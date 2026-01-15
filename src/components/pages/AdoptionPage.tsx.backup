@@ -1,0 +1,725 @@
+/**
+ * 입양정보 페이지 - 새로운 가족을 찾아주는 따뜻한 공간
+ * "반려동물과의 시간을 기록해도 괜찮은 장소"의 시작점
+ * 파란하늘 테마 + 감성적 디자인 + 3D Dome Gallery
+ */
+
+"use client";
+
+import { useState, useEffect } from "react";
+import {
+    Card,
+    CardContent,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import {
+    Heart,
+    MapPin,
+    Calendar,
+    Users,
+    Search,
+    Filter,
+    Phone,
+    MessageCircle,
+    Star,
+    PawPrint,
+    Baby,
+    Dog,
+    Cat,
+    Rabbit,
+} from "lucide-react";
+import { EmotionalTrueFocus } from "../ui/TrueFocus";
+import { usePetImages } from "@/hooks/usePetImages";
+import { AdoptionDomeGallery } from "../ui/DomeGallery";
+
+// 입양 동물 정보 타입
+interface AdoptionPet {
+    id: string;
+    name: string;
+    species: "dog" | "cat" | "rabbit" | "bird";
+    breed: string;
+    age: string;
+    gender: "male" | "female";
+    size: "small" | "medium" | "large";
+    personality: string[];
+    description: string;
+    location: string;
+    shelter: string;
+    contact: string;
+    imageUrl: string;
+    isUrgent?: boolean;
+    healthStatus: string;
+    adoptionFee: number;
+    postedDate: string;
+    isFavorited?: boolean;
+}
+
+// 임시 데모 데이터
+const mockAdoptionPets: AdoptionPet[] = [
+    {
+        id: "1",
+        name: "몽이",
+        species: "dog",
+        breed: "골든리트리버 믹스",
+        age: "2살",
+        gender: "male",
+        size: "large",
+        personality: ["온순함", "사람 좋아함", "활발함"],
+        description:
+            "사람을 정말 좋아하는 착한 몽이예요. 산책을 좋아하고 아이들과도 잘 어울려요.",
+        location: "서울 강남구",
+        shelter: "사랑 보호소",
+        contact: "02-1234-5678",
+        imageUrl: "/api/placeholder/300/300",
+        healthStatus: "건강함",
+        adoptionFee: 100000,
+        postedDate: "2024-01-10",
+        isFavorited: false,
+    },
+    {
+        id: "2",
+        name: "루나",
+        species: "cat",
+        breed: "코리안 숏헤어",
+        age: "1살",
+        gender: "female",
+        size: "small",
+        personality: ["조용함", "독립적", "애교 많음"],
+        description:
+            "조용하고 차분한 성격의 루나예요. 혼자 있는 시간도 잘 보내고 애교도 부려요.",
+        location: "서울 마포구",
+        shelter: "희망 동물보호센터",
+        contact: "02-2345-6789",
+        imageUrl: "/api/placeholder/300/300",
+        healthStatus: "건강함",
+        adoptionFee: 80000,
+        postedDate: "2024-01-12",
+        isUrgent: true,
+        isFavorited: true,
+    },
+    {
+        id: "3",
+        name: "초코",
+        species: "dog",
+        breed: "포메라니안",
+        age: "3살",
+        gender: "female",
+        size: "small",
+        personality: ["활발함", "장난기 많음", "영리함"],
+        description:
+            "작지만 당찬 초코예요! 똑똑하고 장난기 많아서 함께 있으면 즐거워요.",
+        location: "경기 성남시",
+        shelter: "새생명 보호소",
+        contact: "031-3456-7890",
+        imageUrl: "/api/placeholder/300/300",
+        healthStatus: "건강함",
+        adoptionFee: 120000,
+        postedDate: "2024-01-08",
+    },
+    {
+        id: "4",
+        name: "별이",
+        species: "cat",
+        breed: "러시안 블루",
+        age: "4살",
+        gender: "female",
+        size: "medium",
+        personality: ["차분함", "우아함", "관찰력 좋음"],
+        description:
+            "우아하고 신비로운 별이예요. 조용한 환경을 좋아하고 사람을 관찰하는 걸 좋아해요.",
+        location: "서울 송파구",
+        shelter: "행복 동물센터",
+        contact: "02-4567-8901",
+        imageUrl: "/api/placeholder/300/300",
+        healthStatus: "건강함",
+        adoptionFee: 90000,
+        postedDate: "2024-01-09",
+    },
+    {
+        id: "5",
+        name: "바둑이",
+        species: "dog",
+        breed: "믹스견",
+        age: "5살",
+        gender: "male",
+        size: "medium",
+        personality: ["충성심", "보호본능", "똑똑함"],
+        description:
+            "충성스러운 바둑이예요. 가족을 잘 보호하고 훈련도 잘 따라와요.",
+        location: "인천 부평구",
+        shelter: "따뜻한 집",
+        contact: "032-5678-9012",
+        imageUrl: "/api/placeholder/300/300",
+        healthStatus: "건강함",
+        adoptionFee: 70000,
+        postedDate: "2024-01-11",
+        isUrgent: true,
+    },
+    {
+        id: "6",
+        name: "민트",
+        species: "rabbit",
+        breed: "홀랜드 롭",
+        age: "1살",
+        gender: "female",
+        size: "small",
+        personality: ["온순함", "호기심 많음", "깔끔함"],
+        description:
+            "깨끗하고 온순한 민트예요. 호기심이 많고 조용한 환경에서 잘 지내요.",
+        location: "경기 고양시",
+        shelter: "작은 친구들의 집",
+        contact: "031-6789-0123",
+        imageUrl: "/api/placeholder/300/300",
+        healthStatus: "건강함",
+        adoptionFee: 50000,
+        postedDate: "2024-01-13",
+    },
+];
+
+export default function AdoptionPage() {
+    // Pet Images API 연동
+    const { petImages } = usePetImages();
+
+    const [pets, setPets] = useState<AdoptionPet[]>(mockAdoptionPets);
+    const [filteredPets, setFilteredPets] =
+        useState<AdoptionPet[]>(mockAdoptionPets);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [speciesFilter, setSpeciesFilter] = useState<string>("all");
+    const [sizeFilter, setSizeFilter] = useState<string>("all");
+    const [locationFilter, setLocationFilter] = useState<string>("all");
+    const [showFilters, setShowFilters] = useState(false);
+
+    // 필터링 로직
+    useEffect(() => {
+        let filtered = pets.filter((pet) => {
+            const matchesSearch =
+                pet.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                pet.breed.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                pet.description
+                    .toLowerCase()
+                    .includes(searchTerm.toLowerCase());
+
+            const matchesSpecies =
+                speciesFilter === "all" || pet.species === speciesFilter;
+            const matchesSize = sizeFilter === "all" || pet.size === sizeFilter;
+            const matchesLocation =
+                locationFilter === "all" ||
+                pet.location.includes(locationFilter);
+
+            return (
+                matchesSearch &&
+                matchesSpecies &&
+                matchesSize &&
+                matchesLocation
+            );
+        });
+
+        // 긴급한 친구들을 앞으로
+        filtered = filtered.sort((a, b) => {
+            if (a.isUrgent && !b.isUrgent) return -1;
+            if (!a.isUrgent && b.isUrgent) return 1;
+            return 0;
+        });
+
+        setFilteredPets(filtered);
+    }, [pets, searchTerm, speciesFilter, sizeFilter, locationFilter]);
+
+    // 찜하기 토글
+    const toggleFavorite = (petId: string) => {
+        setPets((prev) =>
+            prev.map((pet) =>
+                pet.id === petId
+                    ? { ...pet, isFavorited: !pet.isFavorited }
+                    : pet
+            )
+        );
+    };
+
+    // 종별 아이콘
+    const getSpeciesIcon = (species: string) => {
+        switch (species) {
+            case "dog":
+                return <Dog className="w-5 h-5" />;
+            case "cat":
+                return <Cat className="w-5 h-5" />;
+            case "rabbit":
+                return <Rabbit className="w-5 h-5" />;
+            default:
+                return <PawPrint className="w-5 h-5" />;
+        }
+    };
+
+    // 종별 한글 변환
+    const getSpeciesKorean = (species: string) => {
+        switch (species) {
+            case "dog":
+                return "강아지";
+            case "cat":
+                return "고양이";
+            case "rabbit":
+                return "토끼";
+            case "bird":
+                return "조류";
+            default:
+                return "기타";
+        }
+    };
+
+    return (
+        <div className="min-h-screen relative overflow-hidden">
+            {/* 파란하늘 배경 */}
+            <div className="absolute inset-0 bg-gradient-to-br from-sky-100 via-blue-50 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
+                <div className="absolute top-0 right-1/4 w-80 h-80 bg-gradient-to-r from-blue-200/20 to-sky-200/20 dark:from-blue-800/10 dark:to-sky-800/10 rounded-full blur-3xl animate-pulse"></div>
+                <div className="absolute bottom-1/3 left-1/4 w-72 h-72 bg-gradient-to-r from-sky-200/20 to-blue-100/20 dark:from-sky-800/10 dark:to-blue-700/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+            </div>
+
+            <div className="relative z-10 max-w-7xl mx-auto px-4 py-8">
+                {/* 페이지 헤더 */}
+                <div className="text-center mb-8">
+                    <h1 className="text-4xl md:text-5xl font-bold mb-4">
+                        <EmotionalTrueFocus
+                            text="새로운 가족을 기다리는 친구들"
+                            variant="gentle"
+                            className="bg-gradient-to-r from-blue-600 to-sky-600 dark:from-blue-400 dark:to-sky-400 bg-clip-text text-transparent"
+                            delay={200}
+                        />
+                    </h1>
+
+                    <div className="mt-4">
+                        <EmotionalTrueFocus
+                            text="여기서 시작되는 특별한 인연, 함께할 시간을 기록해나가세요"
+                            variant="warm"
+                            className="text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto"
+                            delay={1000}
+                        />
+                    </div>
+                </div>
+
+                {/* 검색 및 필터 영역 */}
+                <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg border border-white/50 dark:border-gray-700/50 rounded-3xl p-6 mb-8 shadow-xl">
+                    <div className="flex flex-col lg:flex-row gap-4 items-center">
+                        {/* 검색창 */}
+                        <div className="flex-1 relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                            <Input
+                                placeholder="이름, 품종, 특징으로 검색해보세요..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="pl-10 bg-white/70 dark:bg-gray-700/70 border-blue-200 dark:border-blue-600"
+                            />
+                        </div>
+
+                        {/* 필터 토글 버튼 */}
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowFilters(!showFilters)}
+                            className="bg-white/70 dark:bg-gray-700/70 border-blue-200 dark:border-blue-600"
+                        >
+                            <Filter className="w-4 h-4 mr-2" />
+                            필터
+                        </Button>
+                    </div>
+
+                    {/* 필터 옵션들 */}
+                    {showFilters && (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-blue-100 dark:border-blue-800">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    종류
+                                </label>
+                                <Select
+                                    value={speciesFilter}
+                                    onValueChange={setSpeciesFilter}
+                                >
+                                    <SelectTrigger className="bg-white/70 dark:bg-gray-700/70">
+                                        <SelectValue placeholder="전체" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">
+                                            전체
+                                        </SelectItem>
+                                        <SelectItem value="dog">
+                                            강아지
+                                        </SelectItem>
+                                        <SelectItem value="cat">
+                                            고양이
+                                        </SelectItem>
+                                        <SelectItem value="rabbit">
+                                            토끼
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    크기
+                                </label>
+                                <Select
+                                    value={sizeFilter}
+                                    onValueChange={setSizeFilter}
+                                >
+                                    <SelectTrigger className="bg-white/70 dark:bg-gray-700/70">
+                                        <SelectValue placeholder="전체" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">
+                                            전체
+                                        </SelectItem>
+                                        <SelectItem value="small">
+                                            소형
+                                        </SelectItem>
+                                        <SelectItem value="medium">
+                                            중형
+                                        </SelectItem>
+                                        <SelectItem value="large">
+                                            대형
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    지역
+                                </label>
+                                <Select
+                                    value={locationFilter}
+                                    onValueChange={setLocationFilter}
+                                >
+                                    <SelectTrigger className="bg-white/70 dark:bg-gray-700/70">
+                                        <SelectValue placeholder="전체" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">
+                                            전체
+                                        </SelectItem>
+                                        <SelectItem value="서울">
+                                            서울
+                                        </SelectItem>
+                                        <SelectItem value="경기">
+                                            경기도
+                                        </SelectItem>
+                                        <SelectItem value="인천">
+                                            인천
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* 3D Dome Gallery 섹션 */}
+                {filteredPets.length > 0 && (
+                    <div className="mb-12">
+                        <div className="text-center mb-6">
+                            <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+                                <EmotionalTrueFocus
+                                    text="새로운 가족들을 3D로 만나보세요"
+                                    variant="gentle"
+                                    className="bg-gradient-to-r from-blue-600 to-sky-600 dark:from-blue-400 dark:to-sky-400 bg-clip-text text-transparent"
+                                    delay={200}
+                                />
+                            </h2>
+                            <p className="text-gray-600 dark:text-gray-300">
+                                하늘을 감싸듯 배치된 친구들과 특별한 만남을
+                                가져보세요
+                            </p>
+                        </div>
+
+                        {/* Dome Gallery */}
+                        <AdoptionDomeGallery
+                            pets={filteredPets.map((pet, index) => ({
+                                ...pet,
+                                imageUrl:
+                                    petImages && petImages.length > 0
+                                        ? petImages[index % petImages.length]
+                                        : "/api/placeholder/300/300",
+                            }))}
+                            onPetClick={(pet) => {
+                                // 펫 상세 정보 모달이나 페이지로 이동
+                                console.log("Pet clicked:", pet);
+                            }}
+                        />
+                    </div>
+                )}
+
+                {/* 결과 헤더 */}
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+                        입양 대기 중인 친구들 ({filteredPets.length}마리)
+                    </h2>
+
+                    {filteredPets.filter((pet) => pet.isUrgent).length > 0 && (
+                        <Badge className="bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700">
+                            긴급{" "}
+                            {filteredPets.filter((pet) => pet.isUrgent).length}
+                            마리
+                        </Badge>
+                    )}
+                </div>
+
+                {/* 입양 동물 카드들 */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredPets.map((pet, index) => (
+                        <Card
+                            key={pet.id}
+                            className={`
+                bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg border-white/50 dark:border-gray-700/50 shadow-xl hover:shadow-2xl transition-all duration-200 transform hover:scale-105 relative
+                ${pet.isUrgent ? "ring-2 ring-red-300 dark:ring-red-600" : ""}
+              `}
+                        >
+                            {/* 긴급 뱃지 */}
+                            {pet.isUrgent && (
+                                <div className="absolute -top-2 -right-2 z-10">
+                                    <Badge className="bg-red-500 text-white border-red-600 animate-pulse">
+                                        긴급
+                                    </Badge>
+                                </div>
+                            )}
+
+                            {/* 찜하기 버튼 */}
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleFavorite(pet.id)}
+                                className="absolute top-3 right-3 z-10 bg-white/80 dark:bg-gray-700/80 rounded-full p-2 hover:bg-white dark:hover:bg-gray-600"
+                            >
+                                <Heart
+                                    className={`w-5 h-5 ${
+                                        pet.isFavorited
+                                            ? "fill-red-500 text-red-500"
+                                            : "text-gray-400"
+                                    }`}
+                                />
+                            </Button>
+
+                            <CardHeader className="pb-4">
+                                {/* 동물 이미지 (실제 API 이미지) */}
+                                <div className="w-full h-48 bg-gradient-to-br from-blue-100 to-sky-100 dark:from-blue-900/30 dark:to-sky-900/30 rounded-2xl overflow-hidden mb-4">
+                                    {petImages && petImages.length > 0 ? (
+                                        <img
+                                            src={
+                                                petImages[
+                                                    index % petImages.length
+                                                ]
+                                            }
+                                            alt={`${pet.name} 사진`}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                // 이미지 로드 실패시 기본 아이콘 표시
+                                                e.currentTarget.style.display =
+                                                    "none";
+                                                const parent =
+                                                    e.currentTarget
+                                                        .parentElement;
+                                                if (
+                                                    parent &&
+                                                    !parent.querySelector(
+                                                        ".fallback-icon"
+                                                    )
+                                                ) {
+                                                    const fallback =
+                                                        document.createElement(
+                                                            "div"
+                                                        );
+                                                    fallback.className =
+                                                        "fallback-icon w-full h-full flex items-center justify-center";
+                                                    fallback.innerHTML = `<div class="text-4xl text-blue-400">아이콘</div>`;
+                                                    parent.appendChild(
+                                                        fallback
+                                                    );
+                                                }
+                                            }}
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center">
+                                            <div className="text-4xl text-blue-400">
+                                                {getSpeciesIcon(pet.species)}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="flex items-center justify-between">
+                                    <CardTitle className="text-xl font-bold text-gray-800 dark:text-gray-100">
+                                        {pet.name}
+                                    </CardTitle>
+                                    <div className="flex items-center space-x-1 text-blue-600 dark:text-blue-400">
+                                        {getSpeciesIcon(pet.species)}
+                                        <span className="text-sm">
+                                            {getSpeciesKorean(pet.species)}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                    <Badge
+                                        variant="outline"
+                                        className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300"
+                                    >
+                                        {pet.breed}
+                                    </Badge>
+                                    <Badge
+                                        variant="outline"
+                                        className="bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-700 text-sky-700 dark:text-sky-300"
+                                    >
+                                        {pet.age}
+                                    </Badge>
+                                    <Badge
+                                        variant="outline"
+                                        className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700 text-green-700 dark:text-green-300"
+                                    >
+                                        {pet.gender === "male"
+                                            ? "수컷"
+                                            : "암컷"}
+                                    </Badge>
+                                </div>
+                            </CardHeader>
+
+                            <CardContent className="space-y-4">
+                                {/* 성격 태그들 */}
+                                <div>
+                                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        성격
+                                    </h4>
+                                    <div className="flex flex-wrap gap-1">
+                                        {pet.personality.map((trait, i) => (
+                                            <span
+                                                key={i}
+                                                className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-xs rounded-full"
+                                            >
+                                                {trait}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* 설명 */}
+                                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                                    {pet.description}
+                                </p>
+
+                                {/* 위치 정보 */}
+                                <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                                    <MapPin className="w-4 h-4 mr-1" />
+                                    {pet.location} • {pet.shelter}
+                                </div>
+
+                                {/* 입양비 */}
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-gray-600 dark:text-gray-300">
+                                        입양비
+                                    </span>
+                                    <span className="font-bold text-blue-600 dark:text-blue-400">
+                                        {pet.adoptionFee.toLocaleString()}원
+                                    </span>
+                                </div>
+                            </CardContent>
+
+                            <CardFooter className="flex gap-2">
+                                <Button
+                                    className="flex-1 bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 text-white"
+                                    size="sm"
+                                >
+                                    <Phone className="w-4 h-4 mr-2" />
+                                    연락하기
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="bg-white/70 dark:bg-gray-700/70 border-blue-200 dark:border-blue-600"
+                                >
+                                    <MessageCircle className="w-4 h-4 mr-2" />
+                                    상세보기
+                                </Button>
+                            </CardFooter>
+                        </Card>
+                    ))}
+                </div>
+
+                {/* 결과 없음 */}
+                {filteredPets.length === 0 && (
+                    <div className="text-center py-16">
+                        <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Search className="w-8 h-8 text-gray-400" />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-600 dark:text-gray-300 mb-2">
+                            조건에 맞는 친구들을 찾지 못했어요
+                        </h3>
+                        <p className="text-gray-500 dark:text-gray-400">
+                            다른 조건으로 다시 검색해보세요
+                        </p>
+                    </div>
+                )}
+
+                {/* 입양 안내 섹션 */}
+                <div className="mt-16 bg-gradient-to-r from-blue-50 to-sky-50 dark:from-blue-900/20 dark:to-sky-900/20 rounded-3xl p-8 border border-blue-100 dark:border-blue-800">
+                    <div className="text-center space-y-6">
+                        <h3 className="text-2xl font-bold text-blue-800 dark:text-blue-200">
+                            입양 전 알아두세요
+                        </h3>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="space-y-2">
+                                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto">
+                                    <Heart className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                                </div>
+                                <h4 className="font-bold text-gray-800 dark:text-gray-100">
+                                    평생 약속
+                                </h4>
+                                <p className="text-sm text-gray-600 dark:text-gray-300">
+                                    반려동물은 평생을 함께할 가족입니다
+                                </p>
+                            </div>
+
+                            <div className="space-y-2">
+                                <div className="w-12 h-12 bg-sky-100 dark:bg-sky-900/30 rounded-full flex items-center justify-center mx-auto">
+                                    <Calendar className="w-6 h-6 text-sky-600 dark:text-sky-400" />
+                                </div>
+                                <h4 className="font-bold text-gray-800 dark:text-gray-100">
+                                    충분한 준비
+                                </h4>
+                                <p className="text-sm text-gray-600 dark:text-gray-300">
+                                    입양 전 충분한 준비와 계획이 필요합니다
+                                </p>
+                            </div>
+
+                            <div className="space-y-2">
+                                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto">
+                                    <Users className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                                </div>
+                                <h4 className="font-bold text-gray-800 dark:text-gray-100">
+                                    가족 동의
+                                </h4>
+                                <p className="text-sm text-gray-600 dark:text-gray-300">
+                                    모든 가족의 동의와 지지가 필요합니다
+                                </p>
+                            </div>
+                        </div>
+
+                        <Button
+                            size="lg"
+                            className="bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 text-white mt-6"
+                        >
+                            입양 가이드 자세히 보기
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}

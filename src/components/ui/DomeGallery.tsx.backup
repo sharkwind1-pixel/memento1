@@ -1,0 +1,340 @@
+/**
+ * Dome Gallery 컴포넌트 - 메멘토애니 감성 3D 갤러리
+ * reactbits.dev/components/dome-gallery 기반
+ * 파란하늘 테마 + 감성적 디자인
+ */
+
+"use client";
+
+import { useRef, useEffect, useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight, Heart, Eye, Calendar } from "lucide-react";
+
+interface DomeGalleryItem {
+    id: string;
+    imageUrl: string;
+    title: string;
+    subtitle?: string;
+    description?: string;
+    date?: string;
+    author?: string;
+    isLiked?: boolean;
+    viewCount?: number;
+}
+
+interface DomeGalleryProps {
+    items: DomeGalleryItem[];
+    className?: string;
+    autoRotate?: boolean;
+    rotateSpeed?: number;
+    itemSize?: "small" | "medium" | "large";
+    onItemClick?: (item: DomeGalleryItem) => void;
+    onItemLike?: (itemId: string) => void;
+}
+
+export default function DomeGallery({
+    items,
+    className = "",
+    autoRotate = false,
+    rotateSpeed = 0.01,
+    itemSize = "medium",
+    onItemClick,
+    onItemLike,
+}: DomeGalleryProps) {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [isHovered, setIsHovered] = useState(false);
+    const [rotation, setRotation] = useState(0);
+
+    // 아이템 크기 설정
+    const sizeConfig = {
+        small: { width: 120, height: 120 },
+        medium: { width: 160, height: 160 },
+        large: { width: 200, height: 200 },
+    };
+
+    const itemConfig = sizeConfig[itemSize];
+
+    // 자동 회전
+    useEffect(() => {
+        if (!autoRotate || isHovered) return;
+
+        const interval = setInterval(() => {
+            setRotation((prev) => prev + rotateSpeed);
+        }, 16); // ~60fps
+
+        return () => clearInterval(interval);
+    }, [autoRotate, rotateSpeed, isHovered]);
+
+    // 아이템 위치 계산 (Dome 형태)
+    const calculateItemPosition = (index: number, total: number) => {
+        const angle = (index / total) * Math.PI * 2 + rotation;
+        const radius = 280; // Dome 반지름
+        const heightVariation = Math.sin(angle * 2) * 30; // 높낮이 변화
+
+        return {
+            x: Math.cos(angle) * radius,
+            y: Math.sin(angle) * radius * 0.3 + heightVariation, // 타원형 + 높이 변화
+            z: Math.sin(angle) * 50, // 깊이감
+            scale: 0.8 + Math.cos(angle) * 0.3, // 크기 변화
+            opacity: 0.6 + Math.cos(angle) * 0.4, // 투명도 변화
+        };
+    };
+
+    // 다음/이전 아이템
+    const nextItem = () => {
+        setRotation((prev) => prev + (Math.PI * 2) / items.length);
+        setCurrentIndex((prev) => (prev + 1) % items.length);
+    };
+
+    const prevItem = () => {
+        setRotation((prev) => prev - (Math.PI * 2) / items.length);
+        setCurrentIndex((prev) => (prev - 1 + items.length) % items.length);
+    };
+
+    return (
+        <div
+            className={`relative w-full h-96 overflow-hidden rounded-3xl bg-gradient-to-br from-sky-50 to-blue-50 dark:from-sky-900/20 dark:to-blue-900/20 ${className}`}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+        >
+            {/* 3D 컨테이너 */}
+            <div
+                ref={containerRef}
+                className="relative w-full h-full flex items-center justify-center"
+                style={{ perspective: "1000px" }}
+            >
+                {/* Dome Gallery 아이템들 */}
+                {items.map((item, index) => {
+                    const pos = calculateItemPosition(index, items.length);
+
+                    return (
+                        <div
+                            key={item.id}
+                            className="absolute cursor-pointer transition-all duration-500 ease-out"
+                            style={{
+                                transform: `
+                  translate3d(${pos.x}px, ${pos.y}px, ${pos.z}px) 
+                  scale(${pos.scale})
+                `,
+                                opacity: pos.opacity,
+                                zIndex: Math.floor(pos.z + 50),
+                                width: itemConfig.width,
+                                height: itemConfig.height,
+                            }}
+                            onClick={() => onItemClick?.(item)}
+                        >
+                            <Card className="w-full h-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg border border-white/50 dark:border-gray-700/50 shadow-xl hover:shadow-2xl transition-all duration-200 overflow-hidden group">
+                                <CardContent className="p-0 relative h-full">
+                                    {/* 이미지 */}
+                                    <div className="relative w-full h-3/4 overflow-hidden">
+                                        <img
+                                            src={item.imageUrl}
+                                            alt={item.title}
+                                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                            onError={(e) => {
+                                                e.currentTarget.style.display =
+                                                    "none";
+                                                const parent =
+                                                    e.currentTarget
+                                                        .parentElement;
+                                                if (
+                                                    parent &&
+                                                    !parent.querySelector(
+                                                        ".fallback-bg"
+                                                    )
+                                                ) {
+                                                    const fallback =
+                                                        document.createElement(
+                                                            "div"
+                                                        );
+                                                    fallback.className =
+                                                        "fallback-bg w-full h-full bg-gradient-to-br from-blue-200 to-sky-200 dark:from-blue-800 to-sky-800 flex items-center justify-center";
+                                                    fallback.innerHTML = `<div class="text-2xl text-blue-600 dark:text-blue-400">${item.title.charAt(
+                                                        0
+                                                    )}</div>`;
+                                                    parent.appendChild(
+                                                        fallback
+                                                    );
+                                                }
+                                            }}
+                                        />
+
+                                        {/* 오버레이 정보 */}
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                            <div className="absolute bottom-2 left-2 right-2">
+                                                <div className="flex items-center justify-between">
+                                                    {item.viewCount && (
+                                                        <div className="flex items-center text-white text-xs">
+                                                            <Eye className="w-3 h-3 mr-1" />
+                                                            {item.viewCount}
+                                                        </div>
+                                                    )}
+                                                    {item.isLiked !==
+                                                        undefined && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="p-1 h-6 w-6"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                onItemLike?.(
+                                                                    item.id
+                                                                );
+                                                            }}
+                                                        >
+                                                            <Heart
+                                                                className={`w-3 h-3 ${
+                                                                    item.isLiked
+                                                                        ? "fill-red-500 text-red-500"
+                                                                        : "text-white"
+                                                                }`}
+                                                            />
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 텍스트 정보 */}
+                                    <div className="p-2 h-1/4 flex flex-col justify-center">
+                                        <h4 className="font-bold text-sm text-gray-800 dark:text-gray-100 truncate">
+                                            {item.title}
+                                        </h4>
+                                        {item.subtitle && (
+                                            <p className="text-xs text-gray-600 dark:text-gray-300 truncate">
+                                                {item.subtitle}
+                                            </p>
+                                        )}
+                                        {item.date && (
+                                            <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                <Calendar className="w-3 h-3 mr-1" />
+                                                {item.date}
+                                            </div>
+                                        )}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    );
+                })}
+
+                {/* 중앙 제목 (현재 선택된 아이템) */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="text-center bg-white/20 dark:bg-gray-800/20 backdrop-blur-lg rounded-2xl p-6 border border-white/30 dark:border-gray-700/30">
+                        <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+                            {items[currentIndex]?.title}
+                        </h3>
+                        {items[currentIndex]?.description && (
+                            <p className="text-gray-600 dark:text-gray-300 max-w-md">
+                                {items[currentIndex].description}
+                            </p>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* 네비게이션 컨트롤 */}
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center space-x-4">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={prevItem}
+                    className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg border-white/50 dark:border-gray-700/50 hover:bg-white dark:hover:bg-gray-700"
+                >
+                    <ChevronLeft className="w-4 h-4" />
+                </Button>
+
+                {/* 인디케이터 */}
+                <div className="flex space-x-1">
+                    {items.map((_, index) => (
+                        <button
+                            key={index}
+                            className={`w-2 h-2 rounded-full transition-colors duration-200 ${
+                                index === currentIndex
+                                    ? "bg-blue-500 dark:bg-blue-400"
+                                    : "bg-white/50 dark:bg-gray-600/50"
+                            }`}
+                            onClick={() => {
+                                const targetRotation =
+                                    -(index * (Math.PI * 2)) / items.length;
+                                setRotation(targetRotation);
+                                setCurrentIndex(index);
+                            }}
+                        />
+                    ))}
+                </div>
+
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={nextItem}
+                    className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg border-white/50 dark:border-gray-700/50 hover:bg-white dark:hover:bg-gray-700"
+                >
+                    <ChevronRight className="w-4 h-4" />
+                </Button>
+            </div>
+        </div>
+    );
+}
+
+// 사용 편의를 위한 래퍼 컴포넌트들
+export function AdoptionDomeGallery({
+    pets,
+    onPetClick,
+}: {
+    pets: any[];
+    onPetClick?: (pet: any) => void;
+}) {
+    const galleryItems: DomeGalleryItem[] = pets.map((pet) => ({
+        id: pet.id,
+        imageUrl: pet.imageUrl,
+        title: pet.name,
+        subtitle: pet.breed,
+        description: pet.description,
+        date: `${pet.age} • ${pet.location}`,
+        isLiked: pet.isFavorited,
+    }));
+
+    return (
+        <DomeGallery
+            items={galleryItems}
+            autoRotate={true}
+            rotateSpeed={0.005}
+            itemSize="medium"
+            onItemClick={onPetClick}
+            className="mb-8"
+        />
+    );
+}
+
+export function MemorialDomeGallery({
+    memories,
+    onMemoryClick,
+}: {
+    memories: any[];
+    onMemoryClick?: (memory: any) => void;
+}) {
+    const galleryItems: DomeGalleryItem[] = memories.map((memory) => ({
+        id: memory.id,
+        imageUrl: memory.imageUrl,
+        title: memory.title,
+        subtitle: memory.emotion,
+        description: memory.description,
+        date: memory.date,
+        viewCount: memory.viewCount,
+    }));
+
+    return (
+        <DomeGallery
+            items={galleryItems}
+            autoRotate={true}
+            rotateSpeed={0.003}
+            itemSize="large"
+            onItemClick={onMemoryClick}
+            className="mb-8"
+        />
+    );
+}
