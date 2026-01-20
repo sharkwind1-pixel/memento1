@@ -1,13 +1,16 @@
 /**
  * Layout.tsx
  * 메인 레이아웃 - 헤더, 네비게이션, 푸터 포함
+ * 로그인/로그아웃 기능 추가
  */
 
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { TabType } from "@/types";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import AuthModal from "@/components/auth/AuthModal";
 import {
     Home,
     Users,
@@ -21,6 +24,10 @@ import {
     X,
     Moon,
     Sun,
+    LogIn,
+    LogOut,
+    User,
+    ChevronDown,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -47,16 +54,47 @@ export default function Layout({
     selectedTab,
     setSelectedTab,
 }: LayoutProps) {
+    const { user, loading, signOut } = useAuth();
+
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(false);
+    const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
+    // openAuthModal 이벤트 리스닝 (RecordPage에서 발생)
+    useEffect(() => {
+        const handleOpenAuthModal = () => {
+            setIsAuthModalOpen(true);
+        };
+
+        window.addEventListener("openAuthModal", handleOpenAuthModal);
+        return () => {
+            window.removeEventListener("openAuthModal", handleOpenAuthModal);
+        };
+    }, []);
 
     const toggleDarkMode = () => {
         setIsDarkMode(!isDarkMode);
         document.documentElement.classList.toggle("dark");
     };
 
+    const handleSignOut = async () => {
+        await signOut();
+        setIsUserMenuOpen(false);
+    };
+
+    // 사용자 닉네임 또는 이메일 앞부분
+    const displayName =
+        user?.user_metadata?.nickname || user?.email?.split("@")[0] || "사용자";
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+            {/* 인증 모달 */}
+            <AuthModal
+                isOpen={isAuthModalOpen}
+                onClose={() => setIsAuthModalOpen(false)}
+            />
+
             {/* 헤더 */}
             <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-700/50">
                 <div className="max-w-7xl mx-auto px-4">
@@ -116,6 +154,79 @@ export default function Layout({
                                     <Moon className="w-5 h-5" />
                                 )}
                             </Button>
+
+                            {/* 로그인/사용자 메뉴 */}
+                            {loading ? (
+                                <div className="w-24 h-10 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-xl" />
+                            ) : user ? (
+                                <div className="relative">
+                                    <button
+                                        onClick={() =>
+                                            setIsUserMenuOpen(!isUserMenuOpen)
+                                        }
+                                        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-50 dark:bg-gray-800 hover:bg-blue-100 dark:hover:bg-gray-700 transition-colors"
+                                    >
+                                        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-sky-500 rounded-full flex items-center justify-center">
+                                            <User className="w-4 h-4 text-white" />
+                                        </div>
+                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-200 hidden sm:block max-w-[100px] truncate">
+                                            {displayName}
+                                        </span>
+                                        <ChevronDown className="w-4 h-4 text-gray-500" />
+                                    </button>
+
+                                    {/* 드롭다운 메뉴 */}
+                                    {isUserMenuOpen && (
+                                        <>
+                                            <div
+                                                className="fixed inset-0 z-40"
+                                                onClick={() =>
+                                                    setIsUserMenuOpen(false)
+                                                }
+                                            />
+                                            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 z-50 overflow-hidden">
+                                                <div className="p-3 border-b border-gray-200 dark:border-gray-700">
+                                                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                                        {displayName}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500 truncate">
+                                                        {user.email}
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedTab(
+                                                            "record",
+                                                        );
+                                                        setIsUserMenuOpen(
+                                                            false,
+                                                        );
+                                                    }}
+                                                    className="w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
+                                                >
+                                                    <Camera className="w-4 h-4" />
+                                                    우리의 기록
+                                                </button>
+                                                <button
+                                                    onClick={handleSignOut}
+                                                    className="w-full px-4 py-3 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                                                >
+                                                    <LogOut className="w-4 h-4" />
+                                                    로그아웃
+                                                </button>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            ) : (
+                                <Button
+                                    onClick={() => setIsAuthModalOpen(true)}
+                                    className="bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 rounded-xl"
+                                >
+                                    <LogIn className="w-4 h-4 mr-2" />
+                                    로그인
+                                </Button>
+                            )}
 
                             {/* 모바일 메뉴 버튼 */}
                             <Button
