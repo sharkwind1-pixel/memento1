@@ -1,199 +1,665 @@
-/**
- * Dome Gallery 컴포넌트
- * reactbits.dev 스타일의 3D 돔 형태 이미지 갤러리
- */
+"use client";
 
-'use client'
+import { useEffect, useMemo, useRef, useCallback } from "react";
+import { useGesture } from "@use-gesture/react";
+import "./DomeGallery.css";
 
-import { useState, useRef, useEffect } from 'react'
-import Image from 'next/image'
+export type DomeImage =
+    | string
+    | {
+          src: string;
+          alt?: string;
+      };
 
-interface DomeGalleryItem {
-  id: string | number
-  image: string
-  title?: string
-  subtitle?: string
-  onClick?: () => void
-}
+const DEFAULT_IMAGES: DomeImage[] = [
+    {
+        src: "https://images.unsplash.com/photo-1755331039789-7e5680e26e8f?q=80&w=774&auto=format&fit=crop",
+        alt: "Abstract art",
+    },
+    {
+        src: "https://images.unsplash.com/photo-1755569309049-98410b94f66d?q=80&w=772&auto=format&fit=crop",
+        alt: "Modern sculpture",
+    },
+];
 
-interface DomeGalleryProps {
-  items: DomeGalleryItem[]
-  radius?: number
-  autoRotate?: boolean
-  rotateSpeed?: number
-  className?: string
-  itemSize?: number
-  perspective?: number
-}
+const DEFAULTS = {
+    maxVerticalRotationDeg: 5,
+    dragSensitivity: 20,
+    enlargeTransitionMs: 300,
+    segments: 35,
+};
 
-export function DomeGallery({
-  items,
-  radius = 300,
-  autoRotate = true,
-  rotateSpeed = 0.3,
-  className = '',
-  itemSize = 120,
-  perspective = 1000
-}: DomeGalleryProps) {
-  const [rotation, setRotation] = useState(0)
-  const [isDragging, setIsDragging] = useState(false)
-  const [startX, setStartX] = useState(0)
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const animationRef = useRef<number>()
+const clamp = (v: number, min: number, max: number) =>
+    Math.min(Math.max(v, min), max);
+const normalizeAngle = (d: number) => ((d % 360) + 360) % 360;
+const wrapAngleSigned = (deg: number) => {
+    const a = (((deg + 180) % 360) + 360) % 360;
+    return a - 180;
+};
 
-  // 자동 회전
-  useEffect(() => {
-    if (!autoRotate || isDragging) return
+const getDataNumber = (el: HTMLElement, name: string, fallback: number) => {
+    const attr = (el.dataset as any)[name] ?? el.getAttribute(`data-${name}`);
+    const n = attr == null ? NaN : parseFloat(attr);
+    return Number.isFinite(n) ? n : fallback;
+};
 
-    const animate = () => {
-      setRotation(prev => prev + rotateSpeed)
-      animationRef.current = requestAnimationFrame(animate)
+type BuiltItem = {
+    x: number;
+    y: number;
+    sizeX: number;
+    sizeY: number;
+    src: string;
+    alt: string;
+};
+
+function buildItems(pool: DomeImage[], seg: number): BuiltItem[] {
+    const xCols = Array.from({ length: seg }, (_, i) => -37 + i * 2);
+    const evenYs = [-4, -2, 0, 2, 4];
+    const oddYs = [-3, -1, 1, 3, 5];
+
+    const coords = xCols.flatMap((x, c) => {
+        const ys = c % 2 === 0 ? evenYs : oddYs;
+        return ys.map((y) => ({ x, y, sizeX: 2, sizeY: 2 }));
+    });
+
+    const totalSlots = coords.length;
+
+    const normalizedImages = pool.map((image) => {
+        if (typeof image === "string") return { src: image, alt: "" };
+        return { src: image.src || "", alt: image.alt || "" };
+    });
+
+    if (normalizedImages.length === 0) {
+        return coords.map((c) => ({ ...c, src: "", alt: "" }));
     }
 
-    animationRef.current = requestAnimationFrame(animate)
-
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current)
-      }
+    if (normalizedImages.length > totalSlots) {
+        console.warn(
+            `[DomeGallery] Provided image count (${normalizedImages.length}) exceeds available tiles (${totalSlots}). Some images will not be shown.`
+        );
     }
-  }, [autoRotate, isDragging, rotateSpeed])
 
-  // 드래그 핸들러
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true)
-    setStartX(e.clientX)
-  }
+    const usedImages = Array.from(
+        { length: totalSlots },
+        (_, i) => normalizedImages[i % normalizedImages.length]
+    );
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return
-    const deltaX = e.clientX - startX
-    setRotation(prev => prev + deltaX * 0.5)
-    setStartX(e.clientX)
-  }
+    // 연속 중복 방지(가능하면 섞기)
+    for (let i = 1; i < usedImages.length; i++) {
+        if (usedImages[i].src === usedImages[i - 1].src) {
+            for (let j = i + 1; j < usedImages.length; j++) {
+                if (usedImages[j].src !== usedImages[i].src) {
+                    const tmp = usedImages[i];
+                    usedImages[i] = usedImages[j];
+                    usedImages[j] = tmp;
+                    break;
+                }
+            }
+        }
+    }
 
-  const handleMouseUp = () => {
-    setIsDragging(false)
-  }
-
-  // 터치 핸들러
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setIsDragging(true)
-    setStartX(e.touches[0].clientX)
-  }
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging) return
-    const deltaX = e.touches[0].clientX - startX
-    setRotation(prev => prev + deltaX * 0.5)
-    setStartX(e.touches[0].clientX)
-  }
-
-  const handleTouchEnd = () => {
-    setIsDragging(false)
-  }
-
-  const itemCount = items.length
-  const angleStep = 360 / itemCount
-
-  return (
-    <div
-      ref={containerRef}
-      className={`relative w-full h-[400px] cursor-grab active:cursor-grabbing ${className}`}
-      style={{ perspective: `${perspective}px` }}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
-      {/* 중앙 기준점 */}
-      <div
-        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-        style={{
-          transformStyle: 'preserve-3d',
-          transform: `rotateY(${rotation}deg)`,
-          transition: isDragging ? 'none' : 'transform 0.1s ease-out'
-        }}
-      >
-        {items.map((item, index) => {
-          const angle = angleStep * index
-          const radian = (angle * Math.PI) / 180
-          const x = Math.sin(radian) * radius
-          const z = Math.cos(radian) * radius
-          const isHovered = hoveredIndex === index
-          const scale = isHovered ? 1.15 : 1
-
-          return (
-            <div
-              key={item.id}
-              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-300"
-              style={{
-                transform: `translateX(${x}px) translateZ(${z}px) rotateY(${-angle}deg) scale(${scale})`,
-                transformStyle: 'preserve-3d',
-                zIndex: isHovered ? 100 : Math.round(z + radius)
-              }}
-              onMouseEnter={() => setHoveredIndex(index)}
-              onMouseLeave={() => setHoveredIndex(null)}
-              onClick={item.onClick}
-            >
-              <div
-                className={`
-                  relative overflow-hidden rounded-2xl shadow-lg
-                  bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm
-                  border-2 transition-all duration-300
-                  ${isHovered 
-                    ? 'border-blue-500 shadow-2xl shadow-blue-500/20' 
-                    : 'border-white/50 dark:border-gray-700/50'
-                  }
-                `}
-                style={{ width: itemSize, height: itemSize }}
-              >
-                {item.image ? (
-                  <Image
-                    src={item.image}
-                    alt={item.title || '갤러리 이미지'}
-                    fill
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-blue-100 to-sky-100 dark:from-blue-900 dark:to-sky-900 flex items-center justify-center">
-                    <div className="w-12 h-12 bg-blue-200 dark:bg-blue-700 rounded-full" />
-                  </div>
-                )}
-                
-                {/* 호버시 정보 오버레이 */}
-                {isHovered && (item.title || item.subtitle) && (
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex flex-col justify-end p-3">
-                    {item.title && (
-                      <p className="text-white text-sm font-medium truncate">
-                        {item.title}
-                      </p>
-                    )}
-                    {item.subtitle && (
-                      <p className="text-white/80 text-xs truncate">
-                        {item.subtitle}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      {/* 안내 텍스트 */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-center">
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          드래그하여 회전
-        </p>
-      </div>
-    </div>
-  )
+    return coords.map((c, i) => ({
+        ...c,
+        src: usedImages[i].src,
+        alt: usedImages[i].alt,
+    }));
 }
 
-export default DomeGallery
+function computeItemBaseRotation(
+    offsetX: number,
+    offsetY: number,
+    sizeX: number,
+    sizeY: number,
+    segments: number
+) {
+    const unit = 360 / segments / 2;
+    const rotateY = unit * (offsetX + (sizeX - 1) / 2);
+    const rotateX = unit * (offsetY - (sizeY - 1) / 2);
+    return { rotateX, rotateY };
+}
+
+export default function DomeGallery({
+    images = DEFAULT_IMAGES,
+    fit = 0.5,
+    fitBasis = "auto",
+    minRadius = 600,
+    maxRadius = Infinity,
+    padFactor = 0.25,
+    overlayBlurColor = "#060010",
+    maxVerticalRotationDeg = DEFAULTS.maxVerticalRotationDeg,
+    dragSensitivity = DEFAULTS.dragSensitivity,
+    enlargeTransitionMs = DEFAULTS.enlargeTransitionMs,
+    segments = DEFAULTS.segments,
+    dragDampening = 2,
+    openedImageWidth = "250px",
+    openedImageHeight = "350px",
+    imageBorderRadius = "30px",
+    openedImageBorderRadius = "30px",
+    grayscale = true,
+}: {
+    images?: DomeImage[];
+    fit?: number;
+    fitBasis?: "auto" | "min" | "max" | "width" | "height";
+    minRadius?: number;
+    maxRadius?: number;
+    padFactor?: number;
+    overlayBlurColor?: string;
+    maxVerticalRotationDeg?: number;
+    dragSensitivity?: number;
+    enlargeTransitionMs?: number;
+    segments?: number;
+    dragDampening?: number;
+    openedImageWidth?: string;
+    openedImageHeight?: string;
+    imageBorderRadius?: string;
+    openedImageBorderRadius?: string;
+    grayscale?: boolean;
+}) {
+    const rootRef = useRef<HTMLDivElement | null>(null);
+    const mainRef = useRef<HTMLElement | null>(null);
+    const sphereRef = useRef<HTMLDivElement | null>(null);
+    const frameRef = useRef<HTMLDivElement | null>(null);
+    const viewerRef = useRef<HTMLDivElement | null>(null);
+    const scrimRef = useRef<HTMLDivElement | null>(null);
+    const focusedElRef = useRef<HTMLElement | null>(null);
+    const originalTilePositionRef = useRef<DOMRect | null>(null);
+
+    const rotationRef = useRef({ x: 0, y: 0 });
+    const startRotRef = useRef({ x: 0, y: 0 });
+    const startPosRef = useRef<{ x: number; y: number } | null>(null);
+    const draggingRef = useRef(false);
+    const movedRef = useRef(false);
+    const inertiaRAF = useRef<number | null>(null);
+    const openingRef = useRef(false);
+    const openStartedAtRef = useRef(0);
+    const lastDragEndAt = useRef(0);
+
+    const scrollLockedRef = useRef(false);
+
+    const lockScroll = useCallback(() => {
+        if (scrollLockedRef.current) return;
+        scrollLockedRef.current = true;
+        document.body.classList.add("dg-scroll-lock");
+    }, []);
+
+    const unlockScroll = useCallback(() => {
+        if (!scrollLockedRef.current) return;
+        if (rootRef.current?.getAttribute("data-enlarging") === "true") return;
+        scrollLockedRef.current = false;
+        document.body.classList.remove("dg-scroll-lock");
+    }, []);
+
+    const items = useMemo(
+        () => buildItems(images, segments),
+        [images, segments]
+    );
+
+    const applyTransform = (xDeg: number, yDeg: number) => {
+        const el = sphereRef.current;
+        if (el) {
+            el.style.transform = `translateZ(calc(var(--radius) * -1)) rotateX(${xDeg}deg) rotateY(${yDeg}deg)`;
+        }
+    };
+
+    const lockedRadiusRef = useRef<number | null>(null);
+
+    useEffect(() => {
+        const root = rootRef.current;
+        if (!root) return;
+
+        const ro = new ResizeObserver((entries) => {
+            const cr = entries[0].contentRect;
+            const w = Math.max(1, cr.width);
+            const h = Math.max(1, cr.height);
+            const minDim = Math.min(w, h);
+            const maxDim = Math.max(w, h);
+            const aspect = w / h;
+
+            let basis: number;
+            switch (fitBasis) {
+                case "min":
+                    basis = minDim;
+                    break;
+                case "max":
+                    basis = maxDim;
+                    break;
+                case "width":
+                    basis = w;
+                    break;
+                case "height":
+                    basis = h;
+                    break;
+                default:
+                    basis = aspect >= 1.3 ? w : minDim;
+            }
+
+            let radius = basis * fit;
+            const heightGuard = h * 1.35;
+            radius = Math.min(radius, heightGuard);
+            radius = clamp(radius, minRadius, maxRadius);
+            lockedRadiusRef.current = Math.round(radius);
+
+            const viewerPad = Math.max(8, Math.round(minDim * padFactor));
+            root.style.setProperty("--radius", `${lockedRadiusRef.current}px`);
+            root.style.setProperty("--viewer-pad", `${viewerPad}px`);
+            root.style.setProperty("--overlay-blur-color", overlayBlurColor);
+            root.style.setProperty("--tile-radius", imageBorderRadius);
+            root.style.setProperty("--enlarge-radius", openedImageBorderRadius);
+            root.style.setProperty(
+                "--image-filter",
+                grayscale ? "grayscale(1)" : "none"
+            );
+
+            applyTransform(rotationRef.current.x, rotationRef.current.y);
+        });
+
+        ro.observe(root);
+        return () => ro.disconnect();
+    }, [
+        fit,
+        fitBasis,
+        minRadius,
+        maxRadius,
+        padFactor,
+        overlayBlurColor,
+        grayscale,
+        imageBorderRadius,
+        openedImageBorderRadius,
+    ]);
+
+    useEffect(() => {
+        applyTransform(rotationRef.current.x, rotationRef.current.y);
+    }, []);
+
+    const stopInertia = useCallback(() => {
+        if (inertiaRAF.current) {
+            cancelAnimationFrame(inertiaRAF.current);
+            inertiaRAF.current = null;
+        }
+    }, []);
+
+    const startInertia = useCallback(
+        (vx: number, vy: number) => {
+            const MAX_V = 1.4;
+            let vX = clamp(vx, -MAX_V, MAX_V) * 80;
+            let vY = clamp(vy, -MAX_V, MAX_V) * 80;
+            let frames = 0;
+            const d = clamp(dragDampening ?? 0.6, 0, 1);
+            const frictionMul = 0.94 + 0.055 * d;
+            const stopThreshold = 0.015 - 0.01 * d;
+            const maxFrames = Math.round(90 + 270 * d);
+
+            const step = () => {
+                vX *= frictionMul;
+                vY *= frictionMul;
+
+                if (
+                    Math.abs(vX) < stopThreshold &&
+                    Math.abs(vY) < stopThreshold
+                ) {
+                    inertiaRAF.current = null;
+                    return;
+                }
+                if (++frames > maxFrames) {
+                    inertiaRAF.current = null;
+                    return;
+                }
+
+                const nextX = clamp(
+                    rotationRef.current.x - vY / 200,
+                    -maxVerticalRotationDeg,
+                    maxVerticalRotationDeg
+                );
+                const nextY = wrapAngleSigned(rotationRef.current.y + vX / 200);
+                rotationRef.current = { x: nextX, y: nextY };
+                applyTransform(nextX, nextY);
+
+                inertiaRAF.current = requestAnimationFrame(step);
+            };
+
+            stopInertia();
+            inertiaRAF.current = requestAnimationFrame(step);
+        },
+        [dragDampening, maxVerticalRotationDeg, stopInertia]
+    );
+
+    useGesture(
+        {
+            onDragStart: ({ event }) => {
+                if (focusedElRef.current) return;
+                stopInertia();
+                const evt = event as PointerEvent;
+                draggingRef.current = true;
+                movedRef.current = false;
+                startRotRef.current = { ...rotationRef.current };
+                startPosRef.current = { x: evt.clientX, y: evt.clientY };
+            },
+            onDrag: ({
+                event,
+                last,
+                velocity = [0, 0],
+                direction = [0, 0],
+                movement,
+            }) => {
+                if (
+                    focusedElRef.current ||
+                    !draggingRef.current ||
+                    !startPosRef.current
+                )
+                    return;
+                const evt = event as PointerEvent;
+
+                const dxTotal = evt.clientX - startPosRef.current.x;
+                const dyTotal = evt.clientY - startPosRef.current.y;
+
+                if (!movedRef.current) {
+                    const dist2 = dxTotal * dxTotal + dyTotal * dyTotal;
+                    if (dist2 > 16) movedRef.current = true;
+                }
+
+                const nextX = clamp(
+                    startRotRef.current.x - dyTotal / dragSensitivity,
+                    -maxVerticalRotationDeg,
+                    maxVerticalRotationDeg
+                );
+                const nextY = wrapAngleSigned(
+                    startRotRef.current.y + dxTotal / dragSensitivity
+                );
+
+                if (
+                    rotationRef.current.x !== nextX ||
+                    rotationRef.current.y !== nextY
+                ) {
+                    rotationRef.current = { x: nextX, y: nextY };
+                    applyTransform(nextX, nextY);
+                }
+
+                if (last) {
+                    draggingRef.current = false;
+
+                    let [vMagX, vMagY] = velocity as [number, number];
+                    const [dirX, dirY] = direction as [number, number];
+                    let vx = vMagX * dirX;
+                    let vy = vMagY * dirY;
+
+                    if (
+                        Math.abs(vx) < 0.001 &&
+                        Math.abs(vy) < 0.001 &&
+                        Array.isArray(movement)
+                    ) {
+                        const [mx, my] = movement as [number, number];
+                        vx = clamp((mx / dragSensitivity) * 0.02, -1.2, 1.2);
+                        vy = clamp((my / dragSensitivity) * 0.02, -1.2, 1.2);
+                    }
+
+                    if (Math.abs(vx) > 0.005 || Math.abs(vy) > 0.005)
+                        startInertia(vx, vy);
+                    if (movedRef.current)
+                        lastDragEndAt.current = performance.now();
+                    movedRef.current = false;
+                }
+            },
+        },
+        { target: mainRef, eventOptions: { passive: true } }
+    );
+
+    useEffect(() => {
+        const scrim = scrimRef.current;
+        if (!scrim) return;
+
+        const close = () => {
+            if (performance.now() - openStartedAtRef.current < 250) return;
+            const el = focusedElRef.current;
+            if (!el) return;
+
+            const parent = el.parentElement as HTMLElement | null;
+            const overlay = viewerRef.current?.querySelector(
+                ".enlarge"
+            ) as HTMLDivElement | null;
+            if (!parent || !overlay) return;
+
+            const refDiv = parent.querySelector(
+                ".item__image--reference"
+            ) as HTMLDivElement | null;
+            const originalPos = originalTilePositionRef.current;
+
+            overlay.remove();
+            if (refDiv) refDiv.remove();
+
+            parent.style.setProperty("--rot-y-delta", "0deg");
+            parent.style.setProperty("--rot-x-delta", "0deg");
+            el.style.visibility = "";
+            el.style.zIndex = "0";
+            focusedElRef.current = null;
+            rootRef.current?.removeAttribute("data-enlarging");
+            openingRef.current = false;
+
+            unlockScroll();
+            originalTilePositionRef.current = originalPos ?? null;
+        };
+
+        scrim.addEventListener("click", close);
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === "Escape") close();
+        };
+        window.addEventListener("keydown", onKey);
+
+        return () => {
+            scrim.removeEventListener("click", close);
+            window.removeEventListener("keydown", onKey);
+        };
+    }, [unlockScroll]);
+
+    const openItemFromElement = useCallback(
+        (el: HTMLElement) => {
+            if (openingRef.current) return;
+            openingRef.current = true;
+            openStartedAtRef.current = performance.now();
+            lockScroll();
+
+            const parent = el.parentElement as HTMLElement | null;
+            if (!parent) return;
+
+            focusedElRef.current = el;
+            el.setAttribute("data-focused", "true");
+
+            const offsetX = getDataNumber(parent, "offsetX", 0);
+            const offsetY = getDataNumber(parent, "offsetY", 0);
+            const sizeX = getDataNumber(parent, "sizeX", 2);
+            const sizeY = getDataNumber(parent, "sizeY", 2);
+
+            const parentRot = computeItemBaseRotation(
+                offsetX,
+                offsetY,
+                sizeX,
+                sizeY,
+                segments
+            );
+            const parentY = normalizeAngle(parentRot.rotateY);
+            const globalY = normalizeAngle(rotationRef.current.y);
+
+            let rotY = -(parentY + globalY) % 360;
+            if (rotY < -180) rotY += 360;
+
+            const rotX = -parentRot.rotateX - rotationRef.current.x;
+            parent.style.setProperty("--rot-y-delta", `${rotY}deg`);
+            parent.style.setProperty("--rot-x-delta", `${rotX}deg`);
+
+            const refDiv = document.createElement("div");
+            refDiv.className = "item__image item__image--reference";
+            refDiv.style.opacity = "0";
+            refDiv.style.transform = `rotateX(${-parentRot.rotateX}deg) rotateY(${-parentRot.rotateY}deg)`;
+            parent.appendChild(refDiv);
+
+            void refDiv.offsetHeight;
+
+            const tileR = refDiv.getBoundingClientRect();
+            const mainR = mainRef.current?.getBoundingClientRect();
+            const frameR = frameRef.current?.getBoundingClientRect();
+
+            if (!mainR || !frameR || tileR.width <= 0 || tileR.height <= 0) {
+                openingRef.current = false;
+                focusedElRef.current = null;
+                refDiv.remove();
+                unlockScroll();
+                return;
+            }
+
+            originalTilePositionRef.current = tileR;
+            el.style.visibility = "hidden";
+            el.style.zIndex = "0";
+
+            const overlay = document.createElement("div");
+            overlay.className = "enlarge";
+            overlay.style.left = frameR.left - mainR.left + "px";
+            overlay.style.top = frameR.top - mainR.top + "px";
+            overlay.style.width = frameR.width + "px";
+            overlay.style.height = frameR.height + "px";
+            overlay.style.opacity = "0";
+
+            const rawSrc =
+                parent.dataset.src ||
+                (el.querySelector("img") as HTMLImageElement | null)?.src ||
+                "";
+            const img = document.createElement("img");
+            img.src = rawSrc;
+
+            overlay.appendChild(img);
+            viewerRef.current?.appendChild(overlay);
+
+            const tx0 = tileR.left - frameR.left;
+            const ty0 = tileR.top - frameR.top;
+            const sx0 = tileR.width / frameR.width;
+            const sy0 = tileR.height / frameR.height;
+
+            overlay.style.transform = `translate(${tx0}px, ${ty0}px) scale(${
+                isFinite(sx0) && sx0 > 0 ? sx0 : 1
+            }, ${isFinite(sy0) && sy0 > 0 ? sy0 : 1})`;
+
+            setTimeout(() => {
+                if (!overlay.parentElement) return;
+                overlay.style.opacity = "1";
+                overlay.style.transform = "translate(0px, 0px) scale(1, 1)";
+                rootRef.current?.setAttribute("data-enlarging", "true");
+            }, 16);
+
+            // 커스텀 사이즈 적용
+            if (openedImageWidth || openedImageHeight) {
+                setTimeout(() => {
+                    overlay.style.transition = `all ${enlargeTransitionMs}ms ease`;
+                    overlay.style.width =
+                        openedImageWidth || overlay.style.width;
+                    overlay.style.height =
+                        openedImageHeight || overlay.style.height;
+                }, enlargeTransitionMs + 20);
+            }
+        },
+        [
+            enlargeTransitionMs,
+            lockScroll,
+            openedImageHeight,
+            openedImageWidth,
+            segments,
+            unlockScroll,
+        ]
+    );
+
+    const onTileClick = useCallback(
+        (e: React.MouseEvent<HTMLElement>) => {
+            if (draggingRef.current) return;
+            if (movedRef.current) return;
+            if (performance.now() - lastDragEndAt.current < 80) return;
+            if (openingRef.current) return;
+            openItemFromElement(e.currentTarget as HTMLElement);
+        },
+        [openItemFromElement]
+    );
+
+    const onTilePointerUp = useCallback(
+        (e: React.PointerEvent<HTMLElement>) => {
+            if (e.pointerType !== "touch") return;
+            if (draggingRef.current) return;
+            if (movedRef.current) return;
+            if (performance.now() - lastDragEndAt.current < 80) return;
+            if (openingRef.current) return;
+            openItemFromElement(e.currentTarget as HTMLElement);
+        },
+        [openItemFromElement]
+    );
+
+    useEffect(() => {
+        return () => {
+            document.body.classList.remove("dg-scroll-lock");
+        };
+    }, []);
+
+    return (
+        <div
+            ref={rootRef}
+            className="sphere-root"
+            style={
+                {
+                    ["--segments-x" as any]: segments,
+                    ["--segments-y" as any]: segments,
+                    ["--overlay-blur-color" as any]: overlayBlurColor,
+                    ["--tile-radius" as any]: imageBorderRadius,
+                    ["--enlarge-radius" as any]: openedImageBorderRadius,
+                    ["--image-filter" as any]: grayscale
+                        ? "grayscale(1)"
+                        : "none",
+                } as React.CSSProperties
+            }
+        >
+            <main ref={mainRef} className="sphere-main">
+                <div className="stage">
+                    <div ref={sphereRef} className="sphere">
+                        {items.map((it, i) => (
+                            <div
+                                key={`${it.x},${it.y},${i}`}
+                                className="item"
+                                data-src={it.src}
+                                data-offset-x={it.x}
+                                data-offset-y={it.y}
+                                data-size-x={it.sizeX}
+                                data-size-y={it.sizeY}
+                                style={
+                                    {
+                                        ["--offset-x" as any]: it.x,
+                                        ["--offset-y" as any]: it.y,
+                                        ["--item-size-x" as any]: it.sizeX,
+                                        ["--item-size-y" as any]: it.sizeY,
+                                    } as React.CSSProperties
+                                }
+                            >
+                                <div
+                                    className="item__image"
+                                    role="button"
+                                    tabIndex={0}
+                                    aria-label={it.alt || "Open image"}
+                                    onClick={onTileClick}
+                                    onPointerUp={onTilePointerUp}
+                                >
+                                    <img
+                                        src={it.src}
+                                        draggable={false}
+                                        alt={it.alt}
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="overlay" />
+                <div className="overlay overlay--blur" />
+                <div className="edge-fade edge-fade--top" />
+                <div className="edge-fade edge-fade--bottom" />
+
+                <div className="viewer" ref={viewerRef}>
+                    <div ref={scrimRef} className="scrim" />
+                    <div ref={frameRef} className="frame" />
+                </div>
+            </main>
+        </div>
+    );
+}

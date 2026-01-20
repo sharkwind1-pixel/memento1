@@ -1,14 +1,16 @@
 /**
- * 메멘토애니 홈페이지 - 파란하늘 테마 + TrueFocus + DomeGallery
- * - 외부(크롤링) 이미지: <img>로 렌더링 (next/image host 제한 회피)
- * - 로컬 이미지/StaticImport만 next/image 사용 가능
- * - startAutoScroll이 함수가 아닐 때 런타임 크래시 방지
+ * 메멘토애니 홈페이지
+ * - 통계 카드(591만/24/7/무한) 제거됨
+ * - open api 이미지(외부 URL)는 <img>로 렌더링
+ * - "하늘나라 친구들" → "함께하는 순간들"
+ * - 추모 관련 표현 순화
  */
 
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import Image, { type StaticImageData } from "next/image";
+/* eslint-disable @next/next/no-img-element */
+
+import React, { useEffect, useMemo, useState } from "react";
 import {
     Card,
     CardContent,
@@ -25,11 +27,12 @@ import {
     TrendingUp,
     Users,
     MapPin,
-    Stethoscope,
     ArrowRight,
     Zap,
     Crown,
-    Cloud,
+    Camera,
+    X,
+    BookOpen,
 } from "lucide-react";
 
 import { TabType } from "@/types";
@@ -37,177 +40,227 @@ import { bestPosts, memorialCards } from "@/data/posts";
 import { usePetImages } from "@/hooks/usePetImages";
 import { useSmoothAutoScroll } from "@/hooks/useSmoothAutoScroll";
 import { EmotionalTrueFocus } from "@/components/ui/TrueFocus";
-import { DomeGallery } from "@/components/ui/DomeGallery";
 
 interface HomePageProps {
     setSelectedTab: (tab: TabType) => void;
 }
 
-/** null/undefined/빈문자열 정리 */
-function normalizeSrc(src: unknown): string | null {
-    if (typeof src !== "string") return null;
-    const s = src.trim();
-    return s.length ? s : null;
-}
+type LightboxItem = {
+    title: string;
+    subtitle?: string;
+    meta?: string;
+    src: string;
+};
 
-/** 외부 URL인지 체크 */
-function isRemoteUrl(src: string): boolean {
-    try {
-        const u = new URL(src);
-        return u.protocol === "http:" || u.protocol === "https:";
-    } catch {
-        return false;
-    }
-}
+type SmoothAutoScrollReturn = {
+    communityScrollRef: React.RefObject<HTMLDivElement>;
+    adoptionScrollRef: React.RefObject<HTMLDivElement>;
+    petcareScrollRef: React.RefObject<HTMLDivElement>;
+    memorialScrollRef: React.RefObject<HTMLDivElement>;
+    startAutoScroll?: (start?: boolean) => void | (() => void);
+};
 
-/**
- * 크롤링된 외부 이미지는 next/image가 host 미설정이면 런타임에서 터짐.
- * 그래서:
- * - src가 http/https면 <img>
- * - 그 외(로컬 경로 "/..." 또는 StaticImport)는 next/image
- */
-function SmartImage(props: {
-    src: string | StaticImageData | null | undefined;
-    alt: string;
-    className?: string;
-    fill?: boolean;
-    width?: number;
-    height?: number;
+const safeStringSrc = (v: unknown): string | null =>
+    typeof v === "string" && v.trim().length ? v.trim() : null;
+
+/* ---------------- Lightbox ---------------- */
+function Lightbox({
+    item,
+    onClose,
+}: {
+    item: LightboxItem | null;
+    onClose: () => void;
 }) {
-    const { src, alt, className, fill, width, height } = props;
+    useEffect(() => {
+        if (!item) return;
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") onClose();
+        };
+        window.addEventListener("keydown", onKeyDown);
+        return () => window.removeEventListener("keydown", onKeyDown);
+    }, [item, onClose]);
 
-    // StaticImport면 next/image OK
-    if (src && typeof src !== "string") {
-        if (fill)
-            return <Image src={src} alt={alt} fill className={className} />;
-        return (
-            <Image
-                src={src}
-                alt={alt}
-                width={width ?? 100}
-                height={height ?? 100}
-                className={className}
-            />
-        );
-    }
+    if (!item) return null;
 
-    const s = normalizeSrc(src);
-
-    // src 없으면 아무것도 안 그림 (너가 "회색박스 필요없다" 했으니)
-    if (!s) return null;
-
-    // 외부 URL이면 <img>
-    if (isRemoteUrl(s)) {
-        if (fill) {
-            return (
-                <img
-                    src={s}
-                    alt={alt}
-                    className={className}
-                    style={{
-                        position: "absolute",
-                        inset: 0,
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                    }}
-                    loading="lazy"
-                    referrerPolicy="no-referrer"
-                />
-            );
-        }
-        return (
-            <img
-                src={s}
-                alt={alt}
-                className={className}
-                width={width}
-                height={height}
-                loading="lazy"
-                referrerPolicy="no-referrer"
-            />
-        );
-    }
-
-    // 로컬 경로면 next/image
-    if (fill) return <Image src={s} alt={alt} fill className={className} />;
     return (
-        <Image
-            src={s}
-            alt={alt}
-            width={width ?? 100}
-            height={height ?? 100}
-            className={className}
-        />
+        <div
+            className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+            onMouseDown={(e) => {
+                if (e.target === e.currentTarget) onClose();
+            }}
+            role="dialog"
+            aria-modal="true"
+        >
+            <div className="w-full max-w-4xl bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl border border-white/10">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200/70 dark:border-gray-800">
+                    <div className="min-w-0">
+                        <div className="font-semibold text-gray-900 dark:text-gray-100 truncate">
+                            {item.title}
+                        </div>
+                        {(item.subtitle || item.meta) && (
+                            <div className="text-sm text-gray-600 dark:text-gray-300 truncate">
+                                {[item.subtitle, item.meta]
+                                    .filter(Boolean)
+                                    .join(" · ")}
+                            </div>
+                        )}
+                    </div>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="rounded-xl"
+                        onClick={onClose}
+                        aria-label="닫기"
+                    >
+                        <X className="w-5 h-5" />
+                    </Button>
+                </div>
+
+                <div className="relative w-full bg-black">
+                    <img
+                        src={item.src}
+                        alt={item.title}
+                        className="w-full max-h-[70vh] object-contain"
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                    />
+                </div>
+            </div>
+        </div>
     );
 }
 
+/* ---------------- Tile Gallery ---------------- */
+function TileGallery({
+    items,
+    onItemClick,
+}: {
+    items: LightboxItem[];
+    onItemClick: (item: LightboxItem) => void;
+}) {
+    return (
+        <div className="grid gap-4 sm:gap-5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+            {items.map((it, idx) => (
+                <button
+                    key={`${it.title}-${idx}`}
+                    onClick={() => onItemClick(it)}
+                    className="group text-left"
+                    type="button"
+                >
+                    <div className="rounded-2xl overflow-hidden bg-white/60 dark:bg-gray-800/60 border border-white/50 dark:border-gray-700/60 shadow-sm hover:shadow-lg transition-all">
+                        <div className="relative aspect-[4/3] bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 overflow-hidden">
+                            <img
+                                src={it.src}
+                                alt={it.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                loading="lazy"
+                                referrerPolicy="no-referrer"
+                            />
+                        </div>
+                        <div className="p-3">
+                            <div className="font-semibold text-gray-900 dark:text-gray-100 truncate">
+                                {it.title}
+                            </div>
+                            {(it.subtitle || it.meta) && (
+                                <div className="text-sm text-gray-600 dark:text-gray-300 truncate">
+                                    {[it.subtitle, it.meta]
+                                        .filter(Boolean)
+                                        .join(" · ")}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </button>
+            ))}
+        </div>
+    );
+}
+
+/* ================= HomePage ================= */
 export default function HomePage({ setSelectedTab }: HomePageProps) {
     const { petImages, adoptionImages } = usePetImages();
+    const scroll = useSmoothAutoScroll() as unknown as SmoothAutoScrollReturn;
 
-    const {
-        communityScrollRef,
-        adoptionScrollRef,
-        petcareScrollRef,
-        memorialScrollRef,
-        startAutoScroll,
-    } = useSmoothAutoScroll();
+    const [lightboxItem, setLightboxItem] = useState<LightboxItem | null>(null);
+    const [showAdoptionTile, setShowAdoptionTile] = useState(true);
 
-    const [showDomeGallery, setShowDomeGallery] = useState(false);
-
-    // ✅ startAutoScroll이 함수가 아닐 때 크래시 방지
     useEffect(() => {
-        if (typeof startAutoScroll !== "function") return;
-        const cleanup = startAutoScroll(true);
+        const cleanup = scroll.startAutoScroll?.(true);
         return typeof cleanup === "function" ? cleanup : undefined;
-    }, [startAutoScroll]);
+    }, [scroll]);
 
-    // DomeGallery 아이템 생성
-    const memorialDomeItems = useMemo(
-        () =>
-            memorialCards.map((card) => ({
-                id: card.name,
-                image: normalizeSrc(petImages?.[card.name]) ?? "", // DomeGallery가 빈 문자열 처리 가능해야 함
-                title: card.name,
-                subtitle: card.pet,
-                onClick: () => setSelectedTab("memorial"),
-            })),
-        [petImages, setSelectedTab]
-    );
+    // 입양 타일 아이템
+    const adoptionTileItems = useMemo<LightboxItem[]>(() => {
+        const imgs = Array.isArray(adoptionImages) ? adoptionImages : [];
+        return bestPosts.adoption
+            .map((pet, index) => {
+                const src = safeStringSrc(imgs[index]);
+                if (!src) return null;
+                return {
+                    title: pet.title,
+                    subtitle: `${pet.location} · ${pet.age}`,
+                    meta: pet.badge,
+                    src,
+                };
+            })
+            .filter(Boolean) as LightboxItem[];
+    }, [adoptionImages]);
+
+    // 함께하는 순간들 타일 아이템 (구 추모)
+    const momentsTileItems = useMemo<LightboxItem[]>(() => {
+        const dict = (petImages ?? {}) as Record<string, unknown>;
+        return memorialCards
+            .map((m) => {
+                const src = safeStringSrc(dict[m.name]);
+                if (!src) return null;
+                return {
+                    title: m.name,
+                    subtitle: `${m.pet} · ${m.years}`,
+                    meta: m.message,
+                    src,
+                };
+            })
+            .filter(Boolean) as LightboxItem[];
+    }, [petImages]);
 
     return (
         <div className="min-h-screen relative overflow-hidden">
             {/* 배경 */}
             <div className="absolute inset-0 bg-gradient-to-br from-sky-100 via-blue-50 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
                 <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-r from-blue-200/30 to-sky-200/30 dark:from-blue-800/20 dark:to-sky-800/20 rounded-full blur-3xl animate-pulse" />
-                <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-gradient-to-r from-sky-200/30 to-blue-100/30 dark:from-sky-800/20 dark:to-blue-700/20 rounded-full blur-3xl animate-pulse delay-1000" />
+                <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-gradient-to-r from-violet-200/30 to-purple-200/30 dark:from-violet-800/20 dark:to-purple-800/20 rounded-full blur-3xl animate-pulse delay-1000" />
             </div>
+
+            <Lightbox
+                item={lightboxItem}
+                onClose={() => setLightboxItem(null)}
+            />
 
             <div className="relative z-10 space-y-16 pb-8">
                 {/* 히어로 */}
-                <div className="relative">
-                    <div className="bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg border border-white/40 dark:border-gray-700/40 rounded-3xl p-8 md:p-12 shadow-2xl">
+                <section className="pt-8">
+                    <div className="bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg border border-white/40 dark:border-gray-700/40 rounded-3xl p-8 md:p-12 shadow-2xl mx-4">
                         <div className="text-center space-y-6">
-                            <h1 className="text-4xl md:text-6xl font-bold">
+                            <h1 className="text-4xl md:text-3xl font-bold">
                                 <EmotionalTrueFocus
                                     text="반려동물과의 시간을 기록해도 괜찮은 장소"
                                     variant="gentle"
-                                    delay={300}
+                                    delay={250}
                                     className="bg-gradient-to-r from-blue-600 via-sky-600 to-blue-800 dark:from-blue-400 dark:via-sky-400 dark:to-blue-300 bg-clip-text text-transparent"
                                 />
                             </h1>
 
-                            <p className="text-xl md:text-2xl font-bold text-gray-700 dark:text-gray-200">
+                            <p className="text-xl md:text-xl font-bold text-gray-700 dark:text-gray-200">
                                 <EmotionalTrueFocus
                                     text="일상부터 기억까지, 시간이 쌓이고 의미가 바뀌는 기록 플랫폼"
                                     variant="warm"
-                                    delay={1200}
+                                    delay={1100}
                                     duration={0.6}
                                     staggerDelay={0.02}
                                 />
                             </p>
 
-                            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
+                            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-3">
                                 <Button
                                     size="lg"
                                     onClick={() => setSelectedTab("ai-chat")}
@@ -218,46 +271,19 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                 <Button
                                     size="lg"
                                     variant="outline"
+                                    onClick={() => setSelectedTab("community")}
                                     className="bg-white/50 dark:bg-gray-700/50 border-blue-200 dark:border-blue-600 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-gray-600 rounded-xl px-8 py-3"
                                 >
                                     서비스 둘러보기
                                     <ArrowRight className="w-5 h-5 ml-2" />
                                 </Button>
                             </div>
-
-                            {/* 통계 */}
-                            <div className="grid grid-cols-3 gap-4 mt-8 max-w-md mx-auto">
-                                <div className="bg-white/40 dark:bg-gray-700/40 backdrop-blur-sm rounded-2xl p-4 border border-white/50 dark:border-gray-600/50">
-                                    <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                                        591만
-                                    </div>
-                                    <div className="text-sm text-gray-600 dark:text-gray-300">
-                                        반려동물 가구
-                                    </div>
-                                </div>
-                                <div className="bg-white/40 dark:bg-gray-700/40 backdrop-blur-sm rounded-2xl p-4 border border-white/50 dark:border-gray-600/50">
-                                    <div className="text-2xl font-bold text-sky-600 dark:text-sky-400">
-                                        24/7
-                                    </div>
-                                    <div className="text-sm text-gray-600 dark:text-gray-300">
-                                        AI 상담
-                                    </div>
-                                </div>
-                                <div className="bg-white/40 dark:bg-gray-700/40 backdrop-blur-sm rounded-2xl p-4 border border-white/50 dark:border-gray-600/50">
-                                    <div className="text-2xl font-bold text-blue-500 dark:text-blue-300">
-                                        무한
-                                    </div>
-                                    <div className="text-sm text-gray-600 dark:text-gray-300">
-                                        소중한 추억
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
-                </div>
+                </section>
 
                 {/* 인기 커뮤니티 */}
-                <section className="space-y-6">
+                <section className="space-y-6 px-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                             <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-sky-500 rounded-xl flex items-center justify-center">
@@ -283,7 +309,7 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                     </div>
 
                     <div
-                        ref={communityScrollRef}
+                        ref={scroll.communityScrollRef}
                         className="flex space-x-6 overflow-x-auto pb-4 scrollbar-hide"
                         style={{ scrollBehavior: "smooth" }}
                     >
@@ -296,24 +322,18 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                     <div className="flex justify-between items-start">
                                         <Badge
                                             variant="secondary"
-                                            className={`
-                        ${
-                            post.badge === "인기"
-                                ? "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300"
-                                : ""
-                        }
-                        ${
-                            post.badge === "꿀팁"
-                                ? "bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300"
-                                : ""
-                        }
-                        ${
-                            post.badge === "후기"
-                                ? "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300"
-                                : ""
-                        }
-                        rounded-lg px-3 py-1
-                      `}
+                                            className={[
+                                                post.badge === "인기"
+                                                    ? "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300"
+                                                    : "",
+                                                post.badge === "꿀팁"
+                                                    ? "bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300"
+                                                    : "",
+                                                post.badge === "후기"
+                                                    ? "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300"
+                                                    : "",
+                                                "rounded-lg px-3 py-1",
+                                            ].join(" ")}
                                         >
                                             {post.badge === "인기" && (
                                                 <Crown className="w-3 h-3 mr-1 inline" />
@@ -362,8 +382,8 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                     </div>
                 </section>
 
-                {/* 입양정보 */}
-                <section className="space-y-6">
+                {/* 입양정보 (타일) */}
+                <section className="space-y-6 px-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                             <div className="w-10 h-10 bg-gradient-to-r from-sky-500 to-blue-500 rounded-xl flex items-center justify-center">
@@ -383,10 +403,10 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => setShowDomeGallery((v) => !v)}
+                                onClick={() => setShowAdoptionTile((v) => !v)}
                                 className="rounded-xl border-blue-200 dark:border-blue-600 text-blue-700 dark:text-blue-300"
                             >
-                                {showDomeGallery ? "카드 보기" : "3D 갤러리"}
+                                {showAdoptionTile ? "카드 보기" : "타일 보기"}
                             </Button>
                             <Button
                                 variant="ghost"
@@ -399,32 +419,30 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                         </div>
                     </div>
 
-                    {showDomeGallery ? (
-                        <div className="bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg rounded-3xl p-4 border border-white/40 dark:border-gray-700/40">
-                            <DomeGallery
-                                items={bestPosts.adoption.map((pet, index) => ({
-                                    id: index,
-                                    image:
-                                        normalizeSrc(adoptionImages?.[index]) ??
-                                        "",
-                                    title: pet.title.split(" ")[0],
-                                    subtitle: `${pet.location} · ${pet.age}`,
-                                    onClick: () => setSelectedTab("adoption"),
-                                }))}
-                                radius={250}
-                                itemSize={100}
-                                autoRotate={true}
-                                rotateSpeed={0.2}
-                            />
+                    {showAdoptionTile ? (
+                        <div className="bg-white/40 dark:bg-gray-800/40 backdrop-blur-lg rounded-3xl p-4 border border-white/50 dark:border-gray-700/50">
+                            {adoptionTileItems.length ? (
+                                <TileGallery
+                                    items={adoptionTileItems}
+                                    onItemClick={(it) => setLightboxItem(it)}
+                                />
+                            ) : (
+                                <div className="text-center text-gray-600 dark:text-gray-300 py-10">
+                                    이미지 불러오는 중…
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <div
-                            ref={adoptionScrollRef}
+                            ref={scroll.adoptionScrollRef}
                             className="flex space-x-6 overflow-x-auto pb-4 scrollbar-hide"
                             style={{ scrollBehavior: "smooth" }}
                         >
                             {bestPosts.adoption.map((pet, i) => {
-                                const src = normalizeSrc(adoptionImages?.[i]);
+                                const imgs = Array.isArray(adoptionImages)
+                                    ? adoptionImages
+                                    : [];
+                                const src = safeStringSrc(imgs[i]);
                                 return (
                                     <Card
                                         key={i}
@@ -433,14 +451,27 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                         <CardHeader className="p-0">
                                             <div className="relative w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 overflow-hidden">
                                                 {src ? (
-                                                    <SmartImage
-                                                        src={src}
-                                                        alt={pet.title}
-                                                        fill
-                                                        className="object-cover hover:scale-110 transition-transform duration-500"
-                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setLightboxItem({
+                                                                title: pet.title,
+                                                                subtitle: `${pet.location} · ${pet.age}`,
+                                                                meta: pet.badge,
+                                                                src,
+                                                            })
+                                                        }
+                                                        className="w-full h-full"
+                                                    >
+                                                        <img
+                                                            src={src}
+                                                            alt={pet.title}
+                                                            className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
+                                                            loading="lazy"
+                                                            referrerPolicy="no-referrer"
+                                                        />
+                                                    </button>
                                                 ) : null}
-
                                                 <div className="absolute top-3 left-3">
                                                     <Badge
                                                         variant={
@@ -458,7 +489,6 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                                     </Badge>
                                                 </div>
                                             </div>
-
                                             <div className="p-6">
                                                 <CardTitle className="text-lg text-gray-800 dark:text-gray-100 mb-2">
                                                     {pet.title}
@@ -469,7 +499,6 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                                 </CardDescription>
                                             </div>
                                         </CardHeader>
-
                                         <CardFooter className="px-6 pb-6 pt-0">
                                             <Button className="w-full bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 rounded-xl">
                                                 자세히 알아보기
@@ -482,34 +511,33 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                     )}
                 </section>
 
-                {/* 펫케어 */}
-                <section className="space-y-6">
+                {/* 펫매거진 */}
+                <section className="space-y-6 px-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-sky-600 rounded-xl flex items-center justify-center">
-                                <Stethoscope className="w-5 h-5 text-white" />
+                            <div className="w-10 h-10 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center">
+                                <BookOpen className="w-5 h-5 text-white" />
                             </div>
                             <div>
                                 <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-                                    전문가의 케어 가이드
+                                    펫매거진
                                 </h2>
                                 <p className="text-gray-600 dark:text-gray-300">
-                                    건강하고 행복한 일상을 위한 맞춤 정보
+                                    건강하고 행복한 일상을 위한 정보
                                 </p>
                             </div>
                         </div>
-
                         <Button
                             variant="ghost"
-                            onClick={() => setSelectedTab("petcare")}
-                            className="text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 rounded-xl"
+                            onClick={() => setSelectedTab("magazine")}
+                            className="text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-gray-700 rounded-xl"
                         >
-                            전체 가이드 <ArrowRight className="w-4 h-4 ml-2" />
+                            전체 보기 <ArrowRight className="w-4 h-4 ml-2" />
                         </Button>
                     </div>
 
                     <div
-                        ref={petcareScrollRef}
+                        ref={scroll.petcareScrollRef}
                         className="flex space-x-6 overflow-x-auto pb-4 scrollbar-hide"
                         style={{ scrollBehavior: "smooth" }}
                     >
@@ -519,14 +547,13 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                 className="min-w-64 flex-shrink-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 hover:bg-white/80 dark:hover:bg-gray-700/60 transition-all duration-300 hover:scale-105 rounded-2xl"
                             >
                                 <CardHeader>
-                                    <div className="w-full h-40 bg-gradient-to-br from-blue-50 to-sky-50 dark:from-blue-900 dark:to-sky-900 rounded-xl mb-3 flex items-center justify-center border border-blue-100 dark:border-blue-700">
-                                        <Stethoscope className="w-16 h-16 text-blue-500 dark:text-blue-400 opacity-70" />
+                                    <div className="w-full h-40 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900 dark:to-teal-900 rounded-xl mb-3 flex items-center justify-center border border-emerald-100 dark:border-emerald-700">
+                                        <BookOpen className="w-16 h-16 text-emerald-500 dark:text-emerald-400 opacity-70" />
                                     </div>
-
                                     <div className="flex justify-between items-start">
                                         <Badge
                                             variant="outline"
-                                            className="bg-blue-50 dark:bg-blue-900/50 border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300 rounded-lg"
+                                            className="bg-emerald-50 dark:bg-emerald-900/50 border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 rounded-lg"
                                         >
                                             {guide.badge}
                                         </Badge>
@@ -537,7 +564,6 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                             {guide.difficulty}
                                         </Badge>
                                     </div>
-
                                     <CardTitle className="text-sm leading-snug text-gray-800 dark:text-gray-100">
                                         {guide.title}
                                     </CardTitle>
@@ -545,13 +571,12 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                         {guide.category}
                                     </CardDescription>
                                 </CardHeader>
-
                                 <CardFooter>
                                     <Button
                                         variant="outline"
-                                        className="w-full border-blue-200 dark:border-blue-600 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/50 rounded-xl"
+                                        className="w-full border-emerald-200 dark:border-emerald-600 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/50 rounded-xl"
                                     >
-                                        가이드 보기
+                                        읽어보기
                                     </Button>
                                 </CardFooter>
                             </Card>
@@ -559,123 +584,106 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                     </div>
                 </section>
 
-                {/* 추모 */}
-                <section className="space-y-6">
+                {/* 함께하는 순간들 (구 추모 섹션) */}
+                <section className="space-y-6 px-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-sky-600 rounded-xl flex items-center justify-center">
-                                <Cloud className="w-5 h-5 text-white" />
+                            <div className="w-10 h-10 bg-gradient-to-r from-violet-500 to-purple-500 rounded-xl flex items-center justify-center">
+                                <Camera className="w-5 h-5 text-white" />
                             </div>
                             <div>
-                                <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-sky-600 dark:from-blue-400 dark:to-sky-400 bg-clip-text text-transparent">
-                                    하늘나라 친구들
+                                <h2 className="text-2xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 dark:from-violet-400 dark:to-purple-400 bg-clip-text text-transparent">
+                                    함께하는 순간들
                                 </h2>
                                 <p className="text-gray-600 dark:text-gray-300">
-                                    영원히 마음속에 남을 특별한 친구들
+                                    다른 친구들의 소중한 일상
                                 </p>
                             </div>
                         </div>
-
                         <Button
                             variant="ghost"
-                            onClick={() => setSelectedTab("memorial")}
-                            className="text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 rounded-xl"
+                            onClick={() => setSelectedTab("record")}
+                            className="text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-gray-700 rounded-xl"
                         >
-                            추모공간 방문{" "}
+                            앨범 보러가기{" "}
                             <ArrowRight className="w-4 h-4 ml-2" />
                         </Button>
                     </div>
 
-                    <div className="bg-gradient-to-br from-blue-50/80 to-sky-50/80 dark:from-blue-900/30 dark:to-sky-900/30 backdrop-blur-lg rounded-3xl p-4 border border-white/50 dark:border-blue-700/50">
-                        <DomeGallery
-                            items={memorialDomeItems}
-                            radius={280}
-                            itemSize={110}
-                            autoRotate={true}
-                            rotateSpeed={0.15}
-                        />
+                    <div className="bg-gradient-to-br from-violet-50/80 to-purple-50/80 dark:from-violet-900/30 dark:to-purple-900/30 backdrop-blur-lg rounded-3xl p-4 border border-white/50 dark:border-violet-700/50">
+                        {momentsTileItems.length ? (
+                            <TileGallery
+                                items={momentsTileItems}
+                                onItemClick={(it) => setLightboxItem(it)}
+                            />
+                        ) : (
+                            <div className="text-center text-gray-600 dark:text-gray-300 py-10">
+                                이미지 불러오는 중…
+                            </div>
+                        )}
                     </div>
 
                     <div
-                        ref={memorialScrollRef}
+                        ref={scroll.memorialScrollRef}
                         className="flex space-x-6 overflow-x-auto pb-4 scrollbar-hide"
                         style={{ scrollBehavior: "smooth" }}
                     >
-                        {memorialCards.map((memorial, i) => {
-                            const src = normalizeSrc(
-                                petImages?.[memorial.name]
+                        {memorialCards.map((m, i) => {
+                            const src = safeStringSrc(
+                                (petImages as Record<string, unknown>)[m.name],
                             );
                             return (
                                 <Card
                                     key={i}
-                                    className="min-w-72 flex-shrink-0 bg-gradient-to-br from-blue-50/80 to-sky-50/80 dark:from-blue-900/40 dark:to-sky-900/40 backdrop-blur-lg border-white/60 dark:border-blue-700/50 hover:from-blue-100/80 hover:to-sky-100/80 transition-all duration-500 hover:scale-105 rounded-3xl"
+                                    className="min-w-72 flex-shrink-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 rounded-2xl overflow-hidden"
                                 >
-                                    <CardHeader className="text-center space-y-4 p-6">
-                                        <div className="w-24 h-24 mx-auto rounded-full overflow-hidden bg-gradient-to-br from-blue-200 to-sky-200 dark:from-blue-700 dark:to-sky-700 p-1 shadow-lg">
-                                            <div className="w-full h-full rounded-full overflow-hidden bg-white/50 dark:bg-gray-800/50 relative">
-                                                {src ? (
-                                                    <SmartImage
-                                                        src={src}
-                                                        alt={memorial.name}
-                                                        width={96}
-                                                        height={96}
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                ) : null}
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <CardTitle className="text-lg font-bold bg-gradient-to-r from-blue-700 to-sky-700 dark:from-blue-300 dark:to-sky-300 bg-clip-text text-transparent">
-                                                {memorial.name}
-                                            </CardTitle>
-                                            <CardDescription className="text-blue-600 dark:text-blue-400 font-medium">
-                                                {memorial.pet} ·{" "}
-                                                {memorial.years}
-                                            </CardDescription>
-                                        </div>
+                                    <CardHeader className="p-0">
+                                        {src ? (
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setLightboxItem({
+                                                        title: m.name,
+                                                        subtitle: `${m.pet} · ${m.years}`,
+                                                        meta: m.message,
+                                                        src,
+                                                    })
+                                                }
+                                                className="w-full"
+                                            >
+                                                <img
+                                                    src={src}
+                                                    alt={m.name}
+                                                    className="w-full h-56 object-cover"
+                                                    loading="lazy"
+                                                    referrerPolicy="no-referrer"
+                                                />
+                                            </button>
+                                        ) : (
+                                            <div className="w-full h-56 bg-gray-200 dark:bg-gray-700" />
+                                        )}
                                     </CardHeader>
 
-                                    <CardContent className="text-center px-6 pb-6">
-                                        <p className="text-sm text-blue-700 dark:text-blue-300 italic bg-white/30 dark:bg-gray-800/30 rounded-xl p-3">
-                                            &quot;{memorial.message}&quot;
-                                        </p>
-                                    </CardContent>
-
-                                    <CardFooter className="px-6 pb-6">
+                                    <CardFooter className="p-6 flex-col items-start gap-2">
+                                        <div className="font-semibold">
+                                            {m.name}
+                                        </div>
+                                        <div className="text-sm text-gray-600 dark:text-gray-300">
+                                            {m.pet} · {m.years}
+                                        </div>
                                         <Button
                                             variant="outline"
-                                            className="w-full bg-white/50 dark:bg-gray-700/50 border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-300 rounded-xl"
+                                            className="w-full rounded-xl border-violet-200 dark:border-violet-600 text-violet-700 dark:text-violet-300"
+                                            onClick={() =>
+                                                setSelectedTab("record")
+                                            }
                                         >
-                                            추억 들여다보기
+                                            기록 보러가기
                                         </Button>
                                     </CardFooter>
                                 </Card>
                             );
                         })}
-                    </div>
-                </section>
-
-                {/* CTA */}
-                <section>
-                    <div className="bg-gradient-to-r from-blue-100/50 to-sky-100/50 dark:from-blue-900/30 dark:to-sky-900/30 backdrop-blur-lg border border-white/50 dark:border-blue-700/50 rounded-3xl p-8 text-center shadow-2xl">
-                        <div className="space-y-6">
-                            <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-700 to-sky-700 dark:from-blue-300 dark:to-sky-300 bg-clip-text text-transparent">
-                                소중한 친구와의 추억을 기록하세요
-                            </h3>
-                            <p className="text-blue-600 dark:text-blue-300 max-w-2xl mx-auto">
-                                AI와 함께 특별한 대화를 나누고, 아름다운 추억을
-                                정리하며 소중히 보관할 수 있어요
-                            </p>
-                            <Button
-                                size="lg"
-                                onClick={() => setSelectedTab("memorial")}
-                                className="bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 text-white border-0 rounded-xl px-8 py-3 shadow-lg hover:scale-105 transition-all"
-                            >
-                                <Cloud className="w-5 h-5 mr-2" />
-                                시작하기
-                            </Button>
-                        </div>
                     </div>
                 </section>
             </div>
