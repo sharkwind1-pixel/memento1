@@ -1,7 +1,7 @@
 /**
  * Layout.tsx
- * 메인 레이아웃 - 헤더, 네비게이션, 푸터 포함
- * 로그인/로그아웃 기능 추가
+ * 메인 레이아웃 - 뭉게구름 & 하늘색 컬러 시스템
+ * Primary: #05B2DC / Background: 뭉게구름 화이트
  */
 
 "use client";
@@ -28,6 +28,7 @@ import {
     LogOut,
     User,
     ChevronDown,
+    UserPlus,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -37,16 +38,16 @@ interface LayoutProps {
     setSelectedTab: (tab: TabType) => void;
 }
 
-// 탭 정보
+// 탭 정보 - 순서: 홈 → 우리의 기록 → 나머지
 const TABS: { id: TabType; label: string; icon: React.ElementType }[] = [
     { id: "home", label: "홈", icon: Home },
+    { id: "record", label: "우리의 기록", icon: Camera },
     { id: "community", label: "커뮤니티", icon: Users },
     { id: "ai-chat", label: "AI 펫톡", icon: MessageCircle },
     { id: "adoption", label: "입양정보", icon: Heart },
     { id: "local", label: "지역정보", icon: MapPin },
     { id: "lost", label: "분실동물", icon: Search },
     { id: "magazine", label: "펫매거진", icon: BookOpen },
-    { id: "record", label: "우리의 기록", icon: Camera },
 ];
 
 export default function Layout({
@@ -59,18 +60,19 @@ export default function Layout({
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(false);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+    const [authModalMode, setAuthModalMode] = useState<"login" | "signup">(
+        "login",
+    );
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
-    // openAuthModal 이벤트 리스닝 (RecordPage에서 발생)
     useEffect(() => {
         const handleOpenAuthModal = () => {
+            setAuthModalMode("login");
             setIsAuthModalOpen(true);
         };
-
         window.addEventListener("openAuthModal", handleOpenAuthModal);
-        return () => {
+        return () =>
             window.removeEventListener("openAuthModal", handleOpenAuthModal);
-        };
     }, []);
 
     const toggleDarkMode = () => {
@@ -83,16 +85,26 @@ export default function Layout({
         setIsUserMenuOpen(false);
     };
 
-    // 사용자 닉네임 또는 이메일 앞부분
+    const openLoginModal = () => {
+        setAuthModalMode("login");
+        setIsAuthModalOpen(true);
+    };
+
+    const openSignupModal = () => {
+        setAuthModalMode("signup");
+        setIsAuthModalOpen(true);
+    };
+
     const displayName =
         user?.user_metadata?.nickname || user?.email?.split("@")[0] || "사용자";
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <div className="min-h-screen bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
             {/* 인증 모달 */}
             <AuthModal
                 isOpen={isAuthModalOpen}
                 onClose={() => setIsAuthModalOpen(false)}
+                initialMode={authModalMode}
             />
 
             {/* 헤더 */}
@@ -104,12 +116,12 @@ export default function Layout({
                             onClick={() => setSelectedTab("home")}
                             className="flex items-center space-x-2"
                         >
-                            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-sky-500 rounded-xl flex items-center justify-center">
+                            <div className="w-10 h-10 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] rounded-xl flex items-center justify-center shadow-lg shadow-[#05B2DC]/20">
                                 <span className="text-white font-bold text-lg">
                                     M
                                 </span>
                             </div>
-                            <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-sky-600 bg-clip-text text-transparent hidden sm:block">
+                            <span className="text-xl font-bold bg-gradient-to-r from-[#05B2DC] to-[#0891B2] bg-clip-text text-transparent hidden sm:block">
                                 메멘토애니
                             </span>
                         </button>
@@ -127,8 +139,8 @@ export default function Layout({
                                             flex items-center space-x-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all
                                             ${
                                                 isActive
-                                                    ? "bg-gradient-to-r from-blue-500 to-sky-500 text-white shadow-lg"
-                                                    : "text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-800"
+                                                    ? "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white shadow-lg shadow-[#05B2DC]/25"
+                                                    : "text-gray-600 dark:text-gray-300 hover:bg-[#E0F7FF] dark:hover:bg-gray-800"
                                             }
                                         `}
                                     >
@@ -141,7 +153,6 @@ export default function Layout({
 
                         {/* 우측 버튼들 */}
                         <div className="flex items-center space-x-2">
-                            {/* 다크모드 토글 */}
                             <Button
                                 variant="ghost"
                                 size="icon"
@@ -155,7 +166,6 @@ export default function Layout({
                                 )}
                             </Button>
 
-                            {/* 로그인/사용자 메뉴 */}
                             {loading ? (
                                 <div className="w-24 h-10 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-xl" />
                             ) : user ? (
@@ -164,9 +174,9 @@ export default function Layout({
                                         onClick={() =>
                                             setIsUserMenuOpen(!isUserMenuOpen)
                                         }
-                                        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-50 dark:bg-gray-800 hover:bg-blue-100 dark:hover:bg-gray-700 transition-colors"
+                                        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#E0F7FF] dark:bg-gray-800 hover:bg-[#BAE6FD] dark:hover:bg-gray-700 transition-colors"
                                     >
-                                        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-sky-500 rounded-full flex items-center justify-center">
+                                        <div className="w-8 h-8 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] rounded-full flex items-center justify-center">
                                             <User className="w-4 h-4 text-white" />
                                         </div>
                                         <span className="text-sm font-medium text-gray-700 dark:text-gray-200 hidden sm:block max-w-[100px] truncate">
@@ -175,7 +185,6 @@ export default function Layout({
                                         <ChevronDown className="w-4 h-4 text-gray-500" />
                                     </button>
 
-                                    {/* 드롭다운 메뉴 */}
                                     {isUserMenuOpen && (
                                         <>
                                             <div
@@ -202,7 +211,7 @@ export default function Layout({
                                                             false,
                                                         );
                                                     }}
-                                                    className="w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
+                                                    className="w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-[#E0F7FF] dark:hover:bg-gray-700 flex items-center gap-2"
                                                 >
                                                     <Camera className="w-4 h-4" />
                                                     우리의 기록
@@ -219,16 +228,25 @@ export default function Layout({
                                     )}
                                 </div>
                             ) : (
-                                <Button
-                                    onClick={() => setIsAuthModalOpen(true)}
-                                    className="bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 rounded-xl"
-                                >
-                                    <LogIn className="w-4 h-4 mr-2" />
-                                    로그인
-                                </Button>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="outline"
+                                        onClick={openLoginModal}
+                                        className="rounded-xl border-[#05B2DC] text-[#05B2DC] hover:bg-[#E0F7FF]"
+                                    >
+                                        <LogIn className="w-4 h-4 mr-2" />
+                                        로그인
+                                    </Button>
+                                    <Button
+                                        onClick={openSignupModal}
+                                        className="bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-[#05B2DC] rounded-xl shadow-lg shadow-[#05B2DC]/25"
+                                    >
+                                        <UserPlus className="w-4 h-4 mr-2" />
+                                        회원가입
+                                    </Button>
+                                </div>
                             )}
 
-                            {/* 모바일 메뉴 버튼 */}
                             <Button
                                 variant="ghost"
                                 size="icon"
@@ -265,8 +283,8 @@ export default function Layout({
                                             flex flex-col items-center justify-center p-3 rounded-xl text-xs font-medium transition-all
                                             ${
                                                 isActive
-                                                    ? "bg-gradient-to-r from-blue-500 to-sky-500 text-white shadow-lg"
-                                                    : "text-gray-600 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-gray-800"
+                                                    ? "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white shadow-lg"
+                                                    : "text-gray-600 dark:text-gray-300 hover:bg-[#E0F7FF] dark:hover:bg-gray-800"
                                             }
                                         `}
                                     >
@@ -295,11 +313,7 @@ export default function Layout({
                                 onClick={() => setSelectedTab(tab.id)}
                                 className={`
                                     flex flex-col items-center justify-center flex-1 py-2 transition-all
-                                    ${
-                                        isActive
-                                            ? "text-blue-500"
-                                            : "text-gray-400 dark:text-gray-500"
-                                    }
+                                    ${isActive ? "text-[#05B2DC]" : "text-gray-400 dark:text-gray-500"}
                                 `}
                             >
                                 <Icon
@@ -311,7 +325,6 @@ export default function Layout({
                             </button>
                         );
                     })}
-                    {/* 더보기 버튼 */}
                     <button
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                         className="flex flex-col items-center justify-center flex-1 py-2 text-gray-400 dark:text-gray-500"
@@ -324,7 +337,6 @@ export default function Layout({
                 </div>
             </nav>
 
-            {/* 모바일 하단 여백 */}
             <div className="lg:hidden h-16" />
         </div>
     );

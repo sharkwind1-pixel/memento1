@@ -1,9 +1,7 @@
 /**
  * 메멘토애니 홈페이지
- * - 통계 카드(591만/24/7/무한) 제거됨
- * - open api 이미지(외부 URL)는 <img>로 렌더링
- * - "하늘나라 친구들" → "함께하는 순간들"
- * - 추모 관련 표현 순화
+ * - 좋아요 버튼 실제 토글
+ * - 카드 클릭 시 인스타그램 스타일 모달
  */
 
 "use client";
@@ -13,7 +11,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
     Card,
-    CardContent,
     CardDescription,
     CardFooter,
     CardHeader,
@@ -27,12 +24,16 @@ import {
     TrendingUp,
     Users,
     MapPin,
+    Stethoscope,
     ArrowRight,
     Zap,
     Crown,
-    Camera,
+    Cloud,
     X,
-    BookOpen,
+    Send,
+    Bookmark,
+    MoreHorizontal,
+    Share2,
 } from "lucide-react";
 
 import { TabType } from "@/types";
@@ -52,6 +53,19 @@ type LightboxItem = {
     src: string;
 };
 
+// 커뮤니티 포스트 타입
+type CommunityPost = {
+    id: number;
+    title: string;
+    content: string;
+    author: string;
+    badge: string;
+    likes: number;
+    comments: number;
+    time: string;
+    avatar?: string;
+};
+
 type SmoothAutoScrollReturn = {
     communityScrollRef: React.RefObject<HTMLDivElement>;
     adoptionScrollRef: React.RefObject<HTMLDivElement>;
@@ -60,10 +74,290 @@ type SmoothAutoScrollReturn = {
     startAutoScroll?: (start?: boolean) => void | (() => void);
 };
 
-const safeStringSrc = (v: unknown): string | null =>
-    typeof v === "string" && v.trim().length ? v.trim() : null;
+const safeStringSrc = (val: unknown): string | null => {
+    if (typeof val === "string" && val.trim().length) return val;
+    return null;
+};
 
-/* ---------------- Lightbox ---------------- */
+// 댓글 타입
+type Comment = {
+    id: number;
+    author: string;
+    content: string;
+    time: string;
+    likes: number;
+};
+
+/* ---------------- 인스타그램 스타일 포스트 모달 ---------------- */
+function PostModal({
+    post,
+    isLiked,
+    onToggleLike,
+    onClose,
+    comments,
+    onAddComment,
+}: {
+    post: CommunityPost | null;
+    isLiked: boolean;
+    onToggleLike: () => void;
+    onClose: () => void;
+    comments: Comment[];
+    onAddComment: (postId: number, content: string) => void;
+}) {
+    const [comment, setComment] = useState("");
+    const [isSaved, setIsSaved] = useState(false);
+    const [showAllComments, setShowAllComments] = useState(false);
+
+    useEffect(() => {
+        if (!post) return;
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") onClose();
+        };
+        window.addEventListener("keydown", onKeyDown);
+        document.body.style.overflow = "hidden";
+        return () => {
+            window.removeEventListener("keydown", onKeyDown);
+            document.body.style.overflow = "";
+        };
+    }, [post, onClose]);
+
+    // 모달 닫힐 때 상태 초기화
+    useEffect(() => {
+        if (!post) {
+            setComment("");
+            setShowAllComments(false);
+        }
+    }, [post]);
+
+    if (!post) return null;
+
+    const displayLikes = isLiked ? post.likes + 1 : post.likes;
+    const totalComments = post.comments + comments.length;
+    const displayComments = showAllComments ? comments : comments.slice(-3);
+
+    const handleSubmitComment = () => {
+        if (!comment.trim()) return;
+        onAddComment(post.id, comment.trim());
+        setComment("");
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            handleSubmitComment();
+        }
+    };
+
+    return (
+        <div
+            className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+            onMouseDown={(e) => {
+                if (e.target === e.currentTarget) onClose();
+            }}
+        >
+            <div className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col">
+                {/* 헤더 */}
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] rounded-full flex items-center justify-center">
+                            <span className="text-white font-bold text-sm">
+                                {post.author.charAt(0)}
+                            </span>
+                        </div>
+                        <div>
+                            <p className="font-semibold text-gray-900 dark:text-gray-100">
+                                {post.author}
+                            </p>
+                            <p className="text-xs text-gray-500">{post.time}</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="rounded-full"
+                        >
+                            <MoreHorizontal className="w-5 h-5" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="rounded-full"
+                            onClick={onClose}
+                        >
+                            <X className="w-5 h-5" />
+                        </Button>
+                    </div>
+                </div>
+
+                {/* 스크롤 가능한 컨텐츠 영역 */}
+                <div className="flex-1 overflow-y-auto">
+                    {/* 컨텐츠 */}
+                    <div className="p-4 space-y-4">
+                        {/* 배지 */}
+                        <Badge
+                            className={`
+                                ${post.badge === "인기" ? "bg-[#BAE6FD] text-[#0369A1] dark:bg-blue-900/50 dark:text-blue-300" : ""}
+                                ${post.badge === "꿀팁" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300" : ""}
+                                ${post.badge === "후기" ? "bg-[#E0F7FF] text-[#0369A1] dark:bg-sky-900/50 dark:text-sky-300" : ""}
+                                rounded-lg
+                            `}
+                        >
+                            {post.badge === "인기" && (
+                                <Crown className="w-3 h-3 mr-1" />
+                            )}
+                            {post.badge === "꿀팁" && (
+                                <Zap className="w-3 h-3 mr-1" />
+                            )}
+                            {post.badge}
+                        </Badge>
+
+                        {/* 제목 & 내용 */}
+                        <div>
+                            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                                {post.title}
+                            </h2>
+                            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                                {post.content}
+                            </p>
+                        </div>
+
+                        {/* 이미지 플레이스홀더 */}
+                        <div className="aspect-video bg-gradient-to-br from-[#BAE6FD] to-[#E0F7FF] dark:from-blue-900/30 dark:to-sky-900/30 rounded-xl flex items-center justify-center">
+                            <div className="text-center text-gray-500 dark:text-gray-400">
+                                <MessageCircle className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                                <p className="text-sm">커뮤니티 게시글</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 액션 버튼들 */}
+                    <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-800">
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-4">
+                                <button
+                                    onClick={onToggleLike}
+                                    className="transition-transform active:scale-125"
+                                >
+                                    <Heart
+                                        className={`w-7 h-7 transition-colors ${
+                                            isLiked
+                                                ? "fill-red-500 text-red-500"
+                                                : "text-gray-700 dark:text-gray-300 hover:text-gray-500"
+                                        }`}
+                                    />
+                                </button>
+                                <button>
+                                    <MessageCircle className="w-7 h-7 text-gray-700 dark:text-gray-300 hover:text-gray-500" />
+                                </button>
+                                <button>
+                                    <Share2 className="w-7 h-7 text-gray-700 dark:text-gray-300 hover:text-gray-500" />
+                                </button>
+                            </div>
+                            <button onClick={() => setIsSaved(!isSaved)}>
+                                <Bookmark
+                                    className={`w-7 h-7 transition-colors ${
+                                        isSaved
+                                            ? "fill-gray-900 dark:fill-gray-100 text-gray-900 dark:text-gray-100"
+                                            : "text-gray-700 dark:text-gray-300 hover:text-gray-500"
+                                    }`}
+                                />
+                            </button>
+                        </div>
+
+                        {/* 좋아요 수 */}
+                        <p className="font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                            좋아요 {displayLikes.toLocaleString()}개
+                        </p>
+
+                        {/* 댓글 섹션 */}
+                        <div className="space-y-3">
+                            {/* 댓글 더보기 */}
+                            {comments.length > 3 && !showAllComments && (
+                                <button
+                                    onClick={() => setShowAllComments(true)}
+                                    className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                                >
+                                    댓글 {totalComments}개 모두 보기
+                                </button>
+                            )}
+
+                            {/* 기존 댓글 표시 (목업) */}
+                            {post.comments > 0 && comments.length === 0 && (
+                                <button className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
+                                    댓글 {post.comments}개 모두 보기
+                                </button>
+                            )}
+
+                            {/* 새로 추가된 댓글들 */}
+                            {displayComments.map((c) => (
+                                <div key={c.id} className="flex gap-3 group">
+                                    <div className="w-8 h-8 bg-gradient-to-r from-gray-400 to-gray-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <span className="text-white text-xs font-bold">
+                                            {c.author.charAt(0)}
+                                        </span>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-baseline gap-2">
+                                            <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+                                                {c.author}
+                                            </span>
+                                            <span className="text-sm text-gray-700 dark:text-gray-300">
+                                                {c.content}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-3 mt-1">
+                                            <span className="text-xs text-gray-500">
+                                                {c.time}
+                                            </span>
+                                            <button className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 font-semibold">
+                                                좋아요 {c.likes}개
+                                            </button>
+                                            <button className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 font-semibold">
+                                                답글 달기
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <button className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Heart className="w-4 h-4 text-gray-400 hover:text-red-500" />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* 댓글 입력 - 하단 고정 */}
+                <div className="flex items-center gap-3 px-4 py-3 border-t border-gray-200 dark:border-gray-800 flex-shrink-0 bg-white dark:bg-gray-900">
+                    <div className="w-8 h-8 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-white text-xs font-bold">나</span>
+                    </div>
+                    <input
+                        type="text"
+                        placeholder="댓글 달기..."
+                        value={comment}
+                        onChange={(e) => setComment(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        className="flex-1 bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-500 outline-none text-sm"
+                    />
+                    <button
+                        onClick={handleSubmitComment}
+                        className={`font-semibold text-sm transition-colors ${
+                            comment.trim()
+                                ? "text-[#05B2DC] hover:text-[#0891B2]"
+                                : "text-blue-300 dark:text-[#0369A1] cursor-not-allowed"
+                        }`}
+                        disabled={!comment.trim()}
+                    >
+                        게시
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+/* ---------------- Lightbox (이미지용) ---------------- */
 function Lightbox({
     item,
     onClose,
@@ -88,8 +382,6 @@ function Lightbox({
             onMouseDown={(e) => {
                 if (e.target === e.currentTarget) onClose();
             }}
-            role="dialog"
-            aria-modal="true"
         >
             <div className="w-full max-w-4xl bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl border border-white/10">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200/70 dark:border-gray-800">
@@ -110,12 +402,10 @@ function Lightbox({
                         size="icon"
                         className="rounded-xl"
                         onClick={onClose}
-                        aria-label="닫기"
                     >
                         <X className="w-5 h-5" />
                     </Button>
                 </div>
-
                 <div className="relative w-full bg-black">
                     <img
                         src={item.src}
@@ -176,25 +466,78 @@ function TileGallery({
     );
 }
 
-/* ================= HomePage ================= */
+/* ---------------- 메인 홈페이지 ---------------- */
 export default function HomePage({ setSelectedTab }: HomePageProps) {
     const { petImages, adoptionImages } = usePetImages();
     const scroll = useSmoothAutoScroll() as unknown as SmoothAutoScrollReturn;
 
-    const [lightboxItem, setLightboxItem] = useState<LightboxItem | null>(null);
     const [showAdoptionTile, setShowAdoptionTile] = useState(true);
+    const [lightboxItem, setLightboxItem] = useState<LightboxItem | null>(null);
+
+    // 좋아요 상태 관리 (postId -> liked)
+    const [likedPosts, setLikedPosts] = useState<Record<number, boolean>>({});
+
+    // 댓글 상태 관리 (postId -> comments[])
+    const [postComments, setPostComments] = useState<Record<number, Comment[]>>(
+        {},
+    );
+
+    // 선택된 포스트 (모달용)
+    const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(
+        null,
+    );
+
+    // 커뮤니티 포스트 데이터 (id, content 추가)
+    const communityPosts: CommunityPost[] = useMemo(() => {
+        return bestPosts.community.map((post, idx) => ({
+            id: idx + 1,
+            title: post.title,
+            content:
+                post.badge === "인기"
+                    ? "정말 많은 분들이 공감해주신 이야기예요. 반려동물과 함께하는 일상의 소소한 행복들을 나누고 싶었어요. 여러분도 비슷한 경험 있으시죠? 댓글로 여러분의 이야기도 들려주세요!"
+                    : post.badge === "꿀팁"
+                      ? "오랜 경험을 통해 알게 된 꿀팁을 공유합니다. 처음에는 저도 많이 헤맸는데, 이 방법을 알고 나서 정말 편해졌어요. 도움이 되셨으면 좋겠습니다!"
+                      : "직접 경험해보고 작성하는 솔직한 후기입니다. 장단점을 모두 적었으니 참고해주세요. 궁금한 점 있으시면 댓글 남겨주세요!",
+            author: post.author,
+            badge: post.badge,
+            likes: post.likes,
+            comments: post.comments,
+            time: "방금 전",
+        }));
+    }, []);
+
+    const toggleLike = (postId: number) => {
+        setLikedPosts((prev) => ({
+            ...prev,
+            [postId]: !prev[postId],
+        }));
+    };
+
+    const addComment = (postId: number, content: string) => {
+        const newComment: Comment = {
+            id: Date.now(),
+            author: "나",
+            content,
+            time: "방금 전",
+            likes: 0,
+        };
+        setPostComments((prev) => ({
+            ...prev,
+            [postId]: [...(prev[postId] || []), newComment],
+        }));
+    };
 
     useEffect(() => {
         const cleanup = scroll.startAutoScroll?.(true);
         return typeof cleanup === "function" ? cleanup : undefined;
     }, [scroll]);
 
-    // 입양 타일 아이템
     const adoptionTileItems = useMemo<LightboxItem[]>(() => {
-        const imgs = Array.isArray(adoptionImages) ? adoptionImages : [];
         return bestPosts.adoption
             .map((pet, index) => {
-                const src = safeStringSrc(imgs[index]);
+                const src = safeStringSrc(
+                    (adoptionImages as unknown[] | undefined)?.[index],
+                );
                 if (!src) return null;
                 return {
                     title: pet.title,
@@ -206,12 +549,12 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
             .filter(Boolean) as LightboxItem[];
     }, [adoptionImages]);
 
-    // 함께하는 순간들 타일 아이템 (구 추모)
-    const momentsTileItems = useMemo<LightboxItem[]>(() => {
-        const dict = (petImages ?? {}) as Record<string, unknown>;
+    const memorialTileItems = useMemo<LightboxItem[]>(() => {
         return memorialCards
             .map((m) => {
-                const src = safeStringSrc(dict[m.name]);
+                const src = safeStringSrc(
+                    (petImages as Record<string, unknown>)[m.name],
+                );
                 if (!src) return null;
                 return {
                     title: m.name,
@@ -226,31 +569,45 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
     return (
         <div className="min-h-screen relative overflow-hidden">
             {/* 배경 */}
-            <div className="absolute inset-0 bg-gradient-to-br from-sky-100 via-blue-50 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
-                <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-r from-blue-200/30 to-sky-200/30 dark:from-blue-800/20 dark:to-sky-800/20 rounded-full blur-3xl animate-pulse" />
-                <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-gradient-to-r from-violet-200/30 to-purple-200/30 dark:from-violet-800/20 dark:to-purple-800/20 rounded-full blur-3xl animate-pulse delay-1000" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
+                <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-r from-[#7DD3FC]/30 to-sky-200/30 dark:from-blue-800/20 dark:to-sky-800/20 rounded-full blur-3xl animate-pulse" />
+                <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-gradient-to-r from-sky-200/30 to-[#BAE6FD]/30 dark:from-sky-800/20 dark:to-[#0369A1]/20 rounded-full blur-3xl animate-pulse delay-1000" />
             </div>
 
+            {/* 이미지 Lightbox */}
             <Lightbox
                 item={lightboxItem}
                 onClose={() => setLightboxItem(null)}
             />
 
-            <div className="relative z-10 space-y-16 pb-8">
-                {/* 히어로 */}
-                <section className="pt-8">
-                    <div className="bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg border border-white/40 dark:border-gray-700/40 rounded-3xl p-8 md:p-12 shadow-2xl mx-4">
+            {/* 포스트 모달 */}
+            <PostModal
+                post={selectedPost}
+                isLiked={
+                    selectedPost ? likedPosts[selectedPost.id] || false : false
+                }
+                onToggleLike={() => selectedPost && toggleLike(selectedPost.id)}
+                onClose={() => setSelectedPost(null)}
+                comments={
+                    selectedPost ? postComments[selectedPost.id] || [] : []
+                }
+                onAddComment={addComment}
+            />
+
+            <div className="relative z-10 space-y-16 pb-10">
+                {/* HERO */}
+                <section className="px-4 pt-8">
+                    <div className="bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg border border-white/40 dark:border-gray-700/40 rounded-3xl p-8 md:p-12 shadow-2xl">
                         <div className="text-center space-y-6">
-                            <h1 className="text-4xl md:text-3xl font-bold">
+                            <h1 className="text-4xl md:text-6xl font-bold">
                                 <EmotionalTrueFocus
                                     text="반려동물과의 시간을 기록해도 괜찮은 장소"
                                     variant="gentle"
                                     delay={250}
-                                    className="bg-gradient-to-r from-blue-600 via-sky-600 to-blue-800 dark:from-blue-400 dark:via-sky-400 dark:to-blue-300 bg-clip-text text-transparent"
+                                    className="bg-gradient-to-r from-[#05B2DC] via-[#38BDF8] to-[#0891B2] dark:from-[#38BDF8] dark:via-[#05B2DC] dark:to-[#38BDF8] bg-clip-text text-transparent"
                                 />
                             </h1>
-
-                            <p className="text-xl md:text-xl font-bold text-gray-700 dark:text-gray-200">
+                            <p className="text-xl md:text-2xl font-bold text-gray-700 dark:text-gray-200">
                                 <EmotionalTrueFocus
                                     text="일상부터 기억까지, 시간이 쌓이고 의미가 바뀌는 기록 플랫폼"
                                     variant="warm"
@@ -259,12 +616,11 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                     staggerDelay={0.02}
                                 />
                             </p>
-
                             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-3">
                                 <Button
                                     size="lg"
                                     onClick={() => setSelectedTab("ai-chat")}
-                                    className="bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 text-white border-0 rounded-xl px-8 py-3 shadow-lg hover:scale-105 transition-all"
+                                    className="bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-sky-600 text-white border-0 rounded-xl px-8 py-3 shadow-lg hover:scale-105 transition-all"
                                 >
                                     AI 상담 시작하기
                                 </Button>
@@ -272,7 +628,7 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                     size="lg"
                                     variant="outline"
                                     onClick={() => setSelectedTab("community")}
-                                    className="bg-white/50 dark:bg-gray-700/50 border-blue-200 dark:border-blue-600 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-gray-600 rounded-xl px-8 py-3"
+                                    className="bg-white/50 dark:bg-gray-700/50 border-[#7DD3FC] dark:border-[#0891B2] text-[#0369A1] dark:text-blue-300 hover:bg-[#E0F7FF] dark:hover:bg-gray-600 rounded-xl px-8 py-3"
                                 >
                                     서비스 둘러보기
                                     <ArrowRight className="w-5 h-5 ml-2" />
@@ -286,7 +642,7 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                 <section className="space-y-6 px-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-sky-500 rounded-xl flex items-center justify-center">
+                            <div className="w-10 h-10 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] rounded-xl flex items-center justify-center">
                                 <TrendingUp className="w-5 h-5 text-white" />
                             </div>
                             <div>
@@ -301,7 +657,7 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                         <Button
                             variant="ghost"
                             onClick={() => setSelectedTab("community")}
-                            className="text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 rounded-xl"
+                            className="text-[#0891B2] dark:text-[#38BDF8] hover:bg-[#E0F7FF] dark:hover:bg-gray-700 rounded-xl"
                         >
                             더 많은 이야기{" "}
                             <ArrowRight className="w-4 h-4 ml-2" />
@@ -313,80 +669,105 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                         className="flex space-x-6 overflow-x-auto pb-4 scrollbar-hide"
                         style={{ scrollBehavior: "smooth" }}
                     >
-                        {bestPosts.community.map((post, i) => (
-                            <Card
-                                key={i}
-                                className="min-w-80 flex-shrink-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 hover:bg-white/80 dark:hover:bg-gray-700/60 transition-all duration-300 hover:scale-105 rounded-2xl"
-                            >
-                                <CardHeader className="space-y-3">
-                                    <div className="flex justify-between items-start">
-                                        <Badge
-                                            variant="secondary"
-                                            className={[
-                                                post.badge === "인기"
-                                                    ? "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300"
-                                                    : "",
-                                                post.badge === "꿀팁"
-                                                    ? "bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300"
-                                                    : "",
-                                                post.badge === "후기"
-                                                    ? "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300"
-                                                    : "",
-                                                "rounded-lg px-3 py-1",
-                                            ].join(" ")}
-                                        >
-                                            {post.badge === "인기" && (
-                                                <Crown className="w-3 h-3 mr-1 inline" />
-                                            )}
-                                            {post.badge === "꿀팁" && (
-                                                <Zap className="w-3 h-3 mr-1 inline" />
-                                            )}
-                                            {post.badge}
-                                        </Badge>
+                        {communityPosts.map((post) => {
+                            const isLiked = likedPosts[post.id] || false;
+                            const displayLikes = isLiked
+                                ? post.likes + 1
+                                : post.likes;
+                            const addedComments =
+                                postComments[post.id]?.length || 0;
+                            const totalComments = post.comments + addedComments;
+
+                            return (
+                                <Card
+                                    key={post.id}
+                                    onClick={() => setSelectedPost(post)}
+                                    className="min-w-80 flex-shrink-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 hover:bg-white/80 dark:hover:bg-gray-700/60 transition-all duration-300 hover:scale-105 rounded-2xl cursor-pointer"
+                                >
+                                    <CardHeader className="space-y-3">
+                                        <div className="flex justify-between items-start">
+                                            <Badge
+                                                variant="secondary"
+                                                className={`
+                                                    ${post.badge === "인기" ? "bg-[#BAE6FD] dark:bg-blue-900/50 text-[#0369A1] dark:text-blue-300" : ""}
+                                                    ${post.badge === "꿀팁" ? "bg-[#E0F7FF] dark:bg-sky-900/50 text-[#0369A1] dark:text-sky-300" : ""}
+                                                    ${post.badge === "후기" ? "bg-[#BAE6FD] dark:bg-blue-900/50 text-[#0369A1] dark:text-blue-300" : ""}
+                                                    rounded-lg px-3 py-1
+                                                `}
+                                            >
+                                                {post.badge === "인기" && (
+                                                    <Crown className="w-3 h-3 mr-1 inline" />
+                                                )}
+                                                {post.badge === "꿀팁" && (
+                                                    <Zap className="w-3 h-3 mr-1 inline" />
+                                                )}
+                                                {post.badge}
+                                            </Badge>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="text-gray-400 hover:text-red-500 hover:bg-transparent"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    toggleLike(post.id);
+                                                }}
+                                            >
+                                                <Heart
+                                                    className={`w-5 h-5 transition-all ${
+                                                        isLiked
+                                                            ? "fill-red-500 text-red-500 scale-110"
+                                                            : ""
+                                                    }`}
+                                                />
+                                            </Button>
+                                        </div>
+                                        <CardTitle className="text-lg text-gray-800 dark:text-gray-100">
+                                            {post.title}
+                                        </CardTitle>
+                                        <CardDescription className="text-gray-600 dark:text-gray-300">
+                                            {post.author}님의 이야기
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardFooter className="flex justify-between items-center pt-0">
+                                        <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
+                                            <span className="flex items-center gap-1">
+                                                <Heart
+                                                    className={`w-4 h-4 ${
+                                                        isLiked
+                                                            ? "fill-red-500 text-red-500"
+                                                            : ""
+                                                    }`}
+                                                />
+                                                {displayLikes}
+                                            </span>
+                                            <span className="flex items-center gap-1">
+                                                <MessageCircle className="w-4 h-4" />
+                                                {totalComments}
+                                            </span>
+                                        </div>
                                         <Button
-                                            variant="ghost"
                                             size="sm"
-                                            className="text-gray-400 hover:text-blue-500"
+                                            variant="outline"
+                                            className="rounded-lg border-[#7DD3FC] dark:border-[#0891B2] text-[#0369A1] dark:text-blue-300"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setSelectedPost(post);
+                                            }}
                                         >
-                                            <Heart className="w-4 h-4" />
+                                            읽어보기
                                         </Button>
-                                    </div>
-                                    <CardTitle className="text-lg text-gray-800 dark:text-gray-100">
-                                        {post.title}
-                                    </CardTitle>
-                                    <CardDescription className="text-gray-600 dark:text-gray-300">
-                                        {post.author}님의 이야기
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardFooter className="flex justify-between items-center pt-0">
-                                    <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
-                                        <span className="flex items-center gap-1">
-                                            <Heart className="w-4 h-4" />
-                                            {post.likes}
-                                        </span>
-                                        <span className="flex items-center gap-1">
-                                            <MessageCircle className="w-4 h-4" />
-                                            {post.comments}
-                                        </span>
-                                    </div>
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        className="rounded-lg border-blue-200 dark:border-blue-600 text-blue-700 dark:text-blue-300"
-                                    >
-                                        읽어보기
-                                    </Button>
-                                </CardFooter>
-                            </Card>
-                        ))}
+                                    </CardFooter>
+                                </Card>
+                            );
+                        })}
                     </div>
                 </section>
 
-                {/* 입양정보 (타일) */}
+                {/* 입양정보 */}
                 <section className="space-y-6 px-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-gradient-to-r from-sky-500 to-blue-500 rounded-xl flex items-center justify-center">
+                            <div className="w-10 h-10 bg-gradient-to-r from-[#38BDF8] to-[#05B2DC] rounded-xl flex items-center justify-center">
                                 <Users className="w-5 h-5 text-white" />
                             </div>
                             <div>
@@ -394,33 +775,44 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                     새로운 가족을 기다리고 있어요
                                 </h2>
                                 <p className="text-gray-600 dark:text-gray-300">
-                                    사랑이 필요한 친구들
+                                    따뜻한 손길을 기다리는 친구들
                                 </p>
                             </div>
                         </div>
-
                         <div className="flex items-center gap-2">
                             <Button
-                                variant="outline"
+                                variant={
+                                    showAdoptionTile ? "default" : "outline"
+                                }
                                 size="sm"
-                                onClick={() => setShowAdoptionTile((v) => !v)}
-                                className="rounded-xl border-blue-200 dark:border-blue-600 text-blue-700 dark:text-blue-300"
+                                onClick={() => setShowAdoptionTile(true)}
+                                className="rounded-lg"
                             >
-                                {showAdoptionTile ? "카드 보기" : "타일 보기"}
+                                타일
+                            </Button>
+                            <Button
+                                variant={
+                                    !showAdoptionTile ? "default" : "outline"
+                                }
+                                size="sm"
+                                onClick={() => setShowAdoptionTile(false)}
+                                className="rounded-lg"
+                            >
+                                스크롤
                             </Button>
                             <Button
                                 variant="ghost"
                                 onClick={() => setSelectedTab("adoption")}
-                                className="text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-gray-700 rounded-xl"
+                                className="text-[#0891B2] dark:text-[#38BDF8] hover:bg-[#E0F7FF] dark:hover:bg-gray-700 rounded-xl ml-2"
                             >
-                                더 많은 친구들{" "}
+                                전체 보기{" "}
                                 <ArrowRight className="w-4 h-4 ml-2" />
                             </Button>
                         </div>
                     </div>
 
                     {showAdoptionTile ? (
-                        <div className="bg-white/40 dark:bg-gray-800/40 backdrop-blur-lg rounded-3xl p-4 border border-white/50 dark:border-gray-700/50">
+                        <div className="bg-gradient-to-br from-[#E0F7FF]/80 to-[#E0F7FF]/80 dark:from-sky-900/30 dark:to-blue-900/30 backdrop-blur-lg rounded-3xl p-4 border border-white/50 dark:border-[#0369A1]/50">
                             {adoptionTileItems.length ? (
                                 <TileGallery
                                     items={adoptionTileItems}
@@ -439,69 +831,68 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                             style={{ scrollBehavior: "smooth" }}
                         >
                             {bestPosts.adoption.map((pet, i) => {
-                                const imgs = Array.isArray(adoptionImages)
-                                    ? adoptionImages
-                                    : [];
-                                const src = safeStringSrc(imgs[i]);
+                                const src = safeStringSrc(
+                                    (adoptionImages as unknown[] | undefined)?.[
+                                        i
+                                    ],
+                                );
                                 return (
                                     <Card
                                         key={i}
                                         className="min-w-72 flex-shrink-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 hover:bg-white/80 dark:hover:bg-gray-700/60 transition-all duration-300 hover:scale-105 rounded-2xl overflow-hidden"
                                     >
                                         <CardHeader className="p-0">
-                                            <div className="relative w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 overflow-hidden">
-                                                {src ? (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            setLightboxItem({
-                                                                title: pet.title,
-                                                                subtitle: `${pet.location} · ${pet.age}`,
-                                                                meta: pet.badge,
-                                                                src,
-                                                            })
-                                                        }
-                                                        className="w-full h-full"
-                                                    >
-                                                        <img
-                                                            src={src}
-                                                            alt={pet.title}
-                                                            className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
-                                                            loading="lazy"
-                                                            referrerPolicy="no-referrer"
-                                                        />
-                                                    </button>
-                                                ) : null}
-                                                <div className="absolute top-3 left-3">
-                                                    <Badge
-                                                        variant={
-                                                            pet.badge === "긴급"
-                                                                ? "destructive"
-                                                                : "default"
-                                                        }
-                                                        className={
-                                                            pet.badge === "긴급"
-                                                                ? "bg-red-500 text-white"
-                                                                : "bg-white/90 dark:bg-gray-800/90 text-gray-700 dark:text-gray-200"
-                                                        }
-                                                    >
-                                                        {pet.badge}
-                                                    </Badge>
+                                            {src ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setLightboxItem({
+                                                            title: pet.title,
+                                                            subtitle: `${pet.location} · ${pet.age}`,
+                                                            meta: pet.badge,
+                                                            src,
+                                                        })
+                                                    }
+                                                    className="w-full"
+                                                >
+                                                    <img
+                                                        src={src}
+                                                        alt={pet.title}
+                                                        className="w-full h-48 object-cover"
+                                                        loading="lazy"
+                                                        referrerPolicy="no-referrer"
+                                                    />
+                                                </button>
+                                            ) : (
+                                                <div className="w-full h-48 bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD] dark:from-sky-900 dark:to-blue-900 flex items-center justify-center">
+                                                    <Users className="w-16 h-16 text-sky-400 opacity-50" />
                                                 </div>
-                                            </div>
-                                            <div className="p-6">
-                                                <CardTitle className="text-lg text-gray-800 dark:text-gray-100 mb-2">
-                                                    {pet.title}
-                                                </CardTitle>
-                                                <CardDescription className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                                                    <MapPin className="w-4 h-4" />
-                                                    {pet.location} · {pet.age}
-                                                </CardDescription>
-                                            </div>
+                                            )}
                                         </CardHeader>
-                                        <CardFooter className="px-6 pb-6 pt-0">
-                                            <Button className="w-full bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 rounded-xl">
-                                                자세히 알아보기
+                                        <CardFooter className="flex-col items-start gap-2 p-4">
+                                            <div className="flex justify-between items-start w-full">
+                                                <Badge
+                                                    variant="outline"
+                                                    className="bg-[#E0F7FF] dark:bg-sky-900/50 border-sky-200 dark:border-[#0369A1] text-[#0369A1] dark:text-sky-300 rounded-lg"
+                                                >
+                                                    {pet.badge}
+                                                </Badge>
+                                                <span className="text-xs text-gray-500 flex items-center gap-1">
+                                                    <MapPin className="w-3 h-3" />
+                                                    {pet.location}
+                                                </span>
+                                            </div>
+                                            <CardTitle className="text-base text-gray-800 dark:text-gray-100">
+                                                {pet.title}
+                                            </CardTitle>
+                                            <CardDescription className="text-gray-600 dark:text-gray-300">
+                                                {pet.age}
+                                            </CardDescription>
+                                            <Button
+                                                variant="outline"
+                                                className="w-full mt-2 border-sky-200 dark:border-sky-600 text-[#0369A1] dark:text-sky-300 hover:bg-[#E0F7FF] dark:hover:bg-sky-900/50 rounded-xl"
+                                            >
+                                                만나러 가기
                                             </Button>
                                         </CardFooter>
                                     </Card>
@@ -511,28 +902,28 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                     )}
                 </section>
 
-                {/* 펫매거진 */}
+                {/* 케어 가이드 */}
                 <section className="space-y-6 px-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center">
-                                <BookOpen className="w-5 h-5 text-white" />
+                            <div className="w-10 h-10 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] rounded-xl flex items-center justify-center">
+                                <Stethoscope className="w-5 h-5 text-white" />
                             </div>
                             <div>
                                 <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-                                    펫매거진
+                                    전문가의 케어 가이드
                                 </h2>
                                 <p className="text-gray-600 dark:text-gray-300">
-                                    건강하고 행복한 일상을 위한 정보
+                                    건강하고 행복한 일상을 위한 맞춤 정보
                                 </p>
                             </div>
                         </div>
                         <Button
                             variant="ghost"
                             onClick={() => setSelectedTab("magazine")}
-                            className="text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-gray-700 rounded-xl"
+                            className="text-[#0891B2] dark:text-[#38BDF8] hover:bg-[#E0F7FF] dark:hover:bg-gray-700 rounded-xl"
                         >
-                            전체 보기 <ArrowRight className="w-4 h-4 ml-2" />
+                            전체 가이드 <ArrowRight className="w-4 h-4 ml-2" />
                         </Button>
                     </div>
 
@@ -547,13 +938,13 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                 className="min-w-64 flex-shrink-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 hover:bg-white/80 dark:hover:bg-gray-700/60 transition-all duration-300 hover:scale-105 rounded-2xl"
                             >
                                 <CardHeader>
-                                    <div className="w-full h-40 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900 dark:to-teal-900 rounded-xl mb-3 flex items-center justify-center border border-emerald-100 dark:border-emerald-700">
-                                        <BookOpen className="w-16 h-16 text-emerald-500 dark:text-emerald-400 opacity-70" />
+                                    <div className="w-full h-40 bg-gradient-to-br from-[#E0F7FF] to-[#E0F7FF] dark:from-blue-900 dark:to-sky-900 rounded-xl mb-3 flex items-center justify-center border border-[#BAE6FD] dark:border-[#0369A1]">
+                                        <Stethoscope className="w-16 h-16 text-[#05B2DC] dark:text-[#38BDF8] opacity-70" />
                                     </div>
                                     <div className="flex justify-between items-start">
                                         <Badge
                                             variant="outline"
-                                            className="bg-emerald-50 dark:bg-emerald-900/50 border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 rounded-lg"
+                                            className="bg-[#E0F7FF] dark:bg-blue-900/50 border-[#7DD3FC] dark:border-[#0369A1] text-[#0369A1] dark:text-blue-300 rounded-lg"
                                         >
                                             {guide.badge}
                                         </Badge>
@@ -574,9 +965,9 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                 <CardFooter>
                                     <Button
                                         variant="outline"
-                                        className="w-full border-emerald-200 dark:border-emerald-600 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/50 rounded-xl"
+                                        className="w-full border-[#7DD3FC] dark:border-[#0891B2] text-[#0369A1] dark:text-blue-300 hover:bg-[#E0F7FF] dark:hover:bg-blue-900/50 rounded-xl"
                                     >
-                                        읽어보기
+                                        가이드 보기
                                     </Button>
                                 </CardFooter>
                             </Card>
@@ -584,36 +975,36 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                     </div>
                 </section>
 
-                {/* 함께하는 순간들 (구 추모 섹션) */}
+                {/* 추모 */}
                 <section className="space-y-6 px-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-gradient-to-r from-violet-500 to-purple-500 rounded-xl flex items-center justify-center">
-                                <Camera className="w-5 h-5 text-white" />
+                            <div className="w-10 h-10 bg-gradient-to-r from-[#05B2DC] to-[#0891B2] rounded-xl flex items-center justify-center">
+                                <Cloud className="w-5 h-5 text-white" />
                             </div>
                             <div>
-                                <h2 className="text-2xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 dark:from-violet-400 dark:to-purple-400 bg-clip-text text-transparent">
-                                    함께하는 순간들
+                                <h2 className="text-2xl font-bold bg-gradient-to-r from-[#05B2DC] to-[#0891B2] dark:from-[#38BDF8] dark:to-sky-400 bg-clip-text text-transparent">
+                                    하늘나라 친구들
                                 </h2>
                                 <p className="text-gray-600 dark:text-gray-300">
-                                    다른 친구들의 소중한 일상
+                                    영원히 마음속에 남을 특별한 친구들
                                 </p>
                             </div>
                         </div>
                         <Button
                             variant="ghost"
                             onClick={() => setSelectedTab("record")}
-                            className="text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-gray-700 rounded-xl"
+                            className="text-[#0891B2] dark:text-[#38BDF8] hover:bg-[#E0F7FF] dark:hover:bg-gray-700 rounded-xl"
                         >
-                            앨범 보러가기{" "}
+                            추모공간 방문{" "}
                             <ArrowRight className="w-4 h-4 ml-2" />
                         </Button>
                     </div>
 
-                    <div className="bg-gradient-to-br from-violet-50/80 to-purple-50/80 dark:from-violet-900/30 dark:to-purple-900/30 backdrop-blur-lg rounded-3xl p-4 border border-white/50 dark:border-violet-700/50">
-                        {momentsTileItems.length ? (
+                    <div className="bg-gradient-to-br from-[#E0F7FF]/80 to-[#E0F7FF]/80 dark:from-blue-900/30 dark:to-sky-900/30 backdrop-blur-lg rounded-3xl p-4 border border-white/50 dark:border-[#0369A1]/50">
+                        {memorialTileItems.length ? (
                             <TileGallery
-                                items={momentsTileItems}
+                                items={memorialTileItems}
                                 onItemClick={(it) => setLightboxItem(it)}
                             />
                         ) : (
@@ -663,7 +1054,6 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                             <div className="w-full h-56 bg-gray-200 dark:bg-gray-700" />
                                         )}
                                     </CardHeader>
-
                                     <CardFooter className="p-6 flex-col items-start gap-2">
                                         <div className="font-semibold">
                                             {m.name}
@@ -673,12 +1063,12 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                         </div>
                                         <Button
                                             variant="outline"
-                                            className="w-full rounded-xl border-violet-200 dark:border-violet-600 text-violet-700 dark:text-violet-300"
+                                            className="w-full rounded-xl"
                                             onClick={() =>
                                                 setSelectedTab("record")
                                             }
                                         >
-                                            기록 보러가기
+                                            추억 들여다보기
                                         </Button>
                                     </CardFooter>
                                 </Card>

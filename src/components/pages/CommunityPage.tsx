@@ -1,6 +1,6 @@
 /**
  * CommunityPage.tsx
- * 커뮤니티 - 치유/자유/정보 게시판
+ * 커뮤니티 - 자유/정보/치유 게시판
  */
 
 "use client";
@@ -9,7 +9,6 @@ import { useState } from "react";
 import {
     Card,
     CardContent,
-    CardDescription,
     CardFooter,
     CardHeader,
     CardTitle,
@@ -25,23 +24,13 @@ import {
     PenSquare,
     Search,
     TrendingUp,
-    Zap,
-    Crown,
-    Sparkles,
     Coffee,
     Lightbulb,
     Eye,
 } from "lucide-react";
 
-// 게시판 카테고리
+// 게시판 카테고리 - 순서: 자유 > 정보 > 치유
 const BOARD_CATEGORIES = [
-    {
-        id: "healing",
-        label: "치유 게시판",
-        icon: Heart,
-        color: "violet",
-        description: "슬픔을 나누고 위로받는 공간",
-    },
     {
         id: "free",
         label: "자유게시판",
@@ -56,63 +45,20 @@ const BOARD_CATEGORIES = [
         color: "emerald",
         description: "유용한 정보와 꿀팁 공유",
     },
+    {
+        id: "healing",
+        label: "치유 게시판",
+        icon: Heart,
+        color: "violet",
+        description: "슬픔을 나누고 위로받는 공간",
+    },
 ];
 
 // 목업 게시글 데이터
 const MOCK_POSTS = {
-    healing: [
-        {
-            id: 1,
-            title: "우리 콩이가 떠난 지 한 달이 되었어요",
-            content:
-                "아직도 콩이 밥그릇 보면 눈물이 나요. 15년을 함께했는데... 여러분은 어떻게 극복하셨나요?",
-            author: "콩이엄마",
-            time: "2시간 전",
-            likes: 156,
-            comments: 89,
-            views: 1234,
-            badge: "위로",
-        },
-        {
-            id: 2,
-            title: "무지개다리를 건넌 초코에게",
-            content:
-                "초코야, 아프지 말고 편히 쉬어. 다음 생에 꼭 다시 만나자. 사랑해.",
-            author: "초코아빠",
-            time: "5시간 전",
-            likes: 234,
-            comments: 67,
-            views: 2156,
-            badge: "추억",
-        },
-        {
-            id: 3,
-            title: "반려동물 장례 경험 공유드려요",
-            content:
-                "처음이라 많이 당황했는데, 혹시 도움이 될까 해서 제 경험 공유드립니다.",
-            author: "나눔이",
-            time: "1일 전",
-            likes: 89,
-            comments: 45,
-            views: 987,
-            badge: "정보",
-        },
-        {
-            id: 4,
-            title: "치료 포기 결정이 너무 힘들어요",
-            content:
-                "의사 선생님이 고통만 길어질 거라고... 어떻게 해야 할지 모르겠어요.",
-            author: "힘든보호자",
-            time: "3시간 전",
-            likes: 78,
-            comments: 123,
-            views: 876,
-            badge: "고민",
-        },
-    ],
     free: [
         {
-            id: 5,
+            id: 1,
             title: "우리 뭉치 첫 산책 성공!",
             content:
                 "드디어 밖을 무서워하던 뭉치가 산책에 성공했어요! 사진 보세요 ㅠㅠ",
@@ -124,7 +70,7 @@ const MOCK_POSTS = {
             badge: "자랑",
         },
         {
-            id: 6,
+            id: 2,
             title: "고양이 집사 4년차인데 아직도 모르겠는 것들",
             content:
                 "왜 새벽 4시에 운동회를 하는 걸까요... 여러분 고양이도 그런가요?",
@@ -136,7 +82,7 @@ const MOCK_POSTS = {
             badge: "일상",
         },
         {
-            id: 7,
+            id: 3,
             title: "강아지 이름 추천해주세요!",
             content:
                 "곧 새 가족이 올 예정인데 이름을 못 정하겠어요. 갈색 푸들이에요!",
@@ -148,7 +94,7 @@ const MOCK_POSTS = {
             badge: "질문",
         },
         {
-            id: 8,
+            id: 4,
             title: "오늘 미용 다녀왔어요",
             content: "숲속요정 스타일로 해달라고 했는데 어떤가요? ㅋㅋㅋ",
             author: "미용덕후",
@@ -161,7 +107,7 @@ const MOCK_POSTS = {
     ],
     info: [
         {
-            id: 9,
+            id: 5,
             title: "강아지 슬개골 탈구 수술 후기 (비용 포함)",
             content:
                 "수술 고민하시는 분들 참고하세요. 병원 선택부터 회복까지 상세히 적어봤어요.",
@@ -173,7 +119,7 @@ const MOCK_POSTS = {
             badge: "꿀팁",
         },
         {
-            id: 10,
+            id: 6,
             title: "사료 브랜드별 성분 비교표 만들어봤어요",
             content: "인기 사료 20개 성분 비교해봤습니다. 첨부파일 참고하세요!",
             author: "분석맨",
@@ -184,7 +130,7 @@ const MOCK_POSTS = {
             badge: "자료",
         },
         {
-            id: 11,
+            id: 7,
             title: "반려동물 보험 가입 전 체크리스트",
             content:
                 "보험 가입하려는데 뭘 봐야할지 모르겠다는 분들 참고하세요.",
@@ -196,7 +142,7 @@ const MOCK_POSTS = {
             badge: "정보",
         },
         {
-            id: 12,
+            id: 8,
             title: "서울 강남/서초 좋은 동물병원 리스트",
             content:
                 "제가 다녀본 병원들 솔직 후기입니다. 진료비도 참고로 적어봤어요.",
@@ -208,56 +154,106 @@ const MOCK_POSTS = {
             badge: "추천",
         },
     ],
+    healing: [
+        {
+            id: 9,
+            title: "우리 콩이가 떠난 지 한 달이 되었어요",
+            content:
+                "아직도 콩이 밥그릇 보면 눈물이 나요. 15년을 함께했는데... 여러분은 어떻게 극복하셨나요?",
+            author: "콩이엄마",
+            time: "2시간 전",
+            likes: 156,
+            comments: 89,
+            views: 1234,
+            badge: "위로",
+        },
+        {
+            id: 10,
+            title: "무지개다리를 건넌 초코에게",
+            content:
+                "초코야, 아프지 말고 편히 쉬어. 다음 생에 꼭 다시 만나자. 사랑해.",
+            author: "초코아빠",
+            time: "5시간 전",
+            likes: 234,
+            comments: 67,
+            views: 2156,
+            badge: "추억",
+        },
+        {
+            id: 11,
+            title: "반려동물 장례 경험 공유드려요",
+            content:
+                "처음이라 많이 당황했는데, 혹시 도움이 될까 해서 제 경험 공유드립니다.",
+            author: "나눔이",
+            time: "1일 전",
+            likes: 89,
+            comments: 45,
+            views: 987,
+            badge: "정보",
+        },
+        {
+            id: 12,
+            title: "치료 포기 결정이 너무 힘들어요",
+            content:
+                "의사 선생님이 고통만 길어질 거라고... 어떻게 해야 할지 모르겠어요.",
+            author: "힘든보호자",
+            time: "3시간 전",
+            likes: 78,
+            comments: 123,
+            views: 876,
+            badge: "고민",
+        },
+    ],
 };
 
 // 배지 색상
 const getBadgeStyle = (badge: string, boardType: string) => {
-    // 치유 게시판
     if (boardType === "healing") {
         switch (badge) {
             case "위로":
-                return "bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-300";
+                return "bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300";
             case "추억":
-                return "bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300";
+                return "bg-pink-100 text-pink-700 dark:bg-pink-900/50 dark:text-pink-300";
             case "정보":
-                return "bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300";
+                return "bg-[#BAE6FD] text-[#0369A1] dark:bg-blue-900/50 dark:text-blue-300";
             case "고민":
-                return "bg-pink-100 dark:bg-pink-900/50 text-pink-700 dark:text-pink-300";
+                return "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300";
             default:
-                return "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300";
+                return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
         }
     }
-    // 자유게시판
     if (boardType === "free") {
         switch (badge) {
             case "자랑":
-                return "bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300";
+                return "bg-[#BAE6FD] text-[#0369A1] dark:bg-blue-900/50 dark:text-blue-300";
             case "일상":
-                return "bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300";
+                return "bg-[#E0F7FF] text-sky-700 dark:bg-sky-900/50 dark:text-sky-300";
             case "질문":
-                return "bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300";
+                return "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300";
             default:
-                return "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300";
+                return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
         }
     }
-    // 정보 게시판
-    switch (badge) {
-        case "꿀팁":
-            return "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300";
-        case "자료":
-            return "bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300";
-        case "정보":
-            return "bg-cyan-100 dark:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300";
-        case "추천":
-            return "bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300";
-        default:
-            return "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300";
+    if (boardType === "info") {
+        switch (badge) {
+            case "꿀팁":
+                return "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300";
+            case "자료":
+                return "bg-teal-100 text-teal-700 dark:bg-teal-900/50 dark:text-teal-300";
+            case "정보":
+                return "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-300";
+            case "추천":
+                return "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300";
+            default:
+                return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
+        }
     }
+    return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
 };
 
 // 카테고리 색상
-const getCategoryColor = (colorName: string) => {
-    switch (colorName) {
+const getCategoryColor = (color: string) => {
+    switch (color) {
         case "violet":
             return {
                 bg: "from-violet-500 to-purple-500",
@@ -267,10 +263,10 @@ const getCategoryColor = (colorName: string) => {
             };
         case "blue":
             return {
-                bg: "from-blue-500 to-sky-500",
-                text: "text-blue-600 dark:text-blue-400",
-                border: "border-blue-200 dark:border-blue-700",
-                light: "bg-blue-50 dark:bg-blue-900/30",
+                bg: "from-[#05B2DC] to-[#38BDF8]",
+                text: "text-[#0891B2] dark:text-[#38BDF8]",
+                border: "border-[#7DD3FC] dark:border-[#0369A1]",
+                light: "bg-[#E0F7FF] dark:bg-blue-900/30",
             };
         case "emerald":
             return {
@@ -290,7 +286,7 @@ const getCategoryColor = (colorName: string) => {
 };
 
 export default function CommunityPage() {
-    const [selectedBoard, setSelectedBoard] = useState<string>("healing");
+    const [selectedBoard, setSelectedBoard] = useState<string>("free");
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [sortBy, setSortBy] = useState<string>("latest");
 
@@ -308,14 +304,14 @@ export default function CommunityPage() {
     const sortedPosts = [...filteredPosts].sort((a, b) => {
         if (sortBy === "popular") return b.likes - a.likes;
         if (sortBy === "comments") return b.comments - a.comments;
-        return 0; // latest (기본)
+        return 0;
     });
 
     return (
         <div className="min-h-screen relative overflow-hidden">
             {/* 배경 */}
-            <div className="absolute inset-0 bg-gradient-to-br from-sky-100 via-blue-50 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
-                <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-r from-blue-200/30 to-sky-200/30 dark:from-blue-800/20 dark:to-sky-800/20 rounded-full blur-3xl animate-pulse" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
+                <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-r from-[#7DD3FC]/30 to-sky-200/30 dark:from-blue-800/20 dark:to-sky-800/20 rounded-full blur-3xl animate-pulse" />
             </div>
 
             <div className="relative z-10 space-y-6 pb-8">
@@ -323,7 +319,7 @@ export default function CommunityPage() {
                 <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg border border-white/50 dark:border-gray-700/50 rounded-3xl p-6">
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center space-x-3">
-                            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-sky-500 rounded-xl flex items-center justify-center">
+                            <div className="w-12 h-12 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] rounded-xl flex items-center justify-center">
                                 <Users className="w-6 h-6 text-white" />
                             </div>
                             <div>

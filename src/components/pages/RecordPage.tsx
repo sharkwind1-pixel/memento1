@@ -1,55 +1,53 @@
 /**
  * RecordPage.tsx
  * 우리의 기록 - 마이페이지
- * 대시보드 / 내 반려동물 / 설정 탭
+ * 사진 1:1 비율, 스텝 형식 등록, CRUD 완성
  */
 
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
 
-import { useState } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { usePets, Pet, PetPhoto } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import {
     Camera,
     Plus,
     Heart,
     Calendar,
-    Settings,
     Grid3X3,
     List,
     Star,
-    Clock,
     MoreHorizontal,
     Pencil,
     Trash2,
     Crown,
     LogIn,
-    LayoutDashboard,
     PawPrint,
-    Bell,
-    User,
-    Mail,
-    Shield,
-    CreditCard,
-    MessageCircle,
-    FileText,
-    ThumbsUp,
+    X,
+    ZoomIn,
+    ZoomOut,
+    Move,
+    Check,
+    Upload,
+    Image as ImageIcon,
+    AlertTriangle,
+    ChevronLeft,
     ChevronRight,
-    Lock,
-    Image,
-    Sparkles,
 } from "lucide-react";
 
 import { TabType } from "@/types";
@@ -58,112 +56,1158 @@ interface RecordPageProps {
     setSelectedTab?: (tab: TabType) => void;
 }
 
-// 탭 타입
-type RecordTab = "dashboard" | "pets" | "settings";
+// 1:1 이미지 크롭 컴포넌트
+function ImageCropper({
+    imageUrl,
+    initialPosition,
+    onSave,
+    onCancel,
+}: {
+    imageUrl: string;
+    initialPosition?: { x: number; y: number; scale: number };
+    onSave: (position: { x: number; y: number; scale: number }) => void;
+    onCancel: () => void;
+}) {
+    const [position, setPosition] = useState(
+        initialPosition || { x: 50, y: 50, scale: 1 },
+    );
+    const [isDragging, setIsDragging] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
 
-// 목업 반려동물 데이터
-const MOCK_PETS = [
-    {
-        id: "1",
-        name: "초코",
-        type: "강아지",
-        breed: "말티즈",
-        birthday: "2021-03-15",
-        age: "3살 10개월",
-        gender: "남아",
-        weight: "3.2kg",
-        image: "https://images.dog.ceo/breeds/maltese/n02085936_4245.jpg",
-        isPrimary: true,
-        status: "active" as const,
-        recordCount: 234,
-        photoCount: 512,
-    },
-];
+    const handleMouseDown = (e: React.MouseEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
 
-// 목업 활동 데이터
-const MOCK_ACTIVITIES = [
-    {
-        type: "post",
-        title: "초코 산책 후기 올렸어요",
-        time: "2시간 전",
-        icon: FileText,
-    },
-    {
-        type: "comment",
-        title: "댓글을 남겼습니다",
-        time: "5시간 전",
-        icon: MessageCircle,
-    },
-    {
-        type: "like",
-        title: "게시글에 좋아요를 눌렀습니다",
-        time: "1일 전",
-        icon: ThumbsUp,
-    },
-    {
-        type: "photo",
-        title: "사진 3장을 업로드했습니다",
-        time: "2일 전",
-        icon: Image,
-    },
-];
+    const handleMouseMove = useCallback(
+        (e: MouseEvent) => {
+            if (!isDragging || !containerRef.current) return;
+            const rect = containerRef.current.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 100;
+            const y = ((e.clientY - rect.top) / rect.height) * 100;
+            setPosition((prev) => ({
+                ...prev,
+                x: Math.max(0, Math.min(100, x)),
+                y: Math.max(0, Math.min(100, y)),
+            }));
+        },
+        [isDragging],
+    );
 
-// 목업 기록 데이터
-const MOCK_RECORDS = [
-    {
-        id: 1,
-        type: "photo",
-        title: "오늘 산책 나갔다 온 초코",
-        date: "2025.01.20",
-        image: "https://images.dog.ceo/breeds/maltese/n02085936_4245.jpg",
-    },
-    {
-        id: 2,
-        type: "milestone",
-        title: "예방접종 완료!",
-        date: "2025.01.18",
-        image: null,
-    },
-    {
-        id: 3,
-        type: "photo",
-        title: "간식 먹는 중",
-        date: "2025.01.17",
-        image: "https://images.dog.ceo/breeds/maltese/n02085936_7310.jpg",
-    },
-];
+    const handleMouseUp = useCallback(() => {
+        setIsDragging(false);
+    }, []);
 
+    const handleTouchStart = (e: React.TouchEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleTouchMove = useCallback(
+        (e: TouchEvent) => {
+            if (!isDragging || !containerRef.current) return;
+            const touch = e.touches[0];
+            const rect = containerRef.current.getBoundingClientRect();
+            const x = ((touch.clientX - rect.left) / rect.width) * 100;
+            const y = ((touch.clientY - rect.top) / rect.height) * 100;
+            setPosition((prev) => ({
+                ...prev,
+                x: Math.max(0, Math.min(100, x)),
+                y: Math.max(0, Math.min(100, y)),
+            }));
+        },
+        [isDragging],
+    );
+
+    const handleTouchEnd = useCallback(() => {
+        setIsDragging(false);
+    }, []);
+
+    useEffect(() => {
+        if (isDragging) {
+            window.addEventListener("mousemove", handleMouseMove);
+            window.addEventListener("mouseup", handleMouseUp);
+            window.addEventListener("touchmove", handleTouchMove);
+            window.addEventListener("touchend", handleTouchEnd);
+            return () => {
+                window.removeEventListener("mousemove", handleMouseMove);
+                window.removeEventListener("mouseup", handleMouseUp);
+                window.removeEventListener("touchmove", handleTouchMove);
+                window.removeEventListener("touchend", handleTouchEnd);
+            };
+        }
+    }, [
+        isDragging,
+        handleMouseMove,
+        handleMouseUp,
+        handleTouchMove,
+        handleTouchEnd,
+    ]);
+
+    const handleScale = (delta: number) => {
+        setPosition((prev) => ({
+            ...prev,
+            scale: Math.max(1, Math.min(3, prev.scale + delta)),
+        }));
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-sm w-full">
+                <h3 className="text-lg font-semibold mb-2 text-center">
+                    사진 영역 선택
+                </h3>
+                <p className="text-sm text-gray-500 text-center mb-4">
+                    1:1 비율로 보여질 영역을 선택하세요
+                </p>
+
+                <div
+                    ref={containerRef}
+                    className="relative w-full aspect-square rounded-xl overflow-hidden cursor-move border-4 border-[#05B2DC]"
+                    onMouseDown={handleMouseDown}
+                    onTouchStart={handleTouchStart}
+                >
+                    <img
+                        src={imageUrl}
+                        alt="Crop preview"
+                        className="absolute w-full h-full"
+                        style={{
+                            objectFit: "cover",
+                            objectPosition: `${position.x}% ${position.y}%`,
+                            transform: `scale(${position.scale})`,
+                        }}
+                        draggable={false}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="w-16 h-16 border-2 border-white/70 rounded-full flex items-center justify-center bg-black/20">
+                            <Move className="w-8 h-8 text-white" />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex items-center justify-center gap-4 mt-4">
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handleScale(-0.2)}
+                        disabled={position.scale <= 1}
+                    >
+                        <ZoomOut className="w-4 h-4" />
+                    </Button>
+                    <span className="text-sm text-gray-500 w-16 text-center">
+                        {Math.round(position.scale * 100)}%
+                    </span>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handleScale(0.2)}
+                        disabled={position.scale >= 3}
+                    >
+                        <ZoomIn className="w-4 h-4" />
+                    </Button>
+                </div>
+
+                <div className="flex gap-3 mt-6">
+                    <Button
+                        variant="outline"
+                        onClick={onCancel}
+                        className="flex-1"
+                    >
+                        취소
+                    </Button>
+                    <Button
+                        onClick={() => onSave(position)}
+                        className="flex-1 bg-[#05B2DC] hover:bg-[#0891B2]"
+                    >
+                        <Check className="w-4 h-4 mr-2" />
+                        적용
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// 사진 업로드 모달
+function PhotoUploadModal({
+    isOpen,
+    onClose,
+    onUpload,
+}: {
+    isOpen: boolean;
+    onClose: () => void;
+    onUpload: (
+        photos: {
+            url: string;
+            caption: string;
+            cropPosition: { x: number; y: number; scale: number };
+        }[],
+    ) => void;
+}) {
+    const [selectedFiles, setSelectedFiles] = useState<
+        {
+            file: File;
+            preview: string;
+            caption: string;
+            cropPosition: { x: number; y: number; scale: number };
+            cropped: boolean;
+        }[]
+    >([]);
+    const [cropIndex, setCropIndex] = useState<number | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (!isOpen) {
+            selectedFiles.forEach((f) => URL.revokeObjectURL(f.preview));
+            setSelectedFiles([]);
+            setCropIndex(null);
+        }
+    }, [isOpen]);
+
+    if (!isOpen) return null;
+
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        const newFiles = files.map((file) => ({
+            file,
+            preview: URL.createObjectURL(file),
+            caption: "",
+            cropPosition: { x: 50, y: 50, scale: 1 },
+            cropped: false,
+        }));
+        setSelectedFiles((prev) => [...prev, ...newFiles]);
+        if (newFiles.length > 0) {
+            setCropIndex(selectedFiles.length);
+        }
+    };
+
+    const handleRemove = (index: number) => {
+        setSelectedFiles((prev) => {
+            URL.revokeObjectURL(prev[index].preview);
+            return prev.filter((_, i) => i !== index);
+        });
+    };
+
+    const handleCaptionChange = (index: number, caption: string) => {
+        setSelectedFiles((prev) =>
+            prev.map((f, i) => (i === index ? { ...f, caption } : f)),
+        );
+    };
+
+    const handleCropSave = (
+        index: number,
+        position: { x: number; y: number; scale: number },
+    ) => {
+        setSelectedFiles((prev) =>
+            prev.map((f, i) =>
+                i === index
+                    ? { ...f, cropPosition: position, cropped: true }
+                    : f,
+            ),
+        );
+        const nextUncropped = selectedFiles.findIndex(
+            (f, i) => i > index && !f.cropped,
+        );
+        setCropIndex(nextUncropped !== -1 ? nextUncropped : null);
+    };
+
+    const handleUpload = () => {
+        const uncropped = selectedFiles.filter((f) => !f.cropped);
+        if (uncropped.length > 0) {
+            alert("모든 사진의 영역을 선택해주세요");
+            return;
+        }
+        onUpload(
+            selectedFiles.map((f) => ({
+                url: f.preview,
+                caption: f.caption,
+                cropPosition: f.cropPosition,
+            })),
+        );
+        setSelectedFiles([]);
+        onClose();
+    };
+
+    const allCropped =
+        selectedFiles.length > 0 && selectedFiles.every((f) => f.cropped);
+
+    return (
+        <>
+            <div className="fixed inset-0 z-40 bg-black/50 flex items-center justify-center p-4">
+                <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-lg font-semibold">
+                            사진 업로드 (1:1)
+                        </h3>
+                        <Button variant="ghost" size="icon" onClick={onClose}>
+                            <X className="w-5 h-5" />
+                        </Button>
+                    </div>
+
+                    <div
+                        onClick={() => fileInputRef.current?.click()}
+                        className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center cursor-pointer hover:border-[#05B2DC] transition-colors"
+                    >
+                        <Upload className="w-10 h-10 mx-auto text-gray-400 mb-2" />
+                        <p className="text-gray-600 dark:text-gray-300">
+                            클릭하여 사진 선택
+                        </p>
+                        <p className="text-sm text-gray-400 mt-1">
+                            여러 장 선택 가능 · 1:1 비율로 크롭됩니다
+                        </p>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={handleFileSelect}
+                            className="hidden"
+                        />
+                    </div>
+
+                    {selectedFiles.length > 0 && (
+                        <div className="mt-4 space-y-4">
+                            {selectedFiles.map((file, index) => (
+                                <div
+                                    key={index}
+                                    className={`flex gap-4 p-3 rounded-xl ${file.cropped ? "bg-green-50 dark:bg-green-900/20 border border-green-200" : "bg-amber-50 dark:bg-amber-900/20 border border-amber-200"}`}
+                                >
+                                    <div
+                                        className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer"
+                                        onClick={() => setCropIndex(index)}
+                                    >
+                                        <img
+                                            src={file.preview}
+                                            alt=""
+                                            className="w-full h-full object-cover"
+                                            style={{
+                                                objectPosition: `${file.cropPosition.x}% ${file.cropPosition.y}%`,
+                                            }}
+                                        />
+                                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                                            <Move className="w-5 h-5 text-white" />
+                                        </div>
+                                    </div>
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            {file.cropped ? (
+                                                <Badge className="bg-green-100 text-green-700 text-xs">
+                                                    <Check className="w-3 h-3 mr-1" />
+                                                    완료
+                                                </Badge>
+                                            ) : (
+                                                <Badge className="bg-amber-100 text-amber-700 text-xs">
+                                                    영역 선택 필요
+                                                </Badge>
+                                            )}
+                                        </div>
+                                        <Input
+                                            placeholder="캡션 (선택)"
+                                            value={file.caption}
+                                            onChange={(e) =>
+                                                handleCaptionChange(
+                                                    index,
+                                                    e.target.value,
+                                                )
+                                            }
+                                            className="mb-2 h-8 text-sm"
+                                        />
+                                        <div className="flex gap-2">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() =>
+                                                    setCropIndex(index)
+                                                }
+                                                className="text-xs h-7"
+                                            >
+                                                <Move className="w-3 h-3 mr-1" />
+                                                영역 수정
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() =>
+                                                    handleRemove(index)
+                                                }
+                                                className="text-red-500 hover:text-red-600 text-xs h-7"
+                                            >
+                                                <Trash2 className="w-3 h-3 mr-1" />
+                                                삭제
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    <div className="flex gap-3 mt-6">
+                        <Button
+                            variant="outline"
+                            onClick={onClose}
+                            className="flex-1"
+                        >
+                            취소
+                        </Button>
+                        <Button
+                            onClick={handleUpload}
+                            disabled={!allCropped}
+                            className="flex-1 bg-[#05B2DC] hover:bg-[#0891B2]"
+                        >
+                            <Upload className="w-4 h-4 mr-2" />
+                            {selectedFiles.length}장 업로드
+                        </Button>
+                    </div>
+                </div>
+            </div>
+
+            {cropIndex !== null && selectedFiles[cropIndex] && (
+                <ImageCropper
+                    imageUrl={selectedFiles[cropIndex].preview}
+                    initialPosition={selectedFiles[cropIndex].cropPosition}
+                    onSave={(pos) => handleCropSave(cropIndex, pos)}
+                    onCancel={() => setCropIndex(null)}
+                />
+            )}
+        </>
+    );
+}
+
+// 반려동물 등록/수정 모달 (스텝 형식)
+function PetModal({
+    isOpen,
+    onClose,
+    pet,
+    onSave,
+}: {
+    isOpen: boolean;
+    onClose: () => void;
+    pet?: Pet | null;
+    onSave: (pet: Omit<Pet, "id" | "createdAt" | "photos">) => void;
+}) {
+    const [step, setStep] = useState(1);
+    const [formData, setFormData] = useState({
+        name: "",
+        type: "강아지" as Pet["type"],
+        breed: "",
+        birthday: "",
+        gender: "남아" as Pet["gender"],
+        weight: "",
+        personality: "",
+        status: "active" as Pet["status"],
+        isPrimary: false,
+    });
+    const [profilePreview, setProfilePreview] = useState<string>("");
+    const [profileCropPosition, setProfileCropPosition] = useState({
+        x: 50,
+        y: 50,
+        scale: 1,
+    });
+    const [showCropper, setShowCropper] = useState(false);
+    const [profileCropped, setProfileCropped] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (isOpen) {
+            setStep(1);
+            if (pet) {
+                setFormData({
+                    name: pet.name,
+                    type: pet.type,
+                    breed: pet.breed,
+                    birthday: pet.birthday,
+                    gender: pet.gender,
+                    weight: pet.weight,
+                    personality: pet.personality,
+                    status: pet.status,
+                    isPrimary: pet.isPrimary,
+                });
+                setProfilePreview(pet.profileImage);
+                setProfileCropPosition(
+                    pet.profileCropPosition || { x: 50, y: 50, scale: 1 },
+                );
+                setProfileCropped(!!pet.profileImage);
+            } else {
+                setFormData({
+                    name: "",
+                    type: "강아지",
+                    breed: "",
+                    birthday: "",
+                    gender: "남아",
+                    weight: "",
+                    personality: "",
+                    status: "active",
+                    isPrimary: false,
+                });
+                setProfilePreview("");
+                setProfileCropPosition({ x: 50, y: 50, scale: 1 });
+                setProfileCropped(false);
+            }
+        }
+    }, [pet, isOpen]);
+
+    if (!isOpen) return null;
+
+    const handleProfileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setProfilePreview(reader.result as string);
+                setProfileCropped(false);
+                setShowCropper(true);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleCropSave = (position: {
+        x: number;
+        y: number;
+        scale: number;
+    }) => {
+        setProfileCropPosition(position);
+        setProfileCropped(true);
+        setShowCropper(false);
+    };
+
+    const handleNext = () => {
+        if (!formData.name.trim()) {
+            alert("이름을 입력해주세요");
+            return;
+        }
+        if (profilePreview && !profileCropped) {
+            alert("프로필 사진 영역을 선택해주세요");
+            return;
+        }
+        setStep(2);
+    };
+
+    const handleSubmit = () => {
+        onSave({
+            ...formData,
+            profileImage: profilePreview,
+            profileCropPosition,
+        });
+        onClose();
+    };
+
+    return (
+        <>
+            <div className="fixed inset-0 z-40 bg-black/50 flex items-center justify-center p-4">
+                <div className="bg-white dark:bg-gray-900 rounded-2xl max-w-md w-full overflow-hidden">
+                    <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+                        <h3 className="text-lg font-semibold">
+                            {pet ? "반려동물 수정" : "새 반려동물 등록"}
+                        </h3>
+                        <Button variant="ghost" size="icon" onClick={onClose}>
+                            <X className="w-5 h-5" />
+                        </Button>
+                    </div>
+
+                    <div className="flex items-center justify-center gap-2 py-3 bg-gray-50 dark:bg-gray-800">
+                        <div
+                            className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${step === 1 ? "bg-[#05B2DC] text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-500"}`}
+                        >
+                            <Camera className="w-4 h-4" />
+                            사진/이름
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-gray-400" />
+                        <div
+                            className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${step === 2 ? "bg-[#05B2DC] text-white" : "bg-gray-200 dark:bg-gray-700 text-gray-500"}`}
+                        >
+                            <PawPrint className="w-4 h-4" />
+                            상세정보
+                        </div>
+                    </div>
+
+                    <div className="p-6">
+                        {step === 1 ? (
+                            <div className="space-y-6">
+                                <div className="flex flex-col items-center">
+                                    <div
+                                        onClick={() =>
+                                            fileInputRef.current?.click()
+                                        }
+                                        className={`relative w-40 h-40 rounded-2xl cursor-pointer overflow-hidden border-4 transition-all ${profilePreview && !profileCropped ? "border-amber-400" : profilePreview ? "border-green-400" : "border-dashed border-[#05B2DC] hover:border-solid"} shadow-lg bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD]`}
+                                    >
+                                        {profilePreview ? (
+                                            <img
+                                                src={profilePreview}
+                                                alt="Profile"
+                                                className="w-full h-full object-cover"
+                                                style={{
+                                                    objectPosition: `${profileCropPosition.x}% ${profileCropPosition.y}%`,
+                                                    transform: `scale(${profileCropPosition.scale})`,
+                                                }}
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex flex-col items-center justify-center text-[#05B2DC]">
+                                                <Camera className="w-12 h-12 mb-2" />
+                                                <span className="text-sm font-medium">
+                                                    사진 등록
+                                                </span>
+                                                <span className="text-xs text-gray-400 mt-1">
+                                                    클릭하여 선택
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    {profilePreview && (
+                                        <div className="flex gap-2 mt-3">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() =>
+                                                    setShowCropper(true)
+                                                }
+                                                className="text-xs"
+                                            >
+                                                <Move className="w-3 h-3 mr-1" />
+                                                영역 수정
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => {
+                                                    setProfilePreview("");
+                                                    setProfileCropped(false);
+                                                }}
+                                                className="text-xs text-red-500 hover:text-red-600"
+                                            >
+                                                <Trash2 className="w-3 h-3 mr-1" />
+                                                삭제
+                                            </Button>
+                                        </div>
+                                    )}
+                                    {profilePreview && !profileCropped && (
+                                        <p className="text-amber-600 text-xs mt-2 flex items-center gap-1">
+                                            <AlertTriangle className="w-3 h-3" />
+                                            영역 선택이 필요해요
+                                        </p>
+                                    )}
+                                    {profilePreview && profileCropped && (
+                                        <p className="text-green-600 text-xs mt-2 flex items-center gap-1">
+                                            <Check className="w-3 h-3" />
+                                            사진 준비 완료
+                                        </p>
+                                    )}
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleProfileUpload}
+                                        className="hidden"
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label className="text-base font-medium">
+                                        이름 *
+                                    </Label>
+                                    <Input
+                                        value={formData.name}
+                                        onChange={(e) =>
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                name: e.target.value,
+                                            }))
+                                        }
+                                        placeholder="반려동물 이름을 입력하세요"
+                                        className="mt-2 h-12 text-lg"
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label className="text-base font-medium">
+                                        종류
+                                    </Label>
+                                    <div className="flex gap-2 mt-2">
+                                        {["강아지", "고양이", "기타"].map(
+                                            (type) => (
+                                                <Button
+                                                    key={type}
+                                                    type="button"
+                                                    variant={
+                                                        formData.type === type
+                                                            ? "default"
+                                                            : "outline"
+                                                    }
+                                                    onClick={() =>
+                                                        setFormData((prev) => ({
+                                                            ...prev,
+                                                            type: type as Pet["type"],
+                                                        }))
+                                                    }
+                                                    className={
+                                                        formData.type === type
+                                                            ? "bg-[#05B2DC] hover:bg-[#0891B2]"
+                                                            : ""
+                                                    }
+                                                >
+                                                    {type}
+                                                </Button>
+                                            ),
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label>성별</Label>
+                                        <Select
+                                            value={formData.gender}
+                                            onValueChange={(v) =>
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    gender: v as Pet["gender"],
+                                                }))
+                                            }
+                                        >
+                                            <SelectTrigger className="mt-1">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="남아">
+                                                    남아
+                                                </SelectItem>
+                                                <SelectItem value="여아">
+                                                    여아
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div>
+                                        <Label>품종</Label>
+                                        <Input
+                                            value={formData.breed}
+                                            onChange={(e) =>
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    breed: e.target.value,
+                                                }))
+                                            }
+                                            placeholder="예: 말티즈"
+                                            className="mt-1"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label>생일</Label>
+                                        <Input
+                                            type="date"
+                                            value={formData.birthday}
+                                            onChange={(e) =>
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    birthday: e.target.value,
+                                                }))
+                                            }
+                                            className="mt-1"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label>몸무게</Label>
+                                        <Input
+                                            value={formData.weight}
+                                            onChange={(e) =>
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    weight: e.target.value,
+                                                }))
+                                            }
+                                            placeholder="예: 3.2kg"
+                                            className="mt-1"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <Label>성격/특징</Label>
+                                    <Textarea
+                                        value={formData.personality}
+                                        onChange={(e) =>
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                personality: e.target.value,
+                                            }))
+                                        }
+                                        placeholder="우리 아이만의 특징을 적어주세요"
+                                        rows={3}
+                                        className="mt-1"
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label>현재 상태</Label>
+                                    <div className="flex gap-2 mt-2">
+                                        <Button
+                                            type="button"
+                                            variant={
+                                                formData.status === "active"
+                                                    ? "default"
+                                                    : "outline"
+                                            }
+                                            onClick={() =>
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    status: "active",
+                                                }))
+                                            }
+                                            className={`flex-1 ${formData.status === "active" ? "bg-green-500 hover:bg-green-600" : ""}`}
+                                        >
+                                            <Heart className="w-4 h-4 mr-2" />
+                                            함께하는 중
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant={
+                                                formData.status === "memorial"
+                                                    ? "default"
+                                                    : "outline"
+                                            }
+                                            onClick={() =>
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    status: "memorial",
+                                                }))
+                                            }
+                                            className={`flex-1 ${formData.status === "memorial" ? "bg-amber-500 hover:bg-amber-600" : ""}`}
+                                        >
+                                            <Star className="w-4 h-4 mr-2" />
+                                            기억 속에서 함께해요
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="flex gap-3 p-4 border-t border-gray-200 dark:border-gray-700">
+                        {step === 1 ? (
+                            <>
+                                <Button
+                                    variant="outline"
+                                    onClick={onClose}
+                                    className="flex-1"
+                                >
+                                    취소
+                                </Button>
+                                <Button
+                                    onClick={handleNext}
+                                    className="flex-1 bg-[#05B2DC] hover:bg-[#0891B2]"
+                                >
+                                    다음
+                                    <ChevronRight className="w-4 h-4 ml-1" />
+                                </Button>
+                            </>
+                        ) : (
+                            <>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setStep(1)}
+                                    className="flex-1"
+                                >
+                                    <ChevronLeft className="w-4 h-4 mr-1" />
+                                    이전
+                                </Button>
+                                <Button
+                                    onClick={handleSubmit}
+                                    className="flex-1 bg-[#05B2DC] hover:bg-[#0891B2]"
+                                >
+                                    <Check className="w-4 h-4 mr-2" />
+                                    {pet ? "수정하기" : "등록하기"}
+                                </Button>
+                            </>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {showCropper && profilePreview && (
+                <ImageCropper
+                    imageUrl={profilePreview}
+                    initialPosition={profileCropPosition}
+                    onSave={handleCropSave}
+                    onCancel={() => setShowCropper(false)}
+                />
+            )}
+        </>
+    );
+}
+
+// 삭제 확인 모달
+function DeleteConfirmModal({
+    isOpen,
+    onClose,
+    onConfirm,
+    title,
+    message,
+}: {
+    isOpen: boolean;
+    onClose: () => void;
+    onConfirm: () => void;
+    title: string;
+    message: string;
+}) {
+    if (!isOpen) return null;
+    return (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-sm w-full">
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                        <AlertTriangle className="w-5 h-5 text-red-600" />
+                    </div>
+                    <h3 className="text-lg font-semibold">{title}</h3>
+                </div>
+                <p className="text-gray-600 dark:text-gray-300 mb-6">
+                    {message}
+                </p>
+                <div className="flex gap-3">
+                    <Button
+                        variant="outline"
+                        onClick={onClose}
+                        className="flex-1"
+                    >
+                        취소
+                    </Button>
+                    <Button
+                        onClick={() => {
+                            onConfirm();
+                            onClose();
+                        }}
+                        className="flex-1 bg-red-500 hover:bg-red-600 text-white"
+                    >
+                        삭제
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// 사진 뷰어
+function PhotoViewer({
+    photo,
+    petName,
+    onClose,
+    onDelete,
+}: {
+    photo: PetPhoto;
+    petName: string;
+    onClose: () => void;
+    onDelete: () => void;
+}) {
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    return (
+        <>
+            <div
+                className="fixed inset-0 z-40 bg-black/90 flex items-center justify-center p-4"
+                onClick={onClose}
+            >
+                <div
+                    className="relative max-w-md w-full"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <div className="absolute top-4 right-4 z-10 flex gap-2">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setShowDeleteConfirm(true)}
+                            className="text-white hover:bg-red-500/20 rounded-full"
+                        >
+                            <Trash2 className="w-5 h-5" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={onClose}
+                            className="text-white hover:bg-white/20 rounded-full"
+                        >
+                            <X className="w-6 h-6" />
+                        </Button>
+                    </div>
+                    <div className="aspect-square rounded-2xl overflow-hidden">
+                        <img
+                            src={photo.url}
+                            alt={photo.caption}
+                            className="w-full h-full object-cover"
+                            style={{
+                                objectPosition: photo.cropPosition
+                                    ? `${photo.cropPosition.x}% ${photo.cropPosition.y}%`
+                                    : "center",
+                            }}
+                        />
+                    </div>
+                    <div className="text-center mt-4 text-white">
+                        <p className="font-medium">
+                            {photo.caption || petName}
+                        </p>
+                        <p className="text-sm text-gray-400">{photo.date}</p>
+                    </div>
+                </div>
+            </div>
+            <DeleteConfirmModal
+                isOpen={showDeleteConfirm}
+                onClose={() => setShowDeleteConfirm(false)}
+                onConfirm={onDelete}
+                title="사진 삭제"
+                message="이 사진을 삭제하시겠습니까?"
+            />
+        </>
+    );
+}
+
+// 나이 계산
+function calculateAge(birthday: string): string {
+    if (!birthday) return "";
+    const birth = new Date(birthday);
+    const now = new Date();
+    const totalMonths =
+        (now.getFullYear() - birth.getFullYear()) * 12 +
+        (now.getMonth() - birth.getMonth());
+    if (totalMonths < 12) return `${totalMonths}개월`;
+    const remainingMonths = totalMonths % 12;
+    return remainingMonths > 0
+        ? `${Math.floor(totalMonths / 12)}살 ${remainingMonths}개월`
+        : `${Math.floor(totalMonths / 12)}살`;
+}
+
+// 메인
 export default function RecordPage({ setSelectedTab }: RecordPageProps) {
-    const { user, loading, signOut } = useAuth();
-    const [activeTab, setActiveTab] = useState<RecordTab>("dashboard");
-    const [showSubscribeModal, setShowSubscribeModal] = useState(false);
+    const { user, loading: authLoading } = useAuth();
+    const {
+        pets,
+        selectedPetId,
+        selectedPet,
+        addPet,
+        updatePet,
+        deletePet,
+        selectPet,
+        addPhotos,
+        deletePhoto,
+        isLoading: petsLoading,
+    } = usePets();
 
-    // 로그인 안 한 경우
-    if (!loading && !user) {
+    const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+    const [isPetModalOpen, setIsPetModalOpen] = useState(false);
+    const [editingPet, setEditingPet] = useState<Pet | null>(null);
+    const [isPhotoUploadOpen, setIsPhotoUploadOpen] = useState(false);
+    const [viewingPhoto, setViewingPhoto] = useState<PetPhoto | null>(null);
+    const [petToDelete, setPetToDelete] = useState<Pet | null>(null);
+    const [showPetMenu, setShowPetMenu] = useState<string | null>(null);
+    const [isSelectMode, setIsSelectMode] = useState(false);
+    const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
+
+    const handleSelectAll = () => {
+        if (!selectedPet) return;
+        setSelectedPhotos(
+            selectedPhotos.length === selectedPet.photos.length
+                ? []
+                : selectedPet.photos.map((p) => p.id),
+        );
+    };
+
+    const handleDeleteSelected = () => {
+        if (!selectedPet || selectedPhotos.length === 0) return;
+        if (
+            confirm(
+                `선택한 ${selectedPhotos.length}장의 사진을 삭제하시겠습니까?`,
+            )
+        ) {
+            selectedPhotos.forEach((photoId) =>
+                deletePhoto(selectedPet.id, photoId),
+            );
+            setSelectedPhotos([]);
+            setIsSelectMode(false);
+        }
+    };
+
+    const togglePhotoSelect = (photoId: string) => {
+        setSelectedPhotos((prev) =>
+            prev.includes(photoId)
+                ? prev.filter((id) => id !== photoId)
+                : [...prev, photoId],
+        );
+    };
+
+    const handleSavePet = (
+        petData: Omit<Pet, "id" | "createdAt" | "photos">,
+    ) => {
+        if (editingPet) {
+            updatePet(editingPet.id, petData);
+        } else {
+            addPet(petData);
+        }
+        setEditingPet(null);
+    };
+
+    const handlePhotoUpload = (
+        photos: {
+            url: string;
+            caption: string;
+            cropPosition: { x: number; y: number; scale: number };
+        }[],
+    ) => {
+        if (!selectedPet) return;
+        addPhotos(
+            selectedPet.id,
+            photos.map((p) => ({
+                url: p.url,
+                caption: p.caption,
+                date: new Date().toISOString().split("T")[0],
+                cropPosition: p.cropPosition,
+            })),
+        );
+    };
+
+    useEffect(() => {
+        if (!isSelectMode) setSelectedPhotos([]);
+    }, [isSelectMode]);
+    useEffect(() => {
+        setIsSelectMode(false);
+        setSelectedPhotos([]);
+    }, [selectedPetId]);
+
+    if (authLoading || petsLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <PawPrint className="w-12 h-12 text-[#05B2DC] animate-bounce mx-auto mb-4" />
+                    <p className="text-gray-500">로딩 중...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!user) {
         return (
             <div className="min-h-screen relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-violet-50 via-purple-50 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900" />
-
+                <div className="absolute inset-0 bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900" />
                 <div className="relative z-10 flex flex-col items-center justify-center min-h-[60vh] px-4">
-                    <div className="w-24 h-24 bg-gradient-to-r from-violet-500 to-purple-500 rounded-full flex items-center justify-center mb-6">
-                        <Lock className="w-12 h-12 text-white" />
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD] flex items-center justify-center mb-6">
+                        <LogIn className="w-12 h-12 text-[#05B2DC]" />
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
                         로그인이 필요해요
                     </h2>
-                    <p className="text-gray-600 dark:text-gray-300 text-center mb-6">
-                        반려동물과의 소중한 순간을 기록하려면
+                    <p className="text-gray-500 dark:text-gray-400 text-center mb-6">
+                        우리 아이의 소중한 기록을 남기려면
                         <br />
                         먼저 로그인해주세요
                     </p>
                     <Button
-                        className="bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 rounded-xl px-8"
-                        onClick={() => {
-                            // Layout의 AuthModal 열기 위해 이벤트 발생
+                        onClick={() =>
                             window.dispatchEvent(
                                 new CustomEvent("openAuthModal"),
-                            );
-                        }}
+                            )
+                        }
+                        className="bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-[#05B2DC] text-white px-8"
                     >
                         <LogIn className="w-4 h-4 mr-2" />
                         로그인하기
@@ -173,823 +1217,572 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
         );
     }
 
-    // 로딩 중
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="w-12 h-12 border-4 border-violet-500 border-t-transparent rounded-full animate-spin" />
-            </div>
-        );
-    }
-
-    // 사용자 정보
-    const displayName =
-        user?.user_metadata?.nickname || user?.email?.split("@")[0] || "사용자";
-    const userEmail = user?.email || "";
-    const joinDate = user?.created_at
-        ? new Date(user.created_at).toLocaleDateString("ko-KR")
-        : "";
-    const isSubscribed = false; // TODO: 실제 구독 상태 확인
-
-    // 탭 렌더링
-    const renderTabContent = () => {
-        switch (activeTab) {
-            case "dashboard":
-                return (
-                    <DashboardTab
-                        displayName={displayName}
-                        userEmail={userEmail}
-                        joinDate={joinDate}
-                        isSubscribed={isSubscribed}
-                        onSubscribe={() => setShowSubscribeModal(true)}
-                    />
-                );
-            case "pets":
-                return (
-                    <PetsTab
-                        pets={MOCK_PETS}
-                        isSubscribed={isSubscribed}
-                        onSubscribe={() => setShowSubscribeModal(true)}
-                    />
-                );
-            case "settings":
-                return (
-                    <SettingsTab
-                        displayName={displayName}
-                        userEmail={userEmail}
-                        isSubscribed={isSubscribed}
-                        onSignOut={signOut}
-                        onSubscribe={() => setShowSubscribeModal(true)}
-                    />
-                );
-            default:
-                return null;
-        }
-    };
-
     return (
-        <div className="min-h-screen relative overflow-hidden">
-            {/* 배경 */}
-            <div className="absolute inset-0 bg-gradient-to-br from-violet-50 via-purple-50 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
-                <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-r from-violet-200/30 to-purple-200/30 dark:from-violet-800/20 dark:to-purple-800/20 rounded-full blur-3xl animate-pulse" />
-            </div>
-
-            {/* 구독 모달 */}
-            {showSubscribeModal && (
-                <SubscribeModal onClose={() => setShowSubscribeModal(false)} />
-            )}
-
-            <div className="relative z-10 space-y-6 pb-8">
-                {/* 헤더 */}
-                <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg border border-white/50 dark:border-gray-700/50 rounded-3xl p-6">
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center space-x-3">
-                            <div className="w-12 h-12 bg-gradient-to-r from-violet-500 to-purple-500 rounded-xl flex items-center justify-center">
-                                <Camera className="w-6 h-6 text-white" />
-                            </div>
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-                                    우리의 기록
-                                </h1>
-                                <p className="text-gray-600 dark:text-gray-300">
-                                    {displayName}님의 공간
-                                </p>
-                            </div>
-                        </div>
-                        {isSubscribed ? (
-                            <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white">
-                                <Crown className="w-3 h-3 mr-1" />
-                                프리미엄
-                            </Badge>
-                        ) : (
-                            <Button
-                                variant="outline"
-                                className="border-violet-300 text-violet-600 hover:bg-violet-50 rounded-xl"
-                                onClick={() => setShowSubscribeModal(true)}
-                            >
-                                <Sparkles className="w-4 h-4 mr-2" />
-                                프리미엄 구독
-                            </Button>
-                        )}
-                    </div>
-
-                    {/* 탭 네비게이션 */}
-                    <div className="flex gap-2">
-                        {[
-                            {
-                                id: "dashboard" as RecordTab,
-                                label: "대시보드",
-                                icon: LayoutDashboard,
-                            },
-                            {
-                                id: "pets" as RecordTab,
-                                label: "내 반려동물",
-                                icon: PawPrint,
-                            },
-                            {
-                                id: "settings" as RecordTab,
-                                label: "설정",
-                                icon: Settings,
-                            },
-                        ].map((tab) => {
-                            const Icon = tab.icon;
-                            const isActive = activeTab === tab.id;
-                            return (
-                                <Button
-                                    key={tab.id}
-                                    variant={isActive ? "default" : "outline"}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`rounded-xl ${
-                                        isActive
-                                            ? "bg-gradient-to-r from-violet-500 to-purple-500 border-0"
-                                            : "border-violet-200 dark:border-violet-700"
-                                    }`}
-                                >
-                                    <Icon className="w-4 h-4 mr-2" />
-                                    {tab.label}
-                                </Button>
-                            );
-                        })}
-                    </div>
+        <div className="min-h-screen relative overflow-hidden pb-24">
+            <div className="absolute inset-0 bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900" />
+            <div className="relative z-10 max-w-4xl mx-auto px-4 py-6">
+                <div className="flex items-center justify-between mb-6">
+                    <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
+                        우리의 기록
+                    </h1>
+                    <Button
+                        onClick={() => {
+                            setEditingPet(null);
+                            setIsPetModalOpen(true);
+                        }}
+                        className="bg-[#05B2DC] hover:bg-[#0891B2]"
+                    >
+                        <Plus className="w-4 h-4 mr-2" />새 반려동물
+                    </Button>
                 </div>
 
-                {/* 탭 컨텐츠 */}
-                {renderTabContent()}
-            </div>
-        </div>
-    );
-}
-
-/* ==================== 대시보드 탭 ==================== */
-function DashboardTab({
-    displayName,
-    userEmail,
-    joinDate,
-    isSubscribed,
-    onSubscribe,
-}: {
-    displayName: string;
-    userEmail: string;
-    joinDate: string;
-    isSubscribed: boolean;
-    onSubscribe: () => void;
-}) {
-    return (
-        <div className="space-y-6">
-            {/* 프로필 카드 */}
-            <Card className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 rounded-2xl">
-                <CardContent className="p-6">
-                    <div className="flex items-center gap-4">
-                        <div className="w-20 h-20 bg-gradient-to-r from-violet-500 to-purple-500 rounded-full flex items-center justify-center">
-                            <User className="w-10 h-10 text-white" />
-                        </div>
-                        <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                                <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">
-                                    {displayName}
-                                </h2>
-                                {isSubscribed && (
-                                    <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs">
-                                        <Crown className="w-3 h-3 mr-1" />
-                                        프리미엄
-                                    </Badge>
-                                )}
+                {pets.length === 0 ? (
+                    <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+                        <CardContent className="flex flex-col items-center justify-center py-16">
+                            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD] flex items-center justify-center mb-4">
+                                <PawPrint className="w-10 h-10 text-[#05B2DC]" />
                             </div>
-                            <p className="text-gray-500 dark:text-gray-400 text-sm">
-                                {userEmail}
+                            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">
+                                아직 등록된 반려동물이 없어요
+                            </h3>
+                            <p className="text-gray-500 text-center mb-6">
+                                소중한 반려동물을 등록하고
+                                <br />
+                                함께한 추억을 기록해보세요
                             </p>
-                            <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">
-                                가입일: {joinDate}
-                            </p>
-                        </div>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="rounded-xl"
-                        >
-                            <Pencil className="w-4 h-4 mr-1" />
-                            수정
-                        </Button>
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* 통계 카드 */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[
-                    {
-                        label: "등록된 반려동물",
-                        value: "1",
-                        icon: PawPrint,
-                        color: "violet",
-                    },
-                    {
-                        label: "기록한 순간",
-                        value: "234",
-                        icon: Camera,
-                        color: "blue",
-                    },
-                    {
-                        label: "작성한 글",
-                        value: "12",
-                        icon: FileText,
-                        color: "emerald",
-                    },
-                    {
-                        label: "받은 좋아요",
-                        value: "89",
-                        icon: Heart,
-                        color: "rose",
-                    },
-                ].map((stat) => {
-                    const Icon = stat.icon;
-                    return (
-                        <Card
-                            key={stat.label}
-                            className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 rounded-2xl"
-                        >
-                            <CardContent className="p-4 text-center">
-                                <Icon
-                                    className={`w-8 h-8 mx-auto mb-2 text-${stat.color}-500`}
-                                />
-                                <div className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-                                    {stat.value}
-                                </div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400">
-                                    {stat.label}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    );
-                })}
-            </div>
-
-            {/* 구독 배너 (무료 유저만) */}
-            {!isSubscribed && (
-                <Card className="bg-gradient-to-r from-violet-500 to-purple-500 border-0 rounded-2xl overflow-hidden">
-                    <CardContent className="p-6 text-white">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <div className="flex items-center gap-2 mb-2">
-                                    <Crown className="w-6 h-6" />
-                                    <h3 className="text-lg font-bold">
-                                        프리미엄으로 업그레이드
-                                    </h3>
-                                </div>
-                                <p className="text-white/80 text-sm">
-                                    반려동물 무제한 등록 · AI 펫톡 무제한 ·
-                                    프리미엄 테마
-                                </p>
-                            </div>
                             <Button
-                                className="bg-white text-violet-600 hover:bg-gray-100 rounded-xl"
-                                onClick={onSubscribe}
+                                onClick={() => {
+                                    setEditingPet(null);
+                                    setIsPetModalOpen(true);
+                                }}
+                                className="bg-gradient-to-r from-[#05B2DC] to-[#38BDF8]"
                             >
-                                월 7,900원
+                                <Plus className="w-4 h-4 mr-2" />
+                                반려동물 등록하기
                             </Button>
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
-
-            {/* 최근 활동 */}
-            <Card className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 rounded-2xl">
-                <CardHeader>
-                    <CardTitle className="text-lg">최근 활동</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                    {MOCK_ACTIVITIES.map((activity, i) => {
-                        const Icon = activity.icon;
-                        return (
-                            <div
-                                key={i}
-                                className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                            >
-                                <div className="w-10 h-10 bg-violet-100 dark:bg-violet-900/50 rounded-full flex items-center justify-center">
-                                    <Icon className="w-5 h-5 text-violet-600 dark:text-violet-400" />
-                                </div>
-                                <div className="flex-1">
-                                    <p className="text-sm text-gray-800 dark:text-gray-100">
-                                        {activity.title}
-                                    </p>
-                                    <p className="text-xs text-gray-400">
-                                        {activity.time}
-                                    </p>
-                                </div>
-                                <ChevronRight className="w-4 h-4 text-gray-400" />
-                            </div>
-                        );
-                    })}
-                </CardContent>
-            </Card>
-        </div>
-    );
-}
-
-/* ==================== 내 반려동물 탭 ==================== */
-function PetsTab({
-    pets,
-    isSubscribed,
-    onSubscribe,
-}: {
-    pets: typeof MOCK_PETS;
-    isSubscribed: boolean;
-    onSubscribe: () => void;
-}) {
-    const [selectedPet, setSelectedPet] = useState<string | null>(
-        pets[0]?.id || null,
-    );
-    const [viewMode, setViewMode] = useState<"grid" | "list">("list");
-
-    const currentPet = pets.find((p) => p.id === selectedPet);
-    const canAddPet = isSubscribed || pets.length < 1;
-
-    return (
-        <div className="space-y-6">
-            {/* 반려동물 선택 */}
-            <div className="flex gap-3 overflow-x-auto pb-2">
-                {pets.map((pet) => (
-                    <button
-                        key={pet.id}
-                        onClick={() => setSelectedPet(pet.id)}
-                        className={`flex-shrink-0 flex items-center gap-3 p-3 rounded-2xl border-2 transition-all ${
-                            selectedPet === pet.id
-                                ? "bg-violet-100 dark:bg-violet-900/50 border-violet-500"
-                                : "bg-white/60 dark:bg-gray-800/60 border-transparent hover:border-violet-200"
-                        }`}
-                    >
-                        <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200">
-                            {pet.image && (
-                                <img
-                                    src={pet.image}
-                                    alt={pet.name}
-                                    className="w-full h-full object-cover"
-                                />
-                            )}
-                        </div>
-                        <div className="text-left">
-                            <div className="flex items-center gap-1">
-                                <span className="font-bold text-gray-800 dark:text-gray-100">
-                                    {pet.name}
-                                </span>
-                                {pet.isPrimary && (
-                                    <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-                                )}
-                            </div>
-                            <span className="text-xs text-gray-500">
-                                {pet.breed}
-                            </span>
-                        </div>
-                    </button>
-                ))}
-
-                {/* 추가 버튼 */}
-                <button
-                    onClick={() => {
-                        if (!canAddPet) {
-                            onSubscribe();
-                        } else {
-                            // TODO: 반려동물 추가 모달
-                            alert("반려동물 추가 기능 준비 중");
-                        }
-                    }}
-                    className="flex-shrink-0 flex items-center gap-2 p-3 rounded-2xl border-2 border-dashed border-violet-300 dark:border-violet-700 text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/30 transition-all"
-                >
-                    <div className="w-12 h-12 rounded-full bg-violet-100 dark:bg-violet-900/50 flex items-center justify-center">
-                        <Plus className="w-6 h-6" />
-                    </div>
-                    <div className="text-left">
-                        <span className="font-medium">추가하기</span>
-                        {!canAddPet && (
-                            <div className="flex items-center gap-1 text-xs text-amber-600">
-                                <Crown className="w-3 h-3" />
-                                프리미엄
-                            </div>
-                        )}
-                    </div>
-                </button>
-            </div>
-
-            {/* 선택된 반려동물 정보 */}
-            {currentPet && (
-                <>
-                    {/* 프로필 카드 */}
-                    <Card className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 rounded-2xl overflow-hidden">
-                        <div className="flex">
-                            <div className="w-32 h-32 sm:w-40 sm:h-40 flex-shrink-0">
-                                {currentPet.image && (
-                                    <img
-                                        src={currentPet.image}
-                                        alt={currentPet.name}
-                                        className="w-full h-full object-cover"
-                                    />
-                                )}
-                            </div>
-                            <div className="flex-1 p-4">
-                                <div className="flex items-center justify-between mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">
-                                            {currentPet.name}
-                                        </h2>
-                                        <Badge className="bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300">
-                                            {currentPet.type}
-                                        </Badge>
-                                    </div>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="rounded-lg"
-                                    >
-                                        <MoreHorizontal className="w-4 h-4" />
-                                    </Button>
-                                </div>
-                                <p className="text-gray-600 dark:text-gray-300 text-sm mb-3">
-                                    {currentPet.breed} · {currentPet.gender} ·{" "}
-                                    {currentPet.age}
-                                </p>
-                                <div className="flex gap-4 text-sm">
-                                    <div className="flex items-center gap-1 text-gray-500">
-                                        <Calendar className="w-4 h-4" />
-                                        <span>{currentPet.birthday}</span>
-                                    </div>
-                                    <div className="flex items-center gap-1 text-violet-600">
-                                        <Heart className="w-4 h-4 fill-current" />
-                                        <span>함께한 지 1,392일</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="flex border-t border-gray-200/50 dark:border-gray-700/50">
-                            <div className="flex-1 py-3 text-center border-r border-gray-200/50 dark:border-gray-700/50">
-                                <div className="text-xl font-bold text-gray-800 dark:text-gray-100">
-                                    {currentPet.recordCount}
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                    기록
-                                </div>
-                            </div>
-                            <div className="flex-1 py-3 text-center">
-                                <div className="text-xl font-bold text-gray-800 dark:text-gray-100">
-                                    {currentPet.photoCount}
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                    사진
-                                </div>
-                            </div>
-                        </div>
+                        </CardContent>
                     </Card>
-
-                    {/* 새 기록 버튼 */}
-                    <div className="grid grid-cols-3 gap-3">
-                        <Button className="h-auto py-4 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 rounded-2xl flex flex-col items-center gap-2">
-                            <Camera className="w-6 h-6" />
-                            <span className="text-sm">사진 기록</span>
-                        </Button>
-                        <Button
-                            variant="outline"
-                            className="h-auto py-4 rounded-2xl flex flex-col items-center gap-2 border-violet-200 dark:border-violet-700"
-                        >
-                            <Pencil className="w-6 h-6 text-violet-600 dark:text-violet-400" />
-                            <span className="text-sm">메모 남기기</span>
-                        </Button>
-                        <Button
-                            variant="outline"
-                            className="h-auto py-4 rounded-2xl flex flex-col items-center gap-2 border-violet-200 dark:border-violet-700"
-                        >
-                            <Star className="w-6 h-6 text-violet-600 dark:text-violet-400" />
-                            <span className="text-sm">특별한 날</span>
-                        </Button>
-                    </div>
-
-                    {/* 뷰 모드 & 기록 */}
-                    <div className="flex items-center justify-between">
-                        <h3 className="font-bold text-gray-800 dark:text-gray-100">
-                            기록
-                        </h3>
-                        <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setViewMode("list")}
-                                className={`rounded-lg ${viewMode === "list" ? "bg-white dark:bg-gray-700 shadow-sm" : ""}`}
-                            >
-                                <List className="w-4 h-4" />
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setViewMode("grid")}
-                                className={`rounded-lg ${viewMode === "grid" ? "bg-white dark:bg-gray-700 shadow-sm" : ""}`}
-                            >
-                                <Grid3X3 className="w-4 h-4" />
-                            </Button>
-                        </div>
-                    </div>
-
-                    {/* 기록 목록 */}
-                    {viewMode === "list" ? (
-                        <div className="space-y-3">
-                            {MOCK_RECORDS.map((record) => (
-                                <Card
-                                    key={record.id}
-                                    className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 rounded-2xl cursor-pointer hover:shadow-md transition-all"
-                                >
-                                    <CardContent className="p-4 flex gap-4">
-                                        {record.image && (
-                                            <div className="w-20 h-20 rounded-xl overflow-hidden bg-gray-100">
-                                                <img
-                                                    src={record.image}
-                                                    alt={record.title}
-                                                    className="w-full h-full object-cover"
-                                                />
+                ) : (
+                    <>
+                        <div className="mb-6">
+                            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                                {pets.map((pet) => (
+                                    <div
+                                        key={pet.id}
+                                        className="relative flex-shrink-0"
+                                    >
+                                        <button
+                                            onClick={() => selectPet(pet.id)}
+                                            className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${selectedPetId === pet.id ? "bg-[#05B2DC] text-white shadow-lg" : "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"}`}
+                                        >
+                                            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow">
+                                                {pet.profileImage ? (
+                                                    <img
+                                                        src={pet.profileImage}
+                                                        alt={pet.name}
+                                                        className="w-full h-full object-cover"
+                                                        style={{
+                                                            objectPosition:
+                                                                pet.profileCropPosition
+                                                                    ? `${pet.profileCropPosition.x}% ${pet.profileCropPosition.y}%`
+                                                                    : "center",
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD] flex items-center justify-center">
+                                                        <PawPrint className="w-6 h-6 text-[#05B2DC]" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="text-left">
+                                                <div className="flex items-center gap-1">
+                                                    <span className="font-semibold">
+                                                        {pet.name}
+                                                    </span>
+                                                    {pet.isPrimary && (
+                                                        <Crown className="w-3 h-3 text-amber-400" />
+                                                    )}
+                                                    {pet.status ===
+                                                        "memorial" && (
+                                                        <Star className="w-3 h-3 text-amber-400" />
+                                                    )}
+                                                </div>
+                                                <span
+                                                    className={`text-xs ${selectedPetId === pet.id ? "text-white/80" : "text-gray-500"}`}
+                                                >
+                                                    {pet.breed}{" "}
+                                                    {pet.birthday &&
+                                                        `· ${calculateAge(pet.birthday)}`}
+                                                </span>
+                                            </div>
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setShowPetMenu(
+                                                    showPetMenu === pet.id
+                                                        ? null
+                                                        : pet.id,
+                                                );
+                                            }}
+                                            className={`absolute -top-1 -right-1 p-1 rounded-full ${selectedPetId === pet.id ? "bg-white/20 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-500"}`}
+                                        >
+                                            <MoreHorizontal className="w-4 h-4" />
+                                        </button>
+                                        {showPetMenu === pet.id && (
+                                            <div className="absolute top-full right-0 mt-1 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-10 min-w-[120px]">
+                                                <button
+                                                    onClick={() => {
+                                                        setEditingPet(pet);
+                                                        setIsPetModalOpen(true);
+                                                        setShowPetMenu(null);
+                                                    }}
+                                                    className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+                                                >
+                                                    <Pencil className="w-4 h-4" />
+                                                    수정
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        setPetToDelete(pet);
+                                                        setShowPetMenu(null);
+                                                    }}
+                                                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                    삭제
+                                                </button>
                                             </div>
                                         )}
-                                        <div className="flex-1">
-                                            <h4 className="font-bold text-gray-800 dark:text-gray-100">
-                                                {record.title}
-                                            </h4>
-                                            <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
-                                                <Calendar className="w-3 h-3" />
-                                                {record.date}
-                                            </p>
+                                    </div>
+                                ))}
+                                <button
+                                    onClick={() => {
+                                        setEditingPet(null);
+                                        setIsPetModalOpen(true);
+                                    }}
+                                    className="flex-shrink-0 w-12 h-full min-h-[72px] rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center hover:border-[#05B2DC] transition-colors"
+                                >
+                                    <Plus className="w-5 h-5 text-gray-400" />
+                                </button>
+                            </div>
+                        </div>
+
+                        {selectedPet && (
+                            <>
+                                <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm mb-6">
+                                    <CardContent className="p-6">
+                                        <div className="flex items-start gap-6">
+                                            <div className="relative">
+                                                <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-lg">
+                                                    {selectedPet.profileImage ? (
+                                                        <img
+                                                            src={
+                                                                selectedPet.profileImage
+                                                            }
+                                                            alt={
+                                                                selectedPet.name
+                                                            }
+                                                            className="w-full h-full object-cover"
+                                                            style={{
+                                                                objectPosition:
+                                                                    selectedPet.profileCropPosition
+                                                                        ? `${selectedPet.profileCropPosition.x}% ${selectedPet.profileCropPosition.y}%`
+                                                                        : "center",
+                                                            }}
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-full bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD] flex items-center justify-center">
+                                                            <PawPrint className="w-10 h-10 text-[#05B2DC]" />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <Badge
+                                                    className={`absolute -bottom-2 left-1/2 -translate-x-1/2 text-xs ${selectedPet.status === "memorial" ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"}`}
+                                                >
+                                                    {selectedPet.status ===
+                                                    "memorial" ? (
+                                                        <>
+                                                            <Star className="w-3 h-3 mr-1" />
+                                                            추억 속에
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Heart className="w-3 h-3 mr-1" />
+                                                            함께하는 중
+                                                        </>
+                                                    )}
+                                                </Badge>
+                                            </div>
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <h2 className="text-xl font-bold text-gray-800 dark:text-white">
+                                                        {selectedPet.name}
+                                                    </h2>
+                                                    {selectedPet.isPrimary && (
+                                                        <Badge className="bg-amber-100 text-amber-700 text-xs">
+                                                            <Crown className="w-3 h-3 mr-1" />
+                                                            대표
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                                <p className="text-gray-500 dark:text-gray-400 text-sm mb-3">
+                                                    {selectedPet.type} ·{" "}
+                                                    {selectedPet.breed} ·{" "}
+                                                    {selectedPet.gender}
+                                                </p>
+                                                <div className="flex flex-wrap gap-2 text-sm">
+                                                    {selectedPet.birthday && (
+                                                        <span className="flex items-center gap-1 text-gray-600 dark:text-gray-300">
+                                                            <Calendar className="w-4 h-4" />
+                                                            {calculateAge(
+                                                                selectedPet.birthday,
+                                                            )}
+                                                        </span>
+                                                    )}
+                                                    {selectedPet.weight && (
+                                                        <span className="flex items-center gap-1 text-gray-600 dark:text-gray-300">
+                                                            <Star className="w-4 h-4" />
+                                                            {selectedPet.weight}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {selectedPet.personality && (
+                                                    <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">
+                                                        {
+                                                            selectedPet.personality
+                                                        }
+                                                    </p>
+                                                )}
+                                            </div>
                                         </div>
                                     </CardContent>
                                 </Card>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-3 gap-2">
-                            {MOCK_RECORDS.filter((r) => r.image).map(
-                                (record) => (
-                                    <div
-                                        key={record.id}
-                                        className="aspect-square rounded-xl overflow-hidden bg-gray-100 cursor-pointer hover:opacity-90 transition-opacity"
-                                    >
-                                        <img
-                                            src={record.image!}
-                                            alt={record.title}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    </div>
-                                ),
-                            )}
-                        </div>
-                    )}
-                </>
-            )}
 
-            {pets.length === 0 && (
-                <div className="text-center py-16">
-                    <div className="w-20 h-20 bg-violet-100 dark:bg-violet-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <PawPrint className="w-10 h-10 text-violet-500" />
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">
-                        아직 등록된 반려동물이 없어요
-                    </h3>
-                    <p className="text-gray-500 mb-4">
-                        첫 번째 반려동물을 등록해보세요
-                    </p>
-                    <Button className="bg-gradient-to-r from-violet-500 to-purple-500 rounded-xl">
-                        <Plus className="w-4 h-4 mr-2" />
-                        반려동물 등록하기
-                    </Button>
-                </div>
-            )}
-        </div>
-    );
-}
-
-/* ==================== 설정 탭 ==================== */
-function SettingsTab({
-    displayName,
-    userEmail,
-    isSubscribed,
-    onSignOut,
-    onSubscribe,
-}: {
-    displayName: string;
-    userEmail: string;
-    isSubscribed: boolean;
-    onSignOut: () => void;
-    onSubscribe: () => void;
-}) {
-    return (
-        <div className="space-y-6">
-            {/* 계정 설정 */}
-            <Card className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 rounded-2xl">
-                <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                        <User className="w-5 h-5" />
-                        계정 설정
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-violet-100 dark:bg-violet-900/50 rounded-full flex items-center justify-center">
-                                <User className="w-5 h-5 text-violet-600" />
-                            </div>
-                            <div>
-                                <p className="font-medium text-gray-800 dark:text-gray-100">
-                                    닉네임
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                    {displayName}
-                                </p>
-                            </div>
-                        </div>
-                        <ChevronRight className="w-5 h-5 text-gray-400" />
-                    </div>
-                    <div className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
-                                <Mail className="w-5 h-5 text-blue-600" />
-                            </div>
-                            <div>
-                                <p className="font-medium text-gray-800 dark:text-gray-100">
-                                    이메일
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                    {userEmail}
-                                </p>
-                            </div>
-                        </div>
-                        <ChevronRight className="w-5 h-5 text-gray-400" />
-                    </div>
-                    <div className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center">
-                                <Shield className="w-5 h-5 text-emerald-600" />
-                            </div>
-                            <div>
-                                <p className="font-medium text-gray-800 dark:text-gray-100">
-                                    비밀번호 변경
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                    보안을 위해 주기적으로 변경해주세요
-                                </p>
-                            </div>
-                        </div>
-                        <ChevronRight className="w-5 h-5 text-gray-400" />
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* 구독 설정 */}
-            <Card className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 rounded-2xl">
-                <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                        <CreditCard className="w-5 h-5" />
-                        구독 관리
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-900/30 dark:to-purple-900/30">
-                        <div>
-                            <div className="flex items-center gap-2 mb-1">
-                                {isSubscribed ? (
-                                    <>
-                                        <Crown className="w-5 h-5 text-amber-500" />
-                                        <span className="font-bold text-gray-800 dark:text-gray-100">
-                                            프리미엄 플랜
-                                        </span>
-                                    </>
-                                ) : (
-                                    <span className="font-bold text-gray-800 dark:text-gray-100">
-                                        무료 플랜
-                                    </span>
-                                )}
-                            </div>
-                            <p className="text-sm text-gray-500">
-                                {isSubscribed
-                                    ? "모든 프리미엄 기능을 이용 중입니다"
-                                    : "반려동물 1마리 · AI 펫톡 하루 15회"}
-                            </p>
-                        </div>
-                        {!isSubscribed && (
-                            <Button
-                                className="bg-gradient-to-r from-violet-500 to-purple-500 rounded-xl"
-                                onClick={onSubscribe}
-                            >
-                                업그레이드
-                            </Button>
+                                <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+                                    <CardHeader className="flex flex-row items-center justify-between">
+                                        <CardTitle className="text-lg">
+                                            사진 앨범
+                                            <span className="text-sm font-normal text-gray-500 ml-2">
+                                                {selectedPet.photos.length}장
+                                            </span>
+                                        </CardTitle>
+                                        <div className="flex items-center gap-2">
+                                            {selectedPet.photos.length > 0 && (
+                                                <Button
+                                                    variant={
+                                                        isSelectMode
+                                                            ? "default"
+                                                            : "outline"
+                                                    }
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        setIsSelectMode(
+                                                            !isSelectMode,
+                                                        );
+                                                        setSelectedPhotos([]);
+                                                    }}
+                                                    className={
+                                                        isSelectMode
+                                                            ? "bg-gray-500 hover:bg-gray-600"
+                                                            : ""
+                                                    }
+                                                >
+                                                    {isSelectMode
+                                                        ? "취소"
+                                                        : "선택"}
+                                                </Button>
+                                            )}
+                                            {isSelectMode && (
+                                                <>
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={
+                                                            handleSelectAll
+                                                        }
+                                                    >
+                                                        {selectedPhotos.length ===
+                                                        selectedPet.photos
+                                                            .length
+                                                            ? "전체 해제"
+                                                            : "전체 선택"}
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        onClick={
+                                                            handleDeleteSelected
+                                                        }
+                                                        disabled={
+                                                            selectedPhotos.length ===
+                                                            0
+                                                        }
+                                                        className="bg-red-500 hover:bg-red-600 text-white"
+                                                    >
+                                                        <Trash2 className="w-4 h-4 mr-1" />
+                                                        {selectedPhotos.length}
+                                                        장 삭제
+                                                    </Button>
+                                                </>
+                                            )}
+                                            {!isSelectMode && (
+                                                <>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() =>
+                                                            setViewMode(
+                                                                viewMode ===
+                                                                    "grid"
+                                                                    ? "list"
+                                                                    : "grid",
+                                                            )
+                                                        }
+                                                    >
+                                                        {viewMode === "grid" ? (
+                                                            <List className="w-4 h-4" />
+                                                        ) : (
+                                                            <Grid3X3 className="w-4 h-4" />
+                                                        )}
+                                                    </Button>
+                                                    <Button
+                                                        onClick={() =>
+                                                            setIsPhotoUploadOpen(
+                                                                true,
+                                                            )
+                                                        }
+                                                        size="sm"
+                                                        className="bg-[#05B2DC] hover:bg-[#0891B2]"
+                                                    >
+                                                        <Plus className="w-4 h-4 mr-1" />
+                                                        사진 추가
+                                                    </Button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent>
+                                        {selectedPet.photos.length === 0 ? (
+                                            <div className="text-center py-12">
+                                                <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mx-auto mb-4">
+                                                    <ImageIcon className="w-8 h-8 text-gray-400" />
+                                                </div>
+                                                <p className="text-gray-500 mb-4">
+                                                    아직 등록된 사진이 없어요
+                                                </p>
+                                                <Button
+                                                    onClick={() =>
+                                                        setIsPhotoUploadOpen(
+                                                            true,
+                                                        )
+                                                    }
+                                                    variant="outline"
+                                                    className="border-[#05B2DC] text-[#05B2DC]"
+                                                >
+                                                    <Camera className="w-4 h-4 mr-2" />
+                                                    사진 추가하기
+                                                </Button>
+                                            </div>
+                                        ) : viewMode === "grid" ? (
+                                            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                                                {selectedPet.photos.map(
+                                                    (photo) => (
+                                                        <div
+                                                            key={photo.id}
+                                                            onClick={() => {
+                                                                if (
+                                                                    isSelectMode
+                                                                )
+                                                                    togglePhotoSelect(
+                                                                        photo.id,
+                                                                    );
+                                                                else
+                                                                    setViewingPhoto(
+                                                                        photo,
+                                                                    );
+                                                            }}
+                                                            className={`aspect-square rounded-xl overflow-hidden cursor-pointer transition-all relative group ${isSelectMode && selectedPhotos.includes(photo.id) ? "ring-4 ring-[#05B2DC]" : "hover:opacity-90"}`}
+                                                        >
+                                                            <img
+                                                                src={photo.url}
+                                                                alt={
+                                                                    photo.caption
+                                                                }
+                                                                className="w-full h-full object-cover"
+                                                                style={{
+                                                                    objectPosition:
+                                                                        photo.cropPosition
+                                                                            ? `${photo.cropPosition.x}% ${photo.cropPosition.y}%`
+                                                                            : "center",
+                                                                }}
+                                                            />
+                                                            {isSelectMode && (
+                                                                <div
+                                                                    className={`absolute top-2 left-2 w-6 h-6 rounded-full border-2 flex items-center justify-center ${selectedPhotos.includes(photo.id) ? "bg-[#05B2DC] border-[#05B2DC]" : "bg-white/80 border-gray-300"}`}
+                                                                >
+                                                                    {selectedPhotos.includes(
+                                                                        photo.id,
+                                                                    ) && (
+                                                                        <Check className="w-4 h-4 text-white" />
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                            {!isSelectMode && (
+                                                                <button
+                                                                    onClick={(
+                                                                        e,
+                                                                    ) => {
+                                                                        e.stopPropagation();
+                                                                        if (
+                                                                            confirm(
+                                                                                "삭제하시겠습니까?",
+                                                                            )
+                                                                        )
+                                                                            deletePhoto(
+                                                                                selectedPet.id,
+                                                                                photo.id,
+                                                                            );
+                                                                    }}
+                                                                    className="absolute top-1 right-1 p-1 bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                >
+                                                                    <X className="w-3 h-3" />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    ),
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-3">
+                                                {selectedPet.photos.map(
+                                                    (photo) => (
+                                                        <div
+                                                            key={photo.id}
+                                                            onClick={() => {
+                                                                if (
+                                                                    isSelectMode
+                                                                )
+                                                                    togglePhotoSelect(
+                                                                        photo.id,
+                                                                    );
+                                                                else
+                                                                    setViewingPhoto(
+                                                                        photo,
+                                                                    );
+                                                            }}
+                                                            className={`flex gap-4 p-3 rounded-xl cursor-pointer transition-colors group ${isSelectMode && selectedPhotos.includes(photo.id) ? "bg-[#E0F7FF] ring-2 ring-[#05B2DC]" : "bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100"}`}
+                                                        >
+                                                            {isSelectMode && (
+                                                                <div
+                                                                    className={`self-center w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${selectedPhotos.includes(photo.id) ? "bg-[#05B2DC] border-[#05B2DC]" : "bg-white border-gray-300"}`}
+                                                                >
+                                                                    {selectedPhotos.includes(
+                                                                        photo.id,
+                                                                    ) && (
+                                                                        <Check className="w-4 h-4 text-white" />
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                            <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                                                                <img
+                                                                    src={
+                                                                        photo.url
+                                                                    }
+                                                                    alt={
+                                                                        photo.caption
+                                                                    }
+                                                                    className="w-full h-full object-cover"
+                                                                    style={{
+                                                                        objectPosition:
+                                                                            photo.cropPosition
+                                                                                ? `${photo.cropPosition.x}% ${photo.cropPosition.y}%`
+                                                                                : "center",
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <p className="font-medium text-gray-800 dark:text-white">
+                                                                    {photo.caption ||
+                                                                        selectedPet.name}
+                                                                </p>
+                                                                <p className="text-sm text-gray-500">
+                                                                    {photo.date}
+                                                                </p>
+                                                            </div>
+                                                            {!isSelectMode && (
+                                                                <button
+                                                                    onClick={(
+                                                                        e,
+                                                                    ) => {
+                                                                        e.stopPropagation();
+                                                                        if (
+                                                                            confirm(
+                                                                                "삭제하시겠습니까?",
+                                                                            )
+                                                                        )
+                                                                            deletePhoto(
+                                                                                selectedPet.id,
+                                                                                photo.id,
+                                                                            );
+                                                                    }}
+                                                                    className="self-center p-2 text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    ),
+                                                )}
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </>
                         )}
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* 알림 설정 */}
-            <Card className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 rounded-2xl">
-                <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                        <Bell className="w-5 h-5" />
-                        알림 설정
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    {[
-                        { label: "커뮤니티 알림", desc: "댓글, 좋아요 알림" },
-                        { label: "AI 펫톡 알림", desc: "새로운 메시지 알림" },
-                        {
-                            label: "이벤트 알림",
-                            desc: "프로모션 및 이벤트 정보",
-                        },
-                    ].map((item, i) => (
-                        <div
-                            key={i}
-                            className="flex items-center justify-between p-3 rounded-xl"
-                        >
-                            <div>
-                                <p className="font-medium text-gray-800 dark:text-gray-100">
-                                    {item.label}
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                    {item.desc}
-                                </p>
-                            </div>
-                            <div className="w-12 h-7 bg-violet-500 rounded-full relative cursor-pointer">
-                                <div className="absolute right-1 top-1 w-5 h-5 bg-white rounded-full shadow" />
-                            </div>
-                        </div>
-                    ))}
-                </CardContent>
-            </Card>
-
-            {/* 로그아웃 */}
-            <Button
-                variant="outline"
-                className="w-full h-12 rounded-xl border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
-                onClick={onSignOut}
-            >
-                로그아웃
-            </Button>
-        </div>
-    );
-}
-
-/* ==================== 구독 모달 ==================== */
-function SubscribeModal({ onClose }: { onClose: () => void }) {
-    return (
-        <div
-            className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
-            onClick={(e) => {
-                if (e.target === e.currentTarget) onClose();
-            }}
-        >
-            <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden">
-                {/* 헤더 */}
-                <div className="bg-gradient-to-r from-violet-500 to-purple-500 p-6 text-white text-center">
-                    <Crown className="w-12 h-12 mx-auto mb-3" />
-                    <h2 className="text-2xl font-bold">프리미엄 구독</h2>
-                    <p className="text-white/80 mt-1">
-                        더 많은 기능을 만나보세요
-                    </p>
-                </div>
-
-                {/* 혜택 */}
-                <div className="p-6 space-y-4">
-                    {[
-                        { icon: PawPrint, text: "반려동물 무제한 등록" },
-                        { icon: MessageCircle, text: "AI 펫톡 무제한 이용" },
-                        { icon: Sparkles, text: "프리미엄 테마 & 스티커" },
-                        { icon: Image, text: "고화질 사진 저장" },
-                    ].map((item, i) => {
-                        const Icon = item.icon;
-                        return (
-                            <div key={i} className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-violet-100 dark:bg-violet-900/50 rounded-full flex items-center justify-center">
-                                    <Icon className="w-5 h-5 text-violet-600 dark:text-violet-400" />
-                                </div>
-                                <span className="text-gray-800 dark:text-gray-100">
-                                    {item.text}
-                                </span>
-                            </div>
-                        );
-                    })}
-
-                    {/* 가격 */}
-                    <div className="text-center pt-4 border-t border-gray-200 dark:border-gray-700">
-                        <div className="text-4xl font-bold text-gray-800 dark:text-gray-100">
-                            월 7,900원
-                        </div>
-                        <p className="text-gray-500 text-sm mt-1">
-                            언제든 해지 가능
-                        </p>
-                    </div>
-
-                    {/* 버튼 */}
-                    <Button className="w-full h-12 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 rounded-xl">
-                        구독 시작하기
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        className="w-full"
-                        onClick={onClose}
-                    >
-                        나중에 할게요
-                    </Button>
-                </div>
+                    </>
+                )}
             </div>
+
+            <PetModal
+                isOpen={isPetModalOpen}
+                onClose={() => {
+                    setIsPetModalOpen(false);
+                    setEditingPet(null);
+                }}
+                pet={editingPet}
+                onSave={handleSavePet}
+            />
+            <PhotoUploadModal
+                isOpen={isPhotoUploadOpen}
+                onClose={() => setIsPhotoUploadOpen(false)}
+                onUpload={handlePhotoUpload}
+            />
+            {viewingPhoto && selectedPet && (
+                <PhotoViewer
+                    photo={viewingPhoto}
+                    petName={selectedPet.name}
+                    onClose={() => setViewingPhoto(null)}
+                    onDelete={() => {
+                        deletePhoto(selectedPet.id, viewingPhoto.id);
+                        setViewingPhoto(null);
+                    }}
+                />
+            )}
+            <DeleteConfirmModal
+                isOpen={!!petToDelete}
+                onClose={() => setPetToDelete(null)}
+                onConfirm={() => {
+                    if (petToDelete) deletePet(petToDelete.id);
+                }}
+                title="반려동물 삭제"
+                message={`"${petToDelete?.name}"의 모든 기록이 삭제됩니다.`}
+            />
+            {showPetMenu && (
+                <div
+                    className="fixed inset-0 z-0"
+                    onClick={() => setShowPetMenu(null)}
+                />
+            )}
         </div>
     );
 }

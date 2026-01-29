@@ -1,11 +1,12 @@
 /**
  * AuthModal.tsx
  * 로그인/회원가입 모달
+ * initialMode prop으로 시작 모드 설정 가능
  */
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,93 +18,80 @@ import {
     Eye,
     EyeOff,
     Loader2,
+    CheckCircle,
     AlertCircle,
 } from "lucide-react";
 
 interface AuthModalProps {
     isOpen: boolean;
     onClose: () => void;
+    initialMode?: "login" | "signup";
 }
 
-type AuthMode = "login" | "signup";
-
-export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
+export default function AuthModal({
+    isOpen,
+    onClose,
+    initialMode = "login",
+}: AuthModalProps) {
     const { signIn, signUp, signInWithGoogle, signInWithKakao } = useAuth();
 
-    const [mode, setMode] = useState<AuthMode>("login");
+    const [mode, setMode] = useState<"login" | "signup">(initialMode);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
     const [nickname, setNickname] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
 
+    // initialMode가 변경될 때 mode 업데이트
+    useEffect(() => {
+        setMode(initialMode);
+    }, [initialMode]);
+
+    // 모달이 열릴 때 상태 초기화
+    useEffect(() => {
+        if (isOpen) {
+            setEmail("");
+            setPassword("");
+            setNickname("");
+            setError(null);
+            setSuccess(null);
+        }
+    }, [isOpen]);
+
     if (!isOpen) return null;
-
-    const resetForm = () => {
-        setEmail("");
-        setPassword("");
-        setConfirmPassword("");
-        setNickname("");
-        setError(null);
-        setSuccess(null);
-    };
-
-    const switchMode = (newMode: AuthMode) => {
-        setMode(newMode);
-        resetForm();
-    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setLoading(true);
         setError(null);
         setSuccess(null);
 
-        // 유효성 검사
-        if (!email || !password) {
-            setError("이메일과 비밀번호를 입력해주세요.");
-            return;
-        }
-
-        if (mode === "signup") {
-            if (password !== confirmPassword) {
-                setError("비밀번호가 일치하지 않습니다.");
-                return;
-            }
-            if (password.length < 6) {
-                setError("비밀번호는 6자 이상이어야 합니다.");
-                return;
-            }
-        }
-
-        setLoading(true);
-
         try {
-            if (mode === "login") {
-                const { error } = await signIn(email, password);
-                if (error) {
-                    if (error.message.includes("Invalid login")) {
-                        setError("이메일 또는 비밀번호가 올바르지 않습니다.");
-                    } else {
-                        setError(error.message);
-                    }
-                } else {
-                    onClose();
-                }
-            } else {
+            if (mode === "signup") {
+                // 회원가입
                 const { error } = await signUp(email, password, nickname);
                 if (error) {
-                    if (error.message.includes("already registered")) {
-                        setError("이미 가입된 이메일입니다.");
-                    } else {
-                        setError(error.message);
-                    }
+                    setError(getErrorMessage(error.message));
                 } else {
                     setSuccess(
-                        "가입 확인 이메일을 발송했습니다. 이메일을 확인해주세요.",
+                        "회원가입이 완료되었습니다! 이메일을 확인해주세요.",
                     );
+                    // 3초 후 로그인 모드로 전환
+                    setTimeout(() => {
+                        setMode("login");
+                        setSuccess(null);
+                        setPassword("");
+                    }, 3000);
+                }
+            } else {
+                // 로그인
+                const { error } = await signIn(email, password);
+                if (error) {
+                    setError(getErrorMessage(error.message));
+                } else {
+                    onClose();
                 }
             }
         } catch (err) {
@@ -113,22 +101,36 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         }
     };
 
-    const handleGoogleLogin = async () => {
+    const handleSocialLogin = async (provider: "google" | "kakao") => {
         setLoading(true);
-        const { error } = await signInWithGoogle();
-        if (error) {
-            setError(error.message);
+        setError(null);
+
+        try {
+            if (provider === "google") {
+                await signInWithGoogle();
+            } else {
+                await signInWithKakao();
+            }
+        } catch (err) {
+            setError("소셜 로그인에 실패했습니다.");
+            setLoading(false);
         }
-        setLoading(false);
     };
 
-    const handleKakaoLogin = async () => {
-        setLoading(true);
-        const { error } = await signInWithKakao();
-        if (error) {
-            setError(error.message);
+    const getErrorMessage = (message: string) => {
+        if (message.includes("Invalid login credentials")) {
+            return "이메일 또는 비밀번호가 올바르지 않습니다.";
         }
-        setLoading(false);
+        if (message.includes("Email not confirmed")) {
+            return "이메일 인증이 필요합니다. 이메일을 확인해주세요.";
+        }
+        if (message.includes("User already registered")) {
+            return "이미 가입된 이메일입니다.";
+        }
+        if (message.includes("Password should be at least")) {
+            return "비밀번호는 최소 6자 이상이어야 합니다.";
+        }
+        return message;
     };
 
     return (
@@ -140,81 +142,96 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         >
             <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden">
                 {/* 헤더 */}
-                <div className="relative bg-gradient-to-r from-blue-500 to-sky-500 p-6 text-white">
+                <div className="relative bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] p-6 text-white">
                     <button
                         onClick={onClose}
-                        className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/20 transition-colors"
+                        className="absolute top-4 right-4 p-2 hover:bg-white/20 rounded-full transition-colors"
                     >
                         <X className="w-5 h-5" />
                     </button>
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                            <span className="text-2xl font-bold">M</span>
-                        </div>
-                        <div>
-                            <h2 className="text-2xl font-bold">
-                                {mode === "login" ? "로그인" : "회원가입"}
-                            </h2>
-                            <p className="text-white/80 text-sm">
-                                메멘토애니에 오신 것을 환영합니다
-                            </p>
-                        </div>
-                    </div>
+                    <h2 className="text-2xl font-bold">
+                        {mode === "login" ? "로그인" : "회원가입"}
+                    </h2>
+                    <p className="text-white/80 mt-1">
+                        {mode === "login"
+                            ? "메멘토애니에 오신 것을 환영합니다"
+                            : "반려동물과의 소중한 순간을 기록하세요"}
+                    </p>
                 </div>
 
                 {/* 폼 */}
-                <div className="p-6">
-                    {/* 에러/성공 메시지 */}
+                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                    {/* 에러 메시지 */}
                     {error && (
-                        <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl flex items-center gap-2 text-red-600 dark:text-red-400">
-                            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                            <span className="text-sm">{error}</span>
-                        </div>
-                    )}
-                    {success && (
-                        <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-xl text-green-600 dark:text-green-400">
-                            <span className="text-sm">{success}</span>
+                        <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl text-sm">
+                            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                            {error}
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        {/* 닉네임 (회원가입만) */}
-                        {mode === "signup" && (
+                    {/* 성공 메시지 */}
+                    {success && (
+                        <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-xl text-sm">
+                            <CheckCircle className="w-4 h-4 flex-shrink-0" />
+                            {success}
+                        </div>
+                    )}
+
+                    {/* 닉네임 (회원가입만) */}
+                    {mode === "signup" && (
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                닉네임
+                            </label>
                             <div className="relative">
                                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                 <Input
                                     type="text"
-                                    placeholder="닉네임"
+                                    placeholder="닉네임을 입력하세요"
                                     value={nickname}
                                     onChange={(e) =>
                                         setNickname(e.target.value)
                                     }
-                                    className="pl-11 h-12 rounded-xl bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+                                    className="pl-10 h-12 rounded-xl"
+                                    required
                                 />
                             </div>
-                        )}
+                        </div>
+                    )}
 
-                        {/* 이메일 */}
+                    {/* 이메일 */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            이메일
+                        </label>
                         <div className="relative">
                             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                             <Input
                                 type="email"
-                                placeholder="이메일"
+                                placeholder="이메일을 입력하세요"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="pl-11 h-12 rounded-xl bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+                                className="pl-10 h-12 rounded-xl"
+                                required
                             />
                         </div>
+                    </div>
 
-                        {/* 비밀번호 */}
+                    {/* 비밀번호 */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            비밀번호
+                        </label>
                         <div className="relative">
                             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                             <Input
                                 type={showPassword ? "text" : "password"}
-                                placeholder="비밀번호"
+                                placeholder="비밀번호를 입력하세요"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="pl-11 pr-11 h-12 rounded-xl bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+                                className="pl-10 pr-10 h-12 rounded-xl"
+                                required
+                                minLength={6}
                             />
                             <button
                                 type="button"
@@ -228,38 +245,27 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                                 )}
                             </button>
                         </div>
-
-                        {/* 비밀번호 확인 (회원가입만) */}
                         {mode === "signup" && (
-                            <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                <Input
-                                    type={showPassword ? "text" : "password"}
-                                    placeholder="비밀번호 확인"
-                                    value={confirmPassword}
-                                    onChange={(e) =>
-                                        setConfirmPassword(e.target.value)
-                                    }
-                                    className="pl-11 h-12 rounded-xl bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
-                                />
-                            </div>
+                            <p className="text-xs text-gray-500">
+                                최소 6자 이상 입력해주세요
+                            </p>
                         )}
+                    </div>
 
-                        {/* 제출 버튼 */}
-                        <Button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full h-12 bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 rounded-xl text-white font-medium"
-                        >
-                            {loading ? (
-                                <Loader2 className="w-5 h-5 animate-spin" />
-                            ) : mode === "login" ? (
-                                "로그인"
-                            ) : (
-                                "회원가입"
-                            )}
-                        </Button>
-                    </form>
+                    {/* 제출 버튼 */}
+                    <Button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full h-12 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-blue-600 hover:to-sky-600 rounded-xl text-base"
+                    >
+                        {loading ? (
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : mode === "login" ? (
+                            "로그인"
+                        ) : (
+                            "회원가입"
+                        )}
+                    </Button>
 
                     {/* 구분선 */}
                     <div className="relative my-6">
@@ -267,7 +273,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                             <div className="w-full border-t border-gray-200 dark:border-gray-700" />
                         </div>
                         <div className="relative flex justify-center text-sm">
-                            <span className="px-3 bg-white dark:bg-gray-900 text-gray-500">
+                            <span className="px-2 bg-white dark:bg-gray-900 text-gray-500">
                                 또는
                             </span>
                         </div>
@@ -278,9 +284,9 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                         <Button
                             type="button"
                             variant="outline"
-                            onClick={handleGoogleLogin}
+                            onClick={() => handleSocialLogin("google")}
                             disabled={loading}
-                            className="w-full h-12 rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+                            className="w-full h-12 rounded-xl"
                         >
                             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                                 <path
@@ -306,29 +312,34 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                         <Button
                             type="button"
                             variant="outline"
-                            onClick={handleKakaoLogin}
+                            onClick={() => handleSocialLogin("kakao")}
                             disabled={loading}
-                            className="w-full h-12 rounded-xl bg-[#FEE500] hover:bg-[#FDD800] border-[#FEE500] text-[#191919] font-medium"
+                            className="w-full h-12 rounded-xl bg-[#FEE500] hover:bg-[#FDD835] border-[#FEE500] text-[#191919]"
                         >
-                            <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                                <path
-                                    fill="#191919"
-                                    d="M12 3c5.8 0 10.5 3.66 10.5 8.18 0 4.52-4.7 8.18-10.5 8.18-1.04 0-2.04-.1-3-.3l-4.23 2.9.9-4.2C3.56 16.16 1.5 14.3 1.5 11.18 1.5 6.66 6.2 3 12 3z"
-                                />
+                            <svg
+                                className="w-5 h-5 mr-2"
+                                viewBox="0 0 24 24"
+                                fill="#191919"
+                            >
+                                <path d="M12 3C6.477 3 2 6.463 2 10.691c0 2.738 1.82 5.135 4.55 6.48-.168.607-.61 2.198-.7 2.543-.112.428.157.422.33.307.135-.09 2.15-1.46 3.02-2.048.57.083 1.16.127 1.8.127 5.523 0 10-3.463 10-7.409C22 6.463 17.523 3 12 3z" />
                             </svg>
                             카카오로 계속하기
                         </Button>
                     </div>
 
                     {/* 모드 전환 */}
-                    <div className="mt-6 text-center text-sm text-gray-500">
+                    <p className="text-center text-sm text-gray-500 mt-6">
                         {mode === "login" ? (
                             <>
-                                아직 계정이 없으신가요?{" "}
+                                계정이 없으신가요?{" "}
                                 <button
                                     type="button"
-                                    onClick={() => switchMode("signup")}
-                                    className="text-blue-500 hover:text-blue-600 font-medium"
+                                    onClick={() => {
+                                        setMode("signup");
+                                        setError(null);
+                                        setSuccess(null);
+                                    }}
+                                    className="text-[#05B2DC] hover:underline font-medium"
                                 >
                                     회원가입
                                 </button>
@@ -338,15 +349,19 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                                 이미 계정이 있으신가요?{" "}
                                 <button
                                     type="button"
-                                    onClick={() => switchMode("login")}
-                                    className="text-blue-500 hover:text-blue-600 font-medium"
+                                    onClick={() => {
+                                        setMode("login");
+                                        setError(null);
+                                        setSuccess(null);
+                                    }}
+                                    className="text-[#05B2DC] hover:underline font-medium"
                                 >
                                     로그인
                                 </button>
                             </>
                         )}
-                    </div>
-                </div>
+                    </p>
+                </form>
             </div>
         </div>
     );
