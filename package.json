@@ -26,6 +26,7 @@
     "lucide-react": "^0.562.0",
     "motion": "^12.26.2",
     "next": "14.2.5",
+    "openai": "^6.17.0",
     "react": "^18",
     "react-dom": "^18",
     "tailwind-merge": "^3.4.0",

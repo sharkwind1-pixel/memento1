@@ -82,7 +82,7 @@ export function usePetImages(): UsePetImagesReturn {
                     setAdoptionImages(dogData.message);
                 }
 
-                // 2. 추모용 이미지 (이름별로 매핑)
+                // 2. 추모용 이미지 (이름별로 매핑) - 병렬 로딩
                 const memorialNames = [
                     "초코",
                     "나비",
@@ -91,20 +91,25 @@ export function usePetImages(): UsePetImagesReturn {
                     "콩이",
                     "달이",
                 ];
-                const memorialImages: Record<string, string | null> = {};
 
-                for (const name of memorialNames) {
-                    try {
-                        const res = await fetch(
-                            "https://dog.ceo/api/breeds/image/random"
-                        );
-                        const data = await res.json();
-                        memorialImages[name] =
-                            data.status === "success" ? data.message : null;
-                    } catch {
-                        memorialImages[name] = null;
-                    }
-                }
+                const results = await Promise.all(
+                    memorialNames.map(async () => {
+                        try {
+                            const res = await fetch(
+                                "https://dog.ceo/api/breeds/image/random"
+                            );
+                            const data = await res.json();
+                            return data.status === "success" ? data.message : null;
+                        } catch {
+                            return null;
+                        }
+                    })
+                );
+
+                const memorialImages: Record<string, string | null> = {};
+                memorialNames.forEach((name, i) => {
+                    memorialImages[name] = results[i];
+                });
 
                 setPetImages(memorialImages);
             } catch (err) {

@@ -1,6 +1,6 @@
 /**
  * CommunityPage.tsx
- * 커뮤니티 - 자유/정보/치유 게시판
+ * 커뮤니티 - 자유/정보/동물전용/치유(추모모드) 게시판
  */
 
 "use client";
@@ -27,9 +27,17 @@ import {
     Coffee,
     Lightbulb,
     Eye,
+    PawPrint,
+    Dog,
+    Cat,
+    Bird,
+    Fish,
+    Rabbit,
+    Turtle,
 } from "lucide-react";
+import { usePets } from "@/contexts/PetContext";
 
-// 게시판 카테고리 - 순서: 자유 > 정보 > 치유
+// 게시판 카테고리 - 순서: 자유 > 정보 > 동물별 > 치유(추모모드)
 const BOARD_CATEGORIES = [
     {
         id: "free",
@@ -37,6 +45,7 @@ const BOARD_CATEGORIES = [
         icon: Coffee,
         color: "blue",
         description: "일상과 자랑, 자유로운 이야기",
+        memorialOnly: false,
     },
     {
         id: "info",
@@ -44,6 +53,15 @@ const BOARD_CATEGORIES = [
         icon: Lightbulb,
         color: "emerald",
         description: "유용한 정보와 꿀팁 공유",
+        memorialOnly: false,
+    },
+    {
+        id: "pets",
+        label: "동물별 게시판",
+        icon: PawPrint,
+        color: "amber",
+        description: "종류별 반려동물 이야기",
+        memorialOnly: false,
     },
     {
         id: "healing",
@@ -51,7 +69,19 @@ const BOARD_CATEGORIES = [
         icon: Heart,
         color: "violet",
         description: "슬픔을 나누고 위로받는 공간",
+        memorialOnly: true, // 추모 모드에서만 표시
     },
+];
+
+// 동물 종류 카테고리
+const ANIMAL_TYPES = [
+    { id: "all", label: "전체", icon: PawPrint, color: "gray" },
+    { id: "dog", label: "강아지", icon: Dog, color: "amber" },
+    { id: "cat", label: "고양이", icon: Cat, color: "orange" },
+    { id: "bird", label: "새", icon: Bird, color: "sky" },
+    { id: "fish", label: "물고기", icon: Fish, color: "blue" },
+    { id: "rabbit", label: "토끼/햄스터", icon: Rabbit, color: "pink" },
+    { id: "reptile", label: "파충류", icon: Turtle, color: "green" },
 ];
 
 // 목업 게시글 데이터
@@ -154,6 +184,128 @@ const MOCK_POSTS = {
             badge: "추천",
         },
     ],
+    pets: [
+        {
+            id: 13,
+            title: "우리 뽀삐 오늘 간식 먹방",
+            content: "얼마나 맛있게 먹는지 보세요!! 너무 귀엽지 않나요? ㅠㅠ",
+            author: "뽀삐맘",
+            time: "10분 전",
+            likes: 234,
+            comments: 45,
+            views: 1234,
+            badge: "먹방",
+            animalType: "dog",
+        },
+        {
+            id: 14,
+            title: "고양이 숨바꼭질 천재",
+            content: "박스만 보면 들어가는 우리 냥이... 찾는데 30분 걸림 ㅋㅋㅋ",
+            author: "숨바꼭질",
+            time: "1시간 전",
+            likes: 567,
+            comments: 89,
+            views: 2345,
+            badge: "일상",
+            animalType: "cat",
+        },
+        {
+            id: 15,
+            title: "앵무새가 말을 배웠어요!",
+            content: "'안녕'이랑 '밥줘' 할 줄 알아요 ㅋㅋㅋ 영상 첨부!",
+            author: "앵무집사",
+            time: "2시간 전",
+            likes: 890,
+            comments: 156,
+            views: 4567,
+            badge: "자랑",
+            animalType: "bird",
+        },
+        {
+            id: 16,
+            title: "햄스터 쳇바퀴 풀가동 중",
+            content: "새벽 3시에 운동회 시작... 소리가 ㅋㅋㅋ",
+            author: "햄찌맘",
+            time: "3시간 전",
+            likes: 345,
+            comments: 67,
+            views: 1890,
+            badge: "일상",
+            animalType: "rabbit",
+        },
+        {
+            id: 17,
+            title: "레오파드 게코 첫 탈피 성공!",
+            content: "건강하게 잘 벗었어요! 파충류 키우시는 분들 탈피 팁 공유해요",
+            author: "파충류러버",
+            time: "4시간 전",
+            likes: 123,
+            comments: 34,
+            views: 890,
+            badge: "정보",
+            animalType: "reptile",
+        },
+        {
+            id: 18,
+            title: "베타 물고기 색깔이 더 예뻐졌어요",
+            content: "수질 관리 열심히 했더니 색이 진해졌어요! 사진 보세요",
+            author: "아쿠아리스트",
+            time: "5시간 전",
+            likes: 234,
+            comments: 45,
+            views: 1234,
+            badge: "자랑",
+            animalType: "fish",
+        },
+        {
+            id: 19,
+            title: "토끼 발톱 깎는 법 아시는 분?",
+            content: "너무 무서워해서 못 깎겠어요 ㅠㅠ 팁 좀 주세요",
+            author: "토끼초보",
+            time: "6시간 전",
+            likes: 89,
+            comments: 78,
+            views: 2345,
+            badge: "질문",
+            animalType: "rabbit",
+        },
+        {
+            id: 20,
+            title: "말티즈 미용 다녀왔어요",
+            content: "곰돌이컷 했는데 너무 귀여워요 ㅠㅠ 인생컷!",
+            author: "미용덕후",
+            time: "7시간 전",
+            likes: 567,
+            comments: 89,
+            views: 3456,
+            badge: "자랑",
+            animalType: "dog",
+        },
+        {
+            id: 21,
+            title: "코리도라스 군무 영상",
+            content: "먹이 줄 때 군무 추는 거 너무 귀여워요 ㅋㅋㅋ",
+            author: "열대어집사",
+            time: "8시간 전",
+            likes: 345,
+            comments: 56,
+            views: 1567,
+            badge: "귀여움",
+            animalType: "fish",
+        },
+        {
+            id: 22,
+            title: "스코티시폴드 빵 자세 포착",
+            content: "완벽한 빵 자세... 세상 편안해 보여요",
+            author: "냥스타그램",
+            time: "9시간 전",
+            likes: 789,
+            comments: 123,
+            views: 4567,
+            badge: "귀여움",
+            animalType: "cat",
+        },
+    ],
     healing: [
         {
             id: 9,
@@ -248,6 +400,26 @@ const getBadgeStyle = (badge: string, boardType: string) => {
                 return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
         }
     }
+    if (boardType === "pets") {
+        switch (badge) {
+            case "먹방":
+                return "bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300";
+            case "일상":
+                return "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300";
+            case "케미":
+                return "bg-pink-100 text-pink-700 dark:bg-pink-900/50 dark:text-pink-300";
+            case "귀여움":
+                return "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300";
+            case "자랑":
+                return "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300";
+            case "정보":
+                return "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-300";
+            case "질문":
+                return "bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300";
+            default:
+                return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
+        }
+    }
     return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
 };
 
@@ -275,6 +447,13 @@ const getCategoryColor = (color: string) => {
                 border: "border-emerald-200 dark:border-emerald-700",
                 light: "bg-emerald-50 dark:bg-emerald-900/30",
             };
+        case "amber":
+            return {
+                bg: "from-amber-500 to-orange-500",
+                text: "text-amber-600 dark:text-amber-400",
+                border: "border-amber-200 dark:border-amber-700",
+                light: "bg-amber-50 dark:bg-amber-900/30",
+            };
         default:
             return {
                 bg: "from-gray-500 to-gray-600",
@@ -286,26 +465,50 @@ const getCategoryColor = (color: string) => {
 };
 
 export default function CommunityPage() {
+    const { selectedPet } = usePets();
     const [selectedBoard, setSelectedBoard] = useState<string>("free");
+    const [selectedAnimalType, setSelectedAnimalType] = useState<string>("all");
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [sortBy, setSortBy] = useState<string>("latest");
 
-    const currentBoard = BOARD_CATEGORIES.find((b) => b.id === selectedBoard)!;
+    // 추모 모드 여부 확인
+    const isMemorialMode = selectedPet?.status === "memorial";
+
+    // 모드에 따라 게시판 필터링 (일상 모드에서는 치유 게시판 숨김)
+    const visibleBoards = BOARD_CATEGORIES.filter(
+        (board) => !board.memorialOnly || isMemorialMode
+    );
+
+    const currentBoard = visibleBoards.find((b) => b.id === selectedBoard) || visibleBoards[0];
     const currentColor = getCategoryColor(currentBoard.color);
     const posts = MOCK_POSTS[selectedBoard as keyof typeof MOCK_POSTS] || [];
 
-    const filteredPosts = posts.filter(
-        (post) =>
-            searchQuery === "" ||
+    // 게시글 필터링 (검색어 + 동물 종류)
+    const filteredPosts = posts.filter((post) => {
+        // 검색어 필터
+        const matchesSearch = searchQuery === "" ||
             post.title.includes(searchQuery) ||
-            post.content.includes(searchQuery),
-    );
+            post.content.includes(searchQuery);
+
+        // 동물 종류 필터 (동물별 게시판일 때만)
+        const matchesAnimalType = selectedBoard !== "pets" ||
+            selectedAnimalType === "all" ||
+            (post as { animalType?: string }).animalType === selectedAnimalType;
+
+        return matchesSearch && matchesAnimalType;
+    });
 
     const sortedPosts = [...filteredPosts].sort((a, b) => {
         if (sortBy === "popular") return b.likes - a.likes;
         if (sortBy === "comments") return b.comments - a.comments;
         return 0;
     });
+
+    // 게시판 변경 시 동물 종류 필터 초기화
+    const handleBoardChange = (boardId: string) => {
+        setSelectedBoard(boardId);
+        setSelectedAnimalType("all");
+    };
 
     return (
         <div className="min-h-screen relative overflow-hidden">
@@ -339,34 +542,36 @@ export default function CommunityPage() {
                         </Button>
                     </div>
 
-                    {/* 게시판 탭 */}
-                    <div className="grid grid-cols-3 gap-3 mb-4">
-                        {BOARD_CATEGORIES.map((board) => {
+                    {/* 게시판 탭 - 모드에 따라 동적으로 표시 */}
+                    <div className={`grid gap-3 mb-4 ${
+                        visibleBoards.length === 4 ? "grid-cols-4" : "grid-cols-3"
+                    }`}>
+                        {visibleBoards.map((board) => {
                             const Icon = board.icon;
                             const isActive = selectedBoard === board.id;
                             const color = getCategoryColor(board.color);
                             return (
                                 <button
                                     key={board.id}
-                                    onClick={() => setSelectedBoard(board.id)}
-                                    className={`p-4 rounded-2xl border-2 transition-all ${
+                                    onClick={() => handleBoardChange(board.id)}
+                                    className={`p-3 rounded-2xl border-2 transition-all ${
                                         isActive
                                             ? `bg-gradient-to-r ${color.bg} text-white border-transparent shadow-lg`
                                             : `bg-white/50 dark:bg-gray-700/50 ${color.border} hover:shadow-md`
                                     }`}
                                 >
-                                    <div className="flex items-center gap-2 mb-1">
+                                    <div className="flex items-center gap-1.5 mb-1">
                                         <Icon
-                                            className={`w-5 h-5 ${isActive ? "text-white" : color.text}`}
+                                            className={`w-4 h-4 ${isActive ? "text-white" : color.text}`}
                                         />
                                         <span
-                                            className={`font-bold ${isActive ? "text-white" : "text-gray-800 dark:text-gray-100"}`}
+                                            className={`font-bold text-sm ${isActive ? "text-white" : "text-gray-800 dark:text-gray-100"}`}
                                         >
                                             {board.label}
                                         </span>
                                     </div>
                                     <p
-                                        className={`text-xs ${isActive ? "text-white/80" : "text-gray-500 dark:text-gray-400"}`}
+                                        className={`text-xs line-clamp-1 ${isActive ? "text-white/80" : "text-gray-500 dark:text-gray-400"}`}
                                     >
                                         {board.description}
                                     </p>
@@ -374,6 +579,30 @@ export default function CommunityPage() {
                             );
                         })}
                     </div>
+
+                    {/* 동물 종류 필터 - 동물별 게시판일 때만 표시 */}
+                    {selectedBoard === "pets" && (
+                        <div className="flex flex-wrap gap-2 mb-4 p-3 bg-amber-50/50 dark:bg-amber-900/20 rounded-xl border border-amber-200/50 dark:border-amber-700/30">
+                            {ANIMAL_TYPES.map((animal) => {
+                                const Icon = animal.icon;
+                                const isActive = selectedAnimalType === animal.id;
+                                return (
+                                    <button
+                                        key={animal.id}
+                                        onClick={() => setSelectedAnimalType(animal.id)}
+                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                                            isActive
+                                                ? "bg-amber-500 text-white shadow-md"
+                                                : "bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-amber-100 dark:hover:bg-amber-800/30 border border-amber-200 dark:border-amber-700/50"
+                                        }`}
+                                    >
+                                        <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-amber-500"}`} />
+                                        {animal.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
 
                     {/* 검색 & 정렬 */}
                     <div className="flex gap-3">

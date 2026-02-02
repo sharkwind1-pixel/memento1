@@ -31,6 +31,7 @@ interface AuthContextType {
     signOut: () => Promise<void>;
     signInWithGoogle: () => Promise<{ error: Error | null }>;
     signInWithKakao: () => Promise<{ error: Error | null }>;
+    updateProfile: (data: { nickname?: string }) => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -137,6 +138,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    // 프로필 업데이트
+    const updateProfile = async (data: { nickname?: string }) => {
+        try {
+            const { error } = await supabase.auth.updateUser({
+                data: {
+                    nickname: data.nickname,
+                },
+            });
+            return { error };
+        } catch (error) {
+            return { error: error as Error };
+        }
+    };
+
     const value = {
         user,
         session,
@@ -146,6 +161,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signOut,
         signInWithGoogle,
         signInWithKakao,
+        updateProfile,
     };
 
     return (

@@ -1,21 +1,138 @@
 /**
  * 메멘토애니 프로젝트 타입 정의
+ * ================================
+ * 모든 타입 정의를 한 곳에서 관리합니다.
+ *
+ * @description
+ * - 컴포넌트에서 interface/type 정의 금지
+ * - 새 타입 추가 시 적절한 섹션에 추가
+ * - 관련 타입끼리 그룹화하여 관리
  */
 
-// 탭 타입 - 메인 네비게이션
+// ============================================
+// 1. 네비게이션 & 라우팅 타입
+// ============================================
+
+/** 메인 네비게이션 탭 타입 */
 export type TabType =
     | "home"
     | "community"
     | "ai-chat"
     | "adoption"
     | "local"
-    | "lost" // 분실동물
-    | "magazine" // 펫매거진 (구 petcare)
-    | "record"; // 우리의 기록 (구 memorial)
+    | "lost"
+    | "magazine"
+    | "record";
 
-// 커뮤니티 게시글 타입
+// ============================================
+// 2. 반려동물 관련 타입
+// ============================================
+
+/** 반려동물 상태 */
+export type PetStatus = "active" | "memorial";
+
+/** 반려동물 종류 */
+export type PetType = "강아지" | "고양이" | "기타";
+
+/** 반려동물 성별 */
+export type PetGender = "남아" | "여아";
+
+/** 이미지 크롭 위치 */
+export interface CropPosition {
+    x: number;
+    y: number;
+}
+
+/** 반려동물 사진 */
+export interface PetPhoto {
+    id: string;
+    url: string;
+    cropPosition?: CropPosition;
+    uploadedAt?: string;
+}
+
+/** 반려동물 정보 (전체) */
+export interface Pet {
+    id: string;
+    userId: string;
+    name: string;
+    type: PetType;
+    breed: string;
+    gender: PetGender;
+    birthday?: string;
+    weight?: number;
+    personality?: string;
+    profileImage?: string;
+    profileCropPosition?: CropPosition;
+    photos: PetPhoto[];
+    status: PetStatus;
+    memorialDate?: string;
+    isPrimary?: boolean;
+    createdAt?: string;
+    updatedAt?: string;
+}
+
+/** 반려동물 등록/수정용 데이터 */
+export interface PetFormData {
+    name: string;
+    type: PetType;
+    breed: string;
+    gender: PetGender;
+    birthday?: string;
+    weight?: number;
+    personality?: string;
+    status?: PetStatus;
+    memorialDate?: string;
+}
+
+// ============================================
+// 3. AI 펫톡 관련 타입
+// ============================================
+
+/** AI 채팅 메시지 */
+export interface ChatMessage {
+    id: string;
+    role: "user" | "pet";
+    content: string;
+    timestamp: Date;
+    emotion?: EmotionType;
+    emotionScore?: number;
+}
+
+/** 감정 타입 */
+export type EmotionType =
+    | "happy"
+    | "sad"
+    | "anxious"
+    | "angry"
+    | "grateful"
+    | "lonely"
+    | "peaceful"
+    | "excited"
+    | "neutral";
+
+/** AI API 요청용 펫 정보 */
+export interface PetInfoForAPI {
+    id?: string;
+    name: string;
+    type: PetType;
+    breed: string;
+    gender: PetGender;
+    personality?: string;
+    birthday?: string;
+    status: PetStatus;
+    memorialDate?: string;
+}
+
+// ============================================
+// 4. 커뮤니티 관련 타입
+// ============================================
+
+/** 커뮤니티 게시글 */
 export interface CommunityPost {
+    id?: number;
     title: string;
+    content?: string;
     author: string;
     likes: number;
     comments: number;
@@ -24,61 +141,240 @@ export interface CommunityPost {
     category?: string;
     preview?: string;
     time?: string;
+    avatar?: string;
 }
 
-// 입양 동물 타입
+/** 댓글 */
+export interface Comment {
+    id: number;
+    author: string;
+    content: string;
+    time: string;
+    likes: number;
+}
+
+/** 게시판 카테고리 */
+export interface BoardCategory {
+    id: string;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    color: string;
+    description: string;
+    memorialOnly?: boolean;
+}
+
+// ============================================
+// 5. 입양/분실동물 관련 타입
+// ============================================
+
+/** 입양 게시글 */
 export interface AdoptionPost {
+    id?: number;
     title: string;
     location: string;
     age: string;
     badge: string;
+    image?: string;
+    petType?: string;
+    breed?: string;
+    gender?: string;
+    description?: string;
 }
 
-// 펫매거진 가이드 타입 (구 PetcareGuide)
+/** 분실동물 게시글 */
+export interface LostPet {
+    id: number;
+    type: "lost" | "found";
+    title: string;
+    petType: string;
+    breed: string;
+    color: string;
+    gender: string;
+    age: string;
+    location: string;
+    date: string;
+    description: string;
+    contact: string;
+    author: string;
+    time: string;
+    image?: string;
+    reward?: string;
+}
+
+// ============================================
+// 6. 매거진/정보 관련 타입
+// ============================================
+
+/** 펫매거진 게시글 */
 export interface MagazinePost {
+    id?: number;
     title: string;
     category: string;
     difficulty: string;
     badge: string;
+    content?: string;
+    image?: string;
 }
 
-// 기록 카드 타입 (구 MemorialCard)
-export interface RecordCard {
+/** 펫케어 가이드 (레거시 호환) */
+export type PetcareGuide = MagazinePost;
+
+// ============================================
+// 7. 추모/기록 관련 타입
+// ============================================
+
+/** 추모 카드 */
+export interface MemorialCard {
     name: string;
     pet: string;
     years: string;
     message: string;
     emoji?: string;
-}
-
-// 분실동물 타입
-export interface LostPet {
-    id: number;
-    type: "lost" | "found"; // 실종 / 발견
-    title: string;
-    petType: string; // 강아지, 고양이 등
-    breed: string; // 품종
-    color: string; // 색상
-    gender: string; // 성별
-    age: string; // 나이
-    location: string; // 실종/발견 장소
-    date: string; // 실종/발견 날짜
-    description: string; // 상세 설명
-    contact: string; // 연락처
-    author: string;
-    time: string;
     image?: string;
-    reward?: string; // 사례금
 }
 
-// 이미지 상태 타입
+/** 기록 카드 (레거시 호환) */
+export type RecordCard = MemorialCard;
+
+/** 추모 게시글 */
+export interface MemorialPost {
+    id: string;
+    userId: string;
+    petId: string;
+    title: string;
+    content: string;
+    imageUrl?: string;
+    isPublic: boolean;
+    likesCount: number;
+    commentsCount: number;
+    createdAt: string;
+    updatedAt: string;
+    pet?: Pet;
+    user?: {
+        nickname?: string;
+    };
+}
+
+/** 타임라인 엔트리 */
+export interface TimelineEntry {
+    id: string;
+    petId: string;
+    date: string;
+    title: string;
+    content?: string;
+    photos?: string[];
+    category: TimelineCategory;
+    createdAt?: string;
+}
+
+/** 타임라인 카테고리 */
+export type TimelineCategory =
+    | "일상"
+    | "건강"
+    | "여행"
+    | "기념일"
+    | "특별한날"
+    | "기타";
+
+// ============================================
+// 8. UI 공통 타입
+// ============================================
+
+/** 라이트박스 아이템 */
+export interface LightboxItem {
+    title: string;
+    subtitle?: string;
+    meta?: string;
+    src: string;
+}
+
+/** 자동 스크롤 훅 반환 타입 */
+export interface SmoothAutoScrollReturn {
+    communityScrollRef: React.RefObject<HTMLDivElement>;
+    adoptionScrollRef: React.RefObject<HTMLDivElement>;
+    petcareScrollRef: React.RefObject<HTMLDivElement>;
+    memorialScrollRef: React.RefObject<HTMLDivElement>;
+    startAutoScroll?: (start?: boolean) => void | (() => void);
+}
+
+/** 이미지 상태 맵 */
 export interface ImageState {
     [key: string]: string | null;
 }
 
-// 게시글 컬렉션 타입
+// ============================================
+// 9. 페이지 Props 타입
+// ============================================
+
+/** 공통 페이지 Props (탭 네비게이션) */
+export interface PageProps {
+    setSelectedTab?: (tab: TabType) => void;
+}
+
+/** HomePage Props */
+export interface HomePageProps extends PageProps {}
+
+/** AIChatPage Props */
+export interface AIChatPageProps extends PageProps {}
+
+/** CommunityPage Props */
+export interface CommunityPageProps extends PageProps {}
+
+/** AdoptionPage Props */
+export interface AdoptionPageProps extends PageProps {}
+
+/** LocalPage Props */
+export interface LocalPageProps extends PageProps {}
+
+/** LostPage Props */
+export interface LostPageProps extends PageProps {}
+
+/** MagazinePage Props */
+export interface MagazinePageProps extends PageProps {}
+
+/** RecordPage Props */
+export interface RecordPageProps extends PageProps {}
+
+// ============================================
+// 10. API 응답 타입
+// ============================================
+
+/** API 에러 응답 */
+export interface APIError {
+    code: number;
+    error_code: string;
+    msg: string;
+}
+
+/** AI 채팅 API 응답 */
+export interface AIChatResponse {
+    reply: string;
+    emotion?: EmotionType;
+    emotionScore?: number;
+    usage?: {
+        prompt_tokens: number;
+        completion_tokens: number;
+        total_tokens: number;
+    };
+}
+
+// ============================================
+// 11. 컬렉션/유틸 타입
+// ============================================
+
+/** 게시글 컬렉션 */
 export interface PostCollections {
     community: CommunityPost[];
     adoption: AdoptionPost[];
-    magazine: MagazinePost[];
+    petcare: MagazinePost[];
+}
+
+/** 정렬 옵션 */
+export type SortOption = "latest" | "popular" | "comments";
+
+/** 필터 옵션 */
+export interface FilterOption {
+    id: string;
+    label: string;
+    value: string;
 }

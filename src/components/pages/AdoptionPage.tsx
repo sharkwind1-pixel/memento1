@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Heart, MapPin, Phone, Users, X } from "lucide-react";
+import { ArrowLeft, Heart, MapPin, Phone, Users, X, Loader2 } from "lucide-react";
 
 import { TabType } from "@/types";
 import { bestPosts } from "@/data/posts";
@@ -263,8 +263,9 @@ export default function AdoptionPage({ setSelectedTab }: AdoptionPageProps) {
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-center text-gray-600 dark:text-gray-300 py-10">
-                                이미지 불러오는 중…
+                            <div className="flex flex-col items-center justify-center text-gray-500 py-10">
+                                <Loader2 className="w-8 h-8 animate-spin mb-2" />
+                                <span>이미지 불러오는 중...</span>
                             </div>
                         )}
                     </div>

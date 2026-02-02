@@ -1,71 +1,72 @@
 /**
- * 부드러운 자동 스크롤 훅 (성능 최적화 버전)
- * 기존의 버벅거리는 문제를 해결한 매끄러운 애니메이션
+ * 부드러운 자동 스크롤 훅 (requestAnimationFrame 버전)
+ * 60fps 동기화로 끊김 없는 매끄러운 애니메이션
  */
 
 "use client";
 
-import { useRef, useCallback } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 
 export function useSmoothAutoScroll() {
     const communityScrollRef = useRef<HTMLDivElement>(null);
     const adoptionScrollRef = useRef<HTMLDivElement>(null);
     const petcareScrollRef = useRef<HTMLDivElement>(null);
     const memorialScrollRef = useRef<HTMLDivElement>(null);
+    const [isRunning, setIsRunning] = useState(false);
+    const animationIdsRef = useRef<number[]>([]);
 
-    const startSmoothAutoScroll = useCallback((enabled: boolean = true) => {
-        if (!enabled) return () => {};
+    // 자동 스크롤 애니메이션 - 모든 섹션 동일한 속도
+    useEffect(() => {
+        if (!isRunning) return;
 
-        const intervals: NodeJS.Timeout[] = [];
-        const refs = [
-            communityScrollRef,
-            adoptionScrollRef,
-            petcareScrollRef,
-            memorialScrollRef,
-        ];
+        const SPEED = 0.5; // 모든 섹션 동일한 속도
+        const refs = [communityScrollRef, adoptionScrollRef, petcareScrollRef, memorialScrollRef];
 
+        // 각 섹션별 독립적인 애니메이션
         refs.forEach((ref, index) => {
-            const interval = setInterval(
-                () => {
-                    if (!ref.current) return;
+            let lastTime = 0;
 
-                    const container = ref.current;
-                    const scrollWidth = container.scrollWidth;
-                    const clientWidth = container.clientWidth;
-                    const maxScroll = scrollWidth - clientWidth;
+            const animate = (currentTime: number) => {
+                const container = ref.current;
+                if (!container) {
+                    animationIdsRef.current[index] = requestAnimationFrame(animate);
+                    return;
+                }
 
-                    if (maxScroll <= 0) return;
+                const deltaTime = lastTime ? currentTime - lastTime : 16.67;
+                lastTime = currentTime;
 
-                    // 현재 스크롤 위치
-                    let currentScroll = container.scrollLeft;
+                const maxScroll = container.scrollWidth - container.clientWidth;
 
-                    // 부드러운 스크롤 증가 (픽셀 단위로 세밀하게)
-                    const scrollStep = 1; // 1px씩 부드럽게
-                    currentScroll += scrollStep;
+                if (maxScroll > 0) {
+                    const scrollAmount = SPEED * (deltaTime / 16.67);
+                    container.scrollLeft += scrollAmount;
 
-                    // 끝에 도달하면 부드럽게 처음으로 리셋
-                    if (currentScroll >= maxScroll) {
-                        // 부드럽게 처음으로 돌아가기
-                        container.scrollTo({
-                            left: 0,
-                            behavior: "smooth",
-                        });
-                    } else {
-                        // 자연스러운 스크롤
-                        container.scrollLeft = currentScroll;
+                    if (container.scrollLeft >= maxScroll) {
+                        container.scrollLeft = 0;
                     }
-                },
-                // 각 섹션마다 다른 속도로 (더 자연스러운 느낌)
-                30 + index * 10
-            ); // 30ms, 40ms, 50ms, 60ms
+                }
+
+                animationIdsRef.current[index] = requestAnimationFrame(animate);
+            };
+
+            // 모든 섹션 동시에 시작
+            animationIdsRef.current[index] = requestAnimationFrame(animate);
         });
 
-        intervals.push(...intervals);
-
-        // cleanup 함수
         return () => {
-            intervals.forEach((interval) => clearInterval(interval));
+            animationIdsRef.current.forEach((id) => {
+                if (id) cancelAnimationFrame(id);
+            });
+            animationIdsRef.current = [];
         };
+    }, [isRunning]);
+
+    // 외부에서 호출 (기존 API 호환)
+    const startAutoScroll = useCallback((enabled: boolean = true) => {
+        // DOM 렌더링 대기 후 시작
+        setTimeout(() => setIsRunning(enabled), 500);
+        return () => setIsRunning(false);
     }, []);
 
     return {
@@ -73,6 +74,7 @@ export function useSmoothAutoScroll() {
         adoptionScrollRef,
         petcareScrollRef,
         memorialScrollRef,
-        startSmoothAutoScroll,
+        startSmoothAutoScroll: startAutoScroll,
+        startAutoScroll,
     };
 }

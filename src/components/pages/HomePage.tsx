@@ -11,6 +11,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
     Card,
+    CardContent,
     CardDescription,
     CardFooter,
     CardHeader,
@@ -34,6 +35,11 @@ import {
     Bookmark,
     MoreHorizontal,
     Share2,
+    PawPrint,
+    Dog,
+    Cat,
+    Star,
+    type LucideIcon,
 } from "lucide-react";
 
 import { TabType } from "@/types";
@@ -77,6 +83,16 @@ type SmoothAutoScrollReturn = {
 const safeStringSrc = (val: unknown): string | null => {
     if (typeof val === "string" && val.trim().length) return val;
     return null;
+};
+
+// 펫 타입에 따른 아이콘 반환
+const getPetIcon = (petType: string): LucideIcon => {
+    const lower = petType.toLowerCase();
+    if (lower.includes("고양이") || lower.includes("냥") || lower.includes("cat")) return Cat;
+    if (lower.includes("강아지") || lower.includes("개") || lower.includes("dog") ||
+        lower.includes("리트리버") || lower.includes("말티즈") || lower.includes("푸들") ||
+        lower.includes("테리어") || lower.includes("진돗개")) return Dog;
+    return PawPrint; // 기본값
 };
 
 // 댓글 타입
@@ -604,7 +620,6 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                     text="반려동물과의 시간을 기록해도 괜찮은 장소"
                                     variant="gentle"
                                     delay={250}
-                                    className="bg-gradient-to-r from-[#05B2DC] via-[#38BDF8] to-[#0891B2] dark:from-[#38BDF8] dark:via-[#05B2DC] dark:to-[#38BDF8] bg-clip-text text-transparent"
                                 />
                             </h1>
                             <p className="text-xl md:text-2xl font-bold text-gray-700 dark:text-gray-200">
@@ -616,11 +631,11 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                     staggerDelay={0.02}
                                 />
                             </p>
-                            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-3">
+                            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center pt-3 px-4 sm:px-0">
                                 <Button
                                     size="lg"
                                     onClick={() => setSelectedTab("ai-chat")}
-                                    className="bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-sky-600 text-white border-0 rounded-xl px-8 py-3 shadow-lg hover:scale-105 transition-all"
+                                    className="w-full sm:w-auto bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-sky-600 text-white border-0 rounded-xl px-8 py-3 min-h-[48px] shadow-lg hover:scale-105 active:scale-95 transition-all"
                                 >
                                     AI 상담 시작하기
                                 </Button>
@@ -628,7 +643,7 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                     size="lg"
                                     variant="outline"
                                     onClick={() => setSelectedTab("community")}
-                                    className="bg-white/50 dark:bg-gray-700/50 border-[#7DD3FC] dark:border-[#0891B2] text-[#0369A1] dark:text-blue-300 hover:bg-[#E0F7FF] dark:hover:bg-gray-600 rounded-xl px-8 py-3"
+                                    className="w-full sm:w-auto bg-white/50 dark:bg-gray-700/50 border-[#7DD3FC] dark:border-[#0891B2] text-[#0369A1] dark:text-blue-300 hover:bg-[#E0F7FF] dark:hover:bg-gray-600 rounded-xl px-8 py-3 min-h-[48px] active:scale-95 transition-all"
                                 >
                                     서비스 둘러보기
                                     <ArrowRight className="w-5 h-5 ml-2" />
@@ -666,10 +681,9 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
 
                     <div
                         ref={scroll.communityScrollRef}
-                        className="flex space-x-6 overflow-x-auto pb-4 scrollbar-hide"
-                        style={{ scrollBehavior: "smooth" }}
+                        className="flex gap-4 overflow-x-auto pb-4 px-4 -mx-4 scrollbar-hide"
                     >
-                        {communityPosts.map((post) => {
+                        {communityPosts.map((post, idx) => {
                             const isLiked = likedPosts[post.id] || false;
                             const displayLikes = isLiked
                                 ? post.likes + 1
@@ -678,21 +692,31 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                 postComments[post.id]?.length || 0;
                             const totalComments = post.comments + addedComments;
 
+                            // 그라데이션 색상 배열
+                            const gradients = [
+                                "from-rose-500 to-orange-400",
+                                "from-violet-500 to-purple-400",
+                                "from-cyan-500 to-blue-400",
+                                "from-emerald-500 to-teal-400",
+                                "from-amber-500 to-yellow-400",
+                            ];
+
                             return (
                                 <Card
                                     key={post.id}
                                     onClick={() => setSelectedPost(post)}
-                                    className="min-w-80 flex-shrink-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 hover:bg-white/80 dark:hover:bg-gray-700/60 transition-all duration-300 hover:scale-105 rounded-2xl cursor-pointer"
+                                    className="min-w-[280px] sm:min-w-72 flex-shrink-0 overflow-hidden rounded-2xl cursor-pointer group border-0 shadow-lg will-change-transform"
                                 >
-                                    <CardHeader className="space-y-3">
-                                        <div className="flex justify-between items-start">
+                                    {/* 상단 그라데이션 배너 */}
+                                    <div className={`h-24 bg-gradient-to-br ${gradients[idx % gradients.length]} relative overflow-hidden`}>
+                                        <div className="absolute inset-0 bg-black/10" />
+                                        <div className="absolute top-3 left-3">
                                             <Badge
-                                                variant="secondary"
                                                 className={`
-                                                    ${post.badge === "인기" ? "bg-[#BAE6FD] dark:bg-blue-900/50 text-[#0369A1] dark:text-blue-300" : ""}
-                                                    ${post.badge === "꿀팁" ? "bg-[#E0F7FF] dark:bg-sky-900/50 text-[#0369A1] dark:text-sky-300" : ""}
-                                                    ${post.badge === "후기" ? "bg-[#BAE6FD] dark:bg-blue-900/50 text-[#0369A1] dark:text-blue-300" : ""}
-                                                    rounded-lg px-3 py-1
+                                                    bg-white/90 text-gray-800 font-semibold shadow-sm
+                                                    ${post.badge === "인기" ? "text-rose-600" : ""}
+                                                    ${post.badge === "꿀팁" ? "text-amber-600" : ""}
+                                                    ${post.badge === "후기" ? "text-violet-600" : ""}
                                                 `}
                                             >
                                                 {post.badge === "인기" && (
@@ -703,60 +727,57 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                                 )}
                                                 {post.badge}
                                             </Badge>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="text-gray-400 hover:text-red-500 hover:bg-transparent"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    toggleLike(post.id);
-                                                }}
-                                            >
-                                                <Heart
-                                                    className={`w-5 h-5 transition-all ${
-                                                        isLiked
-                                                            ? "fill-red-500 text-red-500 scale-110"
-                                                            : ""
-                                                    }`}
-                                                />
-                                            </Button>
-                                        </div>
-                                        <CardTitle className="text-lg text-gray-800 dark:text-gray-100">
-                                            {post.title}
-                                        </CardTitle>
-                                        <CardDescription className="text-gray-600 dark:text-gray-300">
-                                            {post.author}님의 이야기
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardFooter className="flex justify-between items-center pt-0">
-                                        <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
-                                            <span className="flex items-center gap-1">
-                                                <Heart
-                                                    className={`w-4 h-4 ${
-                                                        isLiked
-                                                            ? "fill-red-500 text-red-500"
-                                                            : ""
-                                                    }`}
-                                                />
-                                                {displayLikes}
-                                            </span>
-                                            <span className="flex items-center gap-1">
-                                                <MessageCircle className="w-4 h-4" />
-                                                {totalComments}
-                                            </span>
                                         </div>
                                         <Button
+                                            variant="ghost"
                                             size="sm"
-                                            variant="outline"
-                                            className="rounded-lg border-[#7DD3FC] dark:border-[#0891B2] text-[#0369A1] dark:text-blue-300"
+                                            className="absolute top-2 right-2 text-white hover:text-red-300 hover:bg-white/20"
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                setSelectedPost(post);
+                                                toggleLike(post.id);
                                             }}
                                         >
-                                            읽어보기
+                                            <Heart
+                                                className={`w-5 h-5 transition-all ${
+                                                    isLiked
+                                                        ? "fill-red-400 text-red-400 scale-110"
+                                                        : ""
+                                                }`}
+                                            />
                                         </Button>
-                                    </CardFooter>
+                                        {/* 데코 아이콘 */}
+                                        <div className="absolute bottom-2 right-3 opacity-30">
+                                            <PawPrint className="w-12 h-12 text-white" />
+                                        </div>
+                                    </div>
+
+                                    <CardContent className="p-4 bg-white dark:bg-gray-800">
+                                        <h3 className="font-bold text-gray-800 dark:text-white text-base mb-1 line-clamp-2 group-hover:text-[#05B2DC] transition-colors">
+                                            {post.title}
+                                        </h3>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                                            {post.author}님의 이야기
+                                        </p>
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3 text-sm text-gray-500">
+                                                <span className="flex items-center gap-1">
+                                                    <Heart
+                                                        className={`w-4 h-4 ${
+                                                            isLiked
+                                                                ? "fill-red-500 text-red-500"
+                                                                : ""
+                                                        }`}
+                                                    />
+                                                    {displayLikes}
+                                                </span>
+                                                <span className="flex items-center gap-1">
+                                                    <MessageCircle className="w-4 h-4" />
+                                                    {totalComments}
+                                                </span>
+                                            </div>
+                                            <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-[#05B2DC] group-hover:translate-x-1 transition-all" />
+                                        </div>
+                                    </CardContent>
                                 </Card>
                             );
                         })}
@@ -779,56 +800,19 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                 </p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Button
-                                variant={
-                                    showAdoptionTile ? "default" : "outline"
-                                }
-                                size="sm"
-                                onClick={() => setShowAdoptionTile(true)}
-                                className="rounded-lg"
-                            >
-                                타일
-                            </Button>
-                            <Button
-                                variant={
-                                    !showAdoptionTile ? "default" : "outline"
-                                }
-                                size="sm"
-                                onClick={() => setShowAdoptionTile(false)}
-                                className="rounded-lg"
-                            >
-                                스크롤
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                onClick={() => setSelectedTab("adoption")}
-                                className="text-[#0891B2] dark:text-[#38BDF8] hover:bg-[#E0F7FF] dark:hover:bg-gray-700 rounded-xl ml-2"
-                            >
-                                전체 보기{" "}
-                                <ArrowRight className="w-4 h-4 ml-2" />
-                            </Button>
-                        </div>
+                        <Button
+                            variant="ghost"
+                            onClick={() => setSelectedTab("adoption")}
+                            className="text-[#0891B2] dark:text-[#38BDF8] hover:bg-[#E0F7FF] dark:hover:bg-gray-700 rounded-xl"
+                        >
+                            전체 보기{" "}
+                            <ArrowRight className="w-4 h-4 ml-2" />
+                        </Button>
                     </div>
 
-                    {showAdoptionTile ? (
-                        <div className="bg-gradient-to-br from-[#E0F7FF]/80 to-[#E0F7FF]/80 dark:from-sky-900/30 dark:to-blue-900/30 backdrop-blur-lg rounded-3xl p-4 border border-white/50 dark:border-[#0369A1]/50">
-                            {adoptionTileItems.length ? (
-                                <TileGallery
-                                    items={adoptionTileItems}
-                                    onItemClick={(it) => setLightboxItem(it)}
-                                />
-                            ) : (
-                                <div className="text-center text-gray-600 dark:text-gray-300 py-10">
-                                    이미지 불러오는 중…
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        <div
+                    <div
                             ref={scroll.adoptionScrollRef}
-                            className="flex space-x-6 overflow-x-auto pb-4 scrollbar-hide"
-                            style={{ scrollBehavior: "smooth" }}
+                            className="flex gap-4 overflow-x-auto pb-4 px-4 -mx-4 scrollbar-hide"
                         >
                             {bestPosts.adoption.map((pet, i) => {
                                 const src = safeStringSrc(
@@ -839,7 +823,7 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                 return (
                                     <Card
                                         key={i}
-                                        className="min-w-72 flex-shrink-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 hover:bg-white/80 dark:hover:bg-gray-700/60 transition-all duration-300 hover:scale-105 rounded-2xl overflow-hidden"
+                                        className="min-w-[280px] sm:min-w-72 flex-shrink-0 bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 rounded-2xl overflow-hidden shadow-sm will-change-transform"
                                     >
                                         <CardHeader className="p-0">
                                             {src ? (
@@ -890,7 +874,7 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                             </CardDescription>
                                             <Button
                                                 variant="outline"
-                                                className="w-full mt-2 border-sky-200 dark:border-sky-600 text-[#0369A1] dark:text-sky-300 hover:bg-[#E0F7FF] dark:hover:bg-sky-900/50 rounded-xl"
+                                                className="w-full mt-2 border-sky-200 dark:border-sky-600 text-[#0369A1] dark:text-sky-300 hover:bg-[#E0F7FF] dark:hover:bg-sky-900/50 rounded-xl min-h-[44px] active:scale-95 transition-transform"
                                             >
                                                 만나러 가기
                                             </Button>
@@ -899,7 +883,6 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                 );
                             })}
                         </div>
-                    )}
                 </section>
 
                 {/* 케어 가이드 */}
@@ -929,13 +912,12 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
 
                     <div
                         ref={scroll.petcareScrollRef}
-                        className="flex space-x-6 overflow-x-auto pb-4 scrollbar-hide"
-                        style={{ scrollBehavior: "smooth" }}
+                        className="flex gap-4 overflow-x-auto pb-4 px-4 -mx-4 scrollbar-hide"
                     >
                         {bestPosts.petcare.map((guide, i) => (
                             <Card
                                 key={i}
-                                className="min-w-64 flex-shrink-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 hover:bg-white/80 dark:hover:bg-gray-700/60 transition-all duration-300 hover:scale-105 rounded-2xl"
+                                className="min-w-[260px] sm:min-w-64 flex-shrink-0 bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 rounded-2xl shadow-sm will-change-transform"
                             >
                                 <CardHeader>
                                     <div className="w-full h-40 bg-gradient-to-br from-[#E0F7FF] to-[#E0F7FF] dark:from-blue-900 dark:to-sky-900 rounded-xl mb-3 flex items-center justify-center border border-[#BAE6FD] dark:border-[#0369A1]">
@@ -965,7 +947,7 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                 <CardFooter>
                                     <Button
                                         variant="outline"
-                                        className="w-full border-[#7DD3FC] dark:border-[#0891B2] text-[#0369A1] dark:text-blue-300 hover:bg-[#E0F7FF] dark:hover:bg-blue-900/50 rounded-xl"
+                                        className="w-full border-[#7DD3FC] dark:border-[#0891B2] text-[#0369A1] dark:text-blue-300 hover:bg-[#E0F7FF] dark:hover:bg-blue-900/50 rounded-xl min-h-[44px] active:scale-95 transition-transform"
                                     >
                                         가이드 보기
                                     </Button>
@@ -979,45 +961,31 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                 <section className="space-y-6 px-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-gradient-to-r from-[#05B2DC] to-[#0891B2] rounded-xl flex items-center justify-center">
+                            <div className="w-10 h-10 bg-gradient-to-r from-violet-500 to-purple-500 rounded-xl flex items-center justify-center">
                                 <Cloud className="w-5 h-5 text-white" />
                             </div>
                             <div>
-                                <h2 className="text-2xl font-bold bg-gradient-to-r from-[#05B2DC] to-[#0891B2] dark:from-[#38BDF8] dark:to-sky-400 bg-clip-text text-transparent">
-                                    하늘나라 친구들
+                                <h2 className="text-2xl font-bold bg-gradient-to-r from-violet-500 to-purple-500 dark:from-violet-400 dark:to-purple-400 bg-clip-text text-transparent">
+                                    기억 속을 함께 걷는 친구들
                                 </h2>
                                 <p className="text-gray-600 dark:text-gray-300">
-                                    영원히 마음속에 남을 특별한 친구들
+                                    영원히 마음속에 함께해요
                                 </p>
                             </div>
                         </div>
                         <Button
                             variant="ghost"
-                            onClick={() => setSelectedTab("record")}
-                            className="text-[#0891B2] dark:text-[#38BDF8] hover:bg-[#E0F7FF] dark:hover:bg-gray-700 rounded-xl"
+                            onClick={() => setSelectedTab("community")}
+                            className="text-violet-500 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-xl"
                         >
-                            추모공간 방문{" "}
+                            더 많은 이야기{" "}
                             <ArrowRight className="w-4 h-4 ml-2" />
                         </Button>
                     </div>
 
-                    <div className="bg-gradient-to-br from-[#E0F7FF]/80 to-[#E0F7FF]/80 dark:from-blue-900/30 dark:to-sky-900/30 backdrop-blur-lg rounded-3xl p-4 border border-white/50 dark:border-[#0369A1]/50">
-                        {memorialTileItems.length ? (
-                            <TileGallery
-                                items={memorialTileItems}
-                                onItemClick={(it) => setLightboxItem(it)}
-                            />
-                        ) : (
-                            <div className="text-center text-gray-600 dark:text-gray-300 py-10">
-                                이미지 불러오는 중…
-                            </div>
-                        )}
-                    </div>
-
                     <div
                         ref={scroll.memorialScrollRef}
-                        className="flex space-x-6 overflow-x-auto pb-4 scrollbar-hide"
-                        style={{ scrollBehavior: "smooth" }}
+                        className="flex gap-4 overflow-x-auto pb-4 px-4 -mx-4 scrollbar-hide"
                     >
                         {memorialCards.map((m, i) => {
                             const src = safeStringSrc(
@@ -1026,9 +994,9 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                             return (
                                 <Card
                                     key={i}
-                                    className="min-w-72 flex-shrink-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 rounded-2xl overflow-hidden"
+                                    className="min-w-[280px] sm:min-w-72 flex-shrink-0 bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/30 dark:to-purple-900/30 border-violet-100 dark:border-violet-800/50 rounded-2xl overflow-hidden shadow-sm will-change-transform"
                                 >
-                                    <CardHeader className="p-0">
+                                    <CardHeader className="p-0 relative">
                                         {src ? (
                                             <button
                                                 type="button"
@@ -1045,32 +1013,56 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                                 <img
                                                     src={src}
                                                     alt={m.name}
-                                                    className="w-full h-56 object-cover"
+                                                    className="w-full h-48 object-cover"
                                                     loading="lazy"
                                                     referrerPolicy="no-referrer"
                                                 />
                                             </button>
                                         ) : (
-                                            <div className="w-full h-56 bg-gray-200 dark:bg-gray-700" />
+                                            <div className="w-full h-48 bg-gradient-to-br from-violet-200 to-purple-200 dark:from-violet-800 dark:to-purple-800 flex items-center justify-center">
+                                                {(() => {
+                                                    const PetIcon = getPetIcon(m.pet);
+                                                    return <PetIcon className="w-16 h-16 text-violet-500/60" />;
+                                                })()}
+                                            </div>
                                         )}
+                                        {/* 오버레이 그라데이션 */}
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                                        {/* 이름 태그 */}
+                                        <div className="absolute bottom-3 left-3 flex items-center gap-2">
+                                            <Badge className="bg-white/90 text-violet-700 font-medium">
+                                                {m.pet}
+                                            </Badge>
+                                        </div>
                                     </CardHeader>
-                                    <CardFooter className="p-6 flex-col items-start gap-2">
-                                        <div className="font-semibold">
-                                            {m.name}
+                                    <CardContent className="p-4">
+                                        <div className="flex items-start justify-between mb-2">
+                                            <div>
+                                                <h4 className="font-bold text-gray-800 dark:text-white">
+                                                    {m.name}
+                                                </h4>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                    {m.years}
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div className="text-sm text-gray-600 dark:text-gray-300">
-                                            {m.pet} · {m.years}
+                                        <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 mb-3">
+                                            &ldquo;{m.message}&rdquo;
+                                        </p>
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3 text-sm text-gray-500">
+                                                <span className="flex items-center gap-1">
+                                                    <Heart className="w-4 h-4 text-pink-400" />
+                                                    {(i * 13 + 24) % 50 + 15}
+                                                </span>
+                                                <span className="flex items-center gap-1">
+                                                    <MessageCircle className="w-4 h-4" />
+                                                    {(i * 7 + 5) % 20 + 3}
+                                                </span>
+                                            </div>
+                                            <span className="text-xs text-violet-500">함께 기억해요</span>
                                         </div>
-                                        <Button
-                                            variant="outline"
-                                            className="w-full rounded-xl"
-                                            onClick={() =>
-                                                setSelectedTab("record")
-                                            }
-                                        >
-                                            추억 들여다보기
-                                        </Button>
-                                    </CardFooter>
+                                    </CardContent>
                                 </Card>
                             );
                         })}

@@ -10,7 +10,7 @@ import React, { useEffect } from "react";
 import { TabType } from "@/types";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import AuthModal from "@/components/auth/AuthModal";
+import AuthModal from "@/components/Auth/AuthModal";
 import {
     Home,
     Users,
@@ -99,7 +99,7 @@ export default function Layout({
         user?.user_metadata?.nickname || user?.email?.split("@")[0] || "사용자";
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <div className="min-h-screen bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 pb-safe">
             {/* 인증 모달 */}
             <AuthModal
                 isOpen={isAuthModalOpen}
@@ -228,21 +228,21 @@ export default function Layout({
                                     )}
                                 </div>
                             ) : (
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1 sm:gap-2">
                                     <Button
                                         variant="outline"
                                         onClick={openLoginModal}
-                                        className="rounded-xl border-[#05B2DC] text-[#05B2DC] hover:bg-[#E0F7FF]"
+                                        className="rounded-xl border-[#05B2DC] text-[#05B2DC] hover:bg-[#E0F7FF] px-2 sm:px-4"
                                     >
-                                        <LogIn className="w-4 h-4 mr-2" />
-                                        로그인
+                                        <LogIn className="w-4 h-4 sm:mr-2" />
+                                        <span className="hidden sm:inline">로그인</span>
                                     </Button>
                                     <Button
                                         onClick={openSignupModal}
-                                        className="bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-[#05B2DC] rounded-xl shadow-lg shadow-[#05B2DC]/25"
+                                        className="bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-[#05B2DC] rounded-xl shadow-lg shadow-[#05B2DC]/25 px-2 sm:px-4"
                                     >
-                                        <UserPlus className="w-4 h-4 mr-2" />
-                                        회원가입
+                                        <UserPlus className="w-4 h-4 sm:mr-2" />
+                                        <span className="hidden sm:inline">회원가입</span>
                                     </Button>
                                 </div>
                             )}
@@ -302,8 +302,8 @@ export default function Layout({
             <main className="max-w-7xl mx-auto px-4 py-6">{children}</main>
 
             {/* 모바일 하단 네비게이션 */}
-            <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-200/50 dark:border-gray-700/50 z-50">
-                <div className="flex justify-around items-center h-16 px-2">
+            <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-200/50 dark:border-gray-700/50 z-50 pb-safe">
+                <div className="flex justify-around items-center h-16 px-1">
                     {TABS.slice(0, 5).map((tab) => {
                         const Icon = tab.icon;
                         const isActive = selectedTab === tab.id;
@@ -312,14 +312,14 @@ export default function Layout({
                                 key={tab.id}
                                 onClick={() => setSelectedTab(tab.id)}
                                 className={`
-                                    flex flex-col items-center justify-center flex-1 py-2 transition-all
+                                    flex flex-col items-center justify-center flex-1 py-2 min-h-[56px] active:scale-95 transition-all
                                     ${isActive ? "text-[#05B2DC]" : "text-gray-400 dark:text-gray-500"}
                                 `}
                             >
-                                <Icon
-                                    className={`w-5 h-5 ${isActive ? "scale-110" : ""}`}
-                                />
-                                <span className="text-[10px] mt-1 font-medium">
+                                <div className={`p-1.5 rounded-xl transition-colors ${isActive ? "bg-[#E0F7FF] dark:bg-[#05B2DC]/20" : ""}`}>
+                                    <Icon className={`w-5 h-5 ${isActive ? "scale-110" : ""} transition-transform`} />
+                                </div>
+                                <span className="text-[10px] mt-0.5 font-medium">
                                     {tab.label}
                                 </span>
                             </button>
@@ -327,17 +327,20 @@ export default function Layout({
                     })}
                     <button
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        className="flex flex-col items-center justify-center flex-1 py-2 text-gray-400 dark:text-gray-500"
+                        className="flex flex-col items-center justify-center flex-1 py-2 min-h-[56px] text-gray-400 dark:text-gray-500 active:scale-95 transition-all"
                     >
-                        <Menu className="w-5 h-5" />
-                        <span className="text-[10px] mt-1 font-medium">
+                        <div className={`p-1.5 rounded-xl ${isMobileMenuOpen ? "bg-gray-100 dark:bg-gray-800" : ""}`}>
+                            <Menu className="w-5 h-5" />
+                        </div>
+                        <span className="text-[10px] mt-0.5 font-medium">
                             더보기
                         </span>
                     </button>
                 </div>
             </nav>
 
-            <div className="lg:hidden h-16" />
+            {/* 하단 네비게이션 높이 확보 */}
+            <div className="lg:hidden h-20" />
         </div>
     );
 }

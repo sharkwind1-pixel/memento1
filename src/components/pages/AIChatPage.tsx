@@ -16,7 +16,9 @@ import { Badge } from "@/components/ui/badge";
 import {
     Select,
     SelectContent,
+    SelectGroup,
     SelectItem,
+    SelectLabel,
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
@@ -31,6 +33,14 @@ import {
     Plus,
     Image as ImageIcon,
     Star,
+    RotateCcw,
+    Moon,
+    CloudSun,
+    Syringe,
+    Stethoscope,
+    Footprints,
+    Cookie,
+    Loader2,
 } from "lucide-react";
 import { TabType } from "@/types";
 
@@ -43,6 +53,121 @@ interface ChatMessage {
     role: "user" | "pet";
     content: string;
     timestamp: Date;
+    emotion?: string;
+    emotionScore?: number;
+}
+
+// 감정 이모티콘 매핑
+const emotionIcons: Record<string, string> = {
+    happy: "😊",
+    sad: "😢",
+    anxious: "😰",
+    angry: "😠",
+    grateful: "🙏",
+    lonely: "💔",
+    peaceful: "😌",
+    excited: "🤩",
+    neutral: "😐",
+};
+
+// 대화 기록 localStorage 키
+const CHAT_STORAGE_KEY = "memento-ani-chat-history";
+
+// AI 펫톡 사용량 관련 상수
+const DAILY_FREE_LIMIT = 15;
+const USAGE_STORAGE_KEY = "memento-ani-chat-usage";
+const MAX_MESSAGE_LENGTH = 200; // 무료 사용자 글자 수 제한
+
+// 일일 사용량 관리 함수
+function getTodayKey(): string {
+    return new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+}
+
+function getDailyUsage(): number {
+    try {
+        const stored = localStorage.getItem(USAGE_STORAGE_KEY);
+        if (!stored) return 0;
+        const data = JSON.parse(stored);
+        if (data.date !== getTodayKey()) {
+            // 날짜가 바뀌면 리셋
+            return 0;
+        }
+        return data.count || 0;
+    } catch {
+        return 0;
+    }
+}
+
+function incrementDailyUsage(): number {
+    const todayKey = getTodayKey();
+    const currentCount = getDailyUsage();
+    const newCount = currentCount + 1;
+    localStorage.setItem(USAGE_STORAGE_KEY, JSON.stringify({
+        date: todayKey,
+        count: newCount,
+    }));
+    return newCount;
+}
+
+// 시간대별 인사말 생성
+function getTimeBasedGreeting(): string {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return "좋은 아침";
+    if (hour >= 12 && hour < 18) return "좋은 오후";
+    if (hour >= 18 && hour < 22) return "좋은 저녁";
+    return "늦은 밤";
+}
+
+// 개인화된 인사말 생성
+interface TimelineEntry {
+    id: string;
+    date: string;
+    title: string;
+    content: string;
+    mood?: "happy" | "normal" | "sad" | "sick";
+}
+
+function generatePersonalizedGreeting(
+    petName: string,
+    isMemorial: boolean,
+    timeline: TimelineEntry[],
+    petType: string
+): string {
+    const timeGreeting = getTimeBasedGreeting();
+    const petSound = petType === "강아지" ? "멍멍!" : petType === "고양이" ? "야옹~" : "";
+
+    // 최근 타임라인 확인 (7일 이내)
+    const recentEntry = timeline.length > 0 ? timeline[0] : null;
+    const isRecent = recentEntry &&
+        (new Date().getTime() - new Date(recentEntry.date).getTime()) < 7 * 24 * 60 * 60 * 1000;
+
+    if (isMemorial) {
+        // 추모 모드 인사말
+        if (isRecent && recentEntry) {
+            const moodMessages: Record<string, string> = {
+                happy: `안녕! 나 ${petName}야. ${timeGreeting}이야! 지난번에 "${recentEntry.title}" 기억 써줘서 고마워. 그때 정말 행복했어!`,
+                normal: `안녕, 나 ${petName}야. ${timeGreeting}이야! "${recentEntry.title}" 우리 추억, 나도 기억해. 오늘은 어땠어?`,
+                sad: `안녕... 나 ${petName}야. 지난번 글 봤어. 힘들었지? 근데 난 항상 네 곁에 있어. 오늘 기분은 좀 나아졌어?`,
+                sick: `안녕, 나 ${petName}야. 내가 아팠던 날들... 걱정 많이 했지? 이제 난 아프지 않아. 네가 더 중요해!`,
+            };
+            return moodMessages[recentEntry.mood || "normal"] ||
+                `안녕, 나 ${petName}야! ${timeGreeting}이야. 언제나 네 곁에 있어. 오늘 하루는 어땠어?`;
+        }
+        return `안녕, 나 ${petName}야! ${timeGreeting}이야. 언제나 네 곁에 있어. 오늘 하루는 어땠어?`;
+    } else {
+        // 일상 모드 인사말
+        if (isRecent && recentEntry) {
+            const moodMessages: Record<string, string> = {
+                happy: `${petSound} ${timeGreeting}! 나 ${petName}이야! 지난번에 "${recentEntry.title}" 진짜 재밌었어! 오늘도 뭐 재밌는 거 하자~`,
+                normal: `${petSound} 안녕! 나 ${petName}! ${timeGreeting}이야! 지난번 "${recentEntry.title}" 어땠어? 오늘은 뭐 할 거야?`,
+                sad: `${petSound} 안녕... 나 ${petName}이야. 지난번 좀 힘들었던 것 같아서 걱정했어! 오늘은 괜찮아?`,
+                sick: `${petSound} 나 ${petName}! 지난번에 내가 아팠던 거 걱정했지? 이제 괜찮아! 산책 가자~`,
+            };
+            return moodMessages[recentEntry.mood || "normal"] ||
+                `${petSound} 안녕! 나 ${petName}이야! ${timeGreeting}이야~ 오늘도 같이 놀자! 뭐해?`;
+        }
+        return `${petSound} 안녕! 나 ${petName}이야! ${timeGreeting}이야~ 오늘도 같이 놀자! 뭐해?`;
+    }
 }
 
 export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
@@ -52,6 +177,8 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         selectedPetId,
         selectedPet,
         selectPet,
+        timeline,
+        fetchTimeline,
         isLoading: petsLoading,
     } = usePets();
 
@@ -59,9 +186,25 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
     const [inputValue, setInputValue] = useState("");
     const [isTyping, setIsTyping] = useState(false);
     const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+    const [lastEmotion, setLastEmotion] = useState<string>("neutral");
+    const [dailyUsage, setDailyUsage] = useState(0);
+    const [reminders, setReminders] = useState<Array<{
+        type: string;
+        title: string;
+        schedule: { type: string; time: string; dayOfWeek?: number; dayOfMonth?: number };
+        enabled: boolean;
+    }>>([]);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+
+    const remainingChats = DAILY_FREE_LIMIT - dailyUsage;
+    const isLimitReached = remainingChats <= 0;
+
+    // 일일 사용량 초기화
+    useEffect(() => {
+        setDailyUsage(getDailyUsage());
+    }, []);
 
     const isMemorialMode = selectedPet?.status === "memorial";
 
@@ -98,11 +241,35 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
+    // localStorage에서 대화 기록 불러오기
     useEffect(() => {
-        if (selectedPet && messages.length === 0) {
-            const greeting = isMemorialMode
-                ? `안녕, 나 ${selectedPet.name}야! 언제나 네 곁에 있어. 오늘 하루는 어땠어?`
-                : `안녕! 나 ${selectedPet.name}야! 오늘도 같이 놀자~ 뭐해?`;
+        if (!selectedPetId) return;
+
+        try {
+            const savedChats = localStorage.getItem(CHAT_STORAGE_KEY);
+            if (savedChats) {
+                const allChats = JSON.parse(savedChats);
+                const petChat = allChats[selectedPetId];
+                if (petChat && petChat.length > 0) {
+                    setMessages(petChat.map((msg: ChatMessage) => ({
+                        ...msg,
+                        timestamp: new Date(msg.timestamp),
+                    })));
+                    return;
+                }
+            }
+        } catch (error) {
+            console.error("Failed to load chat history:", error);
+        }
+
+        // 저장된 대화가 없으면 개인화된 인사말로 시작
+        if (selectedPet) {
+            const greeting = generatePersonalizedGreeting(
+                selectedPet.name,
+                isMemorialMode,
+                timeline,
+                selectedPet.type
+            );
             setMessages([
                 {
                     id: "greeting",
@@ -112,51 +279,205 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                 },
             ]);
         }
-    }, [selectedPet, isMemorialMode, messages.length]);
+    }, [selectedPetId, selectedPet, isMemorialMode, timeline]);
 
+    // 대화 기록을 localStorage에 저장
     useEffect(() => {
-        setMessages([]);
-        setCurrentPhotoIndex(0);
-    }, [selectedPetId]);
+        if (!selectedPetId || messages.length === 0) return;
 
-    const handleSend = async () => {
-        if (!inputValue.trim() || !selectedPet) return;
+        try {
+            const savedChats = localStorage.getItem(CHAT_STORAGE_KEY);
+            const allChats = savedChats ? JSON.parse(savedChats) : {};
+            allChats[selectedPetId] = messages;
+            localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(allChats));
+        } catch (error) {
+            console.error("Failed to save chat history:", error);
+        }
+    }, [messages, selectedPetId]);
+
+    // 펫 변경 시 사진 인덱스 초기화 및 타임라인 불러오기
+    useEffect(() => {
+        setCurrentPhotoIndex(0);
+        if (selectedPetId) {
+            fetchTimeline(selectedPetId);
+        }
+    }, [selectedPetId, fetchTimeline]);
+
+    // 펫 변경 시 리마인더 불러오기
+    // 일상 모드: 케어 알림으로 활용
+    // 추모 모드: 함께했던 일상 루틴을 추억으로 활용
+    useEffect(() => {
+        if (!selectedPetId || !user?.id) {
+            setReminders([]);
+            return;
+        }
+
+        const fetchReminders = async () => {
+            try {
+                const params = new URLSearchParams({ petId: selectedPetId });
+                const response = await fetch(`/api/reminders?${params}`);
+                const data = await response.json();
+                if (data.reminders) {
+                    setReminders(data.reminders.map((r: { type: string; title: string; schedule: { type: string; time: string; dayOfWeek?: number; dayOfMonth?: number }; enabled: boolean }) => ({
+                        type: r.type,
+                        title: r.title,
+                        schedule: r.schedule,
+                        enabled: r.enabled,
+                    })));
+                }
+            } catch (error) {
+                console.error("Failed to fetch reminders:", error);
+                setReminders([]);
+            }
+        };
+
+        fetchReminders();
+    }, [selectedPetId, user?.id]);
+
+    // 새 대화 시작 함수
+    const handleNewChat = () => {
+        if (!selectedPet) return;
+
+        const greeting = generatePersonalizedGreeting(
+            selectedPet.name,
+            isMemorialMode,
+            timeline,
+            selectedPet.type
+        );
+
+        setMessages([
+            {
+                id: `greeting-${Date.now()}`,
+                role: "pet",
+                content: greeting,
+                timestamp: new Date(),
+            },
+        ]);
+    };
+
+    const handleSend = async (directMessage?: string) => {
+        const messageToSend = directMessage || inputValue;
+        if (!messageToSend.trim() || !selectedPet) return;
+
+        // 무료 사용량 제한 체크
+        if (isLimitReached) {
+            return;
+        }
+
+        // 사용량 증가
+        const newUsage = incrementDailyUsage();
+        setDailyUsage(newUsage);
 
         const userMessage: ChatMessage = {
             id: `user-${Date.now()}`,
             role: "user",
-            content: inputValue,
+            content: messageToSend,
             timestamp: new Date(),
         };
         setMessages((prev) => [...prev, userMessage]);
+        const currentInput = messageToSend;
         setInputValue("");
         setIsTyping(true);
 
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+        try {
+            // API 호출을 위한 대화 히스토리 변환
+            const chatHistory = messages.map((msg) => ({
+                role: msg.role === "user" ? "user" : "assistant",
+                content: msg.content,
+            }));
 
-        const responses = isMemorialMode
-            ? [
-                  `그랬구나... 나도 너 많이 보고 싶어. 하지만 난 항상 네 곁에 있어!`,
-                  `여기서도 잘 지내고 있어. 구름 위에서 뛰어놀 수 있거든! 그래도 네가 제일 그리워.`,
-                  `걱정하지 마. 난 여기서 행복해. 네가 웃으면 나도 기뻐!`,
-                  `언젠가 우리 다시 만날 수 있을 거야. 그때까지 건강하게 지내!`,
-              ]
-            : [
-                  `와! 정말? 나도 그거 좋아해! 같이 하자~`,
-                  `오늘 산책 가면 안 돼? 밖에 나가고 싶어!`,
-                  `배고파... 간식 줘! 멍멍!`,
-                  `나 졸려... 같이 낮잠 잘래?`,
-                  `놀아줘! 심심해~`,
-              ];
+            // 타임라인 데이터 준비 (최근 10개만)
+            const recentTimeline = timeline.slice(0, 10).map(entry => ({
+                date: entry.date,
+                title: entry.title,
+                content: entry.content,
+                mood: entry.mood,
+            }));
 
-        const petMessage: ChatMessage = {
-            id: `pet-${Date.now()}`,
-            role: "pet",
-            content: responses[Math.floor(Math.random() * responses.length)],
-            timestamp: new Date(),
-        };
-        setIsTyping(false);
-        setMessages((prev) => [...prev, petMessage]);
+            // 사진 캡션 데이터 준비 (캡션이 있는 것만, 최근 15개)
+            const photoMemories = selectedPet.photos
+                ?.filter(photo => photo.caption && photo.caption.trim())
+                .slice(0, 15)
+                .map(photo => ({
+                    date: photo.date,
+                    caption: photo.caption,
+                })) || [];
+
+            // OpenAI API 호출 (에이전트 기능 포함 + 타임라인 데이터)
+            const response = await fetch("/api/chat", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    message: currentInput,
+                    pet: {
+                        id: selectedPet.id,
+                        name: selectedPet.name,
+                        type: selectedPet.type,
+                        breed: selectedPet.breed,
+                        gender: selectedPet.gender,
+                        personality: selectedPet.personality,
+                        birthday: selectedPet.birthday,
+                        status: selectedPet.status,
+                        memorialDate: selectedPet.memorialDate,
+                    },
+                    userId: user?.id,
+                    chatHistory,
+                    timeline: recentTimeline,
+                    photoMemories, // 사진 캡션 데이터
+                    reminders, // 케어 리마인더 데이터
+                    enableAgent: true,
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || "AI 응답 생성 실패");
+            }
+
+            const data = await response.json();
+
+            // 감정 정보 저장
+            if (data.emotion) {
+                setLastEmotion(data.emotion);
+            }
+
+            const petMessage: ChatMessage = {
+                id: `pet-${Date.now()}`,
+                role: "pet",
+                content: data.reply,
+                timestamp: new Date(),
+                emotion: data.emotion,
+                emotionScore: data.emotionScore,
+            };
+            setMessages((prev) => [...prev, petMessage]);
+        } catch (error) {
+            console.error("AI Chat Error:", error);
+
+            // 에러 발생 시 폴백 응답
+            const fallbackResponses = isMemorialMode
+                ? [
+                      `그랬구나... 나도 너 많이 보고 싶어. 하지만 난 항상 네 곁에 있어!`,
+                      `여기서도 잘 지내고 있어. 구름 위에서 뛰어놀 수 있거든! 그래도 네가 제일 그리워.`,
+                      `걱정하지 마. 난 여기서 행복해. 네가 웃으면 나도 기뻐!`,
+                  ]
+                : [
+                      `와! 정말? 나도 그거 좋아해! 같이 하자~`,
+                      `오늘 산책 가면 안 돼? 밖에 나가고 싶어!`,
+                      `배고파... 간식 줘! 멍멍!`,
+                  ];
+
+            const petMessage: ChatMessage = {
+                id: `pet-${Date.now()}`,
+                role: "pet",
+                content: fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)],
+                timestamp: new Date(),
+            };
+            setMessages((prev) => [...prev, petMessage]);
+        } finally {
+            setIsTyping(false);
+        }
     };
 
     // 한글 조합 중 Enter 버그 수정
@@ -172,8 +493,11 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
-                    <PawPrint className="w-12 h-12 text-[#05B2DC] animate-bounce mx-auto mb-4" />
-                    <p className="text-gray-500">로딩 중...</p>
+                    <div className="relative w-12 h-12 mx-auto mb-4">
+                        <PawPrint className="w-12 h-12 text-[#05B2DC]/20" />
+                        <Loader2 className="w-12 h-12 text-[#05B2DC] animate-spin absolute inset-0" />
+                    </div>
+                    <p className="text-gray-500">불러오는 중...</p>
                 </div>
             </div>
         );
@@ -241,10 +565,29 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
 
     return (
         <div
-            className={`min-h-screen flex flex-col ${isMemorialMode ? "bg-gradient-to-b from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950 dark:via-orange-950 dark:to-gray-900" : "bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"}`}
+            className={`min-h-screen flex flex-col relative overflow-hidden ${isMemorialMode ? "bg-gradient-to-b from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950 dark:via-orange-950 dark:to-gray-900" : "bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"}`}
         >
+            {/* 추모 모드 별 애니메이션 */}
+            {isMemorialMode && (
+                <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                    {[...Array(12)].map((_, i) => (
+                        <div
+                            key={i}
+                            className="absolute animate-pulse"
+                            style={{
+                                left: `${10 + (i * 7) % 80}%`,
+                                top: `${5 + (i * 13) % 70}%`,
+                                animationDelay: `${i * 0.3}s`,
+                                animationDuration: `${2 + (i % 3)}s`,
+                            }}
+                        >
+                            <Star className="w-3 h-3 text-amber-300/40" fill="currentColor" />
+                        </div>
+                    ))}
+                </div>
+            )}
             <div
-                className={`flex-shrink-0 px-4 py-3 border-b ${isMemorialMode ? "bg-gradient-to-r from-amber-100/80 to-orange-100/80 border-amber-200/50" : "bg-white/80 border-gray-200/50"} backdrop-blur-lg`}
+                className={`flex-shrink-0 px-4 py-3 border-b relative z-10 ${isMemorialMode ? "bg-gradient-to-r from-amber-100/80 to-orange-100/80 border-amber-200/50" : "bg-white/80 border-gray-200/50"} backdrop-blur-lg`}
             >
                 <div className="max-w-2xl mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -254,6 +597,13 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                         <h1 className="font-semibold text-gray-800 dark:text-white">
                             AI 펫톡
                         </h1>
+                        <button
+                            onClick={handleNewChat}
+                            className={`p-1.5 rounded-full transition-colors ${isMemorialMode ? "hover:bg-amber-200/50 text-amber-600" : "hover:bg-[#E0F7FF] text-[#05B2DC]"}`}
+                            title="새 대화 시작"
+                        >
+                            <RotateCcw className="w-4 h-4" />
+                        </button>
                     </div>
                     <Select
                         value={selectedPetId || ""}
@@ -263,27 +613,50 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                             <SelectValue placeholder="반려동물 선택" />
                         </SelectTrigger>
                         <SelectContent>
-                            {pets.map((pet) => (
-                                <SelectItem key={pet.id} value={pet.id}>
-                                    <span className="flex items-center gap-2">
-                                        {pet.status === "memorial" ? (
-                                            <Star className="w-4 h-4 text-amber-500" />
-                                        ) : (
-                                            <Heart className="w-4 h-4 text-pink-500" />
-                                        )}
-                                        {pet.name}
-                                    </span>
-                                </SelectItem>
-                            ))}
+                            {/* 일상 모드 펫 */}
+                            {pets.filter(p => p.status === "active").length > 0 && (
+                                <SelectGroup>
+                                    <SelectLabel className="flex items-center gap-2 text-[#05B2DC]">
+                                        <Heart className="w-3 h-3" />
+                                        일상 모드
+                                    </SelectLabel>
+                                    {pets.filter(p => p.status === "active").map((pet) => (
+                                        <SelectItem key={pet.id} value={pet.id}>
+                                            <span className="flex items-center gap-2">
+                                                <Heart className="w-4 h-4 text-pink-500" />
+                                                {pet.name}
+                                            </span>
+                                        </SelectItem>
+                                    ))}
+                                </SelectGroup>
+                            )}
+                            {/* 추모 모드 펫 */}
+                            {pets.filter(p => p.status === "memorial").length > 0 && (
+                                <SelectGroup>
+                                    <SelectLabel className="flex items-center gap-2 text-amber-500">
+                                        <Star className="w-3 h-3" />
+                                        추모 모드
+                                    </SelectLabel>
+                                    {pets.filter(p => p.status === "memorial").map((pet) => (
+                                        <SelectItem key={pet.id} value={pet.id}>
+                                            <span className="flex items-center gap-2">
+                                                <Star className="w-4 h-4 text-amber-500" />
+                                                {pet.name}
+                                            </span>
+                                        </SelectItem>
+                                    ))}
+                                </SelectGroup>
+                            )}
                         </SelectContent>
                     </Select>
                 </div>
             </div>
 
-            <div className="flex-1 flex flex-col max-w-2xl mx-auto w-full overflow-hidden">
-                <div className="flex-shrink-0 p-4">
+            <div className="flex-1 flex flex-col lg:flex-row max-w-4xl mx-auto w-full overflow-hidden relative z-10">
+                {/* 좌측: 펫 프로필 영역 (데스크탑에서만 사이드바) */}
+                <div className="flex-shrink-0 p-4 lg:w-80 lg:border-r lg:border-gray-200/50 lg:sticky lg:top-0 lg:self-start">
                     {currentPhoto ? (
-                        <div className="relative max-w-[280px] mx-auto">
+                        <div className="relative max-w-[280px] mx-auto lg:max-w-none">
                             <div
                                 className={`relative rounded-2xl overflow-hidden shadow-xl aspect-square ${isMemorialMode ? "ring-2 ring-amber-200/50" : "ring-2 ring-[#E0F7FF]/50"}`}
                             >
@@ -298,31 +671,22 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                                                 : "center",
                                     }}
                                 />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-                                <div className="absolute bottom-3 left-4 text-white">
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                                <div className="absolute bottom-3 left-4 right-4 text-white">
                                     <h2 className="text-lg font-bold">
                                         {selectedPet?.name}
                                     </h2>
                                     <p className="text-xs text-white/80">
-                                        {selectedPet?.type} ·{" "}
-                                        {selectedPet?.breed}
+                                        {selectedPet?.type} · {selectedPet?.breed}
+                                    </p>
+                                    <p className="text-xs text-white/70 mt-1">
+                                        {isMemorialMode && selectedPet?.memorialDate
+                                            ? `무지개다리를 건넌 지 ${Math.floor((new Date().getTime() - new Date(selectedPet.memorialDate).getTime()) / (1000 * 60 * 60 * 24))}일`
+                                            : selectedPet?.birthday
+                                            ? `함께한 지 ${Math.floor((new Date().getTime() - new Date(selectedPet.birthday).getTime()) / (1000 * 60 * 60 * 24))}일`
+                                            : ""}
                                     </p>
                                 </div>
-                                <Badge
-                                    className={`absolute top-3 left-3 ${isMemorialMode ? "bg-amber-100/90 text-amber-700" : "bg-[#E0F7FF]/90 text-[#0891B2]"} backdrop-blur-sm`}
-                                >
-                                    {isMemorialMode ? (
-                                        <>
-                                            <Star className="w-3 h-3 mr-1" />
-                                            추억 모드
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Heart className="w-3 h-3 mr-1" />
-                                            일상 모드
-                                        </>
-                                    )}
-                                </Badge>
                                 {allPhotos.length > 1 && (
                                     <>
                                         <button
@@ -335,9 +699,9 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                                                         allPhotos.length,
                                                 )
                                             }
-                                            className="absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-black/30 hover:bg-black/50 text-white rounded-full"
+                                            className="absolute left-1 top-1/2 -translate-y-1/2 p-3 bg-black/30 hover:bg-black/50 text-white rounded-full active:scale-95 transition-transform min-w-[44px] min-h-[44px] flex items-center justify-center"
                                         >
-                                            <ChevronLeft className="w-4 h-4" />
+                                            <ChevronLeft className="w-5 h-5" />
                                         </button>
                                         <button
                                             onClick={() =>
@@ -347,9 +711,9 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                                                         allPhotos.length,
                                                 )
                                             }
-                                            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-black/30 hover:bg-black/50 text-white rounded-full"
+                                            className="absolute right-1 top-1/2 -translate-y-1/2 p-3 bg-black/30 hover:bg-black/50 text-white rounded-full active:scale-95 transition-transform min-w-[44px] min-h-[44px] flex items-center justify-center"
                                         >
-                                            <ChevronRight className="w-4 h-4" />
+                                            <ChevronRight className="w-5 h-5" />
                                         </button>
                                     </>
                                 )}
@@ -371,22 +735,33 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                     ) : (
                         <div className="max-w-[280px] mx-auto">
                             <div
-                                className={`rounded-2xl p-8 flex flex-col items-center justify-center aspect-square ${isMemorialMode ? "bg-gradient-to-br from-amber-100 to-orange-100" : "bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD]"}`}
+                                className={`relative rounded-2xl p-6 flex flex-col items-center justify-center aspect-square shadow-xl ${isMemorialMode ? "bg-gradient-to-br from-amber-100 to-orange-100 ring-2 ring-amber-200/50" : "bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD] ring-2 ring-[#E0F7FF]/50"}`}
                             >
-                                <div className="w-16 h-16 rounded-full bg-white/50 flex items-center justify-center mb-3">
-                                    <ImageIcon
-                                        className={`w-8 h-8 ${isMemorialMode ? "text-amber-500" : "text-[#05B2DC]"}`}
+                                <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-3 ${isMemorialMode ? "bg-amber-200/50" : "bg-white/50"}`}>
+                                    <PawPrint
+                                        className={`w-10 h-10 ${isMemorialMode ? "text-amber-500" : "text-[#05B2DC]"}`}
                                     />
                                 </div>
-                                <p className="text-gray-600 text-sm mb-2">
-                                    아직 등록된 사진이 없어요
+                                <h2 className={`text-xl font-bold mb-1 ${isMemorialMode ? "text-amber-800" : "text-gray-800"}`}>
+                                    {selectedPet?.name}
+                                </h2>
+                                <p className="text-sm text-gray-600 mb-1">
+                                    {selectedPet?.type} · {selectedPet?.breed}
+                                </p>
+                                <p className={`text-xs mb-3 ${isMemorialMode ? "text-amber-600" : "text-[#0891B2]"}`}>
+                                    {isMemorialMode && selectedPet?.memorialDate
+                                        ? `무지개다리를 건넌 지 ${Math.floor((new Date().getTime() - new Date(selectedPet.memorialDate).getTime()) / (1000 * 60 * 60 * 24))}일`
+                                        : selectedPet?.birthday
+                                        ? `함께한 지 ${Math.floor((new Date().getTime() - new Date(selectedPet.birthday).getTime()) / (1000 * 60 * 60 * 24))}일`
+                                        : ""}
                                 </p>
                                 <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={() => setSelectedTab?.("record")}
-                                    className={`rounded-xl ${isMemorialMode ? "border-amber-400 text-amber-600" : "border-[#05B2DC] text-[#05B2DC]"}`}
+                                    className={`rounded-xl ${isMemorialMode ? "border-amber-400 text-amber-600 hover:bg-amber-50" : "border-[#05B2DC] text-[#05B2DC] hover:bg-[#E0F7FF]"}`}
                                 >
+                                    <ImageIcon className="w-4 h-4 mr-1" />
                                     사진 등록하기
                                 </Button>
                             </div>
@@ -394,6 +769,8 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                     )}
                 </div>
 
+                {/* 우측: 채팅 영역 */}
+                <div className="flex-1 flex flex-col min-h-0 lg:min-w-0">
                 <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-3">
                     {messages.map((message) => (
                         <div
@@ -455,22 +832,34 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                                 )}
                             </div>
                             <div
-                                className={`px-4 py-3 rounded-2xl rounded-bl-md ${isMemorialMode ? "bg-amber-100" : "bg-white shadow-sm"}`}
+                                className={`px-5 py-3 rounded-2xl rounded-bl-md ${isMemorialMode ? "bg-amber-100" : "bg-white shadow-sm"}`}
                             >
-                                <div className="flex gap-1">
-                                    <span
-                                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                                        style={{ animationDelay: "0ms" }}
-                                    />
-                                    <span
-                                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                                        style={{ animationDelay: "150ms" }}
-                                    />
-                                    <span
-                                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                                        style={{ animationDelay: "300ms" }}
-                                    />
+                                <div className="flex items-end gap-1.5">
+                                    {[0, 1, 2].map((i) => (
+                                        <div
+                                            key={i}
+                                            className="animate-bounce"
+                                            style={{
+                                                animationDelay: `${i * 200}ms`,
+                                                animationDuration: "0.6s",
+                                            }}
+                                        >
+                                            <PawPrint
+                                                className={`w-4 h-4 ${
+                                                    isMemorialMode
+                                                        ? "text-amber-400"
+                                                        : "text-sky-400"
+                                                }`}
+                                                style={{
+                                                    transform: `rotate(${-15 + i * 15}deg)`,
+                                                }}
+                                            />
+                                        </div>
+                                    ))}
                                 </div>
+                                <p className={`text-xs mt-1 ${isMemorialMode ? "text-amber-500" : "text-sky-500"}`}>
+                                    {selectedPet?.name}가 답변 중...
+                                </p>
                             </div>
                         </div>
                     )}
@@ -481,29 +870,112 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                     className={`flex-shrink-0 p-4 border-t ${isMemorialMode ? "bg-amber-50/80 border-amber-200/50" : "bg-white/80 border-gray-200/50"} backdrop-blur-lg`}
                 >
                     <div className="max-w-2xl mx-auto">
-                        <div className="flex gap-3">
-                            <Input
-                                ref={inputRef}
-                                value={inputValue}
-                                onChange={(e) => setInputValue(e.target.value)}
-                                onKeyDown={handleKeyDown}
-                                placeholder={`${selectedPet?.name}에게 말해보세요...`}
-                                className="flex-1 rounded-xl border-gray-200 bg-white"
-                            />
-                            <Button
-                                onClick={handleSend}
-                                disabled={!inputValue.trim()}
-                                className={`rounded-xl px-4 ${isMemorialMode ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600" : "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-[#05B2DC]"} shadow-lg`}
-                            >
-                                <Send className="w-5 h-5" />
-                            </Button>
-                        </div>
-                        <p className="text-xs text-gray-500 text-center mt-2">
-                            {isMemorialMode
-                                ? "소중한 기억을 함께 나눠요"
-                                : "AI가 반려동물의 입장에서 대화합니다"}
-                        </p>
+                        {/* 제한 도달 시 프리미엄 안내 */}
+                        {isLimitReached ? (
+                            <div className="text-center py-4">
+                                <div className="bg-gradient-to-r from-violet-100 to-sky-100 rounded-2xl p-6 mb-3">
+                                    <p className="text-gray-700 font-medium mb-2">
+                                        오늘의 무료 대화를 모두 사용했어요
+                                    </p>
+                                    <p className="text-sm text-gray-500 mb-4">
+                                        프리미엄으로 {selectedPet?.name}와(과) 무제한 대화하세요
+                                    </p>
+                                    <Button
+                                        className="bg-gradient-to-r from-violet-500 to-sky-500 hover:from-violet-600 hover:to-sky-600 text-white rounded-full px-6"
+                                    >
+                                        <Sparkles className="w-4 h-4 mr-2" />
+                                        프리미엄 시작하기 (월 7,900원)
+                                    </Button>
+                                </div>
+                                <p className="text-xs text-gray-400">
+                                    내일 다시 15회 무료 대화가 충전돼요
+                                </p>
+                            </div>
+                        ) : (
+                            <>
+                                {/* 추천 대화 버튼 - 항상 표시 */}
+                                <div className="flex flex-wrap gap-2 mb-3 justify-center">
+                                    {(isMemorialMode
+                                        ? [
+                                            { text: "잘 지냈어?", Icon: Sparkles },
+                                            { text: "보고싶어", Icon: Moon },
+                                            { text: "오늘 너 생각이 났어", Icon: Star },
+                                            { text: "행복했던 기억 얘기해줘", Icon: CloudSun },
+                                        ]
+                                        : [
+                                            { text: "예방접종 언제 해야 해?", Icon: Syringe },
+                                            { text: "오늘 건강 체크해줘", Icon: Stethoscope },
+                                            { text: "산책 시간 알려줘", Icon: Footprints },
+                                            { text: "간식 추천해줘", Icon: Cookie },
+                                        ]
+                                    ).map((suggestion) => (
+                                        <button
+                                            key={suggestion.text}
+                                            onClick={() => { handleSend(suggestion.text); }}
+                                            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm transition-all active:scale-95 min-h-[44px] ${
+                                                isMemorialMode
+                                                    ? "bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-200"
+                                                    : "bg-[#E0F7FF] hover:bg-[#BAE6FD] text-[#0891B2] border border-[#BAE6FD]"
+                                            }`}
+                                        >
+                                            <suggestion.Icon className="w-3.5 h-3.5" />
+                                            {suggestion.text}
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="flex gap-2 sm:gap-3">
+                                    <Input
+                                        ref={inputRef}
+                                        value={inputValue}
+                                        onChange={(e) => setInputValue(e.target.value.slice(0, MAX_MESSAGE_LENGTH))}
+                                        onKeyDown={handleKeyDown}
+                                        placeholder={`${selectedPet?.name}에게 말해보세요...`}
+                                        className="flex-1 rounded-xl border-gray-200 bg-white h-12 text-base"
+                                    />
+                                    <Button
+                                        onClick={() => handleSend()}
+                                        disabled={!inputValue.trim()}
+                                        className={`rounded-xl px-4 min-w-[48px] min-h-[48px] ${isMemorialMode ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600" : "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-[#05B2DC]"} shadow-lg active:scale-95 transition-transform`}
+                                    >
+                                        <Send className="w-5 h-5" />
+                                    </Button>
+                                </div>
+                                {/* 글자 수 카운터 - 타이핑 중일 때만 표시 */}
+                                {inputValue.length > 0 && (
+                                    <div className="flex justify-end mt-1 mr-14">
+                                        <span className={`text-xs transition-colors ${
+                                            inputValue.length >= MAX_MESSAGE_LENGTH
+                                                ? "text-red-500 font-medium"
+                                                : inputValue.length >= MAX_MESSAGE_LENGTH - 30
+                                                ? "text-amber-500"
+                                                : "text-gray-400"
+                                        }`}>
+                                            {inputValue.length}/{MAX_MESSAGE_LENGTH}
+                                        </span>
+                                    </div>
+                                )}
+                                <div className="flex items-center justify-center gap-2 mt-2 flex-wrap">
+                                    {/* 남은 횟수 표시 */}
+                                    <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                                        remainingChats <= 3
+                                            ? "bg-red-100 text-red-600"
+                                            : remainingChats <= 7
+                                            ? "bg-amber-100 text-amber-600"
+                                            : "bg-sky-100 text-sky-600"
+                                    }`}>
+                                        오늘 {remainingChats}회 남음
+                                    </span>
+                                    {lastEmotion !== "neutral" && (
+                                        <span className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                            <span>{emotionIcons[lastEmotion] || "😐"}</span>
+                                            <span className="text-gray-500">감정 인식됨</span>
+                                        </span>
+                                    )}
+                                </div>
+                            </>
+                        )}
                     </div>
+                </div>
                 </div>
             </div>
         </div>
