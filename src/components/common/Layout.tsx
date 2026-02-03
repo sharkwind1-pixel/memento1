@@ -68,6 +68,15 @@ export default function Layout({
     );
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
+    // 다크모드 초기화 (localStorage에서 읽기)
+    useEffect(() => {
+        const savedDarkMode = localStorage.getItem("darkMode");
+        if (savedDarkMode === "true") {
+            setIsDarkMode(true);
+            document.documentElement.classList.add("dark");
+        }
+    }, []);
+
     useEffect(() => {
         const handleOpenAuthModal = () => {
             setAuthModalMode("login");
@@ -79,8 +88,11 @@ export default function Layout({
     }, []);
 
     const toggleDarkMode = () => {
-        setIsDarkMode(!isDarkMode);
+        const newDarkMode = !isDarkMode;
+        setIsDarkMode(newDarkMode);
         document.documentElement.classList.toggle("dark");
+        // localStorage에 저장
+        localStorage.setItem("darkMode", String(newDarkMode));
     };
 
     const handleSignOut = async () => {
