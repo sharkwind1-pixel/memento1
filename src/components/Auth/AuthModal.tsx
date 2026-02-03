@@ -57,6 +57,7 @@ export default function AuthModal({
             setNickname("");
             setError(null);
             setSuccess(null);
+            setLoading(false);
         }
     }, [isOpen]);
 
