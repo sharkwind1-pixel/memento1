@@ -6,21 +6,31 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
 
-// Supabase 클라이언트 (지연 초기화 - 빌드 시점 에러 방지)
-let supabase: SupabaseClient | null = null;
+// Supabase 서버 클라이언트 (지연 초기화 - service role key로 RLS 우회)
+let supabaseServer: SupabaseClient | null = null;
 
 function getSupabase(): SupabaseClient {
-    if (!supabase) {
+    if (!supabaseServer) {
         const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+        // 서버 사이드에서는 service role key 사용 (RLS 우회)
+        const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+        // service role key가 있으면 사용, 없으면 anon key fallback
+        const key = serviceKey || anonKey;
 
         if (!url || !key) {
             throw new Error("Supabase 환경변수가 설정되지 않았습니다.");
         }
 
-        supabase = createClient(url, key);
+        supabaseServer = createClient(url, key, {
+            auth: {
+                autoRefreshToken: false,
+                persistSession: false,
+            },
+        });
     }
-    return supabase;
+    return supabaseServer;
 }
 
 // OpenAI 클라이언트 (지연 초기화)

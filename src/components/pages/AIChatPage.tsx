@@ -226,7 +226,16 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         const fetchReminders = async () => {
             try {
                 const params = new URLSearchParams({ petId: selectedPetId });
-                const response = await fetch(`/api/reminders?${params}`);
+                const response = await fetch(`/api/reminders?${params}`, {
+                    credentials: "include", // 쿠키 포함
+                });
+
+                // 인증 실패 등 에러 응답은 무시하고 빈 배열 사용
+                if (!response.ok) {
+                    setReminders([]);
+                    return;
+                }
+
                 const data = await response.json();
                 if (data.reminders) {
                     setReminders(data.reminders.map((r: { type: string; title: string; schedule: { type: string; time: string; dayOfWeek?: number; dayOfMonth?: number }; enabled: boolean }) => ({
