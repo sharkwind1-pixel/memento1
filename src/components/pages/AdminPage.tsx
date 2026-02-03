@@ -96,9 +96,12 @@ export default function AdminPage() {
     const loadDashboardStats = async () => {
         setLoading(true);
         try {
-            // 전체 사용자 수 (pets 테이블의 유니크 user_id로 추정)
-            const { count: petsCount } = await supabase
-                .from("pets")
+            // 오늘 날짜
+            const today = new Date().toISOString().split("T")[0];
+
+            // 전체 사용자 수 (profiles 테이블)
+            const { count: totalUsers } = await supabase
+                .from("profiles")
                 .select("*", { count: "exact", head: true });
 
             // 전체 반려동물 수
@@ -106,32 +109,49 @@ export default function AdminPage() {
                 .from("pets")
                 .select("*", { count: "exact", head: true });
 
-            // 유니크 사용자 수 추정 (pets 테이블에서)
-            const { data: uniqueUsers } = await supabase
-                .from("pets")
-                .select("user_id")
-                .limit(1000);
+            // 전체 게시글 수
+            const { count: totalPosts } = await supabase
+                .from("community_posts")
+                .select("*", { count: "exact", head: true });
 
-            const uniqueUserIds = new Set(uniqueUsers?.map(p => p.user_id) || []);
+            // 전체 채팅 수
+            const { count: totalChats } = await supabase
+                .from("chat_messages")
+                .select("*", { count: "exact", head: true });
 
-            // 오늘 날짜
-            const today = new Date().toISOString().split("T")[0];
-
-            // 오늘 생성된 반려동물 (신규 가입 추정)
-            const { count: todayPets } = await supabase
-                .from("pets")
+            // 오늘 가입한 사용자
+            const { count: todayUsers } = await supabase
+                .from("profiles")
                 .select("*", { count: "exact", head: true })
                 .gte("created_at", today);
 
+            // 오늘 채팅 수
+            const { count: todayChats } = await supabase
+                .from("chat_messages")
+                .select("*", { count: "exact", head: true })
+                .gte("created_at", today);
+
+            // 프리미엄 사용자
+            const { count: premiumUsers } = await supabase
+                .from("profiles")
+                .select("*", { count: "exact", head: true })
+                .eq("is_premium", true);
+
+            // 정지된 사용자
+            const { count: bannedUsers } = await supabase
+                .from("profiles")
+                .select("*", { count: "exact", head: true })
+                .eq("is_banned", true);
+
             setStats({
-                totalUsers: uniqueUserIds.size,
+                totalUsers: totalUsers || 0,
                 totalPets: totalPets || 0,
-                totalPosts: 0, // 커뮤니티 테이블 있으면 연동
-                totalChats: 0, // 채팅 로그 테이블 있으면 연동
-                todayUsers: todayPets || 0,
-                todayChats: 0,
-                premiumUsers: 0,
-                bannedUsers: 0,
+                totalPosts: totalPosts || 0,
+                totalChats: totalChats || 0,
+                todayUsers: todayUsers || 0,
+                todayChats: todayChats || 0,
+                premiumUsers: premiumUsers || 0,
+                bannedUsers: bannedUsers || 0,
             });
         } catch (error) {
             console.error("통계 로드 실패:", error);
@@ -144,34 +164,50 @@ export default function AdminPage() {
     const loadUsers = async () => {
         try {
             const { data, error } = await supabase
-                .from("pets")
-                .select("user_id, created_at")
+                .from("profiles")
+                .select("id, email, nickname, is_premium, is_banned, created_at")
                 .order("created_at", { ascending: false })
                 .limit(100);
 
             if (data) {
-                // 유니크 사용자만 추출
-                const userMap = new Map<string, UserRow>();
-                data.forEach((pet) => {
-                    if (!userMap.has(pet.user_id)) {
-                        userMap.set(pet.user_id, {
-                            id: pet.user_id,
-                            email: pet.user_id.substring(0, 8) + "...",
-                            created_at: pet.created_at,
-                        });
-                    }
-                });
-                setUsers(Array.from(userMap.values()));
+                setUsers(data.map(profile => ({
+                    id: profile.id,
+                    email: profile.email || "이메일 없음",
+                    created_at: profile.created_at,
+                    user_metadata: { nickname: profile.nickname },
+                    is_banned: profile.is_banned,
+                    is_premium: profile.is_premium,
+                })));
             }
         } catch (error) {
             console.error("사용자 로드 실패:", error);
         }
     };
 
-    // 게시물 목록 로드 (예시 - 실제 테이블에 맞게 수정 필요)
+    // 게시물 목록 로드
     const loadPosts = async () => {
-        // 커뮤니티 게시물 테이블이 있으면 연동
-        setPosts([]);
+        try {
+            const { data, error } = await supabase
+                .from("community_posts")
+                .select("id, title, content, user_id, author_name, created_at, is_hidden, views")
+                .order("created_at", { ascending: false })
+                .limit(100);
+
+            if (data) {
+                setPosts(data.map(post => ({
+                    id: post.id,
+                    title: post.title,
+                    content: post.content,
+                    author_id: post.user_id,
+                    author_email: post.author_name,
+                    created_at: post.created_at,
+                    is_hidden: post.is_hidden,
+                    report_count: 0,
+                })));
+            }
+        } catch (error) {
+            console.error("게시물 로드 실패:", error);
+        }
     };
 
     useEffect(() => {
