@@ -50,27 +50,45 @@ export function TrueFocus({
     return () => clearTimeout(startAnimation)
   }, [characters.length, delay, staggerDelay])
 
+  // 단어 단위로 묶어서 줄바꿈 방지
+  const words = text.split(' ')
+  let charIndex = 0
+
   return (
-    <span className={className}>
-      {characters.map((char, index) => (
-        <span
-          key={index}
-          className={`
-            inline-block transition-all
-            ${isComplete || index <= focusedIndex
-              ? focusColor
-              : blurColor
-            }
-          `}
-          style={{
-            transitionDuration: `${duration}s`,
-            filter: isComplete || index <= focusedIndex ? 'blur(0px)' : 'blur(4px)',
-            opacity: isComplete || index <= focusedIndex ? 1 : 0.3,
-          }}
-        >
-          {char === ' ' ? '\u00A0' : char}
-        </span>
-      ))}
+    <span className={`${className} inline`} style={{ wordBreak: 'keep-all' }}>
+      {words.map((word, wordIdx) => {
+        const wordChars = word.split('')
+        const wordStartIndex = charIndex
+        charIndex += word.length + 1 // +1 for space
+
+        return (
+          <span key={wordIdx} className="inline-block whitespace-nowrap">
+            {wordChars.map((char, idx) => {
+              const globalIndex = wordStartIndex + idx
+              return (
+                <span
+                  key={idx}
+                  className={`
+                    inline transition-all
+                    ${isComplete || globalIndex <= focusedIndex
+                      ? focusColor
+                      : blurColor
+                    }
+                  `}
+                  style={{
+                    transitionDuration: `${duration}s`,
+                    filter: isComplete || globalIndex <= focusedIndex ? 'blur(0px)' : 'blur(4px)',
+                    opacity: isComplete || globalIndex <= focusedIndex ? 1 : 0.3,
+                  }}
+                >
+                  {char}
+                </span>
+              )
+            })}
+            {wordIdx < words.length - 1 && <span>&nbsp;</span>}
+          </span>
+        )
+      })}
     </span>
   )
 }

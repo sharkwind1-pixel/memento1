@@ -207,15 +207,15 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                 {/* HERO */}
                 <section className="px-4 pt-8">
                     <div className="bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg border border-white/40 dark:border-gray-700/40 rounded-3xl p-8 md:p-12 shadow-2xl">
-                        <div className="text-center space-y-6">
-                            <h1 className="text-4xl md:text-6xl font-bold">
+                        <div className="text-center space-y-4 md:space-y-6">
+                            <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold leading-tight">
                                 <EmotionalTrueFocus
                                     text="특별한 매일을 함께"
                                     variant="gentle"
                                     delay={250}
                                 />
                             </h1>
-                            <p className="text-xl md:text-2xl font-bold text-gray-700 dark:text-gray-200">
+                            <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-700 dark:text-gray-200 leading-relaxed px-2">
                                 <EmotionalTrueFocus
                                     text="일상부터 기억까지, 시간이 쌓이고 의미가 바뀌는 기록 플랫폼"
                                     variant="warm"
@@ -248,16 +248,16 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
 
                 {/* 인기 커뮤니티 */}
                 <section className="space-y-6 px-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] rounded-xl flex items-center justify-center">
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center space-x-3 min-w-0">
+                            <div className="w-10 h-10 flex-shrink-0 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] rounded-xl flex items-center justify-center">
                                 <TrendingUp className="w-5 h-5 text-white" />
                             </div>
-                            <div>
-                                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+                            <div className="min-w-0">
+                                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 dark:text-gray-100 leading-tight">
                                     지금 인기 있는 이야기
                                 </h2>
-                                <p className="text-gray-600 dark:text-gray-300">
+                                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 hidden sm:block">
                                     커뮤니티에서 가장 사랑받는 글들
                                 </p>
                             </div>
@@ -265,10 +265,11 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                         <Button
                             variant="ghost"
                             onClick={() => setSelectedTab("community")}
-                            className="text-[#0891B2] dark:text-[#38BDF8] hover:bg-[#E0F7FF] dark:hover:bg-gray-700 rounded-xl"
+                            className="text-[#0891B2] dark:text-[#38BDF8] hover:bg-[#E0F7FF] dark:hover:bg-gray-700 rounded-xl flex-shrink-0 px-2 sm:px-4"
                         >
-                            더 많은 이야기{" "}
-                            <ArrowRight className="w-4 h-4 ml-2" />
+                            <span className="hidden sm:inline">더 많은 이야기</span>
+                            <span className="sm:hidden">더보기</span>
+                            <ArrowRight className="w-4 h-4 ml-1 sm:ml-2" />
                         </Button>
                     </div>
 
@@ -379,16 +380,16 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
 
                 {/* 입양정보 */}
                 <section className="space-y-6 px-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-gradient-to-r from-[#38BDF8] to-[#05B2DC] rounded-xl flex items-center justify-center">
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center space-x-3 min-w-0">
+                            <div className="w-10 h-10 flex-shrink-0 bg-gradient-to-r from-[#38BDF8] to-[#05B2DC] rounded-xl flex items-center justify-center">
                                 <Users className="w-5 h-5 text-white" />
                             </div>
-                            <div>
-                                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-                                    새로운 가족을 기다리고 있어요
+                            <div className="min-w-0">
+                                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 dark:text-gray-100 leading-tight">
+                                    새 가족을 기다려요
                                 </h2>
-                                <p className="text-gray-600 dark:text-gray-300">
+                                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 hidden sm:block">
                                     따뜻한 손길을 기다리는 친구들
                                 </p>
                             </div>
@@ -396,10 +397,11 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                         <Button
                             variant="ghost"
                             onClick={() => setSelectedTab("adoption")}
-                            className="text-[#0891B2] dark:text-[#38BDF8] hover:bg-[#E0F7FF] dark:hover:bg-gray-700 rounded-xl"
+                            className="text-[#0891B2] dark:text-[#38BDF8] hover:bg-[#E0F7FF] dark:hover:bg-gray-700 rounded-xl flex-shrink-0 px-2 sm:px-4"
                         >
-                            전체 보기{" "}
-                            <ArrowRight className="w-4 h-4 ml-2" />
+                            <span className="hidden sm:inline">전체 보기</span>
+                            <span className="sm:hidden">더보기</span>
+                            <ArrowRight className="w-4 h-4 ml-1 sm:ml-2" />
                         </Button>
                     </div>
 
@@ -480,16 +482,16 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
 
                 {/* 케어 가이드 */}
                 <section className="space-y-6 px-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] rounded-xl flex items-center justify-center">
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center space-x-3 min-w-0">
+                            <div className="w-10 h-10 flex-shrink-0 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] rounded-xl flex items-center justify-center">
                                 <Stethoscope className="w-5 h-5 text-white" />
                             </div>
-                            <div>
-                                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-                                    전문가의 케어 가이드
+                            <div className="min-w-0">
+                                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 dark:text-gray-100 leading-tight">
+                                    케어 가이드
                                 </h2>
-                                <p className="text-gray-600 dark:text-gray-300">
+                                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 hidden sm:block">
                                     건강하고 행복한 일상을 위한 맞춤 정보
                                 </p>
                             </div>
@@ -497,9 +499,11 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                         <Button
                             variant="ghost"
                             onClick={() => setSelectedTab("magazine")}
-                            className="text-[#0891B2] dark:text-[#38BDF8] hover:bg-[#E0F7FF] dark:hover:bg-gray-700 rounded-xl"
+                            className="text-[#0891B2] dark:text-[#38BDF8] hover:bg-[#E0F7FF] dark:hover:bg-gray-700 rounded-xl flex-shrink-0 px-2 sm:px-4"
                         >
-                            전체 가이드 <ArrowRight className="w-4 h-4 ml-2" />
+                            <span className="hidden sm:inline">전체 가이드</span>
+                            <span className="sm:hidden">더보기</span>
+                            <ArrowRight className="w-4 h-4 ml-1 sm:ml-2" />
                         </Button>
                     </div>
 
@@ -552,16 +556,16 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
 
                 {/* 추모 */}
                 <section className="space-y-6 px-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-gradient-to-r from-violet-500 to-purple-500 rounded-xl flex items-center justify-center">
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center space-x-3 min-w-0">
+                            <div className="w-10 h-10 flex-shrink-0 bg-gradient-to-r from-violet-500 to-purple-500 rounded-xl flex items-center justify-center">
                                 <Cloud className="w-5 h-5 text-white" />
                             </div>
-                            <div>
-                                <h2 className="text-2xl font-bold bg-gradient-to-r from-violet-500 to-purple-500 dark:from-violet-400 dark:to-purple-400 bg-clip-text text-transparent">
-                                    기억 속을 함께 걷는 친구들
+                            <div className="min-w-0">
+                                <h2 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-violet-500 to-purple-500 dark:from-violet-400 dark:to-purple-400 bg-clip-text text-transparent leading-tight">
+                                    함께 걷는 친구들
                                 </h2>
-                                <p className="text-gray-600 dark:text-gray-300">
+                                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 hidden sm:block">
                                     영원히 마음속에 함께해요
                                 </p>
                             </div>
@@ -569,10 +573,11 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                         <Button
                             variant="ghost"
                             onClick={() => setSelectedTab("community")}
-                            className="text-violet-500 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-xl"
+                            className="text-violet-500 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-xl flex-shrink-0 px-2 sm:px-4"
                         >
-                            더 많은 이야기{" "}
-                            <ArrowRight className="w-4 h-4 ml-2" />
+                            <span className="hidden sm:inline">더 많은 이야기</span>
+                            <span className="sm:hidden">더보기</span>
+                            <ArrowRight className="w-4 h-4 ml-1 sm:ml-2" />
                         </Button>
                     </div>
 
