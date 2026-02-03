@@ -24,6 +24,15 @@ export const metadata: Metadata = {
     title: "메멘토애니 - 특별한 매일을 함께",
     description: "일상부터 기억까지, 시간이 쌓이고 의미가 바뀌는 기록 플랫폼",
     keywords: ["반려동물", "펫", "추모", "기록", "커뮤니티", "AI 상담"],
+    icons: {
+        icon: "/logo.png",
+        apple: "/logo.png",
+    },
+    openGraph: {
+        title: "메멘토애니 - 특별한 매일을 함께",
+        description: "일상부터 기억까지, 시간이 쌓이고 의미가 바뀌는 기록 플랫폼",
+        images: ["/logo.png"],
+    },
 };
 
 export default function RootLayout({

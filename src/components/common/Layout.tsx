@@ -7,6 +7,7 @@
 "use client";
 
 import React, { useEffect } from "react";
+import Image from "next/image";
 import { TabType, isAdmin } from "@/types";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -118,11 +119,13 @@ export default function Layout({
                             onClick={() => setSelectedTab("home")}
                             className="flex items-center space-x-2"
                         >
-                            <div className="w-10 h-10 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] rounded-xl flex items-center justify-center shadow-lg shadow-[#05B2DC]/20">
-                                <span className="text-white font-bold text-lg">
-                                    M
-                                </span>
-                            </div>
+                            <Image
+                                src="/logo.png"
+                                alt="메멘토애니"
+                                width={44}
+                                height={44}
+                                className="rounded-lg"
+                            />
                             <span className="text-xl font-bold bg-gradient-to-r from-[#05B2DC] to-[#0891B2] bg-clip-text text-transparent hidden sm:block">
                                 메멘토애니
                             </span>
