@@ -701,9 +701,9 @@ export async function POST(request: NextRequest) {
                 ...recentHistory,
                 { role: "user", content: message },
             ],
-            // 일상모드: 정보 전달 시 충분한 길이 허용 (200토큰)
-            // 추모모드: 따뜻하지만 간결하게 (150토큰)
-            max_tokens: mode === "memorial" ? 150 : 200,
+            // 일상모드: 정보 전달 시 충분한 길이 허용 (400토큰)
+            // 추모모드: 따뜻하지만 적당히 (300토큰)
+            max_tokens: mode === "memorial" ? 300 : 400,
             // 추모모드: 따뜻하고 감성적, 일상모드: 활발하면서 정확한 정보
             temperature: mode === "memorial" ? 0.8 : 0.75,
             // 반복 방지
