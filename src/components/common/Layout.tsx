@@ -117,19 +117,16 @@ export default function Layout({
                         {/* 로고 */}
                         <button
                             onClick={() => setSelectedTab("home")}
-                            className="flex items-center gap-2 flex-shrink-0"
+                            className="flex-shrink-0"
                         >
                             <Image
                                 src="/logo.png"
                                 alt="메멘토애니"
-                                width={48}
-                                height={48}
-                                className="w-10 h-10 sm:w-12 sm:h-12 object-contain"
+                                width={140}
+                                height={56}
+                                className="h-12 sm:h-14 w-auto object-contain rounded-xl dark:bg-white/90 dark:p-1"
                                 priority
                             />
-                            <span className="text-lg sm:text-xl font-bold bg-gradient-to-r from-[#05B2DC] to-[#0891B2] bg-clip-text text-transparent hidden sm:block whitespace-nowrap">
-                                메멘토애니
-                            </span>
                         </button>
 
                         {/* 데스크톱 네비게이션 */}
