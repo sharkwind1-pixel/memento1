@@ -22,10 +22,17 @@ import {
     GriefStage,
 } from "@/lib/agent";
 
-// OpenAI 클라이언트 초기화
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
+// OpenAI 클라이언트 (지연 초기화)
+let openaiInstance: OpenAI | null = null;
+
+function getOpenAI(): OpenAI {
+    if (!openaiInstance) {
+        openaiInstance = new OpenAI({
+            apiKey: process.env.OPENAI_API_KEY,
+        });
+    }
+    return openaiInstance;
+}
 
 // 반려동물 정보 타입
 interface PetInfo {
@@ -686,7 +693,7 @@ export async function POST(request: NextRequest) {
         }));
 
         // OpenAI API 호출 (모드별 설정 최적화)
-        const completion = await openai.chat.completions.create({
+        const completion = await getOpenAI().chat.completions.create({
             model: "gpt-4o-mini",
             messages: [
                 { role: "system", content: systemPrompt },

@@ -6,14 +6,18 @@
 import { createServerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
 /**
  * API Route Handler용 Supabase 클라이언트 생성
  * 쿠키에서 세션을 자동으로 가져옴
  */
 export async function createServerSupabase() {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+        throw new Error("Supabase 환경변수가 설정되지 않았습니다.");
+    }
+
     const cookieStore = await cookies();
 
     return createServerClient(supabaseUrl, supabaseKey, {
