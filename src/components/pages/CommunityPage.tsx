@@ -5,7 +5,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
     Card,
     CardContent,
@@ -34,8 +34,26 @@ import {
     Fish,
     Rabbit,
     Turtle,
+    Loader2,
 } from "lucide-react";
 import { usePets } from "@/contexts/PetContext";
+import { useAuth } from "@/contexts/AuthContext";
+import WritePostModal from "@/components/features/community/WritePostModal";
+
+interface Post {
+    id: string;
+    userId: string;
+    boardType: string;
+    animalType?: string;
+    badge: string;
+    title: string;
+    content: string;
+    authorName: string;
+    likes: number;
+    views: number;
+    comments: number;
+    createdAt: string;
+}
 
 // 게시판 카테고리 - 순서: 자유 > 정보 > 동물별 > 치유(추모모드)
 const BOARD_CATEGORIES = [
@@ -466,10 +484,16 @@ const getCategoryColor = (color: string) => {
 
 export default function CommunityPage() {
     const { selectedPet } = usePets();
+    const { user } = useAuth();
     const [selectedBoard, setSelectedBoard] = useState<string>("free");
     const [selectedAnimalType, setSelectedAnimalType] = useState<string>("all");
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [sortBy, setSortBy] = useState<string>("latest");
+
+    // 실제 데이터 상태
+    const [posts, setPosts] = useState<Post[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [showWriteModal, setShowWriteModal] = useState(false);
 
     // 추모 모드 여부 확인
     const isMemorialMode = selectedPet?.status === "memorial";
@@ -481,33 +505,85 @@ export default function CommunityPage() {
 
     const currentBoard = visibleBoards.find((b) => b.id === selectedBoard) || visibleBoards[0];
     const currentColor = getCategoryColor(currentBoard.color);
-    const posts = MOCK_POSTS[selectedBoard as keyof typeof MOCK_POSTS] || [];
 
-    // 게시글 필터링 (검색어 + 동물 종류)
-    const filteredPosts = posts.filter((post) => {
-        // 검색어 필터
-        const matchesSearch = searchQuery === "" ||
-            post.title.includes(searchQuery) ||
-            post.content.includes(searchQuery);
+    // 게시글 불러오기
+    const fetchPosts = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const params = new URLSearchParams({
+                board: selectedBoard,
+                sort: sortBy,
+            });
+            if (selectedAnimalType !== "all") {
+                params.append("animal", selectedAnimalType);
+            }
+            if (searchQuery) {
+                params.append("search", searchQuery);
+            }
 
-        // 동물 종류 필터 (동물별 게시판일 때만)
-        const matchesAnimalType = selectedBoard !== "pets" ||
-            selectedAnimalType === "all" ||
-            (post as { animalType?: string }).animalType === selectedAnimalType;
+            const response = await fetch(`/api/posts?${params}`);
+            const data = await response.json();
 
-        return matchesSearch && matchesAnimalType;
-    });
+            if (data.posts) {
+                setPosts(data.posts);
+            }
+        } catch (error) {
+            console.error("게시글 로드 실패:", error);
+            // 에러 시 목업 데이터로 폴백
+            const mockPosts = MOCK_POSTS[selectedBoard as keyof typeof MOCK_POSTS] || [];
+            setPosts(mockPosts.map((p, i) => ({
+                id: String(p.id),
+                userId: "",
+                boardType: selectedBoard,
+                animalType: (p as { animalType?: string }).animalType,
+                badge: p.badge,
+                title: p.title,
+                content: p.content,
+                authorName: p.author,
+                likes: p.likes,
+                views: p.views,
+                comments: p.comments,
+                createdAt: new Date().toISOString(),
+            })));
+        } finally {
+            setIsLoading(false);
+        }
+    }, [selectedBoard, sortBy, selectedAnimalType, searchQuery]);
 
-    const sortedPosts = [...filteredPosts].sort((a, b) => {
-        if (sortBy === "popular") return b.likes - a.likes;
-        if (sortBy === "comments") return b.comments - a.comments;
-        return 0;
-    });
+    // 게시판/정렬/필터 변경 시 다시 로드
+    useEffect(() => {
+        fetchPosts();
+    }, [fetchPosts]);
+
+    // 시간 포맷
+    const formatTime = (dateStr: string) => {
+        const date = new Date(dateStr);
+        const now = new Date();
+        const diff = now.getTime() - date.getTime();
+        const minutes = Math.floor(diff / 60000);
+        const hours = Math.floor(diff / 3600000);
+        const days = Math.floor(diff / 86400000);
+
+        if (minutes < 1) return "방금 전";
+        if (minutes < 60) return `${minutes}분 전`;
+        if (hours < 24) return `${hours}시간 전`;
+        if (days < 7) return `${days}일 전`;
+        return date.toLocaleDateString("ko-KR");
+    };
 
     // 게시판 변경 시 동물 종류 필터 초기화
     const handleBoardChange = (boardId: string) => {
         setSelectedBoard(boardId);
         setSelectedAnimalType("all");
+    };
+
+    // 글쓰기 버튼 클릭
+    const handleWriteClick = () => {
+        if (!user) {
+            window.dispatchEvent(new CustomEvent("openAuthModal"));
+            return;
+        }
+        setShowWriteModal(true);
     };
 
     return (
@@ -535,6 +611,7 @@ export default function CommunityPage() {
                             </div>
                         </div>
                         <Button
+                            onClick={handleWriteClick}
                             className={`bg-gradient-to-r ${currentColor.bg} hover:opacity-90 rounded-xl`}
                         >
                             <PenSquare className="w-4 h-4 mr-2" />
@@ -649,76 +726,100 @@ export default function CommunityPage() {
 
                 {/* 게시글 목록 */}
                 <div className="space-y-4">
-                    {sortedPosts.map((post) => (
-                        <Card
-                            key={post.id}
-                            className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 hover:bg-white/80 dark:hover:bg-gray-700/60 transition-all duration-300 rounded-2xl cursor-pointer"
-                        >
-                            <CardHeader className="pb-2">
-                                <div className="flex items-start justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <Badge
-                                            className={`${getBadgeStyle(post.badge, selectedBoard)} rounded-lg`}
-                                        >
-                                            {post.badge}
-                                        </Badge>
+                    {isLoading ? (
+                        <div className="flex items-center justify-center py-16">
+                            <Loader2 className="w-8 h-8 animate-spin text-sky-500" />
+                        </div>
+                    ) : (
+                        posts.map((post) => (
+                            <Card
+                                key={post.id}
+                                className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 hover:bg-white/80 dark:hover:bg-gray-700/60 transition-all duration-300 rounded-2xl cursor-pointer"
+                            >
+                                <CardHeader className="pb-2">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <Badge
+                                                className={`${getBadgeStyle(post.badge, selectedBoard)} rounded-lg`}
+                                            >
+                                                {post.badge}
+                                            </Badge>
+                                        </div>
+                                        <span className="text-sm text-gray-400 flex items-center gap-1">
+                                            <Clock className="w-3 h-3" />
+                                            {formatTime(post.createdAt)}
+                                        </span>
                                     </div>
-                                    <span className="text-sm text-gray-400 flex items-center gap-1">
-                                        <Clock className="w-3 h-3" />
-                                        {post.time}
+                                    <CardTitle className="text-lg text-gray-800 dark:text-gray-100 mt-2 line-clamp-1">
+                                        {post.title}
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="pb-2">
+                                    <p className="text-gray-600 dark:text-gray-300 line-clamp-2">
+                                        {post.content}
+                                    </p>
+                                </CardContent>
+                                <CardFooter className="flex items-center justify-between pt-2">
+                                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                                        {post.authorName}
                                     </span>
-                                </div>
-                                <CardTitle className="text-lg text-gray-800 dark:text-gray-100 mt-2 line-clamp-1">
-                                    {post.title}
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="pb-2">
-                                <p className="text-gray-600 dark:text-gray-300 line-clamp-2">
-                                    {post.content}
-                                </p>
-                            </CardContent>
-                            <CardFooter className="flex items-center justify-between pt-2">
-                                <span className="text-sm text-gray-500 dark:text-gray-400">
-                                    {post.author}
-                                </span>
-                                <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                                    <span className="flex items-center gap-1">
-                                        <Eye className="w-4 h-4" />
-                                        {post.views.toLocaleString()}
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                        <Heart className="w-4 h-4" />
-                                        {post.likes}
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                        <MessageCircle className="w-4 h-4" />
-                                        {post.comments}
-                                    </span>
-                                </div>
-                            </CardFooter>
-                        </Card>
-                    ))}
+                                    <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                                        <span className="flex items-center gap-1">
+                                            <Eye className="w-4 h-4" />
+                                            {post.views.toLocaleString()}
+                                        </span>
+                                        <span className="flex items-center gap-1">
+                                            <Heart className="w-4 h-4" />
+                                            {post.likes}
+                                        </span>
+                                        <span className="flex items-center gap-1">
+                                            <MessageCircle className="w-4 h-4" />
+                                            {post.comments}
+                                        </span>
+                                    </div>
+                                </CardFooter>
+                            </Card>
+                        ))
+                    )}
                 </div>
 
                 {/* 게시글 없을 때 */}
-                {sortedPosts.length === 0 && (
+                {!isLoading && posts.length === 0 && (
                     <div className="text-center py-16">
                         <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
                             <Search className="w-10 h-10 text-gray-400" />
                         </div>
                         <p className="text-gray-500 dark:text-gray-400">
-                            검색 결과가 없습니다
+                            {searchQuery ? "검색 결과가 없습니다" : "아직 게시글이 없습니다"}
                         </p>
-                        <Button
-                            variant="outline"
-                            className="mt-4 rounded-xl"
-                            onClick={() => setSearchQuery("")}
-                        >
-                            전체 보기
-                        </Button>
+                        {searchQuery ? (
+                            <Button
+                                variant="outline"
+                                className="mt-4 rounded-xl"
+                                onClick={() => setSearchQuery("")}
+                            >
+                                전체 보기
+                            </Button>
+                        ) : (
+                            <Button
+                                onClick={handleWriteClick}
+                                className={`mt-4 bg-gradient-to-r ${currentColor.bg} rounded-xl`}
+                            >
+                                <PenSquare className="w-4 h-4 mr-2" />
+                                첫 글 작성하기
+                            </Button>
+                        )}
                     </div>
                 )}
             </div>
+
+            {/* 글쓰기 모달 */}
+            <WritePostModal
+                isOpen={showWriteModal}
+                onClose={() => setShowWriteModal(false)}
+                boardType={selectedBoard}
+                onSuccess={fetchPosts}
+            />
         </div>
     );
 }

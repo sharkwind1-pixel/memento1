@@ -563,7 +563,7 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                             </div>
                             <div className="min-w-0">
                                 <h2 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-violet-500 to-purple-500 dark:from-violet-400 dark:to-purple-400 bg-clip-text text-transparent leading-tight">
-                                    함께 걷는 친구들
+                                    마음속에 영원히
                                 </h2>
                                 <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 hidden sm:block">
                                     영원히 마음속에 함께해요
