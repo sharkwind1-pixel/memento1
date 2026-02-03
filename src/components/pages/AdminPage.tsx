@@ -90,24 +90,7 @@ export default function AdminPage() {
     const [posts, setPosts] = useState<PostRow[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
 
-    // 관리자 권한 체크
-    if (!isAdmin(user?.email)) {
-        return (
-            <div className="min-h-[60vh] flex items-center justify-center">
-                <Card className="max-w-md">
-                    <CardContent className="pt-6 text-center">
-                        <Shield className="w-16 h-16 text-red-400 mx-auto mb-4" />
-                        <h2 className="text-xl font-bold text-gray-800 mb-2">
-                            접근 권한이 없습니다
-                        </h2>
-                        <p className="text-gray-500">
-                            관리자만 접근할 수 있는 페이지입니다.
-                        </p>
-                    </CardContent>
-                </Card>
-            </div>
-        );
-    }
+    const isAdminUser = isAdmin(user?.email);
 
     // 대시보드 통계 로드
     const loadDashboardStats = async () => {
@@ -192,13 +175,36 @@ export default function AdminPage() {
     };
 
     useEffect(() => {
-        loadDashboardStats();
-    }, []);
+        if (isAdminUser) {
+            loadDashboardStats();
+        }
+    }, [isAdminUser]);
 
     useEffect(() => {
-        if (activeTab === "users") loadUsers();
-        if (activeTab === "posts") loadPosts();
-    }, [activeTab]);
+        if (isAdminUser) {
+            if (activeTab === "users") loadUsers();
+            if (activeTab === "posts") loadPosts();
+        }
+    }, [activeTab, isAdminUser]);
+
+    // 관리자 권한 체크 (hooks 이후에 배치)
+    if (!isAdminUser) {
+        return (
+            <div className="min-h-[60vh] flex items-center justify-center">
+                <Card className="max-w-md">
+                    <CardContent className="pt-6 text-center">
+                        <Shield className="w-16 h-16 text-red-400 mx-auto mb-4" />
+                        <h2 className="text-xl font-bold text-gray-800 mb-2">
+                            접근 권한이 없습니다
+                        </h2>
+                        <p className="text-gray-500">
+                            관리자만 접근할 수 있는 페이지입니다.
+                        </p>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
 
     const tabs = [
         { id: "dashboard" as AdminTab, label: "대시보드", icon: LayoutDashboard },
