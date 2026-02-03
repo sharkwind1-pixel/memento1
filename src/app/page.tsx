@@ -110,10 +110,24 @@ function HomeContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    // URL에서 탭 읽기 (없으면 home)
-    const tabFromUrl = searchParams.get("tab");
-    const initialTab = isValidTab(tabFromUrl) ? tabFromUrl : "home";
-    const [selectedTab, setSelectedTab] = useState<TabType>(initialTab);
+    // 초기 탭 결정: URL > localStorage > home
+    const getInitialTab = (): TabType => {
+        // 1. URL에서 먼저 확인
+        const tabFromUrl = searchParams.get("tab");
+        if (isValidTab(tabFromUrl)) {
+            return tabFromUrl;
+        }
+        // 2. localStorage에서 확인 (모바일 새로고침 대응)
+        if (typeof window !== "undefined") {
+            const savedTab = localStorage.getItem("memento-current-tab");
+            if (isValidTab(savedTab)) {
+                return savedTab;
+            }
+        }
+        return "home";
+    };
+
+    const [selectedTab, setSelectedTab] = useState<TabType>(getInitialTab);
     const [showOnboarding, setShowOnboarding] = useState(false);
 
     // URL 변경 시 탭 동기화
@@ -121,6 +135,7 @@ function HomeContent() {
         const tabFromUrl = searchParams.get("tab");
         if (isValidTab(tabFromUrl) && tabFromUrl !== selectedTab) {
             setSelectedTab(tabFromUrl);
+            localStorage.setItem("memento-current-tab", tabFromUrl);
         }
     }, [searchParams, selectedTab]);
 
@@ -133,6 +148,8 @@ function HomeContent() {
 
     const handleTabChange = useCallback((tab: TabType) => {
         setSelectedTab(tab);
+        // localStorage에 저장 (모바일 새로고침 대응)
+        localStorage.setItem("memento-current-tab", tab);
         // URL 업데이트 (home이면 파라미터 제거)
         if (tab === "home") {
             router.push("/", { scroll: false });
