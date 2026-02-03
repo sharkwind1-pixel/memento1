@@ -733,30 +733,41 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                     </h1>
                 </div>
 
-                {/* 탭 네비게이션 */}
-                <div className="flex gap-2 mb-6">
+                {/* 탭 네비게이션 - 한 줄로 통합 */}
+                <div className="flex items-center gap-2 mb-6">
                     <button
                         onClick={() => setActiveTab("pets")}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all ${
+                        className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl font-medium transition-all text-sm sm:text-base ${
                             activeTab === "pets"
                                 ? "bg-[#05B2DC] text-white shadow-lg"
                                 : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                         }`}
                     >
                         <PawPrint className="w-4 h-4" />
-                        반려동물
+                        <span className="hidden sm:inline">반려동물</span>
+                        <span className="sm:hidden">반려</span>
                     </button>
                     <button
                         onClick={() => setActiveTab("profile")}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all ${
+                        className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl font-medium transition-all text-sm sm:text-base ${
                             activeTab === "profile"
                                 ? "bg-[#05B2DC] text-white shadow-lg"
                                 : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                         }`}
                     >
                         <User className="w-4 h-4" />
-                        내 정보
+                        <span className="hidden sm:inline">내 정보</span>
+                        <span className="sm:hidden">정보</span>
                     </button>
+                    <div className="flex-1" />
+                    <Button
+                        onClick={handleAddNewPet}
+                        size="sm"
+                        className="bg-[#05B2DC] hover:bg-[#0891B2] text-sm"
+                    >
+                        <Plus className="w-4 h-4 sm:mr-1" />
+                        <span className="hidden sm:inline">새 반려동물</span>
+                    </Button>
                 </div>
 
                 {/* 내 정보 탭 */}
@@ -917,16 +928,6 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                 {/* 반려동물 탭 */}
                 {activeTab === "pets" && (
                     <>
-                        {/* 새 반려동물 추가 버튼 */}
-                        <div className="flex justify-end mb-4">
-                            <Button
-                                onClick={handleAddNewPet}
-                                className="bg-[#05B2DC] hover:bg-[#0891B2]"
-                            >
-                                <Plus className="w-4 h-4 mr-2" />새 반려동물
-                            </Button>
-                        </div>
-
                         {pets.length === 0 ? (
                     <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
                         <CardContent className="flex flex-col items-center justify-center py-16">
