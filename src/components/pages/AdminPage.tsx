@@ -36,6 +36,17 @@ import {
     Crown,
     AlertTriangle,
 } from "lucide-react";
+import {
+    LineChart,
+    Line,
+    AreaChart,
+    Area,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+} from "recharts";
 
 type AdminTab = "dashboard" | "users" | "posts" | "reports";
 
@@ -72,6 +83,12 @@ interface PostRow {
     report_count?: number;
 }
 
+interface ChartData {
+    date: string;
+    가입자: number;
+    채팅: number;
+}
+
 export default function AdminPage() {
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState<AdminTab>("dashboard");
@@ -89,8 +106,45 @@ export default function AdminPage() {
     const [users, setUsers] = useState<UserRow[]>([]);
     const [posts, setPosts] = useState<PostRow[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
+    const [chartData, setChartData] = useState<ChartData[]>([]);
 
     const isAdminUser = isAdmin(user?.email);
+
+    // 차트 데이터 로드 (최근 7일)
+    const loadChartData = async () => {
+        try {
+            const days = [];
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                const dateStr = date.toISOString().split("T")[0];
+                const displayDate = `${date.getMonth() + 1}/${date.getDate()}`;
+
+                // 해당 날짜의 가입자 수
+                const { count: signups } = await supabase
+                    .from("profiles")
+                    .select("*", { count: "exact", head: true })
+                    .gte("created_at", dateStr)
+                    .lt("created_at", new Date(date.getTime() + 86400000).toISOString().split("T")[0]);
+
+                // 해당 날짜의 채팅 수
+                const { count: chats } = await supabase
+                    .from("chat_messages")
+                    .select("*", { count: "exact", head: true })
+                    .gte("created_at", dateStr)
+                    .lt("created_at", new Date(date.getTime() + 86400000).toISOString().split("T")[0]);
+
+                days.push({
+                    date: displayDate,
+                    가입자: signups || 0,
+                    채팅: chats || 0,
+                });
+            }
+            setChartData(days);
+        } catch (error) {
+            console.error("차트 데이터 로드 실패:", error);
+        }
+    };
 
     // 대시보드 통계 로드
     const loadDashboardStats = async () => {
@@ -189,7 +243,7 @@ export default function AdminPage() {
         try {
             const { data, error } = await supabase
                 .from("community_posts")
-                .select("id, title, content, user_id, author_name, created_at, is_hidden, views")
+                .select("id, title, content, user_id, author_name, created_at, views")
                 .order("created_at", { ascending: false })
                 .limit(100);
 
@@ -201,7 +255,7 @@ export default function AdminPage() {
                     author_id: post.user_id,
                     author_email: post.author_name,
                     created_at: post.created_at,
-                    is_hidden: post.is_hidden,
+                    is_hidden: false,
                     report_count: 0,
                 })));
             }
@@ -213,6 +267,7 @@ export default function AdminPage() {
     useEffect(() => {
         if (isAdminUser) {
             loadDashboardStats();
+            loadChartData();
         }
     }, [isAdminUser]);
 
@@ -407,6 +462,77 @@ export default function AdminPage() {
                             </div>
                         </CardContent>
                     </Card>
+
+                    {/* 가입자 & 채팅 추이 그래프 */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-lg flex items-center gap-2">
+                                    <TrendingUp className="w-5 h-5 text-blue-500" />
+                                    주간 가입자 추이
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="h-64">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <AreaChart data={chartData}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                                            <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#9ca3af" />
+                                            <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" />
+                                            <Tooltip
+                                                contentStyle={{
+                                                    backgroundColor: '#fff',
+                                                    border: '1px solid #e5e7eb',
+                                                    borderRadius: '8px'
+                                                }}
+                                            />
+                                            <Area
+                                                type="monotone"
+                                                dataKey="가입자"
+                                                stroke="#3b82f6"
+                                                fill="#93c5fd"
+                                                strokeWidth={2}
+                                            />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-lg flex items-center gap-2">
+                                    <MessageCircle className="w-5 h-5 text-violet-500" />
+                                    주간 AI 채팅 추이
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="h-64">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <LineChart data={chartData}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                                            <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#9ca3af" />
+                                            <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" />
+                                            <Tooltip
+                                                contentStyle={{
+                                                    backgroundColor: '#fff',
+                                                    border: '1px solid #e5e7eb',
+                                                    borderRadius: '8px'
+                                                }}
+                                            />
+                                            <Line
+                                                type="monotone"
+                                                dataKey="채팅"
+                                                stroke="#8b5cf6"
+                                                strokeWidth={2}
+                                                dot={{ fill: '#8b5cf6', strokeWidth: 2 }}
+                                            />
+                                        </LineChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
 
                     {/* 최근 활동 */}
                     <Card>
