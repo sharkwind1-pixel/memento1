@@ -113,20 +113,21 @@ export default function Layout({
             {/* 헤더 */}
             <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-700/50">
                 <div className="max-w-7xl mx-auto px-4">
-                    <div className="flex items-center justify-between h-16">
+                    <div className="flex items-center justify-between h-16 sm:h-[72px]">
                         {/* 로고 */}
                         <button
                             onClick={() => setSelectedTab("home")}
-                            className="flex items-center space-x-2"
+                            className="flex items-center gap-2 flex-shrink-0"
                         >
                             <Image
                                 src="/logo.png"
                                 alt="메멘토애니"
-                                width={44}
-                                height={44}
-                                className="rounded-lg"
+                                width={48}
+                                height={48}
+                                className="w-10 h-10 sm:w-12 sm:h-12 object-contain"
+                                priority
                             />
-                            <span className="text-xl font-bold bg-gradient-to-r from-[#05B2DC] to-[#0891B2] bg-clip-text text-transparent hidden sm:block">
+                            <span className="text-lg sm:text-xl font-bold bg-gradient-to-r from-[#05B2DC] to-[#0891B2] bg-clip-text text-transparent hidden sm:block whitespace-nowrap">
                                 메멘토애니
                             </span>
                         </button>
