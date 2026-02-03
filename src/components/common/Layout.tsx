@@ -113,7 +113,7 @@ export default function Layout({
             {/* 헤더 */}
             <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-700/50">
                 <div className="max-w-7xl mx-auto px-4">
-                    <div className="flex items-center justify-between h-16 sm:h-[72px]">
+                    <div className="flex items-center justify-between h-20 sm:h-24">
                         {/* 로고 */}
                         <button
                             onClick={() => setSelectedTab("home")}
@@ -122,9 +122,9 @@ export default function Layout({
                             <Image
                                 src="/logo.png"
                                 alt="메멘토애니"
-                                width={140}
-                                height={56}
-                                className="h-12 sm:h-14 w-auto object-contain rounded-xl dark:bg-white/90 dark:p-1"
+                                width={200}
+                                height={80}
+                                className="h-16 sm:h-20 w-auto object-contain rounded-2xl dark:bg-white dark:p-1.5 dark:rounded-2xl"
                                 priority
                             />
                         </button>
