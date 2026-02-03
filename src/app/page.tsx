@@ -6,13 +6,20 @@
 
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useCallback } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { TabType } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePets } from "@/contexts/PetContext";
 import Layout from "@/components/common/Layout";
 import { hasCompletedOnboarding } from "@/components/features/onboarding/OnboardingModal";
+
+// 유효한 탭인지 확인
+const VALID_TABS: TabType[] = ["home", "record", "community", "ai-chat", "magazine", "adoption", "local", "lost", "admin"];
+const isValidTab = (tab: string | null): tab is TabType => {
+    return tab !== null && VALID_TABS.includes(tab as TabType);
+};
 
 // 페이지 로딩 컴포넌트
 function PageLoader() {
@@ -88,11 +95,34 @@ const OnboardingModal = dynamic(
     { ssr: false }
 );
 
+// Suspense 래퍼 (useSearchParams 필요)
 export default function Home() {
+    return (
+        <Suspense fallback={<PageLoader />}>
+            <HomeContent />
+        </Suspense>
+    );
+}
+
+function HomeContent() {
     const { user, loading } = useAuth();
     const { pets, isLoading: petsLoading } = usePets();
-    const [selectedTab, setSelectedTab] = useState<TabType>("home");
+    const router = useRouter();
+    const searchParams = useSearchParams();
+
+    // URL에서 탭 읽기 (없으면 home)
+    const tabFromUrl = searchParams.get("tab");
+    const initialTab = isValidTab(tabFromUrl) ? tabFromUrl : "home";
+    const [selectedTab, setSelectedTab] = useState<TabType>(initialTab);
     const [showOnboarding, setShowOnboarding] = useState(false);
+
+    // URL 변경 시 탭 동기화
+    useEffect(() => {
+        const tabFromUrl = searchParams.get("tab");
+        if (isValidTab(tabFromUrl) && tabFromUrl !== selectedTab) {
+            setSelectedTab(tabFromUrl);
+        }
+    }, [searchParams, selectedTab]);
 
     // 온보딩 표시 여부 체크
     useEffect(() => {
@@ -101,9 +131,15 @@ export default function Home() {
         }
     }, [user, pets, petsLoading]);
 
-    const handleTabChange = (tab: TabType) => {
+    const handleTabChange = useCallback((tab: TabType) => {
         setSelectedTab(tab);
-    };
+        // URL 업데이트 (home이면 파라미터 제거)
+        if (tab === "home") {
+            router.push("/", { scroll: false });
+        } else {
+            router.push(`/?tab=${tab}`, { scroll: false });
+        }
+    }, [router]);
 
     const renderCurrentPage = () => {
         switch (selectedTab) {
