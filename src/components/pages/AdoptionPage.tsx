@@ -155,53 +155,50 @@ export default function AdoptionPage({ setSelectedTab }: AdoptionPageProps) {
             />
 
             <div className="relative z-10 space-y-8 pb-8">
-                {/* 헤더 */}
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
+                {/* 헤더 - 모바일 최적화 */}
+                <div className="space-y-4">
+                    <div className="flex items-center gap-3">
                         <Button
                             variant="ghost"
+                            size="icon"
                             onClick={() => setSelectedTab("home")}
-                            className="rounded-xl"
+                            className="rounded-xl flex-shrink-0"
                         >
-                            <ArrowLeft className="w-5 h-5 mr-2" />
-                            홈으로
+                            <ArrowLeft className="w-5 h-5" />
                         </Button>
-                        <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-gradient-to-r from-sky-500 to-blue-500 rounded-xl flex items-center justify-center">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <div className="w-10 h-10 bg-gradient-to-r from-sky-500 to-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
                                 <Users className="w-5 h-5 text-white" />
                             </div>
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+                            <div className="min-w-0">
+                                <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100 truncate">
                                     입양 정보
                                 </h1>
-                                <p className="text-gray-600 dark:text-gray-300">
-                                    새로운 가족을 기다리는 친구들
+                                <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
+                                    새 가족을 기다리는 친구들
                                 </p>
                             </div>
                         </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        <Button
-                            variant={
-                                viewMode === "grid" ? "default" : "outline"
-                            }
-                            size="sm"
-                            onClick={() => setViewMode("grid")}
-                            className="rounded-xl"
-                        >
-                            그리드
-                        </Button>
-                        <Button
-                            variant={
-                                viewMode === "list" ? "default" : "outline"
-                            }
-                            size="sm"
-                            onClick={() => setViewMode("list")}
-                            className="rounded-xl"
-                        >
-                            리스트
-                        </Button>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                            <Button
+                                variant={viewMode === "grid" ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setViewMode("grid")}
+                                className="rounded-xl px-2 sm:px-3"
+                            >
+                                <span className="sm:hidden">🔲</span>
+                                <span className="hidden sm:inline">그리드</span>
+                            </Button>
+                            <Button
+                                variant={viewMode === "list" ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setViewMode("list")}
+                                className="rounded-xl px-2 sm:px-3"
+                            >
+                                <span className="sm:hidden">📋</span>
+                                <span className="hidden sm:inline">리스트</span>
+                            </Button>
+                        </div>
                     </div>
                 </div>
 

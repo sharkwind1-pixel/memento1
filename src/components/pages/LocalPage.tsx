@@ -310,65 +310,80 @@ export default function LocalPage({ setSelectedTab }: LocalPageProps) {
             <div className="relative z-10 space-y-6 pb-8">
                 {/* 헤더 */}
                 <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg border border-white/50 dark:border-gray-700/50 rounded-3xl p-6">
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center space-x-3">
-                            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-sky-500 rounded-xl flex items-center justify-center">
-                                <MapPin className="w-6 h-6 text-white" />
+                    <div className="flex items-center justify-between gap-3 mb-6">
+                        <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-500 to-sky-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                                <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                             </div>
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+                            <div className="min-w-0">
+                                <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">
                                     지역정보
                                 </h1>
-                                <p className="text-gray-600 dark:text-gray-300">
+                                <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
                                     우리 동네 반려동물 이야기
                                 </p>
                             </div>
                         </div>
-                        <Button className="bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 rounded-xl">
-                            <PenSquare className="w-4 h-4 mr-2" />
-                            글쓰기
+                        <Button className="bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 rounded-xl flex-shrink-0 px-3 sm:px-4">
+                            <PenSquare className="w-4 h-4 sm:mr-2" />
+                            <span className="hidden sm:inline">글쓰기</span>
                         </Button>
                     </div>
 
-                    {/* 지역 선택 */}
-                    <div className="flex flex-wrap gap-3 mb-4">
-                        <Select
-                            value={selectedRegion}
-                            onValueChange={(v) => {
-                                setSelectedRegion(v);
-                                setSelectedDistrict("");
-                            }}
-                        >
-                            <SelectTrigger className="w-40 rounded-xl bg-white/70 dark:bg-gray-700/70">
-                                <SelectValue placeholder="시/도 선택" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {Object.keys(REGIONS).map((region) => (
-                                    <SelectItem key={region} value={region}>
-                                        {region}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                    {/* 지역 선택 - 모바일 최적화 */}
+                    <div className="space-y-3 mb-4">
+                        {/* 지역 선택 행 */}
+                        <div className="flex gap-2">
+                            <Select
+                                value={selectedRegion}
+                                onValueChange={(v) => {
+                                    setSelectedRegion(v);
+                                    setSelectedDistrict("");
+                                }}
+                            >
+                                <SelectTrigger className="flex-1 rounded-xl bg-white/70 dark:bg-gray-700/70">
+                                    <SelectValue placeholder="시/도" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {Object.keys(REGIONS).map((region) => (
+                                        <SelectItem key={region} value={region}>
+                                            {region}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
 
-                        <Select
-                            value={selectedDistrict}
-                            onValueChange={setSelectedDistrict}
-                            disabled={!selectedRegion}
-                        >
-                            <SelectTrigger className="w-40 rounded-xl bg-white/70 dark:bg-gray-700/70">
-                                <SelectValue placeholder="구/군 선택" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {districts.map((district) => (
-                                    <SelectItem key={district} value={district}>
-                                        {district}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                            <Select
+                                value={selectedDistrict}
+                                onValueChange={setSelectedDistrict}
+                                disabled={!selectedRegion}
+                            >
+                                <SelectTrigger className="flex-1 rounded-xl bg-white/70 dark:bg-gray-700/70">
+                                    <SelectValue placeholder="구/군" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {districts.map((district) => (
+                                        <SelectItem key={district} value={district}>
+                                            {district}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
 
-                        <div className="flex-1 min-w-[200px] relative">
+                            {/* 지역 검색 버튼 */}
+                            <Button
+                                onClick={() => {
+                                    // 선택된 지역으로 검색 (현재는 필터링이 자동으로 됨)
+                                }}
+                                disabled={!selectedRegion}
+                                className="bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 rounded-xl px-4"
+                            >
+                                <Search className="w-4 h-4" />
+                            </Button>
+                        </div>
+
+                        {/* 검색어 입력 */}
+                        <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                             <Input
                                 placeholder="검색어를 입력하세요"
@@ -379,8 +394,8 @@ export default function LocalPage({ setSelectedTab }: LocalPageProps) {
                         </div>
                     </div>
 
-                    {/* 카테고리 필터 */}
-                    <div className="flex flex-wrap gap-2">
+                    {/* 카테고리 필터 - 모바일 최적화 */}
+                    <div className="grid grid-cols-4 sm:flex sm:flex-wrap gap-1.5 sm:gap-2">
                         {CATEGORIES.map((cat) => {
                             const Icon = cat.icon;
                             const isActive = selectedCategory === cat.id;
@@ -390,14 +405,14 @@ export default function LocalPage({ setSelectedTab }: LocalPageProps) {
                                     variant={isActive ? "default" : "outline"}
                                     size="sm"
                                     onClick={() => setSelectedCategory(cat.id)}
-                                    className={`rounded-xl ${
+                                    className={`rounded-xl flex-col sm:flex-row h-auto py-2 sm:py-1.5 px-1 sm:px-3 ${
                                         isActive
                                             ? "bg-gradient-to-r from-blue-500 to-sky-500 text-white border-0"
                                             : "bg-white/50 dark:bg-gray-700/50 border-blue-200 dark:border-blue-700"
                                     }`}
                                 >
-                                    <Icon className="w-4 h-4 mr-1" />
-                                    {cat.label}
+                                    <Icon className="w-4 h-4 sm:mr-1" />
+                                    <span className="text-[10px] sm:text-sm mt-0.5 sm:mt-0">{cat.label}</span>
                                 </Button>
                             );
                         })}

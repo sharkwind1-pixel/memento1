@@ -863,33 +863,33 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                             </div>
                         ) : (
                             <>
-                                {/* 추천 대화 버튼 - 항상 표시 */}
-                                <div className="flex flex-wrap gap-2 mb-3 justify-center">
+                                {/* 추천 대화 버튼 - 2x2 그리드 모바일 최적화 */}
+                                <div className="grid grid-cols-2 gap-2 mb-3">
                                     {(isMemorialMode
                                         ? [
                                             { text: "잘 지냈어?", Icon: Sparkles },
                                             { text: "보고싶어", Icon: Moon },
-                                            { text: "오늘 너 생각이 났어", Icon: Star },
-                                            { text: "행복했던 기억 얘기해줘", Icon: CloudSun },
+                                            { text: "오늘 네 생각 났어", Icon: Star },
+                                            { text: "행복했던 기억", Icon: CloudSun },
                                         ]
                                         : [
-                                            { text: "예방접종 언제 해야 해?", Icon: Syringe },
-                                            { text: "오늘 건강 체크해줘", Icon: Stethoscope },
-                                            { text: "산책 시간 알려줘", Icon: Footprints },
-                                            { text: "간식 추천해줘", Icon: Cookie },
+                                            { text: "예방접종 언제?", Icon: Syringe },
+                                            { text: "건강 체크해줘", Icon: Stethoscope },
+                                            { text: "산책 시간", Icon: Footprints },
+                                            { text: "간식 추천", Icon: Cookie },
                                         ]
                                     ).map((suggestion) => (
                                         <button
                                             key={suggestion.text}
                                             onClick={() => { handleSend(suggestion.text); }}
-                                            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm transition-all active:scale-95 min-h-[44px] ${
+                                            className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all active:scale-95 min-h-[44px] ${
                                                 isMemorialMode
                                                     ? "bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-200"
                                                     : "bg-[#E0F7FF] hover:bg-[#BAE6FD] text-[#0891B2] border border-[#BAE6FD]"
                                             }`}
                                         >
-                                            <suggestion.Icon className="w-3.5 h-3.5" />
-                                            {suggestion.text}
+                                            <suggestion.Icon className="w-4 h-4 flex-shrink-0" />
+                                            <span className="truncate">{suggestion.text}</span>
                                         </button>
                                     ))}
                                 </div>

@@ -596,33 +596,31 @@ export default function CommunityPage() {
             <div className="relative z-10 space-y-6 pb-8">
                 {/* 헤더 */}
                 <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg border border-white/50 dark:border-gray-700/50 rounded-3xl p-6">
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center space-x-3">
-                            <div className="w-12 h-12 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] rounded-xl flex items-center justify-center">
-                                <Users className="w-6 h-6 text-white" />
+                    <div className="flex items-center justify-between gap-3 mb-6">
+                        <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] rounded-xl flex items-center justify-center flex-shrink-0">
+                                <Users className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                             </div>
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+                            <div className="min-w-0">
+                                <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">
                                     커뮤니티
                                 </h1>
-                                <p className="text-gray-600 dark:text-gray-300">
+                                <p className="text-sm text-gray-600 dark:text-gray-300">
                                     함께 나누는 이야기
                                 </p>
                             </div>
                         </div>
                         <Button
                             onClick={handleWriteClick}
-                            className={`bg-gradient-to-r ${currentColor.bg} hover:opacity-90 rounded-xl`}
+                            className={`bg-gradient-to-r ${currentColor.bg} hover:opacity-90 rounded-xl flex-shrink-0 px-3 sm:px-4`}
                         >
-                            <PenSquare className="w-4 h-4 mr-2" />
-                            글쓰기
+                            <PenSquare className="w-4 h-4 sm:mr-2" />
+                            <span className="hidden sm:inline">글쓰기</span>
                         </Button>
                     </div>
 
-                    {/* 게시판 탭 - 모드에 따라 동적으로 표시 */}
-                    <div className={`grid gap-3 mb-4 ${
-                        visibleBoards.length === 4 ? "grid-cols-4" : "grid-cols-3"
-                    }`}>
+                    {/* 게시판 탭 - 모바일 최적화 */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
                         {visibleBoards.map((board) => {
                             const Icon = board.icon;
                             const isActive = selectedBoard === board.id;
@@ -631,24 +629,24 @@ export default function CommunityPage() {
                                 <button
                                     key={board.id}
                                     onClick={() => handleBoardChange(board.id)}
-                                    className={`p-3 rounded-2xl border-2 transition-all ${
+                                    className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border-2 transition-all ${
                                         isActive
                                             ? `bg-gradient-to-r ${color.bg} text-white border-transparent shadow-lg`
                                             : `bg-white/50 dark:bg-gray-700/50 ${color.border} hover:shadow-md`
                                     }`}
                                 >
-                                    <div className="flex items-center gap-1.5 mb-1">
+                                    <div className="flex items-center justify-center sm:justify-start gap-1.5">
                                         <Icon
-                                            className={`w-4 h-4 ${isActive ? "text-white" : color.text}`}
+                                            className={`w-4 h-4 flex-shrink-0 ${isActive ? "text-white" : color.text}`}
                                         />
                                         <span
-                                            className={`font-bold text-sm ${isActive ? "text-white" : "text-gray-800 dark:text-gray-100"}`}
+                                            className={`font-bold text-xs sm:text-sm whitespace-nowrap ${isActive ? "text-white" : "text-gray-800 dark:text-gray-100"}`}
                                         >
                                             {board.label}
                                         </span>
                                     </div>
                                     <p
-                                        className={`text-xs line-clamp-1 ${isActive ? "text-white/80" : "text-gray-500 dark:text-gray-400"}`}
+                                        className={`text-xs mt-1 hidden sm:block truncate ${isActive ? "text-white/80" : "text-gray-500 dark:text-gray-400"}`}
                                     >
                                         {board.description}
                                     </p>
@@ -681,9 +679,9 @@ export default function CommunityPage() {
                         </div>
                     )}
 
-                    {/* 검색 & 정렬 */}
-                    <div className="flex gap-3">
-                        <div className="flex-1 relative">
+                    {/* 검색 & 정렬 - 모바일 최적화 */}
+                    <div className="space-y-3">
+                        <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                             <Input
                                 placeholder="검색어를 입력하세요"
@@ -692,34 +690,28 @@ export default function CommunityPage() {
                                 className="pl-10 rounded-xl bg-white/70 dark:bg-gray-700/70"
                             />
                         </div>
-                        <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
-                            {[
-                                { id: "latest", label: "최신", icon: Clock },
-                                {
-                                    id: "popular",
-                                    label: "인기",
-                                    icon: TrendingUp,
-                                },
-                                {
-                                    id: "comments",
-                                    label: "댓글",
-                                    icon: MessageCircle,
-                                },
-                            ].map((sort) => {
-                                const Icon = sort.icon;
-                                return (
-                                    <Button
-                                        key={sort.id}
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => setSortBy(sort.id)}
-                                        className={`rounded-lg ${sortBy === sort.id ? "bg-white dark:bg-gray-700 shadow-sm" : ""}`}
-                                    >
-                                        <Icon className="w-4 h-4 mr-1" />
-                                        {sort.label}
-                                    </Button>
-                                );
-                            })}
+                        <div className="flex justify-center sm:justify-end">
+                            <div className="inline-flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
+                                {[
+                                    { id: "latest", label: "최신", icon: Clock },
+                                    { id: "popular", label: "인기", icon: TrendingUp },
+                                    { id: "comments", label: "댓글", icon: MessageCircle },
+                                ].map((sort) => {
+                                    const Icon = sort.icon;
+                                    return (
+                                        <Button
+                                            key={sort.id}
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => setSortBy(sort.id)}
+                                            className={`rounded-lg px-2 sm:px-3 ${sortBy === sort.id ? "bg-white dark:bg-gray-700 shadow-sm" : ""}`}
+                                        >
+                                            <Icon className="w-4 h-4 sm:mr-1" />
+                                            <span className="hidden sm:inline">{sort.label}</span>
+                                        </Button>
+                                    );
+                                })}
+                            </div>
                         </div>
                     </div>
                 </div>
