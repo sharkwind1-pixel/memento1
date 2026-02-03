@@ -1,24 +1,92 @@
 /**
  * 메멘토애니 메인 페이지
+ * - Dynamic import로 페이지 컴포넌트 lazy loading
+ * - 초기 번들 크기 최적화
  */
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import dynamic from "next/dynamic";
 import { TabType } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePets } from "@/contexts/PetContext";
 import Layout from "@/components/common/Layout";
-import HomePage from "@/components/pages/HomePage";
-import CommunityPage from "@/components/pages/CommunityPage";
-import AIChatPage from "@/components/pages/AIChatPage";
-import AdoptionPage from "@/components/pages/AdoptionPage";
-import LocalPage from "@/components/pages/LocalPage";
-import LostPage from "@/components/pages/LostPage";
-import MagazinePage from "@/components/pages/MagazinePage";
-import RecordPage from "@/components/pages/RecordPage";
-import LandingPage from "@/components/pages/LandingPage";
-import OnboardingModal, { hasCompletedOnboarding } from "@/components/features/onboarding/OnboardingModal";
+import { hasCompletedOnboarding } from "@/components/features/onboarding/OnboardingModal";
+
+// 페이지 로딩 컴포넌트
+function PageLoader() {
+    return (
+        <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="text-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-sky-200 to-violet-200 rounded-full flex items-center justify-center mx-auto mb-3 animate-pulse">
+                    <svg className="w-6 h-6 text-violet-500 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                </div>
+                <p className="text-gray-400 text-sm">페이지 로딩 중...</p>
+            </div>
+        </div>
+    );
+}
+
+// Dynamic imports - 각 페이지를 lazy load
+const HomePage = dynamic(() => import("@/components/pages/HomePage"), {
+    loading: () => <PageLoader />,
+    ssr: false,
+});
+
+const CommunityPage = dynamic(() => import("@/components/pages/CommunityPage"), {
+    loading: () => <PageLoader />,
+    ssr: false,
+});
+
+const AIChatPage = dynamic(() => import("@/components/pages/AIChatPage"), {
+    loading: () => <PageLoader />,
+    ssr: false,
+});
+
+const AdoptionPage = dynamic(() => import("@/components/pages/AdoptionPage"), {
+    loading: () => <PageLoader />,
+    ssr: false,
+});
+
+const LocalPage = dynamic(() => import("@/components/pages/LocalPage"), {
+    loading: () => <PageLoader />,
+    ssr: false,
+});
+
+const LostPage = dynamic(() => import("@/components/pages/LostPage"), {
+    loading: () => <PageLoader />,
+    ssr: false,
+});
+
+const MagazinePage = dynamic(() => import("@/components/pages/MagazinePage"), {
+    loading: () => <PageLoader />,
+    ssr: false,
+});
+
+const RecordPage = dynamic(() => import("@/components/pages/RecordPage"), {
+    loading: () => <PageLoader />,
+    ssr: false,
+});
+
+const LandingPage = dynamic(() => import("@/components/pages/LandingPage"), {
+    loading: () => <PageLoader />,
+    ssr: false,
+});
+
+const AdminPage = dynamic(() => import("@/components/pages/AdminPage"), {
+    loading: () => <PageLoader />,
+    ssr: false,
+});
+
+// 온보딩 모달 - 사용자 로그인 후에만 필요
+const OnboardingModal = dynamic(
+    () => import("@/components/features/onboarding/OnboardingModal"),
+    { ssr: false }
+);
 
 export default function Home() {
     const { user, loading } = useAuth();
@@ -55,6 +123,8 @@ export default function Home() {
                 return <MagazinePage setSelectedTab={handleTabChange} />;
             case "record":
                 return <RecordPage setSelectedTab={handleTabChange} />;
+            case "admin":
+                return <AdminPage />;
             default:
                 return <HomePage setSelectedTab={handleTabChange} />;
         }
@@ -76,22 +146,19 @@ export default function Home() {
         );
     }
 
-    // 비로그인 사용자 → 랜딩 페이지
-    if (!user) {
-        return <LandingPage />;
-    }
-
-    // 로그인한 사용자 → 기존 앱
+    // 비로그인/로그인 모두 동일한 앱 구조 (로그인 필요 기능에서만 유도)
     return (
         <>
             <Layout selectedTab={selectedTab} setSelectedTab={handleTabChange}>
                 {renderCurrentPage()}
             </Layout>
-            <OnboardingModal
-                isOpen={showOnboarding}
-                onClose={() => setShowOnboarding(false)}
-                onGoToRecord={() => setSelectedTab("record")}
-            />
+            {user && (
+                <OnboardingModal
+                    isOpen={showOnboarding}
+                    onClose={() => setShowOnboarding(false)}
+                    onGoToRecord={() => setSelectedTab("record")}
+                />
+            )}
         </>
     );
 }

@@ -22,7 +22,17 @@ export type TabType =
     | "local"
     | "lost"
     | "magazine"
-    | "record";
+    | "record"
+    | "admin";
+
+/** 관리자 이메일 목록 */
+export const ADMIN_EMAILS = ["sharkwind1@gmail.com"];
+
+/** 관리자 여부 확인 */
+export function isAdmin(email?: string | null): boolean {
+    if (!email) return false;
+    return ADMIN_EMAILS.includes(email);
+}
 
 // ============================================
 // 2. 반려동물 관련 타입

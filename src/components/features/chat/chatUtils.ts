@@ -1,6 +1,6 @@
 // AI 채팅 관련 유틸리티 함수
 
-export const DAILY_FREE_LIMIT = 5; // 무료 사용자 일일 대화 제한
+export const DAILY_FREE_LIMIT = 10; // 무료 사용자 일일 대화 제한
 export const USAGE_STORAGE_KEY = "memento-ani-chat-usage";
 export const MAX_MESSAGE_LENGTH = 200; // 무료 사용자 글자 수 제한
 

@@ -41,14 +41,10 @@ import { bestPosts, memorialCards } from "@/data/posts";
 import { usePetImages } from "@/hooks/usePetImages";
 import { useSmoothAutoScroll } from "@/hooks/useSmoothAutoScroll";
 import { EmotionalTrueFocus } from "@/components/ui/TrueFocus";
-import {
-    PostModal,
-    Lightbox,
-    TileGallery,
-    type LightboxItem,
-    type CommunityPost,
-    type Comment,
-} from "@/components/features/home";
+import { TileGallery } from "@/components/features/home";
+import type { LightboxItem, CommunityPost, Comment } from "@/components/features/home";
+import PostModal from "@/components/features/home/PostModal";
+import Lightbox from "@/components/features/home/Lightbox";
 
 
 
@@ -214,7 +210,7 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                         <div className="text-center space-y-6">
                             <h1 className="text-4xl md:text-6xl font-bold">
                                 <EmotionalTrueFocus
-                                    text="반려동물과의 시간을 기록해도 괜찮은 장소"
+                                    text="특별한 매일을 함께"
                                     variant="gentle"
                                     delay={250}
                                 />
@@ -302,7 +298,7 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                 <Card
                                     key={post.id}
                                     onClick={() => setSelectedPost(post)}
-                                    className="min-w-[280px] sm:min-w-72 flex-shrink-0 overflow-hidden rounded-2xl cursor-pointer group border-0 shadow-lg will-change-transform"
+                                    className="min-w-[260px] sm:min-w-72 flex-shrink-0 overflow-hidden rounded-2xl cursor-pointer group border-0 shadow-lg will-change-transform"
                                 >
                                     {/* 상단 그라데이션 배너 */}
                                     <div className={`h-24 bg-gradient-to-br ${gradients[idx % gradients.length]} relative overflow-hidden`}>
@@ -328,14 +324,14 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            className="absolute top-2 right-2 text-white hover:text-red-300 hover:bg-white/20"
+                                            className="absolute top-2 right-2 text-white hover:text-red-300 hover:bg-white/20 min-w-[44px] min-h-[44px] p-2"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 toggleLike(post.id);
                                             }}
                                         >
                                             <Heart
-                                                className={`w-5 h-5 transition-all ${
+                                                className={`w-6 h-6 transition-all ${
                                                     isLiked
                                                         ? "fill-red-400 text-red-400 scale-110"
                                                         : ""
@@ -420,7 +416,7 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                 return (
                                     <Card
                                         key={i}
-                                        className="min-w-[280px] sm:min-w-72 flex-shrink-0 bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 rounded-2xl overflow-hidden shadow-sm will-change-transform"
+                                        className="min-w-[260px] sm:min-w-72 flex-shrink-0 bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 rounded-2xl overflow-hidden shadow-sm will-change-transform"
                                     >
                                         <CardHeader className="p-0">
                                             {src ? (
@@ -591,7 +587,7 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                             return (
                                 <Card
                                     key={i}
-                                    className="min-w-[280px] sm:min-w-72 flex-shrink-0 bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/30 dark:to-purple-900/30 border-violet-100 dark:border-violet-800/50 rounded-2xl overflow-hidden shadow-sm will-change-transform"
+                                    className="min-w-[260px] sm:min-w-72 flex-shrink-0 bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/30 dark:to-purple-900/30 border-violet-100 dark:border-violet-800/50 rounded-2xl overflow-hidden shadow-sm will-change-transform"
                                 >
                                     <CardHeader className="p-0 relative">
                                         {src ? (

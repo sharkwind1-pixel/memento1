@@ -26,8 +26,7 @@ export default function Footer() {
                 </h3>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                반려동물과의 시간을<br />
-                기록해도 괜찮은 장소
+                특별한 매일을 함께
               </p>
             </div>
 
@@ -93,7 +92,7 @@ export default function Footer() {
                 2026 메멘토애니. 모든 권리 보유.
               </p>
               <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mt-2 md:mt-0">
-                기록해도 괜찮은 장소
+                특별한 매일을 함께
               </p>
             </div>
           </div>

@@ -13,8 +13,13 @@ import {
     saveMessage,
     saveMemory,
     getEmotionResponseGuide,
+    getGriefStageResponseGuide,
     memoriesToContext,
+    buildConversationContext,
+    generateConversationSummary,
+    saveConversationSummary,
     EmotionType,
+    GriefStage,
 } from "@/lib/agent";
 
 // OpenAI 클라이언트 초기화
@@ -588,19 +593,30 @@ export async function POST(request: NextRequest) {
         let memoryContext = "";
         let userEmotion: EmotionType = "neutral";
         let emotionScore = 0.5;
+        let griefStage: GriefStage | undefined;
 
         // 모드 결정
         const mode = pet.status === "memorial" ? "memorial" : "daily";
+        const isMemorialMode = mode === "memorial";
 
         // 에이전트 기능 활성화 시
         if (enableAgent) {
-            // 1. 감정 분석
-            const emotionResult = await analyzeEmotion(message);
+            // 1. 감정 분석 (추모 모드일 때 애도 단계도 분석)
+            const emotionResult = await analyzeEmotion(message, isMemorialMode);
             userEmotion = emotionResult.emotion;
             emotionScore = emotionResult.score;
+            griefStage = emotionResult.griefStage;
+
+            // 2. 감정 응답 가이드 생성
             emotionGuide = getEmotionResponseGuide(userEmotion, mode);
 
-            // 2. 메모리 컨텍스트 (DB 연동 시)
+            // 3. 추모 모드에서 애도 단계 가이드 추가
+            if (isMemorialMode && griefStage && griefStage !== "unknown") {
+                const griefGuide = getGriefStageResponseGuide(griefStage);
+                emotionGuide = `${emotionGuide}\n\n## 현재 감지된 애도 단계별 대응 가이드\n${griefGuide}`;
+            }
+
+            // 4. 메모리 컨텍스트 (DB 연동 시)
             if (pet.id) {
                 try {
                     const memories = await getPetMemories(pet.id, 5);
@@ -611,7 +627,7 @@ export async function POST(request: NextRequest) {
                 }
             }
 
-            // 3. 새로운 메모리 추출 (비동기로 처리)
+            // 5. 새로운 메모리 추출 (비동기로 처리)
             if (pet.id && userId) {
                 extractMemories(message, pet.name).then(async (newMemories) => {
                     if (newMemories && newMemories.length > 0) {
@@ -620,6 +636,21 @@ export async function POST(request: NextRequest) {
                         }
                     }
                 }).catch(console.error);
+            }
+        }
+
+        // 6. 대화 맥락 컨텍스트 생성 (이전 세션 요약 + 최근 대화)
+        let conversationContext = "";
+        if (pet.id && userId && enableAgent) {
+            try {
+                conversationContext = await buildConversationContext(
+                    userId,
+                    pet.id,
+                    pet.name,
+                    isMemorialMode
+                );
+            } catch (e) {
+                console.log("Conversation context build skipped:", e);
             }
         }
 
@@ -639,8 +670,8 @@ export async function POST(request: NextRequest) {
             ? remindersToContext(reminders, pet.name)
             : remindersToMemorialContext(reminders, pet.name);
 
-        // 통합 컨텍스트 (타임라인 + 사진 + 특별한 날 + 리마인더)
-        const combinedContext = [specialDayContext, timelineContext, photoContext, reminderContext].filter(Boolean).join("\n\n");
+        // 통합 컨텍스트 (대화 맥락 + 타임라인 + 사진 + 특별한 날 + 리마인더)
+        const combinedContext = [conversationContext, specialDayContext, timelineContext, photoContext, reminderContext].filter(Boolean).join("\n\n");
 
         // 모드에 따른 시스템 프롬프트 선택
         const systemPrompt =
@@ -683,10 +714,24 @@ export async function POST(request: NextRequest) {
             ]).catch(console.error);
         }
 
+        // 세션 요약 생성 (10번째 메시지마다 비동기로)
+        // 프론트엔드에서 chatHistory.length로 체크하여 호출 가능
+        if (enableAgent && pet.id && userId && chatHistory.length > 0 && chatHistory.length % 10 === 0) {
+            const allMessages = [...chatHistory, { role: "user", content: message }, { role: "assistant", content: reply }];
+            generateConversationSummary(allMessages, pet.name, isMemorialMode)
+                .then(async (summary) => {
+                    if (summary) {
+                        await saveConversationSummary(userId, pet.id!, summary);
+                    }
+                })
+                .catch(console.error);
+        }
+
         return NextResponse.json({
             reply,
             emotion: userEmotion,
             emotionScore,
+            griefStage: isMemorialMode ? griefStage : undefined,
             usage: completion.usage,
         });
     } catch (error) {

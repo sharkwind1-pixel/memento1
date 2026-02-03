@@ -2,6 +2,7 @@
  * RecordPage.tsx
  * 우리의 기록 - 마이페이지
  * 사진 1:1 비율, 스텝 형식 등록, CRUD 완성
+ * - Dynamic import로 모달 컴포넌트 lazy loading
  */
 
 "use client";
@@ -9,6 +10,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useState, useRef, useEffect } from "react";
+import { toast } from "sonner";
 import { usePets, Pet, PetPhoto } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,14 +53,15 @@ import {
 } from "lucide-react";
 
 import { TabType } from "@/types";
+
+// 즉각적인 반응을 위해 일반 import 사용 (Dynamic import 제거)
 import MemorialSwitchModal from "@/components/modals/MemorialSwitchModal";
 import RemindersSection from "@/components/features/reminders/RemindersSection";
-import {
-    MediaUploadModal,
-    PetFormModal,
-    DeleteConfirmModal,
-    PhotoViewer,
-} from "@/components/features/record";
+import MediaUploadModal from "@/components/features/record/MediaUploadModal";
+import PetFormModal from "@/components/features/record/PetFormModal";
+import DeleteConfirmModal from "@/components/features/record/DeleteConfirmModal";
+import PremiumModal from "@/components/modals/PremiumModal";
+import PhotoViewer from "@/components/features/record/PhotoViewer";
 
 interface RecordPageProps {
     setSelectedTab?: (tab: TabType) => void;
@@ -134,7 +137,7 @@ function TimelineSection({ petId, petName }: { petId: string; petName: string })
     // 저장 (추가 또는 수정)
     const handleSave = async () => {
         if (!formData.title.trim()) {
-            alert("제목을 입력해주세요");
+            toast.error("제목을 입력해주세요");
             return;
         }
 
@@ -146,6 +149,7 @@ function TimelineSection({ petId, petName }: { petId: string; petName: string })
                 content: formData.content,
                 mood: formData.mood,
             });
+            toast.success("일기가 수정되었습니다");
         } else {
             // 추가 모드
             const result = await addTimelineEntry(petId, {
@@ -156,9 +160,10 @@ function TimelineSection({ petId, petName }: { petId: string; petName: string })
             });
 
             if (!result) {
-                alert("일기 저장에 실패했습니다. 다시 시도해주세요.");
+                toast.error("일기 저장에 실패했습니다. 다시 시도해주세요.");
                 return;
             }
+            toast.success("일기가 저장되었습니다");
         }
 
         setIsModalOpen(false);
@@ -166,9 +171,19 @@ function TimelineSection({ petId, petName }: { petId: string; petName: string })
     };
 
     const handleDelete = async (entryId: string) => {
-        if (confirm("이 일기를 삭제하시겠습니까?")) {
-            await deleteTimelineEntry(entryId);
-        }
+        toast("이 일기를 삭제할까요?", {
+            action: {
+                label: "삭제",
+                onClick: async () => {
+                    await deleteTimelineEntry(entryId);
+                    toast.success("일기가 삭제되었습니다");
+                },
+            },
+            cancel: {
+                label: "취소",
+                onClick: () => {},
+            },
+        });
     };
 
     // 비로그인 시 안내
@@ -260,15 +275,15 @@ function TimelineSection({ petId, petName }: { petId: string; petName: string })
                                                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <button
                                                         onClick={() => openEditModal(entry)}
-                                                        className="p-1 text-gray-400 hover:text-[#05B2DC]"
+                                                        className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-[#05B2DC] hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                                                     >
-                                                        <Pencil className="w-4 h-4" />
+                                                        <Pencil className="w-5 h-5" />
                                                     </button>
                                                     <button
                                                         onClick={() => handleDelete(entry.id)}
-                                                        className="p-1 text-gray-400 hover:text-red-500"
+                                                        className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                                                     >
-                                                        <Trash2 className="w-4 h-4" />
+                                                        <Trash2 className="w-5 h-5" />
                                                     </button>
                                                 </div>
                                             </div>
@@ -428,6 +443,15 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
     const [nickname, setNickname] = useState("");
     const [isSavingProfile, setIsSavingProfile] = useState(false);
 
+    // 프리미엄 모달 상태
+    const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
+    const [premiumFeature, setPremiumFeature] = useState<"pet-limit" | "photo-limit">("pet-limit");
+
+    // 무료 회원 제한 상수
+    const FREE_PET_LIMIT = 1;
+    const FREE_PHOTO_LIMIT = 100;
+    const isPremium = false; // TODO: 실제 프리미엄 여부 확인 로직 추가
+
     // 사용자 닉네임 초기화
     useEffect(() => {
         if (user?.user_metadata?.nickname) {
@@ -440,24 +464,35 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
     // 닉네임 저장
     const handleSaveNickname = async () => {
         if (!nickname.trim()) {
-            alert("닉네임을 입력해주세요");
+            toast.error("닉네임을 입력해주세요");
             return;
         }
         setIsSavingProfile(true);
         const { error } = await updateProfile({ nickname: nickname.trim() });
         setIsSavingProfile(false);
         if (error) {
-            alert("닉네임 변경에 실패했습니다.");
+            toast.error("닉네임 변경에 실패했습니다");
         } else {
+            toast.success("닉네임이 변경되었습니다");
             setIsEditingNickname(false);
         }
     };
 
     // 로그아웃
     const handleSignOut = async () => {
-        if (confirm("로그아웃 하시겠습니까?")) {
-            await signOut();
-        }
+        toast("로그아웃 하시겠습니까?", {
+            action: {
+                label: "로그아웃",
+                onClick: async () => {
+                    await signOut();
+                    toast.success("로그아웃 되었습니다");
+                },
+            },
+            cancel: {
+                label: "취소",
+                onClick: () => {},
+            },
+        });
     };
     const [showPetMenu, setShowPetMenu] = useState<string | null>(null);
     const [isSelectMode, setIsSelectMode] = useState(false);
@@ -497,20 +532,34 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
         );
     };
 
+    // 새 반려동물 추가 (무료 회원 제한 체크)
+    const handleAddNewPet = () => {
+        // 무료 회원이고, 이미 제한에 도달했으면 프리미엄 모달
+        if (!isPremium && pets.length >= FREE_PET_LIMIT) {
+            setPremiumFeature("pet-limit");
+            setIsPremiumModalOpen(true);
+            return;
+        }
+        setEditingPet(null);
+        setIsPetModalOpen(true);
+    };
+
     const handleSavePet = async (
         petData: Omit<Pet, "id" | "createdAt" | "photos">,
     ) => {
         try {
             if (editingPet) {
                 await updatePet(editingPet.id, petData);
+                toast.success(`${petData.name} 정보가 수정되었습니다`);
             } else {
                 await addPet(petData);
+                toast.success(`${petData.name}이(가) 등록되었습니다`);
             }
             setEditingPet(null);
             setIsPetModalOpen(false);
         } catch (error) {
             console.error("Pet save error:", error);
-            alert("저장 중 오류가 발생했습니다.");
+            toast.error("저장 중 오류가 발생했습니다");
         }
     };
 
@@ -533,9 +582,10 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                 files.map(() => new Date().toISOString().split("T")[0]),
                 (current, total) => setUploadProgress({ current, total }),
             );
+            toast.success("사진이 업로드되었습니다");
         } catch (error) {
             console.error("Upload failed:", error);
-            alert("업로드 중 오류가 발생했습니다.");
+            toast.error("업로드 중 오류가 발생했습니다");
         } finally {
             setIsUploading(false);
             setUploadProgress({ current: 0, total: 0 });
@@ -557,11 +607,22 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
     // 선택 삭제 핸들러
     const handleDeleteSelected = async () => {
         if (!selectedPet || selectedPhotos.length === 0) return;
-        if (!confirm(`선택한 ${selectedPhotos.length}개의 항목을 삭제하시겠습니까?`)) return;
 
-        await deletePhotos(selectedPet.id, selectedPhotos);
-        setSelectedPhotos([]);
-        setIsSelectMode(false);
+        toast(`선택한 ${selectedPhotos.length}개의 항목을 삭제할까요?`, {
+            action: {
+                label: "삭제",
+                onClick: async () => {
+                    await deletePhotos(selectedPet.id, selectedPhotos);
+                    setSelectedPhotos([]);
+                    setIsSelectMode(false);
+                    toast.success("선택한 항목이 삭제되었습니다");
+                },
+            },
+            cancel: {
+                label: "취소",
+                onClick: () => {},
+            },
+        });
     };
 
     useEffect(() => {
@@ -590,29 +651,72 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
         return (
             <div className="min-h-screen relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900" />
-                <div className="relative z-10 flex flex-col items-center justify-center min-h-[60vh] px-4">
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD] flex items-center justify-center mb-6">
-                        <LogIn className="w-12 h-12 text-[#05B2DC]" />
+                <div className="relative z-10 flex flex-col items-center justify-center min-h-[60vh] px-4 max-w-md mx-auto">
+                    {/* 아이콘 */}
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-violet-100 to-amber-100 flex items-center justify-center mb-6 shadow-lg">
+                        <Camera className="w-12 h-12 text-violet-500" />
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
-                        로그인이 필요해요
+
+                    {/* 타이틀 */}
+                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2 text-center">
+                        소중한 순간을 기록해보세요
                     </h2>
                     <p className="text-gray-500 dark:text-gray-400 text-center mb-6">
-                        우리 아이의 소중한 기록을 남기려면
+                        사진, 일상, 건강 기록을
                         <br />
-                        먼저 로그인해주세요
+                        한 곳에서 관리할 수 있어요
                     </p>
-                    <Button
-                        onClick={() =>
-                            window.dispatchEvent(
-                                new CustomEvent("openAuthModal"),
-                            )
-                        }
-                        className="bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-[#05B2DC] text-white px-8"
-                    >
-                        <LogIn className="w-4 h-4 mr-2" />
-                        로그인하기
-                    </Button>
+
+                    {/* 기능 미리보기 */}
+                    <div className="w-full bg-white/80 dark:bg-gray-800/80 rounded-2xl p-4 mb-6 space-y-3">
+                        <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
+                            <div className="w-8 h-8 bg-violet-100 rounded-lg flex items-center justify-center">
+                                <Camera className="w-4 h-4 text-violet-500" />
+                            </div>
+                            <span>사진 갤러리로 추억 모아보기</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
+                            <div className="w-8 h-8 bg-sky-100 rounded-lg flex items-center justify-center">
+                                <BookOpen className="w-4 h-4 text-sky-500" />
+                            </div>
+                            <span>타임라인으로 일상 기록하기</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
+                            <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
+                                <Bell className="w-4 h-4 text-amber-500" />
+                            </div>
+                            <span>예방접종, 미용 리마인더</span>
+                        </div>
+                    </div>
+
+                    {/* 무료 안내 */}
+                    <p className="text-sm text-gray-400 mb-4">
+                        무료로 시작할 수 있어요
+                    </p>
+
+                    {/* CTA 버튼 */}
+                    <div className="flex flex-col gap-3 w-full">
+                        <Button
+                            onClick={() =>
+                                window.dispatchEvent(
+                                    new CustomEvent("openAuthModal"),
+                                )
+                            }
+                            className="w-full bg-gradient-to-r from-violet-500 to-sky-500 hover:from-violet-600 hover:to-sky-600 text-white py-6 rounded-xl font-bold"
+                        >
+                            무료로 시작하기
+                        </Button>
+                        <button
+                            onClick={() =>
+                                window.dispatchEvent(
+                                    new CustomEvent("openAuthModal"),
+                                )
+                            }
+                            className="text-gray-400 text-sm hover:text-gray-600 transition-colors"
+                        >
+                            이미 계정이 있어요
+                        </button>
+                    </div>
                 </div>
             </div>
         );
@@ -816,10 +920,7 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                         {/* 새 반려동물 추가 버튼 */}
                         <div className="flex justify-end mb-4">
                             <Button
-                                onClick={() => {
-                                    setEditingPet(null);
-                                    setIsPetModalOpen(true);
-                                }}
+                                onClick={handleAddNewPet}
                                 className="bg-[#05B2DC] hover:bg-[#0891B2]"
                             >
                                 <Plus className="w-4 h-4 mr-2" />새 반려동물
@@ -841,10 +942,7 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                                 함께한 추억을 기록해보세요
                             </p>
                             <Button
-                                onClick={() => {
-                                    setEditingPet(null);
-                                    setIsPetModalOpen(true);
-                                }}
+                                onClick={handleAddNewPet}
                                 className="bg-gradient-to-r from-[#05B2DC] to-[#38BDF8]"
                             >
                                 <Plus className="w-4 h-4 mr-2" />
@@ -856,7 +954,7 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                     <>
                         {/* 펫 카드 그리드 - 1:1 비율 */}
                         <div className="mb-6">
-                            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                                 {pets.map((pet) => (
                                     <div
                                         key={pet.id}
@@ -902,7 +1000,7 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                                                         <Star className="w-3 h-3 text-amber-400 flex-shrink-0" />
                                                     )}
                                                 </div>
-                                                <p className="text-white/70 text-xs text-center truncate">
+                                                <p className="text-white/80 text-sm text-center truncate">
                                                     {pet.breed}
                                                 </p>
                                             </div>
@@ -961,10 +1059,7 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                                 ))}
                                 {/* 새 펫 추가 버튼 - 1:1 비율 */}
                                 <button
-                                    onClick={() => {
-                                        setEditingPet(null);
-                                        setIsPetModalOpen(true);
-                                    }}
+                                    onClick={handleAddNewPet}
                                     className="aspect-square rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex flex-col items-center justify-center hover:border-[#05B2DC] hover:bg-[#05B2DC]/5 active:scale-95 transition-all min-h-[80px]"
                                 >
                                     <Plus className="w-8 h-8 text-gray-400 mb-1" />
@@ -1094,12 +1189,22 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                                                         </p>
                                                         <Button
                                                             onClick={() => {
-                                                                if (confirm("일상 모드로 되돌리시겠습니까?")) {
-                                                                    updatePet(selectedPet.id, {
-                                                                        status: "active",
-                                                                        memorialDate: undefined,
-                                                                    });
-                                                                }
+                                                                toast("일상 모드로 되돌리시겠습니까?", {
+                                                                    action: {
+                                                                        label: "복구",
+                                                                        onClick: async () => {
+                                                                            await updatePet(selectedPet.id, {
+                                                                                status: "active",
+                                                                                memorialDate: undefined,
+                                                                            });
+                                                                            toast.success("일상 모드로 복구되었습니다");
+                                                                        },
+                                                                    },
+                                                                    cancel: {
+                                                                        label: "취소",
+                                                                        onClick: () => {},
+                                                                    },
+                                                                });
                                                             }}
                                                             variant="ghost"
                                                             size="sm"
@@ -1243,7 +1348,7 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                                                 </Button>
                                             </div>
                                         ) : viewMode === "grid" ? (
-                                            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
                                                 {selectedPet.photos.map(
                                                     (photo) => (
                                                         <div
@@ -1293,11 +1398,21 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                                                             )}
                                                             {!isSelectMode && (
                                                                 <button
-                                                                    onClick={async (e) => {
+                                                                    onClick={(e) => {
                                                                         e.stopPropagation();
-                                                                        if (confirm("삭제하시겠습니까?")) {
-                                                                            await deletePhoto(selectedPet.id, photo.id);
-                                                                        }
+                                                                        toast("이 사진을 삭제할까요?", {
+                                                                            action: {
+                                                                                label: "삭제",
+                                                                                onClick: async () => {
+                                                                                    await deletePhoto(selectedPet.id, photo.id);
+                                                                                    toast.success("사진이 삭제되었습니다");
+                                                                                },
+                                                                            },
+                                                                            cancel: {
+                                                                                label: "취소",
+                                                                                onClick: () => {},
+                                                                            },
+                                                                        });
                                                                     }}
                                                                     className="absolute top-1 right-1 p-1.5 bg-black/50 text-white rounded-full sm:opacity-0 sm:group-hover:opacity-100 transition-opacity min-w-[28px] min-h-[28px] flex items-center justify-center active:scale-95"
                                                                 >
@@ -1375,15 +1490,25 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                                                             </div>
                                                             {!isSelectMode && (
                                                                 <button
-                                                                    onClick={async (e) => {
+                                                                    onClick={(e) => {
                                                                         e.stopPropagation();
-                                                                        if (confirm("삭제하시겠습니까?")) {
-                                                                            await deletePhoto(selectedPet.id, photo.id);
-                                                                        }
+                                                                        toast("이 사진을 삭제할까요?", {
+                                                                            action: {
+                                                                                label: "삭제",
+                                                                                onClick: async () => {
+                                                                                    await deletePhoto(selectedPet.id, photo.id);
+                                                                                    toast.success("사진이 삭제되었습니다");
+                                                                                },
+                                                                            },
+                                                                            cancel: {
+                                                                                label: "취소",
+                                                                                onClick: () => {},
+                                                                            },
+                                                                        });
                                                                     }}
-                                                                    className="self-center p-2 text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                    className="self-center p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
                                                                 >
-                                                                    <Trash2 className="w-4 h-4" />
+                                                                    <Trash2 className="w-5 h-5" />
                                                                 </button>
                                                             )}
                                                         </div>
@@ -1464,6 +1589,13 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                     onConfirm={handleMemorialSwitch}
                 />
             )}
+
+            {/* 프리미엄 유도 모달 */}
+            <PremiumModal
+                isOpen={isPremiumModalOpen}
+                onClose={() => setIsPremiumModalOpen(false)}
+                feature={premiumFeature}
+            />
 
             {showPetMenu && (
                 <div

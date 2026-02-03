@@ -6,6 +6,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 import { usePets } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -198,19 +199,32 @@ export default function RemindersPage() {
 
     // 리마인더 삭제
     const handleDelete = async (id: string) => {
-        if (!confirm("이 리마인더를 삭제할까요?")) return;
+        toast("이 리마인더를 삭제할까요?", {
+            action: {
+                label: "삭제",
+                onClick: async () => {
+                    try {
+                        const response = await fetch(`/api/reminders/${id}`, {
+                            method: "DELETE",
+                        });
 
-        try {
-            const response = await fetch(`/api/reminders/${id}`, {
-                method: "DELETE",
-            });
-
-            if (response.ok) {
-                setReminders(prev => prev.filter(r => r.id !== id));
-            }
-        } catch (error) {
-            console.error("Failed to delete reminder:", error);
-        }
+                        if (response.ok) {
+                            setReminders(prev => prev.filter(r => r.id !== id));
+                            toast.success("리마인더가 삭제되었습니다");
+                        } else {
+                            toast.error("삭제에 실패했습니다");
+                        }
+                    } catch (error) {
+                        console.error("Failed to delete reminder:", error);
+                        toast.error("삭제 중 오류가 발생했습니다");
+                    }
+                },
+            },
+            cancel: {
+                label: "취소",
+                onClick: () => {},
+            },
+        });
     };
 
     // 타입에 따른 아이콘 반환

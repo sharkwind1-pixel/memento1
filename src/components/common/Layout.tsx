@@ -7,7 +7,7 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { TabType } from "@/types";
+import { TabType, isAdmin } from "@/types";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import AuthModal from "@/components/Auth/AuthModal";
@@ -29,6 +29,7 @@ import {
     User,
     ChevronDown,
     UserPlus,
+    Shield,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -38,16 +39,17 @@ interface LayoutProps {
     setSelectedTab: (tab: TabType) => void;
 }
 
-// 탭 정보 - 순서: 홈 → 우리의 기록 → 나머지
-const TABS: { id: TabType; label: string; icon: React.ElementType }[] = [
+// 탭 정보 - 순서: 홈 → 우리의 기록 → AI펫톡 → 펫매거진 → 나머지
+const TABS: { id: TabType; label: string; icon: React.ElementType; adminOnly?: boolean }[] = [
     { id: "home", label: "홈", icon: Home },
     { id: "record", label: "우리의 기록", icon: Camera },
     { id: "community", label: "커뮤니티", icon: Users },
     { id: "ai-chat", label: "AI 펫톡", icon: MessageCircle },
+    { id: "magazine", label: "펫매거진", icon: BookOpen },
     { id: "adoption", label: "입양정보", icon: Heart },
     { id: "local", label: "지역정보", icon: MapPin },
     { id: "lost", label: "분실동물", icon: Search },
-    { id: "magazine", label: "펫매거진", icon: BookOpen },
+    { id: "admin", label: "관리자", icon: Shield, adminOnly: true },
 ];
 
 export default function Layout({
@@ -128,7 +130,7 @@ export default function Layout({
 
                         {/* 데스크톱 네비게이션 */}
                         <nav className="hidden lg:flex items-center space-x-1">
-                            {TABS.map((tab) => {
+                            {TABS.filter(tab => !tab.adminOnly || isAdmin(user?.email)).map((tab) => {
                                 const Icon = tab.icon;
                                 const isActive = selectedTab === tab.id;
                                 return (
@@ -140,7 +142,9 @@ export default function Layout({
                                             ${
                                                 isActive
                                                     ? "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white shadow-lg shadow-[#05B2DC]/25"
-                                                    : "text-gray-600 dark:text-gray-300 hover:bg-[#E0F7FF] dark:hover:bg-gray-800"
+                                                    : tab.adminOnly
+                                                        ? "text-violet-600 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-900/30"
+                                                        : "text-gray-600 dark:text-gray-300 hover:bg-[#E0F7FF] dark:hover:bg-gray-800"
                                             }
                                         `}
                                     >
@@ -269,7 +273,7 @@ export default function Layout({
                 {isMobileMenuOpen && (
                     <div className="lg:hidden border-t border-gray-200/50 dark:border-gray-700/50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg">
                         <nav className="max-w-7xl mx-auto px-4 py-4 grid grid-cols-4 gap-2">
-                            {TABS.map((tab) => {
+                            {TABS.filter(tab => !tab.adminOnly || isAdmin(user?.email)).map((tab) => {
                                 const Icon = tab.icon;
                                 const isActive = selectedTab === tab.id;
                                 return (
@@ -284,7 +288,9 @@ export default function Layout({
                                             ${
                                                 isActive
                                                     ? "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white shadow-lg"
-                                                    : "text-gray-600 dark:text-gray-300 hover:bg-[#E0F7FF] dark:hover:bg-gray-800"
+                                                    : tab.adminOnly
+                                                        ? "text-violet-600 dark:text-violet-400 hover:bg-violet-100"
+                                                        : "text-gray-600 dark:text-gray-300 hover:bg-[#E0F7FF] dark:hover:bg-gray-800"
                                             }
                                         `}
                                     >

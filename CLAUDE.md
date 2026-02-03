@@ -129,16 +129,22 @@ if (selectedPet?.status === "memorial") {
 - 듀얼 모드 UI 전환
 - 동물별 게시판 분류
 - **API 보안**: reminders API 세션 기반 인증 완료 (supabase-server.ts)
+- **관리자 페이지**: AdminPage.tsx (사용자/게시물 관리, 대시보드)
+- **프리미엄 모달**: PremiumModal.tsx (커피 한 잔 값 설득)
+- **로그인 프롬프트**: LoginPromptModal.tsx (비로그인 유저 유도)
+- **랜딩 페이지 제거**: 비로그인자도 홈 화면 바로 접근 가능
 
 ### 개선 필요 🔧
 1. **타입 통합**: PetContext 타입을 types/index.ts로 통합
 2. **console.log 제거**: 프로덕션 전 정리
+3. **isPremium 하드코딩 제거**: Supabase 프로필에서 실제 값 가져오기
 
 ### 목업 → DB 연동 필요 🟡
 - 커뮤니티 게시판
 - 입양 정보
 - 분실동물 신고
 - 펫매거진
+- 결제 연동 (포트원)
 
 ---
 
@@ -155,6 +161,70 @@ if (selectedPet?.status === "memorial") {
 - 모바일 반응형 고려
 - 모드별 테마 색상 적용
 - 타입 안전성 확보
+
+---
+
+## 자주 발생하는 실수 & 디버깅
+
+### 1. 같은 기능 버튼 여러 개 → 일부만 수정
+**문제**: "새 반려동물" 버튼이 3군데 있는데 2군데만 handleAddNewPet으로 수정
+**해결**: 수정 전 반드시 grep으로 전체 검색
+```bash
+grep -n "setIsPetModalOpen\|handleAddNewPet" src/components/pages/RecordPage.tsx
+```
+
+### 2. Dynamic Import 사용 금지
+**원칙**: 즉각적인 반응이 UX에 더 중요 (스포티파이 사례)
+**해결**: 모달, 컴포넌트는 일반 import 사용. dynamic import 사용하지 않음
+
+### 3. 반응형 텍스트 줄바꿈
+**문제**: "특별해지는 곳"이 "특" / "별해지는 곳"으로 끊김
+**해결**: 짧은 텍스트로 변경 ("특별한 매일을 함께")
+
+### 4. Context 로딩 타이밍
+**문제**: pets.length가 0으로 나옴 (데이터 로딩 전)
+**해결**: isLoading 체크 후 렌더링, useEffect 의존성 확인
+
+### 5. 프리미엄 모달 안 뜸
+**문제**: 제한 체크 로직이 있는 함수를 안 쓰고 직접 setModal(true) 호출
+**해결**: 항상 래퍼 함수 (handleAddNewPet) 사용
+
+---
+
+## 프리미엄/무료 회원 제한
+
+| 기능 | 무료 | 프리미엄 (월 7,900원) |
+|-----|-----|---------------------|
+| AI 펫톡 | 하루 10회 | 무제한 |
+| 반려동물 등록 | 1마리 | 무제한 |
+| 사진 저장 | 100장 | 무제한 |
+
+```typescript
+// chatUtils.ts
+export const DAILY_FREE_LIMIT = 10;
+
+// RecordPage.tsx
+const FREE_PET_LIMIT = 1;
+const FREE_PHOTO_LIMIT = 100;
+const isPremium = false; // TODO: Supabase에서 가져오기
+```
+
+---
+
+## 관리자 시스템
+
+```typescript
+// types/index.ts
+export const ADMIN_EMAILS = ["sharkwind1@gmail.com"];
+
+export function isAdmin(email?: string | null): boolean {
+    if (!email) return false;
+    return ADMIN_EMAILS.includes(email);
+}
+
+// Layout.tsx에서 관리자 탭 조건부 표시
+{isAdmin(user?.email) && <AdminTab />}
+```
 
 ---
 

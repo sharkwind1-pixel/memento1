@@ -418,29 +418,72 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         return (
             <div className="min-h-screen relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900" />
-                <div className="relative z-10 flex flex-col items-center justify-center min-h-[60vh] px-4">
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD] flex items-center justify-center mb-6">
-                        <LogIn className="w-12 h-12 text-[#05B2DC]" />
+                <div className="relative z-10 flex flex-col items-center justify-center min-h-[60vh] px-4 max-w-md mx-auto">
+                    {/* 아이콘 */}
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-sky-100 to-violet-100 flex items-center justify-center mb-6 shadow-lg">
+                        <Sparkles className="w-12 h-12 text-violet-500" />
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
-                        로그인이 필요해요
+
+                    {/* 타이틀 */}
+                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2 text-center">
+                        AI 펫톡으로 대화해보세요
                     </h2>
                     <p className="text-gray-500 dark:text-gray-400 text-center mb-6">
-                        AI 펫톡을 이용하려면
+                        반려동물의 시점에서 대화하고,
                         <br />
-                        먼저 로그인해주세요
+                        건강 관리 정보도 받아보세요
                     </p>
-                    <Button
-                        onClick={() =>
-                            window.dispatchEvent(
-                                new CustomEvent("openAuthModal"),
-                            )
-                        }
-                        className="bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-[#05B2DC] text-white px-8"
-                    >
-                        <LogIn className="w-4 h-4 mr-2" />
-                        로그인하기
-                    </Button>
+
+                    {/* 기능 미리보기 */}
+                    <div className="w-full bg-white/80 dark:bg-gray-800/80 rounded-2xl p-4 mb-6 space-y-3">
+                        <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
+                            <div className="w-8 h-8 bg-sky-100 rounded-lg flex items-center justify-center">
+                                <Heart className="w-4 h-4 text-sky-500" />
+                            </div>
+                            <span>우리 아이 성격 맞춤 대화</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
+                            <div className="w-8 h-8 bg-violet-100 rounded-lg flex items-center justify-center">
+                                <Syringe className="w-4 h-4 text-violet-500" />
+                            </div>
+                            <span>예방접종, 건강 체크 알림</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
+                            <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
+                                <Moon className="w-4 h-4 text-amber-500" />
+                            </div>
+                            <span>메모리얼 모드 지원</span>
+                        </div>
+                    </div>
+
+                    {/* 무료 안내 */}
+                    <p className="text-sm text-gray-400 mb-4">
+                        무료로 하루 10회 대화할 수 있어요
+                    </p>
+
+                    {/* CTA 버튼 */}
+                    <div className="flex flex-col gap-3 w-full">
+                        <Button
+                            onClick={() =>
+                                window.dispatchEvent(
+                                    new CustomEvent("openAuthModal"),
+                                )
+                            }
+                            className="w-full bg-gradient-to-r from-sky-500 to-violet-500 hover:from-sky-600 hover:to-violet-600 text-white py-6 rounded-xl font-bold"
+                        >
+                            무료로 시작하기
+                        </Button>
+                        <button
+                            onClick={() =>
+                                window.dispatchEvent(
+                                    new CustomEvent("openAuthModal"),
+                                )
+                            }
+                            className="text-gray-400 text-sm hover:text-gray-600 transition-colors"
+                        >
+                            이미 계정이 있어요
+                        </button>
+                    </div>
                 </div>
             </div>
         );
@@ -510,10 +553,10 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                         </h1>
                         <button
                             onClick={handleNewChat}
-                            className={`p-1.5 rounded-full transition-colors ${isMemorialMode ? "hover:bg-amber-200/50 text-amber-600" : "hover:bg-[#E0F7FF] text-[#05B2DC]"}`}
+                            className={`p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-colors ${isMemorialMode ? "hover:bg-amber-200/50 text-amber-600" : "hover:bg-[#E0F7FF] text-[#05B2DC]"}`}
                             title="새 대화 시작"
                         >
-                            <RotateCcw className="w-4 h-4" />
+                            <RotateCcw className="w-5 h-5" />
                         </button>
                     </div>
                     <Select
@@ -587,10 +630,10 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                                     <h2 className="text-lg font-bold">
                                         {selectedPet?.name}
                                     </h2>
-                                    <p className="text-xs text-white/80">
+                                    <p className="text-sm text-white/90">
                                         {selectedPet?.type} · {selectedPet?.breed}
                                     </p>
-                                    <p className="text-xs text-white/70 mt-1">
+                                    <p className="text-sm text-white/80 mt-1">
                                         {isMemorialMode && selectedPet?.memorialDate
                                             ? `무지개다리를 건넌 지 ${Math.floor((new Date().getTime() - new Date(selectedPet.memorialDate).getTime()) / (1000 * 60 * 60 * 24))}일`
                                             : selectedPet?.birthday
@@ -716,7 +759,7 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                             <div
                                 className={`max-w-[75%] px-4 py-3 rounded-2xl ${message.role === "user" ? (isMemorialMode ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-br-md" : "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white rounded-br-md") : isMemorialMode ? "bg-amber-100 text-amber-900 rounded-bl-md" : "bg-white text-gray-800 rounded-bl-md shadow-sm"}`}
                             >
-                                <p className="text-sm leading-relaxed">
+                                <p className="text-base leading-relaxed">
                                     {message.content}
                                 </p>
                             </div>
@@ -793,13 +836,20 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                                     </p>
                                     <Button
                                         className="bg-gradient-to-r from-violet-500 to-sky-500 hover:from-violet-600 hover:to-sky-600 text-white rounded-full px-6"
+                                        onClick={() => {
+                                            // TODO: 결제 연동 후 구현
+                                            alert("결제 기능은 도메인 설정 후 활성화됩니다!");
+                                        }}
                                     >
                                         <Sparkles className="w-4 h-4 mr-2" />
-                                        프리미엄 시작하기 (월 7,900원)
+                                        프리미엄 시작하기
                                     </Button>
+                                    <p className="text-xs text-violet-500 mt-2">
+                                        커피 한 잔 값, 월 7,900원
+                                    </p>
                                 </div>
                                 <p className="text-xs text-gray-400">
-                                    내일 다시 15회 무료 대화가 충전돼요
+                                    내일 다시 10회 무료 대화가 충전돼요
                                 </p>
                             </div>
                         ) : (
