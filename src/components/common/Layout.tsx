@@ -142,7 +142,7 @@ export default function Layout({
                         </button>
 
                         {/* 데스크톱 네비게이션 */}
-                        <nav className="hidden lg:flex items-center space-x-1">
+                        <nav className="hidden xl:flex items-center space-x-0.5">
                             {TABS.filter(tab => !tab.adminOnly || isAdmin(user?.email)).map((tab) => {
                                 const Icon = tab.icon;
                                 const isActive = selectedTab === tab.id;
@@ -151,7 +151,7 @@ export default function Layout({
                                         key={tab.id}
                                         onClick={() => setSelectedTab(tab.id)}
                                         className={`
-                                            flex items-center space-x-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all
+                                            flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap
                                             ${
                                                 isActive
                                                     ? "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white shadow-lg shadow-[#05B2DC]/25"
@@ -161,7 +161,7 @@ export default function Layout({
                                             }
                                         `}
                                     >
-                                        <Icon className="w-4 h-4" />
+                                        <Icon className="w-3.5 h-3.5" />
                                         <span>{tab.label}</span>
                                     </button>
                                 );
@@ -270,7 +270,7 @@ export default function Layout({
                                 onClick={() =>
                                     setIsMobileMenuOpen(!isMobileMenuOpen)
                                 }
-                                className="lg:hidden rounded-xl"
+                                className="xl:hidden rounded-xl"
                             >
                                 {isMobileMenuOpen ? (
                                     <X className="w-5 h-5" />
@@ -284,7 +284,7 @@ export default function Layout({
 
                 {/* 모바일 메뉴 */}
                 {isMobileMenuOpen && (
-                    <div className="lg:hidden border-t border-gray-200/50 dark:border-gray-700/50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg">
+                    <div className="xl:hidden border-t border-gray-200/50 dark:border-gray-700/50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg">
                         <nav className="max-w-7xl mx-auto px-4 py-4 grid grid-cols-4 gap-2">
                             {TABS.filter(tab => !tab.adminOnly || isAdmin(user?.email)).map((tab) => {
                                 const Icon = tab.icon;
@@ -321,7 +321,7 @@ export default function Layout({
             <main className="max-w-7xl mx-auto px-4 py-6">{children}</main>
 
             {/* 모바일 하단 네비게이션 */}
-            <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-200/50 dark:border-gray-700/50 z-50 pb-safe">
+            <nav className="xl:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-200/50 dark:border-gray-700/50 z-50 pb-safe">
                 <div className="flex justify-around items-center h-16 px-1">
                     {TABS.slice(0, 5).map((tab) => {
                         const Icon = tab.icon;
@@ -359,7 +359,7 @@ export default function Layout({
             </nav>
 
             {/* 하단 네비게이션 높이 확보 */}
-            <div className="lg:hidden h-20" />
+            <div className="xl:hidden h-20" />
         </div>
     );
 }
