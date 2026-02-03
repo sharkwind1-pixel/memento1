@@ -273,31 +273,33 @@ export default function LostPage({ setSelectedTab }: LostPageProps) {
             <div className="relative z-10 space-y-6 pb-8">
                 {/* 헤더 */}
                 <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg border border-white/50 dark:border-gray-700/50 rounded-3xl p-6">
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center space-x-3">
-                            <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
-                                <Search className="w-6 h-6 text-white" />
+                    <div className="space-y-4 mb-6">
+                        {/* 타이틀 */}
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                                <Search className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                             </div>
                             <div>
-                                <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+                                <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">
                                     분실동물 찾기
                                 </h1>
-                                <p className="text-gray-600 dark:text-gray-300">
+                                <p className="text-sm text-gray-600 dark:text-gray-300">
                                     잃어버린 가족을 찾아요
                                 </p>
                             </div>
                         </div>
-                        <div className="flex gap-2">
+                        {/* 신고 버튼 - 세로 배치 */}
+                        <div className="grid grid-cols-2 gap-2">
                             <Button
                                 variant="outline"
                                 className="rounded-xl border-orange-300 text-orange-600 hover:bg-orange-50"
                             >
-                                <AlertTriangle className="w-4 h-4 mr-2" />
-                                실종 신고
+                                <AlertTriangle className="w-4 h-4 mr-1 sm:mr-2" />
+                                <span className="text-sm">실종 신고</span>
                             </Button>
                             <Button className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 rounded-xl">
-                                <Eye className="w-4 h-4 mr-2" />
-                                발견 신고
+                                <Eye className="w-4 h-4 mr-1 sm:mr-2" />
+                                <span className="text-sm">발견 신고</span>
                             </Button>
                         </div>
                     </div>

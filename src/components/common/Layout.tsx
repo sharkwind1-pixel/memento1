@@ -40,7 +40,7 @@ interface LayoutProps {
     setSelectedTab: (tab: TabType) => void;
 }
 
-// 탭 정보 - 순서: 홈 → 우리의 기록 → AI펫톡 → 펫매거진 → 나머지
+// 탭 정보 - 전체 메뉴
 const TABS: { id: TabType; label: string; icon: React.ElementType; adminOnly?: boolean }[] = [
     { id: "home", label: "홈", icon: Home },
     { id: "record", label: "우리의 기록", icon: Camera },
@@ -51,6 +51,15 @@ const TABS: { id: TabType; label: string; icon: React.ElementType; adminOnly?: b
     { id: "local", label: "지역정보", icon: MapPin },
     { id: "lost", label: "분실동물", icon: Search },
     { id: "admin", label: "관리자", icon: Shield, adminOnly: true },
+];
+
+// 하단 네비게이션용 - 홈이 가운데 (UX 최적화)
+const BOTTOM_NAV_TABS: { id: TabType; label: string; icon: React.ElementType }[] = [
+    { id: "record", label: "기록", icon: Camera },
+    { id: "community", label: "커뮤니티", icon: Users },
+    { id: "home", label: "홈", icon: Home },
+    { id: "ai-chat", label: "AI펫톡", icon: MessageCircle },
+    { id: "magazine", label: "매거진", icon: BookOpen },
 ];
 
 export default function Layout({
@@ -320,12 +329,13 @@ export default function Layout({
             {/* 메인 컨텐츠 */}
             <main className="max-w-7xl mx-auto px-4 py-6">{children}</main>
 
-            {/* 모바일 하단 네비게이션 */}
+            {/* 모바일 하단 네비게이션 - 홈 가운데 배치 */}
             <nav className="xl:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-200/50 dark:border-gray-700/50 z-50 pb-safe">
                 <div className="flex justify-around items-center h-16 px-1">
-                    {TABS.slice(0, 5).map((tab) => {
+                    {BOTTOM_NAV_TABS.map((tab) => {
                         const Icon = tab.icon;
                         const isActive = selectedTab === tab.id;
+                        const isHome = tab.id === "home";
                         return (
                             <button
                                 key={tab.id}
@@ -335,8 +345,14 @@ export default function Layout({
                                     ${isActive ? "text-[#05B2DC]" : "text-gray-400 dark:text-gray-500"}
                                 `}
                             >
-                                <div className={`p-1.5 rounded-xl transition-colors ${isActive ? "bg-[#E0F7FF] dark:bg-[#05B2DC]/20" : ""}`}>
-                                    <Icon className={`w-5 h-5 ${isActive ? "scale-110" : ""} transition-transform`} />
+                                <div className={`p-1.5 rounded-xl transition-colors ${
+                                    isHome && isActive
+                                        ? "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white"
+                                        : isActive
+                                            ? "bg-[#E0F7FF] dark:bg-[#05B2DC]/20"
+                                            : ""
+                                }`}>
+                                    <Icon className={`w-5 h-5 ${isActive ? "scale-110" : ""} ${isHome && isActive ? "text-white" : ""} transition-transform`} />
                                 </div>
                                 <span className="text-[10px] mt-0.5 font-medium">
                                     {tab.label}

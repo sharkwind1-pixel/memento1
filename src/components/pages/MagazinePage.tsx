@@ -246,28 +246,45 @@ export default function MagazinePage({ setSelectedTab }: MagazinePageProps) {
                         />
                     </div>
 
-                    {/* 카테고리 */}
-                    <div className="flex flex-wrap gap-2">
-                        {CATEGORIES.map((cat) => {
-                            const Icon = cat.icon;
-                            const isActive = selectedCategory === cat.id;
-                            return (
-                                <Button
-                                    key={cat.id}
-                                    variant={isActive ? "default" : "outline"}
-                                    size="sm"
-                                    onClick={() => setSelectedCategory(cat.id)}
-                                    className={`rounded-xl ${
-                                        isActive
-                                            ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0"
-                                            : "bg-white/50 dark:bg-gray-700/50 border-emerald-200 dark:border-emerald-700"
-                                    }`}
-                                >
-                                    <Icon className="w-4 h-4 mr-1" />
-                                    {cat.label}
-                                </Button>
-                            );
-                        })}
+                    {/* 카테고리 - 1줄(전체) + 3열 2줄 */}
+                    <div className="space-y-2">
+                        {/* 전체 버튼 - 1줄 */}
+                        <Button
+                            variant={selectedCategory === "all" ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setSelectedCategory("all")}
+                            className={`w-full rounded-xl ${
+                                selectedCategory === "all"
+                                    ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0"
+                                    : "bg-white/50 dark:bg-gray-700/50 border-emerald-200 dark:border-emerald-700"
+                            }`}
+                        >
+                            <BookOpen className="w-4 h-4 mr-1" />
+                            전체
+                        </Button>
+                        {/* 나머지 카테고리 - 3열 2줄 */}
+                        <div className="grid grid-cols-3 gap-2">
+                            {CATEGORIES.slice(1).map((cat) => {
+                                const Icon = cat.icon;
+                                const isActive = selectedCategory === cat.id;
+                                return (
+                                    <Button
+                                        key={cat.id}
+                                        variant={isActive ? "default" : "outline"}
+                                        size="sm"
+                                        onClick={() => setSelectedCategory(cat.id)}
+                                        className={`rounded-xl flex-col h-auto py-2 px-1 text-xs ${
+                                            isActive
+                                                ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0"
+                                                : "bg-white/50 dark:bg-gray-700/50 border-emerald-200 dark:border-emerald-700"
+                                        }`}
+                                    >
+                                        <Icon className="w-4 h-4 mb-0.5" />
+                                        {cat.label}
+                                    </Button>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
 
