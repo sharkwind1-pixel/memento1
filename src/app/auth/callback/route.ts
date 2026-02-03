@@ -3,6 +3,8 @@
  * 구글/카카오 로그인 후 리다이렉트 처리
  */
 
+export const dynamic = "force-dynamic";
+
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 

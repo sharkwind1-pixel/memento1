@@ -6,6 +6,8 @@
  * 세션 기반 인증 + 소유권 검증 적용
  */
 
+export const dynamic = "force-dynamic";
+
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
 

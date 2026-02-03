@@ -3,6 +3,10 @@
  * 장기 메모리 + 감정 인식 시스템
  */
 
+// Next.js 빌드 시점 정적 분석 방지 (환경변수 런타임 접근 필요)
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import {

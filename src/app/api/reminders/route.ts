@@ -6,6 +6,8 @@
  * 세션 기반 인증 적용 - userId는 쿠키 세션에서 자동 추출
  */
 
+export const dynamic = "force-dynamic";
+
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
 
