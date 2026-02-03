@@ -9,22 +9,11 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
-import {
-    analyzeEmotion,
-    extractMemories,
-    getRecentMessages,
-    getPetMemories,
-    saveMessage,
-    saveMemory,
-    getEmotionResponseGuide,
-    getGriefStageResponseGuide,
-    memoriesToContext,
-    buildConversationContext,
-    generateConversationSummary,
-    saveConversationSummary,
-    EmotionType,
-    GriefStage,
-} from "@/lib/agent";
+
+// agent 모듈은 런타임에만 동적 import (빌드 시점 환경변수 에러 방지)
+// EmotionType, GriefStage 타입만 여기서 정의
+type EmotionType = "happy" | "sad" | "anxious" | "angry" | "grateful" | "lonely" | "peaceful" | "excited" | "neutral";
+type GriefStage = "denial" | "anger" | "bargaining" | "depression" | "acceptance" | "unknown";
 
 // OpenAI 클라이언트 (지연 초기화)
 let openaiInstance: OpenAI | null = null;
@@ -36,6 +25,11 @@ function getOpenAI(): OpenAI {
         });
     }
     return openaiInstance;
+}
+
+// agent 모듈 동적 import 함수
+async function getAgentModule() {
+    return await import("@/lib/agent");
 }
 
 // 반려동물 정보 타입
@@ -571,6 +565,9 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // agent 모듈 동적 import (런타임에만 로드)
+        const agent = await getAgentModule();
+
         const body = await request.json();
         const {
             message,
@@ -613,25 +610,25 @@ export async function POST(request: NextRequest) {
         // 에이전트 기능 활성화 시
         if (enableAgent) {
             // 1. 감정 분석 (추모 모드일 때 애도 단계도 분석)
-            const emotionResult = await analyzeEmotion(message, isMemorialMode);
+            const emotionResult = await agent.analyzeEmotion(message, isMemorialMode);
             userEmotion = emotionResult.emotion;
             emotionScore = emotionResult.score;
             griefStage = emotionResult.griefStage;
 
             // 2. 감정 응답 가이드 생성
-            emotionGuide = getEmotionResponseGuide(userEmotion, mode);
+            emotionGuide = agent.getEmotionResponseGuide(userEmotion, mode);
 
             // 3. 추모 모드에서 애도 단계 가이드 추가
             if (isMemorialMode && griefStage && griefStage !== "unknown") {
-                const griefGuide = getGriefStageResponseGuide(griefStage);
+                const griefGuide = agent.getGriefStageResponseGuide(griefStage);
                 emotionGuide = `${emotionGuide}\n\n## 현재 감지된 애도 단계별 대응 가이드\n${griefGuide}`;
             }
 
             // 4. 메모리 컨텍스트 (DB 연동 시)
             if (pet.id) {
                 try {
-                    const memories = await getPetMemories(pet.id, 5);
-                    memoryContext = memoriesToContext(memories as any);
+                    const memories = await agent.getPetMemories(pet.id, 5);
+                    memoryContext = agent.memoriesToContext(memories as any);
                 } catch (e) {
                     // DB 연결 실패 시 무시
                     console.log("Memory fetch skipped:", e);
@@ -640,10 +637,10 @@ export async function POST(request: NextRequest) {
 
             // 5. 새로운 메모리 추출 (비동기로 처리)
             if (pet.id && userId) {
-                extractMemories(message, pet.name).then(async (newMemories) => {
+                agent.extractMemories(message, pet.name).then(async (newMemories) => {
                     if (newMemories && newMemories.length > 0) {
                         for (const mem of newMemories) {
-                            await saveMemory(userId, pet.id!, mem as any);
+                            await agent.saveMemory(userId, pet.id!, mem as any);
                         }
                     }
                 }).catch(console.error);
@@ -654,7 +651,7 @@ export async function POST(request: NextRequest) {
         let conversationContext = "";
         if (pet.id && userId && enableAgent) {
             try {
-                conversationContext = await buildConversationContext(
+                conversationContext = await agent.buildConversationContext(
                     userId,
                     pet.id,
                     pet.name,
@@ -720,8 +717,8 @@ export async function POST(request: NextRequest) {
         if (enableAgent && pet.id && userId) {
             // 비동기로 저장 (응답 속도에 영향 없음)
             Promise.all([
-                saveMessage(userId, pet.id, "user", message, userEmotion, emotionScore),
-                saveMessage(userId, pet.id, "assistant", reply),
+                agent.saveMessage(userId, pet.id, "user", message, userEmotion, emotionScore),
+                agent.saveMessage(userId, pet.id, "assistant", reply),
             ]).catch(console.error);
         }
 
@@ -729,10 +726,10 @@ export async function POST(request: NextRequest) {
         // 프론트엔드에서 chatHistory.length로 체크하여 호출 가능
         if (enableAgent && pet.id && userId && chatHistory.length > 0 && chatHistory.length % 10 === 0) {
             const allMessages = [...chatHistory, { role: "user", content: message }, { role: "assistant", content: reply }];
-            generateConversationSummary(allMessages, pet.name, isMemorialMode)
+            agent.generateConversationSummary(allMessages, pet.name, isMemorialMode)
                 .then(async (summary) => {
                     if (summary) {
-                        await saveConversationSummary(userId, pet.id!, summary);
+                        await agent.saveConversationSummary(userId, pet.id!, summary);
                     }
                 })
                 .catch(console.error);
