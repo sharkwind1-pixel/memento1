@@ -124,8 +124,8 @@ export default function Layout({
 
             {/* 헤더 */}
             <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-700/50">
-                <div className="max-w-7xl mx-auto px-4">
-                    <div className="flex items-center justify-between h-20 sm:h-24">
+                <div className="max-w-7xl mx-auto px-3 sm:px-4">
+                    <div className="flex items-center justify-between h-14 sm:h-16">
                         {/* 로고 */}
                         <button
                             onClick={() => setSelectedTab("home")}
@@ -134,15 +134,15 @@ export default function Layout({
                             <Image
                                 src="/logo.png"
                                 alt="메멘토애니"
-                                width={200}
-                                height={80}
-                                className="h-16 sm:h-20 w-auto object-contain rounded-2xl dark:bg-white dark:p-1.5 dark:rounded-2xl"
+                                width={160}
+                                height={48}
+                                className="h-10 sm:h-12 w-auto object-contain dark:bg-white dark:p-1 dark:rounded-lg"
                                 priority
                             />
                         </button>
 
                         {/* 데스크톱 네비게이션 */}
-                        <nav className="hidden xl:flex items-center space-x-0.5">
+                        <nav className="hidden xl:flex items-center gap-1">
                             {TABS.filter(tab => !tab.adminOnly || isAdmin(user?.email)).map((tab) => {
                                 const Icon = tab.icon;
                                 const isActive = selectedTab === tab.id;
@@ -151,17 +151,17 @@ export default function Layout({
                                         key={tab.id}
                                         onClick={() => setSelectedTab(tab.id)}
                                         className={`
-                                            flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap
+                                            flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap
                                             ${
                                                 isActive
-                                                    ? "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white shadow-lg shadow-[#05B2DC]/25"
+                                                    ? "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white shadow-md"
                                                     : tab.adminOnly
                                                         ? "text-violet-600 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-900/30"
                                                         : "text-gray-600 dark:text-gray-300 hover:bg-[#E0F7FF] dark:hover:bg-gray-800"
                                             }
                                         `}
                                     >
-                                        <Icon className="w-3.5 h-3.5" />
+                                        <Icon className="w-4 h-4" />
                                         <span>{tab.label}</span>
                                     </button>
                                 );
@@ -169,7 +169,7 @@ export default function Layout({
                         </nav>
 
                         {/* 우측 버튼들 */}
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center gap-1 sm:gap-2">
                             <Button
                                 variant="ghost"
                                 size="icon"
@@ -184,22 +184,22 @@ export default function Layout({
                             </Button>
 
                             {loading ? (
-                                <div className="w-24 h-10 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-xl" />
+                                <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-full" />
                             ) : user ? (
                                 <div className="relative">
                                     <button
                                         onClick={() =>
                                             setIsUserMenuOpen(!isUserMenuOpen)
                                         }
-                                        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#E0F7FF] dark:bg-gray-800 hover:bg-[#BAE6FD] dark:hover:bg-gray-700 transition-colors"
+                                        className="flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 rounded-full sm:rounded-xl bg-[#E0F7FF] dark:bg-gray-800 hover:bg-[#BAE6FD] dark:hover:bg-gray-700 transition-colors"
                                     >
-                                        <div className="w-8 h-8 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] rounded-full flex items-center justify-center">
+                                        <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] rounded-full flex items-center justify-center flex-shrink-0">
                                             <User className="w-4 h-4 text-white" />
                                         </div>
-                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-200 hidden sm:block max-w-[100px] truncate">
+                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-200 hidden sm:block max-w-[80px] truncate">
                                             {displayName}
                                         </span>
-                                        <ChevronDown className="w-4 h-4 text-gray-500" />
+                                        <ChevronDown className="w-4 h-4 text-gray-500 hidden sm:block" />
                                     </button>
 
                                     {isUserMenuOpen && (
