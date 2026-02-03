@@ -3,7 +3,7 @@
  * AuthProvider로 전체 앱 감싸기
  */
 
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -11,6 +11,14 @@ import { PetProvider } from "@/contexts/PetContext";
 import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"] });
+
+export const viewport: Viewport = {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+    viewportFit: "cover",
+};
 
 export const metadata: Metadata = {
     title: "메멘토애니 - 특별한 매일을 함께",

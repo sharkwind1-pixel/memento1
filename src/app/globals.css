@@ -148,7 +148,20 @@
   * {
     @apply border-border;
   }
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
   body {
     @apply bg-background text-foreground;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  /* 한글 줄바꿈 최적화 */
+  p, h1, h2, h3, h4, h5, h6, span, div, li, td, th, label, button {
+    word-break: keep-all;
+    overflow-wrap: break-word;
   }
 }
