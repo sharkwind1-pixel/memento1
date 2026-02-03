@@ -61,6 +61,29 @@ export default function AuthModal({
         }
     }, [isOpen]);
 
+    // 페이지가 다시 보일 때 (OAuth 뒤로가기 등) 로딩 리셋
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === "visible" && isOpen) {
+                setLoading(false);
+            }
+        };
+
+        const handleFocus = () => {
+            if (isOpen) {
+                setLoading(false);
+            }
+        };
+
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+        window.addEventListener("focus", handleFocus);
+
+        return () => {
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+            window.removeEventListener("focus", handleFocus);
+        };
+    }, [isOpen]);
+
     if (!isOpen) return null;
 
     const handleSubmit = async (e: React.FormEvent) => {
