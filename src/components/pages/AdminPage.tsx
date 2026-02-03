@@ -70,6 +70,7 @@ interface UserRow {
     };
     is_banned?: boolean;
     is_premium?: boolean;
+    is_admin?: boolean;
 }
 
 interface PostRow {
@@ -219,7 +220,7 @@ export default function AdminPage() {
         try {
             const { data, error } = await supabase
                 .from("profiles")
-                .select("id, email, nickname, is_premium, is_banned, created_at")
+                .select("id, email, nickname, is_premium, is_banned, is_admin, created_at")
                 .order("created_at", { ascending: false })
                 .limit(100);
 
@@ -231,10 +232,34 @@ export default function AdminPage() {
                     user_metadata: { nickname: profile.nickname },
                     is_banned: profile.is_banned,
                     is_premium: profile.is_premium,
+                    is_admin: profile.is_admin,
                 })));
             }
         } catch (error) {
             console.error("사용자 로드 실패:", error);
+        }
+    };
+
+    // 사용자 권한 업데이트
+    const updateUserRole = async (userId: string, field: "is_premium" | "is_admin" | "is_banned", value: boolean) => {
+        try {
+            const { error } = await supabase
+                .from("profiles")
+                .update({ [field]: value })
+                .eq("id", userId);
+
+            if (error) throw error;
+
+            // 로컬 상태 업데이트
+            setUsers(prev => prev.map(u =>
+                u.id === userId ? { ...u, [field]: value } : u
+            ));
+
+            // 통계 새로고침
+            loadDashboardStats();
+        } catch (error) {
+            console.error("권한 업데이트 실패:", error);
+            alert("권한 업데이트에 실패했습니다.");
         }
     };
 
@@ -578,7 +603,26 @@ export default function AdminPage() {
                                 className="pl-10"
                             />
                         </div>
-                        <Button variant="outline">검색</Button>
+                        <Button variant="outline" onClick={loadUsers}>
+                            <RefreshCw className="w-4 h-4 mr-1" />
+                            새로고침
+                        </Button>
+                    </div>
+
+                    {/* 범례 */}
+                    <div className="flex flex-wrap gap-2 text-sm">
+                        <Badge className="bg-violet-100 text-violet-700">
+                            <Shield className="w-3 h-3 mr-1" />
+                            관리자
+                        </Badge>
+                        <Badge className="bg-amber-100 text-amber-700">
+                            <Crown className="w-3 h-3 mr-1" />
+                            프리미엄
+                        </Badge>
+                        <Badge className="bg-red-100 text-red-700">
+                            <Ban className="w-3 h-3 mr-1" />
+                            정지됨
+                        </Badge>
                     </div>
 
                     {/* 유저 목록 */}
@@ -590,32 +634,97 @@ export default function AdminPage() {
                                     <p>등록된 사용자가 없습니다.</p>
                                 </div>
                             ) : (
-                                <div className="space-y-2">
-                                    {users.map((u) => (
+                                <div className="space-y-3">
+                                    {users
+                                        .filter(u =>
+                                            searchQuery === "" ||
+                                            u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                            u.user_metadata?.nickname?.toLowerCase().includes(searchQuery.toLowerCase())
+                                        )
+                                        .map((u) => (
                                         <div
                                             key={u.id}
-                                            className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                                            className={`p-4 rounded-xl border transition-colors ${
+                                                u.is_banned
+                                                    ? "bg-red-50 border-red-200"
+                                                    : u.is_admin
+                                                        ? "bg-violet-50 border-violet-200"
+                                                        : u.is_premium
+                                                            ? "bg-amber-50 border-amber-200"
+                                                            : "bg-gray-50 border-gray-200 hover:bg-gray-100"
+                                            }`}
                                         >
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-gradient-to-br from-violet-400 to-sky-400 rounded-full flex items-center justify-center text-white font-bold">
-                                                    {u.email.charAt(0).toUpperCase()}
+                                            {/* 유저 정보 */}
+                                            <div className="flex items-center justify-between mb-3">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
+                                                        u.is_admin
+                                                            ? "bg-gradient-to-br from-violet-500 to-purple-600"
+                                                            : u.is_premium
+                                                                ? "bg-gradient-to-br from-amber-400 to-orange-500"
+                                                                : "bg-gradient-to-br from-gray-400 to-gray-500"
+                                                    }`}>
+                                                        {u.email.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <p className="font-medium text-gray-800">
+                                                                {u.user_metadata?.nickname || "사용자"}
+                                                            </p>
+                                                            {u.is_admin && (
+                                                                <Badge className="bg-violet-100 text-violet-700 text-xs">
+                                                                    <Shield className="w-3 h-3 mr-0.5" />
+                                                                    관리자
+                                                                </Badge>
+                                                            )}
+                                                            {u.is_premium && (
+                                                                <Badge className="bg-amber-100 text-amber-700 text-xs">
+                                                                    <Crown className="w-3 h-3 mr-0.5" />
+                                                                    프리미엄
+                                                                </Badge>
+                                                            )}
+                                                            {u.is_banned && (
+                                                                <Badge className="bg-red-100 text-red-700 text-xs">
+                                                                    정지됨
+                                                                </Badge>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-xs text-gray-500">{u.email}</p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <p className="font-medium text-gray-800">
-                                                        {u.user_metadata?.nickname || "사용자"}
-                                                    </p>
-                                                    <p className="text-sm text-gray-500">{u.id}</p>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <Badge variant="secondary">
-                                                    {new Date(u.created_at).toLocaleDateString("ko-KR")}
+                                                <Badge variant="secondary" className="text-xs">
+                                                    {new Date(u.created_at).toLocaleDateString("ko-KR")} 가입
                                                 </Badge>
-                                                <Button size="sm" variant="ghost">
-                                                    <Eye className="w-4 h-4" />
+                                            </div>
+
+                                            {/* 권한 관리 버튼 */}
+                                            <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200">
+                                                <Button
+                                                    size="sm"
+                                                    variant={u.is_premium ? "default" : "outline"}
+                                                    className={u.is_premium ? "bg-amber-500 hover:bg-amber-600" : ""}
+                                                    onClick={() => updateUserRole(u.id, "is_premium", !u.is_premium)}
+                                                >
+                                                    <Crown className="w-3 h-3 mr-1" />
+                                                    {u.is_premium ? "프리미엄 해제" : "프리미엄 부여"}
                                                 </Button>
-                                                <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-600">
-                                                    <Ban className="w-4 h-4" />
+                                                <Button
+                                                    size="sm"
+                                                    variant={u.is_admin ? "default" : "outline"}
+                                                    className={u.is_admin ? "bg-violet-500 hover:bg-violet-600" : ""}
+                                                    onClick={() => updateUserRole(u.id, "is_admin", !u.is_admin)}
+                                                >
+                                                    <Shield className="w-3 h-3 mr-1" />
+                                                    {u.is_admin ? "관리자 해제" : "관리자 부여"}
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant={u.is_banned ? "default" : "outline"}
+                                                    className={u.is_banned ? "bg-red-500 hover:bg-red-600" : "text-red-500 border-red-300 hover:bg-red-50"}
+                                                    onClick={() => updateUserRole(u.id, "is_banned", !u.is_banned)}
+                                                >
+                                                    <Ban className="w-3 h-3 mr-1" />
+                                                    {u.is_banned ? "정지 해제" : "계정 정지"}
                                                 </Button>
                                             </div>
                                         </div>
