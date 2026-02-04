@@ -86,10 +86,20 @@ export default function TutorialTour({
         const step = currentSteps[currentStep];
         if (!step) return;
 
-        const target = document.querySelector(`[data-tutorial-id="${step.targetId}"]`);
+        // 같은 ID를 가진 모든 요소 중 보이는 것만 찾기
+        const targets = document.querySelectorAll(`[data-tutorial-id="${step.targetId}"]`);
+        let visibleTarget: Element | null = null;
 
-        if (target) {
-            const rect = target.getBoundingClientRect();
+        targets.forEach((el) => {
+            const htmlEl = el as HTMLElement;
+            // offsetParent가 있고 크기가 있으면 보이는 요소
+            if (htmlEl.offsetParent !== null && htmlEl.offsetWidth > 0) {
+                visibleTarget = el;
+            }
+        });
+
+        if (visibleTarget) {
+            const rect = visibleTarget.getBoundingClientRect();
             setTargetRect(rect);
         } else {
             setTargetRect(null);
