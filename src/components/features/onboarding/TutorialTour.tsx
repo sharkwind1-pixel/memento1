@@ -191,8 +191,8 @@ export default function TutorialTour({
     } : null;
 
     // 말풍선 위치 계산
-    // 모바일: 네비가 하단 → 말풍선은 위에 (꼬리가 아래로)
-    // 데스크톱: 네비가 상단 → 말풍선은 아래에 (꼬리가 위로)
+    // 타겟이 화면 하단에 있으면 (모바일 하단 네비) → 말풍선은 위에
+    // 타겟이 화면 상단에 있으면 (데스크톱 헤더) → 말풍선은 아래에
     const getBubblePosition = () => {
         if (!targetRect) return { left: 0, top: 0 };
 
@@ -205,15 +205,17 @@ export default function TutorialTour({
             left = window.innerWidth - bubbleWidth - 16;
         }
 
-        if (isMobile) {
-            // 모바일: 하단 네비 바로 위에 말풍선 (몽글몽글 꼬리가 버튼 가리킴)
-            // 말풍선 높이 약 160px + 꼬리 55px
+        // 타겟 위치로 판단 (화면 하단 절반에 있으면 모바일 하단 네비)
+        const isTargetAtBottom = targetRect.top > window.innerHeight / 2;
+
+        if (isTargetAtBottom) {
+            // 타겟이 하단에 있음 → 말풍선은 위에
             return {
                 left,
                 top: targetRect.top - 220,
             };
         } else {
-            // 데스크톱: 타겟 아래에 말풍선 (꼬리 높이 고려)
+            // 타겟이 상단에 있음 → 말풍선은 아래에
             return {
                 left,
                 top: targetRect.bottom + 50,
@@ -305,8 +307,8 @@ export default function TutorialTour({
                     }}
                 >
                     <div className="relative w-[240px]">
-                        {/* 꼬리 - 위쪽 (데스크톱: 몽글몽글 구름 꼬리가 위로) */}
-                        {!isMobile && (
+                        {/* 꼬리 - 위쪽 (타겟이 상단에 있을 때) */}
+                        {targetRect && targetRect.top <= window.innerHeight / 2 && (
                             <div className="absolute left-1/2 -translate-x-1/2 -top-14 flex flex-col items-center">
                                 <div className="w-3 h-3 bg-white rounded-full" />
                                 <div className="w-4 h-4 bg-white rounded-full -mt-1" />
@@ -374,8 +376,8 @@ export default function TutorialTour({
                             <div className="absolute -bottom-1 right-4 w-2 h-2 bg-violet-200 rounded-full animate-pulse" style={{ animationDelay: "0.3s" }} />
                         </div>
 
-                        {/* 꼬리 - 아래쪽 (모바일: 몽글몽글 구름 꼬리) */}
-                        {isMobile && (
+                        {/* 꼬리 - 아래쪽 (타겟이 하단에 있을 때) */}
+                        {targetRect && targetRect.top > window.innerHeight / 2 && (
                             <div className="absolute left-1/2 -translate-x-1/2 -bottom-10">
                                 {/* 구름 뭉치처럼 */}
                                 <div className="relative">
