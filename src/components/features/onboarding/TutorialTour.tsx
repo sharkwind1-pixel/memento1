@@ -1,21 +1,16 @@
 /**
  * TutorialTour.tsx
- * 신규 사용자를 위한 앱 튜토리얼 투어
+ * 코치마크 스타일 튜토리얼 - 실제 UI 요소에 스포트라이트
  */
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import {
-    Home,
-    MessageCircle,
-    BookOpen,
-    Heart,
-    MapPin,
-    Search,
-    PawPrint,
     ArrowRight,
+    ArrowLeft,
     X,
     Sparkles,
 } from "lucide-react";
@@ -26,94 +21,56 @@ interface TutorialTourProps {
     onNavigate: (tab: string) => void;
 }
 
-const TUTORIAL_STEPS = [
-    {
-        id: "welcome",
-        title: "메멘토애니에 오신 걸 환영해요!",
-        description: "반려동물과의 소중한 추억을 기록하고,\n다양한 정보를 얻을 수 있는 공간이에요.",
-        icon: Sparkles,
-        color: "from-violet-500 to-purple-500",
-        bgColor: "bg-violet-50",
-    },
+interface TutorialStep {
+    id: string;
+    targetId: string; // data-tutorial-id 값
+    title: string;
+    description: string;
+    position: "top" | "bottom";
+}
+
+const TUTORIAL_STEPS: TutorialStep[] = [
     {
         id: "home",
+        targetId: "home",
         title: "홈",
-        description: "메멘토애니의 시작점이에요.\n주요 기능들을 한눈에 볼 수 있어요.",
-        icon: Home,
-        color: "from-sky-500 to-blue-500",
-        bgColor: "bg-sky-50",
-        tab: "home",
-    },
-    {
-        id: "ai-chat",
-        title: "AI 펫톡",
-        description: "등록한 반려동물과 대화할 수 있어요.\n추억 속 아이와 다시 이야기 나눠보세요.",
-        icon: MessageCircle,
-        color: "from-emerald-500 to-teal-500",
-        bgColor: "bg-emerald-50",
-        tab: "ai-chat",
+        description: "메멘토애니의 시작점이에요.\n주요 기능을 한눈에 볼 수 있어요.",
+        position: "top",
     },
     {
         id: "record",
+        targetId: "record",
         title: "우리의 기록",
-        description: "반려동물을 등록하고 추억을 기록해요.\n사진, 건강 정보, 리마인더를 관리할 수 있어요.",
-        icon: PawPrint,
-        color: "from-amber-500 to-orange-500",
-        bgColor: "bg-amber-50",
-        tab: "record",
+        description: "반려동물을 등록하고\n소중한 추억을 기록해요.",
+        position: "top",
     },
     {
         id: "community",
+        targetId: "community",
         title: "커뮤니티",
         description: "다른 반려인들과 소통하고\n정보를 나눌 수 있어요.",
-        icon: Heart,
-        color: "from-pink-500 to-rose-500",
-        bgColor: "bg-pink-50",
-        tab: "community",
+        position: "top",
+    },
+    {
+        id: "ai-chat",
+        targetId: "ai-chat",
+        title: "AI 펫톡",
+        description: "등록한 반려동물과 대화해요.\n추억 속 아이와 다시 만나보세요.",
+        position: "top",
     },
     {
         id: "magazine",
+        targetId: "magazine",
         title: "펫 매거진",
-        description: "반려동물 관련 유용한 정보와\n트렌드를 확인할 수 있어요.",
-        icon: BookOpen,
-        color: "from-indigo-500 to-blue-500",
-        bgColor: "bg-indigo-50",
-        tab: "magazine",
+        description: "반려동물 관련 유용한 정보와\n트렌드를 확인해요.",
+        position: "top",
     },
     {
-        id: "adoption",
-        title: "입양 정보",
-        description: "유기동물 입양 정보를 확인하고\n새로운 가족을 찾아줄 수 있어요.",
-        icon: Heart,
-        color: "from-rose-500 to-pink-500",
-        bgColor: "bg-rose-50",
-        tab: "adoption",
-    },
-    {
-        id: "local",
-        title: "내 주변",
-        description: "주변의 동물병원, 미용실, 카페 등\n반려동물 관련 장소를 찾을 수 있어요.",
-        icon: MapPin,
-        color: "from-cyan-500 to-sky-500",
-        bgColor: "bg-cyan-50",
-        tab: "local",
-    },
-    {
-        id: "lost",
-        title: "분실동물 찾기",
-        description: "잃어버린 반려동물을 찾거나\n발견한 동물을 신고할 수 있어요.",
-        icon: Search,
-        color: "from-red-500 to-orange-500",
-        bgColor: "bg-red-50",
-        tab: "lost",
-    },
-    {
-        id: "complete",
-        title: "준비 완료!",
-        description: "이제 메멘토애니를 자유롭게 둘러보세요.\n소중한 추억을 함께 기록해요.",
-        icon: Sparkles,
-        color: "from-violet-500 to-purple-500",
-        bgColor: "bg-violet-50",
+        id: "more",
+        targetId: "more",
+        title: "더보기",
+        description: "입양정보, 지역정보, 분실동물 찾기 등\n더 많은 기능이 있어요.",
+        position: "top",
     },
 ];
 
@@ -134,21 +91,57 @@ export default function TutorialTour({
     onNavigate,
 }: TutorialTourProps) {
     const [currentStep, setCurrentStep] = useState(0);
+    const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
+    const [mounted, setMounted] = useState(false);
+
+    // 클라이언트에서만 렌더링
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    // 타겟 요소 위치 계산
+    const updateTargetPosition = useCallback(() => {
+        if (!isOpen) return;
+
+        const step = TUTORIAL_STEPS[currentStep];
+        const targetElement = document.querySelector(`[data-tutorial-id="${step.targetId}"]`);
+
+        if (targetElement) {
+            const rect = targetElement.getBoundingClientRect();
+            setTargetRect(rect);
+        }
+    }, [isOpen, currentStep]);
 
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = "hidden";
             setCurrentStep(0);
+            updateTargetPosition();
         }
         return () => {
             document.body.style.overflow = "";
         };
-    }, [isOpen]);
+    }, [isOpen, updateTargetPosition]);
 
-    if (!isOpen) return null;
+    // 윈도우 리사이즈 대응
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const handleResize = () => updateTargetPosition();
+        window.addEventListener("resize", handleResize);
+
+        // 초기 위치 설정
+        const timer = setTimeout(updateTargetPosition, 100);
+
+        return () => {
+            window.removeEventListener("resize", handleResize);
+            clearTimeout(timer);
+        };
+    }, [isOpen, currentStep, updateTargetPosition]);
+
+    if (!isOpen || !mounted) return null;
 
     const step = TUTORIAL_STEPS[currentStep];
-    const Icon = step.icon;
     const isLastStep = currentStep === TUTORIAL_STEPS.length - 1;
     const isFirstStep = currentStep === 0;
 
@@ -156,21 +149,12 @@ export default function TutorialTour({
         if (isLastStep) {
             handleComplete();
         } else {
-            // 해당 탭으로 이동 (있는 경우)
-            const nextStep = TUTORIAL_STEPS[currentStep + 1];
-            if (nextStep.tab) {
-                onNavigate(nextStep.tab);
-            }
             setCurrentStep(currentStep + 1);
         }
     };
 
     const handlePrev = () => {
         if (currentStep > 0) {
-            const prevStep = TUTORIAL_STEPS[currentStep - 1];
-            if (prevStep.tab) {
-                onNavigate(prevStep.tab);
-            }
             setCurrentStep(currentStep - 1);
         }
     };
@@ -186,100 +170,176 @@ export default function TutorialTour({
         onClose();
     };
 
-    return (
-        <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center">
-            {/* 배경 오버레이 */}
-            <div
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-                onClick={handleSkip}
-            />
+    // 스포트라이트 마스크 계산
+    const padding = 8;
+    const borderRadius = 16;
 
-            {/* 튜토리얼 카드 */}
-            <div className="relative w-full max-w-md mx-4 mb-20 sm:mb-0 bg-white rounded-3xl overflow-hidden shadow-2xl animate-in slide-in-from-bottom-4 duration-300">
-                {/* 닫기 버튼 */}
-                <button
-                    onClick={handleSkip}
-                    className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/80 hover:bg-white transition-colors shadow-sm"
-                >
-                    <X className="w-5 h-5 text-gray-500" />
-                </button>
-
-                {/* 진행 표시 */}
-                <div className="flex gap-1 px-6 pt-6">
-                    {TUTORIAL_STEPS.map((_, index) => (
-                        <div
-                            key={index}
-                            className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-                                index <= currentStep
-                                    ? "bg-gradient-to-r from-violet-500 to-purple-500"
-                                    : "bg-gray-200"
-                            }`}
-                        />
-                    ))}
-                </div>
-
-                {/* 콘텐츠 */}
-                <div className="p-6 pt-8">
-                    {/* 아이콘 */}
-                    <div className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${step.color} flex items-center justify-center mx-auto mb-6 shadow-lg`}>
-                        <Icon className="w-10 h-10 text-white" />
-                    </div>
-
-                    {/* 텍스트 */}
-                    <h2 className="text-xl font-bold text-gray-800 text-center mb-3">
-                        {step.title}
-                    </h2>
-                    <p className="text-gray-600 text-center whitespace-pre-line leading-relaxed mb-8">
-                        {step.description}
-                    </p>
-
-                    {/* 버튼 영역 */}
-                    <div className="flex gap-3">
-                        {!isFirstStep && (
-                            <Button
-                                variant="outline"
-                                onClick={handlePrev}
-                                className="flex-1 rounded-xl"
-                            >
-                                이전
-                            </Button>
+    const tooltipContent = (
+        <div className="fixed inset-0 z-[9999]">
+            {/* 어두운 오버레이 with 스포트라이트 구멍 */}
+            <svg className="absolute inset-0 w-full h-full">
+                <defs>
+                    <mask id="spotlight-mask">
+                        <rect x="0" y="0" width="100%" height="100%" fill="white" />
+                        {targetRect && (
+                            <rect
+                                x={targetRect.left - padding}
+                                y={targetRect.top - padding}
+                                width={targetRect.width + padding * 2}
+                                height={targetRect.height + padding * 2}
+                                rx={borderRadius}
+                                ry={borderRadius}
+                                fill="black"
+                            />
                         )}
-                        <Button
-                            onClick={handleNext}
-                            className={`flex-1 rounded-xl bg-gradient-to-r ${step.color} text-white`}
-                        >
-                            {isLastStep ? (
-                                <>
-                                    <Sparkles className="w-4 h-4 mr-1" />
-                                    시작하기
-                                </>
-                            ) : (
-                                <>
-                                    다음
-                                    <ArrowRight className="w-4 h-4 ml-1" />
-                                </>
-                            )}
-                        </Button>
+                    </mask>
+                </defs>
+                <rect
+                    x="0"
+                    y="0"
+                    width="100%"
+                    height="100%"
+                    fill="rgba(0, 0, 0, 0.75)"
+                    mask="url(#spotlight-mask)"
+                />
+            </svg>
+
+            {/* 스포트라이트 테두리 */}
+            {targetRect && (
+                <div
+                    className="absolute border-2 border-white/50 rounded-2xl pointer-events-none animate-pulse"
+                    style={{
+                        left: targetRect.left - padding,
+                        top: targetRect.top - padding,
+                        width: targetRect.width + padding * 2,
+                        height: targetRect.height + padding * 2,
+                        boxShadow: "0 0 0 4px rgba(5, 178, 220, 0.3), 0 0 20px rgba(5, 178, 220, 0.5)",
+                    }}
+                />
+            )}
+
+            {/* 설명 툴팁 */}
+            {targetRect && (
+                <div
+                    className="absolute w-[280px] animate-in fade-in slide-in-from-bottom-2 duration-300"
+                    style={{
+                        left: Math.max(16, Math.min(
+                            targetRect.left + targetRect.width / 2 - 140,
+                            window.innerWidth - 296
+                        )),
+                        bottom: step.position === "top"
+                            ? window.innerHeight - targetRect.top + 16
+                            : undefined,
+                        top: step.position === "bottom"
+                            ? targetRect.bottom + 16
+                            : undefined,
+                    }}
+                >
+                    {/* 화살표 */}
+                    <div
+                        className="absolute w-4 h-4 bg-white rotate-45"
+                        style={{
+                            left: Math.max(20, Math.min(
+                                targetRect.left + targetRect.width / 2 - (Math.max(16, Math.min(
+                                    targetRect.left + targetRect.width / 2 - 140,
+                                    window.innerWidth - 296
+                                ))),
+                                240
+                            )),
+                            ...(step.position === "top"
+                                ? { bottom: -8 }
+                                : { top: -8 }
+                            ),
+                        }}
+                    />
+
+                    {/* 카드 */}
+                    <div className="relative bg-white rounded-2xl shadow-2xl overflow-hidden">
+                        {/* 진행 바 */}
+                        <div className="flex gap-1 px-4 pt-4">
+                            {TUTORIAL_STEPS.map((_, index) => (
+                                <div
+                                    key={index}
+                                    className={`h-1 flex-1 rounded-full transition-all ${
+                                        index <= currentStep
+                                            ? "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8]"
+                                            : "bg-gray-200"
+                                    }`}
+                                />
+                            ))}
+                        </div>
+
+                        {/* 내용 */}
+                        <div className="p-4">
+                            <div className="flex items-center justify-between mb-2">
+                                <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                                    <Sparkles className="w-4 h-4 text-[#05B2DC]" />
+                                    {step.title}
+                                </h3>
+                                <span className="text-xs text-gray-400">
+                                    {currentStep + 1}/{TUTORIAL_STEPS.length}
+                                </span>
+                            </div>
+                            <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed mb-4">
+                                {step.description}
+                            </p>
+
+                            {/* 버튼 */}
+                            <div className="flex gap-2">
+                                {!isFirstStep && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handlePrev}
+                                        className="flex-1 rounded-xl"
+                                    >
+                                        <ArrowLeft className="w-4 h-4 mr-1" />
+                                        이전
+                                    </Button>
+                                )}
+                                <Button
+                                    size="sm"
+                                    onClick={handleNext}
+                                    className="flex-1 rounded-xl bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white"
+                                >
+                                    {isLastStep ? (
+                                        <>
+                                            <Sparkles className="w-4 h-4 mr-1" />
+                                            완료
+                                        </>
+                                    ) : (
+                                        <>
+                                            다음
+                                            <ArrowRight className="w-4 h-4 ml-1" />
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* 건너뛰기 */}
+                        <div className="px-4 pb-4 pt-0">
+                            <button
+                                onClick={handleSkip}
+                                className="w-full text-xs text-gray-400 hover:text-gray-600 transition-colors py-1"
+                            >
+                                건너뛰기
+                            </button>
+                        </div>
                     </div>
-
-                    {/* 건너뛰기 */}
-                    {!isLastStep && (
-                        <button
-                            onClick={handleSkip}
-                            className="w-full mt-4 text-sm text-gray-500 hover:text-gray-700 transition-colors"
-                        >
-                            건너뛰기
-                        </button>
-                    )}
                 </div>
+            )}
 
-                {/* 스텝 표시 */}
-                <div className="px-6 pb-6 text-center">
-                    <span className="text-xs text-gray-400">
-                        {currentStep + 1} / {TUTORIAL_STEPS.length}
-                    </span>
-                </div>
-            </div>
+            {/* 닫기 버튼 */}
+            <button
+                onClick={handleSkip}
+                className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            >
+                <X className="w-5 h-5 text-white" />
+            </button>
         </div>
     );
+
+    // Portal로 body에 직접 렌더링
+    return createPortal(tooltipContent, document.body);
 }

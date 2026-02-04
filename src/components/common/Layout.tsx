@@ -339,6 +339,7 @@ export default function Layout({
                         return (
                             <button
                                 key={tab.id}
+                                data-tutorial-id={tab.id}
                                 onClick={() => setSelectedTab(tab.id)}
                                 className={`
                                     flex flex-col items-center justify-center flex-1 py-2 min-h-[56px] active:scale-95 transition-all
@@ -361,6 +362,7 @@ export default function Layout({
                         );
                     })}
                     <button
+                        data-tutorial-id="more"
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                         className="flex flex-col items-center justify-center flex-1 py-2 min-h-[56px] text-gray-400 dark:text-gray-500 active:scale-95 transition-all"
                     >
