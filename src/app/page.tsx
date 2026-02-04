@@ -130,14 +130,13 @@ function HomeContent() {
     const [selectedTab, setSelectedTab] = useState<TabType>(getInitialTab);
     const [showOnboarding, setShowOnboarding] = useState(false);
 
-    // URL 변경 시 탭 동기화
+    // URL 변경 시 탭 동기화 (외부에서 URL이 변경된 경우만)
     useEffect(() => {
         const tabFromUrl = searchParams.get("tab");
         if (isValidTab(tabFromUrl) && tabFromUrl !== selectedTab) {
             setSelectedTab(tabFromUrl);
-            localStorage.setItem("memento-current-tab", tabFromUrl);
         }
-    }, [searchParams, selectedTab]);
+    }, [searchParams]); // selectedTab 제거 - 무한 루프 방지
 
     // 온보딩 표시 여부 체크 + 접속 기록 (DB 기반)
     useEffect(() => {
@@ -176,27 +175,18 @@ function HomeContent() {
         }
     }, [user, petsLoading, pets.length]);
 
+    // 탭 변경 핸들러 - URL도 함께 업데이트
     const handleTabChange = useCallback((tab: TabType) => {
-        // 즉시 상태 업데이트 (UI 반응성)
         setSelectedTab(tab);
-        // localStorage에 저장 (모바일 새로고침 대응)
         localStorage.setItem("memento-current-tab", tab);
-    }, []);
 
-    // URL 동기화 (상태 변경 후 비동기로 처리)
-    useEffect(() => {
-        const currentParam = searchParams.get("tab");
-        const shouldBeParam = selectedTab === "home" ? null : selectedTab;
-
-        // URL과 상태가 다를 때만 업데이트
-        if (currentParam !== shouldBeParam) {
-            if (selectedTab === "home") {
-                router.replace("/", { scroll: false });
-            } else {
-                router.replace(`/?tab=${selectedTab}`, { scroll: false });
-            }
+        // URL 업데이트
+        if (tab === "home") {
+            router.replace("/", { scroll: false });
+        } else {
+            router.replace(`/?tab=${tab}`, { scroll: false });
         }
-    }, [selectedTab, searchParams, router]);
+    }, [router]);
 
     const renderCurrentPage = () => {
         switch (selectedTab) {
