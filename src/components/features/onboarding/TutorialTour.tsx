@@ -193,17 +193,17 @@ export default function TutorialTour({
         }
 
         if (isMobile) {
-            // 모바일: 하단 네비 바로 위에 말풍선 (꼬리가 버튼을 가리킴)
-            // 말풍선 높이 약 140px + 꼬리 45px = 185px
+            // 모바일: 하단 네비 바로 위에 말풍선 (몽글몽글 꼬리가 버튼 가리킴)
+            // 말풍선 높이 약 160px + 꼬리 55px
             return {
                 left,
-                top: targetRect.top - 190,
+                top: targetRect.top - 220,
             };
         } else {
-            // 데스크톱: 타겟 아래에 말풍선
+            // 데스크톱: 타겟 아래에 말풍선 (꼬리 높이 고려)
             return {
                 left,
-                top: targetRect.bottom + 20,
+                top: targetRect.bottom + 50,
             };
         }
     };
@@ -292,77 +292,99 @@ export default function TutorialTour({
                     }}
                 >
                     <div className="relative w-[240px]">
-                        {/* 꼬리 - 위쪽 (데스크톱: 꼬리가 위로 향함) */}
+                        {/* 꼬리 - 위쪽 (데스크톱: 몽글몽글 구름 꼬리가 위로) */}
                         {!isMobile && (
-                            <div className="absolute left-1/2 -translate-x-1/2 -top-6 flex flex-col-reverse items-center">
-                                <div className="w-5 h-5 bg-white rounded-full shadow-sm" />
-                                <div className="w-3.5 h-3.5 bg-white rounded-full mb-[-6px] shadow-sm" />
-                                <div className="w-2.5 h-2.5 bg-white rounded-full mb-[-4px]" />
+                            <div className="absolute left-1/2 -translate-x-1/2 -top-12">
+                                <div className="relative">
+                                    <div className="absolute left-1.5 bottom-0 w-3 h-3 bg-white rounded-full" />
+                                    <div className="absolute left-1 bottom-2 w-4 h-4 bg-white rounded-full" />
+                                    <div className="absolute left-0 bottom-5 w-5 h-5 bg-white rounded-full shadow-sm" />
+                                    <div className="absolute -left-3 bottom-8 w-5 h-5 bg-white rounded-full" />
+                                    <div className="absolute left-1 bottom-8 w-6 h-6 bg-white rounded-full shadow-sm" />
+                                    <div className="absolute -right-2 bottom-9 w-4 h-4 bg-white rounded-full" />
+                                </div>
                             </div>
                         )}
 
-                        {/* 구름 본체 - 더 몽글몽글하게 */}
+                        {/* 몽글몽글 구름 본체 */}
                         <div className="relative">
-                            {/* 메인 구름 바디 */}
-                            <div className="relative bg-white rounded-[32px] px-5 py-4 shadow-xl">
-                                {/* 좌우 볼록 - 더 둥글게 */}
-                                <div className="absolute -left-3 top-1/3 w-7 h-7 bg-white rounded-full shadow-sm" />
-                                <div className="absolute -left-2 top-1/2 w-5 h-5 bg-white rounded-full" />
-                                <div className="absolute -right-3 top-1/3 w-7 h-7 bg-white rounded-full shadow-sm" />
-                                <div className="absolute -right-2 top-2/3 w-5 h-5 bg-white rounded-full" />
+                            {/* 구름 레이어들 - 여러 겹으로 몽글몽글 */}
+                            <div className="absolute inset-0">
+                                {/* 뒤쪽 큰 구름들 */}
+                                <div className="absolute -left-4 top-2 w-12 h-12 bg-white rounded-full opacity-90" />
+                                <div className="absolute -left-2 top-8 w-10 h-10 bg-white rounded-full" />
+                                <div className="absolute -right-4 top-4 w-11 h-11 bg-white rounded-full opacity-90" />
+                                <div className="absolute -right-2 top-10 w-9 h-9 bg-white rounded-full" />
 
-                                {/* 상단 볼록 - 구름처럼 */}
-                                <div className="absolute left-4 -top-3 w-8 h-8 bg-white rounded-full" />
-                                <div className="absolute left-1/2 -translate-x-1/2 -top-4 w-10 h-10 bg-white rounded-full" />
-                                <div className="absolute right-4 -top-3 w-8 h-8 bg-white rounded-full" />
+                                {/* 상단 구름 뭉게뭉게 */}
+                                <div className="absolute left-2 -top-5 w-11 h-11 bg-white rounded-full" />
+                                <div className="absolute left-10 -top-6 w-12 h-12 bg-white rounded-full" />
+                                <div className="absolute right-10 -top-6 w-12 h-12 bg-white rounded-full" />
+                                <div className="absolute right-2 -top-5 w-11 h-11 bg-white rounded-full" />
+                                <div className="absolute left-1/2 -translate-x-1/2 -top-7 w-14 h-14 bg-white rounded-full" />
 
-                                {/* 하단 볼록 */}
-                                <div className="absolute left-6 -bottom-2 w-6 h-6 bg-white rounded-full" />
-                                <div className="absolute right-6 -bottom-2 w-6 h-6 bg-white rounded-full" />
-                                <div className="absolute left-1/2 -translate-x-1/2 -bottom-3 w-8 h-8 bg-white rounded-full" />
+                                {/* 하단 구름 */}
+                                <div className="absolute left-4 -bottom-4 w-10 h-10 bg-white rounded-full" />
+                                <div className="absolute left-1/2 -translate-x-1/2 -bottom-5 w-12 h-12 bg-white rounded-full" />
+                                <div className="absolute right-4 -bottom-4 w-10 h-10 bg-white rounded-full" />
+                            </div>
 
+                            {/* 메인 바디 */}
+                            <div className="relative bg-white/95 backdrop-blur-sm rounded-[40px] px-5 py-5 shadow-lg border border-white/50">
                                 {/* 내용 */}
                                 <div className="relative z-10 text-center">
                                     <div className="flex items-center justify-center gap-2 mb-2">
-                                        <Sparkles className="w-5 h-5 text-[#05B2DC]" />
-                                        <span className="font-bold text-gray-800 text-base">
+                                        <div className="p-1.5 bg-gradient-to-br from-sky-100 to-violet-100 rounded-full">
+                                            <Sparkles className="w-4 h-4 text-[#05B2DC]" />
+                                        </div>
+                                        <span className="font-bold text-gray-700 text-base">
                                             {step.title}
                                         </span>
                                     </div>
-                                    <p className="text-sm text-gray-600 leading-relaxed mb-3">
+                                    <p className="text-sm text-gray-500 leading-relaxed mb-3">
                                         {step.description}
                                     </p>
 
-                                    {/* 진행 표시 */}
-                                    <div className="flex items-center justify-center gap-1.5 mb-2">
+                                    {/* 진행 표시 - 더 귀엽게 */}
+                                    <div className="flex items-center justify-center gap-2 mb-2">
                                         {TUTORIAL_STEPS.map((_, index) => (
                                             <div
                                                 key={index}
-                                                className={`h-2 rounded-full transition-all duration-300 ${
+                                                className={`rounded-full transition-all duration-300 ${
                                                     index === currentStep
-                                                        ? "w-5 bg-[#05B2DC]"
+                                                        ? "w-4 h-4 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] shadow-md"
                                                         : index < currentStep
-                                                            ? "w-2 bg-[#05B2DC]/50"
-                                                            : "w-2 bg-gray-200"
+                                                            ? "w-2.5 h-2.5 bg-[#05B2DC]/40"
+                                                            : "w-2.5 h-2.5 bg-gray-200"
                                                 }`}
                                             />
                                         ))}
                                     </div>
 
-                                    <p className="text-xs text-[#05B2DC] font-medium">
+                                    <p className="text-xs text-[#05B2DC]/80 font-medium">
                                         탭하여 다음으로
                                     </p>
                                 </div>
                             </div>
+
+                            {/* 반짝이 장식 */}
+                            <div className="absolute -top-2 -right-1 w-3 h-3 bg-amber-200 rounded-full animate-pulse" />
+                            <div className="absolute top-3 -left-2 w-2 h-2 bg-sky-200 rounded-full animate-pulse" style={{ animationDelay: "0.5s" }} />
+                            <div className="absolute -bottom-1 right-4 w-2 h-2 bg-violet-200 rounded-full animate-pulse" style={{ animationDelay: "0.3s" }} />
                         </div>
 
-                        {/* 꼬리 - 아래쪽 (모바일: 꼬리가 아래로 향해서 하단 버튼 가리킴) */}
+                        {/* 꼬리 - 아래쪽 (모바일: 몽글몽글 구름 꼬리) */}
                         {isMobile && (
-                            <div className="absolute left-1/2 -translate-x-1/2 -bottom-8 flex flex-col items-center">
-                                <div className="w-6 h-6 bg-white rounded-full shadow-lg" />
-                                <div className="w-4 h-4 bg-white rounded-full -mt-2 shadow-md" />
-                                <div className="w-3 h-3 bg-white rounded-full -mt-1.5 shadow-sm" />
-                                <div className="w-2 h-2 bg-white rounded-full -mt-1" />
+                            <div className="absolute left-1/2 -translate-x-1/2 -bottom-10">
+                                {/* 구름 뭉치처럼 */}
+                                <div className="relative">
+                                    <div className="absolute -left-3 top-0 w-5 h-5 bg-white rounded-full" />
+                                    <div className="absolute left-1 top-0 w-6 h-6 bg-white rounded-full shadow-sm" />
+                                    <div className="absolute -right-2 top-1 w-4 h-4 bg-white rounded-full" />
+                                    <div className="absolute left-0 top-4 w-5 h-5 bg-white rounded-full shadow-sm" />
+                                    <div className="absolute left-1 top-7 w-4 h-4 bg-white rounded-full" />
+                                    <div className="absolute left-1.5 top-9 w-3 h-3 bg-white rounded-full" />
+                                </div>
                             </div>
                         )}
                     </div>
