@@ -16,7 +16,6 @@ export async function GET(request: Request) {
 
     // 오류가 있으면 메인으로 리다이렉트 (에러 파라미터 전달 X)
     if (error) {
-        console.error("OAuth Error:", error, errorDescription);
         return NextResponse.redirect(new URL("/", requestUrl.origin));
     }
 
@@ -31,12 +30,9 @@ export async function GET(request: Request) {
             const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
             if (exchangeError) {
-                console.error("Session exchange error:", exchangeError);
                 // 이미 사용된 코드거나 만료된 코드 - 조용히 메인으로
             }
-        } catch (e) {
-            console.error("Auth callback error:", e);
-        }
+        } catch {}
     }
 
     // 항상 메인 페이지로 리다이렉트 (오류 있어도)

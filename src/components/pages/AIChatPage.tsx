@@ -169,9 +169,8 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                     return;
                 }
             }
-        } catch (error) {
-            console.error("Failed to load chat history:", error);
-        }
+        } catch {}
+
 
         // 저장된 대화가 없으면 개인화된 인사말로 시작
         if (selectedPet) {
@@ -201,9 +200,8 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
             const allChats = savedChats ? JSON.parse(savedChats) : {};
             allChats[selectedPetId] = messages;
             localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(allChats));
-        } catch (error) {
-            console.error("Failed to save chat history:", error);
-        }
+        } catch {}
+
     }, [messages, selectedPetId]);
 
     // 펫 변경 시 사진 인덱스 초기화 및 타임라인 불러오기
@@ -245,8 +243,7 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                         enabled: r.enabled,
                     })));
                 }
-            } catch (error) {
-                console.error("Failed to fetch reminders:", error);
+            } catch {
                 setReminders([]);
             }
         };
@@ -372,9 +369,7 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                 emotionScore: data.emotionScore,
             };
             setMessages((prev) => [...prev, petMessage]);
-        } catch (error) {
-            console.error("AI Chat Error:", error);
-
+        } catch {
             // 에러 발생 시 폴백 응답
             const fallbackResponses = isMemorialMode
                 ? [

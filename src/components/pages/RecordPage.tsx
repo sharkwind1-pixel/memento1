@@ -557,8 +557,7 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
             }
             setEditingPet(null);
             setIsPetModalOpen(false);
-        } catch (error) {
-            console.error("Pet save error:", error);
+        } catch {
             toast.error("저장 중 오류가 발생했습니다");
         }
     };
@@ -583,8 +582,7 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                 (current, total) => setUploadProgress({ current, total }),
             );
             toast.success("사진이 업로드되었습니다");
-        } catch (error) {
-            console.error("Upload failed:", error);
+        } catch {
             toast.error("업로드 중 오류가 발생했습니다");
         } finally {
             setIsUploading(false);
@@ -601,7 +599,6 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
         }[],
     ) => {
         // 이 함수는 더 이상 사용되지 않음 - MediaUploadModal이 handleMediaUpload 사용
-        console.warn("handlePhotoUpload is deprecated, use handleMediaUpload");
     };
 
     // 선택 삭제 핸들러

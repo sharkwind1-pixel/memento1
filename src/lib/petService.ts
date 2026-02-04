@@ -72,7 +72,6 @@ export async function fetchPets(userId: string): Promise<PetData[]> {
         .order("created_at", { ascending: true });
 
     if (error) {
-        console.error("Fetch pets error:", error);
         return [];
     }
 
@@ -91,7 +90,6 @@ export async function createPet(
         .single();
 
     if (error) {
-        console.error("Create pet error:", error);
         return null;
     }
 
@@ -109,7 +107,6 @@ export async function updatePetData(
         .eq("id", petId);
 
     if (error) {
-        console.error("Update pet error:", error);
         return false;
     }
 
@@ -140,7 +137,6 @@ export async function deletePetData(petId: string): Promise<boolean> {
     const { error } = await supabase.from("pets").delete().eq("id", petId);
 
     if (error) {
-        console.error("Delete pet error:", error);
         return false;
     }
 
@@ -158,7 +154,6 @@ export async function fetchPetMedia(petId: string): Promise<PetMedia[]> {
         .order("date", { ascending: false });
 
     if (error) {
-        console.error("Fetch media error:", error);
         return [];
     }
 
@@ -178,7 +173,6 @@ export async function addPetMedia(
     const uploadResult = await uploadMedia(file, userId, petId);
 
     if (!uploadResult.success || !uploadResult.url || !uploadResult.path) {
-        console.error("Media upload failed:", uploadResult.error);
         return null;
     }
 
@@ -202,7 +196,6 @@ export async function addPetMedia(
         .single();
 
     if (error) {
-        console.error("Save media record error:", error);
         // Storage에서도 삭제
         await deleteMedia(uploadResult.path);
         return null;
@@ -222,7 +215,6 @@ export async function updateMediaData(
         .eq("id", mediaId);
 
     if (error) {
-        console.error("Update media error:", error);
         return false;
     }
 
@@ -250,7 +242,6 @@ export async function deletePetMedia(mediaId: string): Promise<boolean> {
         .eq("id", mediaId);
 
     if (error) {
-        console.error("Delete media error:", error);
         return false;
     }
 
@@ -277,7 +268,6 @@ export async function deleteMultipleMedia(mediaIds: string[]): Promise<boolean> 
         .in("id", mediaIds);
 
     if (error) {
-        console.error("Delete multiple media error:", error);
         return false;
     }
 
@@ -295,7 +285,6 @@ export async function fetchTimeline(petId: string): Promise<TimelineEntry[]> {
         .order("date", { ascending: false });
 
     if (error) {
-        console.error("Fetch timeline error:", error);
         return [];
     }
 
@@ -321,7 +310,6 @@ export async function createTimelineEntry(
         .single();
 
     if (error) {
-        console.error("Create timeline entry error:", error);
         return null;
     }
 
@@ -339,7 +327,6 @@ export async function updateTimelineEntry(
         .eq("id", entryId);
 
     if (error) {
-        console.error("Update timeline entry error:", error);
         return false;
     }
 
@@ -354,7 +341,6 @@ export async function deleteTimelineEntry(entryId: string): Promise<boolean> {
         .eq("id", entryId);
 
     if (error) {
-        console.error("Delete timeline entry error:", error);
         return false;
     }
 

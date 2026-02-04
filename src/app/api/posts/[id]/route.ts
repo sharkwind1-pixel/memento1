@@ -64,8 +64,7 @@ export async function GET(
                 comments: comments || [],
             },
         });
-    } catch (error) {
-        console.error("API error:", error);
+    } catch {
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });
     }
 }
@@ -110,8 +109,7 @@ export async function PATCH(
         }
 
         return NextResponse.json({ post: data });
-    } catch (error) {
-        console.error("API error:", error);
+    } catch {
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });
     }
 }
@@ -152,8 +150,7 @@ export async function DELETE(
         }
 
         return NextResponse.json({ success: true });
-    } catch (error) {
-        console.error("API error:", error);
+    } catch {
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });
     }
 }

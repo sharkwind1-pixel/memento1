@@ -68,7 +68,6 @@ export async function uploadMedia(
             });
 
         if (error) {
-            console.error("Upload error:", error);
             return {
                 success: false,
                 error: error.message || "업로드 중 오류가 발생했습니다.",
@@ -85,8 +84,7 @@ export async function uploadMedia(
             url: publicUrl,
             path: data.path,
         };
-    } catch (error) {
-        console.error("Upload error:", error);
+    } catch {
         return {
             success: false,
             error: "업로드 중 오류가 발생했습니다.",
@@ -122,13 +120,11 @@ export async function deleteMedia(path: string): Promise<boolean> {
             .remove([path]);
 
         if (error) {
-            console.error("Delete error:", error);
             return false;
         }
 
         return true;
-    } catch (error) {
-        console.error("Delete error:", error);
+    } catch {
         return false;
     }
 }
@@ -148,8 +144,7 @@ export function base64ToFile(
             u8arr[n] = bstr.charCodeAt(n);
         }
         return new File([u8arr], filename, { type: mime });
-    } catch (error) {
-        console.error("Base64 conversion error:", error);
+    } catch {
         return null;
     }
 }

@@ -137,7 +137,6 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
     const loadFromSupabase = useCallback(async (userId: string) => {
         try {
             setIsSyncing(true);
-            console.log("🔄 Supabase에서 펫 데이터 로드 중...", userId);
 
             // 반려동물 조회
             const { data: petsData, error: petsError } = await supabase
@@ -145,8 +144,6 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                 .select("*")
                 .eq("user_id", userId)
                 .order("created_at", { ascending: true });
-
-            console.log("📦 Supabase 펫 조회 결과:", { petsData, petsError });
 
             if (petsError) throw petsError;
 
@@ -203,7 +200,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                 setSelectedPetId(petsWithMedia[0].id);
             }
         } catch (error) {
-            console.error("Failed to load from Supabase:", error);
+            // Supabase 로드 실패 (무시 - 빈 상태로 초기화됨)
             // Supabase 로드 실패 시 빈 상태로 초기화
             setPets([]);
             setSelectedPetId(null);
@@ -222,7 +219,6 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
 
     // 초기 데이터 로드
     useEffect(() => {
-        console.log("🔑 PetContext 초기화 - user:", user ? user.id : "없음 (비로그인)");
         if (user) {
             loadFromSupabase(user.id);
         } else {
@@ -249,12 +245,8 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
         ): Promise<string> => {
             // 비로그인 시 저장 불가
             if (!user) {
-                console.warn("🚫 비로그인 상태 - 펫 등록 불가");
                 return "";
             }
-
-            // Supabase에 저장
-            console.log("🐾 Supabase에 펫 저장 시도...", { userId: user.id, petData });
             try {
                 const { data, error } = await supabase
                     .from("pets")
@@ -278,10 +270,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                     .select()
                     .single();
 
-                console.log("📝 Supabase 펫 저장 결과:", { data, error });
-
                 if (error) {
-                    console.error("❌ Supabase save failed:", error.message);
                     return "";
                 }
 
@@ -295,10 +284,8 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
 
                 setPets((prev) => [...prev, newPet]);
                 setSelectedPetId(data.id);
-                console.log("✅ Supabase에 펫 저장 성공!", data.id);
                 return data.id;
-            } catch (err) {
-                console.error("❌ Supabase error:", err);
+            } catch {
                 return "";
             }
         },
@@ -332,8 +319,8 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                         updateData.is_primary = data.isPrimary;
 
                     await supabase.from("pets").update(updateData).eq("id", id);
-                } catch (err) {
-                    console.warn("Supabase update failed:", err);
+                } catch {
+                    // Supabase 업데이트 실패 (무시 - 로컬 상태는 업데이트됨)
                 }
             }
 
@@ -359,8 +346,8 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                     }
 
                     await supabase.from("pets").delete().eq("id", id);
-                } catch (err) {
-                    console.warn("Supabase delete failed:", err);
+                } catch {
+                    // Supabase 삭제 실패 (무시)
                 }
             }
 
@@ -398,7 +385,6 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
         ): Promise<PetPhoto[]> => {
             // 비로그인 시 업로드 불가
             if (!user) {
-                console.warn("🚫 비로그인 상태 - 미디어 업로드 불가");
                 return [];
             }
 
@@ -453,14 +439,10 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                                 date,
                                 thumbnailUrl,
                             });
-                        } else {
-                            console.error("DB save failed:", error?.message);
                         }
-                    } else {
-                        console.error("Storage upload failed:", uploadResult.error);
                     }
-                } catch (err) {
-                    console.error("Upload error:", err);
+                } catch {
+                    // 업로드 실패 (무시 - 다음 파일 계속)
                 }
             }
 
@@ -612,7 +594,6 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
             entry: Omit<TimelineEntry, "id" | "petId" | "createdAt">
         ): Promise<TimelineEntry | null> => {
             if (!user) {
-                console.warn("Timeline: 로그인이 필요합니다");
                 return null;
             }
 
@@ -633,13 +614,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                     .select()
                     .single();
 
-                if (error) {
-                    console.error("Timeline 저장 오류:", error.message);
-                    return null;
-                }
-
-                if (!data) {
-                    console.error("Timeline 저장 실패: 데이터 없음");
+                if (error || !data) {
                     return null;
                 }
 
@@ -656,8 +631,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
 
                 setTimeline((prev) => [newEntry, ...prev]);
                 return newEntry;
-            } catch (err) {
-                console.error("Timeline 저장 예외:", err);
+            } catch {
                 return null;
             }
         },

@@ -112,7 +112,6 @@ export async function PUT(
             .single();
 
         if (error) {
-            console.error("Failed to update reminder:", error);
             return NextResponse.json(
                 { error: "Failed to update reminder" },
                 { status: 500 }
@@ -120,8 +119,7 @@ export async function PUT(
         }
 
         return NextResponse.json({ success: true, reminder: data });
-    } catch (error) {
-        console.error("Reminder PUT error:", error);
+    } catch {
         return NextResponse.json(
             { error: "Internal server error" },
             { status: 500 }
@@ -164,7 +162,6 @@ export async function DELETE(
             .eq("user_id", user.id);
 
         if (error) {
-            console.error("Failed to delete reminder:", error);
             return NextResponse.json(
                 { error: "Failed to delete reminder" },
                 { status: 500 }
@@ -172,8 +169,7 @@ export async function DELETE(
         }
 
         return NextResponse.json({ success: true });
-    } catch (error) {
-        console.error("Reminder DELETE error:", error);
+    } catch {
         return NextResponse.json(
             { error: "Internal server error" },
             { status: 500 }

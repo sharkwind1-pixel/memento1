@@ -628,10 +628,9 @@ export async function POST(request: NextRequest) {
             if (pet.id) {
                 try {
                     const memories = await agent.getPetMemories(pet.id, 5);
-                    memoryContext = agent.memoriesToContext(memories as any);
-                } catch (e) {
+                    memoryContext = agent.memoriesToContext(memories);
+                } catch {
                     // DB 연결 실패 시 무시
-                    console.log("Memory fetch skipped:", e);
                 }
             }
 
@@ -640,10 +639,10 @@ export async function POST(request: NextRequest) {
                 agent.extractMemories(message, pet.name).then(async (newMemories) => {
                     if (newMemories && newMemories.length > 0) {
                         for (const mem of newMemories) {
-                            await agent.saveMemory(userId, pet.id!, mem as any);
+                            await agent.saveMemory(userId, pet.id!, mem);
                         }
                     }
-                }).catch(console.error);
+                }).catch(() => { /* 무시 */ });
             }
         }
 
@@ -657,8 +656,8 @@ export async function POST(request: NextRequest) {
                     pet.name,
                     isMemorialMode
                 );
-            } catch (e) {
-                console.log("Conversation context build skipped:", e);
+            } catch {
+                // 컨텍스트 빌드 실패 시 무시
             }
         }
 
@@ -719,7 +718,7 @@ export async function POST(request: NextRequest) {
             Promise.all([
                 agent.saveMessage(userId, pet.id, "user", message, userEmotion, emotionScore),
                 agent.saveMessage(userId, pet.id, "assistant", reply),
-            ]).catch(console.error);
+            ]).catch(() => { /* 무시 */ });
         }
 
         // 세션 요약 생성 (10번째 메시지마다 비동기로)
@@ -732,7 +731,7 @@ export async function POST(request: NextRequest) {
                         await agent.saveConversationSummary(userId, pet.id!, summary);
                     }
                 })
-                .catch(console.error);
+                .catch(() => { /* 무시 */ });
         }
 
         return NextResponse.json({
@@ -743,8 +742,6 @@ export async function POST(request: NextRequest) {
             usage: completion.usage,
         });
     } catch (error) {
-        console.error("AI Chat Error:", error);
-
         // OpenAI API 에러 처리
         if (error instanceof OpenAI.APIError) {
             if (error.status === 401) {

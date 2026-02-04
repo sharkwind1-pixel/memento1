@@ -142,9 +142,8 @@ export default function AdminPage() {
                 });
             }
             setChartData(days);
-        } catch (error) {
-            console.error("차트 데이터 로드 실패:", error);
-        }
+        } catch {}
+
     };
 
     // 대시보드 통계 로드
@@ -208,9 +207,8 @@ export default function AdminPage() {
                 premiumUsers: premiumUsers || 0,
                 bannedUsers: bannedUsers || 0,
             });
-        } catch (error) {
-            console.error("통계 로드 실패:", error);
-        } finally {
+        } catch {}
+ finally {
             setLoading(false);
         }
     };
@@ -235,9 +233,8 @@ export default function AdminPage() {
                     is_admin: profile.is_admin,
                 })));
             }
-        } catch (error) {
-            console.error("사용자 로드 실패:", error);
-        }
+        } catch {}
+
     };
 
     // 사용자 권한 업데이트
@@ -257,8 +254,7 @@ export default function AdminPage() {
 
             // 통계 새로고침
             loadDashboardStats();
-        } catch (error) {
-            console.error("권한 업데이트 실패:", error);
+        } catch {
             alert("권한 업데이트에 실패했습니다.");
         }
     };
@@ -284,9 +280,8 @@ export default function AdminPage() {
                     report_count: 0,
                 })));
             }
-        } catch (error) {
-            console.error("게시물 로드 실패:", error);
-        }
+        } catch {}
+
     };
 
     useEffect(() => {

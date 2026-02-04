@@ -73,7 +73,6 @@ export async function GET(request: NextRequest) {
         const { data, error } = await query;
 
         if (error) {
-            console.error("Failed to get reminders:", error);
             return NextResponse.json(
                 { error: "Failed to get reminders" },
                 { status: 500 }
@@ -107,8 +106,7 @@ export async function GET(request: NextRequest) {
         }));
 
         return NextResponse.json({ reminders });
-    } catch (error) {
-        console.error("Reminders GET error:", error);
+    } catch {
         return NextResponse.json(
             { error: "Internal server error" },
             { status: 500 }
@@ -174,7 +172,6 @@ export async function POST(request: NextRequest) {
             .single();
 
         if (error) {
-            console.error("Failed to create reminder:", error);
             return NextResponse.json(
                 { error: "Failed to create reminder" },
                 { status: 500 }
@@ -194,8 +191,7 @@ export async function POST(request: NextRequest) {
                 },
             },
         });
-    } catch (error) {
-        console.error("Reminders POST error:", error);
+    } catch {
         return NextResponse.json(
             { error: "Internal server error" },
             { status: 500 }

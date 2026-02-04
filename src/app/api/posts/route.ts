@@ -59,7 +59,6 @@ export async function GET(request: NextRequest) {
         const { data, error, count } = await query;
 
         if (error) {
-            console.error("Posts fetch error:", error);
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
 
@@ -80,8 +79,7 @@ export async function GET(request: NextRequest) {
         }));
 
         return NextResponse.json({ posts, total: count });
-    } catch (error) {
-        console.error("API error:", error);
+    } catch {
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });
     }
 }
@@ -113,13 +111,11 @@ export async function POST(request: NextRequest) {
             .single();
 
         if (error) {
-            console.error("Post create error:", error);
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
 
         return NextResponse.json({ post: data });
-    } catch (error) {
-        console.error("API error:", error);
+    } catch {
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });
     }
 }

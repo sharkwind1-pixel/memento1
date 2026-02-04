@@ -117,9 +117,8 @@ export default function RemindersPage() {
             if (data.reminders) {
                 setReminders(data.reminders);
             }
-        } catch (error) {
-            console.error("Failed to fetch reminders:", error);
-        } finally {
+        } catch {}
+ finally {
             setIsLoading(false);
         }
     }, [user?.id, selectedPetId]);
@@ -173,9 +172,8 @@ export default function RemindersPage() {
                 });
                 fetchReminders();
             }
-        } catch (error) {
-            console.error("Failed to create reminder:", error);
-        }
+        } catch {}
+
     };
 
     // 리마인더 토글
@@ -192,9 +190,8 @@ export default function RemindersPage() {
                     prev.map(r => r.id === id ? { ...r, enabled: !currentEnabled } : r)
                 );
             }
-        } catch (error) {
-            console.error("Failed to toggle reminder:", error);
-        }
+        } catch {}
+
     };
 
     // 리마인더 삭제
@@ -214,8 +211,7 @@ export default function RemindersPage() {
                         } else {
                             toast.error("삭제에 실패했습니다");
                         }
-                    } catch (error) {
-                        console.error("Failed to delete reminder:", error);
+                    } catch {
                         toast.error("삭제 중 오류가 발생했습니다");
                     }
                 },

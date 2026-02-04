@@ -1,8 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useCallback } from "react";
+import { useEffect, useMemo, useRef, useCallback, CSSProperties } from "react";
 import { useGesture } from "@use-gesture/react";
 import "./DomeGallery.css";
+
+// CSS 커스텀 프로퍼티를 허용하는 스타일 타입
+type CSSCustomProperties = CSSProperties & {
+    [key: `--${string}`]: string | number;
+};
 
 export type DomeImage =
     | string
@@ -38,7 +43,7 @@ const wrapAngleSigned = (deg: number) => {
 };
 
 const getDataNumber = (el: HTMLElement, name: string, fallback: number) => {
-    const attr = (el.dataset as any)[name] ?? el.getAttribute(`data-${name}`);
+    const attr = el.dataset[name as keyof DOMStringMap] ?? el.getAttribute(`data-${name}`);
     const n = attr == null ? NaN : parseFloat(attr);
     return Number.isFinite(n) ? n : fallback;
 };
@@ -74,9 +79,7 @@ function buildItems(pool: DomeImage[], seg: number): BuiltItem[] {
     }
 
     if (normalizedImages.length > totalSlots) {
-        console.warn(
-            `[DomeGallery] Provided image count (${normalizedImages.length}) exceeds available tiles (${totalSlots}). Some images will not be shown.`
-        );
+        // Provided image count exceeds available tiles, some images will not be shown
     }
 
     const usedImages = Array.from(
@@ -597,18 +600,14 @@ export default function DomeGallery({
         <div
             ref={rootRef}
             className="sphere-root"
-            style={
-                {
-                    ["--segments-x" as any]: segments,
-                    ["--segments-y" as any]: segments,
-                    ["--overlay-blur-color" as any]: overlayBlurColor,
-                    ["--tile-radius" as any]: imageBorderRadius,
-                    ["--enlarge-radius" as any]: openedImageBorderRadius,
-                    ["--image-filter" as any]: grayscale
-                        ? "grayscale(1)"
-                        : "none",
-                } as React.CSSProperties
-            }
+            style={{
+                "--segments-x": segments,
+                "--segments-y": segments,
+                "--overlay-blur-color": overlayBlurColor,
+                "--tile-radius": imageBorderRadius,
+                "--enlarge-radius": openedImageBorderRadius,
+                "--image-filter": grayscale ? "grayscale(1)" : "none",
+            } as CSSCustomProperties}
         >
             <main ref={mainRef} className="sphere-main">
                 <div className="stage">
@@ -622,14 +621,12 @@ export default function DomeGallery({
                                 data-offset-y={it.y}
                                 data-size-x={it.sizeX}
                                 data-size-y={it.sizeY}
-                                style={
-                                    {
-                                        ["--offset-x" as any]: it.x,
-                                        ["--offset-y" as any]: it.y,
-                                        ["--item-size-x" as any]: it.sizeX,
-                                        ["--item-size-y" as any]: it.sizeY,
-                                    } as React.CSSProperties
-                                }
+                                style={{
+                                    "--offset-x": it.x,
+                                    "--offset-y": it.y,
+                                    "--item-size-x": it.sizeX,
+                                    "--item-size-y": it.sizeY,
+                                } as CSSCustomProperties}
                             >
                                 <div
                                     className="item__image"

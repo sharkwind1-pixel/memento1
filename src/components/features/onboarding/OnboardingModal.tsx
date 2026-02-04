@@ -124,12 +124,8 @@ export default function OnboardingModal({
                 })
                 .eq("id", user.id);
 
-            if (error) {
-                console.error("온보딩 데이터 저장 실패:", error);
-            }
-        } catch (err) {
-            console.error("온보딩 저장 오류:", err);
-        } finally {
+        } catch {}
+ finally {
             setSaving(false);
         }
     };

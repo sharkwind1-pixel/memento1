@@ -55,8 +55,7 @@ export function usePetImages(): UsePetImagesReturn {
                 );
                 const data = await response.json();
                 return data.message || null;
-            } catch (err) {
-                console.error("이미지 로딩 실패:", err);
+            } catch {
                 return null;
             }
         },
@@ -112,9 +111,8 @@ export function usePetImages(): UsePetImagesReturn {
                 });
 
                 setPetImages(memorialImages);
-            } catch (err) {
+            } catch {
                 setError("이미지를 불러오는데 실패했습니다.");
-                console.error("Failed to fetch pet images:", err);
             } finally {
                 setIsLoading(false);
             }

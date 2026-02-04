@@ -102,8 +102,7 @@ export async function POST(
             liked,
             likes: updatedPost?.likes || 0,
         });
-    } catch (error) {
-        console.error("Like API error:", error);
+    } catch {
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });
     }
 }

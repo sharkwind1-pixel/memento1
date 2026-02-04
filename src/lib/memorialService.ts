@@ -81,7 +81,6 @@ export async function getPublicMemorialPosts(limit = 10): Promise<MemorialPost[]
         .limit(limit);
 
     if (error) {
-        console.error("Failed to fetch memorial posts:", error);
         return [];
     }
 
@@ -99,7 +98,6 @@ export async function getMyMemorialPosts(userId: string): Promise<MemorialPost[]
         .order("created_at", { ascending: false });
 
     if (error) {
-        console.error("Failed to fetch my memorial posts:", error);
         return [];
     }
 
@@ -117,7 +115,6 @@ export async function getPetMemorialPosts(petId: string): Promise<MemorialPost[]
         .order("created_at", { ascending: false });
 
     if (error) {
-        console.error("Failed to fetch pet memorial posts:", error);
         return [];
     }
 
@@ -135,7 +132,6 @@ export async function getMemorialPost(postId: string): Promise<MemorialPost | nu
         .single();
 
     if (error) {
-        console.error("Failed to fetch memorial post:", error);
         return null;
     }
 
@@ -169,7 +165,6 @@ export async function createMemorialPost(
         .single();
 
     if (error) {
-        console.error("Failed to create memorial post:", error);
         return null;
     }
 
@@ -195,7 +190,6 @@ export async function updateMemorialPost(
         .eq("id", postId);
 
     if (error) {
-        console.error("Failed to update memorial post:", error);
         return false;
     }
 
@@ -212,7 +206,6 @@ export async function deleteMemorialPost(postId: string): Promise<boolean> {
         .eq("id", postId);
 
     if (error) {
-        console.error("Failed to delete memorial post:", error);
         return false;
     }
 
@@ -242,7 +235,6 @@ export async function toggleMemorialLike(
             .eq("id", existing.id);
 
         if (error) {
-            console.error("Failed to unlike:", error);
             return null;
         }
 
@@ -264,7 +256,6 @@ export async function toggleMemorialLike(
         ]);
 
         if (error) {
-            console.error("Failed to like:", error);
             return null;
         }
 
@@ -304,7 +295,6 @@ export async function getMemorialComments(postId: string): Promise<MemorialComme
         .order("created_at", { ascending: true });
 
     if (error) {
-        console.error("Failed to fetch comments:", error);
         return [];
     }
 
@@ -338,7 +328,6 @@ export async function createMemorialComment(
         .single();
 
     if (error) {
-        console.error("Failed to create comment:", error);
         return null;
     }
 
@@ -361,7 +350,6 @@ export async function deleteMemorialComment(commentId: string): Promise<boolean>
         .eq("id", commentId);
 
     if (error) {
-        console.error("Failed to delete comment:", error);
         return false;
     }
 

@@ -75,6 +75,37 @@ export interface PetMemory {
     };
 }
 
+// DB 레코드 타입 (snake_case)
+interface PetMemoryRecord {
+    id: string;
+    pet_id: string;
+    user_id: string;
+    memory_type: string;
+    title: string;
+    content: string;
+    importance: number;
+    time_info?: {
+        type: "daily" | "weekly" | "monthly" | "once";
+        time?: string;
+        dayOfWeek?: number;
+        dayOfMonth?: number;
+    };
+}
+
+// DB 레코드를 PetMemory로 변환
+function recordToMemory(record: PetMemoryRecord): PetMemory {
+    return {
+        id: record.id,
+        petId: record.pet_id,
+        userId: record.user_id,
+        memoryType: record.memory_type as PetMemory["memoryType"],
+        title: record.title,
+        content: record.content,
+        importance: record.importance,
+        timeInfo: record.time_info,
+    };
+}
+
 // 리마인더 타입
 export interface PetReminder {
     id?: string;
@@ -323,8 +354,7 @@ ${isMemorialMode ? `추모 모드 - 애도 단계 (Kübler-Ross):
             context: result.context || "",
             griefStage: result.griefStage || griefStage,
         };
-    } catch (error) {
-        console.error("Emotion analysis error:", error);
+    } catch {
         // API 실패 시 키워드 분석 결과 사용
         return {
             emotion: quickResult.emotion || "neutral",
@@ -335,13 +365,16 @@ ${isMemorialMode ? `추모 모드 - 애도 단계 (Kübler-Ross):
     }
 }
 
+// 메모리 추출 결과 타입 (id, petId, userId 없음)
+export type ExtractedMemory = Omit<PetMemory, "id" | "petId" | "userId">;
+
 /**
  * 대화에서 중요한 정보 추출 (메모리 생성)
  */
 export async function extractMemories(
     message: string,
     petName: string
-): Promise<PetMemory[] | null> {
+): Promise<ExtractedMemory[] | null> {
     try {
         const response = await getOpenAI().chat.completions.create({
             model: "gpt-4o-mini",
@@ -397,8 +430,7 @@ export async function extractMemories(
 
         const result = JSON.parse(response.choices[0]?.message?.content || "[]");
         return Array.isArray(result) && result.length > 0 ? result : null;
-    } catch (error) {
-        console.error("Memory extraction error:", error);
+    } catch {
         return null;
     }
 }
@@ -420,7 +452,6 @@ export async function getRecentMessages(
         .limit(limit);
 
     if (error) {
-        console.error("Failed to get messages:", error);
         return [];
     }
 
@@ -433,7 +464,7 @@ export async function getRecentMessages(
 export async function getPetMemories(
     petId: string,
     limit: number = 10
-) {
+): Promise<PetMemory[]> {
     const { data, error } = await getSupabase()
         .from("pet_memories")
         .select("*")
@@ -441,12 +472,11 @@ export async function getPetMemories(
         .order("importance", { ascending: false })
         .limit(limit);
 
-    if (error) {
-        console.error("Failed to get memories:", error);
+    if (error || !data) {
         return [];
     }
 
-    return data || [];
+    return (data as PetMemoryRecord[]).map(recordToMemory);
 }
 
 /**
@@ -474,7 +504,6 @@ export async function saveMessage(
         .single();
 
     if (error) {
-        console.error("Failed to save message:", error);
         return null;
     }
 
@@ -503,7 +532,6 @@ export async function saveMemory(
         .single();
 
     if (error) {
-        console.error("Failed to save memory:", error);
         return null;
     }
 
@@ -750,7 +778,6 @@ export async function saveReminder(
         .single();
 
     if (error) {
-        console.error("Failed to save reminder:", error);
         return null;
     }
 
@@ -778,7 +805,6 @@ export async function getReminders(
     const { data, error } = await query;
 
     if (error) {
-        console.error("Failed to get reminders:", error);
         return [];
     }
 
@@ -859,7 +885,7 @@ export async function markReminderTriggered(reminderId: string) {
         .eq("id", reminderId);
 
     if (error) {
-        console.error("Failed to update reminder:", error);
+        // 에러 처리
     }
 }
 
@@ -873,7 +899,6 @@ export async function deleteReminder(reminderId: string) {
         .eq("id", reminderId);
 
     if (error) {
-        console.error("Failed to delete reminder:", error);
         return false;
     }
 
@@ -890,7 +915,6 @@ export async function toggleReminder(reminderId: string, enabled: boolean) {
         .eq("id", reminderId);
 
     if (error) {
-        console.error("Failed to toggle reminder:", error);
         return false;
     }
 
@@ -956,8 +980,7 @@ export async function suggestReminderFromChat(
         if (!result || result === "null") return null;
 
         return JSON.parse(result);
-    } catch (error) {
-        console.error("Reminder suggestion error:", error);
+    } catch {
         return null;
     }
 }
@@ -1043,8 +1066,7 @@ ${isMemorial ? "- griefProgress: 애도 과정에서 현재 단계 (Kübler-Ross
             griefProgress: result.griefProgress,
             importantMentions: result.importantMentions || [],
         };
-    } catch (error) {
-        console.error("Conversation summary generation error:", error);
+    } catch {
         return null;
     }
 }
@@ -1073,7 +1095,6 @@ export async function saveConversationSummary(
         .single();
 
     if (error) {
-        console.error("Failed to save conversation summary:", error);
         return null;
     }
 
@@ -1097,7 +1118,6 @@ export async function getRecentSummaries(
         .limit(limit);
 
     if (error) {
-        console.error("Failed to get conversation summaries:", error);
         return [];
     }
 
@@ -1238,8 +1258,7 @@ ${lastMessages.join("\n")}
         }
 
         return [summaryContext, recentContext].filter(Boolean).join("\n\n");
-    } catch (error) {
-        console.error("Failed to build conversation context:", error);
+    } catch {
         return "";
     }
 }

@@ -527,8 +527,7 @@ export default function CommunityPage() {
             if (data.posts) {
                 setPosts(data.posts);
             }
-        } catch (error) {
-            console.error("게시글 로드 실패:", error);
+        } catch {
             // 에러 시 목업 데이터로 폴백
             const mockPosts = MOCK_POSTS[selectedBoard as keyof typeof MOCK_POSTS] || [];
             setPosts(mockPosts.map((p, i) => ({

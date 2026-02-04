@@ -108,9 +108,8 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
             if (data.reminders) {
                 setReminders(data.reminders);
             }
-        } catch (error) {
-            console.error("Failed to fetch reminders:", error);
-        } finally {
+        } catch {}
+ finally {
             setIsLoading(false);
         }
     }, [user?.id, petId]);
@@ -154,9 +153,8 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
                 });
                 fetchReminders();
             }
-        } catch (error) {
-            console.error("Failed to create reminder:", error);
-        }
+        } catch {}
+
     };
 
     // 리마인더 토글
@@ -173,9 +171,8 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
                     prev.map(r => r.id === id ? { ...r, enabled: !currentEnabled } : r)
                 );
             }
-        } catch (error) {
-            console.error("Failed to toggle reminder:", error);
-        }
+        } catch {}
+
     };
 
     // 리마인더 삭제
@@ -190,9 +187,8 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
             if (response.ok) {
                 setReminders(prev => prev.filter(r => r.id !== id));
             }
-        } catch (error) {
-            console.error("Failed to delete reminder:", error);
-        }
+        } catch {}
+
     };
 
     // 타입에 따른 아이콘 반환
