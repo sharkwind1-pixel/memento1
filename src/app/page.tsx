@@ -6,7 +6,7 @@
 
 "use client";
 
-import { useState, useEffect, Suspense, useCallback } from "react";
+import { useState, useEffect, Suspense, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { TabType } from "@/types";
@@ -129,14 +129,26 @@ function HomeContent() {
 
     const [selectedTab, setSelectedTab] = useState<TabType>(getInitialTab);
     const [showOnboarding, setShowOnboarding] = useState(false);
+    const isInternalNavigation = useRef(false);
 
-    // URL 변경 시 탭 동기화 (외부에서 URL이 변경된 경우만)
+    // URL 변경 시 탭 동기화 (브라우저 뒤로가기/앞으로가기 등 외부 변경만)
     useEffect(() => {
+        // 내부 네비게이션(handleTabChange)으로 인한 변경은 무시
+        if (isInternalNavigation.current) {
+            isInternalNavigation.current = false;
+            return;
+        }
+
         const tabFromUrl = searchParams.get("tab");
         if (isValidTab(tabFromUrl) && tabFromUrl !== selectedTab) {
             setSelectedTab(tabFromUrl);
+            localStorage.setItem("memento-current-tab", tabFromUrl);
+        } else if (!tabFromUrl && selectedTab !== "home") {
+            // URL에 tab이 없으면 home으로
+            setSelectedTab("home");
+            localStorage.setItem("memento-current-tab", "home");
         }
-    }, [searchParams]); // selectedTab 제거 - 무한 루프 방지
+    }, [searchParams, selectedTab]);
 
     // 온보딩 표시 여부 체크 + 접속 기록 (DB 기반)
     useEffect(() => {
@@ -177,6 +189,9 @@ function HomeContent() {
 
     // 탭 변경 핸들러 - URL도 함께 업데이트
     const handleTabChange = useCallback((tab: TabType) => {
+        // 내부 네비게이션 플래그 설정 (useEffect에서 무시하도록)
+        isInternalNavigation.current = true;
+
         setSelectedTab(tab);
         localStorage.setItem("memento-current-tab", tab);
 
@@ -239,7 +254,7 @@ function HomeContent() {
                 <OnboardingModal
                     isOpen={showOnboarding}
                     onClose={() => setShowOnboarding(false)}
-                    onGoToRecord={() => setSelectedTab("record")}
+                    onGoToRecord={() => handleTabChange("record")}
                 />
             )}
         </>
