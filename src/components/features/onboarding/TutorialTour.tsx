@@ -165,15 +165,19 @@ export default function TutorialTour({
             if (firstTab) {
                 onNavigateRef.current(firstTab);
             }
+        } else if (!isOpen && wasOpenRef.current) {
+            // 닫힐 때 스크롤 복원
+            document.body.style.overflow = "";
         }
         wasOpenRef.current = isOpen;
-
-        return () => {
-            if (!isOpen) {
-                document.body.style.overflow = "";
-            }
-        };
     }, [isOpen]);
+
+    // 컴포넌트 언마운트 시 스크롤 복원
+    useEffect(() => {
+        return () => {
+            document.body.style.overflow = "";
+        };
+    }, []);
 
     if (!isOpen || !mounted) return null;
 
