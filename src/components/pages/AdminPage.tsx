@@ -583,6 +583,34 @@ export default function AdminPage() {
                                     <MessageCircle className="w-5 h-5 text-violet-500" />
                                     <span className="text-sm">AI 사용량</span>
                                 </Button>
+                                <Button
+                                    variant="outline"
+                                    className="h-auto py-4 flex flex-col gap-2 border-amber-200 hover:bg-amber-50"
+                                    onClick={async () => {
+                                        if (!user) return;
+                                        if (!confirm("온보딩과 튜토리얼을 리셋하고 새로고침합니다.")) return;
+
+                                        // DB 리셋
+                                        await supabase
+                                            .from("profiles")
+                                            .update({
+                                                onboarding_completed_at: null,
+                                                user_type: null,
+                                                onboarding_data: null,
+                                            })
+                                            .eq("id", user.id);
+
+                                        // localStorage 리셋
+                                        localStorage.removeItem("memento-ani-onboarding-complete");
+                                        localStorage.removeItem("memento-ani-tutorial-complete");
+
+                                        // 새로고침
+                                        window.location.reload();
+                                    }}
+                                >
+                                    <RotateCcw className="w-5 h-5 text-amber-500" />
+                                    <span className="text-sm">내 온보딩 테스트</span>
+                                </Button>
                             </div>
                         </CardContent>
                     </Card>
