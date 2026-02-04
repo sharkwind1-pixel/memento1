@@ -174,16 +174,26 @@ function HomeContent() {
     }, [user, petsLoading]);
 
     const handleTabChange = useCallback((tab: TabType) => {
+        // 즉시 상태 업데이트 (UI 반응성)
         setSelectedTab(tab);
         // localStorage에 저장 (모바일 새로고침 대응)
         localStorage.setItem("memento-current-tab", tab);
-        // URL 업데이트 (home이면 파라미터 제거)
-        if (tab === "home") {
-            router.push("/", { scroll: false });
-        } else {
-            router.push(`/?tab=${tab}`, { scroll: false });
+    }, []);
+
+    // URL 동기화 (상태 변경 후 비동기로 처리)
+    useEffect(() => {
+        const currentParam = searchParams.get("tab");
+        const shouldBeParam = selectedTab === "home" ? null : selectedTab;
+
+        // URL과 상태가 다를 때만 업데이트
+        if (currentParam !== shouldBeParam) {
+            if (selectedTab === "home") {
+                router.replace("/", { scroll: false });
+            } else {
+                router.replace(`/?tab=${selectedTab}`, { scroll: false });
+            }
         }
-    }, [router]);
+    }, [selectedTab, searchParams, router]);
 
     const renderCurrentPage = () => {
         switch (selectedTab) {
