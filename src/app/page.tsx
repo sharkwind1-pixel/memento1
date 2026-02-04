@@ -13,7 +13,7 @@ import { TabType } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePets } from "@/contexts/PetContext";
 import Layout from "@/components/common/Layout";
-import { hasCompletedOnboarding } from "@/components/features/onboarding/OnboardingModal";
+import { supabase } from "@/lib/supabase";
 
 // 유효한 탭인지 확인
 const VALID_TABS: TabType[] = ["home", "record", "community", "ai-chat", "magazine", "adoption", "local", "lost", "admin"];
@@ -139,12 +139,33 @@ function HomeContent() {
         }
     }, [searchParams, selectedTab]);
 
-    // 온보딩 표시 여부 체크
+    // 온보딩 표시 여부 체크 (DB 기반)
     useEffect(() => {
-        if (user && !petsLoading && pets.length === 0 && !hasCompletedOnboarding()) {
-            setShowOnboarding(true);
+        const checkOnboarding = async () => {
+            if (!user) return;
+
+            try {
+                // DB에서 온보딩 완료 여부 확인
+                const { data } = await supabase
+                    .from("profiles")
+                    .select("onboarding_completed_at")
+                    .eq("id", user.id)
+                    .single();
+
+                // 온보딩 미완료 시 모달 표시
+                if (!data?.onboarding_completed_at) {
+                    setShowOnboarding(true);
+                }
+            } catch {
+                // 프로필 없으면 온보딩 필요
+                setShowOnboarding(true);
+            }
+        };
+
+        if (user && !petsLoading) {
+            checkOnboarding();
         }
-    }, [user, pets, petsLoading]);
+    }, [user, petsLoading]);
 
     const handleTabChange = useCallback((tab: TabType) => {
         setSelectedTab(tab);
