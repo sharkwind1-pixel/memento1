@@ -131,8 +131,8 @@ export default function Layout({
                 initialMode={authModalMode}
             />
 
-            {/* 헤더 */}
-            <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-700/50">
+            {/* 헤더 - 모바일은 불투명, 데스크톱은 반투명 */}
+            <header className="sticky top-0 z-50 bg-white dark:bg-gray-900 xl:bg-white/80 xl:dark:bg-gray-900/80 xl:backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-700/50">
                 <div className="max-w-7xl mx-auto px-3 sm:px-4">
                     <div className="flex items-center justify-between h-14 sm:h-16">
                         {/* 로고 */}
