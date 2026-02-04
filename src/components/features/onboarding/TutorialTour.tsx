@@ -104,12 +104,21 @@ export default function TutorialTour({
         if (!isOpen) return;
 
         const step = TUTORIAL_STEPS[currentStep];
-        const targetElement = document.querySelector(`[data-tutorial-id="${step.targetId}"]`);
+        // 하단 네비게이션(모바일)에서 먼저 찾고, 없으면 데스크톱 네비에서 찾기
+        let targetElement = document.querySelector(`[data-tutorial-id="${step.targetId}"]`);
 
+        // 요소가 없거나 화면에 안 보이면 (데스크톱에서 하단 네비가 hidden)
         if (targetElement) {
             const rect = targetElement.getBoundingClientRect();
-            setTargetRect(rect);
+            // 요소가 화면에 보이는지 확인
+            if (rect.width > 0 && rect.height > 0) {
+                setTargetRect(rect);
+                return;
+            }
         }
+
+        // 타겟을 못 찾으면 null (fallback UI 표시)
+        setTargetRect(null);
     }, [isOpen, currentStep]);
 
     useEffect(() => {
@@ -174,14 +183,18 @@ export default function TutorialTour({
     const padding = 8;
     const borderRadius = 16;
 
+    // 데스크톱 fallback: 타겟을 못 찾으면 중앙 모달로 표시
+    const isMobile = targetRect !== null;
+
     const tooltipContent = (
         <div className="fixed inset-0 z-[9999]">
-            {/* 어두운 오버레이 with 스포트라이트 구멍 */}
-            <svg className="absolute inset-0 w-full h-full">
-                <defs>
-                    <mask id="spotlight-mask">
-                        <rect x="0" y="0" width="100%" height="100%" fill="white" />
-                        {targetRect && (
+            {/* 어두운 오버레이 */}
+            {isMobile ? (
+                // 모바일: 스포트라이트 with 구멍
+                <svg className="absolute inset-0 w-full h-full">
+                    <defs>
+                        <mask id="spotlight-mask">
+                            <rect x="0" y="0" width="100%" height="100%" fill="white" />
                             <rect
                                 x={targetRect.left - padding}
                                 y={targetRect.top - padding}
@@ -191,21 +204,24 @@ export default function TutorialTour({
                                 ry={borderRadius}
                                 fill="black"
                             />
-                        )}
-                    </mask>
-                </defs>
-                <rect
-                    x="0"
-                    y="0"
-                    width="100%"
-                    height="100%"
-                    fill="rgba(0, 0, 0, 0.75)"
-                    mask="url(#spotlight-mask)"
-                />
-            </svg>
+                        </mask>
+                    </defs>
+                    <rect
+                        x="0"
+                        y="0"
+                        width="100%"
+                        height="100%"
+                        fill="rgba(0, 0, 0, 0.75)"
+                        mask="url(#spotlight-mask)"
+                    />
+                </svg>
+            ) : (
+                // 데스크톱: 단순 오버레이
+                <div className="absolute inset-0 bg-black/75" onClick={handleSkip} />
+            )}
 
-            {/* 스포트라이트 테두리 */}
-            {targetRect && (
+            {/* 스포트라이트 테두리 (모바일만) */}
+            {isMobile && (
                 <div
                     className="absolute border-2 border-white/50 rounded-2xl pointer-events-none animate-pulse"
                     style={{
@@ -219,7 +235,7 @@ export default function TutorialTour({
             )}
 
             {/* 설명 툴팁 */}
-            {targetRect && (
+            {isMobile ? (
                 <div
                     className="absolute w-[280px] animate-in fade-in slide-in-from-bottom-2 duration-300"
                     style={{
@@ -322,6 +338,84 @@ export default function TutorialTour({
                             <button
                                 onClick={handleSkip}
                                 className="w-full text-xs text-gray-400 hover:text-gray-600 transition-colors py-1"
+                            >
+                                건너뛰기
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                // 데스크톱: 중앙 모달
+                <div className="absolute inset-0 flex items-center justify-center p-4">
+                    <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+                        {/* 진행 바 */}
+                        <div className="flex gap-1 px-4 pt-4">
+                            {TUTORIAL_STEPS.map((_, index) => (
+                                <div
+                                    key={index}
+                                    className={`h-1 flex-1 rounded-full transition-all ${
+                                        index <= currentStep
+                                            ? "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8]"
+                                            : "bg-gray-200"
+                                    }`}
+                                />
+                            ))}
+                        </div>
+
+                        {/* 내용 */}
+                        <div className="p-6">
+                            <div className="flex items-center justify-between mb-3">
+                                <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                                    <Sparkles className="w-5 h-5 text-[#05B2DC]" />
+                                    {step.title}
+                                </h3>
+                                <span className="text-sm text-gray-400">
+                                    {currentStep + 1}/{TUTORIAL_STEPS.length}
+                                </span>
+                            </div>
+                            <p className="text-gray-600 whitespace-pre-line leading-relaxed mb-6">
+                                {step.description}
+                            </p>
+                            <p className="text-xs text-gray-400 mb-4">
+                                모바일에서 하단 메뉴를 직접 확인해보세요
+                            </p>
+
+                            {/* 버튼 */}
+                            <div className="flex gap-3">
+                                {!isFirstStep && (
+                                    <Button
+                                        variant="outline"
+                                        onClick={handlePrev}
+                                        className="flex-1 rounded-xl"
+                                    >
+                                        <ArrowLeft className="w-4 h-4 mr-1" />
+                                        이전
+                                    </Button>
+                                )}
+                                <Button
+                                    onClick={handleNext}
+                                    className="flex-1 rounded-xl bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white"
+                                >
+                                    {isLastStep ? (
+                                        <>
+                                            <Sparkles className="w-4 h-4 mr-1" />
+                                            완료
+                                        </>
+                                    ) : (
+                                        <>
+                                            다음
+                                            <ArrowRight className="w-4 h-4 ml-1" />
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* 건너뛰기 */}
+                        <div className="px-6 pb-6 pt-0">
+                            <button
+                                onClick={handleSkip}
+                                className="w-full text-sm text-gray-400 hover:text-gray-600 transition-colors py-2"
                             >
                                 건너뛰기
                             </button>
