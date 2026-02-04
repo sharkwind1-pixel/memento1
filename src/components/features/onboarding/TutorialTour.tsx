@@ -171,9 +171,6 @@ export default function TutorialTour({
         height: targetRect.height + spotlightPadding * 2,
     } : null;
 
-    // 말풍선은 화면 중앙 상단에 고정 (하단 네비 위에 표시)
-    const bubbleBottom = targetRect ? Math.max(window.innerHeight - targetRect.top + 20, 120) : 150;
-
     const maskId = "tutorial-spotlight-mask";
 
     const content = (
@@ -247,20 +244,24 @@ export default function TutorialTour({
                 </>
             )}
 
-            {/* 구름 말풍선 - 화면 하단 고정 */}
-            <div
-                className="fixed left-1/2 -translate-x-1/2 pointer-events-none animate-in fade-in slide-in-from-bottom-4 duration-300"
-                style={{ bottom: `${bubbleBottom}px` }}
-            >
-                <div className="relative">
-                    {/* 구름 본체 */}
-                    <div className="relative bg-white rounded-3xl px-6 py-5 shadow-2xl min-w-[240px] max-w-[280px]">
-                        {/* 구름 장식 */}
-                        <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-8 h-12 bg-white rounded-full" />
-                        <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-8 h-12 bg-white rounded-full" />
-                        <div className="absolute left-6 -top-3 w-10 h-7 bg-white rounded-full" />
-                        <div className="absolute right-6 -top-3 w-12 h-7 bg-white rounded-full" />
-                        <div className="absolute left-1/2 -translate-x-1/2 -top-4 w-14 h-7 bg-white rounded-full" />
+            {/* 구름 말풍선 - 하이라이트 위에 표시 */}
+            {targetRect && (
+                <div
+                    className="fixed pointer-events-none animate-in fade-in zoom-in-95 duration-300"
+                    style={{
+                        left: Math.max(16, Math.min(targetRect.left + targetRect.width / 2 - 130, window.innerWidth - 276)),
+                        top: Math.max(80, targetRect.top - 180),
+                    }}
+                >
+                    <div className="relative">
+                        {/* 구름 본체 */}
+                        <div className="relative bg-white rounded-3xl px-5 py-4 shadow-2xl w-[260px]">
+                            {/* 구름 장식 */}
+                            <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-6 h-10 bg-white rounded-full" />
+                            <div className="absolute -right-2 top-1/2 -translate-y-1/2 w-6 h-10 bg-white rounded-full" />
+                            <div className="absolute left-4 -top-2 w-8 h-5 bg-white rounded-full" />
+                            <div className="absolute right-4 -top-2 w-10 h-5 bg-white rounded-full" />
+                            <div className="absolute left-1/2 -translate-x-1/2 -top-3 w-12 h-5 bg-white rounded-full" />
 
                         {/* 내용 */}
                         <div className="relative z-10 text-center">
@@ -298,13 +299,14 @@ export default function TutorialTour({
                     </div>
 
                     {/* 구름 꼬리 (아래로 향하는 화살표) */}
-                    <div className="absolute left-1/2 -translate-x-1/2 -bottom-6 flex flex-col items-center">
-                        <div className="w-6 h-6 bg-white rounded-full shadow-lg" />
-                        <div className="w-4 h-4 bg-white rounded-full -mt-2 shadow-md" />
-                        <div className="w-2.5 h-2.5 bg-white rounded-full -mt-1 shadow-sm" />
+                    <div className="absolute left-1/2 -translate-x-1/2 -bottom-5 flex flex-col items-center">
+                        <div className="w-5 h-5 bg-white rounded-full shadow-lg" />
+                        <div className="w-3 h-3 bg-white rounded-full -mt-1.5 shadow-md" />
+                        <div className="w-2 h-2 bg-white rounded-full -mt-1 shadow-sm" />
                     </div>
                 </div>
             </div>
+            )}
 
             {/* 탭 애니메이션 - 타겟 위에 표시 */}
             {targetRect && (
