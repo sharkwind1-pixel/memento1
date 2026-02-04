@@ -405,43 +405,14 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
     };
 
     if (authLoading || petsLoading) {
-        // 스켈레톤 UI로 로딩 화면 최적화
         return (
-            <div className="min-h-screen flex flex-col bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white">
-                {/* 헤더 스켈레톤 */}
-                <div className="flex-shrink-0 px-4 py-3 border-b bg-white/80 border-gray-200/50 backdrop-blur-lg">
-                    <div className="max-w-2xl mx-auto flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="w-5 h-5 bg-gray-200 rounded animate-pulse" />
-                            <div className="w-16 h-5 bg-gray-200 rounded animate-pulse" />
-                        </div>
-                        <div className="w-32 h-9 bg-gray-200 rounded-lg animate-pulse" />
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="relative w-12 h-12 mx-auto mb-4">
+                        <PawPrint className="w-12 h-12 text-[#05B2DC]/20" />
+                        <Loader2 className="w-12 h-12 text-[#05B2DC] animate-spin absolute inset-0" />
                     </div>
-                </div>
-
-                {/* 컨텐츠 스켈레톤 */}
-                <div className="flex-1 flex flex-col lg:flex-row max-w-4xl mx-auto w-full overflow-hidden">
-                    {/* 프로필 영역 스켈레톤 */}
-                    <div className="flex-shrink-0 p-4 lg:w-80">
-                        <div className="max-w-[280px] mx-auto">
-                            <div className="aspect-square rounded-2xl bg-gray-200 animate-pulse" />
-                        </div>
-                    </div>
-
-                    {/* 채팅 영역 스켈레톤 */}
-                    <div className="flex-1 flex flex-col p-4 space-y-3">
-                        <div className="flex justify-start">
-                            <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse mr-2" />
-                            <div className="w-48 h-16 rounded-2xl bg-gray-200 animate-pulse" />
-                        </div>
-                        <div className="flex justify-end">
-                            <div className="w-40 h-12 rounded-2xl bg-gray-200 animate-pulse" />
-                        </div>
-                        <div className="flex justify-start">
-                            <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse mr-2" />
-                            <div className="w-56 h-20 rounded-2xl bg-gray-200 animate-pulse" />
-                        </div>
-                    </div>
+                    <p className="text-gray-500">불러오는 중...</p>
                 </div>
             </div>
         );
