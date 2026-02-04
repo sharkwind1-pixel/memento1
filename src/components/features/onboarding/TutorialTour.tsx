@@ -294,43 +294,31 @@ export default function TutorialTour({
                     <div className="relative w-[240px]">
                         {/* 꼬리 - 위쪽 (데스크톱: 몽글몽글 구름 꼬리가 위로) */}
                         {!isMobile && (
-                            <div className="absolute left-1/2 -translate-x-1/2 -top-12">
-                                <div className="relative">
-                                    <div className="absolute left-1.5 bottom-0 w-3 h-3 bg-white rounded-full" />
-                                    <div className="absolute left-1 bottom-2 w-4 h-4 bg-white rounded-full" />
-                                    <div className="absolute left-0 bottom-5 w-5 h-5 bg-white rounded-full shadow-sm" />
-                                    <div className="absolute -left-3 bottom-8 w-5 h-5 bg-white rounded-full" />
-                                    <div className="absolute left-1 bottom-8 w-6 h-6 bg-white rounded-full shadow-sm" />
-                                    <div className="absolute -right-2 bottom-9 w-4 h-4 bg-white rounded-full" />
-                                </div>
+                            <div className="absolute left-1/2 -translate-x-1/2 -top-14 flex flex-col items-center">
+                                <div className="w-3 h-3 bg-white rounded-full" />
+                                <div className="w-4 h-4 bg-white rounded-full -mt-1" />
+                                <div className="w-5 h-5 bg-white rounded-full -mt-1 shadow-sm" />
                             </div>
                         )}
 
                         {/* 몽글몽글 구름 본체 */}
                         <div className="relative">
-                            {/* 구름 레이어들 - 여러 겹으로 몽글몽글 */}
-                            <div className="absolute inset-0">
-                                {/* 뒤쪽 큰 구름들 */}
-                                <div className="absolute -left-4 top-2 w-12 h-12 bg-white rounded-full opacity-90" />
-                                <div className="absolute -left-2 top-8 w-10 h-10 bg-white rounded-full" />
-                                <div className="absolute -right-4 top-4 w-11 h-11 bg-white rounded-full opacity-90" />
-                                <div className="absolute -right-2 top-10 w-9 h-9 bg-white rounded-full" />
+                            {/* 구름 레이어들 - 좌우 & 하단만 (상단은 꼬리 영역) */}
+                            <div className="absolute inset-0 -z-10">
+                                {/* 좌우 뭉게구름 */}
+                                <div className="absolute -left-3 top-4 w-8 h-8 bg-white rounded-full" />
+                                <div className="absolute -left-2 top-12 w-7 h-7 bg-white rounded-full" />
+                                <div className="absolute -right-3 top-6 w-8 h-8 bg-white rounded-full" />
+                                <div className="absolute -right-2 top-14 w-6 h-6 bg-white rounded-full" />
 
-                                {/* 상단 구름 뭉게뭉게 */}
-                                <div className="absolute left-2 -top-5 w-11 h-11 bg-white rounded-full" />
-                                <div className="absolute left-10 -top-6 w-12 h-12 bg-white rounded-full" />
-                                <div className="absolute right-10 -top-6 w-12 h-12 bg-white rounded-full" />
-                                <div className="absolute right-2 -top-5 w-11 h-11 bg-white rounded-full" />
-                                <div className="absolute left-1/2 -translate-x-1/2 -top-7 w-14 h-14 bg-white rounded-full" />
-
-                                {/* 하단 구름 */}
-                                <div className="absolute left-4 -bottom-4 w-10 h-10 bg-white rounded-full" />
-                                <div className="absolute left-1/2 -translate-x-1/2 -bottom-5 w-12 h-12 bg-white rounded-full" />
-                                <div className="absolute right-4 -bottom-4 w-10 h-10 bg-white rounded-full" />
+                                {/* 하단 뭉게구름 */}
+                                <div className="absolute left-6 -bottom-3 w-7 h-7 bg-white rounded-full" />
+                                <div className="absolute left-1/2 -translate-x-1/2 -bottom-4 w-9 h-9 bg-white rounded-full" />
+                                <div className="absolute right-6 -bottom-3 w-7 h-7 bg-white rounded-full" />
                             </div>
 
                             {/* 메인 바디 */}
-                            <div className="relative bg-white/95 backdrop-blur-sm rounded-[40px] px-5 py-5 shadow-lg border border-white/50">
+                            <div className="relative bg-white rounded-[36px] px-5 py-4 shadow-xl">
                                 {/* 내용 */}
                                 <div className="relative z-10 text-center">
                                     <div className="flex items-center justify-center gap-2 mb-2">
