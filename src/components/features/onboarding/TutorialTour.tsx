@@ -5,7 +5,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -143,25 +143,37 @@ export default function TutorialTour({
 }: TutorialTourProps) {
     const [currentStep, setCurrentStep] = useState(0);
     const [mounted, setMounted] = useState(false);
+    const onNavigateRef = useRef(onNavigate);
+    const wasOpenRef = useRef(false);
+
+    // onNavigate ref 업데이트
+    useEffect(() => {
+        onNavigateRef.current = onNavigate;
+    }, [onNavigate]);
 
     useEffect(() => {
         setMounted(true);
     }, []);
 
+    // isOpen이 false → true로 바뀔 때만 초기화
     useEffect(() => {
-        if (isOpen) {
+        if (isOpen && !wasOpenRef.current) {
             document.body.style.overflow = "hidden";
             setCurrentStep(0);
             // 첫 스텝의 탭으로 이동
             const firstTab = TUTORIAL_STEPS[0].tab;
             if (firstTab) {
-                onNavigate(firstTab);
+                onNavigateRef.current(firstTab);
             }
         }
+        wasOpenRef.current = isOpen;
+
         return () => {
-            document.body.style.overflow = "";
+            if (!isOpen) {
+                document.body.style.overflow = "";
+            }
         };
-    }, [isOpen, onNavigate]);
+    }, [isOpen]);
 
     if (!isOpen || !mounted) return null;
 
