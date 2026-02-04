@@ -158,6 +158,7 @@ export default function Layout({
                                 return (
                                     <button
                                         key={tab.id}
+                                        data-tutorial-id={tab.id}
                                         onClick={() => setSelectedTab(tab.id)}
                                         className={`
                                             flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap

@@ -1,25 +1,13 @@
 /**
  * TutorialTour.tsx
- * 실제 화면을 보여주면서 안내하는 튜토리얼
+ * 스포트라이트 + 몽글몽글 코치마크 튜토리얼
  */
 
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { Button } from "@/components/ui/button";
-import {
-    ArrowRight,
-    ArrowLeft,
-    X,
-    Sparkles,
-    Home,
-    Camera,
-    Users,
-    MessageCircle,
-    BookOpen,
-    Menu,
-} from "lucide-react";
+import { Hand, Sparkles } from "lucide-react";
 
 interface TutorialTourProps {
     isOpen: boolean;
@@ -28,100 +16,48 @@ interface TutorialTourProps {
 }
 
 interface TutorialStep {
-    id: string;
-    tab: string | null; // 이동할 탭 (null이면 이동 안 함)
+    targetId: string; // data-tutorial-id 값
     title: string;
     description: string;
-    icon: React.ElementType;
-    features?: string[]; // 주요 기능 목록
+    position: "top" | "bottom"; // 말풍선 위치
 }
 
 const TUTORIAL_STEPS: TutorialStep[] = [
     {
-        id: "welcome",
-        tab: "home",
-        title: "메멘토애니에 오신 걸 환영해요!",
-        description: "반려동물과의 소중한 추억을 기록하고, 다양한 정보를 얻을 수 있는 공간이에요.",
-        icon: Sparkles,
-    },
-    {
-        id: "home",
-        tab: "home",
+        targetId: "home",
         title: "홈",
-        description: "메멘토애니의 시작점이에요. 주요 기능들을 한눈에 볼 수 있어요.",
-        icon: Home,
-        features: [
-            "내 반려동물 프로필 확인",
-            "최근 추억 타임라인",
-            "빠른 메뉴 접근",
-        ],
+        description: "메멘토애니의 시작점이에요",
+        position: "top",
     },
     {
-        id: "record",
-        tab: "record",
+        targetId: "record",
         title: "우리의 기록",
-        description: "반려동물을 등록하고 소중한 추억을 기록하는 공간이에요.",
-        icon: Camera,
-        features: [
-            "반려동물 프로필 등록/관리",
-            "사진과 추억 타임라인",
-            "건강 기록 & 리마인더",
-        ],
+        description: "반려동물 등록과 추억을 기록해요",
+        position: "top",
     },
     {
-        id: "community",
-        tab: "community",
+        targetId: "community",
         title: "커뮤니티",
-        description: "다른 반려인들과 소통하고 정보를 나눌 수 있어요.",
-        icon: Users,
-        features: [
-            "자유롭게 글 작성 & 댓글",
-            "반려동물 사진 공유",
-            "질문 & 정보 교류",
-        ],
+        description: "다른 반려인들과 소통해요",
+        position: "top",
     },
     {
-        id: "ai-chat",
-        tab: "ai-chat",
+        targetId: "ai-chat",
         title: "AI 펫톡",
-        description: "등록한 반려동물과 대화할 수 있어요. 추억 속 아이와 다시 이야기 나눠보세요.",
-        icon: MessageCircle,
-        features: [
-            "AI가 반려동물 성격을 학습",
-            "추억을 기반으로 대화",
-            "일상/추모 모드 지원",
-        ],
+        description: "우리 아이와 대화해보세요",
+        position: "top",
     },
     {
-        id: "magazine",
-        tab: "magazine",
+        targetId: "magazine",
         title: "펫 매거진",
-        description: "반려동물 관련 유용한 정보와 트렌드를 확인할 수 있어요.",
-        icon: BookOpen,
-        features: [
-            "건강 & 영양 정보",
-            "훈련 & 케어 팁",
-            "반려동물 트렌드",
-        ],
+        description: "유용한 반려 정보를 확인해요",
+        position: "top",
     },
     {
-        id: "more",
-        tab: null,
-        title: "더 많은 기능",
-        description: "하단의 '더보기' 메뉴에서 더 많은 기능을 이용할 수 있어요.",
-        icon: Menu,
-        features: [
-            "입양정보 - 유기동물 입양",
-            "지역정보 - 주변 동물병원, 카페",
-            "분실동물 - 잃어버린 아이 찾기",
-        ],
-    },
-    {
-        id: "complete",
-        tab: "home",
-        title: "준비 완료!",
-        description: "이제 메멘토애니를 자유롭게 둘러보세요. 소중한 추억을 함께 기록해요.",
-        icon: Sparkles,
+        targetId: "more",
+        title: "더보기",
+        description: "입양, 지역정보, 분실동물 찾기",
+        position: "top",
     },
 ];
 
@@ -143,203 +79,378 @@ export default function TutorialTour({
 }: TutorialTourProps) {
     const [currentStep, setCurrentStep] = useState(0);
     const [mounted, setMounted] = useState(false);
-    const onNavigateRef = useRef(onNavigate);
+    const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
     const wasOpenRef = useRef(false);
 
-    // onNavigate ref 업데이트
-    useEffect(() => {
-        onNavigateRef.current = onNavigate;
-    }, [onNavigate]);
+    // 타겟 요소 위치 계산
+    const updateTargetRect = useCallback(() => {
+        if (!isOpen) return;
+
+        const step = TUTORIAL_STEPS[currentStep];
+        const target = document.querySelector(`[data-tutorial-id="${step.targetId}"]`);
+
+        if (target) {
+            const rect = target.getBoundingClientRect();
+            setTargetRect(rect);
+        }
+    }, [isOpen, currentStep]);
 
     useEffect(() => {
         setMounted(true);
     }, []);
 
-    // isOpen이 false → true로 바뀔 때만 초기화
+    // isOpen이 변경될 때
     useEffect(() => {
         if (isOpen && !wasOpenRef.current) {
             document.body.style.overflow = "hidden";
             setCurrentStep(0);
-            // 첫 스텝의 탭으로 이동
-            const firstTab = TUTORIAL_STEPS[0].tab;
-            if (firstTab) {
-                onNavigateRef.current(firstTab);
-            }
+            // 홈 탭으로 먼저 이동
+            onNavigate("home");
         } else if (!isOpen && wasOpenRef.current) {
-            // 닫힐 때 스크롤 복원
             document.body.style.overflow = "";
         }
         wasOpenRef.current = isOpen;
-    }, [isOpen]);
+    }, [isOpen, onNavigate]);
 
-    // 컴포넌트 언마운트 시 스크롤 복원
+    // 스텝 변경 또는 리사이즈 시 위치 업데이트
+    useEffect(() => {
+        if (!isOpen) return;
+
+        // 약간의 딜레이 후 위치 계산 (탭 전환 애니메이션 대기)
+        const timer = setTimeout(updateTargetRect, 100);
+
+        window.addEventListener("resize", updateTargetRect);
+        window.addEventListener("scroll", updateTargetRect);
+
+        return () => {
+            clearTimeout(timer);
+            window.removeEventListener("resize", updateTargetRect);
+            window.removeEventListener("scroll", updateTargetRect);
+        };
+    }, [isOpen, currentStep, updateTargetRect]);
+
+    // 컴포넌트 언마운트 시
     useEffect(() => {
         return () => {
             document.body.style.overflow = "";
         };
     }, []);
 
+    // 타겟 요소 클릭 감지
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const step = TUTORIAL_STEPS[currentStep];
+        const target = document.querySelector(`[data-tutorial-id="${step.targetId}"]`);
+
+        const handleTargetClick = () => {
+            // 다음 단계로
+            if (currentStep < TUTORIAL_STEPS.length - 1) {
+                setCurrentStep(currentStep + 1);
+            } else {
+                handleComplete();
+            }
+        };
+
+        if (target) {
+            target.addEventListener("click", handleTargetClick);
+            return () => target.removeEventListener("click", handleTargetClick);
+        }
+    }, [isOpen, currentStep]);
+
     if (!isOpen || !mounted) return null;
 
     const step = TUTORIAL_STEPS[currentStep];
-    const Icon = step.icon;
     const isLastStep = currentStep === TUTORIAL_STEPS.length - 1;
-    const isFirstStep = currentStep === 0;
-
-    const handleNext = () => {
-        if (isLastStep) {
-            handleComplete();
-        } else {
-            const nextStep = TUTORIAL_STEPS[currentStep + 1];
-            // 다음 스텝의 탭으로 이동
-            if (nextStep.tab) {
-                onNavigate(nextStep.tab);
-            }
-            setCurrentStep(currentStep + 1);
-        }
-    };
-
-    const handlePrev = () => {
-        if (currentStep > 0) {
-            const prevStep = TUTORIAL_STEPS[currentStep - 1];
-            // 이전 스텝의 탭으로 이동
-            if (prevStep.tab) {
-                onNavigate(prevStep.tab);
-            }
-            setCurrentStep(currentStep - 1);
-        }
-    };
 
     const handleComplete = () => {
         markTutorialComplete();
+        document.body.style.overflow = "";
         onNavigate("home");
         onClose();
     };
 
     const handleSkip = () => {
         markTutorialComplete();
+        document.body.style.overflow = "";
         onNavigate("home");
         onClose();
     };
 
+    // 오버레이 클릭 핸들러 - 타겟 영역 클릭 시 다음 단계, 아니면 건너뛰기
+    const handleOverlayClick = (e: React.MouseEvent) => {
+        if (!targetRect) {
+            handleSkip();
+            return;
+        }
+
+        const clickX = e.clientX;
+        const clickY = e.clientY;
+
+        // 타겟 영역 안에서 클릭했는지 확인
+        const isInTarget =
+            clickX >= targetRect.left - 12 &&
+            clickX <= targetRect.right + 12 &&
+            clickY >= targetRect.top - 12 &&
+            clickY <= targetRect.bottom + 12;
+
+        if (isInTarget) {
+            // 다음 단계로
+            if (currentStep < TUTORIAL_STEPS.length - 1) {
+                setCurrentStep(currentStep + 1);
+            } else {
+                handleComplete();
+            }
+        } else {
+            // 영역 밖 클릭 시 건너뛰기
+            handleSkip();
+        }
+    };
+
+    // 말풍선 위치 계산
+    const getBubbleStyle = (): React.CSSProperties => {
+        if (!targetRect) return { opacity: 0 };
+
+        const bubbleWidth = 200;
+        const bubbleHeight = 100;
+        const padding = 16;
+
+        let left = targetRect.left + targetRect.width / 2 - bubbleWidth / 2;
+        let top = step.position === "top"
+            ? targetRect.top - bubbleHeight - padding - 20
+            : targetRect.bottom + padding + 20;
+
+        // 화면 경계 체크
+        if (left < 16) left = 16;
+        if (left + bubbleWidth > window.innerWidth - 16) {
+            left = window.innerWidth - bubbleWidth - 16;
+        }
+
+        return {
+            position: "fixed",
+            left: `${left}px`,
+            top: `${top}px`,
+            width: `${bubbleWidth}px`,
+        };
+    };
+
+    // 화살표 위치 계산
+    const getArrowStyle = (): React.CSSProperties => {
+        if (!targetRect) return { opacity: 0 };
+
+        return {
+            position: "fixed",
+            left: `${targetRect.left + targetRect.width / 2 - 12}px`,
+            top: step.position === "top"
+                ? `${targetRect.top - 32}px`
+                : `${targetRect.bottom + 8}px`,
+            transform: step.position === "top" ? "rotate(180deg)" : "rotate(0deg)",
+        };
+    };
+
+    // 고유 ID 생성 (SSR 호환)
+    const maskId = "tutorial-spotlight-mask";
+
     const content = (
         <div className="fixed inset-0 z-[9999] pointer-events-none">
-            {/* 상단 그라데이션 오버레이 */}
-            <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-black/60 to-transparent pointer-events-auto" />
-
-            {/* 하단 카드 */}
-            <div className="absolute bottom-0 left-0 right-0 pointer-events-auto">
-                {/* 하단 그라데이션 */}
-                <div className="h-20 bg-gradient-to-t from-black/80 to-transparent" />
-
-                {/* 카드 */}
-                <div className="bg-white dark:bg-gray-900 rounded-t-3xl shadow-2xl animate-in slide-in-from-bottom-4 duration-300">
-                    {/* 핸들 */}
-                    <div className="flex justify-center pt-3">
-                        <div className="w-10 h-1 bg-gray-300 dark:bg-gray-700 rounded-full" />
-                    </div>
-
-                    {/* 진행 바 */}
-                    <div className="flex gap-1 px-6 pt-4">
-                        {TUTORIAL_STEPS.map((_, index) => (
-                            <div
-                                key={index}
-                                className={`h-1 flex-1 rounded-full transition-all ${
-                                    index <= currentStep
-                                        ? "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8]"
-                                        : "bg-gray-200 dark:bg-gray-700"
-                                }`}
+            {/* 스포트라이트 오버레이 (SVG mask로 구멍 뚫기) */}
+            <svg
+                className="absolute inset-0 w-full h-full pointer-events-auto"
+                onClick={handleOverlayClick}
+                style={{ pointerEvents: "auto" }}
+            >
+                <defs>
+                    <mask id={maskId}>
+                        {/* 전체 흰색 (보임) */}
+                        <rect x="0" y="0" width="100%" height="100%" fill="white" />
+                        {/* 타겟 영역 검정 (구멍) */}
+                        {targetRect && (
+                            <rect
+                                x={targetRect.left - 12}
+                                y={targetRect.top - 12}
+                                width={targetRect.width + 24}
+                                height={targetRect.height + 24}
+                                rx="20"
+                                ry="20"
+                                fill="black"
                             />
-                        ))}
-                    </div>
-
-                    {/* 내용 */}
-                    <div className="p-6">
-                        <div className="flex items-start gap-4 mb-4">
-                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#05B2DC] to-[#38BDF8] flex items-center justify-center flex-shrink-0">
-                                <Icon className="w-6 h-6 text-white" />
-                            </div>
-                            <div className="flex-1">
-                                <div className="flex items-center justify-between mb-1">
-                                    <h3 className="text-lg font-bold text-gray-800 dark:text-white">
-                                        {step.title}
-                                    </h3>
-                                    <span className="text-xs text-gray-400">
-                                        {currentStep + 1}/{TUTORIAL_STEPS.length}
-                                    </span>
-                                </div>
-                                <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                                    {step.description}
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* 주요 기능 목록 */}
-                        {step.features && step.features.length > 0 && (
-                            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 mb-4">
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium">주요 기능</p>
-                                <ul className="space-y-1.5">
-                                    {step.features.map((feature, index) => (
-                                        <li key={index} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-[#05B2DC]" />
-                                            {feature}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
                         )}
+                    </mask>
+                </defs>
+                {/* 어두운 오버레이 (마스크 적용) */}
+                <rect
+                    x="0"
+                    y="0"
+                    width="100%"
+                    height="100%"
+                    fill="rgba(0, 0, 0, 0.85)"
+                    mask={`url(#${maskId})`}
+                    style={{ pointerEvents: "auto" }}
+                />
+                {/* 타겟 영역은 클릭이 통과하도록 투명 rect */}
+                {targetRect && (
+                    <rect
+                        x={targetRect.left - 12}
+                        y={targetRect.top - 12}
+                        width={targetRect.width + 24}
+                        height={targetRect.height + 24}
+                        fill="transparent"
+                        style={{ pointerEvents: "none" }}
+                    />
+                )}
+            </svg>
 
-                        {/* 버튼 */}
-                        <div className="flex gap-3">
-                            {!isFirstStep && (
-                                <Button
-                                    variant="outline"
-                                    onClick={handlePrev}
-                                    className="flex-1 rounded-xl h-12"
-                                >
-                                    <ArrowLeft className="w-4 h-4 mr-1" />
-                                    이전
-                                </Button>
-                            )}
-                            <Button
-                                onClick={handleNext}
-                                className="flex-1 rounded-xl h-12 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white"
-                            >
-                                {isLastStep ? (
-                                    <>
-                                        <Sparkles className="w-4 h-4 mr-1" />
-                                        시작하기
-                                    </>
-                                ) : (
-                                    <>
-                                        다음
-                                        <ArrowRight className="w-4 h-4 ml-1" />
-                                    </>
-                                )}
-                            </Button>
+            {/* 스포트라이트 테두리 (몽글몽글 효과) */}
+            {targetRect && (
+                <div
+                    className="absolute pointer-events-none transition-all duration-300 ease-out"
+                    style={{
+                        left: targetRect.left - 16,
+                        top: targetRect.top - 16,
+                        width: targetRect.width + 32,
+                        height: targetRect.height + 32,
+                    }}
+                >
+                    {/* 빛나는 테두리 */}
+                    <div
+                        className="absolute inset-0 rounded-3xl"
+                        style={{
+                            boxShadow: "0 0 30px 8px rgba(56, 189, 248, 0.4), 0 0 60px 12px rgba(5, 178, 220, 0.2)",
+                            border: "2px solid rgba(255,255,255,0.5)",
+                        }}
+                    />
+                    {/* 몽글몽글 장식 - 파스텔 색상 */}
+                    <div className="absolute -top-3 left-1/4 w-5 h-5 bg-sky-200/60 rounded-full blur-[2px] animate-pulse" />
+                    <div className="absolute -top-2 right-1/3 w-4 h-4 bg-violet-200/50 rounded-full blur-[2px] animate-pulse" style={{ animationDelay: "0.3s" }} />
+                    <div className="absolute top-1/4 -right-3 w-5 h-5 bg-sky-200/60 rounded-full blur-[2px] animate-pulse" style={{ animationDelay: "0.6s" }} />
+                    <div className="absolute bottom-1/4 -left-3 w-4 h-4 bg-violet-200/50 rounded-full blur-[2px] animate-pulse" style={{ animationDelay: "0.9s" }} />
+                    <div className="absolute -bottom-2 left-1/2 w-4 h-4 bg-amber-200/50 rounded-full blur-[2px] animate-pulse" style={{ animationDelay: "0.5s" }} />
+                </div>
+            )}
+
+            {/* 몽글몽글 구름 말풍선 */}
+            <div
+                className="pointer-events-none animate-in fade-in zoom-in-95 duration-300"
+                style={getBubbleStyle()}
+            >
+                {/* 메인 구름 */}
+                <div className="relative">
+                    {/* 구름 본체 - 여러 원으로 몽글몽글하게 */}
+                    <div className="relative bg-white rounded-[28px] px-5 py-4 shadow-xl">
+                        {/* 구름 장식 (좌우 볼록) */}
+                        <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-6 h-10 bg-white rounded-full" />
+                        <div className="absolute -right-2 top-1/2 -translate-y-1/2 w-6 h-10 bg-white rounded-full" />
+                        <div className="absolute left-4 -top-2 w-8 h-6 bg-white rounded-full" />
+                        <div className="absolute right-4 -top-2 w-10 h-6 bg-white rounded-full" />
+                        <div className="absolute left-1/2 -translate-x-1/2 -top-3 w-12 h-6 bg-white rounded-full" />
+
+                        {/* 내용 */}
+                        <div className="relative z-10">
+                            <div className="flex items-center gap-2 mb-1">
+                                <Sparkles className="w-4 h-4 text-[#05B2DC]" />
+                                <span className="font-bold text-gray-800 text-sm">
+                                    {step.title}
+                                </span>
+                                <span className="text-xs text-gray-400 ml-auto">
+                                    {currentStep + 1}/{TUTORIAL_STEPS.length}
+                                </span>
+                            </div>
+                            <p className="text-xs text-gray-600 leading-relaxed">
+                                {step.description}
+                            </p>
+
+                            {/* 안내 텍스트 */}
+                            <p className="text-[10px] text-[#05B2DC] mt-2 flex items-center gap-1">
+                                <Hand className="w-3 h-3" />
+                                눌러서 이동해보세요!
+                            </p>
                         </div>
-
-                        {/* 건너뛰기 */}
-                        <button
-                            onClick={handleSkip}
-                            className="w-full mt-3 text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors py-2"
-                        >
-                            건너뛰기
-                        </button>
                     </div>
 
-                    {/* Safe area for mobile */}
-                    <div className="h-safe" />
+                    {/* 구름 꼬리 (말풍선 화살표) */}
+                    <div
+                        className={`absolute left-1/2 -translate-x-1/2 flex flex-col items-center ${
+                            step.position === "top" ? "-bottom-4" : "-top-4 rotate-180"
+                        }`}
+                    >
+                        <div className="w-5 h-5 bg-white rounded-full" />
+                        <div className="w-3 h-3 bg-white rounded-full -mt-2" />
+                        <div className="w-2 h-2 bg-white rounded-full -mt-1" />
+                    </div>
                 </div>
             </div>
 
-            {/* 닫기 버튼 */}
+            {/* 탭 포인터 애니메이션 */}
+            {targetRect && (
+                <div
+                    className="pointer-events-none"
+                    style={{
+                        position: "fixed",
+                        left: targetRect.left + targetRect.width / 2,
+                        top: targetRect.top + targetRect.height / 2 + 8,
+                        zIndex: 10001,
+                    }}
+                >
+                    <div
+                        className="relative"
+                        style={{
+                            animation: "tapAnimation 1.5s ease-in-out infinite",
+                        }}
+                    >
+                        {/* 탭 원형 효과 */}
+                        <div
+                            className="absolute -top-8 -left-8 w-16 h-16 rounded-full bg-white/30"
+                            style={{
+                                animation: "tapRipple 1.5s ease-out infinite",
+                            }}
+                        />
+                        {/* 손가락 아이콘 */}
+                        <svg
+                            viewBox="0 0 24 24"
+                            className="w-10 h-10 drop-shadow-lg"
+                            fill="white"
+                        >
+                            <path d="M9.5 4c.28 0 .5.22.5.5v6c0 .28-.22.5-.5.5s-.5-.22-.5-.5v-6c0-.28.22-.5.5-.5zM12 3c.28 0 .5.22.5.5v7c0 .28-.22.5-.5.5s-.5-.22-.5-.5v-7c0-.28.22-.5.5-.5zM14.5 4c.28 0 .5.22.5.5v6c0 .28-.22.5-.5.5s-.5-.22-.5-.5v-6c0-.28.22-.5.5-.5zM17 5.5c0-.28.22-.5.5-.5s.5.22.5.5v5c0 .28-.22.5-.5.5s-.5-.22-.5-.5v-5zM6 11.5v-1c0-.83.67-1.5 1.5-1.5H8v3.5c0 2.49 2.01 4.5 4.5 4.5h3.25c.97 0 1.75.78 1.75 1.75V19c0 .55-.45 1-1 1H9c-2.76 0-5-2.24-5-5v-2c0-.83.67-1.5 1.5-1.5H6z"/>
+                        </svg>
+                    </div>
+                </div>
+            )}
+
+            {/* 탭 애니메이션 스타일 */}
+            <style>{`
+                @keyframes tapAnimation {
+                    0%, 100% { transform: translateY(0) scale(1); }
+                    50% { transform: translateY(-8px) scale(0.95); }
+                }
+                @keyframes tapRipple {
+                    0% { transform: scale(0.5); opacity: 0.8; }
+                    100% { transform: scale(1.5); opacity: 0; }
+                }
+            `}</style>
+
+            {/* 건너뛰기 버튼 */}
             <button
                 onClick={handleSkip}
-                className="absolute top-4 right-4 p-2 rounded-full bg-black/30 hover:bg-black/50 transition-colors pointer-events-auto"
+                className="fixed top-4 right-4 px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white text-sm rounded-full transition-colors"
             >
-                <X className="w-5 h-5 text-white" />
+                건너뛰기
             </button>
+
+            {/* 진행률 표시 */}
+            <div className="fixed top-4 left-4 flex items-center gap-2">
+                {TUTORIAL_STEPS.map((_, index) => (
+                    <div
+                        key={index}
+                        className={`h-1.5 rounded-full transition-all duration-300 ${
+                            index === currentStep
+                                ? "w-6 bg-white"
+                                : index < currentStep
+                                ? "w-3 bg-white/60"
+                                : "w-3 bg-white/30"
+                        }`}
+                    />
+                ))}
+            </div>
         </div>
     );
 
