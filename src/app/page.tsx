@@ -95,6 +95,12 @@ const OnboardingModal = dynamic(
     { ssr: false }
 );
 
+// 튜토리얼 투어
+const TutorialTour = dynamic(
+    () => import("@/components/features/onboarding/TutorialTour"),
+    { ssr: false }
+);
+
 // Suspense 래퍼 (useSearchParams 필요)
 export default function Home() {
     return (
@@ -129,6 +135,7 @@ function HomeContent() {
 
     const [selectedTab, setSelectedTab] = useState<TabType>(getInitialTab);
     const [showOnboarding, setShowOnboarding] = useState(false);
+    const [showTutorial, setShowTutorial] = useState(false);
     const isInternalNavigation = useRef(false);
 
     // URL 변경 시 탭 동기화 (브라우저 뒤로가기/앞으로가기 등 외부 변경만)
@@ -255,8 +262,15 @@ function HomeContent() {
                     isOpen={showOnboarding}
                     onClose={() => setShowOnboarding(false)}
                     onGoToRecord={() => handleTabChange("record")}
+                    onGoToHome={() => handleTabChange("home")}
+                    onStartTutorial={() => setShowTutorial(true)}
                 />
             )}
+            <TutorialTour
+                isOpen={showTutorial}
+                onClose={() => setShowTutorial(false)}
+                onNavigate={(tab) => handleTabChange(tab as TabType)}
+            />
         </>
     );
 }

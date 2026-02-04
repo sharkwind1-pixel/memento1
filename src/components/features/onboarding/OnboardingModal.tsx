@@ -33,6 +33,8 @@ interface OnboardingModalProps {
     isOpen: boolean;
     onClose: () => void;
     onGoToRecord: () => void;
+    onGoToHome: () => void;
+    onStartTutorial: () => void;
 }
 
 const ONBOARDING_STORAGE_KEY = "memento-ani-onboarding-complete";
@@ -87,6 +89,8 @@ export default function OnboardingModal({
     isOpen,
     onClose,
     onGoToRecord,
+    onGoToHome,
+    onStartTutorial,
 }: OnboardingModalProps) {
     const { user } = useAuth();
     const [step, setStep] = useState(0);
@@ -130,12 +134,22 @@ export default function OnboardingModal({
         }
     };
 
-    // 완료 처리
+    // 완료 처리 - 유저 타입에 따라 다른 페이지로 연결
     const handleComplete = async () => {
         await saveOnboardingData();
         markOnboardingComplete();
         onClose();
-        onGoToRecord();
+
+        // 유저 타입별 연결
+        if (data.userType === "planning") {
+            // 키우려는 사람 → 홈에서 둘러보기 + 튜토리얼
+            onGoToHome();
+            onStartTutorial();
+        } else {
+            // 키우는 중 / 떠나보낸 → 반려동물 등록으로
+            onGoToRecord();
+            onStartTutorial();
+        }
     };
 
     // 건너뛰기
