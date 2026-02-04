@@ -82,19 +82,27 @@ export default function TutorialTour({
     const updateTargetRect = useCallback(() => {
         if (!isOpen) return;
 
-        const currentSteps = window.innerWidth < 1280 ? MOBILE_STEPS : DESKTOP_STEPS;
+        const isMobileNow = window.innerWidth < 1280;
+        const currentSteps = isMobileNow ? MOBILE_STEPS : DESKTOP_STEPS;
         const step = currentSteps[currentStep];
         if (!step) return;
 
-        // 같은 ID를 가진 모든 요소 중 보이는 것만 찾기
+        // 같은 ID를 가진 모든 요소 중 실제로 보이는 것만 찾기
         const targets = document.querySelectorAll(`[data-tutorial-id="${step.targetId}"]`);
         let visibleTarget: Element | null = null;
 
         targets.forEach((el) => {
-            const htmlEl = el as HTMLElement;
-            // offsetParent가 있고 크기가 있으면 보이는 요소
-            if (htmlEl.offsetParent !== null && htmlEl.offsetWidth > 0) {
-                visibleTarget = el;
+            const rect = el.getBoundingClientRect();
+            // 실제로 화면에 크기가 있는 요소만 (display:none이면 width/height가 0)
+            if (rect.width > 0 && rect.height > 0) {
+                // 모바일이면 화면 하단에 있는 요소 (y > 화면 절반)
+                // 데스크톱이면 화면 상단에 있는 요소 (y < 화면 절반)
+                const screenMid = window.innerHeight / 2;
+                if (isMobileNow && rect.top > screenMid) {
+                    visibleTarget = el;
+                } else if (!isMobileNow && rect.top < screenMid) {
+                    visibleTarget = el;
+                }
             }
         });
 
