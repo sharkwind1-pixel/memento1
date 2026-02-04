@@ -190,13 +190,12 @@ export default function TutorialTour({
     } : null;
 
     // 말풍선 위치 계산
-    // 타겟이 화면 하단에 있으면 (모바일 하단 네비) → 말풍선은 위에
-    // 타겟이 화면 상단에 있으면 (데스크톱 헤더) → 말풍선은 아래에
     const getBubblePosition = () => {
-        if (!targetRect) return { left: 0, top: 0 };
+        if (!targetRect) return { left: 0, top: 0, arrowLeft: 120 };
 
         const bubbleWidth = 240;
-        let left = targetRect.left + targetRect.width / 2 - bubbleWidth / 2;
+        const targetCenterX = targetRect.left + targetRect.width / 2;
+        let left = targetCenterX - bubbleWidth / 2;
 
         // 화면 경계 체크
         if (left < 16) left = 16;
@@ -204,20 +203,22 @@ export default function TutorialTour({
             left = window.innerWidth - bubbleWidth - 16;
         }
 
-        // 타겟 위치로 판단 (화면 하단 절반에 있으면 모바일 하단 네비)
+        // 화살표가 타겟 중심을 가리키도록 (말풍선 내 상대 위치)
+        const arrowLeft = Math.max(20, Math.min(targetCenterX - left, bubbleWidth - 20));
+
         const isTargetAtBottom = targetRect.top > window.innerHeight / 2;
 
         if (isTargetAtBottom) {
-            // 타겟이 하단에 있음 → 말풍선은 위에
             return {
                 left,
-                top: targetRect.top - 220,
+                top: targetRect.top - 170,
+                arrowLeft,
             };
         } else {
-            // 타겟이 상단에 있음 → 말풍선은 아래에
             return {
                 left,
-                top: targetRect.bottom + 50,
+                top: targetRect.bottom + 20,
+                arrowLeft,
             };
         }
     };
@@ -306,13 +307,18 @@ export default function TutorialTour({
                     }}
                 >
                     <div className="relative w-[240px]">
-                        {/* 꼬리 - 위쪽 (타겟이 상단에 있을 때) */}
+                        {/* 화살표 - 위쪽 (타겟이 상단에 있을 때) */}
                         {targetRect && targetRect.top <= window.innerHeight / 2 && (
-                            <div className="absolute left-1/2 -translate-x-1/2 -top-14 flex flex-col items-center">
-                                <div className="w-3 h-3 bg-white rounded-full" />
-                                <div className="w-4 h-4 bg-white rounded-full -mt-1" />
-                                <div className="w-5 h-5 bg-white rounded-full -mt-1 shadow-sm" />
-                            </div>
+                            <div
+                                className="absolute -top-4 w-0 h-0"
+                                style={{
+                                    left: `${bubblePos.arrowLeft - 12}px`,
+                                    borderLeft: "12px solid transparent",
+                                    borderRight: "12px solid transparent",
+                                    borderBottom: "14px solid white",
+                                    filter: "drop-shadow(0 -2px 2px rgba(0,0,0,0.1))"
+                                }}
+                            />
                         )}
 
                         {/* 몽글몽글 구름 본체 */}
@@ -375,19 +381,18 @@ export default function TutorialTour({
                             <div className="absolute -bottom-1 right-4 w-2 h-2 bg-violet-200 rounded-full animate-pulse" style={{ animationDelay: "0.3s" }} />
                         </div>
 
-                        {/* 꼬리 - 아래쪽 (타겟이 하단에 있을 때) */}
+                        {/* 화살표 - 아래쪽 (타겟이 하단에 있을 때) */}
                         {targetRect && targetRect.top > window.innerHeight / 2 && (
-                            <div className="absolute left-1/2 -translate-x-1/2 -bottom-10">
-                                {/* 구름 뭉치처럼 */}
-                                <div className="relative">
-                                    <div className="absolute -left-3 top-0 w-5 h-5 bg-white rounded-full" />
-                                    <div className="absolute left-1 top-0 w-6 h-6 bg-white rounded-full shadow-sm" />
-                                    <div className="absolute -right-2 top-1 w-4 h-4 bg-white rounded-full" />
-                                    <div className="absolute left-0 top-4 w-5 h-5 bg-white rounded-full shadow-sm" />
-                                    <div className="absolute left-1 top-7 w-4 h-4 bg-white rounded-full" />
-                                    <div className="absolute left-1.5 top-9 w-3 h-3 bg-white rounded-full" />
-                                </div>
-                            </div>
+                            <div
+                                className="absolute -bottom-4 w-0 h-0"
+                                style={{
+                                    left: `${bubblePos.arrowLeft - 12}px`,
+                                    borderLeft: "12px solid transparent",
+                                    borderRight: "12px solid transparent",
+                                    borderTop: "14px solid white",
+                                    filter: "drop-shadow(0 2px 2px rgba(0,0,0,0.1))"
+                                }}
+                            />
                         )}
                     </div>
                 </div>
