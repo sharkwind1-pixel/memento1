@@ -193,10 +193,11 @@ export default function TutorialTour({
         }
 
         if (isMobile) {
-            // 모바일: 타겟 위에 말풍선
+            // 모바일: 하단 네비 바로 위에 말풍선 (꼬리가 버튼을 가리킴)
+            // 말풍선 높이 약 140px + 꼬리 45px = 185px
             return {
                 left,
-                top: Math.max(60, targetRect.top - 160),
+                top: targetRect.top - 190,
             };
         } else {
             // 데스크톱: 타겟 아래에 말풍선
@@ -355,12 +356,13 @@ export default function TutorialTour({
                             </div>
                         </div>
 
-                        {/* 꼬리 - 아래쪽 (모바일: 꼬리가 아래로 향함) */}
+                        {/* 꼬리 - 아래쪽 (모바일: 꼬리가 아래로 향해서 하단 버튼 가리킴) */}
                         {isMobile && (
-                            <div className="absolute left-1/2 -translate-x-1/2 -bottom-6 flex flex-col items-center">
-                                <div className="w-5 h-5 bg-white rounded-full shadow-lg" />
-                                <div className="w-3.5 h-3.5 bg-white rounded-full -mt-2 shadow-md" />
-                                <div className="w-2.5 h-2.5 bg-white rounded-full -mt-1.5 shadow-sm" />
+                            <div className="absolute left-1/2 -translate-x-1/2 -bottom-8 flex flex-col items-center">
+                                <div className="w-6 h-6 bg-white rounded-full shadow-lg" />
+                                <div className="w-4 h-4 bg-white rounded-full -mt-2 shadow-md" />
+                                <div className="w-3 h-3 bg-white rounded-full -mt-1.5 shadow-sm" />
+                                <div className="w-2 h-2 bg-white rounded-full -mt-1" />
                             </div>
                         )}
                     </div>
