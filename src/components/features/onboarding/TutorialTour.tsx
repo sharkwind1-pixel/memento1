@@ -1,7 +1,7 @@
 /**
  * TutorialTour.tsx
  * 스포트라이트 + 몽글몽글 코치마크 튜토리얼
- * 하단 네비게이션에 최적화된 버전
+ * 데스크톱/모바일 반응형
  */
 
 "use client";
@@ -74,15 +74,19 @@ export default function TutorialTour({
     const [currentStep, setCurrentStep] = useState(0);
     const [mounted, setMounted] = useState(false);
     const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
+    const [isMobile, setIsMobile] = useState(false);
     const wasOpenRef = useRef(false);
     const onNavigateRef = useRef(onNavigate);
 
-    // onNavigate ref 업데이트
     useEffect(() => {
         onNavigateRef.current = onNavigate;
     }, [onNavigate]);
 
-    // 타겟 요소 위치 계산
+    // 모바일 여부 감지
+    const checkMobile = useCallback(() => {
+        setIsMobile(window.innerWidth < 1280); // xl breakpoint
+    }, []);
+
     const updateTargetRect = useCallback(() => {
         if (!isOpen) return;
 
@@ -99,9 +103,9 @@ export default function TutorialTour({
 
     useEffect(() => {
         setMounted(true);
-    }, []);
+        checkMobile();
+    }, [checkMobile]);
 
-    // isOpen이 변경될 때
     useEffect(() => {
         if (isOpen && !wasOpenRef.current) {
             document.body.style.overflow = "hidden";
@@ -113,23 +117,26 @@ export default function TutorialTour({
         wasOpenRef.current = isOpen;
     }, [isOpen]);
 
-    // 스텝 변경 또는 리사이즈 시 위치 업데이트
     useEffect(() => {
         if (!isOpen) return;
 
         const timer = setTimeout(updateTargetRect, 150);
 
-        window.addEventListener("resize", updateTargetRect);
+        const handleResize = () => {
+            checkMobile();
+            updateTargetRect();
+        };
+
+        window.addEventListener("resize", handleResize);
         window.addEventListener("scroll", updateTargetRect);
 
         return () => {
             clearTimeout(timer);
-            window.removeEventListener("resize", updateTargetRect);
+            window.removeEventListener("resize", handleResize);
             window.removeEventListener("scroll", updateTargetRect);
         };
-    }, [isOpen, currentStep, updateTargetRect]);
+    }, [isOpen, currentStep, updateTargetRect, checkMobile]);
 
-    // 컴포넌트 언마운트 시
     useEffect(() => {
         return () => {
             document.body.style.overflow = "";
@@ -162,7 +169,6 @@ export default function TutorialTour({
         }
     };
 
-    // 스포트라이트 영역 계산 (패딩 포함)
     const spotlightPadding = 8;
     const spotlightRect = targetRect ? {
         x: targetRect.left - spotlightPadding,
@@ -171,6 +177,37 @@ export default function TutorialTour({
         height: targetRect.height + spotlightPadding * 2,
     } : null;
 
+    // 말풍선 위치 계산
+    // 모바일: 네비가 하단 → 말풍선은 위에 (꼬리가 아래로)
+    // 데스크톱: 네비가 상단 → 말풍선은 아래에 (꼬리가 위로)
+    const getBubblePosition = () => {
+        if (!targetRect) return { left: 0, top: 0 };
+
+        const bubbleWidth = 240;
+        let left = targetRect.left + targetRect.width / 2 - bubbleWidth / 2;
+
+        // 화면 경계 체크
+        if (left < 16) left = 16;
+        if (left + bubbleWidth > window.innerWidth - 16) {
+            left = window.innerWidth - bubbleWidth - 16;
+        }
+
+        if (isMobile) {
+            // 모바일: 타겟 위에 말풍선
+            return {
+                left,
+                top: Math.max(60, targetRect.top - 160),
+            };
+        } else {
+            // 데스크톱: 타겟 아래에 말풍선
+            return {
+                left,
+                top: targetRect.bottom + 20,
+            };
+        }
+    };
+
+    const bubblePos = getBubblePosition();
     const maskId = "tutorial-spotlight-mask";
 
     const content = (
@@ -244,82 +281,104 @@ export default function TutorialTour({
                 </>
             )}
 
-            {/* 구름 말풍선 - 하이라이트 위에 표시 */}
+            {/* 몽글몽글 구름 말풍선 */}
             {targetRect && (
                 <div
                     className="fixed pointer-events-none animate-in fade-in zoom-in-95 duration-300"
                     style={{
-                        left: Math.max(16, Math.min(targetRect.left + targetRect.width / 2 - 130, window.innerWidth - 276)),
-                        top: Math.max(80, targetRect.top - 180),
+                        left: bubblePos.left,
+                        top: bubblePos.top,
                     }}
                 >
-                    <div className="relative">
-                        {/* 구름 본체 */}
-                        <div className="relative bg-white rounded-3xl px-5 py-4 shadow-2xl w-[260px]">
-                            {/* 구름 장식 */}
-                            <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-6 h-10 bg-white rounded-full" />
-                            <div className="absolute -right-2 top-1/2 -translate-y-1/2 w-6 h-10 bg-white rounded-full" />
-                            <div className="absolute left-4 -top-2 w-8 h-5 bg-white rounded-full" />
-                            <div className="absolute right-4 -top-2 w-10 h-5 bg-white rounded-full" />
-                            <div className="absolute left-1/2 -translate-x-1/2 -top-3 w-12 h-5 bg-white rounded-full" />
-
-                        {/* 내용 */}
-                        <div className="relative z-10 text-center">
-                            <div className="flex items-center justify-center gap-2 mb-2">
-                                <Sparkles className="w-5 h-5 text-[#05B2DC]" />
-                                <span className="font-bold text-gray-800 text-base">
-                                    {step.title}
-                                </span>
+                    <div className="relative w-[240px]">
+                        {/* 꼬리 - 위쪽 (데스크톱: 꼬리가 위로 향함) */}
+                        {!isMobile && (
+                            <div className="absolute left-1/2 -translate-x-1/2 -top-6 flex flex-col-reverse items-center">
+                                <div className="w-5 h-5 bg-white rounded-full shadow-sm" />
+                                <div className="w-3.5 h-3.5 bg-white rounded-full mb-[-6px] shadow-sm" />
+                                <div className="w-2.5 h-2.5 bg-white rounded-full mb-[-4px]" />
                             </div>
-                            <p className="text-sm text-gray-600 leading-relaxed mb-3">
-                                {step.description}
-                            </p>
+                        )}
 
-                            {/* 진행 표시 */}
-                            <div className="flex items-center justify-center gap-1.5 mb-3">
-                                {TUTORIAL_STEPS.map((_, index) => (
-                                    <div
-                                        key={index}
-                                        className={`h-1.5 rounded-full transition-all duration-300 ${
-                                            index === currentStep
-                                                ? "w-5 bg-[#05B2DC]"
-                                                : index < currentStep
-                                                    ? "w-2 bg-[#05B2DC]/50"
-                                                    : "w-2 bg-gray-200"
-                                        }`}
-                                    />
-                                ))}
+                        {/* 구름 본체 - 더 몽글몽글하게 */}
+                        <div className="relative">
+                            {/* 메인 구름 바디 */}
+                            <div className="relative bg-white rounded-[32px] px-5 py-4 shadow-xl">
+                                {/* 좌우 볼록 - 더 둥글게 */}
+                                <div className="absolute -left-3 top-1/3 w-7 h-7 bg-white rounded-full shadow-sm" />
+                                <div className="absolute -left-2 top-1/2 w-5 h-5 bg-white rounded-full" />
+                                <div className="absolute -right-3 top-1/3 w-7 h-7 bg-white rounded-full shadow-sm" />
+                                <div className="absolute -right-2 top-2/3 w-5 h-5 bg-white rounded-full" />
+
+                                {/* 상단 볼록 - 구름처럼 */}
+                                <div className="absolute left-4 -top-3 w-8 h-8 bg-white rounded-full" />
+                                <div className="absolute left-1/2 -translate-x-1/2 -top-4 w-10 h-10 bg-white rounded-full" />
+                                <div className="absolute right-4 -top-3 w-8 h-8 bg-white rounded-full" />
+
+                                {/* 하단 볼록 */}
+                                <div className="absolute left-6 -bottom-2 w-6 h-6 bg-white rounded-full" />
+                                <div className="absolute right-6 -bottom-2 w-6 h-6 bg-white rounded-full" />
+                                <div className="absolute left-1/2 -translate-x-1/2 -bottom-3 w-8 h-8 bg-white rounded-full" />
+
+                                {/* 내용 */}
+                                <div className="relative z-10 text-center">
+                                    <div className="flex items-center justify-center gap-2 mb-2">
+                                        <Sparkles className="w-5 h-5 text-[#05B2DC]" />
+                                        <span className="font-bold text-gray-800 text-base">
+                                            {step.title}
+                                        </span>
+                                    </div>
+                                    <p className="text-sm text-gray-600 leading-relaxed mb-3">
+                                        {step.description}
+                                    </p>
+
+                                    {/* 진행 표시 */}
+                                    <div className="flex items-center justify-center gap-1.5 mb-2">
+                                        {TUTORIAL_STEPS.map((_, index) => (
+                                            <div
+                                                key={index}
+                                                className={`h-2 rounded-full transition-all duration-300 ${
+                                                    index === currentStep
+                                                        ? "w-5 bg-[#05B2DC]"
+                                                        : index < currentStep
+                                                            ? "w-2 bg-[#05B2DC]/50"
+                                                            : "w-2 bg-gray-200"
+                                                }`}
+                                            />
+                                        ))}
+                                    </div>
+
+                                    <p className="text-xs text-[#05B2DC] font-medium">
+                                        탭하여 다음으로
+                                    </p>
+                                </div>
                             </div>
-
-                            {/* 안내 텍스트 */}
-                            <p className="text-xs text-[#05B2DC] font-medium">
-                                화면을 탭하면 다음으로
-                            </p>
                         </div>
-                    </div>
 
-                    {/* 구름 꼬리 (아래로 향하는 화살표) */}
-                    <div className="absolute left-1/2 -translate-x-1/2 -bottom-5 flex flex-col items-center">
-                        <div className="w-5 h-5 bg-white rounded-full shadow-lg" />
-                        <div className="w-3 h-3 bg-white rounded-full -mt-1.5 shadow-md" />
-                        <div className="w-2 h-2 bg-white rounded-full -mt-1 shadow-sm" />
+                        {/* 꼬리 - 아래쪽 (모바일: 꼬리가 아래로 향함) */}
+                        {isMobile && (
+                            <div className="absolute left-1/2 -translate-x-1/2 -bottom-6 flex flex-col items-center">
+                                <div className="w-5 h-5 bg-white rounded-full shadow-lg" />
+                                <div className="w-3.5 h-3.5 bg-white rounded-full -mt-2 shadow-md" />
+                                <div className="w-2.5 h-2.5 bg-white rounded-full -mt-1.5 shadow-sm" />
+                            </div>
+                        )}
                     </div>
                 </div>
-            </div>
             )}
 
-            {/* 탭 애니메이션 - 타겟 위에 표시 */}
+            {/* 탭 애니메이션 */}
             {targetRect && (
                 <div
                     className="absolute pointer-events-none"
                     style={{
-                        left: targetRect.left + targetRect.width / 2 - 20,
-                        top: targetRect.top + targetRect.height / 2 - 20,
+                        left: targetRect.left + targetRect.width / 2 - 16,
+                        top: targetRect.top + targetRect.height / 2 - 16,
                     }}
                 >
                     <div className="relative animate-bounce">
-                        <div className="w-10 h-10 rounded-full border-2 border-white/80 bg-white/20 flex items-center justify-center">
-                            <div className="w-3 h-3 rounded-full bg-white animate-ping" />
+                        <div className="w-8 h-8 rounded-full border-2 border-white/80 bg-white/30 flex items-center justify-center">
+                            <div className="w-2 h-2 rounded-full bg-white animate-ping" />
                         </div>
                     </div>
                 </div>
