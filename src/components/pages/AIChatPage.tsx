@@ -7,9 +7,10 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { usePets } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -77,9 +78,6 @@ const emotionIcons: Record<string, string> = {
     excited: "🤩",
     neutral: "😐",
 };
-
-// 대화 기록 localStorage 키
-const CHAT_STORAGE_KEY = "memento-ani-chat-history";
 
 export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
     const { user, loading: authLoading } = useAuth();
@@ -152,57 +150,108 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    // localStorage에서 대화 기록 불러오기
+    // Supabase에서 대화 기록 불러오기
     useEffect(() => {
-        if (!selectedPetId) return;
+        if (!selectedPetId || !user?.id) return;
 
-        try {
-            const savedChats = localStorage.getItem(CHAT_STORAGE_KEY);
-            if (savedChats) {
-                const allChats = JSON.parse(savedChats);
-                const petChat = allChats[selectedPetId];
-                if (petChat && petChat.length > 0) {
-                    setMessages(petChat.map((msg: ChatMessage) => ({
+        const loadChatFromSupabase = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from("ai_chats")
+                    .select("messages")
+                    .eq("user_id", user.id)
+                    .eq("pet_id", selectedPetId)
+                    .single();
+
+                if (error && error.code !== "PGRST116") {
+                    // PGRST116 = no rows found (정상 케이스)
+                    console.error("채팅 불러오기 에러:", error);
+                }
+
+                if (data?.messages && data.messages.length > 0) {
+                    setMessages(data.messages.map((msg: ChatMessage) => ({
                         ...msg,
                         timestamp: new Date(msg.timestamp),
                     })));
                     return;
                 }
+
+                // 저장된 대화가 없으면 개인화된 인사말로 시작
+                if (selectedPet) {
+                    const greeting = generatePersonalizedGreeting(
+                        selectedPet.name,
+                        isMemorialMode,
+                        timeline,
+                        selectedPet.type
+                    );
+                    setMessages([
+                        {
+                            id: "greeting",
+                            role: "pet",
+                            content: greeting,
+                            timestamp: new Date(),
+                        },
+                    ]);
+                }
+            } catch (err) {
+                console.error("채팅 불러오기 실패:", err);
+                // 에러 시 인사말로 시작
+                if (selectedPet) {
+                    const greeting = generatePersonalizedGreeting(
+                        selectedPet.name,
+                        isMemorialMode,
+                        timeline,
+                        selectedPet.type
+                    );
+                    setMessages([
+                        {
+                            id: "greeting",
+                            role: "pet",
+                            content: greeting,
+                            timestamp: new Date(),
+                        },
+                    ]);
+                }
             }
-        } catch {}
+        };
 
+        loadChatFromSupabase();
+    }, [selectedPetId, selectedPet, isMemorialMode, timeline, user?.id]);
 
-        // 저장된 대화가 없으면 개인화된 인사말로 시작
-        if (selectedPet) {
-            const greeting = generatePersonalizedGreeting(
-                selectedPet.name,
-                isMemorialMode,
-                timeline,
-                selectedPet.type
-            );
-            setMessages([
-                {
-                    id: "greeting",
-                    role: "pet",
-                    content: greeting,
-                    timestamp: new Date(),
-                },
-            ]);
-        }
-    }, [selectedPetId, selectedPet, isMemorialMode, timeline]);
-
-    // 대화 기록을 localStorage에 저장
-    useEffect(() => {
-        if (!selectedPetId || messages.length === 0) return;
+    // Supabase에 대화 기록 저장 (debounced)
+    const saveToSupabase = useCallback(async (messagesToSave: ChatMessage[]) => {
+        if (!selectedPetId || !user?.id || messagesToSave.length === 0) return;
 
         try {
-            const savedChats = localStorage.getItem(CHAT_STORAGE_KEY);
-            const allChats = savedChats ? JSON.parse(savedChats) : {};
-            allChats[selectedPetId] = messages;
-            localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(allChats));
-        } catch {}
+            // upsert: 있으면 업데이트, 없으면 생성
+            const { error } = await supabase
+                .from("ai_chats")
+                .upsert({
+                    user_id: user.id,
+                    pet_id: selectedPetId,
+                    messages: messagesToSave,
+                }, {
+                    onConflict: "user_id,pet_id",
+                });
 
-    }, [messages, selectedPetId]);
+            if (error) {
+                console.error("채팅 저장 에러:", error);
+            }
+        } catch (err) {
+            console.error("채팅 저장 실패:", err);
+        }
+    }, [selectedPetId, user?.id]);
+
+    // 메시지 변경 시 저장 (debounce로 API 호출 최소화)
+    useEffect(() => {
+        if (!selectedPetId || !user?.id || messages.length === 0) return;
+
+        const timeoutId = setTimeout(() => {
+            saveToSupabase(messages);
+        }, 1000); // 1초 디바운스
+
+        return () => clearTimeout(timeoutId);
+    }, [messages, selectedPetId, user?.id, saveToSupabase]);
 
     // 펫 변경 시 사진 인덱스 초기화 및 타임라인 불러오기
     useEffect(() => {
