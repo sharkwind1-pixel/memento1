@@ -35,6 +35,8 @@ import {
     RefreshCw,
     Crown,
     AlertTriangle,
+    RotateCcw,
+    Activity,
 } from "lucide-react";
 import {
     LineChart,
@@ -59,6 +61,9 @@ interface DashboardStats {
     todayChats: number;
     premiumUsers: number;
     bannedUsers: number;
+    todayActiveUsers: number; // DAU
+    weeklyActiveUsers: number; // WAU
+    monthlyActiveUsers: number; // MAU
 }
 
 interface UserRow {
@@ -88,6 +93,7 @@ interface ChartData {
     date: string;
     가입자: number;
     채팅: number;
+    접속자: number;
 }
 
 export default function AdminPage() {
@@ -103,6 +109,9 @@ export default function AdminPage() {
         todayChats: 0,
         premiumUsers: 0,
         bannedUsers: 0,
+        todayActiveUsers: 0,
+        weeklyActiveUsers: 0,
+        monthlyActiveUsers: 0,
     });
     const [users, setUsers] = useState<UserRow[]>([]);
     const [posts, setPosts] = useState<PostRow[]>([]);
@@ -119,6 +128,7 @@ export default function AdminPage() {
                 const date = new Date();
                 date.setDate(date.getDate() - i);
                 const dateStr = date.toISOString().split("T")[0];
+                const nextDateStr = new Date(date.getTime() + 86400000).toISOString().split("T")[0];
                 const displayDate = `${date.getMonth() + 1}/${date.getDate()}`;
 
                 // 해당 날짜의 가입자 수
@@ -126,24 +136,31 @@ export default function AdminPage() {
                     .from("profiles")
                     .select("*", { count: "exact", head: true })
                     .gte("created_at", dateStr)
-                    .lt("created_at", new Date(date.getTime() + 86400000).toISOString().split("T")[0]);
+                    .lt("created_at", nextDateStr);
 
                 // 해당 날짜의 채팅 수
                 const { count: chats } = await supabase
                     .from("chat_messages")
                     .select("*", { count: "exact", head: true })
                     .gte("created_at", dateStr)
-                    .lt("created_at", new Date(date.getTime() + 86400000).toISOString().split("T")[0]);
+                    .lt("created_at", nextDateStr);
+
+                // 해당 날짜의 접속자 수 (last_seen_at 기준)
+                const { count: activeUsers } = await supabase
+                    .from("profiles")
+                    .select("*", { count: "exact", head: true })
+                    .gte("last_seen_at", dateStr)
+                    .lt("last_seen_at", nextDateStr);
 
                 days.push({
                     date: displayDate,
                     가입자: signups || 0,
                     채팅: chats || 0,
+                    접속자: activeUsers || 0,
                 });
             }
             setChartData(days);
         } catch {}
-
     };
 
     // 대시보드 통계 로드
@@ -197,6 +214,28 @@ export default function AdminPage() {
                 .select("*", { count: "exact", head: true })
                 .eq("is_banned", true);
 
+            // DAU (오늘 접속한 사용자)
+            const { count: todayActiveUsers } = await supabase
+                .from("profiles")
+                .select("*", { count: "exact", head: true })
+                .gte("last_seen_at", today);
+
+            // WAU (최근 7일 접속한 사용자)
+            const weekAgo = new Date();
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            const { count: weeklyActiveUsers } = await supabase
+                .from("profiles")
+                .select("*", { count: "exact", head: true })
+                .gte("last_seen_at", weekAgo.toISOString().split("T")[0]);
+
+            // MAU (최근 30일 접속한 사용자)
+            const monthAgo = new Date();
+            monthAgo.setDate(monthAgo.getDate() - 30);
+            const { count: monthlyActiveUsers } = await supabase
+                .from("profiles")
+                .select("*", { count: "exact", head: true })
+                .gte("last_seen_at", monthAgo.toISOString().split("T")[0]);
+
             setStats({
                 totalUsers: totalUsers || 0,
                 totalPets: totalPets || 0,
@@ -206,6 +245,9 @@ export default function AdminPage() {
                 todayChats: todayChats || 0,
                 premiumUsers: premiumUsers || 0,
                 bannedUsers: bannedUsers || 0,
+                todayActiveUsers: todayActiveUsers || 0,
+                weeklyActiveUsers: weeklyActiveUsers || 0,
+                monthlyActiveUsers: monthlyActiveUsers || 0,
             });
         } catch {}
  finally {
@@ -256,6 +298,29 @@ export default function AdminPage() {
             loadDashboardStats();
         } catch {
             alert("권한 업데이트에 실패했습니다.");
+        }
+    };
+
+    // 온보딩 리셋
+    const resetOnboarding = async (userId: string, userEmail: string) => {
+        if (!confirm(`${userEmail}의 온보딩을 리셋하시겠습니까?\n다음 로그인 시 온보딩 화면이 다시 표시됩니다.`)) {
+            return;
+        }
+
+        try {
+            const { error } = await supabase
+                .from("profiles")
+                .update({
+                    onboarding_completed_at: null,
+                    user_type: null,
+                    onboarding_data: null,
+                })
+                .eq("id", userId);
+
+            if (error) throw error;
+            alert("온보딩이 리셋되었습니다.");
+        } catch {
+            alert("온보딩 리셋에 실패했습니다.");
         }
     };
 
@@ -441,6 +506,45 @@ export default function AdminPage() {
                         </Card>
                     </div>
 
+                    {/* DAU/WAU/MAU 지표 */}
+                    <div className="grid grid-cols-3 gap-4">
+                        <Card className="bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200">
+                            <CardContent className="pt-6">
+                                <div className="text-center">
+                                    <Activity className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
+                                    <p className="text-sm text-emerald-600 font-medium">오늘 접속 (DAU)</p>
+                                    <p className="text-3xl font-bold text-emerald-700 mt-1">
+                                        {loading ? "..." : stats.todayActiveUsers}
+                                    </p>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+                            <CardContent className="pt-6">
+                                <div className="text-center">
+                                    <Activity className="w-8 h-8 text-blue-500 mx-auto mb-2" />
+                                    <p className="text-sm text-blue-600 font-medium">주간 접속 (WAU)</p>
+                                    <p className="text-3xl font-bold text-blue-700 mt-1">
+                                        {loading ? "..." : stats.weeklyActiveUsers}
+                                    </p>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200">
+                            <CardContent className="pt-6">
+                                <div className="text-center">
+                                    <Activity className="w-8 h-8 text-purple-500 mx-auto mb-2" />
+                                    <p className="text-sm text-purple-600 font-medium">월간 접속 (MAU)</p>
+                                    <p className="text-3xl font-bold text-purple-700 mt-1">
+                                        {loading ? "..." : stats.monthlyActiveUsers}
+                                    </p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
                     {/* 빠른 액션 */}
                     <Card>
                         <CardHeader>
@@ -479,6 +583,41 @@ export default function AdminPage() {
                                     <MessageCircle className="w-5 h-5 text-violet-500" />
                                     <span className="text-sm">AI 사용량</span>
                                 </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* 접속자 추이 그래프 (핵심 지표) */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-lg flex items-center gap-2">
+                                <Activity className="w-5 h-5 text-emerald-500" />
+                                주간 접속자 추이 (DAU)
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="h-72">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={chartData}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                                        <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#9ca3af" />
+                                        <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" />
+                                        <Tooltip
+                                            contentStyle={{
+                                                backgroundColor: '#fff',
+                                                border: '1px solid #e5e7eb',
+                                                borderRadius: '8px'
+                                            }}
+                                        />
+                                        <Area
+                                            type="monotone"
+                                            dataKey="접속자"
+                                            stroke="#10b981"
+                                            fill="#a7f3d0"
+                                            strokeWidth={3}
+                                        />
+                                    </AreaChart>
+                                </ResponsiveContainer>
                             </div>
                         </CardContent>
                     </Card>
@@ -720,6 +859,15 @@ export default function AdminPage() {
                                                 >
                                                     <Ban className="w-3 h-3 mr-1" />
                                                     {u.is_banned ? "정지 해제" : "계정 정지"}
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="text-blue-500 border-blue-300 hover:bg-blue-50"
+                                                    onClick={() => resetOnboarding(u.id, u.email)}
+                                                >
+                                                    <RotateCcw className="w-3 h-3 mr-1" />
+                                                    온보딩 리셋
                                                 </Button>
                                             </div>
                                         </div>

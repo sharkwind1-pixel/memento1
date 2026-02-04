@@ -139,9 +139,9 @@ function HomeContent() {
         }
     }, [searchParams, selectedTab]);
 
-    // 온보딩 표시 여부 체크 (DB 기반)
+    // 온보딩 표시 여부 체크 + 접속 기록 (DB 기반)
     useEffect(() => {
-        const checkOnboarding = async () => {
+        const checkOnboardingAndUpdateActivity = async () => {
             if (!user) return;
 
             try {
@@ -156,6 +156,12 @@ function HomeContent() {
                 if (!data?.onboarding_completed_at) {
                     setShowOnboarding(true);
                 }
+
+                // 접속 기록 업데이트 (DAU 추적용)
+                await supabase
+                    .from("profiles")
+                    .update({ last_seen_at: new Date().toISOString() })
+                    .eq("id", user.id);
             } catch {
                 // 프로필 없으면 온보딩 필요
                 setShowOnboarding(true);
@@ -163,7 +169,7 @@ function HomeContent() {
         };
 
         if (user && !petsLoading) {
-            checkOnboarding();
+            checkOnboardingAndUpdateActivity();
         }
     }, [user, petsLoading]);
 
