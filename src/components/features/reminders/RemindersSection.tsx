@@ -102,14 +102,23 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
         setIsLoading(true);
         try {
             const params = new URLSearchParams({ petId });
-            const response = await fetch(`/api/reminders?${params}`);
-            const data = await response.json();
+            const response = await fetch(`/api/reminders?${params}`, {
+                credentials: "include", // 쿠키 포함 (인증)
+            });
 
+            // 인증 실패 등 에러는 빈 배열 처리
+            if (!response.ok) {
+                setReminders([]);
+                return;
+            }
+
+            const data = await response.json();
             if (data.reminders) {
                 setReminders(data.reminders);
             }
-        } catch {}
- finally {
+        } catch {
+            setReminders([]);
+        } finally {
             setIsLoading(false);
         }
     }, [user?.id, petId]);
