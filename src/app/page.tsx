@@ -152,8 +152,9 @@ function HomeContent() {
                     .eq("id", user.id)
                     .single();
 
-                // 온보딩 미완료 시 모달 표시
-                if (!data?.onboarding_completed_at) {
+                // 온보딩 미완료 && 등록된 펫이 없을 때만 모달 표시
+                // (기존 유저는 펫이 있으므로 온보딩 스킵)
+                if (!data?.onboarding_completed_at && pets.length === 0) {
                     setShowOnboarding(true);
                 }
 
@@ -163,15 +164,17 @@ function HomeContent() {
                     .update({ last_seen_at: new Date().toISOString() })
                     .eq("id", user.id);
             } catch {
-                // 프로필 없으면 온보딩 필요
-                setShowOnboarding(true);
+                // 프로필 없으면 온보딩 필요 (단, 펫이 없을 때만)
+                if (pets.length === 0) {
+                    setShowOnboarding(true);
+                }
             }
         };
 
         if (user && !petsLoading) {
             checkOnboardingAndUpdateActivity();
         }
-    }, [user, petsLoading]);
+    }, [user, petsLoading, pets.length]);
 
     const handleTabChange = useCallback((tab: TabType) => {
         // 즉시 상태 업데이트 (UI 반응성)
