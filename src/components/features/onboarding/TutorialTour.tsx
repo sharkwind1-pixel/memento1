@@ -22,37 +22,26 @@ interface TutorialStep {
     description: string;
 }
 
-const TUTORIAL_STEPS: TutorialStep[] = [
-    {
-        targetId: "home",
-        title: "홈",
-        description: "메멘토애니의 시작점이에요",
-    },
-    {
-        targetId: "record",
-        title: "우리의 기록",
-        description: "반려동물 등록과 추억을 기록해요",
-    },
-    {
-        targetId: "community",
-        title: "커뮤니티",
-        description: "다른 반려인들과 소통해요",
-    },
-    {
-        targetId: "ai-chat",
-        title: "AI 펫톡",
-        description: "우리 아이와 대화해보세요",
-    },
-    {
-        targetId: "magazine",
-        title: "펫 매거진",
-        description: "유용한 반려 정보를 확인해요",
-    },
-    {
-        targetId: "more",
-        title: "더보기",
-        description: "입양, 지역정보, 분실동물 찾기",
-    },
+// 데스크톱용 튜토리얼 (헤더에 모든 메뉴가 보임)
+const DESKTOP_STEPS: TutorialStep[] = [
+    { targetId: "home", title: "홈", description: "메멘토애니의 시작점이에요" },
+    { targetId: "record", title: "우리의 기록", description: "반려동물 등록과 추억을 기록해요" },
+    { targetId: "community", title: "커뮤니티", description: "다른 반려인들과 소통해요" },
+    { targetId: "ai-chat", title: "AI 펫톡", description: "우리 아이와 대화해보세요" },
+    { targetId: "magazine", title: "펫 매거진", description: "유용한 반려 정보를 확인해요" },
+    { targetId: "adoption", title: "입양정보", description: "새로운 가족을 찾아보세요" },
+    { targetId: "local", title: "지역정보", description: "주변 동물병원, 미용실 등을 찾아요" },
+    { targetId: "lost", title: "분실동물", description: "잃어버린 아이를 찾아요" },
+];
+
+// 모바일용 튜토리얼 (하단 네비 5개 + 더보기)
+const MOBILE_STEPS: TutorialStep[] = [
+    { targetId: "home", title: "홈", description: "메멘토애니의 시작점이에요" },
+    { targetId: "record", title: "우리의 기록", description: "반려동물 등록과 추억을 기록해요" },
+    { targetId: "community", title: "커뮤니티", description: "다른 반려인들과 소통해요" },
+    { targetId: "ai-chat", title: "AI 펫톡", description: "우리 아이와 대화해보세요" },
+    { targetId: "magazine", title: "펫 매거진", description: "유용한 반려 정보를 확인해요" },
+    { targetId: "more", title: "더보기", description: "입양, 지역정보, 분실동물 등 더 많은 메뉴" },
 ];
 
 const TUTORIAL_STORAGE_KEY = "memento-ani-tutorial-complete";
@@ -87,10 +76,16 @@ export default function TutorialTour({
         setIsMobile(window.innerWidth < 1280); // xl breakpoint
     }, []);
 
+    // 모바일/데스크톱에 따라 다른 스텝 사용
+    const steps = isMobile ? MOBILE_STEPS : DESKTOP_STEPS;
+
     const updateTargetRect = useCallback(() => {
         if (!isOpen) return;
 
-        const step = TUTORIAL_STEPS[currentStep];
+        const currentSteps = window.innerWidth < 1280 ? MOBILE_STEPS : DESKTOP_STEPS;
+        const step = currentSteps[currentStep];
+        if (!step) return;
+
         const target = document.querySelector(`[data-tutorial-id="${step.targetId}"]`);
 
         if (target) {
@@ -145,7 +140,7 @@ export default function TutorialTour({
 
     if (!isOpen || !mounted) return null;
 
-    const step = TUTORIAL_STEPS[currentStep];
+    const step = steps[currentStep];
 
     const handleComplete = () => {
         markTutorialComplete();
@@ -162,7 +157,7 @@ export default function TutorialTour({
     };
 
     const handleNext = () => {
-        if (currentStep < TUTORIAL_STEPS.length - 1) {
+        if (currentStep < steps.length - 1) {
             setCurrentStep(currentStep + 1);
         } else {
             handleComplete();
@@ -335,7 +330,7 @@ export default function TutorialTour({
 
                                     {/* 진행 표시 - 더 귀엽게 */}
                                     <div className="flex items-center justify-center gap-2 mb-2">
-                                        {TUTORIAL_STEPS.map((_, index) => (
+                                        {steps.map((_, index) => (
                                             <div
                                                 key={index}
                                                 className={`rounded-full transition-all duration-300 ${

@@ -302,6 +302,7 @@ export default function Layout({
                                 return (
                                     <button
                                         key={tab.id}
+                                        data-tutorial-id={`mobile-${tab.id}`}
                                         onClick={() => {
                                             setSelectedTab(tab.id);
                                             setIsMobileMenuOpen(false);
