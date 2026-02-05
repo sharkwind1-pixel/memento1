@@ -60,6 +60,19 @@ export interface Pet {
     memorialDate?: string;
     isPrimary: boolean;
     createdAt: string;
+
+    // AI 펫톡 개인화를 위한 추가 정보
+    adoptedDate?: string;           // 처음 만난 날/입양한 날
+    howWeMet?: "펫샵" | "분양" | "보호소" | "지인" | "길에서" | "기타";  // 어떻게 만났는지
+    nicknames?: string;             // 부르는 별명들 (쉼표로 구분)
+    specialHabits?: string;         // 특별한 버릇/습관
+    favoriteFood?: string;          // 좋아하는 간식/음식
+    favoriteActivity?: string;      // 좋아하는 놀이/활동
+    favoritePlace?: string;         // 좋아하는 장소
+
+    // 추모 관련 추가 정보
+    togetherPeriod?: string;        // 함께한 기간
+    memorableMemory?: string;       // 기억하고 싶은 순간
 }
 
 // 타임라인 일기 타입
@@ -183,6 +196,16 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                         memorialDate: pet.memorial_date,
                         isPrimary: pet.is_primary,
                         createdAt: pet.created_at,
+                        // AI 펫톡 개인화를 위한 추가 필드
+                        adoptedDate: pet.adopted_date || undefined,
+                        howWeMet: pet.how_we_met || undefined,
+                        nicknames: pet.nicknames || undefined,
+                        specialHabits: pet.special_habits || undefined,
+                        favoriteFood: pet.favorite_food || undefined,
+                        favoriteActivity: pet.favorite_activity || undefined,
+                        favoritePlace: pet.favorite_place || undefined,
+                        togetherPeriod: pet.together_period || undefined,
+                        memorableMemory: pet.memorable_memory || undefined,
                     };
                 })
             );
@@ -265,6 +288,16 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                             status: petData.status,
                             memorial_date: petData.memorialDate || null,
                             is_primary: pets.length === 0,
+                            // AI 펫톡 개인화를 위한 추가 필드
+                            adopted_date: petData.adoptedDate || null,
+                            how_we_met: petData.howWeMet || null,
+                            nicknames: petData.nicknames || null,
+                            special_habits: petData.specialHabits || null,
+                            favorite_food: petData.favoriteFood || null,
+                            favorite_activity: petData.favoriteActivity || null,
+                            favorite_place: petData.favoritePlace || null,
+                            together_period: petData.togetherPeriod || null,
+                            memorable_memory: petData.memorableMemory || null,
                         },
                     ])
                     .select()
@@ -317,6 +350,25 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                         updateData.memorial_date = data.memorialDate || null;
                     if (data.isPrimary !== undefined)
                         updateData.is_primary = data.isPrimary;
+                    // AI 펫톡 개인화를 위한 추가 필드
+                    if (data.adoptedDate !== undefined)
+                        updateData.adopted_date = data.adoptedDate || null;
+                    if (data.howWeMet !== undefined)
+                        updateData.how_we_met = data.howWeMet || null;
+                    if (data.nicknames !== undefined)
+                        updateData.nicknames = data.nicknames || null;
+                    if (data.specialHabits !== undefined)
+                        updateData.special_habits = data.specialHabits || null;
+                    if (data.favoriteFood !== undefined)
+                        updateData.favorite_food = data.favoriteFood || null;
+                    if (data.favoriteActivity !== undefined)
+                        updateData.favorite_activity = data.favoriteActivity || null;
+                    if (data.favoritePlace !== undefined)
+                        updateData.favorite_place = data.favoritePlace || null;
+                    if (data.togetherPeriod !== undefined)
+                        updateData.together_period = data.togetherPeriod || null;
+                    if (data.memorableMemory !== undefined)
+                        updateData.memorable_memory = data.memorableMemory || null;
 
                     await supabase.from("pets").update(updateData).eq("id", id);
                 } catch {
