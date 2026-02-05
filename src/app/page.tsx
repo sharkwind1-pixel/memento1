@@ -251,34 +251,29 @@ function HomeContent() {
         }
     }, [router]);
 
-    // 자주 사용하는 탭은 마운트 유지 (탭 전환 최적화)
-    const renderPages = () => {
-        // 핵심 탭들은 항상 마운트, display로 숨김
-        const coreTabs = ["home", "record", "ai-chat"];
-        const isCore = coreTabs.includes(selectedTab);
-
-        return (
-            <>
-                {/* 핵심 탭: 마운트 유지 */}
-                <div style={{ display: selectedTab === "home" ? "block" : "none" }}>
-                    <HomePage setSelectedTab={handleTabChange} />
-                </div>
-                <div style={{ display: selectedTab === "record" ? "block" : "none" }}>
-                    <RecordPage setSelectedTab={handleTabChange} />
-                </div>
-                <div style={{ display: selectedTab === "ai-chat" ? "block" : "none" }}>
-                    <AIChatPage />
-                </div>
-
-                {/* 기타 탭: 필요 시에만 렌더 */}
-                {!isCore && selectedTab === "community" && <CommunityPage />}
-                {!isCore && selectedTab === "adoption" && <AdoptionPage setSelectedTab={handleTabChange} />}
-                {!isCore && selectedTab === "local" && <LocalPage setSelectedTab={handleTabChange} />}
-                {!isCore && selectedTab === "lost" && <LostPage setSelectedTab={handleTabChange} />}
-                {!isCore && selectedTab === "magazine" && <MagazinePage setSelectedTab={handleTabChange} />}
-                {!isCore && selectedTab === "admin" && <AdminPage />}
-            </>
-        );
+    const renderCurrentPage = () => {
+        switch (selectedTab) {
+            case "home":
+                return <HomePage setSelectedTab={handleTabChange} />;
+            case "community":
+                return <CommunityPage />;
+            case "ai-chat":
+                return <AIChatPage />;
+            case "adoption":
+                return <AdoptionPage setSelectedTab={handleTabChange} />;
+            case "local":
+                return <LocalPage setSelectedTab={handleTabChange} />;
+            case "lost":
+                return <LostPage setSelectedTab={handleTabChange} />;
+            case "magazine":
+                return <MagazinePage setSelectedTab={handleTabChange} />;
+            case "record":
+                return <RecordPage setSelectedTab={handleTabChange} />;
+            case "admin":
+                return <AdminPage />;
+            default:
+                return <HomePage setSelectedTab={handleTabChange} />;
+        }
     };
 
     // 로딩 중
@@ -301,7 +296,7 @@ function HomeContent() {
     return (
         <>
             <Layout selectedTab={selectedTab} setSelectedTab={handleTabChange}>
-                {renderPages()}
+                {renderCurrentPage()}
             </Layout>
             {user && (
                 <>
