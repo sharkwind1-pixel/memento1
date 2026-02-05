@@ -761,6 +761,7 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                         onClick={handleAddNewPet}
                         size="sm"
                         className="bg-[#05B2DC] hover:bg-[#0891B2] text-sm"
+                        data-tutorial-id="add-pet-button"
                     >
                         <Plus className="w-4 h-4 sm:mr-1" />
                         <span className="hidden sm:inline">새 반려동물</span>
@@ -951,7 +952,7 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                 ) : (
                     <>
                         {/* 펫 카드 그리드 - 1:1 비율 */}
-                        <div className="mb-6">
+                        <div className="mb-6" data-tutorial-id="pet-card-area">
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                                 {pets.map((pet) => (
                                     <div
@@ -1218,7 +1219,7 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                                     </CardContent>
                                 </Card>
 
-                                <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+                                <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm" data-tutorial-id="photo-album-section">
                                     <CardHeader className="flex flex-row items-center justify-between">
                                         <CardTitle className="text-lg">
                                             사진/영상 앨범
@@ -1312,6 +1313,7 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                                                         }
                                                         size="sm"
                                                         className="bg-[#05B2DC] hover:bg-[#0891B2]"
+                                                        data-tutorial-id="add-photo-button"
                                                     >
                                                         <Plus className="w-4 h-4 mr-1" />
                                                         사진 추가
@@ -1518,10 +1520,12 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                                 </Card>
 
                                 {/* 타임라인 일기 섹션 */}
-                                <TimelineSection
-                                    petId={selectedPet.id}
-                                    petName={selectedPet.name}
-                                />
+                                <div data-tutorial-id="timeline-section">
+                                    <TimelineSection
+                                        petId={selectedPet.id}
+                                        petName={selectedPet.name}
+                                    />
+                                </div>
 
                                 {/* 케어 리마인더 섹션 - 일상 기록 중인 펫만 */}
                                 {selectedPet.status !== "memorial" && (

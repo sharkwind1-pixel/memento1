@@ -101,6 +101,18 @@ const TutorialTour = dynamic(
     { ssr: false }
 );
 
+// 온보딩 후 유저별 안내
+const PostOnboardingGuide = dynamic(
+    () => import("@/components/features/onboarding/PostOnboardingGuide"),
+    { ssr: false }
+);
+
+// Record 페이지 스포트라이트 튜토리얼
+const RecordPageTutorial = dynamic(
+    () => import("@/components/features/onboarding/RecordPageTutorial"),
+    { ssr: false }
+);
+
 // Suspense 래퍼 (useSearchParams 필요)
 export default function Home() {
     return (
@@ -136,6 +148,10 @@ function HomeContent() {
     const [selectedTab, setSelectedTab] = useState<TabType>(getInitialTab);
     const [showOnboarding, setShowOnboarding] = useState(false);
     const [showTutorial, setShowTutorial] = useState(false);
+    const [showPostGuide, setShowPostGuide] = useState(false);
+    const [postGuideUserType, setPostGuideUserType] = useState<"planning" | "current" | "memorial" | null>(null);
+    const [showRecordTutorial, setShowRecordTutorial] = useState(false);
+    const [recordTutorialUserType, setRecordTutorialUserType] = useState<"current" | "memorial" | null>(null);
     const isInternalNavigation = useRef(false);
 
     // URL 변경 시 탭 동기화 (브라우저 뒤로가기/앞으로가기 등 외부 변경만)
@@ -157,28 +173,48 @@ function HomeContent() {
         }
     }, [searchParams, selectedTab]);
 
-    // 온보딩/튜토리얼 표시 여부 체크 + 접속 기록 (DB 기반)
+    // 신규 유저 플로우: 튜토리얼 → 온보딩 → 유저별 안내
+    // 1. 튜토리얼 먼저 (앱 소개)
+    // 2. 온보딩 (유저 타입 파악)
+    // 3. 유저 타입별 다음 단계 안내
     useEffect(() => {
-        const checkOnboardingAndUpdateActivity = async () => {
+        const checkNewUserFlow = async () => {
             if (!user) return;
 
             try {
-                // DB에서 온보딩/튜토리얼 완료 여부 확인
+                // DB에서 튜토리얼/온보딩 완료 여부 확인
                 const { data } = await supabase
                     .from("profiles")
-                    .select("onboarding_completed_at, tutorial_completed_at")
+                    .select("tutorial_completed_at, onboarding_completed_at")
                     .eq("id", user.id)
                     .single();
 
-                // 온보딩 미완료 && 등록된 펫이 없을 때만 모달 표시
-                // (기존 유저는 펫이 있으므로 온보딩 스킵)
-                if (!data?.onboarding_completed_at && pets.length === 0) {
-                    setShowOnboarding(true);
-                }
-
-                // 튜토리얼 완료 상태 localStorage 동기화
+                // localStorage 동기화
                 if (data?.tutorial_completed_at) {
                     localStorage.setItem("memento-ani-tutorial-complete", "true");
+                }
+                if (data?.onboarding_completed_at) {
+                    localStorage.setItem("memento-ani-onboarding-complete", "true");
+                }
+
+                // 기존 유저 (펫이 있음) → 플로우 스킵
+                if (pets.length > 0) {
+                    // 접속 기록만 업데이트
+                    await supabase
+                        .from("profiles")
+                        .update({ last_seen_at: new Date().toISOString() })
+                        .eq("id", user.id);
+                    return;
+                }
+
+                // 신규 유저 플로우
+                // 1. 튜토리얼 미완료 → 튜토리얼 먼저
+                if (!data?.tutorial_completed_at) {
+                    setShowTutorial(true);
+                }
+                // 2. 튜토리얼 완료 + 온보딩 미완료 → 온보딩
+                else if (!data?.onboarding_completed_at) {
+                    setShowOnboarding(true);
                 }
 
                 // 접속 기록 업데이트 (DAU 추적용)
@@ -187,15 +223,15 @@ function HomeContent() {
                     .update({ last_seen_at: new Date().toISOString() })
                     .eq("id", user.id);
             } catch {
-                // 프로필 없으면 온보딩 필요 (단, 펫이 없을 때만)
+                // 프로필 없으면 신규 유저 → 튜토리얼부터
                 if (pets.length === 0) {
-                    setShowOnboarding(true);
+                    setShowTutorial(true);
                 }
             }
         };
 
         if (user && !petsLoading) {
-            checkOnboardingAndUpdateActivity();
+            checkNewUserFlow();
         }
     }, [user, petsLoading, pets.length]);
 
@@ -263,17 +299,52 @@ function HomeContent() {
                 {renderCurrentPage()}
             </Layout>
             {user && (
-                <OnboardingModal
-                    isOpen={showOnboarding}
-                    onClose={() => setShowOnboarding(false)}
-                    onGoToRecord={() => handleTabChange("record")}
-                    onGoToHome={() => handleTabChange("home")}
-                    onStartTutorial={() => setShowTutorial(true)}
-                />
+                <>
+                    <OnboardingModal
+                        isOpen={showOnboarding}
+                        onClose={() => setShowOnboarding(false)}
+                        onGoToRecord={() => handleTabChange("record")}
+                        onGoToHome={() => handleTabChange("home")}
+                        onGoToAIChat={() => handleTabChange("ai-chat")}
+                        onShowPostGuide={(userType) => {
+                            setPostGuideUserType(userType);
+                            setShowPostGuide(true);
+                        }}
+                    />
+                    <PostOnboardingGuide
+                        isOpen={showPostGuide}
+                        userType={postGuideUserType}
+                        onClose={() => setShowPostGuide(false)}
+                        onGoToHome={() => handleTabChange("home")}
+                        onGoToRecord={() => handleTabChange("record")}
+                        onGoToAIChat={() => handleTabChange("ai-chat")}
+                        onStartRecordTutorial={(type) => {
+                            setRecordTutorialUserType(type);
+                            setShowRecordTutorial(true);
+                        }}
+                    />
+                    {recordTutorialUserType && (
+                        <RecordPageTutorial
+                            isOpen={showRecordTutorial}
+                            userType={recordTutorialUserType}
+                            onClose={() => {
+                                setShowRecordTutorial(false);
+                                setRecordTutorialUserType(null);
+                            }}
+                            onGoToAIChat={() => handleTabChange("ai-chat")}
+                        />
+                    )}
+                </>
             )}
             <TutorialTour
                 isOpen={showTutorial}
-                onClose={() => setShowTutorial(false)}
+                onClose={() => {
+                    setShowTutorial(false);
+                    // 튜토리얼 완료 후 온보딩 시작 (신규 유저만)
+                    if (pets.length === 0) {
+                        setTimeout(() => setShowOnboarding(true), 300);
+                    }
+                }}
                 onNavigate={(tab) => handleTabChange(tab as TabType)}
                 userId={user?.id}
             />
