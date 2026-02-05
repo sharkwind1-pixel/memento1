@@ -9,6 +9,13 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import {
+    getClientIP,
+    checkRateLimit,
+    checkDailyUsage,
+    getRateLimitHeaders,
+    sanitizeInput,
+} from "@/lib/rate-limit";
 
 // agent 모듈은 런타임에만 동적 import (빌드 시점 환경변수 에러 방지)
 // EmotionType, GriefStage 타입만 여기서 정의
@@ -557,6 +564,20 @@ ${timelineContext}
 
 export async function POST(request: NextRequest) {
     try {
+        // 1. IP 기반 Rate Limiting
+        const clientIP = await getClientIP();
+        const rateLimit = checkRateLimit(clientIP, "aiChat");
+
+        if (!rateLimit.allowed) {
+            return NextResponse.json(
+                { error: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요." },
+                {
+                    status: 429,
+                    headers: getRateLimitHeaders(rateLimit.remaining, rateLimit.resetIn),
+                }
+            );
+        }
+
         // API 키 확인
         if (!process.env.OPENAI_API_KEY) {
             return NextResponse.json(
@@ -597,6 +618,24 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // 2. 일일 사용량 체크 (토큰 어뷰징 방지)
+        const identifier = userId || clientIP;
+        const dailyUsage = checkDailyUsage(identifier, !!userId);
+
+        if (!dailyUsage.allowed) {
+            return NextResponse.json(
+                {
+                    error: "오늘의 대화 횟수를 모두 사용했어요. 내일 다시 만나요!",
+                    remaining: 0,
+                    isLimitReached: true,
+                },
+                { status: 429 }
+            );
+        }
+
+        // 3. 입력값 검증 (XSS, 과도한 길이 방지)
+        const sanitizedMessage = sanitizeInput(message);
+
         let emotionGuide = "";
         let memoryContext = "";
         let userEmotion: EmotionType = "neutral";
@@ -610,7 +649,7 @@ export async function POST(request: NextRequest) {
         // 에이전트 기능 활성화 시
         if (enableAgent) {
             // 1. 감정 분석 (추모 모드일 때 애도 단계도 분석)
-            const emotionResult = await agent.analyzeEmotion(message, isMemorialMode);
+            const emotionResult = await agent.analyzeEmotion(sanitizedMessage, isMemorialMode);
             userEmotion = emotionResult.emotion;
             emotionScore = emotionResult.score;
             griefStage = emotionResult.griefStage;
@@ -636,7 +675,7 @@ export async function POST(request: NextRequest) {
 
             // 5. 새로운 메모리 추출 (비동기로 처리)
             if (pet.id && userId) {
-                agent.extractMemories(message, pet.name).then(async (newMemories) => {
+                agent.extractMemories(sanitizedMessage, pet.name).then(async (newMemories) => {
                     if (newMemories && newMemories.length > 0) {
                         for (const mem of newMemories) {
                             await agent.saveMemory(userId, pet.id!, mem);
@@ -698,7 +737,7 @@ export async function POST(request: NextRequest) {
             messages: [
                 { role: "system", content: systemPrompt },
                 ...recentHistory,
-                { role: "user", content: message },
+                { role: "user", content: sanitizedMessage },
             ],
             // 일상모드: 정보 전달 시 충분한 길이 허용 (400토큰)
             // 추모모드: 따뜻하지만 적당히 (300토큰)
@@ -716,7 +755,7 @@ export async function POST(request: NextRequest) {
         if (enableAgent && pet.id && userId) {
             // 비동기로 저장 (응답 속도에 영향 없음)
             Promise.all([
-                agent.saveMessage(userId, pet.id, "user", message, userEmotion, emotionScore),
+                agent.saveMessage(userId, pet.id, "user", sanitizedMessage, userEmotion, emotionScore),
                 agent.saveMessage(userId, pet.id, "assistant", reply),
             ]).catch(() => { /* 무시 */ });
         }
@@ -724,7 +763,7 @@ export async function POST(request: NextRequest) {
         // 세션 요약 생성 (10번째 메시지마다 비동기로)
         // 프론트엔드에서 chatHistory.length로 체크하여 호출 가능
         if (enableAgent && pet.id && userId && chatHistory.length > 0 && chatHistory.length % 10 === 0) {
-            const allMessages = [...chatHistory, { role: "user", content: message }, { role: "assistant", content: reply }];
+            const allMessages = [...chatHistory, { role: "user", content: sanitizedMessage }, { role: "assistant", content: reply }];
             agent.generateConversationSummary(allMessages, pet.name, isMemorialMode)
                 .then(async (summary) => {
                     if (summary) {
@@ -740,6 +779,9 @@ export async function POST(request: NextRequest) {
             emotionScore,
             griefStage: isMemorialMode ? griefStage : undefined,
             usage: completion.usage,
+            // Rate Limit 정보
+            remaining: dailyUsage.remaining,
+            isWarning: dailyUsage.isWarning, // 남은 횟수 10회 이하일 때 true
         });
     } catch (error) {
         // OpenAI API 에러 처리

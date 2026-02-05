@@ -2,10 +2,23 @@
  * 커뮤니티 게시글 API
  * GET: 게시글 목록 조회
  * POST: 게시글 작성
+ *
+ * 보안:
+ * - POST 요청 시 세션 기반 인증 필수
+ * - 검색어 SQL Injection 방지
+ * - Rate Limiting 적용
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { getAuthUser } from "@/lib/supabase-server";
+import {
+    getClientIP,
+    checkRateLimit,
+    getRateLimitHeaders,
+    sanitizeSearchQuery,
+    sanitizeInput,
+} from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -39,9 +52,12 @@ export async function GET(request: NextRequest) {
             query = query.eq("animal_type", animalType);
         }
 
-        // 검색어 필터
+        // 검색어 필터 (SQL Injection 방지)
         if (search) {
-            query = query.or(`title.ilike.%${search}%,content.ilike.%${search}%`);
+            const sanitizedSearch = sanitizeSearchQuery(search);
+            if (sanitizedSearch) {
+                query = query.or(`title.ilike.%${sanitizedSearch}%,content.ilike.%${sanitizedSearch}%`);
+            }
         }
 
         // 정렬
@@ -87,25 +103,59 @@ export async function GET(request: NextRequest) {
 // 게시글 작성
 export async function POST(request: NextRequest) {
     try {
+        // 1. Rate Limiting (스팸 방지)
+        const clientIP = await getClientIP();
+        const rateLimit = checkRateLimit(clientIP, "write");
+
+        if (!rateLimit.allowed) {
+            return NextResponse.json(
+                { error: "게시글 작성이 너무 빠릅니다. 잠시 후 다시 시도해주세요." },
+                {
+                    status: 429,
+                    headers: getRateLimitHeaders(rateLimit.remaining, rateLimit.resetIn),
+                }
+            );
+        }
+
+        // 2. 인증 확인 (세션 기반 - 타인 명의 글 작성 방지)
+        const user = await getAuthUser();
+        if (!user) {
+            return NextResponse.json(
+                { error: "로그인이 필요합니다." },
+                { status: 401 }
+            );
+        }
+
         const supabase = getSupabase();
         const body = await request.json();
 
-        const { userId, boardType, animalType, badge, title, content, authorName } = body;
+        const { boardType, animalType, badge, title, content, authorName } = body;
 
-        if (!userId || !boardType || !badge || !title || !content || !authorName) {
+        // 3. 필수 필드 검증
+        if (!boardType || !badge || !title || !content || !authorName) {
             return NextResponse.json({ error: "필수 필드 누락" }, { status: 400 });
         }
 
+        // 4. 입력값 검증 및 Sanitize
+        const sanitizedTitle = sanitizeInput(title).slice(0, 200); // 제목 200자 제한
+        const sanitizedContent = sanitizeInput(content).slice(0, 10000); // 내용 10000자 제한
+        const sanitizedAuthorName = sanitizeInput(authorName).slice(0, 50);
+
+        if (!sanitizedTitle || !sanitizedContent) {
+            return NextResponse.json({ error: "유효하지 않은 입력입니다." }, { status: 400 });
+        }
+
+        // 5. 게시글 저장 (세션에서 가져온 userId 사용)
         const { data, error } = await supabase
             .from("community_posts")
             .insert([{
-                user_id: userId,
+                user_id: user.id, // 세션에서 가져온 userId 사용 (보안!)
                 board_type: boardType,
                 animal_type: animalType || null,
                 badge,
-                title,
-                content,
-                author_name: authorName,
+                title: sanitizedTitle,
+                content: sanitizedContent,
+                author_name: sanitizedAuthorName,
             }])
             .select()
             .single();
