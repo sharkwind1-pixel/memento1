@@ -3,6 +3,7 @@
  * - IP별 요청 횟수 제한
  * - 의심스러운 활동 탐지
  * - 토큰 어뷰징 방지
+ * - VPN/프록시 감지
  */
 
 import { headers } from "next/headers";
@@ -11,6 +12,7 @@ import { headers } from "next/headers";
 const ipRequestCounts = new Map<string, { count: number; resetTime: number }>();
 const ipBlockList = new Map<string, number>(); // IP -> 차단 해제 시간
 const userDailyUsage = new Map<string, { count: number; date: string }>();
+const vpnCheckCache = new Map<string, { isVPN: boolean; checkedAt: number }>(); // VPN 체크 캐시
 
 // Rate Limit 설정
 const RATE_LIMITS = {
@@ -237,6 +239,276 @@ export function detectSuspiciousActivity(
     }
 
     return { suspicious: false };
+}
+
+// ============================================
+// VPN/프록시 감지 시스템
+// ============================================
+
+// 알려진 VPN/데이터센터 IP 대역 (일부)
+// 실제 서비스에서는 MaxMind, IP2Location 등 DB 사용 권장
+const KNOWN_VPN_RANGES = [
+    // NordVPN 일부
+    "185.159.156.", "185.159.157.", "185.159.158.", "185.159.159.",
+    // ExpressVPN 일부
+    "185.94.188.", "185.94.189.", "185.94.190.", "185.94.191.",
+    // 일반적인 데이터센터 대역
+    "104.238.", "104.243.", "45.33.", "45.56.", "45.79.",
+    "66.228.", "96.126.", "173.230.", "173.255.",
+    // AWS, GCP, Azure 일부 (대량의 봇이 사용)
+    "35.192.", "35.193.", "35.194.", "35.195.",
+    "52.0.", "52.1.", "52.2.", "52.3.",
+    "13.64.", "13.65.", "13.66.", "13.67.",
+];
+
+// 의심스러운 ASN 키워드 (IP 정보 조회 시 사용)
+const SUSPICIOUS_ASN_KEYWORDS = [
+    "hosting", "datacenter", "cloud", "server", "vps",
+    "proxy", "vpn", "tunnel", "anonymous"
+];
+
+/**
+ * 헤더 기반 VPN/프록시 감지 (빠름, 무료)
+ */
+export async function detectVPNByHeaders(): Promise<{
+    isVPN: boolean;
+    confidence: "high" | "medium" | "low";
+    reason?: string;
+}> {
+    const headersList = await headers();
+    let suspicionScore = 0;
+    const reasons: string[] = [];
+
+    // 1. 프록시 관련 헤더 체크
+    const proxyHeaders = [
+        "via",
+        "x-forwarded-for",
+        "forwarded",
+        "x-proxy-id",
+        "proxy-connection",
+    ];
+
+    for (const header of proxyHeaders) {
+        const value = headersList.get(header);
+        if (value) {
+            // X-Forwarded-For에 여러 IP가 있으면 프록시 경유
+            if (header === "x-forwarded-for" && value.includes(",")) {
+                suspicionScore += 2;
+                reasons.push("Multiple proxy hops detected");
+            }
+            // Via 헤더가 있으면 프록시 사용
+            if (header === "via") {
+                suspicionScore += 3;
+                reasons.push("Via header present");
+            }
+        }
+    }
+
+    // 2. VPN 관련 헤더 체크 (일부 VPN이 남기는 흔적)
+    const vpnHeaders = [
+        "x-vpn",
+        "x-anonymous",
+        "x-proxy",
+    ];
+
+    for (const header of vpnHeaders) {
+        if (headersList.get(header)) {
+            suspicionScore += 5;
+            reasons.push(`VPN header: ${header}`);
+        }
+    }
+
+    // 3. 불일치 체크 - Cloudflare 국가와 Accept-Language
+    const cfCountry = headersList.get("cf-ipcountry");
+    const acceptLang = headersList.get("accept-language");
+
+    if (cfCountry && acceptLang) {
+        // 한국 IP인데 한국어가 없으면 의심
+        if (cfCountry === "KR" && !acceptLang.includes("ko")) {
+            suspicionScore += 1;
+            reasons.push("Language mismatch");
+        }
+        // 해외 IP인데 한국어만 있으면 VPN 가능성
+        if (cfCountry !== "KR" && acceptLang.startsWith("ko") && !acceptLang.includes("en")) {
+            suspicionScore += 2;
+            reasons.push("Possible VPN (KR user from abroad)");
+        }
+    }
+
+    // 4. 비정상적인 User-Agent 조합 체크
+    const userAgent = headersList.get("user-agent");
+    if (userAgent) {
+        // 모바일 UA인데 화면 관련 힌트가 데스크톱인 경우
+        if (userAgent.includes("Mobile") && headersList.get("sec-ch-ua-mobile") === "?0") {
+            suspicionScore += 2;
+            reasons.push("UA inconsistency");
+        }
+    }
+
+    // 점수 기반 판정
+    if (suspicionScore >= 5) {
+        return { isVPN: true, confidence: "high", reason: reasons.join(", ") };
+    } else if (suspicionScore >= 3) {
+        return { isVPN: true, confidence: "medium", reason: reasons.join(", ") };
+    } else if (suspicionScore >= 1) {
+        return { isVPN: false, confidence: "low", reason: reasons.join(", ") };
+    }
+
+    return { isVPN: false, confidence: "low" };
+}
+
+/**
+ * IP 대역 기반 VPN 감지 (빠름, 무료)
+ */
+export function detectVPNByIPRange(ip: string): boolean {
+    // 알려진 VPN/데이터센터 IP 대역 체크
+    for (const range of KNOWN_VPN_RANGES) {
+        if (ip.startsWith(range)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * 외부 API를 통한 VPN 감지 (정확함, API 키 필요)
+ * IPInfo.io 무료 플랜: 월 50,000 요청
+ * 환경변수: IPINFO_TOKEN
+ */
+export async function detectVPNByAPI(ip: string): Promise<{
+    isVPN: boolean;
+    isProxy: boolean;
+    isDatacenter: boolean;
+    country?: string;
+    org?: string;
+}> {
+    // 캐시 확인 (24시간)
+    const cached = vpnCheckCache.get(ip);
+    if (cached && Date.now() - cached.checkedAt < 24 * 60 * 60 * 1000) {
+        return {
+            isVPN: cached.isVPN,
+            isProxy: cached.isVPN,
+            isDatacenter: cached.isVPN,
+        };
+    }
+
+    const token = process.env.IPINFO_TOKEN;
+    if (!token) {
+        // API 키 없으면 헤더/IP 대역 기반 감지만 사용
+        return {
+            isVPN: false,
+            isProxy: false,
+            isDatacenter: false,
+        };
+    }
+
+    try {
+        const response = await fetch(`https://ipinfo.io/${ip}?token=${token}`, {
+            next: { revalidate: 86400 }, // 24시간 캐시
+        });
+
+        if (!response.ok) {
+            return { isVPN: false, isProxy: false, isDatacenter: false };
+        }
+
+        const data = await response.json();
+
+        // IPInfo privacy 필드 체크 (유료 플랜)
+        const isVPN = data.privacy?.vpn || false;
+        const isProxy = data.privacy?.proxy || false;
+
+        // 무료 플랜: ASN/org 이름으로 추정
+        const org = (data.org || "").toLowerCase();
+        const isDatacenter = SUSPICIOUS_ASN_KEYWORDS.some(keyword =>
+            org.includes(keyword)
+        );
+
+        // 캐시 저장
+        vpnCheckCache.set(ip, {
+            isVPN: isVPN || isProxy || isDatacenter,
+            checkedAt: Date.now(),
+        });
+
+        return {
+            isVPN,
+            isProxy,
+            isDatacenter,
+            country: data.country,
+            org: data.org,
+        };
+    } catch {
+        return { isVPN: false, isProxy: false, isDatacenter: false };
+    }
+}
+
+/**
+ * 종합 VPN 감지 (헤더 + IP 대역 + API)
+ */
+export async function checkVPN(ip: string): Promise<{
+    blocked: boolean;
+    isVPN: boolean;
+    confidence: "high" | "medium" | "low";
+    reason?: string;
+}> {
+    // 1단계: IP 대역 체크 (가장 빠름)
+    if (detectVPNByIPRange(ip)) {
+        return {
+            blocked: true,
+            isVPN: true,
+            confidence: "high",
+            reason: "Known VPN/Datacenter IP range",
+        };
+    }
+
+    // 2단계: 헤더 기반 체크
+    const headerCheck = await detectVPNByHeaders();
+    if (headerCheck.isVPN && headerCheck.confidence === "high") {
+        return {
+            blocked: true,
+            isVPN: true,
+            confidence: "high",
+            reason: headerCheck.reason,
+        };
+    }
+
+    // 3단계: API 체크 (있는 경우에만)
+    if (process.env.IPINFO_TOKEN) {
+        const apiCheck = await detectVPNByAPI(ip);
+        if (apiCheck.isVPN || apiCheck.isProxy || apiCheck.isDatacenter) {
+            return {
+                blocked: true,
+                isVPN: true,
+                confidence: "high",
+                reason: `Detected by API: ${apiCheck.org || "VPN/Proxy"}`,
+            };
+        }
+    }
+
+    // Medium confidence는 경고만 (차단 안함)
+    if (headerCheck.confidence === "medium") {
+        return {
+            blocked: false,
+            isVPN: true,
+            confidence: "medium",
+            reason: headerCheck.reason,
+        };
+    }
+
+    return {
+        blocked: false,
+        isVPN: false,
+        confidence: "low",
+    };
+}
+
+/**
+ * VPN 사용자에게 반환할 에러 응답
+ */
+export function getVPNBlockResponse() {
+    return {
+        error: "VPN/프록시 사용이 감지되었습니다. 보안을 위해 VPN을 끄고 다시 시도해주세요.",
+        code: "VPN_DETECTED",
+    };
 }
 
 // Rate Limit 응답 헤더 생성

@@ -18,6 +18,8 @@ import {
     getRateLimitHeaders,
     sanitizeSearchQuery,
     sanitizeInput,
+    checkVPN,
+    getVPNBlockResponse,
 } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
@@ -115,6 +117,13 @@ export async function POST(request: NextRequest) {
                     headers: getRateLimitHeaders(rateLimit.remaining, rateLimit.resetIn),
                 }
             );
+        }
+
+        // 1.5. VPN/프록시 감지 (게시글 작성은 VPN 차단)
+        const vpnCheck = await checkVPN(clientIP);
+        if (vpnCheck.blocked) {
+            console.warn(`[Security] VPN blocked (post): ${clientIP} - ${vpnCheck.reason}`);
+            return NextResponse.json(getVPNBlockResponse(), { status: 403 });
         }
 
         // 2. 인증 확인 (세션 기반 - 타인 명의 글 작성 방지)

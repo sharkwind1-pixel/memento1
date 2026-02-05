@@ -15,6 +15,8 @@ import {
     checkDailyUsage,
     getRateLimitHeaders,
     sanitizeInput,
+    checkVPN,
+    getVPNBlockResponse,
 } from "@/lib/rate-limit";
 
 // agent 모듈은 런타임에만 동적 import (빌드 시점 환경변수 에러 방지)
@@ -576,6 +578,13 @@ export async function POST(request: NextRequest) {
                     headers: getRateLimitHeaders(rateLimit.remaining, rateLimit.resetIn),
                 }
             );
+        }
+
+        // 1.5. VPN/프록시 감지
+        const vpnCheck = await checkVPN(clientIP);
+        if (vpnCheck.blocked) {
+            console.warn(`[Security] VPN blocked: ${clientIP} - ${vpnCheck.reason}`);
+            return NextResponse.json(getVPNBlockResponse(), { status: 403 });
         }
 
         // API 키 확인
