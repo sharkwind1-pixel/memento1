@@ -14,6 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePets } from "@/contexts/PetContext";
 import Layout from "@/components/common/Layout";
 import { supabase } from "@/lib/supabase";
+import { PawPrint, Loader2 } from "lucide-react";
 
 // 유효한 탭인지 확인
 const VALID_TABS: TabType[] = ["home", "record", "community", "ai-chat", "magazine", "adoption", "local", "lost", "admin"];
@@ -21,18 +22,16 @@ const isValidTab = (tab: string | null): tab is TabType => {
     return tab !== null && VALID_TABS.includes(tab as TabType);
 };
 
-// 페이지 로딩 컴포넌트
+// 페이지 로딩 컴포넌트 - 발자국 애니메이션
 function PageLoader() {
     return (
         <div className="flex items-center justify-center min-h-[60vh]">
             <div className="text-center">
-                <div className="w-12 h-12 bg-gradient-to-br from-sky-200 to-violet-200 rounded-full flex items-center justify-center mx-auto mb-3 animate-pulse">
-                    <svg className="w-6 h-6 text-violet-500 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
+                <div className="relative w-14 h-14 mx-auto mb-4">
+                    <PawPrint className="w-14 h-14 text-[#05B2DC]/20" />
+                    <Loader2 className="w-14 h-14 text-[#05B2DC] animate-spin absolute inset-0" />
                 </div>
-                <p className="text-gray-400 text-sm">페이지 로딩 중...</p>
+                <p className="text-gray-400 text-sm">로딩 중...</p>
             </div>
         </div>
     );
@@ -281,10 +280,9 @@ function HomeContent() {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sky-50 to-violet-50">
                 <div className="text-center">
-                    <div className="w-16 h-16 bg-gradient-to-br from-sky-200 to-violet-200 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-                        <svg className="w-8 h-8 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                        </svg>
+                    <div className="relative w-16 h-16 mx-auto mb-4">
+                        <PawPrint className="w-16 h-16 text-[#05B2DC]/20" />
+                        <Loader2 className="w-16 h-16 text-[#05B2DC] animate-spin absolute inset-0" />
                     </div>
                     <p className="text-gray-500">로딩 중...</p>
                 </div>
