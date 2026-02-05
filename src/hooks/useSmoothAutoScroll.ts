@@ -19,8 +19,11 @@ export function useSmoothAutoScroll() {
         const SPEED = 0.5;
         const refs = [communityScrollRef, adoptionScrollRef, petcareScrollRef, memorialScrollRef];
 
+        console.log("[AutoScroll] 훅 마운트됨");
+
         // DOM 렌더링 대기
         const startTimer = setTimeout(() => {
+            console.log("[AutoScroll] 애니메이션 시작");
             refs.forEach((ref, index) => {
                 let lastTime = 0;
 
