@@ -38,14 +38,26 @@ export default function PostOnboardingGuide({
         if (!isOpen || !userType) return;
 
         if (userType === "current" || userType === "memorial") {
-            onClose();
+            // 1. 먼저 페이지 이동
             onGoToRecord();
-            // 페이지 전환 후 튜토리얼 시작 (약간의 딜레이)
-            setTimeout(() => {
+
+            // 2. 페이지 전환 완료 후 튜토리얼 시작
+            const tutorialTimer = setTimeout(() => {
                 onStartRecordTutorial(userType);
-            }, 500);
+            }, 600);
+
+            // 3. 튜토리얼 시작 후 PostGuide 닫기
+            const closeTimer = setTimeout(() => {
+                onClose();
+            }, 700);
+
+            return () => {
+                clearTimeout(tutorialTimer);
+                clearTimeout(closeTimer);
+            };
         }
-    }, [isOpen, userType, onClose, onGoToRecord, onStartRecordTutorial]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen, userType]);
 
     if (!isOpen || !userType) return null;
 
