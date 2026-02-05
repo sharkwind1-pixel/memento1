@@ -139,7 +139,8 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
     useEffect(() => {
         const cleanup = scroll.startAutoScroll?.(true);
         return typeof cleanup === "function" ? cleanup : undefined;
-    }, [scroll]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const adoptionTileItems = useMemo<LightboxItem[]>(() => {
         return bestPosts.adoption
