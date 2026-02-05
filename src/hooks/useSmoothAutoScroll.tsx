@@ -5,68 +5,65 @@
 
 "use client";
 
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useCallback } from "react";
 
 export function useSmoothAutoScroll() {
     const communityScrollRef = useRef<HTMLDivElement>(null);
     const adoptionScrollRef = useRef<HTMLDivElement>(null);
     const petcareScrollRef = useRef<HTMLDivElement>(null);
     const memorialScrollRef = useRef<HTMLDivElement>(null);
-    const [isRunning, setIsRunning] = useState(false);
     const animationIdsRef = useRef<number[]>([]);
 
-    // 자동 스크롤 애니메이션 - 모든 섹션 동일한 속도
+    // 마운트 시 자동 시작
     useEffect(() => {
-        if (!isRunning) return;
-
-        const SPEED = 0.5; // 모든 섹션 동일한 속도
+        const SPEED = 0.5;
         const refs = [communityScrollRef, adoptionScrollRef, petcareScrollRef, memorialScrollRef];
 
-        // 각 섹션별 독립적인 애니메이션
-        refs.forEach((ref, index) => {
-            let lastTime = 0;
+        // DOM 렌더링 대기
+        const startTimer = setTimeout(() => {
+            refs.forEach((ref, index) => {
+                let lastTime = 0;
 
-            const animate = (currentTime: number) => {
-                const container = ref.current;
-                if (!container) {
-                    animationIdsRef.current[index] = requestAnimationFrame(animate);
-                    return;
-                }
-
-                const deltaTime = lastTime ? currentTime - lastTime : 16.67;
-                lastTime = currentTime;
-
-                const maxScroll = container.scrollWidth - container.clientWidth;
-
-                if (maxScroll > 0) {
-                    const scrollAmount = SPEED * (deltaTime / 16.67);
-                    container.scrollLeft += scrollAmount;
-
-                    if (container.scrollLeft >= maxScroll) {
-                        container.scrollLeft = 0;
+                const animate = (currentTime: number) => {
+                    const container = ref.current;
+                    if (!container) {
+                        animationIdsRef.current[index] = requestAnimationFrame(animate);
+                        return;
                     }
-                }
+
+                    const deltaTime = lastTime ? currentTime - lastTime : 16.67;
+                    lastTime = currentTime;
+
+                    const maxScroll = container.scrollWidth - container.clientWidth;
+
+                    if (maxScroll > 0) {
+                        const scrollAmount = SPEED * (deltaTime / 16.67);
+                        container.scrollLeft += scrollAmount;
+
+                        if (container.scrollLeft >= maxScroll) {
+                            container.scrollLeft = 0;
+                        }
+                    }
+
+                    animationIdsRef.current[index] = requestAnimationFrame(animate);
+                };
 
                 animationIdsRef.current[index] = requestAnimationFrame(animate);
-            };
-
-            // 모든 섹션 동시에 시작
-            animationIdsRef.current[index] = requestAnimationFrame(animate);
-        });
+            });
+        }, 500);
 
         return () => {
+            clearTimeout(startTimer);
             animationIdsRef.current.forEach((id) => {
                 if (id) cancelAnimationFrame(id);
             });
             animationIdsRef.current = [];
         };
-    }, [isRunning]);
+    }, []);
 
-    // 외부에서 호출 (기존 API 호환)
-    const startAutoScroll = useCallback((enabled: boolean = true) => {
-        // DOM 렌더링 대기 후 시작
-        setTimeout(() => setIsRunning(enabled), 500);
-        return () => setIsRunning(false);
+    // 기존 API 호환 (더 이상 필요 없지만 유지)
+    const startAutoScroll = useCallback(() => {
+        return () => {};
     }, []);
 
     return {
