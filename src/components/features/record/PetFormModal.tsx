@@ -56,6 +56,7 @@ export default function PetFormModal({
     onSave,
 }: PetFormModalProps) {
     const [step, setStep] = useState(1);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         name: "",
         type: "강아지" as Pet["type"],
@@ -91,6 +92,7 @@ export default function PetFormModal({
     useEffect(() => {
         if (isOpen) {
             setStep(1);
+            setIsSubmitting(false); // 초기화
             if (pet) {
                 setFormData({
                     name: pet.name,
@@ -188,12 +190,20 @@ export default function PetFormModal({
     };
 
     const handleSubmit = async () => {
-        await onSave({
-            ...formData,
-            howWeMet: formData.howWeMet || undefined,
-            profileImage: profilePreview,
-            profileCropPosition,
-        });
+        // 중복 제출 방지
+        if (isSubmitting) return;
+        setIsSubmitting(true);
+
+        try {
+            await onSave({
+                ...formData,
+                howWeMet: formData.howWeMet || undefined,
+                profileImage: profilePreview,
+                profileCropPosition,
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     // Step 1: 사진/이름
@@ -664,10 +674,11 @@ export default function PetFormModal({
                         ) : (
                             <Button
                                 onClick={handleSubmit}
-                                className="flex-1 bg-[#05B2DC] hover:bg-[#0891B2]"
+                                disabled={isSubmitting}
+                                className="flex-1 bg-[#05B2DC] hover:bg-[#0891B2] disabled:opacity-50"
                             >
                                 <Check className="w-4 h-4 mr-2" />
-                                {pet ? "수정하기" : "등록하기"}
+                                {isSubmitting ? "저장 중..." : pet ? "수정하기" : "등록하기"}
                             </Button>
                         )}
                     </div>
