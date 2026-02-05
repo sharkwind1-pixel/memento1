@@ -19,13 +19,11 @@ export function useSmoothAutoScroll() {
         const SPEED = 0.5;
         const refs = [communityScrollRef, adoptionScrollRef, petcareScrollRef, memorialScrollRef];
 
-        console.log("[AutoScroll] 훅 마운트됨");
-
         // DOM 렌더링 대기
         const startTimer = setTimeout(() => {
-            console.log("[AutoScroll] 애니메이션 시작");
             refs.forEach((ref, index) => {
                 let lastTime = 0;
+                let scrollPos = 0; // 소수점 누적용
 
                 const animate = (currentTime: number) => {
                     const container = ref.current;
@@ -40,11 +38,11 @@ export function useSmoothAutoScroll() {
                     const maxScroll = container.scrollWidth - container.clientWidth;
 
                     if (maxScroll > 0) {
-                        const scrollAmount = SPEED * (deltaTime / 16.67);
-                        container.scrollLeft += scrollAmount;
+                        scrollPos += SPEED * (deltaTime / 16.67);
+                        container.scrollLeft = Math.round(scrollPos);
 
-                        if (container.scrollLeft >= maxScroll) {
-                            container.scrollLeft = 0;
+                        if (scrollPos >= maxScroll) {
+                            scrollPos = 0;
                         }
                     }
 
