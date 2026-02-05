@@ -14,7 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePets } from "@/contexts/PetContext";
 import Layout from "@/components/common/Layout";
 import { supabase } from "@/lib/supabase";
-import { PawPrint, Loader2 } from "lucide-react";
+import { PawPrint } from "lucide-react";
 
 // 유효한 탭인지 확인
 const VALID_TABS: TabType[] = ["home", "record", "community", "ai-chat", "magazine", "adoption", "local", "lost", "admin"];
@@ -22,14 +22,22 @@ const isValidTab = (tab: string | null): tab is TabType => {
     return tab !== null && VALID_TABS.includes(tab as TabType);
 };
 
-// 페이지 로딩 컴포넌트 - 발자국 애니메이션
+// 페이지 로딩 컴포넌트 - 발자국 총총총 애니메이션
 function PageLoader() {
     return (
         <div className="flex items-center justify-center min-h-[60vh]">
             <div className="text-center">
-                <div className="relative w-14 h-14 mx-auto mb-4">
-                    <PawPrint className="w-14 h-14 text-[#05B2DC]/20" />
-                    <Loader2 className="w-14 h-14 text-[#05B2DC] animate-spin absolute inset-0" />
+                <div className="flex gap-3 mb-4 justify-center">
+                    {[0, 1, 2].map((i) => (
+                        <PawPrint
+                            key={i}
+                            className="w-7 h-7 text-[#05B2DC] animate-bounce"
+                            style={{
+                                animationDelay: `${i * 0.15}s`,
+                                animationDuration: "0.5s",
+                            }}
+                        />
+                    ))}
                 </div>
                 <p className="text-gray-400 text-sm">로딩 중...</p>
             </div>
@@ -280,9 +288,17 @@ function HomeContent() {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sky-50 to-violet-50">
                 <div className="text-center">
-                    <div className="relative w-16 h-16 mx-auto mb-4">
-                        <PawPrint className="w-16 h-16 text-[#05B2DC]/20" />
-                        <Loader2 className="w-16 h-16 text-[#05B2DC] animate-spin absolute inset-0" />
+                    <div className="flex gap-3 mb-4 justify-center">
+                        {[0, 1, 2].map((i) => (
+                            <PawPrint
+                                key={i}
+                                className="w-8 h-8 text-[#05B2DC] animate-bounce"
+                                style={{
+                                    animationDelay: `${i * 0.15}s`,
+                                    animationDuration: "0.5s",
+                                }}
+                            />
+                        ))}
                     </div>
                     <p className="text-gray-500">로딩 중...</p>
                 </div>
