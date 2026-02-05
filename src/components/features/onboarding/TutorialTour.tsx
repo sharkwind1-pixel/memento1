@@ -9,11 +9,13 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Sparkles } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 interface TutorialTourProps {
     isOpen: boolean;
     onClose: () => void;
     onNavigate: (tab: string) => void;
+    userId?: string; // DB 저장용
 }
 
 interface TutorialStep {
@@ -46,19 +48,53 @@ const MOBILE_STEPS: TutorialStep[] = [
 
 const TUTORIAL_STORAGE_KEY = "memento-ani-tutorial-complete";
 
+// 튜토리얼 완료 여부 확인 (localStorage 캐시)
 export function hasCompletedTutorial(): boolean {
     if (typeof window === "undefined") return true;
     return localStorage.getItem(TUTORIAL_STORAGE_KEY) === "true";
 }
 
+// DB에서 튜토리얼 상태 확인 (비동기)
+export async function checkTutorialFromDB(userId: string): Promise<boolean> {
+    try {
+        const { data } = await supabase
+            .from("profiles")
+            .select("tutorial_completed_at")
+            .eq("id", userId)
+            .single();
+
+        if (data?.tutorial_completed_at) {
+            localStorage.setItem(TUTORIAL_STORAGE_KEY, "true");
+            return true;
+        }
+        return false;
+    } catch {
+        return false;
+    }
+}
+
+// 튜토리얼 완료 표시 (localStorage)
 export function markTutorialComplete(): void {
     localStorage.setItem(TUTORIAL_STORAGE_KEY, "true");
+}
+
+// 튜토리얼 완료 DB 저장 (비동기)
+export async function saveTutorialCompleteToDb(userId: string): Promise<void> {
+    try {
+        await supabase
+            .from("profiles")
+            .update({ tutorial_completed_at: new Date().toISOString() })
+            .eq("id", userId);
+    } catch {
+        // 실패해도 localStorage에는 저장됨
+    }
 }
 
 export default function TutorialTour({
     isOpen,
     onClose,
     onNavigate,
+    userId,
 }: TutorialTourProps) {
     const [currentStep, setCurrentStep] = useState(0);
     const [mounted, setMounted] = useState(false);
@@ -159,15 +195,21 @@ export default function TutorialTour({
 
     const step = steps[currentStep];
 
-    const handleComplete = () => {
+    const handleComplete = async () => {
         markTutorialComplete();
+        if (userId) {
+            saveTutorialCompleteToDb(userId);
+        }
         document.body.style.overflow = "";
         onNavigateRef.current("home");
         onClose();
     };
 
-    const handleSkip = () => {
+    const handleSkip = async () => {
         markTutorialComplete();
+        if (userId) {
+            saveTutorialCompleteToDb(userId);
+        }
         document.body.style.overflow = "";
         onNavigateRef.current("home");
         onClose();

@@ -157,16 +157,16 @@ function HomeContent() {
         }
     }, [searchParams, selectedTab]);
 
-    // 온보딩 표시 여부 체크 + 접속 기록 (DB 기반)
+    // 온보딩/튜토리얼 표시 여부 체크 + 접속 기록 (DB 기반)
     useEffect(() => {
         const checkOnboardingAndUpdateActivity = async () => {
             if (!user) return;
 
             try {
-                // DB에서 온보딩 완료 여부 확인
+                // DB에서 온보딩/튜토리얼 완료 여부 확인
                 const { data } = await supabase
                     .from("profiles")
-                    .select("onboarding_completed_at")
+                    .select("onboarding_completed_at, tutorial_completed_at")
                     .eq("id", user.id)
                     .single();
 
@@ -174,6 +174,11 @@ function HomeContent() {
                 // (기존 유저는 펫이 있으므로 온보딩 스킵)
                 if (!data?.onboarding_completed_at && pets.length === 0) {
                     setShowOnboarding(true);
+                }
+
+                // 튜토리얼 완료 상태 localStorage 동기화
+                if (data?.tutorial_completed_at) {
+                    localStorage.setItem("memento-ani-tutorial-complete", "true");
                 }
 
                 // 접속 기록 업데이트 (DAU 추적용)
@@ -270,6 +275,7 @@ function HomeContent() {
                 isOpen={showTutorial}
                 onClose={() => setShowTutorial(false)}
                 onNavigate={(tab) => handleTabChange(tab as TabType)}
+                userId={user?.id}
             />
         </>
     );

@@ -39,13 +39,33 @@ interface OnboardingModalProps {
 
 const ONBOARDING_STORAGE_KEY = "memento-ani-onboarding-complete";
 
-// 온보딩 완료 여부 확인
+// 온보딩 완료 여부 확인 (localStorage 캐시 + DB 동기화)
 export function hasCompletedOnboarding(): boolean {
     if (typeof window === "undefined") return true;
     return localStorage.getItem(ONBOARDING_STORAGE_KEY) === "true";
 }
 
-// 온보딩 완료 표시
+// DB에서 온보딩 상태 확인 (비동기)
+export async function checkOnboardingFromDB(userId: string): Promise<boolean> {
+    try {
+        const { data } = await supabase
+            .from("profiles")
+            .select("onboarding_completed_at")
+            .eq("id", userId)
+            .single();
+
+        if (data?.onboarding_completed_at) {
+            // DB에 완료 기록이 있으면 localStorage도 동기화
+            localStorage.setItem(ONBOARDING_STORAGE_KEY, "true");
+            return true;
+        }
+        return false;
+    } catch {
+        return false;
+    }
+}
+
+// 온보딩 완료 표시 (localStorage 캐시)
 export function markOnboardingComplete(): void {
     localStorage.setItem(ONBOARDING_STORAGE_KEY, "true");
 }

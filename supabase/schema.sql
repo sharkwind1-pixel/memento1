@@ -20,10 +20,11 @@ CREATE TABLE IF NOT EXISTS profiles (
     is_admin BOOLEAN DEFAULT false,
     is_banned BOOLEAN DEFAULT false,
 
-    -- 온보딩
+    -- 온보딩 & 튜토리얼
     user_type TEXT, -- 'planning', 'current', 'memorial'
     onboarding_data JSONB,
     onboarding_completed_at TIMESTAMPTZ,
+    tutorial_completed_at TIMESTAMPTZ,
 
     -- 활동 추적
     last_seen_at TIMESTAMPTZ DEFAULT NOW(),
