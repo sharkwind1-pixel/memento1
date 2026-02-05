@@ -1,33 +1,53 @@
 /**
  * 게시글 좋아요 API
  * POST: 좋아요 토글
+ *
+ * 보안: 세션 기반 인증, Rate Limiting, VPN 차단
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
+import {
+    getClientIP,
+    checkRateLimit,
+    getRateLimitHeaders,
+    checkVPN,
+    getVPNBlockResponse
+} from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
-
-function getSupabase() {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!url || !key) throw new Error("Supabase 환경변수 없음");
-    return createClient(url, key);
-}
 
 export async function POST(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const supabase = getSupabase();
-        const { id: postId } = await params;
-        const body = await request.json();
-        const { userId } = body;
+        // 1. Rate Limit 체크
+        const clientIP = await getClientIP();
+        const rateLimit = checkRateLimit(clientIP, "write");
+        if (!rateLimit.allowed) {
+            return NextResponse.json(
+                { error: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요." },
+                { status: 429, headers: getRateLimitHeaders(rateLimit.remaining, rateLimit.resetIn) }
+            );
+        }
 
-        if (!userId) {
+        // 2. VPN 체크
+        const vpnCheck = await checkVPN(clientIP);
+        if (vpnCheck.blocked) {
+            console.warn(`[Security] VPN blocked on like: ${clientIP} - ${vpnCheck.reason}`);
+            return NextResponse.json(getVPNBlockResponse(), { status: 403 });
+        }
+
+        // 3. 세션 기반 인증 (body에서 userId 받지 않음!)
+        const user = await getAuthUser();
+        if (!user) {
             return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
         }
+
+        const supabase = await createServerSupabase();
+        const { id: postId } = await params;
+        const userId = user.id;  // 세션에서 가져온 안전한 userId
 
         // 이미 좋아요 했는지 확인
         const { data: existing } = await supabase
