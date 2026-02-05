@@ -14,7 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePets } from "@/contexts/PetContext";
 import Layout from "@/components/common/Layout";
 import { supabase } from "@/lib/supabase";
-import { PawPrint } from "lucide-react";
+import { SectionLoading, FullPageLoading } from "@/components/ui/PawLoading";
 
 // 유효한 탭인지 확인
 const VALID_TABS: TabType[] = ["home", "record", "community", "ai-chat", "magazine", "adoption", "local", "lost", "admin"];
@@ -22,77 +22,54 @@ const isValidTab = (tab: string | null): tab is TabType => {
     return tab !== null && VALID_TABS.includes(tab as TabType);
 };
 
-// 페이지 로딩 컴포넌트 - 발자국 총총총 애니메이션
-function PageLoader() {
-    return (
-        <div className="flex items-center justify-center min-h-[60vh]">
-            <div className="text-center">
-                <div className="flex gap-3 mb-4 justify-center">
-                    {[0, 1, 2].map((i) => (
-                        <PawPrint
-                            key={i}
-                            className="w-7 h-7 text-[#05B2DC] animate-bounce"
-                            style={{
-                                animationDelay: `${i * 0.15}s`,
-                                animationDuration: "0.5s",
-                            }}
-                        />
-                    ))}
-                </div>
-                <p className="text-gray-400 text-sm">로딩 중...</p>
-            </div>
-        </div>
-    );
-}
-
 // Dynamic imports - 각 페이지를 lazy load
 const HomePage = dynamic(() => import("@/components/pages/HomePage"), {
-    loading: () => <PageLoader />,
+    loading: () => <SectionLoading />,
     ssr: false,
 });
 
 const CommunityPage = dynamic(() => import("@/components/pages/CommunityPage"), {
-    loading: () => <PageLoader />,
+    loading: () => <SectionLoading />,
     ssr: false,
 });
 
 const AIChatPage = dynamic(() => import("@/components/pages/AIChatPage"), {
-    loading: () => <PageLoader />,
+    loading: () => <SectionLoading />,
     ssr: false,
 });
 
 const AdoptionPage = dynamic(() => import("@/components/pages/AdoptionPage"), {
-    loading: () => <PageLoader />,
+    loading: () => <SectionLoading />,
     ssr: false,
 });
 
 const LocalPage = dynamic(() => import("@/components/pages/LocalPage"), {
-    loading: () => <PageLoader />,
+    loading: () => <SectionLoading />,
     ssr: false,
 });
 
 const LostPage = dynamic(() => import("@/components/pages/LostPage"), {
-    loading: () => <PageLoader />,
+    loading: () => <SectionLoading />,
     ssr: false,
 });
 
 const MagazinePage = dynamic(() => import("@/components/pages/MagazinePage"), {
-    loading: () => <PageLoader />,
+    loading: () => <SectionLoading />,
     ssr: false,
 });
 
 const RecordPage = dynamic(() => import("@/components/pages/RecordPage"), {
-    loading: () => <PageLoader />,
+    loading: () => <SectionLoading />,
     ssr: false,
 });
 
 const LandingPage = dynamic(() => import("@/components/pages/LandingPage"), {
-    loading: () => <PageLoader />,
+    loading: () => <SectionLoading />,
     ssr: false,
 });
 
 const AdminPage = dynamic(() => import("@/components/pages/AdminPage"), {
-    loading: () => <PageLoader />,
+    loading: () => <SectionLoading />,
     ssr: false,
 });
 
@@ -123,7 +100,7 @@ const RecordPageTutorial = dynamic(
 // Suspense 래퍼 (useSearchParams 필요)
 export default function Home() {
     return (
-        <Suspense fallback={<PageLoader />}>
+        <Suspense fallback={<SectionLoading />}>
             <HomeContent />
         </Suspense>
     );
@@ -285,25 +262,7 @@ function HomeContent() {
 
     // 로딩 중
     if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sky-50 to-violet-50">
-                <div className="text-center">
-                    <div className="flex gap-3 mb-4 justify-center">
-                        {[0, 1, 2].map((i) => (
-                            <PawPrint
-                                key={i}
-                                className="w-8 h-8 text-[#05B2DC] animate-bounce"
-                                style={{
-                                    animationDelay: `${i * 0.15}s`,
-                                    animationDuration: "0.5s",
-                                }}
-                            />
-                        ))}
-                    </div>
-                    <p className="text-gray-500">로딩 중...</p>
-                </div>
-            </div>
-        );
+        return <FullPageLoading />;
     }
 
     // 비로그인/로그인 모두 동일한 앱 구조 (로그인 필요 기능에서만 유도)

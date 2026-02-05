@@ -49,8 +49,8 @@ import {
     Mail,
     LogOut,
     Bell,
-    Loader2,
 } from "lucide-react";
+import { FullPageLoading } from "@/components/ui/PawLoading";
 
 import { TabType } from "@/types";
 
@@ -631,17 +631,7 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
     }, [selectedPetId]);
 
     if (authLoading || petsLoading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center">
-                    <div className="relative w-12 h-12 mx-auto mb-4">
-                        <PawPrint className="w-12 h-12 text-[#05B2DC]/20" />
-                        <Loader2 className="w-12 h-12 text-[#05B2DC] animate-spin absolute inset-0" />
-                    </div>
-                    <p className="text-gray-500">불러오는 중...</p>
-                </div>
-            </div>
-        );
+        return <FullPageLoading text="불러오는 중..." />;
     }
 
     if (!user) {

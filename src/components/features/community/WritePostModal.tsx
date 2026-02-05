@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { X, Send, Loader2 } from "lucide-react";
+import { X, Send } from "lucide-react";
+import { InlineLoading } from "@/components/ui/PawLoading";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface WritePostModalProps {
@@ -200,11 +201,13 @@ export default function WritePostModal({
                         className="bg-gradient-to-r from-sky-500 to-blue-500"
                     >
                         {isSubmitting ? (
-                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                            <InlineLoading />
                         ) : (
-                            <Send className="w-4 h-4 mr-2" />
+                            <>
+                                <Send className="w-4 h-4 mr-2" />
+                                등록
+                            </>
                         )}
-                        등록
                     </Button>
                 </div>
             </div>

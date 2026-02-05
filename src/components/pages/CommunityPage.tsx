@@ -34,8 +34,8 @@ import {
     Fish,
     Rabbit,
     Turtle,
-    Loader2,
 } from "lucide-react";
+import PawLoading from "@/components/ui/PawLoading";
 import { usePets } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
 import WritePostModal from "@/components/features/community/WritePostModal";
@@ -719,7 +719,7 @@ export default function CommunityPage() {
                 <div className="space-y-4">
                     {isLoading ? (
                         <div className="flex items-center justify-center py-16">
-                            <Loader2 className="w-8 h-8 animate-spin text-sky-500" />
+                            <PawLoading size="lg" />
                         </div>
                     ) : (
                         posts.map((post) => (

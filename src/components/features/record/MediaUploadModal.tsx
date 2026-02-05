@@ -215,7 +215,20 @@ export default function MediaUploadModal({
 
                     {isLoading && (
                         <div className="mt-4 text-center text-gray-500">
-                            <div className="animate-spin w-6 h-6 border-2 border-[#05B2DC] border-t-transparent rounded-full mx-auto mb-2" />
+                            <div className="flex gap-2 justify-center mb-2">
+                                {[0, 1, 2].map((i) => (
+                                    <span
+                                        key={i}
+                                        className="text-[#05B2DC] animate-bounce text-xl"
+                                        style={{
+                                            animationDelay: `${i * 0.15}s`,
+                                            animationDuration: "0.5s",
+                                        }}
+                                    >
+                                        🐾
+                                    </span>
+                                ))}
+                            </div>
                             영상 썸네일 생성 중...
                         </div>
                     )}

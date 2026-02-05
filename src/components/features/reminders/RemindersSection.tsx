@@ -34,8 +34,8 @@ import {
     X,
     ChevronDown,
     ChevronUp,
-    Loader2,
 } from "lucide-react";
+import PawLoading from "@/components/ui/PawLoading";
 
 interface Reminder {
     id: string;
@@ -250,9 +250,8 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
             {isExpanded && (
                 <CardContent className="pt-0">
                     {isLoading ? (
-                        <div className="text-center py-8">
-                            <Loader2 className="w-6 h-6 text-[#05B2DC] animate-spin mx-auto mb-2" />
-                            <p className="text-sm text-gray-400">불러오는 중...</p>
+                        <div className="flex items-center justify-center py-8">
+                            <PawLoading size="md" text="불러오는 중..." />
                         </div>
                     ) : (
                         <>

@@ -17,10 +17,10 @@ import {
     User,
     Eye,
     EyeOff,
-    Loader2,
     CheckCircle,
     AlertCircle,
 } from "lucide-react";
+import { InlineLoading } from "@/components/ui/PawLoading";
 
 interface AuthModalProps {
     isOpen: boolean;
@@ -283,7 +283,7 @@ export default function AuthModal({
                         className="w-full h-12 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-blue-600 hover:to-sky-600 rounded-xl text-base"
                     >
                         {loading ? (
-                            <Loader2 className="w-5 h-5 animate-spin" />
+                            <InlineLoading />
                         ) : mode === "login" ? (
                             "로그인"
                         ) : (

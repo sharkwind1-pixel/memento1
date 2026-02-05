@@ -35,8 +35,8 @@ import {
     CalendarDays,
     LogIn,
     X,
-    Loader2,
 } from "lucide-react";
+import PawLoading, { FullPageLoading } from "@/components/ui/PawLoading";
 
 interface Reminder {
     id: string;
@@ -256,17 +256,7 @@ export default function RemindersPage() {
     };
 
     if (authLoading || petsLoading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center">
-                    <div className="relative w-12 h-12 mx-auto mb-4">
-                        <Bell className="w-12 h-12 text-[#05B2DC]/20" />
-                        <Loader2 className="w-12 h-12 text-[#05B2DC] animate-spin absolute inset-0" />
-                    </div>
-                    <p className="text-gray-500">불러오는 중...</p>
-                </div>
-            </div>
-        );
+        return <FullPageLoading text="불러오는 중..." />;
     }
 
     if (!user) {
@@ -512,9 +502,8 @@ export default function RemindersPage() {
             {/* 리마인더 목록 */}
             <div className="max-w-2xl mx-auto px-4 py-6">
                 {isLoading ? (
-                    <div className="text-center py-12">
-                        <Loader2 className="w-8 h-8 text-[#05B2DC] animate-spin mx-auto mb-2" />
-                        <p className="text-gray-400">리마인더 불러오는 중...</p>
+                    <div className="flex items-center justify-center py-12">
+                        <PawLoading size="lg" text="리마인더 불러오는 중..." />
                     </div>
                 ) : reminders.length === 0 ? (
                     <div className="text-center py-12">
