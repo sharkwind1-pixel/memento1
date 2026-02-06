@@ -165,15 +165,41 @@ function HomeContent() {
         const checkNewUserFlow = async () => {
             if (!user) return;
 
+            // 1. localStorage 먼저 체크 (가장 빠르고 확실)
+            const tutorialCompletedLocal = localStorage.getItem("memento-ani-tutorial-complete") === "true";
+            const onboardingCompletedLocal = localStorage.getItem("memento-ani-onboarding-complete") === "true";
+
+            // 기존 유저 (펫이 있음) → 플로우 스킵
+            if (pets.length > 0) {
+                // 접속 기록만 업데이트
+                supabase
+                    .from("profiles")
+                    .update({ last_seen_at: new Date().toISOString() })
+                    .eq("id", user.id);
+                return;
+            }
+
+            // 2. localStorage에서 완료 여부가 확인되면 바로 적용
+            if (tutorialCompletedLocal && onboardingCompletedLocal) {
+                // 둘 다 완료 → 아무것도 안 띄움
+                return;
+            }
+
+            if (tutorialCompletedLocal && !onboardingCompletedLocal) {
+                // 튜토리얼만 완료 → 온보딩 시작
+                setShowOnboarding(true);
+                return;
+            }
+
+            // 3. localStorage에 없으면 DB 확인 (첫 기기 접속 또는 캐시 삭제)
             try {
-                // DB에서 튜토리얼/온보딩 완료 여부 확인
                 const { data } = await supabase
                     .from("profiles")
                     .select("tutorial_completed_at, onboarding_completed_at")
                     .eq("id", user.id)
                     .single();
 
-                // localStorage 동기화
+                // DB → localStorage 동기화
                 if (data?.tutorial_completed_at) {
                     localStorage.setItem("memento-ani-tutorial-complete", "true");
                 }
@@ -181,24 +207,19 @@ function HomeContent() {
                     localStorage.setItem("memento-ani-onboarding-complete", "true");
                 }
 
-                // 기존 유저 (펫이 있음) → 플로우 스킵
-                if (pets.length > 0) {
-                    // 접속 기록만 업데이트
-                    await supabase
-                        .from("profiles")
-                        .update({ last_seen_at: new Date().toISOString() })
-                        .eq("id", user.id);
+                // DB에서 완료 여부 확인
+                if (data?.tutorial_completed_at && data?.onboarding_completed_at) {
+                    return; // 둘 다 완료
+                }
+
+                if (data?.tutorial_completed_at && !data?.onboarding_completed_at) {
+                    setShowOnboarding(true);
                     return;
                 }
 
-                // 신규 유저 플로우
-                // 1. 튜토리얼 미완료 → 튜토리얼 먼저
+                // 튜토리얼 미완료 → 튜토리얼 시작
                 if (!data?.tutorial_completed_at) {
                     setShowTutorial(true);
-                }
-                // 2. 튜토리얼 완료 + 온보딩 미완료 → 온보딩
-                else if (!data?.onboarding_completed_at) {
-                    setShowOnboarding(true);
                 }
 
                 // 접속 기록 업데이트 (DAU 추적용)
@@ -207,8 +228,9 @@ function HomeContent() {
                     .update({ last_seen_at: new Date().toISOString() })
                     .eq("id", user.id);
             } catch {
-                // 프로필 없으면 신규 유저 → 튜토리얼부터
-                if (pets.length === 0) {
+                // 프로필 없으면 신규 유저
+                // localStorage에도 없고 DB에도 없으면 → 튜토리얼 시작
+                if (!tutorialCompletedLocal) {
                     setShowTutorial(true);
                 }
             }
