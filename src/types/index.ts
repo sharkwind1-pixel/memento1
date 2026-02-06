@@ -13,17 +13,40 @@
 // 1. 네비게이션 & 라우팅 타입
 // ============================================
 
-/** 메인 네비게이션 탭 타입 */
+/** 메인 카테고리 (5개) - 새 네비게이션 구조 */
+export type MainCategory = "home" | "record" | "community" | "ai-chat" | "magazine";
+
+/** 커뮤니티 서브카테고리 (5개) */
+export type CommunitySubcategory = "free" | "memorial" | "adoption" | "local" | "lost";
+
+/** 자유게시판 말머리(태그) */
+export type PostTag = "정보" | "강아지" | "고양이" | "일상" | "질문" | "새" | "물고기" | "토끼" | "파충류";
+
+/** 메인 네비게이션 탭 타입 (레거시 호환 포함) */
 export type TabType =
     | "home"
     | "community"
     | "ai-chat"
-    | "adoption"
-    | "local"
-    | "lost"
+    | "adoption"  // 레거시: community/adoption으로 리다이렉트
+    | "local"     // 레거시: community/local으로 리다이렉트
+    | "lost"      // 레거시: community/lost으로 리다이렉트
     | "magazine"
     | "record"
     | "admin";
+
+/** 레거시 탭을 서브카테고리로 변환 */
+export function getLegacyTabRedirect(tab: TabType): { main: MainCategory; sub?: CommunitySubcategory } | null {
+    switch (tab) {
+        case "adoption":
+            return { main: "community", sub: "adoption" };
+        case "local":
+            return { main: "community", sub: "local" };
+        case "lost":
+            return { main: "community", sub: "lost" };
+        default:
+            return null;
+    }
+}
 
 /** 관리자 이메일 목록 */
 export const ADMIN_EMAILS = ["sharkwind1@gmail.com"];
@@ -149,6 +172,9 @@ export interface CommunityPost {
     badge: string;
     views?: number;
     category?: string;
+    subcategory?: CommunitySubcategory;  // 서브카테고리 (free, memorial, adoption, local, lost)
+    tag?: PostTag;                        // 말머리 (자유게시판용)
+    isPublic?: boolean;                   // 공개 여부 (추모 게시판용)
     preview?: string;
     time?: string;
     avatar?: string;
@@ -328,7 +354,10 @@ export interface HomePageProps extends PageProps {}
 export interface AIChatPageProps extends PageProps {}
 
 /** CommunityPage Props */
-export interface CommunityPageProps extends PageProps {}
+export interface CommunityPageProps extends PageProps {
+    subcategory?: CommunitySubcategory;
+    onSubcategoryChange?: (sub: CommunitySubcategory) => void;
+}
 
 /** AdoptionPage Props */
 export interface AdoptionPageProps extends PageProps {}

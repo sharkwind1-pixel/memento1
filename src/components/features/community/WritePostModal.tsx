@@ -1,30 +1,55 @@
 /**
  * 글쓰기 모달
+ * v2: 추모 공개 옵션 + 말머리 시스템 추가
  */
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { X, Send } from "lucide-react";
+import { X, Send, Home, Eye, EyeOff } from "lucide-react";
 import { InlineLoading } from "@/components/ui/PawLoading";
 import { useAuth } from "@/contexts/AuthContext";
+import type { CommunitySubcategory, PostTag } from "@/types";
 
 interface WritePostModalProps {
     isOpen: boolean;
     onClose: () => void;
-    boardType: string;
+    boardType: string; // CommunitySubcategory
     onSuccess: () => void;
 }
 
-const BADGES_BY_BOARD: Record<string, string[]> = {
-    free: ["일상", "자랑", "질문", "수다"],
-    info: ["정보", "꿀팁", "자료", "추천"],
-    pets: ["일상", "자랑", "먹방", "귀여움", "질문"],
-    healing: ["위로", "추억", "고민", "감사"],
+// 서브카테고리별 배지 옵션
+const BADGES_BY_SUBCATEGORY: Record<string, string[]> = {
+    free: ["일상", "자랑", "질문", "수다", "꿀팁"],
+    memorial: ["위로", "추억", "고민", "감사"],
+    adoption: ["입양", "분양", "긴급"],
+    local: ["추천", "정보", "모임", "후기"],
+    lost: ["분실", "발견"],
+};
+
+// 자유게시판 말머리 옵션
+const POST_TAGS: { id: PostTag; label: string }[] = [
+    { id: "일상", label: "일상" },
+    { id: "정보", label: "정보" },
+    { id: "질문", label: "질문" },
+    { id: "강아지", label: "강아지" },
+    { id: "고양이", label: "고양이" },
+    { id: "새", label: "새" },
+    { id: "물고기", label: "물고기" },
+    { id: "토끼", label: "토끼" },
+    { id: "파충류", label: "파충류" },
+];
+
+// 서브카테고리별 라벨
+const SUBCATEGORY_LABELS: Record<string, string> = {
+    free: "자유게시판",
+    memorial: "추모게시판",
+    adoption: "입양정보",
+    local: "지역정보",
+    lost: "분실동물",
 };
 
 export default function WritePostModal({
@@ -37,11 +62,22 @@ export default function WritePostModal({
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
     const [badge, setBadge] = useState("");
+    const [tag, setTag] = useState<PostTag | "">("");
     const [authorName, setAuthorName] = useState("");
+    const [isPublic, setIsPublic] = useState(false); // 홈화면 공개 여부
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
 
-    const badges = BADGES_BY_BOARD[boardType] || BADGES_BY_BOARD.free;
+    const isMemorial = boardType === "memorial";
+    const isFreeBoard = boardType === "free";
+    const badges = BADGES_BY_SUBCATEGORY[boardType] || BADGES_BY_SUBCATEGORY.free;
+
+    // boardType 변경 시 상태 초기화
+    useEffect(() => {
+        setBadge("");
+        setTag("");
+        setIsPublic(false);
+    }, [boardType]);
 
     const handleSubmit = async () => {
         if (!user) {
@@ -54,6 +90,12 @@ export default function WritePostModal({
             return;
         }
 
+        // 자유게시판은 말머리 필수
+        if (isFreeBoard && !tag) {
+            setError("말머리를 선택해주세요");
+            return;
+        }
+
         setIsSubmitting(true);
         setError("");
 
@@ -63,11 +105,13 @@ export default function WritePostModal({
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     userId: user.id,
-                    boardType,
+                    subcategory: boardType,
                     badge,
+                    tag: isFreeBoard ? tag : undefined,
                     title: title.trim(),
                     content: content.trim(),
                     authorName: authorName.trim(),
+                    isPublic: isMemorial ? isPublic : undefined,
                 }),
             });
 
@@ -80,7 +124,9 @@ export default function WritePostModal({
             setTitle("");
             setContent("");
             setBadge("");
+            setTag("");
             setAuthorName("");
+            setIsPublic(false);
             onSuccess();
             onClose();
         } catch (err) {
@@ -104,9 +150,14 @@ export default function WritePostModal({
             <div className="relative w-full max-w-lg bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
                 {/* 헤더 */}
                 <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
-                    <h2 className="text-lg font-bold text-gray-800 dark:text-white">
-                        글쓰기
-                    </h2>
+                    <div>
+                        <h2 className="text-lg font-bold text-gray-800 dark:text-white">
+                            글쓰기
+                        </h2>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                            {SUBCATEGORY_LABELS[boardType] || "커뮤니티"}
+                        </p>
+                    </div>
                     <button
                         onClick={onClose}
                         className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
@@ -129,6 +180,30 @@ export default function WritePostModal({
                             maxLength={20}
                         />
                     </div>
+
+                    {/* 말머리 선택 (자유게시판만) */}
+                    {isFreeBoard && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                말머리 <span className="text-red-500">*</span>
+                            </label>
+                            <div className="flex flex-wrap gap-2">
+                                {POST_TAGS.map((t) => (
+                                    <button
+                                        key={t.id}
+                                        onClick={() => setTag(t.id)}
+                                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                                            tag === t.id
+                                                ? "bg-sky-500 text-white"
+                                                : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200"
+                                        }`}
+                                    >
+                                        {t.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* 태그 선택 */}
                     <div>
@@ -181,6 +256,43 @@ export default function WritePostModal({
                             {content.length}/5000
                         </p>
                     </div>
+
+                    {/* 홈화면 공개 옵션 (추모게시판만) */}
+                    {isMemorial && (
+                        <div className="p-4 bg-violet-50 dark:bg-violet-900/20 rounded-xl border border-violet-200 dark:border-violet-700/50">
+                            <label className="flex items-start gap-3 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={isPublic}
+                                    onChange={(e) => setIsPublic(e.target.checked)}
+                                    className="mt-1 w-5 h-5 rounded border-violet-300 text-violet-600 focus:ring-violet-500"
+                                />
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2 font-medium text-gray-800 dark:text-gray-100">
+                                        <Home className="w-4 h-4 text-violet-500" />
+                                        홈화면에 공개
+                                    </div>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                        체크하면 홈화면의 &apos;추모의 공간&apos;에 글이 노출됩니다.
+                                        다른 사용자들과 함께 위로와 추억을 나눌 수 있어요.
+                                    </p>
+                                    <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                                        {isPublic ? (
+                                            <>
+                                                <Eye className="w-3.5 h-3.5 text-violet-500" />
+                                                <span className="text-violet-600 dark:text-violet-400">공개 상태로 설정됨</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <EyeOff className="w-3.5 h-3.5" />
+                                                <span>비공개 (커뮤니티 추모게시판에서만 볼 수 있음)</span>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    )}
 
                     {/* 에러 */}
                     {error && (
