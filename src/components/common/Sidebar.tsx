@@ -125,7 +125,7 @@ export default function Sidebar({
         <div className="flex flex-col h-full">
             {/* 모바일 헤더 */}
             {isMobile && (
-                <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
                     <span className="text-lg font-bold text-gray-800 dark:text-white">메뉴</span>
                     <Button
                         variant="ghost"
@@ -138,8 +138,8 @@ export default function Sidebar({
                 </div>
             )}
 
-            {/* 네비게이션 목록 */}
-            <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+            {/* 네비게이션 목록 - 스크롤 영역 */}
+            <nav className="flex-1 min-h-0 p-4 space-y-1 overflow-y-auto">
                 {MAIN_CATEGORIES.map((category) => (
                     <div key={category.id}>
                         {/* 메인 카테고리 버튼 */}
@@ -189,8 +189,8 @@ export default function Sidebar({
                 ))}
             </nav>
 
-            {/* 하단 링크 */}
-            <div className="p-3 border-t border-gray-200 dark:border-gray-700 space-y-1">
+            {/* 하단 링크 - 항상 고정 */}
+            <div className="flex-shrink-0 p-3 border-t border-gray-200 dark:border-gray-700 space-y-1 bg-white dark:bg-gray-900">
                 <button
                     onClick={() => {
                         // TODO: 질문/신고 페이지 연결
