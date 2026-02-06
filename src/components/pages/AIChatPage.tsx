@@ -154,6 +154,9 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
     useEffect(() => {
         if (!selectedPetId || !user?.id) return;
 
+        // 펫 전환 시 이전 메시지 즉시 초기화 (모드 분리)
+        setMessages([]);
+
         const loadChatFromSupabase = async () => {
             try {
                 const { data, error } = await supabase
