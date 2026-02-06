@@ -317,7 +317,7 @@ export default function Layout({
 
             </header>
 
-            {/* 모바일 사이드바 */}
+            {/* 모바일 사이드바 (오버레이) */}
             <Sidebar
                 isOpen={isSidebarOpen}
                 onClose={() => setIsSidebarOpen(false)}
@@ -330,8 +330,26 @@ export default function Layout({
                 isMobile={true}
             />
 
-            {/* 메인 컨텐츠 */}
-            <main className="max-w-7xl mx-auto px-4 py-6">{children}</main>
+            {/* 데스크톱 레이아웃: 사이드바 + 메인 컨텐츠 */}
+            <div className="flex min-h-[calc(100vh-80px)]">
+                {/* 데스크톱 사이드바 (항상 표시, sticky) */}
+                <div className="hidden xl:block sticky top-20 h-[calc(100vh-80px)]">
+                    <Sidebar
+                        isOpen={true}
+                        onClose={() => {}}
+                        selectedTab={selectedTab}
+                        onTabChange={(tab) => {
+                            setSelectedTab(tab);
+                        }}
+                        subcategory={subcategory}
+                        onSubcategoryChange={onSubcategoryChange}
+                        isMobile={false}
+                    />
+                </div>
+
+                {/* 메인 컨텐츠 */}
+                <main className="flex-1 max-w-5xl mx-auto px-4 py-6">{children}</main>
+            </div>
 
             {/* 모바일 하단 네비게이션 - 5개 메인 카테고리 */}
             <nav className="xl:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-200/50 dark:border-gray-700/50 z-50 pb-safe">

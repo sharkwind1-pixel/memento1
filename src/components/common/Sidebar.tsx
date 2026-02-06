@@ -227,8 +227,9 @@ export default function Sidebar({
     return (
         <aside
             className={cn(
-                "hidden xl:flex flex-col h-full w-56 bg-white dark:bg-gray-900",
-                "border-r border-gray-200 dark:border-gray-700",
+                "flex flex-col w-56 h-full overflow-y-auto",
+                "bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg",
+                "border-r border-gray-200/50 dark:border-gray-700/50",
                 "transition-all duration-300"
             )}
         >
