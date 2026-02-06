@@ -22,6 +22,8 @@ import {
     Search,
     Cloud,
     Coffee,
+    HelpCircle,
+    Lightbulb,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { MainCategory, CommunitySubcategory, TabType } from "@/types";
@@ -187,9 +189,29 @@ export default function Sidebar({
                 ))}
             </nav>
 
-            {/* 하단 정보 */}
-            <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-                <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+            {/* 하단 링크 */}
+            <div className="p-3 border-t border-gray-200 dark:border-gray-700 space-y-1">
+                <button
+                    onClick={() => {
+                        // TODO: 질문/신고 페이지 연결
+                        if (isMobile) onClose();
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+                >
+                    <HelpCircle className="w-4 h-4" />
+                    <span>질문/신고</span>
+                </button>
+                <button
+                    onClick={() => {
+                        // TODO: 건의사항 페이지 연결
+                        if (isMobile) onClose();
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+                >
+                    <Lightbulb className="w-4 h-4" />
+                    <span>건의사항</span>
+                </button>
+                <p className="text-[10px] text-gray-400 dark:text-gray-500 text-center pt-2">
                     메멘토애니 v1.0
                 </p>
             </div>
