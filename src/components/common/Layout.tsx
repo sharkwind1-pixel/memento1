@@ -284,20 +284,20 @@ export default function Layout({
                                     )}
                                 </div>
                             ) : (
-                                <div className="flex items-center gap-1 sm:gap-2">
+                                <div className="flex items-center gap-0.5 sm:gap-2">
                                     <Button
                                         variant="outline"
                                         onClick={openLoginModal}
-                                        className="rounded-lg border-[#05B2DC] text-[#05B2DC] hover:bg-[#E0F7FF] px-2 sm:px-3 py-1.5 text-xs sm:text-sm h-auto"
+                                        className="rounded-md border-[#05B2DC] text-[#05B2DC] hover:bg-[#E0F7FF] px-1.5 sm:px-3 py-1 text-[11px] sm:text-sm h-auto"
                                     >
-                                        <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
+                                        <LogIn className="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
                                         로그인
                                     </Button>
                                     <Button
                                         onClick={openSignupModal}
-                                        className="bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-[#05B2DC] rounded-lg shadow-md shadow-[#05B2DC]/25 px-2 sm:px-3 py-1.5 text-xs sm:text-sm h-auto"
+                                        className="bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-[#05B2DC] rounded-md shadow-sm shadow-[#05B2DC]/25 px-1.5 sm:px-3 py-1 text-[11px] sm:text-sm h-auto"
                                     >
-                                        <UserPlus className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
+                                        <UserPlus className="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
                                         회원가입
                                     </Button>
                                 </div>
