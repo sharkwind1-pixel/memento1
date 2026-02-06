@@ -345,8 +345,10 @@ export default function Layout({
                 />
             </aside>
 
-            {/* 메인 컨텐츠 - 모바일: 전체폭, 데스크톱: 사이드바 공간 확보 */}
-            <main className="max-w-7xl mx-auto px-4 py-6 xl:ml-56">{children}</main>
+            {/* 메인 컨텐츠 - 모바일: 전체폭 중앙, 데스크톱: 사이드바 제외 영역 중앙 */}
+            <div className="xl:ml-56">
+                <main className="max-w-6xl mx-auto px-4 py-6">{children}</main>
+            </div>
 
             {/* 모바일 하단 네비게이션 - 5개 메인 카테고리 */}
             <nav className="xl:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-200/50 dark:border-gray-700/50 z-50 pb-safe">
