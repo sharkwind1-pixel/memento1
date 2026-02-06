@@ -288,16 +288,16 @@ export default function Layout({
                                     <Button
                                         variant="outline"
                                         onClick={openLoginModal}
-                                        className="rounded-xl border-[#05B2DC] text-[#05B2DC] hover:bg-[#E0F7FF] px-3 sm:px-4 text-sm"
+                                        className="rounded-lg border-[#05B2DC] text-[#05B2DC] hover:bg-[#E0F7FF] px-2 sm:px-3 py-1.5 text-xs sm:text-sm h-auto"
                                     >
-                                        <LogIn className="w-4 h-4 mr-1.5" />
+                                        <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
                                         로그인
                                     </Button>
                                     <Button
                                         onClick={openSignupModal}
-                                        className="bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-[#05B2DC] rounded-xl shadow-lg shadow-[#05B2DC]/25 px-3 sm:px-4 text-sm"
+                                        className="bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-[#05B2DC] rounded-lg shadow-md shadow-[#05B2DC]/25 px-2 sm:px-3 py-1.5 text-xs sm:text-sm h-auto"
                                     >
-                                        <UserPlus className="w-4 h-4 mr-1.5" />
+                                        <UserPlus className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
                                         회원가입
                                     </Button>
                                 </div>
