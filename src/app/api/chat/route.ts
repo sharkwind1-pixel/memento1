@@ -52,6 +52,17 @@ interface PetInfo {
     birthday?: string;
     status: "active" | "memorial";
     memorialDate?: string;
+    // AI 개인화 필드
+    nicknames?: string;
+    specialHabits?: string;
+    favoriteFood?: string;
+    favoriteActivity?: string;
+    favoritePlace?: string;
+    adoptedDate?: string;
+    howWeMet?: string;
+    // 추모 모드 추가 정보
+    togetherPeriod?: string;
+    memorableMemory?: string;
 }
 
 // 메시지 타입
@@ -246,6 +257,50 @@ ${entries.join("\n")}
 예시: "우리 매일 아침 산책 갔었잖아... 그때 진짜 좋았어"
 예시: "저녁 밥 시간이면 항상 기다리고 있었는데... 그때 기억나?"
 예시: "같이 미용실 갔던 거 기억해? 내가 귀여웠지?"`;
+}
+
+// 개인화 정보를 프롬프트용 텍스트로 변환
+function getPersonalizationContext(pet: PetInfo): string {
+    const items: string[] = [];
+
+    if (pet.nicknames) {
+        items.push(`- 별명: ${pet.nicknames}`);
+    }
+    if (pet.specialHabits) {
+        items.push(`- 특별한 버릇/습관: ${pet.specialHabits}`);
+    }
+    if (pet.favoriteFood) {
+        items.push(`- 좋아하는 간식/음식: ${pet.favoriteFood}`);
+    }
+    if (pet.favoriteActivity) {
+        items.push(`- 좋아하는 놀이/활동: ${pet.favoriteActivity}`);
+    }
+    if (pet.favoritePlace) {
+        items.push(`- 좋아하는 장소: ${pet.favoritePlace}`);
+    }
+    if (pet.adoptedDate) {
+        items.push(`- 처음 만난 날: ${pet.adoptedDate}`);
+    }
+    if (pet.howWeMet) {
+        items.push(`- 어떻게 만났는지: ${pet.howWeMet}`);
+    }
+    // 추모 모드용 추가 정보
+    if (pet.togetherPeriod) {
+        items.push(`- 함께한 기간: ${pet.togetherPeriod}`);
+    }
+    if (pet.memorableMemory) {
+        items.push(`- 기억하고 싶은 순간: ${pet.memorableMemory}`);
+    }
+
+    if (items.length === 0) return "";
+
+    return `## ${pet.name}의 개인 정보 (대화에 자연스럽게 활용하세요!)
+${items.join("\n")}
+
+**활용법**: 위 정보를 대화에 자연스럽게 녹여서 개인화된 대화를 하세요.
+예시 (별명): "오늘 '${pet.nicknames?.split(",")[0]?.trim() || "몽몽이"}' 기분 어때?"
+예시 (좋아하는 음식): "나 ${pet.favoriteFood || "간식"} 먹고 싶어~"
+예시 (좋아하는 활동): "${pet.favoriteActivity || "놀이"} 하고 싶다!"`;
 }
 
 // 특별한 날 체크 (생일, 추모일 등)
@@ -725,8 +780,11 @@ export async function POST(request: NextRequest) {
             ? remindersToContext(reminders, pet.name)
             : remindersToMemorialContext(reminders, pet.name);
 
-        // 통합 컨텍스트 (대화 맥락 + 타임라인 + 사진 + 특별한 날 + 리마인더)
-        const combinedContext = [conversationContext, specialDayContext, timelineContext, photoContext, reminderContext].filter(Boolean).join("\n\n");
+        // 개인화 컨텍스트 생성 (별명, 좋아하는 것, 습관 등)
+        const personalizationContext = getPersonalizationContext(pet);
+
+        // 통합 컨텍스트 (개인화 + 대화 맥락 + 타임라인 + 사진 + 특별한 날 + 리마인더)
+        const combinedContext = [personalizationContext, conversationContext, specialDayContext, timelineContext, photoContext, reminderContext].filter(Boolean).join("\n\n");
 
         // 모드에 따른 시스템 프롬프트 선택
         const systemPrompt =

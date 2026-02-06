@@ -387,6 +387,17 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                         birthday: selectedPet.birthday,
                         status: selectedPet.status,
                         memorialDate: selectedPet.memorialDate,
+                        // AI 개인화 필드
+                        nicknames: selectedPet.nicknames,
+                        specialHabits: selectedPet.specialHabits,
+                        favoriteFood: selectedPet.favoriteFood,
+                        favoriteActivity: selectedPet.favoriteActivity,
+                        favoritePlace: selectedPet.favoritePlace,
+                        adoptedDate: selectedPet.adoptedDate,
+                        howWeMet: selectedPet.howWeMet,
+                        // 추모 모드 추가 정보
+                        togetherPeriod: selectedPet.togetherPeriod,
+                        memorableMemory: selectedPet.memorableMemory,
                     },
                     userId: user?.id,
                     chatHistory,
