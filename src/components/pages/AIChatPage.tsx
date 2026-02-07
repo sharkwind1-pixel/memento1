@@ -547,11 +547,6 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
     }
 
     if (pets.length === 0) {
-        const handleGoToRecord = () => {
-            // 직접 URL 변경으로 이동
-            window.location.href = "/?tab=record";
-        };
-
         return (
             <div className="flex flex-col items-center justify-center px-4 py-20">
                 <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD] flex items-center justify-center mb-6">
@@ -565,13 +560,16 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                     <br />
                     먼저 반려동물을 등록해야 해요
                 </p>
-                <a
-                    href="/?tab=record"
-                    className="flex items-center justify-center gap-2 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white px-8 py-4 rounded-xl font-medium text-base no-underline"
+                <button
+                    type="button"
+                    onClick={() => {
+                        window.location.href = "/?tab=record";
+                    }}
+                    className="flex items-center justify-center gap-2 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white px-8 py-4 rounded-xl font-medium text-base active:scale-95 transition-transform touch-manipulation"
                 >
                     <Plus className="w-5 h-5" />
                     반려동물 등록하기
-                </a>
+                </button>
             </div>
         );
     }
