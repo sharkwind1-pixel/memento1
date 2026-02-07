@@ -608,7 +608,8 @@ export default function PetFormModal({
             {/* 모달 - 배경 위에 별도 레이어 */}
             <div className="fixed inset-x-0 bottom-0 top-auto z-[9999] sm:inset-0 sm:flex sm:items-center sm:justify-center sm:p-4 pointer-events-none">
                 <div
-                    className="pointer-events-auto bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl sm:max-w-md w-full max-h-[85vh] flex flex-col shadow-xl"
+                    className="pointer-events-auto bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl sm:max-w-md w-full max-h-[90vh] sm:max-h-[85vh] flex flex-col shadow-xl"
+                    style={{ maxHeight: 'calc(90vh - env(safe-area-inset-bottom, 0px))' }}
                 >
                     {/* 헤더 - 고정 */}
                     <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
@@ -654,12 +655,18 @@ export default function PetFormModal({
                     </div>
 
                     {/* 스텝 컨텐츠 - 스크롤 영역 */}
-                    <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6">
+                    <div
+                        className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6"
+                        style={{ WebkitOverflowScrolling: 'touch' }}
+                    >
                         {renderCurrentStep()}
                     </div>
 
                     {/* 네비게이션 버튼 - 고정 */}
-                    <div className="flex-shrink-0 flex gap-3 p-4 pb-8 sm:pb-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                    <div
+                        className="flex-shrink-0 flex gap-3 p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
+                        style={{ paddingBottom: 'max(1rem, calc(env(safe-area-inset-bottom, 0px) + 0.5rem))' }}
+                    >
                         {step === 1 ? (
                             <Button variant="outline" onClick={onClose} className="flex-1">
                                 <X className="w-4 h-4 mr-2" />
