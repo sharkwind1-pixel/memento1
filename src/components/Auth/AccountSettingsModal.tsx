@@ -328,7 +328,7 @@ export default function AccountSettingsModal({
 
                                 <div>
                                     <label className="block text-xs text-red-600 mb-1">
-                                        확인을 위해 "회원탈퇴"를 입력해주세요
+                                        확인을 위해 &quot;회원탈퇴&quot;를 입력해주세요
                                     </label>
                                     <Input
                                         type="text"
