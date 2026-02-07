@@ -38,6 +38,11 @@ const RATE_LIMITS = {
         windowMs: 60 * 1000, // 1분
         maxRequests: 5, // 분당 5회
     },
+    // 쪽지 (스팸 방지)
+    message: {
+        windowMs: 60 * 1000, // 1분
+        maxRequests: 10, // 분당 10회
+    },
 };
 
 // 차단 설정

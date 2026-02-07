@@ -599,10 +599,19 @@ export default function PetFormModal({
 
     return (
         <>
-            <div className="fixed inset-0 z-40 bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-                <div className="bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl max-w-md w-full overflow-hidden max-h-[90vh] flex flex-col">
-                    {/* 헤더 */}
-                    <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+            {/* 배경 오버레이 - 별도 레이어 */}
+            <div
+                className="fixed inset-0 z-[9998] bg-black/50"
+                onClick={onClose}
+            />
+
+            {/* 모달 - 배경 위에 별도 레이어 */}
+            <div className="fixed inset-x-0 bottom-0 top-auto z-[9999] sm:inset-0 sm:flex sm:items-center sm:justify-center sm:p-4 pointer-events-none">
+                <div
+                    className="pointer-events-auto bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl sm:max-w-md w-full max-h-[85vh] flex flex-col shadow-xl"
+                >
+                    {/* 헤더 - 고정 */}
+                    <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
                         <h3 className="text-lg font-semibold">
                             {pet ? "반려동물 수정" : "새 반려동물 등록"}
                         </h3>
@@ -611,8 +620,8 @@ export default function PetFormModal({
                         </Button>
                     </div>
 
-                    {/* 스텝 인디케이터 */}
-                    <div className="flex items-center justify-center gap-1 py-3 px-4 bg-gray-50 dark:bg-gray-800 overflow-x-auto">
+                    {/* 스텝 인디케이터 - 고정 */}
+                    <div className="flex-shrink-0 flex items-center justify-center gap-1 py-3 px-4 bg-gray-50 dark:bg-gray-800 overflow-x-auto">
                         {STEP_INFO.map((info, idx) => {
                             const Icon = info.icon;
                             const stepNum = idx + 1;
@@ -644,13 +653,13 @@ export default function PetFormModal({
                         })}
                     </div>
 
-                    {/* 스텝 컨텐츠 */}
-                    <div className="p-4 sm:p-6 overflow-y-auto flex-1">
+                    {/* 스텝 컨텐츠 - 스크롤 영역 */}
+                    <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6">
                         {renderCurrentStep()}
                     </div>
 
-                    {/* 네비게이션 버튼 */}
-                    <div className="flex gap-3 p-4 border-t border-gray-200 dark:border-gray-700">
+                    {/* 네비게이션 버튼 - 고정 */}
+                    <div className="flex-shrink-0 flex gap-3 p-4 pb-8 sm:pb-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
                         {step === 1 ? (
                             <Button variant="outline" onClick={onClose} className="flex-1">
                                 <X className="w-4 h-4 mr-2" />

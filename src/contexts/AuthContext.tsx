@@ -32,6 +32,7 @@ interface AuthContextType {
     signInWithGoogle: () => Promise<{ error: Error | null }>;
     signInWithKakao: () => Promise<{ error: Error | null }>;
     updateProfile: (data: { nickname?: string }) => Promise<{ error: Error | null }>;
+    checkNickname: (nickname: string) => Promise<{ available: boolean; error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -156,6 +157,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    // 닉네임 중복 체크
+    const checkNickname = async (nickname: string) => {
+        try {
+            const { data, error } = await supabase
+                .from("profiles")
+                .select("id")
+                .eq("nickname", nickname)
+                .maybeSingle();
+
+            if (error) {
+                return { available: false, error };
+            }
+
+            // data가 null이면 사용 가능 (중복 없음)
+            return { available: data === null, error: null };
+        } catch (error) {
+            return { available: false, error: error as Error };
+        }
+    };
+
     const value = {
         user,
         session,
@@ -166,6 +187,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signInWithGoogle,
         signInWithKakao,
         updateProfile,
+        checkNickname,
     };
 
     return (

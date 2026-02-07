@@ -64,6 +64,8 @@ interface SidebarProps {
     subcategory?: CommunitySubcategory;
     onSubcategoryChange?: (sub: CommunitySubcategory) => void;
     isMobile?: boolean;
+    onOpenInquiry?: () => void;
+    onOpenSuggestion?: () => void;
 }
 
 export default function Sidebar({
@@ -74,6 +76,8 @@ export default function Sidebar({
     subcategory = "free",
     onSubcategoryChange,
     isMobile = false,
+    onOpenInquiry,
+    onOpenSuggestion,
 }: SidebarProps) {
     const [expandedCategory, setExpandedCategory] = useState<MainCategory | null>(
         selectedTab === "community" ? "community" : null
@@ -193,7 +197,7 @@ export default function Sidebar({
             <div className="flex-shrink-0 p-3 border-t border-gray-200 dark:border-gray-700 space-y-1 bg-white dark:bg-gray-900">
                 <button
                     onClick={() => {
-                        // TODO: 질문/신고 페이지 연결
+                        onOpenInquiry?.();
                         if (isMobile) onClose();
                     }}
                     className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
@@ -203,7 +207,7 @@ export default function Sidebar({
                 </button>
                 <button
                     onClick={() => {
-                        // TODO: 건의사항 페이지 연결
+                        onOpenSuggestion?.();
                         if (isMobile) onClose();
                     }}
                     className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"

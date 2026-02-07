@@ -139,7 +139,7 @@ export default function WritePostModal({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center">
             {/* 배경 */}
             <div
                 className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -147,7 +147,7 @@ export default function WritePostModal({
             />
 
             {/* 모달 */}
-            <div className="relative w-full max-w-lg bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
+            <div className="relative w-full sm:max-w-lg sm:mx-4 bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl shadow-xl overflow-hidden max-h-[calc(100vh-60px)] sm:max-h-[85vh] flex flex-col">
                 {/* 헤더 */}
                 <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
                     <div>

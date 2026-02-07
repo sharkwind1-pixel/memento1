@@ -14,7 +14,10 @@ import { TabType, MainCategory, CommunitySubcategory, isAdmin } from "@/types";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import AuthModal from "@/components/Auth/AuthModal";
+import AccountSettingsModal from "@/components/Auth/AccountSettingsModal";
 import Sidebar from "@/components/common/Sidebar";
+import SupportModal from "@/components/features/support/SupportModal";
+import MessageInbox from "@/components/features/messages/MessageInbox";
 import {
     Home,
     Users,
@@ -30,6 +33,8 @@ import {
     ChevronDown,
     UserPlus,
     Shield,
+    Mail,
+    Settings,
 } from "lucide-react";
 
 interface LayoutProps {
@@ -77,6 +82,9 @@ export default function Layout({
         "login",
     );
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const [supportModalType, setSupportModalType] = useState<"inquiry" | "suggestion" | null>(null);
+    const [isMessageInboxOpen, setIsMessageInboxOpen] = useState(false);
+    const [isAccountSettingsOpen, setIsAccountSettingsOpen] = useState(false);
 
     // 메인 카테고리인지 확인
     const isMainCategory = (tab: TabType): tab is MainCategory => {
@@ -141,6 +149,29 @@ export default function Layout({
                 onClose={() => setIsAuthModalOpen(false)}
                 initialMode={authModalMode}
             />
+
+            {/* 질문/신고 & 건의사항 모달 */}
+            <SupportModal
+                isOpen={supportModalType !== null}
+                onClose={() => setSupportModalType(null)}
+                type={supportModalType || "inquiry"}
+            />
+
+            {/* 쪽지함 모달 */}
+            {user && (
+                <MessageInbox
+                    isOpen={isMessageInboxOpen}
+                    onClose={() => setIsMessageInboxOpen(false)}
+                />
+            )}
+
+            {/* 내 정보(계정 설정) 모달 */}
+            {user && (
+                <AccountSettingsModal
+                    isOpen={isAccountSettingsOpen}
+                    onClose={() => setIsAccountSettingsOpen(false)}
+                />
+            )}
 
             {/* 헤더 - 모바일은 불투명, 데스크톱은 반투명 */}
             <header className="sticky top-0 z-50 bg-white dark:bg-gray-900 xl:bg-white/80 xl:dark:bg-gray-900/80 xl:backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-700/50">
@@ -273,6 +304,26 @@ export default function Layout({
                                                     우리의 기록
                                                 </button>
                                                 <button
+                                                    onClick={() => {
+                                                        setIsMessageInboxOpen(true);
+                                                        setIsUserMenuOpen(false);
+                                                    }}
+                                                    className="w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-[#E0F7FF] dark:hover:bg-gray-700 flex items-center gap-2"
+                                                >
+                                                    <Mail className="w-4 h-4" />
+                                                    쪽지함
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        setIsAccountSettingsOpen(true);
+                                                        setIsUserMenuOpen(false);
+                                                    }}
+                                                    className="w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-[#E0F7FF] dark:hover:bg-gray-700 flex items-center gap-2"
+                                                >
+                                                    <Settings className="w-4 h-4" />
+                                                    내 정보
+                                                </button>
+                                                <button
                                                     onClick={handleSignOut}
                                                     className="w-full px-4 py-3 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
                                                 >
@@ -328,6 +379,8 @@ export default function Layout({
                 subcategory={subcategory}
                 onSubcategoryChange={onSubcategoryChange}
                 isMobile={true}
+                onOpenInquiry={() => setSupportModalType("inquiry")}
+                onOpenSuggestion={() => setSupportModalType("suggestion")}
             />
 
             {/* 데스크톱 사이드바 (xl 이상에서만 표시) */}
@@ -342,11 +395,13 @@ export default function Layout({
                     subcategory={subcategory}
                     onSubcategoryChange={onSubcategoryChange}
                     isMobile={false}
+                    onOpenInquiry={() => setSupportModalType("inquiry")}
+                    onOpenSuggestion={() => setSupportModalType("suggestion")}
                 />
             </aside>
 
             {/* 메인 컨텐츠 - 모바일: 전체폭 중앙, 데스크톱: 사이드바 제외 영역 중앙 */}
-            <div className="xl:ml-56">
+            <div className="xl:ml-56 pb-20 xl:pb-0">
                 <main className="max-w-6xl mx-auto px-4 py-6">{children}</main>
             </div>
 

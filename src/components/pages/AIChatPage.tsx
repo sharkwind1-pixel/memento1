@@ -547,29 +547,31 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
     }
 
     if (pets.length === 0) {
+        const handleGoToRecord = () => {
+            // 직접 URL 변경으로 이동
+            window.location.href = "/?tab=record";
+        };
+
         return (
-            <div className="min-h-screen relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900" />
-                <div className="relative z-10 flex flex-col items-center justify-center min-h-[60vh] px-4">
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD] flex items-center justify-center mb-6">
-                        <PawPrint className="w-12 h-12 text-[#05B2DC]" />
-                    </div>
-                    <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
-                        반려동물을 등록해주세요
-                    </h2>
-                    <p className="text-gray-500 dark:text-gray-400 text-center mb-6">
-                        AI 펫톡을 시작하려면
-                        <br />
-                        먼저 반려동물을 등록해야 해요
-                    </p>
-                    <Button
-                        onClick={() => setSelectedTab?.("record")}
-                        className="bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-[#05B2DC] text-white px-8"
-                    >
-                        <Plus className="w-4 h-4 mr-2" />
-                        반려동물 등록하기
-                    </Button>
+            <div className="flex flex-col items-center justify-center px-4 py-20">
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD] flex items-center justify-center mb-6">
+                    <PawPrint className="w-12 h-12 text-[#05B2DC]" />
                 </div>
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2 text-center">
+                    반려동물을 등록해주세요
+                </h2>
+                <p className="text-gray-500 dark:text-gray-400 text-center mb-6">
+                    AI 펫톡을 시작하려면
+                    <br />
+                    먼저 반려동물을 등록해야 해요
+                </p>
+                <a
+                    href="/?tab=record"
+                    className="flex items-center justify-center gap-2 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white px-8 py-4 rounded-xl font-medium text-base no-underline"
+                >
+                    <Plus className="w-5 h-5" />
+                    반려동물 등록하기
+                </a>
             </div>
         );
     }

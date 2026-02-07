@@ -62,6 +62,12 @@ const AdminPage = dynamic(() => import("@/components/pages/AdminPage"), {
     ssr: false,
 });
 
+// 닉네임 설정 모달 (OAuth 회원가입 후)
+const NicknameSetupModal = dynamic(
+    () => import("@/components/Auth/NicknameSetupModal"),
+    { ssr: false }
+);
+
 // 온보딩 모달 - 사용자 로그인 후에만 필요
 const OnboardingModal = dynamic(
     () => import("@/components/features/onboarding/OnboardingModal"),
@@ -143,23 +149,34 @@ function HomeContent() {
     const [selectedTab, setSelectedTab] = useState<TabType>(initialState.tab);
     const [selectedSubcategory, setSelectedSubcategory] = useState<CommunitySubcategory | undefined>(initialState.sub);
 
+    const [showNicknameSetup, setShowNicknameSetup] = useState(false);
     const [showOnboarding, setShowOnboarding] = useState(false);
     const [showTutorial, setShowTutorial] = useState(false);
     const [showPostGuide, setShowPostGuide] = useState(false);
     const [postGuideUserType, setPostGuideUserType] = useState<"planning" | "current" | "memorial" | null>(null);
     const [showRecordTutorial, setShowRecordTutorial] = useState(false);
     const [recordTutorialUserType, setRecordTutorialUserType] = useState<"current" | "memorial" | null>(null);
-    const isInternalNavigation = useRef(false);
 
-    // URL 변경 시 탭/서브카테고리 동기화
+    // 현재 상태를 ref로 추적 (useEffect에서 stale closure 방지)
+    const currentStateRef = useRef({ tab: selectedTab, sub: selectedSubcategory });
+    currentStateRef.current = { tab: selectedTab, sub: selectedSubcategory };
+
+    // URL 변경 시 탭/서브카테고리 동기화 (브라우저 뒤로가기/앞으로가기 처리)
     useEffect(() => {
-        if (isInternalNavigation.current) {
-            isInternalNavigation.current = false;
-            return;
-        }
-
         const tabFromUrl = searchParams.get("tab");
         const subFromUrl = searchParams.get("sub");
+
+        // 현재 상태와 URL이 같으면 무시 (무한 루프 방지)
+        const currentTab = currentStateRef.current.tab;
+        const currentSub = currentStateRef.current.sub;
+
+        const targetTab = tabFromUrl || "home";
+        const targetSub = tabFromUrl === "community" && isValidSubcategory(subFromUrl) ? subFromUrl : undefined;
+
+        // 이미 같은 상태면 아무것도 하지 않음
+        if (targetTab === currentTab && targetSub === currentSub) {
+            return;
+        }
 
         if (isValidTab(tabFromUrl)) {
             // 레거시 탭 처리
@@ -171,80 +188,90 @@ function HomeContent() {
                 if (redirect.sub) {
                     localStorage.setItem("memento-current-subcategory", redirect.sub);
                 }
-                // URL 정규화 (레거시 → 신규 구조)
-                router.replace(`/?tab=${redirect.main}${redirect.sub ? `&sub=${redirect.sub}` : ""}`, { scroll: false });
+                // URL 정규화는 handleTabChange에서 처리하도록 위임
                 return;
             }
 
-            if (tabFromUrl !== selectedTab) {
-                setSelectedTab(tabFromUrl);
-                localStorage.setItem("memento-current-tab", tabFromUrl);
-            }
+            setSelectedTab(tabFromUrl);
+            localStorage.setItem("memento-current-tab", tabFromUrl);
 
             if (tabFromUrl === "community" && isValidSubcategory(subFromUrl)) {
-                if (subFromUrl !== selectedSubcategory) {
-                    setSelectedSubcategory(subFromUrl);
-                    localStorage.setItem("memento-current-subcategory", subFromUrl);
-                }
+                setSelectedSubcategory(subFromUrl);
+                localStorage.setItem("memento-current-subcategory", subFromUrl);
             } else {
                 setSelectedSubcategory(undefined);
             }
-        } else if (!tabFromUrl && selectedTab !== "home") {
+        } else if (!tabFromUrl && currentTab !== "home") {
+            // URL에 tab이 없고 현재 home이 아니면 home으로
             setSelectedTab("home");
             setSelectedSubcategory(undefined);
             localStorage.setItem("memento-current-tab", "home");
         }
-    }, [searchParams, selectedTab, selectedSubcategory, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams]);
 
     // 신규 유저 플로우
     useEffect(() => {
         const checkNewUserFlow = async () => {
             if (!user) return;
 
-            const tutorialCompletedLocal = localStorage.getItem("memento-ani-tutorial-complete") === "true";
-            const onboardingCompletedLocal = localStorage.getItem("memento-ani-onboarding-complete") === "true";
-
-            if (pets.length > 0) {
-                supabase
-                    .from("profiles")
-                    .update({ last_seen_at: new Date().toISOString() })
-                    .eq("id", user.id);
-                return;
-            }
-
-            if (tutorialCompletedLocal && onboardingCompletedLocal) {
-                return;
-            }
-
-            if (tutorialCompletedLocal && !onboardingCompletedLocal) {
-                setShowOnboarding(true);
-                return;
-            }
-
+            // 1. 먼저 닉네임 설정 여부 확인
             try {
-                const { data } = await supabase
+                const { data: profileData } = await supabase
                     .from("profiles")
-                    .select("tutorial_completed_at, onboarding_completed_at")
+                    .select("nickname, tutorial_completed_at, onboarding_completed_at")
                     .eq("id", user.id)
                     .single();
 
-                if (data?.tutorial_completed_at) {
-                    localStorage.setItem("memento-ani-tutorial-complete", "true");
-                }
-                if (data?.onboarding_completed_at) {
-                    localStorage.setItem("memento-ani-onboarding-complete", "true");
+                // 닉네임이 없거나 이메일 앞부분과 같으면 (자동 생성된 경우) 닉네임 설정 필요
+                const emailPrefix = user.email?.split("@")[0] || "";
+                const needsNickname = !profileData?.nickname ||
+                    profileData.nickname === emailPrefix ||
+                    profileData.nickname === user.user_metadata?.full_name; // OAuth에서 가져온 이름
+
+                if (needsNickname) {
+                    setShowNicknameSetup(true);
+                    return; // 닉네임 설정 후 다시 체크
                 }
 
-                if (data?.tutorial_completed_at && data?.onboarding_completed_at) {
+                // 2. 기존 플로우 진행
+                const tutorialCompletedLocal = localStorage.getItem("memento-ani-tutorial-complete") === "true";
+                const onboardingCompletedLocal = localStorage.getItem("memento-ani-onboarding-complete") === "true";
+
+                if (pets.length > 0) {
+                    supabase
+                        .from("profiles")
+                        .update({ last_seen_at: new Date().toISOString() })
+                        .eq("id", user.id);
                     return;
                 }
 
-                if (data?.tutorial_completed_at && !data?.onboarding_completed_at) {
+                if (tutorialCompletedLocal && onboardingCompletedLocal) {
+                    return;
+                }
+
+                if (tutorialCompletedLocal && !onboardingCompletedLocal) {
                     setShowOnboarding(true);
                     return;
                 }
 
-                if (!data?.tutorial_completed_at) {
+                if (profileData?.tutorial_completed_at) {
+                    localStorage.setItem("memento-ani-tutorial-complete", "true");
+                }
+                if (profileData?.onboarding_completed_at) {
+                    localStorage.setItem("memento-ani-onboarding-complete", "true");
+                }
+
+                if (profileData?.tutorial_completed_at && profileData?.onboarding_completed_at) {
+                    return;
+                }
+
+                if (profileData?.tutorial_completed_at && !profileData?.onboarding_completed_at) {
+                    setShowOnboarding(true);
+                    return;
+                }
+
+                if (!profileData?.tutorial_completed_at) {
                     setShowTutorial(true);
                 }
 
@@ -253,6 +280,7 @@ function HomeContent() {
                     .update({ last_seen_at: new Date().toISOString() })
                     .eq("id", user.id);
             } catch {
+                const tutorialCompletedLocal = localStorage.getItem("memento-ani-tutorial-complete") === "true";
                 if (!tutorialCompletedLocal) {
                     setShowTutorial(true);
                 }
@@ -266,8 +294,6 @@ function HomeContent() {
 
     // 탭 변경 핸들러
     const handleTabChange = useCallback((tab: TabType, sub?: CommunitySubcategory) => {
-        isInternalNavigation.current = true;
-
         // 레거시 탭 처리
         const redirect = getLegacyTabRedirect(tab);
         if (redirect) {
@@ -318,7 +344,7 @@ function HomeContent() {
                     />
                 );
             case "ai-chat":
-                return <AIChatPage />;
+                return <AIChatPage setSelectedTab={handleTabChange} />;
             case "magazine":
                 return <MagazinePage setSelectedTab={handleTabChange} />;
             case "record":
@@ -346,6 +372,22 @@ function HomeContent() {
             </Layout>
             {user && (
                 <>
+                    <NicknameSetupModal
+                        isOpen={showNicknameSetup}
+                        onComplete={() => {
+                            setShowNicknameSetup(false);
+                            // 닉네임 설정 완료 후 튜토리얼 시작
+                            const tutorialCompletedLocal = localStorage.getItem("memento-ani-tutorial-complete") === "true";
+                            if (!tutorialCompletedLocal) {
+                                setShowTutorial(true);
+                            } else {
+                                const onboardingCompletedLocal = localStorage.getItem("memento-ani-onboarding-complete") === "true";
+                                if (!onboardingCompletedLocal && pets.length === 0) {
+                                    setShowOnboarding(true);
+                                }
+                            }
+                        }}
+                    />
                     <OnboardingModal
                         isOpen={showOnboarding}
                         onClose={() => setShowOnboarding(false)}

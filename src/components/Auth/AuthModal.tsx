@@ -19,6 +19,7 @@ import {
     EyeOff,
     CheckCircle,
     AlertCircle,
+    Loader2,
 } from "lucide-react";
 import { InlineLoading } from "@/components/ui/PawLoading";
 
@@ -33,7 +34,7 @@ export default function AuthModal({
     onClose,
     initialMode = "login",
 }: AuthModalProps) {
-    const { signIn, signUp, signInWithGoogle, signInWithKakao } = useAuth();
+    const { signIn, signUp, signInWithGoogle, signInWithKakao, checkNickname } = useAuth();
 
     const [mode, setMode] = useState<"login" | "signup">(initialMode);
     const [email, setEmail] = useState("");
@@ -43,6 +44,9 @@ export default function AuthModal({
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
+
+    // 닉네임 중복 체크 상태
+    const [nicknameStatus, setNicknameStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
 
     // initialMode가 변경될 때 mode 업데이트
     useEffect(() => {
@@ -58,8 +62,32 @@ export default function AuthModal({
             setError(null);
             setSuccess(null);
             setLoading(false);
+            setNicknameStatus("idle");
         }
     }, [isOpen]);
+
+    // 닉네임 변경 시 중복 체크 (디바운스)
+    useEffect(() => {
+        if (mode !== "signup" || !nickname.trim()) {
+            setNicknameStatus("idle");
+            return;
+        }
+
+        // 2자 미만이면 체크 안함
+        if (nickname.trim().length < 2) {
+            setNicknameStatus("idle");
+            return;
+        }
+
+        setNicknameStatus("checking");
+
+        const timer = setTimeout(async () => {
+            const { available } = await checkNickname(nickname.trim());
+            setNicknameStatus(available ? "available" : "taken");
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [nickname, mode, checkNickname]);
 
     // 페이지가 다시 보일 때 (OAuth 뒤로가기 등) 로딩 리셋
     useEffect(() => {
@@ -94,6 +122,26 @@ export default function AuthModal({
 
         try {
             if (mode === "signup") {
+                // 닉네임 길이 체크
+                if (nickname.trim().length < 2) {
+                    setError("닉네임은 2자 이상이어야 합니다.");
+                    setLoading(false);
+                    return;
+                }
+
+                // 닉네임 중복 최종 확인
+                if (nicknameStatus === "taken") {
+                    setError("이미 사용 중인 닉네임입니다.");
+                    setLoading(false);
+                    return;
+                }
+
+                if (nicknameStatus === "checking") {
+                    setError("닉네임 확인 중입니다. 잠시 후 다시 시도해주세요.");
+                    setLoading(false);
+                    return;
+                }
+
                 // 회원가입
                 const { error } = await signUp(email, password, nickname);
                 if (error) {
@@ -107,6 +155,7 @@ export default function AuthModal({
                         setMode("login");
                         setSuccess(null);
                         setPassword("");
+                        setNicknameStatus("idle");
                     }, 3000);
                 }
             } else {
@@ -211,15 +260,51 @@ export default function AuthModal({
                                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                 <Input
                                     type="text"
-                                    placeholder="닉네임을 입력하세요"
+                                    placeholder="닉네임을 입력하세요 (2자 이상)"
                                     value={nickname}
                                     onChange={(e) =>
                                         setNickname(e.target.value)
                                     }
-                                    className="pl-10 h-12 rounded-xl"
+                                    className={`pl-10 pr-10 h-12 rounded-xl ${
+                                        nicknameStatus === "taken"
+                                            ? "border-red-500 focus:border-red-500"
+                                            : nicknameStatus === "available"
+                                                ? "border-green-500 focus:border-green-500"
+                                                : ""
+                                    }`}
                                     required
+                                    minLength={2}
+                                    maxLength={20}
                                 />
+                                {/* 닉네임 상태 아이콘 */}
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                    {nicknameStatus === "checking" && (
+                                        <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
+                                    )}
+                                    {nicknameStatus === "available" && (
+                                        <CheckCircle className="w-5 h-5 text-green-500" />
+                                    )}
+                                    {nicknameStatus === "taken" && (
+                                        <AlertCircle className="w-5 h-5 text-red-500" />
+                                    )}
+                                </div>
                             </div>
+                            {/* 닉네임 상태 메시지 */}
+                            {nicknameStatus === "available" && (
+                                <p className="text-xs text-green-600">
+                                    사용 가능한 닉네임입니다
+                                </p>
+                            )}
+                            {nicknameStatus === "taken" && (
+                                <p className="text-xs text-red-600">
+                                    이미 사용 중인 닉네임입니다
+                                </p>
+                            )}
+                            {nicknameStatus === "idle" && nickname.length > 0 && nickname.length < 2 && (
+                                <p className="text-xs text-gray-500">
+                                    2자 이상 입력해주세요
+                                </p>
+                            )}
                         </div>
                     )}
 
@@ -279,8 +364,8 @@ export default function AuthModal({
                     {/* 제출 버튼 */}
                     <Button
                         type="submit"
-                        disabled={loading}
-                        className="w-full h-12 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-blue-600 hover:to-sky-600 rounded-xl text-base"
+                        disabled={loading || (mode === "signup" && (nicknameStatus === "taken" || nicknameStatus === "checking" || nickname.trim().length < 2))}
+                        className="w-full h-12 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-blue-600 hover:to-sky-600 rounded-xl text-base disabled:opacity-50"
                     >
                         {loading ? (
                             <InlineLoading />

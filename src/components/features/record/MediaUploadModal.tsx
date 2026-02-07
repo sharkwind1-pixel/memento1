@@ -177,8 +177,9 @@ export default function MediaUploadModal({
 
     return (
         <>
-            <div className="fixed inset-0 z-40 bg-black/50 flex items-center justify-center p-4">
-                <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            {/* 모바일: 하단 시트 / 데스크톱: 중앙 모달 */}
+            <div className="fixed inset-0 z-[9999] bg-black/50 flex items-end sm:items-center justify-center">
+                <div className="bg-white dark:bg-gray-900 w-full sm:max-w-2xl sm:mx-4 rounded-t-2xl sm:rounded-2xl p-6 max-h-[calc(100vh-60px)] sm:max-h-[85vh] overflow-y-auto">
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="text-lg font-semibold">사진/영상 업로드</h3>
                         <Button variant="ghost" size="icon" onClick={onClose}>

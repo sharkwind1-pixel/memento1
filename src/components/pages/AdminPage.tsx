@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
     LayoutDashboard,
     Users,
@@ -37,6 +38,11 @@ import {
     AlertTriangle,
     RotateCcw,
     Activity,
+    HelpCircle,
+    Lightbulb,
+    CheckCircle,
+    Clock,
+    Send,
 } from "lucide-react";
 import {
     LineChart,
@@ -50,7 +56,7 @@ import {
     ResponsiveContainer,
 } from "recharts";
 
-type AdminTab = "dashboard" | "users" | "posts" | "reports";
+type AdminTab = "dashboard" | "users" | "posts" | "reports" | "inquiries";
 
 interface DashboardStats {
     totalUsers: number;
@@ -96,6 +102,19 @@ interface ChartData {
     접속자: number;
 }
 
+interface InquiryRow {
+    id: string;
+    user_id: string | null;
+    email: string;
+    category: "question" | "report" | "suggestion";
+    title: string;
+    content: string;
+    status: "pending" | "in_progress" | "resolved" | "closed";
+    admin_response: string | null;
+    responded_at: string | null;
+    created_at: string;
+}
+
 export default function AdminPage() {
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState<AdminTab>("dashboard");
@@ -115,8 +134,12 @@ export default function AdminPage() {
     });
     const [users, setUsers] = useState<UserRow[]>([]);
     const [posts, setPosts] = useState<PostRow[]>([]);
+    const [inquiries, setInquiries] = useState<InquiryRow[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [chartData, setChartData] = useState<ChartData[]>([]);
+    const [selectedInquiry, setSelectedInquiry] = useState<InquiryRow | null>(null);
+    const [adminResponse, setAdminResponse] = useState("");
+    const [isResponding, setIsResponding] = useState(false);
 
     const isAdminUser = isAdmin(user?.email);
 
@@ -349,6 +372,74 @@ export default function AdminPage() {
 
     };
 
+    // 문의 목록 로드
+    const loadInquiries = async () => {
+        try {
+            const { data, error } = await supabase
+                .from("support_inquiries")
+                .select("*")
+                .order("created_at", { ascending: false })
+                .limit(100);
+
+            if (data) {
+                setInquiries(data as InquiryRow[]);
+            }
+        } catch {}
+    };
+
+    // 문의 상태 업데이트
+    const updateInquiryStatus = async (id: string, status: InquiryRow["status"]) => {
+        try {
+            const { error } = await supabase
+                .from("support_inquiries")
+                .update({ status })
+                .eq("id", id);
+
+            if (error) throw error;
+
+            setInquiries(prev => prev.map(i =>
+                i.id === id ? { ...i, status } : i
+            ));
+        } catch {
+            alert("상태 업데이트에 실패했습니다.");
+        }
+    };
+
+    // 문의 답변 저장
+    const submitResponse = async () => {
+        if (!selectedInquiry || !adminResponse.trim()) return;
+
+        setIsResponding(true);
+        try {
+            const { error } = await supabase
+                .from("support_inquiries")
+                .update({
+                    admin_response: adminResponse.trim(),
+                    responded_at: new Date().toISOString(),
+                    responded_by: user?.id,
+                    status: "resolved",
+                })
+                .eq("id", selectedInquiry.id);
+
+            if (error) throw error;
+
+            // 로컬 상태 업데이트
+            setInquiries(prev => prev.map(i =>
+                i.id === selectedInquiry.id
+                    ? { ...i, admin_response: adminResponse.trim(), status: "resolved", responded_at: new Date().toISOString() }
+                    : i
+            ));
+
+            setSelectedInquiry(null);
+            setAdminResponse("");
+            alert("답변이 저장되었습니다.");
+        } catch {
+            alert("답변 저장에 실패했습니다.");
+        } finally {
+            setIsResponding(false);
+        }
+    };
+
     useEffect(() => {
         if (isAdminUser) {
             loadDashboardStats();
@@ -360,6 +451,7 @@ export default function AdminPage() {
         if (isAdminUser) {
             if (activeTab === "users") loadUsers();
             if (activeTab === "posts") loadPosts();
+            if (activeTab === "inquiries") loadInquiries();
         }
     }, [activeTab, isAdminUser]);
 
@@ -386,6 +478,7 @@ export default function AdminPage() {
         { id: "dashboard" as AdminTab, label: "대시보드", icon: LayoutDashboard },
         { id: "users" as AdminTab, label: "유저 관리", icon: Users },
         { id: "posts" as AdminTab, label: "게시물 관리", icon: FileText },
+        { id: "inquiries" as AdminTab, label: "문의 관리", icon: HelpCircle },
         { id: "reports" as AdminTab, label: "신고 관리", icon: Flag },
     ];
 
@@ -921,6 +1014,234 @@ export default function AdminPage() {
                             </div>
                         </CardContent>
                     </Card>
+                </div>
+            )}
+
+            {/* 문의 관리 탭 */}
+            {activeTab === "inquiries" && (
+                <div className="space-y-4">
+                    {/* 검색 & 필터 */}
+                    <div className="flex gap-2">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            <Input
+                                placeholder="제목 또는 이메일로 검색..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="pl-10"
+                            />
+                        </div>
+                        <Button variant="outline" onClick={loadInquiries}>
+                            <RefreshCw className="w-4 h-4 mr-1" />
+                            새로고침
+                        </Button>
+                    </div>
+
+                    {/* 범례 */}
+                    <div className="flex flex-wrap gap-2 text-sm">
+                        <Badge className="bg-blue-100 text-blue-700">
+                            <HelpCircle className="w-3 h-3 mr-1" />
+                            질문
+                        </Badge>
+                        <Badge className="bg-red-100 text-red-700">
+                            <AlertTriangle className="w-3 h-3 mr-1" />
+                            신고
+                        </Badge>
+                        <Badge className="bg-amber-100 text-amber-700">
+                            <Lightbulb className="w-3 h-3 mr-1" />
+                            건의
+                        </Badge>
+                    </div>
+
+                    {/* 문의 목록 */}
+                    <Card>
+                        <CardContent className="pt-6">
+                            {inquiries.length === 0 ? (
+                                <div className="text-center py-8 text-gray-500">
+                                    <HelpCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                                    <p>문의 내역이 없습니다</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {inquiries
+                                        .filter(i =>
+                                            searchQuery === "" ||
+                                            i.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                            i.email.toLowerCase().includes(searchQuery.toLowerCase())
+                                        )
+                                        .map((inquiry) => (
+                                        <div
+                                            key={inquiry.id}
+                                            className={`p-4 rounded-xl border transition-colors ${
+                                                inquiry.status === "resolved"
+                                                    ? "bg-green-50 border-green-200"
+                                                    : inquiry.status === "in_progress"
+                                                        ? "bg-blue-50 border-blue-200"
+                                                        : inquiry.category === "report"
+                                                            ? "bg-red-50 border-red-200"
+                                                            : "bg-gray-50 border-gray-200"
+                                            }`}
+                                        >
+                                            <div className="flex items-start justify-between mb-2">
+                                                <div className="flex items-center gap-2">
+                                                    {inquiry.category === "question" && (
+                                                        <Badge className="bg-blue-100 text-blue-700">
+                                                            <HelpCircle className="w-3 h-3 mr-1" />
+                                                            질문
+                                                        </Badge>
+                                                    )}
+                                                    {inquiry.category === "report" && (
+                                                        <Badge className="bg-red-100 text-red-700">
+                                                            <AlertTriangle className="w-3 h-3 mr-1" />
+                                                            신고
+                                                        </Badge>
+                                                    )}
+                                                    {inquiry.category === "suggestion" && (
+                                                        <Badge className="bg-amber-100 text-amber-700">
+                                                            <Lightbulb className="w-3 h-3 mr-1" />
+                                                            건의
+                                                        </Badge>
+                                                    )}
+                                                    {inquiry.status === "pending" && (
+                                                        <Badge variant="secondary" className="text-xs">
+                                                            <Clock className="w-3 h-3 mr-1" />
+                                                            대기중
+                                                        </Badge>
+                                                    )}
+                                                    {inquiry.status === "in_progress" && (
+                                                        <Badge className="bg-blue-100 text-blue-700 text-xs">
+                                                            처리중
+                                                        </Badge>
+                                                    )}
+                                                    {inquiry.status === "resolved" && (
+                                                        <Badge className="bg-green-100 text-green-700 text-xs">
+                                                            <CheckCircle className="w-3 h-3 mr-1" />
+                                                            답변완료
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                                <span className="text-xs text-gray-500">
+                                                    {new Date(inquiry.created_at).toLocaleDateString("ko-KR")}
+                                                </span>
+                                            </div>
+
+                                            <h4 className="font-medium text-gray-800 mb-1">
+                                                {inquiry.title}
+                                            </h4>
+                                            <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                                                {inquiry.content}
+                                            </p>
+                                            <p className="text-xs text-gray-500 mb-3">
+                                                보낸 사람: {inquiry.email}
+                                            </p>
+
+                                            {/* 관리자 답변 (있을 경우) */}
+                                            {inquiry.admin_response && (
+                                                <div className="p-3 bg-white rounded-lg border border-green-200 mb-3">
+                                                    <p className="text-xs text-green-600 font-medium mb-1">관리자 답변</p>
+                                                    <p className="text-sm text-gray-700">{inquiry.admin_response}</p>
+                                                    {inquiry.responded_at && (
+                                                        <p className="text-xs text-gray-400 mt-1">
+                                                            {new Date(inquiry.responded_at).toLocaleString("ko-KR")}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {/* 액션 버튼 */}
+                                            <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200">
+                                                {inquiry.status === "pending" && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() => updateInquiryStatus(inquiry.id, "in_progress")}
+                                                    >
+                                                        처리 시작
+                                                    </Button>
+                                                )}
+                                                {inquiry.status !== "resolved" && (
+                                                    <Button
+                                                        size="sm"
+                                                        className="bg-green-500 hover:bg-green-600"
+                                                        onClick={() => {
+                                                            setSelectedInquiry(inquiry);
+                                                            setAdminResponse(inquiry.admin_response || "");
+                                                        }}
+                                                    >
+                                                        <Send className="w-3 h-3 mr-1" />
+                                                        답변하기
+                                                    </Button>
+                                                )}
+                                                {inquiry.status === "resolved" && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() => updateInquiryStatus(inquiry.id, "closed")}
+                                                    >
+                                                        종료
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* 답변 모달 */}
+                    {selectedInquiry && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                            <div
+                                className="absolute inset-0 bg-black/50"
+                                onClick={() => {
+                                    setSelectedInquiry(null);
+                                    setAdminResponse("");
+                                }}
+                            />
+                            <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-xl overflow-hidden">
+                                <div className="p-4 border-b bg-green-50">
+                                    <h3 className="font-bold text-gray-800">문의 답변</h3>
+                                    <p className="text-sm text-gray-500">{selectedInquiry.title}</p>
+                                </div>
+                                <div className="p-4 space-y-4">
+                                    <div className="p-3 bg-gray-50 rounded-lg">
+                                        <p className="text-sm text-gray-600 font-medium mb-1">문의 내용</p>
+                                        <p className="text-sm text-gray-800">{selectedInquiry.content}</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            답변 내용
+                                        </label>
+                                        <Textarea
+                                            value={adminResponse}
+                                            onChange={(e) => setAdminResponse(e.target.value)}
+                                            placeholder="답변을 입력하세요..."
+                                            rows={5}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="p-4 border-t flex justify-end gap-2">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                            setSelectedInquiry(null);
+                                            setAdminResponse("");
+                                        }}
+                                    >
+                                        취소
+                                    </Button>
+                                    <Button
+                                        className="bg-green-500 hover:bg-green-600"
+                                        onClick={submitResponse}
+                                        disabled={isResponding || !adminResponse.trim()}
+                                    >
+                                        {isResponding ? "저장 중..." : "답변 저장"}
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 

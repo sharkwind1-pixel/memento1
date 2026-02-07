@@ -101,7 +101,7 @@ export default function ImageCropper({
     };
 
     return (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center p-4">
             <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-sm w-full">
                 <h3 className="text-lg font-semibold mb-2 text-center">
                     사진 영역 선택
