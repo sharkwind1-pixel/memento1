@@ -1,12 +1,30 @@
 /**
+ * ============================================================================
  * AIChatPage.tsx
- * AI 펫톡 - 한글 입력 버그 수정 + 1:1 사진
+ * ============================================================================
+ *
+ * AI 펫톡 페이지 - 반려동물과 AI 대화 기능
+ *
+ * 주요 기능:
+ * - 일상 모드: 건강 관리, 케어 알림, 일상 대화
+ * - 추모 모드: 무지개다리를 건넌 반려동물과의 추억 대화
+ * - 감정 인식 및 개인화된 응답
+ * - 타임라인/사진 캡션 기반 맥락 이해
+ *
+ * 상태 관리:
+ * - 대화 기록: Supabase에 저장 (자동 동기화)
+ * - 일일 사용량: localStorage 기반 (무료 10회/일)
+ *
+ * ============================================================================
  */
 
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
 
+// ============================================================================
+// 임포트
+// ============================================================================
 import { useState, useRef, useEffect, useCallback } from "react";
 import { usePets } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -53,20 +71,30 @@ import {
     type TimelineEntry,
 } from "@/components/features/chat";
 
+// ============================================================================
+// 타입 정의
+// ============================================================================
+
+/** AI 펫톡 페이지 Props */
 interface AIChatPageProps {
     setSelectedTab?: (tab: TabType) => void;
 }
 
+/** 채팅 메시지 구조 */
 interface ChatMessage {
     id: string;
-    role: "user" | "pet";
+    role: "user" | "pet";    // user: 사용자, pet: AI(반려동물)
     content: string;
     timestamp: Date;
-    emotion?: string;
-    emotionScore?: number;
+    emotion?: string;        // AI가 감지한 사용자 감정
+    emotionScore?: number;   // 감정 강도 (0-1)
 }
 
-// 감정 이모티콘 매핑
+// ============================================================================
+// 상수 정의
+// ============================================================================
+
+/** 감정별 이모티콘 매핑 */
 const emotionIcons: Record<string, string> = {
     happy: "😊",
     sad: "😢",
@@ -79,7 +107,14 @@ const emotionIcons: Record<string, string> = {
     neutral: "😐",
 };
 
+// ============================================================================
+// 메인 컴포넌트
+// ============================================================================
+
 export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
+    // ========================================================================
+    // Context & Hooks
+    // ========================================================================
     const { user, loading: authLoading } = useAuth();
     const {
         pets,
@@ -91,6 +126,9 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         isLoading: petsLoading,
     } = usePets();
 
+    // ========================================================================
+    // 상태 관리
+    // ========================================================================
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [inputValue, setInputValue] = useState("");
     const [isTyping, setIsTyping] = useState(false);
@@ -104,17 +142,26 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         enabled: boolean;
     }>>([]);
 
-    const messagesEndRef = useRef<HTMLDivElement>(null);
-    const inputRef = useRef<HTMLInputElement>(null);
+    // Refs
+    const messagesEndRef = useRef<HTMLDivElement>(null);  // 채팅 스크롤 위치
+    const inputRef = useRef<HTMLInputElement>(null);      // 입력창 포커스
 
+    // ========================================================================
+    // 계산된 값
+    // ========================================================================
     const remainingChats = DAILY_FREE_LIMIT - dailyUsage;
     const isLimitReached = remainingChats <= 0;
 
-    // 일일 사용량 초기화
+    // ========================================================================
+    // Side Effects (useEffect)
+    // ========================================================================
+
+    // 일일 사용량 초기화 (localStorage에서 로드)
     useEffect(() => {
         setDailyUsage(getDailyUsage());
     }, []);
 
+    // 추모 모드 여부 (펫 상태가 memorial인 경우)
     const isMemorialMode = selectedPet?.status === "memorial";
 
     const allPhotos = selectedPet
@@ -303,7 +350,15 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         fetchReminders();
     }, [selectedPetId, user?.id]);
 
-    // 새 대화 시작 함수
+    // ========================================================================
+    // 이벤트 핸들러
+    // ========================================================================
+
+    /**
+     * 새 대화 시작
+     * - 기존 대화 초기화
+     * - 개인화된 인사말로 시작
+     */
     const handleNewChat = () => {
         if (!selectedPet) return;
 
@@ -324,6 +379,16 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         ]);
     };
 
+    /**
+     * 메시지 전송 및 AI 응답 처리
+     * @param directMessage - 추천 대화 버튼 클릭 시 직접 전달되는 메시지
+     *
+     * 처리 순서:
+     * 1. 무료 사용량 체크
+     * 2. 사용자 메시지 추가
+     * 3. AI API 호출 (타임라인, 사진캡션, 리마인더 데이터 포함)
+     * 4. AI 응답 추가
+     */
     const handleSend = async (directMessage?: string) => {
         const messageToSend = directMessage || inputValue;
         if (!messageToSend.trim() || !selectedPet) return;
@@ -458,19 +523,29 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         }
     };
 
-    // 한글 조합 중 Enter 버그 수정
+    /**
+     * 키보드 입력 처리
+     * - 한글 조합 중(isComposing)에는 Enter 무시 (IME 버그 방지)
+     * - Enter: 메시지 전송
+     */
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.nativeEvent.isComposing) return;
+        if (e.nativeEvent.isComposing) return;  // 한글 조합 중 Enter 방지
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             handleSend();
         }
     };
 
+    // ========================================================================
+    // 렌더링
+    // ========================================================================
+
+    // 1. 로딩 상태
     if (authLoading || petsLoading) {
         return <FullPageLoading text="불러오는 중..." />;
     }
 
+    // 2. 비로그인 상태 - 로그인 유도 화면
     if (!user) {
         return (
             <div className="min-h-screen relative overflow-hidden">
@@ -546,6 +621,8 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         );
     }
 
+    // 3. 펫 미등록 상태 - 등록 유도 화면
+    // 중요: 모바일에서 버튼 클릭이 작동하도록 button + window.location.href 사용
     if (pets.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center px-4 py-20">
@@ -574,11 +651,14 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         );
     }
 
+    // 4. 메인 채팅 UI
     return (
         <div
             className={`min-h-screen flex flex-col relative overflow-hidden ${isMemorialMode ? "bg-gradient-to-b from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950 dark:via-orange-950 dark:to-gray-900" : "bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"}`}
         >
-            {/* 추모 모드 별 애니메이션 */}
+            {/* ================================================================
+                추모 모드 배경 장식 - 반짝이는 별 애니메이션
+            ================================================================ */}
             {isMemorialMode && (
                 <div className="absolute inset-0 pointer-events-none overflow-hidden">
                     {[...Array(12)].map((_, i) => (

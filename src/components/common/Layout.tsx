@@ -1,13 +1,32 @@
 /**
+ * ============================================================================
  * Layout.tsx
- * 메인 레이아웃 - 뭉게구름 & 하늘색 컬러 시스템
- * Primary: #05B2DC / Background: 뭉게구름 화이트
+ * ============================================================================
  *
- * v2: 사이드바 네비게이션 + 5개 메인 카테고리
+ * 메인 레이아웃 컴포넌트
+ *
+ * 컬러 시스템:
+ * - Primary: #05B2DC (하늘색)
+ * - Background: 뭉게구름 화이트 그라데이션
+ *
+ * 레이아웃 구조:
+ * - 헤더: 로고, 데스크톱 네비게이션, 사용자 메뉴
+ * - 사이드바: 데스크톱에서 고정, 모바일에서 오버레이
+ * - 메인 콘텐츠: 반응형 중앙 정렬
+ * - 하단 네비게이션: 모바일 전용 (5개 탭 + 메뉴)
+ *
+ * 반응형:
+ * - xl (1280px+): 사이드바 고정 표시
+ * - xl 미만: 하단 네비게이션 + 햄버거 메뉴
+ *
+ * ============================================================================
  */
 
 "use client";
 
+// ============================================================================
+// 임포트
+// ============================================================================
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { TabType, MainCategory, CommunitySubcategory, isAdmin } from "@/types";
@@ -37,6 +56,10 @@ import {
     Settings,
 } from "lucide-react";
 
+// ============================================================================
+// 타입 정의
+// ============================================================================
+
 interface LayoutProps {
     children: React.ReactNode;
     selectedTab: TabType;
@@ -45,7 +68,11 @@ interface LayoutProps {
     onSubcategoryChange?: (sub: CommunitySubcategory) => void;
 }
 
-// 메인 카테고리 (5개) - 데스크탑 상단 네비게이션
+// ============================================================================
+// 상수 정의
+// ============================================================================
+
+/** 메인 카테고리 (5개) - 데스크탑 상단 네비게이션 */
 const MAIN_TABS: { id: MainCategory; label: string; icon: React.ElementType }[] = [
     { id: "home", label: "홈", icon: Home },
     { id: "record", label: "우리의 기록", icon: Camera },
@@ -54,10 +81,10 @@ const MAIN_TABS: { id: MainCategory; label: string; icon: React.ElementType }[] 
     { id: "magazine", label: "펫매거진", icon: BookOpen },
 ];
 
-// 관리자 탭 (별도)
+/** 관리자 탭 (별도) - 관리자 권한 있는 사용자만 표시 */
 const ADMIN_TAB = { id: "admin" as TabType, label: "관리자", icon: Shield, adminOnly: true };
 
-// 하단 네비게이션용 - 홈이 가운데 (UX 최적화)
+/** 하단 네비게이션용 탭 - 홈이 가운데 배치 (UX 최적화) */
 const BOTTOM_NAV_TABS: { id: MainCategory; label: string; icon: React.ElementType }[] = [
     { id: "record", label: "기록", icon: Camera },
     { id: "community", label: "커뮤니티", icon: Users },
@@ -66,6 +93,10 @@ const BOTTOM_NAV_TABS: { id: MainCategory; label: string; icon: React.ElementTyp
     { id: "magazine", label: "매거진", icon: BookOpen },
 ];
 
+// ============================================================================
+// 메인 컴포넌트
+// ============================================================================
+
 export default function Layout({
     children,
     selectedTab,
@@ -73,6 +104,9 @@ export default function Layout({
     subcategory = "free",
     onSubcategoryChange,
 }: LayoutProps) {
+    // ========================================================================
+    // Context & State
+    // ========================================================================
     const { user, loading, signOut } = useAuth();
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);

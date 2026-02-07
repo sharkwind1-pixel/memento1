@@ -1,12 +1,32 @@
 /**
- * 메멘토애니 메인 페이지
- * - Dynamic import로 페이지 컴포넌트 lazy loading
- * - 초기 번들 크기 최적화
- * - v2: 5개 메인 카테고리 + 커뮤니티 서브카테고리 구조
+ * ============================================================================
+ * page.tsx (메인 페이지)
+ * ============================================================================
+ *
+ * 메멘토애니 SPA 라우팅 컨트롤러
+ *
+ * 라우팅 구조:
+ * - 5개 메인 탭: home, record, community, ai-chat, magazine
+ * - 커뮤니티 서브카테고리: free, memorial, adoption, local, lost
+ * - 레거시 탭 리다이렉트: adoption/local/lost → community?sub=xxx
+ *
+ * URL 동기화:
+ * - ?tab=xxx&sub=yyy 형태로 상태 관리
+ * - 브라우저 뒤로가기/앞으로가기 지원
+ * - localStorage 백업 (새로고침 시 복원)
+ *
+ * 최적화:
+ * - Dynamic import로 각 페이지 lazy loading
+ * - 초기 번들 크기 최소화
+ *
+ * ============================================================================
  */
 
 "use client";
 
+// ============================================================================
+// 임포트
+// ============================================================================
 import { useState, useEffect, Suspense, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -17,12 +37,17 @@ import Layout from "@/components/common/Layout";
 import { supabase } from "@/lib/supabase";
 import { SectionLoading, FullPageLoading } from "@/components/ui/PawLoading";
 
-// 메인 카테고리 (5개 + admin)
+// ============================================================================
+// 상수 및 유틸리티
+// ============================================================================
+
+/** 메인 카테고리 (5개 + admin) */
 const MAIN_TABS: TabType[] = ["home", "record", "community", "ai-chat", "magazine", "admin"];
 
-// 레거시 탭 포함 (하위 호환용)
+/** 레거시 탭 포함 (하위 호환용 - v1에서 사용하던 탭들) */
 const VALID_TABS: TabType[] = [...MAIN_TABS, "adoption", "local", "lost"];
 
+/** 유효한 탭인지 검증 */
 const isValidTab = (tab: string | null): tab is TabType => {
     return tab !== null && VALID_TABS.includes(tab as TabType);
 };
@@ -31,7 +56,10 @@ const isValidSubcategory = (sub: string | null): sub is CommunitySubcategory => 
     return sub !== null && ["free", "memorial", "adoption", "local", "lost"].includes(sub);
 };
 
-// Dynamic imports - 각 페이지를 lazy load
+// ============================================================================
+// Dynamic Imports - 코드 스플리팅으로 초기 로딩 최적화
+// ============================================================================
+
 const HomePage = dynamic(() => import("@/components/pages/HomePage"), {
     loading: () => <SectionLoading />,
     ssr: false,
@@ -92,7 +120,11 @@ const RecordPageTutorial = dynamic(
     { ssr: false }
 );
 
-// Suspense 래퍼 (useSearchParams 필요)
+// ============================================================================
+// 메인 컴포넌트
+// ============================================================================
+
+/** Suspense 래퍼 - useSearchParams는 Suspense 내부에서만 사용 가능 */
 export default function Home() {
     return (
         <Suspense fallback={<SectionLoading />}>
@@ -101,13 +133,23 @@ export default function Home() {
     );
 }
 
+/**
+ * 실제 페이지 컨텐츠
+ * - URL 파라미터 기반 탭 상태 관리
+ * - 온보딩/튜토리얼 플로우 제어
+ */
 function HomeContent() {
+    // ========================================================================
+    // Context & Hooks
+    // ========================================================================
     const { user, loading } = useAuth();
     const { pets, isLoading: petsLoading } = usePets();
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    // 초기 탭/서브카테고리 결정
+    // ========================================================================
+    // 초기 상태 결정 (URL > localStorage > 기본값)
+    // ========================================================================
     const getInitialState = (): { tab: TabType; sub?: CommunitySubcategory } => {
         // 1. URL에서 확인
         const tabFromUrl = searchParams.get("tab");

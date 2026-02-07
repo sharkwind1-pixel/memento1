@@ -1,7 +1,33 @@
+/**
+ * ============================================================================
+ * PetFormModal.tsx
+ * ============================================================================
+ *
+ * 반려동물 등록/수정 모달
+ *
+ * 구조:
+ * - 4단계 스텝 폼
+ *   1. 사진/이름: 프로필 사진 업로드, 이름 입력
+ *   2. 기본정보: 종류, 품종, 생일, 성별, 몸무게
+ *   3. 우리 이야기: 입양일, 만난 계기, 별명, 특이 행동
+ *   4. 좋아하는 것: 음식, 활동, 장소 (+ 추모 모드 정보)
+ *
+ * 모바일 최적화:
+ * - 하단 시트 형태 (모바일) / 중앙 모달 (데스크톱)
+ * - 스크롤 가능한 컨텐츠 영역
+ * - Safe Area Inset 대응
+ * - touch-manipulation으로 터치 응답성 향상
+ *
+ * ============================================================================
+ */
+
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
 
+// ============================================================================
+// 임포트
+// ============================================================================
 import { useState, useRef, useEffect } from "react";
 import { Pet } from "@/contexts/PetContext";
 import { Button } from "@/components/ui/button";
@@ -33,6 +59,11 @@ import {
 } from "lucide-react";
 import ImageCropper, { CropPosition } from "./ImageCropper";
 
+// ============================================================================
+// 타입 및 상수 정의
+// ============================================================================
+
+/** 모달 Props */
 interface PetFormModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -40,8 +71,10 @@ interface PetFormModalProps {
     onSave: (pet: Omit<Pet, "id" | "createdAt" | "photos">) => void | Promise<void>;
 }
 
+/** 총 스텝 수 */
 const TOTAL_STEPS = 4;
 
+/** 각 스텝별 아이콘과 라벨 */
 const STEP_INFO = [
     { icon: Camera, label: "사진/이름" },
     { icon: PawPrint, label: "기본정보" },
@@ -49,14 +82,21 @@ const STEP_INFO = [
     { icon: Sparkles, label: "좋아하는 것" },
 ];
 
+// ============================================================================
+// 메인 컴포넌트
+// ============================================================================
+
 export default function PetFormModal({
     isOpen,
     onClose,
     pet,
     onSave,
 }: PetFormModalProps) {
-    const [step, setStep] = useState(1);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    // ========================================================================
+    // 상태 관리
+    // ========================================================================
+    const [step, setStep] = useState(1);              // 현재 스텝 (1-4)
+    const [isSubmitting, setIsSubmitting] = useState(false);  // 제출 중 상태
     const [formData, setFormData] = useState({
         name: "",
         type: "강아지" as Pet["type"],
@@ -587,6 +627,7 @@ export default function PetFormModal({
         </div>
     );
 
+    /** 현재 스텝에 맞는 폼 렌더링 */
     const renderCurrentStep = () => {
         switch (step) {
             case 1: return renderStep1();
@@ -597,9 +638,20 @@ export default function PetFormModal({
         }
     };
 
+    // ========================================================================
+    // 렌더링
+    // ========================================================================
+    // 모달 구조:
+    // - 오버레이 (z-9998): 배경 딤처리, 클릭 시 닫기
+    // - 모달 (z-9999): 실제 콘텐츠
+    //   - 모바일: 하단 시트 (bottom sheet)
+    //   - 데스크톱: 중앙 모달
+
     return (
         <>
-            {/* 배경 오버레이 - 별도 레이어 */}
+            {/* ================================================================
+                배경 오버레이 - 클릭 시 모달 닫기
+            ================================================================ */}
             <div
                 className="fixed inset-0 z-[9998] bg-black/50"
                 onClick={onClose}
