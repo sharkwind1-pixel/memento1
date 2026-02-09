@@ -18,6 +18,7 @@ import {
     Trash2,
 } from "lucide-react";
 import ImageCropper, { CropPosition } from "./ImageCropper";
+import { toast } from "sonner";
 
 function isVideoFile(file: File): boolean {
     return file.type.startsWith("video/");
@@ -159,7 +160,7 @@ export default function MediaUploadModal({
     const handleUpload = () => {
         const uncropped = selectedFiles.filter((f) => !f.cropped);
         if (uncropped.length > 0) {
-            alert("모든 사진의 영역을 선택해주세요");
+            toast.warning("모든 사진의 영역을 선택해주세요");
             return;
         }
         onUpload(

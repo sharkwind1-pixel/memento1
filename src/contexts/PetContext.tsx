@@ -2,6 +2,8 @@
  * PetContext.tsx
  * 반려동물 데이터 전역 상태 관리
  * Supabase 연동 (로그인 시) + localStorage 폴백 (비로그인 시)
+ *
+ * 타입은 @/types/index.ts에서 통합 관리
  */
 
 "use client";
@@ -12,6 +14,7 @@ import React, {
     useState,
     useEffect,
     useCallback,
+    useMemo,
 } from "react";
 import { useAuth } from "./AuthContext";
 import { supabase } from "@/lib/supabase";
@@ -22,60 +25,18 @@ import {
     generateVideoThumbnail,
 } from "@/lib/storage";
 
-// 타입 정의
-export type MediaType = "image" | "video";
+// 타입은 @/types에서 import (Single Source of Truth)
+import type {
+    Pet,
+    PetPhoto,
+    MediaType,
+    CropPosition,
+} from "@/types";
 
-export interface PetPhoto {
-    id: string;
-    url: string;
-    storagePath?: string; // Supabase Storage 경로
-    type: MediaType;
-    caption: string;
-    date: string;
-    cropPosition?: {
-        x: number;
-        y: number;
-        scale: number;
-    };
-    thumbnailUrl?: string; // 영상 썸네일
-}
+// Re-export for backward compatibility
+export type { Pet, PetPhoto, MediaType };
 
-export interface Pet {
-    id: string;
-    name: string;
-    type: "강아지" | "고양이" | "기타";
-    breed: string;
-    birthday: string;
-    gender: "남아" | "여아";
-    weight: string;
-    personality: string;
-    profileImage: string;
-    profileCropPosition?: {
-        x: number;
-        y: number;
-        scale: number;
-    };
-    photos: PetPhoto[];
-    status: "active" | "memorial";
-    memorialDate?: string;
-    isPrimary: boolean;
-    createdAt: string;
-
-    // AI 펫톡 개인화를 위한 추가 정보
-    adoptedDate?: string;           // 처음 만난 날/입양한 날
-    howWeMet?: "펫샵" | "분양" | "보호소" | "지인" | "길에서" | "기타";  // 어떻게 만났는지
-    nicknames?: string;             // 부르는 별명들 (쉼표로 구분)
-    specialHabits?: string;         // 특별한 버릇/습관
-    favoriteFood?: string;          // 좋아하는 간식/음식
-    favoriteActivity?: string;      // 좋아하는 놀이/활동
-    favoritePlace?: string;         // 좋아하는 장소
-
-    // 추모 관련 추가 정보
-    togetherPeriod?: string;        // 함께한 기간
-    memorableMemory?: string;       // 기억하고 싶은 순간
-}
-
-// 타임라인 일기 타입
+// 타임라인 일기 타입 (Context 전용)
 export interface TimelineEntry {
     id: string;
     petId: string;
@@ -736,30 +697,54 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
         [pets]
     );
 
+    // Context value를 useMemo로 메모이제이션하여 불필요한 리렌더링 방지
+    const contextValue = useMemo(
+        () => ({
+            pets,
+            selectedPetId,
+            selectedPet,
+            timeline,
+            addPet,
+            updatePet,
+            deletePet,
+            selectPet,
+            addMedia,
+            updatePhoto,
+            deletePhoto,
+            deletePhotos,
+            addTimelineEntry,
+            updateTimelineEntry,
+            deleteTimelineEntry,
+            fetchTimeline: fetchTimelineData,
+            getPetById,
+            isLoading,
+            isSyncing,
+        }),
+        [
+            pets,
+            selectedPetId,
+            selectedPet,
+            timeline,
+            addPet,
+            updatePet,
+            deletePet,
+            selectPet,
+            addMedia,
+            updatePhoto,
+            deletePhoto,
+            deletePhotos,
+            addTimelineEntry,
+            updateTimelineEntry,
+            deleteTimelineEntry,
+            fetchTimelineData,
+            getPetById,
+            isLoading,
+            isSyncing,
+        ]
+    );
+
     return (
-        <PetContext.Provider
-            value={{
-                pets,
-                selectedPetId,
-                selectedPet,
-                timeline,
-                addPet,
-                updatePet,
-                deletePet,
-                selectPet,
-                addMedia,
-                updatePhoto,
-                deletePhoto,
-                deletePhotos,
-                addTimelineEntry,
-                updateTimelineEntry,
-                deleteTimelineEntry,
-                fetchTimeline: fetchTimelineData,
-                getPetById,
-                isLoading,
-                isSyncing,
-            }}
-        >
+        <PetContext.Provider value={contextValue}>
             {children}
         </PetContext.Provider>
     );

@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 import {
     LayoutDashboard,
     Users,
@@ -320,7 +321,7 @@ export default function AdminPage() {
             // 통계 새로고침
             loadDashboardStats();
         } catch {
-            alert("권한 업데이트에 실패했습니다.");
+            toast.error("권한 업데이트에 실패했습니다.");
         }
     };
 
@@ -341,9 +342,9 @@ export default function AdminPage() {
                 .eq("id", userId);
 
             if (error) throw error;
-            alert("온보딩이 리셋되었습니다.");
+            toast.success("온보딩이 리셋되었습니다.");
         } catch {
-            alert("온보딩 리셋에 실패했습니다.");
+            toast.error("온보딩 리셋에 실패했습니다.");
         }
     };
 
@@ -401,7 +402,7 @@ export default function AdminPage() {
                 i.id === id ? { ...i, status } : i
             ));
         } catch {
-            alert("상태 업데이트에 실패했습니다.");
+            toast.error("상태 업데이트에 실패했습니다.");
         }
     };
 
@@ -432,9 +433,9 @@ export default function AdminPage() {
 
             setSelectedInquiry(null);
             setAdminResponse("");
-            alert("답변이 저장되었습니다.");
+            toast.success("답변이 저장되었습니다.");
         } catch {
-            alert("답변 저장에 실패했습니다.");
+            toast.error("답변 저장에 실패했습니다.");
         } finally {
             setIsResponding(false);
         }

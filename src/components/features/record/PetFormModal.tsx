@@ -58,6 +58,7 @@ import {
     Cookie,
 } from "lucide-react";
 import ImageCropper, { CropPosition } from "./ImageCropper";
+import { toast } from "sonner";
 
 // ============================================================================
 // 타입 및 상수 정의
@@ -138,12 +139,12 @@ export default function PetFormModal({
                     name: pet.name,
                     type: pet.type,
                     breed: pet.breed,
-                    birthday: pet.birthday,
+                    birthday: pet.birthday || "",
                     gender: pet.gender,
-                    weight: pet.weight,
-                    personality: pet.personality,
+                    weight: pet.weight || "",
+                    personality: pet.personality || "",
                     status: pet.status,
-                    isPrimary: pet.isPrimary,
+                    isPrimary: pet.isPrimary ?? false,
                     adoptedDate: pet.adoptedDate || "",
                     howWeMet: pet.howWeMet || "",
                     nicknames: pet.nicknames || "",
@@ -155,10 +156,12 @@ export default function PetFormModal({
                     togetherPeriod: pet.togetherPeriod || "",
                     memorableMemory: pet.memorableMemory || "",
                 });
-                setProfilePreview(pet.profileImage);
-                setProfileCropPosition(
-                    pet.profileCropPosition || { x: 50, y: 50, scale: 1 }
-                );
+                setProfilePreview(pet.profileImage || "");
+                setProfileCropPosition({
+                    x: pet.profileCropPosition?.x ?? 50,
+                    y: pet.profileCropPosition?.y ?? 50,
+                    scale: pet.profileCropPosition?.scale ?? 1,
+                });
                 setProfileCropped(!!pet.profileImage);
             } else {
                 setFormData({
@@ -214,11 +217,11 @@ export default function PetFormModal({
         // Step 1 검증
         if (step === 1) {
             if (!formData.name.trim()) {
-                alert("이름을 입력해주세요");
+                toast.warning("이름을 입력해주세요");
                 return;
             }
             if (profilePreview && !profileCropped) {
-                alert("프로필 사진 영역을 선택해주세요");
+                toast.warning("프로필 사진 영역을 선택해주세요");
                 return;
             }
         }

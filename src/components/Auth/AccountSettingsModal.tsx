@@ -22,6 +22,7 @@ import {
     Edit3,
 } from "lucide-react";
 import { InlineLoading } from "@/components/ui/PawLoading";
+import { toast } from "sonner";
 
 interface AccountSettingsModalProps {
     isOpen: boolean;
@@ -161,7 +162,7 @@ export default function AccountSettingsModal({
             localStorage.removeItem("memento-ani-onboarding-complete");
             localStorage.removeItem("memento-current-tab");
 
-            alert("회원탈퇴가 완료되었습니다. 이용해 주셔서 감사합니다.");
+            toast.success("회원탈퇴가 완료되었습니다. 이용해 주셔서 감사합니다.");
             onClose();
             window.location.reload();
         } catch (err) {

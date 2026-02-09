@@ -18,6 +18,7 @@ import {
     Check,
     Crown,
 } from "lucide-react";
+import { toast } from "sonner";
 
 export type PremiumFeature =
     | "ai-chat-limit"      // AI 펫톡 무제한
@@ -166,7 +167,7 @@ export default function PremiumModal({
                                 className="w-full bg-gradient-to-r from-violet-500 to-sky-500 hover:from-violet-600 hover:to-sky-600 text-white rounded-xl py-6 font-bold"
                                 onClick={() => {
                                     // TODO: 결제 페이지로 이동
-                                    alert("결제 기능은 도메인 설정 후 활성화됩니다!");
+                                    toast.info("결제 기능은 도메인 설정 후 활성화됩니다!");
                                     onClose();
                                 }}
                             >

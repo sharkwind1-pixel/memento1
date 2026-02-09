@@ -70,30 +70,42 @@ export type PetType = "강아지" | "고양이" | "기타";
 /** 반려동물 성별 */
 export type PetGender = "남아" | "여아";
 
-/** 이미지 크롭 위치 */
+/** 미디어 타입 */
+export type MediaType = "image" | "video";
+
+/** 어떻게 만났는지 */
+export type HowWeMet = "펫샵" | "분양" | "보호소" | "지인" | "길에서" | "기타";
+
+/** 이미지 크롭 위치 (scale 포함) */
 export interface CropPosition {
     x: number;
     y: number;
+    scale: number;
 }
 
-/** 반려동물 사진 */
+/** 반려동물 사진/영상 */
 export interface PetPhoto {
     id: string;
     url: string;
+    storagePath?: string;
+    type: MediaType;
+    caption: string;
+    date: string;
     cropPosition?: CropPosition;
+    thumbnailUrl?: string;
     uploadedAt?: string;
 }
 
-/** 반려동물 정보 (전체) */
+/** 반려동물 정보 (전체) - Single Source of Truth */
 export interface Pet {
     id: string;
-    userId: string;
+    userId?: string;
     name: string;
     type: PetType;
     breed: string;
     gender: PetGender;
     birthday?: string;
-    weight?: number;
+    weight?: string;
     personality?: string;
     profileImage?: string;
     profileCropPosition?: CropPosition;
@@ -103,6 +115,19 @@ export interface Pet {
     isPrimary?: boolean;
     createdAt?: string;
     updatedAt?: string;
+
+    // AI 펫톡 개인화를 위한 추가 정보
+    adoptedDate?: string;
+    howWeMet?: HowWeMet;
+    nicknames?: string;
+    specialHabits?: string;
+    favoriteFood?: string;
+    favoriteActivity?: string;
+    favoritePlace?: string;
+
+    // 추모 관련 추가 정보
+    togetherPeriod?: string;
+    memorableMemory?: string;
 }
 
 /** 반려동물 등록/수정용 데이터 */
@@ -112,10 +137,23 @@ export interface PetFormData {
     breed: string;
     gender: PetGender;
     birthday?: string;
-    weight?: number;
+    weight?: string;
     personality?: string;
     status?: PetStatus;
     memorialDate?: string;
+
+    // AI 펫톡 개인화 필드
+    adoptedDate?: string;
+    howWeMet?: HowWeMet;
+    nicknames?: string;
+    specialHabits?: string;
+    favoriteFood?: string;
+    favoriteActivity?: string;
+    favoritePlace?: string;
+
+    // 추모 필드
+    togetherPeriod?: string;
+    memorableMemory?: string;
 }
 
 // ============================================
@@ -144,7 +182,7 @@ export type EmotionType =
     | "excited"
     | "neutral";
 
-/** AI API 요청용 펫 정보 */
+/** AI API 요청용 펫 정보 (Pet에서 필요한 필드만 추출) */
 export interface PetInfoForAPI {
     id?: string;
     name: string;
@@ -155,6 +193,17 @@ export interface PetInfoForAPI {
     birthday?: string;
     status: PetStatus;
     memorialDate?: string;
+
+    // AI 펫톡 개인화
+    nicknames?: string;
+    specialHabits?: string;
+    favoriteFood?: string;
+    favoriteActivity?: string;
+    favoritePlace?: string;
+
+    // 추모 정보
+    togetherPeriod?: string;
+    memorableMemory?: string;
 }
 
 // ============================================

@@ -3,12 +3,10 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ZoomIn, ZoomOut, Move, X, Check } from "lucide-react";
+import type { CropPosition } from "@/types";
 
-export interface CropPosition {
-    x: number;
-    y: number;
-    scale: number;
-}
+// Re-export for backward compatibility
+export type { CropPosition };
 
 interface ImageCropperProps {
     imageUrl: string;

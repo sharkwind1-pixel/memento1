@@ -62,6 +62,7 @@ import {
 } from "lucide-react";
 import { FullPageLoading } from "@/components/ui/PawLoading";
 import { TabType } from "@/types";
+import { toast } from "sonner";
 import {
     DAILY_FREE_LIMIT,
     MAX_MESSAGE_LENGTH,
@@ -975,7 +976,7 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                                         className="bg-gradient-to-r from-violet-500 to-sky-500 hover:from-violet-600 hover:to-sky-600 text-white rounded-full px-6"
                                         onClick={() => {
                                             // TODO: 결제 연동 후 구현
-                                            alert("결제 기능은 도메인 설정 후 활성화됩니다!");
+                                            toast.info("결제 기능은 도메인 설정 후 활성화됩니다!");
                                         }}
                                     >
                                         <Sparkles className="w-4 h-4 mr-2" />
