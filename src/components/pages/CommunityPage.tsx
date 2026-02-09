@@ -30,7 +30,16 @@ import {
     Cloud,
     MapPin,
     AlertTriangle,
+    MoreHorizontal,
+    Flag,
 } from "lucide-react";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import ReportModal from "@/components/modals/ReportModal";
 import PawLoading from "@/components/ui/PawLoading";
 import { usePets } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -481,6 +490,13 @@ export default function CommunityPage({ subcategory, onSubcategoryChange }: Comm
     const [isLoading, setIsLoading] = useState(true);
     const [showWriteModal, setShowWriteModal] = useState(false);
 
+    // 신고 모달 상태
+    const [reportTarget, setReportTarget] = useState<{
+        id: string;
+        type: "post" | "comment" | "user";
+        title?: string;
+    } | null>(null);
+
     // 추모 모드 여부 확인
     const isMemorialMode = selectedPet?.status === "memorial";
 
@@ -747,10 +763,43 @@ export default function CommunityPage({ subcategory, onSubcategoryChange }: Comm
                                                 </Badge>
                                             )}
                                         </div>
-                                        <span className="text-sm text-gray-400 flex items-center gap-1">
-                                            <Clock className="w-3 h-3" />
-                                            {formatTime(post.createdAt)}
-                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm text-gray-400 flex items-center gap-1">
+                                                <Clock className="w-3 h-3" />
+                                                {formatTime(post.createdAt)}
+                                            </span>
+                                            {/* 더보기 메뉴 (신고) */}
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <button
+                                                        className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <MoreHorizontal className="w-4 h-4 text-gray-400" />
+                                                    </button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (!user) {
+                                                                window.dispatchEvent(new CustomEvent("openAuthModal"));
+                                                                return;
+                                                            }
+                                                            setReportTarget({
+                                                                id: post.id,
+                                                                type: "post",
+                                                                title: post.title,
+                                                            });
+                                                        }}
+                                                        className="text-red-500 focus:text-red-600"
+                                                    >
+                                                        <Flag className="w-4 h-4 mr-2" />
+                                                        신고하기
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
                                     </div>
                                     <CardTitle className="text-lg text-gray-800 dark:text-gray-100 mt-2 line-clamp-1">
                                         {post.title}
@@ -822,6 +871,17 @@ export default function CommunityPage({ subcategory, onSubcategoryChange }: Comm
                 boardType={currentSubcategory}
                 onSuccess={fetchPosts}
             />
+
+            {/* 신고 모달 */}
+            {reportTarget && (
+                <ReportModal
+                    isOpen={true}
+                    onClose={() => setReportTarget(null)}
+                    targetType={reportTarget.type}
+                    targetId={reportTarget.id}
+                    targetTitle={reportTarget.title}
+                />
+            )}
         </div>
     );
 }

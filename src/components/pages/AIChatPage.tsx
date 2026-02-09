@@ -863,6 +863,19 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
 
                 {/* 우측: 채팅 영역 */}
                 <div className="flex-1 flex flex-col min-h-0 lg:min-w-0">
+                {/* AI 고지 배너 */}
+                <div className={`mx-4 mt-2 mb-1 px-3 py-2 rounded-lg text-xs text-center ${
+                    isMemorialMode
+                        ? "bg-amber-100/80 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
+                        : "bg-sky-100/80 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300"
+                }`}>
+                    <span className="inline-flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                        </svg>
+                        이 대화는 AI가 생성합니다. 실제 반려동물의 의사가 아닌 참고용 서비스입니다.
+                    </span>
+                </div>
                 <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-3">
                     {messages.map((message) => (
                         <div

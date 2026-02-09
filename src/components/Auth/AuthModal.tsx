@@ -46,6 +46,11 @@ export default function AuthModal({
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
 
+    // 약관 동의 상태
+    const [agreeTerms, setAgreeTerms] = useState(false);
+    const [agreePrivacy, setAgreePrivacy] = useState(false);
+    const [agreeMarketing, setAgreeMarketing] = useState(false);
+
     // 닉네임 중복 체크 훅
     const { status: nicknameStatus, message: nicknameMessage, reset: resetNickname } = useNicknameCheck(
         nickname,
@@ -67,6 +72,9 @@ export default function AuthModal({
             setSuccess(null);
             setLoading(false);
             resetNickname();
+            setAgreeTerms(false);
+            setAgreePrivacy(false);
+            setAgreeMarketing(false);
         }
     }, [isOpen, resetNickname]);
 
@@ -119,6 +127,13 @@ export default function AuthModal({
 
                 if (nicknameStatus === "checking") {
                     setError("닉네임 확인 중입니다. 잠시 후 다시 시도해주세요.");
+                    setLoading(false);
+                    return;
+                }
+
+                // 필수 약관 동의 체크
+                if (!agreeTerms || !agreePrivacy) {
+                    setError("필수 약관에 동의해주세요.");
                     setLoading(false);
                     return;
                 }
@@ -341,10 +356,89 @@ export default function AuthModal({
                         )}
                     </div>
 
+                    {/* 약관 동의 (회원가입만) */}
+                    {mode === "signup" && (
+                        <div className="space-y-3 pt-2">
+                            {/* 전체 동의 */}
+                            <label className="flex items-center gap-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-800 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={agreeTerms && agreePrivacy && agreeMarketing}
+                                    onChange={(e) => {
+                                        const checked = e.target.checked;
+                                        setAgreeTerms(checked);
+                                        setAgreePrivacy(checked);
+                                        setAgreeMarketing(checked);
+                                    }}
+                                    className="w-5 h-5 rounded border-gray-300 text-sky-500 focus:ring-sky-500"
+                                />
+                                <span className="font-medium text-gray-800 dark:text-white">
+                                    전체 동의
+                                </span>
+                            </label>
+
+                            {/* 개별 동의 항목 */}
+                            <div className="space-y-2 pl-2">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={agreeTerms}
+                                        onChange={(e) => setAgreeTerms(e.target.checked)}
+                                        className="w-4 h-4 rounded border-gray-300 text-sky-500 focus:ring-sky-500"
+                                    />
+                                    <span className="text-sm text-gray-600 dark:text-gray-300">
+                                        <span className="text-red-500">[필수]</span>{" "}
+                                        <a
+                                            href="/terms"
+                                            target="_blank"
+                                            className="underline hover:text-sky-500"
+                                        >
+                                            이용약관
+                                        </a>
+                                        에 동의합니다
+                                    </span>
+                                </label>
+
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={agreePrivacy}
+                                        onChange={(e) => setAgreePrivacy(e.target.checked)}
+                                        className="w-4 h-4 rounded border-gray-300 text-sky-500 focus:ring-sky-500"
+                                    />
+                                    <span className="text-sm text-gray-600 dark:text-gray-300">
+                                        <span className="text-red-500">[필수]</span>{" "}
+                                        <a
+                                            href="/privacy"
+                                            target="_blank"
+                                            className="underline hover:text-sky-500"
+                                        >
+                                            개인정보처리방침
+                                        </a>
+                                        에 동의합니다
+                                    </span>
+                                </label>
+
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={agreeMarketing}
+                                        onChange={(e) => setAgreeMarketing(e.target.checked)}
+                                        className="w-4 h-4 rounded border-gray-300 text-sky-500 focus:ring-sky-500"
+                                    />
+                                    <span className="text-sm text-gray-600 dark:text-gray-300">
+                                        <span className="text-gray-400">[선택]</span>{" "}
+                                        마케팅 정보 수신에 동의합니다
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                    )}
+
                     {/* 제출 버튼 */}
                     <Button
                         type="submit"
-                        disabled={loading || (mode === "signup" && (nicknameStatus === "taken" || nicknameStatus === "checking" || nickname.trim().length < 2))}
+                        disabled={loading || (mode === "signup" && (nicknameStatus === "taken" || nicknameStatus === "checking" || nickname.trim().length < 2 || !agreeTerms || !agreePrivacy))}
                         className="w-full h-12 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-blue-600 hover:to-sky-600 rounded-xl text-base disabled:opacity-50"
                     >
                         {loading ? (

@@ -116,6 +116,21 @@ interface InquiryRow {
     created_at: string;
 }
 
+interface ReportRow {
+    id: string;
+    reporter_id: string;
+    reporter_email?: string;
+    target_type: "post" | "comment" | "user" | "pet_memorial";
+    target_id: string;
+    reason: string;
+    description: string | null;
+    status: "pending" | "reviewing" | "resolved" | "rejected";
+    admin_notes: string | null;
+    resolved_at: string | null;
+    resolved_by: string | null;
+    created_at: string;
+}
+
 export default function AdminPage() {
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState<AdminTab>("dashboard");
@@ -136,6 +151,7 @@ export default function AdminPage() {
     const [users, setUsers] = useState<UserRow[]>([]);
     const [posts, setPosts] = useState<PostRow[]>([]);
     const [inquiries, setInquiries] = useState<InquiryRow[]>([]);
+    const [reports, setReports] = useState<ReportRow[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [chartData, setChartData] = useState<ChartData[]>([]);
     const [selectedInquiry, setSelectedInquiry] = useState<InquiryRow | null>(null);
@@ -388,6 +404,93 @@ export default function AdminPage() {
         } catch {}
     };
 
+    // 신고 목록 로드
+    const loadReports = async () => {
+        try {
+            const { data, error } = await supabase
+                .from("reports")
+                .select(`
+                    *,
+                    reporter:profiles!reporter_id(email, nickname)
+                `)
+                .order("created_at", { ascending: false })
+                .limit(100);
+
+            if (data) {
+                setReports(data.map((r: Record<string, unknown>) => ({
+                    ...r,
+                    reporter_email: (r.reporter as { email?: string; nickname?: string } | null)?.email || "알 수 없음",
+                })) as ReportRow[]);
+            }
+        } catch {}
+    };
+
+    // 신고 상태 업데이트
+    const updateReportStatus = async (id: string, status: ReportRow["status"], adminNotes?: string) => {
+        try {
+            const updateData: Record<string, unknown> = { status };
+            if (status === "resolved" || status === "rejected") {
+                updateData.resolved_at = new Date().toISOString();
+                updateData.resolved_by = user?.id;
+            }
+            if (adminNotes) {
+                updateData.admin_notes = adminNotes;
+            }
+
+            const { error } = await supabase
+                .from("reports")
+                .update(updateData)
+                .eq("id", id);
+
+            if (error) throw error;
+
+            setReports(prev => prev.map(r =>
+                r.id === id ? { ...r, status, admin_notes: adminNotes || r.admin_notes } : r
+            ));
+            toast.success("신고 상태가 업데이트되었습니다.");
+        } catch {
+            toast.error("상태 업데이트에 실패했습니다.");
+        }
+    };
+
+    // 신고된 콘텐츠 삭제
+    const deleteReportedContent = async (report: ReportRow) => {
+        if (!confirm(`이 ${report.target_type === "post" ? "게시물" : report.target_type === "comment" ? "댓글" : "콘텐츠"}을(를) 삭제하시겠습니까?`)) {
+            return;
+        }
+
+        try {
+            let tableName = "";
+            switch (report.target_type) {
+                case "post":
+                    tableName = "community_posts";
+                    break;
+                case "comment":
+                    tableName = "comments";
+                    break;
+                case "pet_memorial":
+                    tableName = "pet_memorials";
+                    break;
+                default:
+                    toast.error("삭제할 수 없는 타입입니다.");
+                    return;
+            }
+
+            const { error } = await supabase
+                .from(tableName)
+                .delete()
+                .eq("id", report.target_id);
+
+            if (error) throw error;
+
+            // 신고 상태를 resolved로 변경
+            await updateReportStatus(report.id, "resolved", "콘텐츠 삭제됨");
+            toast.success("콘텐츠가 삭제되었습니다.");
+        } catch {
+            toast.error("콘텐츠 삭제에 실패했습니다.");
+        }
+    };
+
     // 문의 상태 업데이트
     const updateInquiryStatus = async (id: string, status: InquiryRow["status"]) => {
         try {
@@ -453,6 +556,7 @@ export default function AdminPage() {
             if (activeTab === "users") loadUsers();
             if (activeTab === "posts") loadPosts();
             if (activeTab === "inquiries") loadInquiries();
+            if (activeTab === "reports") loadReports();
         }
     }, [activeTab, isAdminUser]);
 
@@ -1249,15 +1353,192 @@ export default function AdminPage() {
             {/* 신고 관리 탭 */}
             {activeTab === "reports" && (
                 <div className="space-y-4">
+                    {/* 검색 & 필터 */}
+                    <div className="flex gap-2">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            <Input
+                                placeholder="신고 사유로 검색..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="pl-10"
+                            />
+                        </div>
+                        <Button variant="outline" onClick={loadReports}>
+                            <RefreshCw className="w-4 h-4 mr-1" />
+                            새로고침
+                        </Button>
+                    </div>
+
+                    {/* 상태 범례 */}
+                    <div className="flex flex-wrap gap-2 text-sm">
+                        <Badge className="bg-amber-100 text-amber-700">
+                            <Clock className="w-3 h-3 mr-1" />
+                            대기중
+                        </Badge>
+                        <Badge className="bg-blue-100 text-blue-700">
+                            <Eye className="w-3 h-3 mr-1" />
+                            검토중
+                        </Badge>
+                        <Badge className="bg-green-100 text-green-700">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            처리완료
+                        </Badge>
+                        <Badge className="bg-gray-100 text-gray-700">
+                            반려
+                        </Badge>
+                    </div>
+
+                    {/* 신고 목록 */}
                     <Card>
                         <CardContent className="pt-6">
-                            <div className="text-center py-8 text-gray-500">
-                                <Flag className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                                <p>신고 내역이 없습니다</p>
-                                <p className="text-sm mt-2">
-                                    사용자 신고 기능 구현 후 여기서 관리할 수 있습니다.
-                                </p>
-                            </div>
+                            {reports.length === 0 ? (
+                                <div className="text-center py-8 text-gray-500">
+                                    <Flag className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                                    <p>신고 내역이 없습니다</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {reports
+                                        .filter(r =>
+                                            searchQuery === "" ||
+                                            r.reason.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                            (r.description || "").toLowerCase().includes(searchQuery.toLowerCase())
+                                        )
+                                        .map((report) => {
+                                            const reasonLabels: Record<string, string> = {
+                                                spam: "스팸/광고",
+                                                abuse: "욕설/비방",
+                                                inappropriate: "부적절한 콘텐츠",
+                                                harassment: "괴롭힘",
+                                                misinformation: "허위정보",
+                                                copyright: "저작권 침해",
+                                                other: "기타",
+                                            };
+                                            const targetLabels: Record<string, string> = {
+                                                post: "게시물",
+                                                comment: "댓글",
+                                                user: "회원",
+                                                pet_memorial: "추모공간",
+                                            };
+
+                                            return (
+                                                <div
+                                                    key={report.id}
+                                                    className={`p-4 rounded-xl border transition-colors ${
+                                                        report.status === "resolved"
+                                                            ? "bg-green-50 border-green-200"
+                                                            : report.status === "reviewing"
+                                                                ? "bg-blue-50 border-blue-200"
+                                                                : report.status === "rejected"
+                                                                    ? "bg-gray-50 border-gray-200"
+                                                                    : "bg-red-50 border-red-200"
+                                                    }`}
+                                                >
+                                                    {/* 상단: 타입, 사유, 상태 */}
+                                                    <div className="flex items-start justify-between mb-2">
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <Badge variant="secondary" className="text-xs">
+                                                                {targetLabels[report.target_type] || report.target_type}
+                                                            </Badge>
+                                                            <Badge className="bg-red-100 text-red-700">
+                                                                {reasonLabels[report.reason] || report.reason}
+                                                            </Badge>
+                                                            {report.status === "pending" && (
+                                                                <Badge className="bg-amber-100 text-amber-700 text-xs">
+                                                                    <Clock className="w-3 h-3 mr-1" />
+                                                                    대기중
+                                                                </Badge>
+                                                            )}
+                                                            {report.status === "reviewing" && (
+                                                                <Badge className="bg-blue-100 text-blue-700 text-xs">
+                                                                    <Eye className="w-3 h-3 mr-1" />
+                                                                    검토중
+                                                                </Badge>
+                                                            )}
+                                                            {report.status === "resolved" && (
+                                                                <Badge className="bg-green-100 text-green-700 text-xs">
+                                                                    <CheckCircle className="w-3 h-3 mr-1" />
+                                                                    처리완료
+                                                                </Badge>
+                                                            )}
+                                                            {report.status === "rejected" && (
+                                                                <Badge className="bg-gray-100 text-gray-700 text-xs">
+                                                                    반려
+                                                                </Badge>
+                                                            )}
+                                                        </div>
+                                                        <span className="text-xs text-gray-500">
+                                                            {new Date(report.created_at).toLocaleDateString("ko-KR")}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* 신고 내용 */}
+                                                    {report.description && (
+                                                        <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                                                            {report.description}
+                                                        </p>
+                                                    )}
+
+                                                    {/* 신고자 정보 */}
+                                                    <p className="text-xs text-gray-500 mb-3">
+                                                        신고자: {report.reporter_email || "알 수 없음"} |
+                                                        대상 ID: <code className="bg-gray-100 px-1 rounded">{report.target_id.slice(0, 8)}...</code>
+                                                    </p>
+
+                                                    {/* 관리자 메모 */}
+                                                    {report.admin_notes && (
+                                                        <div className="p-2 bg-white rounded-lg border border-gray-200 mb-3 text-sm">
+                                                            <span className="font-medium text-gray-700">관리자 메모: </span>
+                                                            <span className="text-gray-600">{report.admin_notes}</span>
+                                                        </div>
+                                                    )}
+
+                                                    {/* 액션 버튼 */}
+                                                    <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200">
+                                                        {report.status === "pending" && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                onClick={() => updateReportStatus(report.id, "reviewing")}
+                                                            >
+                                                                <Eye className="w-3 h-3 mr-1" />
+                                                                검토 시작
+                                                            </Button>
+                                                        )}
+                                                        {(report.status === "pending" || report.status === "reviewing") && (
+                                                            <>
+                                                                <Button
+                                                                    size="sm"
+                                                                    className="bg-red-500 hover:bg-red-600"
+                                                                    onClick={() => deleteReportedContent(report)}
+                                                                >
+                                                                    <Trash2 className="w-3 h-3 mr-1" />
+                                                                    콘텐츠 삭제
+                                                                </Button>
+                                                                <Button
+                                                                    size="sm"
+                                                                    className="bg-green-500 hover:bg-green-600"
+                                                                    onClick={() => updateReportStatus(report.id, "resolved", "검토 후 처리 완료")}
+                                                                >
+                                                                    <CheckCircle className="w-3 h-3 mr-1" />
+                                                                    처리 완료
+                                                                </Button>
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="outline"
+                                                                    onClick={() => updateReportStatus(report.id, "rejected", "신고 사유 불충분")}
+                                                                >
+                                                                    반려
+                                                                </Button>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </div>
