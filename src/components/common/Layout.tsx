@@ -107,6 +107,14 @@ export default function Layout({
     // ========================================================================
     const { user, loading, signOut } = useAuth();
 
+    // DEBUG: 관리자 체크 로깅
+    useEffect(() => {
+        if (user) {
+            console.log("[Layout] User email:", user.email);
+            console.log("[Layout] isAdmin:", isAdmin(user.email));
+        }
+    }, [user]);
+
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(false);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);

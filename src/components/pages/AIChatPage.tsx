@@ -71,6 +71,7 @@ import {
     generatePersonalizedGreeting,
     type TimelineEntry,
 } from "@/components/features/chat";
+import DomeGallery from "@/components/ui/DomeGallery";
 
 // ============================================================================
 // 타입 정의
@@ -142,6 +143,7 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         schedule: { type: string; time: string; dayOfWeek?: number; dayOfMonth?: number };
         enabled: boolean;
     }>>([]);
+    const [isPremium, setIsPremium] = useState(false);
 
     // Refs
     const messagesEndRef = useRef<HTMLDivElement>(null);  // 채팅 스크롤 위치
@@ -151,7 +153,8 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
     // 계산된 값
     // ========================================================================
     const remainingChats = DAILY_FREE_LIMIT - dailyUsage;
-    const isLimitReached = remainingChats <= 0;
+    // 프리미엄 사용자는 제한 없음
+    const isLimitReached = !isPremium && remainingChats <= 0;
 
     // ========================================================================
     // Side Effects (useEffect)
@@ -161,6 +164,46 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
     useEffect(() => {
         setDailyUsage(getDailyUsage());
     }, []);
+
+    // 프리미엄 상태 확인 (profiles 테이블에서 - 만료일 포함)
+    useEffect(() => {
+        if (!user?.id) {
+            setIsPremium(false);
+            return;
+        }
+
+        const checkPremiumStatus = async () => {
+            try {
+                // select("*") 로 모든 필드 가져오기 (없는 필드는 undefined)
+                const { data, error } = await supabase
+                    .from("profiles")
+                    .select("*")
+                    .eq("id", user.id)
+                    .single();
+
+                if (!error && data) {
+                    // is_premium이 true이고, 만료일이 없거나 아직 안 지났으면 프리미엄
+                    const expiresAt = data.premium_expires_at;
+                    const isPremiumValid = data.is_premium === true && (
+                        !expiresAt ||
+                        new Date(expiresAt) > new Date()
+                    );
+                    setIsPremium(isPremiumValid);
+
+                    // 디버그 로그
+                    console.log("[AIChatPage] Premium check:", {
+                        is_premium: data.is_premium,
+                        expires_at: expiresAt,
+                        isPremiumValid
+                    });
+                }
+            } catch (err) {
+                console.error("프리미엄 상태 확인 실패:", err);
+            }
+        };
+
+        checkPremiumStatus();
+    }, [user?.id]);
 
     // 추모 모드 여부 (펫 상태가 memorial인 경우)
     const isMemorialMode = selectedPet?.status === "memorial";
@@ -653,10 +696,48 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
     }
 
     // 4. 메인 채팅 UI
+    // DomeGallery용 이미지 배열 생성
+    const galleryImages = allPhotos.length > 0
+        ? allPhotos.map(photo => ({
+            src: photo.url,
+            alt: selectedPet?.name || "펫 사진"
+        }))
+        : [];
+
     return (
         <div
             className={`min-h-screen flex flex-col relative overflow-hidden ${isMemorialMode ? "bg-gradient-to-b from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950 dark:via-orange-950 dark:to-gray-900" : "bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"}`}
         >
+            {/* ================================================================
+                상단 DomeGallery - 3D 사진 갤러리
+            ================================================================ */}
+            {galleryImages.length > 0 && (
+                <div className={`flex-shrink-0 h-[180px] relative overflow-hidden ${
+                    isMemorialMode
+                        ? "bg-gradient-to-b from-amber-100 to-amber-50"
+                        : "bg-gradient-to-b from-sky-100 to-sky-50"
+                }`}>
+                    <DomeGallery
+                        images={galleryImages}
+                        fit={0.4}
+                        minRadius={250}
+                        maxVerticalRotationDeg={2}
+                        segments={20}
+                        dragDampening={1.5}
+                        grayscale={false}
+                        overlayBlurColor={isMemorialMode ? "#fef3c7" : "#e0f2fe"}
+                        imageBorderRadius="12px"
+                        openedImageBorderRadius="16px"
+                    />
+                    {/* 하단 그라데이션 페이드 */}
+                    <div className={`absolute bottom-0 left-0 right-0 h-12 pointer-events-none ${
+                        isMemorialMode
+                            ? "bg-gradient-to-t from-amber-50 to-transparent"
+                            : "bg-gradient-to-t from-[#F0F9FF] to-transparent"
+                    }`} />
+                </div>
+            )}
+
             {/* ================================================================
                 추모 모드 배경 장식 - 반짝이는 별 애니메이션
             ================================================================ */}
@@ -877,13 +958,16 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                     </span>
                 </div>
                 <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-3">
-                    {messages.map((message) => (
+                    {messages.map((message, index) => (
                         <div
                             key={message.id}
-                            className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                            className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} animate-in fade-in slide-in-from-bottom-2 duration-300`}
+                            style={{ animationDelay: index === messages.length - 1 ? "0ms" : "0ms" }}
                         >
                             {message.role === "pet" && (
-                                <div className="w-8 h-8 rounded-full overflow-hidden mr-2 flex-shrink-0">
+                                <div className={`w-9 h-9 rounded-full overflow-hidden mr-2 flex-shrink-0 ring-2 shadow-md transition-transform hover:scale-105 ${
+                                    isMemorialMode ? "ring-amber-200" : "ring-sky-200"
+                                }`}>
                                     {selectedPet?.profileImage ? (
                                         <img
                                             src={selectedPet.profileImage}
@@ -908,9 +992,9 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                                 </div>
                             )}
                             <div
-                                className={`max-w-[75%] px-4 py-3 rounded-2xl ${message.role === "user" ? (isMemorialMode ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-br-md" : "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white rounded-br-md") : isMemorialMode ? "bg-amber-100 text-amber-900 rounded-bl-md" : "bg-white text-gray-800 rounded-bl-md shadow-sm"}`}
+                                className={`max-w-[75%] px-4 py-3 rounded-2xl shadow-md transition-all hover:shadow-lg ${message.role === "user" ? (isMemorialMode ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-br-md" : "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white rounded-br-md") : isMemorialMode ? "bg-amber-100 text-amber-900 rounded-bl-md border border-amber-200/50" : "bg-white text-gray-800 rounded-bl-md border border-sky-100"}`}
                             >
-                                <p className="text-base leading-relaxed">
+                                <p className="text-[15px] leading-relaxed">
                                     {message.content}
                                 </p>
                             </div>
@@ -1005,7 +1089,7 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                             </div>
                         ) : (
                             <>
-                                {/* 추천 대화 버튼 - 2x2 그리드 모바일 최적화 */}
+                                {/* 추천 대화 버튼 - 2x2 그리드 모바일 최적화 + 애니메이션 */}
                                 <div className="grid grid-cols-2 gap-2 mb-3">
                                     {(isMemorialMode
                                         ? [
@@ -1020,15 +1104,16 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                                             { text: "산책 시간", Icon: Footprints },
                                             { text: "간식 추천", Icon: Cookie },
                                         ]
-                                    ).map((suggestion) => (
+                                    ).map((suggestion, idx) => (
                                         <button
                                             key={suggestion.text}
                                             onClick={() => { handleSend(suggestion.text); }}
-                                            className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all active:scale-95 min-h-[44px] ${
+                                            className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all hover:scale-[1.02] active:scale-95 min-h-[44px] shadow-sm hover:shadow-md animate-in fade-in slide-in-from-bottom-1 ${
                                                 isMemorialMode
                                                     ? "bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-200"
                                                     : "bg-[#E0F7FF] hover:bg-[#BAE6FD] text-[#0891B2] border border-[#BAE6FD]"
                                             }`}
+                                            style={{ animationDelay: `${idx * 50}ms` }}
                                         >
                                             <suggestion.Icon className="w-4 h-4 flex-shrink-0" />
                                             <span className="truncate">{suggestion.text}</span>

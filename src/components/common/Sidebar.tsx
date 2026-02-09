@@ -24,9 +24,12 @@ import {
     Coffee,
     HelpCircle,
     Lightbulb,
+    Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 import type { MainCategory, CommunitySubcategory, TabType } from "@/types";
+import { isAdmin } from "@/types";
 
 // 메인 카테고리 정의
 const MAIN_CATEGORIES: {
@@ -79,9 +82,13 @@ export default function Sidebar({
     onOpenInquiry,
     onOpenSuggestion,
 }: SidebarProps) {
+    const { user } = useAuth();
     const [expandedCategory, setExpandedCategory] = useState<MainCategory | null>(
         selectedTab === "community" ? "community" : null
     );
+
+    // 관리자 여부 확인
+    const isAdminUser = isAdmin(user?.email);
 
     // 탭이 변경되면 커뮤니티 확장 상태 업데이트
     useEffect(() => {
@@ -191,6 +198,26 @@ export default function Sidebar({
                         )}
                     </div>
                 ))}
+
+                {/* 관리자 탭 (관리자만 표시) */}
+                {isAdminUser && (
+                    <button
+                        onClick={() => {
+                            onTabChange("admin");
+                            if (isMobile) onClose();
+                        }}
+                        className={cn(
+                            "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all mt-2",
+                            "hover:bg-violet-100 dark:hover:bg-violet-900/30",
+                            selectedTab === "admin"
+                                ? "bg-gradient-to-r from-violet-500 to-purple-500 text-white font-medium"
+                                : "text-violet-600 dark:text-violet-400"
+                        )}
+                    >
+                        <Shield className="w-5 h-5" />
+                        <span>관리자</span>
+                    </button>
+                )}
             </nav>
 
             {/* 하단 링크 - 항상 고정 */}

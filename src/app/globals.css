@@ -95,6 +95,37 @@
   .scroll-smooth {
     scroll-behavior: smooth;
   }
+
+  /* Chat message animations */
+  .animate-in {
+    animation: fadeIn 0.3s ease-out, slideInFromBottom 0.3s ease-out;
+  }
+  .fade-in {
+    animation-name: fadeIn;
+  }
+  .slide-in-from-bottom-2 {
+    animation-name: slideInFromBottom;
+  }
+  .duration-300 {
+    animation-duration: 300ms;
+  }
+}
+
+/* Chat message keyframe animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @layer base {

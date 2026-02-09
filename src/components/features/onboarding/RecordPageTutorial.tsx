@@ -9,7 +9,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { Sparkles, Heart, Camera, MessageCircle, BookOpen } from "lucide-react";
+import { Sparkles, Heart, Camera, MessageCircle, BookOpen, Bell } from "lucide-react";
 
 type UserType = "current" | "memorial";
 
@@ -46,6 +46,12 @@ const CURRENT_STEPS: TutorialStep[] = [
         title: "매일의 기록을 남겨요",
         description: "일기처럼 기록하면 나중에 소중한 추억이 돼요",
         icon: BookOpen,
+    },
+    {
+        targetId: "care-reminder-section",
+        title: "케어 알림을 설정해요",
+        description: "예방접종, 미용, 건강검진 일정을 알려드려요. 중요한 날을 놓치지 마세요!",
+        icon: Bell,
     },
 ];
 
@@ -89,7 +95,7 @@ export default function RecordPageTutorial({
         setMounted(true);
     }, []);
 
-    // 타겟 요소 위치 찾기
+    // 타겟 요소 위치 찾기 + 자동 스크롤
     const findTarget = useCallback(() => {
         const step = steps[currentStep];
         if (!step) return;
@@ -103,7 +109,19 @@ export default function RecordPageTutorial({
         const target = document.querySelector(`[data-tutorial-id="${step.targetId}"]`);
         if (target) {
             const rect = target.getBoundingClientRect();
-            setTargetRect(rect);
+
+            // 화면 밖에 있으면 자동 스크롤
+            const isOutOfView = rect.top < 0 || rect.bottom > window.innerHeight;
+            if (isOutOfView) {
+                target.scrollIntoView({ behavior: "smooth", block: "center" });
+                // 스크롤 후 위치 재계산
+                setTimeout(() => {
+                    const newRect = target.getBoundingClientRect();
+                    setTargetRect(newRect);
+                }, 400);
+            } else {
+                setTargetRect(rect);
+            }
         } else {
             setTargetRect(null);
         }

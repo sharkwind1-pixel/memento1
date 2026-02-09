@@ -83,6 +83,9 @@ interface UserRow {
     is_banned?: boolean;
     is_premium?: boolean;
     is_admin?: boolean;
+    premium_started_at?: string;
+    premium_expires_at?: string;
+    premium_plan?: string;
 }
 
 interface PostRow {
@@ -157,6 +160,12 @@ export default function AdminPage() {
     const [selectedInquiry, setSelectedInquiry] = useState<InquiryRow | null>(null);
     const [adminResponse, setAdminResponse] = useState("");
     const [isResponding, setIsResponding] = useState(false);
+
+    // 프리미엄 관리 모달 상태
+    const [premiumModalUser, setPremiumModalUser] = useState<UserRow | null>(null);
+    const [premiumDuration, setPremiumDuration] = useState<string>("30"); // 일수 또는 "unlimited"
+    const [premiumReason, setPremiumReason] = useState("");
+    const [isSavingPremium, setIsSavingPremium] = useState(false);
 
     const isAdminUser = isAdmin(user?.email);
 
@@ -300,7 +309,7 @@ export default function AdminPage() {
         try {
             const { data, error } = await supabase
                 .from("profiles")
-                .select("id, email, nickname, is_premium, is_banned, is_admin, created_at")
+                .select("*")
                 .order("created_at", { ascending: false })
                 .limit(100);
 
@@ -313,6 +322,9 @@ export default function AdminPage() {
                     is_banned: profile.is_banned,
                     is_premium: profile.is_premium,
                     is_admin: profile.is_admin,
+                    premium_started_at: profile.premium_started_at || undefined,
+                    premium_expires_at: profile.premium_expires_at || undefined,
+                    premium_plan: profile.premium_plan || undefined,
                 })));
             }
         } catch {}
@@ -341,24 +353,141 @@ export default function AdminPage() {
         }
     };
 
-    // 온보딩 리셋
-    const resetOnboarding = async (userId: string, userEmail: string) => {
-        if (!confirm(`${userEmail}의 온보딩을 리셋하시겠습니까?\n다음 로그인 시 온보딩 화면이 다시 표시됩니다.`)) {
-            return;
+    // 프리미엄 부여/해제 (새 버전 - 기간 포함)
+    const grantPremium = async () => {
+        if (!premiumModalUser || !user) return;
+
+        setIsSavingPremium(true);
+        try {
+            const isUnlimited = premiumDuration === "unlimited";
+            const durationDays = isUnlimited ? null : parseInt(premiumDuration);
+            const expiresAt = isUnlimited ? null : new Date(Date.now() + (durationDays || 30) * 24 * 60 * 60 * 1000).toISOString();
+
+            // 먼저 기본 필드만 업데이트 시도
+            const updateData: Record<string, unknown> = { is_premium: true };
+
+            // 확장 필드가 있으면 추가 (없으면 무시됨)
+            try {
+                const { error } = await supabase
+                    .from("profiles")
+                    .update({
+                        is_premium: true,
+                        premium_started_at: new Date().toISOString(),
+                        premium_expires_at: expiresAt,
+                        premium_plan: "admin_grant",
+                    })
+                    .eq("id", premiumModalUser.id);
+
+                if (error) {
+                    // 필드가 없으면 기본 필드만 업데이트
+                    await supabase
+                        .from("profiles")
+                        .update({ is_premium: true })
+                        .eq("id", premiumModalUser.id);
+                }
+            } catch {
+                // 기본 필드만 업데이트
+                await supabase
+                    .from("profiles")
+                    .update({ is_premium: true })
+                    .eq("id", premiumModalUser.id);
+            }
+
+            // 로컬 상태 업데이트
+            setUsers(prev => prev.map(u =>
+                u.id === premiumModalUser.id ? {
+                    ...u,
+                    is_premium: true,
+                    premium_started_at: new Date().toISOString(),
+                    premium_expires_at: expiresAt || undefined,
+                    premium_plan: "admin_grant",
+                } : u
+            ));
+
+            toast.success(`${premiumModalUser.email}에게 프리미엄이 부여되었습니다! ${isUnlimited ? "(무기한)" : `(${durationDays}일)`}`);
+            setPremiumModalUser(null);
+            setPremiumReason("");
+            loadDashboardStats();
+        } catch {
+            toast.error("프리미엄 부여에 실패했습니다.");
+        } finally {
+            setIsSavingPremium(false);
         }
+    };
+
+    // 프리미엄 해제
+    const revokePremium = async (targetUser: UserRow) => {
+        if (!confirm(`${targetUser.email}의 프리미엄을 해제하시겠습니까?`)) return;
 
         try {
             const { error } = await supabase
                 .from("profiles")
                 .update({
+                    is_premium: false,
+                    premium_expires_at: new Date().toISOString(),
+                    premium_plan: null,
+                })
+                .eq("id", targetUser.id);
+
+            if (error) throw error;
+
+            setUsers(prev => prev.map(u =>
+                u.id === targetUser.id ? {
+                    ...u,
+                    is_premium: false,
+                    premium_expires_at: new Date().toISOString(),
+                    premium_plan: undefined,
+                } : u
+            ));
+
+            toast.success("프리미엄이 해제되었습니다.");
+            loadDashboardStats();
+        } catch {
+            toast.error("프리미엄 해제에 실패했습니다.");
+        }
+    };
+
+    // 온보딩 리셋 (튜토리얼 + 온보딩 모두)
+    const resetOnboarding = async (userId: string, userEmail: string) => {
+        if (!confirm(`${userEmail}의 온보딩을 리셋하시겠습니까?\n\n초기화 항목:\n- 튜토리얼 완료 상태\n- 온보딩 완료 상태\n- 사용자 유형\n\n※ 본인 계정이면 새로고침 후 적용됩니다.`)) {
+            return;
+        }
+
+        console.log("[AdminPage] 온보딩 리셋 시도:", { userId, userEmail });
+
+        try {
+            const { error, data, count } = await supabase
+                .from("profiles")
+                .update({
+                    tutorial_completed_at: null,  // 튜토리얼도 초기화!
                     onboarding_completed_at: null,
                     user_type: null,
                     onboarding_data: null,
                 })
-                .eq("id", userId);
+                .eq("id", userId)
+                .select();  // 업데이트 결과 확인용
 
-            if (error) throw error;
-            toast.success("온보딩이 리셋되었습니다.");
+            console.log("[AdminPage] 온보딩 리셋 결과:", { error, data, count });
+
+            if (error) {
+                console.error("[AdminPage] 온보딩 리셋 에러:", error);
+                throw error;
+            }
+
+            if (!data || data.length === 0) {
+                console.error("[AdminPage] 업데이트된 행 없음! RLS 문제일 수 있음");
+                toast.error("업데이트 실패: 권한이 없거나 해당 유저가 없습니다.");
+                return;
+            }
+
+            // 본인 계정이면 localStorage도 클리어하라고 안내
+            if (userId === user?.id) {
+                localStorage.removeItem("memento-ani-tutorial-complete");
+                localStorage.removeItem("memento-ani-onboarding-complete");
+                toast.success("온보딩이 리셋되었습니다! 새로고침하면 처음부터 시작됩니다.");
+            } else {
+                toast.success("온보딩이 리셋되었습니다. 해당 유저가 다시 로그인하면 적용됩니다.");
+            }
         } catch {
             toast.error("온보딩 리셋에 실패했습니다.");
         }
@@ -1084,17 +1213,42 @@ export default function AdminPage() {
                                                 </Badge>
                                             </div>
 
+                                            {/* 프리미엄 상태 표시 */}
+                                            {u.is_premium && (
+                                                <div className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-lg mb-2">
+                                                    {u.premium_expires_at
+                                                        ? `만료: ${new Date(u.premium_expires_at).toLocaleDateString("ko-KR")} (${Math.max(0, Math.ceil((new Date(u.premium_expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))}일 남음)`
+                                                        : "무기한 프리미엄"
+                                                    }
+                                                </div>
+                                            )}
+
                                             {/* 권한 관리 버튼 */}
                                             <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200">
-                                                <Button
-                                                    size="sm"
-                                                    variant={u.is_premium ? "default" : "outline"}
-                                                    className={u.is_premium ? "bg-amber-500 hover:bg-amber-600" : ""}
-                                                    onClick={() => updateUserRole(u.id, "is_premium", !u.is_premium)}
-                                                >
-                                                    <Crown className="w-3 h-3 mr-1" />
-                                                    {u.is_premium ? "프리미엄 해제" : "프리미엄 부여"}
-                                                </Button>
+                                                {u.is_premium ? (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="default"
+                                                        className="bg-amber-500 hover:bg-amber-600"
+                                                        onClick={() => revokePremium(u)}
+                                                    >
+                                                        <Crown className="w-3 h-3 mr-1" />
+                                                        프리미엄 해제
+                                                    </Button>
+                                                ) : (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="text-amber-600 border-amber-300 hover:bg-amber-50"
+                                                        onClick={() => {
+                                                            setPremiumModalUser(u);
+                                                            setPremiumDuration("30");
+                                                        }}
+                                                    >
+                                                        <Crown className="w-3 h-3 mr-1" />
+                                                        프리미엄 부여
+                                                    </Button>
+                                                )}
                                                 <Button
                                                     size="sm"
                                                     variant={u.is_admin ? "default" : "outline"}
@@ -1568,6 +1722,94 @@ export default function AdminPage() {
                             )}
                         </CardContent>
                     </Card>
+                </div>
+            )}
+
+            {/* 프리미엄 부여 모달 */}
+            {premiumModalUser && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div
+                        className="absolute inset-0 bg-black/50"
+                        onClick={() => setPremiumModalUser(null)}
+                    />
+                    <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
+                        <div className="p-4 border-b bg-gradient-to-r from-amber-50 to-orange-50">
+                            <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                                <Crown className="w-5 h-5 text-amber-500" />
+                                프리미엄 부여
+                            </h3>
+                            <p className="text-sm text-gray-500">{premiumModalUser.email}</p>
+                        </div>
+                        <div className="p-4 space-y-4">
+                            {/* 기간 선택 */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    프리미엄 기간
+                                </label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {[
+                                        { value: "7", label: "7일" },
+                                        { value: "30", label: "30일" },
+                                        { value: "90", label: "90일" },
+                                        { value: "180", label: "6개월" },
+                                        { value: "365", label: "1년" },
+                                        { value: "unlimited", label: "무기한" },
+                                    ].map((option) => (
+                                        <button
+                                            key={option.value}
+                                            onClick={() => setPremiumDuration(option.value)}
+                                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                                                premiumDuration === option.value
+                                                    ? "bg-amber-500 text-white"
+                                                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                            }`}
+                                        >
+                                            {option.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* 사유 입력 (선택) */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    부여 사유 (선택)
+                                </label>
+                                <Input
+                                    value={premiumReason}
+                                    onChange={(e) => setPremiumReason(e.target.value)}
+                                    placeholder="예: 이벤트 당첨, 테스트 계정 등"
+                                />
+                            </div>
+
+                            {/* 적용 미리보기 */}
+                            <div className="p-3 bg-amber-50 rounded-lg text-sm">
+                                <p className="font-medium text-amber-800 mb-1">적용 내용</p>
+                                <ul className="text-amber-700 space-y-1">
+                                    <li>- AI 펫톡 무제한 사용</li>
+                                    <li>- 만료: {premiumDuration === "unlimited"
+                                        ? "무기한"
+                                        : new Date(Date.now() + parseInt(premiumDuration) * 24 * 60 * 60 * 1000).toLocaleDateString("ko-KR")
+                                    }</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div className="p-4 border-t flex justify-end gap-2 bg-gray-50">
+                            <Button
+                                variant="outline"
+                                onClick={() => setPremiumModalUser(null)}
+                            >
+                                취소
+                            </Button>
+                            <Button
+                                className="bg-amber-500 hover:bg-amber-600"
+                                onClick={grantPremium}
+                                disabled={isSavingPremium}
+                            >
+                                {isSavingPremium ? "저장 중..." : "저장하고 즉시 적용"}
+                            </Button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

@@ -1518,7 +1518,7 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
 
                                 {/* 케어 리마인더 섹션 - 일상 기록 중인 펫만 */}
                                 {selectedPet.status !== "memorial" && (
-                                    <div ref={remindersSectionRef}>
+                                    <div ref={remindersSectionRef} data-tutorial-id="care-reminder-section">
                                         <RemindersSection
                                             petId={selectedPet.id}
                                             petName={selectedPet.name}

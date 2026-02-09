@@ -64,7 +64,7 @@ export default function PostOnboardingGuide({
     // current/memorial은 useEffect에서 처리하므로 여기서는 planning만
     if (userType !== "planning") return null;
 
-    // 키울 예정인 유저 - 환영 팝업
+    // 키울 예정인 유저 - 환영 팝업 (로그인 상태 유지!)
     return (
         <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="w-full max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl">
@@ -73,12 +73,12 @@ export default function PostOnboardingGuide({
                         <Heart className="w-10 h-10 text-white" />
                     </div>
                     <h2 className="text-2xl font-bold text-gray-800 mb-3">
-                        새로운 가족을 기다리는 마음,<br/>응원할게요
+                        환영해요!<br/>함께 준비해요
                     </h2>
                     <p className="text-gray-600 leading-relaxed mb-6">
-                        메멘토애니에서 입양 정보도 확인하고,<br/>
-                        다른 반려인들의 이야기도 들어보세요.<br/>
-                        준비가 되면 언제든 돌아와 주세요.
+                        커뮤니티에서 다른 반려인들의 경험을 들어보고,<br/>
+                        매거진에서 유용한 정보도 확인해보세요.<br/>
+                        새 가족을 맞이할 준비를 도와드릴게요!
                     </p>
                     <Button
                         onClick={() => {
@@ -87,7 +87,7 @@ export default function PostOnboardingGuide({
                         }}
                         className="w-full rounded-xl bg-gradient-to-r from-sky-500 to-violet-500 py-6 text-lg"
                     >
-                        둘러볼게요
+                        시작하기
                         <ArrowRight className="w-5 h-5 ml-2" />
                     </Button>
                 </div>
