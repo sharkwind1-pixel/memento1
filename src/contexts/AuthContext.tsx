@@ -15,10 +15,19 @@ import {
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 
+// 삭제 계정 체크 결과 타입
+interface DeletedAccountCheck {
+    canRejoin: boolean;
+    daysUntilRejoin: number;
+    previousAiUsage: number;
+    wasPremium: boolean;
+}
+
 interface AuthContextType {
     user: User | null;
     session: Session | null;
     loading: boolean;
+    checkDeletedAccount: (email: string) => Promise<DeletedAccountCheck | null>;
     signUp: (
         email: string,
         password: string,
@@ -69,6 +78,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
     }, []);
 
+    // 삭제된 계정 체크 (재가입 쿨다운 확인)
+    const checkDeletedAccount = async (email: string): Promise<DeletedAccountCheck | null> => {
+        try {
+            const { data, error } = await supabase.rpc("check_deleted_account", {
+                check_email: email,
+            });
+
+            if (error || !data || data.length === 0) {
+                return null; // 삭제된 계정 없음
+            }
+
+            const record = data[0];
+            return {
+                canRejoin: record.can_rejoin,
+                daysUntilRejoin: record.days_until_rejoin,
+                previousAiUsage: record.previous_ai_usage,
+                wasPremium: record.was_premium,
+            };
+        } catch {
+            return null;
+        }
+    };
+
     // 이메일 회원가입
     const signUp = async (
         email: string,
@@ -76,7 +108,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         nickname?: string,
     ) => {
         try {
-            const { error } = await supabase.auth.signUp({
+            // 삭제된 계정 쿨다운 체크
+            const deletedCheck = await checkDeletedAccount(email);
+            if (deletedCheck && !deletedCheck.canRejoin) {
+                return {
+                    error: new Error(
+                        `탈퇴 후 ${deletedCheck.daysUntilRejoin}일 후에 재가입 가능합니다.`
+                    ),
+                };
+            }
+
+            const { data, error } = await supabase.auth.signUp({
                 email,
                 password,
                 options: {
@@ -85,6 +127,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     },
                 },
             });
+
+            // 재가입인 경우 기록 업데이트
+            if (!error && data.user && deletedCheck) {
+                await supabase.rpc("mark_account_rejoined", {
+                    p_email: email,
+                    p_new_user_id: data.user.id,
+                });
+            }
+
             return { error };
         } catch (error) {
             return { error: error as Error };
@@ -181,6 +232,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         session,
         loading,
+        checkDeletedAccount,
         signUp,
         signIn,
         signOut,

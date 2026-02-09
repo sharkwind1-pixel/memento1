@@ -23,8 +23,8 @@ export const PREMIUM_LIMITS = {
 
 // ===== 가격 (원) =====
 export const PRICING = {
-    PREMIUM_MONTHLY: 4900,      // 프리미엄 월 구독
-    PREMIUM_YEARLY: 49000,      // 프리미엄 연 구독 (2개월 무료)
+    PREMIUM_MONTHLY: 7900,      // 프리미엄 월 구독
+    PREMIUM_YEARLY: 79000,      // 프리미엄 연 구독 (2개월 무료)
 } as const;
 
 // ===== UI 설정 =====

@@ -119,10 +119,39 @@ export default function AccountSettingsModal({
         setDeleteError(null);
 
         try {
-            // 1. 사용자 데이터 삭제 (cascade로 관련 데이터도 삭제됨)
-            // pets, chat_messages, community_posts 등은 FK cascade로 자동 삭제
+            // 0. 사용량 통계 수집 (재가입 악용 방지용)
+            const [petsResult, photosResult, profileResult] = await Promise.all([
+                supabase.from("pets").select("id", { count: "exact" }).eq("user_id", user?.id),
+                supabase.from("pet_photos").select("id", { count: "exact" }).eq("user_id", user?.id),
+                supabase.from("profiles").select("is_premium").eq("id", user?.id).single(),
+            ]);
 
-            // 2. profiles 삭제
+            // AI 사용량은 localStorage에서 가져오기
+            const aiUsageData = localStorage.getItem("memento-ani-chat-usage");
+            let totalAiUsage = 0;
+            if (aiUsageData) {
+                try {
+                    const parsed = JSON.parse(aiUsageData);
+                    totalAiUsage = parsed.count || 0;
+                } catch {
+                    // ignore
+                }
+            }
+
+            // 1. 삭제 계정 정보 보관 (30일 재가입 제한)
+            await supabase.rpc("save_deleted_account", {
+                p_user_id: user?.id,
+                p_email: user?.email || "",
+                p_nickname: currentNickname,
+                p_ai_usage: totalAiUsage,
+                p_pets_count: petsResult.count || 0,
+                p_photos_count: photosResult.count || 0,
+                p_was_premium: profileResult.data?.is_premium || false,
+                p_reason: null,
+                p_cooldown_days: 30,
+            });
+
+            // 2. profiles 삭제 (cascade로 관련 데이터도 삭제됨)
             const { error: profileError } = await supabase
                 .from("profiles")
                 .delete()
@@ -140,6 +169,7 @@ export default function AccountSettingsModal({
             localStorage.removeItem("memento-ani-tutorial-complete");
             localStorage.removeItem("memento-ani-onboarding-complete");
             localStorage.removeItem("memento-current-tab");
+            localStorage.removeItem("memento-ani-chat-usage");
 
             toast.success("회원탈퇴가 완료되었습니다. 이용해 주셔서 감사합니다.");
             onClose();
