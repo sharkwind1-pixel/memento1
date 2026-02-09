@@ -10,6 +10,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNicknameCheck } from "@/hooks/useNicknameCheck";
 import {
     X,
     Mail,
@@ -34,7 +35,7 @@ export default function AuthModal({
     onClose,
     initialMode = "login",
 }: AuthModalProps) {
-    const { signIn, signUp, signInWithGoogle, signInWithKakao, checkNickname } = useAuth();
+    const { signIn, signUp, signInWithGoogle, signInWithKakao } = useAuth();
 
     const [mode, setMode] = useState<"login" | "signup">(initialMode);
     const [email, setEmail] = useState("");
@@ -45,8 +46,11 @@ export default function AuthModal({
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
 
-    // 닉네임 중복 체크 상태
-    const [nicknameStatus, setNicknameStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
+    // 닉네임 중복 체크 훅
+    const { status: nicknameStatus, message: nicknameMessage, reset: resetNickname } = useNicknameCheck(
+        nickname,
+        { enabled: mode === "signup" && nickname.trim().length >= 2 }
+    );
 
     // initialMode가 변경될 때 mode 업데이트
     useEffect(() => {
@@ -62,32 +66,9 @@ export default function AuthModal({
             setError(null);
             setSuccess(null);
             setLoading(false);
-            setNicknameStatus("idle");
+            resetNickname();
         }
-    }, [isOpen]);
-
-    // 닉네임 변경 시 중복 체크 (디바운스)
-    useEffect(() => {
-        if (mode !== "signup" || !nickname.trim()) {
-            setNicknameStatus("idle");
-            return;
-        }
-
-        // 2자 미만이면 체크 안함
-        if (nickname.trim().length < 2) {
-            setNicknameStatus("idle");
-            return;
-        }
-
-        setNicknameStatus("checking");
-
-        const timer = setTimeout(async () => {
-            const { available } = await checkNickname(nickname.trim());
-            setNicknameStatus(available ? "available" : "taken");
-        }, 500);
-
-        return () => clearTimeout(timer);
-    }, [nickname, mode, checkNickname]);
+    }, [isOpen, resetNickname]);
 
     // 페이지가 다시 보일 때 (OAuth 뒤로가기 등) 로딩 리셋
     useEffect(() => {
@@ -155,7 +136,7 @@ export default function AuthModal({
                         setMode("login");
                         setSuccess(null);
                         setPassword("");
-                        setNicknameStatus("idle");
+                        resetNickname();
                     }, 3000);
                 }
             } else {
@@ -290,14 +271,13 @@ export default function AuthModal({
                                 </div>
                             </div>
                             {/* 닉네임 상태 메시지 */}
-                            {nicknameStatus === "available" && (
-                                <p className="text-xs text-green-600">
-                                    사용 가능한 닉네임입니다
-                                </p>
-                            )}
-                            {nicknameStatus === "taken" && (
-                                <p className="text-xs text-red-600">
-                                    이미 사용 중인 닉네임입니다
+                            {nicknameMessage && (
+                                <p className={`text-xs ${
+                                    nicknameStatus === "available" ? "text-green-600" :
+                                    nicknameStatus === "taken" || nicknameStatus === "invalid" ? "text-red-600" :
+                                    "text-gray-500"
+                                }`}>
+                                    {nicknameMessage}
                                 </p>
                             )}
                             {nicknameStatus === "idle" && nickname.length > 0 && nickname.length < 2 && (

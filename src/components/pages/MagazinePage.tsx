@@ -34,6 +34,7 @@ import {
     TrendingUp,
 } from "lucide-react";
 
+import Image from "next/image";
 import { TabType } from "@/types";
 
 interface MagazinePageProps {
@@ -304,10 +305,11 @@ export default function MagazinePage({ setSelectedTab }: MagazinePageProps) {
                                     className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 hover:shadow-lg transition-all duration-300 rounded-2xl cursor-pointer overflow-hidden"
                                 >
                                     <div className="relative h-40">
-                                        <img
+                                        <Image
                                             src={article.image}
                                             alt={article.title}
-                                            className="w-full h-full object-cover"
+                                            fill
+                                            className="object-cover"
                                         />
                                         <div className="absolute top-2 left-2 flex items-center gap-2">
                                             <Badge
@@ -355,11 +357,12 @@ export default function MagazinePage({ setSelectedTab }: MagazinePageProps) {
                             className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 hover:shadow-lg transition-all duration-300 rounded-2xl cursor-pointer overflow-hidden"
                         >
                             <div className="flex flex-col sm:flex-row">
-                                <div className="sm:w-48 h-40 sm:h-auto flex-shrink-0">
-                                    <img
+                                <div className="sm:w-48 h-40 sm:h-auto flex-shrink-0 relative">
+                                    <Image
                                         src={article.image}
                                         alt={article.title}
-                                        className="w-full h-full object-cover"
+                                        fill
+                                        className="object-cover"
                                     />
                                 </div>
                                 <div className="flex-1 p-5">

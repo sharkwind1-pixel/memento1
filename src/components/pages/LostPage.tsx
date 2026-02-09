@@ -42,6 +42,7 @@ import {
     MessageCircle,
 } from "lucide-react";
 
+import Image from "next/image";
 import { TabType } from "@/types";
 
 interface LostPageProps {
@@ -459,10 +460,11 @@ export default function LostPage({ setSelectedTab }: LostPageProps) {
                                 {/* 이미지 */}
                                 <div className="w-32 h-32 sm:w-40 sm:h-40 flex-shrink-0 bg-gray-100 dark:bg-gray-700 relative">
                                     {pet.image && (
-                                        <img
+                                        <Image
                                             src={pet.image}
                                             alt={pet.title}
-                                            className="w-full h-full object-cover"
+                                            fill
+                                            className="object-cover"
                                         />
                                     )}
                                     <Badge

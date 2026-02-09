@@ -53,6 +53,7 @@ import {
 import { FullPageLoading } from "@/components/ui/PawLoading";
 
 import { TabType } from "@/types";
+import { FREE_LIMITS } from "@/config/constants";
 
 // 즉각적인 반응을 위해 일반 import 사용 (Dynamic import 제거)
 import MemorialSwitchModal from "@/components/modals/MemorialSwitchModal";
@@ -447,9 +448,7 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
     const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
     const [premiumFeature, setPremiumFeature] = useState<"pet-limit" | "photo-limit">("pet-limit");
 
-    // 무료 회원 제한 상수
-    const FREE_PET_LIMIT = 1;
-    const FREE_PHOTO_LIMIT = 100;
+    // 무료/프리미엄 회원 제한
     const isPremium = false; // TODO: 실제 프리미엄 여부 확인 로직 추가
 
     // 사용자 닉네임 초기화
@@ -535,7 +534,7 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
     // 새 반려동물 추가 (무료 회원 제한 체크)
     const handleAddNewPet = () => {
         // 무료 회원이고, 이미 제한에 도달했으면 프리미엄 모달
-        if (!isPremium && pets.length >= FREE_PET_LIMIT) {
+        if (!isPremium && pets.length >= FREE_LIMITS.PETS) {
             setPremiumFeature("pet-limit");
             setIsPremiumModalOpen(true);
             return;

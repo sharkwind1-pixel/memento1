@@ -4,7 +4,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -64,7 +64,7 @@ export default function SendMessageModal({
     }, [replyTo, isOpen]);
 
     // 유저 검색
-    const searchUsers = async (query: string) => {
+    const searchUsers = useCallback(async (query: string) => {
         if (!query.trim() || query.length < 2) {
             setSearchResults([]);
             return;
@@ -88,7 +88,7 @@ export default function SendMessageModal({
         } finally {
             setIsSearching(false);
         }
-    };
+    }, [user?.id]);
 
     // 검색어 변경 시 디바운스
     useEffect(() => {
@@ -99,7 +99,7 @@ export default function SendMessageModal({
         }, 300);
 
         return () => clearTimeout(timer);
-    }, [searchQuery]);
+    }, [searchQuery, searchUsers]);
 
     // 유저 선택
     const selectUser = (selectedUser: UserSearchResult) => {

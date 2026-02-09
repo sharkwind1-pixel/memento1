@@ -1,8 +1,12 @@
 // AI 채팅 관련 유틸리티 함수
 
-export const DAILY_FREE_LIMIT = 10; // 무료 사용자 일일 대화 제한
+import { FREE_LIMITS } from "@/config/constants";
+
+// config에서 가져온 값을 re-export (하위 호환성)
+export const DAILY_FREE_LIMIT = FREE_LIMITS.DAILY_CHATS;
+export const MAX_MESSAGE_LENGTH = FREE_LIMITS.MESSAGE_LENGTH;
+
 export const USAGE_STORAGE_KEY = "memento-ani-chat-usage";
-export const MAX_MESSAGE_LENGTH = 200; // 무료 사용자 글자 수 제한
 
 // 일일 사용량 관리 함수
 export function getTodayKey(): string {

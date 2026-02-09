@@ -9,6 +9,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNicknameCheck } from "@/hooks/useNicknameCheck";
 import { supabase } from "@/lib/supabase";
 import {
     X,
@@ -33,12 +34,17 @@ export default function AccountSettingsModal({
     isOpen,
     onClose,
 }: AccountSettingsModalProps) {
-    const { user, checkNickname, updateProfile, signOut } = useAuth();
+    const { user, updateProfile, signOut } = useAuth();
 
     const [currentNickname, setCurrentNickname] = useState("");
     const [nickname, setNickname] = useState("");
-    const [nicknameStatus, setNicknameStatus] = useState<"idle" | "checking" | "available" | "taken" | "same">("idle");
     const [isEditingNickname, setIsEditingNickname] = useState(false);
+
+    // 닉네임 중복 체크 훅
+    const { status: nicknameStatus, message: nicknameMessage, reset: resetNickname } = useNicknameCheck(
+        nickname,
+        { enabled: isEditingNickname, currentNickname }
+    );
     const [isSavingNickname, setIsSavingNickname] = useState(false);
     const [nicknameSuccess, setNicknameSuccess] = useState(false);
 
@@ -74,33 +80,6 @@ export default function AccountSettingsModal({
         }
     }, [isOpen, user]);
 
-    // 닉네임 변경 시 중복 체크
-    useEffect(() => {
-        if (!isEditingNickname || !nickname.trim()) {
-            setNicknameStatus("idle");
-            return;
-        }
-
-        // 현재 닉네임과 같으면
-        if (nickname.trim() === currentNickname) {
-            setNicknameStatus("same");
-            return;
-        }
-
-        if (nickname.trim().length < 2) {
-            setNicknameStatus("idle");
-            return;
-        }
-
-        setNicknameStatus("checking");
-
-        const timer = setTimeout(async () => {
-            const { available } = await checkNickname(nickname.trim());
-            setNicknameStatus(available ? "available" : "taken");
-        }, 500);
-
-        return () => clearTimeout(timer);
-    }, [nickname, isEditingNickname, currentNickname, checkNickname]);
 
     // 닉네임 저장
     const handleSaveNickname = async () => {
@@ -253,14 +232,14 @@ export default function AccountSettingsModal({
                                     </div>
                                 </div>
 
-                                {nicknameStatus === "available" && (
-                                    <p className="text-xs text-green-600">사용 가능한 닉네임입니다</p>
-                                )}
-                                {nicknameStatus === "taken" && (
-                                    <p className="text-xs text-red-600">이미 사용 중인 닉네임입니다</p>
-                                )}
-                                {nicknameStatus === "same" && (
-                                    <p className="text-xs text-gray-500">현재 닉네임과 동일합니다</p>
+                                {nicknameMessage && (
+                                    <p className={`text-xs ${
+                                        nicknameStatus === "available" ? "text-green-600" :
+                                        nicknameStatus === "taken" || nicknameStatus === "invalid" ? "text-red-600" :
+                                        "text-gray-500"
+                                    }`}>
+                                        {nicknameMessage}
+                                    </p>
                                 )}
 
                                 <div className="flex gap-2">
