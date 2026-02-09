@@ -30,6 +30,15 @@
     display: none;
   }
 
+  /* 캐러셀 터치 최적화 */
+  .carousel-touch {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    scroll-behavior: smooth;
+    touch-action: pan-x;
+    will-change: scroll-position;
+  }
+
   /* Safe area padding for notch phones */
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom, 0px);

@@ -75,16 +75,72 @@ export function useSmoothAutoScroll() {
             container.style.userSelect = "";
         };
 
-        // 터치 이벤트 (모바일)
-        const handleTouchStart = (index: number) => () => {
+        // 터치 이벤트 (모바일) - 드래그 + 관성 스크롤
+        const touchStartX = [0, 0, 0, 0];
+        const touchScrollStart = [0, 0, 0, 0];
+        const lastTouchX = [0, 0, 0, 0];
+        const lastTouchTime = [0, 0, 0, 0];
+        const velocity = [0, 0, 0, 0];
+
+        const handleTouchStart = (index: number) => (e: TouchEvent) => {
             pausedRef.current[index] = true;
+            const container = refs[index].current;
+            if (!container) return;
+
+            const touch = e.touches[0];
+            touchStartX[index] = touch.pageX;
+            touchScrollStart[index] = container.scrollLeft;
+            lastTouchX[index] = touch.pageX;
+            lastTouchTime[index] = Date.now();
+            velocity[index] = 0;
+        };
+
+        const handleTouchMove = (index: number) => (e: TouchEvent) => {
+            const container = refs[index].current;
+            if (!container) return;
+
+            const touch = e.touches[0];
+            const currentX = touch.pageX;
+            const currentTime = Date.now();
+
+            // 속도 계산 (관성용)
+            const dt = currentTime - lastTouchTime[index];
+            if (dt > 0) {
+                velocity[index] = (lastTouchX[index] - currentX) / dt;
+            }
+
+            lastTouchX[index] = currentX;
+            lastTouchTime[index] = currentTime;
+
+            // 드래그로 스크롤
+            const walk = (touchStartX[index] - currentX) * 1.2;
+            container.scrollLeft = touchScrollStart[index] + walk;
+            scrollPosRef.current[index] = container.scrollLeft;
         };
 
         const handleTouchEnd = (index: number) => () => {
-            pausedRef.current[index] = false;
             const container = refs[index].current;
-            if (container) {
+            if (!container) return;
+
+            // 관성 스크롤 (flick gesture)
+            const v = velocity[index];
+            if (Math.abs(v) > 0.3) {
+                const momentum = v * 150; // 관성 강도
+                const targetScroll = container.scrollLeft + momentum;
+
+                container.scrollTo({
+                    left: targetScroll,
+                    behavior: "smooth",
+                });
+
+                // 관성 스크롤 완료 후 위치 동기화
+                setTimeout(() => {
+                    scrollPosRef.current[index] = container.scrollLeft;
+                    pausedRef.current[index] = false;
+                }, 300);
+            } else {
                 scrollPosRef.current[index] = container.scrollLeft;
+                pausedRef.current[index] = false;
             }
         };
 
@@ -103,8 +159,9 @@ export function useSmoothAutoScroll() {
                 container.addEventListener("mousedown", handleMouseDown(index));
                 container.addEventListener("mousemove", handleMouseMove(index));
                 container.addEventListener("mouseup", handleMouseUp(index));
-                container.addEventListener("touchstart", handleTouchStart(index));
-                container.addEventListener("touchend", handleTouchEnd(index));
+                container.addEventListener("touchstart", handleTouchStart(index), { passive: true });
+                container.addEventListener("touchmove", handleTouchMove(index), { passive: true });
+                container.addEventListener("touchend", handleTouchEnd(index), { passive: true });
 
                 // 애니메이션 루프
                 let lastTime = 0;
@@ -160,6 +217,7 @@ export function useSmoothAutoScroll() {
                 container.removeEventListener("mousemove", handleMouseMove(index));
                 container.removeEventListener("mouseup", handleMouseUp(index));
                 container.removeEventListener("touchstart", handleTouchStart(index));
+                container.removeEventListener("touchmove", handleTouchMove(index));
                 container.removeEventListener("touchend", handleTouchEnd(index));
             });
         };

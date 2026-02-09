@@ -276,7 +276,7 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
 
                     <div
                         ref={scroll.communityScrollRef}
-                        className="flex gap-4 overflow-x-auto pb-4 px-4 -mx-4 scrollbar-hide"
+                        className="flex gap-4 overflow-x-auto pb-4 px-4 -mx-4 scrollbar-hide carousel-touch"
                     >
                         {communityPosts.map((post, idx) => {
                             const isLiked = likedPosts[post.id] || false;
@@ -408,7 +408,7 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
 
                     <div
                             ref={scroll.adoptionScrollRef}
-                            className="flex gap-4 overflow-x-auto pb-4 px-4 -mx-4 scrollbar-hide"
+                            className="flex gap-4 overflow-x-auto pb-4 px-4 -mx-4 scrollbar-hide carousel-touch"
                         >
                             {bestPosts.adoption.map((pet, i) => {
                                 const src = safeStringSrc(
@@ -510,7 +510,7 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
 
                     <div
                         ref={scroll.petcareScrollRef}
-                        className="flex gap-4 overflow-x-auto pb-4 px-4 -mx-4 scrollbar-hide"
+                        className="flex gap-4 overflow-x-auto pb-4 px-4 -mx-4 scrollbar-hide carousel-touch"
                     >
                         {bestPosts.petcare.map((guide, i) => (
                             <Card
@@ -584,7 +584,7 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
 
                     <div
                         ref={scroll.memorialScrollRef}
-                        className="flex gap-4 overflow-x-auto pb-4 px-4 -mx-4 scrollbar-hide"
+                        className="flex gap-4 overflow-x-auto pb-4 px-4 -mx-4 scrollbar-hide carousel-touch"
                     >
                         {memorialCards.map((m, i) => {
                             const src = safeStringSrc(
