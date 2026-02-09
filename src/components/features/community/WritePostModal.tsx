@@ -63,10 +63,12 @@ export default function WritePostModal({
     const [content, setContent] = useState("");
     const [badge, setBadge] = useState("");
     const [tag, setTag] = useState<PostTag | "">("");
-    const [authorName, setAuthorName] = useState("");
     const [isPublic, setIsPublic] = useState(false); // 홈화면 공개 여부
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
+
+    // 가입된 닉네임 사용
+    const userNickname = user?.user_metadata?.nickname || user?.email?.split("@")[0] || "익명";
 
     const isMemorial = boardType === "memorial";
     const isFreeBoard = boardType === "free";
@@ -85,7 +87,7 @@ export default function WritePostModal({
             return;
         }
 
-        if (!title.trim() || !content.trim() || !badge || !authorName.trim()) {
+        if (!title.trim() || !content.trim() || !badge) {
             setError("모든 필드를 입력해주세요");
             return;
         }
@@ -110,7 +112,7 @@ export default function WritePostModal({
                     tag: isFreeBoard ? tag : undefined,
                     title: title.trim(),
                     content: content.trim(),
-                    authorName: authorName.trim(),
+                    authorName: userNickname,
                     isPublic: isMemorial ? isPublic : undefined,
                 }),
             });
@@ -125,7 +127,6 @@ export default function WritePostModal({
             setContent("");
             setBadge("");
             setTag("");
-            setAuthorName("");
             setIsPublic(false);
             onSuccess();
             onClose();
@@ -168,17 +169,14 @@ export default function WritePostModal({
 
                 {/* 내용 */}
                 <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
-                    {/* 닉네임 */}
+                    {/* 닉네임 (자동) */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            닉네임
+                            작성자
                         </label>
-                        <Input
-                            value={authorName}
-                            onChange={(e) => setAuthorName(e.target.value)}
-                            placeholder="표시될 닉네임"
-                            maxLength={20}
-                        />
+                        <div className="px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300 text-sm">
+                            {userNickname}
+                        </div>
                     </div>
 
                     {/* 말머리 선택 (자유게시판만) */}
