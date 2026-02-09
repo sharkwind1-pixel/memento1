@@ -783,31 +783,58 @@ export default function AdminPage() {
                                 </Button>
                                 <Button
                                     variant="outline"
-                                    className="h-auto py-4 flex flex-col gap-2 border-amber-200 hover:bg-amber-50"
+                                    className="h-auto py-4 flex flex-col gap-2 border-red-200 hover:bg-red-50"
                                     onClick={async () => {
                                         if (!user) return;
-                                        if (!confirm("온보딩과 튜토리얼을 리셋하고 새로고침합니다.")) return;
+                                        if (!confirm("⚠️ 완전 초기화\n\n다음 데이터가 모두 삭제됩니다:\n- 온보딩/튜토리얼 상태\n- 등록된 반려동물\n- AI 채팅 기록\n- 작성한 게시글\n\n정말 진행하시겠습니까?")) return;
 
-                                        // DB 리셋
-                                        await supabase
-                                            .from("profiles")
-                                            .update({
-                                                onboarding_completed_at: null,
-                                                user_type: null,
-                                                onboarding_data: null,
-                                            })
-                                            .eq("id", user.id);
+                                        try {
+                                            // 1. 등록된 반려동물 삭제
+                                            await supabase
+                                                .from("pets")
+                                                .delete()
+                                                .eq("owner_id", user.id);
 
-                                        // localStorage 리셋
-                                        localStorage.removeItem("memento-ani-onboarding-complete");
-                                        localStorage.removeItem("memento-ani-tutorial-complete");
+                                            // 2. AI 채팅 기록 삭제
+                                            await supabase
+                                                .from("chat_messages")
+                                                .delete()
+                                                .eq("user_id", user.id);
 
-                                        // 새로고침
-                                        window.location.reload();
+                                            // 3. 작성한 게시글 삭제
+                                            await supabase
+                                                .from("community_posts")
+                                                .delete()
+                                                .eq("user_id", user.id);
+
+                                            // 4. 온보딩/프로필 초기화
+                                            await supabase
+                                                .from("profiles")
+                                                .update({
+                                                    onboarding_completed_at: null,
+                                                    user_type: null,
+                                                    onboarding_data: null,
+                                                })
+                                                .eq("id", user.id);
+
+                                            // 5. localStorage 전체 초기화 (메멘토 관련)
+                                            const keysToRemove = Object.keys(localStorage).filter(
+                                                key => key.startsWith("memento") || key.startsWith("pet-") || key.startsWith("chat-")
+                                            );
+                                            keysToRemove.forEach(key => localStorage.removeItem(key));
+
+                                            toast.success("완전 초기화 완료! 새로고침합니다.");
+
+                                            // 새로고침
+                                            setTimeout(() => window.location.reload(), 1000);
+                                        } catch (err) {
+                                            toast.error("초기화 중 오류가 발생했습니다.");
+                                            console.error(err);
+                                        }
                                     }}
                                 >
-                                    <RotateCcw className="w-5 h-5 text-amber-500" />
-                                    <span className="text-sm">내 온보딩 테스트</span>
+                                    <RotateCcw className="w-5 h-5 text-red-500" />
+                                    <span className="text-sm">완전 초기화</span>
                                 </Button>
                             </div>
                         </CardContent>
