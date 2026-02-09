@@ -36,7 +36,6 @@ import AuthModal from "@/components/Auth/AuthModal";
 import AccountSettingsModal from "@/components/Auth/AccountSettingsModal";
 import Sidebar from "@/components/common/Sidebar";
 import SupportModal from "@/components/features/support/SupportModal";
-import MessageInbox from "@/components/features/messages/MessageInbox";
 import {
     Home,
     Users,
@@ -52,7 +51,6 @@ import {
     ChevronDown,
     UserPlus,
     Shield,
-    Mail,
     Settings,
 } from "lucide-react";
 
@@ -117,7 +115,6 @@ export default function Layout({
     );
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [supportModalType, setSupportModalType] = useState<"inquiry" | "suggestion" | null>(null);
-    const [isMessageInboxOpen, setIsMessageInboxOpen] = useState(false);
     const [isAccountSettingsOpen, setIsAccountSettingsOpen] = useState(false);
 
     // 메인 카테고리인지 확인
@@ -190,14 +187,6 @@ export default function Layout({
                 onClose={() => setSupportModalType(null)}
                 type={supportModalType || "inquiry"}
             />
-
-            {/* 쪽지함 모달 */}
-            {user && (
-                <MessageInbox
-                    isOpen={isMessageInboxOpen}
-                    onClose={() => setIsMessageInboxOpen(false)}
-                />
-            )}
 
             {/* 내 정보(계정 설정) 모달 */}
             {user && (
@@ -336,16 +325,6 @@ export default function Layout({
                                                 >
                                                     <Camera className="w-4 h-4" />
                                                     우리의 기록
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        setIsMessageInboxOpen(true);
-                                                        setIsUserMenuOpen(false);
-                                                    }}
-                                                    className="w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-[#E0F7FF] dark:hover:bg-gray-700 flex items-center gap-2"
-                                                >
-                                                    <Mail className="w-4 h-4" />
-                                                    쪽지함
                                                 </button>
                                                 <button
                                                     onClick={() => {
