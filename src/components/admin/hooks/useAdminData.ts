@@ -192,7 +192,7 @@ export function useAdminData(): UseAdminDataReturn {
         try {
             const { data, error } = await supabase
                 .from("profiles")
-                .select("id, email, nickname, created_at, is_banned, is_premium, is_admin, premium_started_at, premium_expires_at, premium_plan")
+                .select("id, email, nickname, created_at, is_banned, is_premium, is_admin")
                 .order("created_at", { ascending: false })
                 .limit(200);
 
@@ -207,9 +207,6 @@ export function useAdminData(): UseAdminDataReturn {
                     is_banned: profile.is_banned,
                     is_premium: profile.is_premium,
                     is_admin: profile.is_admin,
-                    premium_started_at: profile.premium_started_at,
-                    premium_expires_at: profile.premium_expires_at,
-                    premium_plan: profile.premium_plan,
                 })));
             }
         } catch (error) {
