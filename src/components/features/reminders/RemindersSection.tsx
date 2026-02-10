@@ -106,9 +106,8 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
                 credentials: "include", // 쿠키 포함 (인증)
             });
 
-            // 인증 실패 등 에러는 빈 배열 처리
+            // 인증 실패 등 에러는 무시 (상태 변경 안 함 - 무한 루프 방지)
             if (!response.ok) {
-                setReminders([]);
                 return;
             }
 
@@ -117,7 +116,7 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
                 setReminders(data.reminders);
             }
         } catch {
-            setReminders([]);
+            // 에러 시 상태 변경 안 함 (무한 루프 방지)
         } finally {
             setIsLoading(false);
         }

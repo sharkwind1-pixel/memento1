@@ -107,14 +107,6 @@ export default function Layout({
     // ========================================================================
     const { user, loading, signOut } = useAuth();
 
-    // DEBUG: 관리자 체크 로깅
-    useEffect(() => {
-        if (user) {
-            console.log("[Layout] User email:", user.email);
-            console.log("[Layout] isAdmin:", isAdmin(user.email));
-        }
-    }, [user]);
-
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(false);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -181,7 +173,7 @@ export default function Layout({
         user?.user_metadata?.nickname || user?.email?.split("@")[0] || "사용자";
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 pb-safe">
+        <div className="min-h-screen bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 pb-safe flex flex-col xl:block">
             {/* 인증 모달 */}
             <AuthModal
                 isOpen={isAuthModalOpen}
@@ -204,8 +196,15 @@ export default function Layout({
                 />
             )}
 
-            {/* 헤더 - 모바일은 불투명, 데스크톱은 반투명 */}
-            <header className="sticky top-0 z-50 bg-white dark:bg-gray-900 xl:bg-white/80 xl:dark:bg-gray-900/80 xl:backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-700/50">
+            {/* 헤더 - 모바일은 완전 불투명 (성능), 데스크톱은 반투명 */}
+            {/* GPU 가속으로 리페인트 최소화 */}
+            <header
+                className="sticky top-0 z-50 bg-white dark:bg-gray-900 xl:bg-white/90 xl:dark:bg-gray-900/90 xl:backdrop-blur-sm border-b border-gray-200 dark:border-gray-700"
+                style={{
+                    transform: 'translateZ(0)',
+                    backfaceVisibility: 'hidden'
+                }}
+            >
                 <div className="max-w-7xl mx-auto px-3 sm:px-4">
                     <div className="flex items-center justify-between h-14 sm:h-16">
                         {/* 로고 */}
@@ -236,7 +235,7 @@ export default function Layout({
                                         data-tutorial-id={tab.id}
                                         onClick={() => setSelectedTab(tab.id)}
                                         className={`
-                                            flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap
+                                            flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap
                                             ${
                                                 isActive
                                                     ? "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white shadow-md"
@@ -421,13 +420,19 @@ export default function Layout({
                 />
             </aside>
 
-            {/* 메인 컨텐츠 - 모바일: 전체폭 중앙, 데스크톱: 사이드바 제외 영역 중앙 */}
-            <div className="xl:ml-56 pb-20 xl:pb-0">
-                <main className="max-w-6xl mx-auto px-4 py-6">{children}</main>
+            {/* 메인 컨텐츠 영역 */}
+            <div id="main-content" className="xl:ml-56 pb-20 xl:pb-0 flex-1">
+                <main className="max-w-6xl mx-auto px-4 py-6">
+                    {children}
+                </main>
             </div>
 
             {/* 모바일 하단 네비게이션 - 5개 메인 카테고리 */}
-            <nav className="xl:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-200/50 dark:border-gray-700/50 z-50 pb-safe">
+            {/* backdrop-blur 제거 - 모바일 성능 최적화 */}
+            {/* GPU 가속 및 contain으로 리페인트 격리 */}
+            <nav
+                className="xl:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 z-50 pb-safe"
+            >
                 <div className="flex justify-around items-center h-16 px-1">
                     {BOTTOM_NAV_TABS.map((tab) => {
                         const Icon = tab.icon;
@@ -441,18 +446,18 @@ export default function Layout({
                                 data-tutorial-id={tab.id}
                                 onClick={() => setSelectedTab(tab.id)}
                                 className={`
-                                    flex flex-col items-center justify-center flex-1 py-2 min-h-[56px] active:scale-95 transition-all
+                                    flex flex-col items-center justify-center flex-1 py-2 min-h-[56px]
                                     ${isActive ? "text-[#05B2DC]" : "text-gray-400 dark:text-gray-500"}
                                 `}
                             >
-                                <div className={`p-1.5 rounded-xl transition-colors ${
+                                <div className={`p-1.5 rounded-xl ${
                                     isHome && isActive
                                         ? "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white"
                                         : isActive
                                             ? "bg-[#E0F7FF] dark:bg-[#05B2DC]/20"
                                             : ""
                                 }`}>
-                                    <Icon className={`w-5 h-5 ${isActive ? "scale-110" : ""} ${isHome && isActive ? "text-white" : ""} transition-transform`} />
+                                    <Icon className={`w-5 h-5 ${isHome && isActive ? "text-white" : ""}`} />
                                 </div>
                                 <span className="text-[10px] mt-0.5 font-medium">
                                     {tab.label}
@@ -464,7 +469,7 @@ export default function Layout({
                     <button
                         data-tutorial-id="more"
                         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                        className="flex flex-col items-center justify-center flex-1 py-2 min-h-[56px] text-gray-400 dark:text-gray-500 active:scale-95 transition-all"
+                        className="flex flex-col items-center justify-center flex-1 py-2 min-h-[56px] text-gray-400 dark:text-gray-500"
                     >
                         <div className={`p-1.5 rounded-xl ${isSidebarOpen ? "bg-gray-100 dark:bg-gray-800" : ""}`}>
                             <Menu className="w-5 h-5" />

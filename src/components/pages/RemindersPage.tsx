@@ -255,9 +255,7 @@ export default function RemindersPage() {
         }
     };
 
-    if (authLoading || petsLoading) {
-        return <FullPageLoading text="불러오는 중..." />;
-    }
+    // 로딩 화면 완전 제거 - 떨림 방지
 
     if (!user) {
         return (

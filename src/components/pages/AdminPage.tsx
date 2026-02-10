@@ -1,10 +1,30 @@
 /**
+ * ============================================================================
  * AdminPage.tsx
- * 관리자 전용 대시보드
- * - 현황 대시보드
- * - 유저 관리 (밴/정지)
- * - 게시물 관리 (삭제/숨김)
- * - 신고 관리
+ * ============================================================================
+ * 관리자 전용 대시보드 - 메인 페이지
+ *
+ * 📌 이 파일의 역할:
+ * - 탭 네비게이션 관리
+ * - 데이터 로딩 조율
+ * - 각 탭 컴포넌트 렌더링
+ *
+ * 📂 관련 파일 구조:
+ * src/components/admin/
+ * ├── index.ts           - 통합 export
+ * ├── types.ts           - 타입 정의
+ * ├── hooks/
+ * │   └── useAdminData.ts - 데이터 로딩 훅
+ * ├── tabs/
+ * │   ├── AdminDashboardTab.tsx   - 대시보드
+ * │   ├── AdminUsersTab.tsx       - 유저 관리
+ * │   ├── AdminInquiriesTab.tsx   - 문의 관리
+ * │   ├── AdminReportsTab.tsx     - 신고 관리
+ * │   └── AdminWithdrawalsTab.tsx - 탈퇴자 관리
+ * └── modals/
+ *     ├── PremiumModal.tsx     - 프리미엄 부여
+ *     └── WithdrawalModal.tsx  - 탈퇴 처리
+ * ============================================================================
  */
 
 "use client";
@@ -13,691 +33,176 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { isAdmin } from "@/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+
+// UI 컴포넌트
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
     LayoutDashboard,
     Users,
     FileText,
     Flag,
-    Search,
-    Ban,
-    Trash2,
-    Eye,
-    EyeOff,
-    Shield,
-    TrendingUp,
-    MessageCircle,
-    PawPrint,
-    Calendar,
-    RefreshCw,
-    Crown,
-    AlertTriangle,
-    RotateCcw,
-    Activity,
     HelpCircle,
-    Lightbulb,
-    CheckCircle,
-    Clock,
-    Send,
+    Ban,
+    Shield,
 } from "lucide-react";
+
+// 관리자 컴포넌트
 import {
-    LineChart,
-    Line,
-    AreaChart,
-    Area,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
-} from "recharts";
+    useAdminData,
+    AdminDashboardTab,
+    AdminUsersTab,
+    AdminInquiriesTab,
+    AdminReportsTab,
+    AdminWithdrawalsTab,
+    WithdrawalModal,
+    type AdminTab,
+    type UserRow,
+    type WithdrawalType,
+} from "@/components/admin";
 
-type AdminTab = "dashboard" | "users" | "posts" | "reports" | "inquiries";
+// ============================================================================
+// 탭 설정
+// ============================================================================
 
-interface DashboardStats {
-    totalUsers: number;
-    totalPets: number;
-    totalPosts: number;
-    totalChats: number;
-    todayUsers: number;
-    todayChats: number;
-    premiumUsers: number;
-    bannedUsers: number;
-    todayActiveUsers: number; // DAU
-    weeklyActiveUsers: number; // WAU
-    monthlyActiveUsers: number; // MAU
-}
+const TABS: { id: AdminTab; label: string; icon: typeof LayoutDashboard }[] = [
+    { id: "dashboard", label: "대시보드", icon: LayoutDashboard },
+    { id: "users", label: "유저 관리", icon: Users },
+    { id: "posts", label: "게시물", icon: FileText },
+    { id: "inquiries", label: "문의", icon: HelpCircle },
+    { id: "reports", label: "신고", icon: Flag },
+    { id: "withdrawals", label: "탈퇴 관리", icon: Ban },
+];
 
-interface UserRow {
-    id: string;
-    email: string;
-    created_at: string;
-    user_metadata?: {
-        nickname?: string;
-    };
-    is_banned?: boolean;
-    is_premium?: boolean;
-    is_admin?: boolean;
-    premium_started_at?: string;
-    premium_expires_at?: string;
-    premium_plan?: string;
-}
-
-interface PostRow {
-    id: string;
-    title: string;
-    content: string;
-    author_id: string;
-    author_email?: string;
-    created_at: string;
-    is_hidden?: boolean;
-    report_count?: number;
-}
-
-interface ChartData {
-    date: string;
-    가입자: number;
-    채팅: number;
-    접속자: number;
-}
-
-interface InquiryRow {
-    id: string;
-    user_id: string | null;
-    email: string;
-    category: "question" | "report" | "suggestion";
-    title: string;
-    content: string;
-    status: "pending" | "in_progress" | "resolved" | "closed";
-    admin_response: string | null;
-    responded_at: string | null;
-    created_at: string;
-}
-
-interface ReportRow {
-    id: string;
-    reporter_id: string;
-    reporter_email?: string;
-    target_type: "post" | "comment" | "user" | "pet_memorial";
-    target_id: string;
-    reason: string;
-    description: string | null;
-    status: "pending" | "reviewing" | "resolved" | "rejected";
-    admin_notes: string | null;
-    resolved_at: string | null;
-    resolved_by: string | null;
-    created_at: string;
-}
+// ============================================================================
+// 메인 컴포넌트
+// ============================================================================
 
 export default function AdminPage() {
     const { user } = useAuth();
-    const [activeTab, setActiveTab] = useState<AdminTab>("dashboard");
-    const [loading, setLoading] = useState(true);
-    const [stats, setStats] = useState<DashboardStats>({
-        totalUsers: 0,
-        totalPets: 0,
-        totalPosts: 0,
-        totalChats: 0,
-        todayUsers: 0,
-        todayChats: 0,
-        premiumUsers: 0,
-        bannedUsers: 0,
-        todayActiveUsers: 0,
-        weeklyActiveUsers: 0,
-        monthlyActiveUsers: 0,
-    });
-    const [users, setUsers] = useState<UserRow[]>([]);
-    const [posts, setPosts] = useState<PostRow[]>([]);
-    const [inquiries, setInquiries] = useState<InquiryRow[]>([]);
-    const [reports, setReports] = useState<ReportRow[]>([]);
-    const [searchQuery, setSearchQuery] = useState("");
-    const [chartData, setChartData] = useState<ChartData[]>([]);
-    const [selectedInquiry, setSelectedInquiry] = useState<InquiryRow | null>(null);
-    const [adminResponse, setAdminResponse] = useState("");
-    const [isResponding, setIsResponding] = useState(false);
-
-    // 프리미엄 관리 모달 상태
-    const [premiumModalUser, setPremiumModalUser] = useState<UserRow | null>(null);
-    const [premiumDuration, setPremiumDuration] = useState<string>("30"); // 일수 또는 "unlimited"
-    const [premiumReason, setPremiumReason] = useState("");
-    const [isSavingPremium, setIsSavingPremium] = useState(false);
-
     const isAdminUser = isAdmin(user?.email);
 
-    // 차트 데이터 로드 (최근 7일)
-    const loadChartData = async () => {
-        try {
-            const days = [];
-            for (let i = 6; i >= 0; i--) {
-                const date = new Date();
-                date.setDate(date.getDate() - i);
-                const dateStr = date.toISOString().split("T")[0];
-                const nextDateStr = new Date(date.getTime() + 86400000).toISOString().split("T")[0];
-                const displayDate = `${date.getMonth() + 1}/${date.getDate()}`;
-
-                // 해당 날짜의 가입자 수
-                const { count: signups } = await supabase
-                    .from("profiles")
-                    .select("*", { count: "exact", head: true })
-                    .gte("created_at", dateStr)
-                    .lt("created_at", nextDateStr);
-
-                // 해당 날짜의 채팅 수
-                const { count: chats } = await supabase
-                    .from("chat_messages")
-                    .select("*", { count: "exact", head: true })
-                    .gte("created_at", dateStr)
-                    .lt("created_at", nextDateStr);
-
-                // 해당 날짜의 접속자 수 (last_seen_at 기준)
-                const { count: activeUsers } = await supabase
-                    .from("profiles")
-                    .select("*", { count: "exact", head: true })
-                    .gte("last_seen_at", dateStr)
-                    .lt("last_seen_at", nextDateStr);
-
-                days.push({
-                    date: displayDate,
-                    가입자: signups || 0,
-                    채팅: chats || 0,
-                    접속자: activeUsers || 0,
-                });
-            }
-            setChartData(days);
-        } catch {}
-    };
-
-    // 대시보드 통계 로드
-    const loadDashboardStats = async () => {
-        setLoading(true);
-        try {
-            // 오늘 날짜
-            const today = new Date().toISOString().split("T")[0];
-
-            // 전체 사용자 수 (profiles 테이블)
-            const { count: totalUsers } = await supabase
-                .from("profiles")
-                .select("*", { count: "exact", head: true });
-
-            // 전체 반려동물 수
-            const { count: totalPets } = await supabase
-                .from("pets")
-                .select("*", { count: "exact", head: true });
-
-            // 전체 게시글 수
-            const { count: totalPosts } = await supabase
-                .from("community_posts")
-                .select("*", { count: "exact", head: true });
-
-            // 전체 채팅 수
-            const { count: totalChats } = await supabase
-                .from("chat_messages")
-                .select("*", { count: "exact", head: true });
-
-            // 오늘 가입한 사용자
-            const { count: todayUsers } = await supabase
-                .from("profiles")
-                .select("*", { count: "exact", head: true })
-                .gte("created_at", today);
-
-            // 오늘 채팅 수
-            const { count: todayChats } = await supabase
-                .from("chat_messages")
-                .select("*", { count: "exact", head: true })
-                .gte("created_at", today);
-
-            // 프리미엄 사용자
-            const { count: premiumUsers } = await supabase
-                .from("profiles")
-                .select("*", { count: "exact", head: true })
-                .eq("is_premium", true);
-
-            // 정지된 사용자
-            const { count: bannedUsers } = await supabase
-                .from("profiles")
-                .select("*", { count: "exact", head: true })
-                .eq("is_banned", true);
-
-            // DAU (오늘 접속한 사용자)
-            const { count: todayActiveUsers } = await supabase
-                .from("profiles")
-                .select("*", { count: "exact", head: true })
-                .gte("last_seen_at", today);
-
-            // WAU (최근 7일 접속한 사용자)
-            const weekAgo = new Date();
-            weekAgo.setDate(weekAgo.getDate() - 7);
-            const { count: weeklyActiveUsers } = await supabase
-                .from("profiles")
-                .select("*", { count: "exact", head: true })
-                .gte("last_seen_at", weekAgo.toISOString().split("T")[0]);
-
-            // MAU (최근 30일 접속한 사용자)
-            const monthAgo = new Date();
-            monthAgo.setDate(monthAgo.getDate() - 30);
-            const { count: monthlyActiveUsers } = await supabase
-                .from("profiles")
-                .select("*", { count: "exact", head: true })
-                .gte("last_seen_at", monthAgo.toISOString().split("T")[0]);
-
-            setStats({
-                totalUsers: totalUsers || 0,
-                totalPets: totalPets || 0,
-                totalPosts: totalPosts || 0,
-                totalChats: totalChats || 0,
-                todayUsers: todayUsers || 0,
-                todayChats: todayChats || 0,
-                premiumUsers: premiumUsers || 0,
-                bannedUsers: bannedUsers || 0,
-                todayActiveUsers: todayActiveUsers || 0,
-                weeklyActiveUsers: weeklyActiveUsers || 0,
-                monthlyActiveUsers: monthlyActiveUsers || 0,
-            });
-        } catch {}
- finally {
-            setLoading(false);
-        }
-    };
-
-    // 사용자 목록 로드
-    const loadUsers = async () => {
-        try {
-            const { data, error } = await supabase
-                .from("profiles")
-                .select("*")
-                .order("created_at", { ascending: false })
-                .limit(100);
-
-            if (data) {
-                setUsers(data.map(profile => ({
-                    id: profile.id,
-                    email: profile.email || "이메일 없음",
-                    created_at: profile.created_at,
-                    user_metadata: { nickname: profile.nickname },
-                    is_banned: profile.is_banned,
-                    is_premium: profile.is_premium,
-                    is_admin: profile.is_admin,
-                    premium_started_at: profile.premium_started_at || undefined,
-                    premium_expires_at: profile.premium_expires_at || undefined,
-                    premium_plan: profile.premium_plan || undefined,
-                })));
-            }
-        } catch {}
-
-    };
-
-    // 사용자 권한 업데이트
-    const updateUserRole = async (userId: string, field: "is_premium" | "is_admin" | "is_banned", value: boolean) => {
-        try {
-            const { error } = await supabase
-                .from("profiles")
-                .update({ [field]: value })
-                .eq("id", userId);
-
-            if (error) throw error;
-
-            // 로컬 상태 업데이트
-            setUsers(prev => prev.map(u =>
-                u.id === userId ? { ...u, [field]: value } : u
-            ));
-
-            // 통계 새로고침
-            loadDashboardStats();
-        } catch {
-            toast.error("권한 업데이트에 실패했습니다.");
-        }
-    };
-
-    // 프리미엄 부여/해제 (새 버전 - 기간 포함)
-    const grantPremium = async () => {
-        if (!premiumModalUser || !user) return;
-
-        setIsSavingPremium(true);
-        try {
-            const isUnlimited = premiumDuration === "unlimited";
-            const durationDays = isUnlimited ? null : parseInt(premiumDuration);
-            const expiresAt = isUnlimited ? null : new Date(Date.now() + (durationDays || 30) * 24 * 60 * 60 * 1000).toISOString();
-
-            // 먼저 기본 필드만 업데이트 시도
-            const updateData: Record<string, unknown> = { is_premium: true };
-
-            // 확장 필드가 있으면 추가 (없으면 무시됨)
-            try {
-                const { error } = await supabase
-                    .from("profiles")
-                    .update({
-                        is_premium: true,
-                        premium_started_at: new Date().toISOString(),
-                        premium_expires_at: expiresAt,
-                        premium_plan: "admin_grant",
-                    })
-                    .eq("id", premiumModalUser.id);
-
-                if (error) {
-                    // 필드가 없으면 기본 필드만 업데이트
-                    await supabase
-                        .from("profiles")
-                        .update({ is_premium: true })
-                        .eq("id", premiumModalUser.id);
-                }
-            } catch {
-                // 기본 필드만 업데이트
-                await supabase
-                    .from("profiles")
-                    .update({ is_premium: true })
-                    .eq("id", premiumModalUser.id);
-            }
-
-            // 로컬 상태 업데이트
-            setUsers(prev => prev.map(u =>
-                u.id === premiumModalUser.id ? {
-                    ...u,
-                    is_premium: true,
-                    premium_started_at: new Date().toISOString(),
-                    premium_expires_at: expiresAt || undefined,
-                    premium_plan: "admin_grant",
-                } : u
-            ));
-
-            toast.success(`${premiumModalUser.email}에게 프리미엄이 부여되었습니다! ${isUnlimited ? "(무기한)" : `(${durationDays}일)`}`);
-            setPremiumModalUser(null);
-            setPremiumReason("");
-            loadDashboardStats();
-        } catch {
-            toast.error("프리미엄 부여에 실패했습니다.");
-        } finally {
-            setIsSavingPremium(false);
-        }
-    };
-
-    // 프리미엄 해제
-    const revokePremium = async (targetUser: UserRow) => {
-        if (!confirm(`${targetUser.email}의 프리미엄을 해제하시겠습니까?`)) return;
-
-        try {
-            const { error } = await supabase
-                .from("profiles")
-                .update({
-                    is_premium: false,
-                    premium_expires_at: new Date().toISOString(),
-                    premium_plan: null,
-                })
-                .eq("id", targetUser.id);
-
-            if (error) throw error;
-
-            setUsers(prev => prev.map(u =>
-                u.id === targetUser.id ? {
-                    ...u,
-                    is_premium: false,
-                    premium_expires_at: new Date().toISOString(),
-                    premium_plan: undefined,
-                } : u
-            ));
-
-            toast.success("프리미엄이 해제되었습니다.");
-            loadDashboardStats();
-        } catch {
-            toast.error("프리미엄 해제에 실패했습니다.");
-        }
-    };
-
-    // 온보딩 리셋 (튜토리얼 + 온보딩 모두)
-    const resetOnboarding = async (userId: string, userEmail: string) => {
-        if (!confirm(`${userEmail}의 온보딩을 리셋하시겠습니까?\n\n초기화 항목:\n- 튜토리얼 완료 상태\n- 온보딩 완료 상태\n- 사용자 유형\n\n※ 본인 계정이면 새로고침 후 적용됩니다.`)) {
-            return;
-        }
-
-        console.log("[AdminPage] 온보딩 리셋 시도:", { userId, userEmail });
-
-        try {
-            const { error, data, count } = await supabase
-                .from("profiles")
-                .update({
-                    tutorial_completed_at: null,  // 튜토리얼도 초기화!
-                    onboarding_completed_at: null,
-                    user_type: null,
-                    onboarding_data: null,
-                })
-                .eq("id", userId)
-                .select();  // 업데이트 결과 확인용
-
-            console.log("[AdminPage] 온보딩 리셋 결과:", { error, data, count });
-
-            if (error) {
-                console.error("[AdminPage] 온보딩 리셋 에러:", error);
-                throw error;
-            }
-
-            if (!data || data.length === 0) {
-                console.error("[AdminPage] 업데이트된 행 없음! RLS 문제일 수 있음");
-                toast.error("업데이트 실패: 권한이 없거나 해당 유저가 없습니다.");
-                return;
-            }
-
-            // 본인 계정이면 localStorage도 클리어하라고 안내
-            if (userId === user?.id) {
-                localStorage.removeItem("memento-ani-tutorial-complete");
-                localStorage.removeItem("memento-ani-onboarding-complete");
-                toast.success("온보딩이 리셋되었습니다! 새로고침하면 처음부터 시작됩니다.");
-            } else {
-                toast.success("온보딩이 리셋되었습니다. 해당 유저가 다시 로그인하면 적용됩니다.");
-            }
-        } catch {
-            toast.error("온보딩 리셋에 실패했습니다.");
-        }
-    };
-
-    // 게시물 목록 로드
-    const loadPosts = async () => {
-        try {
-            const { data, error } = await supabase
-                .from("community_posts")
-                .select("id, title, content, user_id, author_name, created_at, views")
-                .order("created_at", { ascending: false })
-                .limit(100);
-
-            if (data) {
-                setPosts(data.map(post => ({
-                    id: post.id,
-                    title: post.title,
-                    content: post.content,
-                    author_id: post.user_id,
-                    author_email: post.author_name,
-                    created_at: post.created_at,
-                    is_hidden: false,
-                    report_count: 0,
-                })));
-            }
-        } catch {}
-
-    };
-
-    // 문의 목록 로드
-    const loadInquiries = async () => {
-        try {
-            const { data, error } = await supabase
-                .from("support_inquiries")
-                .select("*")
-                .order("created_at", { ascending: false })
-                .limit(100);
-
-            if (data) {
-                setInquiries(data as InquiryRow[]);
-            }
-        } catch {}
-    };
-
-    // 신고 목록 로드
-    const loadReports = async () => {
-        try {
-            const { data, error } = await supabase
-                .from("reports")
-                .select(`
-                    *,
-                    reporter:profiles!reporter_id(email, nickname)
-                `)
-                .order("created_at", { ascending: false })
-                .limit(100);
-
-            if (data) {
-                setReports(data.map((r: Record<string, unknown>) => ({
-                    ...r,
-                    reporter_email: (r.reporter as { email?: string; nickname?: string } | null)?.email || "알 수 없음",
-                })) as ReportRow[]);
-            }
-        } catch {}
-    };
-
-    // 신고 상태 업데이트
-    const updateReportStatus = async (id: string, status: ReportRow["status"], adminNotes?: string) => {
-        try {
-            const updateData: Record<string, unknown> = { status };
-            if (status === "resolved" || status === "rejected") {
-                updateData.resolved_at = new Date().toISOString();
-                updateData.resolved_by = user?.id;
-            }
-            if (adminNotes) {
-                updateData.admin_notes = adminNotes;
-            }
-
-            const { error } = await supabase
-                .from("reports")
-                .update(updateData)
-                .eq("id", id);
-
-            if (error) throw error;
-
-            setReports(prev => prev.map(r =>
-                r.id === id ? { ...r, status, admin_notes: adminNotes || r.admin_notes } : r
-            ));
-            toast.success("신고 상태가 업데이트되었습니다.");
-        } catch {
-            toast.error("상태 업데이트에 실패했습니다.");
-        }
-    };
-
-    // 신고된 콘텐츠 삭제
-    const deleteReportedContent = async (report: ReportRow) => {
-        if (!confirm(`이 ${report.target_type === "post" ? "게시물" : report.target_type === "comment" ? "댓글" : "콘텐츠"}을(를) 삭제하시겠습니까?`)) {
-            return;
-        }
-
-        try {
-            let tableName = "";
-            switch (report.target_type) {
-                case "post":
-                    tableName = "community_posts";
-                    break;
-                case "comment":
-                    tableName = "comments";
-                    break;
-                case "pet_memorial":
-                    tableName = "pet_memorials";
-                    break;
-                default:
-                    toast.error("삭제할 수 없는 타입입니다.");
-                    return;
-            }
-
-            const { error } = await supabase
-                .from(tableName)
-                .delete()
-                .eq("id", report.target_id);
-
-            if (error) throw error;
-
-            // 신고 상태를 resolved로 변경
-            await updateReportStatus(report.id, "resolved", "콘텐츠 삭제됨");
-            toast.success("콘텐츠가 삭제되었습니다.");
-        } catch {
-            toast.error("콘텐츠 삭제에 실패했습니다.");
-        }
-    };
-
-    // 문의 상태 업데이트
-    const updateInquiryStatus = async (id: string, status: InquiryRow["status"]) => {
-        try {
-            const { error } = await supabase
-                .from("support_inquiries")
-                .update({ status })
-                .eq("id", id);
-
-            if (error) throw error;
-
-            setInquiries(prev => prev.map(i =>
-                i.id === id ? { ...i, status } : i
-            ));
-        } catch {
-            toast.error("상태 업데이트에 실패했습니다.");
-        }
-    };
-
-    // 문의 답변 저장
-    const submitResponse = async () => {
-        if (!selectedInquiry || !adminResponse.trim()) return;
-
-        setIsResponding(true);
-        try {
-            const { error } = await supabase
-                .from("support_inquiries")
-                .update({
-                    admin_response: adminResponse.trim(),
-                    responded_at: new Date().toISOString(),
-                    responded_by: user?.id,
-                    status: "resolved",
-                })
-                .eq("id", selectedInquiry.id);
-
-            if (error) throw error;
-
-            // 로컬 상태 업데이트
-            setInquiries(prev => prev.map(i =>
-                i.id === selectedInquiry.id
-                    ? { ...i, admin_response: adminResponse.trim(), status: "resolved", responded_at: new Date().toISOString() }
-                    : i
-            ));
-
-            setSelectedInquiry(null);
-            setAdminResponse("");
-            toast.success("답변이 저장되었습니다.");
-        } catch {
-            toast.error("답변 저장에 실패했습니다.");
-        } finally {
-            setIsResponding(false);
-        }
-    };
-
+    // 현재 활성 탭
+    const [activeTab, setActiveTab] = useState<AdminTab>("dashboard");
+
+    // 탈퇴 처리 모달 상태
+    const [withdrawalModalUser, setWithdrawalModalUser] = useState<UserRow | null>(null);
+    const [isProcessingWithdrawal, setIsProcessingWithdrawal] = useState(false);
+
+    // 데이터 로딩 훅
+    const {
+        loading,
+        stats,
+        chartData,
+        users,
+        posts,
+        inquiries,
+        reports,
+        withdrawals,
+        loadDashboardStats,
+        loadChartData,
+        loadUsers,
+        loadPosts,
+        loadInquiries,
+        loadReports,
+        loadWithdrawals,
+        setUsers,
+    } = useAdminData();
+
+    // ========================================================================
+    // 초기 데이터 로드
+    // ========================================================================
     useEffect(() => {
         if (isAdminUser) {
             loadDashboardStats();
             loadChartData();
         }
-    }, [isAdminUser]);
+    }, [isAdminUser, loadDashboardStats, loadChartData]);
 
+    // ========================================================================
+    // 탭 변경 시 데이터 로드
+    // ========================================================================
     useEffect(() => {
-        if (isAdminUser) {
-            if (activeTab === "users") loadUsers();
-            if (activeTab === "posts") loadPosts();
-            if (activeTab === "inquiries") loadInquiries();
-            if (activeTab === "reports") loadReports();
-        }
-    }, [activeTab, isAdminUser]);
+        if (!isAdminUser) return;
 
-    // 관리자 권한 체크 (hooks 이후에 배치)
+        switch (activeTab) {
+            case "users":
+                loadUsers();
+                break;
+            case "posts":
+                loadPosts();
+                break;
+            case "inquiries":
+                loadInquiries();
+                break;
+            case "reports":
+                loadReports();
+                break;
+            case "withdrawals":
+                loadWithdrawals();
+                break;
+        }
+    }, [activeTab, isAdminUser, loadUsers, loadPosts, loadInquiries, loadReports, loadWithdrawals]);
+
+    // ========================================================================
+    // 탈퇴 처리
+    // ========================================================================
+    const processWithdrawal = async (type: WithdrawalType, reason: string) => {
+        if (!withdrawalModalUser || !user) return;
+
+        setIsProcessingWithdrawal(true);
+        try {
+            // 1. withdrawn_users 테이블에 추가
+            const rejoinDate = type === "abuse_concern"
+                ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+                : null;
+
+            const { error: insertError } = await supabase
+                .from("withdrawn_users")
+                .insert({
+                    user_id: withdrawalModalUser.id,
+                    email: withdrawalModalUser.email,
+                    nickname: withdrawalModalUser.user_metadata?.nickname,
+                    withdrawal_type: type,
+                    reason: reason || null,
+                    rejoin_allowed_at: rejoinDate,
+                    processed_by: user.id,
+                });
+
+            if (insertError) throw insertError;
+
+            // 2. 영구 차단인 경우 유저 밴 처리
+            if (type === "banned") {
+                await supabase
+                    .from("profiles")
+                    .update({ is_banned: true })
+                    .eq("id", withdrawalModalUser.id);
+            }
+
+            toast.success("탈퇴 처리가 완료되었습니다.");
+            setWithdrawalModalUser(null);
+            loadUsers();
+            loadWithdrawals();
+        } catch (error) {
+            console.error("[AdminPage] 탈퇴 처리 실패:", error);
+            toast.error("탈퇴 처리에 실패했습니다.");
+        } finally {
+            setIsProcessingWithdrawal(false);
+        }
+    };
+
+    // ========================================================================
+    // 권한 체크
+    // ========================================================================
     if (!isAdminUser) {
         return (
-            <div className="min-h-[60vh] flex items-center justify-center">
-                <Card className="max-w-md">
-                    <CardContent className="pt-6 text-center">
-                        <Shield className="w-16 h-16 text-red-400 mx-auto mb-4" />
+            <div className="flex items-center justify-center min-h-screen">
+                <Card className="max-w-md w-full mx-4">
+                    <CardContent className="p-8 text-center">
+                        <Shield className="w-16 h-16 mx-auto text-gray-300 mb-4" />
                         <h2 className="text-xl font-bold text-gray-800 mb-2">
-                            접근 권한이 없습니다
+                            접근 권한 없음
                         </h2>
                         <p className="text-gray-500">
                             관리자만 접근할 수 있는 페이지입니다.
@@ -708,1108 +213,165 @@ export default function AdminPage() {
         );
     }
 
-    const tabs = [
-        { id: "dashboard" as AdminTab, label: "대시보드", icon: LayoutDashboard },
-        { id: "users" as AdminTab, label: "유저 관리", icon: Users },
-        { id: "posts" as AdminTab, label: "게시물 관리", icon: FileText },
-        { id: "inquiries" as AdminTab, label: "문의 관리", icon: HelpCircle },
-        { id: "reports" as AdminTab, label: "신고 관리", icon: Flag },
-    ];
-
+    // ========================================================================
+    // 렌더링
+    // ========================================================================
     return (
-        <div className="space-y-6">
-            {/* 헤더 */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                        <Shield className="w-7 h-7 text-violet-500" />
-                        관리자 대시보드
-                    </h1>
-                    <p className="text-gray-500 text-sm mt-1">
-                        메멘토애니 서비스 관리
-                    </p>
+        <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+            <div className="max-w-7xl mx-auto space-y-6">
+                {/* 헤더 */}
+                <div className="flex items-center justify-between">
+                    <h1 className="text-2xl font-bold text-gray-800">관리자 대시보드</h1>
                 </div>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={loadDashboardStats}
-                    className="gap-2"
-                >
-                    <RefreshCw className="w-4 h-4" />
+
+                {/* 탭 네비게이션 */}
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                    {TABS.map((tab) => {
+                        const Icon = tab.icon;
+                        const isActive = activeTab === tab.id;
+
+                        return (
+                            <Button
+                                key={tab.id}
+                                variant={isActive ? "default" : "outline"}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`flex items-center gap-2 whitespace-nowrap ${
+                                    isActive
+                                        ? "bg-sky-500 hover:bg-sky-600"
+                                        : ""
+                                }`}
+                            >
+                                <Icon className="w-4 h-4" />
+                                {tab.label}
+                            </Button>
+                        );
+                    })}
+                </div>
+
+                {/* 탭 콘텐츠 */}
+                <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6">
+                    {/* 대시보드 탭 */}
+                    {activeTab === "dashboard" && (
+                        <AdminDashboardTab
+                            stats={stats}
+                            chartData={chartData}
+                            loading={loading}
+                        />
+                    )}
+
+                    {/* 유저 관리 탭 */}
+                    {activeTab === "users" && (
+                        <AdminUsersTab
+                            users={users}
+                            onRefresh={loadUsers}
+                            onUpdateUsers={setUsers}
+                            onOpenWithdrawalModal={setWithdrawalModalUser}
+                            onRefreshStats={loadDashboardStats}
+                            currentUserId={user?.id || ""}
+                        />
+                    )}
+
+                    {/* 게시물 탭 - 간단 버전 */}
+                    {activeTab === "posts" && (
+                        <PostsSimpleView posts={posts} onRefresh={loadPosts} />
+                    )}
+
+                    {/* 문의 관리 탭 */}
+                    {activeTab === "inquiries" && (
+                        <AdminInquiriesTab
+                            inquiries={inquiries}
+                            onRefresh={loadInquiries}
+                        />
+                    )}
+
+                    {/* 신고 관리 탭 */}
+                    {activeTab === "reports" && (
+                        <AdminReportsTab
+                            reports={reports}
+                            onRefresh={loadReports}
+                            userId={user?.id || ""}
+                        />
+                    )}
+
+                    {/* 탈퇴자 관리 탭 */}
+                    {activeTab === "withdrawals" && (
+                        <AdminWithdrawalsTab
+                            withdrawals={withdrawals}
+                            onRefresh={loadWithdrawals}
+                            userId={user?.id || ""}
+                        />
+                    )}
+                </div>
+
+                {/* 탈퇴 처리 모달 */}
+                {withdrawalModalUser && (
+                    <WithdrawalModal
+                        user={withdrawalModalUser}
+                        onClose={() => setWithdrawalModalUser(null)}
+                        onProcess={processWithdrawal}
+                        isProcessing={isProcessingWithdrawal}
+                    />
+                )}
+            </div>
+        </div>
+    );
+}
+
+// ============================================================================
+// 게시물 간단 뷰 (별도 탭 컴포넌트로 분리 가능)
+// ============================================================================
+
+import { PostRow } from "@/components/admin";
+import { RefreshCw } from "lucide-react";
+
+interface PostsSimpleViewProps {
+    posts: PostRow[];
+    onRefresh: () => void;
+}
+
+function PostsSimpleView({ posts, onRefresh }: PostsSimpleViewProps) {
+    return (
+        <div className="space-y-4">
+            <div className="flex justify-between items-center">
+                <h3 className="font-medium text-gray-700">
+                    전체 게시물: {posts.length}개
+                </h3>
+                <Button variant="outline" onClick={onRefresh}>
+                    <RefreshCw className="w-4 h-4 mr-1" />
                     새로고침
                 </Button>
             </div>
 
-            {/* 탭 네비게이션 */}
-            <div className="flex gap-2 border-b border-gray-200 pb-2">
-                {tabs.map((tab) => {
-                    const Icon = tab.icon;
-                    return (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={`
-                                flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all
-                                ${activeTab === tab.id
-                                    ? "bg-violet-100 text-violet-700"
-                                    : "text-gray-500 hover:bg-gray-100"
-                                }
-                            `}
+            {posts.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                    <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                    <p>게시물이 없습니다</p>
+                </div>
+            ) : (
+                <div className="space-y-2">
+                    {posts.slice(0, 20).map((post) => (
+                        <div
+                            key={post.id}
+                            className="p-3 bg-gray-50 rounded-lg border border-gray-200"
                         >
-                            <Icon className="w-4 h-4" />
-                            {tab.label}
-                        </button>
-                    );
-                })}
-            </div>
-
-            {/* 대시보드 탭 */}
-            {activeTab === "dashboard" && (
-                <div className="space-y-6">
-                    {/* 주요 지표 */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <Card>
-                            <CardContent className="pt-6">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm text-gray-500">전체 사용자</p>
-                                        <p className="text-2xl font-bold text-gray-800">
-                                            {loading ? "..." : stats.totalUsers}
-                                        </p>
-                                    </div>
-                                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                                        <Users className="w-6 h-6 text-blue-500" />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardContent className="pt-6">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm text-gray-500">등록된 반려동물</p>
-                                        <p className="text-2xl font-bold text-gray-800">
-                                            {loading ? "..." : stats.totalPets}
-                                        </p>
-                                    </div>
-                                    <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
-                                        <PawPrint className="w-6 h-6 text-amber-500" />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardContent className="pt-6">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm text-gray-500">오늘 신규</p>
-                                        <p className="text-2xl font-bold text-green-600">
-                                            +{loading ? "..." : stats.todayUsers}
-                                        </p>
-                                    </div>
-                                    <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                                        <TrendingUp className="w-6 h-6 text-green-500" />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardContent className="pt-6">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm text-gray-500">프리미엄 유저</p>
-                                        <p className="text-2xl font-bold text-violet-600">
-                                            {loading ? "..." : stats.premiumUsers}
-                                        </p>
-                                    </div>
-                                    <div className="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center">
-                                        <Crown className="w-6 h-6 text-violet-500" />
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    {/* DAU/WAU/MAU 지표 */}
-                    <div className="grid grid-cols-3 gap-4">
-                        <Card className="bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200">
-                            <CardContent className="pt-6">
-                                <div className="text-center">
-                                    <Activity className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
-                                    <p className="text-sm text-emerald-600 font-medium">오늘 접속 (DAU)</p>
-                                    <p className="text-3xl font-bold text-emerald-700 mt-1">
-                                        {loading ? "..." : stats.todayActiveUsers}
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <h4 className="font-medium text-gray-800">
+                                        {post.title}
+                                    </h4>
+                                    <p className="text-sm text-gray-500">
+                                        {post.author_email} •{" "}
+                                        {new Date(post.created_at).toLocaleDateString("ko-KR")}
                                     </p>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
-                            <CardContent className="pt-6">
-                                <div className="text-center">
-                                    <Activity className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-                                    <p className="text-sm text-blue-600 font-medium">주간 접속 (WAU)</p>
-                                    <p className="text-3xl font-bold text-blue-700 mt-1">
-                                        {loading ? "..." : stats.weeklyActiveUsers}
-                                    </p>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200">
-                            <CardContent className="pt-6">
-                                <div className="text-center">
-                                    <Activity className="w-8 h-8 text-purple-500 mx-auto mb-2" />
-                                    <p className="text-sm text-purple-600 font-medium">월간 접속 (MAU)</p>
-                                    <p className="text-3xl font-bold text-purple-700 mt-1">
-                                        {loading ? "..." : stats.monthlyActiveUsers}
-                                    </p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    {/* 빠른 액션 */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-lg">빠른 액션</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <Button
-                                    variant="outline"
-                                    className="h-auto py-4 flex flex-col gap-2"
-                                    onClick={() => setActiveTab("users")}
-                                >
-                                    <Users className="w-5 h-5 text-blue-500" />
-                                    <span className="text-sm">유저 관리</span>
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    className="h-auto py-4 flex flex-col gap-2"
-                                    onClick={() => setActiveTab("posts")}
-                                >
-                                    <FileText className="w-5 h-5 text-green-500" />
-                                    <span className="text-sm">게시물 관리</span>
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    className="h-auto py-4 flex flex-col gap-2"
-                                    onClick={() => setActiveTab("reports")}
-                                >
-                                    <Flag className="w-5 h-5 text-red-500" />
-                                    <span className="text-sm">신고 관리</span>
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    className="h-auto py-4 flex flex-col gap-2"
-                                >
-                                    <MessageCircle className="w-5 h-5 text-violet-500" />
-                                    <span className="text-sm">AI 사용량</span>
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    className="h-auto py-4 flex flex-col gap-2 border-red-200 hover:bg-red-50"
-                                    onClick={async () => {
-                                        if (!user) return;
-                                        if (!confirm("⚠️ 완전 초기화\n\n다음 데이터가 모두 삭제됩니다:\n- 온보딩/튜토리얼 상태\n- 등록된 반려동물\n- AI 채팅 기록\n- 작성한 게시글\n\n정말 진행하시겠습니까?")) return;
-
-                                        try {
-                                            // 1. 등록된 반려동물 삭제
-                                            await supabase
-                                                .from("pets")
-                                                .delete()
-                                                .eq("owner_id", user.id);
-
-                                            // 2. AI 채팅 기록 삭제
-                                            await supabase
-                                                .from("chat_messages")
-                                                .delete()
-                                                .eq("user_id", user.id);
-
-                                            // 3. 작성한 게시글 삭제
-                                            await supabase
-                                                .from("community_posts")
-                                                .delete()
-                                                .eq("user_id", user.id);
-
-                                            // 4. 온보딩/프로필 초기화
-                                            await supabase
-                                                .from("profiles")
-                                                .update({
-                                                    onboarding_completed_at: null,
-                                                    user_type: null,
-                                                    onboarding_data: null,
-                                                })
-                                                .eq("id", user.id);
-
-                                            // 5. localStorage 전체 초기화 (메멘토 관련)
-                                            const keysToRemove = Object.keys(localStorage).filter(
-                                                key => key.startsWith("memento") || key.startsWith("pet-") || key.startsWith("chat-")
-                                            );
-                                            keysToRemove.forEach(key => localStorage.removeItem(key));
-
-                                            toast.success("완전 초기화 완료! 새로고침합니다.");
-
-                                            // 새로고침
-                                            setTimeout(() => window.location.reload(), 1000);
-                                        } catch (err) {
-                                            toast.error("초기화 중 오류가 발생했습니다.");
-                                            console.error(err);
-                                        }
-                                    }}
-                                >
-                                    <RotateCcw className="w-5 h-5 text-red-500" />
-                                    <span className="text-sm">완전 초기화</span>
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* 접속자 추이 그래프 (핵심 지표) */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-lg flex items-center gap-2">
-                                <Activity className="w-5 h-5 text-emerald-500" />
-                                주간 접속자 추이 (DAU)
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="h-72">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={chartData}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                                        <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#9ca3af" />
-                                        <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" />
-                                        <Tooltip
-                                            contentStyle={{
-                                                backgroundColor: '#fff',
-                                                border: '1px solid #e5e7eb',
-                                                borderRadius: '8px'
-                                            }}
-                                        />
-                                        <Area
-                                            type="monotone"
-                                            dataKey="접속자"
-                                            stroke="#10b981"
-                                            fill="#a7f3d0"
-                                            strokeWidth={3}
-                                        />
-                                    </AreaChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* 가입자 & 채팅 추이 그래프 */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-lg flex items-center gap-2">
-                                    <TrendingUp className="w-5 h-5 text-blue-500" />
-                                    주간 가입자 추이
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="h-64">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <AreaChart data={chartData}>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                                            <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#9ca3af" />
-                                            <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" />
-                                            <Tooltip
-                                                contentStyle={{
-                                                    backgroundColor: '#fff',
-                                                    border: '1px solid #e5e7eb',
-                                                    borderRadius: '8px'
-                                                }}
-                                            />
-                                            <Area
-                                                type="monotone"
-                                                dataKey="가입자"
-                                                stroke="#3b82f6"
-                                                fill="#93c5fd"
-                                                strokeWidth={2}
-                                            />
-                                        </AreaChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-lg flex items-center gap-2">
-                                    <MessageCircle className="w-5 h-5 text-violet-500" />
-                                    주간 AI 채팅 추이
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="h-64">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <LineChart data={chartData}>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                                            <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#9ca3af" />
-                                            <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" />
-                                            <Tooltip
-                                                contentStyle={{
-                                                    backgroundColor: '#fff',
-                                                    border: '1px solid #e5e7eb',
-                                                    borderRadius: '8px'
-                                                }}
-                                            />
-                                            <Line
-                                                type="monotone"
-                                                dataKey="채팅"
-                                                stroke="#8b5cf6"
-                                                strokeWidth={2}
-                                                dot={{ fill: '#8b5cf6', strokeWidth: 2 }}
-                                            />
-                                        </LineChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    {/* 최근 활동 */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-lg">시스템 상태</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-                                        <span className="text-sm font-medium text-green-700">서비스 정상 운영 중</span>
-                                    </div>
-                                    <Badge variant="secondary" className="bg-green-100 text-green-700">
-                                        정상
-                                    </Badge>
-                                </div>
-                                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                    <div className="flex items-center gap-3">
-                                        <Calendar className="w-4 h-4 text-gray-400" />
-                                        <span className="text-sm text-gray-600">
-                                            마지막 업데이트: {new Date().toLocaleDateString("ko-KR")}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            )}
-
-            {/* 유저 관리 탭 */}
-            {activeTab === "users" && (
-                <div className="space-y-4">
-                    {/* 검색 */}
-                    <div className="flex gap-2">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                            <Input
-                                placeholder="이메일 또는 닉네임으로 검색..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-10"
-                            />
-                        </div>
-                        <Button variant="outline" onClick={loadUsers}>
-                            <RefreshCw className="w-4 h-4 mr-1" />
-                            새로고침
-                        </Button>
-                    </div>
-
-                    {/* 범례 */}
-                    <div className="flex flex-wrap gap-2 text-sm">
-                        <Badge className="bg-violet-100 text-violet-700">
-                            <Shield className="w-3 h-3 mr-1" />
-                            관리자
-                        </Badge>
-                        <Badge className="bg-amber-100 text-amber-700">
-                            <Crown className="w-3 h-3 mr-1" />
-                            프리미엄
-                        </Badge>
-                        <Badge className="bg-red-100 text-red-700">
-                            <Ban className="w-3 h-3 mr-1" />
-                            정지됨
-                        </Badge>
-                    </div>
-
-                    {/* 유저 목록 */}
-                    <Card>
-                        <CardContent className="pt-6">
-                            {users.length === 0 ? (
-                                <div className="text-center py-8 text-gray-500">
-                                    <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                                    <p>등록된 사용자가 없습니다.</p>
-                                </div>
-                            ) : (
-                                <div className="space-y-3">
-                                    {users
-                                        .filter(u =>
-                                            searchQuery === "" ||
-                                            u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                            u.user_metadata?.nickname?.toLowerCase().includes(searchQuery.toLowerCase())
-                                        )
-                                        .map((u) => (
-                                        <div
-                                            key={u.id}
-                                            className={`p-4 rounded-xl border transition-colors ${
-                                                u.is_banned
-                                                    ? "bg-red-50 border-red-200"
-                                                    : u.is_admin
-                                                        ? "bg-violet-50 border-violet-200"
-                                                        : u.is_premium
-                                                            ? "bg-amber-50 border-amber-200"
-                                                            : "bg-gray-50 border-gray-200 hover:bg-gray-100"
-                                            }`}
-                                        >
-                                            {/* 유저 정보 */}
-                                            <div className="flex items-center justify-between mb-3">
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
-                                                        u.is_admin
-                                                            ? "bg-gradient-to-br from-violet-500 to-purple-600"
-                                                            : u.is_premium
-                                                                ? "bg-gradient-to-br from-amber-400 to-orange-500"
-                                                                : "bg-gradient-to-br from-gray-400 to-gray-500"
-                                                    }`}>
-                                                        {u.email.charAt(0).toUpperCase()}
-                                                    </div>
-                                                    <div>
-                                                        <div className="flex items-center gap-2">
-                                                            <p className="font-medium text-gray-800">
-                                                                {u.user_metadata?.nickname || "사용자"}
-                                                            </p>
-                                                            {u.is_admin && (
-                                                                <Badge className="bg-violet-100 text-violet-700 text-xs">
-                                                                    <Shield className="w-3 h-3 mr-0.5" />
-                                                                    관리자
-                                                                </Badge>
-                                                            )}
-                                                            {u.is_premium && (
-                                                                <Badge className="bg-amber-100 text-amber-700 text-xs">
-                                                                    <Crown className="w-3 h-3 mr-0.5" />
-                                                                    프리미엄
-                                                                </Badge>
-                                                            )}
-                                                            {u.is_banned && (
-                                                                <Badge className="bg-red-100 text-red-700 text-xs">
-                                                                    정지됨
-                                                                </Badge>
-                                                            )}
-                                                        </div>
-                                                        <p className="text-xs text-gray-500">{u.email}</p>
-                                                    </div>
-                                                </div>
-                                                <Badge variant="secondary" className="text-xs">
-                                                    {new Date(u.created_at).toLocaleDateString("ko-KR")} 가입
-                                                </Badge>
-                                            </div>
-
-                                            {/* 프리미엄 상태 표시 */}
-                                            {u.is_premium && (
-                                                <div className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-lg mb-2">
-                                                    {u.premium_expires_at
-                                                        ? `만료: ${new Date(u.premium_expires_at).toLocaleDateString("ko-KR")} (${Math.max(0, Math.ceil((new Date(u.premium_expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))}일 남음)`
-                                                        : "무기한 프리미엄"
-                                                    }
-                                                </div>
-                                            )}
-
-                                            {/* 권한 관리 버튼 */}
-                                            <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200">
-                                                {u.is_premium ? (
-                                                    <Button
-                                                        size="sm"
-                                                        variant="default"
-                                                        className="bg-amber-500 hover:bg-amber-600"
-                                                        onClick={() => revokePremium(u)}
-                                                    >
-                                                        <Crown className="w-3 h-3 mr-1" />
-                                                        프리미엄 해제
-                                                    </Button>
-                                                ) : (
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        className="text-amber-600 border-amber-300 hover:bg-amber-50"
-                                                        onClick={() => {
-                                                            setPremiumModalUser(u);
-                                                            setPremiumDuration("30");
-                                                        }}
-                                                    >
-                                                        <Crown className="w-3 h-3 mr-1" />
-                                                        프리미엄 부여
-                                                    </Button>
-                                                )}
-                                                <Button
-                                                    size="sm"
-                                                    variant={u.is_admin ? "default" : "outline"}
-                                                    className={u.is_admin ? "bg-violet-500 hover:bg-violet-600" : ""}
-                                                    onClick={() => updateUserRole(u.id, "is_admin", !u.is_admin)}
-                                                >
-                                                    <Shield className="w-3 h-3 mr-1" />
-                                                    {u.is_admin ? "관리자 해제" : "관리자 부여"}
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant={u.is_banned ? "default" : "outline"}
-                                                    className={u.is_banned ? "bg-red-500 hover:bg-red-600" : "text-red-500 border-red-300 hover:bg-red-50"}
-                                                    onClick={() => updateUserRole(u.id, "is_banned", !u.is_banned)}
-                                                >
-                                                    <Ban className="w-3 h-3 mr-1" />
-                                                    {u.is_banned ? "정지 해제" : "계정 정지"}
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="text-blue-500 border-blue-300 hover:bg-blue-50"
-                                                    onClick={() => resetOnboarding(u.id, u.email)}
-                                                >
-                                                    <RotateCcw className="w-3 h-3 mr-1" />
-                                                    온보딩 리셋
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
-            )}
-
-            {/* 게시물 관리 탭 */}
-            {activeTab === "posts" && (
-                <div className="space-y-4">
-                    <Card>
-                        <CardContent className="pt-6">
-                            <div className="text-center py-8 text-gray-500">
-                                <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                                <p>커뮤니티 게시물 테이블 연동 필요</p>
-                                <p className="text-sm mt-2">
-                                    게시물 관리 기능은 커뮤니티 기능 구현 후 활성화됩니다.
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            )}
-
-            {/* 문의 관리 탭 */}
-            {activeTab === "inquiries" && (
-                <div className="space-y-4">
-                    {/* 검색 & 필터 */}
-                    <div className="flex gap-2">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                            <Input
-                                placeholder="제목 또는 이메일로 검색..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-10"
-                            />
-                        </div>
-                        <Button variant="outline" onClick={loadInquiries}>
-                            <RefreshCw className="w-4 h-4 mr-1" />
-                            새로고침
-                        </Button>
-                    </div>
-
-                    {/* 범례 */}
-                    <div className="flex flex-wrap gap-2 text-sm">
-                        <Badge className="bg-blue-100 text-blue-700">
-                            <HelpCircle className="w-3 h-3 mr-1" />
-                            질문
-                        </Badge>
-                        <Badge className="bg-red-100 text-red-700">
-                            <AlertTriangle className="w-3 h-3 mr-1" />
-                            신고
-                        </Badge>
-                        <Badge className="bg-amber-100 text-amber-700">
-                            <Lightbulb className="w-3 h-3 mr-1" />
-                            건의
-                        </Badge>
-                    </div>
-
-                    {/* 문의 목록 */}
-                    <Card>
-                        <CardContent className="pt-6">
-                            {inquiries.length === 0 ? (
-                                <div className="text-center py-8 text-gray-500">
-                                    <HelpCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                                    <p>문의 내역이 없습니다</p>
-                                </div>
-                            ) : (
-                                <div className="space-y-3">
-                                    {inquiries
-                                        .filter(i =>
-                                            searchQuery === "" ||
-                                            i.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                            i.email.toLowerCase().includes(searchQuery.toLowerCase())
-                                        )
-                                        .map((inquiry) => (
-                                        <div
-                                            key={inquiry.id}
-                                            className={`p-4 rounded-xl border transition-colors ${
-                                                inquiry.status === "resolved"
-                                                    ? "bg-green-50 border-green-200"
-                                                    : inquiry.status === "in_progress"
-                                                        ? "bg-blue-50 border-blue-200"
-                                                        : inquiry.category === "report"
-                                                            ? "bg-red-50 border-red-200"
-                                                            : "bg-gray-50 border-gray-200"
-                                            }`}
-                                        >
-                                            <div className="flex items-start justify-between mb-2">
-                                                <div className="flex items-center gap-2">
-                                                    {inquiry.category === "question" && (
-                                                        <Badge className="bg-blue-100 text-blue-700">
-                                                            <HelpCircle className="w-3 h-3 mr-1" />
-                                                            질문
-                                                        </Badge>
-                                                    )}
-                                                    {inquiry.category === "report" && (
-                                                        <Badge className="bg-red-100 text-red-700">
-                                                            <AlertTriangle className="w-3 h-3 mr-1" />
-                                                            신고
-                                                        </Badge>
-                                                    )}
-                                                    {inquiry.category === "suggestion" && (
-                                                        <Badge className="bg-amber-100 text-amber-700">
-                                                            <Lightbulb className="w-3 h-3 mr-1" />
-                                                            건의
-                                                        </Badge>
-                                                    )}
-                                                    {inquiry.status === "pending" && (
-                                                        <Badge variant="secondary" className="text-xs">
-                                                            <Clock className="w-3 h-3 mr-1" />
-                                                            대기중
-                                                        </Badge>
-                                                    )}
-                                                    {inquiry.status === "in_progress" && (
-                                                        <Badge className="bg-blue-100 text-blue-700 text-xs">
-                                                            처리중
-                                                        </Badge>
-                                                    )}
-                                                    {inquiry.status === "resolved" && (
-                                                        <Badge className="bg-green-100 text-green-700 text-xs">
-                                                            <CheckCircle className="w-3 h-3 mr-1" />
-                                                            답변완료
-                                                        </Badge>
-                                                    )}
-                                                </div>
-                                                <span className="text-xs text-gray-500">
-                                                    {new Date(inquiry.created_at).toLocaleDateString("ko-KR")}
-                                                </span>
-                                            </div>
-
-                                            <h4 className="font-medium text-gray-800 mb-1">
-                                                {inquiry.title}
-                                            </h4>
-                                            <p className="text-sm text-gray-600 mb-2 line-clamp-2">
-                                                {inquiry.content}
-                                            </p>
-                                            <p className="text-xs text-gray-500 mb-3">
-                                                보낸 사람: {inquiry.email}
-                                            </p>
-
-                                            {/* 관리자 답변 (있을 경우) */}
-                                            {inquiry.admin_response && (
-                                                <div className="p-3 bg-white rounded-lg border border-green-200 mb-3">
-                                                    <p className="text-xs text-green-600 font-medium mb-1">관리자 답변</p>
-                                                    <p className="text-sm text-gray-700">{inquiry.admin_response}</p>
-                                                    {inquiry.responded_at && (
-                                                        <p className="text-xs text-gray-400 mt-1">
-                                                            {new Date(inquiry.responded_at).toLocaleString("ko-KR")}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            )}
-
-                                            {/* 액션 버튼 */}
-                                            <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200">
-                                                {inquiry.status === "pending" && (
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() => updateInquiryStatus(inquiry.id, "in_progress")}
-                                                    >
-                                                        처리 시작
-                                                    </Button>
-                                                )}
-                                                {inquiry.status !== "resolved" && (
-                                                    <Button
-                                                        size="sm"
-                                                        className="bg-green-500 hover:bg-green-600"
-                                                        onClick={() => {
-                                                            setSelectedInquiry(inquiry);
-                                                            setAdminResponse(inquiry.admin_response || "");
-                                                        }}
-                                                    >
-                                                        <Send className="w-3 h-3 mr-1" />
-                                                        답변하기
-                                                    </Button>
-                                                )}
-                                                {inquiry.status === "resolved" && (
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() => updateInquiryStatus(inquiry.id, "closed")}
-                                                    >
-                                                        종료
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    {/* 답변 모달 */}
-                    {selectedInquiry && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                            <div
-                                className="absolute inset-0 bg-black/50"
-                                onClick={() => {
-                                    setSelectedInquiry(null);
-                                    setAdminResponse("");
-                                }}
-                            />
-                            <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-xl overflow-hidden">
-                                <div className="p-4 border-b bg-green-50">
-                                    <h3 className="font-bold text-gray-800">문의 답변</h3>
-                                    <p className="text-sm text-gray-500">{selectedInquiry.title}</p>
-                                </div>
-                                <div className="p-4 space-y-4">
-                                    <div className="p-3 bg-gray-50 rounded-lg">
-                                        <p className="text-sm text-gray-600 font-medium mb-1">문의 내용</p>
-                                        <p className="text-sm text-gray-800">{selectedInquiry.content}</p>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            답변 내용
-                                        </label>
-                                        <Textarea
-                                            value={adminResponse}
-                                            onChange={(e) => setAdminResponse(e.target.value)}
-                                            placeholder="답변을 입력하세요..."
-                                            rows={5}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="p-4 border-t flex justify-end gap-2">
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => {
-                                            setSelectedInquiry(null);
-                                            setAdminResponse("");
-                                        }}
-                                    >
-                                        취소
-                                    </Button>
-                                    <Button
-                                        className="bg-green-500 hover:bg-green-600"
-                                        onClick={submitResponse}
-                                        disabled={isResponding || !adminResponse.trim()}
-                                    >
-                                        {isResponding ? "저장 중..." : "답변 저장"}
-                                    </Button>
                                 </div>
                             </div>
                         </div>
+                    ))}
+                    {posts.length > 20 && (
+                        <p className="text-center text-sm text-gray-400 py-2">
+                            ... 외 {posts.length - 20}개
+                        </p>
                     )}
-                </div>
-            )}
-
-            {/* 신고 관리 탭 */}
-            {activeTab === "reports" && (
-                <div className="space-y-4">
-                    {/* 검색 & 필터 */}
-                    <div className="flex gap-2">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                            <Input
-                                placeholder="신고 사유로 검색..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-10"
-                            />
-                        </div>
-                        <Button variant="outline" onClick={loadReports}>
-                            <RefreshCw className="w-4 h-4 mr-1" />
-                            새로고침
-                        </Button>
-                    </div>
-
-                    {/* 상태 범례 */}
-                    <div className="flex flex-wrap gap-2 text-sm">
-                        <Badge className="bg-amber-100 text-amber-700">
-                            <Clock className="w-3 h-3 mr-1" />
-                            대기중
-                        </Badge>
-                        <Badge className="bg-blue-100 text-blue-700">
-                            <Eye className="w-3 h-3 mr-1" />
-                            검토중
-                        </Badge>
-                        <Badge className="bg-green-100 text-green-700">
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                            처리완료
-                        </Badge>
-                        <Badge className="bg-gray-100 text-gray-700">
-                            반려
-                        </Badge>
-                    </div>
-
-                    {/* 신고 목록 */}
-                    <Card>
-                        <CardContent className="pt-6">
-                            {reports.length === 0 ? (
-                                <div className="text-center py-8 text-gray-500">
-                                    <Flag className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                                    <p>신고 내역이 없습니다</p>
-                                </div>
-                            ) : (
-                                <div className="space-y-3">
-                                    {reports
-                                        .filter(r =>
-                                            searchQuery === "" ||
-                                            r.reason.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                            (r.description || "").toLowerCase().includes(searchQuery.toLowerCase())
-                                        )
-                                        .map((report) => {
-                                            const reasonLabels: Record<string, string> = {
-                                                spam: "스팸/광고",
-                                                abuse: "욕설/비방",
-                                                inappropriate: "부적절한 콘텐츠",
-                                                harassment: "괴롭힘",
-                                                misinformation: "허위정보",
-                                                copyright: "저작권 침해",
-                                                other: "기타",
-                                            };
-                                            const targetLabels: Record<string, string> = {
-                                                post: "게시물",
-                                                comment: "댓글",
-                                                user: "회원",
-                                                pet_memorial: "추모공간",
-                                            };
-
-                                            return (
-                                                <div
-                                                    key={report.id}
-                                                    className={`p-4 rounded-xl border transition-colors ${
-                                                        report.status === "resolved"
-                                                            ? "bg-green-50 border-green-200"
-                                                            : report.status === "reviewing"
-                                                                ? "bg-blue-50 border-blue-200"
-                                                                : report.status === "rejected"
-                                                                    ? "bg-gray-50 border-gray-200"
-                                                                    : "bg-red-50 border-red-200"
-                                                    }`}
-                                                >
-                                                    {/* 상단: 타입, 사유, 상태 */}
-                                                    <div className="flex items-start justify-between mb-2">
-                                                        <div className="flex items-center gap-2 flex-wrap">
-                                                            <Badge variant="secondary" className="text-xs">
-                                                                {targetLabels[report.target_type] || report.target_type}
-                                                            </Badge>
-                                                            <Badge className="bg-red-100 text-red-700">
-                                                                {reasonLabels[report.reason] || report.reason}
-                                                            </Badge>
-                                                            {report.status === "pending" && (
-                                                                <Badge className="bg-amber-100 text-amber-700 text-xs">
-                                                                    <Clock className="w-3 h-3 mr-1" />
-                                                                    대기중
-                                                                </Badge>
-                                                            )}
-                                                            {report.status === "reviewing" && (
-                                                                <Badge className="bg-blue-100 text-blue-700 text-xs">
-                                                                    <Eye className="w-3 h-3 mr-1" />
-                                                                    검토중
-                                                                </Badge>
-                                                            )}
-                                                            {report.status === "resolved" && (
-                                                                <Badge className="bg-green-100 text-green-700 text-xs">
-                                                                    <CheckCircle className="w-3 h-3 mr-1" />
-                                                                    처리완료
-                                                                </Badge>
-                                                            )}
-                                                            {report.status === "rejected" && (
-                                                                <Badge className="bg-gray-100 text-gray-700 text-xs">
-                                                                    반려
-                                                                </Badge>
-                                                            )}
-                                                        </div>
-                                                        <span className="text-xs text-gray-500">
-                                                            {new Date(report.created_at).toLocaleDateString("ko-KR")}
-                                                        </span>
-                                                    </div>
-
-                                                    {/* 신고 내용 */}
-                                                    {report.description && (
-                                                        <p className="text-sm text-gray-600 mb-2 line-clamp-2">
-                                                            {report.description}
-                                                        </p>
-                                                    )}
-
-                                                    {/* 신고자 정보 */}
-                                                    <p className="text-xs text-gray-500 mb-3">
-                                                        신고자: {report.reporter_email || "알 수 없음"} |
-                                                        대상 ID: <code className="bg-gray-100 px-1 rounded">{report.target_id.slice(0, 8)}...</code>
-                                                    </p>
-
-                                                    {/* 관리자 메모 */}
-                                                    {report.admin_notes && (
-                                                        <div className="p-2 bg-white rounded-lg border border-gray-200 mb-3 text-sm">
-                                                            <span className="font-medium text-gray-700">관리자 메모: </span>
-                                                            <span className="text-gray-600">{report.admin_notes}</span>
-                                                        </div>
-                                                    )}
-
-                                                    {/* 액션 버튼 */}
-                                                    <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200">
-                                                        {report.status === "pending" && (
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                onClick={() => updateReportStatus(report.id, "reviewing")}
-                                                            >
-                                                                <Eye className="w-3 h-3 mr-1" />
-                                                                검토 시작
-                                                            </Button>
-                                                        )}
-                                                        {(report.status === "pending" || report.status === "reviewing") && (
-                                                            <>
-                                                                <Button
-                                                                    size="sm"
-                                                                    className="bg-red-500 hover:bg-red-600"
-                                                                    onClick={() => deleteReportedContent(report)}
-                                                                >
-                                                                    <Trash2 className="w-3 h-3 mr-1" />
-                                                                    콘텐츠 삭제
-                                                                </Button>
-                                                                <Button
-                                                                    size="sm"
-                                                                    className="bg-green-500 hover:bg-green-600"
-                                                                    onClick={() => updateReportStatus(report.id, "resolved", "검토 후 처리 완료")}
-                                                                >
-                                                                    <CheckCircle className="w-3 h-3 mr-1" />
-                                                                    처리 완료
-                                                                </Button>
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="outline"
-                                                                    onClick={() => updateReportStatus(report.id, "rejected", "신고 사유 불충분")}
-                                                                >
-                                                                    반려
-                                                                </Button>
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
-            )}
-
-            {/* 프리미엄 부여 모달 */}
-            {premiumModalUser && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div
-                        className="absolute inset-0 bg-black/50"
-                        onClick={() => setPremiumModalUser(null)}
-                    />
-                    <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
-                        <div className="p-4 border-b bg-gradient-to-r from-amber-50 to-orange-50">
-                            <h3 className="font-bold text-gray-800 flex items-center gap-2">
-                                <Crown className="w-5 h-5 text-amber-500" />
-                                프리미엄 부여
-                            </h3>
-                            <p className="text-sm text-gray-500">{premiumModalUser.email}</p>
-                        </div>
-                        <div className="p-4 space-y-4">
-                            {/* 기간 선택 */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    프리미엄 기간
-                                </label>
-                                <div className="grid grid-cols-3 gap-2">
-                                    {[
-                                        { value: "7", label: "7일" },
-                                        { value: "30", label: "30일" },
-                                        { value: "90", label: "90일" },
-                                        { value: "180", label: "6개월" },
-                                        { value: "365", label: "1년" },
-                                        { value: "unlimited", label: "무기한" },
-                                    ].map((option) => (
-                                        <button
-                                            key={option.value}
-                                            onClick={() => setPremiumDuration(option.value)}
-                                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                                                premiumDuration === option.value
-                                                    ? "bg-amber-500 text-white"
-                                                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                            }`}
-                                        >
-                                            {option.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* 사유 입력 (선택) */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    부여 사유 (선택)
-                                </label>
-                                <Input
-                                    value={premiumReason}
-                                    onChange={(e) => setPremiumReason(e.target.value)}
-                                    placeholder="예: 이벤트 당첨, 테스트 계정 등"
-                                />
-                            </div>
-
-                            {/* 적용 미리보기 */}
-                            <div className="p-3 bg-amber-50 rounded-lg text-sm">
-                                <p className="font-medium text-amber-800 mb-1">적용 내용</p>
-                                <ul className="text-amber-700 space-y-1">
-                                    <li>- AI 펫톡 무제한 사용</li>
-                                    <li>- 만료: {premiumDuration === "unlimited"
-                                        ? "무기한"
-                                        : new Date(Date.now() + parseInt(premiumDuration) * 24 * 60 * 60 * 1000).toLocaleDateString("ko-KR")
-                                    }</li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div className="p-4 border-t flex justify-end gap-2 bg-gray-50">
-                            <Button
-                                variant="outline"
-                                onClick={() => setPremiumModalUser(null)}
-                            >
-                                취소
-                            </Button>
-                            <Button
-                                className="bg-amber-500 hover:bg-amber-600"
-                                onClick={grantPremium}
-                                disabled={isSavingPremium}
-                            >
-                                {isSavingPremium ? "저장 중..." : "저장하고 즉시 적용"}
-                            </Button>
-                        </div>
-                    </div>
                 </div>
             )}
         </div>

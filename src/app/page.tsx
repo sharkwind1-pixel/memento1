@@ -29,13 +29,12 @@
 // ============================================================================
 import { useState, useEffect, Suspense, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
 import { TabType, CommunitySubcategory, getLegacyTabRedirect } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePets } from "@/contexts/PetContext";
 import Layout from "@/components/common/Layout";
 import { supabase } from "@/lib/supabase";
-import { SectionLoading, FullPageLoading } from "@/components/ui/PawLoading";
+import { FullPageLoading } from "@/components/ui/PawLoading";
 
 // ============================================================================
 // 상수 및 유틸리티
@@ -57,68 +56,24 @@ const isValidSubcategory = (sub: string | null): sub is CommunitySubcategory => 
 };
 
 // ============================================================================
-// Dynamic Imports - 코드 스플리팅으로 초기 로딩 최적화
+// 페이지 컴포넌트 - 정적 import로 떨림 방지
 // ============================================================================
+// Dynamic import 제거 - 페이지 전환 시 지연/떨림의 주요 원인
+// 번들 크기가 약간 증가하지만 UX가 훨씬 부드러워짐
 
-const HomePage = dynamic(() => import("@/components/pages/HomePage"), {
-    loading: () => <SectionLoading />,
-    ssr: false,
-});
+import HomePage from "@/components/pages/HomePage";
+import CommunityPage from "@/components/pages/CommunityPage";
+import AIChatPage from "@/components/pages/AIChatPage";
+import MagazinePage from "@/components/pages/MagazinePage";
+import RecordPage from "@/components/pages/RecordPage";
+import AdminPage from "@/components/pages/AdminPage";
 
-const CommunityPage = dynamic(() => import("@/components/pages/CommunityPage"), {
-    loading: () => <SectionLoading />,
-    ssr: false,
-});
-
-const AIChatPage = dynamic(() => import("@/components/pages/AIChatPage"), {
-    loading: () => <SectionLoading />,
-    ssr: false,
-});
-
-const MagazinePage = dynamic(() => import("@/components/pages/MagazinePage"), {
-    loading: () => <SectionLoading />,
-    ssr: false,
-});
-
-const RecordPage = dynamic(() => import("@/components/pages/RecordPage"), {
-    loading: () => <SectionLoading />,
-    ssr: false,
-});
-
-const AdminPage = dynamic(() => import("@/components/pages/AdminPage"), {
-    loading: () => <SectionLoading />,
-    ssr: false,
-});
-
-// 닉네임 설정 모달 (OAuth 회원가입 후)
-const NicknameSetupModal = dynamic(
-    () => import("@/components/Auth/NicknameSetupModal"),
-    { ssr: false }
-);
-
-// 온보딩 모달 - 사용자 로그인 후에만 필요
-const OnboardingModal = dynamic(
-    () => import("@/components/features/onboarding/OnboardingModal"),
-    { ssr: false }
-);
-
-// 튜토리얼 투어
-const TutorialTour = dynamic(
-    () => import("@/components/features/onboarding/TutorialTour"),
-    { ssr: false }
-);
-
-// 온보딩 후 유저별 안내
-const PostOnboardingGuide = dynamic(
-    () => import("@/components/features/onboarding/PostOnboardingGuide"),
-    { ssr: false }
-);
-
-// Record 페이지 스포트라이트 튜토리얼
-const RecordPageTutorial = dynamic(
-    () => import("@/components/features/onboarding/RecordPageTutorial"),
-    { ssr: false }
-);
+// 모달 컴포넌트 - 정적 import
+import NicknameSetupModal from "@/components/Auth/NicknameSetupModal";
+import OnboardingModal from "@/components/features/onboarding/OnboardingModal";
+import TutorialTour from "@/components/features/onboarding/TutorialTour";
+import PostOnboardingGuide from "@/components/features/onboarding/PostOnboardingGuide";
+import RecordPageTutorial from "@/components/features/onboarding/RecordPageTutorial";
 
 // ============================================================================
 // 메인 컴포넌트
@@ -127,7 +82,7 @@ const RecordPageTutorial = dynamic(
 /** Suspense 래퍼 - useSearchParams는 Suspense 내부에서만 사용 가능 */
 export default function Home() {
     return (
-        <Suspense fallback={<SectionLoading />}>
+        <Suspense fallback={<FullPageLoading />}>
             <HomeContent />
         </Suspense>
     );
@@ -258,8 +213,6 @@ function HomeContent() {
         const checkNewUserFlow = async () => {
             if (!user) return;
 
-            console.log("[NewUserFlow] 시작 - pets:", pets.length);
-
             // 1. 먼저 닉네임 설정 여부 확인
             try {
                 const { data: profileData } = await supabase
@@ -268,22 +221,13 @@ function HomeContent() {
                     .eq("id", user.id)
                     .single();
 
-                console.log("[NewUserFlow] DB 상태:", {
-                    nickname: profileData?.nickname,
-                    tutorial_completed_at: profileData?.tutorial_completed_at,
-                    onboarding_completed_at: profileData?.onboarding_completed_at,
-                });
-
                 // 닉네임이 없거나 이메일 앞부분과 같으면 (자동 생성된 경우) 닉네임 설정 필요
                 const emailPrefix = user.email?.split("@")[0] || "";
                 const needsNickname = !profileData?.nickname ||
                     profileData.nickname === emailPrefix ||
                     profileData.nickname === user.user_metadata?.full_name; // OAuth에서 가져온 이름
 
-                console.log("[NewUserFlow] needsNickname:", needsNickname, "emailPrefix:", emailPrefix);
-
                 if (needsNickname) {
-                    console.log("[NewUserFlow] → 닉네임 설정 필요!");
                     setShowNicknameSetup(true);
                     return; // 닉네임 설정 후 다시 체크
                 }
@@ -291,11 +235,9 @@ function HomeContent() {
                 // 2. DB 상태가 null이면 localStorage 동기화 (관리자 초기화 대응)
                 // DB가 진실의 원천 (Source of Truth)
                 if (!profileData?.tutorial_completed_at) {
-                    console.log("[NewUserFlow] localStorage tutorial 삭제");
                     localStorage.removeItem("memento-ani-tutorial-complete");
                 }
                 if (!profileData?.onboarding_completed_at) {
-                    console.log("[NewUserFlow] localStorage onboarding 삭제");
                     localStorage.removeItem("memento-ani-onboarding-complete");
                 }
 
@@ -306,15 +248,7 @@ function HomeContent() {
                 // 펫이 있어도, DB에서 온보딩이 초기화되었으면 온보딩 표시
                 const isOnboardingReset = !profileData?.onboarding_completed_at || !profileData?.tutorial_completed_at;
 
-                console.log("[NewUserFlow] 체크:", {
-                    tutorialCompletedLocal,
-                    onboardingCompletedLocal,
-                    isOnboardingReset,
-                    petsLength: pets.length,
-                });
-
                 if (pets.length > 0 && !isOnboardingReset) {
-                    console.log("[NewUserFlow] → 펫 있고 리셋 아님 - 리턴");
                     supabase
                         .from("profiles")
                         .update({ last_seen_at: new Date().toISOString() })
@@ -323,7 +257,6 @@ function HomeContent() {
                 }
 
                 if (onboardingCompletedLocal && tutorialCompletedLocal && !isOnboardingReset) {
-                    console.log("[NewUserFlow] → localStorage 완료 상태 - 리턴");
                     return;
                 }
 
@@ -337,21 +270,18 @@ function HomeContent() {
 
                 // DB 둘 다 완료 상태면 리턴
                 if (profileData?.onboarding_completed_at && profileData?.tutorial_completed_at) {
-                    console.log("[NewUserFlow] → DB 완료 상태 - 리턴");
                     return;
                 }
 
                 // 순서: 온보딩 질문 먼저!
                 // 온보딩 미완료 → 온보딩 표시
                 if (!profileData?.onboarding_completed_at) {
-                    console.log("[NewUserFlow] → 온보딩 미완료 - 온보딩 질문 표시!");
                     setShowOnboarding(true);
                     return;
                 }
 
                 // 온보딩 완료, 튜토리얼 미완료 → 튜토리얼 표시
                 if (profileData?.onboarding_completed_at && !profileData?.tutorial_completed_at) {
-                    console.log("[NewUserFlow] → 온보딩 완료, 튜토리얼 미완료 - 튜토리얼 표시!");
                     setShowTutorial(true);
                     return;
                 }
@@ -369,15 +299,23 @@ function HomeContent() {
             }
         };
 
-        console.log("[NewUserFlow] useEffect 트리거됨 - user:", !!user, "petsLoading:", petsLoading, "pets:", pets.length);
-
         if (user && !petsLoading) {
             checkNewUserFlow();
         }
     }, [user, petsLoading, pets.length]);
 
+    // ========================================================================
     // 탭 변경 핸들러
+    // ========================================================================
     const handleTabChange = useCallback((tab: TabType, sub?: CommunitySubcategory) => {
+        // 스크롤을 맨 위로 리셋
+        window.scrollTo({ top: 0, behavior: 'instant' });
+        // main-content 요소도 스크롤 리셋
+        const mainContent = document.getElementById('main-content');
+        if (mainContent) {
+            mainContent.scrollTop = 0;
+        }
+
         // 레거시 탭 처리
         const redirect = getLegacyTabRedirect(tab);
         if (redirect) {
@@ -391,8 +329,10 @@ function HomeContent() {
             return;
         }
 
+        // 상태 변경
         setSelectedTab(tab);
         setSelectedSubcategory(sub);
+
         localStorage.setItem("memento-current-tab", tab);
 
         if (sub) {
@@ -416,10 +356,13 @@ function HomeContent() {
         handleTabChange("community", sub);
     }, [handleTabChange]);
 
-    const renderCurrentPage = () => {
+    // 페이지 렌더링
+    const renderPage = () => {
         switch (selectedTab) {
             case "home":
                 return <HomePage setSelectedTab={handleTabChange} />;
+            case "record":
+                return <RecordPage setSelectedTab={handleTabChange} />;
             case "community":
                 return (
                     <CommunityPage
@@ -431,17 +374,12 @@ function HomeContent() {
                 return <AIChatPage setSelectedTab={handleTabChange} />;
             case "magazine":
                 return <MagazinePage setSelectedTab={handleTabChange} />;
-            case "record":
-                return <RecordPage setSelectedTab={handleTabChange} />;
             case "admin":
                 return <AdminPage />;
             default:
                 return <HomePage setSelectedTab={handleTabChange} />;
         }
     };
-
-    // 디버깅: 매 렌더링마다 상태 확인
-    console.log("[RENDER] user:", !!user, "loading:", loading, "petsLoading:", petsLoading, "pets:", pets.length);
 
     if (loading) {
         return <FullPageLoading />;
@@ -455,7 +393,7 @@ function HomeContent() {
                 subcategory={selectedSubcategory}
                 onSubcategoryChange={handleSubcategoryChange}
             >
-                {renderCurrentPage()}
+                {renderPage()}
             </Layout>
             {user && (
                 <>
@@ -482,15 +420,24 @@ function HomeContent() {
                         onGoToHome={() => handleTabChange("home")}
                         onGoToAIChat={() => handleTabChange("ai-chat")}
                         onShowPostGuide={(userType) => {
-                            // 온보딩 완료 후 튜토리얼 시작 (순서: 온보딩 → 튜토리얼 → 가이드)
-                            setPostGuideUserType(userType); // 튜토리얼 후 가이드용으로 저장
-                            // 튜토리얼 미완료면 튜토리얼 먼저
+                            // 온보딩 완료 후 유저 타입별 분기
+                            setPostGuideUserType(userType);
+
                             const tutorialCompletedLocal = localStorage.getItem("memento-ani-tutorial-complete") === "true";
+
                             if (!tutorialCompletedLocal) {
+                                // 튜토리얼 미완료 → TutorialTour 먼저
                                 setShowTutorial(true);
-                            } else {
-                                // 이미 튜토리얼 완료면 바로 가이드
+                            } else if (userType === "planning") {
+                                // planning 유저: PostOnboardingGuide 표시
                                 setShowPostGuide(true);
+                            } else {
+                                // current/memorial 유저: 바로 Record 페이지 + RecordPageTutorial
+                                handleTabChange("record");
+                                setTimeout(() => {
+                                    setRecordTutorialUserType(userType);
+                                    setShowRecordTutorial(true);
+                                }, 500);
                             }
                         }}
                     />
@@ -523,9 +470,17 @@ function HomeContent() {
                 isOpen={showTutorial}
                 onClose={() => {
                     setShowTutorial(false);
-                    // 튜토리얼 완료 후 가이드 표시 (온보딩에서 저장한 userType 사용)
-                    if (postGuideUserType) {
+                    // 튜토리얼 완료 후 유저 타입별 분기
+                    if (postGuideUserType === "planning") {
+                        // planning 유저: PostOnboardingGuide 표시
                         setTimeout(() => setShowPostGuide(true), 300);
+                    } else if (postGuideUserType === "current" || postGuideUserType === "memorial") {
+                        // current/memorial 유저: 바로 Record 페이지 + RecordPageTutorial
+                        handleTabChange("record");
+                        setTimeout(() => {
+                            setRecordTutorialUserType(postGuideUserType);
+                            setShowRecordTutorial(true);
+                        }, 500);
                     }
                 }}
                 onNavigate={(tab) => handleTabChange(tab as TabType)}

@@ -128,6 +128,16 @@
   }
 }
 
+/* 터치 디바이스에서 버튼 클릭 시 하이라이트 제거 */
+button, a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 기본 설정 */
+html, body {
+  overflow-x: hidden;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

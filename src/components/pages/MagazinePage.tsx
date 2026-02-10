@@ -212,7 +212,10 @@ export default function MagazinePage({ setSelectedTab }: MagazinePageProps) {
         .slice(0, 3);
 
     return (
-        <div className="min-h-screen relative overflow-hidden">
+        <div
+            className="min-h-screen relative overflow-hidden"
+            style={{ contain: 'layout style', transform: 'translateZ(0)' }}
+        >
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-teal-50 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
                 <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-r from-emerald-200/30 to-teal-200/30 dark:from-emerald-800/20 dark:to-teal-800/20 rounded-full blur-3xl animate-pulse" />
             </div>

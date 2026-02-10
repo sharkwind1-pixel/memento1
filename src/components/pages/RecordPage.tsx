@@ -629,9 +629,8 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
         setSelectedPhotos([]);
     }, [selectedPetId]);
 
-    if (authLoading || petsLoading) {
-        return <FullPageLoading text="불러오는 중..." />;
-    }
+    // 로딩 화면 완전 제거 - 떨림 방지
+    // 대신 데이터가 없으면 빈 상태로 표시
 
     if (!user) {
         return (
@@ -709,7 +708,10 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
     }
 
     return (
-        <div className="min-h-screen relative overflow-hidden pb-24">
+        <div
+            className="min-h-screen relative overflow-hidden pb-24"
+            style={{ contain: 'layout style', transform: 'translateZ(0)' }}
+        >
             <div className="absolute inset-0 bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900" />
             <div className="relative z-10 max-w-4xl mx-auto px-4 py-6">
                 {/* 페이지 헤더 */}

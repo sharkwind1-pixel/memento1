@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    // Strict Mode 비활성화 - 개발 모드에서 이중 렌더링 방지
+    reactStrictMode: false,
     images: {
         remotePatterns: [
             // Dog/Cat API 이미지

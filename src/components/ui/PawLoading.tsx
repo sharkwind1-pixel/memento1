@@ -53,10 +53,10 @@ export function FullPageLoading({ text = "로딩 중..." }: { text?: string }) {
     );
 }
 
-// 섹션 로딩용
+// 섹션 로딩용 - 페이지 전환 시 레이아웃 시프트 방지를 위해 고정 높이 사용
 export function SectionLoading({ text }: { text?: string }) {
     return (
-        <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex items-center justify-center h-[calc(100vh-200px)] opacity-0 animate-fade-in">
             <PawLoading size="md" text={text} />
         </div>
     );

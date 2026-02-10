@@ -106,6 +106,10 @@ export default function Sidebar({
             if (onSubcategoryChange && !subcategory) {
                 onSubcategoryChange("free");
             }
+            // 모바일에서 사이드바 닫기
+            if (isMobile) {
+                onClose();
+            }
         } else {
             // 다른 카테고리는 바로 이동
             onTabChange(category as TabType);
@@ -250,25 +254,21 @@ export default function Sidebar({
     );
 
     // 모바일: 오버레이 사이드바
+    // transition 제거 - 모바일 깜빡임 방지
     if (isMobile) {
+        if (!isOpen) return null; // 닫혀있으면 아예 렌더링 안 함
+
         return (
             <>
                 {/* 백드롭 */}
-                {isOpen && (
-                    <div
-                        className="fixed inset-0 bg-black/50 z-40 transition-opacity"
-                        onClick={onClose}
-                    />
-                )}
-
-                {/* 사이드바 패널 */}
                 <div
-                    className={cn(
-                        "fixed top-0 left-0 h-full w-72 bg-white dark:bg-gray-900 z-50",
-                        "transform transition-transform duration-300 ease-in-out",
-                        "shadow-xl",
-                        isOpen ? "translate-x-0" : "-translate-x-full"
-                    )}
+                    className="fixed inset-0 bg-black/50 z-40"
+                    onClick={onClose}
+                />
+
+                {/* 사이드바 패널 - transition 제거 */}
+                <div
+                    className="fixed top-0 left-0 h-full w-72 bg-white dark:bg-gray-900 z-50 shadow-xl"
                 >
                     {sidebarContent}
                 </div>

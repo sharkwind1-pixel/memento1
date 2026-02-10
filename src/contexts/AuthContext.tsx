@@ -15,7 +15,7 @@ import {
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 
-// 삭제 계정 체크 결과 타입
+// 삭제 계정 체크 결과 타입 (기존 호환성)
 interface DeletedAccountCheck {
     canRejoin: boolean;
     daysUntilRejoin: number;
@@ -23,11 +23,19 @@ interface DeletedAccountCheck {
     wasPremium: boolean;
 }
 
+// 새로운 탈퇴자 재가입 체크 결과 타입
+interface RejoinCheck {
+    canJoin: boolean;
+    blockReason: string | null;
+    waitUntil: string | null; // ISO timestamp
+}
+
 interface AuthContextType {
     user: User | null;
     session: Session | null;
     loading: boolean;
     checkDeletedAccount: (email: string) => Promise<DeletedAccountCheck | null>;
+    checkCanRejoin: (email: string) => Promise<RejoinCheck>;
     signUp: (
         email: string,
         password: string,
@@ -78,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
     }, []);
 
-    // 삭제된 계정 체크 (재가입 쿨다운 확인)
+    // 삭제된 계정 체크 (재가입 쿨다운 확인) - 기존 호환성 유지
     const checkDeletedAccount = async (email: string): Promise<DeletedAccountCheck | null> => {
         try {
             const { data, error } = await supabase.rpc("check_deleted_account", {
@@ -101,6 +109,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    // 새로운 탈퇴 유형별 재가입 가능 여부 체크
+    const checkCanRejoin = async (email: string): Promise<RejoinCheck> => {
+        try {
+            const { data, error } = await supabase.rpc("can_rejoin", {
+                check_email: email,
+                check_ip: null, // 클라이언트에서는 IP를 가져올 수 없음
+            });
+
+            if (error || !data || data.length === 0) {
+                // 오류 또는 데이터 없음 = 가입 가능
+                return { canJoin: true, blockReason: null, waitUntil: null };
+            }
+
+            const record = data[0];
+            return {
+                canJoin: record.can_join,
+                blockReason: record.block_reason,
+                waitUntil: record.wait_until,
+            };
+        } catch {
+            // 오류 시 가입 허용 (관리자가 직접 관리)
+            return { canJoin: true, blockReason: null, waitUntil: null };
+        }
+    };
+
     // 이메일 회원가입
     const signUp = async (
         email: string,
@@ -108,7 +141,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         nickname?: string,
     ) => {
         try {
-            // 삭제된 계정 쿨다운 체크
+            // 1. 새로운 탈퇴 유형별 재가입 체크 (withdrawn_users 테이블)
+            const rejoinCheck = await checkCanRejoin(email);
+            if (!rejoinCheck.canJoin) {
+                // 차단 사유에 따른 에러 메시지
+                let errorMessage = rejoinCheck.blockReason || "가입이 제한되었습니다.";
+
+                // 재가입 대기 기간인 경우 남은 일수 계산
+                if (rejoinCheck.waitUntil) {
+                    const waitDate = new Date(rejoinCheck.waitUntil);
+                    const now = new Date();
+                    const diffTime = waitDate.getTime() - now.getTime();
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                    if (diffDays > 0) {
+                        errorMessage = `${diffDays}일 후에 재가입 가능합니다.`;
+                    }
+                }
+
+                return { error: new Error(errorMessage) };
+            }
+
+            // 2. 기존 삭제된 계정 체크 (deleted_accounts 테이블 - 호환성)
             const deletedCheck = await checkDeletedAccount(email);
             if (deletedCheck && !deletedCheck.canRejoin) {
                 return {
@@ -233,6 +287,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         loading,
         checkDeletedAccount,
+        checkCanRejoin,
         signUp,
         signIn,
         signOut,

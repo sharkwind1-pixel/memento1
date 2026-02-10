@@ -1,14 +1,11 @@
 /**
  * PostOnboardingGuide.tsx
- * 온보딩 완료 후 유저 타입별 맞춤 안내
- * - 키울 예정: 환영 팝업 + 자유롭게 둘러보기
- * - 키우고 있다: Record 페이지로 이동 + 스포트라이트 튜토리얼
- * - 이별했다: Record 페이지로 이동 + 추모용 스포트라이트 튜토리얼
+ * 온보딩 완료 후 planning 유저 환영 팝업
+ * (current/memorial 유저는 page.tsx에서 직접 RecordPageTutorial로 이동)
  */
 
 "use client";
 
-import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Heart, ArrowRight } from "lucide-react";
 
@@ -19,9 +16,10 @@ interface PostOnboardingGuideProps {
     userType: UserType | null;
     onClose: () => void;
     onGoToHome: () => void;
-    onGoToRecord: () => void;
-    onGoToAIChat: () => void;
-    onStartRecordTutorial: (type: "current" | "memorial") => void;
+    // 아래 props는 page.tsx와의 호환성을 위해 유지 (실제로는 사용 안 함)
+    onGoToRecord?: () => void;
+    onGoToAIChat?: () => void;
+    onStartRecordTutorial?: (type: "current" | "memorial") => void;
 }
 
 export default function PostOnboardingGuide({
@@ -29,40 +27,9 @@ export default function PostOnboardingGuide({
     userType,
     onClose,
     onGoToHome,
-    onGoToRecord,
-    onGoToAIChat,
-    onStartRecordTutorial,
 }: PostOnboardingGuideProps) {
-    // current/memorial 유저는 바로 Record 페이지 + 튜토리얼 시작
-    useEffect(() => {
-        if (!isOpen || !userType) return;
-
-        if (userType === "current" || userType === "memorial") {
-            // 1. 먼저 페이지 이동
-            onGoToRecord();
-
-            // 2. 페이지 전환 완료 후 튜토리얼 시작
-            const tutorialTimer = setTimeout(() => {
-                onStartRecordTutorial(userType);
-            }, 600);
-
-            // 3. 튜토리얼 시작 후 PostGuide 닫기
-            const closeTimer = setTimeout(() => {
-                onClose();
-            }, 700);
-
-            return () => {
-                clearTimeout(tutorialTimer);
-                clearTimeout(closeTimer);
-            };
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isOpen, userType]);
-
-    if (!isOpen || !userType) return null;
-
-    // current/memorial은 useEffect에서 처리하므로 여기서는 planning만
-    if (userType !== "planning") return null;
+    // planning 유저만 이 컴포넌트 사용 (current/memorial은 page.tsx에서 직접 처리)
+    if (!isOpen || userType !== "planning") return null;
 
     // 키울 예정인 유저 - 환영 팝업 (로그인 상태 유지!)
     return (

@@ -189,16 +189,9 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                         new Date(expiresAt) > new Date()
                     );
                     setIsPremium(isPremiumValid);
-
-                    // 디버그 로그
-                    console.log("[AIChatPage] Premium check:", {
-                        is_premium: data.is_premium,
-                        expires_at: expiresAt,
-                        isPremiumValid
-                    });
                 }
-            } catch (err) {
-                console.error("프리미엄 상태 확인 실패:", err);
+            } catch {
+                // 프리미엄 상태 확인 실패 - 무시
             }
         };
 
@@ -258,8 +251,7 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                     .single();
 
                 if (error && error.code !== "PGRST116") {
-                    // PGRST116 = no rows found (정상 케이스)
-                    console.error("채팅 불러오기 에러:", error);
+                    // PGRST116 = no rows found (정상 케이스) - 에러 무시
                 }
 
                 if (data?.messages && data.messages.length > 0) {
@@ -287,8 +279,7 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                         },
                     ]);
                 }
-            } catch (err) {
-                console.error("채팅 불러오기 실패:", err);
+            } catch {
                 // 에러 시 인사말로 시작
                 if (selectedPet) {
                     const greeting = generatePersonalizedGreeting(
@@ -328,11 +319,9 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                     onConflict: "user_id,pet_id",
                 });
 
-            if (error) {
-                console.error("채팅 저장 에러:", error);
-            }
-        } catch (err) {
-            console.error("채팅 저장 실패:", err);
+            // 저장 에러는 무시
+        } catch {
+            // 채팅 저장 실패 - 무시
         }
     }, [selectedPetId, user?.id]);
 
@@ -360,7 +349,8 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
     // 추모 모드: 함께했던 일상 루틴을 추억으로 활용
     useEffect(() => {
         if (!selectedPetId || !user?.id) {
-            setReminders([]);
+            // 이미 빈 배열이면 상태 변경 안 함 (무한 루프 방지)
+            setReminders(prev => prev.length === 0 ? prev : []);
             return;
         }
 
@@ -371,9 +361,8 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                     credentials: "include", // 쿠키 포함
                 });
 
-                // 인증 실패 등 에러 응답은 무시하고 빈 배열 사용
+                // 인증 실패 등 에러 응답은 무시 (상태 변경 안 함)
                 if (!response.ok) {
-                    setReminders([]);
                     return;
                 }
 
@@ -387,7 +376,7 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                     })));
                 }
             } catch {
-                setReminders([]);
+                // 에러 시 상태 변경 안 함 (무한 루프 방지)
             }
         };
 
@@ -584,12 +573,10 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
     // 렌더링
     // ========================================================================
 
-    // 1. 로딩 상태
-    if (authLoading || petsLoading) {
-        return <FullPageLoading text="불러오는 중..." />;
-    }
+    // 로딩 화면 완전 제거 - 떨림 방지
+    // 대신 데이터가 없으면 빈 상태로 표시
 
-    // 2. 비로그인 상태 - 로그인 유도 화면
+    // 비로그인 상태 - 로그인 유도 화면
     if (!user) {
         return (
             <div className="min-h-screen relative overflow-hidden">
@@ -707,6 +694,7 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
     return (
         <div
             className={`min-h-screen flex flex-col relative overflow-hidden ${isMemorialMode ? "bg-gradient-to-b from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950 dark:via-orange-950 dark:to-gray-900" : "bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"}`}
+            style={{ contain: 'layout style', transform: 'translateZ(0)' }}
         >
             {/* ================================================================
                 상단 DomeGallery - 3D 사진 갤러리
