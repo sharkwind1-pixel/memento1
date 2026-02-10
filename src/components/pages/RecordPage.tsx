@@ -1518,15 +1518,16 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                                     />
                                 </div>
 
-                                {/* 케어 리마인더 섹션 - 일상 기록 중인 펫만 */}
-                                {selectedPet.status !== "memorial" && (
+                                {/* 케어 리마인더 섹션 - 임시 비활성화 (401 에러로 인한 깜빡임 방지) */}
+                                {/* TODO: reminders API 인증 문제 해결 후 다시 활성화 */}
+                                {/* {selectedPet.status !== "memorial" && (
                                     <div ref={remindersSectionRef} data-tutorial-id="care-reminder-section">
                                         <RemindersSection
                                             petId={selectedPet.id}
                                             petName={selectedPet.name}
                                         />
                                     </div>
-                                )}
+                                )} */}
                             </>
                         )}
                     </>
