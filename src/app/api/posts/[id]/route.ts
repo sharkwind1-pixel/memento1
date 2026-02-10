@@ -146,7 +146,6 @@ export async function PATCH(
             return NextResponse.json({ error: "게시글 수정에 실패했습니다" }, { status: 500 });
         }
 
-        console.log(`[Post] Updated: ${id} by user ${user.id} from IP ${clientIP}`);
         return NextResponse.json({ post: data });
     } catch {
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });
@@ -207,7 +206,6 @@ export async function DELETE(
             return NextResponse.json({ error: "게시글 삭제에 실패했습니다" }, { status: 500 });
         }
 
-        console.log(`[Post] Deleted: ${id} by user ${user.id} from IP ${clientIP}`);
         return NextResponse.json({ success: true });
     } catch {
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });

@@ -344,10 +344,6 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         }
     }, [selectedPetId, fetchTimeline]);
 
-    // 펫 변경 시 리마인더 불러오기 - 임시 비활성화 (401 에러로 인한 깜빡임 방지)
-    // TODO: reminders API 인증 문제 해결 후 다시 활성화
-    // useEffect(() => { ... }, [selectedPetId, user?.id]);
-
     // ========================================================================
     // 이벤트 핸들러
     // ========================================================================

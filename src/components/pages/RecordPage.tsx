@@ -57,7 +57,6 @@ import { FREE_LIMITS } from "@/config/constants";
 
 // 즉각적인 반응을 위해 일반 import 사용 (Dynamic import 제거)
 import MemorialSwitchModal from "@/components/modals/MemorialSwitchModal";
-import RemindersSection from "@/components/features/reminders/RemindersSection";
 import MediaUploadModal from "@/components/features/record/MediaUploadModal";
 import PetFormModal from "@/components/features/record/PetFormModal";
 import DeleteConfirmModal from "@/components/features/record/DeleteConfirmModal";
@@ -497,13 +496,6 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
     const [isSelectMode, setIsSelectMode] = useState(false);
     const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
     const [isMemorialModalOpen, setIsMemorialModalOpen] = useState(false);
-
-    // 리마인더 섹션 ref (스크롤용)
-    const remindersSectionRef = useRef<HTMLDivElement>(null);
-
-    const scrollToReminders = () => {
-        remindersSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    };
 
     // 분기점 전환 처리
     const handleMemorialSwitch = (memorialDate: string) => {
@@ -1145,18 +1137,9 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                                                     </p>
                                                 )}
 
-                                                {/* 분기점 전환/리마인더 버튼 - active 상태일 때만 표시 */}
+                                                {/* 분기점 전환 버튼 - active 상태일 때만 표시 */}
                                                 {selectedPet.status === "active" && (
                                                     <div className="flex items-center gap-2 mt-4 flex-wrap">
-                                                        <Button
-                                                            onClick={scrollToReminders}
-                                                            variant="outline"
-                                                            size="sm"
-                                                            className="border-[#05B2DC] text-[#05B2DC] hover:bg-[#E0F7FF] hover:text-[#0891B2]"
-                                                        >
-                                                            <Bell className="w-4 h-4 mr-2" />
-                                                            케어 알림
-                                                        </Button>
                                                         <Button
                                                             onClick={() => setIsMemorialModalOpen(true)}
                                                             variant="outline"
@@ -1517,17 +1500,6 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                                         petName={selectedPet.name}
                                     />
                                 </div>
-
-                                {/* 케어 리마인더 섹션 - 임시 비활성화 (401 에러로 인한 깜빡임 방지) */}
-                                {/* TODO: reminders API 인증 문제 해결 후 다시 활성화 */}
-                                {/* {selectedPet.status !== "memorial" && (
-                                    <div ref={remindersSectionRef} data-tutorial-id="care-reminder-section">
-                                        <RemindersSection
-                                            petId={selectedPet.id}
-                                            petName={selectedPet.name}
-                                        />
-                                    </div>
-                                )} */}
                             </>
                         )}
                     </>
