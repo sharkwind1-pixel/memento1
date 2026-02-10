@@ -344,44 +344,9 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         }
     }, [selectedPetId, fetchTimeline]);
 
-    // 펫 변경 시 리마인더 불러오기
-    // 일상 모드: 케어 알림으로 활용
-    // 추모 모드: 함께했던 일상 루틴을 추억으로 활용
-    useEffect(() => {
-        if (!selectedPetId || !user?.id) {
-            // 이미 빈 배열이면 상태 변경 안 함 (무한 루프 방지)
-            setReminders(prev => prev.length === 0 ? prev : []);
-            return;
-        }
-
-        const fetchReminders = async () => {
-            try {
-                const params = new URLSearchParams({ petId: selectedPetId });
-                const response = await fetch(`/api/reminders?${params}`, {
-                    credentials: "include", // 쿠키 포함
-                });
-
-                // 인증 실패 등 에러 응답은 무시 (상태 변경 안 함)
-                if (!response.ok) {
-                    return;
-                }
-
-                const data = await response.json();
-                if (data.reminders) {
-                    setReminders(data.reminders.map((r: { type: string; title: string; schedule: { type: string; time: string; dayOfWeek?: number; dayOfMonth?: number }; enabled: boolean }) => ({
-                        type: r.type,
-                        title: r.title,
-                        schedule: r.schedule,
-                        enabled: r.enabled,
-                    })));
-                }
-            } catch {
-                // 에러 시 상태 변경 안 함 (무한 루프 방지)
-            }
-        };
-
-        fetchReminders();
-    }, [selectedPetId, user?.id]);
+    // 펫 변경 시 리마인더 불러오기 - 임시 비활성화 (401 에러로 인한 깜빡임 방지)
+    // TODO: reminders API 인증 문제 해결 후 다시 활성화
+    // useEffect(() => { ... }, [selectedPetId, user?.id]);
 
     // ========================================================================
     // 이벤트 핸들러
