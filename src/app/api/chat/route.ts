@@ -9,6 +9,8 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { createClient } from "@supabase/supabase-js";
+import { awardPoints } from "@/lib/points";
 import {
     getClientIP,
     checkRateLimit,
@@ -18,6 +20,13 @@ import {
     checkVPN,
     getVPNBlockResponse,
 } from "@/lib/rate-limit";
+
+function getPointsSupabase() {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !key) return null;
+    return createClient(url, key);
+}
 
 // agent 모듈은 런타임에만 동적 import (빌드 시점 환경변수 에러 방지)
 // EmotionType, GriefStage 타입만 여기서 정의
@@ -838,6 +847,18 @@ export async function POST(request: NextRequest) {
                     }
                 })
                 .catch(() => { /* 무시 */ });
+        }
+
+        // 포인트 적립 (AI 펫톡 +1P, 비동기)
+        if (userId) {
+            try {
+                const pointsSb = getPointsSupabase();
+                if (pointsSb) {
+                    awardPoints(pointsSb, userId, "ai_chat").catch(() => {});
+                }
+            } catch {
+                // 포인트 적립 실패 무시
+            }
         }
 
         return NextResponse.json({

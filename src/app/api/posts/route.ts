@@ -12,6 +12,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getAuthUser } from "@/lib/supabase-server";
+import { awardPoints } from "@/lib/points";
 import {
     getClientIP,
     checkRateLimit,
@@ -173,7 +174,14 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
 
-        return NextResponse.json({ post: data });
+        // 6. 포인트 적립 (게시글 작성 +10P, 실패해도 게시글은 정상 반환)
+        try {
+            await awardPoints(supabase, user.id, "write_post", { postId: data.id });
+        } catch {
+            // 포인트 적립 실패 무시
+        }
+
+        return NextResponse.json({ post: data, pointsEarned: 10 });
     } catch {
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });
     }

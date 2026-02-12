@@ -28,8 +28,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import PointsBadge from "@/components/features/points/PointsBadge";
 import type { MainCategory, CommunitySubcategory, TabType } from "@/types";
-import { isAdmin } from "@/types";
 
 // 메인 카테고리 정의
 const MAIN_CATEGORIES: {
@@ -82,13 +82,10 @@ export default function Sidebar({
     onOpenInquiry,
     onOpenSuggestion,
 }: SidebarProps) {
-    const { user } = useAuth();
+    const { user, isAdminUser } = useAuth();
     const [expandedCategory, setExpandedCategory] = useState<MainCategory | null>(
         selectedTab === "community" ? "community" : null
     );
-
-    // 관리자 여부 확인
-    const isAdminUser = isAdmin(user?.email);
 
     // 탭이 변경되면 커뮤니티 확장 상태 업데이트
     useEffect(() => {
@@ -150,6 +147,13 @@ export default function Sidebar({
                     >
                         <X className="w-5 h-5" />
                     </Button>
+                </div>
+            )}
+
+            {/* 포인트 배지 */}
+            {user && (
+                <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-700">
+                    <PointsBadge />
                 </div>
             )}
 

@@ -1,6 +1,6 @@
 /**
  * AuthContext.tsx
- * 인증 상태 관리 Context
+ * 인증 상태 관리 Context + 포인트 시스템
  */
 
 "use client";
@@ -10,10 +10,12 @@ import {
     useContext,
     useEffect,
     useState,
+    useCallback,
     ReactNode,
 } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
+import { ADMIN_EMAILS } from "@/config/constants";
 
 // 삭제 계정 체크 결과 타입 (기존 호환성)
 interface DeletedAccountCheck {
@@ -34,6 +36,15 @@ interface AuthContextType {
     user: User | null;
     session: Session | null;
     loading: boolean;
+    // 권한 상태 (DB + 이메일 기반 통합 체크)
+    isAdminUser: boolean;
+    isPremiumUser: boolean;
+    refreshProfile: () => Promise<void>;
+    // 포인트 시스템
+    points: number;
+    rank: number;
+    refreshPoints: () => Promise<void>;
+    // 인증 메서드
     checkDeletedAccount: (email: string) => Promise<DeletedAccountCheck | null>;
     checkCanRejoin: (email: string) => Promise<RejoinCheck>;
     signUp: (
@@ -58,6 +69,76 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [session, setSession] = useState<Session | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isAdminUser, setIsAdminUser] = useState(false);
+    const [isPremiumUser, setIsPremiumUser] = useState(false);
+    const [points, setPoints] = useState(0);
+    const [rank, setRank] = useState(0);
+
+    // 프로필에서 관리자/프리미엄 상태 조회
+    const refreshProfile = useCallback(async () => {
+        try {
+            const { data: { user: currentUser } } = await supabase.auth.getUser();
+            if (!currentUser) {
+                setIsAdminUser(false);
+                setIsPremiumUser(false);
+                return;
+            }
+
+            // DB에서 프로필 조회 (is_admin, is_premium, premium_expires_at)
+            const { data, error } = await supabase
+                .from("profiles")
+                .select("is_admin, is_premium, premium_expires_at")
+                .eq("id", currentUser.id)
+                .single();
+
+            // 관리자 체크: 하드코딩 이메일 OR DB is_admin 필드
+            const emailAdmin = ADMIN_EMAILS.includes(currentUser.email || "");
+            const dbAdmin = !error && data?.is_admin === true;
+            setIsAdminUser(emailAdmin || dbAdmin);
+
+            // 프리미엄 체크: DB is_premium + 만료일 검증
+            if (!error && data?.is_premium === true) {
+                const expiresAt = data.premium_expires_at;
+                const isPremiumValid = !expiresAt || new Date(expiresAt) > new Date();
+                setIsPremiumUser(isPremiumValid);
+            } else {
+                setIsPremiumUser(false);
+            }
+        } catch {
+            // 프로필 조회 실패 시 기본값 유지
+        }
+    }, []);
+
+    // 포인트 조회
+    const refreshPoints = useCallback(async () => {
+        try {
+            const res = await fetch("/api/points");
+            if (!res.ok) return;
+            const data = await res.json();
+            setPoints(data.points || 0);
+            setRank(data.rank || 0);
+        } catch {
+            // 포인트 조회 실패해도 앱 사용에 영향 없음
+        }
+    }, []);
+
+    // 출석 체크
+    const checkDailyLogin = useCallback(async () => {
+        try {
+            const today = new Date().toISOString().split("T")[0];
+            const lastCheck = localStorage.getItem("lastDailyCheck");
+            if (lastCheck === today) return; // 오늘 이미 체크함
+
+            const res = await fetch("/api/points/daily-check", { method: "POST" });
+            if (res.ok) {
+                localStorage.setItem("lastDailyCheck", today);
+                // 출석 성공 시 포인트 새로고침
+                await refreshPoints();
+            }
+        } catch {
+            // 출석 체크 실패해도 앱 사용에 영향 없음
+        }
+    }, [refreshPoints]);
 
     useEffect(() => {
         // 현재 세션 가져오기
@@ -68,6 +149,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setSession(session);
             setUser(session?.user ?? null);
             setLoading(false);
+
+            // 로그인 상태면 프로필 + 포인트 로드 + 출석 체크
+            if (session?.user) {
+                refreshProfile();
+                refreshPoints();
+                checkDailyLogin();
+            }
         };
 
         getSession();
@@ -79,12 +167,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setSession(session);
             setUser(session?.user ?? null);
             setLoading(false);
+
+            // 로그인 시 프로필 + 포인트 로드 + 출석 체크
+            if (event === "SIGNED_IN" && session?.user) {
+                refreshProfile();
+                refreshPoints();
+                checkDailyLogin();
+            }
+
+            // 로그아웃 시 상태 초기화
+            if (event === "SIGNED_OUT") {
+                setPoints(0);
+                setRank(0);
+                setIsAdminUser(false);
+                setIsPremiumUser(false);
+            }
         });
 
         return () => {
             subscription.unsubscribe();
         };
-    }, []);
+    }, [refreshProfile, refreshPoints, checkDailyLogin]);
 
     // 삭제된 계정 체크 (재가입 쿨다운 확인) - 기존 호환성 유지
     const checkDeletedAccount = async (email: string): Promise<DeletedAccountCheck | null> => {
@@ -286,6 +389,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         session,
         loading,
+        isAdminUser,
+        isPremiumUser,
+        refreshProfile,
+        points,
+        rank,
+        refreshPoints,
         checkDeletedAccount,
         checkCanRejoin,
         signUp,

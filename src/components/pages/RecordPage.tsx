@@ -415,7 +415,7 @@ function TimelineSection({ petId, petName }: { petId: string; petName: string })
 
 // 메인
 export default function RecordPage({ setSelectedTab }: RecordPageProps) {
-    const { user, loading: authLoading, signOut, updateProfile } = useAuth();
+    const { user, loading: authLoading, signOut, updateProfile, isPremiumUser } = useAuth();
     const {
         pets,
         selectedPetId,
@@ -447,8 +447,8 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
     const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
     const [premiumFeature, setPremiumFeature] = useState<"pet-limit" | "photo-limit">("pet-limit");
 
-    // 무료/프리미엄 회원 제한
-    const isPremium = false; // TODO: 실제 프리미엄 여부 확인 로직 추가
+    // 무료/프리미엄 회원 제한 (AuthContext에서 DB 기반 체크)
+    const isPremium = isPremiumUser;
 
     // 사용자 닉네임 초기화
     useEffect(() => {

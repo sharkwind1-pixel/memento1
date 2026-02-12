@@ -6,7 +6,9 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
+import { awardPoints } from "@/lib/points";
 import {
     getClientIP,
     checkRateLimit,
@@ -14,6 +16,13 @@ import {
     checkVPN,
     getVPNBlockResponse
 } from "@/lib/rate-limit";
+
+function getSupabase() {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !key) throw new Error("Supabase 환경변수 없음");
+    return createClient(url, key);
+}
 
 export const dynamic = "force-dynamic";
 
@@ -109,6 +118,22 @@ export async function POST(
             }
 
             liked = true;
+
+            // 글쓴이에게 포인트 적립 (자기 글 좋아요 제외)
+            try {
+                const { data: postData } = await supabase
+                    .from("community_posts")
+                    .select("user_id")
+                    .eq("id", postId)
+                    .single();
+
+                if (postData && postData.user_id !== userId) {
+                    const pointsSupabase = getSupabase();
+                    await awardPoints(pointsSupabase, postData.user_id, "receive_like", { postId });
+                }
+            } catch {
+                // 포인트 적립 실패 무시
+            }
         }
 
         // 현재 좋아요 수 가져오기

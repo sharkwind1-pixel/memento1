@@ -117,7 +117,7 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
     // ========================================================================
     // Context & Hooks
     // ========================================================================
-    const { user, loading: authLoading } = useAuth();
+    const { user, loading: authLoading, isPremiumUser } = useAuth();
     const {
         pets,
         selectedPetId,
@@ -143,7 +143,7 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         schedule: { type: string; time: string; dayOfWeek?: number; dayOfMonth?: number };
         enabled: boolean;
     }>>([]);
-    const [isPremium, setIsPremium] = useState(false);
+    const isPremium = isPremiumUser; // AuthContext에서 중앙 관리
 
     // Refs
     const messagesEndRef = useRef<HTMLDivElement>(null);  // 채팅 스크롤 위치
@@ -164,39 +164,6 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
     useEffect(() => {
         setDailyUsage(getDailyUsage());
     }, []);
-
-    // 프리미엄 상태 확인 (profiles 테이블에서 - 만료일 포함)
-    useEffect(() => {
-        if (!user?.id) {
-            setIsPremium(false);
-            return;
-        }
-
-        const checkPremiumStatus = async () => {
-            try {
-                // select("*") 로 모든 필드 가져오기 (없는 필드는 undefined)
-                const { data, error } = await supabase
-                    .from("profiles")
-                    .select("*")
-                    .eq("id", user.id)
-                    .single();
-
-                if (!error && data) {
-                    // is_premium이 true이고, 만료일이 없거나 아직 안 지났으면 프리미엄
-                    const expiresAt = data.premium_expires_at;
-                    const isPremiumValid = data.is_premium === true && (
-                        !expiresAt ||
-                        new Date(expiresAt) > new Date()
-                    );
-                    setIsPremium(isPremiumValid);
-                }
-            } catch {
-                // 프리미엄 상태 확인 실패 - 무시
-            }
-        };
-
-        checkPremiumStatus();
-    }, [user?.id]);
 
     // 추모 모드 여부 (펫 상태가 memorial인 경우)
     const isMemorialMode = selectedPet?.status === "memorial";

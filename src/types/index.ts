@@ -460,3 +460,54 @@ export interface FilterOption {
     label: string;
     value: string;
 }
+
+// ============================================
+// 12. 포인트 시스템 타입
+// ============================================
+
+/** 포인트 활동 타입 */
+export type PointAction =
+    | "daily_login"
+    | "write_post"
+    | "write_comment"
+    | "receive_like"
+    | "ai_chat"
+    | "pet_registration"
+    | "timeline_entry"
+    | "photo_upload";
+
+/** 포인트 거래 기록 */
+export interface PointTransaction {
+    id: string;
+    userId: string;
+    actionType: PointAction;
+    pointsEarned: number;
+    metadata?: Record<string, string>;
+    createdAt: string;
+}
+
+/** 사용자 포인트 정보 */
+export interface UserPoints {
+    userId: string;
+    points: number;
+    totalEarned: number;
+    rank: number;
+}
+
+/** 랭킹 항목 */
+export interface LeaderboardEntry {
+    rank: number;
+    userId: string;
+    nickname: string;
+    points: number;
+    avatarUrl?: string;
+}
+
+/** 포인트 적립 결과 (RPC 응답) */
+export interface PointAwardResult {
+    success: boolean;
+    reason?: "daily_cap_reached" | "already_earned";
+    points: number;
+    totalEarned?: number;
+    earned?: number;
+}

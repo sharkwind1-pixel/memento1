@@ -29,7 +29,7 @@
 // ============================================================================
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { TabType, MainCategory, CommunitySubcategory, isAdmin } from "@/types";
+import { TabType, MainCategory, CommunitySubcategory } from "@/types";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import AuthModal from "@/components/Auth/AuthModal";
@@ -105,7 +105,7 @@ export default function Layout({
     // ========================================================================
     // Context & State
     // ========================================================================
-    const { user, loading, signOut } = useAuth();
+    const { user, loading, signOut, isAdminUser } = useAuth();
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(false);
@@ -249,7 +249,7 @@ export default function Layout({
                                 );
                             })}
                             {/* 관리자 탭 (조건부) */}
-                            {isAdmin(user?.email) && (
+                            {isAdminUser && (
                                 <button
                                     data-tutorial-id="admin"
                                     onClick={() => setSelectedTab("admin")}

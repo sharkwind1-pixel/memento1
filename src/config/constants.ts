@@ -51,6 +51,52 @@ export const API = {
     AI_TEMPERATURE: 0.8,        // AI 창의성 (0-1)
 } as const;
 
+// ===== 포인트 시스템 =====
+export const POINTS = {
+    /** 활동별 적립 포인트 */
+    ACTIONS: {
+        daily_login: 10,
+        write_post: 10,
+        write_comment: 3,
+        receive_like: 2,
+        ai_chat: 1,
+        pet_registration: 50,
+        timeline_entry: 5,
+        photo_upload: 3,
+    } as const,
+
+    /** 일일 상한선 (null = 무제한) */
+    DAILY_CAPS: {
+        daily_login: 1,
+        write_post: 5,
+        write_comment: 50,
+        receive_like: null,
+        ai_chat: 10,
+        pet_registration: null,
+        timeline_entry: 10,
+        photo_upload: 10,
+    } as const,
+
+    /** 일회성 활동 (평생 1회만) */
+    ONE_TIME: ["pet_registration"] as const,
+
+    /** 활동별 한글 라벨 */
+    LABELS: {
+        daily_login: "출석 체크",
+        write_post: "게시글 작성",
+        write_comment: "댓글 작성",
+        receive_like: "좋아요 받기",
+        ai_chat: "AI 펫톡",
+        pet_registration: "반려동물 등록",
+        timeline_entry: "타임라인 기록",
+        photo_upload: "사진 업로드",
+    } as const,
+
+    /** 페이지네이션 */
+    HISTORY_PAGE_SIZE: 20,
+    LEADERBOARD_SIZE: 100,
+} as const;
+
 // Helper: 관리자 여부 확인
 export const isAdmin = (email: string | undefined): boolean => {
     if (!email) return false;

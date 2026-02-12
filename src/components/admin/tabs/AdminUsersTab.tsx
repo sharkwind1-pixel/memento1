@@ -101,6 +101,47 @@ export default function AdminUsersTab({
     };
 
     // ========================================================================
+    // 관리자 권한 부여/해제
+    // ========================================================================
+    const toggleAdmin = async (targetUser: UserRow) => {
+        const newAdminStatus = !targetUser.is_admin;
+        const action = newAdminStatus ? "관리자 권한 부여" : "관리자 권한 해제";
+
+        if (!confirm(`${targetUser.email}의 ${action}를 진행하시겠습니까?`)) return;
+
+        try {
+            // SECURITY DEFINER RPC 함수 사용
+            const { error: rpcError } = await supabase.rpc("toggle_admin", {
+                p_target_user_id: targetUser.id,
+                p_is_admin: newAdminStatus,
+            });
+
+            // RPC 실패 시 직접 update 폴백
+            if (rpcError) {
+                const { error } = await supabase
+                    .from("profiles")
+                    .update({ is_admin: newAdminStatus })
+                    .eq("id", targetUser.id);
+
+                if (error) throw error;
+            }
+
+            onUpdateUsers(prev =>
+                prev.map(u =>
+                    u.id === targetUser.id
+                        ? { ...u, is_admin: newAdminStatus }
+                        : u
+                )
+            );
+
+            toast.success(`${targetUser.email}의 ${action}가 완료되었습니다.`);
+            onRefreshStats();
+        } catch {
+            toast.error("관리자 권한 변경에 실패했습니다.");
+        }
+    };
+
+    // ========================================================================
     // 온보딩 리셋
     // ========================================================================
     const resetOnboarding = async (userId: string, userEmail: string) => {
@@ -147,16 +188,24 @@ export default function AdminUsersTab({
         if (!confirm(`${targetUser.email}의 프리미엄을 해제하시겠습니까?`)) return;
 
         try {
-            const { error } = await supabase
-                .from("profiles")
-                .update({
-                    is_premium: false,
-                    premium_expires_at: new Date().toISOString(),
-                    premium_plan: null,
-                })
-                .eq("id", targetUser.id);
+            // SECURITY DEFINER RPC 함수 사용 (RLS 우회)
+            const { error: rpcError } = await supabase.rpc("revoke_premium", {
+                p_user_id: targetUser.id,
+            });
 
-            if (error) throw error;
+            // RPC 실패 시 직접 update 폴백
+            if (rpcError) {
+                const { error } = await supabase
+                    .from("profiles")
+                    .update({
+                        is_premium: false,
+                        premium_expires_at: new Date().toISOString(),
+                        premium_plan: null,
+                    })
+                    .eq("id", targetUser.id);
+
+                if (error) throw error;
+            }
 
             onUpdateUsers(prev =>
                 prev.map(u =>
@@ -186,17 +235,28 @@ export default function AdminUsersTab({
                 ? null
                 : new Date(Date.now() + (durationDays || 30) * 24 * 60 * 60 * 1000).toISOString();
 
-            const { error } = await supabase
-                .from("profiles")
-                .update({
-                    is_premium: true,
-                    premium_started_at: new Date().toISOString(),
-                    premium_expires_at: expiresAt,
-                    premium_plan: "admin_grant",
-                })
-                .eq("id", premiumModalUser.id);
+            // SECURITY DEFINER RPC 함수 사용 (RLS 우회)
+            const { error: rpcError } = await supabase.rpc("grant_premium", {
+                p_user_id: premiumModalUser.id,
+                p_plan: "admin_grant",
+                p_duration_days: durationDays,
+                p_reason: reason || null,
+            });
 
-            if (error) throw error;
+            // RPC 실패 시 직접 update 폴백 (RLS 관리자 정책 필요)
+            if (rpcError) {
+                const { error } = await supabase
+                    .from("profiles")
+                    .update({
+                        is_premium: true,
+                        premium_started_at: new Date().toISOString(),
+                        premium_expires_at: expiresAt,
+                        premium_plan: "admin_grant",
+                    })
+                    .eq("id", premiumModalUser.id);
+
+                if (error) throw error;
+            }
 
             onUpdateUsers(prev =>
                 prev.map(u =>
@@ -269,6 +329,7 @@ export default function AdminUsersTab({
                                     key={u.id}
                                     user={u}
                                     onToggleBan={() => toggleBan(u)}
+                                    onToggleAdmin={() => toggleAdmin(u)}
                                     onResetOnboarding={() => resetOnboarding(u.id, u.email)}
                                     onOpenPremiumModal={() => setPremiumModalUser(u)}
                                     onRevokePremium={() => revokePremium(u)}
@@ -299,6 +360,7 @@ export default function AdminUsersTab({
 interface UserCardProps {
     user: UserRow;
     onToggleBan: () => void;
+    onToggleAdmin: () => void;
     onResetOnboarding: () => void;
     onOpenPremiumModal: () => void;
     onRevokePremium: () => void;
@@ -308,6 +370,7 @@ interface UserCardProps {
 function UserCard({
     user,
     onToggleBan,
+    onToggleAdmin,
     onResetOnboarding,
     onOpenPremiumModal,
     onRevokePremium,
@@ -378,6 +441,20 @@ function UserCard({
                 >
                     <Ban className="w-3 h-3 mr-1" />
                     {user.is_banned ? "차단 해제" : "차단"}
+                </Button>
+
+                {/* 관리자 권한 버튼 */}
+                <Button
+                    size="sm"
+                    variant={user.is_admin ? "outline" : "outline"}
+                    className={user.is_admin
+                        ? "text-purple-600 border-purple-300 hover:bg-purple-50"
+                        : "text-gray-600 border-gray-300 hover:bg-gray-50"
+                    }
+                    onClick={onToggleAdmin}
+                >
+                    <Shield className="w-3 h-3 mr-1" />
+                    {user.is_admin ? "관리자 해제" : "관리자 부여"}
                 </Button>
 
                 {/* 프리미엄 버튼 */}
