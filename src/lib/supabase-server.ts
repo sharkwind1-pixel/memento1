@@ -1,51 +1,61 @@
 /**
- * 서버 사이드 Supabase 클라이언트
- * API 라우트에서 세션 기반 인증에 사용
+ * 서버 사이드 Supabase 유틸리티
+ * API 라우트에서 인증에 사용
+ *
+ * 방법 1: Authorization 헤더의 Bearer 토큰으로 인증 (권장)
+ * 방법 2: 쿠키 기반 세션 (미들웨어 필요, 현재 미사용)
  */
 
-import { createServerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { createClient } from "@supabase/supabase-js";
+import { headers } from "next/headers";
+
+function getEnv() {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !key) throw new Error("Supabase 환경변수가 설정되지 않았습니다.");
+    return { url, key };
+}
 
 /**
  * API Route Handler용 Supabase 클라이언트 생성
- * 쿠키에서 세션을 자동으로 가져옴
+ * Authorization 헤더에서 JWT 토큰을 읽어 인증
  */
 export async function createServerSupabase() {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const { url, key } = getEnv();
+    const headerStore = await headers();
+    const authHeader = headerStore.get("authorization") || "";
+    const token = authHeader.replace("Bearer ", "");
 
-    if (!supabaseUrl || !supabaseKey) {
-        throw new Error("Supabase 환경변수가 설정되지 않았습니다.");
-    }
-
-    const cookieStore = await cookies();
-
-    return createServerClient(supabaseUrl, supabaseKey, {
-        cookies: {
-            getAll() {
-                return cookieStore.getAll();
-            },
-            setAll(cookiesToSet) {
-                try {
-                    cookiesToSet.forEach(({ name, value, options }) => {
-                        cookieStore.set(name, value, options);
-                    });
-                } catch {
-                    // Route Handler에서는 set이 실패할 수 있음 (읽기 전용 컨텍스트)
-                    // 이 경우 middleware에서 처리되므로 무시
-                }
-            },
+    const supabase = createClient(url, key, {
+        global: {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
         },
     });
+
+    return supabase;
 }
 
 /**
  * 현재 인증된 사용자 가져오기
- * @returns 사용자 정보 또는 null
+ * Authorization 헤더의 JWT 토큰으로 사용자 조회
  */
 export async function getAuthUser() {
-    const supabase = await createServerSupabase();
-    const { data: { user }, error } = await supabase.auth.getUser();
+    const { url, key } = getEnv();
+    const headerStore = await headers();
+    const authHeader = headerStore.get("authorization") || "";
+    const token = authHeader.replace("Bearer ", "");
+
+    if (!token) {
+        return null;
+    }
+
+    const supabase = createClient(url, key, {
+        global: {
+            headers: { Authorization: `Bearer ${token}` },
+        },
+    });
+
+    const { data: { user }, error } = await supabase.auth.getUser(token);
 
     if (error || !user) {
         return null;

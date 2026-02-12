@@ -63,7 +63,8 @@ export default function PointsHistoryModal({ open, onClose }: PointsHistoryModal
     const fetchHistory = useCallback(async (currentOffset: number) => {
         try {
             setLoading(true);
-            const res = await fetch(`/api/points/history?offset=${currentOffset}&limit=20`);
+            const { authFetch } = await import("@/lib/auth-fetch");
+            const res = await authFetch(`/api/points/history?offset=${currentOffset}&limit=20`);
             if (!res.ok) return;
             const data = await res.json();
 

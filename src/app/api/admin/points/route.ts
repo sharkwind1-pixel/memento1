@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
             p_action_type: "admin_award",
             p_points: points,
             p_daily_cap: null,
-            p_one_time: false,
+            p_is_one_time: false,
             p_metadata: metadata,  // JSONB → 객체 그대로 전달
         });
 

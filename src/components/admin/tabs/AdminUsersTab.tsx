@@ -301,12 +301,12 @@ export default function AdminUsersTab({
         let newPoints = currentPoints + points;
 
         try {
-            // 방법 1: 서버 API 경유 (권장)
+            // 방법 1: 서버 API 경유 (authFetch로 인증 토큰 자동 첨부)
             let apiSuccess = false;
             try {
-                const res = await fetch("/api/admin/points", {
+                const { authFetch } = await import("@/lib/auth-fetch");
+                const res = await authFetch("/api/admin/points", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ targetUserId: targetId, points, reason }),
                 });
                 const data = await res.json();
@@ -330,7 +330,7 @@ export default function AdminUsersTab({
                         p_action_type: "admin_award",
                         p_points: points,
                         p_daily_cap: null,
-                        p_one_time: false,
+                        p_is_one_time: false,
                         p_metadata: {
                             awarded_by: currentUserId,
                             reason: reason || "관리자 지급",

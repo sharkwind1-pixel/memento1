@@ -112,7 +112,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // 포인트 조회
     const refreshPoints = useCallback(async () => {
         try {
-            const res = await fetch("/api/points");
+            const { authFetch } = await import("@/lib/auth-fetch");
+            const res = await authFetch("/api/points");
             if (!res.ok) return;
             const data = await res.json();
             setPoints(data.points || 0);
@@ -127,12 +128,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
             const today = new Date().toISOString().split("T")[0];
             const lastCheck = localStorage.getItem("lastDailyCheck");
-            if (lastCheck === today) return; // 오늘 이미 체크함
+            if (lastCheck === today) return;
 
-            const res = await fetch("/api/points/daily-check", { method: "POST" });
+            const { authFetch } = await import("@/lib/auth-fetch");
+            const res = await authFetch("/api/points/daily-check", { method: "POST" });
             if (res.ok) {
                 localStorage.setItem("lastDailyCheck", today);
-                // 출석 성공 시 포인트 새로고침
                 await refreshPoints();
             }
         } catch {

@@ -53,7 +53,8 @@ export default function LeaderboardModal({ open, onClose }: LeaderboardModalProp
     const fetchLeaderboard = async () => {
         try {
             setLoading(true);
-            const res = await fetch("/api/points/leaderboard");
+            const { authFetch } = await import("@/lib/auth-fetch");
+            const res = await authFetch("/api/points/leaderboard");
             if (!res.ok) return;
             const data = await res.json();
             setLeaderboard(data.leaderboard || []);

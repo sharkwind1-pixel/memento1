@@ -29,8 +29,8 @@ export async function awardPoints(
             p_action_type: actionType,
             p_points: points,
             p_daily_cap: dailyCap,
-            p_one_time: isOneTime,
-            p_metadata: metadata ? JSON.stringify(metadata) : null,
+            p_is_one_time: isOneTime,
+            p_metadata: metadata ? metadata : null,
         });
 
         if (error) {

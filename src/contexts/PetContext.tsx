@@ -29,9 +29,9 @@ import type { PointAction } from "@/types";
 // 클라이언트에서 포인트 적립 요청 (비동기, 실패해도 무시)
 async function requestPointAward(actionType: PointAction, metadata?: Record<string, string>) {
     try {
-        await fetch("/api/points/award", {
+        const { authFetch } = await import("@/lib/auth-fetch");
+        await authFetch("/api/points/award", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ actionType, metadata }),
         });
     } catch {
