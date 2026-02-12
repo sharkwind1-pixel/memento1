@@ -178,7 +178,7 @@ export default function PointsHistoryModal({ open, onClose }: PointsHistoryModal
                                     등급 점수표
                                 </span>
                                 <span className="text-[11px] text-gray-400">
-                                    Lv.{currentLevel.level} {currentLevel.name}
+                                    Lv.{currentLevel.level}
                                 </span>
                             </div>
                         </div>
@@ -223,28 +223,16 @@ export default function PointsHistoryModal({ open, onClose }: PointsHistoryModal
                                             />
                                         </div>
 
-                                        {/* 등급 이름 */}
+                                        {/* 등급 정보 */}
                                         <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-1.5">
-                                                <span className={cn(
-                                                    "text-[11px] font-bold rounded px-1 py-0.5",
-                                                    isCurrent
-                                                        ? "text-sky-700 bg-sky-100 dark:text-sky-300 dark:bg-sky-800/40"
-                                                        : isAchieved
-                                                            ? "text-gray-500 bg-gray-100 dark:text-gray-400 dark:bg-gray-800"
-                                                            : "text-gray-400 bg-gray-100 dark:text-gray-500 dark:bg-gray-800"
-                                                )}>
-                                                    Lv.{lvl.level}
-                                                </span>
-                                                <span className={cn(
-                                                    "text-sm font-semibold truncate",
-                                                    isCurrent ? "text-gray-900 dark:text-white" : isAchieved ? "text-gray-700 dark:text-gray-300" : "text-gray-400 dark:text-gray-500"
-                                                )}>
-                                                    {lvl.name}
-                                                </span>
-                                            </div>
                                             <span className={cn(
-                                                "text-xs tabular-nums",
+                                                "text-xs font-bold",
+                                                isCurrent ? "text-sky-700 dark:text-sky-300" : isAchieved ? "text-gray-600 dark:text-gray-400" : "text-gray-400 dark:text-gray-500"
+                                            )}>
+                                                Lv.{lvl.level}
+                                            </span>
+                                            <span className={cn(
+                                                "text-xs tabular-nums ml-2",
                                                 isCurrent ? "text-sky-600 dark:text-sky-400 font-bold" : isAchieved ? "text-gray-400" : "text-gray-300 dark:text-gray-600"
                                             )}>
                                                 {lvl.minPoints.toLocaleString()}P

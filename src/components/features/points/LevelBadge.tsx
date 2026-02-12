@@ -45,8 +45,8 @@ export default function LevelBadge({
     const { wrapper, px } = SIZE_MAP[size];
 
     const tooltipText = nextLevel
-        ? `${level.name} (Lv.${level.level})\n다음 등급까지 ${remaining.toLocaleString()}P`
-        : `${level.name} (MAX)`;
+        ? `Lv.${level.level}\n다음 등급까지 ${remaining.toLocaleString()}P`
+        : `Lv.${level.level} (MAX)`;
 
     return (
         <span
@@ -97,7 +97,7 @@ export default function LevelBadge({
                     "text-xs font-medium",
                     level.textColor,
                 )}>
-                    {level.name}
+                    Lv.{level.level}
                 </span>
             )}
         </span>
@@ -115,11 +115,11 @@ export function LevelProgress({ points, nickname }: { points: number; nickname?:
                 <div className="flex items-center gap-2">
                     <LevelBadge points={points} size="lg" showTooltip={false} />
                     <span className={cn("text-sm font-bold", level.textColor)}>
-                        {nickname || level.name}
+                        {nickname || `Lv.${level.level}`}
                     </span>
                 </div>
                 <span className="text-[10px] text-gray-400">
-                    Lv.{level.level} {level.name}
+                    Lv.{level.level}
                 </span>
             </div>
             {nextLevel && (

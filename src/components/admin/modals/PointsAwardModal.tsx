@@ -169,7 +169,7 @@ export function PointsAwardModal({ user, onClose, onAward }: PointsAwardModalPro
                                     className="rounded-full"
                                     unoptimized
                                 />
-                                <span className="text-xs text-gray-500">{currentLevel.name}</span>
+                                <span className="text-xs text-gray-500">Lv.{currentLevel.level}</span>
                                 <span className="text-xs text-gray-400">{currentPoints.toLocaleString()}P</span>
                             </div>
 
@@ -187,7 +187,7 @@ export function PointsAwardModal({ user, onClose, onAward }: PointsAwardModalPro
                                     unoptimized
                                 />
                                 <span className={`text-xs font-medium ${isLevelUp ? "text-violet-600" : "text-gray-500"}`}>
-                                    {afterLevel.name}
+                                    Lv.{afterLevel.level}
                                 </span>
                                 <span className="text-xs text-gray-400">{afterPoints.toLocaleString()}P</span>
                             </div>
