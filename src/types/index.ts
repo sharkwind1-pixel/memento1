@@ -492,16 +492,6 @@ export interface UserPoints {
     userId: string;
     points: number;
     totalEarned: number;
-    rank: number;
-}
-
-/** 랭킹 항목 */
-export interface LeaderboardEntry {
-    rank: number;
-    userId: string;
-    nickname: string;
-    points: number;
-    avatarUrl?: string;
 }
 
 /** 포인트 적립 결과 (RPC 응답) */

@@ -1,26 +1,24 @@
 /**
  * PointsBadge.tsx
  * 사이드바에 표시하는 포인트 배지 위젯
- * - 현재 포인트 + 랭킹 표시
- * - 클릭 시 내역/랭킹 모달 열기
+ * - 현재 포인트 표시
+ * - 클릭 시 내역 모달 열기
  */
 
 "use client";
 
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Star, Trophy, ChevronRight } from "lucide-react";
+import { Star, ChevronRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatPoints } from "@/lib/points";
 import PointsHistoryModal from "./PointsHistoryModal";
-import LeaderboardModal from "./LeaderboardModal";
 import { LevelProgress } from "./LevelBadge";
 
 export default function PointsBadge() {
-    const { user, points, rank } = useAuth();
+    const { user, points } = useAuth();
     const nickname = user?.user_metadata?.nickname || user?.email?.split("@")[0];
     const [showHistory, setShowHistory] = useState(false);
-    const [showLeaderboard, setShowLeaderboard] = useState(false);
 
     // 비로그인 시 표시 안함
     if (!user) return null;
@@ -56,31 +54,6 @@ export default function PointsBadge() {
                     </div>
                     <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
                 </button>
-
-                {/* 랭킹 표시 */}
-                {rank > 0 && (
-                    <button
-                        onClick={() => setShowLeaderboard(true)}
-                        className={cn(
-                            "w-full flex items-center justify-between px-3 py-2 rounded-xl",
-                            "hover:bg-gray-100 dark:hover:bg-gray-800",
-                            "transition-all group"
-                        )}
-                    >
-                        <div className="flex items-center gap-2.5">
-                            <Trophy className={cn(
-                                "w-4 h-4",
-                                rank <= 3 ? "text-amber-500" :
-                                rank <= 10 ? "text-sky-500" :
-                                "text-gray-400"
-                            )} />
-                            <span className="text-xs text-gray-600 dark:text-gray-400">
-                                랭킹 {rank}위
-                            </span>
-                        </div>
-                        <ChevronRight className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
-                    </button>
-                )}
             </div>
 
             {/* 모달 */}
@@ -88,12 +61,6 @@ export default function PointsBadge() {
                 <PointsHistoryModal
                     open={showHistory}
                     onClose={() => setShowHistory(false)}
-                />
-            )}
-            {showLeaderboard && (
-                <LeaderboardModal
-                    open={showLeaderboard}
-                    onClose={() => setShowLeaderboard(false)}
                 />
             )}
         </>

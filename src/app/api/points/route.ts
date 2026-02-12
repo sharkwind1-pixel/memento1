@@ -1,6 +1,6 @@
 /**
  * 사용자 포인트 조회 API
- * GET: 현재 포인트 + 랭킹
+ * GET: 현재 포인트 조회
  *
  * 보안: 세션 기반 인증
  */
@@ -30,47 +30,23 @@ export async function GET() {
 
         const supabase = getSupabase();
 
-        // RPC로 포인트 + 랭킹 한번에 조회
-        const { data, error } = await supabase.rpc("get_user_points_with_rank", {
-            p_user_id: user.id,
-        });
+        const { data: profile } = await supabase
+            .from("profiles")
+            .select("points, total_points_earned")
+            .eq("id", user.id)
+            .single();
 
-        if (error) {
-            console.error("[Points API] RPC 에러:", error.message);
-
-            // RPC 없으면 직접 조회 (폴백)
-            const { data: profile } = await supabase
-                .from("profiles")
-                .select("points, total_points_earned")
-                .eq("id", user.id)
-                .single();
-
-            if (!profile) {
-                return NextResponse.json(
-                    { error: "사용자를 찾을 수 없습니다" },
-                    { status: 404 }
-                );
-            }
-
-            // 랭킹 계산
-            const { count: higherCount } = await supabase
-                .from("profiles")
-                .select("id", { count: "exact", head: true })
-                .gt("points", profile.points || 0);
-
-            return NextResponse.json({
-                userId: user.id,
-                points: profile.points || 0,
-                totalEarned: profile.total_points_earned || 0,
-                rank: (higherCount || 0) + 1,
-            });
+        if (!profile) {
+            return NextResponse.json(
+                { error: "사용자를 찾을 수 없습니다" },
+                { status: 404 }
+            );
         }
 
         return NextResponse.json({
-            userId: data?.user_id || user.id,
-            points: data?.points || 0,
-            totalEarned: data?.total_earned || 0,
-            rank: data?.rank || 0,
+            userId: user.id,
+            points: profile.points || 0,
+            totalEarned: profile.total_points_earned || 0,
         });
     } catch {
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });

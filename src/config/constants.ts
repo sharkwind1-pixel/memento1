@@ -97,7 +97,6 @@ export const POINTS = {
 
     /** 페이지네이션 */
     HISTORY_PAGE_SIZE: 20,
-    LEADERBOARD_SIZE: 100,
 } as const;
 
 // ===== 포인트 등급 시스템 =====
