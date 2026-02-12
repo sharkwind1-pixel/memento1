@@ -112,20 +112,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // 포인트 조회 (profiles 테이블 직접 SELECT)
     const refreshPoints = useCallback(async () => {
         try {
-            const { data: { user: currentUser }, error: authError } = await supabase.auth.getUser();
-            console.log("[refreshPoints] 1. auth:", currentUser?.id, authError?.message);
+            const { data: { user: currentUser } } = await supabase.auth.getUser();
             if (!currentUser) return;
 
-            const { data: profile, error: selectError } = await supabase
+            const { data: profile } = await supabase
                 .from("profiles")
                 .select("points")
                 .eq("id", currentUser.id)
                 .single();
 
-            console.log("[refreshPoints] 2. profile:", JSON.stringify(profile), "error:", selectError?.message);
-
             const myPoints = profile?.points ?? 0;
-            console.log("[refreshPoints] 3. setPoints →", myPoints);
             setPoints(myPoints);
 
             const { count } = await supabase
@@ -134,8 +130,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 .gt("points", myPoints);
 
             setRank((count || 0) + 1);
-        } catch (err) {
-            console.error("[refreshPoints] catch:", err);
+        } catch {
+            // 포인트 조회 실패 시 기본값 유지
         }
     }, []);
 

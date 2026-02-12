@@ -18,17 +18,18 @@ import { getPointLevel, getNextLevelInfo, type PointLevel } from "@/config/const
 
 interface LevelBadgeProps {
     points: number;
-    size?: "sm" | "md" | "lg" | "xl";
+    size?: "sm" | "md" | "lg" | "xl" | "2xl";
     showName?: boolean;
     showTooltip?: boolean;
     className?: string;
 }
 
 const SIZE_MAP = {
-    sm: { wrapper: "w-5 h-5", px: 20 },
-    md: { wrapper: "w-6 h-6", px: 24 },
-    lg: { wrapper: "w-8 h-8", px: 32 },
-    xl: { wrapper: "w-12 h-12", px: 48 },
+    sm: { wrapper: "w-7 h-7", px: 28 },
+    md: { wrapper: "w-9 h-9", px: 36 },
+    lg: { wrapper: "w-11 h-11", px: 44 },
+    xl: { wrapper: "w-14 h-14", px: 56 },
+    "2xl": { wrapper: "w-20 h-20", px: 80 },
 } as const;
 
 export default function LevelBadge({
@@ -78,10 +79,11 @@ export default function LevelBadge({
                 {level.hasSparkle && (
                     <span className={cn(
                         "absolute -top-0.5 -right-0.5 rounded-full border border-white",
-                        size === "sm" && "w-2 h-2",
-                        size === "md" && "w-2.5 h-2.5",
-                        size === "lg" && "w-3 h-3",
-                        size === "xl" && "w-3.5 h-3.5",
+                        size === "sm" && "w-2.5 h-2.5",
+                        size === "md" && "w-3 h-3",
+                        size === "lg" && "w-3.5 h-3.5",
+                        size === "xl" && "w-4 h-4",
+                        size === "2xl" && "w-5 h-5",
                         // Lv.7 무지개 / 나머지 골드
                         level.hasGlow
                             ? "bg-[conic-gradient(#ef4444,#f59e0b,#22c55e,#3b82f6,#8b5cf6,#ef4444)]"
@@ -110,9 +112,9 @@ export function LevelProgress({ points, nickname }: { points: number; nickname?:
     return (
         <div className="px-3 py-2 space-y-1.5">
             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                    <LevelBadge points={points} size="md" showTooltip={false} />
-                    <span className={cn("text-xs font-bold", level.textColor)}>
+                <div className="flex items-center gap-2">
+                    <LevelBadge points={points} size="lg" showTooltip={false} />
+                    <span className={cn("text-sm font-bold", level.textColor)}>
                         {nickname || level.name}
                     </span>
                 </div>

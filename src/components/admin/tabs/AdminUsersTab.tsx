@@ -490,7 +490,7 @@ function UserCard({
                     </span>
                 )}
                 <span className="flex items-center gap-1">
-                    <LevelBadge points={user.points ?? 0} size="md" showName />
+                    <LevelBadge points={user.points ?? 0} size="lg" showName />
                     <span className="text-xs text-gray-400 ml-1">
                         ({(user.points ?? 0).toLocaleString()}P)
                     </span>
