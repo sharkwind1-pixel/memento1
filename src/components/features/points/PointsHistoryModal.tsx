@@ -197,7 +197,7 @@ export default function PointsHistoryModal({ open, onClose }: PointsHistoryModal
                                     <div
                                         key={lvl.level}
                                         className={cn(
-                                            "flex items-center gap-3 px-3 py-3 relative",
+                                            "flex items-center gap-3 px-3 py-2.5 relative",
                                             idx < POINT_LEVELS.length - 1 && "border-b border-gray-100 dark:border-gray-800",
                                             isCurrent && "bg-sky-50 dark:bg-sky-900/20",
                                             !isCurrent && isAchieved && "bg-white dark:bg-gray-900",
@@ -223,7 +223,7 @@ export default function PointsHistoryModal({ open, onClose }: PointsHistoryModal
                                             />
                                         </div>
 
-                                        {/* 등급 정보 */}
+                                        {/* 등급 이름 */}
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-1.5">
                                                 <span className={cn(
@@ -242,21 +242,21 @@ export default function PointsHistoryModal({ open, onClose }: PointsHistoryModal
                                                 )}>
                                                     {lvl.name}
                                                 </span>
-                                                {isCurrent && (
-                                                    <span className="text-[10px] font-bold text-white bg-sky-500 px-1.5 py-0.5 rounded-full ml-auto flex-shrink-0">
-                                                        현재
-                                                    </span>
-                                                )}
                                             </div>
+                                            <span className={cn(
+                                                "text-xs tabular-nums",
+                                                isCurrent ? "text-sky-600 dark:text-sky-400 font-bold" : isAchieved ? "text-gray-400" : "text-gray-300 dark:text-gray-600"
+                                            )}>
+                                                {lvl.minPoints.toLocaleString()}P
+                                            </span>
                                         </div>
 
-                                        {/* 필요 포인트 */}
-                                        <span className={cn(
-                                            "text-sm tabular-nums font-medium flex-shrink-0",
-                                            isCurrent ? "text-sky-600 dark:text-sky-400 font-bold" : isAchieved ? "text-gray-500" : "text-gray-300 dark:text-gray-600"
-                                        )}>
-                                            {lvl.minPoints.toLocaleString()}P
-                                        </span>
+                                        {/* 현재 뱃지 */}
+                                        {isCurrent && (
+                                            <span className="text-[10px] font-bold text-white bg-sky-500 px-2 py-1 rounded-full flex-shrink-0">
+                                                현재
+                                            </span>
+                                        )}
                                     </div>
                                 );
                             })}
