@@ -293,20 +293,34 @@ export default function AdminUsersTab({
     // ========================================================================
     // 포인트 지급 (profiles 테이블 직접 UPDATE — RPC 의존 제거)
     // ========================================================================
-    const awardPoints = async (points: number, reason: string) => {
+    const awardPoints = async (awardAmount: number, reason: string) => {
         if (!pointsModalUser) return;
 
         const targetId = pointsModalUser.id;
-        const currentPoints = pointsModalUser.points ?? 0;
-        const newPoints = currentPoints + points;
 
         try {
-            // 1. profiles 직접 업데이트
+            // 1. DB에서 현재 포인트 실시간 조회
+            const { data: freshProfile, error: fetchError } = await supabase
+                .from("profiles")
+                .select("points, total_points_earned")
+                .eq("id", targetId)
+                .single();
+
+            if (fetchError || !freshProfile) {
+                throw new Error("사용자 정보를 가져올 수 없습니다.");
+            }
+
+            const dbPoints = freshProfile.points ?? 0;
+            const dbTotalEarned = freshProfile.total_points_earned ?? 0;
+            const newPoints = dbPoints + awardAmount;
+            const newTotalEarned = dbTotalEarned + awardAmount;
+
+            // 2. profiles 업데이트
             const { error: updateError } = await supabase
                 .from("profiles")
                 .update({
                     points: newPoints,
-                    total_points_earned: (currentPoints) + points,
+                    total_points_earned: newTotalEarned,
                 })
                 .eq("id", targetId);
 
@@ -315,20 +329,20 @@ export default function AdminUsersTab({
                 throw new Error("포인트 지급 실패: " + updateError.message);
             }
 
-            // 2. 관리자 UI 로컬 상태 업데이트
+            // 3. 관리자 UI 로컬 상태 업데이트
             onUpdateUsers(prev =>
                 prev.map(u =>
                     u.id === targetId ? { ...u, points: newPoints } : u
                 )
             );
 
-            // 3. 본인에게 지급한 경우 AuthContext 포인트 갱신
+            // 4. 본인에게 지급한 경우 AuthContext 포인트 갱신
             if (targetId === currentUserId) {
                 await refreshPoints();
             }
 
             toast.success(
-                `${pointsModalUser.user_metadata?.nickname || pointsModalUser.email}에게 ${points.toLocaleString()}P 지급 완료! (총 ${newPoints.toLocaleString()}P)`
+                `${pointsModalUser.user_metadata?.nickname || pointsModalUser.email}에게 ${awardAmount.toLocaleString()}P 지급 완료! (총 ${newPoints.toLocaleString()}P)`
             );
             setPointsModalUser(null);
         } catch (err) {
