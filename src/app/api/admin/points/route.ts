@@ -4,21 +4,14 @@
  *
  * 보안: 세션 기반 인증 + 관리자 권한 검증
  * DB: increment_user_points RPC (SECURITY DEFINER)로 원자적 처리
+ *     → RPC가 SECURITY DEFINER이므로 anon key로도 동작
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import { getAuthUser } from "@/lib/supabase-server";
+import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
 import { ADMIN_EMAILS } from "@/config/constants";
 
 export const dynamic = "force-dynamic";
-
-function getServiceSupabase() {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!url || !key) throw new Error("Supabase 환경변수 없음 (SERVICE_ROLE_KEY 필요)");
-    return createClient(url, key);
-}
 
 export async function POST(request: NextRequest) {
     try {
@@ -32,7 +25,7 @@ export async function POST(request: NextRequest) {
         }
 
         // 2. 관리자 권한 확인 (이메일 하드코딩 + DB is_admin)
-        const supabase = getServiceSupabase();
+        const supabase = await createServerSupabase();
 
         const isEmailAdmin = ADMIN_EMAILS.includes(adminUser.email || "");
         let isDbAdmin = false;
@@ -75,7 +68,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 4. RPC로 포인트 지급 (원자적 처리 + 트랜잭션 기록)
+        // 4. RPC로 포인트 지급 (SECURITY DEFINER → RLS 무관)
         const metadata = {
             awarded_by: adminUser.id,
             awarded_by_email: adminUser.email || "",
@@ -86,27 +79,38 @@ export async function POST(request: NextRequest) {
             p_user_id: targetUserId,
             p_action_type: "admin_award",
             p_points: points,
-            p_daily_cap: null,      // 관리자 지급은 일일 제한 없음
-            p_one_time: false,      // 중복 지급 허용
-            p_metadata: JSON.stringify(metadata),
+            p_daily_cap: null,
+            p_one_time: false,
+            p_metadata: metadata,  // JSONB → 객체 그대로 전달
         });
 
         if (error) {
-            console.error("[Admin Points] RPC 에러:", error.message);
+            console.error("[Admin Points] RPC 에러:", error.message, error);
             return NextResponse.json(
-                { error: "포인트 지급에 실패했습니다: " + error.message },
+                { error: "포인트 지급 실패: " + error.message },
                 { status: 500 }
+            );
+        }
+
+        // RPC가 JSONB 반환: { success, points, total_earned, earned }
+        const result = typeof data === "string" ? JSON.parse(data) : data;
+
+        if (result?.success === false) {
+            return NextResponse.json(
+                { error: `포인트 지급 실패: ${result.reason || "알 수 없는 오류"}` },
+                { status: 400 }
             );
         }
 
         return NextResponse.json({
             success: true,
             awarded: points,
-            newTotal: data?.points || 0,
+            newTotal: result?.points ?? 0,
             targetUserId,
         });
     } catch (err) {
         console.error("[Admin Points] 서버 오류:", err);
-        return NextResponse.json({ error: "서버 오류" }, { status: 500 });
+        const message = err instanceof Error ? err.message : "서버 오류";
+        return NextResponse.json({ error: message }, { status: 500 });
     }
 }
