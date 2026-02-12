@@ -291,49 +291,38 @@ export default function AdminUsersTab({
     };
 
     // ========================================================================
-    // 포인트 지급 (클라이언트 → Supabase RPC 직접 호출)
+    // 포인트 지급 (profiles 테이블 직접 UPDATE — RPC 의존 제거)
     // ========================================================================
     const awardPoints = async (points: number, reason: string) => {
         if (!pointsModalUser) return;
 
         const targetId = pointsModalUser.id;
-        let newPoints = (pointsModalUser.points ?? 0) + points;
+        const currentPoints = pointsModalUser.points ?? 0;
+        const newPoints = currentPoints + points;
 
         try {
-            const { data: rpcData, error: rpcError } = await supabase.rpc(
-                "increment_user_points",
-                {
-                    p_user_id: targetId,
-                    p_action_type: "admin_award",
-                    p_points: points,
-                    p_daily_cap: null,
-                    p_is_one_time: false,
-                    p_metadata: {
-                        awarded_by: currentUserId,
-                        reason: reason || "관리자 지급",
-                    },
-                }
-            );
+            // 1. profiles 직접 업데이트
+            const { error: updateError } = await supabase
+                .from("profiles")
+                .update({
+                    points: newPoints,
+                    total_points_earned: (currentPoints) + points,
+                })
+                .eq("id", targetId);
 
-            if (rpcError) {
-                console.error("[Admin Points] RPC 실패:", rpcError);
-                throw new Error("포인트 지급 실패: " + rpcError.message);
+            if (updateError) {
+                console.error("[Admin Points] UPDATE 실패:", updateError);
+                throw new Error("포인트 지급 실패: " + updateError.message);
             }
 
-            const result = typeof rpcData === "string" ? JSON.parse(rpcData) : rpcData;
-            if (result?.success === false) {
-                throw new Error("포인트 지급 실패: " + (result.reason || "알 수 없는 오류"));
-            }
-            newPoints = result?.points ?? newPoints;
-
-            // 관리자 UI 로컬 상태 업데이트
+            // 2. 관리자 UI 로컬 상태 업데이트
             onUpdateUsers(prev =>
                 prev.map(u =>
                     u.id === targetId ? { ...u, points: newPoints } : u
                 )
             );
 
-            // 본인에게 지급한 경우 AuthContext 포인트 갱신
+            // 3. 본인에게 지급한 경우 AuthContext 포인트 갱신
             if (targetId === currentUserId) {
                 await refreshPoints();
             }
