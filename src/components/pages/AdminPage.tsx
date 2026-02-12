@@ -32,7 +32,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
-import { isAdmin } from "@/types";
+// isAdmin은 더 이상 사용하지 않음 - AuthContext의 isAdminUser 사용
 import { toast } from "sonner";
 
 // UI 컴포넌트
@@ -80,8 +80,7 @@ const TABS: { id: AdminTab; label: string; icon: typeof LayoutDashboard }[] = [
 // ============================================================================
 
 export default function AdminPage() {
-    const { user } = useAuth();
-    const isAdminUser = isAdmin(user?.email);
+    const { user, isAdminUser } = useAuth();
 
     // 현재 활성 탭
     const [activeTab, setActiveTab] = useState<AdminTab>("dashboard");
