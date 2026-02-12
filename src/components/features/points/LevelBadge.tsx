@@ -67,7 +67,7 @@ export default function LevelBadge({
                 )}>
                     <Image
                         src={level.icon}
-                        alt={level.name}
+                        alt={`Lv.${level.level}`}
                         width={px}
                         height={px}
                         className="w-full h-full object-cover"

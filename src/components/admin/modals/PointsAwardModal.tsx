@@ -163,7 +163,7 @@ export function PointsAwardModal({ user, onClose, onAward }: PointsAwardModalPro
                             <div className="flex flex-col items-center gap-1">
                                 <Image
                                     src={currentLevel.icon}
-                                    alt={currentLevel.name}
+                                    alt={`Lv.${currentLevel.level}`}
                                     width={36}
                                     height={36}
                                     className="rounded-full"
@@ -180,7 +180,7 @@ export function PointsAwardModal({ user, onClose, onAward }: PointsAwardModalPro
                             <div className="flex flex-col items-center gap-1">
                                 <Image
                                     src={afterLevel.icon}
-                                    alt={afterLevel.name}
+                                    alt={`Lv.${afterLevel.level}`}
                                     width={36}
                                     height={36}
                                     className="rounded-full"

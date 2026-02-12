@@ -167,7 +167,7 @@ export default function PointsHistoryModal({ open, onClose }: PointsHistoryModal
                             <div className="w-8 h-8 rounded-lg overflow-hidden bg-white/80 dark:bg-gray-800 shadow-sm flex items-center justify-center">
                                 <Image
                                     src={currentLevel.icon}
-                                    alt={currentLevel.name}
+                                    alt={`Lv.${currentLevel.level}`}
                                     width={28}
                                     height={28}
                                     unoptimized
@@ -216,7 +216,7 @@ export default function PointsHistoryModal({ open, onClose }: PointsHistoryModal
                                         )}>
                                             <Image
                                                 src={lvl.icon}
-                                                alt={lvl.name}
+                                                alt={`Lv.${lvl.level}`}
                                                 width={36}
                                                 height={36}
                                                 unoptimized
