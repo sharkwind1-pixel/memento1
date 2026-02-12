@@ -103,7 +103,7 @@ export default function LevelBadge({
 }
 
 // 사이드바용 등급 상세 표시 (프로그레스바 포함)
-export function LevelProgress({ points }: { points: number }) {
+export function LevelProgress({ points, nickname }: { points: number; nickname?: string }) {
     const level = getPointLevel(points);
     const { nextLevel, remaining, progress } = getNextLevelInfo(points);
 
@@ -113,11 +113,11 @@ export function LevelProgress({ points }: { points: number }) {
                 <div className="flex items-center gap-1.5">
                     <LevelBadge points={points} size="md" showTooltip={false} />
                     <span className={cn("text-xs font-bold", level.textColor)}>
-                        {level.name}
+                        {nickname || level.name}
                     </span>
                 </div>
                 <span className="text-[10px] text-gray-400">
-                    Lv.{level.level}
+                    Lv.{level.level} {level.name}
                 </span>
             </div>
             {nextLevel && (
