@@ -8,7 +8,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import {
     Card,
     CardContent,
@@ -40,6 +40,7 @@ import { TabType } from "@/types";
 import { bestPosts, memorialCards } from "@/data/posts";
 import { usePetImages } from "@/hooks/usePetImages";
 import { useSmoothAutoScroll } from "@/hooks/useSmoothAutoScroll";
+import { getPublicMemorialPosts, MemorialPost } from "@/lib/memorialService";
 import { EmotionalTrueFocus } from "@/components/ui/TrueFocus";
 import { TileGallery } from "@/components/features/home";
 import type { LightboxItem, CommunityPost, Comment } from "@/components/features/home";
@@ -82,6 +83,10 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
 
     const [showAdoptionTile, setShowAdoptionTile] = useState(true);
     const [lightboxItem, setLightboxItem] = useState<LightboxItem | null>(null);
+
+    // 공개 추모글 상태 (DB에서 가져온 실제 데이터)
+    const [publicMemorialPosts, setPublicMemorialPosts] = useState<MemorialPost[]>([]);
+    const [isLoadingMemorial, setIsLoadingMemorial] = useState(true);
 
     // 좋아요 상태 관리 (postId -> liked)
     const [likedPosts, setLikedPosts] = useState<Record<number, boolean>>({});
@@ -142,6 +147,24 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // 공개 추모글 가져오기
+    const fetchPublicMemorialPosts = useCallback(async () => {
+        setIsLoadingMemorial(true);
+        try {
+            const posts = await getPublicMemorialPosts(10);
+            setPublicMemorialPosts(posts);
+        } catch (error) {
+            console.error("공개 추모글 로딩 실패:", error);
+            // 실패 시 빈 배열 유지 (목업 데이터로 폴백됨)
+        } finally {
+            setIsLoadingMemorial(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchPublicMemorialPosts();
+    }, [fetchPublicMemorialPosts]);
+
     const adoptionTileItems = useMemo<LightboxItem[]>(() => {
         return bestPosts.adoption
             .map((pet, index) => {
@@ -175,6 +198,37 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
             })
             .filter(Boolean) as LightboxItem[];
     }, [petImages]);
+
+    // 추모 섹션에 표시할 데이터 (DB 데이터 우선, 없으면 목업 폴백)
+    const displayMemorialData = useMemo(() => {
+        if (publicMemorialPosts.length > 0) {
+            return publicMemorialPosts.map((post) => ({
+                id: post.id,
+                name: post.petName,
+                pet: post.petType,
+                years: post.petYears || "",
+                message: post.title,
+                content: post.content,
+                image: post.petImage,
+                likesCount: post.likesCount,
+                commentsCount: post.commentsCount,
+                isFromDB: true,
+            }));
+        }
+        // 목업 데이터로 폴백
+        return memorialCards.map((m, idx) => ({
+            id: `mock-${idx}`,
+            name: m.name,
+            pet: m.pet,
+            years: m.years,
+            message: m.message,
+            content: "",
+            image: (petImages as Record<string, unknown>)[m.name] as string | undefined,
+            likesCount: (idx * 13 + 24) % 50 + 15,
+            commentsCount: (idx * 7 + 5) % 20 + 3,
+            isFromDB: false,
+        }));
+    }, [publicMemorialPosts, petImages]);
 
     return (
         <div
@@ -589,85 +643,105 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                         ref={scroll.memorialScrollRef}
                         className="flex gap-4 overflow-x-auto pb-4 px-4 -mx-4 scrollbar-hide carousel-touch"
                     >
-                        {memorialCards.map((m, i) => {
-                            const src = safeStringSrc(
-                                (petImages as Record<string, unknown>)[m.name],
-                            );
-                            return (
+                        {isLoadingMemorial ? (
+                            // 로딩 스켈레톤
+                            Array.from({ length: 3 }).map((_, i) => (
                                 <Card
-                                    key={i}
-                                    className="min-w-[260px] sm:min-w-72 flex-shrink-0 bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/30 dark:to-purple-900/30 border-violet-100 dark:border-violet-800/50 rounded-2xl overflow-hidden shadow-sm will-change-transform"
+                                    key={`skeleton-${i}`}
+                                    className="min-w-[260px] sm:min-w-72 flex-shrink-0 bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/30 dark:to-purple-900/30 border-violet-100 dark:border-violet-800/50 rounded-2xl overflow-hidden shadow-sm animate-pulse"
                                 >
-                                    <CardHeader className="p-0 relative">
-                                        {src ? (
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    setLightboxItem({
-                                                        title: m.name,
-                                                        subtitle: `${m.pet} · ${m.years}`,
-                                                        meta: m.message,
-                                                        src,
-                                                    })
-                                                }
-                                                className="w-full"
-                                            >
-                                                <img
-                                                    src={src}
-                                                    alt={m.name}
-                                                    className="w-full h-48 object-cover"
-                                                    loading="lazy"
-                                                    referrerPolicy="no-referrer"
-                                                />
-                                            </button>
-                                        ) : (
-                                            <div className="w-full h-48 bg-gradient-to-br from-violet-200 to-purple-200 dark:from-violet-800 dark:to-purple-800 flex items-center justify-center">
-                                                {(() => {
-                                                    const PetIcon = getPetIcon(m.pet);
-                                                    return <PetIcon className="w-16 h-16 text-violet-500/60" />;
-                                                })()}
-                                            </div>
-                                        )}
-                                        {/* 오버레이 그라데이션 */}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-                                        {/* 이름 태그 */}
-                                        <div className="absolute bottom-3 left-3 flex items-center gap-2">
-                                            <Badge className="bg-white/90 text-violet-700 font-medium">
-                                                {m.pet}
-                                            </Badge>
-                                        </div>
-                                    </CardHeader>
+                                    <div className="w-full h-48 bg-violet-200 dark:bg-violet-800" />
                                     <CardContent className="p-4">
-                                        <div className="flex items-start justify-between mb-2">
-                                            <div>
-                                                <h4 className="font-bold text-gray-800 dark:text-white">
-                                                    {m.name}
-                                                </h4>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                    {m.years}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 mb-3">
-                                            &ldquo;{m.message}&rdquo;
-                                        </p>
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3 text-sm text-gray-500">
-                                                <span className="flex items-center gap-1">
-                                                    <Heart className="w-4 h-4 text-pink-400" />
-                                                    {(i * 13 + 24) % 50 + 15}
-                                                </span>
-                                                <span className="flex items-center gap-1">
-                                                    <MessageCircle className="w-4 h-4" />
-                                                    {(i * 7 + 5) % 20 + 3}
-                                                </span>
-                                            </div>
-                                            <span className="text-xs text-violet-500">함께 기억해요</span>
-                                        </div>
+                                        <div className="h-5 bg-violet-200 dark:bg-violet-700 rounded w-2/3 mb-2" />
+                                        <div className="h-4 bg-violet-100 dark:bg-violet-800 rounded w-1/3 mb-3" />
+                                        <div className="h-4 bg-violet-100 dark:bg-violet-800 rounded w-full" />
                                     </CardContent>
                                 </Card>
-                            );
-                        })}
+                            ))
+                        ) : (
+                            displayMemorialData.map((m, i) => {
+                                const src = safeStringSrc(m.image);
+                                return (
+                                    <Card
+                                        key={m.id}
+                                        className="min-w-[260px] sm:min-w-72 flex-shrink-0 bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/30 dark:to-purple-900/30 border-violet-100 dark:border-violet-800/50 rounded-2xl overflow-hidden shadow-sm will-change-transform"
+                                    >
+                                        <CardHeader className="p-0 relative">
+                                            {src ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setLightboxItem({
+                                                            title: m.name,
+                                                            subtitle: `${m.pet} · ${m.years}`,
+                                                            meta: m.message,
+                                                            src,
+                                                        })
+                                                    }
+                                                    className="w-full"
+                                                >
+                                                    <img
+                                                        src={src}
+                                                        alt={m.name}
+                                                        className="w-full h-48 object-cover"
+                                                        loading="lazy"
+                                                        referrerPolicy="no-referrer"
+                                                    />
+                                                </button>
+                                            ) : (
+                                                <div className="w-full h-48 bg-gradient-to-br from-violet-200 to-purple-200 dark:from-violet-800 dark:to-purple-800 flex items-center justify-center">
+                                                    {(() => {
+                                                        const PetIcon = getPetIcon(m.pet);
+                                                        return <PetIcon className="w-16 h-16 text-violet-500/60" />;
+                                                    })()}
+                                                </div>
+                                            )}
+                                            {/* 오버레이 그라데이션 */}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                                            {/* 이름 태그 */}
+                                            <div className="absolute bottom-3 left-3 flex items-center gap-2">
+                                                <Badge className="bg-white/90 text-violet-700 font-medium">
+                                                    {m.pet}
+                                                </Badge>
+                                                {m.isFromDB && (
+                                                    <Badge className="bg-violet-500/90 text-white text-xs">
+                                                        공개
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                        </CardHeader>
+                                        <CardContent className="p-4">
+                                            <div className="flex items-start justify-between mb-2">
+                                                <div>
+                                                    <h4 className="font-bold text-gray-800 dark:text-white">
+                                                        {m.name}
+                                                    </h4>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                        {m.years}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 mb-3">
+                                                &ldquo;{m.message}&rdquo;
+                                            </p>
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3 text-sm text-gray-500">
+                                                    <span className="flex items-center gap-1">
+                                                        <Heart className="w-4 h-4 text-pink-400" />
+                                                        {m.likesCount}
+                                                    </span>
+                                                    <span className="flex items-center gap-1">
+                                                        <MessageCircle className="w-4 h-4" />
+                                                        {m.commentsCount}
+                                                    </span>
+                                                </div>
+                                                <span className="text-xs text-violet-500">함께 기억해요</span>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                );
+                            })
+                        )}
                     </div>
                 </section>
             </div>
