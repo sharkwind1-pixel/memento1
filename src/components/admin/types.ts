@@ -128,6 +128,7 @@ export interface UserRow {
     premium_started_at?: string;         // 프리미엄 시작일
     premium_expires_at?: string;         // 프리미엄 만료일
     premium_plan?: string;               // 프리미엄 플랜 종류
+    points?: number;                     // 보유 포인트
 }
 
 // ============================================================================

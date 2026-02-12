@@ -31,9 +31,12 @@ import {
     RotateCcw,
     Clock,
     Users,
+    Star,
 } from "lucide-react";
-import { UserRow, WithdrawalType } from "../types";
+import { UserRow } from "../types";
 import { PremiumModal } from "../modals/PremiumModal";
+import { PointsAwardModal } from "../modals/PointsAwardModal";
+import LevelBadge from "@/components/features/points/LevelBadge";
 
 // ============================================================================
 // Props 타입 정의
@@ -69,6 +72,7 @@ export default function AdminUsersTab({
     // 로컬 상태
     const [searchQuery, setSearchQuery] = useState("");
     const [premiumModalUser, setPremiumModalUser] = useState<UserRow | null>(null);
+    const [pointsModalUser, setPointsModalUser] = useState<UserRow | null>(null);
 
     // ========================================================================
     // 유저 밴/해제
@@ -283,6 +287,42 @@ export default function AdminUsersTab({
     };
 
     // ========================================================================
+    // 포인트 지급
+    // ========================================================================
+    const awardPoints = async (points: number, reason: string) => {
+        if (!pointsModalUser) return;
+
+        try {
+            // profiles 테이블의 points 컬럼 직접 업데이트
+            const currentPoints = pointsModalUser.points ?? 0;
+            const newPoints = currentPoints + points;
+
+            const { error } = await supabase
+                .from("profiles")
+                .update({ points: newPoints })
+                .eq("id", pointsModalUser.id);
+
+            if (error) throw error;
+
+            // 로컬 상태 업데이트
+            onUpdateUsers(prev =>
+                prev.map(u =>
+                    u.id === pointsModalUser.id
+                        ? { ...u, points: newPoints }
+                        : u
+                )
+            );
+
+            toast.success(
+                `${pointsModalUser.user_metadata?.nickname || pointsModalUser.email}에게 ${points.toLocaleString()}P 지급 완료! (총 ${newPoints.toLocaleString()}P)`
+            );
+            setPointsModalUser(null);
+        } catch {
+            toast.error("포인트 지급에 실패했습니다.");
+        }
+    };
+
+    // ========================================================================
     // 필터링된 유저 목록
     // ========================================================================
     const filteredUsers = users.filter(
@@ -334,6 +374,7 @@ export default function AdminUsersTab({
                                     onOpenPremiumModal={() => setPremiumModalUser(u)}
                                     onRevokePremium={() => revokePremium(u)}
                                     onOpenWithdrawalModal={() => onOpenWithdrawalModal(u)}
+                                    onOpenPointsModal={() => setPointsModalUser(u)}
                                 />
                             ))}
                         </div>
@@ -347,6 +388,15 @@ export default function AdminUsersTab({
                     user={premiumModalUser}
                     onClose={() => setPremiumModalUser(null)}
                     onGrant={grantPremium}
+                />
+            )}
+
+            {/* 포인트 지급 모달 */}
+            {pointsModalUser && (
+                <PointsAwardModal
+                    user={pointsModalUser}
+                    onClose={() => setPointsModalUser(null)}
+                    onAward={awardPoints}
                 />
             )}
         </div>
@@ -365,6 +415,7 @@ interface UserCardProps {
     onOpenPremiumModal: () => void;
     onRevokePremium: () => void;
     onOpenWithdrawalModal: () => void;
+    onOpenPointsModal: () => void;
 }
 
 function UserCard({
@@ -375,6 +426,7 @@ function UserCard({
     onOpenPremiumModal,
     onRevokePremium,
     onOpenWithdrawalModal,
+    onOpenPointsModal,
 }: UserCardProps) {
     return (
         <div
@@ -416,12 +468,20 @@ function UserCard({
                 </span>
             </div>
 
-            {/* 닉네임 */}
-            {user.user_metadata?.nickname && (
-                <p className="text-sm text-gray-500 mb-2">
-                    닉네임: {user.user_metadata.nickname}
-                </p>
-            )}
+            {/* 닉네임 + 등급 */}
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
+                {user.user_metadata?.nickname && (
+                    <span className="text-sm text-gray-500">
+                        닉네임: {user.user_metadata.nickname}
+                    </span>
+                )}
+                <span className="flex items-center gap-1">
+                    <LevelBadge points={user.points ?? 0} size="md" showName />
+                    <span className="text-xs text-gray-400 ml-1">
+                        ({(user.points ?? 0).toLocaleString()}P)
+                    </span>
+                </span>
+            </div>
 
             {/* 프리미엄 만료일 */}
             {user.is_premium && user.premium_expires_at && (
@@ -478,6 +538,17 @@ function UserCard({
                         프리미엄 부여
                     </Button>
                 )}
+
+                {/* 포인트 지급 */}
+                <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-sky-600 border-sky-300 hover:bg-sky-50"
+                    onClick={onOpenPointsModal}
+                >
+                    <Star className="w-3 h-3 mr-1" />
+                    포인트 지급
+                </Button>
 
                 {/* 온보딩 리셋 */}
                 <Button
