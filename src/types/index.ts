@@ -474,7 +474,8 @@ export type PointAction =
     | "ai_chat"
     | "pet_registration"
     | "timeline_entry"
-    | "photo_upload";
+    | "photo_upload"
+    | "admin_award";
 
 /** 포인트 거래 기록 */
 export interface PointTransaction {

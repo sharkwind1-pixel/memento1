@@ -17,6 +17,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -69,6 +70,9 @@ export default function AdminUsersTab({
     onRefreshStats,
     currentUserId,
 }: AdminUsersTabProps) {
+    // Auth context (포인트 갱신용)
+    const { refreshPoints } = useAuth();
+
     // 로컬 상태
     const [searchQuery, setSearchQuery] = useState("");
     const [premiumModalUser, setPremiumModalUser] = useState<UserRow | null>(null);
@@ -287,24 +291,31 @@ export default function AdminUsersTab({
     };
 
     // ========================================================================
-    // 포인트 지급
+    // 포인트 지급 (서버 API 경유 → RPC 원자적 처리)
     // ========================================================================
     const awardPoints = async (points: number, reason: string) => {
         if (!pointsModalUser) return;
 
         try {
-            // profiles 테이블의 points 컬럼 직접 업데이트
-            const currentPoints = pointsModalUser.points ?? 0;
-            const newPoints = currentPoints + points;
+            const res = await fetch("/api/admin/points", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    targetUserId: pointsModalUser.id,
+                    points,
+                    reason,
+                }),
+            });
 
-            const { error } = await supabase
-                .from("profiles")
-                .update({ points: newPoints })
-                .eq("id", pointsModalUser.id);
+            const data = await res.json();
 
-            if (error) throw error;
+            if (!res.ok) {
+                throw new Error(data.error || "포인트 지급 실패");
+            }
 
-            // 로컬 상태 업데이트
+            const newPoints = data.newTotal ?? ((pointsModalUser.points ?? 0) + points);
+
+            // 관리자 UI 로컬 상태 업데이트
             onUpdateUsers(prev =>
                 prev.map(u =>
                     u.id === pointsModalUser.id
@@ -313,12 +324,17 @@ export default function AdminUsersTab({
                 )
             );
 
+            // 본인에게 지급한 경우 AuthContext의 포인트도 갱신
+            if (pointsModalUser.id === currentUserId) {
+                await refreshPoints();
+            }
+
             toast.success(
                 `${pointsModalUser.user_metadata?.nickname || pointsModalUser.email}에게 ${points.toLocaleString()}P 지급 완료! (총 ${newPoints.toLocaleString()}P)`
             );
             setPointsModalUser(null);
-        } catch {
-            toast.error("포인트 지급에 실패했습니다.");
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : "포인트 지급에 실패했습니다.");
         }
     };
 

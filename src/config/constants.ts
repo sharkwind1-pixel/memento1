@@ -63,6 +63,7 @@ export const POINTS = {
         pet_registration: 50,
         timeline_entry: 5,
         photo_upload: 3,
+        admin_award: 0,     // 관리자 지급 (금액은 API에서 동적 지정)
     } as const,
 
     /** 일일 상한선 (null = 무제한) */
@@ -75,6 +76,7 @@ export const POINTS = {
         pet_registration: null,
         timeline_entry: 10,
         photo_upload: 10,
+        admin_award: null,  // 관리자 지급은 제한 없음
     } as const,
 
     /** 일회성 활동 (평생 1회만) */
@@ -90,6 +92,7 @@ export const POINTS = {
         pet_registration: "반려동물 등록",
         timeline_entry: "타임라인 기록",
         photo_upload: "사진 업로드",
+        admin_award: "관리자 지급",
     } as const,
 
     /** 페이지네이션 */
