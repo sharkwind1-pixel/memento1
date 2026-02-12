@@ -53,11 +53,24 @@ export default function LeaderboardModal({ open, onClose }: LeaderboardModalProp
     const fetchLeaderboard = async () => {
         try {
             setLoading(true);
-            const { authFetch } = await import("@/lib/auth-fetch");
-            const res = await authFetch("/api/points/leaderboard");
-            if (!res.ok) return;
-            const data = await res.json();
-            setLeaderboard(data.leaderboard || []);
+            const { supabase } = await import("@/lib/supabase");
+
+            const { data, error } = await supabase
+                .from("profiles")
+                .select("id, nickname, points")
+                .gt("points", 0)
+                .order("points", { ascending: false })
+                .limit(100);
+
+            if (error || !data) return;
+
+            const mapped: LeaderboardEntry[] = data.map((p, idx) => ({
+                userId: p.id,
+                nickname: p.nickname || "익명",
+                points: p.points || 0,
+                rank: idx + 1,
+            }));
+            setLeaderboard(mapped);
         } catch {
             // 조회 실패
         } finally {

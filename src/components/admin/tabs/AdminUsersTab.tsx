@@ -291,64 +291,40 @@ export default function AdminUsersTab({
     };
 
     // ========================================================================
-    // 포인트 지급 (API 우선 → 실패 시 클라이언트 RPC fallback)
+    // 포인트 지급 (클라이언트 → Supabase RPC 직접 호출)
     // ========================================================================
     const awardPoints = async (points: number, reason: string) => {
         if (!pointsModalUser) return;
 
         const targetId = pointsModalUser.id;
-        const currentPoints = pointsModalUser.points ?? 0;
-        let newPoints = currentPoints + points;
+        let newPoints = (pointsModalUser.points ?? 0) + points;
 
         try {
-            // 방법 1: 서버 API 경유 (authFetch로 인증 토큰 자동 첨부)
-            let apiSuccess = false;
-            try {
-                const { authFetch } = await import("@/lib/auth-fetch");
-                const res = await authFetch("/api/admin/points", {
-                    method: "POST",
-                    body: JSON.stringify({ targetUserId: targetId, points, reason }),
-                });
-                const data = await res.json();
-                if (res.ok && data.success) {
-                    newPoints = data.newTotal ?? newPoints;
-                    apiSuccess = true;
-                } else {
-                    console.warn("[Admin Points] API 실패:", data.error);
+            const { data: rpcData, error: rpcError } = await supabase.rpc(
+                "increment_user_points",
+                {
+                    p_user_id: targetId,
+                    p_action_type: "admin_award",
+                    p_points: points,
+                    p_daily_cap: null,
+                    p_is_one_time: false,
+                    p_metadata: {
+                        awarded_by: currentUserId,
+                        reason: reason || "관리자 지급",
+                    },
                 }
-            } catch (apiErr) {
-                console.warn("[Admin Points] API 호출 에러:", apiErr);
+            );
+
+            if (rpcError) {
+                console.error("[Admin Points] RPC 실패:", rpcError);
+                throw new Error("포인트 지급 실패: " + rpcError.message);
             }
 
-            // 방법 2: 클라이언트 RPC fallback
-            if (!apiSuccess) {
-                console.log("[Admin Points] Fallback: 클라이언트 RPC 직접 호출");
-                const { data: rpcData, error: rpcError } = await supabase.rpc(
-                    "increment_user_points",
-                    {
-                        p_user_id: targetId,
-                        p_action_type: "admin_award",
-                        p_points: points,
-                        p_daily_cap: null,
-                        p_is_one_time: false,
-                        p_metadata: {
-                            awarded_by: currentUserId,
-                            reason: reason || "관리자 지급",
-                        },
-                    }
-                );
-
-                if (rpcError) {
-                    console.error("[Admin Points] RPC도 실패:", rpcError);
-                    throw new Error("포인트 지급 실패: " + rpcError.message);
-                }
-
-                const result = typeof rpcData === "string" ? JSON.parse(rpcData) : rpcData;
-                if (result?.success === false) {
-                    throw new Error("포인트 지급 실패: " + (result.reason || "알 수 없는 오류"));
-                }
-                newPoints = result?.points ?? newPoints;
+            const result = typeof rpcData === "string" ? JSON.parse(rpcData) : rpcData;
+            if (result?.success === false) {
+                throw new Error("포인트 지급 실패: " + (result.reason || "알 수 없는 오류"));
             }
+            newPoints = result?.points ?? newPoints;
 
             // 관리자 UI 로컬 상태 업데이트
             onUpdateUsers(prev =>

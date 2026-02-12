@@ -109,32 +109,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
-    // 포인트 조회
+    // 포인트 조회 (서버 API 우회 → Supabase RPC 직접 호출)
     const refreshPoints = useCallback(async () => {
         try {
-            const { authFetch } = await import("@/lib/auth-fetch");
-            const res = await authFetch("/api/points");
-            if (!res.ok) return;
-            const data = await res.json();
-            setPoints(data.points || 0);
-            setRank(data.rank || 0);
+            const { data: { user: currentUser } } = await supabase.auth.getUser();
+            if (!currentUser) return;
+
+            const { data, error } = await supabase.rpc("get_user_points_with_rank", {
+                p_user_id: currentUser.id,
+            });
+
+            if (error) {
+                // RPC 실패 시 profiles 직접 조회 (fallback)
+                const { data: profile } = await supabase
+                    .from("profiles")
+                    .select("points")
+                    .eq("id", currentUser.id)
+                    .single();
+                setPoints(profile?.points || 0);
+                return;
+            }
+
+            const result = typeof data === "string" ? JSON.parse(data) : data;
+            setPoints(result?.points || 0);
+            setRank(result?.rank || 0);
         } catch {
             // 포인트 조회 실패해도 앱 사용에 영향 없음
         }
     }, []);
 
-    // 출석 체크
+    // 출석 체크 (서버 API 우회 → Supabase RPC 직접 호출)
     const checkDailyLogin = useCallback(async () => {
         try {
             const today = new Date().toISOString().split("T")[0];
             const lastCheck = localStorage.getItem("lastDailyCheck");
             if (lastCheck === today) return;
 
-            const { authFetch } = await import("@/lib/auth-fetch");
-            const res = await authFetch("/api/points/daily-check", { method: "POST" });
-            if (res.ok) {
-                localStorage.setItem("lastDailyCheck", today);
-                await refreshPoints();
+            const { data: { user: currentUser } } = await supabase.auth.getUser();
+            if (!currentUser) return;
+
+            const { data, error } = await supabase.rpc("daily_login_check", {
+                p_user_id: currentUser.id,
+            });
+
+            if (!error && data) {
+                const result = typeof data === "string" ? JSON.parse(data) : data;
+                if (result?.success) {
+                    localStorage.setItem("lastDailyCheck", today);
+                    await refreshPoints();
+                }
             }
         } catch {
             // 출석 체크 실패해도 앱 사용에 영향 없음

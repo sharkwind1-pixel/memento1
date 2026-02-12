@@ -63,17 +63,34 @@ export default function PointsHistoryModal({ open, onClose }: PointsHistoryModal
     const fetchHistory = useCallback(async (currentOffset: number) => {
         try {
             setLoading(true);
-            const { authFetch } = await import("@/lib/auth-fetch");
-            const res = await authFetch(`/api/points/history?offset=${currentOffset}&limit=20`);
-            if (!res.ok) return;
-            const data = await res.json();
+            const { supabase } = await import("@/lib/supabase");
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const { data, error } = await supabase
+                .from("point_transactions")
+                .select("id, action_type, points_earned, metadata, created_at")
+                .eq("user_id", user.id)
+                .order("created_at", { ascending: false })
+                .range(currentOffset, currentOffset + 19);
+
+            if (error || !data) return;
+
+            const mapped: PointTransaction[] = data.map((tx) => ({
+                id: tx.id,
+                userId: user.id,
+                actionType: tx.action_type as PointAction,
+                pointsEarned: tx.points_earned,
+                metadata: tx.metadata,
+                createdAt: tx.created_at,
+            }));
 
             if (currentOffset === 0) {
-                setTransactions(data.transactions || []);
+                setTransactions(mapped);
             } else {
-                setTransactions(prev => [...prev, ...(data.transactions || [])]);
+                setTransactions(prev => [...prev, ...mapped]);
             }
-            setHasMore(data.hasMore || false);
+            setHasMore(data.length === 20);
         } catch {
             // 조회 실패
         } finally {

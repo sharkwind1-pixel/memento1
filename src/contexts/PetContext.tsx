@@ -26,13 +26,26 @@ import {
 } from "@/lib/storage";
 import type { PointAction } from "@/types";
 
-// 클라이언트에서 포인트 적립 요청 (비동기, 실패해도 무시)
+// 클라이언트에서 포인트 적립 (Supabase RPC 직접 호출, 실패해도 무시)
 async function requestPointAward(actionType: PointAction, metadata?: Record<string, string>) {
     try {
-        const { authFetch } = await import("@/lib/auth-fetch");
-        await authFetch("/api/points/award", {
-            method: "POST",
-            body: JSON.stringify({ actionType, metadata }),
+        const { supabase } = await import("@/lib/supabase");
+        const { POINTS } = await import("@/config/constants");
+
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const points = POINTS.ACTIONS[actionType];
+        const dailyCap = POINTS.DAILY_CAPS[actionType];
+        const isOneTime = (POINTS.ONE_TIME as readonly string[]).includes(actionType);
+
+        await supabase.rpc("increment_user_points", {
+            p_user_id: user.id,
+            p_action_type: actionType,
+            p_points: points,
+            p_daily_cap: dailyCap,
+            p_is_one_time: isOneTime,
+            p_metadata: metadata || null,
         });
     } catch {
         // 포인트 적립 실패해도 원본 기능에 영향 없음
