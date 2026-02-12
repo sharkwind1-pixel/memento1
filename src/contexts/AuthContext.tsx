@@ -109,31 +109,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
-    // 포인트 조회 (profiles 테이블 직접 SELECT — RLS: 누구나 읽기 가능)
+    // 포인트 조회 (profiles 테이블 직접 SELECT)
     const refreshPoints = useCallback(async () => {
         try {
-            const { data: { user: currentUser } } = await supabase.auth.getUser();
+            const { data: { user: currentUser }, error: authError } = await supabase.auth.getUser();
+            console.log("[refreshPoints] 1. auth:", currentUser?.id, authError?.message);
             if (!currentUser) return;
 
-            // 내 포인트 조회
-            const { data: profile } = await supabase
+            const { data: profile, error: selectError } = await supabase
                 .from("profiles")
                 .select("points")
                 .eq("id", currentUser.id)
                 .single();
 
-            const myPoints = profile?.points || 0;
+            console.log("[refreshPoints] 2. profile:", JSON.stringify(profile), "error:", selectError?.message);
+
+            const myPoints = profile?.points ?? 0;
+            console.log("[refreshPoints] 3. setPoints →", myPoints);
             setPoints(myPoints);
 
-            // 랭킹 계산 (나보다 포인트 높은 사람 수 + 1)
             const { count } = await supabase
                 .from("profiles")
                 .select("id", { count: "exact", head: true })
                 .gt("points", myPoints);
 
             setRank((count || 0) + 1);
-        } catch {
-            // 포인트 조회 실패해도 앱 사용에 영향 없음
+        } catch (err) {
+            console.error("[refreshPoints] catch:", err);
         }
     }, []);
 
