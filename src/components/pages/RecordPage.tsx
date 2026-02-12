@@ -51,6 +51,7 @@ import {
     Bell,
 } from "lucide-react";
 import { FullPageLoading } from "@/components/ui/PawLoading";
+import LevelBadge from "@/components/features/points/LevelBadge";
 
 import { TabType } from "@/types";
 import { FREE_LIMITS } from "@/config/constants";
@@ -415,7 +416,7 @@ function TimelineSection({ petId, petName }: { petId: string; petName: string })
 
 // 메인
 export default function RecordPage({ setSelectedTab }: RecordPageProps) {
-    const { user, loading: authLoading, signOut, updateProfile, isPremiumUser } = useAuth();
+    const { user, loading: authLoading, signOut, updateProfile, isPremiumUser, points } = useAuth();
     const {
         pets,
         selectedPetId,
@@ -766,11 +767,7 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                                 {/* 닉네임 */}
                                 <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#05B2DC] to-[#38BDF8] flex items-center justify-center">
-                                            <span className="text-white font-bold text-lg">
-                                                {nickname?.charAt(0)?.toUpperCase() || "?"}
-                                            </span>
-                                        </div>
+                                        <LevelBadge points={points} size="xl" showTooltip />
                                         <div>
                                             <p className="text-sm text-gray-500 dark:text-gray-400">닉네임</p>
                                             {isEditingNickname ? (

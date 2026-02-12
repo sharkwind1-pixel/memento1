@@ -1068,16 +1068,23 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                                     </div>
                                 )}
                                 <div className="flex items-center justify-center gap-2 mt-2 flex-wrap">
-                                    {/* 남은 횟수 표시 */}
-                                    <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 ${
-                                        remainingChats <= 3
-                                            ? "bg-red-100 text-red-600"
-                                            : remainingChats <= 7
-                                            ? "bg-amber-100 text-amber-600"
-                                            : "bg-sky-100 text-sky-600"
-                                    }`}>
-                                        오늘 {remainingChats}회 남음
-                                    </span>
+                                    {/* 남은 횟수 / 프리미엄 표시 */}
+                                    {isPremium ? (
+                                        <span className="text-xs px-2 py-0.5 rounded-full flex items-center gap-1 bg-violet-100 text-violet-600">
+                                            <Sparkles className="w-3 h-3" />
+                                            프리미엄 회원 — 마음껏 이야기하세요
+                                        </span>
+                                    ) : (
+                                        <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                                            remainingChats <= 3
+                                                ? "bg-red-100 text-red-600"
+                                                : remainingChats <= 7
+                                                ? "bg-amber-100 text-amber-600"
+                                                : "bg-sky-100 text-sky-600"
+                                        }`}>
+                                            오늘 {remainingChats}회 남음
+                                        </span>
+                                    )}
                                     {lastEmotion !== "neutral" && (
                                         <span className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full flex items-center gap-1">
                                             <span>{emotionIcons[lastEmotion] || "😐"}</span>

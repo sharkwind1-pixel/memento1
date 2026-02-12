@@ -46,6 +46,7 @@ import { TileGallery } from "@/components/features/home";
 import type { LightboxItem, CommunityPost, Comment } from "@/components/features/home";
 import PostModal from "@/components/features/home/PostModal";
 import Lightbox from "@/components/features/home/Lightbox";
+import LevelBadge from "@/components/features/points/LevelBadge";
 
 
 
@@ -407,7 +408,12 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                         <h3 className="font-bold text-gray-800 dark:text-white text-base mb-1 line-clamp-2 group-hover:text-[#05B2DC] transition-colors">
                                             {post.title}
                                         </h3>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-1.5">
+                                            <LevelBadge
+                                                points={[500, 10000, 3000, 100000, 30000][idx % 5]}
+                                                size="lg"
+                                                showTooltip={false}
+                                            />
                                             {post.author}님의 이야기
                                         </p>
                                         <div className="flex items-center justify-between">

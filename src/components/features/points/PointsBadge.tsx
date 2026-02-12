@@ -14,6 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { formatPoints } from "@/lib/points";
 import PointsHistoryModal from "./PointsHistoryModal";
 import LeaderboardModal from "./LeaderboardModal";
+import { LevelProgress } from "./LevelBadge";
 
 export default function PointsBadge() {
     const { user, points, rank } = useAuth();
@@ -26,6 +27,9 @@ export default function PointsBadge() {
     return (
         <>
             <div className="px-3 py-3 space-y-2">
+                {/* 등급 프로그레스 */}
+                <LevelProgress points={points} />
+
                 {/* 포인트 표시 */}
                 <button
                     onClick={() => setShowHistory(true)}

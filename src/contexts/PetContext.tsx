@@ -24,6 +24,20 @@ import {
     getMediaType,
     generateVideoThumbnail,
 } from "@/lib/storage";
+import type { PointAction } from "@/types";
+
+// 클라이언트에서 포인트 적립 요청 (비동기, 실패해도 무시)
+async function requestPointAward(actionType: PointAction, metadata?: Record<string, string>) {
+    try {
+        await fetch("/api/points/award", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ actionType, metadata }),
+        });
+    } catch {
+        // 포인트 적립 실패해도 원본 기능에 영향 없음
+    }
+}
 
 // 타입은 @/types에서 import (Single Source of Truth)
 import type {
@@ -278,6 +292,10 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
 
                 setPets((prev) => [...prev, newPet]);
                 setSelectedPetId(data.id);
+
+                // 포인트 적립: 반려동물 등록 (+50P, 일회성)
+                requestPointAward("pet_registration", { petId: data.id });
+
                 return data.id;
             } catch {
                 return "";
@@ -468,6 +486,11 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                             : pet
                     )
                 );
+
+                // 포인트 적립: 사진 업로드 (+3P × 업로드 수, 일일 10회 상한)
+                for (const photo of newPhotos) {
+                    requestPointAward("photo_upload", { photoId: photo.id });
+                }
             }
 
             return newPhotos;
@@ -643,6 +666,10 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                 };
 
                 setTimeline((prev) => [newEntry, ...prev]);
+
+                // 포인트 적립: 타임라인 기록 (+5P)
+                requestPointAward("timeline_entry", { entryId: data.id });
+
                 return newEntry;
             } catch {
                 return null;

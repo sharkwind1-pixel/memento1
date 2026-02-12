@@ -97,6 +97,57 @@ export const POINTS = {
     LEADERBOARD_SIZE: 100,
 } as const;
 
+// ===== 포인트 등급 시스템 =====
+export interface PointLevel {
+    level: number;
+    name: string;
+    minPoints: number;
+    icon: string;          // 아이콘 이미지 경로 (/icons/levels/...)
+    color: string;         // Tailwind gradient from
+    bgColor: string;       // Tailwind gradient to
+    textColor: string;     // 텍스트 색상
+    hasSparkle?: boolean;  // 상위 등급 반짝이 뱃지
+    hasGlow?: boolean;     // 최상위 등급 글로우 효과
+}
+
+export const POINT_LEVELS: PointLevel[] = [
+    { level: 1, name: "새싹 발바닥",   minPoints: 0,       icon: "/icons/levels/level1_maltese.png",     color: "from-gray-300",    bgColor: "to-gray-400",    textColor: "text-gray-500" },
+    { level: 2, name: "반짝 발바닥",   minPoints: 100,     icon: "/icons/levels/level2_pomeranian.png",  color: "from-emerald-300", bgColor: "to-emerald-500",  textColor: "text-emerald-600" },
+    { level: 3, name: "든든한 발바닥", minPoints: 500,     icon: "/icons/levels/level3_corgi.png",       color: "from-pink-300",    bgColor: "to-pink-500",    textColor: "text-pink-600" },
+    { level: 4, name: "다정한 친구",   minPoints: 3000,    icon: "/icons/levels/level4_shiba.png",       color: "from-sky-300",     bgColor: "to-sky-500",     textColor: "text-sky-600" },
+    { level: 5, name: "따뜻한 동반자", minPoints: 10000,   icon: "/icons/levels/level5_golden.png",      color: "from-violet-400",  bgColor: "to-purple-500",  textColor: "text-violet-600", hasSparkle: true },
+    { level: 6, name: "빛나는 가족",   minPoints: 30000,   icon: "/icons/levels/level6_samoyed.png",     color: "from-amber-300",   bgColor: "to-yellow-500",  textColor: "text-amber-600",  hasSparkle: true },
+    { level: 7, name: "전설의 집사",   minPoints: 100000,  icon: "/icons/levels/level7_legend.png",      color: "from-rose-400",    bgColor: "to-amber-300",   textColor: "text-rose-600",   hasSparkle: true, hasGlow: true },
+];
+
+/** 포인트로 현재 등급 계산 */
+export function getPointLevel(points: number): PointLevel {
+    // 역순으로 탐색해서 가장 높은 등급 찾기
+    for (let i = POINT_LEVELS.length - 1; i >= 0; i--) {
+        if (points >= POINT_LEVELS[i].minPoints) {
+            return POINT_LEVELS[i];
+        }
+    }
+    return POINT_LEVELS[0];
+}
+
+/** 다음 등급까지 남은 포인트 */
+export function getNextLevelInfo(points: number): { nextLevel: PointLevel | null; remaining: number; progress: number } {
+    const currentLevel = getPointLevel(points);
+    const nextIdx = POINT_LEVELS.findIndex(l => l.level === currentLevel.level) + 1;
+
+    if (nextIdx >= POINT_LEVELS.length) {
+        return { nextLevel: null, remaining: 0, progress: 100 };
+    }
+
+    const nextLevel = POINT_LEVELS[nextIdx];
+    const remaining = nextLevel.minPoints - points;
+    const range = nextLevel.minPoints - currentLevel.minPoints;
+    const progress = Math.min(100, Math.round(((points - currentLevel.minPoints) / range) * 100));
+
+    return { nextLevel, remaining, progress };
+}
+
 // Helper: 관리자 여부 확인
 export const isAdmin = (email: string | undefined): boolean => {
     if (!email) return false;
