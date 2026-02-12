@@ -8,10 +8,12 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { X, Star, MessageCircle, Heart, PenLine, Camera, Clock, PawPrint } from "lucide-react";
+import { X, Star, MessageCircle, Heart, PenLine, Camera, Clock, PawPrint, ChevronDown, ChevronUp } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getActionLabel, formatPoints } from "@/lib/points";
+import { POINT_LEVELS, getPointLevel } from "@/config/constants";
 import type { PointTransaction, PointAction } from "@/types";
 
 interface PointsHistoryModalProps {
@@ -55,6 +57,8 @@ export default function PointsHistoryModal({ open, onClose }: PointsHistoryModal
     const [loading, setLoading] = useState(true);
     const [hasMore, setHasMore] = useState(false);
     const [offset, setOffset] = useState(0);
+    const [showLevelChart, setShowLevelChart] = useState(false);
+    const currentLevel = getPointLevel(points);
 
     const fetchHistory = useCallback(async (currentOffset: number) => {
         try {
@@ -133,6 +137,79 @@ export default function PointsHistoryModal({ open, onClose }: PointsHistoryModal
                     >
                         <X className="w-5 h-5 text-gray-500" />
                     </button>
+                </div>
+
+                {/* 등급 점수표 토글 */}
+                <div className="px-4 pt-3">
+                    <button
+                        onClick={() => setShowLevelChart(!showLevelChart)}
+                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-gradient-to-r from-violet-50 to-sky-50 dark:from-violet-900/20 dark:to-sky-900/20 hover:from-violet-100 hover:to-sky-100 transition-all"
+                    >
+                        <div className="flex items-center gap-2">
+                            <Image
+                                src={currentLevel.icon}
+                                alt={currentLevel.name}
+                                width={24}
+                                height={24}
+                                className="rounded-full"
+                                unoptimized
+                            />
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                                등급 점수표
+                            </span>
+                        </div>
+                        {showLevelChart
+                            ? <ChevronUp className="w-4 h-4 text-gray-400" />
+                            : <ChevronDown className="w-4 h-4 text-gray-400" />
+                        }
+                    </button>
+
+                    {showLevelChart && (
+                        <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl space-y-1.5">
+                            {POINT_LEVELS.map((lvl) => {
+                                const isCurrent = lvl.level === currentLevel.level;
+                                const isAchieved = points >= lvl.minPoints;
+                                return (
+                                    <div
+                                        key={lvl.level}
+                                        className={cn(
+                                            "flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg transition-colors",
+                                            isCurrent && "bg-white dark:bg-gray-700 shadow-sm ring-1 ring-sky-200 dark:ring-sky-700",
+                                            !isCurrent && !isAchieved && "opacity-50"
+                                        )}
+                                    >
+                                        <Image
+                                            src={lvl.icon}
+                                            alt={lvl.name}
+                                            width={28}
+                                            height={28}
+                                            className="rounded-full"
+                                            unoptimized
+                                        />
+                                        <div className="flex-1 min-w-0">
+                                            <span className={cn(
+                                                "text-xs font-medium",
+                                                isCurrent ? "text-gray-800 dark:text-white" : "text-gray-600 dark:text-gray-400"
+                                            )}>
+                                                Lv.{lvl.level} {lvl.name}
+                                            </span>
+                                        </div>
+                                        <span className={cn(
+                                            "text-xs tabular-nums",
+                                            isCurrent ? "font-bold text-sky-600" : "text-gray-400"
+                                        )}>
+                                            {lvl.minPoints.toLocaleString()}P
+                                        </span>
+                                        {isCurrent && (
+                                            <span className="text-[10px] font-bold text-sky-500 bg-sky-100 dark:bg-sky-900/30 px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                                                현재
+                                            </span>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
 
                 {/* 내역 목록 */}
