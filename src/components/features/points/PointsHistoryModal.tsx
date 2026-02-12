@@ -161,20 +161,26 @@ export default function PointsHistoryModal({ open, onClose }: PointsHistoryModal
                 <div className="px-4 pt-3">
                     <button
                         onClick={() => setShowLevelChart(!showLevelChart)}
-                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-gradient-to-r from-violet-50 to-sky-50 dark:from-violet-900/20 dark:to-sky-900/20 hover:from-violet-100 hover:to-sky-100 transition-all"
+                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-gradient-to-r from-violet-50 to-sky-50 dark:from-violet-900/20 dark:to-sky-900/20 hover:from-violet-100 hover:to-sky-100 dark:hover:from-violet-900/30 dark:hover:to-sky-900/30 transition-all"
                     >
-                        <div className="flex items-center gap-2">
-                            <Image
-                                src={currentLevel.icon}
-                                alt={currentLevel.name}
-                                width={24}
-                                height={24}
-                                className="rounded-full"
-                                unoptimized
-                            />
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                                등급 점수표
-                            </span>
+                        <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-lg overflow-hidden bg-white/80 dark:bg-gray-800 shadow-sm flex items-center justify-center">
+                                <Image
+                                    src={currentLevel.icon}
+                                    alt={currentLevel.name}
+                                    width={28}
+                                    height={28}
+                                    unoptimized
+                                />
+                            </div>
+                            <div className="text-left">
+                                <span className="text-sm font-semibold text-gray-700 dark:text-gray-200 block leading-tight">
+                                    등급 점수표
+                                </span>
+                                <span className="text-[11px] text-gray-400">
+                                    Lv.{currentLevel.level} {currentLevel.name}
+                                </span>
+                            </div>
                         </div>
                         {showLevelChart
                             ? <ChevronUp className="w-4 h-4 text-gray-400" />
@@ -183,46 +189,74 @@ export default function PointsHistoryModal({ open, onClose }: PointsHistoryModal
                     </button>
 
                     {showLevelChart && (
-                        <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl space-y-1.5">
-                            {POINT_LEVELS.map((lvl) => {
+                        <div className="mt-2 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
+                            {POINT_LEVELS.map((lvl, idx) => {
                                 const isCurrent = lvl.level === currentLevel.level;
                                 const isAchieved = points >= lvl.minPoints;
                                 return (
                                     <div
                                         key={lvl.level}
                                         className={cn(
-                                            "flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg transition-colors",
-                                            isCurrent && "bg-white dark:bg-gray-700 shadow-sm ring-1 ring-sky-200 dark:ring-sky-700",
-                                            !isCurrent && !isAchieved && "opacity-50"
+                                            "flex items-center gap-3 px-3 py-3 relative",
+                                            idx < POINT_LEVELS.length - 1 && "border-b border-gray-100 dark:border-gray-800",
+                                            isCurrent && "bg-sky-50 dark:bg-sky-900/20",
+                                            !isCurrent && isAchieved && "bg-white dark:bg-gray-900",
+                                            !isCurrent && !isAchieved && "bg-gray-50/80 dark:bg-gray-900/50"
                                         )}
                                     >
-                                        <Image
-                                            src={lvl.icon}
-                                            alt={lvl.name}
-                                            width={28}
-                                            height={28}
-                                            className="rounded-full"
-                                            unoptimized
-                                        />
-                                        <div className="flex-1 min-w-0">
-                                            <span className={cn(
-                                                "text-xs font-medium",
-                                                isCurrent ? "text-gray-800 dark:text-white" : "text-gray-600 dark:text-gray-400"
-                                            )}>
-                                                Lv.{lvl.level} {lvl.name}
-                                            </span>
+                                        {/* 현재 등급 표시바 */}
+                                        {isCurrent && (
+                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-sky-500 rounded-r" />
+                                        )}
+
+                                        {/* 아이콘 */}
+                                        <div className={cn(
+                                            "w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center",
+                                            !isAchieved && !isCurrent && "grayscale opacity-40"
+                                        )}>
+                                            <Image
+                                                src={lvl.icon}
+                                                alt={lvl.name}
+                                                width={36}
+                                                height={36}
+                                                unoptimized
+                                            />
                                         </div>
+
+                                        {/* 등급 정보 */}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-1.5">
+                                                <span className={cn(
+                                                    "text-[11px] font-bold rounded px-1 py-0.5",
+                                                    isCurrent
+                                                        ? "text-sky-700 bg-sky-100 dark:text-sky-300 dark:bg-sky-800/40"
+                                                        : isAchieved
+                                                            ? "text-gray-500 bg-gray-100 dark:text-gray-400 dark:bg-gray-800"
+                                                            : "text-gray-400 bg-gray-100 dark:text-gray-500 dark:bg-gray-800"
+                                                )}>
+                                                    Lv.{lvl.level}
+                                                </span>
+                                                <span className={cn(
+                                                    "text-sm font-semibold truncate",
+                                                    isCurrent ? "text-gray-900 dark:text-white" : isAchieved ? "text-gray-700 dark:text-gray-300" : "text-gray-400 dark:text-gray-500"
+                                                )}>
+                                                    {lvl.name}
+                                                </span>
+                                                {isCurrent && (
+                                                    <span className="text-[10px] font-bold text-white bg-sky-500 px-1.5 py-0.5 rounded-full ml-auto flex-shrink-0">
+                                                        현재
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* 필요 포인트 */}
                                         <span className={cn(
-                                            "text-xs tabular-nums",
-                                            isCurrent ? "font-bold text-sky-600" : "text-gray-400"
+                                            "text-sm tabular-nums font-medium flex-shrink-0",
+                                            isCurrent ? "text-sky-600 dark:text-sky-400 font-bold" : isAchieved ? "text-gray-500" : "text-gray-300 dark:text-gray-600"
                                         )}>
                                             {lvl.minPoints.toLocaleString()}P
                                         </span>
-                                        {isCurrent && (
-                                            <span className="text-[10px] font-bold text-sky-500 bg-sky-100 dark:bg-sky-900/30 px-1.5 py-0.5 rounded-full whitespace-nowrap">
-                                                현재
-                                            </span>
-                                        )}
                                     </div>
                                 );
                             })}
