@@ -41,10 +41,14 @@ export default function AccountSettingsModal({
     const [isEditingNickname, setIsEditingNickname] = useState(false);
 
     // 닉네임 중복 체크 훅
-    const { status: nicknameStatus, message: nicknameMessage, reset: resetNickname } = useNicknameCheck(
-        nickname,
-        { enabled: isEditingNickname, currentNickname }
-    );
+    const {
+        status: nicknameStatus,
+        message: nicknameMessage,
+        reset: resetNickname,
+    } = useNicknameCheck(nickname, {
+        enabled: isEditingNickname,
+        currentNickname,
+    });
     const [isSavingNickname, setIsSavingNickname] = useState(false);
     const [nicknameSuccess, setNicknameSuccess] = useState(false);
 
@@ -80,16 +84,18 @@ export default function AccountSettingsModal({
         }
     }, [isOpen, user]);
 
-
     // 닉네임 저장
     const handleSaveNickname = async () => {
-        if (nicknameStatus !== "available" || nickname.trim().length < 2) return;
+        if (nicknameStatus !== "available" || nickname.trim().length < 2)
+            return;
 
         setIsSavingNickname(true);
 
         try {
             // Auth user_metadata 업데이트
-            const { error: authError } = await updateProfile({ nickname: nickname.trim() });
+            const { error: authError } = await updateProfile({
+                nickname: nickname.trim(),
+            });
             if (authError) throw authError;
 
             // profiles 테이블 업데이트
@@ -120,11 +126,23 @@ export default function AccountSettingsModal({
 
         try {
             // 0. 사용량 통계 수집 (재가입 악용 방지용)
-            const [petsResult, photosResult, profileResult] = await Promise.all([
-                supabase.from("pets").select("id", { count: "exact" }).eq("user_id", user?.id),
-                supabase.from("pet_photos").select("id", { count: "exact" }).eq("user_id", user?.id),
-                supabase.from("profiles").select("is_premium").eq("id", user?.id).single(),
-            ]);
+            const [petsResult, photosResult, profileResult] = await Promise.all(
+                [
+                    supabase
+                        .from("pets")
+                        .select("id", { count: "exact" })
+                        .eq("user_id", user?.id),
+                    supabase
+                        .from("pet_photos")
+                        .select("id", { count: "exact" })
+                        .eq("user_id", user?.id),
+                    supabase
+                        .from("profiles")
+                        .select("is_premium")
+                        .eq("id", user?.id)
+                        .single(),
+                ],
+            );
 
             // AI 사용량은 localStorage에서 가져오기
             const aiUsageData = localStorage.getItem("memento-ani-chat-usage");
@@ -171,12 +189,16 @@ export default function AccountSettingsModal({
             localStorage.removeItem("memento-current-tab");
             localStorage.removeItem("memento-ani-chat-usage");
 
-            toast.success("회원탈퇴가 완료되었습니다. 이용해 주셔서 감사합니다.");
+            toast.success(
+                "회원탈퇴가 완료되었습니다. 이용해 주셔서 감사합니다.",
+            );
             onClose();
             window.location.reload();
         } catch (err) {
             console.error("Delete account error:", err);
-            setDeleteError("회원탈퇴 처리 중 오류가 발생했습니다. 다시 시도해주세요.");
+            setDeleteError(
+                "회원탈퇴 처리 중 오류가 발생했습니다. 다시 시도해주세요.",
+            );
         } finally {
             setIsDeleting(false);
         }
@@ -186,7 +208,7 @@ export default function AccountSettingsModal({
 
     return (
         <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center">
-            <div className="w-full sm:max-w-md sm:mx-4 bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[calc(100vh-60px)] sm:max-h-[85vh] overflow-y-auto">
+            <div className="w-full sm:max-w-md sm:mx-4 bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[calc(100vh-140px)] sm:max-h-[85vh] overflow-y-auto mb-[80px] sm:mb-0">
                 {/* 헤더 */}
                 <div className="flex items-center justify-between p-4 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
                     <div className="flex items-center gap-2">
@@ -238,13 +260,15 @@ export default function AccountSettingsModal({
                                     <Input
                                         type="text"
                                         value={nickname}
-                                        onChange={(e) => setNickname(e.target.value)}
+                                        onChange={(e) =>
+                                            setNickname(e.target.value)
+                                        }
                                         className={`pl-10 pr-10 h-12 rounded-xl ${
                                             nicknameStatus === "taken"
                                                 ? "border-red-500"
                                                 : nicknameStatus === "available"
-                                                    ? "border-green-500"
-                                                    : ""
+                                                  ? "border-green-500"
+                                                  : ""
                                         }`}
                                         minLength={2}
                                         maxLength={20}
@@ -263,11 +287,16 @@ export default function AccountSettingsModal({
                                 </div>
 
                                 {nicknameMessage && (
-                                    <p className={`text-xs ${
-                                        nicknameStatus === "available" ? "text-green-600" :
-                                        nicknameStatus === "taken" || nicknameStatus === "invalid" ? "text-red-600" :
-                                        "text-gray-500"
-                                    }`}>
+                                    <p
+                                        className={`text-xs ${
+                                            nicknameStatus === "available"
+                                                ? "text-green-600"
+                                                : nicknameStatus === "taken" ||
+                                                    nicknameStatus === "invalid"
+                                                  ? "text-red-600"
+                                                  : "text-gray-500"
+                                        }`}
+                                    >
                                         {nicknameMessage}
                                     </p>
                                 )}
@@ -286,10 +315,18 @@ export default function AccountSettingsModal({
                                     <Button
                                         size="sm"
                                         onClick={handleSaveNickname}
-                                        disabled={isSavingNickname || nicknameStatus !== "available" || nickname.trim().length < 2}
+                                        disabled={
+                                            isSavingNickname ||
+                                            nicknameStatus !== "available" ||
+                                            nickname.trim().length < 2
+                                        }
                                         className="bg-sky-500 hover:bg-sky-600"
                                     >
-                                        {isSavingNickname ? <InlineLoading /> : "저장"}
+                                        {isSavingNickname ? (
+                                            <InlineLoading />
+                                        ) : (
+                                            "저장"
+                                        )}
                                     </Button>
                                 </div>
                             </div>
@@ -313,7 +350,9 @@ export default function AccountSettingsModal({
 
                     {/* 회원탈퇴 */}
                     <div>
-                        <h3 className="text-sm font-medium text-red-600 mb-2">위험 구역</h3>
+                        <h3 className="text-sm font-medium text-red-600 mb-2">
+                            위험 구역
+                        </h3>
 
                         {!showDeleteConfirm ? (
                             <Button
@@ -329,28 +368,37 @@ export default function AccountSettingsModal({
                                 <div className="flex items-start gap-2 text-red-600">
                                     <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
                                     <div className="text-sm">
-                                        <p className="font-medium">정말 탈퇴하시겠습니까?</p>
+                                        <p className="font-medium">
+                                            정말 탈퇴하시겠습니까?
+                                        </p>
                                         <p className="text-red-500 mt-1">
-                                            모든 데이터(반려동물 기록, 채팅 내역, 게시글 등)가 삭제되며 복구할 수 없습니다.
+                                            모든 데이터(반려동물 기록, 채팅
+                                            내역, 게시글 등)가 삭제되며 복구할
+                                            수 없습니다.
                                         </p>
                                     </div>
                                 </div>
 
                                 <div>
                                     <label className="block text-xs text-red-600 mb-1">
-                                        확인을 위해 &quot;회원탈퇴&quot;를 입력해주세요
+                                        확인을 위해 &quot;회원탈퇴&quot;를
+                                        입력해주세요
                                     </label>
                                     <Input
                                         type="text"
                                         value={deleteConfirmText}
-                                        onChange={(e) => setDeleteConfirmText(e.target.value)}
+                                        onChange={(e) =>
+                                            setDeleteConfirmText(e.target.value)
+                                        }
                                         placeholder="회원탈퇴"
                                         className="border-red-300 focus:border-red-500"
                                     />
                                 </div>
 
                                 {deleteError && (
-                                    <p className="text-xs text-red-600">{deleteError}</p>
+                                    <p className="text-xs text-red-600">
+                                        {deleteError}
+                                    </p>
                                 )}
 
                                 <div className="flex gap-2">
@@ -369,10 +417,17 @@ export default function AccountSettingsModal({
                                     <Button
                                         size="sm"
                                         onClick={handleDeleteAccount}
-                                        disabled={isDeleting || deleteConfirmText !== "회원탈퇴"}
+                                        disabled={
+                                            isDeleting ||
+                                            deleteConfirmText !== "회원탈퇴"
+                                        }
                                         className="flex-1 bg-red-500 hover:bg-red-600 text-white"
                                     >
-                                        {isDeleting ? <InlineLoading /> : "탈퇴하기"}
+                                        {isDeleting ? (
+                                            <InlineLoading />
+                                        ) : (
+                                            "탈퇴하기"
+                                        )}
                                     </Button>
                                 </div>
                             </div>

@@ -40,7 +40,7 @@ interface MediaUploadModalProps {
     onUpload: (
         files: File[],
         captions: string[],
-        cropPositions: CropPosition[]
+        cropPositions: CropPosition[],
     ) => void;
 }
 
@@ -61,7 +61,7 @@ export default function MediaUploadModal({
             setCropIndex(null);
             setIsLoading(false);
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen]);
 
     if (!isOpen) return null;
@@ -107,7 +107,8 @@ export default function MediaUploadModal({
                 let thumbnail: string | undefined;
 
                 if (isVideo) {
-                    thumbnail = (await generateVideoThumbnail(file)) || undefined;
+                    thumbnail =
+                        (await generateVideoThumbnail(file)) || undefined;
                 }
 
                 return {
@@ -119,12 +120,13 @@ export default function MediaUploadModal({
                     cropped: isVideo,
                     isVideo,
                 };
-            })
+            }),
         );
 
         setSelectedFiles((prev) => [...prev, ...newFiles]);
 
-        const firstImageIndex = selectedFiles.length + newFiles.findIndex((f) => !f.isVideo);
+        const firstImageIndex =
+            selectedFiles.length + newFiles.findIndex((f) => !f.isVideo);
         if (firstImageIndex >= selectedFiles.length) {
             setCropIndex(firstImageIndex);
         }
@@ -141,18 +143,20 @@ export default function MediaUploadModal({
 
     const handleCaptionChange = (index: number, caption: string) => {
         setSelectedFiles((prev) =>
-            prev.map((f, i) => (i === index ? { ...f, caption } : f))
+            prev.map((f, i) => (i === index ? { ...f, caption } : f)),
         );
     };
 
     const handleCropSave = (index: number, position: CropPosition) => {
         setSelectedFiles((prev) =>
             prev.map((f, i) =>
-                i === index ? { ...f, cropPosition: position, cropped: true } : f
-            )
+                i === index
+                    ? { ...f, cropPosition: position, cropped: true }
+                    : f,
+            ),
         );
         const nextUncropped = selectedFiles.findIndex(
-            (f, i) => i > index && !f.cropped && !f.isVideo
+            (f, i) => i > index && !f.cropped && !f.isVideo,
         );
         setCropIndex(nextUncropped !== -1 ? nextUncropped : null);
     };
@@ -166,13 +170,14 @@ export default function MediaUploadModal({
         onUpload(
             selectedFiles.map((f) => f.file),
             selectedFiles.map((f) => f.caption),
-            selectedFiles.map((f) => f.cropPosition)
+            selectedFiles.map((f) => f.cropPosition),
         );
         setSelectedFiles([]);
         onClose();
     };
 
-    const allCropped = selectedFiles.length > 0 && selectedFiles.every((f) => f.cropped);
+    const allCropped =
+        selectedFiles.length > 0 && selectedFiles.every((f) => f.cropped);
     const imageCount = selectedFiles.filter((f) => !f.isVideo).length;
     const videoCount = selectedFiles.filter((f) => f.isVideo).length;
 
@@ -180,9 +185,11 @@ export default function MediaUploadModal({
         <>
             {/* 모바일: 하단 시트 / 데스크톱: 중앙 모달 */}
             <div className="fixed inset-0 z-[9999] bg-black/50 flex items-end sm:items-center justify-center">
-                <div className="bg-white dark:bg-gray-900 w-full sm:max-w-2xl sm:mx-4 rounded-t-2xl sm:rounded-2xl p-6 max-h-[calc(100vh-60px)] sm:max-h-[85vh] overflow-y-auto">
+                <div className="bg-white dark:bg-gray-900 w-full sm:max-w-2xl sm:mx-4 rounded-t-2xl sm:rounded-2xl p-6 max-h-[calc(100vh-140px)] sm:max-h-[85vh] overflow-y-auto mb-[80px] sm:mb-0">
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-semibold">사진/영상 업로드</h3>
+                        <h3 className="text-lg font-semibold">
+                            사진/영상 업로드
+                        </h3>
                         <Button variant="ghost" size="icon" onClick={onClose}>
                             <X className="w-5 h-5" />
                         </Button>
@@ -203,7 +210,8 @@ export default function MediaUploadModal({
                             여러 파일 선택 가능 · 사진은 1:1 비율로 크롭됩니다
                         </p>
                         <p className="text-xs text-gray-400 mt-1">
-                            이미지: JPG, PNG, GIF / 영상: MP4, MOV, WebM (최대 100MB)
+                            이미지: JPG, PNG, GIF / 영상: MP4, MOV, WebM (최대
+                            100MB)
                         </p>
                         <input
                             ref={fileInputRef}
@@ -248,12 +256,17 @@ export default function MediaUploadModal({
                                 >
                                     <div
                                         className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer"
-                                        onClick={() => !file.isVideo && setCropIndex(index)}
+                                        onClick={() =>
+                                            !file.isVideo && setCropIndex(index)
+                                        }
                                     >
                                         {file.isVideo ? (
                                             <>
                                                 <img
-                                                    src={file.thumbnail || file.preview}
+                                                    src={
+                                                        file.thumbnail ||
+                                                        file.preview
+                                                    }
                                                     alt=""
                                                     className="w-full h-full object-cover"
                                                 />
@@ -295,14 +308,22 @@ export default function MediaUploadModal({
                                                 </Badge>
                                             )}
                                             <span className="text-xs text-gray-400">
-                                                {(file.file.size / 1024 / 1024).toFixed(1)}MB
+                                                {(
+                                                    file.file.size /
+                                                    1024 /
+                                                    1024
+                                                ).toFixed(1)}
+                                                MB
                                             </span>
                                         </div>
                                         <Input
                                             placeholder="캡션 (선택)"
                                             value={file.caption}
                                             onChange={(e) =>
-                                                handleCaptionChange(index, e.target.value)
+                                                handleCaptionChange(
+                                                    index,
+                                                    e.target.value,
+                                                )
                                             }
                                             className="mb-2 h-8 text-sm"
                                         />
@@ -311,7 +332,9 @@ export default function MediaUploadModal({
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
-                                                    onClick={() => setCropIndex(index)}
+                                                    onClick={() =>
+                                                        setCropIndex(index)
+                                                    }
                                                     className="text-xs h-7"
                                                 >
                                                     <Move className="w-3 h-3 mr-1" />
@@ -321,7 +344,9 @@ export default function MediaUploadModal({
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                onClick={() => handleRemove(index)}
+                                                onClick={() =>
+                                                    handleRemove(index)
+                                                }
                                                 className="text-red-500 hover:text-red-600 text-xs h-7"
                                             >
                                                 <Trash2 className="w-3 h-3 mr-1" />
@@ -335,7 +360,11 @@ export default function MediaUploadModal({
                     )}
 
                     <div className="flex gap-3 mt-6">
-                        <Button variant="outline" onClick={onClose} className="flex-1">
+                        <Button
+                            variant="outline"
+                            onClick={onClose}
+                            className="flex-1"
+                        >
                             <X className="w-4 h-4 mr-2" />
                             취소
                         </Button>

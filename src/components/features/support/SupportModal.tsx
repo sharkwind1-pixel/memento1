@@ -8,7 +8,14 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { X, Send, HelpCircle, Lightbulb, AlertTriangle, MessageSquare } from "lucide-react";
+import {
+    X,
+    Send,
+    HelpCircle,
+    Lightbulb,
+    AlertTriangle,
+    MessageSquare,
+} from "lucide-react";
 import { InlineLoading } from "@/components/ui/PawLoading";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
@@ -32,7 +39,9 @@ export default function SupportModal({
     type,
 }: SupportModalProps) {
     const { user } = useAuth();
-    const [category, setCategory] = useState<SupportType>(type === "inquiry" ? "question" : "suggestion");
+    const [category, setCategory] = useState<SupportType>(
+        type === "inquiry" ? "question" : "suggestion",
+    );
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
     const [email, setEmail] = useState("");
@@ -109,13 +118,19 @@ export default function SupportModal({
             />
 
             {/* 모달 */}
-            <div className="relative w-full sm:max-w-lg sm:mx-4 bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl shadow-xl overflow-hidden max-h-[calc(100vh-60px)] sm:max-h-[85vh]">
+            <div className="relative w-full sm:max-w-lg sm:mx-4 bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl shadow-xl overflow-hidden max-h-[calc(100vh-140px)] sm:max-h-[85vh] mb-[80px] sm:mb-0">
                 {/* 헤더 */}
-                <div className={`flex items-center justify-between p-4 border-b dark:border-gray-700 ${
-                    isInquiry ? "bg-blue-50 dark:bg-blue-900/20" : "bg-amber-50 dark:bg-amber-900/20"
-                }`}>
+                <div
+                    className={`flex items-center justify-between p-4 border-b dark:border-gray-700 ${
+                        isInquiry
+                            ? "bg-blue-50 dark:bg-blue-900/20"
+                            : "bg-amber-50 dark:bg-amber-900/20"
+                    }`}
+                >
                     <div className="flex items-center gap-2">
-                        <ModalIcon className={`w-5 h-5 ${isInquiry ? "text-blue-500" : "text-amber-500"}`} />
+                        <ModalIcon
+                            className={`w-5 h-5 ${isInquiry ? "text-blue-500" : "text-amber-500"}`}
+                        />
                         <h2 className="text-lg font-bold text-gray-800 dark:text-white">
                             {modalTitle}
                         </h2>
@@ -156,15 +171,23 @@ export default function SupportModal({
                                             return (
                                                 <button
                                                     key={cat.id}
-                                                    onClick={() => setCategory(cat.id as SupportType)}
+                                                    onClick={() =>
+                                                        setCategory(
+                                                            cat.id as SupportType,
+                                                        )
+                                                    }
                                                     className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all ${
                                                         category === cat.id
                                                             ? "border-sky-500 bg-sky-50 dark:bg-sky-900/30"
                                                             : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                                                     }`}
                                                 >
-                                                    <Icon className={`w-4 h-4 ${cat.color}`} />
-                                                    <span className="font-medium">{cat.label}</span>
+                                                    <Icon
+                                                        className={`w-4 h-4 ${cat.color}`}
+                                                    />
+                                                    <span className="font-medium">
+                                                        {cat.label}
+                                                    </span>
                                                 </button>
                                             );
                                         })}
@@ -176,12 +199,15 @@ export default function SupportModal({
                             {!user && (
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        이메일 <span className="text-red-500">*</span>
+                                        이메일{" "}
+                                        <span className="text-red-500">*</span>
                                     </label>
                                     <Input
                                         type="email"
                                         value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
+                                        onChange={(e) =>
+                                            setEmail(e.target.value)
+                                        }
                                         placeholder="답변 받으실 이메일"
                                         className="rounded-lg"
                                     />
@@ -199,7 +225,11 @@ export default function SupportModal({
                                 <Input
                                     value={title}
                                     onChange={(e) => setTitle(e.target.value)}
-                                    placeholder={isInquiry ? "문의 제목을 입력하세요" : "건의사항 제목을 입력하세요"}
+                                    placeholder={
+                                        isInquiry
+                                            ? "문의 제목을 입력하세요"
+                                            : "건의사항 제목을 입력하세요"
+                                    }
                                     maxLength={100}
                                     className="rounded-lg"
                                 />

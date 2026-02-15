@@ -72,7 +72,11 @@ interface LayoutProps {
 // ============================================================================
 
 /** 메인 카테고리 (5개) - 데스크탑 상단 네비게이션 */
-const MAIN_TABS: { id: MainCategory; label: string; icon: React.ElementType }[] = [
+const MAIN_TABS: {
+    id: MainCategory;
+    label: string;
+    icon: React.ElementType;
+}[] = [
     { id: "home", label: "홈", icon: Home },
     { id: "record", label: "우리의 기록", icon: Camera },
     { id: "community", label: "커뮤니티", icon: Users },
@@ -81,10 +85,19 @@ const MAIN_TABS: { id: MainCategory; label: string; icon: React.ElementType }[] 
 ];
 
 /** 관리자 탭 (별도) - 관리자 권한 있는 사용자만 표시 */
-const ADMIN_TAB = { id: "admin" as TabType, label: "관리자", icon: Shield, adminOnly: true };
+const ADMIN_TAB = {
+    id: "admin" as TabType,
+    label: "관리자",
+    icon: Shield,
+    adminOnly: true,
+};
 
 /** 하단 네비게이션용 탭 - 홈이 가운데 배치 (UX 최적화) */
-const BOTTOM_NAV_TABS: { id: MainCategory; label: string; icon: React.ElementType }[] = [
+const BOTTOM_NAV_TABS: {
+    id: MainCategory;
+    label: string;
+    icon: React.ElementType;
+}[] = [
     { id: "record", label: "기록", icon: Camera },
     { id: "community", label: "커뮤니티", icon: Users },
     { id: "home", label: "홈", icon: Home },
@@ -115,17 +128,26 @@ export default function Layout({
         "login",
     );
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-    const [supportModalType, setSupportModalType] = useState<"inquiry" | "suggestion" | null>(null);
+    const [supportModalType, setSupportModalType] = useState<
+        "inquiry" | "suggestion" | null
+    >(null);
     const [isAccountSettingsOpen, setIsAccountSettingsOpen] = useState(false);
 
     // 메인 카테고리인지 확인
     const isMainCategory = (tab: TabType): tab is MainCategory => {
-        return ["home", "record", "community", "ai-chat", "magazine"].includes(tab);
+        return ["home", "record", "community", "ai-chat", "magazine"].includes(
+            tab,
+        );
     };
 
     // 현재 탭이 커뮤니티 관련인지 확인
     const isCommunityRelated = (tab: TabType) => {
-        return tab === "community" || tab === "adoption" || tab === "local" || tab === "lost";
+        return (
+            tab === "community" ||
+            tab === "adoption" ||
+            tab === "local" ||
+            tab === "lost"
+        );
     };
 
     // 다크모드 초기화 (localStorage에서 읽기)
@@ -202,8 +224,8 @@ export default function Layout({
             <header
                 className="sticky top-0 z-50 bg-white dark:bg-gray-900 xl:bg-white/90 xl:dark:bg-gray-900/90 xl:backdrop-blur-sm border-b border-gray-200 dark:border-gray-700"
                 style={{
-                    transform: 'translateZ(0)',
-                    backfaceVisibility: 'hidden'
+                    transform: "translateZ(0)",
+                    backfaceVisibility: "hidden",
                 }}
             >
                 <div className="max-w-7xl mx-auto px-3 sm:px-4">
@@ -227,9 +249,10 @@ export default function Layout({
                         <nav className="hidden xl:flex items-center gap-1">
                             {MAIN_TABS.map((tab) => {
                                 const Icon = tab.icon;
-                                const isActive = tab.id === "community"
-                                    ? isCommunityRelated(selectedTab)
-                                    : selectedTab === tab.id;
+                                const isActive =
+                                    tab.id === "community"
+                                        ? isCommunityRelated(selectedTab)
+                                        : selectedTab === tab.id;
                                 return (
                                     <button
                                         key={tab.id}
@@ -270,7 +293,17 @@ export default function Layout({
                         </nav>
 
                         {/* 우측 버튼들 */}
-                        <div className="flex items-center gap-1 sm:gap-2">
+                        <div className="flex items-center gap-2 sm:gap-2">
+                            {/* 모바일 햄버거 메뉴 - auth 버튼과 분리 */}
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                                className="xl:hidden rounded-xl"
+                            >
+                                <Menu className="w-5 h-5" />
+                            </Button>
+
                             <Button
                                 variant="ghost"
                                 size="icon"
@@ -294,7 +327,11 @@ export default function Layout({
                                         }
                                         className="flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 rounded-full sm:rounded-xl bg-[#E0F7FF] dark:bg-gray-800 hover:bg-[#BAE6FD] dark:hover:bg-gray-700 transition-colors"
                                     >
-                                        <LevelBadge points={points} size="lg" showTooltip={false} />
+                                        <LevelBadge
+                                            points={points}
+                                            size="lg"
+                                            showTooltip={false}
+                                        />
                                         <span className="text-sm font-medium text-gray-700 dark:text-gray-200 hidden sm:block max-w-[80px] truncate">
                                             {displayName}
                                         </span>
@@ -334,8 +371,12 @@ export default function Layout({
                                                 </button>
                                                 <button
                                                     onClick={() => {
-                                                        setIsAccountSettingsOpen(true);
-                                                        setIsUserMenuOpen(false);
+                                                        setIsAccountSettingsOpen(
+                                                            true,
+                                                        );
+                                                        setIsUserMenuOpen(
+                                                            false,
+                                                        );
                                                     }}
                                                     className="w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-[#E0F7FF] dark:hover:bg-gray-700 flex items-center gap-2"
                                                 >
@@ -372,19 +413,9 @@ export default function Layout({
                                     </Button>
                                 </div>
                             )}
-
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                                className="xl:hidden rounded-xl"
-                            >
-                                <Menu className="w-5 h-5" />
-                            </Button>
                         </div>
                     </div>
                 </div>
-
             </header>
 
             {/* 모바일 사이드바 (오버레이) */}
@@ -421,23 +452,20 @@ export default function Layout({
 
             {/* 메인 컨텐츠 영역 */}
             <div id="main-content" className="xl:ml-56 pb-20 xl:pb-0 flex-1">
-                <main className="max-w-6xl mx-auto px-4 py-6">
-                    {children}
-                </main>
+                <main className="max-w-6xl mx-auto px-4 py-6">{children}</main>
             </div>
 
             {/* 모바일 하단 네비게이션 - 5개 메인 카테고리 */}
             {/* backdrop-blur 제거 - 모바일 성능 최적화 */}
             {/* GPU 가속 및 contain으로 리페인트 격리 */}
-            <nav
-                className="xl:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 z-50 pb-safe"
-            >
+            <nav className="xl:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 z-50 pb-safe">
                 <div className="flex justify-around items-center h-16 px-1">
                     {BOTTOM_NAV_TABS.map((tab) => {
                         const Icon = tab.icon;
-                        const isActive = tab.id === "community"
-                            ? isCommunityRelated(selectedTab)
-                            : selectedTab === tab.id;
+                        const isActive =
+                            tab.id === "community"
+                                ? isCommunityRelated(selectedTab)
+                                : selectedTab === tab.id;
                         const isHome = tab.id === "home";
                         return (
                             <button
@@ -449,16 +477,20 @@ export default function Layout({
                                     ${isActive ? "text-[#05B2DC]" : "text-gray-400 dark:text-gray-500"}
                                 `}
                             >
-                                <div className={`p-1.5 rounded-xl ${
-                                    isHome && isActive
-                                        ? "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white"
-                                        : isActive
-                                            ? "bg-[#E0F7FF] dark:bg-[#05B2DC]/20"
-                                            : ""
-                                }`}>
-                                    <Icon className={`w-5 h-5 ${isHome && isActive ? "text-white" : ""}`} />
+                                <div
+                                    className={`p-1.5 rounded-xl ${
+                                        isHome && isActive
+                                            ? "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white"
+                                            : isActive
+                                              ? "bg-[#E0F7FF] dark:bg-[#05B2DC]/20"
+                                              : ""
+                                    }`}
+                                >
+                                    <Icon
+                                        className={`w-6 h-6 ${isHome && isActive ? "text-white" : ""}`}
+                                    />
                                 </div>
-                                <span className="text-[10px] mt-0.5 font-medium">
+                                <span className="text-[11px] mt-0.5 font-medium">
                                     {tab.label}
                                 </span>
                             </button>
@@ -470,10 +502,12 @@ export default function Layout({
                         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                         className="flex flex-col items-center justify-center flex-1 py-2 min-h-[56px] text-gray-400 dark:text-gray-500"
                     >
-                        <div className={`p-1.5 rounded-xl ${isSidebarOpen ? "bg-gray-100 dark:bg-gray-800" : ""}`}>
-                            <Menu className="w-5 h-5" />
+                        <div
+                            className={`p-1.5 rounded-xl ${isSidebarOpen ? "bg-gray-100 dark:bg-gray-800" : ""}`}
+                        >
+                            <Menu className="w-6 h-6" />
                         </div>
-                        <span className="text-[10px] mt-0.5 font-medium">
+                        <span className="text-[11px] mt-0.5 font-medium">
                             메뉴
                         </span>
                     </button>

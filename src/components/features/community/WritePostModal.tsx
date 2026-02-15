@@ -68,11 +68,13 @@ export default function WritePostModal({
     const [error, setError] = useState("");
 
     // 가입된 닉네임 사용
-    const userNickname = user?.user_metadata?.nickname || user?.email?.split("@")[0] || "익명";
+    const userNickname =
+        user?.user_metadata?.nickname || user?.email?.split("@")[0] || "익명";
 
     const isMemorial = boardType === "memorial";
     const isFreeBoard = boardType === "free";
-    const badges = BADGES_BY_SUBCATEGORY[boardType] || BADGES_BY_SUBCATEGORY.free;
+    const badges =
+        BADGES_BY_SUBCATEGORY[boardType] || BADGES_BY_SUBCATEGORY.free;
 
     // boardType 변경 시 상태 초기화
     useEffect(() => {
@@ -131,7 +133,9 @@ export default function WritePostModal({
             onSuccess();
             onClose();
         } catch (err) {
-            setError(err instanceof Error ? err.message : "오류가 발생했습니다");
+            setError(
+                err instanceof Error ? err.message : "오류가 발생했습니다",
+            );
         } finally {
             setIsSubmitting(false);
         }
@@ -148,7 +152,7 @@ export default function WritePostModal({
             />
 
             {/* 모달 */}
-            <div className="relative w-full sm:max-w-lg sm:mx-4 bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl shadow-xl overflow-hidden max-h-[calc(100vh-60px)] sm:max-h-[85vh] flex flex-col">
+            <div className="relative w-full sm:max-w-lg sm:mx-4 bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl shadow-xl overflow-hidden max-h-[calc(100vh-140px)] sm:max-h-[85vh] flex flex-col mb-[80px] sm:mb-0">
                 {/* 헤더 */}
                 <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
                     <div>
@@ -262,7 +266,9 @@ export default function WritePostModal({
                                 <input
                                     type="checkbox"
                                     checked={isPublic}
-                                    onChange={(e) => setIsPublic(e.target.checked)}
+                                    onChange={(e) =>
+                                        setIsPublic(e.target.checked)
+                                    }
                                     className="mt-1 w-5 h-5 rounded border-violet-300 text-violet-600 focus:ring-violet-500"
                                 />
                                 <div className="flex-1">
@@ -271,19 +277,26 @@ export default function WritePostModal({
                                         홈화면에 공개
                                     </div>
                                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                        체크하면 홈화면의 &apos;추모의 공간&apos;에 글이 노출됩니다.
-                                        다른 사용자들과 함께 위로와 추억을 나눌 수 있어요.
+                                        체크하면 홈화면의 &apos;추모의
+                                        공간&apos;에 글이 노출됩니다. 다른
+                                        사용자들과 함께 위로와 추억을 나눌 수
+                                        있어요.
                                     </p>
                                     <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
                                         {isPublic ? (
                                             <>
                                                 <Eye className="w-3.5 h-3.5 text-violet-500" />
-                                                <span className="text-violet-600 dark:text-violet-400">공개 상태로 설정됨</span>
+                                                <span className="text-violet-600 dark:text-violet-400">
+                                                    공개 상태로 설정됨
+                                                </span>
                                             </>
                                         ) : (
                                             <>
                                                 <EyeOff className="w-3.5 h-3.5" />
-                                                <span>비공개 (커뮤니티 추모게시판에서만 볼 수 있음)</span>
+                                                <span>
+                                                    비공개 (커뮤니티
+                                                    추모게시판에서만 볼 수 있음)
+                                                </span>
                                             </>
                                         )}
                                     </div>
