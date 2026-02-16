@@ -1173,7 +1173,7 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                 </div>
 
                 <div
-                    className={`flex-shrink-0 p-4 border-t ${isMemorialMode ? "bg-amber-50/80 border-amber-200/50" : "bg-white/80 border-gray-200/50"} backdrop-blur-lg`}
+                    className={`flex-shrink-0 px-4 pt-2 pb-2 border-t ${isMemorialMode ? "bg-amber-50/80 border-amber-200/50" : "bg-white/80 border-gray-200/50"} backdrop-blur-lg`}
                 >
                     <div className="max-w-2xl mx-auto">
                         {/* 제한 도달 시 프리미엄 안내 */}
@@ -1207,7 +1207,7 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                         ) : (
                             <>
                                 {/* 추천 대화 버튼 - AI 제안 우선, 없으면 기본 칩 (카카오톡 챗봇 스타일) */}
-                                <div className="flex gap-2 mb-3 overflow-x-auto scrollbar-hide pb-1 snap-x scroll-smooth-touch">
+                                <div className="flex gap-2 mb-2 overflow-x-auto scrollbar-hide pb-1 snap-x scroll-smooth-touch">
                                     {suggestedQuestions.length > 0 ? (
                                         // AI가 맥락에 맞게 제안한 후속 질문
                                         suggestedQuestions.map((question, idx) => (
@@ -1301,7 +1301,7 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                                         </span>
                                     </div>
                                 )}
-                                <div className="flex items-center justify-center gap-2 mt-2 flex-wrap">
+                                <div className="flex items-center justify-center gap-2 mt-1 flex-wrap">
                                     {/* 남은 횟수 / 프리미엄 표시 */}
                                     {isPremium ? (
                                         <span className="text-xs px-2 py-0.5 rounded-full flex items-center gap-1 bg-violet-100 text-violet-600">
