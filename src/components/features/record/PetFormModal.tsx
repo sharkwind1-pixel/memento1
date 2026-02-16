@@ -131,18 +131,6 @@ export default function PetFormModal({
     const [showCloseConfirm, setShowCloseConfirm] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // 모달 열릴 때 body 스크롤 잠금 (모바일에서 배경 스크롤 방지)
-    useEffect(() => {
-        if (isOpen) {
-            document.documentElement.style.overflow = 'hidden';
-            document.body.style.overflow = 'hidden';
-        }
-        return () => {
-            document.documentElement.style.overflow = '';
-            document.body.style.overflow = '';
-        };
-    }, [isOpen]);
-
     useEffect(() => {
         if (isOpen) {
             setStep(1);
