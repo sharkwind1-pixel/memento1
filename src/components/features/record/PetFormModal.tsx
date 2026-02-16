@@ -693,16 +693,16 @@ export default function PetFormModal({
 
     return (
         <>
-            {/* 모달 래퍼 - 배경 클릭 시 닫기 */}
+            {/* 배경 오버레이 */}
             <div
-                className="fixed inset-0 z-[9999] bg-black/50 flex items-start justify-center pt-16 px-4 pb-4 overflow-y-auto"
+                className="fixed inset-0 z-[9998] bg-black/50"
                 onClick={handleBackdropClose}
+            />
+
+            {/* 모달 - 고정 위치, 내부만 스크롤 */}
+            <div
+                className="fixed z-[9999] top-16 left-4 right-4 bottom-4 sm:left-auto sm:right-auto sm:w-full sm:max-w-md sm:left-1/2 sm:-translate-x-1/2 flex flex-col bg-white dark:bg-gray-900 rounded-2xl shadow-xl"
             >
-                <div
-                    className="bg-white dark:bg-gray-900 rounded-2xl max-w-md w-full flex flex-col shadow-xl"
-                    style={{ maxHeight: 'calc(100vh - 5rem)' }}
-                    onClick={(e) => e.stopPropagation()}
-                >
                     {/* 헤더 - 고정 */}
                     <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
                         <h3 className="text-lg font-semibold">
@@ -790,7 +790,6 @@ export default function PetFormModal({
                             </Button>
                         )}
                     </div>
-                </div>
             </div>
 
             {/* 닫기 확인 다이얼로그 */}
