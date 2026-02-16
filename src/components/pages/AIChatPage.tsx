@@ -30,7 +30,7 @@ import { usePets } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
     Select,
@@ -59,6 +59,9 @@ import {
     Stethoscope,
     Footprints,
     Cookie,
+    Brain,
+    BarChart3,
+    Bell,
 } from "lucide-react";
 import { FullPageLoading } from "@/components/ui/PawLoading";
 import { TabType } from "@/types";
@@ -72,6 +75,9 @@ import {
     type TimelineEntry,
 } from "@/components/features/chat";
 import DomeGallery from "@/components/ui/DomeGallery";
+import MemoryPanel from "@/components/features/chat/MemoryPanel";
+import EmotionTracker from "@/components/features/chat/EmotionTracker";
+import ReminderPanel from "@/components/features/chat/ReminderPanel";
 
 // ============================================================================
 // 타입 정의
@@ -109,6 +115,48 @@ const emotionIcons: Record<string, string> = {
     neutral: "😐",
 };
 
+/** 감정별 펫 메시지 버블 배경색 (미묘한 틴트) */
+const emotionBubbleTint: Record<string, string> = {
+    happy: "bg-yellow-50 border-yellow-100",
+    sad: "bg-purple-50 border-purple-100",
+    anxious: "bg-gray-100 border-gray-200",
+    grateful: "bg-pink-50 border-pink-100",
+    excited: "bg-yellow-50 border-yellow-100",
+    peaceful: "bg-green-50 border-green-100",
+};
+
+/** 감정 라벨 (한국어) */
+const emotionLabels: Record<string, string> = {
+    happy: "기쁨",
+    sad: "슬픔",
+    anxious: "걱정",
+    angry: "화남",
+    grateful: "감사",
+    lonely: "외로움",
+    peaceful: "평온",
+    excited: "신남",
+    neutral: "",
+};
+
+/**
+ * 시간을 한국어 형식으로 포맷 (오전/오후 HH:MM)
+ */
+function formatTimestamp(date: Date): string {
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    const period = hours < 12 ? "오전" : "오후";
+    const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+    const displayMinutes = minutes.toString().padStart(2, "0");
+    return `${period} ${displayHours}:${displayMinutes}`;
+}
+
+/**
+ * 두 메시지 사이의 시간 간격이 5분 이상인지 확인
+ */
+function hasTimeGap(prev: Date, curr: Date): boolean {
+    return Math.abs(curr.getTime() - prev.getTime()) > 5 * 60 * 1000;
+}
+
 // ============================================================================
 // 메인 컴포넌트
 // ============================================================================
@@ -143,11 +191,15 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         schedule: { type: string; time: string; dayOfWeek?: number; dayOfMonth?: number };
         enabled: boolean;
     }>>([]);
+    const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
+    const [isMemoryPanelOpen, setIsMemoryPanelOpen] = useState(false);
+    const [isEmotionTrackerOpen, setIsEmotionTrackerOpen] = useState(false);
+    const [isReminderPanelOpen, setIsReminderPanelOpen] = useState(false);
     const isPremium = isPremiumUser; // AuthContext에서 중앙 관리
 
     // Refs
     const messagesEndRef = useRef<HTMLDivElement>(null);  // 채팅 스크롤 위치
-    const inputRef = useRef<HTMLInputElement>(null);      // 입력창 포커스
+    const textareaRef = useRef<HTMLTextAreaElement>(null); // 입력창 포커스
 
     // ========================================================================
     // 계산된 값
@@ -247,7 +299,8 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                     ]);
                 }
             } catch {
-                // 에러 시 인사말로 시작
+                // 네트워크 에러 시 인사말로 시작 + 사용자 알림
+                toast.error("이전 대화를 불러오지 못했어요. 새 대화로 시작합니다.");
                 if (selectedPet) {
                     const greeting = generatePersonalizedGreeting(
                         selectedPet.name,
@@ -276,7 +329,7 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
 
         try {
             // upsert: 있으면 업데이트, 없으면 생성
-            const { error } = await supabase
+            await supabase
                 .from("ai_chats")
                 .upsert({
                     user_id: user.id,
@@ -285,10 +338,8 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                 }, {
                     onConflict: "user_id,pet_id",
                 });
-
-            // 저장 에러는 무시
         } catch {
-            // 채팅 저장 실패 - 무시
+            // 채팅 저장 실패 - 조용히 무시 (다음 저장에서 재시도됨)
         }
     }, [selectedPetId, user?.id]);
 
@@ -302,6 +353,39 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
 
         return () => clearTimeout(timeoutId);
     }, [messages, selectedPetId, user?.id, saveToSupabase]);
+
+    // 리마인더 불러오기 (Supabase pet_reminders 테이블)
+    useEffect(() => {
+        if (!selectedPetId || !user?.id) {
+            setReminders([]);
+            return;
+        }
+
+        const loadReminders = async () => {
+            try {
+                const response = await fetch(`/api/reminders?petId=${selectedPetId}`);
+                if (!response.ok) return;
+                const data = await response.json();
+                if (data.reminders && Array.isArray(data.reminders)) {
+                    setReminders(data.reminders.map((r: {
+                        type: string;
+                        title: string;
+                        schedule: { type: string; time: string; dayOfWeek?: number; dayOfMonth?: number };
+                        enabled: boolean;
+                    }) => ({
+                        type: r.type,
+                        title: r.title,
+                        schedule: r.schedule,
+                        enabled: r.enabled,
+                    })));
+                }
+            } catch {
+                // 리마인더 로드 실패 - 무시 (빈 배열 유지)
+            }
+        };
+
+        loadReminders();
+    }, [selectedPetId, user?.id]);
 
     // 펫 변경 시 사진 인덱스 초기화 및 타임라인 불러오기
     useEffect(() => {
@@ -372,6 +456,10 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         setMessages((prev) => [...prev, userMessage]);
         const currentInput = messageToSend;
         setInputValue("");
+        // Textarea 높이 초기화
+        if (textareaRef.current) {
+            textareaRef.current.style.height = "40px";
+        }
         setIsTyping(true);
 
         try {
@@ -449,6 +537,11 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                 setLastEmotion(data.emotion);
             }
 
+            // AI가 제안한 후속 질문 저장
+            if (data.suggestedQuestions && data.suggestedQuestions.length > 0) {
+                setSuggestedQuestions(data.suggestedQuestions);
+            }
+
             const petMessage: ChatMessage = {
                 id: `pet-${Date.now()}`,
                 role: "pet",
@@ -458,7 +551,30 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                 emotionScore: data.emotionScore,
             };
             setMessages((prev) => [...prev, petMessage]);
-        } catch {
+        } catch (err) {
+            // 에러 유형별 사용자 친화적 메시지
+            const errorMessage = err instanceof Error ? err.message : "";
+            const isNetworkError = errorMessage.includes("fetch") || errorMessage.includes("network") || errorMessage.includes("Failed");
+            const isRateLimited = errorMessage.includes("429") || errorMessage.includes("요청이 너무");
+
+            if (isNetworkError) {
+                toast.error("네트워크 연결이 불안정해요. 다시 시도해주세요.", {
+                    action: {
+                        label: "다시 시도",
+                        onClick: () => handleSend(messageToSend),
+                    },
+                });
+            } else if (isRateLimited) {
+                toast.error("잠시 후 다시 시도해주세요.");
+            } else {
+                toast.error("응답을 받지 못했어요. 다시 시도해주세요.", {
+                    action: {
+                        label: "다시 시도",
+                        onClick: () => handleSend(messageToSend),
+                    },
+                });
+            }
+
             // 에러 발생 시 폴백 응답
             const fallbackResponses = isMemorialMode
                 ? [
@@ -488,13 +604,25 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
      * 키보드 입력 처리
      * - 한글 조합 중(isComposing)에는 Enter 무시 (IME 버그 방지)
      * - Enter: 메시지 전송
+     * - Shift+Enter: 줄바꿈
      */
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.nativeEvent.isComposing) return;  // 한글 조합 중 Enter 방지
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             handleSend();
         }
+    };
+
+    /**
+     * Textarea 자동 높이 조절 (최대 3줄)
+     */
+    const handleTextareaInput = () => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+        textarea.style.height = "auto";
+        const maxHeight = 84; // 약 3줄 높이
+        textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
     };
 
     // ========================================================================
@@ -622,7 +750,6 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
     return (
         <div
             className={`min-h-screen flex flex-col relative overflow-hidden ${isMemorialMode ? "bg-gradient-to-b from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950 dark:via-orange-950 dark:to-gray-900" : "bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"}`}
-            style={{ contain: 'layout style', transform: 'translateZ(0)' }}
         >
             {/* ================================================================
                 상단 DomeGallery - 3D 사진 갤러리
@@ -693,6 +820,30 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                         >
                             <RotateCcw className="w-5 h-5" />
                         </button>
+                        <button
+                            onClick={() => setIsMemoryPanelOpen(true)}
+                            className={`p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-colors ${isMemorialMode ? "hover:bg-amber-200/50 text-amber-600" : "hover:bg-[#E0F7FF] text-[#05B2DC]"}`}
+                            title="기억 보기"
+                        >
+                            <Brain className="w-5 h-5" />
+                        </button>
+                        <button
+                            onClick={() => setIsEmotionTrackerOpen(true)}
+                            className={`p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-colors ${isMemorialMode ? "hover:bg-amber-200/50 text-amber-600" : "hover:bg-[#E0F7FF] text-[#05B2DC]"}`}
+                            title="감정 분석"
+                        >
+                            <BarChart3 className="w-5 h-5" />
+                        </button>
+                        {/* 케어 알림 버튼 - 일상 모드에서만 표시 */}
+                        {!isMemorialMode && (
+                            <button
+                                onClick={() => setIsReminderPanelOpen(true)}
+                                className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-colors hover:bg-[#E0F7FF] text-[#05B2DC]"
+                                title="케어 알림"
+                            >
+                                <Bell className="w-5 h-5" />
+                            </button>
+                        )}
                     </div>
                     <Select
                         value={selectedPetId || ""}
@@ -874,52 +1025,96 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                     </span>
                 </div>
                 <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-3">
-                    {messages.map((message, index) => (
-                        <div
-                            key={message.id}
-                            className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} animate-in fade-in slide-in-from-bottom-2 duration-300`}
-                            style={{ animationDelay: index === messages.length - 1 ? "0ms" : "0ms" }}
-                        >
-                            {message.role === "pet" && (
-                                <div className={`w-9 h-9 rounded-full overflow-hidden mr-2 flex-shrink-0 ring-2 shadow-md transition-transform hover:scale-105 ${
-                                    isMemorialMode ? "ring-amber-200" : "ring-sky-200"
-                                }`}>
-                                    {selectedPet?.profileImage ? (
-                                        <img
-                                            src={selectedPet.profileImage}
-                                            alt={selectedPet.name}
-                                            className="w-full h-full object-cover"
-                                            style={{
-                                                objectPosition:
-                                                    selectedPet.profileCropPosition
-                                                        ? `${selectedPet.profileCropPosition.x}% ${selectedPet.profileCropPosition.y}%`
-                                                        : "center",
-                                            }}
-                                        />
-                                    ) : (
-                                        <div
-                                            className={`w-full h-full flex items-center justify-center ${isMemorialMode ? "bg-gradient-to-br from-amber-100 to-orange-100" : "bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD]"}`}
-                                        >
-                                            <PawPrint
-                                                className={`w-4 h-4 ${isMemorialMode ? "text-amber-500" : "text-[#05B2DC]"}`}
-                                            />
+                    {messages.map((message, index) => {
+                        // 타임스탬프 표시 여부 결정: 첫 메시지 또는 이전 메시지와 5분 이상 간격
+                        const showTimestamp =
+                            index === 0 ||
+                            hasTimeGap(
+                                messages[index - 1].timestamp,
+                                message.timestamp
+                            );
+
+                        // 감정 기반 버블 색상 (펫 메시지만)
+                        const emotionTintClass =
+                            message.role === "pet" && message.emotion && emotionBubbleTint[message.emotion]
+                                ? emotionBubbleTint[message.emotion]
+                                : "";
+
+                        return (
+                            <div key={message.id}>
+                                {/* 타임스탬프 구분선 */}
+                                {showTimestamp && (
+                                    <div className="chat-timestamp my-2">
+                                        <span>{formatTimestamp(message.timestamp)}</span>
+                                    </div>
+                                )}
+                                <div
+                                    className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} chat-bubble-enter`}
+                                    style={{ animationDelay: index === messages.length - 1 ? "0ms" : "0ms" }}
+                                >
+                                    {message.role === "pet" && (
+                                        <div className={`w-9 h-9 rounded-full overflow-hidden mr-2 flex-shrink-0 ring-2 shadow-md transition-transform hover:scale-105 ${
+                                            isMemorialMode ? "ring-amber-200" : "ring-sky-200"
+                                        }`}>
+                                            {selectedPet?.profileImage ? (
+                                                <img
+                                                    src={selectedPet.profileImage}
+                                                    alt={selectedPet.name}
+                                                    className="w-full h-full object-cover"
+                                                    style={{
+                                                        objectPosition:
+                                                            selectedPet.profileCropPosition
+                                                                ? `${selectedPet.profileCropPosition.x}% ${selectedPet.profileCropPosition.y}%`
+                                                                : "center",
+                                                    }}
+                                                />
+                                            ) : (
+                                                <div
+                                                    className={`w-full h-full flex items-center justify-center ${isMemorialMode ? "bg-gradient-to-br from-amber-100 to-orange-100" : "bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD]"}`}
+                                                >
+                                                    <PawPrint
+                                                        className={`w-4 h-4 ${isMemorialMode ? "text-amber-500" : "text-[#05B2DC]"}`}
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
                                     )}
+                                    <div className="flex flex-col max-w-[75%]">
+                                        <div
+                                            className={`px-4 py-3 rounded-2xl shadow-md transition-all hover:shadow-lg ${
+                                                message.role === "user"
+                                                    ? (isMemorialMode
+                                                        ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-br-sm"
+                                                        : "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white rounded-br-sm")
+                                                    : emotionTintClass
+                                                        ? `${emotionTintClass} text-gray-800 rounded-bl-sm border`
+                                                        : isMemorialMode
+                                                            ? "bg-amber-100 text-amber-900 rounded-bl-sm border border-amber-200/50"
+                                                            : "bg-white text-gray-800 rounded-bl-sm border border-sky-100"
+                                            }`}
+                                        >
+                                            <p className="text-[15px] leading-relaxed">
+                                                {message.content}
+                                            </p>
+                                        </div>
+                                        {/* 감정 아이콘 배지 (펫 메시지만, neutral 제외) */}
+                                        {message.role === "pet" && message.emotion && message.emotion !== "neutral" && (
+                                            <span className="text-[11px] text-gray-400 mt-1 ml-1 flex items-center gap-1">
+                                                <span>{emotionIcons[message.emotion]}</span>
+                                                <span>{emotionLabels[message.emotion] || message.emotion}</span>
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
-                            )}
-                            <div
-                                className={`max-w-[75%] px-4 py-3 rounded-2xl shadow-md transition-all hover:shadow-lg ${message.role === "user" ? (isMemorialMode ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-br-md" : "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white rounded-br-md") : isMemorialMode ? "bg-amber-100 text-amber-900 rounded-bl-md border border-amber-200/50" : "bg-white text-gray-800 rounded-bl-md border border-sky-100"}`}
-                            >
-                                <p className="text-[15px] leading-relaxed">
-                                    {message.content}
-                                </p>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
 
                     {isTyping && (
-                        <div className="flex justify-start">
-                            <div className="w-8 h-8 rounded-full overflow-hidden mr-2 flex-shrink-0">
+                        <div className="flex justify-start chat-bubble-enter">
+                            <div className={`w-9 h-9 rounded-full overflow-hidden mr-2 flex-shrink-0 ring-2 shadow-md ${
+                                isMemorialMode ? "ring-amber-200" : "ring-sky-200"
+                            }`}>
                                 {selectedPet?.profileImage ? (
                                     <img
                                         src={selectedPet.profileImage}
@@ -937,7 +1132,7 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                                 )}
                             </div>
                             <div
-                                className={`px-5 py-3 rounded-2xl rounded-bl-md ${isMemorialMode ? "bg-amber-100" : "bg-white shadow-sm"}`}
+                                className={`px-5 py-3 rounded-2xl rounded-bl-sm ${isMemorialMode ? "bg-amber-100 border border-amber-200/50" : "bg-white shadow-sm border border-sky-100"}`}
                             >
                                 <div className="flex items-end gap-1.5">
                                     {[0, 1, 2].map((i) => (
@@ -962,9 +1157,15 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                                         </div>
                                     ))}
                                 </div>
-                                <p className={`text-xs mt-1 ${isMemorialMode ? "text-amber-500" : "text-sky-500"}`}>
-                                    {selectedPet?.name}가 답변 중...
-                                </p>
+                                {isMemorialMode ? (
+                                    <p className="text-xs mt-1.5 memorial-shimmer-text font-medium">
+                                        이곳에서 생각하고 있어요...
+                                    </p>
+                                ) : (
+                                    <p className="text-xs mt-1 text-sky-500">
+                                        {selectedPet?.name}가 신나게 답변 중...
+                                    </p>
+                                )}
                             </div>
                         </div>
                     )}
@@ -1005,50 +1206,83 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                             </div>
                         ) : (
                             <>
-                                {/* 추천 대화 버튼 - 2x2 그리드 모바일 최적화 + 애니메이션 */}
-                                <div className="grid grid-cols-2 gap-2 mb-3">
-                                    {(isMemorialMode
-                                        ? [
-                                            { text: "잘 지냈어?", Icon: Sparkles },
-                                            { text: "보고싶어", Icon: Moon },
-                                            { text: "오늘 네 생각 났어", Icon: Star },
-                                            { text: "행복했던 기억", Icon: CloudSun },
-                                        ]
-                                        : [
-                                            { text: "예방접종 언제?", Icon: Syringe },
-                                            { text: "건강 체크해줘", Icon: Stethoscope },
-                                            { text: "산책 시간", Icon: Footprints },
-                                            { text: "간식 추천", Icon: Cookie },
-                                        ]
-                                    ).map((suggestion, idx) => (
-                                        <button
-                                            key={suggestion.text}
-                                            onClick={() => { handleSend(suggestion.text); }}
-                                            className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all hover:scale-[1.02] active:scale-95 min-h-[44px] shadow-sm hover:shadow-md animate-in fade-in slide-in-from-bottom-1 ${
-                                                isMemorialMode
-                                                    ? "bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-200"
-                                                    : "bg-[#E0F7FF] hover:bg-[#BAE6FD] text-[#0891B2] border border-[#BAE6FD]"
-                                            }`}
-                                            style={{ animationDelay: `${idx * 50}ms` }}
-                                        >
-                                            <suggestion.Icon className="w-4 h-4 flex-shrink-0" />
-                                            <span className="truncate">{suggestion.text}</span>
-                                        </button>
-                                    ))}
+                                {/* 추천 대화 버튼 - AI 제안 우선, 없으면 기본 칩 (카카오톡 챗봇 스타일) */}
+                                <div className="flex gap-2 mb-3 overflow-x-auto scrollbar-hide pb-1 snap-x scroll-smooth-touch">
+                                    {suggestedQuestions.length > 0 ? (
+                                        // AI가 맥락에 맞게 제안한 후속 질문
+                                        suggestedQuestions.map((question, idx) => (
+                                            <button
+                                                key={question}
+                                                onClick={() => { setSuggestedQuestions([]); handleSend(question); }}
+                                                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all hover:scale-[1.03] active:scale-95 min-h-[38px] shadow-sm hover:shadow-md whitespace-nowrap flex-shrink-0 snap-start chip-enter ${
+                                                    isMemorialMode
+                                                        ? "bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-200"
+                                                        : "bg-[#E0F7FF] hover:bg-[#BAE6FD] text-[#0891B2] border border-[#BAE6FD]"
+                                                }`}
+                                                style={{ animationDelay: `${idx * 80}ms` }}
+                                            >
+                                                <Sparkles className="w-3.5 h-3.5 flex-shrink-0" />
+                                                <span>{question}</span>
+                                            </button>
+                                        ))
+                                    ) : (
+                                        // 기본 추천 대화 (AI 제안이 아직 없을 때)
+                                        (isMemorialMode
+                                            ? [
+                                                { text: "잘 지냈어?", Icon: Sparkles },
+                                                { text: "보고싶어", Icon: Moon },
+                                                { text: "오늘 네 생각 났어", Icon: Star },
+                                                { text: "행복했던 기억", Icon: CloudSun },
+                                            ]
+                                            : [
+                                                { text: "예방접종 언제?", Icon: Syringe },
+                                                { text: "건강 체크해줘", Icon: Stethoscope },
+                                                { text: "산책 시간", Icon: Footprints },
+                                                { text: "간식 추천", Icon: Cookie },
+                                            ]
+                                        ).map((suggestion, idx) => (
+                                            <button
+                                                key={suggestion.text}
+                                                onClick={() => { handleSend(suggestion.text); }}
+                                                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all hover:scale-[1.03] active:scale-95 min-h-[38px] shadow-sm hover:shadow-md whitespace-nowrap flex-shrink-0 snap-start chip-enter ${
+                                                    isMemorialMode
+                                                        ? "bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-200"
+                                                        : "bg-[#E0F7FF] hover:bg-[#BAE6FD] text-[#0891B2] border border-[#BAE6FD]"
+                                                }`}
+                                                style={{ animationDelay: `${idx * 80}ms` }}
+                                            >
+                                                <suggestion.Icon className="w-3.5 h-3.5 flex-shrink-0" />
+                                                <span>{suggestion.text}</span>
+                                            </button>
+                                        ))
+                                    )}
                                 </div>
-                                <div className="flex gap-2 sm:gap-3">
-                                    <Input
-                                        ref={inputRef}
+                                <div className={`flex gap-2 sm:gap-3 items-end rounded-xl border transition-all ${
+                                    isMemorialMode ? "textarea-glow-amber" : "textarea-glow-sky"
+                                } border-gray-200 bg-white p-1.5`}>
+                                    <Textarea
+                                        ref={textareaRef}
                                         value={inputValue}
-                                        onChange={(e) => setInputValue(e.target.value.slice(0, MAX_MESSAGE_LENGTH))}
+                                        onChange={(e) => {
+                                            setInputValue(e.target.value.slice(0, MAX_MESSAGE_LENGTH));
+                                            handleTextareaInput();
+                                        }}
                                         onKeyDown={handleKeyDown}
                                         placeholder={`${selectedPet?.name}에게 말해보세요...`}
-                                        className="flex-1 rounded-xl border-gray-200 bg-white h-12 text-base"
+                                        className="flex-1 rounded-lg border-0 bg-transparent shadow-none text-base resize-none min-h-[40px] max-h-[84px] py-2 px-2 focus-visible:ring-0 focus-visible:ring-offset-0"
+                                        rows={1}
+                                        style={{ height: "40px" }}
                                     />
                                     <Button
                                         onClick={() => handleSend()}
                                         disabled={!inputValue.trim()}
-                                        className={`rounded-xl px-4 min-w-[48px] min-h-[48px] ${isMemorialMode ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600" : "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-[#05B2DC]"} shadow-lg active:scale-95 transition-transform`}
+                                        className={`rounded-lg px-3 min-w-[44px] min-h-[44px] flex-shrink-0 transition-all ${
+                                            inputValue.trim()
+                                                ? isMemorialMode
+                                                    ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg"
+                                                    : "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-[#05B2DC] shadow-lg"
+                                                : "bg-gray-200 text-gray-400"
+                                        } active:scale-95 transition-transform`}
                                     >
                                         <Send className="w-5 h-5" />
                                     </Button>
@@ -1098,6 +1332,40 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                 </div>
                 </div>
             </div>
+
+            {/* 메모리 패널 (바텀시트) */}
+            {selectedPet && (
+                <MemoryPanel
+                    isOpen={isMemoryPanelOpen}
+                    onClose={() => setIsMemoryPanelOpen(false)}
+                    petId={selectedPet.id}
+                    petName={selectedPet.name}
+                    isMemorialMode={isMemorialMode}
+                />
+            )}
+
+            {/* 감정 분석 패널 (바텀시트) */}
+            {selectedPet && user && (
+                <EmotionTracker
+                    isOpen={isEmotionTrackerOpen}
+                    onClose={() => setIsEmotionTrackerOpen(false)}
+                    petId={selectedPet.id}
+                    petName={selectedPet.name}
+                    isMemorialMode={isMemorialMode}
+                    userId={user.id}
+                />
+            )}
+
+            {/* 케어 알림 패널 (바텀시트) - 일상 모드에서만 */}
+            {selectedPet && !isMemorialMode && (
+                <ReminderPanel
+                    isOpen={isReminderPanelOpen}
+                    onClose={() => setIsReminderPanelOpen(false)}
+                    petId={selectedPet.id}
+                    petName={selectedPet.name}
+                    isMemorialMode={isMemorialMode}
+                />
+            )}
         </div>
     );
 }

@@ -154,6 +154,96 @@ label {
     }
 }
 
+/* Memorial mode shimmer effect for typing indicator */
+@keyframes memorial-shimmer {
+    0% {
+        background-position: -200% center;
+    }
+    100% {
+        background-position: 200% center;
+    }
+}
+
+.memorial-shimmer-text {
+    background: linear-gradient(
+        90deg,
+        #d97706 0%,
+        #f59e0b 25%,
+        #fbbf24 50%,
+        #f59e0b 75%,
+        #d97706 100%
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: memorial-shimmer 3s linear infinite;
+}
+
+/* Chat bubble entrance animation */
+@keyframes chatBubbleIn {
+    0% {
+        opacity: 0;
+        transform: translateY(12px) scale(0.96);
+    }
+    60% {
+        opacity: 1;
+        transform: translateY(-2px) scale(1.01);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.chat-bubble-enter {
+    animation: chatBubbleIn 0.35s ease-out forwards;
+}
+
+/* Staggered chip animation for quick reply buttons */
+@keyframes chipSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.chip-enter {
+    animation: chipSlideIn 0.3s ease-out forwards;
+}
+
+/* Textarea focus glow for daily mode */
+.textarea-glow-sky:focus-within {
+    box-shadow: 0 0 0 2px rgba(5, 178, 220, 0.2), 0 0 12px rgba(5, 178, 220, 0.1);
+    border-color: #05B2DC;
+}
+
+/* Textarea focus glow for memorial mode */
+.textarea-glow-amber:focus-within {
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2), 0 0 12px rgba(245, 158, 11, 0.1);
+    border-color: #f59e0b;
+}
+
+/* Timestamp divider style */
+.chat-timestamp {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 0;
+}
+
+.chat-timestamp span {
+    font-size: 11px;
+    color: #9ca3af;
+    background: rgba(255, 255, 255, 0.7);
+    padding: 2px 10px;
+    border-radius: 10px;
+}
+
 /* 터치 디바이스에서 버튼 클릭 시 하이라이트 제거 */
 button,
 a {
