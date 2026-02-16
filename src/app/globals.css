@@ -10,17 +10,15 @@ body {
     overscroll-behavior-x: none;
 }
 
-/* 모바일 터치 반응 개선 - 300ms 탭 딜레이 제거 */
-*,
-*::before,
-*::after {
-    touch-action: manipulation;
-}
-
-/* 버튼/링크 터치 피드백 */
+/* 모바일 터치 반응 개선 - 300ms 탭 딜레이 제거 (버튼/링크만) */
 button,
 a,
-[role="button"] {
+[role="button"],
+input,
+select,
+textarea,
+label {
+    touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
 }
 

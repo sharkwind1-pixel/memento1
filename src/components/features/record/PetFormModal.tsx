@@ -689,7 +689,7 @@ export default function PetFormModal({
             {/* 전체 화면 컨테이너 - 스크롤 가능 */}
             <div
                 className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50"
-                style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
+                style={{ WebkitOverflowScrolling: 'touch' }}
                 onClick={handleBackdropClose}
             >
                 {/* 모달 정렬 래퍼 */}
@@ -697,7 +697,6 @@ export default function PetFormModal({
                     {/* 모달 본체 */}
                     <div
                         className="bg-white dark:bg-gray-900 w-full max-w-md rounded-2xl shadow-xl relative"
-                        style={{ touchAction: 'pan-y' }}
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* 헤더 - sticky */}
