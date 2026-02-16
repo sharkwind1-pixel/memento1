@@ -137,6 +137,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
     // Supabase에서 데이터 로드
     const loadFromSupabase = useCallback(async (userId: string) => {
         try {
+            setIsLoading(true);
             setIsSyncing(true);
 
             // 반려동물 조회
