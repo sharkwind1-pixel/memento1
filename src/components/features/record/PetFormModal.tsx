@@ -131,6 +131,16 @@ export default function PetFormModal({
     const [showCloseConfirm, setShowCloseConfirm] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // 모달 열릴 때 body 스크롤 잠금 (모바일에서 배경 스크롤 방지)
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isOpen]);
+
     useEffect(() => {
         if (isOpen) {
             setStep(1);
@@ -680,7 +690,7 @@ export default function PetFormModal({
                 onClick={handleBackdropClose}
             >
                 <div
-                    className="bg-white dark:bg-gray-900 rounded-2xl max-w-md w-full max-h-[85vh] flex flex-col shadow-xl"
+                    className="bg-white dark:bg-gray-900 rounded-2xl max-w-md w-full max-h-[85vh] flex flex-col shadow-xl overflow-hidden"
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* 헤더 - 고정 */}
@@ -728,8 +738,8 @@ export default function PetFormModal({
 
                     {/* 스텝 컨텐츠 - 스크롤 영역 */}
                     <div
-                        className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6"
-                        style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
+                        className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-4 sm:p-6"
+                        style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
                     >
                         {renderCurrentStep()}
                     </div>

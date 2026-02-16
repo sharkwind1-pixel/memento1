@@ -906,7 +906,17 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                 {/* 반려동물 탭 */}
                 {activeTab === "pets" && (
                     <>
-                        {pets.length === 0 ? (
+                        {petsLoading ? (
+                    <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+                        <CardContent className="py-16">
+                            <div className="flex flex-col items-center gap-3">
+                                <div className="w-20 h-20 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" />
+                                <div className="h-5 w-40 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                                <div className="h-4 w-56 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                            </div>
+                        </CardContent>
+                    </Card>
+                        ) : pets.length === 0 ? (
                     <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
                         <CardContent className="flex flex-col items-center justify-center py-16">
                             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD] flex items-center justify-center mb-4">

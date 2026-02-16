@@ -2,12 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 모바일 화면 떨림(horizontal bounce) 방지 */
+/* 모바일 최적화 */
 html,
 body {
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-x: none;
+}
+
+/* 모바일 터치 반응 개선 - 300ms 탭 딜레이 제거 */
+*,
+*::before,
+*::after {
+    touch-action: manipulation;
+}
+
+/* 버튼/링크 터치 피드백 */
+button,
+a,
+[role="button"] {
+    -webkit-tap-highlight-color: transparent;
 }
 
 :root {
