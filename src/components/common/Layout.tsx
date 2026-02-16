@@ -222,7 +222,7 @@ export default function Layout({
             {/* 헤더 - 모바일은 완전 불투명 (성능), 데스크톱은 반투명 */}
             {/* GPU 가속으로 리페인트 최소화 */}
             <header
-                className="sticky top-0 z-50 bg-white dark:bg-gray-900 xl:bg-white/90 xl:dark:bg-gray-900/90 xl:backdrop-blur-sm border-b border-gray-200 dark:border-gray-700"
+                className="sticky top-0 z-[60] bg-white dark:bg-gray-900 xl:bg-white/90 xl:dark:bg-gray-900/90 xl:backdrop-blur-sm border-b border-gray-200 dark:border-gray-700"
                 style={{
                     transform: "translateZ(0)",
                     backfaceVisibility: "hidden",
@@ -330,7 +330,7 @@ export default function Layout({
                                         <span className={pointsLoaded ? "opacity-100" : "opacity-0"} style={{ transition: "opacity 0.15s" }}>
                                             <LevelBadge
                                                 points={points}
-                                                size="lg"
+                                                size="md"
                                                 showTooltip={false}
                                             />
                                         </span>
@@ -516,8 +516,6 @@ export default function Layout({
                 </div>
             </nav>
 
-            {/* 하단 네비게이션 높이 확보 */}
-            <div className="xl:hidden h-20" />
         </div>
     );
 }
