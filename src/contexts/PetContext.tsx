@@ -149,55 +149,59 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
 
             if (petsError) throw petsError;
 
-            // 각 반려동물의 미디어 조회
-            const petsWithMedia: Pet[] = await Promise.all(
-                (petsData || []).map(async (pet) => {
-                    const { data: mediaData } = await supabase
-                        .from("pet_media")
-                        .select("*")
-                        .eq("pet_id", pet.id)
-                        .order("date", { ascending: false });
+            // 모든 반려동물의 미디어를 한 번에 조회 (N+1 → 1 쿼리)
+            const petIds = (petsData || []).map((p) => p.id);
+            const { data: allMediaData } = petIds.length > 0
+                ? await supabase
+                    .from("pet_media")
+                    .select("*")
+                    .in("pet_id", petIds)
+                    .order("date", { ascending: false })
+                : { data: [] };
 
-                    const photos: PetPhoto[] = (mediaData || []).map((m) => ({
-                        id: m.id,
-                        url: m.url,
-                        storagePath: m.storage_path,
-                        type: m.type as MediaType,
-                        caption: m.caption || "",
-                        date: m.date,
-                        cropPosition: m.crop_position,
-                        thumbnailUrl: m.thumbnail_url,
-                    }));
+            // pet_id별로 미디어 그룹핑
+            const mediaByPetId = new Map<string, PetPhoto[]>();
+            for (const m of allMediaData || []) {
+                const photos = mediaByPetId.get(m.pet_id) || [];
+                photos.push({
+                    id: m.id,
+                    url: m.url,
+                    storagePath: m.storage_path,
+                    type: m.type as MediaType,
+                    caption: m.caption || "",
+                    date: m.date,
+                    cropPosition: m.crop_position,
+                    thumbnailUrl: m.thumbnail_url,
+                });
+                mediaByPetId.set(m.pet_id, photos);
+            }
 
-                    return {
-                        id: pet.id,
-                        name: pet.name,
-                        type: pet.type,
-                        breed: pet.breed,
-                        birthday: pet.birthday || "",
-                        gender: pet.gender,
-                        weight: pet.weight || "",
-                        personality: pet.personality || "",
-                        profileImage: pet.profile_image || "",
-                        profileCropPosition: pet.profile_crop_position,
-                        photos,
-                        status: pet.status,
-                        memorialDate: pet.memorial_date,
-                        isPrimary: pet.is_primary,
-                        createdAt: pet.created_at,
-                        // AI 펫톡 개인화를 위한 추가 필드
-                        adoptedDate: pet.adopted_date || undefined,
-                        howWeMet: pet.how_we_met || undefined,
-                        nicknames: pet.nicknames || undefined,
-                        specialHabits: pet.special_habits || undefined,
-                        favoriteFood: pet.favorite_food || undefined,
-                        favoriteActivity: pet.favorite_activity || undefined,
-                        favoritePlace: pet.favorite_place || undefined,
-                        togetherPeriod: pet.together_period || undefined,
-                        memorableMemory: pet.memorable_memory || undefined,
-                    };
-                })
-            );
+            const petsWithMedia: Pet[] = (petsData || []).map((pet) => ({
+                id: pet.id,
+                name: pet.name,
+                type: pet.type,
+                breed: pet.breed,
+                birthday: pet.birthday || "",
+                gender: pet.gender,
+                weight: pet.weight || "",
+                personality: pet.personality || "",
+                profileImage: pet.profile_image || "",
+                profileCropPosition: pet.profile_crop_position,
+                photos: mediaByPetId.get(pet.id) || [],
+                status: pet.status,
+                memorialDate: pet.memorial_date,
+                isPrimary: pet.is_primary,
+                createdAt: pet.created_at,
+                adoptedDate: pet.adopted_date || undefined,
+                howWeMet: pet.how_we_met || undefined,
+                nicknames: pet.nicknames || undefined,
+                specialHabits: pet.special_habits || undefined,
+                favoriteFood: pet.favorite_food || undefined,
+                favoriteActivity: pet.favorite_activity || undefined,
+                favoritePlace: pet.favorite_place || undefined,
+                togetherPeriod: pet.together_period || undefined,
+                memorableMemory: pet.memorable_memory || undefined,
+            }));
 
             setPets(petsWithMedia);
 

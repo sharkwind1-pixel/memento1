@@ -75,6 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [pointsLoaded, setPointsLoaded] = useState(false);
 
     // 프로필에서 관리자/프리미엄 상태 조회
+    // 프로필+포인트 통합 조회 (단일 쿼리)
     const refreshProfile = useCallback(async () => {
         try {
             const { data: { user: currentUser } } = await supabase.auth.getUser();
@@ -84,32 +85,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 return;
             }
 
-            // DB에서 프로필 조회 (is_admin, is_premium, premium_expires_at)
             const { data, error } = await supabase
                 .from("profiles")
-                .select("is_admin, is_premium, premium_expires_at")
+                .select("is_admin, is_premium, premium_expires_at, points")
                 .eq("id", currentUser.id)
                 .single();
 
-            // 관리자 체크: 하드코딩 이메일 OR DB is_admin 필드
+            // 관리자 체크
             const emailAdmin = ADMIN_EMAILS.includes(currentUser.email || "");
             const dbAdmin = !error && data?.is_admin === true;
             setIsAdminUser(emailAdmin || dbAdmin);
 
-            // 프리미엄 체크: DB is_premium + 만료일 검증
+            // 프리미엄 체크
             if (!error && data?.is_premium === true) {
                 const expiresAt = data.premium_expires_at;
-                const isPremiumValid = !expiresAt || new Date(expiresAt) > new Date();
-                setIsPremiumUser(isPremiumValid);
+                setIsPremiumUser(!expiresAt || new Date(expiresAt) > new Date());
             } else {
                 setIsPremiumUser(false);
             }
+
+            // 포인트도 같이 설정
+            setPoints(!error ? (data?.points ?? 0) : 0);
+            setPointsLoaded(true);
         } catch {
-            // 프로필 조회 실패 시 기본값 유지
+            setPointsLoaded(true);
         }
     }, []);
 
-    // 포인트 조회 (profiles 테이블 직접 SELECT)
+    // 포인트만 새로고침 (포인트 변경 후 호출용)
     const refreshPoints = useCallback(async () => {
         try {
             const { data: { user: currentUser } } = await supabase.auth.getUser();
@@ -121,27 +124,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 .eq("id", currentUser.id)
                 .single();
 
-            const myPoints = profile?.points ?? 0;
-            setPoints(myPoints);
+            setPoints(profile?.points ?? 0);
             setPointsLoaded(true);
         } catch {
-            // 포인트 조회 실패 시 기본값 유지
             setPointsLoaded(true);
         }
     }, []);
 
     // 출석 체크 (RPC 시도, 실패하면 무시)
-    const checkDailyLogin = useCallback(async () => {
+    const checkDailyLogin = useCallback(async (userId: string) => {
         try {
             const today = new Date().toISOString().split("T")[0];
             const lastCheck = localStorage.getItem("lastDailyCheck");
             if (lastCheck === today) return;
 
-            const { data: { user: currentUser } } = await supabase.auth.getUser();
-            if (!currentUser) return;
-
             const { error } = await supabase.rpc("daily_login_check", {
-                p_user_id: currentUser.id,
+                p_user_id: userId,
             });
 
             if (!error) {
@@ -163,11 +161,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(session?.user ?? null);
             setLoading(false);
 
-            // 로그인 상태면 프로필 + 포인트 로드 + 출석 체크
+            // 로그인 상태면 프로필+포인트 통합 로드 + 출석 체크 (병렬)
             if (session?.user) {
                 refreshProfile();
-                refreshPoints();
-                checkDailyLogin();
+                checkDailyLogin(session.user.id);
             }
         };
 
@@ -181,11 +178,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(session?.user ?? null);
             setLoading(false);
 
-            // 로그인 시 프로필 + 포인트 로드 + 출석 체크
+            // 로그인 시 프로필+포인트 통합 로드 + 출석 체크
             if (event === "SIGNED_IN" && session?.user) {
                 refreshProfile();
-                refreshPoints();
-                checkDailyLogin();
+                checkDailyLogin(session.user.id);
             }
 
             // 로그아웃 시 상태 초기화
