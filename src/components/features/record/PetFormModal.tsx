@@ -128,6 +128,7 @@ export default function PetFormModal({
     });
     const [showCropper, setShowCropper] = useState(false);
     const [profileCropped, setProfileCropped] = useState(false);
+    const [showCloseConfirm, setShowCloseConfirm] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -193,6 +194,27 @@ export default function PetFormModal({
     }, [pet, isOpen]);
 
     if (!isOpen) return null;
+
+    // 입력된 데이터가 있는지 체크 (새 등록일 때만 — 수정 모드는 이미 데이터가 있으므로 항상 true)
+    const hasUnsavedData = () => {
+        if (pet) return true; // 수정 모드에서는 항상 확인
+        return !!(
+            formData.name ||
+            formData.breed ||
+            formData.birthday ||
+            formData.weight ||
+            formData.personality ||
+            profilePreview
+        );
+    };
+
+    const handleBackdropClose = () => {
+        if (hasUnsavedData()) {
+            setShowCloseConfirm(true);
+        } else {
+            onClose();
+        }
+    };
 
     const handleProfileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -652,18 +674,14 @@ export default function PetFormModal({
 
     return (
         <>
-            {/* ================================================================
-                배경 오버레이 - 클릭 시 모달 닫기
-            ================================================================ */}
+            {/* 모달 래퍼 - 배경 클릭 시 닫기 */}
             <div
-                className="fixed inset-0 z-[9998] bg-black/50"
-                onClick={onClose}
-            />
-
-            {/* 모달 - 배경 위에 별도 레이어 */}
-            <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-16 px-4 pb-4">
+                className="fixed inset-0 z-[9999] bg-black/50 flex items-start justify-center pt-16 px-4 pb-4"
+                onClick={handleBackdropClose}
+            >
                 <div
                     className="bg-white dark:bg-gray-900 rounded-2xl max-w-md w-full max-h-[85vh] flex flex-col shadow-xl"
+                    onClick={(e) => e.stopPropagation()}
                 >
                     {/* 헤더 - 고정 */}
                     <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
@@ -711,7 +729,7 @@ export default function PetFormModal({
                     {/* 스텝 컨텐츠 - 스크롤 영역 */}
                     <div
                         className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6"
-                        style={{ WebkitOverflowScrolling: 'touch' }}
+                        style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
                     >
                         {renderCurrentStep()}
                     </div>
@@ -754,6 +772,44 @@ export default function PetFormModal({
                     </div>
                 </div>
             </div>
+
+            {/* 닫기 확인 다이얼로그 */}
+            {showCloseConfirm && (
+                <div
+                    className="fixed inset-0 z-[10000] bg-black/60 flex items-center justify-center p-4"
+                    onClick={() => setShowCloseConfirm(false)}
+                >
+                    <div
+                        className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <p className="text-center text-gray-800 dark:text-gray-200 font-medium mb-2">
+                            반려동물 정보를 입력중이에요
+                        </p>
+                        <p className="text-center text-gray-500 text-sm mb-6">
+                            지금 닫으면 입력한 내용이 사라져요
+                        </p>
+                        <div className="flex gap-3">
+                            <Button
+                                variant="outline"
+                                className="flex-1"
+                                onClick={() => setShowCloseConfirm(false)}
+                            >
+                                계속 작성
+                            </Button>
+                            <Button
+                                className="flex-1 bg-red-500 hover:bg-red-600 text-white"
+                                onClick={() => {
+                                    setShowCloseConfirm(false);
+                                    onClose();
+                                }}
+                            >
+                                닫기
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {showCropper && profilePreview && (
                 <ImageCropper

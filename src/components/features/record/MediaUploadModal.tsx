@@ -52,6 +52,7 @@ export default function MediaUploadModal({
     const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
     const [cropIndex, setCropIndex] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [showCloseConfirm, setShowCloseConfirm] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -65,6 +66,14 @@ export default function MediaUploadModal({
     }, [isOpen]);
 
     if (!isOpen) return null;
+
+    const handleBackdropClose = () => {
+        if (selectedFiles.length > 0) {
+            setShowCloseConfirm(true);
+        } else {
+            onClose();
+        }
+    };
 
     const generateVideoThumbnail = (file: File): Promise<string | null> => {
         return new Promise((resolve) => {
@@ -184,8 +193,15 @@ export default function MediaUploadModal({
     return (
         <>
             {/* 모바일: 하단 시트 / 데스크톱: 중앙 모달 */}
-            <div className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4">
-                <div className="bg-white dark:bg-gray-900 w-full max-w-2xl rounded-2xl p-6 max-h-[85vh] overflow-y-auto">
+            <div
+                className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4"
+                onClick={handleBackdropClose}
+            >
+                <div
+                    className="bg-white dark:bg-gray-900 w-full max-w-2xl rounded-2xl p-6 max-h-[85vh] overflow-y-auto"
+                    onClick={(e) => e.stopPropagation()}
+                    style={{ touchAction: 'pan-y' }}
+                >
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="text-lg font-semibold">
                             사진/영상 업로드
@@ -382,6 +398,44 @@ export default function MediaUploadModal({
                     </div>
                 </div>
             </div>
+
+            {/* 닫기 확인 다이얼로그 */}
+            {showCloseConfirm && (
+                <div
+                    className="fixed inset-0 z-[10000] bg-black/60 flex items-center justify-center p-4"
+                    onClick={() => setShowCloseConfirm(false)}
+                >
+                    <div
+                        className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <p className="text-center text-gray-800 dark:text-gray-200 font-medium mb-2">
+                            사진/영상을 선택중이에요
+                        </p>
+                        <p className="text-center text-gray-500 text-sm mb-6">
+                            지금 닫으면 선택한 파일이 사라져요
+                        </p>
+                        <div className="flex gap-3">
+                            <Button
+                                variant="outline"
+                                className="flex-1"
+                                onClick={() => setShowCloseConfirm(false)}
+                            >
+                                계속 작성
+                            </Button>
+                            <Button
+                                className="flex-1 bg-red-500 hover:bg-red-600 text-white"
+                                onClick={() => {
+                                    setShowCloseConfirm(false);
+                                    onClose();
+                                }}
+                            >
+                                닫기
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {cropIndex !== null &&
                 selectedFiles[cropIndex] &&
