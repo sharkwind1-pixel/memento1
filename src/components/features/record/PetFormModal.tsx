@@ -661,7 +661,7 @@ export default function PetFormModal({
             />
 
             {/* 모달 - 배경 위에 별도 레이어 */}
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-16 px-4 pb-4">
                 <div
                     className="bg-white dark:bg-gray-900 rounded-2xl max-w-md w-full max-h-[85vh] flex flex-col shadow-xl"
                 >
