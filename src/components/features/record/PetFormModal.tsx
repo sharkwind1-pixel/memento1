@@ -134,10 +134,19 @@ export default function PetFormModal({
     // 모달 열릴 때 body 스크롤 잠금 (모바일에서 배경 스크롤 방지)
     useEffect(() => {
         if (isOpen) {
-            document.body.style.overflow = 'hidden';
+            const scrollY = window.scrollY;
+            document.body.style.position = 'fixed';
+            document.body.style.top = `-${scrollY}px`;
+            document.body.style.left = '0';
+            document.body.style.right = '0';
         }
         return () => {
-            document.body.style.overflow = '';
+            const top = document.body.style.top;
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.left = '';
+            document.body.style.right = '';
+            window.scrollTo(0, parseInt(top || '0') * -1);
         };
     }, [isOpen]);
 
@@ -686,11 +695,12 @@ export default function PetFormModal({
         <>
             {/* 모달 래퍼 - 배경 클릭 시 닫기 */}
             <div
-                className="fixed inset-0 z-[9999] bg-black/50 flex items-start justify-center pt-16 px-4 pb-4"
+                className="fixed inset-0 z-[9999] bg-black/50 flex items-start justify-center pt-16 px-4 pb-4 overflow-y-auto"
                 onClick={handleBackdropClose}
             >
                 <div
-                    className="bg-white dark:bg-gray-900 rounded-2xl max-w-md w-full max-h-[85vh] flex flex-col shadow-xl overflow-hidden"
+                    className="bg-white dark:bg-gray-900 rounded-2xl max-w-md w-full flex flex-col shadow-xl"
+                    style={{ maxHeight: 'calc(100vh - 5rem)' }}
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* 헤더 - 고정 */}
@@ -738,8 +748,8 @@ export default function PetFormModal({
 
                     {/* 스텝 컨텐츠 - 스크롤 영역 */}
                     <div
-                        className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-4 sm:p-6"
-                        style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
+                        className="flex-1 overflow-y-scroll p-4 sm:p-6"
+                        style={{ minHeight: 0, WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}
                     >
                         {renderCurrentStep()}
                     </div>
