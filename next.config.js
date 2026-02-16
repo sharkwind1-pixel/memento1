@@ -31,6 +31,12 @@ const nextConfig = {
                 hostname: "kuqhjgrlrzskvuutqbce.supabase.co",
                 pathname: "/**",
             },
+            // Unsplash 이미지 (매거진 목업 등)
+            {
+                protocol: "https",
+                hostname: "images.unsplash.com",
+                pathname: "/**",
+            },
             // 기타 외부 이미지 (나중에 필요시 추가)
             {
                 protocol: "https",

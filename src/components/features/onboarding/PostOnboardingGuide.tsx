@@ -33,7 +33,7 @@ export default function PostOnboardingGuide({
 
     // 키울 예정인 유저 - 환영 팝업 (로그인 상태 유지!)
     return (
-        <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4">
             <div className="w-full max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl">
                 <div className="p-8 text-center">
                     <div className="w-20 h-20 bg-gradient-to-br from-sky-400 to-violet-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">

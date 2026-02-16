@@ -113,7 +113,7 @@ export default function SupportModal({
         <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center">
             {/* 배경 */}
             <div
-                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                className="absolute inset-0 bg-black/50"
                 onClick={handleClose}
             />
 

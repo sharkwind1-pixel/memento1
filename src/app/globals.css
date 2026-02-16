@@ -42,7 +42,7 @@ body {
     .carousel-touch {
         -webkit-overflow-scrolling: touch;
         overscroll-behavior-x: contain;
-        scroll-behavior: smooth;
+        scroll-behavior: auto;
         touch-action: pan-x;
         will-change: scroll-position;
     }

@@ -42,6 +42,7 @@ interface AuthContextType {
     refreshProfile: () => Promise<void>;
     // 포인트 시스템
     points: number;
+    pointsLoaded: boolean;
     refreshPoints: () => Promise<void>;
     // 인증 메서드
     checkDeletedAccount: (email: string) => Promise<DeletedAccountCheck | null>;
@@ -71,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [isAdminUser, setIsAdminUser] = useState(false);
     const [isPremiumUser, setIsPremiumUser] = useState(false);
     const [points, setPoints] = useState(0);
+    const [pointsLoaded, setPointsLoaded] = useState(false);
 
     // 프로필에서 관리자/프리미엄 상태 조회
     const refreshProfile = useCallback(async () => {
@@ -121,8 +123,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             const myPoints = profile?.points ?? 0;
             setPoints(myPoints);
+            setPointsLoaded(true);
         } catch {
             // 포인트 조회 실패 시 기본값 유지
+            setPointsLoaded(true);
         }
     }, []);
 
@@ -187,6 +191,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // 로그아웃 시 상태 초기화
             if (event === "SIGNED_OUT") {
                 setPoints(0);
+                setPointsLoaded(false);
                 setIsAdminUser(false);
                 setIsPremiumUser(false);
             }
@@ -401,6 +406,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isPremiumUser,
         refreshProfile,
         points,
+        pointsLoaded,
         refreshPoints,
         checkDeletedAccount,
         checkCanRejoin,

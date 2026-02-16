@@ -119,7 +119,7 @@ export default function Layout({
     // ========================================================================
     // Context & State
     // ========================================================================
-    const { user, loading, signOut, isAdminUser, points } = useAuth();
+    const { user, loading, signOut, isAdminUser, points, pointsLoaded } = useAuth();
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(false);
@@ -327,11 +327,13 @@ export default function Layout({
                                         }
                                         className="flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 rounded-full sm:rounded-xl bg-[#E0F7FF] dark:bg-gray-800 hover:bg-[#BAE6FD] dark:hover:bg-gray-700 transition-colors"
                                     >
-                                        <LevelBadge
-                                            points={points}
-                                            size="lg"
-                                            showTooltip={false}
-                                        />
+                                        <span className={pointsLoaded ? "opacity-100" : "opacity-0"} style={{ transition: "opacity 0.15s" }}>
+                                            <LevelBadge
+                                                points={points}
+                                                size="lg"
+                                                showTooltip={false}
+                                            />
+                                        </span>
                                         <span className="text-sm font-medium text-gray-700 dark:text-gray-200 hidden sm:block max-w-[80px] truncate">
                                             {displayName}
                                         </span>

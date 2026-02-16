@@ -174,15 +174,16 @@ export function useSmoothAutoScroll() {
                         return;
                     }
 
-                    const deltaTime = lastTime ? currentTime - lastTime : 16.67;
+                    const rawDelta = lastTime ? currentTime - lastTime : 16.67;
                     lastTime = currentTime;
+                    const deltaTime = Math.min(rawDelta, 33.34); // cap at 2 frames to prevent jumps
 
                     const maxScroll = cont.scrollWidth - cont.clientWidth;
 
                     // 일시정지 상태가 아닐 때만 자동 스크롤
                     if (maxScroll > 0 && !pausedRef.current[index]) {
                         scrollPosRef.current[index] += SPEED * (deltaTime / 16.67);
-                        cont.scrollLeft = Math.round(scrollPosRef.current[index]);
+                        cont.scrollLeft = scrollPosRef.current[index];
 
                         // 끝에 도달하면 처음으로
                         if (scrollPosRef.current[index] >= maxScroll) {

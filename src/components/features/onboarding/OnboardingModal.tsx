@@ -257,7 +257,7 @@ export default function OnboardingModal({
 
     // 렌더링
     return (
-        <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4">
             <div className="w-full max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl">
                 {/* 헤더 */}
                 <div className="flex justify-between items-center p-4 border-b border-gray-100">
