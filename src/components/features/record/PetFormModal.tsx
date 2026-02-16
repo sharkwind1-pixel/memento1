@@ -661,10 +661,9 @@ export default function PetFormModal({
             />
 
             {/* 모달 - 배경 위에 별도 레이어 */}
-            <div className="fixed inset-x-0 bottom-0 top-auto z-[9999] sm:inset-0 sm:flex sm:items-center sm:justify-center sm:p-4 pointer-events-none">
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
                 <div
-                    className="pointer-events-auto bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl sm:max-w-md w-full max-h-[90vh] sm:max-h-[85vh] flex flex-col shadow-xl"
-                    style={{ maxHeight: 'calc(90vh - env(safe-area-inset-bottom, 0px))' }}
+                    className="bg-white dark:bg-gray-900 rounded-2xl max-w-md w-full max-h-[85vh] flex flex-col shadow-xl"
                 >
                     {/* 헤더 - 고정 */}
                     <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
