@@ -134,19 +134,12 @@ export default function PetFormModal({
     // 모달 열릴 때 body 스크롤 잠금 (모바일에서 배경 스크롤 방지)
     useEffect(() => {
         if (isOpen) {
-            const scrollY = window.scrollY;
-            document.body.style.position = 'fixed';
-            document.body.style.top = `-${scrollY}px`;
-            document.body.style.left = '0';
-            document.body.style.right = '0';
+            document.documentElement.style.overflow = 'hidden';
+            document.body.style.overflow = 'hidden';
         }
         return () => {
-            const top = document.body.style.top;
-            document.body.style.position = '';
-            document.body.style.top = '';
-            document.body.style.left = '';
-            document.body.style.right = '';
-            window.scrollTo(0, parseInt(top || '0') * -1);
+            document.documentElement.style.overflow = '';
+            document.body.style.overflow = '';
         };
     }, [isOpen]);
 
@@ -693,103 +686,106 @@ export default function PetFormModal({
 
     return (
         <>
-            {/* 배경 오버레이 */}
+            {/* 전체 화면 컨테이너 - 스크롤 가능 */}
             <div
-                className="fixed inset-0 z-[9998] bg-black/50"
+                className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50"
+                style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
                 onClick={handleBackdropClose}
-            />
-
-            {/* 모달 - 고정 위치, 내부만 스크롤 */}
-            <div
-                className="fixed z-[9999] top-16 left-4 right-4 bottom-4 sm:left-auto sm:right-auto sm:w-full sm:max-w-md sm:left-1/2 sm:-translate-x-1/2 flex flex-col bg-white dark:bg-gray-900 rounded-2xl shadow-xl"
             >
-                    {/* 헤더 - 고정 */}
-                    <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-                        <h3 className="text-lg font-semibold">
-                            {pet ? "반려동물 수정" : "새 반려동물 등록"}
-                        </h3>
-                        <Button variant="ghost" size="icon" onClick={onClose}>
-                            <X className="w-5 h-5" />
-                        </Button>
-                    </div>
+                {/* 모달 정렬 래퍼 */}
+                <div className="min-h-full flex items-start justify-center pt-16 pb-4 px-4">
+                    {/* 모달 본체 */}
+                    <div
+                        className="bg-white dark:bg-gray-900 w-full max-w-md rounded-2xl shadow-xl relative"
+                        style={{ touchAction: 'pan-y' }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* 헤더 - sticky */}
+                        <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 rounded-t-2xl">
+                            <h3 className="text-lg font-semibold">
+                                {pet ? "반려동물 수정" : "새 반려동물 등록"}
+                            </h3>
+                            <Button variant="ghost" size="icon" onClick={onClose}>
+                                <X className="w-5 h-5" />
+                            </Button>
+                        </div>
 
-                    {/* 스텝 인디케이터 - 고정 */}
-                    <div className="flex-shrink-0 flex items-center justify-center gap-1 py-3 px-4 bg-gray-50 dark:bg-gray-800 overflow-x-auto">
-                        {STEP_INFO.map((info, idx) => {
-                            const Icon = info.icon;
-                            const stepNum = idx + 1;
-                            const isActive = step === stepNum;
-                            const isPast = step > stepNum;
-                            return (
-                                <div key={idx} className="flex items-center">
-                                    <div
-                                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs whitespace-nowrap transition-all ${
-                                            isActive
-                                                ? "bg-[#05B2DC] text-white"
-                                                : isPast
-                                                    ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
-                                                    : "bg-gray-200 dark:bg-gray-700 text-gray-500"
-                                        }`}
-                                    >
-                                        {isPast ? (
-                                            <Check className="w-3.5 h-3.5" />
-                                        ) : (
-                                            <Icon className="w-3.5 h-3.5" />
+                        {/* 스텝 인디케이터 - sticky */}
+                        <div className="sticky top-[57px] z-10 flex items-center justify-center gap-1 py-3 px-4 bg-gray-50 dark:bg-gray-800 overflow-x-auto">
+                            {STEP_INFO.map((info, idx) => {
+                                const Icon = info.icon;
+                                const stepNum = idx + 1;
+                                const isActive = step === stepNum;
+                                const isPast = step > stepNum;
+                                return (
+                                    <div key={idx} className="flex items-center">
+                                        <div
+                                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs whitespace-nowrap transition-all ${
+                                                isActive
+                                                    ? "bg-[#05B2DC] text-white"
+                                                    : isPast
+                                                        ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
+                                                        : "bg-gray-200 dark:bg-gray-700 text-gray-500"
+                                            }`}
+                                        >
+                                            {isPast ? (
+                                                <Check className="w-3.5 h-3.5" />
+                                            ) : (
+                                                <Icon className="w-3.5 h-3.5" />
+                                            )}
+                                            <span className="hidden sm:inline">{info.label}</span>
+                                        </div>
+                                        {idx < STEP_INFO.length - 1 && (
+                                            <ChevronRight className="w-3 h-3 text-gray-400 mx-0.5" />
                                         )}
-                                        <span className="hidden sm:inline">{info.label}</span>
                                     </div>
-                                    {idx < STEP_INFO.length - 1 && (
-                                        <ChevronRight className="w-3 h-3 text-gray-400 mx-0.5" />
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
+                                );
+                            })}
+                        </div>
 
-                    {/* 스텝 컨텐츠 - 스크롤 영역 */}
-                    <div
-                        className="flex-1 overflow-y-scroll p-4 sm:p-6"
-                        style={{ minHeight: 0, WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}
-                    >
-                        {renderCurrentStep()}
-                    </div>
+                        {/* 스텝 컨텐츠 */}
+                        <div className="p-4 sm:p-6">
+                            {renderCurrentStep()}
+                        </div>
 
-                    {/* 네비게이션 버튼 - 고정 */}
-                    <div
-                        className="flex-shrink-0 flex gap-3 p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
-                        style={{ paddingBottom: 'max(1rem, calc(env(safe-area-inset-bottom, 0px) + 0.5rem))' }}
-                    >
-                        {step === 1 ? (
-                            <Button variant="outline" onClick={onClose} className="flex-1">
-                                <X className="w-4 h-4 mr-2" />
-                                취소
-                            </Button>
-                        ) : (
-                            <Button variant="outline" onClick={handlePrev} className="flex-1">
-                                <ChevronLeft className="w-4 h-4 mr-1" />
-                                이전
-                            </Button>
-                        )}
+                        {/* 네비게이션 버튼 - sticky bottom */}
+                        <div
+                            className="sticky bottom-0 z-10 flex gap-3 p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 rounded-b-2xl"
+                            style={{ paddingBottom: 'max(1rem, calc(env(safe-area-inset-bottom, 0px) + 0.5rem))' }}
+                        >
+                            {step === 1 ? (
+                                <Button variant="outline" onClick={onClose} className="flex-1">
+                                    <X className="w-4 h-4 mr-2" />
+                                    취소
+                                </Button>
+                            ) : (
+                                <Button variant="outline" onClick={handlePrev} className="flex-1">
+                                    <ChevronLeft className="w-4 h-4 mr-1" />
+                                    이전
+                                </Button>
+                            )}
 
-                        {step < TOTAL_STEPS ? (
-                            <Button
-                                onClick={handleNext}
-                                className="flex-1 bg-[#05B2DC] hover:bg-[#0891B2]"
-                            >
-                                다음
-                                <ChevronRight className="w-4 h-4 ml-1" />
-                            </Button>
-                        ) : (
-                            <Button
-                                onClick={handleSubmit}
-                                disabled={isSubmitting}
-                                className="flex-1 bg-[#05B2DC] hover:bg-[#0891B2] disabled:opacity-50"
-                            >
-                                <Check className="w-4 h-4 mr-2" />
-                                {isSubmitting ? "저장 중..." : pet ? "수정하기" : "등록하기"}
-                            </Button>
-                        )}
+                            {step < TOTAL_STEPS ? (
+                                <Button
+                                    onClick={handleNext}
+                                    className="flex-1 bg-[#05B2DC] hover:bg-[#0891B2]"
+                                >
+                                    다음
+                                    <ChevronRight className="w-4 h-4 ml-1" />
+                                </Button>
+                            ) : (
+                                <Button
+                                    onClick={handleSubmit}
+                                    disabled={isSubmitting}
+                                    className="flex-1 bg-[#05B2DC] hover:bg-[#0891B2] disabled:opacity-50"
+                                >
+                                    <Check className="w-4 h-4 mr-2" />
+                                    {isSubmitting ? "저장 중..." : pet ? "수정하기" : "등록하기"}
+                                </Button>
+                            )}
+                        </div>
                     </div>
+                </div>
             </div>
 
             {/* 닫기 확인 다이얼로그 */}
