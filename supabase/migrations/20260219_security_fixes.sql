@@ -116,16 +116,19 @@ ALTER FUNCTION public.revoke_premium(UUID) SET search_path = public;
 ALTER FUNCTION public.expire_premium_subscriptions() SET search_path = public;
 
 -- =============================================================
--- PART 3: support_inquiries INSERT 정책 의도 문서화
+-- PART 3: support_inquiries INSERT 정책 강화
 -- =============================================================
--- 이 정책은 의도적입니다 (비로그인 유저도 문의 가능해야 함)
-COMMENT ON POLICY "Anyone can create inquiries" ON public.support_inquiries
-IS 'Intentionally allows unauthenticated users to submit support inquiries - this is by design for support accessibility';
+-- 기존: WITH CHECK (true) → 누구나 문의 가능
+-- 변경: 로그인한 유저만 문의 가능
+DROP POLICY IF EXISTS "Anyone can create inquiries" ON public.support_inquiries;
+CREATE POLICY "Authenticated users can create inquiries" ON public.support_inquiries
+    FOR INSERT
+    WITH CHECK (auth.uid() IS NOT NULL);
 
 -- =============================================================
 -- 완료!
 -- =============================================================
 -- 실행 후 Security Advisor에서 "Rerun linter"를 클릭하세요.
--- 예상 결과: ERROR 0, WARNING 2 (support_inquiries + leaked password)
+-- 예상 결과: ERROR 0, WARNING 1 (leaked password만 남음)
 -- Leaked Password Protection은 Authentication > Settings에서 활성화하세요.
 -- =============================================================

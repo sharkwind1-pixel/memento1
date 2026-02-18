@@ -28,10 +28,10 @@ CREATE POLICY "Users can view own inquiries" ON support_inquiries
     FOR SELECT
     USING (auth.uid() = user_id);
 
--- 정책: 누구나 문의 작성 가능 (비회원도)
-CREATE POLICY "Anyone can create inquiries" ON support_inquiries
+-- 정책: 로그인한 유저만 문의 작성 가능
+CREATE POLICY "Authenticated users can create inquiries" ON support_inquiries
     FOR INSERT
-    WITH CHECK (true);
+    WITH CHECK (auth.uid() IS NOT NULL);
 
 -- 정책: 관리자는 모든 문의 조회/수정 가능
 -- (admin 권한 체크는 앱단에서 처리)

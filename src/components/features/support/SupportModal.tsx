@@ -50,13 +50,13 @@ export default function SupportModal({
     const [success, setSuccess] = useState(false);
 
     const handleSubmit = async () => {
-        if (!title.trim() || !content.trim()) {
-            setError("제목과 내용을 입력해주세요");
+        if (!user) {
+            setError("로그인 후 이용해주세요");
             return;
         }
 
-        if (!user && !email.trim()) {
-            setError("비회원은 이메일을 입력해주세요");
+        if (!title.trim() || !content.trim()) {
+            setError("제목과 내용을 입력해주세요");
             return;
         }
 
@@ -67,8 +67,8 @@ export default function SupportModal({
             const { error: dbError } = await supabase
                 .from("support_inquiries")
                 .insert({
-                    user_id: user?.id || null,
-                    email: user?.email || email.trim(),
+                    user_id: user.id,
+                    email: user.email,
                     category: category,
                     title: title.trim(),
                     content: content.trim(),
@@ -195,24 +195,11 @@ export default function SupportModal({
                                 </div>
                             )}
 
-                            {/* 비회원 이메일 */}
+                            {/* 비로그인 안내 */}
                             {!user && (
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        이메일{" "}
-                                        <span className="text-red-500">*</span>
-                                    </label>
-                                    <Input
-                                        type="email"
-                                        value={email}
-                                        onChange={(e) =>
-                                            setEmail(e.target.value)
-                                        }
-                                        placeholder="답변 받으실 이메일"
-                                        className="rounded-lg"
-                                    />
-                                    <p className="text-xs text-gray-500 mt-1">
-                                        답변은 이메일로 전송됩니다
+                                <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                                    <p className="text-sm text-amber-700 dark:text-amber-300 font-medium">
+                                        로그인 후 문의하실 수 있습니다
                                     </p>
                                 </div>
                             )}
