@@ -60,7 +60,7 @@ BEGIN
     END IF;
     RETURN NULL;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SET search_path = public;
 
 -- 댓글 카운트 트리거 함수
 CREATE OR REPLACE FUNCTION update_memorial_comments_count()
@@ -75,7 +75,7 @@ BEGIN
     END IF;
     RETURN NULL;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SET search_path = public;
 
 -- 트리거 생성 (이미 있으면 무시)
 DROP TRIGGER IF EXISTS trigger_memorial_likes_count ON memorial_likes;

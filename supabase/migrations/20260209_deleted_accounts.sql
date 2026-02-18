@@ -60,7 +60,7 @@ BEGIN
     ORDER BY da.deleted_at DESC
     LIMIT 1;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 4. 계정 삭제 시 호출할 함수
 CREATE OR REPLACE FUNCTION save_deleted_account(
@@ -105,7 +105,7 @@ BEGIN
 
     RETURN new_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 5. 재가입 시 호출할 함수 (이전 기록 연결)
 CREATE OR REPLACE FUNCTION mark_account_rejoined(
@@ -124,7 +124,7 @@ BEGIN
 
     RETURN FOUND;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 6. RLS 정책 (관리자만 조회 가능)
 ALTER TABLE deleted_accounts ENABLE ROW LEVEL SECURITY;

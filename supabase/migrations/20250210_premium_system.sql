@@ -129,7 +129,7 @@ BEGIN
     FROM profiles p
     WHERE p.id = p_user_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 5. 프리미엄 부여 함수 (관리자용)
 -- ============================================================================
@@ -171,7 +171,7 @@ BEGIN
 
     RETURN true;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 6. 프리미엄 해제 함수
 -- ============================================================================
@@ -195,7 +195,7 @@ BEGIN
 
     RETURN true;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- 7. 만료된 프리미엄 자동 해제 함수 (크론잡용)
 -- ============================================================================
@@ -224,7 +224,7 @@ BEGIN
 
     RETURN v_count;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- ============================================================================
 -- 완료!
