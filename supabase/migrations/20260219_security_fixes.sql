@@ -76,6 +76,8 @@ $$;
 
 -- ----- 2-3. check_deleted_account -----
 -- 출처: 20260209_deleted_accounts.sql
+-- DROP 필요: RETURNS TABLE 함수는 CREATE OR REPLACE로 리턴 타입 변경 불가
+DROP FUNCTION IF EXISTS check_deleted_account(TEXT);
 CREATE OR REPLACE FUNCTION check_deleted_account(check_email TEXT)
 RETURNS TABLE (
     can_rejoin BOOLEAN,
@@ -233,6 +235,8 @@ $$;
 
 -- ----- 2-9. check_premium_status -----
 -- 출처: 20250210_premium_system.sql
+-- DROP 필요: RETURNS TABLE 함수는 CREATE OR REPLACE로 리턴 타입 변경 불가
+DROP FUNCTION IF EXISTS check_premium_status(UUID);
 CREATE OR REPLACE FUNCTION check_premium_status(p_user_id UUID)
 RETURNS TABLE (
     is_premium BOOLEAN,
