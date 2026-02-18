@@ -81,11 +81,11 @@ ALTER FUNCTION public.check_deleted_account(TEXT) SET search_path = public;
 
 -- ----- 2-4. save_deleted_account -----
 -- 출처: 20260209_deleted_accounts.sql
-ALTER FUNCTION public.save_deleted_account(UUID, TEXT, TEXT, INTEGER, INTEGER, INTEGER, BOOLEAN, TEXT, INTEGER) SET search_path = public;
+-- DB 실제 시그니처: (p_user_id uuid, p_email text, p_ai_usage integer, p_pets_count integer, p_cooldown_days integer)
+ALTER FUNCTION public.save_deleted_account(uuid, text, integer, integer, integer) SET search_path = public;
 
 -- ----- 2-5. mark_account_rejoined -----
--- 출처: 20260209_deleted_accounts.sql
-ALTER FUNCTION public.mark_account_rejoined(TEXT, UUID) SET search_path = public;
+-- DB에 존재하지 않음 - 스킵
 
 -- ----- 2-6. handle_new_user -----
 -- 출처: schema.sql
