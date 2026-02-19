@@ -200,6 +200,29 @@ export function sanitizeInput(input: string): string {
         .trim();
 }
 
+/**
+ * 리치 텍스트 HTML 콘텐츠 Sanitize
+ * Tiptap 에디터 출력용 — 안전한 HTML 태그는 보존하고 XSS 벡터만 제거
+ */
+export function sanitizeHtmlContent(input: string): string {
+    if (!input) return "";
+
+    return input
+        // script 태그 및 내용 제거
+        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+        // 이벤트 핸들러 제거 (onclick, onerror 등)
+        .replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, "")
+        .replace(/\s*on\w+\s*=\s*[^\s>]*/gi, "")
+        // javascript: 프로토콜 URL 제거
+        .replace(/href\s*=\s*["']javascript:[^"']*["']/gi, "")
+        .replace(/src\s*=\s*["']javascript:[^"']*["']/gi, "")
+        // iframe, object, embed, form, input 태그 제거
+        .replace(/<\s*\/?\s*(iframe|object|embed|form|input)\b[^>]*>/gi, "")
+        // 길이 제한
+        .slice(0, 50000)
+        .trim();
+}
+
 // 검색어 Sanitize
 export function sanitizeSearchQuery(query: string): string {
     if (!query) return "";

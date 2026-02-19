@@ -15,6 +15,7 @@ import {
     checkRateLimit,
     getRateLimitHeaders,
     sanitizeInput,
+    sanitizeHtmlContent,
 } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
@@ -58,6 +59,7 @@ export async function GET(request: NextRequest) {
             category: a.category,
             title: a.title,
             summary: a.summary,
+            content: a.content,
             author: a.author,
             authorRole: a.author_role,
             imageUrl: a.image_url,
@@ -118,7 +120,7 @@ export async function POST(request: NextRequest) {
             category: sanitizeInput(category).slice(0, 50),
             title: sanitizeInput(title).slice(0, 200),
             summary: sanitizeInput(summary).slice(0, 500),
-            content: content ? sanitizeInput(content).slice(0, 50000) : null,
+            content: content ? sanitizeHtmlContent(content) : null,
             author: sanitizeInput(author).slice(0, 100),
             author_role: authorRole ? sanitizeInput(authorRole).slice(0, 100) : null,
             image_url: imageUrl || null,

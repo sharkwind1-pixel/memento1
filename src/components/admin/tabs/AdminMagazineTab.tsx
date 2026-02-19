@@ -42,6 +42,7 @@ import {
 import { authFetch } from "@/lib/auth-fetch";
 import { uploadMagazineImage } from "@/lib/storage";
 import { getBadgeLabel } from "@/data/magazineArticles";
+import RichTextEditor from "@/components/admin/RichTextEditor";
 import type { MagazineArticleRow, MagazineStatus } from "../types";
 
 // ============================================================================
@@ -100,6 +101,13 @@ interface ArticleForm {
     imageUrl: string;
     imageStoragePath: string;
     status: MagazineStatus;
+}
+
+/** 에디터의 HTML이 실질적으로 비어있는지 확인 */
+function isEditorEmpty(html: string): boolean {
+    if (!html) return true;
+    const stripped = html.replace(/<[^>]*>/g, "").trim();
+    return stripped.length === 0;
 }
 
 const INITIAL_FORM: ArticleForm = {
@@ -222,7 +230,7 @@ export default function AdminMagazineTab({
                 category: form.category,
                 title: form.title.trim(),
                 summary: form.summary.trim(),
-                content: form.content.trim() || null,
+                content: isEditorEmpty(form.content) ? null : form.content,
                 author: form.author.trim(),
                 authorRole: form.authorRole.trim() || null,
                 readTime: form.readTime.trim() || null,
@@ -670,16 +678,14 @@ function ArticleFormModal({
                         />
                     </div>
 
-                    {/* 본문 */}
+                    {/* 본문 (리치 텍스트 에디터) */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             본문 (선택)
                         </label>
-                        <Textarea
-                            value={form.content}
-                            onChange={(e) => updateField("content", e.target.value)}
-                            placeholder="기사 본문을 입력하세요"
-                            rows={8}
+                        <RichTextEditor
+                            content={form.content}
+                            onChange={(html) => updateField("content", html)}
                         />
                     </div>
 

@@ -12,6 +12,7 @@ import {
     checkRateLimit,
     getRateLimitHeaders,
     sanitizeInput,
+    sanitizeHtmlContent,
 } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
@@ -64,7 +65,7 @@ export async function PATCH(
         if (body.category !== undefined) updateData.category = sanitizeInput(body.category).slice(0, 50);
         if (body.title !== undefined) updateData.title = sanitizeInput(body.title).slice(0, 200);
         if (body.summary !== undefined) updateData.summary = sanitizeInput(body.summary).slice(0, 500);
-        if (body.content !== undefined) updateData.content = body.content ? sanitizeInput(body.content).slice(0, 50000) : null;
+        if (body.content !== undefined) updateData.content = body.content ? sanitizeHtmlContent(body.content) : null;
         if (body.author !== undefined) updateData.author = sanitizeInput(body.author).slice(0, 100);
         if (body.authorRole !== undefined) updateData.author_role = body.authorRole ? sanitizeInput(body.authorRole).slice(0, 100) : null;
         if (body.imageUrl !== undefined) updateData.image_url = body.imageUrl || null;
