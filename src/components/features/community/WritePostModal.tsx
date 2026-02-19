@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { X, Send, Home, Eye, EyeOff } from "lucide-react";
 import { InlineLoading } from "@/components/ui/PawLoading";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEscapeClose } from "@/hooks/useEscapeClose";
 import type { CommunitySubcategory, PostTag } from "@/types";
 
 interface WritePostModalProps {
@@ -59,6 +60,7 @@ export default function WritePostModal({
     onSuccess,
 }: WritePostModalProps) {
     const { user } = useAuth();
+    useEscapeClose(isOpen, onClose);
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
     const [badge, setBadge] = useState("");

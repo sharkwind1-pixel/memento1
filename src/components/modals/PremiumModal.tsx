@@ -7,6 +7,7 @@
 
 "use client";
 
+import { useEscapeClose } from "@/hooks/useEscapeClose";
 import { Button } from "@/components/ui/button";
 import {
     X,
@@ -81,6 +82,7 @@ export default function PremiumModal({
     onLogin,
     isLoggedIn = true,
 }: PremiumModalProps) {
+    useEscapeClose(isOpen, onClose);
     if (!isOpen) return null;
 
     const info = featureInfo[feature];

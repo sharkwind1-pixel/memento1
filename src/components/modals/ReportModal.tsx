@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { InlineLoading } from "@/components/ui/PawLoading";
+import { useEscapeClose } from "@/hooks/useEscapeClose";
 
 type ReportTargetType = "post" | "comment" | "user" | "pet_memorial";
 type ReportReason = "spam" | "abuse" | "inappropriate" | "harassment" | "misinformation" | "copyright" | "other";
@@ -50,6 +51,7 @@ export default function ReportModal({
     targetTitle,
 }: ReportModalProps) {
     const { user } = useAuth();
+    useEscapeClose(isOpen, onClose);
     const [reason, setReason] = useState<ReportReason | "">("");
     const [description, setDescription] = useState("");
     const [loading, setLoading] = useState(false);

@@ -742,6 +742,7 @@ export default function CommunityPage({ subcategory, onSubcategoryChange }: Comm
                                 placeholder="검색어를 입력하세요"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
+                                maxLength={100}
                                 className="pl-10 rounded-xl bg-white/70 dark:bg-gray-700/70"
                             />
                         </div>

@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { InlineLoading } from "@/components/ui/PawLoading";
 import { toast } from "sonner";
+import { useEscapeClose } from "@/hooks/useEscapeClose";
 
 interface AccountSettingsModalProps {
     isOpen: boolean;
@@ -35,6 +36,7 @@ export default function AccountSettingsModal({
     onClose,
 }: AccountSettingsModalProps) {
     const { user, updateProfile, signOut } = useAuth();
+    useEscapeClose(isOpen, onClose);
 
     const [currentNickname, setCurrentNickname] = useState("");
     const [nickname, setNickname] = useState("");

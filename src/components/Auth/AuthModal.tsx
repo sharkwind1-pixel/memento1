@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNicknameCheck } from "@/hooks/useNicknameCheck";
+import { useEscapeClose } from "@/hooks/useEscapeClose";
 import {
     X,
     Mail,
@@ -36,6 +37,7 @@ export default function AuthModal({
     initialMode = "login",
 }: AuthModalProps) {
     const { signIn, signUp, signInWithGoogle, signInWithKakao } = useAuth();
+    useEscapeClose(isOpen, onClose);
 
     const [mode, setMode] = useState<"login" | "signup">(initialMode);
     const [email, setEmail] = useState("");

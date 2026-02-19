@@ -19,6 +19,7 @@ import {
 import { InlineLoading } from "@/components/ui/PawLoading";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { useEscapeClose } from "@/hooks/useEscapeClose";
 
 type SupportType = "question" | "report" | "suggestion";
 
@@ -39,6 +40,7 @@ export default function SupportModal({
     type,
 }: SupportModalProps) {
     const { user } = useAuth();
+    useEscapeClose(isOpen, onClose);
     const [category, setCategory] = useState<SupportType>(
         type === "inquiry" ? "question" : "suggestion",
     );
