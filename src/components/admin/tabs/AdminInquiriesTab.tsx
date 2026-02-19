@@ -92,8 +92,7 @@ export default function AdminInquiriesTab({
             if (error) throw error;
             toast.success("상태가 업데이트되었습니다");
             onRefresh();
-        } catch (error) {
-            console.error("[AdminInquiriesTab] 상태 업데이트 실패:", error);
+        } catch {
             toast.error("상태 업데이트 중 오류가 발생했습니다");
         }
     };
@@ -121,8 +120,7 @@ export default function AdminInquiriesTab({
             setSelectedInquiry(null);
             setAdminResponse("");
             onRefresh();
-        } catch (error) {
-            console.error("[AdminInquiriesTab] 답변 저장 실패:", error);
+        } catch {
             toast.error("답변 저장 중 오류가 발생했습니다");
         } finally {
             setIsResponding(false);

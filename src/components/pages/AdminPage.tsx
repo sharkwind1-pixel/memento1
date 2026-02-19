@@ -191,8 +191,7 @@ export default function AdminPage() {
             setWithdrawalModalUser(null);
             loadUsers();
             loadWithdrawals();
-        } catch (error) {
-            console.error("[AdminPage] 탈퇴 처리 실패:", error);
+        } catch {
             toast.error("탈퇴 처리에 실패했습니다.");
         } finally {
             setIsProcessingWithdrawal(false);

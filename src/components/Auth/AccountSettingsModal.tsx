@@ -110,8 +110,8 @@ export default function AccountSettingsModal({
             setIsEditingNickname(false);
             setNicknameSuccess(true);
             setTimeout(() => setNicknameSuccess(false), 3000);
-        } catch (err) {
-            console.error("Failed to update nickname:", err);
+        } catch {
+            // 닉네임 업데이트 실패
         } finally {
             setIsSavingNickname(false);
         }
@@ -176,7 +176,7 @@ export default function AccountSettingsModal({
                 .eq("id", user?.id);
 
             if (profileError) {
-                console.error("Profile delete error:", profileError);
+                // 프로필 삭제 실패 (무시하고 계속 진행)
             }
 
             // 3. Auth 사용자 삭제 (Supabase에서는 직접 삭제 불가, 관리자 API 필요)
@@ -194,8 +194,7 @@ export default function AccountSettingsModal({
             );
             onClose();
             window.location.reload();
-        } catch (err) {
-            console.error("Delete account error:", err);
+        } catch {
             setDeleteError(
                 "회원탈퇴 처리 중 오류가 발생했습니다. 다시 시도해주세요.",
             );

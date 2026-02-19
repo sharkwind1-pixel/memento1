@@ -38,8 +38,8 @@ export async function GET(request: NextRequest) {
         const supabase = getSupabase();
         const { searchParams } = new URL(request.url);
 
-        const boardType = searchParams.get("board") || "free";
-        const animalType = searchParams.get("animal");
+        const boardType = searchParams.get("board") || searchParams.get("subcategory") || "free";
+        const animalType = searchParams.get("animal") || searchParams.get("tag");
         const sortBy = searchParams.get("sort") || "latest";
         const search = searchParams.get("search");
         const limit = parseInt(searchParams.get("limit") || "20");
@@ -81,19 +81,19 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
 
-        // 댓글 수 계산
+        // 댓글 수 계산 (신규/레거시 컬럼 모두 지원)
         const posts = (data || []).map(post => ({
             id: post.id,
             userId: post.user_id,
-            boardType: post.board_type,
+            boardType: post.board_type || post.category || "free",
             animalType: post.animal_type,
-            badge: post.badge,
+            badge: post.badge || "",
             title: post.title,
             content: post.content,
             authorName: post.author_name,
-            likes: post.likes,
-            views: post.views,
-            comments: post.post_comments?.[0]?.count || 0,
+            likes: post.likes ?? post.likes_count ?? 0,
+            views: post.views ?? 0,
+            comments: post.post_comments?.[0]?.count || (post.comments ?? post.comments_count ?? 0),
             createdAt: post.created_at,
         }));
 
@@ -139,7 +139,8 @@ export async function POST(request: NextRequest) {
         const supabase = getSupabase();
         const body = await request.json();
 
-        const { boardType, animalType, badge, title, content, authorName } = body;
+        const { boardType: rawBoardType, subcategory, animalType, tag, badge, title, content, authorName } = body;
+        const boardType = rawBoardType || subcategory || "free";
 
         // 3. 필수 필드 검증
         if (!boardType || !badge || !title || !content || !authorName) {
@@ -161,7 +162,8 @@ export async function POST(request: NextRequest) {
             .insert([{
                 user_id: user.id, // 세션에서 가져온 userId 사용 (보안!)
                 board_type: boardType,
-                animal_type: animalType || null,
+                category: boardType, // 레거시 호환
+                animal_type: animalType || tag || null,
                 badge,
                 title: sanitizedTitle,
                 content: sanitizedContent,

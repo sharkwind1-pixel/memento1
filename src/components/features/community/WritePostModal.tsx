@@ -108,10 +108,9 @@ export default function WritePostModal({
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    userId: user.id,
-                    subcategory: boardType,
+                    boardType,
                     badge,
-                    tag: isFreeBoard ? tag : undefined,
+                    animalType: isFreeBoard ? tag : undefined,
                     title: title.trim(),
                     content: content.trim(),
                     authorName: userNickname,

@@ -270,7 +270,6 @@ export default function AdminMagazineTab({
             closeModal();
             onRefresh();
         } catch (error) {
-            console.error("[AdminMagazineTab] 저장 실패:", error);
             toast.error(error instanceof Error ? error.message : "저장 중 오류가 발생했습니다");
         } finally {
             setIsSubmitting(false);
@@ -295,8 +294,7 @@ export default function AdminMagazineTab({
 
             toast.success(newStatus === "published" ? "기사가 발행되었습니다" : "초안으로 변경되었습니다");
             onRefresh();
-        } catch (error) {
-            console.error("[AdminMagazineTab] 상태 토글 실패:", error);
+        } catch {
             toast.error("상태 변경 실패");
         } finally {
             setIsTogglingStatus(null);
@@ -320,8 +318,7 @@ export default function AdminMagazineTab({
 
             toast.success("기사가 삭제되었습니다");
             onRefresh();
-        } catch (error) {
-            console.error("[AdminMagazineTab] 삭제 실패:", error);
+        } catch {
             toast.error("삭제 중 오류가 발생했습니다");
         } finally {
             setIsDeleting(null);

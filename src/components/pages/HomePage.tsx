@@ -154,8 +154,7 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
         try {
             const posts = await getPublicMemorialPosts(10);
             setPublicMemorialPosts(posts);
-        } catch (error) {
-            console.error("공개 추모글 로딩 실패:", error);
+        } catch {
             // 실패 시 빈 배열 유지 (목업 데이터로 폴백됨)
         } finally {
             setIsLoadingMemorial(false);

@@ -140,8 +140,8 @@ export function useAdminData(): UseAdminDataReturn {
                 weeklyActiveUsers: weeklyActiveUsers || 0,
                 monthlyActiveUsers: monthlyActiveUsers || 0,
             });
-        } catch (error) {
-            console.error("[useAdminData] 통계 로드 실패:", error);
+        } catch {
+            // [useAdminData] 통계 로드 실패:", error);
         } finally {
             setLoading(false);
         }
@@ -184,8 +184,8 @@ export function useAdminData(): UseAdminDataReturn {
             }
 
             setChartData(days);
-        } catch (error) {
-            console.error("[useAdminData] 차트 데이터 로드 실패:", error);
+        } catch {
+            // [useAdminData] 차트 데이터 로드 실패:", error);
         }
     }, []);
 
@@ -214,8 +214,8 @@ export function useAdminData(): UseAdminDataReturn {
                     points: profile.points ?? 0,
                 })));
             }
-        } catch (error) {
-            console.error("[useAdminData] 유저 목록 로드 실패:", error);
+        } catch {
+            // [useAdminData] 유저 목록 로드 실패:", error);
         }
     }, []);
 
@@ -244,8 +244,8 @@ export function useAdminData(): UseAdminDataReturn {
                     report_count: 0,
                 })));
             }
-        } catch (error) {
-            console.error("[useAdminData] 게시물 목록 로드 실패:", error);
+        } catch {
+            // [useAdminData] 게시물 목록 로드 실패:", error);
         }
     }, []);
 
@@ -265,8 +265,8 @@ export function useAdminData(): UseAdminDataReturn {
             if (data) {
                 setInquiries(data as InquiryRow[]);
             }
-        } catch (error) {
-            console.error("[useAdminData] 문의 목록 로드 실패:", error);
+        } catch {
+            // [useAdminData] 문의 목록 로드 실패:", error);
         }
     }, []);
 
@@ -289,8 +289,8 @@ export function useAdminData(): UseAdminDataReturn {
                     reporter_email: (r.reporter as { email?: string } | null)?.email || "알 수 없음",
                 })) as ReportRow[]);
             }
-        } catch (error) {
-            console.error("[useAdminData] 신고 목록 로드 실패:", error);
+        } catch {
+            // [useAdminData] 신고 목록 로드 실패:", error);
         }
     }, []);
 
@@ -310,8 +310,8 @@ export function useAdminData(): UseAdminDataReturn {
             if (data) {
                 setWithdrawals(data as WithdrawnUser[]);
             }
-        } catch (error) {
-            console.error("[useAdminData] 탈퇴자 목록 로드 실패:", error);
+        } catch {
+            // [useAdminData] 탈퇴자 목록 로드 실패:", error);
         }
     }, []);
 
@@ -331,8 +331,8 @@ export function useAdminData(): UseAdminDataReturn {
             if (data) {
                 setMagazineArticles(data as MagazineArticleRow[]);
             }
-        } catch (error) {
-            console.error("[useAdminData] 매거진 기사 로드 실패:", error);
+        } catch {
+            // [useAdminData] 매거진 기사 로드 실패:", error);
         }
     }, []);
 

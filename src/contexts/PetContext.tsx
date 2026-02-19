@@ -58,22 +58,11 @@ import type {
     PetPhoto,
     MediaType,
     CropPosition,
+    TimelineEntry,
 } from "@/types";
 
 // Re-export for backward compatibility
-export type { Pet, PetPhoto, MediaType };
-
-// 타임라인 일기 타입 (Context 전용)
-export interface TimelineEntry {
-    id: string;
-    petId: string;
-    date: string;
-    title: string;
-    content: string;
-    mood?: "happy" | "normal" | "sad" | "sick";
-    mediaIds?: string[];
-    createdAt: string;
-}
+export type { Pet, PetPhoto, MediaType, TimelineEntry };
 
 interface PetContextType {
     pets: Pet[];

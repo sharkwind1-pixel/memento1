@@ -86,8 +86,7 @@ export default function AdminReportsTab({
             if (error) throw error;
             toast.success("신고 상태가 업데이트되었습니다");
             onRefresh();
-        } catch (error) {
-            console.error("[AdminReportsTab] 상태 업데이트 실패:", error);
+        } catch {
             toast.error("상태 업데이트 중 오류가 발생했습니다");
         }
     };
@@ -123,8 +122,7 @@ export default function AdminReportsTab({
             // 신고 상태 업데이트
             await updateStatus(report.id, "resolved", "콘텐츠 삭제 처리");
             toast.success("콘텐츠가 삭제되었습니다");
-        } catch (error) {
-            console.error("[AdminReportsTab] 콘텐츠 삭제 실패:", error);
+        } catch {
             toast.error("콘텐츠 삭제 중 오류가 발생했습니다");
         }
     };

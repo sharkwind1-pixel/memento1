@@ -334,16 +334,31 @@ export interface MemorialPost {
     };
 }
 
-/** 타임라인 엔트리 */
+/** 타임라인 엔트리 (camelCase - 클라이언트 사용) */
 export interface TimelineEntry {
     id: string;
     petId: string;
     date: string;
     title: string;
-    content?: string;
+    content: string;
+    mood?: "happy" | "normal" | "sad" | "sick";
+    mediaIds?: string[];
     photos?: string[];
-    category: TimelineCategory;
-    createdAt?: string;
+    category?: TimelineCategory;
+    createdAt: string;
+}
+
+/** 타임라인 DB 행 (snake_case - Supabase 직접 조회 시) */
+export interface TimelineEntryRow {
+    id: string;
+    pet_id: string;
+    user_id: string;
+    date: string;
+    title: string;
+    content: string;
+    mood?: "happy" | "normal" | "sad" | "sick";
+    media_ids?: string[];
+    created_at: string;
 }
 
 /** 타임라인 카테고리 */
