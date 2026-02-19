@@ -29,7 +29,7 @@ export default function MagazineBanner({ onNavigateToMagazine }: MagazineBannerP
                     setArticles(data.articles.map(dbArticleToMagazineArticle));
                 }
             } catch {
-                // DB 조회 실패시 빈 상태 유지
+                // 배너는 보조 UI이므로 조용히 실패
             }
         }
         fetchArticles();

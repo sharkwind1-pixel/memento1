@@ -45,6 +45,7 @@ export function usePetImages(): UsePetImagesReturn {
                     const response = await fetch(
                         "https://api.thecatapi.com/v1/images/search"
                     );
+                    if (!response.ok) return null;
                     const data = await response.json();
                     return data[0]?.url || null;
                 }
@@ -53,6 +54,7 @@ export function usePetImages(): UsePetImagesReturn {
                 const response = await fetch(
                     "https://dog.ceo/api/breeds/image/random"
                 );
+                if (!response.ok) return null;
                 const data = await response.json();
                 return data.message || null;
             } catch {
@@ -72,6 +74,7 @@ export function usePetImages(): UsePetImagesReturn {
                 const dogResponse = await fetch(
                     "https://dog.ceo/api/breeds/image/random/6"
                 );
+                if (!dogResponse.ok) throw new Error("이미지 API 응답 실패");
                 const dogData = await dogResponse.json();
 
                 if (
@@ -97,6 +100,7 @@ export function usePetImages(): UsePetImagesReturn {
                             const res = await fetch(
                                 "https://dog.ceo/api/breeds/image/random"
                             );
+                            if (!res.ok) return null;
                             const data = await res.json();
                             return data.status === "success" ? data.message : null;
                         } catch {

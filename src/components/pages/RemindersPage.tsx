@@ -117,6 +117,9 @@ export default function RemindersPage() {
 
             // 인증 실패 등 에러는 무시 (상태 변경 안 함 - 무한 루프 방지)
             if (!response.ok) {
+                if (response.status !== 401) {
+                    toast.error("리마인더를 불러오지 못했습니다");
+                }
                 return;
             }
 
@@ -125,7 +128,7 @@ export default function RemindersPage() {
                 setReminders(data.reminders);
             }
         } catch {
-            // 에러 시 상태 변경 안 함 (무한 루프 방지)
+            toast.error("리마인더 로딩 중 오류가 발생했습니다");
         } finally {
             setIsLoading(false);
         }
@@ -166,6 +169,7 @@ export default function RemindersPage() {
             });
 
             if (response.ok) {
+                toast.success("리마인더가 생성되었습니다");
                 setIsModalOpen(false);
                 setNewReminder({
                     petId: selectedPetId || "",
@@ -179,8 +183,12 @@ export default function RemindersPage() {
                     date: "",
                 });
                 fetchReminders();
+            } else {
+                toast.error("리마인더 생성에 실패했습니다");
             }
-        } catch {}
+        } catch {
+            toast.error("리마인더 생성 중 오류가 발생했습니다");
+        }
 
     };
 
@@ -197,9 +205,12 @@ export default function RemindersPage() {
                 setReminders(prev =>
                     prev.map(r => r.id === id ? { ...r, enabled: !currentEnabled } : r)
                 );
+            } else {
+                toast.error("리마인더 상태 변경에 실패했습니다");
             }
-        } catch {}
-
+        } catch {
+            toast.error("리마인더 변경 중 오류가 발생했습니다");
+        }
     };
 
     // 리마인더 삭제
