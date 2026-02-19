@@ -7,6 +7,7 @@
 
 "use client";
 
+import { useEscapeClose } from "@/hooks/useEscapeClose";
 import { Button } from "@/components/ui/button";
 import {
     X,
@@ -87,6 +88,7 @@ export default function LoginPromptModal({
     onLogin,
     onSignup,
 }: LoginPromptModalProps) {
+    useEscapeClose(isOpen, onClose);
     if (!isOpen) return null;
 
     const info = featureInfo[feature];
