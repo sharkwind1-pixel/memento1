@@ -10,21 +10,13 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Sparkles, Heart, Camera, MessageCircle, BookOpen, Bell } from "lucide-react";
-
-type UserType = "current" | "memorial";
+import type { OnboardingUserType, TutorialStep } from "@/types";
 
 interface RecordPageTutorialProps {
     isOpen: boolean;
-    userType: UserType;
+    userType: OnboardingUserType;
     onClose: () => void;
     onGoToAIChat: () => void;
-}
-
-interface TutorialStep {
-    targetId: string;
-    title: string;
-    description: string;
-    icon: React.ElementType;
 }
 
 // 키우고 있는 유저용 스텝
@@ -182,12 +174,18 @@ export default function RecordPageTutorial({
     if (!mounted || !isOpen) return null;
 
     const step = steps[currentStep];
-    const Icon = step.icon;
+    const Icon = step.icon ?? Sparkles;
     const isLastStep = currentStep === steps.length - 1;
     const isAIChatGuide = step.targetId === "ai-chat-guide";
 
     // 말풍선 위치 계산
-    const getBubbleStyle = () => {
+    const getBubbleStyle = (): {
+        top: string;
+        left: string;
+        transform?: string;
+        arrowDirection?: string;
+        arrowLeft?: number;
+    } => {
         if (!targetRect || isAIChatGuide) {
             // 중앙에 표시
             return {
@@ -229,8 +227,8 @@ export default function RecordPageTutorial({
     };
 
     const bubbleStyle = getBubbleStyle();
-    const arrowDirection = (bubbleStyle as any).arrowDirection || "up";
-    const arrowLeft = (bubbleStyle as any).arrowLeft || 160;
+    const arrowDirection = bubbleStyle.arrowDirection || "up";
+    const arrowLeft = bubbleStyle.arrowLeft || 160;
 
     return createPortal(
         <div className="fixed inset-0 z-[10000]">

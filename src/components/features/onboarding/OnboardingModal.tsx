@@ -71,8 +71,8 @@ export function markOnboardingComplete(): void {
     localStorage.setItem(ONBOARDING_STORAGE_KEY, "true");
 }
 
-// 회원 유형
-type UserType = "planning" | "current" | "memorial" | null;
+// 회원 유형 (null 허용 - 아직 선택하지 않은 상태)
+type UserType = import("@/types").OnboardingUserType | null;
 
 // 반려동물 종류
 type PetType = "dog" | "cat" | "other" | null;

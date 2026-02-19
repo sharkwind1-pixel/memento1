@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { API } from "@/config/apiEndpoints";
 import { toast } from "sonner";
+import type { Reminder } from "@/types";
 
 // ============================================================================
 // 타입 정의
@@ -41,24 +42,6 @@ interface ReminderPanelProps {
     petId: string;
     petName: string;
     isMemorialMode: boolean;
-}
-
-/** API에서 받아오는 리마인더 데이터 */
-interface Reminder {
-    id: string;
-    petId: string;
-    type: string;
-    title: string;
-    description?: string;
-    schedule: {
-        type: string;
-        time: string;
-        dayOfWeek?: number;
-        dayOfMonth?: number;
-        date?: string;
-    };
-    enabled: boolean;
-    createdAt: string;
 }
 
 /** 알림 추가 폼 데이터 */
