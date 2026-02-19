@@ -1,6 +1,7 @@
 "use client";
 
-import { PawPrint } from "lucide-react";
+import { useState, useEffect } from "react";
+import { PawPrint, RefreshCw } from "lucide-react";
 
 interface PawLoadingProps {
     size?: "sm" | "md" | "lg";
@@ -44,11 +45,27 @@ export default function PawLoading({
     );
 }
 
-// 전체 화면 로딩용
+// 전체 화면 로딩용 — 10초 이상 걸리면 새로고침 버튼 표시
 export function FullPageLoading({ text = "로딩 중..." }: { text?: string }) {
+    const [showRetry, setShowRetry] = useState(false);
+
+    useEffect(() => {
+        const timer = setTimeout(() => setShowRetry(true), 10000);
+        return () => clearTimeout(timer);
+    }, []);
+
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sky-50 to-violet-50">
+        <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-sky-50 to-violet-50 gap-4">
             <PawLoading size="lg" text={text} />
+            {showRetry && (
+                <button
+                    onClick={() => window.location.reload()}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-500 hover:text-sky-600 bg-white/80 rounded-xl border border-gray-200 hover:border-sky-300 transition-colors"
+                >
+                    <RefreshCw className="w-4 h-4" />
+                    새로고침
+                </button>
+            )}
         </div>
     );
 }
