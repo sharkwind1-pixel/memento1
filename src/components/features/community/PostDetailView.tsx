@@ -321,7 +321,7 @@ export default function PostDetailView({
                     )}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="rounded-lg">
+                            <Button variant="ghost" size="sm" aria-label="게시글 더보기" className="rounded-lg">
                                 <MoreHorizontal className="w-4 h-4 text-gray-400" />
                             </Button>
                         </DropdownMenuTrigger>
@@ -464,6 +464,7 @@ export default function PostDetailView({
                                             <img
                                                 src={comment.authorAvatar}
                                                 alt=""
+                                                loading="lazy"
                                                 className="w-7 h-7 rounded-full object-cover"
                                             />
                                         ) : (
@@ -482,7 +483,10 @@ export default function PostDetailView({
                                     {/* 댓글 더보기 */}
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
+                                            <button
+                                                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+                                                aria-label="댓글 더보기"
+                                            >
                                                 <MoreHorizontal className="w-3.5 h-3.5 text-gray-400" />
                                             </button>
                                         </DropdownMenuTrigger>

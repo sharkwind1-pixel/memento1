@@ -297,6 +297,9 @@ export default function WritePostModal({
                             placeholder="제목을 입력하세요"
                             maxLength={100}
                         />
+                        <p className="text-xs text-gray-400 mt-1 text-right">
+                            {title.length}/100
+                        </p>
                     </div>
 
                     {/* 내용 */}
