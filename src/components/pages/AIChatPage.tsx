@@ -62,6 +62,7 @@ import {
     Brain,
     BarChart3,
     Bell,
+    MoreHorizontal,
 } from "lucide-react";
 import { FullPageLoading } from "@/components/ui/PawLoading";
 import { TabType } from "@/types";
@@ -77,6 +78,13 @@ import {
 import DomeGallery from "@/components/ui/DomeGallery";
 import MemoryPanel from "@/components/features/chat/MemoryPanel";
 import EmotionTracker from "@/components/features/chat/EmotionTracker";
+import { authFetch } from "@/lib/auth-fetch";
+import {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import ReminderPanel from "@/components/features/chat/ReminderPanel";
 
 // ============================================================================
@@ -487,11 +495,8 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                 })) || [];
 
             // OpenAI API 호출 (에이전트 기능 포함 + 타임라인 데이터)
-            const response = await fetch("/api/chat", {
+            const response = await authFetch("/api/chat", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
                 body: JSON.stringify({
                     message: currentInput,
                     pet: {
@@ -516,7 +521,6 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                         togetherPeriod: selectedPet.togetherPeriod,
                         memorableMemory: selectedPet.memorableMemory,
                     },
-                    userId: user?.id,
                     chatHistory,
                     timeline: recentTimeline,
                     photoMemories, // 사진 캡션 데이터
@@ -749,7 +753,7 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
 
     return (
         <div
-            className={`min-h-screen flex flex-col relative overflow-hidden ${isMemorialMode ? "bg-gradient-to-b from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950 dark:via-orange-950 dark:to-gray-900" : "bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"}`}
+            className={`min-h-screen flex flex-col relative overflow-hidden transition-all duration-500 ${isMemorialMode ? "bg-gradient-to-b from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950 dark:via-orange-950 dark:to-gray-900" : "bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"}`}
         >
             {/* ================================================================
                 상단 DomeGallery - 3D 사진 갤러리
@@ -803,7 +807,7 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                 </div>
             )}
             <div
-                className={`flex-shrink-0 px-4 py-3 border-b relative z-10 ${isMemorialMode ? "bg-gradient-to-r from-amber-100/80 to-orange-100/80 border-amber-200/50" : "bg-white/80 border-gray-200/50"} backdrop-blur-lg`}
+                className={`flex-shrink-0 px-4 py-3 border-b relative z-10 transition-all duration-500 ${isMemorialMode ? "bg-gradient-to-r from-amber-100/80 to-orange-100/80 border-amber-200/50" : "bg-white/80 border-gray-200/50"} backdrop-blur-lg`}
             >
                 <div className="max-w-2xl mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -820,30 +824,32 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                         >
                             <RotateCcw className="w-5 h-5" />
                         </button>
-                        <button
-                            onClick={() => setIsMemoryPanelOpen(true)}
-                            className={`p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-colors ${isMemorialMode ? "hover:bg-amber-200/50 text-amber-600" : "hover:bg-[#E0F7FF] text-[#05B2DC]"}`}
-                            title="기억 보기"
-                        >
-                            <Brain className="w-5 h-5" />
-                        </button>
-                        <button
-                            onClick={() => setIsEmotionTrackerOpen(true)}
-                            className={`p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-colors ${isMemorialMode ? "hover:bg-amber-200/50 text-amber-600" : "hover:bg-[#E0F7FF] text-[#05B2DC]"}`}
-                            title="감정 분석"
-                        >
-                            <BarChart3 className="w-5 h-5" />
-                        </button>
-                        {/* 케어 알림 버튼 - 일상 모드에서만 표시 */}
-                        {!isMemorialMode && (
-                            <button
-                                onClick={() => setIsReminderPanelOpen(true)}
-                                className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-colors hover:bg-[#E0F7FF] text-[#05B2DC]"
-                                title="케어 알림"
-                            >
-                                <Bell className="w-5 h-5" />
-                            </button>
-                        )}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <button
+                                    className={`p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-colors ${isMemorialMode ? "hover:bg-amber-200/50 text-amber-600" : "hover:bg-[#E0F7FF] text-[#05B2DC]"}`}
+                                    title="더보기"
+                                >
+                                    <MoreHorizontal className="w-5 h-5" />
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                                <DropdownMenuItem onClick={() => setIsMemoryPanelOpen(true)}>
+                                    <Brain className="w-4 h-4 mr-2" />
+                                    기억 보기
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setIsEmotionTrackerOpen(true)}>
+                                    <BarChart3 className="w-4 h-4 mr-2" />
+                                    감정 분석
+                                </DropdownMenuItem>
+                                {!isMemorialMode && (
+                                    <DropdownMenuItem onClick={() => setIsReminderPanelOpen(true)}>
+                                        <Bell className="w-4 h-4 mr-2" />
+                                        케어 알림
+                                    </DropdownMenuItem>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                     <Select
                         value={selectedPetId || ""}
@@ -1173,33 +1179,53 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                 </div>
 
                 <div
-                    className={`flex-shrink-0 px-4 pt-2 pb-2 border-t ${isMemorialMode ? "bg-amber-50/80 border-amber-200/50" : "bg-white/80 border-gray-200/50"} backdrop-blur-lg`}
+                    className={`flex-shrink-0 px-4 pt-2 pb-2 border-t transition-all duration-500 ${isMemorialMode ? "bg-amber-50/80 border-amber-200/50" : "bg-white/80 border-gray-200/50"} backdrop-blur-lg`}
                 >
                     <div className="max-w-2xl mx-auto">
                         {/* 제한 도달 시 프리미엄 안내 */}
                         {isLimitReached ? (
                             <div className="text-center py-4">
-                                <div className="bg-gradient-to-r from-violet-100 to-sky-100 rounded-2xl p-6 mb-3">
-                                    <p className="text-gray-700 font-medium mb-2">
-                                        오늘의 무료 대화를 모두 사용했어요
-                                    </p>
-                                    <p className="text-sm text-gray-500 mb-4">
-                                        프리미엄으로 {selectedPet?.name}와(과) 무제한 대화하세요
-                                    </p>
-                                    <Button
-                                        className="bg-gradient-to-r from-violet-500 to-sky-500 hover:from-violet-600 hover:to-sky-600 text-white rounded-full px-6"
-                                        onClick={() => {
-                                            // TODO: 결제 연동 후 구현
-                                            toast.info("결제 기능은 도메인 설정 후 활성화됩니다!");
-                                        }}
-                                    >
-                                        <Sparkles className="w-4 h-4 mr-2" />
-                                        프리미엄 시작하기
-                                    </Button>
-                                    <p className="text-xs text-violet-500 mt-2">
-                                        커피 한 잔 값, 월 7,900원
-                                    </p>
-                                </div>
+                                {isMemorialMode ? (
+                                    <div className="bg-gradient-to-r from-amber-100 to-orange-100 rounded-2xl p-6 mb-3">
+                                        <p className="text-gray-700 font-medium mb-2">
+                                            오늘은 여기까지 이야기 나눌 수 있어요
+                                        </p>
+                                        <p className="text-sm text-amber-700 mb-4">
+                                            {selectedPet?.name}는 내일도 여기서 기다리고 있을게요.
+                                        </p>
+                                        <p className="text-xs text-amber-600/80">
+                                            <button
+                                                onClick={() => {
+                                                    toast.info("결제 시스템을 준비하고 있어요. 곧 만나요!");
+                                                }}
+                                                className="underline hover:text-amber-700 transition-colors"
+                                            >
+                                                프리미엄으로 더 많은 대화하기
+                                            </button>
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="bg-gradient-to-r from-violet-100 to-sky-100 rounded-2xl p-6 mb-3">
+                                        <p className="text-gray-700 font-medium mb-2">
+                                            오늘의 무료 대화를 모두 사용했어요
+                                        </p>
+                                        <p className="text-sm text-gray-500 mb-4">
+                                            프리미엄으로 {selectedPet?.name}와(과) 무제한 대화하세요
+                                        </p>
+                                        <Button
+                                            className="bg-gradient-to-r from-violet-500 to-sky-500 hover:from-violet-600 hover:to-sky-600 text-white rounded-full px-6"
+                                            onClick={() => {
+                                                toast.info("결제 시스템을 준비하고 있어요. 곧 만나요!");
+                                            }}
+                                        >
+                                            <Sparkles className="w-4 h-4 mr-2" />
+                                            프리미엄 시작하기
+                                        </Button>
+                                        <p className="text-xs text-violet-500 mt-2">
+                                            커피 한 잔 값, 월 7,900원
+                                        </p>
+                                    </div>
+                                )}
                                 <p className="text-xs text-gray-400">
                                     내일 다시 10회 무료 대화가 충전돼요
                                 </p>

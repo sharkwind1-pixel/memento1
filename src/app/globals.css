@@ -55,7 +55,7 @@ label {
         -webkit-overflow-scrolling: touch;
         overscroll-behavior-x: contain;
         scroll-behavior: auto;
-        touch-action: pan-x;
+        touch-action: pan-x pan-y;
         will-change: scroll-position;
     }
 

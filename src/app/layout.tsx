@@ -21,6 +21,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+    metadataBase: new URL(
+        process.env.NEXT_PUBLIC_SITE_URL || "https://mementoani.com"
+    ),
     title: "메멘토애니 - 특별한 매일을 함께",
     description: "일상부터 기억까지, 시간이 쌓이고 의미가 바뀌는 기록 플랫폼",
     keywords: ["반려동물", "펫", "추모", "기록", "커뮤니티", "AI 상담"],

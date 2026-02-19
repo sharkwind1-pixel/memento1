@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { createClient } from "@supabase/supabase-js";
 import { awardPoints } from "@/lib/points";
+import { getAuthUser } from "@/lib/supabase-server";
 import {
     getClientIP,
     checkRateLimit,
@@ -579,6 +580,15 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // 인증 체크 - 세션 토큰으로 사용자 확인
+        const user = await getAuthUser();
+        if (!user) {
+            return NextResponse.json(
+                { error: "로그인이 필요합니다." },
+                { status: 401 }
+            );
+        }
+
         // agent 모듈 동적 import (런타임에만 로드)
         const agent = await getAgentModule();
 
@@ -587,7 +597,6 @@ export async function POST(request: NextRequest) {
             message,
             pet,
             chatHistory = [],
-            userId,
             timeline = [],
             photoMemories = [],
             reminders = [],
@@ -596,7 +605,6 @@ export async function POST(request: NextRequest) {
             message: string;
             pet: PetInfo;
             chatHistory: ChatMessage[];
-            userId?: string;
             timeline?: TimelineEntry[];
             photoMemories?: PhotoMemory[];
             reminders?: ReminderInfo[];
@@ -612,8 +620,8 @@ export async function POST(request: NextRequest) {
         }
 
         // 2. 일일 사용량 체크 (토큰 어뷰징 방지)
-        const identifier = userId || clientIP;
-        const dailyUsage = checkDailyUsage(identifier, !!userId);
+        const identifier = user.id;
+        const dailyUsage = checkDailyUsage(identifier, true);
 
         if (!dailyUsage.allowed) {
             return NextResponse.json(
@@ -667,11 +675,11 @@ export async function POST(request: NextRequest) {
             }
 
             // 5. 새로운 메모리 추출 (비동기로 처리)
-            if (pet.id && userId) {
+            if (pet.id) {
                 agent.extractMemories(sanitizedMessage, pet.name).then(async (newMemories) => {
                     if (newMemories && newMemories.length > 0) {
                         for (const mem of newMemories) {
-                            await agent.saveMemory(userId, pet.id!, mem);
+                            await agent.saveMemory(user.id, pet.id!, mem);
                         }
                     }
                 }).catch(() => { /* 무시 */ });
@@ -680,10 +688,10 @@ export async function POST(request: NextRequest) {
 
         // 6. 대화 맥락 컨텍스트 생성 (이전 세션 요약 + 최근 대화)
         let conversationContext = "";
-        if (pet.id && userId && enableAgent) {
+        if (pet.id && enableAgent) {
             try {
                 conversationContext = await agent.buildConversationContext(
-                    userId,
+                    user.id,
                     pet.id,
                     pet.name,
                     isMemorialMode
@@ -766,37 +774,34 @@ export async function POST(request: NextRequest) {
         }
 
         // 대화 저장 (DB 연동 시)
-        if (enableAgent && pet.id && userId) {
+        if (enableAgent && pet.id) {
             // 비동기로 저장 (응답 속도에 영향 없음)
             Promise.all([
-                agent.saveMessage(userId, pet.id, "user", sanitizedMessage, userEmotion, emotionScore),
-                agent.saveMessage(userId, pet.id, "assistant", reply),
+                agent.saveMessage(user.id, pet.id, "user", sanitizedMessage, userEmotion, emotionScore),
+                agent.saveMessage(user.id, pet.id, "assistant", reply),
             ]).catch(() => { /* 무시 */ });
         }
 
         // 세션 요약 생성 (10번째 메시지마다 비동기로)
-        // 프론트엔드에서 chatHistory.length로 체크하여 호출 가능
-        if (enableAgent && pet.id && userId && chatHistory.length > 0 && chatHistory.length % 10 === 0) {
+        if (enableAgent && pet.id && chatHistory.length > 0 && chatHistory.length % 10 === 0) {
             const allMessages = [...chatHistory, { role: "user", content: sanitizedMessage }, { role: "assistant", content: reply }];
             agent.generateConversationSummary(allMessages, pet.name, isMemorialMode)
                 .then(async (summary) => {
                     if (summary) {
-                        await agent.saveConversationSummary(userId, pet.id!, summary);
+                        await agent.saveConversationSummary(user.id, pet.id!, summary);
                     }
                 })
                 .catch(() => { /* 무시 */ });
         }
 
         // 포인트 적립 (AI 펫톡 +1P, 비동기)
-        if (userId) {
-            try {
-                const pointsSb = getPointsSupabase();
-                if (pointsSb) {
-                    awardPoints(pointsSb, userId, "ai_chat").catch(() => {});
-                }
-            } catch {
-                // 포인트 적립 실패 무시
+        try {
+            const pointsSb = getPointsSupabase();
+            if (pointsSb) {
+                awardPoints(pointsSb, user.id, "ai_chat").catch(() => {});
             }
+        } catch {
+            // 포인트 적립 실패 무시
         }
 
         return NextResponse.json({

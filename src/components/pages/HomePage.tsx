@@ -622,11 +622,11 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                 <section className="space-y-6 px-4">
                     <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center space-x-3 min-w-0">
-                            <div className="w-10 h-10 flex-shrink-0 bg-gradient-to-r from-violet-500 to-purple-500 rounded-xl flex items-center justify-center">
+                            <div className="w-10 h-10 flex-shrink-0 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl flex items-center justify-center">
                                 <Cloud className="w-5 h-5 text-white" />
                             </div>
                             <div className="min-w-0">
-                                <h2 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-violet-500 to-purple-500 dark:from-violet-400 dark:to-purple-400 bg-clip-text text-transparent leading-tight">
+                                <h2 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-amber-500 to-orange-500 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent leading-tight">
                                     마음속에 영원히
                                 </h2>
                                 <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 hidden sm:block">
@@ -637,7 +637,7 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                         <Button
                             variant="ghost"
                             onClick={() => setSelectedTab("community")}
-                            className="text-violet-500 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-xl flex-shrink-0 px-2 sm:px-4"
+                            className="text-amber-500 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl flex-shrink-0 px-2 sm:px-4"
                         >
                             <span className="hidden sm:inline">더 많은 이야기</span>
                             <span className="sm:hidden">더보기</span>
@@ -654,13 +654,13 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                             Array.from({ length: 3 }).map((_, i) => (
                                 <Card
                                     key={`skeleton-${i}`}
-                                    className="min-w-[260px] sm:min-w-72 flex-shrink-0 bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/30 dark:to-purple-900/30 border-violet-100 dark:border-violet-800/50 rounded-2xl overflow-hidden shadow-sm animate-pulse"
+                                    className="min-w-[260px] sm:min-w-72 flex-shrink-0 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 border-amber-100 dark:border-amber-800/50 rounded-2xl overflow-hidden shadow-sm animate-pulse"
                                 >
-                                    <div className="w-full h-48 bg-violet-200 dark:bg-violet-800" />
+                                    <div className="w-full h-48 bg-amber-200 dark:bg-amber-800" />
                                     <CardContent className="p-4">
-                                        <div className="h-5 bg-violet-200 dark:bg-violet-700 rounded w-2/3 mb-2" />
-                                        <div className="h-4 bg-violet-100 dark:bg-violet-800 rounded w-1/3 mb-3" />
-                                        <div className="h-4 bg-violet-100 dark:bg-violet-800 rounded w-full" />
+                                        <div className="h-5 bg-amber-200 dark:bg-amber-700 rounded w-2/3 mb-2" />
+                                        <div className="h-4 bg-amber-100 dark:bg-amber-800 rounded w-1/3 mb-3" />
+                                        <div className="h-4 bg-amber-100 dark:bg-amber-800 rounded w-full" />
                                     </CardContent>
                                 </Card>
                             ))
@@ -670,7 +670,7 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                 return (
                                     <Card
                                         key={m.id}
-                                        className="min-w-[260px] sm:min-w-72 flex-shrink-0 bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/30 dark:to-purple-900/30 border-violet-100 dark:border-violet-800/50 rounded-2xl overflow-hidden shadow-sm will-change-transform"
+                                        className="min-w-[260px] sm:min-w-72 flex-shrink-0 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 border-amber-100 dark:border-amber-800/50 rounded-2xl overflow-hidden shadow-sm will-change-transform"
                                     >
                                         <CardHeader className="p-0 relative">
                                             {src ? (
@@ -695,10 +695,10 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                                     />
                                                 </button>
                                             ) : (
-                                                <div className="w-full h-48 bg-gradient-to-br from-violet-200 to-purple-200 dark:from-violet-800 dark:to-purple-800 flex items-center justify-center">
+                                                <div className="w-full h-48 bg-gradient-to-br from-amber-200 to-orange-200 dark:from-amber-800 dark:to-orange-800 flex items-center justify-center">
                                                     {(() => {
                                                         const PetIcon = getPetIcon(m.pet);
-                                                        return <PetIcon className="w-16 h-16 text-violet-500/60" />;
+                                                        return <PetIcon className="w-16 h-16 text-amber-500/60" />;
                                                     })()}
                                                 </div>
                                             )}
@@ -706,11 +706,11 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
                                             {/* 이름 태그 */}
                                             <div className="absolute bottom-3 left-3 flex items-center gap-2">
-                                                <Badge className="bg-white/90 text-violet-700 font-medium">
+                                                <Badge className="bg-white/90 text-amber-700 font-medium">
                                                     {m.pet}
                                                 </Badge>
                                                 {m.isFromDB && (
-                                                    <Badge className="bg-violet-500/90 text-white text-xs">
+                                                    <Badge className="bg-amber-500/90 text-white text-xs">
                                                         공개
                                                     </Badge>
                                                 )}
@@ -741,7 +741,7 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                                         {m.commentsCount}
                                                     </span>
                                                 </div>
-                                                <span className="text-xs text-violet-500">함께 기억해요</span>
+                                                <span className="text-xs text-amber-500">함께 기억해요</span>
                                             </div>
                                         </CardContent>
                                     </Card>

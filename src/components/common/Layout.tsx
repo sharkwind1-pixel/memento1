@@ -492,7 +492,7 @@ export default function Layout({
                                         className={`w-6 h-6 ${isHome && isActive ? "text-white" : ""}`}
                                     />
                                 </div>
-                                <span className="text-[11px] mt-0.5 font-medium">
+                                <span className="text-xs mt-0.5 font-medium">
                                     {tab.label}
                                 </span>
                             </button>
@@ -509,7 +509,7 @@ export default function Layout({
                         >
                             <Menu className="w-6 h-6" />
                         </div>
-                        <span className="text-[11px] mt-0.5 font-medium">
+                        <span className="text-xs mt-0.5 font-medium">
                             메뉴
                         </span>
                     </button>

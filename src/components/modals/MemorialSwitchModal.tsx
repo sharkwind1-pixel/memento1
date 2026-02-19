@@ -1,6 +1,6 @@
 /**
  * MemorialSwitchModal.tsx
- * 분기점 전환 모달 - 일상 모드 → 추모 모드
+ * 추모 전환 모달 - 일상 모드 → 추모 모드
  * 사업계획서: "준비되었을 때 사용자가 직접 전환, 심리적 부담 최소화"
  */
 
@@ -64,7 +64,7 @@ export default function MemorialSwitchModal({
                             </div>
 
                             <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
-                                분기점
+                                소중한 기억으로
                             </h2>
                             <p className="text-gray-600 dark:text-gray-300 text-sm">
                                 {pet.name}와의 일상을 추억으로 전환합니다

@@ -498,7 +498,7 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
     const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
     const [isMemorialModalOpen, setIsMemorialModalOpen] = useState(false);
 
-    // 분기점 전환 처리
+    // 추억 전환 처리
     const handleMemorialSwitch = (memorialDate: string) => {
         if (!selectedPet) return;
         updatePet(selectedPet.id, {
@@ -1144,7 +1144,7 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                                                     </p>
                                                 )}
 
-                                                {/* 분기점 전환 버튼 - active 상태일 때만 표시 */}
+                                                {/* 추억 전환 버튼 - active 상태일 때만 표시 */}
                                                 {selectedPet.status === "active" && (
                                                     <div className="flex items-center gap-2 mt-4 flex-wrap">
                                                         <Button
@@ -1154,7 +1154,7 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                                                             className="border-amber-300 text-amber-600 hover:bg-amber-50 hover:text-amber-700 dark:border-amber-600 dark:text-amber-400 dark:hover:bg-amber-900/30"
                                                         >
                                                             <Star className="w-4 h-4 mr-2" />
-                                                            분기점 전환
+                                                            추억 전환
                                                         </Button>
                                                     </div>
                                                 )}
@@ -1553,7 +1553,7 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                 message={`"${petToDelete?.name}"의 모든 기록이 삭제됩니다.`}
             />
 
-            {/* 분기점 전환 모달 */}
+            {/* 추억 전환 모달 */}
             {selectedPet && (
                 <MemorialSwitchModal
                     pet={selectedPet}
