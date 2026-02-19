@@ -8,6 +8,7 @@ export interface MagazineArticle {
     category: string;
     title: string;
     summary: string;
+    content?: string | null;
     author: string;
     authorRole: string;
     date: string;
@@ -25,6 +26,7 @@ export function dbArticleToMagazineArticle(row: {
     category: string;
     title: string;
     summary: string;
+    content?: string | null;
     author: string;
     authorRole?: string | null;
     imageUrl?: string | null;
@@ -44,6 +46,7 @@ export function dbArticleToMagazineArticle(row: {
         category: row.category,
         title: row.title,
         summary: row.summary,
+        content: row.content || null,
         author: row.author,
         authorRole: row.authorRole || "",
         date: formatted,

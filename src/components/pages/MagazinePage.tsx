@@ -35,6 +35,8 @@ import {
     Sparkles,
     HeartHandshake,
     Shield,
+    ArrowLeft,
+    User,
 } from "lucide-react";
 
 import Image from "next/image";
@@ -71,6 +73,7 @@ export default function MagazinePage({ setSelectedTab }: MagazinePageProps) {
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [articles, setArticles] = useState<MagazineArticle[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [selectedArticle, setSelectedArticle] = useState<MagazineArticle | null>(null);
 
     // DB에서 기사 불러오기 (발행된 기사만)
     useEffect(() => {
@@ -123,6 +126,14 @@ export default function MagazinePage({ setSelectedTab }: MagazinePageProps) {
             </div>
 
             <div className="relative z-10 space-y-6 pb-8">
+                {/* 기사 상세보기 */}
+                {selectedArticle ? (
+                    <ArticleDetailView
+                        article={selectedArticle}
+                        onBack={() => setSelectedArticle(null)}
+                    />
+                ) : (
+                <>
                 {/* 헤더 */}
                 <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg border border-white/50 dark:border-gray-700/50 rounded-3xl p-6">
                     <div className="flex items-center justify-between mb-6">
@@ -232,6 +243,7 @@ export default function MagazinePage({ setSelectedTab }: MagazinePageProps) {
                             {popularArticles.map((article, index) => (
                                 <Card
                                     key={article.id}
+                                    onClick={() => setSelectedArticle(article)}
                                     className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 hover:shadow-lg transition-all duration-300 rounded-2xl cursor-pointer overflow-hidden"
                                 >
                                     <div className="relative h-40">
@@ -285,6 +297,7 @@ export default function MagazinePage({ setSelectedTab }: MagazinePageProps) {
                         {filteredArticles.map((article) => (
                             <Card
                                 key={article.id}
+                                onClick={() => setSelectedArticle(article)}
                                 className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 hover:shadow-lg transition-all duration-300 rounded-2xl cursor-pointer overflow-hidden"
                             >
                                 <div className="flex flex-col sm:flex-row">
@@ -395,6 +408,151 @@ export default function MagazinePage({ setSelectedTab }: MagazinePageProps) {
                         )}
                     </div>
                 )}
+                </>
+                )}
+            </div>
+        </div>
+    );
+}
+
+/** plain text를 HTML로 변환 (기존 콘텐츠 호환) */
+function renderContent(content: string): string {
+    if (/<[a-z][\s\S]*>/i.test(content)) {
+        return content;
+    }
+    return content
+        .split("\n")
+        .filter((line) => line.trim())
+        .map((line) => `<p>${line}</p>`)
+        .join("");
+}
+
+/** 기사 상세보기 */
+function ArticleDetailView({
+    article,
+    onBack,
+}: {
+    article: MagazineArticle;
+    onBack: () => void;
+}) {
+    return (
+        <div className="space-y-6">
+            {/* 뒤로가기 */}
+            <Button
+                variant="ghost"
+                onClick={onBack}
+                className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 -ml-2"
+            >
+                <ArrowLeft className="w-4 h-4" />
+                목록으로
+            </Button>
+
+            {/* 기사 카드 */}
+            <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg border border-white/50 dark:border-gray-700/50 rounded-3xl overflow-hidden">
+                {/* 히어로 이미지 */}
+                {article.image && (
+                    <div className="relative w-full h-48 sm:h-64 md:h-80">
+                        <Image
+                            src={article.image}
+                            alt={article.title}
+                            fill
+                            className="object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                        {article.badge && (
+                            <div className="absolute top-4 left-4">
+                                <Badge className={`${getBadgeStyle(article.badge)} rounded-lg text-sm px-3 py-1`}>
+                                    {getBadgeLabel(article.badge)}
+                                </Badge>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* 본문 영역 */}
+                <div className="p-6 sm:p-8">
+                    {/* 제목 */}
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100 mb-4 leading-tight">
+                        {article.title}
+                    </h1>
+
+                    {/* 작성자 + 메타 정보 */}
+                    <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-gray-400 mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-emerald-100 dark:bg-emerald-800 rounded-full flex items-center justify-center">
+                                <User className="w-4 h-4 text-emerald-600 dark:text-emerald-300" />
+                            </div>
+                            <div>
+                                <span className="font-medium text-gray-700 dark:text-gray-200">
+                                    {article.author}
+                                </span>
+                                {article.authorRole && (
+                                    <span className="block text-xs text-gray-400">
+                                        {article.authorRole}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                        <span className="text-gray-300 dark:text-gray-600">|</span>
+                        <span>{article.date}</span>
+                        <span className="flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5" />
+                            {article.readTime} 읽기
+                        </span>
+                        <span className="flex items-center gap-1">
+                            <Eye className="w-3.5 h-3.5" />
+                            {article.views.toLocaleString()}
+                        </span>
+                        <span className="flex items-center gap-1">
+                            <Heart className="w-3.5 h-3.5" />
+                            {article.likes}
+                        </span>
+                    </div>
+
+                    {/* 요약 */}
+                    <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-4 mb-8">
+                        <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+                            {article.summary}
+                        </p>
+                    </div>
+
+                    {/* 본문 HTML 렌더링 */}
+                    {article.content ? (
+                        <div
+                            className="prose prose-gray dark:prose-invert max-w-none
+                                prose-headings:text-gray-800 dark:prose-headings:text-gray-100
+                                prose-h2:text-xl prose-h2:font-bold prose-h2:mt-8 prose-h2:mb-4
+                                prose-h3:text-lg prose-h3:font-semibold prose-h3:mt-6 prose-h3:mb-3
+                                prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-p:leading-relaxed
+                                prose-ul:text-gray-700 dark:prose-ul:text-gray-300
+                                prose-ol:text-gray-700 dark:prose-ol:text-gray-300
+                                prose-li:my-1
+                                prose-strong:text-gray-800 dark:prose-strong:text-gray-100
+                                prose-blockquote:border-emerald-300 prose-blockquote:text-gray-600 dark:prose-blockquote:text-gray-400"
+                            dangerouslySetInnerHTML={{
+                                __html: renderContent(article.content),
+                            }}
+                        />
+                    ) : (
+                        <p className="text-gray-400 text-center py-8">
+                            본문 내용이 없습니다
+                        </p>
+                    )}
+
+                    {/* 태그 */}
+                    {article.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                            {article.tags.map((tag) => (
+                                <span
+                                    key={tag}
+                                    className="text-sm text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 rounded-full"
+                                >
+                                    #{tag}
+                                </span>
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
