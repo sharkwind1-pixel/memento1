@@ -68,10 +68,10 @@ function StatCard({ title, value, icon, color, subValue }: StatCardProps) {
             <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                     <div>
-                        <p className="text-sm text-gray-500">{title}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{title}</p>
                         <p className="text-2xl font-bold">{value.toLocaleString()}</p>
                         {subValue && (
-                            <p className="text-xs text-gray-400 mt-1">{subValue}</p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{subValue}</p>
                         )}
                     </div>
                     <div className={`p-3 rounded-full ${color}`}>
@@ -110,26 +110,26 @@ export default function AdminDashboardTab({
                     title="전체 회원"
                     value={stats.totalUsers}
                     icon={<Users className="w-6 h-6 text-blue-600" />}
-                    color="bg-blue-100"
+                    color="bg-blue-100 dark:bg-blue-900/30"
                     subValue={`오늘 +${stats.todayUsers}`}
                 />
                 <StatCard
                     title="반려동물"
                     value={stats.totalPets}
                     icon={<PawPrint className="w-6 h-6 text-pink-600" />}
-                    color="bg-pink-100"
+                    color="bg-pink-100 dark:bg-pink-900/30"
                 />
                 <StatCard
                     title="게시글"
                     value={stats.totalPosts}
                     icon={<FileText className="w-6 h-6 text-green-600" />}
-                    color="bg-green-100"
+                    color="bg-green-100 dark:bg-green-900/30"
                 />
                 <StatCard
                     title="AI 채팅"
                     value={stats.totalChats}
                     icon={<MessageCircle className="w-6 h-6 text-purple-600" />}
-                    color="bg-purple-100"
+                    color="bg-purple-100 dark:bg-purple-900/30"
                     subValue={`오늘 +${stats.todayChats}`}
                 />
             </div>
@@ -147,22 +147,22 @@ export default function AdminDashboardTab({
                 <CardContent>
                     <div className="grid grid-cols-3 gap-4">
                         {/* DAU */}
-                        <div className="text-center p-4 bg-green-50 rounded-xl">
-                            <p className="text-xs text-gray-500 mb-1">DAU (일간)</p>
+                        <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">DAU (일간)</p>
                             <p className="text-2xl font-bold text-green-600">
                                 {stats.todayActiveUsers.toLocaleString()}
                             </p>
                         </div>
                         {/* WAU */}
-                        <div className="text-center p-4 bg-blue-50 rounded-xl">
-                            <p className="text-xs text-gray-500 mb-1">WAU (주간)</p>
+                        <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">WAU (주간)</p>
                             <p className="text-2xl font-bold text-blue-600">
                                 {stats.weeklyActiveUsers.toLocaleString()}
                             </p>
                         </div>
                         {/* MAU */}
-                        <div className="text-center p-4 bg-purple-50 rounded-xl">
-                            <p className="text-xs text-gray-500 mb-1">MAU (월간)</p>
+                        <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">MAU (월간)</p>
                             <p className="text-2xl font-bold text-purple-600">
                                 {stats.monthlyActiveUsers.toLocaleString()}
                             </p>
@@ -178,11 +178,11 @@ export default function AdminDashboardTab({
                 <Card>
                     <CardContent className="p-4">
                         <div className="flex items-center gap-3">
-                            <div className="p-3 bg-amber-100 rounded-full">
+                            <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-full">
                                 <Crown className="w-6 h-6 text-amber-600" />
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500">프리미엄 회원</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">프리미엄 회원</p>
                                 <p className="text-xl font-bold">{stats.premiumUsers}</p>
                             </div>
                         </div>
@@ -191,11 +191,11 @@ export default function AdminDashboardTab({
                 <Card>
                     <CardContent className="p-4">
                         <div className="flex items-center gap-3">
-                            <div className="p-3 bg-red-100 rounded-full">
+                            <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
                                 <Ban className="w-6 h-6 text-red-600" />
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500">차단된 회원</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">차단된 회원</p>
                                 <p className="text-xl font-bold">{stats.bannedUsers}</p>
                             </div>
                         </div>
@@ -247,7 +247,7 @@ export default function AdminDashboardTab({
                             </ResponsiveContainer>
                         </div>
                     ) : (
-                        <div className="h-64 flex items-center justify-center text-gray-400">
+                        <div className="h-64 flex items-center justify-center text-gray-400 dark:text-gray-500">
                             <Calendar className="w-8 h-8 mr-2" />
                             차트 데이터 로딩 중...
                         </div>

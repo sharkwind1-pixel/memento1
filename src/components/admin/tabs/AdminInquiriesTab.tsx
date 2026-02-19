@@ -52,17 +52,17 @@ const CATEGORY_CONFIG = {
     question: {
         label: "질문",
         icon: HelpCircle,
-        color: "bg-blue-100 text-blue-700",
+        color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
     },
     report: {
         label: "신고",
         icon: AlertTriangle,
-        color: "bg-red-100 text-red-700",
+        color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
     },
     suggestion: {
         label: "건의",
         icon: Lightbulb,
-        color: "bg-amber-100 text-amber-700",
+        color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
     },
 } as const;
 
@@ -176,8 +176,8 @@ export default function AdminInquiriesTab({
             <Card>
                 <CardContent className="pt-6">
                     {filteredInquiries.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500">
-                            <HelpCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                            <HelpCircle className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
                             <p>문의 내역이 없습니다</p>
                         </div>
                     ) : (
@@ -232,10 +232,10 @@ function InquiryCard({ inquiry, onUpdateStatus, onOpenResponse }: InquiryCardPro
 
     // 배경색 결정
     const getBgColor = () => {
-        if (inquiry.status === "resolved") return "bg-green-50 border-green-200";
-        if (inquiry.status === "in_progress") return "bg-blue-50 border-blue-200";
-        if (inquiry.category === "report") return "bg-red-50 border-red-200";
-        return "bg-gray-50 border-gray-200";
+        if (inquiry.status === "resolved") return "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/50";
+        if (inquiry.status === "in_progress") return "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/50";
+        if (inquiry.category === "report") return "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/50";
+        return "bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700";
     };
 
     return (
@@ -257,34 +257,34 @@ function InquiryCard({ inquiry, onUpdateStatus, onOpenResponse }: InquiryCardPro
                         </Badge>
                     )}
                     {inquiry.status === "in_progress" && (
-                        <Badge className="bg-blue-100 text-blue-700 text-xs">
+                        <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 text-xs">
                             처리중
                         </Badge>
                     )}
                     {inquiry.status === "resolved" && (
-                        <Badge className="bg-green-100 text-green-700 text-xs">
+                        <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 text-xs">
                             <CheckCircle className="w-3 h-3 mr-1" />
                             답변완료
                         </Badge>
                     )}
                 </div>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-gray-500 dark:text-gray-400">
                     {new Date(inquiry.created_at).toLocaleDateString("ko-KR")}
                 </span>
             </div>
 
             {/* 제목 & 내용 */}
-            <h4 className="font-medium text-gray-800 mb-1">{inquiry.title}</h4>
-            <p className="text-sm text-gray-600 mb-2 line-clamp-2">{inquiry.content}</p>
-            <p className="text-xs text-gray-500 mb-3">보낸 사람: {inquiry.email}</p>
+            <h4 className="font-medium text-gray-800 dark:text-gray-100 mb-1">{inquiry.title}</h4>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-2 line-clamp-2">{inquiry.content}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">보낸 사람: {inquiry.email}</p>
 
             {/* 관리자 답변 */}
             {inquiry.admin_response && (
-                <div className="p-3 bg-white rounded-lg border border-green-200 mb-3">
-                    <p className="text-xs text-green-600 font-medium mb-1">관리자 답변</p>
-                    <p className="text-sm text-gray-700">{inquiry.admin_response}</p>
+                <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border border-green-200 dark:border-green-800/50 mb-3">
+                    <p className="text-xs text-green-600 dark:text-green-400 font-medium mb-1">관리자 답변</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-200">{inquiry.admin_response}</p>
                     {inquiry.responded_at && (
-                        <p className="text-xs text-gray-400 mt-1">
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                             {new Date(inquiry.responded_at).toLocaleString("ko-KR")}
                         </p>
                     )}
@@ -292,7 +292,7 @@ function InquiryCard({ inquiry, onUpdateStatus, onOpenResponse }: InquiryCardPro
             )}
 
             {/* 액션 버튼 */}
-            <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200">
+            <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                 {inquiry.status === "pending" && (
                     <Button
                         size="sm"
@@ -350,21 +350,21 @@ function ResponseModal({
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-            <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div className="relative w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden">
                 {/* 헤더 */}
-                <div className="p-4 border-b bg-green-50">
-                    <h3 className="font-bold text-gray-800">문의 답변</h3>
-                    <p className="text-sm text-gray-500">{inquiry.title}</p>
+                <div className="p-4 border-b dark:border-gray-700 bg-green-50 dark:bg-green-900/20">
+                    <h3 className="font-bold text-gray-800 dark:text-gray-100">문의 답변</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{inquiry.title}</p>
                 </div>
 
                 {/* 본문 */}
                 <div className="p-4 space-y-4">
-                    <div className="p-3 bg-gray-50 rounded-lg">
-                        <p className="text-sm text-gray-600 font-medium mb-1">문의 내용</p>
-                        <p className="text-sm text-gray-800">{inquiry.content}</p>
+                    <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                        <p className="text-sm text-gray-600 dark:text-gray-300 font-medium mb-1">문의 내용</p>
+                        <p className="text-sm text-gray-800 dark:text-gray-100">{inquiry.content}</p>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                             답변 내용
                         </label>
                         <Textarea
@@ -377,7 +377,7 @@ function ResponseModal({
                 </div>
 
                 {/* 푸터 */}
-                <div className="p-4 border-t flex justify-end gap-2">
+                <div className="p-4 border-t dark:border-gray-700 flex justify-end gap-2">
                     <Button variant="outline" onClick={onClose}>
                         취소
                     </Button>

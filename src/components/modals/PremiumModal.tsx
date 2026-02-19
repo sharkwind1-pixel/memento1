@@ -97,7 +97,7 @@ export default function PremiumModal({
             />
 
             {/* 모달 */}
-            <div className="relative bg-white rounded-3xl max-w-md w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="relative bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                 {/* 상단 그라데이션 */}
                 <div className="bg-gradient-to-br from-violet-500 via-purple-500 to-sky-500 p-8 text-white">
                     <button
@@ -121,8 +121,8 @@ export default function PremiumModal({
                 {/* 본문 */}
                 <div className="p-6">
                     {/* 혜택 설명 */}
-                    <div className="bg-violet-50 rounded-2xl p-4 mb-6">
-                        <p className="text-gray-700 leading-relaxed">
+                    <div className="bg-violet-50 dark:bg-violet-900/20 rounded-2xl p-4 mb-6">
+                        <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
                             {info.benefit}
                         </p>
                     </div>
@@ -134,7 +134,7 @@ export default function PremiumModal({
                             <span className="text-gray-500 text-sm">커피 한 잔 값으로</span>
                         </div>
                         <div className="flex items-baseline justify-center gap-1">
-                            <span className="text-4xl font-bold text-gray-800">7,900</span>
+                            <span className="text-4xl font-bold text-gray-800 dark:text-white">7,900</span>
                             <span className="text-gray-500">원/월</span>
                         </div>
                         <p className="text-sm text-gray-400 mt-2">
@@ -144,19 +144,19 @@ export default function PremiumModal({
 
                     {/* 프리미엄 혜택 리스트 */}
                     <div className="space-y-2 mb-6">
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                             <Check className="w-4 h-4 text-green-500" />
                             AI 펫톡 무제한
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                             <Check className="w-4 h-4 text-green-500" />
                             반려동물 & 사진 무제한
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                             <Check className="w-4 h-4 text-green-500" />
                             메모리얼 펫톡 지원
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                             <Check className="w-4 h-4 text-green-500" />
                             언제든 해지 가능
                         </div>

@@ -385,8 +385,8 @@ export default function AdminUsersTab({
             <Card>
                 <CardContent className="pt-6">
                     {filteredUsers.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500">
-                            <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                            <Users className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
                             <p>검색 결과가 없습니다</p>
                         </div>
                     ) : (
@@ -459,12 +459,12 @@ function UserCard({
         <div
             className={`p-4 rounded-xl border transition-colors ${
                 user.is_banned
-                    ? "bg-red-50 border-red-200"
+                    ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/50"
                     : user.is_admin
-                        ? "bg-purple-50 border-purple-200"
+                        ? "bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800/50"
                         : user.is_premium
-                            ? "bg-amber-50 border-amber-200"
-                            : "bg-gray-50 border-gray-200"
+                            ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/50"
+                            : "bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700"
             }`}
         >
             {/* 상단: 이메일, 뱃지 */}
@@ -472,25 +472,25 @@ function UserCard({
                 <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium">{user.email}</span>
                     {user.is_admin && (
-                        <Badge className="bg-purple-100 text-purple-700">
+                        <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
                             <Shield className="w-3 h-3 mr-1" />
                             관리자
                         </Badge>
                     )}
                     {user.is_premium && (
-                        <Badge className="bg-amber-100 text-amber-700">
+                        <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
                             <Crown className="w-3 h-3 mr-1" />
                             프리미엄
                         </Badge>
                     )}
                     {user.is_banned && (
-                        <Badge className="bg-red-100 text-red-700">
+                        <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
                             <Ban className="w-3 h-3 mr-1" />
                             차단됨
                         </Badge>
                     )}
                 </div>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-gray-500 dark:text-gray-400">
                     {new Date(user.created_at).toLocaleDateString("ko-KR")}
                 </span>
             </div>
@@ -498,13 +498,13 @@ function UserCard({
             {/* 닉네임 + 등급 */}
             <div className="flex items-center gap-2 mb-2 flex-wrap">
                 {user.user_metadata?.nickname && (
-                    <span className="text-sm text-gray-500">
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
                         닉네임: {user.user_metadata.nickname}
                     </span>
                 )}
                 <span className="flex items-center gap-1">
                     <LevelBadge points={user.points ?? 0} size="lg" showName />
-                    <span className="text-xs text-gray-400 ml-1">
+                    <span className="text-xs text-gray-400 dark:text-gray-500 ml-1">
                         ({(user.points ?? 0).toLocaleString()}P)
                     </span>
                 </span>
@@ -519,7 +519,7 @@ function UserCard({
             )}
 
             {/* 액션 버튼 */}
-            <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200">
+            <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                 {/* 밴/해제 버튼 */}
                 <Button
                     size="sm"
@@ -535,8 +535,8 @@ function UserCard({
                     size="sm"
                     variant={user.is_admin ? "outline" : "outline"}
                     className={user.is_admin
-                        ? "text-purple-600 border-purple-300 hover:bg-purple-50"
-                        : "text-gray-600 border-gray-300 hover:bg-gray-50"
+                        ? "text-purple-600 dark:text-purple-400 border-purple-300 dark:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                        : "text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
                     }
                     onClick={onToggleAdmin}
                 >
@@ -558,7 +558,7 @@ function UserCard({
                     <Button
                         size="sm"
                         variant="outline"
-                        className="text-amber-600 border-amber-300 hover:bg-amber-50"
+                        className="text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20"
                         onClick={onOpenPremiumModal}
                     >
                         <Crown className="w-3 h-3 mr-1" />
@@ -570,7 +570,7 @@ function UserCard({
                 <Button
                     size="sm"
                     variant="outline"
-                    className="text-sky-600 border-sky-300 hover:bg-sky-50"
+                    className="text-sky-600 dark:text-sky-400 border-sky-300 dark:border-sky-700 hover:bg-sky-50 dark:hover:bg-sky-900/20"
                     onClick={onOpenPointsModal}
                 >
                     <Star className="w-3 h-3 mr-1" />
@@ -591,7 +591,7 @@ function UserCard({
                 <Button
                     size="sm"
                     variant="outline"
-                    className="text-red-600 border-red-300 hover:bg-red-50"
+                    className="text-red-600 dark:text-red-400 border-red-300 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
                     onClick={onOpenWithdrawalModal}
                 >
                     탈퇴 처리
