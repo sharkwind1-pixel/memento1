@@ -25,13 +25,11 @@
 // ============================================================================
 // 임포트
 // ============================================================================
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { usePets } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import {
     Select,
     SelectContent,
@@ -42,37 +40,26 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import {
-    Send,
     Heart,
     Sparkles,
     PawPrint,
-    ChevronLeft,
-    ChevronRight,
     Plus,
-    Image as ImageIcon,
     Star,
     RotateCcw,
     Moon,
-    CloudSun,
     Syringe,
-    Stethoscope,
-    Footprints,
-    Cookie,
     Brain,
     BarChart3,
     Bell,
     MoreHorizontal,
 } from "lucide-react";
-import { FullPageLoading } from "@/components/ui/PawLoading";
 import { TabType } from "@/types";
 import { toast } from "sonner";
 import {
     DAILY_FREE_LIMIT,
-    MAX_MESSAGE_LENGTH,
     getDailyUsage,
     incrementDailyUsage,
     generatePersonalizedGreeting,
-    type TimelineEntry,
 } from "@/components/features/chat";
 import DomeGallery from "@/components/ui/DomeGallery";
 import MemoryPanel from "@/components/features/chat/MemoryPanel";
@@ -85,6 +72,10 @@ import {
     DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import ReminderPanel from "@/components/features/chat/ReminderPanel";
+import { ChatMessage } from "@/components/features/chat/chatTypes";
+import PetProfileSidebar from "@/components/features/chat/PetProfileSidebar";
+import ChatMessageList from "@/components/features/chat/ChatMessageList";
+import ChatInputArea from "@/components/features/chat/ChatInputArea";
 
 // ============================================================================
 // 타입 정의
@@ -93,77 +84,6 @@ import ReminderPanel from "@/components/features/chat/ReminderPanel";
 /** AI 펫톡 페이지 Props */
 interface AIChatPageProps {
     setSelectedTab?: (tab: TabType) => void;
-}
-
-/** 채팅 메시지 구조 */
-interface ChatMessage {
-    id: string;
-    role: "user" | "pet" | "system";    // user: 사용자, pet: AI(반려동물), system: 시스템 알림
-    content: string;
-    timestamp: Date;
-    emotion?: string;        // AI가 감지한 사용자 감정
-    emotionScore?: number;   // 감정 강도 (0-1)
-    isError?: boolean;       // 에러 메시지 여부
-    retryMessage?: string;   // 재시도 시 보낼 메시지
-}
-
-// ============================================================================
-// 상수 정의
-// ============================================================================
-
-/** 감정별 이모티콘 매핑 */
-const emotionIcons: Record<string, string> = {
-    happy: "😊",
-    sad: "😢",
-    anxious: "😰",
-    angry: "😠",
-    grateful: "🙏",
-    lonely: "💔",
-    peaceful: "😌",
-    excited: "🤩",
-    neutral: "😐",
-};
-
-/** 감정별 펫 메시지 버블 배경색 (미묘한 틴트) */
-const emotionBubbleTint: Record<string, string> = {
-    happy: "bg-yellow-50 border-yellow-100",
-    sad: "bg-purple-50 border-purple-100",
-    anxious: "bg-gray-100 border-gray-200",
-    grateful: "bg-pink-50 border-pink-100",
-    excited: "bg-yellow-50 border-yellow-100",
-    peaceful: "bg-green-50 border-green-100",
-};
-
-/** 감정 라벨 (한국어) */
-const emotionLabels: Record<string, string> = {
-    happy: "기쁨",
-    sad: "슬픔",
-    anxious: "걱정",
-    angry: "화남",
-    grateful: "감사",
-    lonely: "외로움",
-    peaceful: "평온",
-    excited: "신남",
-    neutral: "",
-};
-
-/**
- * 시간을 한국어 형식으로 포맷 (오전/오후 HH:MM)
- */
-function formatTimestamp(date: Date): string {
-    const hours = date.getHours();
-    const minutes = date.getMinutes();
-    const period = hours < 12 ? "오전" : "오후";
-    const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
-    const displayMinutes = minutes.toString().padStart(2, "0");
-    return `${period} ${displayHours}:${displayMinutes}`;
-}
-
-/**
- * 두 메시지 사이의 시간 간격이 5분 이상인지 확인
- */
-function hasTimeGap(prev: Date, curr: Date): boolean {
-    return Math.abs(curr.getTime() - prev.getTime()) > 5 * 60 * 1000;
 }
 
 // ============================================================================
@@ -205,10 +125,6 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
     const [isEmotionTrackerOpen, setIsEmotionTrackerOpen] = useState(false);
     const [isReminderPanelOpen, setIsReminderPanelOpen] = useState(false);
     const isPremium = isPremiumUser; // AuthContext에서 중앙 관리
-
-    // Refs
-    const messagesEndRef = useRef<HTMLDivElement>(null);  // 채팅 스크롤 위치
-    const textareaRef = useRef<HTMLTextAreaElement>(null); // 입력창 포커스
 
     // ========================================================================
     // 계산된 값
@@ -257,10 +173,6 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         }, 10000);
         return () => clearInterval(interval);
     }, [allPhotos.length]);
-
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages]);
 
     // Supabase에서 대화 기록 불러오기
     useEffect(() => {
@@ -465,10 +377,6 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         setMessages((prev) => [...prev, userMessage]);
         const currentInput = messageToSend;
         setInputValue("");
-        // Textarea 높이 초기화
-        if (textareaRef.current) {
-            textareaRef.current.style.height = "40px";
-        }
         setIsTyping(true);
 
         try {
@@ -586,31 +494,6 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         setMessages((prev) => prev.filter((msg) => msg.id !== errorMessageId));
         // 원래 메시지 재전송
         handleSend(retryMessage);
-    };
-
-    /**
-     * 키보드 입력 처리
-     * - 한글 조합 중(isComposing)에는 Enter 무시 (IME 버그 방지)
-     * - Enter: 메시지 전송
-     * - Shift+Enter: 줄바꿈
-     */
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.nativeEvent.isComposing) return;  // 한글 조합 중 Enter 방지
-        if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            handleSend();
-        }
-    };
-
-    /**
-     * Textarea 자동 높이 조절 (최대 3줄)
-     */
-    const handleTextareaInput = () => {
-        const textarea = textareaRef.current;
-        if (!textarea) return;
-        textarea.style.height = "auto";
-        const maxHeight = 84; // 약 3줄 높이
-        textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
     };
 
     // ========================================================================
@@ -884,120 +767,14 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
 
             <div className="flex-1 flex flex-col lg:flex-row max-w-4xl mx-auto w-full overflow-hidden relative z-10">
                 {/* 좌측: 펫 프로필 영역 (데스크탑에서만 사이드바) */}
-                <div className="flex-shrink-0 p-4 lg:w-80 lg:border-r lg:border-gray-200/50 lg:sticky lg:top-0 lg:self-start">
-                    {currentPhoto ? (
-                        <div className="relative max-w-[280px] mx-auto lg:max-w-none">
-                            <div
-                                className={`relative rounded-2xl overflow-hidden shadow-xl aspect-square ${isMemorialMode ? "ring-2 ring-amber-200/50" : "ring-2 ring-[#E0F7FF]/50"}`}
-                            >
-                                <img
-                                    src={currentPhoto.url}
-                                    alt={selectedPet?.name}
-                                    className="w-full h-full object-cover"
-                                    style={{
-                                        objectPosition:
-                                            currentPhoto.cropPosition
-                                                ? `${currentPhoto.cropPosition.x}% ${currentPhoto.cropPosition.y}%`
-                                                : "center",
-                                    }}
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                                <div className="absolute bottom-3 left-4 right-4 text-white">
-                                    <h2 className="text-lg font-bold">
-                                        {selectedPet?.name}
-                                    </h2>
-                                    <p className="text-sm text-white/90">
-                                        {selectedPet?.type} · {selectedPet?.breed}
-                                    </p>
-                                    <p className="text-sm text-white/80 mt-1">
-                                        {isMemorialMode && selectedPet?.memorialDate
-                                            ? `무지개다리를 건넌 지 ${Math.floor((new Date().getTime() - new Date(selectedPet.memorialDate).getTime()) / (1000 * 60 * 60 * 24))}일`
-                                            : selectedPet?.birthday
-                                            ? `함께한 지 ${Math.floor((new Date().getTime() - new Date(selectedPet.birthday).getTime()) / (1000 * 60 * 60 * 24))}일`
-                                            : ""}
-                                    </p>
-                                </div>
-                                {allPhotos.length > 1 && (
-                                    <>
-                                        <button
-                                            onClick={() =>
-                                                setCurrentPhotoIndex(
-                                                    (prev) =>
-                                                        (prev -
-                                                            1 +
-                                                            allPhotos.length) %
-                                                        allPhotos.length,
-                                                )
-                                            }
-                                            className="absolute left-1 top-1/2 -translate-y-1/2 p-3 bg-black/30 hover:bg-black/50 text-white rounded-full active:scale-95 transition-transform min-w-[44px] min-h-[44px] flex items-center justify-center"
-                                        >
-                                            <ChevronLeft className="w-5 h-5" />
-                                        </button>
-                                        <button
-                                            onClick={() =>
-                                                setCurrentPhotoIndex(
-                                                    (prev) =>
-                                                        (prev + 1) %
-                                                        allPhotos.length,
-                                                )
-                                            }
-                                            className="absolute right-1 top-1/2 -translate-y-1/2 p-3 bg-black/30 hover:bg-black/50 text-white rounded-full active:scale-95 transition-transform min-w-[44px] min-h-[44px] flex items-center justify-center"
-                                        >
-                                            <ChevronRight className="w-5 h-5" />
-                                        </button>
-                                    </>
-                                )}
-                            </div>
-                            {allPhotos.length > 1 && (
-                                <div className="flex justify-center gap-1 mt-2">
-                                    {allPhotos.map((_, index) => (
-                                        <button
-                                            key={index}
-                                            onClick={() =>
-                                                setCurrentPhotoIndex(index)
-                                            }
-                                            className={`h-1.5 rounded-full transition-all ${index === currentPhotoIndex ? (isMemorialMode ? "bg-amber-500 w-4" : "bg-[#05B2DC] w-4") : "bg-gray-300 w-1.5"}`}
-                                        />
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="max-w-[280px] mx-auto">
-                            <div
-                                className={`relative rounded-2xl p-6 flex flex-col items-center justify-center aspect-square shadow-xl ${isMemorialMode ? "bg-gradient-to-br from-amber-100 to-orange-100 ring-2 ring-amber-200/50" : "bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD] ring-2 ring-[#E0F7FF]/50"}`}
-                            >
-                                <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-3 ${isMemorialMode ? "bg-amber-200/50" : "bg-white/50"}`}>
-                                    <PawPrint
-                                        className={`w-10 h-10 ${isMemorialMode ? "text-amber-500" : "text-[#05B2DC]"}`}
-                                    />
-                                </div>
-                                <h2 className={`text-xl font-bold mb-1 ${isMemorialMode ? "text-amber-800" : "text-gray-800"}`}>
-                                    {selectedPet?.name}
-                                </h2>
-                                <p className="text-sm text-gray-600 mb-1">
-                                    {selectedPet?.type} · {selectedPet?.breed}
-                                </p>
-                                <p className={`text-xs mb-3 ${isMemorialMode ? "text-amber-600" : "text-[#0891B2]"}`}>
-                                    {isMemorialMode && selectedPet?.memorialDate
-                                        ? `무지개다리를 건넌 지 ${Math.floor((new Date().getTime() - new Date(selectedPet.memorialDate).getTime()) / (1000 * 60 * 60 * 24))}일`
-                                        : selectedPet?.birthday
-                                        ? `함께한 지 ${Math.floor((new Date().getTime() - new Date(selectedPet.birthday).getTime()) / (1000 * 60 * 60 * 24))}일`
-                                        : ""}
-                                </p>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setSelectedTab?.("record")}
-                                    className={`rounded-xl ${isMemorialMode ? "border-amber-400 text-amber-600 hover:bg-amber-50" : "border-[#05B2DC] text-[#05B2DC] hover:bg-[#E0F7FF]"}`}
-                                >
-                                    <ImageIcon className="w-4 h-4 mr-1" />
-                                    사진 등록하기
-                                </Button>
-                            </div>
-                        </div>
-                    )}
-                </div>
+                <PetProfileSidebar
+                    selectedPet={selectedPet}
+                    allPhotos={allPhotos}
+                    currentPhotoIndex={currentPhotoIndex}
+                    setCurrentPhotoIndex={setCurrentPhotoIndex}
+                    isMemorialMode={isMemorialMode}
+                    setSelectedTab={setSelectedTab}
+                />
 
                 {/* 우측: 채팅 영역 */}
                 <div className="flex-1 flex flex-col min-h-0 lg:min-w-0">
@@ -1014,358 +791,26 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                         이 대화는 AI가 생성합니다. 실제 반려동물의 의사가 아닌 참고용 서비스입니다.
                     </span>
                 </div>
-                <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-3">
-                    {messages.map((message, index) => {
-                        // 타임스탬프 표시 여부 결정: 첫 메시지 또는 이전 메시지와 5분 이상 간격
-                        const showTimestamp =
-                            index === 0 ||
-                            hasTimeGap(
-                                messages[index - 1].timestamp,
-                                message.timestamp
-                            );
-
-                        // 감정 기반 버블 색상 (펫 메시지만)
-                        const emotionTintClass =
-                            message.role === "pet" && message.emotion && emotionBubbleTint[message.emotion]
-                                ? emotionBubbleTint[message.emotion]
-                                : "";
-
-                        return (
-                            <div key={message.id}>
-                                {/* 타임스탬프 구분선 */}
-                                {showTimestamp && (
-                                    <div className="chat-timestamp my-2">
-                                        <span>{formatTimestamp(message.timestamp)}</span>
-                                    </div>
-                                )}
-
-                                {/* 시스템 에러 메시지 */}
-                                {message.role === "system" && message.isError ? (
-                                    <div className="flex justify-center chat-bubble-enter my-2">
-                                        <div className="bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 max-w-[85%] text-center">
-                                            <p className="text-sm text-gray-600 dark:text-gray-300">
-                                                {message.content}
-                                            </p>
-                                            {message.retryMessage && (
-                                                <button
-                                                    onClick={() => handleRetry(message.id, message.retryMessage!)}
-                                                    className={`mt-2 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all hover:scale-[1.03] active:scale-95 ${
-                                                        isMemorialMode
-                                                            ? "bg-amber-100 hover:bg-amber-200 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300"
-                                                            : "bg-sky-100 hover:bg-sky-200 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300"
-                                                    }`}
-                                                >
-                                                    <RotateCcw className="w-3.5 h-3.5" />
-                                                    다시 시도
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                ) : (
-                                    /* 일반 채팅 메시지 (user / pet) */
-                                    <div
-                                        className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} chat-bubble-enter`}
-                                        style={{ animationDelay: index === messages.length - 1 ? "0ms" : "0ms" }}
-                                    >
-                                        {message.role === "pet" && (
-                                            <div className={`w-9 h-9 rounded-full overflow-hidden mr-2 flex-shrink-0 ring-2 shadow-md transition-transform hover:scale-105 ${
-                                                isMemorialMode ? "ring-amber-200" : "ring-sky-200"
-                                            }`}>
-                                                {selectedPet?.profileImage ? (
-                                                    <img
-                                                        src={selectedPet.profileImage}
-                                                        alt={selectedPet.name}
-                                                        className="w-full h-full object-cover"
-                                                        style={{
-                                                            objectPosition:
-                                                                selectedPet.profileCropPosition
-                                                                    ? `${selectedPet.profileCropPosition.x}% ${selectedPet.profileCropPosition.y}%`
-                                                                    : "center",
-                                                        }}
-                                                    />
-                                                ) : (
-                                                    <div
-                                                        className={`w-full h-full flex items-center justify-center ${isMemorialMode ? "bg-gradient-to-br from-amber-100 to-orange-100" : "bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD]"}`}
-                                                    >
-                                                        <PawPrint
-                                                            className={`w-4 h-4 ${isMemorialMode ? "text-amber-500" : "text-[#05B2DC]"}`}
-                                                        />
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-                                        <div className="flex flex-col max-w-[75%]">
-                                            <div
-                                                className={`px-4 py-3 rounded-2xl shadow-md transition-all hover:shadow-lg ${
-                                                    message.role === "user"
-                                                        ? (isMemorialMode
-                                                            ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-br-sm"
-                                                            : "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white rounded-br-sm")
-                                                        : emotionTintClass
-                                                            ? `${emotionTintClass} text-gray-800 rounded-bl-sm border`
-                                                            : isMemorialMode
-                                                                ? "bg-amber-100 text-amber-900 rounded-bl-sm border border-amber-200/50"
-                                                                : "bg-white text-gray-800 rounded-bl-sm border border-sky-100"
-                                                }`}
-                                            >
-                                                <p className="text-[15px] leading-relaxed">
-                                                    {message.content}
-                                                </p>
-                                            </div>
-                                            {/* 감정 아이콘 배지 (펫 메시지만, neutral 제외) */}
-                                            {message.role === "pet" && message.emotion && message.emotion !== "neutral" && (
-                                                <span className="text-[11px] text-gray-400 mt-1 ml-1 flex items-center gap-1">
-                                                    <span>{emotionIcons[message.emotion]}</span>
-                                                    <span>{emotionLabels[message.emotion] || message.emotion}</span>
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    })}
-
-                    {isTyping && (
-                        <div className="flex justify-start chat-bubble-enter">
-                            <div className={`w-9 h-9 rounded-full overflow-hidden mr-2 flex-shrink-0 ring-2 shadow-md ${
-                                isMemorialMode ? "ring-amber-200" : "ring-sky-200"
-                            }`}>
-                                {selectedPet?.profileImage ? (
-                                    <img
-                                        src={selectedPet.profileImage}
-                                        alt={selectedPet.name}
-                                        className="w-full h-full object-cover"
-                                    />
-                                ) : (
-                                    <div
-                                        className={`w-full h-full flex items-center justify-center ${isMemorialMode ? "bg-gradient-to-br from-amber-100 to-orange-100" : "bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD]"}`}
-                                    >
-                                        <PawPrint
-                                            className={`w-4 h-4 ${isMemorialMode ? "text-amber-500" : "text-[#05B2DC]"}`}
-                                        />
-                                    </div>
-                                )}
-                            </div>
-                            <div
-                                className={`px-5 py-3 rounded-2xl rounded-bl-sm ${isMemorialMode ? "bg-amber-100 border border-amber-200/50" : "bg-white shadow-sm border border-sky-100"}`}
-                            >
-                                <div className="flex items-end gap-1.5">
-                                    {[0, 1, 2].map((i) => (
-                                        <div
-                                            key={i}
-                                            className="animate-bounce"
-                                            style={{
-                                                animationDelay: `${i * 200}ms`,
-                                                animationDuration: "0.6s",
-                                            }}
-                                        >
-                                            <PawPrint
-                                                className={`w-4 h-4 ${
-                                                    isMemorialMode
-                                                        ? "text-amber-400"
-                                                        : "text-sky-400"
-                                                }`}
-                                                style={{
-                                                    transform: `rotate(${-15 + i * 15}deg)`,
-                                                }}
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                                {isMemorialMode ? (
-                                    <p className="text-xs mt-1.5 memorial-shimmer-text font-medium">
-                                        이곳에서 생각하고 있어요...
-                                    </p>
-                                ) : (
-                                    <p className="text-xs mt-1 text-sky-500">
-                                        {selectedPet?.name}가 신나게 답변 중...
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-                    )}
-                    <div ref={messagesEndRef} />
-                </div>
-
-                <div
-                    className={`flex-shrink-0 px-4 pt-2 pb-2 border-t transition-all duration-500 ${isMemorialMode ? "bg-amber-50/80 border-amber-200/50" : "bg-white/80 border-gray-200/50"} backdrop-blur-lg`}
-                >
-                    <div className="max-w-2xl mx-auto">
-                        {/* 제한 도달 시 프리미엄 안내 */}
-                        {isLimitReached ? (
-                            <div className="text-center py-4">
-                                {isMemorialMode ? (
-                                    <div className="bg-gradient-to-r from-amber-100 to-orange-100 rounded-2xl p-6 mb-3">
-                                        <p className="text-gray-700 font-medium mb-2">
-                                            오늘은 여기까지 이야기 나눌 수 있어요
-                                        </p>
-                                        <p className="text-sm text-amber-700 mb-4">
-                                            {selectedPet?.name}는 내일도 여기서 기다리고 있을게요.
-                                        </p>
-                                        <p className="text-xs text-amber-600/80">
-                                            <button
-                                                onClick={() => {
-                                                    toast.info("결제 시스템을 준비하고 있어요. 곧 만나요!");
-                                                }}
-                                                className="underline hover:text-amber-700 transition-colors"
-                                            >
-                                                프리미엄으로 더 많은 대화하기
-                                            </button>
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <div className="bg-gradient-to-r from-violet-100 to-sky-100 rounded-2xl p-6 mb-3">
-                                        <p className="text-gray-700 font-medium mb-2">
-                                            오늘의 무료 대화를 모두 사용했어요
-                                        </p>
-                                        <p className="text-sm text-gray-500 mb-4">
-                                            프리미엄으로 {selectedPet?.name}와(과) 무제한 대화하세요
-                                        </p>
-                                        <Button
-                                            className="bg-gradient-to-r from-violet-500 to-sky-500 hover:from-violet-600 hover:to-sky-600 text-white rounded-full px-6"
-                                            onClick={() => {
-                                                toast.info("결제 시스템을 준비하고 있어요. 곧 만나요!");
-                                            }}
-                                        >
-                                            <Sparkles className="w-4 h-4 mr-2" />
-                                            프리미엄 시작하기
-                                        </Button>
-                                        <p className="text-xs text-violet-500 mt-2">
-                                            커피 한 잔 값, 월 7,900원
-                                        </p>
-                                    </div>
-                                )}
-                                <p className="text-xs text-gray-400">
-                                    내일 다시 10회 무료 대화가 충전돼요
-                                </p>
-                            </div>
-                        ) : (
-                            <>
-                                {/* 추천 대화 버튼 - AI 제안 우선, 없으면 기본 칩 (카카오톡 챗봇 스타일) */}
-                                <div className="flex gap-2 mb-2 overflow-x-auto scrollbar-hide pb-1 snap-x scroll-smooth-touch">
-                                    {suggestedQuestions.length > 0 ? (
-                                        // AI가 맥락에 맞게 제안한 후속 질문
-                                        suggestedQuestions.map((question, idx) => (
-                                            <button
-                                                key={question}
-                                                onClick={() => { setSuggestedQuestions([]); handleSend(question); }}
-                                                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all hover:scale-[1.03] active:scale-95 min-h-[38px] shadow-sm hover:shadow-md whitespace-nowrap flex-shrink-0 snap-start chip-enter ${
-                                                    isMemorialMode
-                                                        ? "bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-200"
-                                                        : "bg-[#E0F7FF] hover:bg-[#BAE6FD] text-[#0891B2] border border-[#BAE6FD]"
-                                                }`}
-                                                style={{ animationDelay: `${idx * 80}ms` }}
-                                            >
-                                                <Sparkles className="w-3.5 h-3.5 flex-shrink-0" />
-                                                <span>{question}</span>
-                                            </button>
-                                        ))
-                                    ) : (
-                                        // 기본 추천 대화 (AI 제안이 아직 없을 때)
-                                        (isMemorialMode
-                                            ? [
-                                                { text: "잘 지냈어?", Icon: Sparkles },
-                                                { text: "보고싶어", Icon: Moon },
-                                                { text: "오늘 네 생각 났어", Icon: Star },
-                                                { text: "행복했던 기억", Icon: CloudSun },
-                                            ]
-                                            : [
-                                                { text: "예방접종 언제?", Icon: Syringe },
-                                                { text: "건강 체크해줘", Icon: Stethoscope },
-                                                { text: "산책 시간", Icon: Footprints },
-                                                { text: "간식 추천", Icon: Cookie },
-                                            ]
-                                        ).map((suggestion, idx) => (
-                                            <button
-                                                key={suggestion.text}
-                                                onClick={() => { handleSend(suggestion.text); }}
-                                                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all hover:scale-[1.03] active:scale-95 min-h-[38px] shadow-sm hover:shadow-md whitespace-nowrap flex-shrink-0 snap-start chip-enter ${
-                                                    isMemorialMode
-                                                        ? "bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-200"
-                                                        : "bg-[#E0F7FF] hover:bg-[#BAE6FD] text-[#0891B2] border border-[#BAE6FD]"
-                                                }`}
-                                                style={{ animationDelay: `${idx * 80}ms` }}
-                                            >
-                                                <suggestion.Icon className="w-3.5 h-3.5 flex-shrink-0" />
-                                                <span>{suggestion.text}</span>
-                                            </button>
-                                        ))
-                                    )}
-                                </div>
-                                <div className={`flex gap-2 sm:gap-3 items-end rounded-xl border transition-all ${
-                                    isMemorialMode ? "textarea-glow-amber" : "textarea-glow-sky"
-                                } border-gray-200 bg-white p-1.5`}>
-                                    <Textarea
-                                        ref={textareaRef}
-                                        value={inputValue}
-                                        onChange={(e) => {
-                                            setInputValue(e.target.value.slice(0, MAX_MESSAGE_LENGTH));
-                                            handleTextareaInput();
-                                        }}
-                                        onKeyDown={handleKeyDown}
-                                        placeholder={`${selectedPet?.name}에게 말해보세요...`}
-                                        className="flex-1 rounded-lg border-0 bg-transparent shadow-none text-base resize-none min-h-[40px] max-h-[84px] py-2 px-2 focus-visible:ring-0 focus-visible:ring-offset-0"
-                                        rows={1}
-                                        style={{ height: "40px" }}
-                                    />
-                                    <Button
-                                        onClick={() => handleSend()}
-                                        disabled={!inputValue.trim()}
-                                        className={`rounded-lg px-3 min-w-[44px] min-h-[44px] flex-shrink-0 transition-all ${
-                                            inputValue.trim()
-                                                ? isMemorialMode
-                                                    ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg"
-                                                    : "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-[#05B2DC] shadow-lg"
-                                                : "bg-gray-200 text-gray-400"
-                                        } active:scale-95 transition-transform`}
-                                    >
-                                        <Send className="w-5 h-5" />
-                                    </Button>
-                                </div>
-                                {/* 글자 수 카운터 - 타이핑 중일 때만 표시 */}
-                                {inputValue.length > 0 && (
-                                    <div className="flex justify-end mt-1 mr-14">
-                                        <span className={`text-xs transition-colors ${
-                                            inputValue.length >= MAX_MESSAGE_LENGTH
-                                                ? "text-red-500 font-medium"
-                                                : inputValue.length >= MAX_MESSAGE_LENGTH - 30
-                                                ? "text-amber-500"
-                                                : "text-gray-400"
-                                        }`}>
-                                            {inputValue.length}/{MAX_MESSAGE_LENGTH}
-                                        </span>
-                                    </div>
-                                )}
-                                <div className="flex items-center justify-center gap-2 mt-1 flex-wrap">
-                                    {/* 남은 횟수 / 프리미엄 표시 */}
-                                    {isPremium ? (
-                                        <span className="text-xs px-2 py-0.5 rounded-full flex items-center gap-1 bg-violet-100 text-violet-600">
-                                            <Sparkles className="w-3 h-3" />
-                                            프리미엄 회원 — 마음껏 이야기하세요
-                                        </span>
-                                    ) : (
-                                        <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 ${
-                                            remainingChats <= 3
-                                                ? "bg-red-100 text-red-600"
-                                                : remainingChats <= 7
-                                                ? "bg-amber-100 text-amber-600"
-                                                : "bg-sky-100 text-sky-600"
-                                        }`}>
-                                            오늘 {remainingChats}회 남음
-                                        </span>
-                                    )}
-                                    {lastEmotion !== "neutral" && (
-                                        <span className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full flex items-center gap-1">
-                                            <span>{emotionIcons[lastEmotion] || "😐"}</span>
-                                            <span className="text-gray-500">감정 인식됨</span>
-                                        </span>
-                                    )}
-                                </div>
-                            </>
-                        )}
-                    </div>
-                </div>
+                <ChatMessageList
+                    messages={messages}
+                    isTyping={isTyping}
+                    isMemorialMode={isMemorialMode}
+                    selectedPet={selectedPet}
+                    onRetry={handleRetry}
+                />
+                <ChatInputArea
+                    inputValue={inputValue}
+                    setInputValue={setInputValue}
+                    isMemorialMode={isMemorialMode}
+                    isLimitReached={isLimitReached}
+                    isPremium={isPremium}
+                    remainingChats={remainingChats}
+                    lastEmotion={lastEmotion}
+                    suggestedQuestions={suggestedQuestions}
+                    setSuggestedQuestions={setSuggestedQuestions}
+                    selectedPet={selectedPet}
+                    onSend={handleSend}
+                />
                 </div>
             </div>
 
