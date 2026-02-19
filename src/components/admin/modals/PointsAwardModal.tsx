@@ -162,7 +162,7 @@ export function PointsAwardModal({ user, onClose, onAward }: PointsAwardModalPro
                             {/* 현재 */}
                             <div className="flex flex-col items-center gap-1">
                                 <Image
-                                    src={currentLevel.icon}
+                                    src={currentLevel.icons.dog}
                                     alt={`Lv.${currentLevel.level}`}
                                     width={36}
                                     height={36}
@@ -179,7 +179,7 @@ export function PointsAwardModal({ user, onClose, onAward }: PointsAwardModalPro
                             {/* 지급 후 */}
                             <div className="flex flex-col items-center gap-1">
                                 <Image
-                                    src={afterLevel.icon}
+                                    src={afterLevel.icons.dog}
                                     alt={`Lv.${afterLevel.level}`}
                                     width={36}
                                     height={36}

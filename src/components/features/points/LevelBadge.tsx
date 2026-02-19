@@ -1,11 +1,9 @@
 /**
  * LevelBadge.tsx
  * 포인트 등급 아이콘 뱃지
- * 닉네임 옆에 표시 — 포인트가 쌓일수록 견종이 진화
+ * 닉네임 옆에 표시 — 포인트가 쌓일수록 등급이 올라감
  *
- * 견종 진화 순서:
- * Lv.1 말티즈 / Lv.2 포메라니안 / Lv.3 웰시코기 / Lv.4 시바견
- * Lv.5 골든리트리버 / Lv.6 사모예드 / Lv.7 전설의 황금 시바
+ * Lv.1 ~ Lv.7 (반려동물 타입별 아이콘: dog / cat / other)
  * Lv.5+ 반짝이 뱃지 / Lv.7 무지개 글로우
  */
 
@@ -14,10 +12,11 @@
 import React from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { getPointLevel, getNextLevelInfo, type PointLevel } from "@/config/constants";
+import { getPointLevel, getNextLevelInfo, type PointLevel, type PetIconType } from "@/config/constants";
 
 interface LevelBadgeProps {
     points: number;
+    petType?: PetIconType;
     size?: "sm" | "md" | "lg" | "xl" | "2xl";
     showName?: boolean;
     showTooltip?: boolean;
@@ -34,6 +33,7 @@ const SIZE_MAP = {
 
 export default function LevelBadge({
     points,
+    petType = "dog",
     size = "sm",
     showName = false,
     showTooltip = true,
@@ -41,6 +41,7 @@ export default function LevelBadge({
 }: LevelBadgeProps) {
     const level = getPointLevel(points);
     const { nextLevel, remaining } = getNextLevelInfo(points);
+    const iconSrc = level.icons[petType];
 
     const { wrapper, px } = SIZE_MAP[size];
 
@@ -66,7 +67,7 @@ export default function LevelBadge({
                     level.hasGlow && "shadow-[0_0_8px_rgba(244,63,94,0.35),0_0_16px_rgba(251,191,36,0.2)]",
                 )}>
                     <Image
-                        src={level.icon}
+                        src={iconSrc}
                         alt={`Lv.${level.level}`}
                         width={px}
                         height={px}
@@ -105,7 +106,7 @@ export default function LevelBadge({
 }
 
 // 사이드바용 등급 상세 표시 (프로그레스바 포함)
-export function LevelProgress({ points, nickname }: { points: number; nickname?: string }) {
+export function LevelProgress({ points, nickname, petType = "dog" }: { points: number; nickname?: string; petType?: PetIconType }) {
     const level = getPointLevel(points);
     const { nextLevel, remaining, progress } = getNextLevelInfo(points);
 
@@ -113,7 +114,7 @@ export function LevelProgress({ points, nickname }: { points: number; nickname?:
         <div className="px-3 py-2 space-y-1.5">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <LevelBadge points={points} size="lg" showTooltip={false} />
+                    <LevelBadge points={points} petType={petType} size="lg" showTooltip={false} />
                     <span className={cn("text-sm font-bold", level.textColor)}>
                         {nickname || `Lv.${level.level}`}
                     </span>
