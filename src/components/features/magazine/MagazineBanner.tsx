@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { BookOpen } from "lucide-react";
+import { API } from "@/config/apiEndpoints";
 import { getBadgeStyle, getBadgeLabel, dbArticleToMagazineArticle, type MagazineArticle } from "@/data/magazineArticles";
 
 interface MagazineBannerProps {
@@ -22,7 +23,7 @@ export default function MagazineBanner({ onNavigateToMagazine }: MagazineBannerP
     useEffect(() => {
         async function fetchArticles() {
             try {
-                const res = await fetch("/api/magazine?limit=10");
+                const res = await fetch(`${API.MAGAZINE}?limit=10`);
                 if (!res.ok) return;
                 const data = await res.json();
                 if (data.articles && data.articles.length > 0) {

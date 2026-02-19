@@ -40,6 +40,7 @@ import {
     Loader2,
 } from "lucide-react";
 import { authFetch } from "@/lib/auth-fetch";
+import { API } from "@/config/apiEndpoints";
 import { uploadMagazineImage } from "@/lib/storage";
 import { getBadgeLabel } from "@/data/magazineArticles";
 import RichTextEditor from "@/components/admin/RichTextEditor";
@@ -248,13 +249,13 @@ export default function AdminMagazineTab({
 
             if (editingArticle) {
                 // 수정
-                res = await authFetch(`/api/magazine/${editingArticle.id}`, {
+                res = await authFetch(API.MAGAZINE_DETAIL(editingArticle.id), {
                     method: "PATCH",
                     body: JSON.stringify(payload),
                 });
             } else {
                 // 생성
-                res = await authFetch("/api/magazine", {
+                res = await authFetch(API.MAGAZINE, {
                     method: "POST",
                     body: JSON.stringify(payload),
                 });
@@ -284,7 +285,7 @@ export default function AdminMagazineTab({
 
         setIsTogglingStatus(article.id);
         try {
-            const res = await authFetch(`/api/magazine/${article.id}`, {
+            const res = await authFetch(API.MAGAZINE_DETAIL(article.id), {
                 method: "PATCH",
                 body: JSON.stringify({ status: newStatus }),
             });
@@ -309,7 +310,7 @@ export default function AdminMagazineTab({
 
         setIsDeleting(article.id);
         try {
-            const res = await authFetch(`/api/magazine/${article.id}`, {
+            const res = await authFetch(API.MAGAZINE_DETAIL(article.id), {
                 method: "DELETE",
             });
 

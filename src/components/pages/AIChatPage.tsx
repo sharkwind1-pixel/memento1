@@ -65,6 +65,7 @@ import DomeGallery from "@/components/ui/DomeGallery";
 import MemoryPanel from "@/components/features/chat/MemoryPanel";
 import EmotionTracker from "@/components/features/chat/EmotionTracker";
 import { authFetch } from "@/lib/auth-fetch";
+import { API } from "@/config/apiEndpoints";
 import {
     DropdownMenu,
     DropdownMenuTrigger,
@@ -284,7 +285,7 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
 
         const loadReminders = async () => {
             try {
-                const response = await fetch(`/api/reminders?petId=${selectedPetId}`);
+                const response = await fetch(`${API.REMINDERS}?petId=${selectedPetId}`);
                 if (!response.ok) return;
                 const data = await response.json();
                 if (data.reminders && Array.isArray(data.reminders)) {
@@ -404,7 +405,7 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                 })) || [];
 
             // OpenAI API 호출 (에이전트 기능 포함 + 타임라인 데이터)
-            const response = await authFetch("/api/chat", {
+            const response = await authFetch(API.CHAT, {
                 method: "POST",
                 body: JSON.stringify({
                     message: currentInput,

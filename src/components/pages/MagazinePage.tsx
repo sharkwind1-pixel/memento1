@@ -42,6 +42,7 @@ import { TabType } from "@/types";
 import { getBadgeStyle, getBadgeLabel, dbArticleToMagazineArticle, type MagazineArticle } from "@/data/magazineArticles";
 import PawLoading from "@/components/ui/PawLoading";
 import { toast } from "sonner";
+import { API } from "@/config/apiEndpoints";
 import MagazineReader from "@/components/features/magazine/MagazineReader";
 
 interface MagazinePageProps {
@@ -80,7 +81,7 @@ export default function MagazinePage({ setSelectedTab }: MagazinePageProps) {
         async function fetchArticles() {
             setIsLoading(true);
             try {
-                const res = await fetch("/api/magazine?limit=50");
+                const res = await fetch(`${API.MAGAZINE}?limit=50`);
                 if (!res.ok) {
                     throw new Error("매거진 불러오기 실패");
                 }

@@ -36,6 +36,7 @@ import {
     ChevronUp,
 } from "lucide-react";
 import PawLoading from "@/components/ui/PawLoading";
+import { API } from "@/config/apiEndpoints";
 import { toast } from "sonner";
 
 interface Reminder {
@@ -103,7 +104,7 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
         setIsLoading(true);
         try {
             const params = new URLSearchParams({ petId });
-            const response = await fetch(`/api/reminders?${params}`, {
+            const response = await fetch(`${API.REMINDERS}?${params}`, {
                 credentials: "include", // 쿠키 포함 (인증)
             });
 
@@ -135,7 +136,7 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
         if (!user?.id || !petId || !newReminder.title) return;
 
         try {
-            const response = await fetch("/api/reminders", {
+            const response = await fetch(API.REMINDERS, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -176,7 +177,7 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
     // 리마인더 토글
     const handleToggle = async (id: string, currentEnabled: boolean) => {
         try {
-            const response = await fetch(`/api/reminders/${id}`, {
+            const response = await fetch(API.REMINDER_DETAIL(id), {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ toggleEnabled: !currentEnabled }),
@@ -199,7 +200,7 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
         if (!confirm("이 리마인더를 삭제할까요?")) return;
 
         try {
-            const response = await fetch(`/api/reminders/${id}`, {
+            const response = await fetch(API.REMINDER_DETAIL(id), {
                 method: "DELETE",
             });
 

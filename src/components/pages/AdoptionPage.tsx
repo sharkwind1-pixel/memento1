@@ -37,6 +37,7 @@ import PawLoading from "@/components/ui/PawLoading";
 
 import { TabType } from "@/types";
 import type { AdoptionAnimal } from "@/app/api/adoption/route";
+import { API } from "@/config/apiEndpoints";
 
 interface AdoptionPageProps {
     setSelectedTab: (tab: TabType) => void;
@@ -325,7 +326,7 @@ export default function AdoptionPage({ setSelectedTab }: AdoptionPageProps) {
             if (regionFilter) params.set("region", regionFilter);
             if (searchQuery) params.set("search", searchQuery);
 
-            const res = await fetch(`/api/adoption?${params.toString()}`);
+            const res = await fetch(`${API.ADOPTION}?${params.toString()}`);
             if (!res.ok) throw new Error("데이터를 불러오지 못했습니다");
 
             const data = await res.json();

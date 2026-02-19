@@ -14,6 +14,7 @@ import { InlineLoading } from "@/components/ui/PawLoading";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
 import { uploadCommunityImage } from "@/lib/storage";
+import { API } from "@/config/apiEndpoints";
 import { toast } from "sonner";
 import Image from "next/image";
 import type { CommunitySubcategory, PostTag } from "@/types";
@@ -158,7 +159,7 @@ export default function WritePostModal({
         setError("");
 
         try {
-            const response = await fetch("/api/posts", {
+            const response = await fetch(API.POSTS, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

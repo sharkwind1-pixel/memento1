@@ -59,6 +59,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { uploadLocalPostImage } from "@/lib/storage";
 import { TabType } from "@/types";
+import { API } from "@/config/apiEndpoints";
 
 interface LocalPageProps {
     setSelectedTab?: (tab: TabType) => void;
@@ -238,7 +239,7 @@ export default function LocalPage({ setSelectedTab }: LocalPageProps) {
             if (selectedDistrict) params.set("district", selectedDistrict);
             if (searchQuery) params.set("search", searchQuery);
 
-            const res = await fetch(`/api/local-posts?${params.toString()}`);
+            const res = await fetch(`${API.LOCAL_POSTS}?${params.toString()}`);
             if (!res.ok) throw new Error("게시글 목록 조회 실패");
 
             const data = await res.json();
@@ -289,7 +290,7 @@ export default function LocalPage({ setSelectedTab }: LocalPageProps) {
         setShowDetailModal(true);
         setDetailLoading(true);
         try {
-            const res = await fetch(`/api/local-posts/${post.id}`);
+            const res = await fetch(API.LOCAL_POST_DETAIL(post.id));
             if (res.ok) {
                 const data = await res.json();
                 setSelectedPost(data.post);
@@ -350,7 +351,7 @@ export default function LocalPage({ setSelectedTab }: LocalPageProps) {
                 }
             }
 
-            const res = await fetch("/api/local-posts", {
+            const res = await fetch(API.LOCAL_POSTS, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -388,7 +389,7 @@ export default function LocalPage({ setSelectedTab }: LocalPageProps) {
     const handleDelete = async (postId: string) => {
         if (!confirm("정말 삭제하시겠습니까?")) return;
         try {
-            const res = await fetch(`/api/local-posts/${postId}`, { method: "DELETE" });
+            const res = await fetch(API.LOCAL_POST_DETAIL(postId), { method: "DELETE" });
             if (!res.ok) throw new Error("삭제 실패");
             toast.success("게시글이 삭제되었습니다.");
             setShowDetailModal(false);
@@ -402,7 +403,7 @@ export default function LocalPage({ setSelectedTab }: LocalPageProps) {
     const handleClose = async (postId: string) => {
         if (!confirm("마감 처리하시겠습니까?")) return;
         try {
-            const res = await fetch(`/api/local-posts/${postId}`, {
+            const res = await fetch(API.LOCAL_POST_DETAIL(postId), {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ status: "closed" }),

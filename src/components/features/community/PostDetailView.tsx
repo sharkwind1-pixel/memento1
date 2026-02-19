@@ -29,6 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import { InlineLoading } from "@/components/ui/PawLoading";
 import PawLoading from "@/components/ui/PawLoading";
 import { useAuth } from "@/contexts/AuthContext";
+import { API } from "@/config/apiEndpoints";
 import ReportModal from "@/components/modals/ReportModal";
 import Image from "next/image";
 import type { CommunitySubcategory } from "@/types";
@@ -130,7 +131,7 @@ export default function PostDetailView({
     const fetchPost = useCallback(async () => {
         setIsLoading(true);
         try {
-            const response = await fetch(`/api/posts/${postId}`);
+            const response = await fetch(API.POST_DETAIL(postId));
             if (!response.ok) throw new Error("게시글 로드 실패");
 
             const data = await response.json();
@@ -187,7 +188,7 @@ export default function PostDetailView({
 
         setIsLiking(true);
         try {
-            const response = await fetch(`/api/posts/${postId}/like`, {
+            const response = await fetch(API.POST_LIKE(postId), {
                 method: "POST",
             });
             if (!response.ok) throw new Error("좋아요 실패");
@@ -212,7 +213,7 @@ export default function PostDetailView({
 
         setIsSubmittingComment(true);
         try {
-            const response = await fetch(`/api/posts/${postId}/comments`, {
+            const response = await fetch(API.POST_COMMENTS(postId), {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ content: commentText.trim() }),
@@ -248,7 +249,7 @@ export default function PostDetailView({
         if (!confirm("정말 삭제하시겠습니까?")) return;
         setIsDeleting(true);
         try {
-            const response = await fetch(`/api/posts/${postId}`, {
+            const response = await fetch(API.POST_DETAIL(postId), {
                 method: "DELETE",
             });
             if (!response.ok) throw new Error("삭제 실패");
