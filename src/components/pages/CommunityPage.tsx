@@ -43,6 +43,7 @@ import ReportModal from "@/components/modals/ReportModal";
 import PawLoading from "@/components/ui/PawLoading";
 import { toast } from "sonner";
 import { usePets } from "@/contexts/PetContext";
+import { ImageIcon } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import WritePostModal from "@/components/features/community/WritePostModal";
 import PostDetailView from "@/components/features/community/PostDetailView";
@@ -60,6 +61,7 @@ interface Post {
     likes: number;
     views: number;
     comments: number;
+    imageUrls?: string[];
     createdAt: string;
     isPublic?: boolean;
 }
@@ -851,6 +853,12 @@ export default function CommunityPage({ subcategory, onSubcategoryChange }: Comm
                                     <p className="text-gray-600 dark:text-gray-300 line-clamp-2">
                                         {post.content}
                                     </p>
+                                    {post.imageUrls && post.imageUrls.length > 0 && (
+                                        <div className="flex items-center gap-1 mt-2 text-xs text-sky-500">
+                                            <ImageIcon className="w-3.5 h-3.5" />
+                                            <span>이미지 {post.imageUrls.length}장</span>
+                                        </div>
+                                    )}
                                 </CardContent>
                                 <CardFooter className="flex items-center justify-between pt-2">
                                     <span className="text-sm text-gray-500 dark:text-gray-400">
