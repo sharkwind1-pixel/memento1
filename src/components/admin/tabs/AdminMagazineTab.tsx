@@ -439,6 +439,12 @@ export default function AdminMagazineTab({
                     isUploading={isUploading}
                     fileInputRef={fileInputRef}
                     onImageUpload={handleImageUpload}
+                    onContentImageUpload={async (file) => {
+                        const result = await uploadMagazineImage(file, userId);
+                        if (result.success && result.url) return result.url;
+                        toast.error(result.error || "본문 이미지 업로드 실패");
+                        return null;
+                    }}
                     onSubmit={handleSubmit}
                     onClose={closeModal}
                 />
@@ -584,6 +590,7 @@ interface ArticleFormModalProps {
     isUploading: boolean;
     fileInputRef: React.RefObject<HTMLInputElement>;
     onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onContentImageUpload: (file: File) => Promise<string | null>;
     onSubmit: () => void;
     onClose: () => void;
 }
@@ -596,6 +603,7 @@ function ArticleFormModal({
     isUploading,
     fileInputRef,
     onImageUpload,
+    onContentImageUpload,
     onSubmit,
     onClose,
 }: ArticleFormModalProps) {
@@ -686,6 +694,7 @@ function ArticleFormModal({
                         <RichTextEditor
                             content={form.content}
                             onChange={(html) => updateField("content", html)}
+                            onImageUpload={onContentImageUpload}
                         />
                     </div>
 

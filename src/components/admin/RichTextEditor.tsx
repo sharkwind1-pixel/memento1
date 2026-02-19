@@ -3,15 +3,16 @@
  * 관리자 매거진 기사 작성/수정용
  *
  * 지원 서식: 볼드, 이탤릭, 밑줄, 제목(H2/H3),
- *           텍스트 정렬(좌/중/우), 불릿/번호 리스트
+ *           텍스트 정렬(좌/중/우), 불릿/번호 리스트, 이미지 삽입
  */
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import TextAlign from "@tiptap/extension-text-align";
+import TiptapImage from "@tiptap/extension-image";
 import { Button } from "@/components/ui/button";
 import {
     Bold,
@@ -26,14 +27,21 @@ import {
     ListOrdered,
     Undo,
     Redo,
+    ImagePlus,
+    Loader2,
 } from "lucide-react";
 
 interface RichTextEditorProps {
     content: string;
     onChange: (html: string) => void;
+    /** 이미지 파일 업로드 콜백. 업로드 후 URL 반환 (실패 시 null) */
+    onImageUpload?: (file: File) => Promise<string | null>;
 }
 
-export default function RichTextEditor({ content, onChange }: RichTextEditorProps) {
+export default function RichTextEditor({ content, onChange, onImageUpload }: RichTextEditorProps) {
+    const [isImageUploading, setIsImageUploading] = useState(false);
+    const imageInputRef = useRef<HTMLInputElement>(null);
+
     const editor = useEditor({
         extensions: [
             StarterKit.configure({
@@ -43,6 +51,10 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
             TextAlign.configure({
                 types: ["heading", "paragraph"],
             }),
+            TiptapImage.configure({
+                inline: false,
+                allowBase64: false,
+            }),
         ],
         content,
         immediatelyRender: false,
@@ -50,6 +62,25 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
             onChange(editor.getHTML());
         },
     });
+
+    /** 이미지 파일 선택 핸들러 */
+    const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !editor || !onImageUpload) return;
+
+        setIsImageUploading(true);
+        try {
+            const url = await onImageUpload(file);
+            if (url) {
+                editor.chain().focus().setImage({ src: url }).run();
+            }
+        } finally {
+            setIsImageUploading(false);
+            if (imageInputRef.current) {
+                imageInputRef.current.value = "";
+            }
+        }
+    };
 
     // content prop 변경 시 에디터 동기화 (모달 열기/닫기 대응)
     useEffect(() => {
@@ -153,6 +184,32 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
                 >
                     <ListOrdered className="w-4 h-4" />
                 </ToolbarButton>
+
+                {/* 이미지 삽입 */}
+                {onImageUpload && (
+                    <>
+                        <Divider />
+                        <ToolbarButton
+                            onClick={() => imageInputRef.current?.click()}
+                            isActive={false}
+                            disabled={isImageUploading}
+                            title="이미지 삽입"
+                        >
+                            {isImageUploading ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <ImagePlus className="w-4 h-4" />
+                            )}
+                        </ToolbarButton>
+                        <input
+                            ref={imageInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleImageSelect}
+                        />
+                    </>
+                )}
 
                 <Divider />
 
