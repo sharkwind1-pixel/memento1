@@ -89,8 +89,7 @@ export default function ReportModal({
                 toast.success("신고가 접수되었습니다. 검토 후 조치하겠습니다.");
                 onClose();
             }
-        } catch (err) {
-            console.error("Report error:", err);
+        } catch {
             toast.error("신고 접수 중 오류가 발생했습니다");
         } finally {
             setLoading(false);

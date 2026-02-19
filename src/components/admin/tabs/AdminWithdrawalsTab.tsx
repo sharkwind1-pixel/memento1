@@ -94,8 +94,7 @@ export default function AdminWithdrawalsTab({
             if (error) throw error;
             toast.success("재가입이 허용되었습니다");
             onRefresh();
-        } catch (error) {
-            console.error("[AdminWithdrawalsTab] 재가입 허용 실패:", error);
+        } catch {
             toast.error("재가입 허용 처리 중 오류가 발생했습니다");
         }
     };
@@ -115,8 +114,7 @@ export default function AdminWithdrawalsTab({
             if (error) throw error;
             toast.success("탈퇴 기록이 삭제되었습니다");
             onRefresh();
-        } catch (error) {
-            console.error("[AdminWithdrawalsTab] 기록 삭제 실패:", error);
+        } catch {
             toast.error("탈퇴 기록 삭제 중 오류가 발생했습니다");
         }
     };

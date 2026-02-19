@@ -85,8 +85,7 @@ export default function SupportModal({
                 setSuccess(false);
                 onClose();
             }, 2000);
-        } catch (err) {
-            console.error("문의 등록 실패:", err);
+        } catch {
             setError("문의 등록에 실패했습니다. 다시 시도해주세요.");
         } finally {
             setIsSubmitting(false);

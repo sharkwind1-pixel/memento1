@@ -325,7 +325,6 @@ export default function AdminUsersTab({
                 .eq("id", targetId);
 
             if (updateError) {
-                console.error("[Admin Points] UPDATE 실패:", updateError);
                 throw new Error("포인트 지급 실패: " + updateError.message);
             }
 
