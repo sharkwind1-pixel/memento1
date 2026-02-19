@@ -36,7 +36,8 @@ import {
 
 import Image from "next/image";
 import { TabType } from "@/types";
-import { MOCK_ARTICLES, getBadgeStyle, dbArticleToMagazineArticle, type MagazineArticle } from "@/data/magazineArticles";
+import { getBadgeStyle, dbArticleToMagazineArticle, type MagazineArticle } from "@/data/magazineArticles";
+import PawLoading from "@/components/ui/PawLoading";
 
 interface MagazinePageProps {
     setSelectedTab?: (tab: TabType) => void;
@@ -56,20 +57,24 @@ const CATEGORIES = [
 export default function MagazinePage({ setSelectedTab }: MagazinePageProps) {
     const [selectedCategory, setSelectedCategory] = useState<string>("all");
     const [searchQuery, setSearchQuery] = useState<string>("");
-    const [articles, setArticles] = useState<MagazineArticle[]>(MOCK_ARTICLES);
+    const [articles, setArticles] = useState<MagazineArticle[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
     // DB에서 기사 불러오기 (발행된 기사만)
     useEffect(() => {
         async function fetchArticles() {
+            setIsLoading(true);
             try {
                 const res = await fetch("/api/magazine?limit=50");
                 if (!res.ok) return;
                 const data = await res.json();
-                if (data.articles && data.articles.length > 0) {
+                if (data.articles) {
                     setArticles(data.articles.map(dbArticleToMagazineArticle));
                 }
             } catch {
-                // DB 조회 실패시 목업 유지
+                // DB 조회 실패시 빈 상태 유지
+            } finally {
+                setIsLoading(false);
             }
         }
         fetchArticles();
@@ -173,8 +178,15 @@ export default function MagazinePage({ setSelectedTab }: MagazinePageProps) {
                     </div>
                 </div>
 
+                {/* 로딩 상태 */}
+                {isLoading && (
+                    <div className="flex items-center justify-center py-16">
+                        <PawLoading size="lg" />
+                    </div>
+                )}
+
                 {/* 인기 아티클 */}
-                {selectedCategory === "all" && !searchQuery && (
+                {!isLoading && selectedCategory === "all" && !searchQuery && popularArticles.length > 0 && (
                     <div className="space-y-4">
                         <div className="flex items-center gap-2">
                             <TrendingUp className="w-5 h-5 text-emerald-500" />
@@ -228,118 +240,124 @@ export default function MagazinePage({ setSelectedTab }: MagazinePageProps) {
                 )}
 
                 {/* 아티클 목록 */}
-                <div className="space-y-4">
-                    {(selectedCategory !== "all" || searchQuery) && (
-                        <div className="text-sm text-gray-500">
-                            {filteredArticles.length}개의 콘텐츠
-                        </div>
-                    )}
-
-                    {filteredArticles.map((article) => (
-                        <Card
-                            key={article.id}
-                            className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 hover:shadow-lg transition-all duration-300 rounded-2xl cursor-pointer overflow-hidden"
-                        >
-                            <div className="flex flex-col sm:flex-row">
-                                <div className="sm:w-48 h-40 sm:h-auto flex-shrink-0 relative">
-                                    <Image
-                                        src={article.image}
-                                        alt={article.title}
-                                        fill
-                                        className="object-cover"
-                                    />
-                                </div>
-                                <div className="flex-1 p-5">
-                                    <div className="flex items-start justify-between mb-2">
-                                        <Badge
-                                            className={`${getBadgeStyle(article.badge)} rounded-lg`}
-                                        >
-                                            {article.badge}
-                                        </Badge>
-                                        <div className="flex gap-1">
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-8 w-8 p-0 rounded-lg"
-                                            >
-                                                <Bookmark className="w-4 h-4" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-8 w-8 p-0 rounded-lg"
-                                            >
-                                                <Share2 className="w-4 h-4" />
-                                            </Button>
-                                        </div>
-                                    </div>
-
-                                    <h3 className="font-bold text-lg text-gray-800 dark:text-gray-100 mb-2 line-clamp-1">
-                                        {article.title}
-                                    </h3>
-                                    <p className="text-gray-600 dark:text-gray-300 text-sm mb-3 line-clamp-2">
-                                        {article.summary}
-                                    </p>
-
-                                    <div className="flex flex-wrap gap-2 mb-3">
-                                        {article.tags.map((tag) => (
-                                            <span
-                                                key={tag}
-                                                className="text-xs text-emerald-600 dark:text-emerald-400"
-                                            >
-                                                #{tag}
-                                            </span>
-                                        ))}
-                                    </div>
-
-                                    <div className="flex items-center justify-between text-xs text-gray-500">
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-medium">
-                                                {article.author}
-                                            </span>
-                                            <span>·</span>
-                                            <span>{article.date}</span>
-                                            <span>·</span>
-                                            <span className="flex items-center gap-1">
-                                                <Clock className="w-3 h-3" />
-                                                {article.readTime} 읽기
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <span className="flex items-center gap-1">
-                                                <Eye className="w-3 h-3" />
-                                                {article.views.toLocaleString()}
-                                            </span>
-                                            <span className="flex items-center gap-1">
-                                                <Heart className="w-3 h-3" />
-                                                {article.likes}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
+                {!isLoading && (
+                    <div className="space-y-4">
+                        {(selectedCategory !== "all" || searchQuery) && (
+                            <div className="text-sm text-gray-500">
+                                {filteredArticles.length}개의 콘텐츠
                             </div>
-                        </Card>
-                    ))}
-                </div>
+                        )}
 
-                {filteredArticles.length === 0 && (
-                    <div className="text-center py-16">
-                        <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <BookOpen className="w-10 h-10 text-gray-400" />
-                        </div>
-                        <p className="text-gray-500 dark:text-gray-400">
-                            해당 조건의 콘텐츠가 없습니다
-                        </p>
-                        <Button
-                            variant="outline"
-                            className="mt-4 rounded-xl"
-                            onClick={() => {
-                                setSelectedCategory("all");
-                                setSearchQuery("");
-                            }}
-                        >
-                            전체 보기
-                        </Button>
+                        {filteredArticles.map((article) => (
+                            <Card
+                                key={article.id}
+                                className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 hover:shadow-lg transition-all duration-300 rounded-2xl cursor-pointer overflow-hidden"
+                            >
+                                <div className="flex flex-col sm:flex-row">
+                                    <div className="sm:w-48 h-40 sm:h-auto flex-shrink-0 relative">
+                                        <Image
+                                            src={article.image}
+                                            alt={article.title}
+                                            fill
+                                            className="object-cover"
+                                        />
+                                    </div>
+                                    <div className="flex-1 p-5">
+                                        <div className="flex items-start justify-between mb-2">
+                                            <Badge
+                                                className={`${getBadgeStyle(article.badge)} rounded-lg`}
+                                            >
+                                                {article.badge}
+                                            </Badge>
+                                            <div className="flex gap-1">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-8 w-8 p-0 rounded-lg"
+                                                >
+                                                    <Bookmark className="w-4 h-4" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-8 w-8 p-0 rounded-lg"
+                                                >
+                                                    <Share2 className="w-4 h-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+
+                                        <h3 className="font-bold text-lg text-gray-800 dark:text-gray-100 mb-2 line-clamp-1">
+                                            {article.title}
+                                        </h3>
+                                        <p className="text-gray-600 dark:text-gray-300 text-sm mb-3 line-clamp-2">
+                                            {article.summary}
+                                        </p>
+
+                                        <div className="flex flex-wrap gap-2 mb-3">
+                                            {article.tags.map((tag) => (
+                                                <span
+                                                    key={tag}
+                                                    className="text-xs text-emerald-600 dark:text-emerald-400"
+                                                >
+                                                    #{tag}
+                                                </span>
+                                            ))}
+                                        </div>
+
+                                        <div className="flex items-center justify-between text-xs text-gray-500">
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-medium">
+                                                    {article.author}
+                                                </span>
+                                                <span>·</span>
+                                                <span>{article.date}</span>
+                                                <span>·</span>
+                                                <span className="flex items-center gap-1">
+                                                    <Clock className="w-3 h-3" />
+                                                    {article.readTime} 읽기
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <span className="flex items-center gap-1">
+                                                    <Eye className="w-3 h-3" />
+                                                    {article.views.toLocaleString()}
+                                                </span>
+                                                <span className="flex items-center gap-1">
+                                                    <Heart className="w-3 h-3" />
+                                                    {article.likes}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Card>
+                        ))}
+
+                        {filteredArticles.length === 0 && (
+                            <div className="text-center py-16">
+                                <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <BookOpen className="w-10 h-10 text-gray-400" />
+                                </div>
+                                <p className="text-gray-500 dark:text-gray-400">
+                                    {searchQuery || selectedCategory !== "all"
+                                        ? "해당 조건의 콘텐츠가 없습니다"
+                                        : "아직 등록된 매거진 기사가 없습니다"}
+                                </p>
+                                {(searchQuery || selectedCategory !== "all") && (
+                                    <Button
+                                        variant="outline"
+                                        className="mt-4 rounded-xl"
+                                        onClick={() => {
+                                            setSelectedCategory("all");
+                                            setSearchQuery("");
+                                        }}
+                                    >
+                                        전체 보기
+                                    </Button>
+                                )}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
