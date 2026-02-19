@@ -133,18 +133,22 @@ if (selectedPet?.status === "memorial") {
 - **프리미엄 모달**: PremiumModal.tsx (커피 한 잔 값 설득)
 - **로그인 프롬프트**: LoginPromptModal.tsx (비로그인 유저 유도)
 - **랜딩 페이지 제거**: 비로그인자도 홈 화면 바로 접근 가능
+- **isPremium DB 연동**: AuthContext에서 profiles.is_premium + premium_expires_at 체크
+- **커뮤니티 DB 연동**: /api/posts CRUD, 5개 게시판 분류, 좋아요/댓글/신고
+- **입양정보 DB 연동**: /api/adoption 공공데이터 연동 + 폴백 목업
+- **분실동물 DB 연동**: /api/lost-pets 완전 CRUD + 이미지 업로드
+- **펫매거진 DB 연동**: /api/magazine 관리자 작성 + 본문 이미지 삽입
+- **지역정보 DB 연동**: /api/local-posts CRUD + 지역 필터
+- **접근성**: 모달 19개 aria 속성 (role, aria-modal, aria-labelledby)
+- **컴포넌트 분리**: RecordPage에서 PetProfileCard, PetPhotoAlbum 추출
+- **개인화**: 온보딩 데이터 기반 홈페이지 HERO 개인화 (planning/current/memorial)
+- **레벨 아이콘**: petType별 (dog/cat/other) 7단계 아이콘 시스템
+- **API 엔드포인트 상수화**: src/config/apiEndpoints.ts
 
 ### 개선 필요 🔧
-1. **타입 통합**: PetContext 타입을 types/index.ts로 통합
-2. **console.log 제거**: 프로덕션 전 정리
-3. **isPremium 하드코딩 제거**: Supabase 프로필에서 실제 값 가져오기
-
-### 목업 → DB 연동 필요 🟡
-- 커뮤니티 게시판
-- 입양 정보
-- 분실동물 신고
-- 펫매거진
-- 결제 연동 (포트원)
+1. **결제 연동**: 포트원(PortOne) 연동 - 프리미엄 구독 실결제
+2. **대형 컴포넌트 분리**: AIChatPage(1408줄), LostPage(1356줄) 서브컴포넌트 추출
+3. **API URL 마이그레이션**: 기존 하드코딩 URL → apiEndpoints.ts 상수 사용으로 점진 전환
 
 ---
 
@@ -200,13 +204,11 @@ grep -n "setIsPetModalOpen\|handleAddNewPet" src/components/pages/RecordPage.tsx
 | 사진 저장 | 100장 | 무제한 |
 
 ```typescript
-// chatUtils.ts
-export const DAILY_FREE_LIMIT = 10;
+// config/constants.ts - 중앙 관리
+export const FREE_LIMITS = { PETS: 1, PHOTOS: 100, DAILY_CHAT: 10 };
 
-// RecordPage.tsx
-const FREE_PET_LIMIT = 1;
-const FREE_PHOTO_LIMIT = 100;
-const isPremium = false; // TODO: Supabase에서 가져오기
+// AuthContext.tsx - DB 기반 프리미엄 체크 (완료)
+const isPremium = data?.is_premium && (!expiresAt || new Date(expiresAt) > new Date());
 ```
 
 ---
