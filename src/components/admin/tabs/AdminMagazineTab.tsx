@@ -386,7 +386,7 @@ export default function AdminMagazineTab({
             </div>
 
             {/* 통계 */}
-            <div className="flex gap-4 text-sm text-gray-500">
+            <div className="flex gap-4 text-sm text-gray-500 dark:text-gray-400">
                 <span>전체: {articles.length}개</span>
                 <span>발행: {articles.filter(a => a.status === "published").length}개</span>
                 <span>초안: {articles.filter(a => a.status === "draft").length}개</span>
@@ -396,8 +396,8 @@ export default function AdminMagazineTab({
             <Card>
                 <CardContent className="pt-6">
                     {filteredArticles.length === 0 ? (
-                        <div className="text-center py-12 text-gray-500">
-                            <BookOpen className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                            <BookOpen className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
                             <p>매거진 기사가 없습니다</p>
                             <Button
                                 variant="outline"
@@ -474,11 +474,11 @@ function ArticleCard({
     const categoryLabel = CATEGORIES.find(c => c.value === article.category)?.label || article.category;
 
     return (
-        <div className="p-4 rounded-xl border border-gray-200 hover:border-gray-300 transition-colors bg-white">
+        <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors bg-white dark:bg-gray-900">
             <div className="flex gap-4">
                 {/* 썸네일 */}
                 {article.image_url && (
-                    <div className="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-gray-100">
+                    <div className="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
                         <img
                             src={article.image_url}
                             alt={article.title}
@@ -495,29 +495,29 @@ function ArticleCard({
                             {categoryLabel}
                         </Badge>
                         {article.status === "published" ? (
-                            <Badge className="bg-green-100 text-green-700 text-xs">
+                            <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 text-xs">
                                 발행
                             </Badge>
                         ) : (
-                            <Badge variant="secondary" className="bg-gray-100 text-gray-500 text-xs">
+                            <Badge variant="secondary" className="bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-xs">
                                 초안
                             </Badge>
                         )}
                         {article.badge && (
-                            <Badge className="bg-sky-100 text-sky-700 text-xs">
+                            <Badge className="bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300 text-xs">
                                 {getBadgeLabel(article.badge)}
                             </Badge>
                         )}
                     </div>
 
                     {/* 제목 */}
-                    <h4 className="font-medium text-gray-800 truncate">{article.title}</h4>
+                    <h4 className="font-medium text-gray-800 dark:text-gray-100 truncate">{article.title}</h4>
 
                     {/* 요약 */}
-                    <p className="text-sm text-gray-500 line-clamp-1 mt-0.5">{article.summary}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1 mt-0.5">{article.summary}</p>
 
                     {/* 메타 정보 */}
-                    <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
+                    <div className="flex items-center gap-3 mt-2 text-xs text-gray-400 dark:text-gray-500">
                         <span>{article.author}</span>
                         <span className="flex items-center gap-1">
                             <Eye className="w-3 h-3" />
@@ -536,7 +536,7 @@ function ArticleCard({
             </div>
 
             {/* 액션 버튼 */}
-            <div className="flex flex-wrap gap-2 pt-3 mt-3 border-t border-gray-100">
+            <div className="flex flex-wrap gap-2 pt-3 mt-3 border-t border-gray-100 dark:border-gray-800">
                 <Button size="sm" variant="outline" onClick={onEdit}>
                     <Edit3 className="w-3 h-3 mr-1" />
                     수정
@@ -611,10 +611,10 @@ function ArticleFormModal({
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-            <div className="relative w-full max-w-2xl max-h-[90vh] bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col">
+            <div className="relative w-full max-w-2xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden flex flex-col">
                 {/* 헤더 */}
-                <div className="flex-shrink-0 flex items-center justify-between p-4 border-b bg-sky-50">
-                    <h3 className="font-bold text-gray-800">
+                <div className="flex-shrink-0 flex items-center justify-between p-4 border-b dark:border-gray-700 bg-sky-50 dark:bg-sky-900/20">
+                    <h3 className="font-bold text-gray-800 dark:text-gray-100">
                         {isEditing ? "기사 수정" : "새 기사 작성"}
                     </h3>
                     <Button variant="ghost" size="sm" onClick={onClose}>
@@ -627,13 +627,13 @@ function ArticleFormModal({
                     {/* 카테고리 + 배지 */}
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                                 카테고리 *
                             </label>
                             <select
                                 value={form.category}
                                 onChange={(e) => updateField("category", e.target.value)}
-                                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                                className="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-sky-500"
                             >
                                 {CATEGORIES.map(c => (
                                     <option key={c.value} value={c.value}>{c.label}</option>
@@ -641,13 +641,13 @@ function ArticleFormModal({
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                                 배지
                             </label>
                             <select
                                 value={form.badge}
                                 onChange={(e) => updateField("badge", e.target.value)}
-                                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                                className="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-sky-500"
                             >
                                 {BADGE_OPTIONS.map(b => (
                                     <option key={b.value} value={b.value}>{b.label}</option>
@@ -658,7 +658,7 @@ function ArticleFormModal({
 
                     {/* 제목 */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                             제목 *
                         </label>
                         <Input
@@ -671,7 +671,7 @@ function ArticleFormModal({
 
                     {/* 요약 */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                             요약 *
                         </label>
                         <Textarea
@@ -685,7 +685,7 @@ function ArticleFormModal({
 
                     {/* 본문 (리치 텍스트 에디터) */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                             본문 (선택)
                         </label>
                         <RichTextEditor
@@ -698,7 +698,7 @@ function ArticleFormModal({
                     {/* 작성자 정보 */}
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                                 작성자 *
                             </label>
                             <Input
@@ -709,7 +709,7 @@ function ArticleFormModal({
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                                 작성자 역할
                             </label>
                             <Input
@@ -724,7 +724,7 @@ function ArticleFormModal({
                     {/* 읽기 시간 + 태그 */}
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                                 읽기 시간
                             </label>
                             <Input
@@ -735,7 +735,7 @@ function ArticleFormModal({
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                                 태그 (쉼표 구분)
                             </label>
                             <Input
@@ -748,12 +748,12 @@ function ArticleFormModal({
 
                     {/* 이미지 업로드 */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                             썸네일 이미지
                         </label>
                         <div className="flex items-center gap-3">
                             {form.imageUrl ? (
-                                <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                                <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
                                     <img
                                         src={form.imageUrl}
                                         alt="썸네일"
@@ -772,7 +772,7 @@ function ArticleFormModal({
                                     </button>
                                 </div>
                             ) : (
-                                <div className="w-24 h-24 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center flex-shrink-0">
+                                <div className="w-24 h-24 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center flex-shrink-0">
                                     <ImageIcon className="w-8 h-8 text-gray-300" />
                                 </div>
                             )}
@@ -791,7 +791,7 @@ function ArticleFormModal({
                                     )}
                                     {isUploading ? "업로드 중..." : "이미지 업로드"}
                                 </Button>
-                                <p className="text-xs text-gray-400">
+                                <p className="text-xs text-gray-400 dark:text-gray-500">
                                     또는 URL을 직접 입력하세요
                                 </p>
                                 <Input
@@ -812,7 +812,7 @@ function ArticleFormModal({
                     </div>
 
                     {/* 발행 상태 */}
-                    <div className="p-3 bg-gray-50 rounded-lg">
+                    <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                         <label className="flex items-center gap-3 cursor-pointer">
                             <input
                                 type="checkbox"
@@ -820,13 +820,13 @@ function ArticleFormModal({
                                 onChange={(e) =>
                                     updateField("status", e.target.checked ? "published" : "draft")
                                 }
-                                className="w-4 h-4 text-sky-500 border-gray-300 rounded focus:ring-sky-500"
+                                className="w-4 h-4 text-sky-500 border-gray-300 dark:border-gray-600 rounded focus:ring-sky-500"
                             />
                             <div>
-                                <span className="text-sm font-medium text-gray-700">
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
                                     즉시 발행
                                 </span>
-                                <p className="text-xs text-gray-500">
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
                                     체크하면 저장 즉시 매거진에 공개됩니다
                                 </p>
                             </div>
@@ -835,7 +835,7 @@ function ArticleFormModal({
                 </div>
 
                 {/* 푸터 */}
-                <div className="flex-shrink-0 p-4 border-t flex justify-end gap-2 bg-white">
+                <div className="flex-shrink-0 p-4 border-t dark:border-gray-700 flex justify-end gap-2 bg-white dark:bg-gray-900">
                     <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
                         취소
                     </Button>

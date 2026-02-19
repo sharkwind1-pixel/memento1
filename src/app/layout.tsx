@@ -94,12 +94,10 @@ export default function RootLayout({
                 <Toaster
                     position="top-center"
                     toastOptions={{
+                        className: 'shadow-lg !bg-white dark:!bg-gray-800 !border-gray-200 dark:!border-gray-700 !text-gray-800 dark:!text-gray-100',
                         style: {
-                            background: 'white',
-                            border: '1px solid #e5e7eb',
                             borderRadius: '12px',
                         },
-                        className: 'shadow-lg',
                     }}
                     richColors
                     closeButton

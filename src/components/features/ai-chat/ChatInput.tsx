@@ -59,8 +59,8 @@ export const ChatInput = forwardRef<HTMLInputElement, ChatInputProps>(
             <div
                 className={`flex-shrink-0 p-4 border-t ${
                     isMemorialMode
-                        ? "bg-amber-50/80 border-amber-200/50"
-                        : "bg-white/80 border-gray-200/50"
+                        ? "bg-amber-50/80 dark:bg-amber-900/40 border-amber-200/50 dark:border-amber-700/50"
+                        : "bg-white/80 dark:bg-gray-900/80 border-gray-200/50 dark:border-gray-700/50"
                 } backdrop-blur-lg`}
             >
                 <div className="max-w-2xl mx-auto">
@@ -72,7 +72,7 @@ export const ChatInput = forwardRef<HTMLInputElement, ChatInputProps>(
                             onChange={(e) => onChange(e.target.value)}
                             onKeyDown={handleKeyDown}
                             placeholder={`${petName || "반려동물"}에게 말해보세요...`}
-                            className="flex-1 rounded-xl border-gray-200 bg-white"
+                            className="flex-1 rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
                         />
                         <Button
                             onClick={onSend}

@@ -135,8 +135,8 @@ function EmotionLineChart({
         return (
             <div className={`flex items-center justify-center h-[180px] rounded-xl border ${
                 isMemorialMode
-                    ? "bg-amber-50/50 border-amber-200/50 text-amber-600"
-                    : "bg-sky-50/50 border-sky-200/50 text-sky-600"
+                    ? "bg-amber-50/50 dark:bg-amber-900/20 border-amber-200/50 dark:border-amber-700/50 text-amber-600 dark:text-amber-400"
+                    : "bg-sky-50/50 dark:bg-sky-900/20 border-sky-200/50 dark:border-sky-700/50 text-sky-600 dark:text-sky-400"
             }`}>
                 <p className="text-sm">아직 감정 데이터가 없어요</p>
             </div>
@@ -280,14 +280,14 @@ function GriefProgress({ currentStage }: { currentStage: string }) {
 
     return (
         <div className="mt-4">
-            <h3 className="text-sm font-semibold text-amber-800 mb-3">
+            <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-300 mb-3">
                 치유의 여정
             </h3>
 
             {/* 진행 바 */}
             <div className="relative flex items-center justify-between mb-2">
                 {/* 연결 라인 (배경) */}
-                <div className="absolute top-1/2 left-[10%] right-[10%] h-0.5 bg-amber-200 -translate-y-1/2" />
+                <div className="absolute top-1/2 left-[10%] right-[10%] h-0.5 bg-amber-200 dark:bg-amber-700 -translate-y-1/2" />
                 {/* 연결 라인 (진행) */}
                 <div
                     className="absolute top-1/2 left-[10%] h-0.5 bg-amber-500 -translate-y-1/2 transition-all duration-500"
@@ -302,7 +302,7 @@ function GriefProgress({ currentStage }: { currentStage: string }) {
                             className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
                                 i <= activeIndex
                                     ? "bg-amber-500 text-white shadow-md"
-                                    : "bg-amber-100 text-amber-400 border border-amber-200"
+                                    : "bg-amber-100 dark:bg-amber-900/30 text-amber-400 border border-amber-200 dark:border-amber-700"
                             } ${i === activeIndex ? "ring-2 ring-amber-300 ring-offset-1 scale-110" : ""}`}
                         >
                             {i + 1}
@@ -310,8 +310,8 @@ function GriefProgress({ currentStage }: { currentStage: string }) {
                         <span
                             className={`text-[10px] mt-1.5 whitespace-nowrap ${
                                 i === activeIndex
-                                    ? "text-amber-700 font-semibold"
-                                    : "text-amber-400"
+                                    ? "text-amber-700 dark:text-amber-300 font-semibold"
+                                    : "text-amber-400 dark:text-amber-500"
                             }`}
                         >
                             {stage.label}
@@ -321,8 +321,8 @@ function GriefProgress({ currentStage }: { currentStage: string }) {
             </div>
 
             {/* 현재 단계 설명 */}
-            <div className="mt-3 bg-amber-100/60 rounded-lg p-3 border border-amber-200/50">
-                <p className="text-xs text-amber-700 leading-relaxed">
+            <div className="mt-3 bg-amber-100/60 dark:bg-amber-900/30 rounded-lg p-3 border border-amber-200/50 dark:border-amber-700/50">
+                <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
                     {currentStageInfo.description}
                 </p>
             </div>
@@ -536,33 +536,33 @@ export default function EmotionTracker({
             <div
                 className={`fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl shadow-2xl transition-transform duration-300 ${
                     isMemorialMode
-                        ? "bg-gradient-to-b from-amber-50 to-white"
-                        : "bg-gradient-to-b from-sky-50 to-white"
+                        ? "bg-gradient-to-b from-amber-50 to-white dark:from-amber-900/20 dark:to-gray-900"
+                        : "bg-gradient-to-b from-sky-50 to-white dark:from-sky-900/20 dark:to-gray-900"
                 }`}
                 style={{ maxHeight: "70vh" }}
             >
                 {/* 핸들 바 */}
                 <div className="flex justify-center pt-3 pb-1">
-                    <div className="w-10 h-1 rounded-full bg-gray-300" />
+                    <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
                 </div>
 
                 {/* 헤더 */}
-                <div className="flex items-center justify-between px-5 pb-3 border-b border-gray-100">
+                <div className="flex items-center justify-between px-5 pb-3 border-b border-gray-100 dark:border-gray-700">
                     <div className="flex items-center gap-2">
                         <TrendingUp
                             className={`w-5 h-5 ${
                                 isMemorialMode ? "text-amber-500" : "text-sky-500"
                             }`}
                         />
-                        <h2 className="text-base font-bold text-gray-800">
+                        <h2 className="text-base font-bold text-gray-800 dark:text-white">
                             {petName}의 감정 분석
                         </h2>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+                        className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                     >
-                        <X className="w-5 h-5 text-gray-500" />
+                        <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                     </button>
                 </div>
 
@@ -581,7 +581,7 @@ export default function EmotionTracker({
                             ============================================ */}
                             <section>
                                 <h3 className={`text-sm font-semibold mb-2 ${
-                                    isMemorialMode ? "text-amber-800" : "text-gray-700"
+                                    isMemorialMode ? "text-amber-800 dark:text-amber-300" : "text-gray-700 dark:text-gray-200"
                                 }`}>
                                     최근 7일 감정 변화
                                 </h3>
@@ -605,7 +605,7 @@ export default function EmotionTracker({
                             ============================================ */}
                             <section>
                                 <h3 className={`text-sm font-semibold mb-2 ${
-                                    isMemorialMode ? "text-amber-800" : "text-gray-700"
+                                    isMemorialMode ? "text-amber-800 dark:text-amber-300" : "text-gray-700 dark:text-gray-200"
                                 }`}>
                                     대화 통계
                                 </h3>
@@ -613,25 +613,25 @@ export default function EmotionTracker({
                                     {/* 총 대화 수 */}
                                     <div className={`rounded-xl p-3 text-center border ${
                                         isMemorialMode
-                                            ? "bg-amber-50 border-amber-200/50"
-                                            : "bg-sky-50 border-sky-200/50"
+                                            ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200/50 dark:border-amber-700/50"
+                                            : "bg-sky-50 dark:bg-sky-900/20 border-sky-200/50 dark:border-sky-700/50"
                                     }`}>
                                         <MessageCircle
                                             className={`w-4 h-4 mx-auto mb-1 ${
                                                 isMemorialMode ? "text-amber-500" : "text-sky-500"
                                             }`}
                                         />
-                                        <p className="text-lg font-bold text-gray-800">
+                                        <p className="text-lg font-bold text-gray-800 dark:text-white">
                                             {totalMessages}
                                         </p>
-                                        <p className="text-[10px] text-gray-500">총 대화</p>
+                                        <p className="text-[10px] text-gray-500 dark:text-gray-400">총 대화</p>
                                     </div>
 
                                     {/* 가장 많은 감정 */}
                                     <div className={`rounded-xl p-3 text-center border ${
                                         isMemorialMode
-                                            ? "bg-amber-50 border-amber-200/50"
-                                            : "bg-sky-50 border-sky-200/50"
+                                            ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200/50 dark:border-amber-700/50"
+                                            : "bg-sky-50 dark:bg-sky-900/20 border-sky-200/50 dark:border-sky-700/50"
                                     }`}>
                                         <div
                                             className="w-4 h-4 rounded-full mx-auto mb-1"
@@ -639,29 +639,29 @@ export default function EmotionTracker({
                                                 backgroundColor: EMOTION_COLORS[mostCommonEmotion] || "#9CA3AF",
                                             }}
                                         />
-                                        <p className="text-lg font-bold text-gray-800">
+                                        <p className="text-lg font-bold text-gray-800 dark:text-white">
                                             {EMOTION_LABELS[mostCommonEmotion] || "보통"}
                                         </p>
-                                        <p className="text-[10px] text-gray-500">주요 감정</p>
+                                        <p className="text-[10px] text-gray-500 dark:text-gray-400">주요 감정</p>
                                     </div>
 
                                     {/* 마지막 대화 */}
                                     <div className={`rounded-xl p-3 text-center border ${
                                         isMemorialMode
-                                            ? "bg-amber-50 border-amber-200/50"
-                                            : "bg-sky-50 border-sky-200/50"
+                                            ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200/50 dark:border-amber-700/50"
+                                            : "bg-sky-50 dark:bg-sky-900/20 border-sky-200/50 dark:border-sky-700/50"
                                     }`}>
                                         <Clock
                                             className={`w-4 h-4 mx-auto mb-1 ${
                                                 isMemorialMode ? "text-amber-500" : "text-sky-500"
                                             }`}
                                         />
-                                        <p className="text-sm font-bold text-gray-800">
+                                        <p className="text-sm font-bold text-gray-800 dark:text-white">
                                             {lastMessageTime
                                                 ? formatRelativeTime(lastMessageTime)
                                                 : "-"}
                                         </p>
-                                        <p className="text-[10px] text-gray-500">마지막 대화</p>
+                                        <p className="text-[10px] text-gray-500 dark:text-gray-400">마지막 대화</p>
                                     </div>
                                 </div>
                             </section>
@@ -672,7 +672,7 @@ export default function EmotionTracker({
                             {emotionsInData.length > 0 && (
                                 <section>
                                     <h3 className={`text-sm font-semibold mb-2 ${
-                                        isMemorialMode ? "text-amber-800" : "text-gray-700"
+                                        isMemorialMode ? "text-amber-800 dark:text-amber-300" : "text-gray-700 dark:text-gray-200"
                                     }`}>
                                         감정 범례
                                     </h3>
@@ -680,7 +680,7 @@ export default function EmotionTracker({
                                         {emotionsInData.map((emotion) => (
                                             <div
                                                 key={emotion}
-                                                className="flex items-center gap-1.5 text-xs text-gray-600 bg-gray-50 rounded-full px-2.5 py-1 border border-gray-100"
+                                                className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 rounded-full px-2.5 py-1 border border-gray-100 dark:border-gray-700"
                                             >
                                                 <div
                                                     className="w-2.5 h-2.5 rounded-full flex-shrink-0"

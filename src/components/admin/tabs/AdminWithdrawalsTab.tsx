@@ -50,18 +50,18 @@ interface AdminWithdrawalsTabProps {
 const TYPE_CONFIG = {
     abuse_concern: {
         label: "악용 우려",
-        color: "bg-amber-50 border-amber-200",
-        badge: "bg-amber-100 text-amber-700",
+        color: "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/50",
+        badge: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
     },
     banned: {
         label: "영구 차단",
-        color: "bg-red-50 border-red-200",
-        badge: "bg-red-100 text-red-700",
+        color: "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/50",
+        badge: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
     },
     error_resolution: {
         label: "오류 해결",
-        color: "bg-green-50 border-green-200",
-        badge: "bg-green-100 text-green-700",
+        color: "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/50",
+        badge: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
     },
 } as const;
 
@@ -153,15 +153,15 @@ export default function AdminWithdrawalsTab({
 
             {/* 유형 범례 */}
             <div className="flex flex-wrap gap-2 text-sm">
-                <Badge className="bg-amber-100 text-amber-700">
+                <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
                     <Clock className="w-3 h-3 mr-1" />
                     악용 우려 (30일 대기)
                 </Badge>
-                <Badge className="bg-red-100 text-red-700">
+                <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
                     <Ban className="w-3 h-3 mr-1" />
                     영구 차단
                 </Badge>
-                <Badge className="bg-green-100 text-green-700">
+                <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
                     <CheckCircle className="w-3 h-3 mr-1" />
                     오류 해결 (즉시 가능)
                 </Badge>
@@ -171,10 +171,10 @@ export default function AdminWithdrawalsTab({
             <Card>
                 <CardContent className="pt-6">
                     {filteredWithdrawals.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500">
-                            <Ban className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                            <Ban className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
                             <p>탈퇴 처리된 유저가 없습니다</p>
-                            <p className="text-xs mt-2 text-gray-400">
+                            <p className="text-xs mt-2 text-gray-400 dark:text-gray-500">
                                 * 유저 관리 탭에서 탈퇴 처리할 수 있습니다
                             </p>
                         </div>
@@ -224,17 +224,17 @@ function WithdrawnUserCard({ user, onAllowRejoin, onDelete }: WithdrawnUserCardP
                         <Badge className={config.badge}>{config.label}</Badge>
                     </div>
                     {user.nickname && (
-                        <p className="text-sm text-gray-500">닉네임: {user.nickname}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">닉네임: {user.nickname}</p>
                     )}
                 </div>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-gray-500 dark:text-gray-400">
                     {new Date(user.withdrawn_at).toLocaleDateString("ko-KR")}
                 </span>
             </div>
 
             {/* 사유 */}
             {user.reason && (
-                <p className="text-sm text-gray-600 mb-2 p-2 bg-white rounded border">
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-2 p-2 bg-white dark:bg-gray-900 rounded border dark:border-gray-700">
                     사유: {user.reason}
                 </p>
             )}
@@ -249,18 +249,18 @@ function WithdrawnUserCard({ user, onAllowRejoin, onDelete }: WithdrawnUserCardP
 
             {/* IP 주소 */}
             {user.ip_address && (
-                <p className="text-xs text-gray-500 mb-2">
-                    IP: <code className="bg-gray-100 px-1 rounded">{user.ip_address}</code>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                    IP: <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">{user.ip_address}</code>
                 </p>
             )}
 
             {/* 액션 버튼 */}
-            <div className="flex gap-2 pt-2 border-t border-gray-200">
+            <div className="flex gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                 {user.withdrawal_type !== "error_resolution" && (
                     <Button
                         size="sm"
                         variant="outline"
-                        className="text-green-600 border-green-300 hover:bg-green-50"
+                        className="text-green-600 dark:text-green-400 border-green-300 dark:border-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
                         onClick={onAllowRejoin}
                     >
                         <CheckCircle className="w-3 h-3 mr-1" />
@@ -270,7 +270,7 @@ function WithdrawnUserCard({ user, onAllowRejoin, onDelete }: WithdrawnUserCardP
                 <Button
                     size="sm"
                     variant="outline"
-                    className="text-red-600 border-red-300 hover:bg-red-50"
+                    className="text-red-600 dark:text-red-400 border-red-300 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
                     onClick={onDelete}
                 >
                     <Trash2 className="w-3 h-3 mr-1" />

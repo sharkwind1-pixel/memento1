@@ -258,12 +258,12 @@ export default function OnboardingModal({
     // 렌더링
     return (
         <div className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4">
-            <div className="w-full max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl">
+            <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl overflow-hidden shadow-2xl">
                 {/* 헤더 */}
-                <div className="flex justify-between items-center p-4 border-b border-gray-100">
+                <div className="flex justify-between items-center p-4 border-b border-gray-100 dark:border-gray-800">
                     <div className="flex items-center gap-2">
                         <PawPrint className="w-5 h-5 text-sky-500" />
-                        <span className="font-medium text-gray-700">메멘토애니</span>
+                        <span className="font-medium text-gray-700 dark:text-gray-200">메멘토애니</span>
                     </div>
                     <button
                         onClick={handleSkip}
@@ -274,7 +274,7 @@ export default function OnboardingModal({
                 </div>
 
                 {/* 진행 바 */}
-                <div className="h-1 bg-gray-100">
+                <div className="h-1 bg-gray-100 dark:bg-gray-800">
                     <div
                         className="h-full bg-gradient-to-r from-sky-400 to-violet-500 transition-all duration-500"
                         style={{ width: `${getProgress()}%` }}
@@ -289,10 +289,10 @@ export default function OnboardingModal({
                             <div className="w-20 h-20 bg-gradient-to-br from-sky-400 to-violet-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
                                 <Sparkles className="w-10 h-10 text-white" />
                             </div>
-                            <h2 className="text-2xl font-bold text-gray-800 mb-3">
+                            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-3">
                                 환영해요!
                             </h2>
-                            <p className="text-gray-600 leading-relaxed">
+                            <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
                                 메멘토애니에 오신 걸 환영해요.<br/>
                                 몇 가지 질문에 답해주시면<br/>
                                 맞춤 서비스를 제공해드릴게요.
@@ -303,7 +303,7 @@ export default function OnboardingModal({
                     {/* Step 1: 회원 유형 선택 */}
                     {step === 1 && (
                         <div>
-                            <h2 className="text-xl font-bold text-gray-800 mb-2 text-center">
+                            <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2 text-center">
                                 어떤 상황이신가요?
                             </h2>
                             <p className="text-gray-500 text-sm text-center mb-6">
@@ -314,17 +314,17 @@ export default function OnboardingModal({
                                     onClick={() => setData({ ...data, userType: "planning" })}
                                     className={`w-full p-4 rounded-2xl border-2 transition-all flex items-center gap-4 ${
                                         data.userType === "planning"
-                                            ? "border-sky-500 bg-sky-50"
-                                            : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                                            ? "border-sky-500 bg-sky-50 dark:bg-sky-900/20"
+                                            : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
                                     }`}
                                 >
                                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                                        data.userType === "planning" ? "bg-sky-500" : "bg-gray-100"
+                                        data.userType === "planning" ? "bg-sky-500" : "bg-gray-100 dark:bg-gray-700"
                                     }`}>
                                         <Heart className={`w-6 h-6 ${data.userType === "planning" ? "text-white" : "text-gray-400"}`} />
                                     </div>
                                     <div className="text-left flex-1">
-                                        <p className={`font-semibold ${data.userType === "planning" ? "text-sky-700" : "text-gray-700"}`}>
+                                        <p className={`font-semibold ${data.userType === "planning" ? "text-sky-700 dark:text-sky-300" : "text-gray-800 dark:text-white"}`}>
                                             반려동물을 맞이할 예정이에요
                                         </p>
                                         <p className="text-sm text-gray-500">입양/분양을 준비 중이에요</p>
@@ -336,17 +336,17 @@ export default function OnboardingModal({
                                     onClick={() => setData({ ...data, userType: "current" })}
                                     className={`w-full p-4 rounded-2xl border-2 transition-all flex items-center gap-4 ${
                                         data.userType === "current"
-                                            ? "border-emerald-500 bg-emerald-50"
-                                            : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                                            ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20"
+                                            : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
                                     }`}
                                 >
                                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                                        data.userType === "current" ? "bg-emerald-500" : "bg-gray-100"
+                                        data.userType === "current" ? "bg-emerald-500" : "bg-gray-100 dark:bg-gray-700"
                                     }`}>
                                         <PawPrint className={`w-6 h-6 ${data.userType === "current" ? "text-white" : "text-gray-400"}`} />
                                     </div>
                                     <div className="text-left flex-1">
-                                        <p className={`font-semibold ${data.userType === "current" ? "text-emerald-700" : "text-gray-700"}`}>
+                                        <p className={`font-semibold ${data.userType === "current" ? "text-emerald-700 dark:text-emerald-300" : "text-gray-800 dark:text-white"}`}>
                                             반려동물과 함께 살고 있어요
                                         </p>
                                         <p className="text-sm text-gray-500">현재 반려동물이 있어요</p>
@@ -358,17 +358,17 @@ export default function OnboardingModal({
                                     onClick={() => setData({ ...data, userType: "memorial" })}
                                     className={`w-full p-4 rounded-2xl border-2 transition-all flex items-center gap-4 ${
                                         data.userType === "memorial"
-                                            ? "border-amber-500 bg-amber-50"
-                                            : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                                            ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20"
+                                            : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
                                     }`}
                                 >
                                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                                        data.userType === "memorial" ? "bg-amber-500" : "bg-gray-100"
+                                        data.userType === "memorial" ? "bg-amber-500" : "bg-gray-100 dark:bg-gray-700"
                                     }`}>
                                         <Rainbow className={`w-6 h-6 ${data.userType === "memorial" ? "text-white" : "text-gray-400"}`} />
                                     </div>
                                     <div className="text-left flex-1">
-                                        <p className={`font-semibold ${data.userType === "memorial" ? "text-amber-700" : "text-gray-700"}`}>
+                                        <p className={`font-semibold ${data.userType === "memorial" ? "text-amber-700 dark:text-amber-300" : "text-gray-800 dark:text-white"}`}>
                                             소중한 아이를 떠나보냈어요
                                         </p>
                                         <p className="text-sm text-gray-500">추억을 간직하고 싶어요</p>
@@ -382,7 +382,7 @@ export default function OnboardingModal({
                     {/* Step 2: 반려동물 종류 */}
                     {step === 2 && (
                         <div>
-                            <h2 className="text-xl font-bold text-gray-800 mb-2 text-center">
+                            <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2 text-center">
                                 {data.userType === "planning" && "어떤 아이를 생각하고 있나요?"}
                                 {data.userType === "current" && "어떤 아이와 함께하고 있나요?"}
                                 {data.userType === "memorial" && "어떤 아이였나요?"}
@@ -395,12 +395,12 @@ export default function OnboardingModal({
                                     onClick={() => setData({ ...data, petType: "dog" })}
                                     className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${
                                         data.petType === "dog"
-                                            ? "border-sky-500 bg-sky-50"
-                                            : "border-gray-200 hover:border-gray-300"
+                                            ? "border-sky-500 bg-sky-50 dark:bg-sky-900/20"
+                                            : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                                     }`}
                                 >
                                     <Dog className={`w-8 h-8 ${data.petType === "dog" ? "text-sky-500" : "text-gray-400"}`} />
-                                    <span className={`font-medium ${data.petType === "dog" ? "text-sky-700" : "text-gray-600"}`}>
+                                    <span className={`font-medium ${data.petType === "dog" ? "text-sky-700 dark:text-sky-300" : "text-gray-600 dark:text-gray-300"}`}>
                                         강아지
                                     </span>
                                 </button>
@@ -408,12 +408,12 @@ export default function OnboardingModal({
                                     onClick={() => setData({ ...data, petType: "cat" })}
                                     className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${
                                         data.petType === "cat"
-                                            ? "border-violet-500 bg-violet-50"
-                                            : "border-gray-200 hover:border-gray-300"
+                                            ? "border-violet-500 bg-violet-50 dark:bg-violet-900/20"
+                                            : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                                     }`}
                                 >
                                     <Cat className={`w-8 h-8 ${data.petType === "cat" ? "text-violet-500" : "text-gray-400"}`} />
-                                    <span className={`font-medium ${data.petType === "cat" ? "text-violet-700" : "text-gray-600"}`}>
+                                    <span className={`font-medium ${data.petType === "cat" ? "text-violet-700 dark:text-violet-300" : "text-gray-600 dark:text-gray-300"}`}>
                                         고양이
                                     </span>
                                 </button>
@@ -421,12 +421,12 @@ export default function OnboardingModal({
                                     onClick={() => setData({ ...data, petType: "other" })}
                                     className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${
                                         data.petType === "other"
-                                            ? "border-amber-500 bg-amber-50"
-                                            : "border-gray-200 hover:border-gray-300"
+                                            ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20"
+                                            : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                                     }`}
                                 >
                                     <Bird className={`w-8 h-8 ${data.petType === "other" ? "text-amber-500" : "text-gray-400"}`} />
-                                    <span className={`font-medium ${data.petType === "other" ? "text-amber-700" : "text-gray-600"}`}>
+                                    <span className={`font-medium ${data.petType === "other" ? "text-amber-700 dark:text-amber-300" : "text-gray-600 dark:text-gray-300"}`}>
                                         기타
                                     </span>
                                 </button>
@@ -437,7 +437,7 @@ export default function OnboardingModal({
                     {/* Step 3: 입양 시기 (키우려는 회원) */}
                     {step === 3 && data.userType === "planning" && (
                         <div>
-                            <h2 className="text-xl font-bold text-gray-800 mb-2 text-center">
+                            <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2 text-center">
                                 언제쯤 맞이할 예정인가요?
                             </h2>
                             <p className="text-gray-500 text-sm text-center mb-6">
@@ -455,12 +455,12 @@ export default function OnboardingModal({
                                         onClick={() => setData({ ...data, adoptionTiming: option.value as AdoptionTiming })}
                                         className={`w-full p-4 rounded-xl border-2 transition-all flex items-center gap-3 ${
                                             data.adoptionTiming === option.value
-                                                ? "border-sky-500 bg-sky-50"
-                                                : "border-gray-200 hover:border-gray-300"
+                                                ? "border-sky-500 bg-sky-50 dark:bg-sky-900/20"
+                                                : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                                         }`}
                                     >
                                         <option.icon className={`w-5 h-5 ${data.adoptionTiming === option.value ? "text-sky-500" : "text-gray-400"}`} />
-                                        <span className={data.adoptionTiming === option.value ? "text-sky-700 font-medium" : "text-gray-600"}>
+                                        <span className={data.adoptionTiming === option.value ? "text-sky-700 dark:text-sky-300 font-medium" : "text-gray-600 dark:text-gray-300"}>
                                             {option.label}
                                         </span>
                                         {data.adoptionTiming === option.value && <Check className="w-5 h-5 text-sky-500 ml-auto" />}
@@ -473,7 +473,7 @@ export default function OnboardingModal({
                     {/* Step 4: 경험 여부 (키우려는 회원) */}
                     {step === 4 && data.userType === "planning" && (
                         <div>
-                            <h2 className="text-xl font-bold text-gray-800 mb-2 text-center">
+                            <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2 text-center">
                                 반려동물 경험이 있으신가요?
                             </h2>
                             <p className="text-gray-500 text-sm text-center mb-6">
@@ -484,12 +484,12 @@ export default function OnboardingModal({
                                     onClick={() => setData({ ...data, previousExperience: "first" })}
                                     className={`p-6 rounded-2xl border-2 transition-all flex flex-col items-center gap-3 ${
                                         data.previousExperience === "first"
-                                            ? "border-sky-500 bg-sky-50"
-                                            : "border-gray-200 hover:border-gray-300"
+                                            ? "border-sky-500 bg-sky-50 dark:bg-sky-900/20"
+                                            : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                                     }`}
                                 >
                                     <Sparkles className={`w-8 h-8 ${data.previousExperience === "first" ? "text-sky-500" : "text-gray-400"}`} />
-                                    <span className={`font-medium text-center ${data.previousExperience === "first" ? "text-sky-700" : "text-gray-600"}`}>
+                                    <span className={`font-medium text-center ${data.previousExperience === "first" ? "text-sky-700 dark:text-sky-300" : "text-gray-600 dark:text-gray-300"}`}>
                                         처음이에요
                                     </span>
                                 </button>
@@ -497,12 +497,12 @@ export default function OnboardingModal({
                                     onClick={() => setData({ ...data, previousExperience: "experienced" })}
                                     className={`p-6 rounded-2xl border-2 transition-all flex flex-col items-center gap-3 ${
                                         data.previousExperience === "experienced"
-                                            ? "border-emerald-500 bg-emerald-50"
-                                            : "border-gray-200 hover:border-gray-300"
+                                            ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20"
+                                            : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                                     }`}
                                 >
                                     <Heart className={`w-8 h-8 ${data.previousExperience === "experienced" ? "text-emerald-500" : "text-gray-400"}`} />
-                                    <span className={`font-medium text-center ${data.previousExperience === "experienced" ? "text-emerald-700" : "text-gray-600"}`}>
+                                    <span className={`font-medium text-center ${data.previousExperience === "experienced" ? "text-emerald-700 dark:text-emerald-300" : "text-gray-600 dark:text-gray-300"}`}>
                                         키워본 적 있어요
                                     </span>
                                 </button>
@@ -513,7 +513,7 @@ export default function OnboardingModal({
                     {/* Step 5: 입양 경로 (키우려는 회원) */}
                     {step === 5 && data.userType === "planning" && (
                         <div>
-                            <h2 className="text-xl font-bold text-gray-800 mb-2 text-center">
+                            <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2 text-center">
                                 어떻게 맞이할 예정인가요?
                             </h2>
                             <p className="text-gray-500 text-sm text-center mb-6">
@@ -531,12 +531,12 @@ export default function OnboardingModal({
                                         onClick={() => setData({ ...data, adoptionRoute: option.value as AdoptionRoute })}
                                         className={`w-full p-4 rounded-xl border-2 transition-all flex items-center gap-3 ${
                                             data.adoptionRoute === option.value
-                                                ? "border-sky-500 bg-sky-50"
-                                                : "border-gray-200 hover:border-gray-300"
+                                                ? "border-sky-500 bg-sky-50 dark:bg-sky-900/20"
+                                                : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                                         }`}
                                     >
                                         <option.icon className={`w-5 h-5 ${data.adoptionRoute === option.value ? "text-sky-500" : "text-gray-400"}`} />
-                                        <span className={data.adoptionRoute === option.value ? "text-sky-700 font-medium" : "text-gray-600"}>
+                                        <span className={data.adoptionRoute === option.value ? "text-sky-700 dark:text-sky-300 font-medium" : "text-gray-600 dark:text-gray-300"}>
                                             {option.label}
                                         </span>
                                         {data.adoptionRoute === option.value && <Check className="w-5 h-5 text-sky-500 ml-auto" />}
@@ -549,7 +549,7 @@ export default function OnboardingModal({
                     {/* Step 6: 이름 (떠나보낸 회원) */}
                     {step === 6 && data.userType === "memorial" && (
                         <div>
-                            <h2 className="text-xl font-bold text-gray-800 mb-2 text-center">
+                            <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2 text-center">
                                 아이의 이름을 알려주세요
                             </h2>
                             <p className="text-gray-500 text-sm text-center mb-6">
@@ -560,7 +560,7 @@ export default function OnboardingModal({
                                 value={data.petName || ""}
                                 onChange={(e) => setData({ ...data, petName: e.target.value })}
                                 placeholder="이름을 입력해주세요"
-                                className="w-full p-4 rounded-xl border-2 border-gray-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none text-center text-lg"
+                                className="w-full p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none text-center text-lg"
                                 autoFocus
                             />
                         </div>
@@ -569,7 +569,7 @@ export default function OnboardingModal({
                     {/* Step 7: 함께한 기간 (떠나보낸 회원) */}
                     {step === 7 && data.userType === "memorial" && (
                         <div>
-                            <h2 className="text-xl font-bold text-gray-800 mb-2 text-center">
+                            <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2 text-center">
                                 {data.petName}와(과) 얼마나 함께했나요?
                             </h2>
                             <p className="text-gray-500 text-sm text-center mb-6">
@@ -587,11 +587,11 @@ export default function OnboardingModal({
                                         onClick={() => setData({ ...data, togetherPeriod: option.value as TogetherPeriod })}
                                         className={`p-4 rounded-xl border-2 transition-all ${
                                             data.togetherPeriod === option.value
-                                                ? "border-amber-500 bg-amber-50"
-                                                : "border-gray-200 hover:border-gray-300"
+                                                ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20"
+                                                : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                                         }`}
                                     >
-                                        <span className={`font-medium ${data.togetherPeriod === option.value ? "text-amber-700" : "text-gray-600"}`}>
+                                        <span className={`font-medium ${data.togetherPeriod === option.value ? "text-amber-700 dark:text-amber-300" : "text-gray-600 dark:text-gray-300"}`}>
                                             {option.label}
                                         </span>
                                     </button>
@@ -603,7 +603,7 @@ export default function OnboardingModal({
                     {/* Step 8: 떠난 기간 (떠나보낸 회원) */}
                     {step === 8 && data.userType === "memorial" && (
                         <div>
-                            <h2 className="text-xl font-bold text-gray-800 mb-2 text-center">
+                            <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2 text-center">
                                 {data.petName}가(이) 떠난 지 얼마나 됐나요?
                             </h2>
                             <p className="text-gray-500 text-sm text-center mb-6">
@@ -621,11 +621,11 @@ export default function OnboardingModal({
                                         onClick={() => setData({ ...data, passedPeriod: option.value as PassedPeriod })}
                                         className={`p-4 rounded-xl border-2 transition-all ${
                                             data.passedPeriod === option.value
-                                                ? "border-amber-500 bg-amber-50"
-                                                : "border-gray-200 hover:border-gray-300"
+                                                ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20"
+                                                : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                                         }`}
                                     >
-                                        <span className={`font-medium ${data.passedPeriod === option.value ? "text-amber-700" : "text-gray-600"}`}>
+                                        <span className={`font-medium ${data.passedPeriod === option.value ? "text-amber-700 dark:text-amber-300" : "text-gray-600 dark:text-gray-300"}`}>
                                             {option.label}
                                         </span>
                                     </button>
@@ -678,7 +678,7 @@ export default function OnboardingModal({
                     {step === 0 && (
                         <button
                             onClick={handleSkip}
-                            className="w-full mt-4 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                            className="w-full mt-4 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                         >
                             나중에 하기
                         </button>

@@ -161,27 +161,27 @@ export default function AdminReportsTab({
 
             {/* 상태 범례 */}
             <div className="flex flex-wrap gap-2 text-sm">
-                <Badge className="bg-amber-100 text-amber-700">
+                <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
                     <Clock className="w-3 h-3 mr-1" />
                     대기중
                 </Badge>
-                <Badge className="bg-blue-100 text-blue-700">
+                <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
                     <Eye className="w-3 h-3 mr-1" />
                     검토중
                 </Badge>
-                <Badge className="bg-green-100 text-green-700">
+                <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
                     <CheckCircle className="w-3 h-3 mr-1" />
                     처리완료
                 </Badge>
-                <Badge className="bg-gray-100 text-gray-700">반려</Badge>
+                <Badge className="bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">반려</Badge>
             </div>
 
             {/* 신고 목록 */}
             <Card>
                 <CardContent className="pt-6">
                     {filteredReports.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500">
-                            <Flag className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                            <Flag className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
                             <p>신고 내역이 없습니다</p>
                         </div>
                     ) : (
@@ -219,13 +219,13 @@ function ReportCard({ report, onUpdateStatus, onDeleteContent }: ReportCardProps
     const getBgColor = () => {
         switch (report.status) {
             case "resolved":
-                return "bg-green-50 border-green-200";
+                return "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/50";
             case "reviewing":
-                return "bg-blue-50 border-blue-200";
+                return "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/50";
             case "rejected":
-                return "bg-gray-50 border-gray-200";
+                return "bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700";
             default:
-                return "bg-red-50 border-red-200";
+                return "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/50";
         }
     };
 
@@ -240,63 +240,63 @@ function ReportCard({ report, onUpdateStatus, onDeleteContent }: ReportCardProps
                     </Badge>
 
                     {/* 사유 */}
-                    <Badge className="bg-red-100 text-red-700">
+                    <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
                         {REPORT_REASON_LABELS[report.reason] || report.reason}
                     </Badge>
 
                     {/* 상태 */}
                     {report.status === "pending" && (
-                        <Badge className="bg-amber-100 text-amber-700 text-xs">
+                        <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 text-xs">
                             <Clock className="w-3 h-3 mr-1" />
                             대기중
                         </Badge>
                     )}
                     {report.status === "reviewing" && (
-                        <Badge className="bg-blue-100 text-blue-700 text-xs">
+                        <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 text-xs">
                             <Eye className="w-3 h-3 mr-1" />
                             검토중
                         </Badge>
                     )}
                     {report.status === "resolved" && (
-                        <Badge className="bg-green-100 text-green-700 text-xs">
+                        <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 text-xs">
                             <CheckCircle className="w-3 h-3 mr-1" />
                             처리완료
                         </Badge>
                     )}
                     {report.status === "rejected" && (
-                        <Badge className="bg-gray-100 text-gray-700 text-xs">반려</Badge>
+                        <Badge className="bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 text-xs">반려</Badge>
                     )}
                 </div>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-gray-500 dark:text-gray-400">
                     {new Date(report.created_at).toLocaleDateString("ko-KR")}
                 </span>
             </div>
 
             {/* 설명 */}
             {report.description && (
-                <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-2 line-clamp-2">
                     {report.description}
                 </p>
             )}
 
             {/* 신고자 정보 */}
-            <p className="text-xs text-gray-500 mb-3">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
                 신고자: {report.reporter_email || "알 수 없음"} | 대상 ID:{" "}
-                <code className="bg-gray-100 px-1 rounded">
+                <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">
                     {report.target_id.slice(0, 8)}...
                 </code>
             </p>
 
             {/* 관리자 메모 */}
             {report.admin_notes && (
-                <div className="p-2 bg-white rounded-lg border border-gray-200 mb-3 text-sm">
-                    <span className="font-medium text-gray-700">관리자 메모: </span>
-                    <span className="text-gray-600">{report.admin_notes}</span>
+                <div className="p-2 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 mb-3 text-sm">
+                    <span className="font-medium text-gray-700 dark:text-gray-200">관리자 메모: </span>
+                    <span className="text-gray-600 dark:text-gray-300">{report.admin_notes}</span>
                 </div>
             )}
 
             {/* 액션 버튼 */}
-            <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200">
+            <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                 {report.status === "pending" && (
                     <Button
                         size="sm"
