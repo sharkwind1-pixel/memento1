@@ -41,6 +41,7 @@ import Image from "next/image";
 import { TabType } from "@/types";
 import { getBadgeStyle, getBadgeLabel, dbArticleToMagazineArticle, type MagazineArticle } from "@/data/magazineArticles";
 import PawLoading from "@/components/ui/PawLoading";
+import { toast } from "sonner";
 import MagazineReader from "@/components/features/magazine/MagazineReader";
 
 interface MagazinePageProps {
@@ -80,13 +81,15 @@ export default function MagazinePage({ setSelectedTab }: MagazinePageProps) {
             setIsLoading(true);
             try {
                 const res = await fetch("/api/magazine?limit=50");
-                if (!res.ok) return;
+                if (!res.ok) {
+                    throw new Error("매거진 불러오기 실패");
+                }
                 const data = await res.json();
                 if (data.articles) {
                     setArticles(data.articles.map(dbArticleToMagazineArticle));
                 }
             } catch {
-                // DB 조회 실패시 빈 상태 유지
+                toast.error("매거진 기사를 불러오지 못했습니다");
             } finally {
                 setIsLoading(false);
             }

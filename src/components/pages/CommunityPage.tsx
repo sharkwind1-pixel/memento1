@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import ReportModal from "@/components/modals/ReportModal";
 import PawLoading from "@/components/ui/PawLoading";
+import { toast } from "sonner";
 import { usePets } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
 import WritePostModal from "@/components/features/community/WritePostModal";
@@ -536,6 +537,9 @@ export default function CommunityPage({ subcategory, onSubcategoryChange }: Comm
             }
 
             const response = await fetch(`/api/posts?${params}`);
+            if (!response.ok) {
+                throw new Error("게시글을 불러오는데 실패했습니다");
+            }
             const data = await response.json();
 
             if (data.posts && data.posts.length > 0) {
@@ -550,7 +554,8 @@ export default function CommunityPage({ subcategory, onSubcategoryChange }: Comm
                 throw new Error("API 응답 없음");
             }
         } catch {
-            // 에러 시 목업 데이터로 폴백
+            // 에러 시 목업 데이터로 폴백 + 사용자 알림
+            toast.error("게시글을 불러오지 못했습니다. 샘플 데이터를 표시합니다.");
             const mockPosts = MOCK_POSTS[currentSubcategory] || [];
             let filteredPosts = mockPosts;
 
