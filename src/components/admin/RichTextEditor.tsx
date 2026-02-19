@@ -7,12 +7,13 @@
  */
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import TextAlign from "@tiptap/extension-text-align";
 import TiptapImage from "@tiptap/extension-image";
+import { Selection } from "@tiptap/pm/state";
 import { Button } from "@/components/ui/button";
 import {
     Bold,
@@ -40,7 +41,29 @@ interface RichTextEditorProps {
 
 export default function RichTextEditor({ content, onChange, onImageUpload }: RichTextEditorProps) {
     const [isImageUploading, setIsImageUploading] = useState(false);
+    const [isDragOver, setIsDragOver] = useState(false);
     const imageInputRef = useRef<HTMLInputElement>(null);
+    const onImageUploadRef = useRef(onImageUpload);
+    onImageUploadRef.current = onImageUpload;
+
+    /** 이미지 파일 업로드 공통 로직 */
+    const uploadAndInsertImage = useCallback(
+        async (file: File, editorInstance: ReturnType<typeof useEditor>) => {
+            if (!editorInstance || !onImageUploadRef.current) return;
+            if (!file.type.startsWith("image/")) return;
+
+            setIsImageUploading(true);
+            try {
+                const url = await onImageUploadRef.current(file);
+                if (url) {
+                    editorInstance.chain().focus().setImage({ src: url }).run();
+                }
+            } finally {
+                setIsImageUploading(false);
+            }
+        },
+        []
+    );
 
     const editor = useEditor({
         extensions: [
@@ -61,24 +84,80 @@ export default function RichTextEditor({ content, onChange, onImageUpload }: Ric
         onUpdate: ({ editor }) => {
             onChange(editor.getHTML());
         },
+        editorProps: {
+            handleDrop: (view, event, _slice, moved) => {
+                if (moved || !onImageUploadRef.current) return false;
+                const files = event.dataTransfer?.files;
+                if (!files?.length) return false;
+
+                const file = files[0];
+                if (!file.type.startsWith("image/")) return false;
+
+                event.preventDefault();
+
+                // 드롭 위치에 커서 이동
+                const pos = view.posAtCoords({
+                    left: event.clientX,
+                    top: event.clientY,
+                });
+                if (pos) {
+                    const resolved = view.state.doc.resolve(pos.pos);
+                    const sel = Selection.near(resolved);
+                    view.dispatch(view.state.tr.setSelection(sel));
+                }
+
+                // 업로드 + 삽입 (editor는 아직 null일 수 있으므로 view에서 접근)
+                const editorEl = view.dom.closest(".tiptap-editor");
+                if (editorEl) {
+                    setIsImageUploading(true);
+                    onImageUploadRef.current(file).then((url) => {
+                        if (url) {
+                            const { tr } = view.state;
+                            const imageNode = view.state.schema.nodes.image.create({ src: url });
+                            const insertPos = pos ? pos.pos : view.state.selection.anchor;
+                            view.dispatch(tr.insert(insertPos, imageNode));
+                        }
+                        setIsImageUploading(false);
+                    });
+                }
+
+                return true;
+            },
+            handlePaste: (view, event) => {
+                if (!onImageUploadRef.current) return false;
+                const items = event.clipboardData?.items;
+                if (!items) return false;
+
+                for (const item of Array.from(items)) {
+                    if (item.type.startsWith("image/")) {
+                        event.preventDefault();
+                        const file = item.getAsFile();
+                        if (!file) continue;
+
+                        setIsImageUploading(true);
+                        onImageUploadRef.current(file).then((url) => {
+                            if (url) {
+                                const { tr } = view.state;
+                                const imageNode = view.state.schema.nodes.image.create({ src: url });
+                                view.dispatch(tr.insert(view.state.selection.anchor, imageNode));
+                            }
+                            setIsImageUploading(false);
+                        });
+                        return true;
+                    }
+                }
+                return false;
+            },
+        },
     });
 
-    /** 이미지 파일 선택 핸들러 */
+    /** 툴바 이미지 버튼 핸들러 */
     const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file || !editor || !onImageUpload) return;
-
-        setIsImageUploading(true);
-        try {
-            const url = await onImageUpload(file);
-            if (url) {
-                editor.chain().focus().setImage({ src: url }).run();
-            }
-        } finally {
-            setIsImageUploading(false);
-            if (imageInputRef.current) {
-                imageInputRef.current.value = "";
-            }
+        if (!file || !editor) return;
+        await uploadAndInsertImage(file, editor);
+        if (imageInputRef.current) {
+            imageInputRef.current.value = "";
         }
     };
 
@@ -89,6 +168,24 @@ export default function RichTextEditor({ content, onChange, onImageUpload }: Ric
         }
     }, [content, editor]);
 
+    // 드래그 오버 시각 피드백 (에디터 컨테이너)
+    const handleDragOver = useCallback(
+        (e: React.DragEvent) => {
+            if (!onImageUpload) return;
+            e.preventDefault();
+            setIsDragOver(true);
+        },
+        [onImageUpload]
+    );
+
+    const handleDragLeave = useCallback(() => {
+        setIsDragOver(false);
+    }, []);
+
+    const handleDropOnContainer = useCallback(() => {
+        setIsDragOver(false);
+    }, []);
+
     if (!editor) {
         return (
             <div className="rounded-md border border-gray-300 bg-gray-50 h-[240px] flex items-center justify-center text-sm text-gray-400">
@@ -98,7 +195,16 @@ export default function RichTextEditor({ content, onChange, onImageUpload }: Ric
     }
 
     return (
-        <div className="tiptap-editor rounded-md border border-gray-300 overflow-hidden focus-within:ring-1 focus-within:ring-sky-500 focus-within:border-sky-500">
+        <div
+            className={`tiptap-editor rounded-md border overflow-hidden focus-within:ring-1 focus-within:ring-sky-500 focus-within:border-sky-500 transition-colors ${
+                isDragOver
+                    ? "border-sky-400 bg-sky-50/50 ring-2 ring-sky-300"
+                    : "border-gray-300"
+            }`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDropOnContainer}
+        >
             {/* 툴바 */}
             <div className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 border-b border-gray-200 bg-gray-50">
                 {/* 텍스트 스타일 */}
@@ -234,6 +340,20 @@ export default function RichTextEditor({ content, onChange, onImageUpload }: Ric
 
             {/* 에디터 본문 */}
             <EditorContent editor={editor} />
+
+            {/* 업로드 상태 / 드래그 힌트 */}
+            {isImageUploading && (
+                <div className="flex items-center gap-2 px-3 py-2 bg-sky-50 border-t border-sky-200 text-xs text-sky-600">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    이미지 업로드 중...
+                </div>
+            )}
+            {isDragOver && !isImageUploading && (
+                <div className="flex items-center justify-center gap-2 px-3 py-3 bg-sky-50 border-t border-sky-200 text-sm text-sky-600 font-medium">
+                    <ImagePlus className="w-4 h-4" />
+                    여기에 놓으면 이미지가 삽입됩니다
+                </div>
+            )}
         </div>
     );
 }
