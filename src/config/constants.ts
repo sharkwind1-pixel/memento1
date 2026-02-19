@@ -48,7 +48,8 @@ export const UPLOAD = {
 export const API = {
     AI_MODEL: "gpt-4o-mini",    // AI 펫톡 모델
     AI_MAX_TOKENS: 500,         // AI 응답 최대 토큰
-    AI_TEMPERATURE: 0.8,        // AI 창의성 (0-1)
+    AI_TEMPERATURE_DAILY: 0.85,     // 일상 모드 온도
+    AI_TEMPERATURE_MEMORIAL: 0.78,  // 추모 모드 온도 (안정적 응답 우선)
 } as const;
 
 // ===== 포인트 시스템 =====

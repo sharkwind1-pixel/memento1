@@ -273,7 +273,7 @@ function TimelineSection({ petId, petName }: { petId: string; petName: string })
                                                         {moodInfo.label}
                                                     </div>
                                                 </div>
-                                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                                     <button
                                                         onClick={() => openEditModal(entry)}
                                                         className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-[#05B2DC] hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"

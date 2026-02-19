@@ -7,4 +7,3 @@
 export * from "./emotions";
 export * from "./community";
 export * from "./storage";
-export * from "./colors";
