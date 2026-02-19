@@ -44,6 +44,7 @@ import PawLoading from "@/components/ui/PawLoading";
 import { usePets } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
 import WritePostModal from "@/components/features/community/WritePostModal";
+import PostDetailView from "@/components/features/community/PostDetailView";
 import type { CommunitySubcategory, PostTag, CommunityPageProps } from "@/types";
 
 interface Post {
@@ -489,6 +490,7 @@ export default function CommunityPage({ subcategory, onSubcategoryChange }: Comm
     const [posts, setPosts] = useState<Post[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showWriteModal, setShowWriteModal] = useState(false);
+    const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
     // 신고 모달 상태
     const [reportTarget, setReportTarget] = useState<{
@@ -523,7 +525,7 @@ export default function CommunityPage({ subcategory, onSubcategoryChange }: Comm
         setIsLoading(true);
         try {
             const params = new URLSearchParams({
-                subcategory: currentSubcategory,
+                board: currentSubcategory,
                 sort: sortBy,
             });
             if (selectedTag !== "all") {
@@ -536,8 +538,16 @@ export default function CommunityPage({ subcategory, onSubcategoryChange }: Comm
             const response = await fetch(`/api/posts?${params}`);
             const data = await response.json();
 
-            if (data.posts) {
-                setPosts(data.posts);
+            if (data.posts && data.posts.length > 0) {
+                setPosts(data.posts.map((p: Post & { boardType?: string; animalType?: string }) => ({
+                    ...p,
+                    subcategory: p.subcategory || p.boardType || currentSubcategory,
+                    tag: p.tag || p.animalType,
+                })));
+            } else if (data.posts) {
+                setPosts([]);
+            } else {
+                throw new Error("API 응답 없음");
             }
         } catch {
             // 에러 시 목업 데이터로 폴백
@@ -597,6 +607,28 @@ export default function CommunityPage({ subcategory, onSubcategoryChange }: Comm
         }
         setShowWriteModal(true);
     };
+
+    // 상세보기 모드
+    if (selectedPostId) {
+        return (
+            <div
+                className="min-h-screen relative overflow-hidden"
+                style={{ contain: 'layout style', transform: 'translateZ(0)' }}
+            >
+                <div className="absolute inset-0 bg-gradient-to-br from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
+                    <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-r from-[#7DD3FC]/30 to-sky-200/30 dark:from-blue-800/20 dark:to-sky-800/20 rounded-full blur-3xl animate-pulse" />
+                </div>
+                <div className="relative z-10 pb-8">
+                    <PostDetailView
+                        postId={selectedPostId}
+                        subcategory={currentSubcategory}
+                        onBack={() => setSelectedPostId(null)}
+                        onPostDeleted={fetchPosts}
+                    />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div
@@ -749,6 +781,7 @@ export default function CommunityPage({ subcategory, onSubcategoryChange }: Comm
                         posts.map((post) => (
                             <Card
                                 key={post.id}
+                                onClick={() => setSelectedPostId(post.id)}
                                 className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 hover:bg-white/80 dark:hover:bg-gray-700/60 transition-all duration-300 rounded-2xl cursor-pointer"
                             >
                                 <CardHeader className="pb-2">
