@@ -9,16 +9,18 @@
 
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Star, ChevronRight } from "lucide-react";
+import { Star, ChevronRight, ShoppingBag } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatPoints } from "@/lib/points";
 import PointsHistoryModal from "./PointsHistoryModal";
+import PointsShopModal from "./PointsShopModal";
 import { LevelProgress } from "./LevelBadge";
 
 export default function PointsBadge() {
     const { user, points } = useAuth();
     const nickname = user?.user_metadata?.nickname || user?.email?.split("@")[0];
     const [showHistory, setShowHistory] = useState(false);
+    const [showShop, setShowShop] = useState(false);
 
     // 비로그인 시 표시 안함
     if (!user) return null;
@@ -54,6 +56,22 @@ export default function PointsBadge() {
                     </div>
                     <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
                 </button>
+
+                {/* 포인트 상점 버튼 */}
+                <button
+                    onClick={() => setShowShop(true)}
+                    className={cn(
+                        "w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl",
+                        "bg-gradient-to-r from-amber-50 to-orange-50",
+                        "dark:from-amber-900/20 dark:to-orange-900/20",
+                        "hover:from-amber-100 hover:to-orange-100",
+                        "dark:hover:from-amber-900/30 dark:hover:to-orange-900/30",
+                        "transition-all text-sm font-medium text-amber-700 dark:text-amber-300"
+                    )}
+                >
+                    <ShoppingBag className="w-4 h-4" />
+                    포인트 상점
+                </button>
             </div>
 
             {/* 모달 */}
@@ -61,6 +79,12 @@ export default function PointsBadge() {
                 <PointsHistoryModal
                     open={showHistory}
                     onClose={() => setShowHistory(false)}
+                />
+            )}
+            {showShop && (
+                <PointsShopModal
+                    isOpen={showShop}
+                    onClose={() => setShowShop(false)}
                 />
             )}
         </>
