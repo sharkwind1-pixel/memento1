@@ -818,6 +818,7 @@ export default function CommunityPage({ subcategory, onSubcategoryChange }: Comm
                                                     <button
                                                         className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
                                                         onClick={(e) => e.stopPropagation()}
+                                                        aria-label="더보기"
                                                     >
                                                         <MoreHorizontal className="w-4 h-4 text-gray-400" />
                                                     </button>

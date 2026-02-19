@@ -113,12 +113,13 @@ function AnimalDetailModal({
             }}
             role="dialog"
             aria-modal="true"
+            aria-labelledby="adoption-detail-title"
         >
             <div className="w-full max-w-2xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl border border-white/10 flex flex-col">
                 {/* 헤더 */}
                 <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200/70 dark:border-gray-800 flex-shrink-0">
                     <div className="min-w-0">
-                        <div className="font-bold text-gray-900 dark:text-gray-100 truncate">
+                        <div id="adoption-detail-title" className="font-bold text-gray-900 dark:text-gray-100 truncate">
                             {animal.breed} ({animal.kind})
                         </div>
                         <div className="text-sm text-gray-500 dark:text-gray-400">
@@ -382,6 +383,7 @@ export default function AdoptionPage({ setSelectedTab }: AdoptionPageProps) {
                         variant="ghost"
                         size="icon"
                         onClick={() => setSelectedTab("home")}
+                        aria-label="뒤로 가기"
                         className="rounded-xl flex-shrink-0"
                     >
                         <ArrowLeft className="w-5 h-5" />
@@ -405,6 +407,7 @@ export default function AdoptionPage({ setSelectedTab }: AdoptionPageProps) {
                             variant="ghost"
                             size="icon"
                             onClick={() => setShowFilters(!showFilters)}
+                            aria-label="필터 열기/닫기"
                             className="rounded-xl"
                         >
                             <Filter className="w-4 h-4" />
@@ -413,6 +416,7 @@ export default function AdoptionPage({ setSelectedTab }: AdoptionPageProps) {
                             variant={viewMode === "grid" ? "default" : "ghost"}
                             size="icon"
                             onClick={() => setViewMode("grid")}
+                            aria-label="그리드 보기"
                             className="rounded-xl"
                         >
                             <Grid3X3 className="w-4 h-4" />
@@ -421,6 +425,7 @@ export default function AdoptionPage({ setSelectedTab }: AdoptionPageProps) {
                             variant={viewMode === "list" ? "default" : "ghost"}
                             size="icon"
                             onClick={() => setViewMode("list")}
+                            aria-label="리스트 보기"
                             className="rounded-xl"
                         >
                             <List className="w-4 h-4" />
@@ -461,8 +466,8 @@ export default function AdoptionPage({ setSelectedTab }: AdoptionPageProps) {
                         variant="outline"
                         size="icon"
                         onClick={fetchAnimals}
+                        aria-label="새로고침"
                         className="rounded-xl flex-shrink-0"
-                        title="새로고침"
                     >
                         <RefreshCw className="w-4 h-4" />
                     </Button>
@@ -599,6 +604,7 @@ export default function AdoptionPage({ setSelectedTab }: AdoptionPageProps) {
                             size="sm"
                             onClick={() => setPage(Math.max(1, page - 1))}
                             disabled={page <= 1}
+                            aria-label="이전 페이지"
                             className="rounded-xl"
                         >
                             <ChevronLeft className="w-4 h-4" />
@@ -635,6 +641,7 @@ export default function AdoptionPage({ setSelectedTab }: AdoptionPageProps) {
                             size="sm"
                             onClick={() => setPage(Math.min(totalPages, page + 1))}
                             disabled={page >= totalPages}
+                            aria-label="다음 페이지"
                             className="rounded-xl"
                         >
                             <ChevronRight className="w-4 h-4" />
