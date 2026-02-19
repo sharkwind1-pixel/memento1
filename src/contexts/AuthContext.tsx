@@ -180,51 +180,75 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         // 현재 세션 가져오기
         const getSession = async () => {
-            const {
-                data: { session },
-            } = await supabase.auth.getSession();
-            setSession(session);
-            setUser(session?.user ?? null);
+            try {
+                const {
+                    data: { session },
+                } = await supabase.auth.getSession();
+                setSession(session);
+                setUser(session?.user ?? null);
 
-            // 로그인 상태면 프로필+포인트 통합 로드 (await) + 출석 체크
-            if (session?.user) {
-                await refreshProfile();
-                checkDailyLogin(session.user.id);
+                // 로그인 상태면 프로필+포인트 통합 로드 (await) + 출석 체크
+                if (session?.user) {
+                    await refreshProfile();
+                    checkDailyLogin(session.user.id);
+                }
+            } catch {
+                // 세션 로드 실패해도 앱은 비로그인 상태로 동작
+                setSession(null);
+                setUser(null);
+            } finally {
+                setLoading(false);
             }
-
-            setLoading(false);
         };
 
         getSession();
+
+        // 안전장치: 8초 이내에 로딩이 끝나지 않으면 강제로 비로그인 상태로 진입
+        const safetyTimer = setTimeout(() => {
+            setLoading((prev) => {
+                if (prev) {
+                    setSession(null);
+                    setUser(null);
+                    setProfileLoaded(true);
+                    setPointsLoaded(true);
+                }
+                return false;
+            });
+        }, 8000);
 
         // 인증 상태 변경 리스너
         const {
             data: { subscription },
         } = supabase.auth.onAuthStateChange(async (event, session) => {
-            setSession(session);
-            setUser(session?.user ?? null);
+            try {
+                setSession(session);
+                setUser(session?.user ?? null);
 
-            // 로그인 시 프로필+포인트 통합 로드 + 출석 체크
-            if (event === "SIGNED_IN" && session?.user) {
-                await refreshProfile();
-                checkDailyLogin(session.user.id);
-            }
+                // 로그인 시 프로필+포인트 통합 로드 + 출석 체크
+                if (event === "SIGNED_IN" && session?.user) {
+                    await refreshProfile();
+                    checkDailyLogin(session.user.id);
+                }
 
-            // 로그아웃 시 상태 초기화
-            if (event === "SIGNED_OUT") {
-                setPoints(0);
-                setPointsLoaded(false);
-                setProfileLoaded(false);
-                setIsAdminUser(false);
-                setIsPremiumUser(false);
-                setUserPetType("dog");
-                setOnboardingData(null);
+                // 로그아웃 시 상태 초기화
+                if (event === "SIGNED_OUT") {
+                    setPoints(0);
+                    setPointsLoaded(false);
+                    setProfileLoaded(false);
+                    setIsAdminUser(false);
+                    setIsPremiumUser(false);
+                    setUserPetType("dog");
+                    setOnboardingData(null);
+                }
+            } catch {
+                // 상태 변경 중 에러 무시
             }
 
             setLoading(false);
         });
 
         return () => {
+            clearTimeout(safetyTimer);
             subscription.unsubscribe();
         };
     }, [refreshProfile, refreshPoints, checkDailyLogin]);
