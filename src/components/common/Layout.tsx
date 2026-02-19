@@ -235,6 +235,7 @@ export default function Layout({
                                 size="icon"
                                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                                 className="xl:hidden rounded-xl"
+                                aria-label="메뉴 열기"
                             >
                                 <Menu className="w-5 h-5" />
                             </Button>
@@ -244,6 +245,7 @@ export default function Layout({
                                 size="icon"
                                 onClick={toggleDarkMode}
                                 className="rounded-xl xl:hidden"
+                                aria-label={isDarkMode ? "라이트 모드로 전환" : "다크 모드로 전환"}
                             >
                                 {isDarkMode ? (
                                     <Sun className="w-5 h-5" />

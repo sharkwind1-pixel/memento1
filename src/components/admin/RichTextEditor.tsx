@@ -380,6 +380,7 @@ function ToolbarButton({
             onClick={onClick}
             disabled={disabled}
             title={title}
+            aria-label={title}
             className={`h-8 w-8 p-0 ${
                 isActive
                     ? "bg-sky-100 text-sky-700 hover:bg-sky-200"

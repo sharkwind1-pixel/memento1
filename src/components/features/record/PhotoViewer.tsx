@@ -30,6 +30,9 @@ export default function PhotoViewer({
             <div
                 className="fixed inset-0 z-[9999] bg-black/90 flex items-center justify-center p-4"
                 onClick={onClose}
+                role="dialog"
+                aria-modal="true"
+                aria-label="미디어 뷰어"
             >
                 <div
                     className="relative max-w-md w-full"
@@ -41,6 +44,7 @@ export default function PhotoViewer({
                             size="icon"
                             onClick={() => setShowDeleteConfirm(true)}
                             className="text-white hover:bg-red-500/20 rounded-full"
+                            aria-label="삭제"
                         >
                             <Trash2 className="w-5 h-5" />
                         </Button>
@@ -49,6 +53,7 @@ export default function PhotoViewer({
                             size="icon"
                             onClick={onClose}
                             className="text-white hover:bg-white/20 rounded-full"
+                            aria-label="닫기"
                         >
                             <X className="w-6 h-6" />
                         </Button>

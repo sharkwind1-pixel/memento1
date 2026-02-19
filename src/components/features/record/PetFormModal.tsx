@@ -787,6 +787,9 @@ export default function PetFormModal({
                     <div
                         className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl"
                         onClick={(e) => e.stopPropagation()}
+                        role="alertdialog"
+                        aria-modal="true"
+                        aria-label="닫기 확인"
                     >
                         <p className="text-center text-gray-800 dark:text-gray-200 font-medium mb-2">
                             반려동물 정보를 입력중이에요

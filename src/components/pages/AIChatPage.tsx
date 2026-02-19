@@ -689,6 +689,7 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                             onClick={handleNewChat}
                             className={`p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-colors ${isMemorialMode ? "hover:bg-amber-200/50 text-amber-600" : "hover:bg-[#E0F7FF] text-[#05B2DC]"}`}
                             title="새 대화 시작"
+                            aria-label="새 대화 시작"
                         >
                             <RotateCcw className="w-5 h-5" />
                         </button>
@@ -697,6 +698,7 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                                 <button
                                     className={`p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-colors ${isMemorialMode ? "hover:bg-amber-200/50 text-amber-600" : "hover:bg-[#E0F7FF] text-[#05B2DC]"}`}
                                     title="더보기"
+                                    aria-label="더보기 메뉴"
                                 >
                                     <MoreHorizontal className="w-5 h-5" />
                                 </button>

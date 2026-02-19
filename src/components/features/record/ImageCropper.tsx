@@ -267,6 +267,7 @@ export default function ImageCropper({
                         size="icon"
                         onClick={() => handleScale(-0.2)}
                         disabled={position.scale <= 1}
+                        aria-label="축소"
                     >
                         <ZoomOut className="w-4 h-4" />
                     </Button>
@@ -278,6 +279,7 @@ export default function ImageCropper({
                         size="icon"
                         onClick={() => handleScale(0.2)}
                         disabled={position.scale >= 3}
+                        aria-label="확대"
                     >
                         <ZoomIn className="w-4 h-4" />
                     </Button>
@@ -286,6 +288,7 @@ export default function ImageCropper({
                         size="icon"
                         onClick={handleReset}
                         title="초기화"
+                        aria-label="초기화"
                     >
                         <RotateCcw className="w-4 h-4" />
                     </Button>
