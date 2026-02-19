@@ -79,10 +79,10 @@ export function PremiumModal({ user, onClose, onGrant }: PremiumModalProps) {
             />
 
             {/* 모달 본체 */}
-            <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden" role="dialog" aria-modal="true" aria-labelledby="admin-premium-title">
                 {/* 헤더 */}
                 <div className="p-4 border-b bg-gradient-to-r from-amber-50 to-orange-50">
-                    <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                    <h3 id="admin-premium-title" className="font-bold text-gray-800 flex items-center gap-2">
                         <Crown className="w-5 h-5 text-amber-500" />
                         프리미엄 부여
                     </h3>

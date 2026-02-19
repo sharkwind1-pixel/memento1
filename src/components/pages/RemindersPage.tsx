@@ -321,15 +321,16 @@ export default function RemindersPage() {
                         className="absolute inset-0 bg-black/50"
                         onClick={() => setIsModalOpen(false)}
                     />
-                    <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+                    <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="reminder-modal-title">
                         <div className="sticky top-0 bg-white border-b px-4 py-3 flex items-center justify-between rounded-t-2xl">
-                            <h2 className="font-semibold text-gray-800 flex items-center gap-2">
+                            <h2 id="reminder-modal-title" className="font-semibold text-gray-800 flex items-center gap-2">
                                 <Bell className="w-5 h-5 text-[#05B2DC]" />
                                 새 리마인더
                             </h2>
                             <button
                                 onClick={() => setIsModalOpen(false)}
                                 className="p-1 hover:bg-gray-100 rounded-full"
+                                aria-label="닫기"
                             >
                                 <X className="w-5 h-5 text-gray-500" />
                             </button>
@@ -586,6 +587,7 @@ export default function RemindersPage() {
                                                         : "text-gray-400 hover:bg-gray-100"
                                                 }`}
                                                 title={reminder.enabled ? "비활성화" : "활성화"}
+                                                aria-label={reminder.enabled ? "알림 비활성화" : "알림 활성화"}
                                             >
                                                 {reminder.enabled ? (
                                                     <ToggleRight className="w-5 h-5" />
@@ -597,6 +599,7 @@ export default function RemindersPage() {
                                                 onClick={() => handleDelete(reminder.id)}
                                                 className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
                                                 title="삭제"
+                                                aria-label="알림 삭제"
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </button>

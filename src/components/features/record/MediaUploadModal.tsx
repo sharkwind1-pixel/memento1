@@ -286,7 +286,7 @@ export default function MediaUploadModal({
                                                         file.thumbnail ||
                                                         file.preview
                                                     }
-                                                    alt=""
+                                                    alt="영상 미리보기"
                                                     className="w-full h-full object-cover"
                                                 />
                                                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
@@ -297,7 +297,7 @@ export default function MediaUploadModal({
                                             <>
                                                 <img
                                                     src={file.preview}
-                                                    alt=""
+                                                    alt="사진 미리보기"
                                                     className="w-full h-full object-cover"
                                                     style={{
                                                         objectPosition: `${file.cropPosition.x}% ${file.cropPosition.y}%`,
@@ -345,6 +345,7 @@ export default function MediaUploadModal({
                                                 )
                                             }
                                             className="mb-2 h-8 text-sm"
+                                            aria-label="사진 캡션"
                                         />
                                         <div className="flex gap-2">
                                             {!file.isVideo && (
@@ -411,6 +412,9 @@ export default function MediaUploadModal({
                     <div
                         className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl"
                         onClick={(e) => e.stopPropagation()}
+                        role="alertdialog"
+                        aria-modal="true"
+                        aria-label="닫기 확인"
                     >
                         <p className="text-center text-gray-800 dark:text-gray-200 font-medium mb-2">
                             사진/영상을 선택중이에요

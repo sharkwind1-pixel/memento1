@@ -72,6 +72,7 @@ export function ChatHeader({
                                 : "hover:bg-[#E0F7FF] text-[#05B2DC]"
                         }`}
                         title="새 대화 시작"
+                        aria-label="새 대화 시작"
                     >
                         <RotateCcw className="w-4 h-4" />
                     </button>
