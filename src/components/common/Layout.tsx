@@ -77,7 +77,7 @@ const BOTTOM_NAV_TABS: {
     label: string;
     icon: React.ElementType;
 }[] = [
-    { id: "record", label: "기록", icon: Camera },
+    { id: "record", label: "내 기록", icon: Camera },
     { id: "community", label: "커뮤니티", icon: Users },
     { id: "home", label: "홈", icon: Home },
     { id: "ai-chat", label: "AI펫톡", icon: MessageCircle },
@@ -175,7 +175,7 @@ export default function Layout({
         user?.user_metadata?.nickname || user?.email?.split("@")[0] || "사용자";
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 pb-safe flex flex-col xl:block">
+        <div className="min-h-screen bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 pb-safe flex flex-col xl:block transition-colors duration-500">
             {/* 인증 모달 */}
             <AuthModal
                 isOpen={isAuthModalOpen}
@@ -455,7 +455,7 @@ export default function Layout({
                                         `}
                                     />
                                 </div>
-                                <span className={`text-[10px] mt-1 leading-none ${isActive ? 'font-semibold' : 'font-medium'}`}>
+                                <span className={`text-xs mt-1 leading-none ${isActive ? 'font-semibold' : 'font-medium'}`}>
                                     {tab.label}
                                 </span>
                                 {isActive && !isHome && (

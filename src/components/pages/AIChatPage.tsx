@@ -99,11 +99,13 @@ interface AIChatPageProps {
 /** 채팅 메시지 구조 */
 interface ChatMessage {
     id: string;
-    role: "user" | "pet";    // user: 사용자, pet: AI(반려동물)
+    role: "user" | "pet" | "system";    // user: 사용자, pet: AI(반려동물), system: 시스템 알림
     content: string;
     timestamp: Date;
     emotion?: string;        // AI가 감지한 사용자 감정
     emotionScore?: number;   // 감정 강도 (0-1)
+    isError?: boolean;       // 에러 메시지 여부
+    retryMessage?: string;   // 재시도 시 보낼 메시지
 }
 
 // ============================================================================
@@ -556,52 +558,35 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
             };
             setMessages((prev) => [...prev, petMessage]);
         } catch (err) {
-            // 에러 유형별 사용자 친화적 메시지
+            // 에러 유형별 시스템 메시지 표시 (채팅 내 인라인)
             const errorMessage = err instanceof Error ? err.message : "";
-            const isNetworkError = errorMessage.includes("fetch") || errorMessage.includes("network") || errorMessage.includes("Failed");
             const isRateLimited = errorMessage.includes("429") || errorMessage.includes("요청이 너무");
 
-            if (isNetworkError) {
-                toast.error("네트워크 연결이 불안정해요. 다시 시도해주세요.", {
-                    action: {
-                        label: "다시 시도",
-                        onClick: () => handleSend(messageToSend),
-                    },
-                });
-            } else if (isRateLimited) {
-                toast.error("잠시 후 다시 시도해주세요.");
-            } else {
-                toast.error("응답을 받지 못했어요. 다시 시도해주세요.", {
-                    action: {
-                        label: "다시 시도",
-                        onClick: () => handleSend(messageToSend),
-                    },
-                });
-            }
-
-            // 에러 발생 시 폴백 응답
-            const fallbackResponses = isMemorialMode
-                ? [
-                      `그랬구나... 나도 너 많이 보고 싶어. 하지만 난 항상 네 곁에 있어!`,
-                      `여기서도 잘 지내고 있어. 구름 위에서 뛰어놀 수 있거든! 그래도 네가 제일 그리워.`,
-                      `걱정하지 마. 난 여기서 행복해. 네가 웃으면 나도 기뻐!`,
-                  ]
-                : [
-                      `와! 정말? 나도 그거 좋아해! 같이 하자~`,
-                      `오늘 산책 가면 안 돼? 밖에 나가고 싶어!`,
-                      `배고파... 간식 줘! 멍멍!`,
-                  ];
-
-            const petMessage: ChatMessage = {
-                id: `pet-${Date.now()}`,
-                role: "pet",
-                content: fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)],
+            const systemMessage: ChatMessage = {
+                id: `system-${Date.now()}`,
+                role: "system",
+                content: isRateLimited
+                    ? "요청이 많아 잠시 쉬어가고 있어요. 잠시 후 다시 시도해주세요."
+                    : "잠시 연결이 불안정해요. 다시 시도해주세요.",
                 timestamp: new Date(),
+                isError: true,
+                retryMessage: isRateLimited ? undefined : messageToSend,
             };
-            setMessages((prev) => [...prev, petMessage]);
+            setMessages((prev) => [...prev, systemMessage]);
         } finally {
             setIsTyping(false);
         }
+    };
+
+    /**
+     * 에러 메시지의 재시도 버튼 핸들러
+     * - 에러 시스템 메시지를 제거하고 원래 메시지를 다시 전송
+     */
+    const handleRetry = (errorMessageId: string, retryMessage: string) => {
+        // 에러 시스템 메시지 제거
+        setMessages((prev) => prev.filter((msg) => msg.id !== errorMessageId));
+        // 원래 메시지 재전송
+        handleSend(retryMessage);
     };
 
     /**
@@ -1054,64 +1039,90 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                                         <span>{formatTimestamp(message.timestamp)}</span>
                                     </div>
                                 )}
-                                <div
-                                    className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} chat-bubble-enter`}
-                                    style={{ animationDelay: index === messages.length - 1 ? "0ms" : "0ms" }}
-                                >
-                                    {message.role === "pet" && (
-                                        <div className={`w-9 h-9 rounded-full overflow-hidden mr-2 flex-shrink-0 ring-2 shadow-md transition-transform hover:scale-105 ${
-                                            isMemorialMode ? "ring-amber-200" : "ring-sky-200"
-                                        }`}>
-                                            {selectedPet?.profileImage ? (
-                                                <img
-                                                    src={selectedPet.profileImage}
-                                                    alt={selectedPet.name}
-                                                    className="w-full h-full object-cover"
-                                                    style={{
-                                                        objectPosition:
-                                                            selectedPet.profileCropPosition
-                                                                ? `${selectedPet.profileCropPosition.x}% ${selectedPet.profileCropPosition.y}%`
-                                                                : "center",
-                                                    }}
-                                                />
-                                            ) : (
-                                                <div
-                                                    className={`w-full h-full flex items-center justify-center ${isMemorialMode ? "bg-gradient-to-br from-amber-100 to-orange-100" : "bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD]"}`}
-                                                >
-                                                    <PawPrint
-                                                        className={`w-4 h-4 ${isMemorialMode ? "text-amber-500" : "text-[#05B2DC]"}`}
-                                                    />
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                    <div className="flex flex-col max-w-[75%]">
-                                        <div
-                                            className={`px-4 py-3 rounded-2xl shadow-md transition-all hover:shadow-lg ${
-                                                message.role === "user"
-                                                    ? (isMemorialMode
-                                                        ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-br-sm"
-                                                        : "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white rounded-br-sm")
-                                                    : emotionTintClass
-                                                        ? `${emotionTintClass} text-gray-800 rounded-bl-sm border`
-                                                        : isMemorialMode
-                                                            ? "bg-amber-100 text-amber-900 rounded-bl-sm border border-amber-200/50"
-                                                            : "bg-white text-gray-800 rounded-bl-sm border border-sky-100"
-                                            }`}
-                                        >
-                                            <p className="text-[15px] leading-relaxed">
+
+                                {/* 시스템 에러 메시지 */}
+                                {message.role === "system" && message.isError ? (
+                                    <div className="flex justify-center chat-bubble-enter my-2">
+                                        <div className="bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 max-w-[85%] text-center">
+                                            <p className="text-sm text-gray-600 dark:text-gray-300">
                                                 {message.content}
                                             </p>
+                                            {message.retryMessage && (
+                                                <button
+                                                    onClick={() => handleRetry(message.id, message.retryMessage!)}
+                                                    className={`mt-2 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all hover:scale-[1.03] active:scale-95 ${
+                                                        isMemorialMode
+                                                            ? "bg-amber-100 hover:bg-amber-200 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300"
+                                                            : "bg-sky-100 hover:bg-sky-200 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300"
+                                                    }`}
+                                                >
+                                                    <RotateCcw className="w-3.5 h-3.5" />
+                                                    다시 시도
+                                                </button>
+                                            )}
                                         </div>
-                                        {/* 감정 아이콘 배지 (펫 메시지만, neutral 제외) */}
-                                        {message.role === "pet" && message.emotion && message.emotion !== "neutral" && (
-                                            <span className="text-[11px] text-gray-400 mt-1 ml-1 flex items-center gap-1">
-                                                <span>{emotionIcons[message.emotion]}</span>
-                                                <span>{emotionLabels[message.emotion] || message.emotion}</span>
-                                            </span>
-                                        )}
                                     </div>
-                                </div>
+                                ) : (
+                                    /* 일반 채팅 메시지 (user / pet) */
+                                    <div
+                                        className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} chat-bubble-enter`}
+                                        style={{ animationDelay: index === messages.length - 1 ? "0ms" : "0ms" }}
+                                    >
+                                        {message.role === "pet" && (
+                                            <div className={`w-9 h-9 rounded-full overflow-hidden mr-2 flex-shrink-0 ring-2 shadow-md transition-transform hover:scale-105 ${
+                                                isMemorialMode ? "ring-amber-200" : "ring-sky-200"
+                                            }`}>
+                                                {selectedPet?.profileImage ? (
+                                                    <img
+                                                        src={selectedPet.profileImage}
+                                                        alt={selectedPet.name}
+                                                        className="w-full h-full object-cover"
+                                                        style={{
+                                                            objectPosition:
+                                                                selectedPet.profileCropPosition
+                                                                    ? `${selectedPet.profileCropPosition.x}% ${selectedPet.profileCropPosition.y}%`
+                                                                    : "center",
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <div
+                                                        className={`w-full h-full flex items-center justify-center ${isMemorialMode ? "bg-gradient-to-br from-amber-100 to-orange-100" : "bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD]"}`}
+                                                    >
+                                                        <PawPrint
+                                                            className={`w-4 h-4 ${isMemorialMode ? "text-amber-500" : "text-[#05B2DC]"}`}
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                        <div className="flex flex-col max-w-[75%]">
+                                            <div
+                                                className={`px-4 py-3 rounded-2xl shadow-md transition-all hover:shadow-lg ${
+                                                    message.role === "user"
+                                                        ? (isMemorialMode
+                                                            ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-br-sm"
+                                                            : "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white rounded-br-sm")
+                                                        : emotionTintClass
+                                                            ? `${emotionTintClass} text-gray-800 rounded-bl-sm border`
+                                                            : isMemorialMode
+                                                                ? "bg-amber-100 text-amber-900 rounded-bl-sm border border-amber-200/50"
+                                                                : "bg-white text-gray-800 rounded-bl-sm border border-sky-100"
+                                                }`}
+                                            >
+                                                <p className="text-[15px] leading-relaxed">
+                                                    {message.content}
+                                                </p>
+                                            </div>
+                                            {/* 감정 아이콘 배지 (펫 메시지만, neutral 제외) */}
+                                            {message.role === "pet" && message.emotion && message.emotion !== "neutral" && (
+                                                <span className="text-[11px] text-gray-400 mt-1 ml-1 flex items-center gap-1">
+                                                    <span>{emotionIcons[message.emotion]}</span>
+                                                    <span>{emotionLabels[message.emotion] || message.emotion}</span>
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         );
                     })}

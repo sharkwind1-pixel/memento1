@@ -24,6 +24,7 @@ import {
     getMediaType,
     generateVideoThumbnail,
 } from "@/lib/storage";
+import { toast } from "sonner";
 import type { PointAction } from "@/types";
 
 // 클라이언트에서 포인트 적립 (Supabase RPC 직접 호출, 실패해도 무시)
@@ -286,6 +287,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                     .single();
 
                 if (error) {
+                    toast.error("등록에 실패했어요. 다시 시도해주세요.");
                     return "";
                 }
 
@@ -305,6 +307,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
 
                 return data.id;
             } catch {
+                toast.error("등록에 실패했어요. 다시 시도해주세요.");
                 return "";
             }
         },
@@ -313,8 +316,13 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
 
     const updatePet = useCallback(
         async (id: string, data: Partial<Pet>) => {
-            // Supabase 업데이트 시도 (실패해도 로컬 상태는 업데이트)
             if (user) {
+                // 낙관적 업데이트: 먼저 로컬 상태 반영
+                const previousPets = pets;
+                setPets((prev) =>
+                    prev.map((pet) => (pet.id === id ? { ...pet, ...data } : pet))
+                );
+
                 try {
                     const updateData: Record<string, unknown> = {};
                     if (data.name !== undefined) updateData.name = data.name;
@@ -356,17 +364,20 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                     if (data.memorableMemory !== undefined)
                         updateData.memorable_memory = data.memorableMemory || null;
 
-                    await supabase.from("pets").update(updateData).eq("id", id);
+                    const { error } = await supabase.from("pets").update(updateData).eq("id", id);
+                    if (error) throw error;
                 } catch {
-                    // Supabase 업데이트 실패 (무시 - 로컬 상태는 업데이트됨)
+                    // Supabase 업데이트 실패 - 로컬 상태 롤백
+                    setPets(previousPets);
+                    toast.error("정보 수정에 실패했어요. 다시 시도해주세요.");
                 }
+            } else {
+                setPets((prev) =>
+                    prev.map((pet) => (pet.id === id ? { ...pet, ...data } : pet))
+                );
             }
-
-            setPets((prev) =>
-                prev.map((pet) => (pet.id === id ? { ...pet, ...data } : pet))
-            );
         },
-        [user]
+        [user, pets]
     );
 
     const deletePet = useCallback(
@@ -383,9 +394,11 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                         }
                     }
 
-                    await supabase.from("pets").delete().eq("id", id);
+                    const { error } = await supabase.from("pets").delete().eq("id", id);
+                    if (error) throw error;
                 } catch {
-                    // Supabase 삭제 실패 (무시)
+                    toast.error("삭제에 실패했어요. 다시 시도해주세요.");
+                    return;
                 }
             }
 
@@ -480,8 +493,16 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                         }
                     }
                 } catch {
-                    // 업로드 실패 (무시 - 다음 파일 계속)
+                    // 업로드 실패 - 다음 파일 계속 시도
                 }
+            }
+
+            // 일부 또는 전체 업로드 실패 시 사용자에게 알림
+            const failedCount = files.length - newPhotos.length;
+            if (failedCount > 0 && newPhotos.length > 0) {
+                toast.error(`${failedCount}개 파일 업로드에 실패했어요.`);
+            } else if (failedCount > 0 && newPhotos.length === 0) {
+                toast.error("업로드에 실패했어요. 다시 시도해주세요.");
             }
 
             // 상태 업데이트
@@ -508,34 +529,58 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
     const updatePhoto = useCallback(
         async (petId: string, photoId: string, data: Partial<PetPhoto>) => {
             if (user) {
-                const updateData: Record<string, unknown> = {};
-                if (data.caption !== undefined) updateData.caption = data.caption;
-                if (data.date !== undefined) updateData.date = data.date;
-                if (data.cropPosition !== undefined)
-                    updateData.crop_position = data.cropPosition;
+                // 낙관적 업데이트: 먼저 로컬 상태 반영
+                const previousPets = pets;
+                setPets((prev) =>
+                    prev.map((pet) =>
+                        pet.id === petId
+                            ? {
+                                  ...pet,
+                                  photos: pet.photos.map((photo) =>
+                                      photo.id === photoId
+                                          ? { ...photo, ...data }
+                                          : photo
+                                  ),
+                              }
+                            : pet
+                    )
+                );
 
-                await supabase
-                    .from("pet_media")
-                    .update(updateData)
-                    .eq("id", photoId);
+                try {
+                    const updateData: Record<string, unknown> = {};
+                    if (data.caption !== undefined) updateData.caption = data.caption;
+                    if (data.date !== undefined) updateData.date = data.date;
+                    if (data.cropPosition !== undefined)
+                        updateData.crop_position = data.cropPosition;
+
+                    const { error } = await supabase
+                        .from("pet_media")
+                        .update(updateData)
+                        .eq("id", photoId);
+                    if (error) throw error;
+                } catch {
+                    // Supabase 업데이트 실패 - 로컬 상태 롤백
+                    setPets(previousPets);
+                    toast.error("사진 정보 수정에 실패했어요. 다시 시도해주세요.");
+                }
+            } else {
+                setPets((prev) =>
+                    prev.map((pet) =>
+                        pet.id === petId
+                            ? {
+                                  ...pet,
+                                  photos: pet.photos.map((photo) =>
+                                      photo.id === photoId
+                                          ? { ...photo, ...data }
+                                          : photo
+                                  ),
+                              }
+                            : pet
+                    )
+                );
             }
-
-            setPets((prev) =>
-                prev.map((pet) =>
-                    pet.id === petId
-                        ? {
-                              ...pet,
-                              photos: pet.photos.map((photo) =>
-                                  photo.id === photoId
-                                      ? { ...photo, ...data }
-                                      : photo
-                              ),
-                          }
-                        : pet
-                )
-            );
         },
-        [user]
+        [user, pets]
     );
 
     const deletePhoto = useCallback(
@@ -543,11 +588,19 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
             const pet = pets.find((p) => p.id === petId);
             const photo = pet?.photos.find((p) => p.id === photoId);
 
-            if (user && photo?.storagePath) {
-                // Storage에서 파일 삭제
-                await deleteMedia(photo.storagePath);
-                // DB에서 레코드 삭제
-                await supabase.from("pet_media").delete().eq("id", photoId);
+            if (user) {
+                try {
+                    if (photo?.storagePath) {
+                        // Storage에서 파일 삭제
+                        await deleteMedia(photo.storagePath);
+                    }
+                    // DB에서 레코드 삭제
+                    const { error } = await supabase.from("pet_media").delete().eq("id", photoId);
+                    if (error) throw error;
+                } catch {
+                    toast.error("사진 삭제에 실패했어요. 다시 시도해주세요.");
+                    return;
+                }
             }
 
             setPets((prev) =>
@@ -571,15 +624,21 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
             const pet = pets.find((p) => p.id === petId);
 
             if (user && pet) {
-                // Storage에서 파일들 삭제
-                for (const photoId of photoIds) {
-                    const photo = pet.photos.find((p) => p.id === photoId);
-                    if (photo?.storagePath) {
-                        await deleteMedia(photo.storagePath);
+                try {
+                    // Storage에서 파일들 삭제
+                    for (const photoId of photoIds) {
+                        const photo = pet.photos.find((p) => p.id === photoId);
+                        if (photo?.storagePath) {
+                            await deleteMedia(photo.storagePath);
+                        }
                     }
+                    // DB에서 레코드들 삭제
+                    const { error } = await supabase.from("pet_media").delete().in("id", photoIds);
+                    if (error) throw error;
+                } catch {
+                    toast.error("사진 삭제에 실패했어요. 다시 시도해주세요.");
+                    return;
                 }
-                // DB에서 레코드들 삭제
-                await supabase.from("pet_media").delete().in("id", photoIds);
             }
 
             setPets((prev) =>
@@ -658,6 +717,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                     .single();
 
                 if (error || !data) {
+                    toast.error("일기 저장에 실패했어요. 다시 시도해주세요.");
                     return null;
                 }
 
@@ -679,6 +739,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
 
                 return newEntry;
             } catch {
+                toast.error("일기 저장에 실패했어요. 다시 시도해주세요.");
                 return null;
             }
         },
@@ -689,34 +750,49 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
         async (entryId: string, data: Partial<TimelineEntry>) => {
             if (!user) return;
 
-            const updateData: Record<string, unknown> = {};
-            if (data.date !== undefined) updateData.date = data.date;
-            if (data.title !== undefined) updateData.title = data.title;
-            if (data.content !== undefined)
-                updateData.content = data.content || null;
-            if (data.mood !== undefined) updateData.mood = data.mood || null;
-            if (data.mediaIds !== undefined)
-                updateData.media_ids = data.mediaIds || null;
-
-            await supabase
-                .from("timeline_entries")
-                .update(updateData)
-                .eq("id", entryId);
-
+            // 낙관적 업데이트: 먼저 로컬 상태 반영
+            const previousTimeline = timeline;
             setTimeline((prev) =>
                 prev.map((entry) =>
                     entry.id === entryId ? { ...entry, ...data } : entry
                 )
             );
+
+            try {
+                const updateData: Record<string, unknown> = {};
+                if (data.date !== undefined) updateData.date = data.date;
+                if (data.title !== undefined) updateData.title = data.title;
+                if (data.content !== undefined)
+                    updateData.content = data.content || null;
+                if (data.mood !== undefined) updateData.mood = data.mood || null;
+                if (data.mediaIds !== undefined)
+                    updateData.media_ids = data.mediaIds || null;
+
+                const { error } = await supabase
+                    .from("timeline_entries")
+                    .update(updateData)
+                    .eq("id", entryId);
+                if (error) throw error;
+            } catch {
+                // Supabase 업데이트 실패 - 로컬 상태 롤백
+                setTimeline(previousTimeline);
+                toast.error("일기 수정에 실패했어요. 다시 시도해주세요.");
+            }
         },
-        [user]
+        [user, timeline]
     );
 
     const deleteTimelineEntry = useCallback(
         async (entryId: string) => {
             if (!user) return;
 
-            await supabase.from("timeline_entries").delete().eq("id", entryId);
+            try {
+                const { error } = await supabase.from("timeline_entries").delete().eq("id", entryId);
+                if (error) throw error;
+            } catch {
+                toast.error("일기 삭제에 실패했어요. 다시 시도해주세요.");
+                return;
+            }
 
             setTimeline((prev) => prev.filter((entry) => entry.id !== entryId));
         },
