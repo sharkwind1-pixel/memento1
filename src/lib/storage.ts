@@ -129,6 +129,47 @@ export async function deleteMedia(path: string): Promise<boolean> {
     }
 }
 
+/** 매거진 기사 썸네일 업로드 */
+export async function uploadMagazineImage(
+    file: File,
+    userId: string
+): Promise<UploadResult> {
+    try {
+        const validation = validateFileSize(file, "image");
+        if (!validation.valid) {
+            return { success: false, error: validation.error };
+        }
+
+        const timestamp = Date.now();
+        const randomId = Math.random().toString(36).substring(2, 9);
+        const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+        const path = `magazine/${userId}/${timestamp}-${randomId}.${ext}`;
+
+        const { data, error } = await supabase.storage
+            .from("pet-media")
+            .upload(path, file, {
+                cacheControl: "3600",
+                upsert: false,
+            });
+
+        if (error) {
+            return { success: false, error: error.message };
+        }
+
+        const {
+            data: { publicUrl },
+        } = supabase.storage.from("pet-media").getPublicUrl(path);
+
+        return {
+            success: true,
+            url: publicUrl,
+            path: data.path,
+        };
+    } catch {
+        return { success: false, error: "업로드 중 오류가 발생했습니다." };
+    }
+}
+
 // Base64를 File로 변환 (기존 localStorage 데이터 마이그레이션용)
 export function base64ToFile(
     base64: string,

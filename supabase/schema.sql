@@ -1570,6 +1570,74 @@ COMMENT ON COLUMN profiles.premium_expires_at IS '프리미엄 만료일 (NULL�
 COMMENT ON COLUMN profiles.premium_plan IS '구독 플랜: monthly, yearly, lifetime, admin_grant';
 
 -- ============================================
+-- 25. MAGAZINE_ARTICLES (펫매거진 기사)
+-- ============================================
+CREATE TABLE IF NOT EXISTS magazine_articles (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+
+    category TEXT NOT NULL,
+    title TEXT NOT NULL,
+    summary TEXT NOT NULL,
+    content TEXT,
+    author TEXT NOT NULL,
+    author_role TEXT,
+
+    image_url TEXT,
+    image_storage_path TEXT,
+
+    read_time TEXT,
+    badge TEXT,
+    tags TEXT[] DEFAULT '{}',
+
+    views INTEGER DEFAULT 0,
+    likes INTEGER DEFAULT 0,
+
+    status TEXT DEFAULT 'draft' CHECK (status IN ('draft', 'published')),
+    published_at TIMESTAMPTZ,
+
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_magazine_articles_status ON magazine_articles(status);
+CREATE INDEX IF NOT EXISTS idx_magazine_articles_category ON magazine_articles(category);
+CREATE INDEX IF NOT EXISTS idx_magazine_articles_created_at ON magazine_articles(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_magazine_articles_published_at ON magazine_articles(published_at DESC);
+
+CREATE TRIGGER update_magazine_articles_updated_at
+    BEFORE UPDATE ON magazine_articles
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+ALTER TABLE magazine_articles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view published articles" ON magazine_articles
+    FOR SELECT USING (status = 'published');
+
+CREATE POLICY "Admins can view all articles" ON magazine_articles
+    FOR SELECT USING (
+        EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
+    );
+
+CREATE POLICY "Admins can insert articles" ON magazine_articles
+    FOR INSERT WITH CHECK (
+        EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
+    );
+
+CREATE POLICY "Admins can update articles" ON magazine_articles
+    FOR UPDATE USING (
+        EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
+    );
+
+CREATE POLICY "Admins can delete articles" ON magazine_articles
+    FOR DELETE USING (
+        EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
+    );
+
+COMMENT ON TABLE magazine_articles IS '펫매거진 기사 - 관리자가 작성/관리';
+
+-- ============================================
 -- 초기 관리자 설정 (필요시)
 -- ============================================
 -- UPDATE profiles SET is_admin = true WHERE email = 'your-email@example.com';

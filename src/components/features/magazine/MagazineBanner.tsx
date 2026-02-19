@@ -1,12 +1,13 @@
 /**
  * 매거진 배너 - 데스크톱 헤더용 자동 회전 배너
  * 펫매거진 글 제목이 4초 간격으로 세로 슬라이드 전환
+ * DB에서 발행된 기사를 불러오고, 없으면 목업 데이터 사용
  */
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { BookOpen } from "lucide-react";
-import { MOCK_ARTICLES, getBadgeStyle } from "@/data/magazineArticles";
+import { MOCK_ARTICLES, getBadgeStyle, dbArticleToMagazineArticle, type MagazineArticle } from "@/data/magazineArticles";
 
 interface MagazineBannerProps {
     onNavigateToMagazine: () => void;
@@ -15,16 +16,39 @@ interface MagazineBannerProps {
 export default function MagazineBanner({ onNavigateToMagazine }: MagazineBannerProps) {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
+    const [articles, setArticles] = useState<MagazineArticle[]>(MOCK_ARTICLES);
+
+    // DB에서 발행된 기사 불러오기
+    useEffect(() => {
+        async function fetchArticles() {
+            try {
+                const res = await fetch("/api/magazine?limit=10");
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.articles && data.articles.length > 0) {
+                    setArticles(data.articles.map(dbArticleToMagazineArticle));
+                }
+            } catch {
+                // DB 조회 실패시 목업 유지
+            }
+        }
+        fetchArticles();
+    }, []);
 
     const nextSlide = useCallback(() => {
-        setCurrentIndex((prev) => (prev + 1) % MOCK_ARTICLES.length);
-    }, []);
+        setCurrentIndex((prev) => (prev + 1) % articles.length);
+    }, [articles.length]);
 
     useEffect(() => {
         if (isPaused) return;
         const interval = setInterval(nextSlide, 4000);
         return () => clearInterval(interval);
     }, [isPaused, nextSlide]);
+
+    // articles가 바뀌면 index 리셋
+    useEffect(() => {
+        setCurrentIndex(0);
+    }, [articles]);
 
     return (
         <div
@@ -43,7 +67,7 @@ export default function MagazineBanner({ onNavigateToMagazine }: MagazineBannerP
                         className="transition-transform duration-500 ease-in-out"
                         style={{ transform: `translateY(-${currentIndex * 24}px)` }}
                     >
-                        {MOCK_ARTICLES.map((article) => (
+                        {articles.map((article) => (
                             <div key={article.id} className="h-6 flex items-center gap-2">
                                 <span
                                     className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold flex-shrink-0 ${getBadgeStyle(article.badge)}`}
@@ -59,7 +83,7 @@ export default function MagazineBanner({ onNavigateToMagazine }: MagazineBannerP
                 </div>
 
                 <div className="flex gap-1 flex-shrink-0">
-                    {MOCK_ARTICLES.map((_, i) => (
+                    {articles.map((_, i) => (
                         <div
                             key={i}
                             className={`w-1 h-1 rounded-full transition-colors duration-300 ${

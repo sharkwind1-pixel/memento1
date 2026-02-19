@@ -29,7 +29,8 @@ export type AdminTab =
     | "posts"
     | "reports"
     | "inquiries"
-    | "withdrawals";
+    | "withdrawals"
+    | "magazine";
 
 // ============================================================================
 // 탈퇴 관련 타입
@@ -244,3 +245,31 @@ export const REPORT_TARGET_LABELS: Record<ReportTargetType, string> = {
     user: "회원",
     pet_memorial: "추모공간",
 };
+
+// ============================================================================
+// 매거진 관련 타입
+// ============================================================================
+
+export type MagazineStatus = "draft" | "published";
+
+export interface MagazineArticleRow {
+    id: string;
+    user_id: string;
+    category: string;
+    title: string;
+    summary: string;
+    content: string | null;
+    author: string;
+    author_role: string | null;
+    image_url: string | null;
+    image_storage_path: string | null;
+    read_time: string | null;
+    badge: string | null;
+    tags: string[];
+    views: number;
+    likes: number;
+    status: MagazineStatus;
+    published_at: string | null;
+    created_at: string;
+    updated_at: string;
+}
