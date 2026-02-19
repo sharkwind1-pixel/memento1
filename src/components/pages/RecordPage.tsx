@@ -398,7 +398,7 @@ function TimelineSection({ petId, petName }: { petId: string; petName: string })
 
 /** 메인 RecordPage */
 export default function RecordPage({ setSelectedTab }: RecordPageProps) {
-    const { user, loading: authLoading, signOut, updateProfile, isPremiumUser, points, userPetType } = useAuth();
+    const { user, signOut, updateProfile, isPremiumUser, points, userPetType } = useAuth();
     const {
         pets,
         selectedPetId,
@@ -526,31 +526,23 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
         }
     };
 
-    const [isUploading, setIsUploading] = useState(false);
-    const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
-
     const handleMediaUpload = async (
         files: File[],
         captions: string[],
-        cropPositions: { x: number; y: number; scale: number }[],
+        _cropPositions: { x: number; y: number; scale: number }[],
     ) => {
         if (!selectedPet) return;
 
-        setIsUploading(true);
         try {
             await addMedia(
                 selectedPet.id,
                 files,
                 captions,
                 files.map(() => new Date().toISOString().split("T")[0]),
-                (current, total) => setUploadProgress({ current, total }),
             );
             toast.success("사진이 업로드되었습니다");
         } catch {
             toast.error("업로드 중 오류가 발생했습니다");
-        } finally {
-            setIsUploading(false);
-            setUploadProgress({ current: 0, total: 0 });
         }
     };
 

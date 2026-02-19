@@ -48,7 +48,6 @@ import {
     PawPrint,
     ChevronLeft,
     ChevronRight,
-    LogIn,
     Plus,
     Image as ImageIcon,
     Star,

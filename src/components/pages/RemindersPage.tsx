@@ -21,7 +21,6 @@ import {
 import {
     Bell,
     Plus,
-    Clock,
     PawPrint,
     Footprints,
     Pill,
