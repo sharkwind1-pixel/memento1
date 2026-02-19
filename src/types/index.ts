@@ -52,6 +52,25 @@ export function getLegacyTabRedirect(tab: TabType): { main: MainCategory; sub?: 
 export { ADMIN_EMAILS, isAdmin } from "@/config/constants";
 
 // ============================================
+// 1-1. 온보딩 & 개인화 타입
+// ============================================
+
+/** 온보딩 회원 유형 */
+export type OnboardingUserType = "planning" | "current" | "memorial";
+
+/** 온보딩 데이터 (profiles.onboarding_data JSONB) */
+export interface OnboardingData {
+    userType: OnboardingUserType | null;
+    petType: "dog" | "cat" | "other" | null;
+    adoptionTiming?: "undecided" | "1month" | "3months" | "6months" | null;
+    previousExperience?: "first" | "experienced" | null;
+    adoptionRoute?: "breeder" | "friend" | "shelter" | "undecided" | null;
+    petName?: string;
+    togetherPeriod?: "under1" | "1to5" | "5to10" | "over10" | null;
+    passedPeriod?: "under1month" | "1to6months" | "6to12months" | "over1year" | null;
+}
+
+// ============================================
 // 2. 반려동물 관련 타입
 // ============================================
 

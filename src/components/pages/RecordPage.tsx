@@ -416,7 +416,7 @@ function TimelineSection({ petId, petName }: { petId: string; petName: string })
 
 // 메인
 export default function RecordPage({ setSelectedTab }: RecordPageProps) {
-    const { user, loading: authLoading, signOut, updateProfile, isPremiumUser, points } = useAuth();
+    const { user, loading: authLoading, signOut, updateProfile, isPremiumUser, points, userPetType } = useAuth();
     const {
         pets,
         selectedPetId,
@@ -767,7 +767,7 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                                 {/* 닉네임 */}
                                 <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
                                     <div className="flex items-center gap-3">
-                                        <LevelBadge points={points} size="2xl" showTooltip />
+                                        <LevelBadge points={points} petType={userPetType} size="2xl" showTooltip />
                                         <div>
                                             <p className="text-sm text-gray-500 dark:text-gray-400">닉네임</p>
                                             {isEditingNickname ? (

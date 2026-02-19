@@ -98,7 +98,7 @@ export default function Layout({
     // ========================================================================
     // Context & State
     // ========================================================================
-    const { user, loading, signOut, isAdminUser, points, pointsLoaded } = useAuth();
+    const { user, loading, signOut, isAdminUser, points, pointsLoaded, userPetType } = useAuth();
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(false);
@@ -266,6 +266,7 @@ export default function Layout({
                                         <span className={pointsLoaded ? "opacity-100" : "opacity-0"} style={{ transition: "opacity 0.15s" }}>
                                             <LevelBadge
                                                 points={points}
+                                                petType={userPetType}
                                                 size="md"
                                                 showTooltip={false}
                                             />
