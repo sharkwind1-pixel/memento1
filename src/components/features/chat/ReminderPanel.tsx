@@ -650,22 +650,7 @@ export default function ReminderPanel({
                 )}
             </div>
 
-            {/* 슬라이드 업 애니메이션 */}
-            <style jsx>{`
-                @keyframes slideUp {
-                    from {
-                        transform: translateY(100%);
-                        opacity: 0.8;
-                    }
-                    to {
-                        transform: translateY(0);
-                        opacity: 1;
-                    }
-                }
-                .animate-slide-up {
-                    animation: slideUp 0.3s ease-out forwards;
-                }
-            `}</style>
+            {/* slideUp 애니메이션: globals.css */}
         </div>
     );
 }

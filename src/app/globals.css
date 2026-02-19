@@ -216,6 +216,22 @@ label {
     animation: chipSlideIn 0.3s ease-out forwards;
 }
 
+/* Slide up animation for bottom sheet modals */
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+        opacity: 0.8;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.animate-slide-up {
+    animation: slideUp 0.3s ease-out forwards;
+}
+
 /* Textarea focus glow for daily mode */
 .textarea-glow-sky:focus-within {
     box-shadow: 0 0 0 2px rgba(5, 178, 220, 0.2), 0 0 12px rgba(5, 178, 220, 0.1);
