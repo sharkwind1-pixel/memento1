@@ -322,6 +322,7 @@ export default function MagazinePage({ setSelectedTab }: MagazinePageProps) {
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
+                                                    aria-label="북마크"
                                                     className="h-8 w-8 p-0 rounded-lg"
                                                 >
                                                     <Bookmark className="w-4 h-4" />
@@ -329,6 +330,7 @@ export default function MagazinePage({ setSelectedTab }: MagazinePageProps) {
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
+                                                    aria-label="공유"
                                                     className="h-8 w-8 p-0 rounded-lg"
                                                 >
                                                     <Share2 className="w-4 h-4" />

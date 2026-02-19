@@ -14,6 +14,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { API } from "@/config/apiEndpoints";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -235,7 +236,7 @@ export default function LostPage({ setSelectedTab }: LostPageProps) {
             if (selectedRegion !== "전체") params.set("region", selectedRegion);
             if (searchQuery) params.set("search", searchQuery);
 
-            const res = await fetch(`/api/lost-pets?${params.toString()}`);
+            const res = await fetch(`${API.LOST_PETS}?${params.toString()}`);
             if (!res.ok) throw new Error("게시글 목록 조회 실패");
 
             const data = await res.json();
@@ -254,8 +255,8 @@ export default function LostPage({ setSelectedTab }: LostPageProps) {
     const fetchStats = useCallback(async () => {
         try {
             const [lostRes, foundRes] = await Promise.all([
-                fetch("/api/lost-pets?type=lost&size=1"),
-                fetch("/api/lost-pets?type=found&size=1"),
+                fetch(`${API.LOST_PETS}?type=lost&size=1`),
+                fetch(`${API.LOST_PETS}?type=found&size=1`),
             ]);
             if (lostRes.ok) {
                 const d = await lostRes.json();
@@ -278,11 +279,27 @@ export default function LostPage({ setSelectedTab }: LostPageProps) {
         fetchStats();
     }, [fetchStats]);
 
+    // 검색 debounce
+    const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
     // 검색 실행
     const handleSearch = () => {
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
         setSearchQuery(searchInput.trim());
         setPage(1);
     };
+
+    // 검색어 debounce: 타이핑 후 300ms 후 자동 검색
+    useEffect(() => {
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = setTimeout(() => {
+            setSearchQuery(searchInput.trim());
+            setPage(1);
+        }, 300);
+        return () => {
+            if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+        };
+    }, [searchInput]);
 
     // 필터 변경 시 페이지 리셋
     useEffect(() => {
@@ -298,13 +315,13 @@ export default function LostPage({ setSelectedTab }: LostPageProps) {
         setShowDetailModal(true);
         setDetailLoading(true);
         try {
-            const res = await fetch(`/api/lost-pets/${post.id}`);
+            const res = await fetch(API.LOST_PET_DETAIL(post.id));
             if (res.ok) {
                 const data = await res.json();
                 setSelectedPost(data.post);
             }
         } catch {
-            // 상세 조회 실패 시 목록 데이터 사용
+            toast.error("상세 정보를 불러오지 못했습니다. 기본 정보로 표시합니다.");
         } finally {
             setDetailLoading(false);
         }
@@ -370,7 +387,7 @@ export default function LostPage({ setSelectedTab }: LostPageProps) {
                 }
             }
 
-            const res = await fetch("/api/lost-pets", {
+            const res = await fetch(API.LOST_PETS, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -418,7 +435,7 @@ export default function LostPage({ setSelectedTab }: LostPageProps) {
         if (!confirm("정말 삭제하시겠습니까?")) return;
 
         try {
-            const res = await fetch(`/api/lost-pets/${postId}`, { method: "DELETE" });
+            const res = await fetch(API.LOST_PET_DETAIL(postId), { method: "DELETE" });
             if (!res.ok) {
                 const err = await res.json();
                 throw new Error(err.error || "삭제 실패");
@@ -441,7 +458,7 @@ export default function LostPage({ setSelectedTab }: LostPageProps) {
         if (!confirm("찾았어요! 해결 완료로 표시하시겠습니까?")) return;
 
         try {
-            const res = await fetch(`/api/lost-pets/${postId}`, {
+            const res = await fetch(API.LOST_PET_DETAIL(postId), {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ status: "resolved" }),
@@ -683,6 +700,7 @@ export default function LostPage({ setSelectedTab }: LostPageProps) {
                                     size="sm"
                                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                                     disabled={page <= 1}
+                                    aria-label="이전 페이지"
                                     className="rounded-xl dark:border-gray-600"
                                 >
                                     <ChevronLeft className="w-4 h-4" />
@@ -719,6 +737,7 @@ export default function LostPage({ setSelectedTab }: LostPageProps) {
                                     size="sm"
                                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                                     disabled={page >= totalPages}
+                                    aria-label="다음 페이지"
                                     className="rounded-xl dark:border-gray-600"
                                 >
                                     <ChevronRight className="w-4 h-4" />
@@ -884,10 +903,16 @@ function DetailModal({
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div
+                className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="lost-detail-title"
+            >
                 {/* 닫기 */}
                 <button
                     onClick={onClose}
+                    aria-label="닫기"
                     className="absolute top-4 right-4 z-10 w-8 h-8 bg-black/20 hover:bg-black/40 rounded-full flex items-center justify-center text-white transition-colors"
                 >
                     <X className="w-5 h-5" />
@@ -932,7 +957,7 @@ function DetailModal({
 
                     {/* 제목 & 사례금 */}
                     <div>
-                        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-1">
+                        <h2 id="lost-detail-title" className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-1">
                             {post.title}
                         </h2>
                         {post.reward && (
@@ -1085,17 +1110,22 @@ function CreateModal({
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div
+                className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="lost-create-title"
+            >
                 {/* 헤더 */}
                 <div className={`sticky top-0 z-10 px-6 py-4 rounded-t-3xl flex items-center justify-between ${
                     form.type === "lost"
                         ? "bg-gradient-to-r from-orange-500 to-red-500"
                         : "bg-gradient-to-r from-green-500 to-emerald-500"
                 }`}>
-                    <h2 className="text-lg font-bold text-white">
+                    <h2 id="lost-create-title" className="text-lg font-bold text-white">
                         {form.type === "lost" ? "실종 신고" : "발견 신고"}
                     </h2>
-                    <button onClick={onClose} className="text-white/80 hover:text-white">
+                    <button onClick={onClose} aria-label="닫기" className="text-white/80 hover:text-white">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -1310,6 +1340,7 @@ function CreateModal({
                                 />
                                 <button
                                     onClick={onRemoveImage}
+                                    aria-label="이미지 제거"
                                     className="absolute top-2 right-2 w-7 h-7 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors"
                                 >
                                     <X className="w-4 h-4" />

@@ -203,6 +203,9 @@ export default function LocalPage({ setSelectedTab }: LocalPageProps) {
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [searchInput, setSearchInput] = useState<string>("");
 
+    // 검색 debounce (300ms)
+    const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
     // 모달 상태
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showDetailModal, setShowDetailModal] = useState(false);
@@ -260,9 +263,22 @@ export default function LocalPage({ setSelectedTab }: LocalPageProps) {
     }, [selectedCategory, selectedRegion, selectedDistrict]);
 
     const handleSearch = () => {
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
         setSearchQuery(searchInput.trim());
         setPage(1);
     };
+
+    // 검색어 debounce: 타이핑 후 300ms 후 자동 검색
+    useEffect(() => {
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = setTimeout(() => {
+            setSearchQuery(searchInput.trim());
+            setPage(1);
+        }, 300);
+        return () => {
+            if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+        };
+    }, [searchInput]);
 
     // ==========================================
     // 게시글 상세 조회
@@ -279,7 +295,8 @@ export default function LocalPage({ setSelectedTab }: LocalPageProps) {
                 setSelectedPost(data.post);
             }
         } catch {
-            // 상세 조회 실패 시 목록 데이터 사용
+            // 상세 조회 실패 시 목록 데이터로 대체 표시 + 사용자 알림
+            toast.error("상세 정보를 불러오지 못했습니다. 기본 정보로 표시합니다.");
         } finally {
             setDetailLoading(false);
         }
@@ -483,6 +500,7 @@ export default function LocalPage({ setSelectedTab }: LocalPageProps) {
                                         setSelectedRegion("");
                                         setSelectedDistrict("");
                                     }}
+                                    aria-label="지역 선택 초기화"
                                     className="rounded-xl dark:border-gray-600 px-3"
                                 >
                                     <X className="w-4 h-4" />
@@ -665,6 +683,7 @@ export default function LocalPage({ setSelectedTab }: LocalPageProps) {
                                     size="sm"
                                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                                     disabled={page <= 1}
+                                    aria-label="이전 페이지"
                                     className="rounded-xl dark:border-gray-600"
                                 >
                                     <ChevronLeft className="w-4 h-4" />
@@ -696,6 +715,7 @@ export default function LocalPage({ setSelectedTab }: LocalPageProps) {
                                     size="sm"
                                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                                     disabled={page >= totalPages}
+                                    aria-label="다음 페이지"
                                     className="rounded-xl dark:border-gray-600"
                                 >
                                     <ChevronRight className="w-4 h-4" />
@@ -754,10 +774,16 @@ function DetailModal({
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div
+                className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="local-detail-title"
+            >
                 {/* 닫기 */}
                 <button
                     onClick={onClose}
+                    aria-label="닫기"
                     className="absolute top-4 right-4 z-10 w-8 h-8 bg-black/20 hover:bg-black/40 dark:bg-white/20 dark:hover:bg-white/40 rounded-full flex items-center justify-center text-white dark:text-gray-200 transition-colors"
                 >
                     <X className="w-5 h-5" />
@@ -794,7 +820,10 @@ function DetailModal({
                     </div>
 
                     {/* 제목 */}
-                    <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">
+                    <h2
+                        id="local-detail-title"
+                        className="text-xl font-bold text-gray-800 dark:text-gray-100"
+                    >
                         {post.title}
                     </h2>
 
@@ -875,11 +904,16 @@ function CreateModal({
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div
+                className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="local-create-title"
+            >
                 {/* 헤더 */}
                 <div className="sticky top-0 z-10 px-6 py-4 rounded-t-3xl flex items-center justify-between bg-gradient-to-r from-blue-500 to-sky-500">
-                    <h2 className="text-lg font-bold text-white">글쓰기</h2>
-                    <button onClick={onClose} className="text-white/80 hover:text-white">
+                    <h2 id="local-create-title" className="text-lg font-bold text-white">글쓰기</h2>
+                    <button onClick={onClose} aria-label="닫기" className="text-white/80 hover:text-white">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -998,6 +1032,7 @@ function CreateModal({
                                 <img src={imagePreview} alt="미리보기" className="w-full h-48 object-cover" />
                                 <button
                                     onClick={onRemoveImage}
+                                    aria-label="이미지 제거"
                                     className="absolute top-2 right-2 w-7 h-7 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors"
                                 >
                                     <X className="w-4 h-4" />
