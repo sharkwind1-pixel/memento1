@@ -25,6 +25,12 @@ import {
     HelpCircle,
     Lightbulb,
     Shield,
+    Moon,
+    Sun,
+    LogIn,
+    LogOut,
+    UserPlus,
+    Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -69,6 +75,13 @@ interface SidebarProps {
     isMobile?: boolean;
     onOpenInquiry?: () => void;
     onOpenSuggestion?: () => void;
+    isDarkMode?: boolean;
+    onToggleDarkMode?: () => void;
+    onOpenLogin?: () => void;
+    onOpenSignup?: () => void;
+    onSignOut?: () => void;
+    onOpenAccountSettings?: () => void;
+    authLoading?: boolean;
 }
 
 export default function Sidebar({
@@ -81,6 +94,13 @@ export default function Sidebar({
     isMobile = false,
     onOpenInquiry,
     onOpenSuggestion,
+    isDarkMode,
+    onToggleDarkMode,
+    onOpenLogin,
+    onOpenSignup,
+    onSignOut,
+    onOpenAccountSettings,
+    authLoading,
 }: SidebarProps) {
     const { user, isAdminUser } = useAuth();
     const [expandedCategory, setExpandedCategory] = useState<MainCategory | null>(
@@ -157,6 +177,21 @@ export default function Sidebar({
                 </div>
             )}
 
+            {/* 다크모드 토글 - 데스크톱 사이드바 전용 */}
+            {!isMobile && onToggleDarkMode && (
+                <div className="flex-shrink-0 px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                    <button
+                        onClick={onToggleDarkMode}
+                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all text-gray-700 dark:text-gray-300"
+                    >
+                        <div className="flex items-center gap-3">
+                            {isDarkMode ? <Sun className="w-5 h-5 text-amber-500" /> : <Moon className="w-5 h-5 text-gray-500" />}
+                            <span className="text-sm">{isDarkMode ? "라이트 모드" : "다크 모드"}</span>
+                        </div>
+                    </button>
+                </div>
+            )}
+
             {/* 네비게이션 목록 - 스크롤 영역 */}
             <nav className="flex-1 min-h-0 p-4 space-y-1 overflow-y-auto">
                 {MAIN_CATEGORIES.map((category) => (
@@ -227,6 +262,55 @@ export default function Sidebar({
                     </button>
                 )}
             </nav>
+
+            {/* 인증 영역 - 데스크톱 사이드바 전용 */}
+            {!isMobile && (onOpenLogin || onSignOut) && (
+                <div className="flex-shrink-0 px-3 py-3 border-t border-gray-200 dark:border-gray-700">
+                    {authLoading ? (
+                        <div className="w-full h-10 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-xl" />
+                    ) : user ? (
+                        <div className="space-y-1">
+                            <div className="px-3 py-2">
+                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                    {user.user_metadata?.nickname || user.email?.split("@")[0]}
+                                </p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
+                            </div>
+                            <button
+                                onClick={onOpenAccountSettings}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+                            >
+                                <Settings className="w-4 h-4" />
+                                <span>내 정보</span>
+                            </button>
+                            <button
+                                onClick={onSignOut}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                            >
+                                <LogOut className="w-4 h-4" />
+                                <span>로그아웃</span>
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="space-y-2">
+                            <button
+                                onClick={onOpenLogin}
+                                className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-[#05B2DC] text-[#05B2DC] hover:bg-[#E0F7FF] transition-all text-sm font-medium"
+                            >
+                                <LogIn className="w-4 h-4" />
+                                로그인
+                            </button>
+                            <button
+                                onClick={onOpenSignup}
+                                className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white hover:opacity-90 transition-all text-sm font-medium"
+                            >
+                                <UserPlus className="w-4 h-4" />
+                                회원가입
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* 하단 링크 - 항상 고정 */}
             <div className="flex-shrink-0 p-3 border-t border-gray-200 dark:border-gray-700 space-y-1 bg-white dark:bg-gray-900">

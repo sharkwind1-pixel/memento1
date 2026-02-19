@@ -37,6 +37,7 @@ import AccountSettingsModal from "@/components/Auth/AccountSettingsModal";
 import Sidebar from "@/components/common/Sidebar";
 import SupportModal from "@/components/features/support/SupportModal";
 import LevelBadge from "@/components/features/points/LevelBadge";
+import MagazineBanner from "@/components/features/magazine/MagazineBanner";
 import {
     Home,
     Users,
@@ -51,7 +52,6 @@ import {
     User,
     ChevronDown,
     UserPlus,
-    Shield,
     Settings,
 } from "lucide-react";
 
@@ -70,27 +70,6 @@ interface LayoutProps {
 // ============================================================================
 // 상수 정의
 // ============================================================================
-
-/** 메인 카테고리 (5개) - 데스크탑 상단 네비게이션 */
-const MAIN_TABS: {
-    id: MainCategory;
-    label: string;
-    icon: React.ElementType;
-}[] = [
-    { id: "home", label: "홈", icon: Home },
-    { id: "record", label: "우리의 기록", icon: Camera },
-    { id: "community", label: "커뮤니티", icon: Users },
-    { id: "ai-chat", label: "AI 펫톡", icon: MessageCircle },
-    { id: "magazine", label: "펫매거진", icon: BookOpen },
-];
-
-/** 관리자 탭 (별도) - 관리자 권한 있는 사용자만 표시 */
-const ADMIN_TAB = {
-    id: "admin" as TabType,
-    label: "관리자",
-    icon: Shield,
-    adminOnly: true,
-};
 
 /** 하단 네비게이션용 탭 - 홈이 가운데 배치 (UX 최적화) */
 const BOTTOM_NAV_TABS: {
@@ -245,52 +224,8 @@ export default function Layout({
                             />
                         </button>
 
-                        {/* 데스크톱 네비게이션 - 5개 메인 카테고리 */}
-                        <nav className="hidden xl:flex items-center gap-1">
-                            {MAIN_TABS.map((tab) => {
-                                const Icon = tab.icon;
-                                const isActive =
-                                    tab.id === "community"
-                                        ? isCommunityRelated(selectedTab)
-                                        : selectedTab === tab.id;
-                                return (
-                                    <button
-                                        key={tab.id}
-                                        data-tutorial-id={tab.id}
-                                        onClick={() => setSelectedTab(tab.id)}
-                                        className={`
-                                            flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap
-                                            ${
-                                                isActive
-                                                    ? "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white shadow-md"
-                                                    : "text-gray-600 dark:text-gray-300 hover:bg-[#E0F7FF] dark:hover:bg-gray-800"
-                                            }
-                                        `}
-                                    >
-                                        <Icon className="w-4 h-4" />
-                                        <span>{tab.label}</span>
-                                    </button>
-                                );
-                            })}
-                            {/* 관리자 탭 (조건부) */}
-                            {isAdminUser && (
-                                <button
-                                    data-tutorial-id="admin"
-                                    onClick={() => setSelectedTab("admin")}
-                                    className={`
-                                        flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap
-                                        ${
-                                            selectedTab === "admin"
-                                                ? "bg-gradient-to-r from-violet-500 to-purple-500 text-white shadow-md"
-                                                : "text-violet-600 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-900/30"
-                                        }
-                                    `}
-                                >
-                                    <Shield className="w-4 h-4" />
-                                    <span>관리자</span>
-                                </button>
-                            )}
-                        </nav>
+                        {/* 데스크톱 매거진 배너 */}
+                        <MagazineBanner onNavigateToMagazine={() => setSelectedTab("magazine")} />
 
                         {/* 우측 버튼들 */}
                         <div className="flex items-center gap-2 sm:gap-2">
@@ -308,7 +243,7 @@ export default function Layout({
                                 variant="ghost"
                                 size="icon"
                                 onClick={toggleDarkMode}
-                                className="rounded-xl"
+                                className="rounded-xl xl:hidden"
                             >
                                 {isDarkMode ? (
                                     <Sun className="w-5 h-5" />
@@ -317,6 +252,7 @@ export default function Layout({
                                 )}
                             </Button>
 
+                            <div className="xl:hidden flex items-center">
                             {loading ? (
                                 <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-full" />
                             ) : user ? (
@@ -415,6 +351,7 @@ export default function Layout({
                                     </Button>
                                 </div>
                             )}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -449,6 +386,13 @@ export default function Layout({
                     isMobile={false}
                     onOpenInquiry={() => setSupportModalType("inquiry")}
                     onOpenSuggestion={() => setSupportModalType("suggestion")}
+                    isDarkMode={isDarkMode}
+                    onToggleDarkMode={toggleDarkMode}
+                    onOpenLogin={openLoginModal}
+                    onOpenSignup={openSignupModal}
+                    onSignOut={handleSignOut}
+                    onOpenAccountSettings={() => setIsAccountSettingsOpen(true)}
+                    authLoading={loading}
                 />
             </aside>
 
