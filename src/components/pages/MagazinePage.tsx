@@ -5,7 +5,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     Card,
     CardContent,
@@ -36,7 +36,7 @@ import {
 
 import Image from "next/image";
 import { TabType } from "@/types";
-import { MOCK_ARTICLES, getBadgeStyle } from "@/data/magazineArticles";
+import { MOCK_ARTICLES, getBadgeStyle, dbArticleToMagazineArticle, type MagazineArticle } from "@/data/magazineArticles";
 
 interface MagazinePageProps {
     setSelectedTab?: (tab: TabType) => void;
@@ -56,8 +56,26 @@ const CATEGORIES = [
 export default function MagazinePage({ setSelectedTab }: MagazinePageProps) {
     const [selectedCategory, setSelectedCategory] = useState<string>("all");
     const [searchQuery, setSearchQuery] = useState<string>("");
+    const [articles, setArticles] = useState<MagazineArticle[]>(MOCK_ARTICLES);
 
-    const filteredArticles = MOCK_ARTICLES.filter((article) => {
+    // DB에서 기사 불러오기 (발행된 기사만)
+    useEffect(() => {
+        async function fetchArticles() {
+            try {
+                const res = await fetch("/api/magazine?limit=50");
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.articles && data.articles.length > 0) {
+                    setArticles(data.articles.map(dbArticleToMagazineArticle));
+                }
+            } catch {
+                // DB 조회 실패시 목업 유지
+            }
+        }
+        fetchArticles();
+    }, []);
+
+    const filteredArticles = articles.filter((article) => {
         if (selectedCategory !== "all" && article.category !== selectedCategory)
             return false;
         if (
@@ -70,7 +88,7 @@ export default function MagazinePage({ setSelectedTab }: MagazinePageProps) {
     });
 
     // 인기 아티클 (상위 3개)
-    const popularArticles = [...MOCK_ARTICLES]
+    const popularArticles = [...articles]
         .sort((a, b) => b.views - a.views)
         .slice(0, 3);
 

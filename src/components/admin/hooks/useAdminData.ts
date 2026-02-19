@@ -21,6 +21,7 @@ import {
     InquiryRow,
     ReportRow,
     WithdrawnUser,
+    MagazineArticleRow,
 } from "../types";
 
 // ============================================================================
@@ -37,6 +38,7 @@ interface UseAdminDataReturn {
     inquiries: InquiryRow[];
     reports: ReportRow[];
     withdrawals: WithdrawnUser[];
+    magazineArticles: MagazineArticleRow[];
 
     // 데이터 로드 함수
     loadDashboardStats: () => Promise<void>;
@@ -46,6 +48,7 @@ interface UseAdminDataReturn {
     loadInquiries: () => Promise<void>;
     loadReports: () => Promise<void>;
     loadWithdrawals: () => Promise<void>;
+    loadMagazineArticles: () => Promise<void>;
 
     // 상태 업데이트 함수 (외부에서 직접 수정 필요시)
     setUsers: React.Dispatch<React.SetStateAction<UserRow[]>>;
@@ -85,6 +88,7 @@ export function useAdminData(): UseAdminDataReturn {
     const [inquiries, setInquiries] = useState<InquiryRow[]>([]);
     const [reports, setReports] = useState<ReportRow[]>([]);
     const [withdrawals, setWithdrawals] = useState<WithdrawnUser[]>([]);
+    const [magazineArticles, setMagazineArticles] = useState<MagazineArticleRow[]>([]);
 
     // ========================================================================
     // 대시보드 통계 로드
@@ -312,6 +316,27 @@ export function useAdminData(): UseAdminDataReturn {
     }, []);
 
     // ========================================================================
+    // 매거진 기사 목록 로드 (관리자용 - 전체 기사)
+    // ========================================================================
+    const loadMagazineArticles = useCallback(async () => {
+        try {
+            const { data, error } = await supabase
+                .from("magazine_articles")
+                .select("*")
+                .order("created_at", { ascending: false })
+                .limit(200);
+
+            if (error) throw error;
+
+            if (data) {
+                setMagazineArticles(data as MagazineArticleRow[]);
+            }
+        } catch (error) {
+            console.error("[useAdminData] 매거진 기사 로드 실패:", error);
+        }
+    }, []);
+
+    // ========================================================================
     // 반환
     // ========================================================================
     return {
@@ -323,6 +348,7 @@ export function useAdminData(): UseAdminDataReturn {
         inquiries,
         reports,
         withdrawals,
+        magazineArticles,
         loadDashboardStats,
         loadChartData,
         loadUsers,
@@ -330,6 +356,7 @@ export function useAdminData(): UseAdminDataReturn {
         loadInquiries,
         loadReports,
         loadWithdrawals,
+        loadMagazineArticles,
         setUsers,
         setInquiries,
         setReports,

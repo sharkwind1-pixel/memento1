@@ -46,6 +46,7 @@ import {
     HelpCircle,
     Ban,
     Shield,
+    BookOpen,
 } from "lucide-react";
 
 // 관리자 컴포넌트
@@ -56,6 +57,7 @@ import {
     AdminInquiriesTab,
     AdminReportsTab,
     AdminWithdrawalsTab,
+    AdminMagazineTab,
     WithdrawalModal,
     type AdminTab,
     type UserRow,
@@ -73,6 +75,7 @@ const TABS: { id: AdminTab; label: string; icon: typeof LayoutDashboard }[] = [
     { id: "inquiries", label: "문의", icon: HelpCircle },
     { id: "reports", label: "신고", icon: Flag },
     { id: "withdrawals", label: "탈퇴 관리", icon: Ban },
+    { id: "magazine", label: "매거진", icon: BookOpen },
 ];
 
 // ============================================================================
@@ -106,6 +109,8 @@ export default function AdminPage() {
         loadInquiries,
         loadReports,
         loadWithdrawals,
+        magazineArticles,
+        loadMagazineArticles,
         setUsers,
     } = useAdminData();
 
@@ -141,8 +146,11 @@ export default function AdminPage() {
             case "withdrawals":
                 loadWithdrawals();
                 break;
+            case "magazine":
+                loadMagazineArticles();
+                break;
         }
-    }, [activeTab, isAdminUser, loadUsers, loadPosts, loadInquiries, loadReports, loadWithdrawals]);
+    }, [activeTab, isAdminUser, loadUsers, loadPosts, loadInquiries, loadReports, loadWithdrawals, loadMagazineArticles]);
 
     // ========================================================================
     // 탈퇴 처리
@@ -297,6 +305,15 @@ export default function AdminPage() {
                         <AdminWithdrawalsTab
                             withdrawals={withdrawals}
                             onRefresh={loadWithdrawals}
+                            userId={user?.id || ""}
+                        />
+                    )}
+
+                    {/* 매거진 관리 탭 */}
+                    {activeTab === "magazine" && (
+                        <AdminMagazineTab
+                            articles={magazineArticles}
+                            onRefresh={loadMagazineArticles}
                             userId={user?.id || ""}
                         />
                     )}
