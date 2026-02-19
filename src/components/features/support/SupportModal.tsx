@@ -119,7 +119,7 @@ export default function SupportModal({
             />
 
             {/* 모달 */}
-            <div className="relative w-full sm:max-w-lg sm:mx-4 bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl shadow-xl overflow-hidden max-h-[calc(100vh-140px)] sm:max-h-[85vh] mb-[80px] sm:mb-0">
+            <div className="relative w-full sm:max-w-lg sm:mx-4 bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl shadow-xl overflow-hidden max-h-[calc(100vh-140px)] sm:max-h-[85vh] mb-[80px] sm:mb-0" role="dialog" aria-modal="true" aria-labelledby="support-title">
                 {/* 헤더 */}
                 <div
                     className={`flex items-center justify-between p-4 border-b dark:border-gray-700 ${
@@ -132,13 +132,14 @@ export default function SupportModal({
                         <ModalIcon
                             className={`w-5 h-5 ${isInquiry ? "text-blue-500" : "text-amber-500"}`}
                         />
-                        <h2 className="text-lg font-bold text-gray-800 dark:text-white">
+                        <h2 id="support-title" className="text-lg font-bold text-gray-800 dark:text-white">
                             {modalTitle}
                         </h2>
                     </div>
                     <button
                         onClick={handleClose}
                         className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+                        aria-label="닫기"
                     >
                         <X className="w-5 h-5" />
                     </button>

@@ -104,10 +104,10 @@ export function WithdrawalModal({
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <Card className="w-full max-w-md">
+            <Card className="w-full max-w-md" role="dialog" aria-modal="true" aria-labelledby="withdrawal-title">
                 {/* 헤더 */}
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle id="withdrawal-title" className="flex items-center gap-2">
                         <Ban className="w-5 h-5 text-red-500" />
                         탈퇴 처리
                     </CardTitle>

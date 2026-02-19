@@ -2,20 +2,19 @@
  * RecordPage.tsx
  * 우리의 기록 - 마이페이지
  * 사진 1:1 비율, 스텝 형식 등록, CRUD 완성
- * - Dynamic import로 모달 컴포넌트 lazy loading
+ * - 서브컴포넌트 분리: PetProfileCard, PetPhotoAlbum, TimelineSection
  */
 
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { usePets, Pet, PetPhoto } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,20 +23,14 @@ import {
     Plus,
     Heart,
     Calendar,
-    Grid3X3,
-    List,
     Star,
     MoreHorizontal,
     Pencil,
     Trash2,
     Crown,
-    LogIn,
     PawPrint,
     X,
     Check,
-    Upload,
-    Image as ImageIcon,
-    Play,
     BookOpen,
     Smile,
     Frown,
@@ -50,7 +43,6 @@ import {
     LogOut,
     Bell,
 } from "lucide-react";
-import { FullPageLoading } from "@/components/ui/PawLoading";
 import LevelBadge from "@/components/features/points/LevelBadge";
 
 import { TabType } from "@/types";
@@ -63,24 +55,11 @@ import PetFormModal from "@/components/features/record/PetFormModal";
 import DeleteConfirmModal from "@/components/features/record/DeleteConfirmModal";
 import PremiumModal from "@/components/modals/PremiumModal";
 import PhotoViewer from "@/components/features/record/PhotoViewer";
+import PetProfileCard from "@/components/features/record/PetProfileCard";
+import PetPhotoAlbum from "@/components/features/record/PetPhotoAlbum";
 
 interface RecordPageProps {
     setSelectedTab?: (tab: TabType) => void;
-}
-
-// 나이 계산
-function calculateAge(birthday: string): string {
-    if (!birthday) return "";
-    const birth = new Date(birthday);
-    const now = new Date();
-    const totalMonths =
-        (now.getFullYear() - birth.getFullYear()) * 12 +
-        (now.getMonth() - birth.getMonth());
-    if (totalMonths < 12) return `${totalMonths}개월`;
-    const remainingMonths = totalMonths % 12;
-    return remainingMonths > 0
-        ? `${Math.floor(totalMonths / 12)}살 ${remainingMonths}개월`
-        : `${Math.floor(totalMonths / 12)}살`;
 }
 
 // 기분 아이콘 매핑
@@ -91,7 +70,7 @@ const moodIcons = {
     sick: { icon: Thermometer, color: "text-red-500", bg: "bg-red-100", label: "아픔" },
 };
 
-// 타임라인 섹션 컴포넌트
+/** 타임라인 섹션 컴포넌트 */
 function TimelineSection({ petId, petName }: { petId: string; petName: string }) {
     const { timeline, fetchTimeline, addTimelineEntry, updateTimelineEntry, deleteTimelineEntry } = usePets();
     const { user } = useAuth();
@@ -277,12 +256,14 @@ function TimelineSection({ petId, petName }: { petId: string; petName: string })
                                                     <button
                                                         onClick={() => openEditModal(entry)}
                                                         className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-[#05B2DC] hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                                        aria-label="일기 수정"
                                                     >
                                                         <Pencil className="w-5 h-5" />
                                                     </button>
                                                     <button
                                                         onClick={() => handleDelete(entry.id)}
                                                         className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                                        aria-label="일기 삭제"
                                                     >
                                                         <Trash2 className="w-5 h-5" />
                                                     </button>
@@ -308,9 +289,9 @@ function TimelineSection({ petId, petName }: { petId: string; petName: string })
             {/* 일기 작성/수정 모달 */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-                    <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-md w-full">
+                    <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-md w-full" role="dialog" aria-modal="true" aria-labelledby="timeline-modal-title">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-semibold flex items-center gap-2">
+                            <h3 id="timeline-modal-title" className="text-lg font-semibold flex items-center gap-2">
                                 <BookOpen className="w-5 h-5 text-[#05B2DC]" />
                                 {editingEntryId ? "일기 수정" : `${petName}의 일기`}
                             </h3>
@@ -318,6 +299,7 @@ function TimelineSection({ petId, petName }: { petId: string; petName: string })
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => setIsModalOpen(false)}
+                                aria-label="닫기"
                             >
                                 <X className="w-5 h-5" />
                             </Button>
@@ -414,7 +396,7 @@ function TimelineSection({ petId, petName }: { petId: string; petName: string })
     );
 }
 
-// 메인
+/** 메인 RecordPage */
 export default function RecordPage({ setSelectedTab }: RecordPageProps) {
     const { user, loading: authLoading, signOut, updateProfile, isPremiumUser, points, userPetType } = useAuth();
     const {
@@ -431,7 +413,6 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
         isLoading: petsLoading,
     } = usePets();
 
-    const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
     const [isPetModalOpen, setIsPetModalOpen] = useState(false);
     const [editingPet, setEditingPet] = useState<Pet | null>(null);
     const [isPhotoUploadOpen, setIsPhotoUploadOpen] = useState(false);
@@ -450,6 +431,10 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
 
     // 무료/프리미엄 회원 제한 (AuthContext에서 DB 기반 체크)
     const isPremium = isPremiumUser;
+
+    // 펫 메뉴/추억 모달 상태
+    const [showPetMenu, setShowPetMenu] = useState<string | null>(null);
+    const [isMemorialModalOpen, setIsMemorialModalOpen] = useState(false);
 
     // 사용자 닉네임 초기화
     useEffect(() => {
@@ -493,10 +478,6 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
             },
         });
     };
-    const [showPetMenu, setShowPetMenu] = useState<string | null>(null);
-    const [isSelectMode, setIsSelectMode] = useState(false);
-    const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
-    const [isMemorialModalOpen, setIsMemorialModalOpen] = useState(false);
 
     // 추억 전환 처리
     const handleMemorialSwitch = (memorialDate: string) => {
@@ -507,21 +488,12 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
         });
     };
 
-    const handleSelectAll = () => {
-        if (!selectedPet) return;
-        setSelectedPhotos(
-            selectedPhotos.length === selectedPet.photos.length
-                ? []
-                : selectedPet.photos.map((p) => p.id),
-        );
-    };
-
-    const togglePhotoSelect = (photoId: string) => {
-        setSelectedPhotos((prev) =>
-            prev.includes(photoId)
-                ? prev.filter((id) => id !== photoId)
-                : [...prev, photoId],
-        );
+    // 일상 모드 복구
+    const handleRecoverToActive = async (petId: string) => {
+        await updatePet(petId, {
+            status: "active",
+            memorialDate: undefined,
+        });
     };
 
     // 새 반려동물 추가 (무료 회원 제한 체크)
@@ -581,49 +553,6 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
             setUploadProgress({ current: 0, total: 0 });
         }
     };
-
-    // 기존 호환용 (deprecated)
-    const handlePhotoUpload = (
-        photos: {
-            url: string;
-            caption: string;
-            cropPosition: { x: number; y: number; scale: number };
-        }[],
-    ) => {
-        // 이 함수는 더 이상 사용되지 않음 - MediaUploadModal이 handleMediaUpload 사용
-    };
-
-    // 선택 삭제 핸들러
-    const handleDeleteSelected = async () => {
-        if (!selectedPet || selectedPhotos.length === 0) return;
-
-        toast(`선택한 ${selectedPhotos.length}개의 항목을 삭제할까요?`, {
-            action: {
-                label: "삭제",
-                onClick: async () => {
-                    await deletePhotos(selectedPet.id, selectedPhotos);
-                    setSelectedPhotos([]);
-                    setIsSelectMode(false);
-                    toast.success("선택한 항목이 삭제되었습니다");
-                },
-            },
-            cancel: {
-                label: "취소",
-                onClick: () => {},
-            },
-        });
-    };
-
-    useEffect(() => {
-        if (!isSelectMode) setSelectedPhotos([]);
-    }, [isSelectMode]);
-    useEffect(() => {
-        setIsSelectMode(false);
-        setSelectedPhotos([]);
-    }, [selectedPetId]);
-
-    // 로딩 화면 완전 제거 - 떨림 방지
-    // 대신 데이터가 없으면 빈 상태로 표시
 
     if (!user) {
         return (
@@ -1013,6 +942,7 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                                                 );
                                             }}
                                             className="absolute top-1 right-1 p-2 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center active:scale-95"
+                                            aria-label="더보기 메뉴"
                                         >
                                             <MoreHorizontal className="w-4 h-4" />
                                         </button>
@@ -1059,446 +989,21 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
 
                         {selectedPet && (
                             <>
-                                <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm mb-6">
-                                    <CardContent className="p-4 sm:p-6">
-                                        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
-                                            <div className="relative">
-                                                <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-lg">
-                                                    {selectedPet.profileImage ? (
-                                                        <img
-                                                            src={
-                                                                selectedPet.profileImage
-                                                            }
-                                                            alt={
-                                                                selectedPet.name
-                                                            }
-                                                            className="w-full h-full object-cover"
-                                                            style={{
-                                                                objectPosition:
-                                                                    selectedPet.profileCropPosition
-                                                                        ? `${selectedPet.profileCropPosition.x}% ${selectedPet.profileCropPosition.y}%`
-                                                                        : "center",
-                                                            }}
-                                                        />
-                                                    ) : (
-                                                        <div className="w-full h-full bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD] flex items-center justify-center">
-                                                            <PawPrint className="w-10 h-10 text-[#05B2DC]" />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                                    <h2 className="text-xl font-bold text-gray-800 dark:text-white">
-                                                        {selectedPet.name}
-                                                    </h2>
-                                                    {selectedPet.isPrimary && (
-                                                        <Badge className="bg-amber-100 text-amber-700 text-xs">
-                                                            <Crown className="w-3 h-3 mr-1" />
-                                                            대표
-                                                        </Badge>
-                                                    )}
-                                                    <Badge
-                                                        className={`text-xs ${selectedPet.status === "memorial" ? "bg-violet-100 text-violet-700" : "bg-green-100 text-green-700"}`}
-                                                    >
-                                                        {selectedPet.status ===
-                                                        "memorial" ? (
-                                                            <>
-                                                                <Star className="w-3 h-3 mr-1" />
-                                                                추억 속에
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <Heart className="w-3 h-3 mr-1" />
-                                                                함께하는 중
-                                                            </>
-                                                        )}
-                                                    </Badge>
-                                                </div>
-                                                <p className="text-gray-500 dark:text-gray-400 text-sm mb-3">
-                                                    {selectedPet.type} ·{" "}
-                                                    {selectedPet.breed} ·{" "}
-                                                    {selectedPet.gender}
-                                                </p>
-                                                <div className="flex flex-wrap gap-2 text-sm">
-                                                    {selectedPet.birthday && (
-                                                        <span className="flex items-center gap-1 text-gray-600 dark:text-gray-300">
-                                                            <Calendar className="w-4 h-4" />
-                                                            {calculateAge(
-                                                                selectedPet.birthday,
-                                                            )}
-                                                        </span>
-                                                    )}
-                                                    {selectedPet.weight && (
-                                                        <span className="flex items-center gap-1 text-gray-600 dark:text-gray-300">
-                                                            <Star className="w-4 h-4" />
-                                                            {selectedPet.weight}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                {selectedPet.personality && (
-                                                    <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">
-                                                        {
-                                                            selectedPet.personality
-                                                        }
-                                                    </p>
-                                                )}
+                                {/* 펫 프로필 카드 */}
+                                <PetProfileCard
+                                    pet={selectedPet}
+                                    onMemorialClick={() => setIsMemorialModalOpen(true)}
+                                    onRecoverToActive={handleRecoverToActive}
+                                />
 
-                                                {/* 추억 전환 버튼 - active 상태일 때만 표시 */}
-                                                {selectedPet.status === "active" && (
-                                                    <div className="flex items-center gap-2 mt-4 flex-wrap">
-                                                        <Button
-                                                            onClick={() => setIsMemorialModalOpen(true)}
-                                                            variant="outline"
-                                                            size="sm"
-                                                            className="border-amber-300 text-amber-600 hover:bg-amber-50 hover:text-amber-700 dark:border-amber-600 dark:text-amber-400 dark:hover:bg-amber-900/30"
-                                                        >
-                                                            <Star className="w-4 h-4 mr-2" />
-                                                            추억 전환
-                                                        </Button>
-                                                    </div>
-                                                )}
-
-                                                {/* 추모 모드일 때 - 일상 모드 복구 옵션 */}
-                                                {selectedPet.status === "memorial" && (
-                                                    <div className="mt-4 space-y-2">
-                                                        <p className="text-xs text-amber-600 dark:text-amber-400">
-                                                            {selectedPet.memorialDate &&
-                                                                `무지개다리를 건넌 날: ${selectedPet.memorialDate}`
-                                                            }
-                                                        </p>
-                                                        <Button
-                                                            onClick={() => {
-                                                                toast("일상 모드로 되돌리시겠습니까?", {
-                                                                    action: {
-                                                                        label: "복구",
-                                                                        onClick: async () => {
-                                                                            await updatePet(selectedPet.id, {
-                                                                                status: "active",
-                                                                                memorialDate: undefined,
-                                                                            });
-                                                                            toast.success("일상 모드로 복구되었습니다");
-                                                                        },
-                                                                    },
-                                                                    cancel: {
-                                                                        label: "취소",
-                                                                        onClick: () => {},
-                                                                    },
-                                                                });
-                                                            }}
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="text-gray-500 hover:text-gray-700 text-xs"
-                                                        >
-                                                            <Heart className="w-3 h-3 mr-1" />
-                                                            일상 모드로 복구
-                                                        </Button>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-
-                                <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm" data-tutorial-id="photo-album-section">
-                                    <CardHeader className="flex flex-row items-center justify-between">
-                                        <CardTitle className="text-lg">
-                                            사진/영상 앨범
-                                            <span className="text-sm font-normal text-gray-500 ml-2">
-                                                {selectedPet.photos.length}개
-                                            </span>
-                                        </CardTitle>
-                                        <div className="flex items-center gap-2">
-                                            {selectedPet.photos.length > 0 && (
-                                                <Button
-                                                    variant={
-                                                        isSelectMode
-                                                            ? "default"
-                                                            : "outline"
-                                                    }
-                                                    size="sm"
-                                                    onClick={() => {
-                                                        setIsSelectMode(
-                                                            !isSelectMode,
-                                                        );
-                                                        setSelectedPhotos([]);
-                                                    }}
-                                                    className={
-                                                        isSelectMode
-                                                            ? "bg-gray-500 hover:bg-gray-600"
-                                                            : ""
-                                                    }
-                                                >
-                                                    {isSelectMode
-                                                        ? "취소"
-                                                        : "선택"}
-                                                </Button>
-                                            )}
-                                            {isSelectMode && (
-                                                <>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={
-                                                            handleSelectAll
-                                                        }
-                                                    >
-                                                        {selectedPhotos.length ===
-                                                        selectedPet.photos
-                                                            .length
-                                                            ? "전체 해제"
-                                                            : "전체 선택"}
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        onClick={
-                                                            handleDeleteSelected
-                                                        }
-                                                        disabled={
-                                                            selectedPhotos.length ===
-                                                            0
-                                                        }
-                                                        className="bg-red-500 hover:bg-red-600 text-white"
-                                                    >
-                                                        <Trash2 className="w-4 h-4 mr-1" />
-                                                        {selectedPhotos.length}
-                                                        장 삭제
-                                                    </Button>
-                                                </>
-                                            )}
-                                            {!isSelectMode && (
-                                                <>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        onClick={() =>
-                                                            setViewMode(
-                                                                viewMode ===
-                                                                    "grid"
-                                                                    ? "list"
-                                                                    : "grid",
-                                                            )
-                                                        }
-                                                    >
-                                                        {viewMode === "grid" ? (
-                                                            <List className="w-4 h-4" />
-                                                        ) : (
-                                                            <Grid3X3 className="w-4 h-4" />
-                                                        )}
-                                                    </Button>
-                                                    <Button
-                                                        onClick={() =>
-                                                            setIsPhotoUploadOpen(
-                                                                true,
-                                                            )
-                                                        }
-                                                        size="sm"
-                                                        className="bg-[#05B2DC] hover:bg-[#0891B2]"
-                                                        data-tutorial-id="add-photo-button"
-                                                    >
-                                                        <Plus className="w-4 h-4 mr-1" />
-                                                        사진 추가
-                                                    </Button>
-                                                </>
-                                            )}
-                                        </div>
-                                    </CardHeader>
-                                    <CardContent>
-                                        {selectedPet.photos.length === 0 ? (
-                                            <div className="text-center py-12">
-                                                <div className="w-16 h-16 rounded-full bg-[#E0F7FF] dark:bg-[#05B2DC]/20 flex items-center justify-center mx-auto mb-4">
-                                                    <Camera className="w-8 h-8 text-[#05B2DC]" />
-                                                </div>
-                                                <h3 className="font-medium text-gray-700 dark:text-gray-200 mb-2">
-                                                    아직 등록된 사진이 없어요
-                                                </h3>
-                                                <p className="text-sm text-gray-400 mb-4">
-                                                    소중한 순간을 담아보세요
-                                                </p>
-                                                <Button
-                                                    onClick={() =>
-                                                        setIsPhotoUploadOpen(
-                                                            true,
-                                                        )
-                                                    }
-                                                    variant="outline"
-                                                    className="border-[#05B2DC] text-[#05B2DC] hover:bg-[#E0F7FF]"
-                                                >
-                                                    <Plus className="w-4 h-4 mr-2" />
-                                                    첫 사진 추가하기
-                                                </Button>
-                                            </div>
-                                        ) : viewMode === "grid" ? (
-                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-                                                {selectedPet.photos.map(
-                                                    (photo) => (
-                                                        <div
-                                                            key={photo.id}
-                                                            onClick={() => {
-                                                                if (isSelectMode) {
-                                                                    togglePhotoSelect(photo.id);
-                                                                } else {
-                                                                    setViewingPhoto(photo);
-                                                                }
-                                                            }}
-                                                            className={`aspect-square rounded-xl overflow-hidden cursor-pointer transition-all relative group ${isSelectMode && selectedPhotos.includes(photo.id) ? "ring-4 ring-[#05B2DC]" : "hover:opacity-90"}`}
-                                                        >
-                                                            {photo.type === "video" ? (
-                                                                <>
-                                                                    <img
-                                                                        src={photo.thumbnailUrl || photo.url}
-                                                                        alt={photo.caption}
-                                                                        className="w-full h-full object-cover"
-                                                                    />
-                                                                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                                                                        <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center">
-                                                                            <Play className="w-6 h-6 text-gray-800 fill-gray-800 ml-1" />
-                                                                        </div>
-                                                                    </div>
-                                                                </>
-                                                            ) : (
-                                                                <img
-                                                                    src={photo.url}
-                                                                    alt={photo.caption}
-                                                                    className="w-full h-full object-cover"
-                                                                    style={{
-                                                                        objectPosition: photo.cropPosition
-                                                                            ? `${photo.cropPosition.x}% ${photo.cropPosition.y}%`
-                                                                            : "center",
-                                                                    }}
-                                                                />
-                                                            )}
-                                                            {isSelectMode && (
-                                                                <div
-                                                                    className={`absolute top-2 left-2 w-7 h-7 rounded-full border-2 flex items-center justify-center ${selectedPhotos.includes(photo.id) ? "bg-[#05B2DC] border-[#05B2DC]" : "bg-white/80 border-gray-300"}`}
-                                                                >
-                                                                    {selectedPhotos.includes(photo.id) && (
-                                                                        <Check className="w-4 h-4 text-white" />
-                                                                    )}
-                                                                </div>
-                                                            )}
-                                                            {!isSelectMode && (
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        toast("이 사진을 삭제할까요?", {
-                                                                            action: {
-                                                                                label: "삭제",
-                                                                                onClick: async () => {
-                                                                                    await deletePhoto(selectedPet.id, photo.id);
-                                                                                    toast.success("사진이 삭제되었습니다");
-                                                                                },
-                                                                            },
-                                                                            cancel: {
-                                                                                label: "취소",
-                                                                                onClick: () => {},
-                                                                            },
-                                                                        });
-                                                                    }}
-                                                                    className="absolute top-1 right-1 p-1.5 bg-black/50 text-white rounded-full sm:opacity-0 sm:group-hover:opacity-100 transition-opacity min-w-[28px] min-h-[28px] flex items-center justify-center active:scale-95"
-                                                                >
-                                                                    <X className="w-3.5 h-3.5" />
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    ),
-                                                )}
-                                            </div>
-                                        ) : (
-                                            <div className="space-y-3">
-                                                {selectedPet.photos.map(
-                                                    (photo) => (
-                                                        <div
-                                                            key={photo.id}
-                                                            onClick={() => {
-                                                                if (
-                                                                    isSelectMode
-                                                                )
-                                                                    togglePhotoSelect(
-                                                                        photo.id,
-                                                                    );
-                                                                else
-                                                                    setViewingPhoto(
-                                                                        photo,
-                                                                    );
-                                                            }}
-                                                            className={`flex gap-4 p-3 rounded-xl cursor-pointer transition-colors group ${isSelectMode && selectedPhotos.includes(photo.id) ? "bg-[#E0F7FF] ring-2 ring-[#05B2DC]" : "bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100"}`}
-                                                        >
-                                                            {isSelectMode && (
-                                                                <div
-                                                                    className={`self-center w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${selectedPhotos.includes(photo.id) ? "bg-[#05B2DC] border-[#05B2DC]" : "bg-white border-gray-300"}`}
-                                                                >
-                                                                    {selectedPhotos.includes(
-                                                                        photo.id,
-                                                                    ) && (
-                                                                        <Check className="w-4 h-4 text-white" />
-                                                                    )}
-                                                                </div>
-                                                            )}
-                                                            <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 relative">
-                                                                {photo.type === "video" ? (
-                                                                    <>
-                                                                        <img
-                                                                            src={photo.thumbnailUrl || photo.url}
-                                                                            alt={photo.caption}
-                                                                            className="w-full h-full object-cover"
-                                                                        />
-                                                                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                                                                            <Play className="w-5 h-5 text-white fill-white" />
-                                                                        </div>
-                                                                    </>
-                                                                ) : (
-                                                                    <img
-                                                                        src={photo.url}
-                                                                        alt={photo.caption}
-                                                                        className="w-full h-full object-cover"
-                                                                        style={{
-                                                                            objectPosition: photo.cropPosition
-                                                                                ? `${photo.cropPosition.x}% ${photo.cropPosition.y}%`
-                                                                                : "center",
-                                                                        }}
-                                                                    />
-                                                                )}
-                                                            </div>
-                                                            <div className="flex-1">
-                                                                <p className="font-medium text-gray-800 dark:text-white">
-                                                                    {photo.caption ||
-                                                                        selectedPet.name}
-                                                                </p>
-                                                                <p className="text-sm text-gray-500">
-                                                                    {photo.date}
-                                                                </p>
-                                                            </div>
-                                                            {!isSelectMode && (
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        toast("이 사진을 삭제할까요?", {
-                                                                            action: {
-                                                                                label: "삭제",
-                                                                                onClick: async () => {
-                                                                                    await deletePhoto(selectedPet.id, photo.id);
-                                                                                    toast.success("사진이 삭제되었습니다");
-                                                                                },
-                                                                            },
-                                                                            cancel: {
-                                                                                label: "취소",
-                                                                                onClick: () => {},
-                                                                            },
-                                                                        });
-                                                                    }}
-                                                                    className="self-center p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
-                                                                >
-                                                                    <Trash2 className="w-5 h-5" />
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    ),
-                                                )}
-                                            </div>
-                                        )}
-                                    </CardContent>
-                                </Card>
+                                {/* 사진/영상 앨범 */}
+                                <PetPhotoAlbum
+                                    selectedPet={selectedPet}
+                                    onPhotoClick={(photo) => setViewingPhoto(photo)}
+                                    onUploadClick={() => setIsPhotoUploadOpen(true)}
+                                    onDeletePhoto={deletePhoto}
+                                    onDeletePhotos={deletePhotos}
+                                />
 
                                 {/* 타임라인 일기 섹션 */}
                                 <div data-tutorial-id="timeline-section">

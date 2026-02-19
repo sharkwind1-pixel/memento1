@@ -209,18 +209,19 @@ export default function AccountSettingsModal({
 
     return (
         <div className="fixed inset-0 z-[9999] bg-black/50 flex items-end sm:items-center justify-center">
-            <div className="w-full sm:max-w-md sm:mx-4 bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[calc(100vh-140px)] sm:max-h-[85vh] overflow-y-auto mb-[80px] sm:mb-0">
+            <div className="w-full sm:max-w-md sm:mx-4 bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[calc(100vh-140px)] sm:max-h-[85vh] overflow-y-auto mb-[80px] sm:mb-0" role="dialog" aria-modal="true" aria-labelledby="account-settings-title">
                 {/* 헤더 */}
                 <div className="flex items-center justify-between p-4 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
                     <div className="flex items-center gap-2">
                         <Settings className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                        <h2 className="text-lg font-bold text-gray-800 dark:text-white">
+                        <h2 id="account-settings-title" className="text-lg font-bold text-gray-800 dark:text-white">
                             내 정보
                         </h2>
                     </div>
                     <button
                         onClick={onClose}
                         className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors"
+                        aria-label="닫기"
                     >
                         <X className="w-5 h-5" />
                     </button>

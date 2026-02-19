@@ -99,13 +99,13 @@ export default function NicknameSetupModal({
 
     return (
         <div className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4">
-            <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden">
+            <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden" role="dialog" aria-modal="true" aria-labelledby="nickname-setup-title">
                 {/* 헤더 */}
                 <div className="bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] p-6 text-white text-center">
                     <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
                         <Sparkles className="w-8 h-8" />
                     </div>
-                    <h2 className="text-2xl font-bold">환영합니다!</h2>
+                    <h2 id="nickname-setup-title" className="text-2xl font-bold">환영합니다!</h2>
                     <p className="text-white/80 mt-1">
                         메멘토애니에서 사용할 닉네임을 설정해주세요
                     </p>

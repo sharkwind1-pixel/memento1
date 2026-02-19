@@ -211,16 +211,17 @@ export default function AuthModal({
                 if (e.target === e.currentTarget) onClose();
             }}
         >
-            <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden">
+            <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
                 {/* 헤더 */}
                 <div className="relative bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] p-6 text-white">
                     <button
                         onClick={onClose}
                         className="absolute top-4 right-4 p-2 hover:bg-white/20 rounded-full transition-colors"
+                        aria-label="닫기"
                     >
                         <X className="w-5 h-5" />
                     </button>
-                    <h2 className="text-2xl font-bold">
+                    <h2 id="auth-modal-title" className="text-2xl font-bold">
                         {mode === "login" ? "로그인" : "회원가입"}
                     </h2>
                     <p className="text-white/80 mt-1">
@@ -343,6 +344,7 @@ export default function AuthModal({
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
                                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                aria-label={showPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
                             >
                                 {showPassword ? (
                                     <EyeOff className="w-5 h-5" />

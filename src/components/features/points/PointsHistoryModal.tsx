@@ -138,11 +138,11 @@ export default function PointsHistoryModal({ open, onClose }: PointsHistoryModal
             />
 
             {/* 모달 */}
-            <div className="relative bg-white dark:bg-gray-900 rounded-2xl max-w-md w-full shadow-2xl max-h-[80vh] flex flex-col animate-in fade-in zoom-in-95">
+            <div className="relative bg-white dark:bg-gray-900 rounded-2xl max-w-md w-full shadow-2xl max-h-[80vh] flex flex-col animate-in fade-in zoom-in-95" role="dialog" aria-modal="true" aria-labelledby="points-history-title">
                 {/* 헤더 */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
                     <div>
-                        <h2 className="text-lg font-bold text-gray-800 dark:text-white">
+                        <h2 id="points-history-title" className="text-lg font-bold text-gray-800 dark:text-white">
                             포인트 내역
                         </h2>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -152,6 +152,7 @@ export default function PointsHistoryModal({ open, onClose }: PointsHistoryModal
                     <button
                         onClick={onClose}
                         className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        aria-label="닫기"
                     >
                         <X className="w-5 h-5 text-gray-500" />
                     </button>

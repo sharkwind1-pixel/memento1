@@ -188,7 +188,7 @@ export default function PointsShopModal({
 
     return (
         <div className="fixed inset-0 z-[9999] bg-black/50 flex items-end sm:items-center justify-center">
-            <div className="w-full sm:max-w-lg sm:mx-4 bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[calc(100vh-140px)] sm:max-h-[85vh] flex flex-col mb-[80px] sm:mb-0">
+            <div className="w-full sm:max-w-lg sm:mx-4 bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[calc(100vh-140px)] sm:max-h-[85vh] flex flex-col mb-[80px] sm:mb-0" role="dialog" aria-modal="true" aria-labelledby="points-shop-title">
                 {/* 헤더 */}
                 <div className="bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400 p-5 text-white">
                     <div className="flex items-center justify-between">
@@ -197,7 +197,7 @@ export default function PointsShopModal({
                                 <ShoppingBag className="w-6 h-6" />
                             </div>
                             <div>
-                                <h2 className="text-lg font-bold">포인트 상점</h2>
+                                <h2 id="points-shop-title" className="text-lg font-bold">포인트 상점</h2>
                                 <p className="text-white/80 text-sm">
                                     보유 포인트: {points.toLocaleString()}P
                                 </p>
@@ -206,6 +206,7 @@ export default function PointsShopModal({
                         <button
                             onClick={onClose}
                             className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+                            aria-label="닫기"
                         >
                             <X className="w-5 h-5" />
                         </button>
