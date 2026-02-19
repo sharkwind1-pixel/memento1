@@ -10,18 +10,13 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import type { TutorialStep } from "@/types";
 
 interface TutorialTourProps {
     isOpen: boolean;
     onClose: () => void;
     onNavigate: (tab: string) => void;
     userId?: string; // DB 저장용
-}
-
-interface TutorialStep {
-    targetId: string;
-    title: string;
-    description: string;
 }
 
 // 데스크톱용 튜토리얼 (헤더에 모든 메뉴가 보임)

@@ -38,22 +38,7 @@ import {
 import PawLoading from "@/components/ui/PawLoading";
 import { API } from "@/config/apiEndpoints";
 import { toast } from "sonner";
-
-interface Reminder {
-    id: string;
-    petId: string;
-    type: string;
-    title: string;
-    description?: string;
-    schedule: {
-        type: string;
-        time: string;
-        dayOfWeek?: number;
-        dayOfMonth?: number;
-        date?: string;
-    };
-    enabled: boolean;
-}
+import type { Reminder } from "@/types";
 
 const REMINDER_TYPES = [
     { value: "walk", label: "산책", icon: Footprints, color: "text-green-500", bg: "bg-green-50" },

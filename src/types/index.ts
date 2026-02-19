@@ -419,6 +419,49 @@ export type TimelineCategory =
     | "기타";
 
 // ============================================
+// 7-1. 리마인더 관련 타입
+// ============================================
+
+/** 리마인더 스케줄 */
+export interface ReminderSchedule {
+    type: string;
+    time: string;
+    dayOfWeek?: number;
+    dayOfMonth?: number;
+    date?: string;
+}
+
+/** 반려동물 케어 리마인더 */
+export interface Reminder {
+    id: string;
+    petId: string;
+    type: string;
+    title: string;
+    description?: string;
+    schedule: ReminderSchedule;
+    enabled: boolean;
+    createdAt?: string;
+    pet?: {
+        id: string;
+        name: string;
+        type: string;
+        profileImage?: string;
+    };
+}
+
+// ============================================
+// 7-2. 온보딩/튜토리얼 관련 타입
+// ============================================
+
+/** 튜토리얼 스텝 */
+export interface TutorialStep {
+    targetId: string;
+    title: string;
+    description: string;
+    icon?: React.ElementType;
+}
+
+// ============================================
 // 8. UI 공통 타입
 // ============================================
 

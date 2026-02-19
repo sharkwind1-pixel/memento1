@@ -8,12 +8,11 @@
 
 import { Button } from "@/components/ui/button";
 import { Heart, ArrowRight } from "lucide-react";
-
-type UserType = "planning" | "current" | "memorial";
+import type { OnboardingUserType } from "@/types";
 
 interface PostOnboardingGuideProps {
     isOpen: boolean;
-    userType: UserType | null;
+    userType: OnboardingUserType | null;
     onClose: () => void;
     onGoToHome: () => void;
     // 아래 props는 page.tsx와의 호환성을 위해 유지 (실제로는 사용 안 함)
