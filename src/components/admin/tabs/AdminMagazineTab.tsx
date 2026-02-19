@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import { authFetch } from "@/lib/auth-fetch";
 import { uploadMagazineImage } from "@/lib/storage";
+import { getBadgeLabel } from "@/data/magazineArticles";
 import type { MagazineArticleRow, MagazineStatus } from "../types";
 
 // ============================================================================
@@ -493,7 +494,7 @@ function ArticleCard({
                         )}
                         {article.badge && (
                             <Badge className="bg-sky-100 text-sky-700 text-xs">
-                                {article.badge}
+                                {getBadgeLabel(article.badge)}
                             </Badge>
                         )}
                     </div>
