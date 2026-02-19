@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { BookOpen } from "lucide-react";
-import { getBadgeStyle, dbArticleToMagazineArticle, type MagazineArticle } from "@/data/magazineArticles";
+import { getBadgeStyle, getBadgeLabel, dbArticleToMagazineArticle, type MagazineArticle } from "@/data/magazineArticles";
 
 interface MagazineBannerProps {
     onNavigateToMagazine: () => void;
@@ -79,7 +79,7 @@ export default function MagazineBanner({ onNavigateToMagazine }: MagazineBannerP
                                     <span
                                         className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold flex-shrink-0 ${getBadgeStyle(article.badge)}`}
                                     >
-                                        {article.badge}
+                                        {getBadgeLabel(article.badge)}
                                     </span>
                                 )}
                                 <span className="text-sm text-gray-600 dark:text-gray-300 truncate group-hover:text-gray-900 dark:group-hover:text-gray-100 transition-colors">

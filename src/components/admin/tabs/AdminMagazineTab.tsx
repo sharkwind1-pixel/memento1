@@ -61,24 +61,19 @@ interface AdminMagazineTabProps {
 // ============================================================================
 
 const CATEGORIES = [
-    { value: "health", label: "건강" },
-    { value: "food", label: "영양/간식" },
+    { value: "health", label: "건강/의료" },
+    { value: "food", label: "사료/영양" },
     { value: "behavior", label: "행동/훈련" },
-    { value: "grooming", label: "미용/관리" },
-    { value: "living", label: "생활" },
-    { value: "travel", label: "여행" },
-    { value: "info", label: "정보" },
+    { value: "grooming", label: "미용/위생" },
+    { value: "living", label: "생활/용품" },
+    { value: "travel", label: "여행/외출" },
 ] as const;
 
 const BADGE_OPTIONS = [
-    { value: "", label: "없음" },
-    { value: "필독", label: "필독" },
-    { value: "인기", label: "인기" },
-    { value: "추천", label: "추천" },
-    { value: "팁", label: "팁" },
-    { value: "시즌", label: "시즌" },
-    { value: "가이드", label: "가이드" },
-    { value: "심화", label: "심화" },
+    { value: "", label: "단계 선택" },
+    { value: "beginner", label: "처음 키워요 (초보)" },
+    { value: "companion", label: "함께 성장해요 (일상)" },
+    { value: "senior", label: "오래오래 함께 (시니어)" },
 ] as const;
 
 const STATUS_FILTERS: { value: MagazineStatus | "all"; label: string }[] = [
