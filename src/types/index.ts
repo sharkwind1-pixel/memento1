@@ -260,8 +260,37 @@ export interface AdoptionPost {
     description?: string;
 }
 
-/** 분실동물 게시글 */
+/** 분실동물 게시글 (DB 스키마 기반) */
 export interface LostPet {
+    id: string;
+    user_id: string;
+    type: "lost" | "found";
+    title: string;
+    pet_type: string;
+    breed: string;
+    color: string;
+    gender: string;
+    age: string;
+    region: string;
+    district: string;
+    location_detail: string;
+    date: string;
+    description: string;
+    contact: string;
+    reward: string | null;
+    image_url: string | null;
+    image_storage_path: string | null;
+    views: number;
+    status: "active" | "resolved" | "deleted";
+    created_at: string;
+    updated_at: string;
+    // 조인된 프로필 정보
+    author_nickname?: string;
+    author_email?: string;
+}
+
+/** 분실동물 게시글 (레거시 프론트엔드 호환) */
+export interface LostPetLegacy {
     id: number;
     type: "lost" | "found";
     title: string;
