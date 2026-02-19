@@ -15,7 +15,8 @@ import {
 } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
-import { ADMIN_EMAILS } from "@/config/constants";
+import { ADMIN_EMAILS, type PetIconType } from "@/config/constants";
+import type { OnboardingData } from "@/types";
 
 // 삭제 계정 체크 결과 타입 (기존 호환성)
 interface DeletedAccountCheck {
@@ -42,6 +43,10 @@ interface AuthContextType {
     refreshProfile: () => Promise<void>;
     // 프로필 로딩 완료 플래그
     profileLoaded: boolean;
+    // 사용자 반려동물 타입 (아이콘용)
+    userPetType: PetIconType;
+    // 온보딩 데이터 (개인화용)
+    onboardingData: OnboardingData | null;
     // 포인트 시스템
     points: number;
     pointsLoaded: boolean;
@@ -76,6 +81,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [points, setPoints] = useState(0);
     const [pointsLoaded, setPointsLoaded] = useState(false);
     const [profileLoaded, setProfileLoaded] = useState(false);
+    const [userPetType, setUserPetType] = useState<PetIconType>("dog");
+    const [onboardingData, setOnboardingData] = useState<OnboardingData | null>(null);
 
     // 프로필에서 관리자/프리미엄 상태 조회
     // 프로필+포인트 통합 조회 (단일 쿼리)
@@ -91,7 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             const { data, error } = await supabase
                 .from("profiles")
-                .select("is_admin, is_premium, premium_expires_at, points")
+                .select("is_admin, is_premium, premium_expires_at, points, onboarding_data")
                 .eq("id", currentUser.id)
                 .single();
 
@@ -110,6 +117,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             // 포인트도 같이 설정
             setPoints(!error ? (data?.points ?? 0) : 0);
+
+            // 온보딩 데이터 설정 + petType 추출
+            if (!error && data?.onboarding_data) {
+                const obData = data.onboarding_data as OnboardingData;
+                setOnboardingData(obData);
+                const pt = obData.petType;
+                if (pt === "cat") setUserPetType("cat");
+                else if (pt === "other") setUserPetType("other");
+                else setUserPetType("dog");
+            } else {
+                setOnboardingData(null);
+            }
+
             setPointsLoaded(true);
             setProfileLoaded(true);
         } catch {
@@ -197,6 +217,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setProfileLoaded(false);
                 setIsAdminUser(false);
                 setIsPremiumUser(false);
+                setUserPetType("dog");
+                setOnboardingData(null);
             }
 
             setLoading(false);
@@ -411,6 +433,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isPremiumUser,
         refreshProfile,
         profileLoaded,
+        userPetType,
+        onboardingData,
         points,
         pointsLoaded,
         refreshPoints,

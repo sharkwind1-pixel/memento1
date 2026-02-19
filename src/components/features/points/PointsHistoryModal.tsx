@@ -52,7 +52,7 @@ function getActionColor(actionType: PointAction) {
 }
 
 export default function PointsHistoryModal({ open, onClose }: PointsHistoryModalProps) {
-    const { points } = useAuth();
+    const { points, userPetType } = useAuth();
     const [transactions, setTransactions] = useState<PointTransaction[]>([]);
     const [loading, setLoading] = useState(true);
     const [hasMore, setHasMore] = useState(false);
@@ -166,7 +166,7 @@ export default function PointsHistoryModal({ open, onClose }: PointsHistoryModal
                         <div className="flex items-center gap-2.5">
                             <div className="w-8 h-8 rounded-lg overflow-hidden bg-white/80 dark:bg-gray-800 shadow-sm flex items-center justify-center">
                                 <Image
-                                    src={currentLevel.icons.dog}
+                                    src={currentLevel.icons[userPetType]}
                                     alt={`Lv.${currentLevel.level}`}
                                     width={28}
                                     height={28}
@@ -215,7 +215,7 @@ export default function PointsHistoryModal({ open, onClose }: PointsHistoryModal
                                             !isAchieved && !isCurrent && "grayscale opacity-40"
                                         )}>
                                             <Image
-                                                src={lvl.icons.dog}
+                                                src={lvl.icons[userPetType]}
                                                 alt={`Lv.${lvl.level}`}
                                                 width={36}
                                                 height={36}

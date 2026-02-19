@@ -17,7 +17,7 @@ import PointsShopModal from "./PointsShopModal";
 import { LevelProgress } from "./LevelBadge";
 
 export default function PointsBadge() {
-    const { user, points } = useAuth();
+    const { user, points, userPetType } = useAuth();
     const nickname = user?.user_metadata?.nickname || user?.email?.split("@")[0];
     const [showHistory, setShowHistory] = useState(false);
     const [showShop, setShowShop] = useState(false);
@@ -29,7 +29,7 @@ export default function PointsBadge() {
         <>
             <div className="px-3 py-3 space-y-2">
                 {/* 등급 프로그레스 */}
-                <LevelProgress points={points} nickname={nickname} />
+                <LevelProgress points={points} nickname={nickname} petType={userPetType} />
 
                 {/* 포인트 표시 */}
                 <button

@@ -47,6 +47,7 @@ import type { LightboxItem, CommunityPost, Comment } from "@/components/features
 import PostModal from "@/components/features/home/PostModal";
 import Lightbox from "@/components/features/home/Lightbox";
 import LevelBadge from "@/components/features/points/LevelBadge";
+import { useAuth } from "@/contexts/AuthContext";
 
 
 
@@ -78,9 +79,32 @@ const getPetIcon = (petType: string): LucideIcon => {
     return PawPrint; // 기본값
 };
 
+// 유저 타입별 개인화 메시지
+const PERSONALIZED_HERO = {
+    planning: {
+        title: "새 가족을 만날 준비",
+        subtitle: "입양부터 케어까지, 따뜻한 시작을 위한 모든 것",
+        ctaLabel: "입양 정보 보기",
+        ctaTab: "adoption" as TabType,
+    },
+    current: {
+        title: "특별한 매일을 함께",
+        subtitle: "일상부터 기억까지, 시간이 쌓이고 의미가 바뀌는 기록 플랫폼",
+        ctaLabel: "AI 상담 시작하기",
+        ctaTab: "ai-chat" as TabType,
+    },
+    memorial: {
+        title: "영원히 마음속에",
+        subtitle: "함께한 시간은 사라지지 않아요. 소중한 기억을 간직하는 공간",
+        ctaLabel: "추모 공간 가기",
+        ctaTab: "community" as TabType,
+    },
+};
+
 export default function HomePage({ setSelectedTab }: HomePageProps) {
     const { petImages, adoptionImages } = usePetImages();
     const scroll = useSmoothAutoScroll() as unknown as SmoothAutoScrollReturn;
+    const { onboardingData } = useAuth();
 
     const [showAdoptionTile, setShowAdoptionTile] = useState(true);
     const [lightboxItem, setLightboxItem] = useState<LightboxItem | null>(null);
@@ -262,47 +286,53 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
             />
 
             <div className="relative z-10 space-y-16 pb-10">
-                {/* HERO */}
-                <section className="px-4 pt-8">
-                    <div className="bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg border border-white/40 dark:border-gray-700/40 rounded-3xl p-8 md:p-12 shadow-2xl">
-                        <div className="text-center space-y-4 md:space-y-6">
-                            <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                                <EmotionalTrueFocus
-                                    text="특별한 매일을 함께"
-                                    variant="gentle"
-                                    delay={250}
-                                />
-                            </h1>
-                            <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-700 dark:text-gray-200 leading-relaxed px-2">
-                                <EmotionalTrueFocus
-                                    text="일상부터 기억까지, 시간이 쌓이고 의미가 바뀌는 기록 플랫폼"
-                                    variant="warm"
-                                    delay={1100}
-                                    duration={0.6}
-                                    staggerDelay={0.02}
-                                />
-                            </p>
-                            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center pt-3 px-4 sm:px-0">
-                                <Button
-                                    size="lg"
-                                    onClick={() => setSelectedTab("ai-chat")}
-                                    className="w-full sm:w-auto bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-sky-600 text-white border-0 rounded-xl px-8 py-3 min-h-[48px] shadow-lg hover:scale-105 active:scale-95 transition-all"
-                                >
-                                    AI 상담 시작하기
-                                </Button>
-                                <Button
-                                    size="lg"
-                                    variant="outline"
-                                    onClick={() => setSelectedTab("community")}
-                                    className="w-full sm:w-auto bg-white/50 dark:bg-gray-700/50 border-[#7DD3FC] dark:border-[#0891B2] text-[#0369A1] dark:text-blue-300 hover:bg-[#E0F7FF] dark:hover:bg-gray-600 rounded-xl px-8 py-3 min-h-[48px] active:scale-95 transition-all"
-                                >
-                                    서비스 둘러보기
-                                    <ArrowRight className="w-5 h-5 ml-2" />
-                                </Button>
+                {/* HERO - 유저 타입별 개인화 */}
+                {(() => {
+                    const userType = onboardingData?.userType;
+                    const hero = userType ? PERSONALIZED_HERO[userType] : PERSONALIZED_HERO.current;
+                    return (
+                        <section className="px-4 pt-8">
+                            <div className="bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg border border-white/40 dark:border-gray-700/40 rounded-3xl p-8 md:p-12 shadow-2xl">
+                                <div className="text-center space-y-4 md:space-y-6">
+                                    <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                                        <EmotionalTrueFocus
+                                            text={hero.title}
+                                            variant={userType === "memorial" ? "warm" : "gentle"}
+                                            delay={250}
+                                        />
+                                    </h1>
+                                    <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-700 dark:text-gray-200 leading-relaxed px-2">
+                                        <EmotionalTrueFocus
+                                            text={hero.subtitle}
+                                            variant="warm"
+                                            delay={1100}
+                                            duration={0.6}
+                                            staggerDelay={0.02}
+                                        />
+                                    </p>
+                                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center pt-3 px-4 sm:px-0">
+                                        <Button
+                                            size="lg"
+                                            onClick={() => setSelectedTab(hero.ctaTab)}
+                                            className="w-full sm:w-auto bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-sky-600 text-white border-0 rounded-xl px-8 py-3 min-h-[48px] shadow-lg hover:scale-105 active:scale-95 transition-all"
+                                        >
+                                            {hero.ctaLabel}
+                                        </Button>
+                                        <Button
+                                            size="lg"
+                                            variant="outline"
+                                            onClick={() => setSelectedTab("community")}
+                                            className="w-full sm:w-auto bg-white/50 dark:bg-gray-700/50 border-[#7DD3FC] dark:border-[#0891B2] text-[#0369A1] dark:text-blue-300 hover:bg-[#E0F7FF] dark:hover:bg-gray-600 rounded-xl px-8 py-3 min-h-[48px] active:scale-95 transition-all"
+                                        >
+                                            서비스 둘러보기
+                                            <ArrowRight className="w-5 h-5 ml-2" />
+                                        </Button>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                </section>
+                        </section>
+                    );
+                })()}
 
                 {/* 인기 커뮤니티 */}
                 <section className="space-y-6 px-4">
