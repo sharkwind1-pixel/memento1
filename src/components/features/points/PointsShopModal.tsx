@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
+import { API } from "@/config/apiEndpoints";
 import { toast } from "sonner";
 
 interface PointsShopModalProps {
@@ -166,7 +167,7 @@ export default function PointsShopModal({
         setPurchasingId(item.id);
 
         try {
-            const response = await fetch("/api/points/shop", {
+            const response = await fetch(API.POINTS_SHOP, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ itemId: item.id }),

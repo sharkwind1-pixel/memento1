@@ -48,6 +48,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import WritePostModal from "@/components/features/community/WritePostModal";
 import PostDetailView from "@/components/features/community/PostDetailView";
 import type { CommunitySubcategory, PostTag, CommunityPageProps } from "@/types";
+import { API } from "@/config/apiEndpoints";
 
 interface Post {
     id: string;
@@ -538,7 +539,7 @@ export default function CommunityPage({ subcategory, onSubcategoryChange }: Comm
                 params.append("search", searchQuery);
             }
 
-            const response = await fetch(`/api/posts?${params}`);
+            const response = await fetch(`${API.POSTS}?${params}`);
             if (!response.ok) {
                 throw new Error("게시글을 불러오는데 실패했습니다");
             }

@@ -28,6 +28,7 @@ import {
     Plus,
     Loader2,
 } from "lucide-react";
+import { API } from "@/config/apiEndpoints";
 import { toast } from "sonner";
 
 // ============================================================================
@@ -161,7 +162,7 @@ export default function ReminderPanel({
         if (!petId) return;
         setIsLoading(true);
         try {
-            const response = await fetch(`/api/reminders?petId=${petId}`);
+            const response = await fetch(`${API.REMINDERS}?petId=${petId}`);
             if (!response.ok) {
                 throw new Error("Failed to fetch reminders");
             }
@@ -197,7 +198,7 @@ export default function ReminderPanel({
         );
 
         try {
-            const response = await fetch(`/api/reminders/${reminder.id}`, {
+            const response = await fetch(API.REMINDER_DETAIL(reminder.id), {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ toggleEnabled: newEnabled }),
@@ -227,7 +228,7 @@ export default function ReminderPanel({
 
         setDeletingId(reminderId);
         try {
-            const response = await fetch(`/api/reminders/${reminderId}`, {
+            const response = await fetch(API.REMINDER_DETAIL(reminderId), {
                 method: "DELETE",
             });
 
@@ -265,7 +266,7 @@ export default function ReminderPanel({
                 scheduleData.dayOfMonth = form.dayOfMonth;
             }
 
-            const response = await fetch("/api/reminders", {
+            const response = await fetch(API.REMINDERS, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

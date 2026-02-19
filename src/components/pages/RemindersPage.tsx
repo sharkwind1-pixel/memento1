@@ -36,6 +36,7 @@ import {
     X,
 } from "lucide-react";
 import PawLoading, { FullPageLoading } from "@/components/ui/PawLoading";
+import { API } from "@/config/apiEndpoints";
 
 interface Reminder {
     id: string;
@@ -110,7 +111,7 @@ export default function RemindersPage() {
                 params.append("petId", selectedPetId);
             }
 
-            const response = await fetch(`/api/reminders?${params}`, {
+            const response = await fetch(`${API.REMINDERS}?${params}`, {
                 credentials: "include", // 쿠키 포함 (인증)
             });
 
@@ -149,7 +150,7 @@ export default function RemindersPage() {
         if (!user?.id || !newReminder.petId || !newReminder.title) return;
 
         try {
-            const response = await fetch("/api/reminders", {
+            const response = await fetch(API.REMINDERS, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -194,7 +195,7 @@ export default function RemindersPage() {
     // 리마인더 토글
     const handleToggle = async (id: string, currentEnabled: boolean) => {
         try {
-            const response = await fetch(`/api/reminders/${id}`, {
+            const response = await fetch(API.REMINDER_DETAIL(id), {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ toggleEnabled: !currentEnabled }),
@@ -219,7 +220,7 @@ export default function RemindersPage() {
                 label: "삭제",
                 onClick: async () => {
                     try {
-                        const response = await fetch(`/api/reminders/${id}`, {
+                        const response = await fetch(API.REMINDER_DETAIL(id), {
                             method: "DELETE",
                         });
 
