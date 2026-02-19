@@ -1,8 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    // Strict Mode 비활성화 - 개발 모드에서 이중 렌더링 방지
-    reactStrictMode: false,
-    // 보안 헤더
+    // Strict Mode - 개발 모드에서 하이드레이션 버그 감지
+    reactStrictMode: true,
+    // gzip 압축 활성화
+    compress: true,
+    // 보안 - X-Powered-By 헤더 제거
+    poweredByHeader: false,
+    // 보안 및 캐시 헤더
     async headers() {
         return [
             {
@@ -23,6 +27,15 @@ const nextConfig = {
                     {
                         key: "Permissions-Policy",
                         value: "camera=(), microphone=(), geolocation=(self)",
+                    },
+                ],
+            },
+            {
+                source: "/icons/:path*",
+                headers: [
+                    {
+                        key: "Cache-Control",
+                        value: "public, max-age=31536000, immutable",
                     },
                 ],
             },

@@ -166,7 +166,7 @@ export default function PointsHistoryModal({ open, onClose }: PointsHistoryModal
                         <div className="flex items-center gap-2.5">
                             <div className="w-8 h-8 rounded-lg overflow-hidden bg-white/80 dark:bg-gray-800 shadow-sm flex items-center justify-center">
                                 <Image
-                                    src={currentLevel.icon}
+                                    src={currentLevel.icons.dog}
                                     alt={`Lv.${currentLevel.level}`}
                                     width={28}
                                     height={28}
@@ -215,7 +215,7 @@ export default function PointsHistoryModal({ open, onClose }: PointsHistoryModal
                                             !isAchieved && !isCurrent && "grayscale opacity-40"
                                         )}>
                                             <Image
-                                                src={lvl.icon}
+                                                src={lvl.icons.dog}
                                                 alt={`Lv.${lvl.level}`}
                                                 width={36}
                                                 height={36}

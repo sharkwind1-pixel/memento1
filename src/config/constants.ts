@@ -101,10 +101,12 @@ export const POINTS = {
 } as const;
 
 // ===== 포인트 등급 시스템 =====
+export type PetIconType = "dog" | "cat" | "other";
+
 export interface PointLevel {
     level: number;
     minPoints: number;
-    icon: string;          // 아이콘 이미지 경로 (/icons/levels/...)
+    icons: Record<PetIconType, string>;  // 반려동물 타입별 아이콘 경로
     color: string;         // Tailwind gradient from
     bgColor: string;       // Tailwind gradient to
     textColor: string;     // 텍스트 색상
@@ -113,14 +115,19 @@ export interface PointLevel {
 }
 
 export const POINT_LEVELS: PointLevel[] = [
-    { level: 1, minPoints: 0,       icon: "/icons/levels/level1_maltese.png",     color: "from-gray-300",    bgColor: "to-gray-400",    textColor: "text-gray-500" },
-    { level: 2, minPoints: 100,     icon: "/icons/levels/level2_pomeranian.png",  color: "from-emerald-300", bgColor: "to-emerald-500",  textColor: "text-emerald-600" },
-    { level: 3, minPoints: 500,     icon: "/icons/levels/level3_corgi.png",       color: "from-pink-300",    bgColor: "to-pink-500",    textColor: "text-pink-600" },
-    { level: 4, minPoints: 3000,    icon: "/icons/levels/level4_shiba.png",       color: "from-sky-300",     bgColor: "to-sky-500",     textColor: "text-sky-600" },
-    { level: 5, minPoints: 10000,   icon: "/icons/levels/level5_golden.png",      color: "from-violet-400",  bgColor: "to-purple-500",  textColor: "text-violet-600", hasSparkle: true },
-    { level: 6, minPoints: 30000,   icon: "/icons/levels/level6_samoyed.png",     color: "from-amber-300",   bgColor: "to-yellow-500",  textColor: "text-amber-600",  hasSparkle: true },
-    { level: 7, minPoints: 100000,  icon: "/icons/levels/level7_legend.png",      color: "from-rose-400",    bgColor: "to-amber-300",   textColor: "text-rose-600",   hasSparkle: true, hasGlow: true },
+    { level: 1, minPoints: 0,       icons: { dog: "/icons/levels/dog_lv1.png", cat: "/icons/levels/cat_lv1.png", other: "/icons/levels/other_lv1.png" }, color: "from-gray-300",    bgColor: "to-gray-400",    textColor: "text-gray-500" },
+    { level: 2, minPoints: 100,     icons: { dog: "/icons/levels/dog_lv2.png", cat: "/icons/levels/cat_lv2.png", other: "/icons/levels/other_lv2.png" }, color: "from-emerald-300", bgColor: "to-emerald-500",  textColor: "text-emerald-600" },
+    { level: 3, minPoints: 500,     icons: { dog: "/icons/levels/dog_lv3.png", cat: "/icons/levels/cat_lv3.png", other: "/icons/levels/other_lv3.png" }, color: "from-pink-300",    bgColor: "to-pink-500",    textColor: "text-pink-600" },
+    { level: 4, minPoints: 3000,    icons: { dog: "/icons/levels/dog_lv4.png", cat: "/icons/levels/cat_lv4.png", other: "/icons/levels/other_lv4.png" }, color: "from-sky-300",     bgColor: "to-sky-500",     textColor: "text-sky-600" },
+    { level: 5, minPoints: 10000,   icons: { dog: "/icons/levels/dog_lv5.png", cat: "/icons/levels/cat_lv5.png", other: "/icons/levels/other_lv5.png" }, color: "from-violet-400",  bgColor: "to-purple-500",  textColor: "text-violet-600", hasSparkle: true },
+    { level: 6, minPoints: 30000,   icons: { dog: "/icons/levels/dog_lv6.png", cat: "/icons/levels/cat_lv6.png", other: "/icons/levels/other_lv6.png" }, color: "from-amber-300",   bgColor: "to-yellow-500",  textColor: "text-amber-600",  hasSparkle: true },
+    { level: 7, minPoints: 100000,  icons: { dog: "/icons/levels/dog_lv7.png", cat: "/icons/levels/cat_lv7.png", other: "/icons/levels/other_lv7.png" }, color: "from-rose-400",    bgColor: "to-amber-300",   textColor: "text-rose-600",   hasSparkle: true, hasGlow: true },
 ];
+
+/** 등급의 아이콘 경로 가져오기 (반려동물 타입별) */
+export function getLevelIcon(level: PointLevel, petType: PetIconType = "dog"): string {
+    return level.icons[petType];
+}
 
 /** 포인트로 현재 등급 계산 */
 export function getPointLevel(points: number): PointLevel {

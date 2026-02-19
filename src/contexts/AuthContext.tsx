@@ -40,6 +40,8 @@ interface AuthContextType {
     isAdminUser: boolean;
     isPremiumUser: boolean;
     refreshProfile: () => Promise<void>;
+    // 프로필 로딩 완료 플래그
+    profileLoaded: boolean;
     // 포인트 시스템
     points: number;
     pointsLoaded: boolean;
@@ -73,6 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [isPremiumUser, setIsPremiumUser] = useState(false);
     const [points, setPoints] = useState(0);
     const [pointsLoaded, setPointsLoaded] = useState(false);
+    const [profileLoaded, setProfileLoaded] = useState(false);
 
     // 프로필에서 관리자/프리미엄 상태 조회
     // 프로필+포인트 통합 조회 (단일 쿼리)
@@ -82,6 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (!currentUser) {
                 setIsAdminUser(false);
                 setIsPremiumUser(false);
+                setProfileLoaded(true);
                 return;
             }
 
@@ -107,8 +111,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // 포인트도 같이 설정
             setPoints(!error ? (data?.points ?? 0) : 0);
             setPointsLoaded(true);
+            setProfileLoaded(true);
         } catch {
             setPointsLoaded(true);
+            setProfileLoaded(true);
         }
     }, []);
 
@@ -159,13 +165,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             } = await supabase.auth.getSession();
             setSession(session);
             setUser(session?.user ?? null);
-            setLoading(false);
 
-            // 로그인 상태면 프로필+포인트 통합 로드 + 출석 체크 (병렬)
+            // 로그인 상태면 프로필+포인트 통합 로드 (await) + 출석 체크
             if (session?.user) {
-                refreshProfile();
+                await refreshProfile();
                 checkDailyLogin(session.user.id);
             }
+
+            setLoading(false);
         };
 
         getSession();
@@ -176,11 +183,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } = supabase.auth.onAuthStateChange(async (event, session) => {
             setSession(session);
             setUser(session?.user ?? null);
-            setLoading(false);
 
             // 로그인 시 프로필+포인트 통합 로드 + 출석 체크
             if (event === "SIGNED_IN" && session?.user) {
-                refreshProfile();
+                await refreshProfile();
                 checkDailyLogin(session.user.id);
             }
 
@@ -188,9 +194,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (event === "SIGNED_OUT") {
                 setPoints(0);
                 setPointsLoaded(false);
+                setProfileLoaded(false);
                 setIsAdminUser(false);
                 setIsPremiumUser(false);
             }
+
+            setLoading(false);
         });
 
         return () => {
@@ -401,6 +410,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAdminUser,
         isPremiumUser,
         refreshProfile,
+        profileLoaded,
         points,
         pointsLoaded,
         refreshPoints,
