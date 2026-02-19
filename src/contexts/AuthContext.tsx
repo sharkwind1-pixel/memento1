@@ -203,7 +203,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         getSession();
 
-        // 안전장치: 8초 이내에 로딩이 끝나지 않으면 강제로 비로그인 상태로 진입
+        // 안전장치: 5초 이내에 로딩이 끝나지 않으면 강제로 비로그인 상태로 진입
         const safetyTimer = setTimeout(() => {
             setLoading((prev) => {
                 if (prev) {
@@ -214,7 +214,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 }
                 return false;
             });
-        }, 8000);
+        }, 5000);
 
         // 인증 상태 변경 리스너
         const {

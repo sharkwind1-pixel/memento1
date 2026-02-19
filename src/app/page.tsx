@@ -102,6 +102,14 @@ function HomeContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
+    // 로딩 안전장치: AuthContext가 실패하더라도 5초 후 강제 표시
+    const [forceShow, setForceShow] = useState(false);
+    useEffect(() => {
+        if (!loading) return;
+        const timer = setTimeout(() => setForceShow(true), 5000);
+        return () => clearTimeout(timer);
+    }, [loading]);
+
     // ========================================================================
     // 초기 상태 결정 (URL > localStorage > 기본값)
     // ========================================================================
@@ -381,7 +389,7 @@ function HomeContent() {
         }
     };
 
-    if (loading) {
+    if (loading && !forceShow) {
         return <FullPageLoading />;
     }
 
