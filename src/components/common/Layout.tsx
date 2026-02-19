@@ -13,7 +13,7 @@
  * - 헤더: 로고, 데스크톱 네비게이션, 사용자 메뉴
  * - 사이드바: 데스크톱에서 고정, 모바일에서 오버레이
  * - 메인 콘텐츠: 반응형 중앙 정렬
- * - 하단 네비게이션: 모바일 전용 (5개 탭 + 메뉴)
+ * - 하단 네비게이션: 모바일 전용 (5개 탭)
  *
  * 반응형:
  * - xl (1280px+): 사이드바 고정 표시
@@ -458,10 +458,14 @@ export default function Layout({
             </div>
 
             {/* 모바일 하단 네비게이션 - 5개 메인 카테고리 */}
-            {/* backdrop-blur 제거 - 모바일 성능 최적화 */}
-            {/* GPU 가속 및 contain으로 리페인트 격리 */}
-            <nav className="xl:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 z-50 pb-safe">
-                <div className="flex justify-around items-center h-16 px-1">
+            <nav
+                className="xl:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-t border-gray-100 dark:border-gray-800 z-50 pb-safe"
+                style={{
+                    boxShadow: '0 -1px 12px rgba(0, 0, 0, 0.04)',
+                    transform: 'translateZ(0)',
+                }}
+            >
+                <div className="flex justify-around items-center h-[68px] px-2 max-w-lg mx-auto">
                     {BOTTOM_NAV_TABS.map((tab) => {
                         const Icon = tab.icon;
                         const isActive =
@@ -475,44 +479,47 @@ export default function Layout({
                                 data-tutorial-id={tab.id}
                                 onClick={() => setSelectedTab(tab.id)}
                                 className={`
-                                    flex flex-col items-center justify-center flex-1 py-2 min-h-[56px]
-                                    ${isActive ? "text-[#05B2DC]" : "text-gray-400 dark:text-gray-500"}
+                                    relative flex flex-col items-center justify-center flex-1 py-1.5
+                                    min-h-[60px] min-w-[56px] transition-colors duration-200
+                                    ${isActive ? "text-[#05B2DC] dark:text-[#38BDF8]" : "text-gray-400 dark:text-gray-500"}
                                 `}
                             >
                                 <div
-                                    className={`p-1.5 rounded-xl ${
-                                        isHome && isActive
-                                            ? "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white"
+                                    className={`
+                                        relative flex items-center justify-center rounded-2xl transition-all duration-200
+                                        ${isHome
+                                            ? isActive
+                                                ? "w-12 h-8 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] shadow-md shadow-[#05B2DC]/25"
+                                                : "w-12 h-8"
                                             : isActive
-                                              ? "bg-[#E0F7FF] dark:bg-[#05B2DC]/20"
-                                              : ""
-                                    }`}
+                                                ? "w-10 h-8 bg-[#E0F7FF] dark:bg-[#05B2DC]/15"
+                                                : "w-10 h-8"
+                                        }
+                                    `}
                                 >
                                     <Icon
-                                        className={`w-6 h-6 ${isHome && isActive ? "text-white" : ""}`}
+                                        className={`
+                                            transition-all duration-200
+                                            ${isHome
+                                                ? isActive
+                                                    ? "w-6 h-6 text-white"
+                                                    : "w-6 h-6"
+                                                : isActive
+                                                    ? "w-[22px] h-[22px]"
+                                                    : "w-5 h-5"
+                                            }
+                                        `}
                                     />
                                 </div>
-                                <span className="text-xs mt-0.5 font-medium">
+                                <span className={`text-[10px] mt-1 leading-none ${isActive ? 'font-semibold' : 'font-medium'}`}>
                                     {tab.label}
                                 </span>
+                                {isActive && !isHome && (
+                                    <div className="absolute bottom-1 w-1 h-1 rounded-full bg-[#05B2DC] dark:bg-[#38BDF8]" />
+                                )}
                             </button>
                         );
                     })}
-                    {/* 메뉴 버튼 - 사이드바 토글 */}
-                    <button
-                        data-tutorial-id="more"
-                        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                        className="flex flex-col items-center justify-center flex-1 py-2 min-h-[56px] text-gray-400 dark:text-gray-500"
-                    >
-                        <div
-                            className={`p-1.5 rounded-xl ${isSidebarOpen ? "bg-gray-100 dark:bg-gray-800" : ""}`}
-                        >
-                            <Menu className="w-6 h-6" />
-                        </div>
-                        <span className="text-xs mt-0.5 font-medium">
-                            메뉴
-                        </span>
-                    </button>
                 </div>
             </nav>
 
