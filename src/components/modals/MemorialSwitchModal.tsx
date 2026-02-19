@@ -46,7 +46,7 @@ export default function MemorialSwitchModal({
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl">
+            <div className="bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="memorial-switch-title">
                 {/* Step 1: 확인 */}
                 {step === 1 && (
                     <>
@@ -55,6 +55,7 @@ export default function MemorialSwitchModal({
                             <button
                                 onClick={handleClose}
                                 className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/50 transition-colors"
+                                aria-label="닫기"
                             >
                                 <X className="w-5 h-5 text-gray-600" />
                             </button>
@@ -63,7 +64,7 @@ export default function MemorialSwitchModal({
                                 <Star className="w-10 h-10 text-amber-600" />
                             </div>
 
-                            <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
+                            <h2 id="memorial-switch-title" className="text-xl font-bold text-gray-800 dark:text-white mb-2">
                                 소중한 기억으로
                             </h2>
                             <p className="text-gray-600 dark:text-gray-300 text-sm">
@@ -124,6 +125,7 @@ export default function MemorialSwitchModal({
                             <button
                                 onClick={handleClose}
                                 className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/50 transition-colors"
+                                aria-label="닫기"
                             >
                                 <X className="w-5 h-5 text-gray-600" />
                             </button>

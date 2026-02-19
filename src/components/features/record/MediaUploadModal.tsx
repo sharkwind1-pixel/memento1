@@ -199,14 +199,17 @@ export default function MediaUploadModal({
             >
                 <div
                     className="bg-white dark:bg-gray-900 w-full max-w-2xl rounded-2xl p-6 max-h-[85vh] overflow-y-auto"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="media-upload-title"
                     onClick={(e) => e.stopPropagation()}
                     style={{ touchAction: 'pan-y' }}
                 >
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-semibold">
+                        <h3 id="media-upload-title" className="text-lg font-semibold">
                             사진/영상 업로드
                         </h3>
-                        <Button variant="ghost" size="icon" onClick={onClose}>
+                        <Button variant="ghost" size="icon" onClick={onClose} aria-label="닫기">
                             <X className="w-5 h-5" />
                         </Button>
                     </div>

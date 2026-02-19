@@ -76,10 +76,10 @@ export function PointsAwardModal({ user, onClose, onAward }: PointsAwardModalPro
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/50" onClick={onClose} />
 
-            <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden" role="dialog" aria-modal="true" aria-labelledby="points-award-title">
                 {/* 헤더 */}
                 <div className="p-4 border-b bg-gradient-to-r from-sky-50 to-violet-50">
-                    <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                    <h3 id="points-award-title" className="font-bold text-gray-800 flex items-center gap-2">
                         <Star className="w-5 h-5 text-sky-500" />
                         포인트 지급
                     </h3>

@@ -208,11 +208,11 @@ export default function WritePostModal({
             />
 
             {/* 모달 */}
-            <div className="relative w-full sm:max-w-lg sm:mx-4 bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl shadow-xl overflow-hidden max-h-[calc(100vh-140px)] sm:max-h-[85vh] flex flex-col mb-[80px] sm:mb-0">
+            <div className="relative w-full sm:max-w-lg sm:mx-4 bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl shadow-xl overflow-hidden max-h-[calc(100vh-140px)] sm:max-h-[85vh] flex flex-col mb-[80px] sm:mb-0" role="dialog" aria-modal="true" aria-labelledby="write-post-title">
                 {/* 헤더 */}
                 <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
                     <div>
-                        <h2 className="text-lg font-bold text-gray-800 dark:text-white">
+                        <h2 id="write-post-title" className="text-lg font-bold text-gray-800 dark:text-white">
                             글쓰기
                         </h2>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -222,6 +222,7 @@ export default function WritePostModal({
                     <button
                         onClick={onClose}
                         className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+                        aria-label="닫기"
                     >
                         <X className="w-5 h-5" />
                     </button>
@@ -336,6 +337,7 @@ export default function WritePostModal({
                                         <button
                                             onClick={() => handleRemoveImage(index)}
                                             className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/60 rounded-full flex items-center justify-center"
+                                            aria-label="이미지 삭제"
                                         >
                                             <X className="w-3 h-3 text-white" />
                                         </button>

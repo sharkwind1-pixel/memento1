@@ -84,7 +84,7 @@ export default function PostModal({
                 if (e.target === e.currentTarget) onClose();
             }}
         >
-            <div className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col">
+            <div className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col" role="dialog" aria-modal="true" aria-labelledby="post-detail-title">
                 {/* 헤더 */}
                 <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
                     <div className="flex items-center gap-3">
@@ -105,6 +105,7 @@ export default function PostModal({
                             variant="ghost"
                             size="icon"
                             className="rounded-full"
+                            aria-label="더보기"
                         >
                             <MoreHorizontal className="w-5 h-5" />
                         </Button>
@@ -113,6 +114,7 @@ export default function PostModal({
                             size="icon"
                             className="rounded-full"
                             onClick={onClose}
+                            aria-label="닫기"
                         >
                             <X className="w-5 h-5" />
                         </Button>
@@ -143,7 +145,7 @@ export default function PostModal({
 
                         {/* 제목 & 내용 */}
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                            <h2 id="post-detail-title" className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                                 {post.title}
                             </h2>
                             <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
@@ -167,6 +169,7 @@ export default function PostModal({
                                 <button
                                     onClick={onToggleLike}
                                     className="transition-transform active:scale-125"
+                                    aria-label="좋아요"
                                 >
                                     <Heart
                                         className={`w-7 h-7 transition-colors ${
@@ -176,14 +179,14 @@ export default function PostModal({
                                         }`}
                                     />
                                 </button>
-                                <button>
+                                <button aria-label="댓글">
                                     <MessageCircle className="w-7 h-7 text-gray-700 dark:text-gray-300" />
                                 </button>
-                                <button>
+                                <button aria-label="공유">
                                     <Share2 className="w-6 h-6 text-gray-700 dark:text-gray-300" />
                                 </button>
                             </div>
-                            <button onClick={() => setIsSaved(!isSaved)}>
+                            <button onClick={() => setIsSaved(!isSaved)} aria-label="저장">
                                 <Bookmark
                                     className={`w-7 h-7 transition-colors ${
                                         isSaved

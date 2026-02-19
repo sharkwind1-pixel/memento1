@@ -97,12 +97,13 @@ export default function PremiumModal({
             />
 
             {/* 모달 */}
-            <div className="relative bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="relative bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200" role="dialog" aria-modal="true" aria-labelledby="premium-modal-title">
                 {/* 상단 그라데이션 */}
                 <div className="bg-gradient-to-br from-violet-500 via-purple-500 to-sky-500 p-8 text-white">
                     <button
                         onClick={onClose}
                         className="absolute top-4 right-4 p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+                        aria-label="닫기"
                     >
                         <X className="w-5 h-5" />
                     </button>
@@ -112,7 +113,7 @@ export default function PremiumModal({
                             <Icon className="w-8 h-8" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold">{info.title}</h2>
+                            <h2 id="premium-modal-title" className="text-xl font-bold">{info.title}</h2>
                             <p className="text-white/80 text-sm mt-1">{info.description}</p>
                         </div>
                     </div>

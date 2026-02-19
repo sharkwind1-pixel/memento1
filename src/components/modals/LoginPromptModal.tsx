@@ -103,11 +103,12 @@ export default function LoginPromptModal({
             />
 
             {/* 모달 */}
-            <div className="relative bg-white dark:bg-gray-900 rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="relative bg-white dark:bg-gray-900 rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200" role="dialog" aria-modal="true" aria-labelledby="login-prompt-title">
                 {/* 닫기 버튼 */}
                 <button
                     onClick={onClose}
                     className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors z-10"
+                    aria-label="닫기"
                 >
                     <X className="w-5 h-5 text-gray-400" />
                 </button>
@@ -117,7 +118,7 @@ export default function LoginPromptModal({
                     <div className="w-20 h-20 bg-gradient-to-br from-sky-100 to-violet-100 dark:from-sky-900/40 dark:to-violet-900/40 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Icon className="w-10 h-10 text-violet-500" />
                     </div>
-                    <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
+                    <h2 id="login-prompt-title" className="text-xl font-bold text-gray-800 dark:text-white mb-2">
                         {info.title}
                     </h2>
                     <p className="text-gray-600 dark:text-gray-300">
