@@ -94,6 +94,8 @@ export async function GET(request: NextRequest) {
             likes: post.likes ?? post.likes_count ?? 0,
             views: post.views ?? 0,
             comments: post.post_comments?.[0]?.count || (post.comments ?? post.comments_count ?? 0),
+            imageUrls: post.image_urls || [],
+            isPublic: post.is_public ?? false,
             createdAt: post.created_at,
         }));
 
@@ -139,7 +141,7 @@ export async function POST(request: NextRequest) {
         const supabase = getSupabase();
         const body = await request.json();
 
-        const { boardType: rawBoardType, subcategory, animalType, tag, badge, title, content, authorName } = body;
+        const { boardType: rawBoardType, subcategory, animalType, tag, badge, title, content, authorName, imageUrls, isPublic } = body;
         const boardType = rawBoardType || subcategory || "free";
 
         // 3. 필수 필드 검증
@@ -156,7 +158,12 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "유효하지 않은 입력입니다." }, { status: 400 });
         }
 
-        // 5. 게시글 저장 (세션에서 가져온 userId 사용)
+        // 5. 이미지 URL 검증 (최대 5개, URL 형식)
+        const validImageUrls = Array.isArray(imageUrls)
+            ? imageUrls.filter((url: string) => typeof url === "string" && url.startsWith("http")).slice(0, 5)
+            : [];
+
+        // 6. 게시글 저장 (세션에서 가져온 userId 사용)
         const { data, error } = await supabase
             .from("community_posts")
             .insert([{
@@ -168,6 +175,8 @@ export async function POST(request: NextRequest) {
                 title: sanitizedTitle,
                 content: sanitizedContent,
                 author_name: sanitizedAuthorName,
+                ...(validImageUrls.length > 0 && { image_urls: validImageUrls }),
+                ...(boardType === "memorial" && { is_public: isPublic ?? false }),
             }])
             .select()
             .single();

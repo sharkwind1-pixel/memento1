@@ -30,6 +30,7 @@ import { InlineLoading } from "@/components/ui/PawLoading";
 import PawLoading from "@/components/ui/PawLoading";
 import { useAuth } from "@/contexts/AuthContext";
 import ReportModal from "@/components/modals/ReportModal";
+import Image from "next/image";
 import type { CommunitySubcategory } from "@/types";
 
 interface PostComment {
@@ -63,6 +64,8 @@ interface PostData {
     views: number;
     comments: PostComment[] | number;
     comments_count?: number;
+    image_urls?: string[];
+    is_public?: boolean;
     created_at: string;
     updated_at?: string;
 }
@@ -388,6 +391,33 @@ export default function PostDetailView({
                     <div className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap break-words">
                         {post.content}
                     </div>
+
+                    {/* 첨부 이미지 */}
+                    {post.image_urls && post.image_urls.length > 0 && (() => {
+                        const images = post.image_urls!;
+                        return (
+                            <div className={`mt-4 gap-2 ${
+                                images.length === 1 ? "flex" : "grid grid-cols-2"
+                            }`}>
+                                {images.map((url: string, index: number) => (
+                                    <div
+                                        key={index}
+                                        className={`relative rounded-xl overflow-hidden border dark:border-gray-600 ${
+                                            images.length === 1 ? "w-full aspect-video" : "aspect-square"
+                                        }`}
+                                    >
+                                        <Image
+                                            src={url}
+                                            alt={`첨부 이미지 ${index + 1}`}
+                                            fill
+                                            className="object-cover"
+                                            sizes={images.length === 1 ? "600px" : "300px"}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        );
+                    })()}
                 </div>
 
                 {/* 좋아요 + 댓글 수 */}

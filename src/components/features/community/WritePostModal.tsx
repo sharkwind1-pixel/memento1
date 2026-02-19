@@ -1,18 +1,21 @@
 /**
  * 글쓰기 모달
- * v2: 추모 공개 옵션 + 말머리 시스템 추가
+ * v3: 이미지 첨부 기능 + 추모 공개 옵션 + 말머리 시스템
  */
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { X, Send, Home, Eye, EyeOff } from "lucide-react";
+import { X, Send, Home, Eye, EyeOff, ImagePlus, Loader2 } from "lucide-react";
 import { InlineLoading } from "@/components/ui/PawLoading";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
+import { uploadCommunityImage } from "@/lib/storage";
+import { toast } from "sonner";
+import Image from "next/image";
 import type { CommunitySubcategory, PostTag } from "@/types";
 
 interface WritePostModalProps {
@@ -53,6 +56,8 @@ const SUBCATEGORY_LABELS: Record<string, string> = {
     lost: "분실동물",
 };
 
+const MAX_IMAGES = 5;
+
 export default function WritePostModal({
     isOpen,
     onClose,
@@ -61,6 +66,7 @@ export default function WritePostModal({
 }: WritePostModalProps) {
     const { user } = useAuth();
     useEscapeClose(isOpen, onClose);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
     const [badge, setBadge] = useState("");
@@ -68,6 +74,10 @@ export default function WritePostModal({
     const [isPublic, setIsPublic] = useState(false); // 홈화면 공개 여부
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
+
+    // 이미지 관련
+    const [imageUrls, setImageUrls] = useState<string[]>([]);
+    const [isUploading, setIsUploading] = useState(false);
 
     // 가입된 닉네임 사용
     const userNickname =
@@ -84,6 +94,48 @@ export default function WritePostModal({
         setTag("");
         setIsPublic(false);
     }, [boardType]);
+
+    // 이미지 업로드 핸들러
+    const handleImageUpload = async (files: FileList | null) => {
+        if (!files || !user) return;
+
+        const remaining = MAX_IMAGES - imageUrls.length;
+        if (remaining <= 0) {
+            toast.error(`이미지는 최대 ${MAX_IMAGES}장까지 첨부할 수 있습니다`);
+            return;
+        }
+
+        const filesToUpload = Array.from(files).slice(0, remaining);
+        setIsUploading(true);
+
+        try {
+            for (const file of filesToUpload) {
+                // 이미지 파일만 허용
+                if (!file.type.startsWith("image/")) {
+                    toast.error("이미지 파일만 업로드할 수 있습니다");
+                    continue;
+                }
+
+                const result = await uploadCommunityImage(file, user.id);
+                if (result.success && result.url) {
+                    setImageUrls(prev => [...prev, result.url!]);
+                } else {
+                    toast.error(result.error || "이미지 업로드 실패");
+                }
+            }
+        } finally {
+            setIsUploading(false);
+            // file input 초기화
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
+        }
+    };
+
+    // 이미지 삭제
+    const handleRemoveImage = (index: number) => {
+        setImageUrls(prev => prev.filter((_, i) => i !== index));
+    };
 
     const handleSubmit = async () => {
         if (!user) {
@@ -117,6 +169,7 @@ export default function WritePostModal({
                     content: content.trim(),
                     authorName: userNickname,
                     isPublic: isMemorial ? isPublic : undefined,
+                    imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
                 }),
             });
 
@@ -131,6 +184,8 @@ export default function WritePostModal({
             setBadge("");
             setTag("");
             setIsPublic(false);
+            setImageUrls([]);
+            toast.success("게시글이 등록되었습니다");
             onSuccess();
             onClose();
         } catch (err) {
@@ -260,6 +315,67 @@ export default function WritePostModal({
                         </p>
                     </div>
 
+                    {/* 이미지 첨부 */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            이미지 첨부 <span className="text-gray-400 font-normal">({imageUrls.length}/{MAX_IMAGES})</span>
+                        </label>
+
+                        {/* 이미지 미리보기 */}
+                        {imageUrls.length > 0 && (
+                            <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
+                                {imageUrls.map((url, index) => (
+                                    <div key={index} className="relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border dark:border-gray-600">
+                                        <Image
+                                            src={url}
+                                            alt={`첨부 이미지 ${index + 1}`}
+                                            fill
+                                            className="object-cover"
+                                            sizes="80px"
+                                        />
+                                        <button
+                                            onClick={() => handleRemoveImage(index)}
+                                            className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/60 rounded-full flex items-center justify-center"
+                                        >
+                                            <X className="w-3 h-3 text-white" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* 업로드 버튼 */}
+                        {imageUrls.length < MAX_IMAGES && (
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={isUploading}
+                                className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-gray-500 dark:text-gray-400 hover:border-sky-400 hover:text-sky-500 transition-colors w-full justify-center"
+                            >
+                                {isUploading ? (
+                                    <>
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                        <span className="text-sm">업로드 중...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <ImagePlus className="w-5 h-5" />
+                                        <span className="text-sm">이미지 추가</span>
+                                    </>
+                                )}
+                            </button>
+                        )}
+
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            className="hidden"
+                            onChange={(e) => handleImageUpload(e.target.files)}
+                        />
+                    </div>
+
                     {/* 홈화면 공개 옵션 (추모게시판만) */}
                     {isMemorial && (
                         <div className="p-4 bg-violet-50 dark:bg-violet-900/20 rounded-xl border border-violet-200 dark:border-violet-700/50">
@@ -321,7 +437,7 @@ export default function WritePostModal({
                     </Button>
                     <Button
                         onClick={handleSubmit}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isUploading}
                         className="bg-gradient-to-r from-sky-500 to-blue-500"
                     >
                         {isSubmitting ? (
