@@ -56,22 +56,28 @@ export function dbArticleToMagazineArticle(row: {
     };
 }
 
+/** 단계별 배지 표시 라벨 */
+export const getBadgeLabel = (badge: string) => {
+    switch (badge) {
+        case "beginner":
+            return "처음 키워요";
+        case "companion":
+            return "함께 성장해요";
+        case "senior":
+            return "오래오래 함께";
+        default:
+            return badge;
+    }
+};
+
 export const getBadgeStyle = (badge: string) => {
     switch (badge) {
-        case "필독":
-            return "bg-red-500 text-white";
-        case "인기":
-            return "bg-orange-500 text-white";
-        case "추천":
-            return "bg-blue-500 text-white";
-        case "팁":
-            return "bg-green-500 text-white";
-        case "시즌":
-            return "bg-purple-500 text-white";
-        case "가이드":
+        case "beginner":
             return "bg-sky-500 text-white";
-        case "심화":
-            return "bg-indigo-500 text-white";
+        case "companion":
+            return "bg-emerald-500 text-white";
+        case "senior":
+            return "bg-amber-500 text-white";
         default:
             return "bg-gray-500 text-white";
     }

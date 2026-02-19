@@ -32,19 +32,30 @@ import {
     Home,
     Plane,
     TrendingUp,
+    Sparkles,
+    HeartHandshake,
+    Shield,
 } from "lucide-react";
 
 import Image from "next/image";
 import { TabType } from "@/types";
-import { getBadgeStyle, dbArticleToMagazineArticle, type MagazineArticle } from "@/data/magazineArticles";
+import { getBadgeStyle, getBadgeLabel, dbArticleToMagazineArticle, type MagazineArticle } from "@/data/magazineArticles";
 import PawLoading from "@/components/ui/PawLoading";
 
 interface MagazinePageProps {
     setSelectedTab?: (tab: TabType) => void;
 }
 
-// 카테고리 데이터
-const CATEGORIES = [
+// 단계별 필터 (상단)
+const STAGES = [
+    { id: "all", label: "전체", icon: BookOpen, color: "from-emerald-500 to-teal-500", description: "모든 콘텐츠" },
+    { id: "beginner", label: "처음 키워요", icon: Sparkles, color: "from-sky-400 to-blue-500", description: "초보 보호자 가이드" },
+    { id: "companion", label: "함께 성장해요", icon: HeartHandshake, color: "from-emerald-400 to-green-500", description: "일상 케어 정보" },
+    { id: "senior", label: "오래오래 함께", icon: Shield, color: "from-amber-400 to-orange-500", description: "시니어 케어" },
+];
+
+// 주제별 필터 (하단)
+const TOPICS = [
     { id: "all", label: "전체", icon: BookOpen },
     { id: "health", label: "건강/의료", icon: Stethoscope },
     { id: "food", label: "사료/영양", icon: Utensils },
@@ -55,7 +66,8 @@ const CATEGORIES = [
 ];
 
 export default function MagazinePage({ setSelectedTab }: MagazinePageProps) {
-    const [selectedCategory, setSelectedCategory] = useState<string>("all");
+    const [selectedStage, setSelectedStage] = useState<string>("all");
+    const [selectedTopic, setSelectedTopic] = useState<string>("all");
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [articles, setArticles] = useState<MagazineArticle[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -81,7 +93,11 @@ export default function MagazinePage({ setSelectedTab }: MagazinePageProps) {
     }, []);
 
     const filteredArticles = articles.filter((article) => {
-        if (selectedCategory !== "all" && article.category !== selectedCategory)
+        // 단계별 필터 (badge 필드 기반)
+        if (selectedStage !== "all" && article.badge !== selectedStage)
+            return false;
+        // 주제별 필터 (category 필드 기반)
+        if (selectedTopic !== "all" && article.category !== selectedTopic)
             return false;
         if (
             searchQuery &&
@@ -136,42 +152,60 @@ export default function MagazinePage({ setSelectedTab }: MagazinePageProps) {
                         />
                     </div>
 
-                    {/* 카테고리 - 1줄(전체) + 3열 2줄 */}
-                    <div className="space-y-2">
-                        {/* 전체 버튼 - 1줄 */}
-                        <Button
-                            variant={selectedCategory === "all" ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setSelectedCategory("all")}
-                            className={`w-full rounded-xl ${
-                                selectedCategory === "all"
-                                    ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0"
-                                    : "bg-white/50 dark:bg-gray-700/50 border-emerald-200 dark:border-emerald-700"
-                            }`}
-                        >
-                            <BookOpen className="w-4 h-4 mr-1" />
-                            전체
-                        </Button>
-                        {/* 나머지 카테고리 - 3열 2줄 */}
-                        <div className="grid grid-cols-3 gap-2">
-                            {CATEGORIES.slice(1).map((cat) => {
-                                const Icon = cat.icon;
-                                const isActive = selectedCategory === cat.id;
+                    {/* 단계별 필터 */}
+                    <div className="space-y-3">
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                            어떤 단계인가요?
+                        </p>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            {STAGES.map((stage) => {
+                                const Icon = stage.icon;
+                                const isActive = selectedStage === stage.id;
                                 return (
-                                    <Button
-                                        key={cat.id}
-                                        variant={isActive ? "default" : "outline"}
-                                        size="sm"
-                                        onClick={() => setSelectedCategory(cat.id)}
-                                        className={`rounded-xl flex-col h-auto py-2 px-1 text-xs ${
+                                    <button
+                                        key={stage.id}
+                                        onClick={() => setSelectedStage(stage.id)}
+                                        className={`p-3 rounded-xl border-2 transition-all text-left ${
                                             isActive
-                                                ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0"
-                                                : "bg-white/50 dark:bg-gray-700/50 border-emerald-200 dark:border-emerald-700"
+                                                ? `bg-gradient-to-r ${stage.color} text-white border-transparent shadow-lg`
+                                                : "bg-white/50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600 hover:shadow-md"
                                         }`}
                                     >
-                                        <Icon className="w-4 h-4 mb-0.5" />
-                                        {cat.label}
-                                    </Button>
+                                        <Icon className={`w-5 h-5 mb-1 ${isActive ? "text-white" : "text-gray-500 dark:text-gray-400"}`} />
+                                        <span className={`block text-sm font-bold ${isActive ? "text-white" : "text-gray-800 dark:text-gray-100"}`}>
+                                            {stage.label}
+                                        </span>
+                                        <span className={`block text-xs mt-0.5 ${isActive ? "text-white/80" : "text-gray-400 dark:text-gray-500"}`}>
+                                            {stage.description}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* 주제별 필터 */}
+                    <div className="space-y-2 mt-4">
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                            주제
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                            {TOPICS.map((topic) => {
+                                const Icon = topic.icon;
+                                const isActive = selectedTopic === topic.id;
+                                return (
+                                    <button
+                                        key={topic.id}
+                                        onClick={() => setSelectedTopic(topic.id)}
+                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                                            isActive
+                                                ? "bg-emerald-500 text-white shadow-md"
+                                                : "bg-white/70 dark:bg-gray-700/70 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+                                        }`}
+                                    >
+                                        <Icon className="w-3.5 h-3.5" />
+                                        {topic.label}
+                                    </button>
                                 );
                             })}
                         </div>
@@ -186,7 +220,7 @@ export default function MagazinePage({ setSelectedTab }: MagazinePageProps) {
                 )}
 
                 {/* 인기 아티클 */}
-                {!isLoading && selectedCategory === "all" && !searchQuery && popularArticles.length > 0 && (
+                {!isLoading && selectedStage === "all" && selectedTopic === "all" && !searchQuery && popularArticles.length > 0 && (
                     <div className="space-y-4">
                         <div className="flex items-center gap-2">
                             <TrendingUp className="w-5 h-5 text-emerald-500" />
@@ -211,7 +245,7 @@ export default function MagazinePage({ setSelectedTab }: MagazinePageProps) {
                                             <Badge
                                                 className={`${getBadgeStyle(article.badge)} rounded-lg`}
                                             >
-                                                {article.badge}
+                                                {getBadgeLabel(article.badge)}
                                             </Badge>
                                             <Badge className="bg-black/50 text-white rounded-lg">
                                                 #{index + 1}
@@ -242,7 +276,7 @@ export default function MagazinePage({ setSelectedTab }: MagazinePageProps) {
                 {/* 아티클 목록 */}
                 {!isLoading && (
                     <div className="space-y-4">
-                        {(selectedCategory !== "all" || searchQuery) && (
+                        {(selectedStage !== "all" || selectedTopic !== "all" || searchQuery) && (
                             <div className="text-sm text-gray-500">
                                 {filteredArticles.length}개의 콘텐츠
                             </div>
@@ -267,7 +301,7 @@ export default function MagazinePage({ setSelectedTab }: MagazinePageProps) {
                                             <Badge
                                                 className={`${getBadgeStyle(article.badge)} rounded-lg`}
                                             >
-                                                {article.badge}
+                                                {getBadgeLabel(article.badge)}
                                             </Badge>
                                             <div className="flex gap-1">
                                                 <Button
@@ -340,16 +374,17 @@ export default function MagazinePage({ setSelectedTab }: MagazinePageProps) {
                                     <BookOpen className="w-10 h-10 text-gray-400" />
                                 </div>
                                 <p className="text-gray-500 dark:text-gray-400">
-                                    {searchQuery || selectedCategory !== "all"
+                                    {searchQuery || selectedStage !== "all" || selectedTopic !== "all"
                                         ? "해당 조건의 콘텐츠가 없습니다"
                                         : "아직 등록된 매거진 기사가 없습니다"}
                                 </p>
-                                {(searchQuery || selectedCategory !== "all") && (
+                                {(searchQuery || selectedStage !== "all" || selectedTopic !== "all") && (
                                     <Button
                                         variant="outline"
                                         className="mt-4 rounded-xl"
                                         onClick={() => {
-                                            setSelectedCategory("all");
+                                            setSelectedStage("all");
+                                            setSelectedTopic("all");
                                             setSearchQuery("");
                                         }}
                                     >
