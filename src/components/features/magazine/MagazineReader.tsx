@@ -1,11 +1,11 @@
 /**
- * MagazineReader - 좌우 스와이프 풀페이지 매거진 리더
- * 전자책/잡지 앱처럼 좌우로 넘기면 전체 페이지가 전환됨
+ * MagazineReader - 인스타그램 카드뉴스 스타일 매거진 리더
+ * 좌우 스와이프로 카드를 넘기며 읽는 풀스크린 리더
  *
- * 페이지 구성:
+ * 카드 구성:
  * 1. 커버 (히어로 이미지 + 제목 + 배지)
  * 2. 요약 (메타정보 + 요약 박스)
- * 3~N. 본문 섹션 (hr/H2/자동 분할)
+ * 3~N. 본문 카드 (텍스트 / 이미지 / 인용문)
  * N+1. 엔딩 (태그 + 목록 복귀)
  */
 "use client";
@@ -22,6 +22,7 @@ import {
     ChevronLeft,
     ChevronRight,
     BookOpen,
+    Quote,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,22 +37,30 @@ interface MagazineReaderProps {
     onBack: () => void;
 }
 
-/** 페이지 타입 */
-type PageType = "cover" | "summary" | "section" | "end";
+// ──────────────────────────────────────────────
+//  카드 타입 & 데이터
+// ──────────────────────────────────────────────
 
-interface PageData {
-    type: PageType;
+type CardType = "cover" | "summary" | "text" | "image" | "quote" | "end";
+
+interface CardData {
+    type: CardType;
+    /** 텍스트 카드: HTML 본문 */
     html?: string;
-    sectionTitle?: string;
+    /** 이미지 카드: 이미지 URL */
+    imageSrc?: string;
+    /** 이미지 카드: 캡션 */
+    caption?: string;
+    /** 인용 카드: 인용문 텍스트 */
+    quoteText?: string;
 }
 
-// ──────────────────────────────────────────────
-//  HTML 콘텐츠를 페이지 단위로 분할
-//  우선순위: <hr> → <h2> → 자동 (블록 5개)
-// ──────────────────────────────────────────────
+/** 텍스트 카드 1장에 들어갈 최대 블록 수 */
+const MAX_BLOCKS_PER_CARD = 3;
 
-/** 한 페이지에 표시할 최대 블록 요소 수 */
-const MAX_BLOCKS_PER_PAGE = 5;
+// ──────────────────────────────────────────────
+//  HTML 콘텐츠를 카드 단위로 분할
+// ──────────────────────────────────────────────
 
 /** plain text를 HTML로 변환 (기존 콘텐츠 호환) */
 function toHtml(content: string): string {
@@ -63,99 +72,111 @@ function toHtml(content: string): string {
         .join("");
 }
 
-/** 섹션 결과 타입 */
-interface ContentSection {
-    title: string;
-    html: string;
-}
-
 /**
- * HTML 콘텐츠를 페이지 단위로 분할
+ * HTML 콘텐츠를 카드 단위로 분할
  *
- * 1단계: <hr> 태그로 명시적 페이지 분할
- * 2단계: 각 파트 내 <h2> 태그로 추가 분할
- * 3단계: 블록 요소가 MAX_BLOCKS_PER_PAGE 초과 시 자동 분할
+ * 분할 규칙:
+ * 1. <hr> → 명시적 카드 경계
+ * 2. <h2> → 새 카드 시작
+ * 3. <img> → 독립 이미지 카드 (다음 <p>가 짧으면 캡션으로 병합)
+ * 4. <blockquote> → 독립 인용 카드
+ * 5. 연속 블록 → MAX_BLOCKS_PER_CARD개씩 텍스트 카드
  */
-function splitContentIntoPages(html: string): ContentSection[] {
-    // 1단계: <hr> 기준 분할 (관리자가 삽입한 페이지 구분선)
+function splitContentIntoCards(html: string): CardData[] {
+    // 1단계: <hr> 기준 분할
     const hrParts = html.split(/<hr\s*\/?>/i).filter((p) => p.trim());
-
-    const sections: ContentSection[] = [];
+    const cards: CardData[] = [];
 
     for (const hrPart of hrParts) {
-        // 2단계: 각 <hr> 파트 내에서 <h2> 기준 분할
-        const h2Parts = hrPart.split(/(?=<h2[\s>])/i);
+        // 블록 요소 단위로 분리
+        const blockPattern = /(?=<(?:p|ul|ol|h2|h3|blockquote|img|figure)[\s>])/i;
+        const blocks = hrPart.split(blockPattern).filter((b) => b.trim());
 
-        for (const h2Part of h2Parts) {
-            const trimmed = h2Part.trim();
-            if (!trimmed) continue;
+        let textBuffer: string[] = [];
 
-            // H2 태그에서 제목 추출
-            const h2Match = trimmed.match(/<h2[^>]*>(.*?)<\/h2>/i);
-            const title = h2Match ? h2Match[1].replace(/<[^>]*>/g, "").trim() : "";
+        const flushTextBuffer = () => {
+            if (textBuffer.length === 0) return;
+            cards.push({ type: "text", html: textBuffer.join("") });
+            textBuffer = [];
+        };
 
-            // 3단계: 블록 요소 수 체크 후 자동 분할
-            const autoSplit = splitByBlockCount(trimmed, title);
-            sections.push(...autoSplit);
+        for (let i = 0; i < blocks.length; i++) {
+            const block = blocks[i].trim();
+
+            // <img> → 이미지 카드
+            const imgMatch = block.match(/<img[^>]+src=["']([^"']+)["'][^>]*>/i);
+            if (imgMatch) {
+                flushTextBuffer();
+                // 다음 블록이 짧은 <p>면 캡션으로 사용
+                let caption: string | undefined;
+                const nextBlock = blocks[i + 1]?.trim();
+                if (nextBlock) {
+                    const pMatch = nextBlock.match(/^<p[^>]*>([\s\S]*?)<\/p>$/i);
+                    const pText = pMatch ? pMatch[1].replace(/<[^>]*>/g, "").trim() : "";
+                    if (pMatch && pText.length < 80) {
+                        caption = pText;
+                        i++; // 캡션으로 소비
+                    }
+                }
+                cards.push({ type: "image", imageSrc: imgMatch[1], caption });
+                continue;
+            }
+
+            // <blockquote> → 인용 카드
+            if (/^<blockquote/i.test(block)) {
+                flushTextBuffer();
+                const quoteText = block
+                    .replace(/<\/?blockquote[^>]*>/gi, "")
+                    .replace(/<\/?p[^>]*>/gi, "")
+                    .replace(/<[^>]*>/g, "")
+                    .trim();
+                cards.push({ type: "quote", quoteText });
+                continue;
+            }
+
+            // <h2> → 새 카드 시작
+            if (/^<h2/i.test(block)) {
+                flushTextBuffer();
+                textBuffer.push(block);
+                continue;
+            }
+
+            // 일반 블록 → 텍스트 버퍼에 추가
+            textBuffer.push(block);
+
+            // MAX_BLOCKS_PER_CARD 도달 시 flush
+            if (textBuffer.length >= MAX_BLOCKS_PER_CARD) {
+                flushTextBuffer();
+            }
         }
+
+        flushTextBuffer();
     }
 
-    return sections.length > 0 ? sections : [{ title: "", html }];
+    return cards;
 }
 
-/**
- * 블록 요소가 MAX_BLOCKS_PER_PAGE 초과하면 자동 분할
- * 블록 요소: <p>, <ul>, <ol>, <h2>, <h3>, <blockquote>, <img>, <figure>
- */
-function splitByBlockCount(html: string, sectionTitle: string): ContentSection[] {
-    // 블록 요소 경계에서 분리 (태그 직전에서 split)
-    const blockPattern = /(?=<(?:p|ul|ol|h2|h3|blockquote|img|figure)[\s>])/i;
-    const blocks = html.split(blockPattern).filter((b) => b.trim());
+/** 기사를 카드 배열로 변환 */
+function buildCards(article: MagazineArticle): CardData[] {
+    const cards: CardData[] = [];
 
-    if (blocks.length <= MAX_BLOCKS_PER_PAGE) {
-        return [{ title: sectionTitle, html }];
-    }
+    // 1. 커버 카드
+    cards.push({ type: "cover" });
 
-    // MAX_BLOCKS_PER_PAGE 개씩 묶기
-    const pages: ContentSection[] = [];
-    for (let i = 0; i < blocks.length; i += MAX_BLOCKS_PER_PAGE) {
-        const chunk = blocks.slice(i, i + MAX_BLOCKS_PER_PAGE).join("");
-        pages.push({
-            title: i === 0 ? sectionTitle : "",
-            html: chunk,
-        });
-    }
+    // 2. 요약 카드
+    cards.push({ type: "summary" });
 
-    return pages;
-}
-
-/** 기사를 페이지 배열로 변환 */
-function buildPages(article: MagazineArticle): PageData[] {
-    const pages: PageData[] = [];
-
-    // 1. 커버 페이지
-    pages.push({ type: "cover" });
-
-    // 2. 요약 페이지
-    pages.push({ type: "summary" });
-
-    // 3~N. 본문 섹션
+    // 3~N. 본문 카드
     if (article.content) {
         const html = toHtml(article.content);
-        const sections = splitContentIntoPages(html);
-        for (const section of sections) {
-            pages.push({
-                type: "section",
-                html: section.html,
-                sectionTitle: section.title,
-            });
-        }
+        const contentCards = splitContentIntoCards(html);
+        cards.push(...contentCards);
     }
 
-    // N+1. 엔딩 페이지
-    pages.push({ type: "end" });
+    // N+1. 엔딩 카드
+    cards.push({ type: "end" });
 
-    return pages;
+    return cards;
 }
 
 // ──────────────────────────────────────────────
@@ -163,30 +184,29 @@ function buildPages(article: MagazineArticle): PageData[] {
 // ──────────────────────────────────────────────
 
 export default function MagazineReader({ article, onBack }: MagazineReaderProps) {
-    const [currentPage, setCurrentPage] = useState(0);
+    const [currentCard, setCurrentCard] = useState(0);
     const [offsetX, setOffsetX] = useState(0);
     const [isDragging, setIsDragging] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
 
-    const pages = useMemo(() => buildPages(article), [article]);
-    const totalPages = pages.length;
+    const cards = useMemo(() => buildCards(article), [article]);
+    const totalCards = cards.length;
 
-    // 페이지 이동
-    const goToPage = useCallback(
-        (page: number) => {
-            const clamped = Math.max(0, Math.min(page, totalPages - 1));
-            setCurrentPage(clamped);
+    // 카드 이동
+    const goToCard = useCallback(
+        (idx: number) => {
+            setCurrentCard(Math.max(0, Math.min(idx, totalCards - 1)));
         },
-        [totalPages]
+        [totalCards]
     );
 
     const goNext = useCallback(
-        () => goToPage(currentPage + 1),
-        [currentPage, goToPage]
+        () => goToCard(currentCard + 1),
+        [currentCard, goToCard]
     );
     const goPrev = useCallback(
-        () => goToPage(currentPage - 1),
-        [currentPage, goToPage]
+        () => goToCard(currentCard - 1),
+        [currentCard, goToCard]
     );
 
     // 키보드 네비게이션
@@ -205,28 +225,22 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
         ({ down, movement: [mx], velocity: [vx], direction: [dx], last }) => {
             if (down) {
                 setIsDragging(true);
-                // 첫/마지막 페이지에서 rubberband (이동량 감쇠)
-                const atStart = currentPage === 0 && mx > 0;
-                const atEnd = currentPage === totalPages - 1 && mx < 0;
-                const damped = atStart || atEnd ? mx * 0.3 : mx;
-                setOffsetX(damped);
+                const atStart = currentCard === 0 && mx > 0;
+                const atEnd = currentCard === totalCards - 1 && mx < 0;
+                setOffsetX(atStart || atEnd ? mx * 0.3 : mx);
             }
 
             if (last) {
                 const THRESHOLD = 80;
                 const VELOCITY_THRESHOLD = 0.5;
 
-                // 스와이프 왼쪽 (다음 페이지)
                 if (mx < -THRESHOLD || (vx > VELOCITY_THRESHOLD && dx < 0)) {
                     goNext();
-                }
-                // 스와이프 오른쪽 (이전 페이지)
-                else if (mx > THRESHOLD || (vx > VELOCITY_THRESHOLD && dx > 0)) {
+                } else if (mx > THRESHOLD || (vx > VELOCITY_THRESHOLD && dx > 0)) {
                     goPrev();
                 }
 
                 setOffsetX(0);
-                // 약간의 딜레이 후 드래그 상태 해제 (전환 애니메이션 적용)
                 requestAnimationFrame(() => setIsDragging(false));
             }
         },
@@ -234,57 +248,60 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
             axis: "x",
             filterTaps: true,
             threshold: 10,
+            pointer: { touch: true },
         }
     );
 
-    // 가상화: 현재 ± 1 페이지만 렌더
-    const visibleRange = useMemo(() => {
-        const start = Math.max(0, currentPage - 1);
-        const end = Math.min(totalPages - 1, currentPage + 1);
-        return { start, end };
-    }, [currentPage, totalPages]);
+    // 가상화: 현재 +/- 1 카드만 렌더
+    const visibleRange = useMemo(() => ({
+        start: Math.max(0, currentCard - 1),
+        end: Math.min(totalCards - 1, currentCard + 1),
+    }), [currentCard, totalCards]);
 
     return (
         <div
             ref={containerRef}
-            className="fixed inset-0 z-50 bg-white dark:bg-gray-900 overflow-hidden select-none-touch tap-highlight-none"
+            className="fixed inset-0 z-50 bg-white dark:bg-gray-900 overflow-hidden"
             style={{ touchAction: "pan-y" }}
         >
-            {/* 뒤로가기 버튼 */}
+            {/* 뒤로가기 */}
             <button
                 onClick={onBack}
-                className="fixed top-4 left-4 z-[60] bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full p-2 shadow-lg hover:bg-white dark:hover:bg-gray-700 transition-colors touch-target"
+                className="fixed top-4 left-4 z-[60] bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full p-2 shadow-lg hover:bg-white dark:hover:bg-gray-700 transition-colors"
                 aria-label="목록으로"
             >
                 <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-gray-200" />
             </button>
 
-            {/* 페이지 컨테이너 */}
+            {/* 카드 컨테이너 */}
             <div
                 {...bind()}
                 className={`flex h-full ${isDragging ? "magazine-page-container dragging" : "magazine-page-container"}`}
                 style={{
-                    width: `${totalPages * 100}%`,
-                    transform: `translateX(calc(-${(currentPage * 100) / totalPages}% + ${offsetX}px))`,
+                    width: `${totalCards * 100}%`,
+                    transform: `translateX(calc(-${(currentCard * 100) / totalCards}% + ${offsetX}px))`,
                 }}
             >
-                {pages.map((page, index) => {
-                    const isVisible =
-                        index >= visibleRange.start && index <= visibleRange.end;
+                {cards.map((card, index) => {
+                    const isVisible = index >= visibleRange.start && index <= visibleRange.end;
                     return (
                         <div
                             key={index}
-                            className="magazine-page h-full overflow-y-auto"
-                            style={{ width: `${100 / totalPages}%` }}
+                            className="h-full overflow-y-auto"
+                            style={{ width: `${100 / totalCards}%` }}
                         >
                             {isVisible && (
-                                <PageRenderer
-                                    page={page}
-                                    article={article}
-                                    pageIndex={index}
-                                    totalPages={totalPages}
-                                    onBack={onBack}
-                                />
+                                <div className="h-full flex items-center justify-center">
+                                    <div className="w-full max-w-2xl mx-auto h-full">
+                                        <CardRenderer
+                                            card={card}
+                                            article={article}
+                                            cardIndex={index}
+                                            totalCards={totalCards}
+                                            onBack={onBack}
+                                        />
+                                    </div>
+                                </div>
                             )}
                         </div>
                     );
@@ -292,81 +309,96 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
             </div>
 
             {/* 데스크톱 좌우 화살표 */}
-            {currentPage > 0 && (
+            {currentCard > 0 && (
                 <button
                     onClick={goPrev}
                     className="fixed left-2 top-1/2 -translate-y-1/2 z-[60] bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-full p-2 shadow-md hover:bg-white dark:hover:bg-gray-700 transition-colors hidden sm:block"
-                    aria-label="이전 페이지"
+                    aria-label="이전 카드"
                 >
                     <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                 </button>
             )}
-            {currentPage < totalPages - 1 && (
+            {currentCard < totalCards - 1 && (
                 <button
                     onClick={goNext}
                     className="fixed right-2 top-1/2 -translate-y-1/2 z-[60] bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-full p-2 shadow-md hover:bg-white dark:hover:bg-gray-700 transition-colors hidden sm:block"
-                    aria-label="다음 페이지"
+                    aria-label="다음 카드"
                 >
                     <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                 </button>
             )}
 
-            {/* 페이지 인디케이터 */}
-            <PageIndicator
-                current={currentPage}
-                total={totalPages}
-                onPageClick={goToPage}
+            {/* 카드 인디케이터 */}
+            <CardIndicator
+                current={currentCard}
+                total={totalCards}
+                onCardClick={goToCard}
             />
         </div>
     );
 }
 
 // ──────────────────────────────────────────────
-//  페이지 렌더러 (타입별 분기)
+//  카드 렌더러 (타입별 분기)
 // ──────────────────────────────────────────────
 
-function PageRenderer({
-    page,
+function CardRenderer({
+    card,
     article,
-    pageIndex,
-    totalPages,
+    cardIndex,
+    totalCards,
     onBack,
 }: {
-    page: PageData;
+    card: CardData;
     article: MagazineArticle;
-    pageIndex: number;
-    totalPages: number;
+    cardIndex: number;
+    totalCards: number;
     onBack: () => void;
 }) {
-    switch (page.type) {
+    switch (card.type) {
         case "cover":
-            return <CoverPage article={article} />;
+            return <CoverCard article={article} />;
         case "summary":
-            return <SummaryPage article={article} />;
-        case "section":
+            return <SummaryCard article={article} />;
+        case "text":
             return (
-                <ContentPage
-                    html={page.html || ""}
-                    sectionTitle={page.sectionTitle}
-                    pageIndex={pageIndex}
-                    totalPages={totalPages}
+                <TextCard
+                    html={card.html || ""}
+                    cardIndex={cardIndex}
+                    totalCards={totalCards}
+                />
+            );
+        case "image":
+            return (
+                <ImageCard
+                    src={card.imageSrc || ""}
+                    caption={card.caption}
+                    cardIndex={cardIndex}
+                    totalCards={totalCards}
+                />
+            );
+        case "quote":
+            return (
+                <QuoteCard
+                    text={card.quoteText || ""}
+                    cardIndex={cardIndex}
+                    totalCards={totalCards}
                 />
             );
         case "end":
-            return <EndPage article={article} onBack={onBack} />;
+            return <EndCard article={article} onBack={onBack} />;
         default:
             return null;
     }
 }
 
 // ──────────────────────────────────────────────
-//  커버 페이지
+//  커버 카드
 // ──────────────────────────────────────────────
 
-function CoverPage({ article }: { article: MagazineArticle }) {
+function CoverCard({ article }: { article: MagazineArticle }) {
     return (
         <div className="relative h-full flex flex-col justify-end">
-            {/* 배경 이미지 */}
             <div className="absolute inset-0">
                 <Image
                     src={article.image}
@@ -378,9 +410,7 @@ function CoverPage({ article }: { article: MagazineArticle }) {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
             </div>
 
-            {/* 오버레이 콘텐츠 */}
             <div className="relative z-10 p-6 pb-20 sm:p-8 sm:pb-24">
-                {/* 배지 */}
                 {article.badge && (
                     <Badge
                         className={`${getBadgeStyle(article.badge)} rounded-lg text-sm px-3 py-1 mb-4`}
@@ -389,12 +419,10 @@ function CoverPage({ article }: { article: MagazineArticle }) {
                     </Badge>
                 )}
 
-                {/* 제목 */}
                 <h1 className="text-3xl sm:text-4xl font-bold text-white leading-tight mb-4">
                     {article.title}
                 </h1>
 
-                {/* 저자 + 날짜 */}
                 <div className="flex items-center gap-3 text-white/80 text-sm">
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
@@ -410,7 +438,6 @@ function CoverPage({ article }: { article: MagazineArticle }) {
                     </span>
                 </div>
 
-                {/* 스와이프 힌트 */}
                 <div className="mt-8 flex items-center justify-center gap-2 text-white/60 text-xs animate-pulse">
                     <ChevronLeft className="w-4 h-4" />
                     <span>스와이프하여 읽기</span>
@@ -422,13 +449,12 @@ function CoverPage({ article }: { article: MagazineArticle }) {
 }
 
 // ──────────────────────────────────────────────
-//  요약 페이지
+//  요약 카드
 // ──────────────────────────────────────────────
 
-function SummaryPage({ article }: { article: MagazineArticle }) {
+function SummaryCard({ article }: { article: MagazineArticle }) {
     return (
         <div className="h-full flex flex-col justify-center px-6 py-16 sm:px-8">
-            {/* 배지 */}
             {article.badge && (
                 <Badge
                     className={`${getBadgeStyle(article.badge)} rounded-lg text-xs px-2.5 py-0.5 w-fit mb-4`}
@@ -437,12 +463,10 @@ function SummaryPage({ article }: { article: MagazineArticle }) {
                 </Badge>
             )}
 
-            {/* 제목 */}
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100 leading-tight mb-6">
                 {article.title}
             </h2>
 
-            {/* 메타정보 */}
             <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-gray-400 mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 bg-emerald-100 dark:bg-emerald-800 rounded-full flex items-center justify-center">
@@ -475,14 +499,12 @@ function SummaryPage({ article }: { article: MagazineArticle }) {
                 </span>
             </div>
 
-            {/* 요약 박스 */}
             <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-5 mb-6">
                 <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
                     {article.summary}
                 </p>
             </div>
 
-            {/* 다음 페이지 안내 */}
             <div className="flex items-center justify-center gap-2 text-gray-400 dark:text-gray-500 text-xs mt-4">
                 <span>본문 보기</span>
                 <ChevronRight className="w-4 h-4" />
@@ -492,34 +514,32 @@ function SummaryPage({ article }: { article: MagazineArticle }) {
 }
 
 // ──────────────────────────────────────────────
-//  본문 콘텐츠 페이지
+//  텍스트 카드
 // ──────────────────────────────────────────────
 
-function ContentPage({
+function TextCard({
     html,
-    sectionTitle,
-    pageIndex,
-    totalPages,
+    cardIndex,
+    totalCards,
 }: {
     html: string;
-    sectionTitle?: string;
-    pageIndex: number;
-    totalPages: number;
+    cardIndex: number;
+    totalCards: number;
 }) {
     return (
-        <div className="h-full px-6 py-16 sm:px-8 overflow-y-auto">
-            {/* 상단 페이지 번호 */}
-            <div className="text-xs text-gray-400 dark:text-gray-500 mb-6 text-right">
-                {pageIndex} / {totalPages - 1}
+        <div className="h-full flex flex-col justify-center px-6 py-16 sm:px-10">
+            {/* 카드 번호 */}
+            <div className="text-xs text-gray-400 dark:text-gray-500 mb-4 text-right">
+                {cardIndex} / {totalCards - 1}
             </div>
 
             {/* HTML 본문 */}
             <div
-                className="prose prose-gray dark:prose-invert max-w-none
+                className="prose prose-lg prose-gray dark:prose-invert max-w-none
                     prose-headings:text-gray-800 dark:prose-headings:text-gray-100
-                    prose-h2:text-xl prose-h2:font-bold prose-h2:mt-2 prose-h2:mb-4
-                    prose-h3:text-lg prose-h3:font-semibold prose-h3:mt-6 prose-h3:mb-3
-                    prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-p:leading-relaxed
+                    prose-h2:text-2xl prose-h2:font-bold prose-h2:mt-0 prose-h2:mb-5
+                    prose-h3:text-xl prose-h3:font-semibold prose-h3:mt-4 prose-h3:mb-3
+                    prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-p:leading-relaxed prose-p:text-base sm:prose-p:text-lg
                     prose-ul:text-gray-700 dark:prose-ul:text-gray-300
                     prose-ol:text-gray-700 dark:prose-ol:text-gray-300
                     prose-li:my-1
@@ -532,10 +552,87 @@ function ContentPage({
 }
 
 // ──────────────────────────────────────────────
-//  엔딩 페이지
+//  이미지 카드
 // ──────────────────────────────────────────────
 
-function EndPage({
+function ImageCard({
+    src,
+    caption,
+    cardIndex,
+    totalCards,
+}: {
+    src: string;
+    caption?: string;
+    cardIndex: number;
+    totalCards: number;
+}) {
+    return (
+        <div className="h-full flex flex-col">
+            {/* 카드 번호 */}
+            <div className="text-xs text-gray-400 dark:text-gray-500 text-right px-6 pt-14">
+                {cardIndex} / {totalCards - 1}
+            </div>
+
+            {/* 이미지 영역 */}
+            <div className="flex-1 relative mx-4 my-4 rounded-2xl overflow-hidden">
+                <Image
+                    src={src}
+                    alt={caption || "기사 이미지"}
+                    fill
+                    className="object-contain"
+                />
+            </div>
+
+            {/* 캡션 */}
+            {caption && (
+                <div className="px-6 pb-20 text-center">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                        {caption}
+                    </p>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ──────────────────────────────────────────────
+//  인용 카드
+// ──────────────────────────────────────────────
+
+function QuoteCard({
+    text,
+    cardIndex,
+    totalCards,
+}: {
+    text: string;
+    cardIndex: number;
+    totalCards: number;
+}) {
+    return (
+        <div className="h-full flex flex-col justify-center px-6 py-16 sm:px-10 bg-amber-50 dark:bg-amber-900/10">
+            {/* 카드 번호 */}
+            <div className="text-xs text-amber-500/60 mb-6 text-right">
+                {cardIndex} / {totalCards - 1}
+            </div>
+
+            {/* 인용 아이콘 */}
+            <div className="mb-6">
+                <Quote className="w-10 h-10 text-amber-400 dark:text-amber-500" />
+            </div>
+
+            {/* 인용문 */}
+            <p className="text-xl sm:text-2xl font-medium text-gray-800 dark:text-gray-100 leading-relaxed italic">
+                {text}
+            </p>
+        </div>
+    );
+}
+
+// ──────────────────────────────────────────────
+//  엔딩 카드
+// ──────────────────────────────────────────────
+
+function EndCard({
     article,
     onBack,
 }: {
@@ -544,7 +641,6 @@ function EndPage({
 }) {
     return (
         <div className="h-full flex flex-col items-center justify-center px-6 py-16 sm:px-8">
-            {/* 아이콘 */}
             <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-800/30 rounded-full flex items-center justify-center mb-6">
                 <BookOpen className="w-8 h-8 text-emerald-500" />
             </div>
@@ -556,7 +652,6 @@ function EndPage({
                 {article.title}
             </p>
 
-            {/* 태그 */}
             {article.tags.length > 0 && (
                 <div className="flex flex-wrap justify-center gap-2 mb-8">
                     {article.tags.map((tag) => (
@@ -570,7 +665,6 @@ function EndPage({
                 </div>
             )}
 
-            {/* 목록 복귀 */}
             <Button
                 onClick={onBack}
                 className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl px-6"
@@ -583,32 +677,31 @@ function EndPage({
 }
 
 // ──────────────────────────────────────────────
-//  페이지 인디케이터
+//  카드 인디케이터
 // ──────────────────────────────────────────────
 
-function PageIndicator({
+function CardIndicator({
     current,
     total,
-    onPageClick,
+    onCardClick,
 }: {
     current: number;
     total: number;
-    onPageClick: (page: number) => void;
+    onCardClick: (idx: number) => void;
 }) {
-    // 5페이지 이하: 도트, 초과: 카운터
-    if (total <= 5) {
+    if (total <= 8) {
         return (
-            <div className="fixed bottom-6 left-0 right-0 z-[60] flex justify-center gap-2">
+            <div className="fixed bottom-6 left-0 right-0 z-[60] flex justify-center gap-1.5">
                 {Array.from({ length: total }, (_, i) => (
                     <button
                         key={i}
-                        onClick={() => onPageClick(i)}
-                        className={`h-2 rounded-full transition-all duration-200 touch-target flex items-center justify-center ${
+                        onClick={() => onCardClick(i)}
+                        className={`h-1.5 rounded-full transition-all duration-200 ${
                             i === current
-                                ? "w-6 bg-emerald-500"
-                                : "w-2 bg-gray-300 dark:bg-gray-600"
+                                ? "w-5 bg-emerald-500"
+                                : "w-1.5 bg-gray-300 dark:bg-gray-600"
                         }`}
-                        aria-label={`${i + 1}페이지`}
+                        aria-label={`${i + 1}번 카드`}
                     />
                 ))}
             </div>

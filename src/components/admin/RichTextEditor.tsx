@@ -294,11 +294,11 @@ export default function RichTextEditor({ content, onChange, onImageUpload }: Ric
 
                 <Divider />
 
-                {/* 페이지 나누기 */}
+                {/* 카드 나누기 */}
                 <ToolbarButton
                     onClick={() => editor.chain().focus().setHorizontalRule().run()}
                     isActive={false}
-                    title="페이지 나누기"
+                    title="카드 나누기"
                 >
                     <SeparatorHorizontal className="w-4 h-4" />
                 </ToolbarButton>
