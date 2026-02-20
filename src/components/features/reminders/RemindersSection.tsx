@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import PawLoading from "@/components/ui/PawLoading";
 import { API } from "@/config/apiEndpoints";
+import { authFetch } from "@/lib/auth-fetch";
 import { toast } from "sonner";
 import type { Reminder } from "@/types";
 
@@ -89,9 +90,7 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
         setIsLoading(true);
         try {
             const params = new URLSearchParams({ petId });
-            const response = await fetch(`${API.REMINDERS}?${params}`, {
-                credentials: "include", // 쿠키 포함 (인증)
-            });
+            const response = await authFetch(`${API.REMINDERS}?${params}`);
 
             // 인증 실패 등 에러는 무시 (상태 변경 안 함 - 무한 루프 방지)
             if (!response.ok) {
@@ -121,9 +120,8 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
         if (!user?.id || !petId || !newReminder.title) return;
 
         try {
-            const response = await fetch(API.REMINDERS, {
+            const response = await authFetch(API.REMINDERS, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     petId,
                     type: newReminder.type,
@@ -162,9 +160,8 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
     // 리마인더 토글
     const handleToggle = async (id: string, currentEnabled: boolean) => {
         try {
-            const response = await fetch(API.REMINDER_DETAIL(id), {
+            const response = await authFetch(API.REMINDER_DETAIL(id), {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ toggleEnabled: !currentEnabled }),
             });
 
@@ -185,7 +182,7 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
         if (!confirm("이 리마인더를 삭제할까요?")) return;
 
         try {
-            const response = await fetch(API.REMINDER_DETAIL(id), {
+            const response = await authFetch(API.REMINDER_DETAIL(id), {
                 method: "DELETE",
             });
 
