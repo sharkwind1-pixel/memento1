@@ -170,6 +170,28 @@ export default function Sidebar({
                 </div>
             )}
 
+            {/* 비로그인 시 로그인/회원가입 - 데스크톱 사이드바 최상단 */}
+            {!isMobile && !user && !authLoading && onOpenLogin && (
+                <div className="flex-shrink-0 px-3 py-3 border-b border-gray-200 dark:border-gray-700">
+                    <div className="space-y-2">
+                        <button
+                            onClick={onOpenLogin}
+                            className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-[#05B2DC] text-[#05B2DC] hover:bg-[#E0F7FF] transition-all text-sm font-medium"
+                        >
+                            <LogIn className="w-4 h-4" />
+                            로그인
+                        </button>
+                        <button
+                            onClick={onOpenSignup}
+                            className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white hover:opacity-90 transition-all text-sm font-medium"
+                        >
+                            <UserPlus className="w-4 h-4" />
+                            회원가입
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* 포인트 배지 */}
             {user && (
                 <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-700">
@@ -263,12 +285,12 @@ export default function Sidebar({
                 )}
             </nav>
 
-            {/* 인증 영역 - 데스크톱 사이드바 전용 */}
-            {!isMobile && (onOpenLogin || onSignOut) && (
+            {/* 유저 정보 영역 - 데스크톱 사이드바, 로그인 시만 */}
+            {!isMobile && user && (
                 <div className="flex-shrink-0 px-3 py-3 border-t border-gray-200 dark:border-gray-700">
                     {authLoading ? (
                         <div className="w-full h-10 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-xl" />
-                    ) : user ? (
+                    ) : (
                         <div className="space-y-1">
                             <div className="px-3 py-2">
                                 <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
@@ -289,23 +311,6 @@ export default function Sidebar({
                             >
                                 <LogOut className="w-4 h-4" />
                                 <span>로그아웃</span>
-                            </button>
-                        </div>
-                    ) : (
-                        <div className="space-y-2">
-                            <button
-                                onClick={onOpenLogin}
-                                className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-[#05B2DC] text-[#05B2DC] hover:bg-[#E0F7FF] transition-all text-sm font-medium"
-                            >
-                                <LogIn className="w-4 h-4" />
-                                로그인
-                            </button>
-                            <button
-                                onClick={onOpenSignup}
-                                className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white hover:opacity-90 transition-all text-sm font-medium"
-                            >
-                                <UserPlus className="w-4 h-4" />
-                                회원가입
                             </button>
                         </div>
                     )}
