@@ -813,6 +813,13 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                             </CardHeader>
                             <CardContent className="space-y-2">
                                 <button
+                                    onClick={() => window.dispatchEvent(new CustomEvent("openAccountSettings"))}
+                                    className="w-full flex items-center gap-3 p-4 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-300"
+                                >
+                                    <Settings className="w-5 h-5" />
+                                    <span>계정 설정</span>
+                                </button>
+                                <button
                                     onClick={handleSignOut}
                                     className="w-full flex items-center gap-3 p-4 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-red-500"
                                 >

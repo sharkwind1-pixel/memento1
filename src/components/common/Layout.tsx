@@ -52,7 +52,6 @@ import {
     User,
     ChevronDown,
     UserPlus,
-    Settings,
 } from "lucide-react";
 
 // ============================================================================
@@ -146,6 +145,16 @@ export default function Layout({
         window.addEventListener("openAuthModal", handleOpenAuthModal);
         return () =>
             window.removeEventListener("openAuthModal", handleOpenAuthModal);
+    }, []);
+
+    // RecordPage에서 "계정 설정" 버튼 클릭 시 AccountSettingsModal 열기
+    useEffect(() => {
+        const handleOpenAccountSettings = () => {
+            setIsAccountSettingsOpen(true);
+        };
+        window.addEventListener("openAccountSettings", handleOpenAccountSettings);
+        return () =>
+            window.removeEventListener("openAccountSettings", handleOpenAccountSettings);
     }, []);
 
     const toggleDarkMode = () => {
@@ -307,21 +316,7 @@ export default function Layout({
                                                     }}
                                                     className="w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-[#E0F7FF] dark:hover:bg-gray-700 flex items-center gap-2"
                                                 >
-                                                    <Camera className="w-4 h-4" />
-                                                    우리의 기록
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        setIsAccountSettingsOpen(
-                                                            true,
-                                                        );
-                                                        setIsUserMenuOpen(
-                                                            false,
-                                                        );
-                                                    }}
-                                                    className="w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-[#E0F7FF] dark:hover:bg-gray-700 flex items-center gap-2"
-                                                >
-                                                    <Settings className="w-4 h-4" />
+                                                    <User className="w-4 h-4" />
                                                     내 정보
                                                 </button>
                                                 <button
@@ -394,7 +389,7 @@ export default function Layout({
                     onOpenLogin={openLoginModal}
                     onOpenSignup={openSignupModal}
                     onSignOut={handleSignOut}
-                    onOpenAccountSettings={() => setIsAccountSettingsOpen(true)}
+                    onOpenAccountSettings={() => setSelectedTab("record")}
                     authLoading={loading}
                 />
             </aside>
