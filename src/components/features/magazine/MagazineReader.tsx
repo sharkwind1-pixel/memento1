@@ -189,10 +189,21 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
     const [currentCard, setCurrentCard] = useState(0);
     const [offsetX, setOffsetX] = useState(0);
     const [isDragging, setIsDragging] = useState(false);
+    const [isTouchDevice, setIsTouchDevice] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
 
     const cards = useMemo(() => buildCards(article), [article]);
     const totalCards = cards.length;
+
+    // 터치 디바이스 감지 (모바일에서만 스와이프 활성화)
+    useEffect(() => {
+        const checkTouch = () => {
+            setIsTouchDevice(
+                "ontouchstart" in window || navigator.maxTouchPoints > 0
+            );
+        };
+        checkTouch();
+    }, []);
 
     // 카드 이동
     const goToCard = useCallback(
@@ -222,9 +233,12 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [goNext, goPrev, onBack]);
 
-    // 제스처 핸들링
+    // 제스처 핸들링 (터치 디바이스에서만 스와이프 동작)
     const bind = useDrag(
         ({ down, movement: [mx], velocity: [vx], direction: [dx], last }) => {
+            // 데스크톱(마우스)에서는 스와이프 무시
+            if (!isTouchDevice) return;
+
             if (down) {
                 setIsDragging(true);
                 const atStart = currentCard === 0 && mx > 0;
@@ -310,23 +324,23 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
                 })}
             </div>
 
-            {/* 데스크톱 좌우 화살표 */}
+            {/* 데스크톱 좌우 화살표 (모바일에서는 숨김) */}
             {currentCard > 0 && (
                 <button
                     onClick={goPrev}
-                    className="fixed left-2 top-1/2 -translate-y-1/2 z-[60] bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-full p-2 shadow-md hover:bg-white dark:hover:bg-gray-700 transition-colors hidden sm:block"
+                    className="fixed left-3 top-1/2 -translate-y-1/2 z-[60] bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-full p-3 shadow-lg hover:bg-white dark:hover:bg-gray-700 hover:scale-110 transition-all hidden sm:flex items-center justify-center"
                     aria-label="이전 카드"
                 >
-                    <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                    <ChevronLeft className="w-6 h-6 text-gray-700 dark:text-gray-200" />
                 </button>
             )}
             {currentCard < totalCards - 1 && (
                 <button
                     onClick={goNext}
-                    className="fixed right-2 top-1/2 -translate-y-1/2 z-[60] bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-full p-2 shadow-md hover:bg-white dark:hover:bg-gray-700 transition-colors hidden sm:block"
+                    className="fixed right-3 top-1/2 -translate-y-1/2 z-[60] bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-full p-3 shadow-lg hover:bg-white dark:hover:bg-gray-700 hover:scale-110 transition-all hidden sm:flex items-center justify-center"
                     aria-label="다음 카드"
                 >
-                    <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                    <ChevronRight className="w-6 h-6 text-gray-700 dark:text-gray-200" />
                 </button>
             )}
 
@@ -442,7 +456,8 @@ function CoverCard({ article }: { article: MagazineArticle }) {
 
                 <div className="mt-8 flex items-center justify-center gap-2 text-white/60 text-xs animate-pulse">
                     <ChevronLeft className="w-4 h-4" />
-                    <span>스와이프하여 읽기</span>
+                    <span className="sm:hidden">스와이프하여 읽기</span>
+                    <span className="hidden sm:inline">화살표 버튼으로 읽기</span>
                     <ChevronRight className="w-4 h-4" />
                 </div>
             </div>
