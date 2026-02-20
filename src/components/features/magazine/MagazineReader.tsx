@@ -186,10 +186,9 @@ function buildCards(article: MagazineArticle): CardData[] {
 
 export default function MagazineReader({ article, onBack }: MagazineReaderProps) {
     const [currentCard, setCurrentCard] = useState(0);
-    const [offsetX, setOffsetX] = useState(0);
-    const [isDragging, setIsDragging] = useState(false);
     const [isTouchDevice, setIsTouchDevice] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
+    const sliderRef = useRef<HTMLDivElement>(null);
 
     const cards = useMemo(() => buildCards(article), [article]);
     const totalCards = cards.length;
@@ -232,8 +231,7 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [goNext, goPrev, onBack]);
 
-    // 네이티브 터치 이벤트 기반 스와이프
-    // 모든 값을 ref로 관리하여 useEffect 재실행 방지 (끊김 원인 제거)
+    // 네이티브 터치 스와이프 (DOM 직접 조작 → 리렌더 없이 60fps)
     const touchRef = useRef<{
         startX: number;
         startY: number;
@@ -250,6 +248,15 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
     goNextRef.current = goNext;
     goPrevRef.current = goPrev;
 
+    /** slider DOM의 transform을 직접 업데이트 (React 리렌더 없음) */
+    const applyOffset = useCallback((offset: number) => {
+        const slider = sliderRef.current;
+        if (!slider) return;
+        const card = currentCardRef.current;
+        const total = totalCardsRef.current;
+        slider.style.transform = `translateX(calc(-${(card * 100) / total}% + ${offset}px))`;
+    }, []);
+
     useEffect(() => {
         const el = containerRef.current;
         if (!el || !isTouchDevice) return;
@@ -263,7 +270,8 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
                 lastX: touch.clientX,
                 direction: "none",
             };
-            setIsDragging(true);
+            // transition 즉시 비활성화 (DOM 직접 조작)
+            sliderRef.current?.classList.add("dragging");
         };
 
         const onTouchMove = (e: TouchEvent) => {
@@ -282,7 +290,6 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
 
             if (touchRef.current.direction === "vertical") return;
 
-            // 수평 스와이프 → 브라우저 기본 동작 방지
             e.preventDefault();
             touchRef.current.lastX = touch.clientX;
 
@@ -292,14 +299,17 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
             const atEnd = card === total - 1 && dx < 0;
             const offset = atStart || atEnd ? dx * 0.3 : dx;
 
-            setOffsetX(offset);
+            // DOM 직접 조작 (React 리렌더 없음 → 60fps)
+            applyOffset(offset);
         };
 
         const onTouchEnd = () => {
+            const slider = sliderRef.current;
+
             if (!touchRef.current || touchRef.current.direction !== "horizontal") {
                 touchRef.current = null;
-                setIsDragging(false);
-                setOffsetX(0);
+                slider?.classList.remove("dragging");
+                applyOffset(0);
                 return;
             }
 
@@ -310,15 +320,19 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
             const THRESHOLD = 30;
             const VELOCITY_THRESHOLD = 0.2;
 
+            // transition 다시 활성화 (카드 전환 애니메이션)
+            slider?.classList.remove("dragging");
+
             if (dx < -THRESHOLD || (velocity > VELOCITY_THRESHOLD && dx < 0)) {
                 goNextRef.current();
             } else if (dx > THRESHOLD || (velocity > VELOCITY_THRESHOLD && dx > 0)) {
                 goPrevRef.current();
+            } else {
+                // 스냅백
+                applyOffset(0);
             }
 
             touchRef.current = null;
-            setOffsetX(0);
-            setIsDragging(false);
         };
 
         el.addEventListener("touchstart", onTouchStart, { passive: true });
@@ -330,7 +344,7 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
             el.removeEventListener("touchmove", onTouchMove);
             el.removeEventListener("touchend", onTouchEnd);
         };
-    }, [isTouchDevice]); // 의존성 최소화: 마운트 시 1회만 등록
+    }, [isTouchDevice, applyOffset]);
 
     // 가상화: 현재 +/- 1 카드만 렌더
     const visibleRange = useMemo(() => ({
@@ -354,10 +368,11 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
 
             {/* 카드 컨테이너 */}
             <div
-                className={`flex h-full ${isDragging ? "magazine-page-container dragging" : "magazine-page-container"}`}
+                ref={sliderRef}
+                className="flex h-full magazine-page-container"
                 style={{
                     width: `${totalCards * 100}%`,
-                    transform: `translateX(calc(-${(currentCard * 100) / totalCards}% + ${offsetX}px))`,
+                    transform: `translateX(-${(currentCard * 100) / totalCards}%)`,
                 }}
             >
                 {cards.map((card, index) => {

@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePets } from "@/contexts/PetContext";
 import PointsBadge from "@/components/features/points/PointsBadge";
 import type { MainCategory, CommunitySubcategory, TabType } from "@/types";
 
@@ -103,6 +104,8 @@ export default function Sidebar({
     authLoading,
 }: SidebarProps) {
     const { user, isAdminUser } = useAuth();
+    const { selectedPet } = usePets();
+    const isMemorialMode = selectedPet?.status === "memorial";
     const [expandedCategory, setExpandedCategory] = useState<MainCategory | null>(
         selectedTab === "community" ? "community" : null
     );
@@ -243,7 +246,7 @@ export default function Sidebar({
                         {/* 커뮤니티 서브카테고리 */}
                         {category.id === "community" && expandedCategory === "community" && (
                             <div className="ml-4 mt-1 space-y-0.5 border-l-2 border-gray-200 dark:border-gray-700 pl-3">
-                                {COMMUNITY_SUBCATEGORIES.map((sub) => (
+                                {COMMUNITY_SUBCATEGORIES.filter((sub) => sub.id !== "memorial" || isMemorialMode).map((sub) => (
                                     <button
                                         key={sub.id}
                                         onClick={() => handleSubcategoryClick(sub.id)}
