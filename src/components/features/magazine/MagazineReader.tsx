@@ -247,8 +247,8 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
             }
 
             if (last) {
-                const THRESHOLD = 80;
-                const VELOCITY_THRESHOLD = 0.5;
+                const THRESHOLD = 50;
+                const VELOCITY_THRESHOLD = 0.3;
 
                 if (mx < -THRESHOLD || (vx > VELOCITY_THRESHOLD && dx < 0)) {
                     goNext();
@@ -263,8 +263,7 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
         {
             axis: "x",
             filterTaps: true,
-            threshold: 10,
-            pointer: { touch: true },
+            threshold: 5,
         }
     );
 
@@ -278,7 +277,6 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
         <div
             ref={containerRef}
             className="fixed inset-0 z-50 bg-white dark:bg-gray-900 overflow-hidden"
-            style={{ touchAction: "pan-y" }}
         >
             {/* 뒤로가기 */}
             <button
@@ -296,6 +294,7 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
                 style={{
                     width: `${totalCards * 100}%`,
                     transform: `translateX(calc(-${(currentCard * 100) / totalCards}% + ${offsetX}px))`,
+                    touchAction: "pan-y pinch-zoom",
                 }}
             >
                 {cards.map((card, index) => {
