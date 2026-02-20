@@ -581,7 +581,9 @@ export type PointAction =
     | "pet_registration"
     | "timeline_entry"
     | "photo_upload"
-    | "admin_award";
+    | "admin_award"
+    | "write_guestbook"
+    | "receive_guestbook";
 
 /** 포인트 거래 기록 */
 export interface PointTransaction {
@@ -607,4 +609,129 @@ export interface PointAwardResult {
     points: number;
     totalEarned?: number;
     earned?: number;
+}
+
+// ============================================
+// 13. 미니미 시스템 타입
+// ============================================
+
+/** 미니미 픽셀 데이터 (CSS box-shadow 렌더링용) */
+export interface PixelData {
+    width: number;
+    height: number;
+    pixels: string;
+}
+
+/** 미니미 캐릭터 카테고리 */
+export type MinimiCategory = "dog" | "cat" | "other";
+
+/** 악세서리 카테고리 */
+export type AccessoryCategory = "hat" | "glasses" | "necklace" | "etc";
+
+/** 악세서리 레이어 위치 */
+export type AccessoryLayer = "top" | "face" | "neck";
+
+/** 미니미 캐릭터 (카탈로그) */
+export interface MinimiCharacter {
+    id: string;
+    slug: string;
+    name: string;
+    category: MinimiCategory;
+    pixelData: PixelData;
+    price: number;
+    resellPrice: number;
+    isAvailable: boolean;
+    releasedAt: string;
+    description?: string;
+}
+
+/** 미니미 악세서리 (카탈로그) */
+export interface MinimiAccessory {
+    id: string;
+    slug: string;
+    name: string;
+    category: AccessoryCategory;
+    layer: AccessoryLayer;
+    pixelData: PixelData;
+    price: number;
+    resellPrice: number;
+    isAvailable: boolean;
+    season?: string;
+    releasedAt: string;
+    description?: string;
+}
+
+/** 사용자 보유 미니미 */
+export interface UserMinimi {
+    id: string;
+    minimiId: string;
+    purchasedAt: string;
+    character: MinimiCharacter;
+}
+
+/** 사용자 보유 악세서리 */
+export interface UserMinimiAccessory {
+    id: string;
+    accessoryId: string;
+    purchasedAt: string;
+    accessory: MinimiAccessory;
+}
+
+/** 미니미 장착 상태 */
+export interface MinimiEquipState {
+    minimiId: string | null;
+    accessoryIds: string[];
+    pixelData: PixelData | null;
+    accessoriesData: PixelData[];
+}
+
+// ============================================
+// 14. 미니홈피 시스템 타입
+// ============================================
+
+/** 미니홈피 배경 테마 카테고리 */
+export type BackgroundCategory = "nature" | "sky" | "season" | "special";
+
+/** 미니홈피 배경 테마 */
+export interface BackgroundTheme {
+    id: string;
+    slug: string;
+    name: string;
+    category: BackgroundCategory;
+    cssBackground: string;
+    price: number;
+    description?: string;
+}
+
+/** 미니홈피 설정 */
+export interface MinihompySettings {
+    userId: string;
+    isPublic: boolean;
+    backgroundSlug: string;
+    greeting: string;
+    todayVisitors: number;
+    totalVisitors: number;
+    totalLikes: number;
+}
+
+/** 방명록 엔트리 */
+export interface GuestbookEntry {
+    id: string;
+    ownerId: string;
+    visitorId: string;
+    visitorNickname: string;
+    visitorMinimiData?: PixelData | null;
+    content: string;
+    createdAt: string;
+}
+
+/** 다른 사용자 미니홈피 데이터 (방문 시) */
+export interface MinihompyViewData {
+    settings: MinihompySettings;
+    ownerNickname: string;
+    ownerPetType: string;
+    ownerMinimiEquip: MinimiEquipState;
+    guestbook: GuestbookEntry[];
+    guestbookTotal: number;
+    isLiked: boolean;
 }

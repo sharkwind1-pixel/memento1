@@ -41,6 +41,22 @@ export const API = {
     REMINDERS: "/api/reminders",
     REMINDER_DETAIL: (id: string) => `/api/reminders/${id}`,
 
+    // 미니미
+    MINIMI_CATALOG: "/api/minimi/catalog",
+    MINIMI_INVENTORY: "/api/minimi/inventory",
+    MINIMI_PURCHASE: "/api/minimi/purchase",
+    MINIMI_EQUIP: "/api/minimi/equip",
+    MINIMI_SELL: "/api/minimi/sell",
+
+    // 미니홈피
+    MINIHOMPY_SETTINGS: "/api/minihompy/settings",
+    MINIHOMPY_VIEW: (userId: string) => `/api/minihompy/${userId}`,
+    MINIHOMPY_GUESTBOOK: (userId: string) => `/api/minihompy/${userId}/guestbook`,
+    MINIHOMPY_LIKE: (userId: string) => `/api/minihompy/${userId}/like`,
+    MINIHOMPY_VISIT: (userId: string) => `/api/minihompy/${userId}/visit`,
+    MINIHOMPY_BG_CATALOG: "/api/minihompy/backgrounds",
+    MINIHOMPY_BG_PURCHASE: "/api/minihompy/backgrounds/purchase",
+
     // 관리자
     ADMIN_POINTS: "/api/admin/points",
 } as const;

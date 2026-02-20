@@ -65,6 +65,8 @@ export const POINTS = {
         timeline_entry: 5,
         photo_upload: 3,
         admin_award: 0,     // 관리자 지급 (금액은 API에서 동적 지정)
+        write_guestbook: 3,   // 방명록 작성
+        receive_guestbook: 2, // 방명록 수신
     } as const,
 
     /** 일일 상한선 (null = 무제한) */
@@ -78,6 +80,8 @@ export const POINTS = {
         timeline_entry: 10,
         photo_upload: 10,
         admin_award: null,  // 관리자 지급은 제한 없음
+        write_guestbook: 30,  // 하루 30캡
+        receive_guestbook: null,
     } as const,
 
     /** 일회성 활동 (평생 1회만) */
@@ -94,6 +98,8 @@ export const POINTS = {
         timeline_entry: "타임라인 기록",
         photo_upload: "사진 업로드",
         admin_award: "관리자 지급",
+        write_guestbook: "방명록 작성",
+        receive_guestbook: "방명록 수신",
     } as const,
 
     /** 페이지네이션 */
@@ -156,6 +162,22 @@ export function getNextLevelInfo(points: number): { nextLevel: PointLevel | null
 
     return { nextLevel, remaining, progress };
 }
+
+// ===== 미니미 시스템 =====
+export const MINIMI = {
+    MAX_EQUIPPED_ACCESSORIES: 3,
+    NEW_ARRIVAL_DAYS: 30,
+    RESELL_RATIO: 1 / 3,
+    PIXEL_SIZE: 3,
+} as const;
+
+// ===== 미니홈피 시스템 =====
+export const MINIHOMPY = {
+    GREETING_MAX_LENGTH: 50,
+    GUESTBOOK_MAX_LENGTH: 200,
+    GUESTBOOK_PAGE_SIZE: 10,
+    DEFAULT_BACKGROUND: "default_sky",
+} as const;
 
 // ===== PostgreSQL 에러 코드 =====
 export const PG_ERROR_CODES = {

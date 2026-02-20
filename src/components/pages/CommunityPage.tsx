@@ -43,6 +43,7 @@ import { ImageIcon } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import WritePostModal from "@/components/features/community/WritePostModal";
 import PostDetailView from "@/components/features/community/PostDetailView";
+import MinihompyVisitModal from "@/components/features/minihompy/MinihompyVisitModal";
 import type { CommunitySubcategory, PostTag, CommunityPageProps } from "@/types";
 import { API } from "@/config/apiEndpoints";
 import type { Post } from "@/components/features/community/communityTypes";
@@ -80,6 +81,7 @@ export default function CommunityPage({ subcategory, onSubcategoryChange }: Comm
     const [isLoading, setIsLoading] = useState(true);
     const [showWriteModal, setShowWriteModal] = useState(false);
     const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+    const [visitUserId, setVisitUserId] = useState<string | null>(null);
 
     // 신고 모달 상태
     const [reportTarget, setReportTarget] = useState<{
@@ -449,9 +451,15 @@ export default function CommunityPage({ subcategory, onSubcategoryChange }: Comm
                                     )}
                                 </CardContent>
                                 <CardFooter className="flex items-center justify-between pt-2">
-                                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (post.userId) setVisitUserId(post.userId);
+                                        }}
+                                        className="text-sm text-gray-500 dark:text-gray-400 hover:text-[#05B2DC] dark:hover:text-[#38BDF8] hover:underline transition-colors"
+                                    >
                                         {post.authorName}
-                                    </span>
+                                    </button>
                                     <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                                         <span className="flex items-center gap-1">
                                             <Eye className="w-4 h-4" />
@@ -518,6 +526,15 @@ export default function CommunityPage({ subcategory, onSubcategoryChange }: Comm
                     targetType={reportTarget.type}
                     targetId={reportTarget.id}
                     targetTitle={reportTarget.title}
+                />
+            )}
+
+            {/* 미니홈피 방문 모달 */}
+            {visitUserId && (
+                <MinihompyVisitModal
+                    isOpen={true}
+                    onClose={() => setVisitUserId(null)}
+                    userId={visitUserId}
                 />
             )}
         </div>

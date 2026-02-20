@@ -42,8 +42,10 @@ import {
     Mail,
     LogOut,
     Bell,
+    Home,
 } from "lucide-react";
 import LevelBadge from "@/components/features/points/LevelBadge";
+import MiniHomepyTab from "@/components/features/minihompy/MiniHomepyTab";
 
 import { TabType } from "@/types";
 import { FREE_LIMITS } from "@/config/constants";
@@ -420,7 +422,7 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
     const [petToDelete, setPetToDelete] = useState<Pet | null>(null);
 
     // 마이페이지 상태
-    const [activeTab, setActiveTab] = useState<"pets" | "profile">("pets");
+    const [activeTab, setActiveTab] = useState<"pets" | "profile" | "minihompy">("pets");
     const [isEditingNickname, setIsEditingNickname] = useState(false);
     const [nickname, setNickname] = useState("");
     const [isSavingProfile, setIsSavingProfile] = useState(false);
@@ -666,16 +668,30 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                         <span className="hidden sm:inline">내 정보</span>
                         <span className="sm:hidden">정보</span>
                     </button>
-                    <div className="flex-1" />
-                    <Button
-                        onClick={handleAddNewPet}
-                        size="sm"
-                        className="bg-[#05B2DC] hover:bg-[#0891B2] text-sm"
-                        data-tutorial-id="add-pet-button"
+                    <button
+                        onClick={() => setActiveTab("minihompy")}
+                        className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl font-medium transition-all text-sm sm:text-base ${
+                            activeTab === "minihompy"
+                                ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg"
+                                : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                        }`}
                     >
-                        <Plus className="w-4 h-4 sm:mr-1" />
-                        <span className="hidden sm:inline">새 반려동물</span>
-                    </Button>
+                        <Home className="w-4 h-4" />
+                        <span className="hidden sm:inline">미니홈피</span>
+                        <span className="sm:hidden">홈피</span>
+                    </button>
+                    <div className="flex-1" />
+                    {activeTab === "pets" && (
+                        <Button
+                            onClick={handleAddNewPet}
+                            size="sm"
+                            className="bg-[#05B2DC] hover:bg-[#0891B2] text-sm"
+                            data-tutorial-id="add-pet-button"
+                        >
+                            <Plus className="w-4 h-4 sm:mr-1" />
+                            <span className="hidden sm:inline">새 반려동물</span>
+                        </Button>
+                    )}
                 </div>
 
                 {/* 내 정보 탭 */}
@@ -834,6 +850,11 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
                             </CardContent>
                         </Card>
                     </div>
+                )}
+
+                {/* 미니홈피 탭 */}
+                {activeTab === "minihompy" && (
+                    <MiniHomepyTab />
                 )}
 
                 {/* 반려동물 탭 */}

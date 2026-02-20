@@ -31,6 +31,7 @@ import PawLoading from "@/components/ui/PawLoading";
 import { useAuth } from "@/contexts/AuthContext";
 import { API } from "@/config/apiEndpoints";
 import ReportModal from "@/components/modals/ReportModal";
+import MinihompyVisitModal from "@/components/features/minihompy/MinihompyVisitModal";
 import Image from "next/image";
 import type { CommunitySubcategory } from "@/types";
 
@@ -126,6 +127,7 @@ export default function PostDetailView({
         title?: string;
     } | null>(null);
     const commentInputRef = useRef<HTMLTextAreaElement>(null);
+    const [visitUserId, setVisitUserId] = useState<string | null>(null);
 
     // 게시글 상세 로드
     const fetchPost = useCallback(async () => {
@@ -370,9 +372,12 @@ export default function PostDetailView({
                     </h1>
                     <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
                         <div className="flex items-center gap-3">
-                            <span className="font-medium text-gray-700 dark:text-gray-300">
+                            <button
+                                onClick={() => post.user_id && setVisitUserId(post.user_id)}
+                                className="font-medium text-gray-700 dark:text-gray-300 hover:text-[#05B2DC] dark:hover:text-[#38BDF8] hover:underline transition-colors"
+                            >
                                 {post.author_name}
-                            </span>
+                            </button>
                             <span className="flex items-center gap-1">
                                 <Clock className="w-3.5 h-3.5" />
                                 {formatTime(post.created_at)}
@@ -473,9 +478,15 @@ export default function PostDetailView({
                                                 {comment.authorNickname.charAt(0)}
                                             </div>
                                         )}
-                                        <span className="font-medium text-sm text-gray-800 dark:text-gray-200">
+                                        <button
+                                            onClick={() => {
+                                                const uid = comment.userId || comment.user_id;
+                                                if (uid) setVisitUserId(uid);
+                                            }}
+                                            className="font-medium text-sm text-gray-800 dark:text-gray-200 hover:text-[#05B2DC] dark:hover:text-[#38BDF8] hover:underline transition-colors"
+                                        >
                                             {comment.authorNickname}
-                                        </span>
+                                        </button>
                                         <span className="text-xs text-gray-400">
                                             {formatTime(comment.createdAt)}
                                         </span>
@@ -573,6 +584,15 @@ export default function PostDetailView({
                     targetType={reportTarget.type}
                     targetId={reportTarget.id}
                     targetTitle={reportTarget.title}
+                />
+            )}
+
+            {/* 미니홈피 방문 모달 */}
+            {visitUserId && (
+                <MinihompyVisitModal
+                    isOpen={true}
+                    onClose={() => setVisitUserId(null)}
+                    userId={visitUserId}
                 />
             )}
         </div>

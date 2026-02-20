@@ -10,7 +10,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { X, Star, MessageCircle, Heart, PenLine, Camera, Clock, PawPrint, ChevronDown, ChevronUp } from "lucide-react";
+import { X, Star, MessageCircle, Heart, PenLine, Camera, Clock, PawPrint, ChevronDown, ChevronUp, BookOpen } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getActionLabel, formatPoints } from "@/lib/points";
 import { POINT_LEVELS, getPointLevel } from "@/config/constants";
@@ -32,6 +32,8 @@ function getActionIcon(actionType: PointAction) {
         case "pet_registration": return PawPrint;
         case "timeline_entry": return Star;
         case "photo_upload": return Camera;
+        case "write_guestbook": return BookOpen;
+        case "receive_guestbook": return BookOpen;
         default: return Star;
     }
 }
@@ -47,6 +49,8 @@ function getActionColor(actionType: PointAction) {
         case "pet_registration": return "text-orange-500 bg-orange-50 dark:bg-orange-900/20";
         case "timeline_entry": return "text-indigo-500 bg-indigo-50 dark:bg-indigo-900/20";
         case "photo_upload": return "text-teal-500 bg-teal-50 dark:bg-teal-900/20";
+        case "write_guestbook": return "text-pink-500 bg-pink-50 dark:bg-pink-900/20";
+        case "receive_guestbook": return "text-fuchsia-500 bg-fuchsia-50 dark:bg-fuchsia-900/20";
         default: return "text-gray-500 bg-gray-50 dark:bg-gray-900/20";
     }
 }
