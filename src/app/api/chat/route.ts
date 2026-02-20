@@ -13,6 +13,7 @@ import { createClient } from "@supabase/supabase-js";
 import { awardPoints } from "@/lib/points";
 import { getAuthUser } from "@/lib/supabase-server";
 import { API } from "@/config/constants";
+import { formatScheduleText } from "@/lib/schedule-utils";
 import {
     getClientIP,
     checkRateLimit,
@@ -148,7 +149,6 @@ ${entries.join("\n")}
 function remindersToContext(reminders: ReminderInfo[], petName: string): string {
     if (!reminders || reminders.length === 0) return "";
 
-    const DAYS_OF_WEEK = ["일", "월", "화", "수", "목", "금", "토"];
     const TYPE_LABELS: Record<string, string> = {
         walk: "산책",
         meal: "식사",
@@ -164,23 +164,7 @@ function remindersToContext(reminders: ReminderInfo[], petName: string): string 
 
     const entries = activeReminders.map(reminder => {
         const typeLabel = TYPE_LABELS[reminder.type] || reminder.type;
-        const time = reminder.schedule.time?.slice(0, 5) || "";
-
-        let scheduleText = "";
-        switch (reminder.schedule.type) {
-            case "daily":
-                scheduleText = `매일 ${time}`;
-                break;
-            case "weekly":
-                scheduleText = `매주 ${DAYS_OF_WEEK[reminder.schedule.dayOfWeek || 0]}요일 ${time}`;
-                break;
-            case "monthly":
-                scheduleText = `매월 ${reminder.schedule.dayOfMonth}일 ${time}`;
-                break;
-            default:
-                scheduleText = time;
-        }
-
+        const scheduleText = formatScheduleText(reminder.schedule);
         return `- [${typeLabel}] ${reminder.title}: ${scheduleText}`;
     });
 
@@ -224,7 +208,6 @@ ${entries.join("\n")}`;
 function remindersToMemorialContext(reminders: ReminderInfo[], petName: string): string {
     if (!reminders || reminders.length === 0) return "";
 
-    const DAYS_OF_WEEK = ["일", "월", "화", "수", "목", "금", "토"];
     const TYPE_LABELS: Record<string, string> = {
         walk: "산책",
         meal: "식사",
@@ -238,23 +221,7 @@ function remindersToMemorialContext(reminders: ReminderInfo[], petName: string):
     // 추모 모드에서는 활성/비활성 상관없이 모든 기록 사용
     const entries = reminders.map(reminder => {
         const typeLabel = TYPE_LABELS[reminder.type] || reminder.type;
-        const time = reminder.schedule.time?.slice(0, 5) || "";
-
-        let scheduleText = "";
-        switch (reminder.schedule.type) {
-            case "daily":
-                scheduleText = `매일 ${time}`;
-                break;
-            case "weekly":
-                scheduleText = `${DAYS_OF_WEEK[reminder.schedule.dayOfWeek || 0]}요일마다 ${time}`;
-                break;
-            case "monthly":
-                scheduleText = `매월 ${reminder.schedule.dayOfMonth}일 ${time}`;
-                break;
-            default:
-                scheduleText = time;
-        }
-
+        const scheduleText = formatScheduleText(reminder.schedule, "요일마다");
         return `- [${typeLabel}] ${reminder.title} (${scheduleText})`;
     });
 

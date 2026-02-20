@@ -157,6 +157,11 @@ export function getNextLevelInfo(points: number): { nextLevel: PointLevel | null
     return { nextLevel, remaining, progress };
 }
 
+// ===== PostgreSQL 에러 코드 =====
+export const PG_ERROR_CODES = {
+    UNIQUE_VIOLATION: "23505",
+} as const;
+
 // Helper: 관리자 여부 확인
 export const isAdmin = (email: string | undefined): boolean => {
     if (!email) return false;

@@ -61,6 +61,7 @@ export function FullPageLoading({ text = "로딩 중..." }: { text?: string }) {
                 <button
                     onClick={() => window.location.reload()}
                     className="flex items-center gap-2 px-4 py-2 text-sm text-gray-500 hover:text-sky-600 bg-white/80 rounded-xl border border-gray-200 hover:border-sky-300 transition-colors"
+                    aria-label="페이지 새로고침"
                 >
                     <RefreshCw className="w-4 h-4" />
                     새로고침
