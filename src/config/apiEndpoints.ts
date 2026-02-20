@@ -41,6 +41,13 @@ export const API = {
     REMINDERS: "/api/reminders",
     REMINDER_DETAIL: (id: string) => `/api/reminders/${id}`,
 
+    // 미니미
+    MINIMI_CATALOG: "/api/minimi/catalog",
+    MINIMI_INVENTORY: "/api/minimi/inventory",
+    MINIMI_PURCHASE: "/api/minimi/purchase",
+    MINIMI_EQUIP: "/api/minimi/equip",
+    MINIMI_SELL: "/api/minimi/sell",
+
     // 관리자
     ADMIN_POINTS: "/api/admin/points",
 } as const;

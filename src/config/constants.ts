@@ -157,6 +157,14 @@ export function getNextLevelInfo(points: number): { nextLevel: PointLevel | null
     return { nextLevel, remaining, progress };
 }
 
+// ===== 미니미 시스템 =====
+export const MINIMI = {
+    MAX_EQUIPPED_ACCESSORIES: 3,
+    NEW_ARRIVAL_DAYS: 30,
+    RESELL_RATIO: 1 / 3,
+    PIXEL_SIZE: 3,
+} as const;
+
 // ===== PostgreSQL 에러 코드 =====
 export const PG_ERROR_CODES = {
     UNIQUE_VIOLATION: "23505",

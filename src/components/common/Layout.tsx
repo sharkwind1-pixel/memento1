@@ -37,6 +37,7 @@ import AccountSettingsModal from "@/components/Auth/AccountSettingsModal";
 import Sidebar from "@/components/common/Sidebar";
 import SupportModal from "@/components/features/support/SupportModal";
 import LevelBadge from "@/components/features/points/LevelBadge";
+import MinimiRenderer from "@/components/features/minimi/MinimiRenderer";
 import MagazineBanner from "@/components/features/magazine/MagazineBanner";
 import {
     Home,
@@ -97,7 +98,7 @@ export default function Layout({
     // ========================================================================
     // Context & State
     // ========================================================================
-    const { user, loading, signOut, isAdminUser, points, pointsLoaded, userPetType } = useAuth();
+    const { user, loading, signOut, isAdminUser, points, pointsLoaded, userPetType, minimiEquip } = useAuth();
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(false);
@@ -282,6 +283,13 @@ export default function Layout({
                                                 showTooltip={false}
                                             />
                                         </span>
+                                        {minimiEquip.pixelData && (
+                                            <MinimiRenderer
+                                                pixelData={minimiEquip.pixelData}
+                                                accessoriesData={minimiEquip.accessoriesData}
+                                                size="xs"
+                                            />
+                                        )}
                                         <span className="text-sm font-medium text-gray-700 dark:text-gray-200 hidden sm:block max-w-[80px] truncate">
                                             {displayName}
                                         </span>
@@ -298,12 +306,23 @@ export default function Layout({
                                             />
                                             <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 z-50 overflow-hidden">
                                                 <div className="p-3 border-b border-gray-200 dark:border-gray-700">
-                                                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                                                        {displayName}
-                                                    </p>
-                                                    <p className="text-xs text-gray-500 truncate">
-                                                        {user.email}
-                                                    </p>
+                                                    <div className="flex items-center gap-2">
+                                                        {minimiEquip.pixelData && (
+                                                            <MinimiRenderer
+                                                                pixelData={minimiEquip.pixelData}
+                                                                accessoriesData={minimiEquip.accessoriesData}
+                                                                size="sm"
+                                                            />
+                                                        )}
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                                                {displayName}
+                                                            </p>
+                                                            <p className="text-xs text-gray-500 truncate">
+                                                                {user.email}
+                                                            </p>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                                 <button
                                                     onClick={() => {

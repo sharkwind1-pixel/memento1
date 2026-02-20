@@ -608,3 +608,77 @@ export interface PointAwardResult {
     totalEarned?: number;
     earned?: number;
 }
+
+// ============================================
+// 13. 미니미 시스템 타입
+// ============================================
+
+/** 미니미 픽셀 데이터 (CSS box-shadow 렌더링용) */
+export interface PixelData {
+    width: number;
+    height: number;
+    pixels: string;
+}
+
+/** 미니미 캐릭터 카테고리 */
+export type MinimiCategory = "dog" | "cat" | "other";
+
+/** 악세서리 카테고리 */
+export type AccessoryCategory = "hat" | "glasses" | "necklace" | "etc";
+
+/** 악세서리 레이어 위치 */
+export type AccessoryLayer = "top" | "face" | "neck";
+
+/** 미니미 캐릭터 (카탈로그) */
+export interface MinimiCharacter {
+    id: string;
+    slug: string;
+    name: string;
+    category: MinimiCategory;
+    pixelData: PixelData;
+    price: number;
+    resellPrice: number;
+    isAvailable: boolean;
+    releasedAt: string;
+    description?: string;
+}
+
+/** 미니미 악세서리 (카탈로그) */
+export interface MinimiAccessory {
+    id: string;
+    slug: string;
+    name: string;
+    category: AccessoryCategory;
+    layer: AccessoryLayer;
+    pixelData: PixelData;
+    price: number;
+    resellPrice: number;
+    isAvailable: boolean;
+    season?: string;
+    releasedAt: string;
+    description?: string;
+}
+
+/** 사용자 보유 미니미 */
+export interface UserMinimi {
+    id: string;
+    minimiId: string;
+    purchasedAt: string;
+    character: MinimiCharacter;
+}
+
+/** 사용자 보유 악세서리 */
+export interface UserMinimiAccessory {
+    id: string;
+    accessoryId: string;
+    purchasedAt: string;
+    accessory: MinimiAccessory;
+}
+
+/** 미니미 장착 상태 */
+export interface MinimiEquipState {
+    minimiId: string | null;
+    accessoryIds: string[];
+    pixelData: PixelData | null;
+    accessoriesData: PixelData[];
+}
