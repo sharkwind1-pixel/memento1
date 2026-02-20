@@ -395,7 +395,7 @@ export default function Layout({
             </aside>
 
             {/* 메인 컨텐츠 영역 */}
-            <div id="main-content" className="xl:ml-64 pb-20 xl:pb-0 flex-1">
+            <div id="main-content" className="xl:ml-80 pb-20 xl:pb-0 flex-1">
                 <main className="max-w-6xl mx-auto px-4 py-6">{children}</main>
             </div>
 

@@ -376,7 +376,7 @@ export default function Sidebar({
     return (
         <aside
             className={cn(
-                "flex flex-col w-64 h-full overflow-y-auto",
+                "flex flex-col w-80 h-full overflow-y-auto",
                 "bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg",
                 "border-r border-gray-200/50 dark:border-gray-700/50",
                 "transition-all duration-300"
