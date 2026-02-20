@@ -581,7 +581,9 @@ export type PointAction =
     | "pet_registration"
     | "timeline_entry"
     | "photo_upload"
-    | "admin_award";
+    | "admin_award"
+    | "write_guestbook"
+    | "receive_guestbook";
 
 /** 포인트 거래 기록 */
 export interface PointTransaction {
@@ -681,4 +683,55 @@ export interface MinimiEquipState {
     accessoryIds: string[];
     pixelData: PixelData | null;
     accessoriesData: PixelData[];
+}
+
+// ============================================
+// 14. 미니홈피 시스템 타입
+// ============================================
+
+/** 미니홈피 배경 테마 카테고리 */
+export type BackgroundCategory = "nature" | "sky" | "season" | "special";
+
+/** 미니홈피 배경 테마 */
+export interface BackgroundTheme {
+    id: string;
+    slug: string;
+    name: string;
+    category: BackgroundCategory;
+    cssBackground: string;
+    price: number;
+    description?: string;
+}
+
+/** 미니홈피 설정 */
+export interface MinihompySettings {
+    userId: string;
+    isPublic: boolean;
+    backgroundSlug: string;
+    greeting: string;
+    todayVisitors: number;
+    totalVisitors: number;
+    totalLikes: number;
+}
+
+/** 방명록 엔트리 */
+export interface GuestbookEntry {
+    id: string;
+    ownerId: string;
+    visitorId: string;
+    visitorNickname: string;
+    visitorMinimiData?: PixelData | null;
+    content: string;
+    createdAt: string;
+}
+
+/** 다른 사용자 미니홈피 데이터 (방문 시) */
+export interface MinihompyViewData {
+    settings: MinihompySettings;
+    ownerNickname: string;
+    ownerPetType: string;
+    ownerMinimiEquip: MinimiEquipState;
+    guestbook: GuestbookEntry[];
+    guestbookTotal: number;
+    isLiked: boolean;
 }
