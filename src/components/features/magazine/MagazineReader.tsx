@@ -82,7 +82,7 @@ function toHtml(content: string): string {
  * 4. <blockquote> → 독립 인용 카드
  * 5. 연속 블록 → MAX_BLOCKS_PER_CARD개씩 텍스트 카드
  */
-function splitContentIntoCards(html: string): CardData[] {
+function splitContentIntoCards(html: string, respectBoundaries = false): CardData[] {
     // 1단계: <hr> 기준 분할
     const hrParts = html.split(/<hr\s*\/?>/i).filter((p) => p.trim());
     const cards: CardData[] = [];
@@ -144,8 +144,8 @@ function splitContentIntoCards(html: string): CardData[] {
             // 일반 블록 → 텍스트 버퍼에 추가
             textBuffer.push(block);
 
-            // MAX_BLOCKS_PER_CARD 도달 시 flush
-            if (textBuffer.length >= MAX_BLOCKS_PER_CARD) {
+            // MAX_BLOCKS_PER_CARD 도달 시 flush (작성자가 경계를 지정한 경우 건너뜀)
+            if (!respectBoundaries && textBuffer.length >= MAX_BLOCKS_PER_CARD) {
                 flushTextBuffer();
             }
         }
@@ -169,7 +169,9 @@ function buildCards(article: MagazineArticle): CardData[] {
     // 3~N. 본문 카드
     if (article.content) {
         const html = toHtml(article.content);
-        const contentCards = splitContentIntoCards(html);
+        // <hr>가 있으면 작성자가 카드 경계를 직접 지정한 것이므로 자동 분할 비활성화
+        const hasExplicitDelimiters = /<hr\s*\/?>/i.test(html);
+        const contentCards = splitContentIntoCards(html, hasExplicitDelimiters);
         cards.push(...contentCards);
     }
 

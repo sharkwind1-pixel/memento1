@@ -26,7 +26,6 @@ import {
     AlignRight,
     List,
     ListOrdered,
-    SeparatorHorizontal,
     Undo,
     Redo,
     ImagePlus,
@@ -290,17 +289,6 @@ export default function RichTextEditor({ content, onChange, onImageUpload }: Ric
                     title="번호 리스트"
                 >
                     <ListOrdered className="w-4 h-4" />
-                </ToolbarButton>
-
-                <Divider />
-
-                {/* 카드 나누기 */}
-                <ToolbarButton
-                    onClick={() => editor.chain().focus().setHorizontalRule().run()}
-                    isActive={false}
-                    title="카드 나누기"
-                >
-                    <SeparatorHorizontal className="w-4 h-4" />
                 </ToolbarButton>
 
                 {/* 이미지 삽입 */}
