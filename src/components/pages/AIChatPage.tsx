@@ -25,7 +25,7 @@
 // ============================================================================
 // 임포트
 // ============================================================================
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { usePets } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
@@ -105,6 +105,10 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         fetchTimeline,
         isLoading: petsLoading,
     } = usePets();
+
+    // timeline을 ref로 관리하여 useEffect 의존성에서 제거 (불필요한 채팅 초기화 방지)
+    const timelineRef = useRef(timeline);
+    timelineRef.current = timeline;
 
     // ========================================================================
     // 상태 관리
@@ -208,7 +212,7 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                     const greeting = generatePersonalizedGreeting(
                         selectedPet.name,
                         isMemorialMode,
-                        timeline,
+                        timelineRef.current,
                         selectedPet.type
                     );
                     setMessages([
@@ -227,7 +231,7 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                     const greeting = generatePersonalizedGreeting(
                         selectedPet.name,
                         isMemorialMode,
-                        timeline,
+                        timelineRef.current,
                         selectedPet.type
                     );
                     setMessages([
@@ -243,7 +247,8 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         };
 
         loadChatFromSupabase();
-    }, [selectedPetId, selectedPet, isMemorialMode, timeline, user?.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedPetId, selectedPet, isMemorialMode, user?.id]);
 
     // Supabase에 대화 기록 저장 (debounced)
     const saveToSupabase = useCallback(async (messagesToSave: ChatMessage[]) => {
@@ -388,7 +393,7 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
             }));
 
             // 타임라인 데이터 준비 (최근 10개만)
-            const recentTimeline = timeline.slice(0, 10).map(entry => ({
+            const recentTimeline = timelineRef.current.slice(0, 10).map(entry => ({
                 date: entry.date,
                 title: entry.title,
                 content: entry.content,

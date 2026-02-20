@@ -15,6 +15,7 @@ import React, {
     useEffect,
     useCallback,
     useMemo,
+    useRef,
 } from "react";
 import { useAuth } from "./AuthContext";
 import { supabase } from "@/lib/supabase";
@@ -123,6 +124,14 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
     const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSyncing, setIsSyncing] = useState(false);
+
+    // 최신 상태 참조용 ref (useCallback 의존성 최적화)
+    const petsRef = useRef(pets);
+    petsRef.current = pets;
+    const timelineRef = useRef(timeline);
+    timelineRef.current = timeline;
+    const selectedPetIdRef = useRef(selectedPetId);
+    selectedPetIdRef.current = selectedPetId;
 
     // Supabase에서 데이터 로드
     const loadFromSupabase = useCallback(async (userId: string) => {
@@ -270,7 +279,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                             profile_crop_position: petData.profileCropPosition,
                             status: petData.status,
                             memorial_date: petData.memorialDate || null,
-                            is_primary: pets.length === 0,
+                            is_primary: petsRef.current.length === 0,
                             // AI 펫톡 개인화를 위한 추가 필드
                             adopted_date: petData.adoptedDate || null,
                             how_we_met: petData.howWeMet || null,
@@ -295,7 +304,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                     id: data.id,
                     ...petData,
                     photos: [],
-                    isPrimary: pets.length === 0,
+                    isPrimary: petsRef.current.length === 0,
                     createdAt: data.created_at,
                 };
 
@@ -311,14 +320,14 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                 return "";
             }
         },
-        [user, pets.length]
+        [user]
     );
 
     const updatePet = useCallback(
         async (id: string, data: Partial<Pet>) => {
             if (user) {
                 // 낙관적 업데이트: 먼저 로컬 상태 반영
-                const previousPets = pets;
+                const previousPets = petsRef.current;
                 setPets((prev) =>
                     prev.map((pet) => (pet.id === id ? { ...pet, ...data } : pet))
                 );
@@ -377,7 +386,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                 );
             }
         },
-        [user, pets]
+        [user]
     );
 
     const deletePet = useCallback(
@@ -385,7 +394,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
             if (user) {
                 try {
                     // Storage에서 파일들 삭제 시도
-                    const pet = pets.find((p) => p.id === id);
+                    const pet = petsRef.current.find((p) => p.id === id);
                     if (pet) {
                         for (const photo of pet.photos) {
                             if (photo.storagePath) {
@@ -405,7 +414,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
             setPets((prev) => {
                 const filtered = prev.filter((pet) => pet.id !== id);
 
-                if (selectedPetId === id) {
+                if (selectedPetIdRef.current === id) {
                     const newSelected =
                         filtered.length > 0 ? filtered[0].id : null;
                     setSelectedPetId(newSelected);
@@ -418,7 +427,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                 return filtered;
             });
         },
-        [user, pets, selectedPetId]
+        [user]
     );
 
     const selectPet = useCallback((id: string) => {
@@ -530,7 +539,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
         async (petId: string, photoId: string, data: Partial<PetPhoto>) => {
             if (user) {
                 // 낙관적 업데이트: 먼저 로컬 상태 반영
-                const previousPets = pets;
+                const previousPets = petsRef.current;
                 setPets((prev) =>
                     prev.map((pet) =>
                         pet.id === petId
@@ -580,12 +589,12 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                 );
             }
         },
-        [user, pets]
+        [user]
     );
 
     const deletePhoto = useCallback(
         async (petId: string, photoId: string) => {
-            const pet = pets.find((p) => p.id === petId);
+            const pet = petsRef.current.find((p) => p.id === petId);
             const photo = pet?.photos.find((p) => p.id === photoId);
 
             if (user) {
@@ -616,12 +625,12 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                 )
             );
         },
-        [user, pets]
+        [user]
     );
 
     const deletePhotos = useCallback(
         async (petId: string, photoIds: string[]) => {
-            const pet = pets.find((p) => p.id === petId);
+            const pet = petsRef.current.find((p) => p.id === petId);
 
             if (user && pet) {
                 try {
@@ -654,7 +663,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                 )
             );
         },
-        [user, pets]
+        [user]
     );
 
     // ===== Timeline CRUD =====
@@ -751,7 +760,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
             if (!user) return;
 
             // 낙관적 업데이트: 먼저 로컬 상태 반영
-            const previousTimeline = timeline;
+            const previousTimeline = timelineRef.current;
             setTimeline((prev) =>
                 prev.map((entry) =>
                     entry.id === entryId ? { ...entry, ...data } : entry
@@ -779,7 +788,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                 toast.error("일기 수정에 실패했어요. 다시 시도해주세요.");
             }
         },
-        [user, timeline]
+        [user]
     );
 
     const deleteTimelineEntry = useCallback(

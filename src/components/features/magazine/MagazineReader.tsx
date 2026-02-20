@@ -11,6 +11,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import DOMPurify from "dompurify";
 import Image from "next/image";
 import {
     ArrowLeft,
@@ -639,7 +640,7 @@ function TextCard({
                     prose-li:my-1
                     prose-strong:text-gray-800 dark:prose-strong:text-gray-100
                     prose-blockquote:border-emerald-300 prose-blockquote:text-gray-600 dark:prose-blockquote:text-gray-400"
-                dangerouslySetInnerHTML={{ __html: html }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
             />
         </div>
     );

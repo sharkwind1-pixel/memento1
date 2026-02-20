@@ -35,7 +35,7 @@ import {
     LogIn,
     X,
 } from "lucide-react";
-import PawLoading, { FullPageLoading } from "@/components/ui/PawLoading";
+import PawLoading from "@/components/ui/PawLoading";
 import { API } from "@/config/apiEndpoints";
 import { authFetch } from "@/lib/auth-fetch";
 import type { Reminder } from "@/types";

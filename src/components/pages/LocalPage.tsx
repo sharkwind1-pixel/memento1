@@ -143,8 +143,13 @@ export default function LocalPage({ setSelectedTab }: LocalPageProps) {
     useEffect(() => {
         if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
         debounceTimerRef.current = setTimeout(() => {
-            setSearchQuery(searchInput.trim());
-            setPage(1);
+            const trimmed = searchInput.trim();
+            // handleSearch에서 이미 설정된 같은 값이면 skip (이중 실행 방지)
+            setSearchQuery((prev) => {
+                if (prev === trimmed) return prev;
+                setPage(1);
+                return trimmed;
+            });
         }, 300);
         return () => {
             if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);

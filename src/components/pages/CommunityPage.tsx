@@ -6,7 +6,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
     Card,
     CardContent,
@@ -70,7 +70,9 @@ export default function CommunityPage({ subcategory, onSubcategoryChange }: Comm
 
     // 말머리 필터 (자유게시판용)
     const [selectedTag, setSelectedTag] = useState<PostTag | "all">("all");
+    const [searchInput, setSearchInput] = useState<string>("");
     const [searchQuery, setSearchQuery] = useState<string>("");
+    const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
     const [sortBy, setSortBy] = useState<string>("latest");
 
     // 실제 데이터 상태
@@ -168,6 +170,17 @@ export default function CommunityPage({ subcategory, onSubcategoryChange }: Comm
             setIsLoading(false);
         }
     }, [currentSubcategory, sortBy, selectedTag, searchQuery]);
+
+    // 검색어 debounce (300ms)
+    useEffect(() => {
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = setTimeout(() => {
+            setSearchQuery(searchInput.trim());
+        }, 300);
+        return () => {
+            if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+        };
+    }, [searchInput]);
 
     // 서브카테고리/정렬/필터 변경 시 다시 로드
     useEffect(() => {
@@ -315,8 +328,14 @@ export default function CommunityPage({ subcategory, onSubcategoryChange }: Comm
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                             <Input
                                 placeholder="검색어를 입력하세요"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
+                                value={searchInput}
+                                onChange={(e) => setSearchInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+                                        setSearchQuery(searchInput.trim());
+                                    }
+                                }}
                                 maxLength={100}
                                 className="pl-10 rounded-xl bg-white/70 dark:bg-gray-700/70"
                             />
@@ -466,7 +485,7 @@ export default function CommunityPage({ subcategory, onSubcategoryChange }: Comm
                             <Button
                                 variant="outline"
                                 className="mt-4 rounded-xl"
-                                onClick={() => setSearchQuery("")}
+                                onClick={() => { setSearchInput(""); setSearchQuery(""); }}
                             >
                                 전체 보기
                             </Button>

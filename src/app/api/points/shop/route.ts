@@ -18,25 +18,25 @@ const SHOP_ITEMS: Record<string, {
 }> = {
     extra_chat_5: {
         name: "AI 펫톡 +5회",
-        price: 50,
+        price: 150,
         effect: "chat_bonus_5",
         available: true,
     },
     extra_chat_10: {
         name: "AI 펫톡 +10회",
-        price: 80,
+        price: 250,
         effect: "chat_bonus_10",
         available: true,
     },
     premium_trial_1d: {
         name: "프리미엄 1일 체험",
-        price: 200,
+        price: 500,
         effect: "premium_trial_1d",
         available: true,
     },
     premium_trial_3d: {
         name: "프리미엄 3일 체험",
-        price: 500,
+        price: 1200,
         effect: "premium_trial_3d",
         available: true,
     },
@@ -82,15 +82,20 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "포인트가 부족합니다" }, { status: 400 });
         }
 
-        // 5. 포인트 차감
-        const { error: updateError } = await supabase
+        // 5. 포인트 차감 (Race Condition 방지: gte 조건으로 잔액 재확인)
+        const { data: updated, error: updateError } = await supabase
             .from("profiles")
             .update({ points: (profile.points || 0) - item.price })
-            .eq("id", user.id);
+            .eq("id", user.id)
+            .gte("points", item.price)
+            .select("points")
+            .single();
 
-        if (updateError) {
-            return NextResponse.json({ error: "포인트 차감 실패" }, { status: 500 });
+        if (updateError || !updated) {
+            return NextResponse.json({ error: "포인트가 부족합니다" }, { status: 400 });
         }
+
+        const remainingPoints = updated.points;
 
         // 6. 거래 내역 기록
         await supabase.from("point_transactions").insert({
@@ -110,7 +115,7 @@ export async function POST(request: NextRequest) {
                 success: true,
                 effect: item.effect,
                 bonusAmount,
-                remainingPoints: (profile.points || 0) - item.price,
+                remainingPoints,
                 message: `AI 펫톡 ${bonusAmount}회가 추가되었습니다`,
             });
         }
@@ -150,7 +155,7 @@ export async function POST(request: NextRequest) {
                 success: true,
                 effect: item.effect,
                 premiumExpiresAt: newExpiresAt.toISOString(),
-                remainingPoints: (profile.points || 0) - item.price,
+                remainingPoints,
                 message: `프리미엄 ${days}일 체험이 시작되었습니다!`,
             });
         }
@@ -158,7 +163,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
             success: true,
             effect: item.effect,
-            remainingPoints: (profile.points || 0) - item.price,
+            remainingPoints,
         });
     } catch {
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });

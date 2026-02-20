@@ -3,10 +3,10 @@
  * POST: 좋아요 토글
  *
  * 보안: 세션 기반 인증, Rate Limiting, VPN 차단
+ * 수정: 이중 감소 버그 제거, post_likes count 기반 정확한 집계
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
 import { awardPoints } from "@/lib/points";
 import {
@@ -16,13 +16,6 @@ import {
     checkVPN,
     getVPNBlockResponse
 } from "@/lib/rate-limit";
-
-function getSupabase() {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!url || !key) throw new Error("Supabase 환경변수 없음");
-    return createClient(url, key);
-}
 
 export const dynamic = "force-dynamic";
 
@@ -69,53 +62,19 @@ export async function POST(
         let liked: boolean;
 
         if (existing) {
-            // 좋아요 취소
+            // 좋아요 취소: 레코드 삭제
             await supabase
                 .from("post_likes")
                 .delete()
                 .eq("post_id", postId)
                 .eq("user_id", userId);
 
-            // 카운트 감소
-            await supabase
-                .from("community_posts")
-                .update({ likes: supabase.rpc("decrement_like", { x: 1 }) })
-                .eq("id", postId);
-
-            // 직접 업데이트 (RPC 없을 경우)
-            const { data: post } = await supabase
-                .from("community_posts")
-                .select("likes")
-                .eq("id", postId)
-                .single();
-
-            if (post) {
-                await supabase
-                    .from("community_posts")
-                    .update({ likes: Math.max(0, (post.likes || 1) - 1) })
-                    .eq("id", postId);
-            }
-
             liked = false;
         } else {
-            // 좋아요 추가
+            // 좋아요 추가: 레코드 삽입
             await supabase
                 .from("post_likes")
                 .insert([{ post_id: postId, user_id: userId }]);
-
-            // 카운트 증가
-            const { data: post } = await supabase
-                .from("community_posts")
-                .select("likes")
-                .eq("id", postId)
-                .single();
-
-            if (post) {
-                await supabase
-                    .from("community_posts")
-                    .update({ likes: (post.likes || 0) + 1 })
-                    .eq("id", postId);
-            }
 
             liked = true;
 
@@ -128,24 +87,28 @@ export async function POST(
                     .single();
 
                 if (postData && postData.user_id !== userId) {
-                    const pointsSupabase = getSupabase();
-                    await awardPoints(pointsSupabase, postData.user_id, "receive_like", { postId });
+                    await awardPoints(supabase, postData.user_id, "receive_like", { postId });
                 }
             } catch {
                 // 포인트 적립 실패 무시
             }
         }
 
-        // 현재 좋아요 수 가져오기
-        const { data: updatedPost } = await supabase
+        // post_likes 테이블에서 실제 카운트 집계 (정확한 값)
+        const { count: likesCount } = await supabase
+            .from("post_likes")
+            .select("id", { count: "exact", head: true })
+            .eq("post_id", postId);
+
+        // community_posts.likes 동기화
+        await supabase
             .from("community_posts")
-            .select("likes")
-            .eq("id", postId)
-            .single();
+            .update({ likes: likesCount || 0 })
+            .eq("id", postId);
 
         return NextResponse.json({
             liked,
-            likes: updatedPost?.likes || 0,
+            likes: likesCount || 0,
         });
     } catch {
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });

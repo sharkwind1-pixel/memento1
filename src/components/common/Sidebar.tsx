@@ -364,7 +364,7 @@ export default function Sidebar({
 
                 {/* 사이드바 패널 - transition 제거 */}
                 <div
-                    className="fixed top-0 left-0 h-full w-72 bg-white dark:bg-gray-900 z-50 shadow-xl"
+                    className="fixed top-0 left-0 h-full w-64 bg-white dark:bg-gray-900 z-50 shadow-xl"
                 >
                     {sidebarContent}
                 </div>
@@ -376,7 +376,7 @@ export default function Sidebar({
     return (
         <aside
             className={cn(
-                "flex flex-col w-56 h-full overflow-y-auto",
+                "flex flex-col w-64 h-full overflow-y-auto",
                 "bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg",
                 "border-r border-gray-200/50 dark:border-gray-700/50",
                 "transition-all duration-300"

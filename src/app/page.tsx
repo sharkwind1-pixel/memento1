@@ -150,9 +150,8 @@ function HomeContent() {
         return { tab: "home" };
     };
 
-    const initialState = getInitialState();
-    const [selectedTab, setSelectedTab] = useState<TabType>(initialState.tab);
-    const [selectedSubcategory, setSelectedSubcategory] = useState<CommunitySubcategory | undefined>(initialState.sub);
+    const [selectedTab, setSelectedTab] = useState<TabType>(() => getInitialState().tab);
+    const [selectedSubcategory, setSelectedSubcategory] = useState<CommunitySubcategory | undefined>(() => getInitialState().sub);
 
     const [showNicknameSetup, setShowNicknameSetup] = useState(false);
     const [showOnboarding, setShowOnboarding] = useState(false);
