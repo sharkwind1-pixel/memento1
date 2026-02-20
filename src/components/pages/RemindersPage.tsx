@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import PawLoading, { FullPageLoading } from "@/components/ui/PawLoading";
 import { API } from "@/config/apiEndpoints";
+import { authFetch } from "@/lib/auth-fetch";
 import type { Reminder } from "@/types";
 
 const REMINDER_TYPES = [
@@ -90,9 +91,7 @@ export default function RemindersPage() {
                 params.append("petId", selectedPetId);
             }
 
-            const response = await fetch(`${API.REMINDERS}?${params}`, {
-                credentials: "include", // 쿠키 포함 (인증)
-            });
+            const response = await authFetch(`${API.REMINDERS}?${params}`);
 
             // 인증 실패 등 에러는 무시 (상태 변경 안 함 - 무한 루프 방지)
             if (!response.ok) {
@@ -129,9 +128,8 @@ export default function RemindersPage() {
         if (!user?.id || !newReminder.petId || !newReminder.title) return;
 
         try {
-            const response = await fetch(API.REMINDERS, {
+            const response = await authFetch(API.REMINDERS, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     petId: newReminder.petId,
                     type: newReminder.type,
@@ -174,9 +172,8 @@ export default function RemindersPage() {
     // 리마인더 토글
     const handleToggle = async (id: string, currentEnabled: boolean) => {
         try {
-            const response = await fetch(API.REMINDER_DETAIL(id), {
+            const response = await authFetch(API.REMINDER_DETAIL(id), {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ toggleEnabled: !currentEnabled }),
             });
 
@@ -199,7 +196,7 @@ export default function RemindersPage() {
                 label: "삭제",
                 onClick: async () => {
                     try {
-                        const response = await fetch(API.REMINDER_DETAIL(id), {
+                        const response = await authFetch(API.REMINDER_DETAIL(id), {
                             method: "DELETE",
                         });
 

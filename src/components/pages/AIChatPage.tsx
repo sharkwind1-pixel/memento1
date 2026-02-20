@@ -285,7 +285,7 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
 
         const loadReminders = async () => {
             try {
-                const response = await fetch(`${API.REMINDERS}?petId=${selectedPetId}`);
+                const response = await authFetch(`${API.REMINDERS}?petId=${selectedPetId}`);
                 if (!response.ok) return;
                 const data = await response.json();
                 if (data.reminders && Array.isArray(data.reminders)) {

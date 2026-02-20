@@ -30,6 +30,7 @@ import {
     Loader2,
 } from "lucide-react";
 import { API } from "@/config/apiEndpoints";
+import { authFetch } from "@/lib/auth-fetch";
 import { toast } from "sonner";
 import type { Reminder } from "@/types";
 
@@ -123,7 +124,7 @@ export default function ReminderPanel({
         if (!petId) return;
         setIsLoading(true);
         try {
-            const response = await fetch(`${API.REMINDERS}?petId=${petId}`);
+            const response = await authFetch(`${API.REMINDERS}?petId=${petId}`);
             if (!response.ok) {
                 throw new Error("Failed to fetch reminders");
             }
@@ -159,9 +160,8 @@ export default function ReminderPanel({
         );
 
         try {
-            const response = await fetch(API.REMINDER_DETAIL(reminder.id), {
+            const response = await authFetch(API.REMINDER_DETAIL(reminder.id), {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ toggleEnabled: newEnabled }),
             });
 
@@ -189,7 +189,7 @@ export default function ReminderPanel({
 
         setDeletingId(reminderId);
         try {
-            const response = await fetch(API.REMINDER_DETAIL(reminderId), {
+            const response = await authFetch(API.REMINDER_DETAIL(reminderId), {
                 method: "DELETE",
             });
 
@@ -227,9 +227,8 @@ export default function ReminderPanel({
                 scheduleData.dayOfMonth = form.dayOfMonth;
             }
 
-            const response = await fetch(API.REMINDERS, {
+            const response = await authFetch(API.REMINDERS, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     petId,
                     type: form.type,
