@@ -247,8 +247,8 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
             }
 
             if (last) {
-                const THRESHOLD = 50;
-                const VELOCITY_THRESHOLD = 0.3;
+                const THRESHOLD = 30;
+                const VELOCITY_THRESHOLD = 0.15;
 
                 if (mx < -THRESHOLD || (vx > VELOCITY_THRESHOLD && dx < 0)) {
                     goNext();
@@ -261,9 +261,8 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
             }
         },
         {
-            axis: "x",
             filterTaps: true,
-            threshold: 5,
+            threshold: 3,
         }
     );
 
@@ -294,7 +293,7 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
                 style={{
                     width: `${totalCards * 100}%`,
                     transform: `translateX(calc(-${(currentCard * 100) / totalCards}% + ${offsetX}px))`,
-                    touchAction: "pan-y pinch-zoom",
+                    touchAction: "none",
                 }}
             >
                 {cards.map((card, index) => {
