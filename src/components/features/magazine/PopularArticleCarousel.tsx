@@ -66,6 +66,7 @@ export default function PopularArticleCarousel({
             axis: "x",
             filterTaps: true,
             threshold: 10,
+            pointer: { touch: true },
         }
     );
 
@@ -89,7 +90,8 @@ export default function PopularArticleCarousel({
             <div
                 ref={containerRef}
                 {...bind()}
-                className="overflow-hidden touch-pan-y"
+                className="overflow-hidden"
+                style={{ touchAction: "none" }}
             >
                 <div
                     className={isDragging ? "" : "transition-transform duration-300 ease-out"}
