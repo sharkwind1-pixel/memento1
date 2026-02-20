@@ -11,7 +11,6 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
-import { useDrag } from "@use-gesture/react";
 import Image from "next/image";
 import {
     ArrowLeft,
@@ -233,38 +232,88 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [goNext, goPrev, onBack]);
 
-    // 제스처 핸들링 (터치 디바이스에서만 스와이프 동작)
-    const bind = useDrag(
-        ({ down, movement: [mx], velocity: [vx], direction: [dx], last }) => {
-            // 데스크톱(마우스)에서는 스와이프 무시
-            if (!isTouchDevice) return;
+    // 네이티브 터치 이벤트 기반 스와이프 (라이브러리 의존 제거)
+    const touchRef = useRef<{ startX: number; startY: number; startTime: number; locked: boolean } | null>(null);
 
-            if (down) {
-                setIsDragging(true);
-                const atStart = currentCard === 0 && mx > 0;
-                const atEnd = currentCard === totalCards - 1 && mx < 0;
-                setOffsetX(atStart || atEnd ? mx * 0.3 : mx);
-            }
+    useEffect(() => {
+        const el = containerRef.current;
+        if (!el || !isTouchDevice) return;
 
-            if (last) {
-                const THRESHOLD = 30;
-                const VELOCITY_THRESHOLD = 0.15;
+        const onTouchStart = (e: TouchEvent) => {
+            const touch = e.touches[0];
+            touchRef.current = {
+                startX: touch.clientX,
+                startY: touch.clientY,
+                startTime: Date.now(),
+                locked: false,
+            };
+            setIsDragging(true);
+        };
 
-                if (mx < -THRESHOLD || (vx > VELOCITY_THRESHOLD && dx < 0)) {
-                    goNext();
-                } else if (mx > THRESHOLD || (vx > VELOCITY_THRESHOLD && dx > 0)) {
-                    goPrev();
+        const onTouchMove = (e: TouchEvent) => {
+            if (!touchRef.current) return;
+            const touch = e.touches[0];
+            const dx = touch.clientX - touchRef.current.startX;
+            const dy = touch.clientY - touchRef.current.startY;
+
+            // 첫 움직임에서 수평/수직 방향 결정
+            if (!touchRef.current.locked) {
+                if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+                    touchRef.current.locked = true;
+                    if (Math.abs(dy) > Math.abs(dx)) {
+                        // 세로 스크롤 → 스와이프 취소
+                        touchRef.current = null;
+                        setIsDragging(false);
+                        setOffsetX(0);
+                        return;
+                    }
+                } else {
+                    return;
                 }
-
-                setOffsetX(0);
-                requestAnimationFrame(() => setIsDragging(false));
             }
-        },
-        {
-            filterTaps: true,
-            threshold: 3,
-        }
-    );
+
+            // 수평 스와이프 → 브라우저 기본 동작 방지
+            e.preventDefault();
+
+            const atStart = currentCard === 0 && dx > 0;
+            const atEnd = currentCard === totalCards - 1 && dx < 0;
+            setOffsetX(atStart || atEnd ? dx * 0.3 : dx);
+        };
+
+        const onTouchEnd = () => {
+            if (!touchRef.current) {
+                setIsDragging(false);
+                return;
+            }
+
+            const elapsed = Date.now() - touchRef.current.startTime;
+            const dx = offsetX;
+            const velocity = Math.abs(dx) / Math.max(elapsed, 1);
+
+            const THRESHOLD = 30;
+            const VELOCITY_THRESHOLD = 0.2;
+
+            if (dx < -THRESHOLD || (velocity > VELOCITY_THRESHOLD && dx < 0)) {
+                goNext();
+            } else if (dx > THRESHOLD || (velocity > VELOCITY_THRESHOLD && dx > 0)) {
+                goPrev();
+            }
+
+            touchRef.current = null;
+            setOffsetX(0);
+            setIsDragging(false);
+        };
+
+        el.addEventListener("touchstart", onTouchStart, { passive: true });
+        el.addEventListener("touchmove", onTouchMove, { passive: false });
+        el.addEventListener("touchend", onTouchEnd, { passive: true });
+
+        return () => {
+            el.removeEventListener("touchstart", onTouchStart);
+            el.removeEventListener("touchmove", onTouchMove);
+            el.removeEventListener("touchend", onTouchEnd);
+        };
+    }, [isTouchDevice, currentCard, totalCards, offsetX, goNext, goPrev]);
 
     // 가상화: 현재 +/- 1 카드만 렌더
     const visibleRange = useMemo(() => ({
@@ -288,12 +337,10 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
 
             {/* 카드 컨테이너 */}
             <div
-                {...bind()}
                 className={`flex h-full ${isDragging ? "magazine-page-container dragging" : "magazine-page-container"}`}
                 style={{
                     width: `${totalCards * 100}%`,
                     transform: `translateX(calc(-${(currentCard * 100) / totalCards}% + ${offsetX}px))`,
-                    touchAction: "none",
                 }}
             >
                 {cards.map((card, index) => {
