@@ -5,7 +5,7 @@
  * 페이지 구성:
  * 1. 커버 (히어로 이미지 + 제목 + 배지)
  * 2. 요약 (메타정보 + 요약 박스)
- * 3~N. 본문 섹션 (H2 기준 분할)
+ * 3~N. 본문 섹션 (hr/H2/자동 분할)
  * N+1. 엔딩 (태그 + 목록 복귀)
  */
 "use client";
@@ -46,8 +46,12 @@ interface PageData {
 }
 
 // ──────────────────────────────────────────────
-//  HTML 콘텐츠를 H2 기준으로 분할
+//  HTML 콘텐츠를 페이지 단위로 분할
+//  우선순위: <hr> → <h2> → 자동 (블록 5개)
 // ──────────────────────────────────────────────
+
+/** 한 페이지에 표시할 최대 블록 요소 수 */
+const MAX_BLOCKS_PER_PAGE = 5;
 
 /** plain text를 HTML로 변환 (기존 콘텐츠 호환) */
 function toHtml(content: string): string {
@@ -59,25 +63,70 @@ function toHtml(content: string): string {
         .join("");
 }
 
-/** HTML 콘텐츠를 <h2> 태그 기준으로 섹션 분할 */
-function splitContentByH2(html: string): { title: string; html: string }[] {
-    // <h2> 태그 직전에서 분할
-    const parts = html.split(/(?=<h2[\s>])/i);
-    const sections: { title: string; html: string }[] = [];
+/** 섹션 결과 타입 */
+interface ContentSection {
+    title: string;
+    html: string;
+}
 
-    for (const part of parts) {
-        const trimmed = part.trim();
-        if (!trimmed) continue;
+/**
+ * HTML 콘텐츠를 페이지 단위로 분할
+ *
+ * 1단계: <hr> 태그로 명시적 페이지 분할
+ * 2단계: 각 파트 내 <h2> 태그로 추가 분할
+ * 3단계: 블록 요소가 MAX_BLOCKS_PER_PAGE 초과 시 자동 분할
+ */
+function splitContentIntoPages(html: string): ContentSection[] {
+    // 1단계: <hr> 기준 분할 (관리자가 삽입한 페이지 구분선)
+    const hrParts = html.split(/<hr\s*\/?>/i).filter((p) => p.trim());
 
-        // H2 태그에서 제목 추출
-        const h2Match = trimmed.match(/<h2[^>]*>(.*?)<\/h2>/i);
-        sections.push({
-            title: h2Match ? h2Match[1].replace(/<[^>]*>/g, "").trim() : "",
-            html: trimmed,
-        });
+    const sections: ContentSection[] = [];
+
+    for (const hrPart of hrParts) {
+        // 2단계: 각 <hr> 파트 내에서 <h2> 기준 분할
+        const h2Parts = hrPart.split(/(?=<h2[\s>])/i);
+
+        for (const h2Part of h2Parts) {
+            const trimmed = h2Part.trim();
+            if (!trimmed) continue;
+
+            // H2 태그에서 제목 추출
+            const h2Match = trimmed.match(/<h2[^>]*>(.*?)<\/h2>/i);
+            const title = h2Match ? h2Match[1].replace(/<[^>]*>/g, "").trim() : "";
+
+            // 3단계: 블록 요소 수 체크 후 자동 분할
+            const autoSplit = splitByBlockCount(trimmed, title);
+            sections.push(...autoSplit);
+        }
     }
 
     return sections.length > 0 ? sections : [{ title: "", html }];
+}
+
+/**
+ * 블록 요소가 MAX_BLOCKS_PER_PAGE 초과하면 자동 분할
+ * 블록 요소: <p>, <ul>, <ol>, <h2>, <h3>, <blockquote>, <img>, <figure>
+ */
+function splitByBlockCount(html: string, sectionTitle: string): ContentSection[] {
+    // 블록 요소 경계에서 분리 (태그 직전에서 split)
+    const blockPattern = /(?=<(?:p|ul|ol|h2|h3|blockquote|img|figure)[\s>])/i;
+    const blocks = html.split(blockPattern).filter((b) => b.trim());
+
+    if (blocks.length <= MAX_BLOCKS_PER_PAGE) {
+        return [{ title: sectionTitle, html }];
+    }
+
+    // MAX_BLOCKS_PER_PAGE 개씩 묶기
+    const pages: ContentSection[] = [];
+    for (let i = 0; i < blocks.length; i += MAX_BLOCKS_PER_PAGE) {
+        const chunk = blocks.slice(i, i + MAX_BLOCKS_PER_PAGE).join("");
+        pages.push({
+            title: i === 0 ? sectionTitle : "",
+            html: chunk,
+        });
+    }
+
+    return pages;
 }
 
 /** 기사를 페이지 배열로 변환 */
@@ -93,7 +142,7 @@ function buildPages(article: MagazineArticle): PageData[] {
     // 3~N. 본문 섹션
     if (article.content) {
         const html = toHtml(article.content);
-        const sections = splitContentByH2(html);
+        const sections = splitContentIntoPages(html);
         for (const section of sections) {
             pages.push({
                 type: "section",

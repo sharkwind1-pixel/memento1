@@ -9,10 +9,6 @@ import { useState, useEffect } from "react";
 import {
     Card,
     CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +40,7 @@ import PawLoading from "@/components/ui/PawLoading";
 import { toast } from "sonner";
 import { API } from "@/config/apiEndpoints";
 import MagazineReader from "@/components/features/magazine/MagazineReader";
+import PopularArticleCarousel from "@/components/features/magazine/PopularArticleCarousel";
 
 interface MagazinePageProps {
     setSelectedTab?: (tab: TabType) => void;
@@ -242,49 +239,10 @@ export default function MagazinePage({ setSelectedTab }: MagazinePageProps) {
                                 인기 콘텐츠
                             </h2>
                         </div>
-                        <div className="grid gap-4 md:grid-cols-3">
-                            {popularArticles.map((article, index) => (
-                                <Card
-                                    key={article.id}
-                                    onClick={() => setSelectedArticle(article)}
-                                    className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 hover:shadow-lg transition-all duration-300 rounded-2xl cursor-pointer overflow-hidden"
-                                >
-                                    <div className="relative h-40">
-                                        <Image
-                                            src={article.image}
-                                            alt={article.title}
-                                            fill
-                                            className="object-cover"
-                                        />
-                                        <div className="absolute top-2 left-2 flex items-center gap-2">
-                                            <Badge
-                                                className={`${getBadgeStyle(article.badge)} rounded-lg`}
-                                            >
-                                                {getBadgeLabel(article.badge)}
-                                            </Badge>
-                                            <Badge className="bg-black/50 text-white rounded-lg">
-                                                #{index + 1}
-                                            </Badge>
-                                        </div>
-                                    </div>
-                                    <CardContent className="p-4">
-                                        <h3 className="font-bold text-gray-800 dark:text-gray-100 line-clamp-2 mb-2">
-                                            {article.title}
-                                        </h3>
-                                        <div className="flex items-center gap-3 text-xs text-gray-500">
-                                            <span className="flex items-center gap-1">
-                                                <Eye className="w-3 h-3" />
-                                                {article.views.toLocaleString()}
-                                            </span>
-                                            <span className="flex items-center gap-1">
-                                                <Heart className="w-3 h-3" />
-                                                {article.likes}
-                                            </span>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
+                        <PopularArticleCarousel
+                            articles={popularArticles}
+                            onSelect={setSelectedArticle}
+                        />
                     </div>
                 )}
 
