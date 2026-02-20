@@ -43,7 +43,7 @@ import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
 import { uploadMagazineImage } from "@/lib/storage";
 import { getBadgeLabel } from "@/data/magazineArticles";
-import RichTextEditor from "@/components/admin/RichTextEditor";
+import CardEditor from "@/components/admin/CardEditor";
 import type { MagazineArticleRow, MagazineStatus } from "../types";
 
 // ============================================================================
@@ -612,7 +612,7 @@ function ArticleFormModal({
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-            <div className="relative w-full max-w-2xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden flex flex-col">
+            <div className="relative w-full max-w-4xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden flex flex-col">
                 {/* 헤더 */}
                 <div className="flex-shrink-0 flex items-center justify-between p-4 border-b dark:border-gray-700 bg-sky-50 dark:bg-sky-900/20">
                     <h3 className="font-bold text-gray-800 dark:text-gray-100">
@@ -689,7 +689,7 @@ function ArticleFormModal({
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                             본문 (선택)
                         </label>
-                        <RichTextEditor
+                        <CardEditor
                             content={form.content}
                             onChange={(html) => updateField("content", html)}
                             onImageUpload={onContentImageUpload}
