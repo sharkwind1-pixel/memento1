@@ -11,7 +11,7 @@
  */
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, type DragEvent } from "react";
 import { Button } from "@/components/ui/button";
 import {
     Plus,
@@ -112,6 +112,10 @@ export default function CardEditor({ content, onChange, onImageUpload }: CardEdi
     const cardsRef = useRef(cards);
     cardsRef.current = cards;
 
+    // 드래그 앤 드롭 상태
+    const [dragIndex, setDragIndex] = useState<number | null>(null);
+    const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
+
     // content prop 변경 시 카드 재파싱 (모달 재열기 대응)
     const prevContentRef = useRef(content);
     useEffect(() => {
@@ -194,6 +198,66 @@ export default function CardEditor({ content, onChange, onImageUpload }: CardEdi
         [cards.length, emitChange]
     );
 
+    /** 드래그 시작 */
+    const handleDragStart = useCallback((e: DragEvent<HTMLButtonElement>, index: number) => {
+        setDragIndex(index);
+        e.dataTransfer.effectAllowed = "move";
+        // 드래그 중 반투명 효과를 위해 살짝 딜레이
+        requestAnimationFrame(() => {
+            (e.target as HTMLElement).style.opacity = "0.4";
+        });
+    }, []);
+
+    /** 드래그 중 hover */
+    const handleDragOver = useCallback((e: DragEvent<HTMLButtonElement>, index: number) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        if (dragIndex !== null && dragIndex !== index) {
+            setDropTargetIndex(index);
+        }
+    }, [dragIndex]);
+
+    /** 드래그 떠남 */
+    const handleDragLeave = useCallback(() => {
+        setDropTargetIndex(null);
+    }, []);
+
+    /** 드롭 */
+    const handleDrop = useCallback((e: DragEvent<HTMLButtonElement>, toIndex: number) => {
+        e.preventDefault();
+        if (dragIndex === null || dragIndex === toIndex) {
+            setDragIndex(null);
+            setDropTargetIndex(null);
+            return;
+        }
+
+        setCards((prev) => {
+            const next = [...prev];
+            const [moved] = next.splice(dragIndex, 1);
+            next.splice(toIndex, 0, moved);
+            requestAnimationFrame(() => emitChange(next));
+            return next;
+        });
+
+        // activeIndex도 드래그에 따라 조정
+        setActiveIndex((prev) => {
+            if (prev === dragIndex) return toIndex;
+            if (dragIndex < prev && toIndex >= prev) return prev - 1;
+            if (dragIndex > prev && toIndex <= prev) return prev + 1;
+            return prev;
+        });
+
+        setDragIndex(null);
+        setDropTargetIndex(null);
+    }, [dragIndex, emitChange]);
+
+    /** 드래그 종료 (드롭 영역 밖) */
+    const handleDragEnd = useCallback((e: DragEvent<HTMLButtonElement>) => {
+        (e.target as HTMLElement).style.opacity = "1";
+        setDragIndex(null);
+        setDropTargetIndex(null);
+    }, []);
+
     const activeCard = cards[activeIndex];
 
     return (
@@ -203,15 +267,24 @@ export default function CardEditor({ content, onChange, onImageUpload }: CardEdi
                 {cards.map((card, i) => {
                     const Icon = getCardTypeIcon(card.html);
                     const isActive = i === activeIndex;
+                    const isDragTarget = dropTargetIndex === i && dragIndex !== i;
                     return (
                         <button
                             key={card.id}
                             type="button"
+                            draggable
                             onClick={() => setActiveIndex(i)}
-                            className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                                isActive
-                                    ? "bg-sky-100 border-sky-400 text-sky-700 shadow-sm"
-                                    : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100 hover:border-gray-300"
+                            onDragStart={(e) => handleDragStart(e, i)}
+                            onDragOver={(e) => handleDragOver(e, i)}
+                            onDragLeave={handleDragLeave}
+                            onDrop={(e) => handleDrop(e, i)}
+                            onDragEnd={handleDragEnd}
+                            className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-grab active:cursor-grabbing ${
+                                isDragTarget
+                                    ? "bg-sky-50 border-sky-400 border-dashed ring-2 ring-sky-200 scale-105"
+                                    : isActive
+                                        ? "bg-sky-100 border-sky-400 text-sky-700 shadow-sm"
+                                        : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100 hover:border-gray-300"
                             }`}
                         >
                             <Icon className="w-3.5 h-3.5" />
@@ -293,7 +366,7 @@ export default function CardEditor({ content, onChange, onImageUpload }: CardEdi
 
             {/* 도움말 */}
             <p className="text-xs text-gray-400 px-1">
-                각 카드는 카드뉴스의 한 페이지로 표시됩니다. 카드를 추가하여 내용을 나누세요.
+                각 카드는 카드뉴스의 한 페이지로 표시됩니다. 카드를 드래그하여 순서를 변경할 수 있습니다.
             </p>
         </div>
     );
