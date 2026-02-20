@@ -217,34 +217,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }, 5000);
 
         // 인증 상태 변경 리스너
+        // 주의: onAuthStateChange 콜백은 Supabase 내부 lock 안에서 호출된다.
+        // 여기서 await로 supabase.auth API를 호출하면 재진입 데드락이 발생하므로
+        // 프로필 로드 등은 setTimeout으로 lock 바깥에서 실행한다.
         const {
             data: { subscription },
-        } = supabase.auth.onAuthStateChange(async (event, session) => {
-            try {
-                setSession(session);
-                setUser(session?.user ?? null);
+        } = supabase.auth.onAuthStateChange((event, session) => {
+            setSession(session);
+            setUser(session?.user ?? null);
+            setLoading(false);
 
-                // 로그인 시 프로필+포인트 통합 로드 + 출석 체크
-                if (event === "SIGNED_IN" && session?.user) {
-                    await refreshProfile();
-                    checkDailyLogin(session.user.id);
-                }
-
-                // 로그아웃 시 상태 초기화
-                if (event === "SIGNED_OUT") {
-                    setPoints(0);
-                    setPointsLoaded(false);
-                    setProfileLoaded(false);
-                    setIsAdminUser(false);
-                    setIsPremiumUser(false);
-                    setUserPetType("dog");
-                    setOnboardingData(null);
-                }
-            } catch {
-                // 상태 변경 중 에러 무시
+            // 로그인 시 프로필+포인트 통합 로드 + 출석 체크
+            // (lock 바깥에서 비동기 실행하여 데드락 방지)
+            if (event === "SIGNED_IN" && session?.user) {
+                const userId = session.user.id;
+                setTimeout(() => {
+                    refreshProfile().then(() => checkDailyLogin(userId));
+                }, 0);
             }
 
-            setLoading(false);
+            // 로그아웃 시 상태 초기화
+            if (event === "SIGNED_OUT") {
+                setPoints(0);
+                setPointsLoaded(false);
+                setProfileLoaded(false);
+                setIsAdminUser(false);
+                setIsPremiumUser(false);
+                setUserPetType("dog");
+                setOnboardingData(null);
+            }
         });
 
         return () => {
