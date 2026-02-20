@@ -67,20 +67,30 @@ export async function GET(
         const supabase = await createServerSupabase();
         const { id } = await params;
 
-        // 조회수 증가
-        const { data: currentPost } = await supabase
-            .from("lost_pets")
-            .select("views")
-            .eq("id", id)
-            .eq("status", "active")
-            .single();
-
-        if (currentPost) {
-            await supabase
-                .from("lost_pets")
-                .update({ views: (currentPost.views || 0) + 1 })
-                .eq("id", id);
-        }
+        // 조회수 원자적 증가 (RPC 사용, 폴백: read-modify-write)
+        supabase.rpc("increment_field", {
+            table_name: "lost_pets",
+            field_name: "views",
+            row_id: id,
+            amount: 1,
+        }).then(({ error: rpcErr }) => {
+            if (rpcErr) {
+                supabase
+                    .from("lost_pets")
+                    .select("views")
+                    .eq("id", id)
+                    .single()
+                    .then(({ data: p }) => {
+                        if (p) {
+                            supabase
+                                .from("lost_pets")
+                                .update({ views: (p.views || 0) + 1 })
+                                .eq("id", id)
+                                .then();
+                        }
+                    });
+            }
+        });
 
         // 게시글 조회
         const { data: post, error } = await supabase

@@ -62,12 +62,21 @@ export async function GET(
             );
         }
 
-        // 조회수 증가 (비동기, 에러 무시)
-        supabase
-            .from("local_posts")
-            .update({ views: (post.views || 0) + 1 })
-            .eq("id", id)
-            .then();
+        // 조회수 원자적 증가 (RPC 사용, 폴백: read-modify-write)
+        supabase.rpc("increment_field", {
+            table_name: "local_posts",
+            field_name: "views",
+            row_id: id,
+            amount: 1,
+        }).then(({ error: rpcErr }) => {
+            if (rpcErr) {
+                supabase
+                    .from("local_posts")
+                    .update({ views: (post.views || 0) + 1 })
+                    .eq("id", id)
+                    .then();
+            }
+        });
 
         return NextResponse.json({ post: toCamelCase(post) });
     } catch (err) {

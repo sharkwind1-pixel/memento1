@@ -6,17 +6,9 @@
  */
 
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import { getAuthUser } from "@/lib/supabase-server";
+import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
 
 export const dynamic = "force-dynamic";
-
-function getSupabase() {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!url || !key) throw new Error("Supabase 환경변수 없음");
-    return createClient(url, key);
-}
 
 export async function GET() {
     try {
@@ -28,7 +20,7 @@ export async function GET() {
             );
         }
 
-        const supabase = getSupabase();
+        const supabase = await createServerSupabase();
 
         const { data: profile } = await supabase
             .from("profiles")

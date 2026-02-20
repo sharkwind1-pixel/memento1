@@ -106,7 +106,6 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
     const scroll = useSmoothAutoScroll() as unknown as SmoothAutoScrollReturn;
     const { onboardingData } = useAuth();
 
-    const [showAdoptionTile, setShowAdoptionTile] = useState(true);
     const [lightboxItem, setLightboxItem] = useState<LightboxItem | null>(null);
 
     // 공개 추모글 상태 (DB에서 가져온 실제 데이터)

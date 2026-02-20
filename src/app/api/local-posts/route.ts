@@ -4,8 +4,7 @@
  * POST: 새 게시글 작성 (인증 필요)
  */
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import { getAuthUser } from "@/lib/supabase-server";
+import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
 import {
     getClientIP,
     checkRateLimit,
@@ -17,13 +16,6 @@ import {
 } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
-
-function getSupabase() {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!url || !key) throw new Error("Supabase 환경변수 없음");
-    return createClient(url, key);
-}
 
 /** snake_case -> camelCase 변환 */
 function toCamelCase(post: Record<string, unknown>) {
@@ -50,7 +42,7 @@ function toCamelCase(post: Record<string, unknown>) {
 /** GET - 게시글 목록 조회 (페이지네이션 + 필터) */
 export async function GET(request: NextRequest) {
     try {
-        const supabase = getSupabase();
+        const supabase = await createServerSupabase();
         const { searchParams } = new URL(request.url);
 
         const category = searchParams.get("category");
@@ -147,7 +139,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const supabase = getSupabase();
+        const supabase = await createServerSupabase();
         const body = await request.json();
 
         const { title, content, category, region, district, badge, imageUrl, imageStoragePath } = body;

@@ -10,8 +10,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import { getAuthUser } from "@/lib/supabase-server";
+import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
 import {
     getClientIP,
     checkRateLimit,
@@ -24,17 +23,10 @@ import {
 
 export const dynamic = "force-dynamic";
 
-function getSupabase() {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!url || !key) throw new Error("Supabase 환경변수 없음");
-    return createClient(url, key);
-}
-
 // 분실/발견 동물 목록 조회
 export async function GET(request: NextRequest) {
     try {
-        const supabase = getSupabase();
+        const supabase = await createServerSupabase();
         const { searchParams } = new URL(request.url);
 
         const type = searchParams.get("type") || "all";           // lost / found / all
@@ -158,7 +150,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const supabase = getSupabase();
+        const supabase = await createServerSupabase();
         const body = await request.json();
 
         const {

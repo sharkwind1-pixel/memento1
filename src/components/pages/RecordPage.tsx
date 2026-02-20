@@ -480,12 +480,17 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
     };
 
     // 추억 전환 처리
-    const handleMemorialSwitch = (memorialDate: string) => {
+    const handleMemorialSwitch = async (memorialDate: string) => {
         if (!selectedPet) return;
-        updatePet(selectedPet.id, {
-            status: "memorial",
-            memorialDate: memorialDate,
-        });
+        try {
+            await updatePet(selectedPet.id, {
+                status: "memorial",
+                memorialDate: memorialDate,
+            });
+            toast.success("무지개다리를 건넜어요. 소중한 기억을 간직합니다.");
+        } catch {
+            toast.error("상태 전환에 실패했어요. 다시 시도해주세요.");
+        }
     };
 
     // 일상 모드 복구
@@ -1076,7 +1081,7 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
 
             {showPetMenu && (
                 <div
-                    className="fixed inset-0 z-0"
+                    className="fixed inset-0 z-40"
                     onClick={() => setShowPetMenu(null)}
                 />
             )}

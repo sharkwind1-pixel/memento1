@@ -6,18 +6,10 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import { getAuthUser } from "@/lib/supabase-server";
+import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
 import { POINTS } from "@/config/constants";
 
 export const dynamic = "force-dynamic";
-
-function getSupabase() {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!url || !key) throw new Error("Supabase 환경변수 없음");
-    return createClient(url, key);
-}
 
 export async function GET(request: NextRequest) {
     try {
@@ -36,7 +28,7 @@ export async function GET(request: NextRequest) {
         );
         const offset = parseInt(searchParams.get("offset") || "0");
 
-        const supabase = getSupabase();
+        const supabase = await createServerSupabase();
 
         const { data, error, count } = await supabase
             .from("point_transactions")

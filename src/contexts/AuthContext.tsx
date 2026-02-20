@@ -11,6 +11,7 @@ import {
     useEffect,
     useState,
     useCallback,
+    useMemo,
     ReactNode,
 } from "react";
 import { User, Session } from "@supabase/supabase-js";
@@ -255,7 +256,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, [refreshProfile, refreshPoints, checkDailyLogin]);
 
     // 삭제된 계정 체크 (재가입 쿨다운 확인) - 기존 호환성 유지
-    const checkDeletedAccount = async (email: string): Promise<DeletedAccountCheck | null> => {
+    const checkDeletedAccount = useCallback(async (email: string): Promise<DeletedAccountCheck | null> => {
         try {
             const { data, error } = await supabase.rpc("check_deleted_account", {
                 check_email: email,
@@ -275,10 +276,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch {
             return null;
         }
-    };
+    }, []);
 
     // 새로운 탈퇴 유형별 재가입 가능 여부 체크
-    const checkCanRejoin = async (email: string): Promise<RejoinCheck> => {
+    const checkCanRejoin = useCallback(async (email: string): Promise<RejoinCheck> => {
         try {
             const { data, error } = await supabase.rpc("can_rejoin", {
                 check_email: email,
@@ -300,10 +301,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // 오류 시 가입 허용 (관리자가 직접 관리)
             return { canJoin: true, blockReason: null, waitUntil: null };
         }
-    };
+    }, []);
 
     // 이메일 회원가입
-    const signUp = async (
+    const signUp = useCallback(async (
         email: string,
         password: string,
         nickname?: string,
@@ -362,10 +363,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (error) {
             return { error: error as Error };
         }
-    };
+    }, [checkCanRejoin, checkDeletedAccount]);
 
     // 이메일 로그인
-    const signIn = async (email: string, password: string) => {
+    const signIn = useCallback(async (email: string, password: string) => {
         try {
             const { error } = await supabase.auth.signInWithPassword({
                 email,
@@ -375,15 +376,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (error) {
             return { error: error as Error };
         }
-    };
+    }, []);
 
     // 로그아웃
-    const signOut = async () => {
-        await supabase.auth.signOut();
-    };
+    const signOut = useCallback(async () => {
+        try {
+            await supabase.auth.signOut();
+        } catch (error) {
+            console.error("[Auth] 로그아웃 실패:", error);
+        }
+    }, []);
 
     // 구글 로그인
-    const signInWithGoogle = async () => {
+    const signInWithGoogle = useCallback(async () => {
         try {
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: "google",
@@ -398,10 +403,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (error) {
             return { error: error as Error };
         }
-    };
+    }, []);
 
     // 카카오 로그인
-    const signInWithKakao = async () => {
+    const signInWithKakao = useCallback(async () => {
         try {
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: "kakao",
@@ -414,10 +419,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (error) {
             return { error: error as Error };
         }
-    };
+    }, []);
 
     // 프로필 업데이트
-    const updateProfile = async (data: { nickname?: string }) => {
+    const updateProfile = useCallback(async (data: { nickname?: string }) => {
         try {
             const { error } = await supabase.auth.updateUser({
                 data: {
@@ -428,10 +433,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (error) {
             return { error: error as Error };
         }
-    };
+    }, []);
 
     // 닉네임 중복 체크
-    const checkNickname = async (nickname: string) => {
+    const checkNickname = useCallback(async (nickname: string) => {
         try {
             const { data, error } = await supabase
                 .from("profiles")
@@ -448,9 +453,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (error) {
             return { available: false, error: error as Error };
         }
-    };
+    }, []);
 
-    const value = {
+    const value = useMemo(() => ({
         user,
         session,
         loading,
@@ -472,7 +477,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signInWithKakao,
         updateProfile,
         checkNickname,
-    };
+    }), [
+        user, session, loading, isAdminUser, isPremiumUser, refreshProfile,
+        profileLoaded, userPetType, onboardingData, points, pointsLoaded,
+        refreshPoints, checkDeletedAccount, checkCanRejoin, signUp, signIn,
+        signOut, signInWithGoogle, signInWithKakao, updateProfile, checkNickname,
+    ]);
 
     return (
         <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
