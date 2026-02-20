@@ -217,9 +217,15 @@ function HomeContent() {
 
     // 신규 유저 플로우
     // 순서: 1. 닉네임 설정 → 2. 온보딩 질문 → 3. 튜토리얼 투어 → 4. 가이드
+    // 크로스탭 재트리거 방지: 같은 user.id에 대해 한 번만 체크
+    const newUserFlowCheckedRef = useRef<string | null>(null);
+
     useEffect(() => {
         const checkNewUserFlow = async () => {
             if (!user) return;
+
+            // 같은 유저에 대해 이미 체크 완료했으면 스킵 (크로스탭 SIGNED_IN 재트리거 방지)
+            if (newUserFlowCheckedRef.current === user.id) return;
 
             // 1. 먼저 닉네임 설정 여부 확인
             try {
@@ -237,7 +243,7 @@ function HomeContent() {
 
                 if (needsNickname) {
                     setShowNicknameSetup(true);
-                    return; // 닉네임 설정 후 다시 체크
+                    return; // 닉네임 설정 후 다시 체크 (ref 마킹 안함)
                 }
 
                 // 2. DB 상태가 null이면 localStorage 동기화 (관리자 초기화 대응)
@@ -257,6 +263,7 @@ function HomeContent() {
                 const isOnboardingReset = !profileData?.onboarding_completed_at || !profileData?.tutorial_completed_at;
 
                 if (pets.length > 0 && !isOnboardingReset) {
+                    newUserFlowCheckedRef.current = user.id;
                     supabase
                         .from("profiles")
                         .update({ last_seen_at: new Date().toISOString() })
@@ -265,6 +272,7 @@ function HomeContent() {
                 }
 
                 if (onboardingCompletedLocal && tutorialCompletedLocal && !isOnboardingReset) {
+                    newUserFlowCheckedRef.current = user.id;
                     return;
                 }
 
@@ -278,6 +286,7 @@ function HomeContent() {
 
                 // DB 둘 다 완료 상태면 리턴
                 if (profileData?.onboarding_completed_at && profileData?.tutorial_completed_at) {
+                    newUserFlowCheckedRef.current = user.id;
                     return;
                 }
 
@@ -285,15 +294,16 @@ function HomeContent() {
                 // 온보딩 미완료 → 온보딩 표시
                 if (!profileData?.onboarding_completed_at) {
                     setShowOnboarding(true);
-                    return;
+                    return; // ref 마킹 안함 (완료 후 재체크 필요)
                 }
 
                 // 온보딩 완료, 튜토리얼 미완료 → 튜토리얼 표시
                 if (profileData?.onboarding_completed_at && !profileData?.tutorial_completed_at) {
                     setShowTutorial(true);
-                    return;
+                    return; // ref 마킹 안함 (완료 후 재체크 필요)
                 }
 
+                newUserFlowCheckedRef.current = user.id;
                 await supabase
                     .from("profiles")
                     .update({ last_seen_at: new Date().toISOString() })
@@ -306,6 +316,11 @@ function HomeContent() {
                 }
             }
         };
+
+        // user가 없으면 ref 초기화 (로그아웃 대응)
+        if (!user) {
+            newUserFlowCheckedRef.current = null;
+        }
 
         if (user && !petsLoading) {
             checkNewUserFlow();
