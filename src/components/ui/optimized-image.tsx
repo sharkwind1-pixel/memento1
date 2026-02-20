@@ -74,6 +74,8 @@ export function OptimizedImage({
                     className
                 )}
                 style={style}
+                role="img"
+                aria-label="이미지 없음"
             >
                 <span className="text-gray-400 text-sm">이미지 없음</span>
             </div>

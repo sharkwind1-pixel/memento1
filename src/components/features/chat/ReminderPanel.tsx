@@ -15,6 +15,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { formatScheduleText, DAY_LABELS } from "@/lib/schedule-utils";
 import {
     X,
     Bell,
@@ -69,9 +70,6 @@ const REMINDER_TYPES = [
     { key: "custom", label: "기타", Icon: Bell, color: "border-gray-400", bg: "bg-gray-50", text: "text-gray-600" },
 ] as const;
 
-/** 요일 라벨 */
-const DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
-
 /** 반복 타입 옵션 */
 const REPEAT_OPTIONS = [
     { value: "daily", label: "매일" },
@@ -89,26 +87,6 @@ function getTypeConfig(type: string) {
     return REMINDER_TYPES.find((t) => t.key === type) || REMINDER_TYPES[REMINDER_TYPES.length - 1];
 }
 
-/** 스케줄 텍스트 생성 */
-function formatScheduleText(schedule: Reminder["schedule"]): string {
-    const time = schedule.time || "00:00";
-    switch (schedule.type) {
-        case "daily":
-            return `매일 ${time}`;
-        case "weekly": {
-            const day = schedule.dayOfWeek !== undefined ? DAY_LABELS[schedule.dayOfWeek] : "월";
-            return `매주 ${day}요일 ${time}`;
-        }
-        case "monthly": {
-            const dayOfMonth = schedule.dayOfMonth || 1;
-            return `매월 ${dayOfMonth}일 ${time}`;
-        }
-        case "once":
-            return `${schedule.date || ""} ${time}`.trim();
-        default:
-            return time;
-    }
-}
 
 // ============================================================================
 // 메인 컴포넌트

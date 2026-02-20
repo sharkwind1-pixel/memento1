@@ -6,6 +6,7 @@
 "use client";
 
 import { useState } from "react";
+import { PG_ERROR_CODES } from "@/config/constants";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { X, AlertTriangle, Flag } from "lucide-react";
@@ -82,7 +83,7 @@ export default function ReportModal({
 
             if (error) {
                 // 중복 신고 체크
-                if (error.code === "23505") {
+                if (error.code === PG_ERROR_CODES.UNIQUE_VIOLATION) {
                     toast.error("이미 신고한 콘텐츠입니다");
                 } else {
                     throw error;

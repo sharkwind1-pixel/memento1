@@ -668,7 +668,7 @@ export default function DomeGallery({
                     className="item__image absolute block overflow-hidden cursor-pointer bg-gray-200 transition-transform duration-300"
                     role="button"
                     tabIndex={0}
-                    aria-label={it.alt || 'Open image'}
+                    aria-label={it.alt || '이미지 보기'}
                     onClick={e => {
                       if (draggingRef.current || movedRef.current || openingRef.current) return;
                       if (performance.now() - lastDragEndAt.current < 80) return;
