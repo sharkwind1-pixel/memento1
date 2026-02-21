@@ -121,13 +121,13 @@ export interface PointLevel {
 }
 
 export const POINT_LEVELS: PointLevel[] = [
-    { level: 1, minPoints: 0,       icons: { dog: "/icons/levels/dog_lv1.png", cat: "/icons/levels/cat_lv1.png?v=3", other: "/icons/levels/other_lv1.png" }, color: "from-gray-300",    bgColor: "to-gray-400",    textColor: "text-gray-500" },
-    { level: 2, minPoints: 100,     icons: { dog: "/icons/levels/dog_lv2.png", cat: "/icons/levels/cat_lv2.png?v=3", other: "/icons/levels/other_lv2.png" }, color: "from-emerald-300", bgColor: "to-emerald-500",  textColor: "text-emerald-600" },
-    { level: 3, minPoints: 500,     icons: { dog: "/icons/levels/dog_lv3.png", cat: "/icons/levels/cat_lv3.png?v=3", other: "/icons/levels/other_lv3.png" }, color: "from-pink-300",    bgColor: "to-pink-500",    textColor: "text-pink-600" },
-    { level: 4, minPoints: 3000,    icons: { dog: "/icons/levels/dog_lv4.png", cat: "/icons/levels/cat_lv4.png?v=3", other: "/icons/levels/other_lv4.png" }, color: "from-sky-300",     bgColor: "to-sky-500",     textColor: "text-sky-600" },
-    { level: 5, minPoints: 10000,   icons: { dog: "/icons/levels/dog_lv5.png", cat: "/icons/levels/cat_lv5.png?v=3", other: "/icons/levels/other_lv5.png" }, color: "from-violet-400",  bgColor: "to-purple-500",  textColor: "text-violet-600", hasSparkle: true },
-    { level: 6, minPoints: 30000,   icons: { dog: "/icons/levels/dog_lv6.png", cat: "/icons/levels/cat_lv6.png?v=3", other: "/icons/levels/other_lv6.png" }, color: "from-amber-300",   bgColor: "to-yellow-500",  textColor: "text-amber-600",  hasSparkle: true },
-    { level: 7, minPoints: 100000,  icons: { dog: "/icons/levels/dog_lv7.png", cat: "/icons/levels/cat_lv7.png?v=3", other: "/icons/levels/other_lv7.png" }, color: "from-rose-400",    bgColor: "to-amber-300",   textColor: "text-rose-600",   hasSparkle: true, hasGlow: true },
+    { level: 1, minPoints: 0,       icons: { dog: "/icons/levels/dog_lv1.png", cat: "/icons/levels/cat_lv1.png?v=4", other: "/icons/levels/other_lv1.png" }, color: "from-gray-300",    bgColor: "to-gray-400",    textColor: "text-gray-500" },
+    { level: 2, minPoints: 100,     icons: { dog: "/icons/levels/dog_lv2.png", cat: "/icons/levels/cat_lv2.png?v=4", other: "/icons/levels/other_lv2.png" }, color: "from-emerald-300", bgColor: "to-emerald-500",  textColor: "text-emerald-600" },
+    { level: 3, minPoints: 500,     icons: { dog: "/icons/levels/dog_lv3.png", cat: "/icons/levels/cat_lv3.png?v=4", other: "/icons/levels/other_lv3.png" }, color: "from-pink-300",    bgColor: "to-pink-500",    textColor: "text-pink-600" },
+    { level: 4, minPoints: 3000,    icons: { dog: "/icons/levels/dog_lv4.png", cat: "/icons/levels/cat_lv4.png?v=4", other: "/icons/levels/other_lv4.png" }, color: "from-sky-300",     bgColor: "to-sky-500",     textColor: "text-sky-600" },
+    { level: 5, minPoints: 10000,   icons: { dog: "/icons/levels/dog_lv5.png", cat: "/icons/levels/cat_lv5.png?v=4", other: "/icons/levels/other_lv5.png" }, color: "from-violet-400",  bgColor: "to-purple-500",  textColor: "text-violet-600", hasSparkle: true },
+    { level: 6, minPoints: 30000,   icons: { dog: "/icons/levels/dog_lv6.png", cat: "/icons/levels/cat_lv6.png?v=4", other: "/icons/levels/other_lv6.png" }, color: "from-amber-300",   bgColor: "to-yellow-500",  textColor: "text-amber-600",  hasSparkle: true },
+    { level: 7, minPoints: 100000,  icons: { dog: "/icons/levels/dog_lv7.png", cat: "/icons/levels/cat_lv7.png?v=4", other: "/icons/levels/other_lv7.png" }, color: "from-rose-400",    bgColor: "to-amber-300",   textColor: "text-rose-600",   hasSparkle: true, hasGlow: true },
 ];
 
 /** 어드민 전용 아이콘 경로 */
