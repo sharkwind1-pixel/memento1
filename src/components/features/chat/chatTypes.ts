@@ -4,17 +4,8 @@
  * AIChatPage에서 분리 - 공유 타입과 상수 정의
  */
 
-/** 채팅 메시지 구조 */
-export interface ChatMessage {
-    id: string;
-    role: "user" | "pet" | "system";
-    content: string;
-    timestamp: Date;
-    emotion?: string;
-    emotionScore?: number;
-    isError?: boolean;
-    retryMessage?: string;
-}
+// ChatMessage 타입은 types/index.ts에서 중앙 관리
+export type { ChatMessage } from "@/types";
 
 /** 감정별 이모티콘 매핑 */
 export const emotionIcons: Record<string, string> = {

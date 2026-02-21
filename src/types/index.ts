@@ -109,6 +109,13 @@ export interface PetPhoto {
     uploadedAt?: string;
 }
 
+/** 사진 갤러리 아이템 (AI 펫톡 등에서 사용) */
+export interface PhotoItem {
+    id: string;
+    url: string;
+    cropPosition?: CropPosition;
+}
+
 /** 반려동물 정보 (전체) - Single Source of Truth */
 export interface Pet {
     id: string;
@@ -176,11 +183,13 @@ export interface PetFormData {
 /** AI 채팅 메시지 */
 export interface ChatMessage {
     id: string;
-    role: "user" | "pet";
+    role: "user" | "pet" | "system";
     content: string;
     timestamp: Date;
-    emotion?: EmotionType;
+    emotion?: string;
     emotionScore?: number;
+    isError?: boolean;
+    retryMessage?: string;
 }
 
 /** 감정 타입 */

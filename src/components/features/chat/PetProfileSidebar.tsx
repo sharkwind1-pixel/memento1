@@ -15,13 +15,7 @@ import {
     ChevronRight,
     Image as ImageIcon,
 } from "lucide-react";
-import type { Pet, TabType } from "@/types";
-
-interface PhotoItem {
-    id: string;
-    url: string;
-    cropPosition?: { x: number; y: number } | null;
-}
+import type { Pet, TabType, PhotoItem } from "@/types";
 
 interface PetProfileSidebarProps {
     selectedPet: Pet | null | undefined;

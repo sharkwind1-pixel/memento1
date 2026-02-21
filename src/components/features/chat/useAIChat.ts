@@ -23,7 +23,7 @@ import {
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
 import { ChatMessage } from "@/components/features/chat/chatTypes";
-import type { Pet, TimelineEntry } from "@/types";
+import type { Pet, TimelineEntry, PhotoItem } from "@/types";
 import type { User } from "@supabase/supabase-js";
 
 // ============================================================================
@@ -43,12 +43,7 @@ interface ReminderItem {
     enabled: boolean;
 }
 
-/** 사진 갤러리 아이템 */
-export interface PhotoItem {
-    id: string;
-    url: string;
-    cropPosition?: { x: number; y: number; scale: number };
-}
+// PhotoItem은 types/index.ts에서 중앙 관리
 
 /** useAIChat 훅 파라미터 */
 interface UseAIChatParams {

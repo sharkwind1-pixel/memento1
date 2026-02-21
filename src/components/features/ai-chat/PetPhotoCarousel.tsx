@@ -19,13 +19,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { Pet, CropPosition, TabType } from "@/types";
-
-interface PhotoItem {
-    id: string;
-    url: string;
-    cropPosition?: CropPosition;
-}
+import type { Pet, TabType, PhotoItem } from "@/types";
 
 interface PetPhotoCarouselProps {
     /** 선택된 펫 */
