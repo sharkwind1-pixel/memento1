@@ -110,7 +110,7 @@ export default function MinimiShopModal({
     return (
         <div className="fixed inset-0 z-[9999] bg-black/50 flex items-end sm:items-center justify-center">
             <div
-                className="w-full sm:max-w-lg sm:mx-4 bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[calc(100vh-140px)] sm:max-h-[85vh] flex flex-col mb-[80px] sm:mb-0"
+                className="w-full sm:max-w-2xl sm:mx-4 bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[calc(100vh-140px)] sm:max-h-[85vh] flex flex-col mb-[80px] sm:mb-0"
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="minimi-shop-title"
