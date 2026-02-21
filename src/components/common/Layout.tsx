@@ -279,6 +279,7 @@ export default function Layout({
                                             <LevelBadge
                                                 points={points}
                                                 petType={userPetType}
+                                                isAdmin={isAdminUser}
                                                 size="md"
                                                 showTooltip={false}
                                             />

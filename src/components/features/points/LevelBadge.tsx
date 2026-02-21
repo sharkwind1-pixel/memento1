@@ -12,11 +12,12 @@
 import React from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { getPointLevel, getNextLevelInfo, type PointLevel, type PetIconType } from "@/config/constants";
+import { getPointLevel, getNextLevelInfo, ADMIN_ICONS, type PointLevel, type PetIconType } from "@/config/constants";
 
 interface LevelBadgeProps {
     points: number;
     petType?: PetIconType;
+    isAdmin?: boolean;
     size?: "sm" | "md" | "lg" | "xl" | "2xl";
     showName?: boolean;
     showTooltip?: boolean;
@@ -34,6 +35,7 @@ const SIZE_MAP = {
 export default function LevelBadge({
     points,
     petType = "dog",
+    isAdmin = false,
     size = "sm",
     showName = false,
     showTooltip = true,
@@ -41,13 +43,15 @@ export default function LevelBadge({
 }: LevelBadgeProps) {
     const level = getPointLevel(points);
     const { nextLevel, remaining } = getNextLevelInfo(points);
-    const iconSrc = level.icons[petType];
+    const iconSrc = isAdmin ? ADMIN_ICONS[petType] : level.icons[petType];
 
     const { wrapper, px } = SIZE_MAP[size];
 
-    const tooltipText = nextLevel
-        ? `Lv.${level.level}\n다음 등급까지 ${remaining.toLocaleString()}P`
-        : `Lv.${level.level} (MAX)`;
+    const tooltipText = isAdmin
+        ? "ADMIN"
+        : nextLevel
+            ? `Lv.${level.level}\n다음 등급까지 ${remaining.toLocaleString()}P`
+            : `Lv.${level.level} (MAX)`;
 
     return (
         <span
@@ -96,9 +100,9 @@ export default function LevelBadge({
             {showName && (
                 <span className={cn(
                     "text-xs font-medium",
-                    level.textColor,
+                    isAdmin ? "text-amber-600" : level.textColor,
                 )}>
-                    Lv.{level.level}
+                    {isAdmin ? "ADMIN" : `Lv.${level.level}`}
                 </span>
             )}
         </span>
@@ -106,7 +110,7 @@ export default function LevelBadge({
 }
 
 // 사이드바용 등급 상세 표시 (프로그레스바 포함)
-export function LevelProgress({ points, nickname, petType = "dog" }: { points: number; nickname?: string; petType?: PetIconType }) {
+export function LevelProgress({ points, nickname, petType = "dog", isAdmin = false }: { points: number; nickname?: string; petType?: PetIconType; isAdmin?: boolean }) {
     const level = getPointLevel(points);
     const { nextLevel, remaining, progress } = getNextLevelInfo(points);
 
@@ -114,7 +118,7 @@ export function LevelProgress({ points, nickname, petType = "dog" }: { points: n
         <div className="px-3 py-2 space-y-1.5">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <LevelBadge points={points} petType={petType} size="lg" showTooltip={false} />
+                    <LevelBadge points={points} petType={petType} isAdmin={isAdmin} size="lg" showTooltip={false} />
                     <span className={cn("text-sm font-bold", level.textColor)}>
                         {nickname || `Lv.${level.level}`}
                     </span>

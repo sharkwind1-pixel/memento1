@@ -130,6 +130,13 @@ export const POINT_LEVELS: PointLevel[] = [
     { level: 7, minPoints: 100000,  icons: { dog: "/icons/levels/dog_lv7.png", cat: "/icons/levels/cat_lv7.png", other: "/icons/levels/other_lv7.png" }, color: "from-rose-400",    bgColor: "to-amber-300",   textColor: "text-rose-600",   hasSparkle: true, hasGlow: true },
 ];
 
+/** 어드민 전용 아이콘 경로 */
+export const ADMIN_ICONS: Record<PetIconType, string> = {
+    dog: "/icons/levels/dog_admin.png",
+    cat: "/icons/levels/cat_admin.png",
+    other: "/icons/levels/dog_admin.png",  // other는 강아지 어드민 사용 (추후 교체 가능)
+};
+
 /** 등급의 아이콘 경로 가져오기 (반려동물 타입별) */
 export function getLevelIcon(level: PointLevel, petType: PetIconType = "dog"): string {
     return level.icons[petType];
