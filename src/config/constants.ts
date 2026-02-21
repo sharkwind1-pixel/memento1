@@ -4,7 +4,7 @@
  */
 
 // ===== 관리자 설정 =====
-export const ADMIN_EMAILS = ["sharkwind1@gmail.com"];
+export const ADMIN_EMAILS = ["sharkwind1@gmail.com", "ahaadh@hanmail.net"];
 
 // ===== 무료/프리미엄 제한 =====
 export const FREE_LIMITS = {
