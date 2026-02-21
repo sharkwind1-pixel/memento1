@@ -328,8 +328,8 @@ export default function Layout({
                                             <Image
                                                 src={minimiEquip.imageUrl}
                                                 alt="미니미"
-                                                width={Math.round(16 * (minimiEquip.displayScale ?? 1))}
-                                                height={Math.round(16 * (minimiEquip.displayScale ?? 1))}
+                                                width={16}
+                                                height={16}
                                                 className="object-contain"
                                                 style={{ imageRendering: "pixelated" }}
                                             />
@@ -355,8 +355,8 @@ export default function Layout({
                                                             <Image
                                                                 src={minimiEquip.imageUrl}
                                                                 alt="미니미"
-                                                                width={Math.round(24 * (minimiEquip.displayScale ?? 1))}
-                                                                height={Math.round(24 * (minimiEquip.displayScale ?? 1))}
+                                                                width={24}
+                                                                height={24}
                                                                 className="object-contain"
                                                                 style={{ imageRendering: "pixelated" }}
                                                             />

@@ -694,7 +694,6 @@ export interface MinimiEquipState {
     pixelData: PixelData | null;
     accessoriesData: PixelData[];
     imageUrl?: string | null;
-    displayScale?: number;
 }
 
 // ============================================

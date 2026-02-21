@@ -80,8 +80,8 @@ export default function MinihompyStage({
                             <Image
                                 src={minimiEquip.imageUrl}
                                 alt="미니미"
-                                width={Math.round((compact ? 64 : 80) * (minimiEquip.displayScale ?? 1))}
-                                height={Math.round((compact ? 64 : 80) * (minimiEquip.displayScale ?? 1))}
+                                width={compact ? 64 : 80}
+                                height={compact ? 64 : 80}
                                 className="object-contain"
                                 style={{ imageRendering: "pixelated" }}
                             />

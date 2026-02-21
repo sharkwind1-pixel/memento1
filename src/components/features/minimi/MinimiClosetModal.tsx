@@ -32,7 +32,6 @@ interface OwnedItem {
     slug: string;
     name: string;
     imageUrl?: string;
-    displayScale?: number;
     price: number;
     resellPrice: number;
 }
@@ -48,7 +47,6 @@ export default function MinimiClosetModal({
     const [ownedCharacters, setOwnedCharacters] = useState<OwnedItem[]>([]);
     const [equippedMinimiSlug, setEquippedMinimiSlug] = useState<string | null>(null);
     const [equippedImageUrl, setEquippedImageUrl] = useState<string | null>(null);
-    const [equippedDisplayScale, setEquippedDisplayScale] = useState<number>(1.0);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [sellConfirm, setSellConfirm] = useState<{ type: "character"; slug: string; name: string; resellPrice: number } | null>(null);
@@ -66,7 +64,6 @@ export default function MinimiClosetModal({
                     slug: catalog.slug,
                     name: catalog.name,
                     imageUrl: catalog.imageUrl,
-                    displayScale: catalog.displayScale,
                     price: catalog.price,
                     resellPrice: Math.ceil(catalog.price * MINIMI.RESELL_RATIO),
                 } : null;
@@ -80,7 +77,6 @@ export default function MinimiClosetModal({
             const eqCatalog = eqSlug ? CHARACTER_CATALOG.find(c => c.slug === eqSlug) : null;
             setEquippedMinimiSlug(eqSlug);
             setEquippedImageUrl(eqCatalog?.imageUrl || eq?.imageUrl || null);
-            setEquippedDisplayScale(eqCatalog?.displayScale ?? 1.0);
         } catch {
             // 에러 무시
         } finally {
@@ -116,7 +112,6 @@ export default function MinimiClosetModal({
             const newCatalog = newSlug ? CHARACTER_CATALOG.find(c => c.slug === newSlug) : null;
             setEquippedMinimiSlug(newSlug);
             setEquippedImageUrl(newCatalog?.imageUrl || data.equipped.imageUrl || null);
-            setEquippedDisplayScale(newCatalog?.displayScale ?? 1.0);
             onChanged?.();
             toast.success(newMinimiSlug ? "미니미를 장착했습니다" : "미니미를 해제했습니다");
         } catch (err) {
@@ -190,8 +185,8 @@ export default function MinimiClosetModal({
                             <Image
                                 src={equippedImageUrl}
                                 alt="장착중인 미니미"
-                                width={Math.round(80 * equippedDisplayScale)}
-                                height={Math.round(80 * equippedDisplayScale)}
+                                width={80}
+                                height={80}
                                 className="object-contain mx-auto"
                                 style={{ imageRendering: "pixelated" }}
                             />
@@ -236,8 +231,8 @@ export default function MinimiClosetModal({
                                                 <Image
                                                     src={char.imageUrl}
                                                     alt={char.name}
-                                                    width={Math.round(80 * (char.displayScale ?? 1))}
-                                                    height={Math.round(80 * (char.displayScale ?? 1))}
+                                                    width={80}
+                                                    height={80}
                                                     className="object-contain"
                                                     style={{ imageRendering: "pixelated" }}
                                                 />

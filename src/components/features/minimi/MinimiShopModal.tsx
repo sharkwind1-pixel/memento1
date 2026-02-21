@@ -36,7 +36,6 @@ interface CatalogCharacter {
     name: string;
     category: MinimiCategory;
     imageUrl?: string;
-    displayScale?: number;
     price: number;
     resellPrice: number;
     description?: string;
@@ -201,8 +200,8 @@ export default function MinimiShopModal({
                                                             <Image
                                                                 src={char.imageUrl}
                                                                 alt={char.name}
-                                                                width={Math.round(80 * (char.displayScale ?? 1))}
-                                                                height={Math.round(80 * (char.displayScale ?? 1))}
+                                                                width={80}
+                                                                height={80}
                                                                 className="object-contain"
                                                                 style={{ imageRendering: "pixelated" }}
                                                             />
