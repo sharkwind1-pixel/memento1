@@ -50,22 +50,23 @@ const mB = "#d49860"; // apricot shadow
 const mC = "#a07040"; // apricot dark (outline)
 
 const maltipooGrid: (string | null)[][] = [
-    [_, _, _, _, mC, mB, mC, mB, mC, mB, mC, _, _, _, _, _],
-    [_, _, _, mC, mA, mA, mA, mA, mA, mA, mA, mC, _, _, _, _],
-    [_, _, mC, mA, mA, mA, mA, mA, mA, mA, mA, mA, mC, _, _, _],
-    [_, mC, mB, mA, mA, mA, mA, mA, mA, mA, mA, mA, mB, mC, _, _],
-    [_, mC, mA, mA, BK, mA, mA, mA, mA, BK, mA, mA, mA, mC, _, _],
-    [_, mC, mB, mA, mA, mA, mA, mA, mA, mA, mA, mA, mB, mC, _, _],
-    [_, _, mC, mA, mA, mA, mA, BK, mA, mA, mA, mA, mC, _, _, _],
-    [_, _, _, mC, mA, mA, PK, PK, mA, mA, mA, mC, _, _, _, _],
-    [_, _, _, mC, mB, mB, mB, mB, mB, mB, mB, mC, _, _, _, _],
-    [_, _, _, mC, mA, mA, mA, WH, mA, mA, mA, mC, _, _, _, _],
-    [_, _, mC, mA, mA, WH, WH, WH, WH, WH, mA, mA, mC, _, _, _],
-    [_, _, mC, mA, mA, mA, WH, WH, mA, mA, mA, mA, mC, _, _, _],
-    [_, _, _, mC, mC, _, _, _, _, _, mC, mC, _, _, _, _],
-    [_, _, _, mB, mB, _, _, _, _, _, mB, mB, _, _, _, _],
-    [_, _, _, _, _, _, _, _, _, _, _, mC, mB, mC, _, _],
-    [_, _, _, _, _, _, _, _, _, _, _, _, mC, _, _, _],
+    //0     1     2     3     4     5     6     7     8     9    10    11    12    13    14    15
+    [_, _, _, _, _, mC, mB, mC, mB, mC, _, _, _, _, _, _],  // row0: 곱슬 머리 꼭대기 (cols 5-9)
+    [_, _, _, _, mC, mA, mA, mA, mA, mA, mC, _, _, _, _, _],  // row1: 머리 상단
+    [_, _, _, mC, mA, mA, mA, mA, mA, mA, mA, mC, _, _, _, _],  // row2: 머리
+    [_, _, mC, mB, mA, mA, mA, mA, mA, mA, mA, mB, mC, _, _, _],  // row3: 머리 (귀 포함)
+    [_, _, mC, mA, BK, mA, mA, mA, mA, BK, mA, mA, mC, _, _, _],  // row4: 눈
+    [_, _, mC, mB, mA, mA, mA, mA, mA, mA, mA, mB, mC, _, _, _],  // row5: 볼
+    [_, _, _, mC, mA, mA, mA, BK, mA, mA, mA, mC, _, _, _, _],  // row6: 코
+    [_, _, _, _, mC, mA, PK, PK, mA, mA, mC, _, _, _, _, _],  // row7: 입
+    [_, _, _, _, mC, mB, mB, mB, mB, mB, mC, _, _, _, _, _],  // row8: 목
+    [_, _, _, mC, mA, mA, WH, WH, mA, mA, mA, mC, _, _, _, _],  // row9: 몸통 상단
+    [_, _, _, mC, mA, WH, WH, WH, WH, mA, mA, mC, _, _, _, _],  // row10: 배 (하이라이트)
+    [_, _, _, mC, mA, mA, WH, WH, mA, mA, mA, mC, _, _, _, _],  // row11: 몸통 하단
+    [_, _, _, _, mC, _, _, _, _, _, mC, _, _, _, _, _],  // row12: 다리 상단
+    [_, _, _, _, mB, _, _, _, _, _, mB, _, _, _, _, _],  // row13: 발
+    [_, _, _, _, _, _, _, _, _, _, _, mC, mB, _, _, _],  // row14: 꼬리
+    [_, _, _, _, _, _, _, _, _, _, _, _, mC, _, _, _],  // row15: 꼬리 끝
 ];
 
 export const MALTIPOO: PixelData = { width: 16, height: 16, pixels: gridToPixels(maltipooGrid) };
@@ -80,22 +81,23 @@ const yC = "#4a3020"; // brown dark
 const yR = "#ff3355"; // ribbon red
 
 const yorkshireGrid: (string | null)[][] = [
-    [_, _, _, _, _, _, _, yR, yR, _, _, _, _, _, _, _],
-    [_, _, _, _, _, yC, yB, yR, yR, yB, yC, _, _, _, _, _],
-    [_, _, _, yC, yB, yA, yA, yA, yA, yA, yB, yC, _, _, _, _],
-    [_, _, yC, yB, yA, yA, yA, yA, yA, yA, yA, yB, yC, _, _, _],
-    [_, yC, yB, yA, BK, yA, yA, yA, yA, BK, yA, yA, yB, yC, _, _],
-    [_, yC, yB, yA, yA, yA, yA, yA, yA, yA, yA, yA, yB, yC, _, _],
-    [_, yC, _, yC, yA, yA, yA, BK, yA, yA, yC, _, yC, _, _, _],
-    [_, yC, _, _, yC, yA, PK, PK, yA, yC, _, _, yC, _, _, _],
-    [_, yC, _, _, yC, yB, yB, yB, yB, yC, _, _, yC, _, _, _],
-    [_, _, yC, yC, yB, yA, yA, yA, yA, yB, yC, yC, _, _, _, _],
-    [_, _, yC, yC, yB, yA, yA, yA, yA, yB, yC, yC, _, _, _, _],
-    [_, _, _, yC, yC, yB, yB, yB, yB, yC, yC, _, _, _, _, _],
-    [_, _, _, _, yB, yC, _, _, yC, yB, _, _, _, _, _, _],
-    [_, _, _, _, _, yC, _, _, yC, _, _, _, _, _, _, _],
-    [_, _, _, _, _, _, _, _, _, _, _, yB, yC, _, _, _],
-    [_, _, _, _, _, _, _, _, _, _, _, _, yB, yC, _, _],
+    //0     1     2     3     4     5     6     7     8     9    10    11    12    13    14    15
+    [_, _, _, _, _, _, _, yR, yR, _, _, _, _, _, _, _],  // row0: 리본 (시그니처)
+    [_, _, _, _, _, yC, yR, yR, yR, yR, yC, _, _, _, _, _],  // row1: 리본 아래
+    [_, _, _, yC, yB, yA, yA, yA, yA, yA, yA, yB, yC, _, _, _],  // row2: 머리 상단
+    [_, _, yC, yB, yA, yA, yA, yA, yA, yA, yA, yA, yB, yC, _, _],  // row3: 머리
+    [_, yC, yB, yA, BK, yA, yA, yA, yA, yA, BK, yA, yB, yC, _, _],  // row4: 눈 (좌상단 하이라이트)
+    [_, yC, yB, yA, yA, yA, yA, yA, yA, yA, yA, yA, yB, yC, _, _],  // row5: 볼
+    [_, yC, _, yC, yA, yA, yA, BK, yA, yA, yA, yC, _, yC, _, _],  // row6: 코 + 옆 흘러내리는 털
+    [_, yC, _, _, yC, yA, PK, PK, PK, yA, yC, _, _, yC, _, _],  // row7: 입 (살짝 혀)
+    [_, yC, _, _, yC, yB, yB, yB, yB, yB, yC, _, _, yC, _, _],  // row8: 목 + 양옆 긴 털
+    [_, yC, _, yC, yB, yA, yA, yA, yA, yA, yB, yC, _, yC, _, _],  // row9: 몸통 상단 + 털
+    [_, _, yC, yC, yB, yA, yA, yA, yA, yA, yB, yC, yC, _, _, _],  // row10: 몸통
+    [_, _, _, yC, yC, yB, yB, yB, yB, yB, yC, yC, _, _, _, _],  // row11: 몸통 하단
+    [_, _, _, _, yC, yB, _, _, _, yB, yC, _, _, _, _, _],  // row12: 다리 상단
+    [_, _, _, _, _, yC, _, _, _, yC, _, _, _, _, _, _],  // row13: 발
+    [_, _, _, _, _, _, _, _, _, _, _, _, yB, yC, _, _],  // row14: 꼬리
+    [_, _, _, _, _, _, _, _, _, _, _, _, _, yB, _, _],  // row15: 꼬리 끝
 ];
 
 export const YORKSHIRE: PixelData = { width: 16, height: 16, pixels: gridToPixels(yorkshireGrid) };
@@ -111,22 +113,23 @@ const gW = "#fff0c0"; // belly cream
 const gT = "#ff6b7b"; // tongue
 
 const goldenGrid: (string | null)[][] = [
-    [_, _, _, _, gC, gB, gB, gB, gB, gB, gC, _, _, _, _, _],
-    [_, _, _, gC, gA, gA, gA, gA, gA, gA, gA, gC, _, _, _, _],
-    [_, _, gC, gA, gA, gA, gA, gA, gA, gA, gA, gA, gC, _, _, _],
-    [_, gC, gB, gA, BK, gA, gA, gA, gA, BK, gA, gA, gB, gC, _, _],
-    [_, gC, gB, gA, gA, gA, gA, gA, gA, gA, gA, gA, gB, gC, _, _],
-    [_, _, gC, gA, gA, gA, gA, BK, gA, gA, gA, gA, gC, _, _, _],
-    [_, _, _, gC, gA, gA, gT, gT, gA, gA, gC, _, _, _, _, _],
-    [_, _, _, _, gC, gA, gT, gT, gA, gC, _, _, _, _, _, _],
-    [_, _, _, gC, gB, gB, gB, gB, gB, gB, gC, _, _, _, _, _],
-    [_, _, gC, gA, gA, gW, gW, gW, gW, gA, gA, gC, _, _, _, _],
-    [_, _, gC, gA, gW, gW, gW, gW, gW, gW, gA, gC, _, _, _, _],
-    [_, _, gC, gA, gA, gW, gW, gW, gA, gA, gA, gC, _, _, _, _],
-    [_, _, _, gC, gC, _, _, _, _, gC, gC, _, _, _, _, _],
-    [_, _, _, gC, gC, _, _, _, _, gC, gC, _, _, _, _, _],
-    [_, _, _, _, _, _, _, _, _, _, _, gB, gB, gC, _, _],
-    [_, _, _, _, _, _, _, _, _, _, _, _, gB, gC, _, _],
+    //0     1     2     3     4     5     6     7     8     9    10    11    12    13    14    15
+    [_, _, _, gC, gB, gB, gB, gB, gB, gB, gB, gC, _, _, _, _],  // row0: 머리 꼭대기 (넓게)
+    [_, _, gC, gA, gA, gA, gA, gA, gA, gA, gA, gA, gC, _, _, _],  // row1: 머리 상단
+    [_, gC, gA, gA, gA, gA, gA, gA, gA, gA, gA, gA, gA, gC, _, _],  // row2: 머리 (넓은 얼굴)
+    [gC, gB, gA, gA, BK, gA, gA, gA, gA, gA, BK, gA, gA, gB, gC, _],  // row3: 눈 (cols 0-14, 15col!)
+    [gC, gB, gA, gA, gA, gA, gA, gA, gA, gA, gA, gA, gA, gB, gC, _],  // row4: 볼 (축 처진 귀)
+    [_, gC, gA, gA, gA, gA, gA, BK, gA, gA, gA, gA, gA, gC, _, _],  // row5: 코
+    [_, _, gC, gA, gA, gA, gT, gT, gT, gA, gA, gA, gC, _, _, _],  // row6: 혀 (시그니처)
+    [_, _, _, gC, gA, gA, gT, gT, gA, gA, gA, gC, _, _, _, _],  // row7: 혀 아래
+    [_, _, gC, gB, gB, gB, gB, gB, gB, gB, gB, gB, gC, _, _, _],  // row8: 목 (넓은)
+    [_, gC, gA, gA, gW, gW, gW, gW, gW, gW, gA, gA, gA, gC, _, _],  // row9: 몸통 상단 (넓은 가슴)
+    [gC, gA, gA, gW, gW, gW, gW, gW, gW, gW, gW, gA, gA, gA, gC, _],  // row10: 배 (최대 너비 15col!)
+    [_, gC, gA, gA, gW, gW, gW, gW, gW, gW, gA, gA, gA, gC, _, _],  // row11: 몸통 하단
+    [_, _, gC, gC, gB, _, _, _, _, _, gB, gC, gC, _, _, _],  // row12: 다리 상단 (넓게 벌림)
+    [_, _, gC, gC, _, _, _, _, _, _, _, gC, gC, _, _, _],  // row13: 발
+    [_, _, _, _, _, _, _, _, _, _, _, _, gB, gC, _, _],  // row14: 꼬리
+    [_, _, _, _, _, _, _, _, _, _, _, _, _, gB, _, _],  // row15: 꼬리 끝
 ];
 
 export const GOLDEN_RETRIEVER: PixelData = { width: 16, height: 16, pixels: gridToPixels(goldenGrid) };
