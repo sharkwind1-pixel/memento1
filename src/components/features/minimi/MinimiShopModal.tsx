@@ -181,7 +181,7 @@ export default function MinimiShopModal({
                                             return (
                                                 <div
                                                     key={char.slug}
-                                                    className={`relative p-3 rounded-2xl border transition-all text-center ${
+                                                    className={`relative p-3 rounded-2xl border transition-all text-center flex flex-col ${
                                                         owned
                                                             ? "border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20"
                                                             : "border-gray-200 dark:border-gray-700 hover:border-emerald-300 hover:shadow-md"
@@ -215,7 +215,7 @@ export default function MinimiShopModal({
                                                     <p className="font-bold text-sm text-gray-800 dark:text-gray-100 mt-1">
                                                         {char.name}
                                                     </p>
-                                                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                                                    <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 flex-1">
                                                         {char.description}
                                                     </p>
 
