@@ -139,7 +139,7 @@ export const GOLDEN_RETRIEVER: PixelData = { width: 16, height: 16, pixels: grid
 // ============================================
 
 export const CHARACTER_CATALOG = [
-    { slug: "maltipoo", name: "말티푸", category: "dog" as const, pixelData: MALTIPOO, imageUrl: "/icons/minimi/maltipoo.png", price: 100, description: "곱슬곱슬 크림색 말티푸" },
-    { slug: "yorkshire", name: "요크셔테리어", category: "dog" as const, pixelData: YORKSHIRE, imageUrl: "/icons/minimi/yorkshire.png", price: 100, description: "작고 용감한 요크셔테리어" },
-    { slug: "golden_retriever", name: "골든리트리버", category: "dog" as const, pixelData: GOLDEN_RETRIEVER, imageUrl: "/icons/minimi/golden.png", price: 100, description: "밝고 다정한 골든리트리버" },
+    { slug: "maltipoo", name: "말티푸", category: "dog" as const, pixelData: MALTIPOO, price: 100, description: "곱슬곱슬 크림색 말티푸" },
+    { slug: "yorkshire", name: "요크셔테리어", category: "dog" as const, pixelData: YORKSHIRE, price: 100, description: "작고 용감한 요크셔테리어" },
+    { slug: "golden_retriever", name: "골든리트리버", category: "dog" as const, pixelData: GOLDEN_RETRIEVER, price: 100, description: "밝고 다정한 골든리트리버" },
 ] as const;

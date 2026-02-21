@@ -21,7 +21,6 @@ export async function GET(request: NextRequest) {
             name: c.name,
             category: c.category,
             pixelData: c.pixelData,
-            ...("imageUrl" in c && c.imageUrl ? { imageUrl: c.imageUrl } : {}),
             price: c.price,
             resellPrice: Math.ceil(c.price * MINIMI.RESELL_RATIO),
             isAvailable: true,
