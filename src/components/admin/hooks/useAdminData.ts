@@ -196,23 +196,31 @@ export function useAdminData(): UseAdminDataReturn {
         try {
             const { data, error } = await supabase
                 .from("profiles")
-                .select("id, email, nickname, created_at, is_banned, is_premium, is_admin, points")
+                .select("id, email, nickname, created_at, is_banned, is_premium, is_admin, points, onboarding_data")
                 .order("created_at", { ascending: false })
                 .limit(200);
 
             if (error) throw error;
 
             if (data) {
-                setUsers(data.map(profile => ({
-                    id: profile.id,
-                    email: profile.email,
-                    created_at: profile.created_at,
-                    user_metadata: { nickname: profile.nickname },
-                    is_banned: profile.is_banned,
-                    is_premium: profile.is_premium,
-                    is_admin: profile.is_admin,
-                    points: profile.points ?? 0,
-                })));
+                setUsers(data.map(profile => {
+                    // onboarding_data에서 petType 추출
+                    const obData = profile.onboarding_data as Record<string, unknown> | null;
+                    const pt = obData?.petType;
+                    const petType: "dog" | "cat" | "other" = pt === "cat" ? "cat" : pt === "other" ? "other" : "dog";
+
+                    return {
+                        id: profile.id,
+                        email: profile.email,
+                        created_at: profile.created_at,
+                        user_metadata: { nickname: profile.nickname },
+                        is_banned: profile.is_banned,
+                        is_premium: profile.is_premium,
+                        is_admin: profile.is_admin,
+                        points: profile.points ?? 0,
+                        petType,
+                    };
+                }));
             }
         } catch {
             // [useAdminData] 유저 목록 로드 실패:", error);
