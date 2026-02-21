@@ -1,14 +1,54 @@
 -- ============================================================
--- 포인트 트랜잭션 원자성 보장을 위한 RPC 함수
--- 기존 다단계 API 로직을 단일 트랜잭션으로 처리
+-- 미니미 시스템 마이그레이션
+-- 1. user_minimi 테이블 생성 (캐릭터 보유 목록)
+-- 2. profiles 테이블에 미니미 관련 컬럼 추가
+-- 3. point_transactions CHECK 제약 수정 (음수 허용)
+-- 4. RPC 함수 3개 (구매/되팔기/상점)
 -- ============================================================
 
--- 1. CHECK 제약 수정: 차감 내역(음수)도 허용
+-- ============================================================
+-- 1. user_minimi 테이블 생성
+-- ============================================================
+CREATE TABLE IF NOT EXISTS user_minimi (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    minimi_id TEXT NOT NULL,
+    purchase_price INTEGER NOT NULL DEFAULT 0,
+    purchased_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(user_id, minimi_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_minimi_user_id ON user_minimi(user_id);
+
+-- RLS
+ALTER TABLE user_minimi ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can read own minimi"
+    ON user_minimi FOR SELECT
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Only server can insert minimi"
+    ON user_minimi FOR INSERT
+    WITH CHECK (false);
+
+CREATE POLICY "Only server can delete minimi"
+    ON user_minimi FOR DELETE
+    USING (false);
+
+-- ============================================================
+-- 2. profiles 테이블에 미니미 컬럼 추가
+-- ============================================================
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS equipped_minimi_id TEXT DEFAULT NULL;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS minimi_pixel_data JSONB DEFAULT NULL;
+
+-- ============================================================
+-- 3. point_transactions CHECK 제약 수정 (음수 허용)
+-- ============================================================
 ALTER TABLE point_transactions DROP CONSTRAINT IF EXISTS point_transactions_points_earned_check;
 ALTER TABLE point_transactions ADD CONSTRAINT point_transactions_points_earned_check CHECK (points_earned != 0);
 
 -- ============================================================
--- 2. 미니미 캐릭터 구매 RPC
+-- 4. 미니미 캐릭터 구매 RPC
 -- ============================================================
 CREATE OR REPLACE FUNCTION purchase_minimi_item(
     p_user_id UUID,
@@ -59,7 +99,7 @@ END;
 $$;
 
 -- ============================================================
--- 3. 미니미 캐릭터 되팔기 RPC
+-- 5. 미니미 캐릭터 되팔기 RPC
 -- ============================================================
 CREATE OR REPLACE FUNCTION sell_minimi_item(
     p_user_id UUID,
@@ -103,7 +143,7 @@ END;
 $$;
 
 -- ============================================================
--- 4. 포인트 상점 아이템 구매 RPC
+-- 6. 포인트 상점 아이템 구매 RPC
 -- ============================================================
 CREATE OR REPLACE FUNCTION purchase_shop_item(
     p_user_id UUID,

@@ -152,7 +152,8 @@ export async function POST(request: NextRequest) {
         }
 
         return buildSuccessResponse(item, newPoints, bonusDays, premiumExpiresAt);
-    } catch {
+    } catch (error) {
+        console.error("[points/shop] Unexpected error:", error);
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });
     }
 }

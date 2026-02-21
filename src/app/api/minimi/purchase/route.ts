@@ -116,6 +116,7 @@ export async function POST(request: NextRequest) {
             .eq("id", user.id);
 
         if (updateError) {
+            console.error("[minimi/purchase] Points update failed:", updateError.message, updateError.code);
             return NextResponse.json({ error: "포인트 차감에 실패했습니다" }, { status: 500 });
         }
 
@@ -125,6 +126,7 @@ export async function POST(request: NextRequest) {
             .insert({ user_id: user.id, minimi_id: itemSlug, purchase_price: itemPrice });
 
         if (insertError) {
+            console.error("[minimi/purchase] Insert user_minimi failed:", insertError.message, insertError.code);
             // 롤백: 포인트 복구
             await supabase.from("profiles").update({ points: profile.points }).eq("id", user.id);
             return NextResponse.json({ error: "아이템 추가에 실패했습니다" }, { status: 500 });
@@ -146,7 +148,8 @@ export async function POST(request: NextRequest) {
             resellPrice: Math.ceil(itemPrice * MINIMI.RESELL_RATIO),
             message: `${itemName}을(를) 구매했습니다!`,
         });
-    } catch {
+    } catch (error) {
+        console.error("[minimi/purchase] Unexpected error:", error);
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });
     }
 }

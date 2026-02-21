@@ -134,7 +134,8 @@ export async function POST(request: NextRequest) {
             remainingPoints: newPoints,
             message: `${itemName}을(를) ${resellPrice}P에 되팔았습니다`,
         });
-    } catch {
+    } catch (error) {
+        console.error("[minimi/sell] Unexpected error:", error);
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });
     }
 }
