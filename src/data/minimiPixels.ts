@@ -82,20 +82,20 @@ const yR = "#ff3355"; // ribbon red
 
 const yorkshireGrid: (string | null)[][] = [
     //0     1     2     3     4     5     6     7     8     9    10    11    12    13    14    15
-    [_, _, _, _, _, _, _, yR, yR, _, _, _, _, _, _, _],  // row0: 리본 (시그니처)
-    [_, _, _, _, _, yC, yR, yR, yR, yR, yC, _, _, _, _, _],  // row1: 리본 아래
-    [_, _, _, yC, yB, yA, yA, yA, yA, yA, yA, yB, yC, _, _, _],  // row2: 머리 상단
-    [_, _, yC, yB, yA, yA, yA, yA, yA, yA, yA, yA, yB, yC, _, _],  // row3: 머리
-    [_, yC, yB, yA, BK, yA, yA, yA, yA, yA, BK, yA, yB, yC, _, _],  // row4: 눈 (좌상단 하이라이트)
-    [_, yC, yB, yA, yA, yA, yA, yA, yA, yA, yA, yA, yB, yC, _, _],  // row5: 볼
-    [_, yC, _, yC, yA, yA, yA, BK, yA, yA, yA, yC, _, yC, _, _],  // row6: 코 + 옆 흘러내리는 털
-    [_, yC, _, _, yC, yA, PK, PK, PK, yA, yC, _, _, yC, _, _],  // row7: 입 (살짝 혀)
-    [_, yC, _, _, yC, yB, yB, yB, yB, yB, yC, _, _, yC, _, _],  // row8: 목 + 양옆 긴 털
-    [_, yC, _, yC, yB, yA, yA, yA, yA, yA, yB, yC, _, yC, _, _],  // row9: 몸통 상단 + 털
-    [_, _, yC, yC, yB, yA, yA, yA, yA, yA, yB, yC, yC, _, _, _],  // row10: 몸통
-    [_, _, _, yC, yC, yB, yB, yB, yB, yB, yC, yC, _, _, _, _],  // row11: 몸통 하단
-    [_, _, _, _, yC, yB, _, _, _, yB, yC, _, _, _, _, _],  // row12: 다리 상단
-    [_, _, _, _, _, yC, _, _, _, yC, _, _, _, _, _, _],  // row13: 발
+    [_, _, _, _, _, _, yR, yR, yR, yR, _, _, _, _, _, _],  // row0: 리본 (크게)
+    [_, _, _, _, yC, yR, yR, yR, yR, yR, yR, yC, _, _, _, _],  // row1: 리본 아래
+    [_, _, yC, yB, yA, yA, yA, yA, yA, yA, yA, yA, yB, yC, _, _],  // row2: 머리 상단
+    [_, yC, yB, yA, yA, yA, yA, yA, yA, yA, yA, yA, yA, yB, yC, _],  // row3: 머리 (15col)
+    [yC, yB, yA, yA, BK, yA, yA, yA, yA, yA, BK, yA, yA, yB, yC, _],  // row4: 눈 (15col)
+    [yC, yB, yA, yA, yA, yA, yA, yA, yA, yA, yA, yA, yA, yB, yC, _],  // row5: 볼 (15col)
+    [yC, yC, _, yC, yA, yA, yA, BK, yA, yA, yA, yC, _, yC, yC, _],  // row6: 코 + 양옆 긴 털
+    [yC, yC, _, _, yC, yA, PK, PK, PK, yA, yC, _, _, yC, yC, _],  // row7: 입
+    [yC, yC, _, _, yC, yB, yB, yB, yB, yB, yC, _, _, yC, yC, _],  // row8: 목 + 양옆 긴 털
+    [yC, yC, _, yC, yB, yA, yA, yA, yA, yA, yB, yC, _, yC, yC, _],  // row9: 몸통 + 털
+    [_, yC, yC, yC, yB, yA, yA, yA, yA, yA, yB, yC, yC, yC, _, _],  // row10: 몸통
+    [_, _, yC, yC, yB, yB, yB, yB, yB, yB, yB, yC, yC, _, _, _],  // row11: 몸통 하단
+    [_, _, _, yC, yC, yB, _, _, _, yB, yC, yC, _, _, _, _],  // row12: 다리
+    [_, _, _, _, yC, yC, _, _, _, yC, yC, _, _, _, _, _],  // row13: 발
     [_, _, _, _, _, _, _, _, _, _, _, _, yB, yC, _, _],  // row14: 꼬리
     [_, _, _, _, _, _, _, _, _, _, _, _, _, yB, _, _],  // row15: 꼬리 끝
 ];
@@ -114,20 +114,20 @@ const gT = "#ff6b7b"; // tongue
 
 const goldenGrid: (string | null)[][] = [
     //0     1     2     3     4     5     6     7     8     9    10    11    12    13    14    15
-    [_, _, _, gC, gB, gB, gB, gB, gB, gB, gB, gC, _, _, _, _],  // row0: 머리 꼭대기 (넓게)
-    [_, _, gC, gA, gA, gA, gA, gA, gA, gA, gA, gA, gC, _, _, _],  // row1: 머리 상단
-    [_, gC, gA, gA, gA, gA, gA, gA, gA, gA, gA, gA, gA, gC, _, _],  // row2: 머리 (넓은 얼굴)
-    [gC, gB, gA, gA, BK, gA, gA, gA, gA, gA, BK, gA, gA, gB, gC, _],  // row3: 눈 (cols 0-14, 15col!)
-    [gC, gB, gA, gA, gA, gA, gA, gA, gA, gA, gA, gA, gA, gB, gC, _],  // row4: 볼 (축 처진 귀)
-    [_, gC, gA, gA, gA, gA, gA, BK, gA, gA, gA, gA, gA, gC, _, _],  // row5: 코
-    [_, _, gC, gA, gA, gA, gT, gT, gT, gA, gA, gA, gC, _, _, _],  // row6: 혀 (시그니처)
-    [_, _, _, gC, gA, gA, gT, gT, gA, gA, gA, gC, _, _, _, _],  // row7: 혀 아래
-    [_, _, gC, gB, gB, gB, gB, gB, gB, gB, gB, gB, gC, _, _, _],  // row8: 목 (넓은)
-    [_, gC, gA, gA, gW, gW, gW, gW, gW, gW, gA, gA, gA, gC, _, _],  // row9: 몸통 상단 (넓은 가슴)
-    [gC, gA, gA, gW, gW, gW, gW, gW, gW, gW, gW, gA, gA, gA, gC, _],  // row10: 배 (최대 너비 15col!)
-    [_, gC, gA, gA, gW, gW, gW, gW, gW, gW, gA, gA, gA, gC, _, _],  // row11: 몸통 하단
-    [_, _, gC, gC, gB, _, _, _, _, _, gB, gC, gC, _, _, _],  // row12: 다리 상단 (넓게 벌림)
-    [_, _, gC, gC, _, _, _, _, _, _, _, gC, gC, _, _, _],  // row13: 발
+    [_, _, gC, gB, gB, gB, gB, gB, gB, gB, gB, gB, gB, gC, _, _],  // row0: 머리 꼭대기 (12col)
+    [_, gC, gA, gA, gA, gA, gA, gA, gA, gA, gA, gA, gA, gA, gC, _],  // row1: 머리 상단 (14col)
+    [gC, gA, gA, gA, gA, gA, gA, gA, gA, gA, gA, gA, gA, gA, gA, gC],  // row2: 머리 (풀 16col!)
+    [gC, gB, gA, gA, BK, gA, gA, gA, gA, gA, gA, BK, gA, gA, gB, gC],  // row3: 눈 (풀 16col!)
+    [gC, gB, gA, gA, gA, gA, gA, gA, gA, gA, gA, gA, gA, gA, gB, gC],  // row4: 볼 (풀 16col, 축 처진 귀)
+    [_, gC, gB, gA, gA, gA, gA, BK, gA, gA, gA, gA, gA, gB, gC, _],  // row5: 코
+    [_, _, gC, gA, gA, gA, gT, gT, gT, gA, gA, gA, gA, gC, _, _],  // row6: 혀 (시그니처)
+    [_, _, _, gC, gA, gA, gT, gT, gT, gA, gA, gC, _, _, _, _],  // row7: 혀 아래
+    [_, gC, gB, gB, gB, gB, gB, gB, gB, gB, gB, gB, gB, gB, gC, _],  // row8: 목 (넓고 두꺼운)
+    [gC, gA, gA, gA, gW, gW, gW, gW, gW, gW, gW, gA, gA, gA, gA, gC],  // row9: 몸통 (풀 16col!)
+    [gC, gA, gA, gW, gW, gW, gW, gW, gW, gW, gW, gW, gA, gA, gA, gC],  // row10: 배 (풀 16col!)
+    [gC, gA, gA, gA, gW, gW, gW, gW, gW, gW, gW, gA, gA, gA, gA, gC],  // row11: 몸통 하단 (풀 16col!)
+    [_, gC, gC, gB, _, _, _, _, _, _, _, _, gB, gC, gC, _],  // row12: 다리 (넓게 벌림)
+    [_, gC, gC, _, _, _, _, _, _, _, _, _, _, gC, gC, _],  // row13: 발
     [_, _, _, _, _, _, _, _, _, _, _, _, gB, gC, _, _],  // row14: 꼬리
     [_, _, _, _, _, _, _, _, _, _, _, _, _, gB, _, _],  // row15: 꼬리 끝
 ];
