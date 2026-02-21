@@ -1,12 +1,12 @@
 /**
  * 미니미 되팔기 API
- * POST: 보유한 캐릭터/악세서리를 1/3 가격에 되팔기
+ * POST: 보유한 캐릭터를 1/3 가격에 되팔기
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
 import { getClientIP, checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
-import { CHARACTER_CATALOG, ACCESSORY_CATALOG } from "@/data/minimiPixels";
+import { CHARACTER_CATALOG } from "@/data/minimiPixels";
 import { MINIMI } from "@/config/constants";
 
 export const dynamic = "force-dynamic";
@@ -36,114 +36,62 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "잘못된 요청입니다" }, { status: 400 });
         }
 
-        const supabase = await createServerSupabase();
-
-        let itemName: string;
-        let resellPrice: number;
-
-        if (type === "character") {
-            // 캐릭터 되팔기
-            const character = CHARACTER_CATALOG.find(c => c.slug === itemSlug);
-            if (!character) {
-                return NextResponse.json({ error: "존재하지 않는 캐릭터입니다" }, { status: 400 });
-            }
-            itemName = character.name;
-            resellPrice = Math.ceil(character.price * MINIMI.RESELL_RATIO);
-
-            // 보유 확인
-            const { data: owned } = await supabase
-                .from("user_minimi")
-                .select("id")
-                .eq("user_id", user.id)
-                .eq("minimi_id", itemSlug)
-                .maybeSingle();
-
-            if (!owned) {
-                return NextResponse.json({ error: "보유하지 않은 캐릭터입니다" }, { status: 400 });
-            }
-
-            // 장착 중이면 해제
-            const { data: profile } = await supabase
-                .from("profiles")
-                .select("equipped_minimi_id")
-                .eq("id", user.id)
-                .single();
-
-            if (profile?.equipped_minimi_id === itemSlug) {
-                await supabase
-                    .from("profiles")
-                    .update({
-                        equipped_minimi_id: null,
-                        minimi_pixel_data: null,
-                    })
-                    .eq("id", user.id);
-            }
-
-            // 삭제
-            const { error: deleteError } = await supabase
-                .from("user_minimi")
-                .delete()
-                .eq("user_id", user.id)
-                .eq("minimi_id", itemSlug);
-
-            if (deleteError) {
-                return NextResponse.json({ error: "되팔기에 실패했습니다" }, { status: 500 });
-            }
-        } else if (type === "accessory") {
-            // 악세서리 되팔기
-            const accessory = ACCESSORY_CATALOG.find(a => a.slug === itemSlug);
-            if (!accessory) {
-                return NextResponse.json({ error: "존재하지 않는 악세서리입니다" }, { status: 400 });
-            }
-            itemName = accessory.name;
-            resellPrice = Math.ceil(accessory.price * MINIMI.RESELL_RATIO);
-
-            // 보유 확인
-            const { data: owned } = await supabase
-                .from("user_minimi_accessories")
-                .select("id")
-                .eq("user_id", user.id)
-                .eq("accessory_id", itemSlug)
-                .maybeSingle();
-
-            if (!owned) {
-                return NextResponse.json({ error: "보유하지 않은 악세서리입니다" }, { status: 400 });
-            }
-
-            // 장착 중이면 해제
-            const { data: profile } = await supabase
-                .from("profiles")
-                .select("equipped_accessories")
-                .eq("id", user.id)
-                .single();
-
-            if (profile?.equipped_accessories?.includes(itemSlug)) {
-                const newAccessories = (profile.equipped_accessories as string[]).filter(
-                    (s: string) => s !== itemSlug
-                );
-                // 악세서리 픽셀 데이터도 업데이트해야 하지만 간소화를 위해 배열만 업데이트
-                await supabase
-                    .from("profiles")
-                    .update({ equipped_accessories: newAccessories })
-                    .eq("id", user.id);
-            }
-
-            // 삭제
-            const { error: deleteError } = await supabase
-                .from("user_minimi_accessories")
-                .delete()
-                .eq("user_id", user.id)
-                .eq("accessory_id", itemSlug);
-
-            if (deleteError) {
-                return NextResponse.json({ error: "되팔기에 실패했습니다" }, { status: 500 });
-            }
-        } else {
+        if (type !== "character") {
             return NextResponse.json({ error: "잘못된 아이템 유형입니다" }, { status: 400 });
         }
 
+        const supabase = await createServerSupabase();
+
+        // 캐릭터 되팔기
+        const character = CHARACTER_CATALOG.find(c => c.slug === itemSlug);
+        if (!character) {
+            return NextResponse.json({ error: "존재하지 않는 캐릭터입니다" }, { status: 400 });
+        }
+        const itemName = character.name;
+        const resellPrice = Math.ceil(character.price * MINIMI.RESELL_RATIO);
+
+        // 보유 확인
+        const { data: owned } = await supabase
+            .from("user_minimi")
+            .select("id")
+            .eq("user_id", user.id)
+            .eq("minimi_id", itemSlug)
+            .maybeSingle();
+
+        if (!owned) {
+            return NextResponse.json({ error: "보유하지 않은 캐릭터입니다" }, { status: 400 });
+        }
+
+        // 장착 중이면 해제
+        const { data: profile } = await supabase
+            .from("profiles")
+            .select("equipped_minimi_id")
+            .eq("id", user.id)
+            .single();
+
+        if (profile?.equipped_minimi_id === itemSlug) {
+            await supabase
+                .from("profiles")
+                .update({
+                    equipped_minimi_id: null,
+                    minimi_pixel_data: null,
+                })
+                .eq("id", user.id);
+        }
+
+        // 삭제
+        const { error: deleteError } = await supabase
+            .from("user_minimi")
+            .delete()
+            .eq("user_id", user.id)
+            .eq("minimi_id", itemSlug);
+
+        if (deleteError) {
+            return NextResponse.json({ error: "되팔기에 실패했습니다" }, { status: 500 });
+        }
+
         // 포인트 환급
-        const { data: updated, error: pointError } = await supabase.rpc("increment_field", {
+        const { error: pointError } = await supabase.rpc("increment_field", {
             table_name: "profiles",
             field_name: "points",
             row_id: user.id,
@@ -153,12 +101,12 @@ export async function POST(request: NextRequest) {
         // RPC 실패 시 수동 업데이트
         let remainingPoints = 0;
         if (pointError) {
-            const { data: profile } = await supabase
+            const { data: fallbackProfile } = await supabase
                 .from("profiles")
                 .select("points")
                 .eq("id", user.id)
                 .single();
-            const newPoints = (profile?.points || 0) + resellPrice;
+            const newPoints = (fallbackProfile?.points || 0) + resellPrice;
             await supabase
                 .from("profiles")
                 .update({ points: newPoints })
@@ -166,12 +114,12 @@ export async function POST(request: NextRequest) {
             remainingPoints = newPoints;
         } else {
             // RPC 후 포인트 조회
-            const { data: profile } = await supabase
+            const { data: updatedProfile } = await supabase
                 .from("profiles")
                 .select("points")
                 .eq("id", user.id)
                 .single();
-            remainingPoints = profile?.points || 0;
+            remainingPoints = updatedProfile?.points || 0;
         }
 
         // 거래 내역 기록

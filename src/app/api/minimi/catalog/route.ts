@@ -1,10 +1,10 @@
 /**
  * 미니미 카탈로그 API
- * GET: 판매중인 캐릭터/악세서리 목록 조회
+ * GET: 판매중인 캐릭터 목록 조회
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { CHARACTER_CATALOG, ACCESSORY_CATALOG } from "@/data/minimiPixels";
+import { CHARACTER_CATALOG } from "@/data/minimiPixels";
 import { MINIMI } from "@/config/constants";
 
 export const dynamic = "force-dynamic";
@@ -30,29 +30,12 @@ export async function GET(request: NextRequest) {
             sortOrder: i,
         }));
 
-        if (category && category !== "all" && category !== "accessory") {
+        if (category && category !== "all") {
             characters = characters.filter(c => c.category === category);
         }
 
-        // 악세서리
-        const accessories = ACCESSORY_CATALOG.map((a, i) => ({
-            id: a.slug,
-            slug: a.slug,
-            name: a.name,
-            category: a.category,
-            layer: a.layer,
-            pixelData: a.pixelData,
-            price: a.price,
-            resellPrice: Math.ceil(a.price * MINIMI.RESELL_RATIO),
-            isAvailable: true,
-            releasedAt: new Date().toISOString(),
-            description: a.description,
-            sortOrder: i,
-        }));
-
         return NextResponse.json({
-            characters: category === "accessory" ? [] : characters,
-            accessories: category && category !== "all" && category !== "accessory" ? [] : accessories,
+            characters,
         });
     } catch {
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });

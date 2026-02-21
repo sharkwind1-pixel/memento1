@@ -20,7 +20,7 @@ import { API } from "@/config/apiEndpoints";
 import { MINIMI } from "@/config/constants";
 import { toast } from "sonner";
 import MinimiRenderer from "./MinimiRenderer";
-import { CHARACTER_CATALOG, ACCESSORY_CATALOG } from "@/data/minimiPixels";
+import { CHARACTER_CATALOG } from "@/data/minimiPixels";
 import type { PixelData } from "@/types";
 
 interface MinimiClosetModalProps {
@@ -46,16 +46,12 @@ export default function MinimiClosetModal({
     const { refreshPoints } = useAuth();
     useEscapeClose(isOpen, onClose);
 
-    const [tab, setTab] = useState<"character" | "accessory">("character");
     const [ownedCharacters, setOwnedCharacters] = useState<OwnedItem[]>([]);
-    const [ownedAccessories, setOwnedAccessories] = useState<OwnedItem[]>([]);
     const [equippedMinimiSlug, setEquippedMinimiSlug] = useState<string | null>(null);
-    const [equippedAccessorySlugs, setEquippedAccessorySlugs] = useState<string[]>([]);
     const [equippedPixelData, setEquippedPixelData] = useState<PixelData | null>(null);
-    const [equippedAccessoriesData, setEquippedAccessoriesData] = useState<PixelData[]>([]);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
-    const [sellConfirm, setSellConfirm] = useState<{ type: "character" | "accessory"; slug: string; name: string; resellPrice: number } | null>(null);
+    const [sellConfirm, setSellConfirm] = useState<{ type: "character"; slug: string; name: string; resellPrice: number } | null>(null);
 
     const loadInventory = useCallback(async () => {
         try {
@@ -76,27 +72,12 @@ export default function MinimiClosetModal({
                 } : null;
             }).filter(Boolean) as OwnedItem[];
 
-            // 악세서리 매핑
-            const accs: OwnedItem[] = (data.accessories || []).map((a: { accessory_id: string }) => {
-                const catalog = ACCESSORY_CATALOG.find(cat => cat.slug === a.accessory_id);
-                return catalog ? {
-                    slug: catalog.slug,
-                    name: catalog.name,
-                    pixelData: catalog.pixelData,
-                    price: catalog.price,
-                    resellPrice: Math.ceil(catalog.price * MINIMI.RESELL_RATIO),
-                } : null;
-            }).filter(Boolean) as OwnedItem[];
-
             setOwnedCharacters(chars);
-            setOwnedAccessories(accs);
 
             // 장착 상태
             const eq = data.equipped;
             setEquippedMinimiSlug(eq?.minimiId || null);
-            setEquippedAccessorySlugs(eq?.accessoryIds || []);
             setEquippedPixelData(eq?.pixelData || null);
-            setEquippedAccessoriesData(eq?.accessoriesData || []);
         } catch {
             // 에러 무시
         } finally {
@@ -121,7 +102,6 @@ export default function MinimiClosetModal({
                 method: "POST",
                 body: JSON.stringify({
                     minimiSlug: newMinimiSlug,
-                    accessorySlugs: equippedAccessorySlugs,
                 }),
             });
             if (!res.ok) {
@@ -131,46 +111,8 @@ export default function MinimiClosetModal({
             const data = await res.json();
             setEquippedMinimiSlug(data.equipped.minimiId);
             setEquippedPixelData(data.equipped.pixelData);
-            setEquippedAccessoriesData(data.equipped.accessoriesData || []);
             onChanged?.();
             toast.success(newMinimiSlug ? "미니미를 장착했습니다" : "미니미를 해제했습니다");
-        } catch (err) {
-            toast.error(err instanceof Error ? err.message : "장착에 실패했습니다");
-        } finally {
-            setActionLoading(null);
-        }
-    };
-
-    const handleEquipAccessory = async (slug: string) => {
-        setActionLoading(slug);
-        try {
-            let newSlugs: string[];
-            if (equippedAccessorySlugs.includes(slug)) {
-                newSlugs = equippedAccessorySlugs.filter(s => s !== slug);
-            } else {
-                if (equippedAccessorySlugs.length >= MINIMI.MAX_EQUIPPED_ACCESSORIES) {
-                    toast.error(`악세서리는 최대 ${MINIMI.MAX_EQUIPPED_ACCESSORIES}개까지 장착 가능합니다`);
-                    setActionLoading(null);
-                    return;
-                }
-                newSlugs = [...equippedAccessorySlugs, slug];
-            }
-
-            const res = await authFetch(API.MINIMI_EQUIP, {
-                method: "POST",
-                body: JSON.stringify({
-                    minimiSlug: equippedMinimiSlug,
-                    accessorySlugs: newSlugs,
-                }),
-            });
-            if (!res.ok) {
-                const data = await res.json();
-                throw new Error(data.error);
-            }
-            const data = await res.json();
-            setEquippedAccessorySlugs(data.equipped.accessoryIds || []);
-            setEquippedAccessoriesData(data.equipped.accessoriesData || []);
-            onChanged?.();
         } catch (err) {
             toast.error(err instanceof Error ? err.message : "장착에 실패했습니다");
         } finally {
@@ -221,7 +163,7 @@ export default function MinimiClosetModal({
                             <div>
                                 <h2 id="minimi-closet-title" className="text-lg font-bold">내 미니미 옷장</h2>
                                 <p className="text-white/80 text-sm">
-                                    캐릭터 {ownedCharacters.length}개 / 악세서리 {ownedAccessories.length}개
+                                    보유 캐릭터 {ownedCharacters.length}개
                                 </p>
                             </div>
                         </div>
@@ -240,7 +182,6 @@ export default function MinimiClosetModal({
                     <div className="text-center">
                         <MinimiRenderer
                             pixelData={equippedPixelData}
-                            accessoriesData={equippedAccessoriesData}
                             size="xl"
                             showEmpty
                         />
@@ -250,175 +191,84 @@ export default function MinimiClosetModal({
                     </div>
                 </div>
 
-                {/* 탭 */}
-                <div className="flex border-b dark:border-gray-700">
-                    <button
-                        onClick={() => setTab("character")}
-                        className={`flex-1 py-3 text-sm font-medium transition-colors ${
-                            tab === "character"
-                                ? "text-violet-600 border-b-2 border-violet-500"
-                                : "text-gray-500 hover:text-gray-700"
-                        }`}
-                    >
-                        캐릭터 ({ownedCharacters.length})
-                    </button>
-                    <button
-                        onClick={() => setTab("accessory")}
-                        className={`flex-1 py-3 text-sm font-medium transition-colors ${
-                            tab === "accessory"
-                                ? "text-violet-600 border-b-2 border-violet-500"
-                                : "text-gray-500 hover:text-gray-700"
-                        }`}
-                    >
-                        악세서리 ({ownedAccessories.length})
-                    </button>
-                </div>
-
-                {/* 아이템 목록 */}
+                {/* 캐릭터 목록 */}
                 <div className="flex-1 overflow-y-auto p-4">
                     {loading ? (
                         <div className="flex items-center justify-center py-12">
                             <span className="w-6 h-6 border-2 border-violet-300 border-t-violet-600 rounded-full animate-spin" />
                         </div>
-                    ) : tab === "character" ? (
-                        ownedCharacters.length === 0 ? (
-                            <p className="text-center text-gray-400 py-12 text-sm">
-                                보유한 캐릭터가 없습니다
-                            </p>
-                        ) : (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                {ownedCharacters.map((char) => {
-                                    const isEquipped = equippedMinimiSlug === char.slug;
-                                    const isLoading = actionLoading === char.slug;
-
-                                    return (
-                                        <div
-                                            key={char.slug}
-                                            className={`relative p-3 rounded-2xl border transition-all text-center ${
-                                                isEquipped
-                                                    ? "border-violet-400 bg-violet-50 dark:bg-violet-900/20 ring-2 ring-violet-300"
-                                                    : "border-gray-200 dark:border-gray-700"
-                                            }`}
-                                        >
-                                            <div className="flex justify-center py-2">
-                                                {char.imageUrl ? (
-                                                    <img
-                                                        src={char.imageUrl}
-                                                        alt={char.name}
-                                                        className="w-20 h-20 object-contain"
-                                                        style={{ imageRendering: "pixelated" }}
-                                                    />
-                                                ) : (
-                                                    <MinimiRenderer pixelData={char.pixelData} size="lg" />
-                                                )}
-                                            </div>
-                                            <p className="font-bold text-sm text-gray-800 dark:text-gray-100">
-                                                {char.name}
-                                            </p>
-                                            <div className="mt-2 space-y-1.5">
-                                                <Button
-                                                    size="sm"
-                                                    onClick={() => handleEquip(char.slug)}
-                                                    disabled={isLoading}
-                                                    className={`w-full rounded-xl text-xs ${
-                                                        isEquipped
-                                                            ? "bg-violet-500 hover:bg-violet-600 text-white"
-                                                            : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200"
-                                                    }`}
-                                                >
-                                                    {isLoading ? (
-                                                        <span className="w-3 h-3 border-2 border-current/30 border-t-current rounded-full animate-spin" />
-                                                    ) : isEquipped ? (
-                                                        <span className="flex items-center gap-1">
-                                                            <Check className="w-3 h-3" /> 장착중
-                                                        </span>
-                                                    ) : (
-                                                        "장착"
-                                                    )}
-                                                </Button>
-                                                <button
-                                                    onClick={() => setSellConfirm({
-                                                        type: "character",
-                                                        slug: char.slug,
-                                                        name: char.name,
-                                                        resellPrice: char.resellPrice,
-                                                    })}
-                                                    className="w-full flex items-center justify-center gap-1 text-[11px] text-gray-400 hover:text-red-400 transition-colors py-1"
-                                                >
-                                                    <Trash2 className="w-3 h-3" />
-                                                    되팔기 ({char.resellPrice}P)
-                                                </button>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )
+                    ) : ownedCharacters.length === 0 ? (
+                        <p className="text-center text-gray-400 py-12 text-sm">
+                            보유한 캐릭터가 없습니다
+                        </p>
                     ) : (
-                        ownedAccessories.length === 0 ? (
-                            <p className="text-center text-gray-400 py-12 text-sm">
-                                보유한 악세서리가 없습니다
-                            </p>
-                        ) : (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                {ownedAccessories.map((acc) => {
-                                    const isEquipped = equippedAccessorySlugs.includes(acc.slug);
-                                    const isLoading = actionLoading === acc.slug;
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            {ownedCharacters.map((char) => {
+                                const isEquipped = equippedMinimiSlug === char.slug;
+                                const isLoading = actionLoading === char.slug;
 
-                                    return (
-                                        <div
-                                            key={acc.slug}
-                                            className={`relative p-3 rounded-2xl border transition-all text-center ${
-                                                isEquipped
-                                                    ? "border-violet-400 bg-violet-50 dark:bg-violet-900/20 ring-2 ring-violet-300"
-                                                    : "border-gray-200 dark:border-gray-700"
-                                            }`}
-                                        >
-                                            <div className="flex justify-center py-2">
-                                                <MinimiRenderer pixelData={acc.pixelData} size="lg" />
-                                            </div>
-                                            <p className="font-bold text-sm text-gray-800 dark:text-gray-100">
-                                                {acc.name}
-                                            </p>
-                                            <div className="mt-2 space-y-1.5">
-                                                <Button
-                                                    size="sm"
-                                                    onClick={() => handleEquipAccessory(acc.slug)}
-                                                    disabled={isLoading}
-                                                    className={`w-full rounded-xl text-xs ${
-                                                        isEquipped
-                                                            ? "bg-violet-500 hover:bg-violet-600 text-white"
-                                                            : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200"
-                                                    }`}
-                                                >
-                                                    {isLoading ? (
-                                                        <span className="w-3 h-3 border-2 border-current/30 border-t-current rounded-full animate-spin" />
-                                                    ) : isEquipped ? (
-                                                        <span className="flex items-center gap-1">
-                                                            <Check className="w-3 h-3" /> 장착중
-                                                        </span>
-                                                    ) : (
-                                                        "장착"
-                                                    )}
-                                                </Button>
-                                                <button
-                                                    onClick={() => setSellConfirm({
-                                                        type: "accessory",
-                                                        slug: acc.slug,
-                                                        name: acc.name,
-                                                        resellPrice: acc.resellPrice,
-                                                    })}
-                                                    className="w-full flex items-center justify-center gap-1 text-[11px] text-gray-400 hover:text-red-400 transition-colors py-1"
-                                                >
-                                                    <Trash2 className="w-3 h-3" />
-                                                    되팔기 ({acc.resellPrice}P)
-                                                </button>
-                                            </div>
+                                return (
+                                    <div
+                                        key={char.slug}
+                                        className={`relative p-3 rounded-2xl border transition-all text-center ${
+                                            isEquipped
+                                                ? "border-violet-400 bg-violet-50 dark:bg-violet-900/20 ring-2 ring-violet-300"
+                                                : "border-gray-200 dark:border-gray-700"
+                                        }`}
+                                    >
+                                        <div className="flex justify-center py-2">
+                                            {char.imageUrl ? (
+                                                <img
+                                                    src={char.imageUrl}
+                                                    alt={char.name}
+                                                    className="w-20 h-20 object-contain"
+                                                    style={{ imageRendering: "pixelated" }}
+                                                />
+                                            ) : (
+                                                <MinimiRenderer pixelData={char.pixelData} size="lg" />
+                                            )}
                                         </div>
-                                    );
-                                })}
-                            </div>
-                        )
+                                        <p className="font-bold text-sm text-gray-800 dark:text-gray-100">
+                                            {char.name}
+                                        </p>
+                                        <div className="mt-2 space-y-1.5">
+                                            <Button
+                                                size="sm"
+                                                onClick={() => handleEquip(char.slug)}
+                                                disabled={isLoading}
+                                                className={`w-full rounded-xl text-xs ${
+                                                    isEquipped
+                                                        ? "bg-violet-500 hover:bg-violet-600 text-white"
+                                                        : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200"
+                                                }`}
+                                            >
+                                                {isLoading ? (
+                                                    <span className="w-3 h-3 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+                                                ) : isEquipped ? (
+                                                    <span className="flex items-center gap-1">
+                                                        <Check className="w-3 h-3" /> 장착중
+                                                    </span>
+                                                ) : (
+                                                    "장착"
+                                                )}
+                                            </Button>
+                                            <button
+                                                onClick={() => setSellConfirm({
+                                                    type: "character",
+                                                    slug: char.slug,
+                                                    name: char.name,
+                                                    resellPrice: char.resellPrice,
+                                                })}
+                                                className="w-full flex items-center justify-center gap-1 text-[11px] text-gray-400 hover:text-red-400 transition-colors py-1"
+                                            >
+                                                <Trash2 className="w-3 h-3" />
+                                                되팔기 ({char.resellPrice}P)
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     )}
                 </div>
 

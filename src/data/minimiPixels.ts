@@ -50,20 +50,20 @@ const mB = "#d49860"; // apricot shadow
 const mC = "#a07040"; // apricot dark (outline)
 
 const maltipooGrid: (string | null)[][] = [
-    [_, _, _, _, _, mC, mB, mC, mB, mC, _, _, _, _, _, _],
-    [_, _, _, _, mC, mA, mA, mA, mA, mA, mC, _, _, _, _, _],
+    [_, _, _, _, mC, mB, mC, mB, mC, mB, mC, _, _, _, _, _],
     [_, _, _, mC, mA, mA, mA, mA, mA, mA, mA, mC, _, _, _, _],
-    [_, _, mC, mB, mA, mA, mA, mA, mA, mA, mA, mB, mC, _, _, _],
-    [_, _, mC, mA, BK, mA, mA, mA, mA, BK, mA, mA, mC, _, _, _],
+    [_, _, mC, mA, mA, mA, mA, mA, mA, mA, mA, mA, mC, _, _, _],
     [_, mC, mB, mA, mA, mA, mA, mA, mA, mA, mA, mA, mB, mC, _, _],
-    [_, mC, mC, mA, mA, mA, mA, BK, mA, mA, mA, mC, mC, _, _, _],
-    [_, _, _, mC, mA, mA, PK, PK, mA, mA, mC, _, _, _, _, _],
-    [_, _, _, _, mC, mB, mB, mB, mB, mB, mC, _, _, _, _, _],
-    [_, _, _, _, mC, mA, mA, WH, mA, mA, mC, _, _, _, _, _],
-    [_, _, _, _, mC, mA, WH, WH, WH, mA, mC, _, _, _, _, _],
-    [_, _, _, _, mC, mA, mA, WH, mA, mA, mC, _, _, _, _, _],
-    [_, _, _, _, _, mC, _, _, _, mC, _, _, _, _, _, _],
-    [_, _, _, _, _, mB, _, _, _, mB, _, _, _, _, _, _],
+    [_, mC, mA, mA, BK, mA, mA, mA, mA, BK, mA, mA, mA, mC, _, _],
+    [_, mC, mB, mA, mA, mA, mA, mA, mA, mA, mA, mA, mB, mC, _, _],
+    [_, _, mC, mA, mA, mA, mA, BK, mA, mA, mA, mA, mC, _, _, _],
+    [_, _, _, mC, mA, mA, PK, PK, mA, mA, mA, mC, _, _, _, _],
+    [_, _, _, mC, mB, mB, mB, mB, mB, mB, mB, mC, _, _, _, _],
+    [_, _, _, mC, mA, mA, mA, WH, mA, mA, mA, mC, _, _, _, _],
+    [_, _, mC, mA, mA, WH, WH, WH, WH, WH, mA, mA, mC, _, _, _],
+    [_, _, mC, mA, mA, mA, WH, WH, mA, mA, mA, mA, mC, _, _, _],
+    [_, _, _, mC, mC, _, _, _, _, _, mC, mC, _, _, _, _],
+    [_, _, _, mB, mB, _, _, _, _, _, mB, mB, _, _, _, _],
     [_, _, _, _, _, _, _, _, _, _, _, mC, mB, mC, _, _],
     [_, _, _, _, _, _, _, _, _, _, _, _, mC, _, _, _],
 ];
@@ -89,10 +89,10 @@ const yorkshireGrid: (string | null)[][] = [
     [_, yC, _, yC, yA, yA, yA, BK, yA, yA, yC, _, yC, _, _, _],
     [_, yC, _, _, yC, yA, PK, PK, yA, yC, _, _, yC, _, _, _],
     [_, yC, _, _, yC, yB, yB, yB, yB, yC, _, _, yC, _, _, _],
-    [_, yC, _, yC, yB, yA, yA, yA, yA, yB, yC, _, yC, _, _, _],
     [_, _, yC, yC, yB, yA, yA, yA, yA, yB, yC, yC, _, _, _, _],
-    [_, _, yC, _, yC, yB, yB, yB, yB, yC, _, yC, _, _, _, _],
-    [_, _, _, yC, _, yC, _, _, yC, _, yC, _, _, _, _, _],
+    [_, _, yC, yC, yB, yA, yA, yA, yA, yB, yC, yC, _, _, _, _],
+    [_, _, _, yC, yC, yB, yB, yB, yB, yC, yC, _, _, _, _, _],
+    [_, _, _, _, yB, yC, _, _, yC, yB, _, _, _, _, _, _],
     [_, _, _, _, _, yC, _, _, yC, _, _, _, _, _, _, _],
     [_, _, _, _, _, _, _, _, _, _, _, yB, yC, _, _, _],
     [_, _, _, _, _, _, _, _, _, _, _, _, yB, yC, _, _],
@@ -111,56 +111,25 @@ const gW = "#fff0c0"; // belly cream
 const gT = "#ff6b7b"; // tongue
 
 const goldenGrid: (string | null)[][] = [
-    [_, _, _, gC, gB, gB, gB, gB, gB, gB, gB, gC, _, _, _, _],
+    [_, _, _, _, gC, gB, gB, gB, gB, gB, gC, _, _, _, _, _],
+    [_, _, _, gC, gA, gA, gA, gA, gA, gA, gA, gC, _, _, _, _],
     [_, _, gC, gA, gA, gA, gA, gA, gA, gA, gA, gA, gC, _, _, _],
+    [_, gC, gB, gA, BK, gA, gA, gA, gA, BK, gA, gA, gB, gC, _, _],
     [_, gC, gB, gA, gA, gA, gA, gA, gA, gA, gA, gA, gB, gC, _, _],
-    [gC, gB, gA, gA, BK, gA, gA, gA, gA, BK, gA, gA, gA, gB, gC, _],
-    [gC, gB, gA, gA, gA, gA, gA, gA, gA, gA, gA, gA, gA, gB, gC, _],
-    [_, gC, gB, gA, gA, gA, gA, BK, gA, gA, gA, gA, gB, gC, _, _],
-    [_, _, gC, gA, gA, gA, gT, gT, gA, gA, gA, gC, _, _, _, _],
+    [_, _, gC, gA, gA, gA, gA, BK, gA, gA, gA, gA, gC, _, _, _],
     [_, _, _, gC, gA, gA, gT, gT, gA, gA, gC, _, _, _, _, _],
-    [_, _, gC, gB, gB, gB, gB, gB, gB, gB, gB, gC, _, _, _, _],
+    [_, _, _, _, gC, gA, gT, gT, gA, gC, _, _, _, _, _, _],
+    [_, _, _, gC, gB, gB, gB, gB, gB, gB, gC, _, _, _, _, _],
     [_, _, gC, gA, gA, gW, gW, gW, gW, gA, gA, gC, _, _, _, _],
-    [_, gC, gA, gA, gW, gW, gW, gW, gW, gW, gA, gA, gC, _, _, _],
-    [_, gC, gA, gA, gA, gW, gW, gW, gA, gA, gA, gA, gC, _, _, _],
-    [_, _, gC, gC, _, _, gC, gC, _, _, gC, gC, _, _, _, _],
-    [_, _, gC, gC, _, _, gC, gC, _, _, gC, gC, _, _, _, _],
+    [_, _, gC, gA, gW, gW, gW, gW, gW, gW, gA, gC, _, _, _, _],
+    [_, _, gC, gA, gA, gW, gW, gW, gA, gA, gA, gC, _, _, _, _],
+    [_, _, _, gC, gC, _, _, _, _, gC, gC, _, _, _, _, _],
+    [_, _, _, gC, gC, _, _, _, _, gC, gC, _, _, _, _, _],
     [_, _, _, _, _, _, _, _, _, _, _, gB, gB, gC, _, _],
     [_, _, _, _, _, _, _, _, _, _, _, _, gB, gC, _, _],
 ];
 
 export const GOLDEN_RETRIEVER: PixelData = { width: 16, height: 16, pixels: gridToPixels(goldenGrid) };
-
-// ============================================
-// 악세서리 (3종)
-// ============================================
-
-/** 빨간 모자 */
-const redHatGrid: (string | null)[][] = [
-    [_, _, _, _, _, "#CC0000", "#CC0000", "#CC0000", "#CC0000", "#CC0000", _, _, _, _, _, _],
-    [_, _, _, "#CC0000", "#FF0000", "#FF3333", "#FF3333", "#FF3333", "#FF3333", "#FF0000", "#CC0000", _, _, _, _, _],
-    [_, _, "#8B0000", "#8B0000", "#8B0000", "#8B0000", "#8B0000", "#8B0000", "#8B0000", "#8B0000", "#8B0000", "#8B0000", _, _, _, _],
-    ...(Array(13).fill([_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _]) as (string | null)[][]),
-];
-export const RED_HAT: PixelData = { width: 16, height: 16, pixels: gridToPixels(redHatGrid) };
-
-/** 선글라스 */
-const sunglassesGrid: (string | null)[][] = [
-    ...(Array(4).fill([_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _]) as (string | null)[][]),
-    [_, _, "#1a1a1a", "#1a1a1a", "#1a1a1a", "#1a1a1a", "#1a1a1a", "#1a1a1a", "#1a1a1a", "#1a1a1a", "#1a1a1a", "#1a1a1a", _, _, _, _],
-    [_, _, "#1a1a1a", "#333333", "#222222", "#1a1a1a", "#1a1a1a", "#1a1a1a", "#222222", "#333333", "#1a1a1a", "#1a1a1a", _, _, _, _],
-    ...(Array(10).fill([_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _]) as (string | null)[][]),
-];
-export const SUNGLASSES: PixelData = { width: 16, height: 16, pixels: gridToPixels(sunglassesGrid) };
-
-/** 꽃 왕관 */
-const flowerCrownGrid: (string | null)[][] = [
-    [_, _, _, "#FF69B4", _, "#FFD700", _, _, "#FFD700", _, "#FF69B4", _, _, _, _, _],
-    [_, _, "#FF69B4", "#FF1493", "#FF69B4", "#FFC107", "#FF69B4", "#FF69B4", "#FFC107", "#FF69B4", "#FF1493", "#FF69B4", _, _, _, _],
-    [_, _, "#4CAF50", "#4CAF50", "#4CAF50", "#4CAF50", "#4CAF50", "#4CAF50", "#4CAF50", "#4CAF50", "#4CAF50", "#4CAF50", _, _, _, _],
-    ...(Array(13).fill([_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _]) as (string | null)[][]),
-];
-export const FLOWER_CROWN: PixelData = { width: 16, height: 16, pixels: gridToPixels(flowerCrownGrid) };
 
 // ============================================
 // 카탈로그
@@ -170,10 +139,4 @@ export const CHARACTER_CATALOG = [
     { slug: "maltipoo", name: "말티푸", category: "dog" as const, pixelData: MALTIPOO, imageUrl: "/icons/minimi/maltipoo.png", price: 100, description: "곱슬곱슬 크림색 말티푸" },
     { slug: "yorkshire", name: "요크셔테리어", category: "dog" as const, pixelData: YORKSHIRE, imageUrl: "/icons/minimi/yorkshire.png", price: 100, description: "작고 용감한 요크셔테리어" },
     { slug: "golden_retriever", name: "골든리트리버", category: "dog" as const, pixelData: GOLDEN_RETRIEVER, imageUrl: "/icons/minimi/golden.png", price: 100, description: "밝고 다정한 골든리트리버" },
-] as const;
-
-export const ACCESSORY_CATALOG = [
-    { slug: "red_hat", name: "빨간 모자", category: "hat" as const, layer: "top" as const, pixelData: RED_HAT, price: 100, description: "클래식 빨간 모자" },
-    { slug: "sunglasses", name: "선글라스", category: "glasses" as const, layer: "face" as const, pixelData: SUNGLASSES, price: 80, description: "멋진 선글라스" },
-    { slug: "flower_crown", name: "꽃 왕관", category: "hat" as const, layer: "top" as const, pixelData: FLOWER_CROWN, price: 120, description: "봄날의 꽃 왕관" },
 ] as const;

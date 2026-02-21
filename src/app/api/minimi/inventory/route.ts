@@ -1,6 +1,6 @@
 /**
  * 미니미 인벤토리 API
- * GET: 내가 보유한 캐릭터/악세서리 + 장착 상태 조회
+ * GET: 내가 보유한 캐릭터 + 장착 상태 조회
  */
 
 import { NextResponse } from "next/server";
@@ -23,27 +23,18 @@ export async function GET() {
             .select("id, minimi_id, purchased_at, purchase_price")
             .eq("user_id", user.id);
 
-        // 보유 악세서리
-        const { data: ownedAccessories } = await supabase
-            .from("user_minimi_accessories")
-            .select("id, accessory_id, purchased_at, purchase_price")
-            .eq("user_id", user.id);
-
         // 장착 상태
         const { data: profile } = await supabase
             .from("profiles")
-            .select("equipped_minimi_id, equipped_accessories, minimi_pixel_data, minimi_accessories_data")
+            .select("equipped_minimi_id, minimi_pixel_data")
             .eq("id", user.id)
             .single();
 
         return NextResponse.json({
             characters: ownedCharacters || [],
-            accessories: ownedAccessories || [],
             equipped: {
                 minimiId: profile?.equipped_minimi_id || null,
-                accessoryIds: profile?.equipped_accessories || [],
                 pixelData: profile?.minimi_pixel_data || null,
-                accessoriesData: profile?.minimi_accessories_data || [],
             },
         });
     } catch {

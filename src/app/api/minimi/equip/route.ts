@@ -1,12 +1,11 @@
 /**
  * 미니미 장착/해제 API
- * POST: 캐릭터 장착/해제 + 악세서리 장착
+ * POST: 캐릭터 장착/해제
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
-import { CHARACTER_CATALOG, ACCESSORY_CATALOG } from "@/data/minimiPixels";
-import { MINIMI } from "@/config/constants";
+import { CHARACTER_CATALOG } from "@/data/minimiPixels";
 
 export const dynamic = "force-dynamic";
 
@@ -18,17 +17,9 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { minimiSlug, accessorySlugs = [] } = body;
+        const { minimiSlug } = body;
 
         const supabase = await createServerSupabase();
-
-        // 악세서리 개수 제한
-        if (accessorySlugs.length > MINIMI.MAX_EQUIPPED_ACCESSORIES) {
-            return NextResponse.json(
-                { error: `악세서리는 최대 ${MINIMI.MAX_EQUIPPED_ACCESSORIES}개까지 장착 가능합니다` },
-                { status: 400 }
-            );
-        }
 
         // 캐릭터 보유 확인 (null이면 해제)
         let minimiPixelData = null;
@@ -51,34 +42,12 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // 악세서리 보유 확인
-        const accessoriesData: object[] = [];
-        for (const slug of accessorySlugs) {
-            const { data: owned } = await supabase
-                .from("user_minimi_accessories")
-                .select("id")
-                .eq("user_id", user.id)
-                .eq("accessory_id", slug)
-                .maybeSingle();
-
-            if (!owned) {
-                return NextResponse.json({ error: `보유하지 않은 악세서리입니다: ${slug}` }, { status: 400 });
-            }
-
-            const accessory = ACCESSORY_CATALOG.find(a => a.slug === slug);
-            if (accessory) {
-                accessoriesData.push(accessory.pixelData);
-            }
-        }
-
         // profiles 업데이트 (장착 상태 + 캐시)
         const { error: updateError } = await supabase
             .from("profiles")
             .update({
                 equipped_minimi_id: minimiSlug || null,
-                equipped_accessories: accessorySlugs,
                 minimi_pixel_data: minimiPixelData,
-                minimi_accessories_data: accessoriesData.length > 0 ? accessoriesData : null,
             })
             .eq("id", user.id);
 
@@ -90,9 +59,7 @@ export async function POST(request: NextRequest) {
             success: true,
             equipped: {
                 minimiId: minimiSlug || null,
-                accessoryIds: accessorySlugs,
                 pixelData: minimiPixelData,
-                accessoriesData,
             },
         });
     } catch {
