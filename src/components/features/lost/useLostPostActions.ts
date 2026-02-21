@@ -8,6 +8,7 @@
 "use client";
 
 import { useState, useRef, type Dispatch, type SetStateAction } from "react";
+import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
 import { toast } from "sonner";
 import { uploadLostPetImage } from "@/lib/storage";
@@ -125,12 +126,13 @@ export function useLostPostActions({
                     imageStoragePath = uploadResult.path || null;
                 } else {
                     toast.error(uploadResult.error || "이미지 업로드 실패");
+                    setSubmitting(false);
+                    return;
                 }
             }
 
-            const res = await fetch(API.LOST_PETS, {
+            const res = await authFetch(API.LOST_PETS, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     type: form.type,
                     title: form.title.trim(),
@@ -179,7 +181,7 @@ export function useLostPostActions({
         if (!confirm("정말 삭제하시겠습니까?")) return;
 
         try {
-            const res = await fetch(API.LOST_PET_DETAIL(postId), { method: "DELETE" });
+            const res = await authFetch(API.LOST_PET_DETAIL(postId), { method: "DELETE" });
             if (!res.ok) {
                 const err = await res.json();
                 throw new Error(err.error || "삭제 실패");
@@ -201,9 +203,8 @@ export function useLostPostActions({
         if (!confirm("찾았어요! 해결 완료로 표시하시겠습니까?")) return;
 
         try {
-            const res = await fetch(API.LOST_PET_DETAIL(postId), {
+            const res = await authFetch(API.LOST_PET_DETAIL(postId), {
                 method: "PATCH",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ status: "resolved" }),
             });
             if (!res.ok) {

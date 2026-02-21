@@ -45,6 +45,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { authFetch } from "@/lib/auth-fetch";
 import { uploadLocalPostImage } from "@/lib/storage";
 import { TabType } from "@/types";
 import { API } from "@/config/apiEndpoints";
@@ -226,9 +227,8 @@ export default function LocalPage({ setSelectedTab }: LocalPageProps) {
                 }
             }
 
-            const res = await fetch(API.LOCAL_POSTS, {
+            const res = await authFetch(API.LOCAL_POSTS, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     category: form.category,
                     title: form.title.trim(),
@@ -264,7 +264,7 @@ export default function LocalPage({ setSelectedTab }: LocalPageProps) {
     const handleDelete = async (postId: string) => {
         if (!confirm("정말 삭제하시겠습니까?")) return;
         try {
-            const res = await fetch(API.LOCAL_POST_DETAIL(postId), { method: "DELETE" });
+            const res = await authFetch(API.LOCAL_POST_DETAIL(postId), { method: "DELETE" });
             if (!res.ok) throw new Error("삭제 실패");
             toast.success("게시글이 삭제되었습니다.");
             setShowDetailModal(false);
@@ -278,9 +278,8 @@ export default function LocalPage({ setSelectedTab }: LocalPageProps) {
     const handleClose = async (postId: string) => {
         if (!confirm("마감 처리하시겠습니까?")) return;
         try {
-            const res = await fetch(API.LOCAL_POST_DETAIL(postId), {
+            const res = await authFetch(API.LOCAL_POST_DETAIL(postId), {
                 method: "PATCH",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ status: "closed" }),
             });
             if (!res.ok) throw new Error("마감 처리 실패");

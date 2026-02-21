@@ -93,7 +93,8 @@ export async function PATCH(
             .single();
 
         if (updateError) {
-            return NextResponse.json({ error: updateError.message }, { status: 500 });
+            console.error("[Magazine PATCH] 수정 에러:", updateError);
+            return NextResponse.json({ error: "매거진 처리 중 오류가 발생했습니다" }, { status: 500 });
         }
 
         return NextResponse.json({ article: data });
@@ -141,7 +142,8 @@ export async function DELETE(
             .eq("id", id);
 
         if (deleteError) {
-            return NextResponse.json({ error: deleteError.message }, { status: 500 });
+            console.error("[Magazine DELETE] 삭제 에러:", deleteError);
+            return NextResponse.json({ error: "매거진 처리 중 오류가 발생했습니다" }, { status: 500 });
         }
 
         return NextResponse.json({ success: true });

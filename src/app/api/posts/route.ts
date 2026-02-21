@@ -70,7 +70,8 @@ export async function GET(request: NextRequest) {
         const { data, error, count } = await query;
 
         if (error) {
-            return NextResponse.json({ error: error.message }, { status: 500 });
+            console.error("[Posts GET] 조회 에러:", error);
+            return NextResponse.json({ error: "게시글 처리 중 오류가 발생했습니다" }, { status: 500 });
         }
 
         // 댓글 수 계산 (신규/레거시 컬럼 모두 지원)
@@ -174,7 +175,8 @@ export async function POST(request: NextRequest) {
             .single();
 
         if (error) {
-            return NextResponse.json({ error: error.message }, { status: 500 });
+            console.error("[Posts POST] 작성 에러:", error);
+            return NextResponse.json({ error: "게시글 처리 중 오류가 발생했습니다" }, { status: 500 });
         }
 
         // 6. 포인트 적립 (게시글 작성 +10P, 실패해도 게시글은 정상 반환)

@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
+import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
 import { MINIMI } from "@/config/constants";
 import { toast } from "sonner";
@@ -101,9 +102,8 @@ export default function MinimiShopModal({
 
         setPurchasingId(slug);
         try {
-            const res = await fetch(API.MINIMI_PURCHASE, {
+            const res = await authFetch(API.MINIMI_PURCHASE, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ type, itemSlug: slug }),
             });
             if (!res.ok) {

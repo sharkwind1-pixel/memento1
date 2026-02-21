@@ -29,6 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import { InlineLoading } from "@/components/ui/PawLoading";
 import PawLoading from "@/components/ui/PawLoading";
 import { useAuth } from "@/contexts/AuthContext";
+import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
 import ReportModal from "@/components/modals/ReportModal";
 import MinihompyVisitModal from "@/components/features/minihompy/MinihompyVisitModal";
@@ -190,7 +191,7 @@ export default function PostDetailView({
 
         setIsLiking(true);
         try {
-            const response = await fetch(API.POST_LIKE(postId), {
+            const response = await authFetch(API.POST_LIKE(postId), {
                 method: "POST",
             });
             if (!response.ok) throw new Error("좋아요 실패");
@@ -215,9 +216,8 @@ export default function PostDetailView({
 
         setIsSubmittingComment(true);
         try {
-            const response = await fetch(API.POST_COMMENTS(postId), {
+            const response = await authFetch(API.POST_COMMENTS(postId), {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ content: commentText.trim() }),
             });
 
@@ -251,7 +251,7 @@ export default function PostDetailView({
         if (!confirm("정말 삭제하시겠습니까?")) return;
         setIsDeleting(true);
         try {
-            const response = await fetch(API.POST_DETAIL(postId), {
+            const response = await authFetch(API.POST_DETAIL(postId), {
                 method: "DELETE",
             });
             if (!response.ok) throw new Error("삭제 실패");

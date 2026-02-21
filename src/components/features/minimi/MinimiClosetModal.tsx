@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
+import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
 import { MINIMI } from "@/config/constants";
 import { toast } from "sonner";
@@ -58,7 +59,7 @@ export default function MinimiClosetModal({
 
     const loadInventory = useCallback(async () => {
         try {
-            const res = await fetch(API.MINIMI_INVENTORY);
+            const res = await authFetch(API.MINIMI_INVENTORY);
             if (!res.ok) return;
             const data = await res.json();
 
@@ -116,9 +117,8 @@ export default function MinimiClosetModal({
         setActionLoading(slug);
         try {
             const newMinimiSlug = equippedMinimiSlug === slug ? null : slug;
-            const res = await fetch(API.MINIMI_EQUIP, {
+            const res = await authFetch(API.MINIMI_EQUIP, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     minimiSlug: newMinimiSlug,
                     accessorySlugs: equippedAccessorySlugs,
@@ -156,9 +156,8 @@ export default function MinimiClosetModal({
                 newSlugs = [...equippedAccessorySlugs, slug];
             }
 
-            const res = await fetch(API.MINIMI_EQUIP, {
+            const res = await authFetch(API.MINIMI_EQUIP, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     minimiSlug: equippedMinimiSlug,
                     accessorySlugs: newSlugs,
@@ -183,9 +182,8 @@ export default function MinimiClosetModal({
         if (!sellConfirm) return;
         setActionLoading(sellConfirm.slug);
         try {
-            const res = await fetch(API.MINIMI_SELL, {
+            const res = await authFetch(API.MINIMI_SELL, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ type: sellConfirm.type, itemSlug: sellConfirm.slug }),
             });
             if (!res.ok) {

@@ -43,7 +43,8 @@ export async function GET(request: NextRequest) {
         const { data, error, count } = await query;
 
         if (error) {
-            return NextResponse.json({ error: error.message }, { status: 500 });
+            console.error("[Magazine GET] 조회 에러:", error);
+            return NextResponse.json({ error: "매거진 처리 중 오류가 발생했습니다" }, { status: 500 });
         }
 
         const articles = (data || []).map((a) => ({
@@ -131,7 +132,8 @@ export async function POST(request: NextRequest) {
             .single();
 
         if (error) {
-            return NextResponse.json({ error: error.message }, { status: 500 });
+            console.error("[Magazine POST] 작성 에러:", error);
+            return NextResponse.json({ error: "매거진 처리 중 오류가 발생했습니다" }, { status: 500 });
         }
 
         return NextResponse.json({ article: data });

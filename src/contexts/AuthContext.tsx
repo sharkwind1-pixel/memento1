@@ -283,7 +283,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // 로그인 시 프로필+포인트 통합 로드 + 출석 체크
             // (lock 바깥에서 비동기 실행하여 데드락 방지)
             if (event === "SIGNED_IN" && session?.user) {
-                const userId = session.user.id;
                 setTimeout(() => {
                     refreshProfile().then(() => checkDailyLogin());
                 }, 0);

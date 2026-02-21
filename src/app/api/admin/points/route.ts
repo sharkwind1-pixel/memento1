@@ -85,9 +85,9 @@ export async function POST(request: NextRequest) {
         });
 
         if (error) {
-            console.error("[Admin Points] RPC 에러:", error.message, error);
+            console.error("[Admin Points] RPC 에러:", error);
             return NextResponse.json(
-                { error: "포인트 지급 실패: " + error.message },
+                { error: "포인트 지급에 실패했습니다" },
                 { status: 500 }
             );
         }
@@ -110,7 +110,6 @@ export async function POST(request: NextRequest) {
         });
     } catch (err) {
         console.error("[Admin Points] 서버 오류:", err);
-        const message = err instanceof Error ? err.message : "서버 오류";
-        return NextResponse.json({ error: message }, { status: 500 });
+        return NextResponse.json({ error: "포인트 지급에 실패했습니다" }, { status: 500 });
     }
 }

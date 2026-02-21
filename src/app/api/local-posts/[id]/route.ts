@@ -80,8 +80,9 @@ export async function GET(
 
         return NextResponse.json({ post: toCamelCase(post) });
     } catch (err) {
+        console.error("[Local Posts GET] 서버 오류:", err);
         return NextResponse.json(
-            { error: "서버 오류", details: err instanceof Error ? err.message : "알 수 없는 오류" },
+            { error: "게시글 처리 중 오류가 발생했습니다" },
             { status: 500 }
         );
     }
@@ -206,8 +207,9 @@ export async function PATCH(
             .single();
 
         if (error) {
+            console.error("[Local Posts PATCH] 수정 에러:", error);
             return NextResponse.json(
-                { error: "게시글 수정 실패", details: error.message },
+                { error: "게시글 처리 중 오류가 발생했습니다" },
                 { status: 500 }
             );
         }
@@ -217,8 +219,9 @@ export async function PATCH(
             { headers: getRateLimitHeaders(rateLimit.remaining, rateLimit.resetIn) }
         );
     } catch (err) {
+        console.error("[Local Posts PATCH] 서버 오류:", err);
         return NextResponse.json(
-            { error: "서버 오류", details: err instanceof Error ? err.message : "알 수 없는 오류" },
+            { error: "게시글 처리 중 오류가 발생했습니다" },
             { status: 500 }
         );
     }
@@ -294,8 +297,9 @@ export async function DELETE(
             .eq("id", id);
 
         if (error) {
+            console.error("[Local Posts DELETE] 삭제 에러:", error);
             return NextResponse.json(
-                { error: "게시글 삭제 실패", details: error.message },
+                { error: "게시글 처리 중 오류가 발생했습니다" },
                 { status: 500 }
             );
         }
@@ -305,8 +309,9 @@ export async function DELETE(
             { headers: getRateLimitHeaders(rateLimit.remaining, rateLimit.resetIn) }
         );
     } catch (err) {
+        console.error("[Local Posts DELETE] 서버 오류:", err);
         return NextResponse.json(
-            { error: "서버 오류", details: err instanceof Error ? err.message : "알 수 없는 오류" },
+            { error: "게시글 처리 중 오류가 발생했습니다" },
             { status: 500 }
         );
     }

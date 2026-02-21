@@ -28,8 +28,8 @@ export async function POST() {
         });
 
         if (error) {
-            console.error("[Daily Check] RPC 에러:", error.message);
-            return NextResponse.json({ error: error.message }, { status: 500 });
+            console.error("[Daily Check] RPC 에러:", error);
+            return NextResponse.json({ error: "포인트 처리 중 오류가 발생했습니다" }, { status: 500 });
         }
 
         return NextResponse.json({

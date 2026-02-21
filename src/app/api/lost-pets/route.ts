@@ -82,7 +82,8 @@ export async function GET(request: NextRequest) {
         const { data, error, count } = await query;
 
         if (error) {
-            return NextResponse.json({ error: error.message }, { status: 500 });
+            console.error("[Lost Pets GET] 조회 에러:", error);
+            return NextResponse.json({ error: "게시글 처리 중 오류가 발생했습니다" }, { status: 500 });
         }
 
         // snake_case -> camelCase 변환
@@ -242,7 +243,8 @@ export async function POST(request: NextRequest) {
             .single();
 
         if (error) {
-            return NextResponse.json({ error: error.message }, { status: 500 });
+            console.error("[Lost Pets POST] 작성 에러:", error);
+            return NextResponse.json({ error: "게시글 처리 중 오류가 발생했습니다" }, { status: 500 });
         }
 
         return NextResponse.json({

@@ -83,8 +83,9 @@ export async function GET(request: NextRequest) {
         const { data, error, count } = await query;
 
         if (error) {
+            console.error("[Local Posts GET] 조회 에러:", error);
             return NextResponse.json(
-                { error: "게시글 조회 실패", details: error.message },
+                { error: "게시글 처리 중 오류가 발생했습니다" },
                 { status: 500 }
             );
         }
@@ -100,8 +101,9 @@ export async function GET(request: NextRequest) {
             totalPages,
         });
     } catch (err) {
+        console.error("[Local Posts GET] 서버 오류:", err);
         return NextResponse.json(
-            { error: "서버 오류", details: err instanceof Error ? err.message : "알 수 없는 오류" },
+            { error: "게시글 처리 중 오류가 발생했습니다" },
             { status: 500 }
         );
     }
@@ -206,8 +208,9 @@ export async function POST(request: NextRequest) {
             .single();
 
         if (error) {
+            console.error("[Local Posts POST] 작성 에러:", error);
             return NextResponse.json(
-                { error: "게시글 작성 실패", details: error.message },
+                { error: "게시글 처리 중 오류가 발생했습니다" },
                 { status: 500 }
             );
         }
@@ -220,8 +223,9 @@ export async function POST(request: NextRequest) {
             }
         );
     } catch (err) {
+        console.error("[Local Posts POST] 서버 오류:", err);
         return NextResponse.json(
-            { error: "서버 오류", details: err instanceof Error ? err.message : "알 수 없는 오류" },
+            { error: "게시글 처리 중 오류가 발생했습니다" },
             { status: 500 }
         );
     }
