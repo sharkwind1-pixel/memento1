@@ -240,16 +240,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setSession(session);
                 setUser(session?.user ?? null);
 
-                // 로그인 상태면 프로필+포인트 통합 로드 (await) + 출석 체크
+                // 세션 확인 즉시 로딩 해제 (UI를 빠르게 표시)
+                setLoading(false);
+
+                // 로그인 상태면 프로필+포인트를 백그라운드에서 로드 (UI 블로킹 없음)
                 if (session?.user) {
-                    await refreshProfile();
-                    checkDailyLogin();
+                    refreshProfile().then(() => checkDailyLogin());
                 }
             } catch {
                 // 세션 로드 실패해도 앱은 비로그인 상태로 동작
                 setSession(null);
                 setUser(null);
-            } finally {
                 setLoading(false);
             }
         };

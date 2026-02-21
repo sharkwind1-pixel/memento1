@@ -26,14 +26,12 @@ import {
     generateVideoThumbnail,
 } from "@/lib/storage";
 import { toast } from "sonner";
+import { POINTS } from "@/config/constants";
 import type { PointAction } from "@/types";
 
 // 클라이언트에서 포인트 적립 (Supabase RPC 직접 호출, 실패해도 무시)
 async function requestPointAward(actionType: PointAction, metadata?: Record<string, string>) {
     try {
-        const { supabase } = await import("@/lib/supabase");
-        const { POINTS } = await import("@/config/constants");
-
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 

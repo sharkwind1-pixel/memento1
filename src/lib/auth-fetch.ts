@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabase";
 /**
  * Authorization 헤더가 포함된 fetch
  * 세션이 없으면 토큰 없이 호출 (서버에서 401 반환)
+ * FormData 전송 시 Content-Type을 설정하지 않음 (브라우저가 multipart/form-data + boundary 자동 설정)
  */
 export async function authFetch(
     url: string,
@@ -18,11 +19,12 @@ export async function authFetch(
 ): Promise<Response> {
     const { data: { session } } = await supabase.auth.getSession();
     const token = session?.access_token;
+    const isFormData = options?.body instanceof FormData;
 
     return fetch(url, {
         ...options,
         headers: {
-            "Content-Type": "application/json",
+            ...(isFormData ? {} : { "Content-Type": "application/json" }),
             ...options?.headers,
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },

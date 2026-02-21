@@ -102,7 +102,7 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
     // ========================================================================
     return (
         <div
-            className={`min-h-screen flex flex-col relative overflow-hidden transition-all duration-500 ${
+            className={`min-h-screen flex flex-col relative overflow-hidden transition-all duration-700 ease-in-out ${
                 chat.isMemorialMode
                     ? "bg-gradient-to-b from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950 dark:via-orange-950 dark:to-gray-900"
                     : "bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
@@ -111,7 +111,7 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
             {/* 상단 DomeGallery - 3D 사진 갤러리 */}
             {chat.galleryImages.length > 0 && (
                 <div
-                    className={`flex-shrink-0 h-[180px] relative overflow-hidden ${
+                    className={`flex-shrink-0 h-[180px] relative overflow-hidden transition-all duration-700 ease-in-out ${
                         chat.isMemorialMode
                             ? "bg-gradient-to-b from-amber-100 to-amber-50"
                             : "bg-gradient-to-b from-sky-100 to-sky-50"
@@ -133,7 +133,7 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                     />
                     {/* 하단 그라데이션 페이드 */}
                     <div
-                        className={`absolute bottom-0 left-0 right-0 h-12 pointer-events-none ${
+                        className={`absolute bottom-0 left-0 right-0 h-12 pointer-events-none transition-all duration-700 ease-in-out ${
                             chat.isMemorialMode
                                 ? "bg-gradient-to-t from-amber-50 to-transparent"
                                 : "bg-gradient-to-t from-[#F0F9FF] to-transparent"
@@ -192,7 +192,7 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                 <div className="flex-1 flex flex-col min-h-0 lg:min-w-0">
                     {/* AI 고지 배너 */}
                     <div
-                        className={`mx-4 mt-2 mb-1 px-3 py-2 rounded-lg text-xs text-center ${
+                        className={`mx-4 mt-2 mb-1 px-3 py-2 rounded-lg text-xs text-center transition-colors duration-700 ${
                             chat.isMemorialMode
                                 ? "bg-amber-100/80 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
                                 : "bg-sky-100/80 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300"

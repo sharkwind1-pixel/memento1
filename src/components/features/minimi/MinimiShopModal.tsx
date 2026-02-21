@@ -222,7 +222,7 @@ export default function MinimiShopModal({
                                                             <img
                                                                 src={char.imageUrl}
                                                                 alt={char.name}
-                                                                className="w-20 h-20 object-contain"
+                                                                className="w-24 h-24 object-contain"
                                                                 style={{ imageRendering: "pixelated" }}
                                                             />
                                                         ) : (

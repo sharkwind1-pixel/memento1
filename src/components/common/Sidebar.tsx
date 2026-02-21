@@ -244,10 +244,12 @@ export default function Sidebar({
                         <button
                             onClick={() => handleMainCategoryClick(category.id)}
                             className={cn(
-                                "w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all",
+                                "w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-500",
                                 "hover:bg-gray-100 dark:hover:bg-gray-800",
                                 isMainCategoryActive(category.id)
-                                    ? "bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 font-medium"
+                                    ? isMemorialMode
+                                        ? "bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 font-medium"
+                                        : "bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 font-medium"
                                     : "text-gray-700 dark:text-gray-300"
                             )}
                         >
@@ -397,9 +399,14 @@ export default function Sidebar({
         <aside
             className={cn(
                 "flex flex-col w-80 h-full overflow-y-auto",
-                "bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg",
-                "border-r border-gray-200/50 dark:border-gray-700/50",
-                "transition-all duration-300"
+                isMemorialMode
+                    ? "bg-amber-50/80 dark:bg-amber-950/80"
+                    : "bg-white/80 dark:bg-gray-900/80",
+                "backdrop-blur-lg",
+                isMemorialMode
+                    ? "border-r border-amber-200/50 dark:border-amber-800/50"
+                    : "border-r border-gray-200/50 dark:border-gray-700/50",
+                "transition-all duration-700 ease-in-out"
             )}
         >
             {sidebarContent}

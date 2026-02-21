@@ -88,7 +88,7 @@ export default function ChatMessageList({
                                 style={{ animationDelay: index === messages.length - 1 ? "0ms" : "0ms" }}
                             >
                                 {message.role === "pet" && (
-                                    <div className={`w-9 h-9 rounded-full overflow-hidden mr-2 flex-shrink-0 ring-2 shadow-md transition-transform hover:scale-105 ${
+                                    <div className={`w-9 h-9 rounded-full overflow-hidden mr-2 flex-shrink-0 ring-2 shadow-md transition-all duration-500 hover:scale-105 ${
                                         isMemorialMode ? "ring-amber-200" : "ring-sky-200"
                                     }`}>
                                         {selectedPet?.profileImage ? (
@@ -116,7 +116,7 @@ export default function ChatMessageList({
                                 )}
                                 <div className="flex flex-col max-w-[75%]">
                                     <div
-                                        className={`px-4 py-3 rounded-2xl shadow-md transition-all hover:shadow-lg ${
+                                        className={`px-4 py-3 rounded-2xl shadow-md transition-all duration-500 hover:shadow-lg ${
                                             message.role === "user"
                                                 ? (isMemorialMode
                                                     ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-br-sm"
@@ -147,7 +147,7 @@ export default function ChatMessageList({
 
             {isTyping && (
                 <div className="flex justify-start chat-bubble-enter">
-                    <div className={`w-9 h-9 rounded-full overflow-hidden mr-2 flex-shrink-0 ring-2 shadow-md ${
+                    <div className={`w-9 h-9 rounded-full overflow-hidden mr-2 flex-shrink-0 ring-2 shadow-md transition-all duration-500 ${
                         isMemorialMode ? "ring-amber-200" : "ring-sky-200"
                     }`}>
                         {selectedPet?.profileImage ? (
@@ -158,16 +158,16 @@ export default function ChatMessageList({
                             />
                         ) : (
                             <div
-                                className={`w-full h-full flex items-center justify-center ${isMemorialMode ? "bg-gradient-to-br from-amber-100 to-orange-100" : "bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD]"}`}
+                                className={`w-full h-full flex items-center justify-center transition-all duration-500 ${isMemorialMode ? "bg-gradient-to-br from-amber-100 to-orange-100" : "bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD]"}`}
                             >
                                 <PawPrint
-                                    className={`w-4 h-4 ${isMemorialMode ? "text-amber-500" : "text-[#05B2DC]"}`}
+                                    className={`w-4 h-4 transition-colors duration-500 ${isMemorialMode ? "text-amber-500" : "text-[#05B2DC]"}`}
                                 />
                             </div>
                         )}
                     </div>
                     <div
-                        className={`px-5 py-3 rounded-2xl rounded-bl-sm ${isMemorialMode ? "bg-amber-100 border border-amber-200/50" : "bg-white shadow-sm border border-sky-100"}`}
+                        className={`px-5 py-3 rounded-2xl rounded-bl-sm transition-all duration-500 ${isMemorialMode ? "bg-amber-100 border border-amber-200/50" : "bg-white shadow-sm border border-sky-100"}`}
                     >
                         <div className="flex items-end gap-1.5">
                             {[0, 1, 2].map((i) => (

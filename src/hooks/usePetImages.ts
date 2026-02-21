@@ -20,6 +20,10 @@ interface UsePetImagesReturn {
     fetchPetImage: (breed: string) => Promise<string | null>;
 }
 
+// 모듈 레벨 캐시 (앱 생명주기 동안 유지 - API 재호출 방지)
+let cachedPetImages: Record<string, string | null> | null = null;
+let cachedAdoptionImages: string[] | null = null;
+
 export function usePetImages(): UsePetImagesReturn {
     const [petImages, setPetImages] = useState<Record<string, string | null>>(
         {}
@@ -66,6 +70,14 @@ export function usePetImages(): UsePetImagesReturn {
 
     useEffect(() => {
         const loadImages = async () => {
+            // 캐시가 있으면 API 호출 없이 즉시 반환
+            if (cachedPetImages && cachedAdoptionImages) {
+                setPetImages(cachedPetImages);
+                setAdoptionImages(cachedAdoptionImages);
+                setIsLoading(false);
+                return;
+            }
+
             try {
                 setIsLoading(true);
                 setError(null);
@@ -115,6 +127,10 @@ export function usePetImages(): UsePetImagesReturn {
                 });
 
                 setPetImages(memorialImages);
+
+                // 캐시에 저장 (다음 마운트 시 API 재호출 방지)
+                cachedPetImages = memorialImages;
+                cachedAdoptionImages = dogData.message;
             } catch {
                 setError("이미지를 불러오는데 실패했습니다.");
             } finally {

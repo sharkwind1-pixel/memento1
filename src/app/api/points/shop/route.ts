@@ -71,46 +71,40 @@ export async function POST(request: NextRequest) {
 
         const supabase = await createServerSupabase();
 
-        // 4. 현재 포인트 확인
-        const { data: profile } = await supabase
-            .from("profiles")
-            .select("points")
-            .eq("id", user.id)
-            .single();
+        // 4. 보너스 일수 계산 (프리미엄 체험인 경우)
+        let bonusDays: number | null = null;
+        if (item.effect === "premium_trial_1d") bonusDays = 1;
+        if (item.effect === "premium_trial_3d") bonusDays = 3;
 
-        if (!profile || (profile.points || 0) < item.price) {
-            return NextResponse.json({ error: "포인트가 부족합니다" }, { status: 400 });
-        }
-
-        // 5. 포인트 차감 (Race Condition 방지: gte 조건으로 잔액 재확인)
-        const { data: updated, error: updateError } = await supabase
-            .from("profiles")
-            .update({ points: (profile.points || 0) - item.price })
-            .eq("id", user.id)
-            .gte("points", item.price)
-            .select("points")
-            .single();
-
-        if (updateError || !updated) {
-            return NextResponse.json({ error: "포인트가 부족합니다" }, { status: 400 });
-        }
-
-        const remainingPoints = updated.points;
-
-        // 6. 거래 내역 기록
-        await supabase.from("point_transactions").insert({
-            user_id: user.id,
-            action_type: "shop_purchase",
-            points_earned: -item.price,
-            metadata: { itemId, itemName: item.name, effect: item.effect },
+        // 5. RPC로 원자적 구매 처리
+        const { data, error: rpcError } = await supabase.rpc("purchase_shop_item", {
+            p_user_id: user.id,
+            p_item_id: itemId,
+            p_item_name: item.name,
+            p_item_price: item.price,
+            p_effect: item.effect,
+            p_bonus_days: bonusDays,
         });
 
-        // 7. 효과 적용
+        if (rpcError) {
+            console.error("[points/shop] RPC error:", rpcError.message);
+            return NextResponse.json({ error: "구매 처리 중 오류가 발생했습니다" }, { status: 500 });
+        }
+
+        if (!data?.success) {
+            const errMap: Record<string, { msg: string; status: number }> = {
+                user_not_found: { msg: "사용자 정보를 찾을 수 없습니다", status: 400 },
+                insufficient_points: { msg: "포인트가 부족합니다", status: 400 },
+            };
+            const err = errMap[data?.error] || { msg: "구매에 실패했습니다", status: 500 };
+            return NextResponse.json({ error: err.msg }, { status: err.status });
+        }
+
+        const remainingPoints = data.remaining_points;
+
+        // 6. 효과별 응답 분기
         if (item.effect === "chat_bonus_5" || item.effect === "chat_bonus_10") {
             const bonusAmount = item.effect === "chat_bonus_5" ? 5 : 10;
-            // chat_bonus를 profiles에 저장 (또는 별도 테이블)
-            // 현재는 localStorage 기반 사용량이므로 클라이언트에서 처리
-            // 응답에 bonus 정보 포함
             return NextResponse.json({
                 success: true,
                 effect: item.effect,
@@ -120,43 +114,13 @@ export async function POST(request: NextRequest) {
             });
         }
 
-        if (item.effect === "premium_trial_1d" || item.effect === "premium_trial_3d") {
-            const days = item.effect === "premium_trial_1d" ? 1 : 3;
-            const expiresAt = new Date();
-            expiresAt.setDate(expiresAt.getDate() + days);
-
-            // premium_expires_at 업데이트
-            const { data: currentProfile } = await supabase
-                .from("profiles")
-                .select("is_premium, premium_expires_at")
-                .eq("id", user.id)
-                .single();
-
-            // 이미 프리미엄인 경우 만료일 연장, 아닌 경우 새로 설정
-            let newExpiresAt = expiresAt;
-            if (currentProfile?.is_premium && currentProfile?.premium_expires_at) {
-                const currentExpiry = new Date(currentProfile.premium_expires_at);
-                if (currentExpiry > new Date()) {
-                    // 기존 만료일에서 연장
-                    newExpiresAt = new Date(currentExpiry);
-                    newExpiresAt.setDate(newExpiresAt.getDate() + days);
-                }
-            }
-
-            await supabase
-                .from("profiles")
-                .update({
-                    is_premium: true,
-                    premium_expires_at: newExpiresAt.toISOString(),
-                })
-                .eq("id", user.id);
-
+        if (bonusDays !== null) {
             return NextResponse.json({
                 success: true,
                 effect: item.effect,
-                premiumExpiresAt: newExpiresAt.toISOString(),
+                premiumExpiresAt: data.premium_expires_at,
                 remainingPoints,
-                message: `프리미엄 ${days}일 체험이 시작되었습니다!`,
+                message: `프리미엄 ${bonusDays}일 체험이 시작되었습니다!`,
             });
         }
 

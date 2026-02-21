@@ -272,6 +272,31 @@ body {
     overflow-x: hidden;
 }
 
+/* 모드 전환 페이드 오버레이 (일상 ↔ 추모) */
+@keyframes modeTransitionFade {
+    0% {
+        opacity: 0;
+    }
+    40% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+.mode-transition-overlay {
+    animation: modeTransitionFade 0.7s ease-in-out forwards;
+    pointer-events: none;
+}
+
+/* 모드 전환용 부드러운 색상 전환 유틸리티 */
+.mode-transition {
+    transition-property: background-color, background-image, border-color, color, box-shadow, ring-color;
+    transition-duration: 700ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* 페이지 전환 시 깜빡임 방지 */
 #main-content {
     /* 레이아웃 시프트 방지 */

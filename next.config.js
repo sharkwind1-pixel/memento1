@@ -1,4 +1,21 @@
 /** @type {import('next').NextConfig} */
+
+// Content-Security-Policy 헤더 값
+const ContentSecurityPolicy = `
+    default-src 'self';
+    script-src 'self' 'unsafe-eval' 'unsafe-inline';
+    style-src 'self' 'unsafe-inline';
+    img-src 'self' data: blob: *.supabase.co *.supabase.in;
+    font-src 'self';
+    connect-src 'self' *.supabase.co *.supabase.in api.openai.com apis.data.go.kr;
+    frame-src 'self';
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+`
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
 const nextConfig = {
     // Strict Mode - 개발 모드에서 하이드레이션 버그 감지
     reactStrictMode: true,
@@ -12,6 +29,10 @@ const nextConfig = {
             {
                 source: "/(.*)",
                 headers: [
+                    {
+                        key: "Content-Security-Policy",
+                        value: ContentSecurityPolicy,
+                    },
                     {
                         key: "X-Frame-Options",
                         value: "DENY",

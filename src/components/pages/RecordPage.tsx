@@ -932,7 +932,7 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
 
                                             {/* 하단 정보 오버레이 */}
                                             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent p-2 pt-6">
-                                                <div className="flex items-center justify-center gap-1">
+                                                <div className="flex items-center justify-center gap-1 min-w-0">
                                                     <span className="font-semibold text-white text-sm truncate">
                                                         {pet.name}
                                                     </span>

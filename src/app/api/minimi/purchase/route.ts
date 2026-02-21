@@ -50,68 +50,32 @@ export async function POST(request: NextRequest) {
 
         const supabase = await createServerSupabase();
 
-        // 4. 중복 구매 체크
-        const { data: existing } = await supabase
-            .from("user_minimi")
-            .select("id")
-            .eq("user_id", user.id)
-            .eq("minimi_id", itemSlug)
-            .maybeSingle();
-        if (existing) {
-            return NextResponse.json({ error: "이미 보유한 캐릭터입니다" }, { status: 400 });
-        }
-
-        // 5. 포인트 확인 + 차감 (Race Condition 방지)
-        const { data: profile } = await supabase
-            .from("profiles")
-            .select("points")
-            .eq("id", user.id)
-            .single();
-
-        if (!profile || (profile.points || 0) < itemPrice) {
-            return NextResponse.json({ error: "포인트가 부족합니다" }, { status: 400 });
-        }
-
-        const { data: updated, error: updateError } = await supabase
-            .from("profiles")
-            .update({ points: (profile.points || 0) - itemPrice })
-            .eq("id", user.id)
-            .gte("points", itemPrice)
-            .select("points")
-            .single();
-
-        if (updateError || !updated) {
-            return NextResponse.json({ error: "포인트가 부족합니다" }, { status: 400 });
-        }
-
-        // 6. 아이템 추가
-        const { error: insertError } = await supabase
-            .from("user_minimi")
-            .insert({
-                user_id: user.id,
-                minimi_id: itemSlug,
-                purchase_price: itemPrice,
-            });
-        if (insertError) {
-            // 롤백: 포인트 복구
-            await supabase
-                .from("profiles")
-                .update({ points: (updated.points || 0) + itemPrice })
-                .eq("id", user.id);
-            return NextResponse.json({ error: "구매에 실패했습니다" }, { status: 500 });
-        }
-
-        // 7. 거래 내역 기록
-        await supabase.from("point_transactions").insert({
-            user_id: user.id,
-            action_type: "minimi_purchase",
-            points_earned: -itemPrice,
-            metadata: { type, itemSlug, itemName },
+        // 4. RPC로 원자적 구매 처리
+        const { data, error: rpcError } = await supabase.rpc("purchase_minimi_item", {
+            p_user_id: user.id,
+            p_minimi_id: itemSlug,
+            p_item_name: itemName,
+            p_item_price: itemPrice,
         });
+
+        if (rpcError) {
+            console.error("[minimi/purchase] RPC error:", rpcError.message);
+            return NextResponse.json({ error: "구매 처리 중 오류가 발생했습니다" }, { status: 500 });
+        }
+
+        if (!data?.success) {
+            const errMap: Record<string, { msg: string; status: number }> = {
+                already_owned: { msg: "이미 보유한 캐릭터입니다", status: 400 },
+                user_not_found: { msg: "사용자 정보를 찾을 수 없습니다", status: 400 },
+                insufficient_points: { msg: "포인트가 부족합니다", status: 400 },
+            };
+            const err = errMap[data?.error] || { msg: "구매에 실패했습니다", status: 500 };
+            return NextResponse.json({ error: err.msg }, { status: err.status });
+        }
 
         return NextResponse.json({
             success: true,
-            remainingPoints: updated.points,
+            remainingPoints: data.remaining_points,
             resellPrice: Math.ceil(itemPrice * MINIMI.RESELL_RATIO),
             message: `${itemName}을(를) 구매했습니다!`,
         });

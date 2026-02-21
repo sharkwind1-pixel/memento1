@@ -27,122 +27,107 @@ export function useSmoothAutoScroll() {
         const startX = [0, 0, 0, 0];
         const scrollStart = [0, 0, 0, 0];
 
-        // 이벤트 핸들러들
-        const handleMouseEnter = (index: number) => () => {
-            pausedRef.current[index] = true;
-        };
-
-        const handleMouseLeave = (index: number) => () => {
-            if (!isDragging[index]) {
-                pausedRef.current[index] = false;
-                // 현재 스크롤 위치 동기화
-                const container = refs[index].current;
-                if (container) {
-                    scrollPosRef.current[index] = container.scrollLeft;
-                }
-            }
-        };
-
-        const handleMouseDown = (index: number) => (e: MouseEvent) => {
-            const container = refs[index].current;
-            if (!container) return;
-
-            isDragging[index] = true;
-            startX[index] = e.pageX - container.offsetLeft;
-            scrollStart[index] = container.scrollLeft;
-            container.style.cursor = "grabbing";
-            container.style.userSelect = "none";
-        };
-
-        const handleMouseMove = (index: number) => (e: MouseEvent) => {
-            if (!isDragging[index]) return;
-            const container = refs[index].current;
-            if (!container) return;
-
-            e.preventDefault();
-            const x = e.pageX - container.offsetLeft;
-            const walk = (x - startX[index]) * 1.5; // 드래그 감도
-            container.scrollLeft = scrollStart[index] - walk;
-            scrollPosRef.current[index] = container.scrollLeft;
-        };
-
-        const handleMouseUp = (index: number) => () => {
-            const container = refs[index].current;
-            if (!container) return;
-
-            isDragging[index] = false;
-            container.style.cursor = "grab";
-            container.style.userSelect = "";
-        };
-
-        // 터치 이벤트 (모바일) - 드래그 + 관성 스크롤
+        // 터치 이벤트 상태
         const touchStartX = [0, 0, 0, 0];
         const touchScrollStart = [0, 0, 0, 0];
         const lastTouchX = [0, 0, 0, 0];
         const lastTouchTime = [0, 0, 0, 0];
         const velocity = [0, 0, 0, 0];
 
-        const handleTouchStart = (index: number) => (e: TouchEvent) => {
-            pausedRef.current[index] = true;
-            const container = refs[index].current;
-            if (!container) return;
-
-            const touch = e.touches[0];
-            touchStartX[index] = touch.pageX;
-            touchScrollStart[index] = container.scrollLeft;
-            lastTouchX[index] = touch.pageX;
-            lastTouchTime[index] = Date.now();
-            velocity[index] = 0;
-        };
-
-        const handleTouchMove = (index: number) => (e: TouchEvent) => {
-            const container = refs[index].current;
-            if (!container) return;
-
-            const touch = e.touches[0];
-            const currentX = touch.pageX;
-            const currentTime = Date.now();
-
-            // 속도 계산 (관성용)
-            const dt = currentTime - lastTouchTime[index];
-            if (dt > 0) {
-                velocity[index] = (lastTouchX[index] - currentX) / dt;
-            }
-
-            lastTouchX[index] = currentX;
-            lastTouchTime[index] = currentTime;
-
-            // 드래그로 스크롤
-            const walk = (touchStartX[index] - currentX) * 1.2;
-            container.scrollLeft = touchScrollStart[index] + walk;
-            scrollPosRef.current[index] = container.scrollLeft;
-        };
-
-        const handleTouchEnd = (index: number) => () => {
-            const container = refs[index].current;
-            if (!container) return;
-
-            // 관성 스크롤 (flick gesture)
-            const v = velocity[index];
-            if (Math.abs(v) > 0.3) {
-                const momentum = v * 150; // 관성 강도
-                const targetScroll = container.scrollLeft + momentum;
-
-                container.scrollTo({
-                    left: targetScroll,
-                    behavior: "smooth",
-                });
-
-                // 관성 스크롤 완료 후 위치 동기화
-                setTimeout(() => {
+        // 바인딩된 핸들러 참조 저장 (removeEventListener에서 동일 참조 사용)
+        const boundHandlers: Array<{
+            mouseenter: () => void;
+            mouseleave: () => void;
+            mousedown: (e: MouseEvent) => void;
+            mousemove: (e: MouseEvent) => void;
+            mouseup: () => void;
+            touchstart: (e: TouchEvent) => void;
+            touchmove: (e: TouchEvent) => void;
+            touchend: () => void;
+        }> = refs.map((_, index) => ({
+            mouseenter: () => {
+                pausedRef.current[index] = true;
+            },
+            mouseleave: () => {
+                if (!isDragging[index]) {
+                    pausedRef.current[index] = false;
+                    const container = refs[index].current;
+                    if (container) {
+                        scrollPosRef.current[index] = container.scrollLeft;
+                    }
+                }
+            },
+            mousedown: (e: MouseEvent) => {
+                const container = refs[index].current;
+                if (!container) return;
+                isDragging[index] = true;
+                startX[index] = e.pageX - container.offsetLeft;
+                scrollStart[index] = container.scrollLeft;
+                container.style.cursor = "grabbing";
+                container.style.userSelect = "none";
+            },
+            mousemove: (e: MouseEvent) => {
+                if (!isDragging[index]) return;
+                const container = refs[index].current;
+                if (!container) return;
+                e.preventDefault();
+                const x = e.pageX - container.offsetLeft;
+                const walk = (x - startX[index]) * 1.5;
+                container.scrollLeft = scrollStart[index] - walk;
+                scrollPosRef.current[index] = container.scrollLeft;
+            },
+            mouseup: () => {
+                const container = refs[index].current;
+                if (!container) return;
+                isDragging[index] = false;
+                container.style.cursor = "grab";
+                container.style.userSelect = "";
+            },
+            touchstart: (e: TouchEvent) => {
+                pausedRef.current[index] = true;
+                const container = refs[index].current;
+                if (!container) return;
+                const touch = e.touches[0];
+                touchStartX[index] = touch.pageX;
+                touchScrollStart[index] = container.scrollLeft;
+                lastTouchX[index] = touch.pageX;
+                lastTouchTime[index] = Date.now();
+                velocity[index] = 0;
+            },
+            touchmove: (e: TouchEvent) => {
+                const container = refs[index].current;
+                if (!container) return;
+                const touch = e.touches[0];
+                const currentX = touch.pageX;
+                const currentTime = Date.now();
+                const dt = currentTime - lastTouchTime[index];
+                if (dt > 0) {
+                    velocity[index] = (lastTouchX[index] - currentX) / dt;
+                }
+                lastTouchX[index] = currentX;
+                lastTouchTime[index] = currentTime;
+                const walk = (touchStartX[index] - currentX) * 1.2;
+                container.scrollLeft = touchScrollStart[index] + walk;
+                scrollPosRef.current[index] = container.scrollLeft;
+            },
+            touchend: () => {
+                const container = refs[index].current;
+                if (!container) return;
+                const v = velocity[index];
+                if (Math.abs(v) > 0.3) {
+                    const momentum = v * 150;
+                    const targetScroll = container.scrollLeft + momentum;
+                    container.scrollTo({ left: targetScroll, behavior: "smooth" });
+                    setTimeout(() => {
+                        scrollPosRef.current[index] = container.scrollLeft;
+                        pausedRef.current[index] = false;
+                    }, 300);
+                } else {
                     scrollPosRef.current[index] = container.scrollLeft;
                     pausedRef.current[index] = false;
-                }, 300);
-            } else {
-                scrollPosRef.current[index] = container.scrollLeft;
-                pausedRef.current[index] = false;
-            }
-        };
+                }
+            },
+        }));
 
         // DOM 렌더링 대기 후 시작
         const startTimer = setTimeout(() => {
@@ -153,15 +138,16 @@ export function useSmoothAutoScroll() {
                 // 기본 커서 스타일
                 container.style.cursor = "grab";
 
-                // 이벤트 리스너 등록
-                container.addEventListener("mouseenter", handleMouseEnter(index));
-                container.addEventListener("mouseleave", handleMouseLeave(index));
-                container.addEventListener("mousedown", handleMouseDown(index));
-                container.addEventListener("mousemove", handleMouseMove(index));
-                container.addEventListener("mouseup", handleMouseUp(index));
-                container.addEventListener("touchstart", handleTouchStart(index), { passive: true });
-                container.addEventListener("touchmove", handleTouchMove(index), { passive: true });
-                container.addEventListener("touchend", handleTouchEnd(index), { passive: true });
+                // 저장된 핸들러 참조로 이벤트 리스너 등록
+                const h = boundHandlers[index];
+                container.addEventListener("mouseenter", h.mouseenter);
+                container.addEventListener("mouseleave", h.mouseleave);
+                container.addEventListener("mousedown", h.mousedown);
+                container.addEventListener("mousemove", h.mousemove);
+                container.addEventListener("mouseup", h.mouseup);
+                container.addEventListener("touchstart", h.touchstart, { passive: true });
+                container.addEventListener("touchmove", h.touchmove, { passive: true });
+                container.addEventListener("touchend", h.touchend, { passive: true });
 
                 // 애니메이션 루프
                 let lastTime = 0;
@@ -207,19 +193,20 @@ export function useSmoothAutoScroll() {
             });
             animationIdsRef.current = [];
 
-            // 이벤트 리스너 정리
+            // 동일한 핸들러 참조로 이벤트 리스너 정리 (누수 방지)
             refs.forEach((ref, index) => {
                 const container = ref.current;
                 if (!container) return;
 
-                container.removeEventListener("mouseenter", handleMouseEnter(index));
-                container.removeEventListener("mouseleave", handleMouseLeave(index));
-                container.removeEventListener("mousedown", handleMouseDown(index));
-                container.removeEventListener("mousemove", handleMouseMove(index));
-                container.removeEventListener("mouseup", handleMouseUp(index));
-                container.removeEventListener("touchstart", handleTouchStart(index));
-                container.removeEventListener("touchmove", handleTouchMove(index));
-                container.removeEventListener("touchend", handleTouchEnd(index));
+                const h = boundHandlers[index];
+                container.removeEventListener("mouseenter", h.mouseenter);
+                container.removeEventListener("mouseleave", h.mouseleave);
+                container.removeEventListener("mousedown", h.mousedown);
+                container.removeEventListener("mousemove", h.mousemove);
+                container.removeEventListener("mouseup", h.mouseup);
+                container.removeEventListener("touchstart", h.touchstart);
+                container.removeEventListener("touchmove", h.touchmove);
+                container.removeEventListener("touchend", h.touchend);
             });
         };
     }, []);

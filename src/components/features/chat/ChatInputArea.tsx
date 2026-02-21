@@ -95,7 +95,7 @@ export default function ChatInputArea({
 
     return (
         <div
-            className={`flex-shrink-0 px-4 pt-2 pb-2 border-t transition-all duration-500 ${isMemorialMode ? "bg-amber-50/80 border-amber-200/50" : "bg-white/80 border-gray-200/50"} backdrop-blur-lg`}
+            className={`flex-shrink-0 px-4 pt-2 pb-2 border-t transition-all duration-700 ease-in-out ${isMemorialMode ? "bg-amber-50/80 border-amber-200/50" : "bg-white/80 border-gray-200/50"} backdrop-blur-lg`}
         >
             <div className="max-w-2xl mx-auto">
                 {isLimitReached ? (
@@ -230,9 +230,10 @@ export default function ChatInputArea({
                         )}
                         <div className="flex items-center justify-center gap-2 mt-1 flex-wrap">
                             {isPremium ? (
-                                <span className="text-xs px-2 py-0.5 rounded-full flex items-center gap-1 bg-violet-100 text-violet-600">
-                                    <Sparkles className="w-3 h-3" />
-                                    프리미엄 회원 — 마음껏 이야기하세요
+                                <span className="text-xs px-2 py-0.5 rounded-full flex items-center gap-1 bg-violet-100 text-violet-600 whitespace-nowrap">
+                                    <Sparkles className="w-3 h-3 flex-shrink-0" />
+                                    <span className="hidden sm:inline">프리미엄 회원 — 마음껏 이야기하세요</span>
+                                    <span className="sm:hidden">프리미엄 무제한</span>
                                 </span>
                             ) : (
                                 <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 ${

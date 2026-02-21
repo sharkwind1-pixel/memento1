@@ -12,11 +12,12 @@
  *
  * URL 동기화:
  * - ?tab=xxx&sub=yyy 형태로 상태 관리
- * - 브라우저 뒤로가기/앞으로가기 지원
+ * - router.push로 탭 전환 히스토리 기록 → 브라우저 뒤로가기/앞으로가기 지원
  * - localStorage 백업 (새로고침 시 복원)
  *
  * 최적화:
- * - Dynamic import로 각 페이지 lazy loading
+ * - HomePage만 정적 import (첫 화면)
+ * - 나머지 5개 페이지는 next/dynamic 코드스플리팅
  * - 초기 번들 크기 최소화
  *
  * ============================================================================
@@ -29,6 +30,8 @@
 // ============================================================================
 import { useState, useEffect, Suspense, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import { Loader2 } from "lucide-react";
 import { TabType, CommunitySubcategory, getLegacyTabRedirect } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePets } from "@/contexts/PetContext";
@@ -56,17 +59,37 @@ const isValidSubcategory = (sub: string | null): sub is CommunitySubcategory => 
 };
 
 // ============================================================================
-// 페이지 컴포넌트 - 정적 import로 떨림 방지
+// 페이지 컴포넌트 - HomePage만 정적, 나머지는 dynamic import (코드스플리팅)
 // ============================================================================
-// Dynamic import 제거 - 페이지 전환 시 지연/떨림의 주요 원인
-// 번들 크기가 약간 증가하지만 UX가 훨씬 부드러워짐
+// HomePage는 첫 화면이므로 정적 import 유지
+// 나머지 5개 페이지는 lazy loading으로 초기 번들 크기 최소화
 
 import HomePage from "@/components/pages/HomePage";
-import CommunityPage from "@/components/pages/CommunityPage";
-import AIChatPage from "@/components/pages/AIChatPage";
-import MagazinePage from "@/components/pages/MagazinePage";
-import RecordPage from "@/components/pages/RecordPage";
-import AdminPage from "@/components/pages/AdminPage";
+
+/** 페이지 로딩 중 표시되는 스켈레톤 */
+function PageSkeleton() {
+    return (
+        <div className="flex items-center justify-center py-20">
+            <Loader2 className="w-8 h-8 text-[#05B2DC] animate-spin" />
+        </div>
+    );
+}
+
+const CommunityPage = dynamic(() => import("@/components/pages/CommunityPage"), {
+    loading: () => <PageSkeleton />,
+});
+const AIChatPage = dynamic(() => import("@/components/pages/AIChatPage"), {
+    loading: () => <PageSkeleton />,
+});
+const MagazinePage = dynamic(() => import("@/components/pages/MagazinePage"), {
+    loading: () => <PageSkeleton />,
+});
+const RecordPage = dynamic(() => import("@/components/pages/RecordPage"), {
+    loading: () => <PageSkeleton />,
+});
+const AdminPage = dynamic(() => import("@/components/pages/AdminPage"), {
+    loading: () => <PageSkeleton />,
+});
 
 // 모달 컴포넌트 - 정적 import
 import NicknameSetupModal from "@/components/Auth/NicknameSetupModal";
@@ -363,13 +386,13 @@ function HomeContent() {
             localStorage.removeItem("memento-current-subcategory");
         }
 
-        // URL 업데이트
+        // URL 업데이트 (push로 히스토리 기록 → 브라우저 뒤로가기 지원)
         if (tab === "home") {
-            router.replace("/", { scroll: false });
+            router.push("/", { scroll: false });
         } else if (sub) {
-            router.replace(`/?tab=${tab}&sub=${sub}`, { scroll: false });
+            router.push(`/?tab=${tab}&sub=${sub}`, { scroll: false });
         } else {
-            router.replace(`/?tab=${tab}`, { scroll: false });
+            router.push(`/?tab=${tab}`, { scroll: false });
         }
     }, [router]);
 

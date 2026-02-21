@@ -259,9 +259,9 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
             style={{ contain: 'layout style', transform: 'translateZ(0)' }}
         >
             {/* 배경 */}
-            <div className="absolute inset-0 bg-gradient-to-br from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
-                <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-r from-[#7DD3FC]/30 to-sky-200/30 dark:from-blue-800/20 dark:to-sky-800/20 rounded-full blur-3xl animate-pulse" />
-                <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-gradient-to-r from-sky-200/30 to-[#BAE6FD]/30 dark:from-sky-800/20 dark:to-[#0369A1]/20 rounded-full blur-3xl animate-pulse delay-1000" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-all duration-700 ease-in-out">
+                <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-r from-[#7DD3FC]/30 to-sky-200/30 dark:from-blue-800/20 dark:to-sky-800/20 rounded-full blur-2xl animate-pulse will-change-[opacity]" />
+                <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-gradient-to-r from-sky-200/30 to-[#BAE6FD]/30 dark:from-sky-800/20 dark:to-[#0369A1]/20 rounded-full blur-2xl animate-pulse delay-1000 will-change-[opacity]" />
             </div>
 
             {/* 이미지 Lightbox */}
@@ -436,13 +436,13 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                         <h3 className="font-bold text-gray-800 dark:text-white text-base mb-1 line-clamp-2 group-hover:text-[#05B2DC] transition-colors">
                                             {post.title}
                                         </h3>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-1.5">
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-1.5 min-w-0">
                                             <LevelBadge
                                                 points={[500, 10000, 3000, 100000, 30000][idx % 5]}
                                                 size="lg"
                                                 showTooltip={false}
                                             />
-                                            {post.author}님의 이야기
+                                            <span className="truncate">{post.author}님의 이야기</span>
                                         </p>
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-3 text-sm text-gray-500">
@@ -548,9 +548,9 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                                 >
                                                     {pet.badge}
                                                 </Badge>
-                                                <span className="text-xs text-gray-500 flex items-center gap-1">
-                                                    <MapPin className="w-3 h-3" />
-                                                    {pet.location}
+                                                <span className="text-xs text-gray-500 flex items-center gap-1 min-w-0">
+                                                    <MapPin className="w-3 h-3 flex-shrink-0" />
+                                                    <span className="truncate">{pet.location}</span>
                                                 </span>
                                             </div>
                                             <CardTitle className="text-base text-gray-800 dark:text-gray-100">

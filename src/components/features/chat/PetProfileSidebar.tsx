@@ -41,7 +41,7 @@ export default function PetProfileSidebar({
             {currentPhoto ? (
                 <div className="relative max-w-[280px] mx-auto lg:max-w-none">
                     <div
-                        className={`relative rounded-2xl overflow-hidden shadow-xl aspect-square ${isMemorialMode ? "ring-2 ring-amber-200/50" : "ring-2 ring-[#E0F7FF]/50"}`}
+                        className={`relative rounded-2xl overflow-hidden shadow-xl aspect-square transition-all duration-700 ${isMemorialMode ? "ring-2 ring-amber-200/50" : "ring-2 ring-[#E0F7FF]/50"}`}
                     >
                         <img
                             src={currentPhoto.url}
@@ -56,13 +56,13 @@ export default function PetProfileSidebar({
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                         <div className="absolute bottom-3 left-4 right-4 text-white">
-                            <h2 className="text-lg font-bold">
+                            <h2 className="text-lg font-bold truncate">
                                 {selectedPet?.name}
                             </h2>
-                            <p className="text-sm text-white/90">
+                            <p className="text-sm text-white/90 truncate">
                                 {selectedPet?.type} · {selectedPet?.breed}
                             </p>
-                            <p className="text-sm text-white/80 mt-1">
+                            <p className="text-sm text-white/80 mt-1 truncate">
                                 {isMemorialMode && selectedPet?.memorialDate
                                     ? `무지개다리를 건넌 지 ${Math.floor((new Date().getTime() - new Date(selectedPet.memorialDate).getTime()) / (1000 * 60 * 60 * 24))}일`
                                     : selectedPet?.birthday

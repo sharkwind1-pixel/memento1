@@ -27,11 +27,12 @@
 // ============================================================================
 // 임포트
 // ============================================================================
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { TabType, MainCategory, CommunitySubcategory } from "@/types";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePets } from "@/contexts/PetContext";
 import AuthModal from "@/components/Auth/AuthModal";
 import AccountSettingsModal from "@/components/Auth/AccountSettingsModal";
 import Sidebar from "@/components/common/Sidebar";
@@ -99,6 +100,27 @@ export default function Layout({
     // Context & State
     // ========================================================================
     const { user, loading, signOut, isAdminUser, points, pointsLoaded, userPetType, minimiEquip } = useAuth();
+    const { selectedPet } = usePets();
+
+    // 모드 전환 감지 및 페이드 오버레이
+    const isMemorialMode = selectedPet?.status === "memorial";
+    const prevModeRef = useRef<boolean | undefined>(undefined);
+    const [showModeTransition, setShowModeTransition] = useState(false);
+
+    useEffect(() => {
+        // 최초 렌더링 시에는 전환 효과 없이 모드만 기록
+        if (prevModeRef.current === undefined) {
+            prevModeRef.current = isMemorialMode;
+            return;
+        }
+        // 모드가 실제로 변경된 경우에만 페이드 효과 표시
+        if (prevModeRef.current !== isMemorialMode) {
+            prevModeRef.current = isMemorialMode;
+            setShowModeTransition(true);
+            const timer = setTimeout(() => setShowModeTransition(false), 700);
+            return () => clearTimeout(timer);
+        }
+    }, [isMemorialMode]);
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(false);
@@ -185,7 +207,22 @@ export default function Layout({
         user?.user_metadata?.nickname || user?.email?.split("@")[0] || "사용자";
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 pb-safe flex flex-col xl:block transition-colors duration-500">
+        <div className={`min-h-screen pb-safe flex flex-col xl:block transition-all duration-700 ease-in-out ${
+            isMemorialMode
+                ? "bg-gradient-to-b from-amber-50/80 via-orange-50/40 to-white dark:from-amber-950 dark:via-orange-950 dark:to-gray-900"
+                : "bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
+        }`}>
+            {/* 모드 전환 페이드 오버레이 */}
+            {showModeTransition && (
+                <div
+                    className={`fixed inset-0 z-[100] mode-transition-overlay ${
+                        isMemorialMode
+                            ? "bg-amber-100/30"
+                            : "bg-sky-100/30"
+                    }`}
+                />
+            )}
+
             {/* 인증 모달 */}
             <AuthModal
                 isOpen={isAuthModalOpen}
@@ -211,7 +248,11 @@ export default function Layout({
             {/* 헤더 - 모바일은 완전 불투명 (성능), 데스크톱은 반투명 */}
             {/* GPU 가속으로 리페인트 최소화 */}
             <header
-                className="sticky top-0 z-[60] bg-white dark:bg-gray-900 xl:bg-white/90 xl:dark:bg-gray-900/90 xl:backdrop-blur-sm border-b border-gray-200 dark:border-gray-700"
+                className={`sticky top-0 z-[60] xl:backdrop-blur-sm border-b transition-colors duration-700 ease-in-out ${
+                    isMemorialMode
+                        ? "bg-amber-50 dark:bg-amber-950 xl:bg-amber-50/90 xl:dark:bg-amber-950/90 border-amber-200 dark:border-amber-800"
+                        : "bg-white dark:bg-gray-900 xl:bg-white/90 xl:dark:bg-gray-900/90 border-gray-200 dark:border-gray-700"
+                }`}
                 style={{
                     transform: "translateZ(0)",
                     backfaceVisibility: "hidden",
@@ -355,14 +396,14 @@ export default function Layout({
                                     <Button
                                         variant="outline"
                                         onClick={openLoginModal}
-                                        className="rounded-md border-[#05B2DC] text-[#05B2DC] hover:bg-[#E0F7FF] px-1.5 sm:px-3 py-1 text-[11px] sm:text-sm h-auto"
+                                        className="rounded-md border-[#05B2DC] text-[#05B2DC] hover:bg-[#E0F7FF] px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm h-auto min-h-[36px]"
                                     >
                                         <LogIn className="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
                                         로그인
                                     </Button>
                                     <Button
                                         onClick={openSignupModal}
-                                        className="bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-[#05B2DC] rounded-md shadow-sm shadow-[#05B2DC]/25 px-1.5 sm:px-3 py-1 text-[11px] sm:text-sm h-auto"
+                                        className="bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-[#05B2DC] rounded-md shadow-sm shadow-[#05B2DC]/25 px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm h-auto min-h-[36px]"
                                     >
                                         <UserPlus className="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
                                         회원가입
@@ -421,7 +462,11 @@ export default function Layout({
 
             {/* 모바일 하단 네비게이션 - 5개 메인 카테고리 */}
             <nav
-                className="xl:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-t border-gray-100 dark:border-gray-800 z-50 pb-safe"
+                className={`xl:hidden fixed bottom-0 left-0 right-0 backdrop-blur-sm border-t z-50 pb-safe transition-colors duration-700 ease-in-out ${
+                    isMemorialMode
+                        ? "bg-amber-50/95 dark:bg-amber-950/95 border-amber-200 dark:border-amber-800"
+                        : "bg-white/95 dark:bg-gray-900/95 border-gray-100 dark:border-gray-800"
+                }`}
                 style={{
                     boxShadow: '0 -1px 12px rgba(0, 0, 0, 0.04)',
                     transform: 'translateZ(0)',
@@ -442,19 +487,27 @@ export default function Layout({
                                 onClick={() => setSelectedTab(tab.id)}
                                 className={`
                                     relative flex flex-col items-center justify-center flex-1 py-1.5
-                                    min-h-[60px] min-w-[56px] transition-colors duration-200
-                                    ${isActive ? "text-[#05B2DC] dark:text-[#38BDF8]" : "text-gray-400 dark:text-gray-500"}
+                                    min-h-[60px] min-w-[56px] transition-colors duration-500
+                                    ${isActive
+                                        ? isMemorialMode
+                                            ? "text-amber-500 dark:text-amber-400"
+                                            : "text-[#05B2DC] dark:text-[#38BDF8]"
+                                        : "text-gray-400 dark:text-gray-500"}
                                 `}
                             >
                                 <div
                                     className={`
-                                        relative flex items-center justify-center rounded-2xl transition-all duration-200
+                                        relative flex items-center justify-center rounded-2xl transition-all duration-500
                                         ${isHome
                                             ? isActive
-                                                ? "w-12 h-8 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] shadow-md shadow-[#05B2DC]/25"
+                                                ? isMemorialMode
+                                                    ? "w-12 h-8 bg-gradient-to-r from-amber-500 to-orange-500 shadow-md shadow-amber-500/25"
+                                                    : "w-12 h-8 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] shadow-md shadow-[#05B2DC]/25"
                                                 : "w-12 h-8"
                                             : isActive
-                                                ? "w-10 h-8 bg-[#E0F7FF] dark:bg-[#05B2DC]/15"
+                                                ? isMemorialMode
+                                                    ? "w-10 h-8 bg-amber-100 dark:bg-amber-500/15"
+                                                    : "w-10 h-8 bg-[#E0F7FF] dark:bg-[#05B2DC]/15"
                                                 : "w-10 h-8"
                                         }
                                     `}
@@ -473,11 +526,13 @@ export default function Layout({
                                         `}
                                     />
                                 </div>
-                                <span className={`text-xs mt-1 leading-none ${isActive ? 'font-semibold' : 'font-medium'}`}>
+                                <span className={`text-xs mt-1 leading-tight whitespace-nowrap ${isActive ? 'font-semibold' : 'font-medium'}`}>
                                     {tab.label}
                                 </span>
                                 {isActive && !isHome && (
-                                    <div className="absolute bottom-1 w-1 h-1 rounded-full bg-[#05B2DC] dark:bg-[#38BDF8]" />
+                                    <div className={`absolute bottom-1 w-1 h-1 rounded-full transition-colors duration-500 ${
+                                        isMemorialMode ? "bg-amber-500 dark:bg-amber-400" : "bg-[#05B2DC] dark:bg-[#38BDF8]"
+                                    }`} />
                                 )}
                             </button>
                         );

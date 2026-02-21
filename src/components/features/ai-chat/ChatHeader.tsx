@@ -47,7 +47,7 @@ export function ChatHeader({
 
     return (
         <div
-            className={`flex-shrink-0 px-4 py-3 border-b ${
+            className={`flex-shrink-0 px-4 py-3 border-b transition-all duration-700 ease-in-out ${
                 isMemorialMode
                     ? "bg-gradient-to-r from-amber-100/80 to-orange-100/80 border-amber-200/50"
                     : "bg-white/80 border-gray-200/50"
@@ -57,7 +57,7 @@ export function ChatHeader({
                 {/* 타이틀 & 새 대화 버튼 */}
                 <div className="flex items-center gap-3">
                     <Sparkles
-                        className={`w-5 h-5 ${
+                        className={`w-5 h-5 transition-colors duration-700 ${
                             isMemorialMode ? "text-amber-500" : "text-[#05B2DC]"
                         }`}
                     />
@@ -66,7 +66,7 @@ export function ChatHeader({
                     </h1>
                     <button
                         onClick={onNewChat}
-                        className={`p-1.5 rounded-full transition-colors ${
+                        className={`p-1.5 rounded-full transition-colors duration-500 ${
                             isMemorialMode
                                 ? "hover:bg-amber-200/50 text-amber-600"
                                 : "hover:bg-[#E0F7FF] text-[#05B2DC]"

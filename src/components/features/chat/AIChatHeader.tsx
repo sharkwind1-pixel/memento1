@@ -72,7 +72,7 @@ export default function AIChatHeader({
 
     return (
         <div
-            className={`flex-shrink-0 px-4 py-3 border-b relative z-10 transition-all duration-500 ${
+            className={`flex-shrink-0 px-4 py-3 border-b relative z-10 transition-all duration-700 ease-in-out ${
                 isMemorialMode
                     ? "bg-gradient-to-r from-amber-100/80 to-orange-100/80 border-amber-200/50"
                     : "bg-white/80 border-gray-200/50"
@@ -81,7 +81,7 @@ export default function AIChatHeader({
             <div className="max-w-2xl mx-auto flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <Sparkles
-                        className={`w-5 h-5 ${
+                        className={`w-5 h-5 transition-colors duration-700 ${
                             isMemorialMode
                                 ? "text-amber-500"
                                 : "text-[#05B2DC]"
@@ -92,7 +92,7 @@ export default function AIChatHeader({
                     </h1>
                     <button
                         onClick={onNewChat}
-                        className={`p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-colors ${
+                        className={`p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-colors duration-500 ${
                             isMemorialMode
                                 ? "hover:bg-amber-200/50 text-amber-600"
                                 : "hover:bg-[#E0F7FF] text-[#05B2DC]"
@@ -105,7 +105,7 @@ export default function AIChatHeader({
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <button
-                                className={`p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-colors ${
+                                className={`p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-colors duration-500 ${
                                     isMemorialMode
                                         ? "hover:bg-amber-200/50 text-amber-600"
                                         : "hover:bg-[#E0F7FF] text-[#05B2DC]"

@@ -413,7 +413,7 @@ export default function LocalPage({ setSelectedTab }: LocalPageProps) {
                                     }`}
                                 >
                                     <Icon className="w-4 h-4 sm:mr-1" />
-                                    <span className="text-[10px] sm:text-sm mt-0.5 sm:mt-0">{cat.label}</span>
+                                    <span className="text-[11px] sm:text-sm mt-0.5 sm:mt-0 leading-tight">{cat.label}</span>
                                 </Button>
                             );
                         })}
@@ -462,9 +462,9 @@ export default function LocalPage({ setSelectedTab }: LocalPageProps) {
                                                     {post.badge}
                                                 </Badge>
                                                 {post.region && (
-                                                    <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                                                        <MapPin className="w-3 h-3" />
-                                                        {post.region} {post.district}
+                                                    <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 min-w-0">
+                                                        <MapPin className="w-3 h-3 flex-shrink-0" />
+                                                        <span className="truncate">{post.region} {post.district}</span>
                                                     </span>
                                                 )}
                                             </div>
