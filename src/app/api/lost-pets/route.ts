@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
         const type = searchParams.get("type") || "all";           // lost / found / all
         const petType = searchParams.get("petType") || "all";     // 강아지 / 고양이 / 기타 / all
         const region = searchParams.get("region");                 // 시/도
+        const district = searchParams.get("district");             // 구/군
         const search = searchParams.get("search");                 // 검색어
         const page = parseInt(searchParams.get("page") || "1");
         const size = parseInt(searchParams.get("size") || "20");
@@ -55,6 +56,11 @@ export async function GET(request: NextRequest) {
         // 지역 필터
         if (region && region !== "all") {
             query = query.eq("region", region);
+        }
+
+        // 구/군 필터
+        if (district) {
+            query = query.eq("district", district);
         }
 
         // 검색어 필터 (SQL Injection 방지)

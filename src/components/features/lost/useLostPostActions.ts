@@ -7,7 +7,7 @@
 
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, type Dispatch, type SetStateAction } from "react";
 import { API } from "@/config/apiEndpoints";
 import { toast } from "sonner";
 import { uploadLostPetImage } from "@/lib/storage";
@@ -19,7 +19,7 @@ interface UseLostPostActionsParams {
     user: User | null;
     fetchPosts: () => void;
     fetchStats: () => void;
-    setPage: (page: number) => void;
+    setPage: Dispatch<SetStateAction<number>>;
 }
 
 export function useLostPostActions({
@@ -163,7 +163,7 @@ export function useLostPostActions({
             );
             setShowCreateModal(false);
             setPage(1);
-            fetchPosts();
+            // fetchPosts는 page 의존성으로 자동 재호출됨
             fetchStats();
         } catch (err) {
             toast.error(

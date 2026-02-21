@@ -49,6 +49,7 @@ export function useLostPosts() {
             if (selectedType !== "all") params.set("type", selectedType);
             if (selectedPetType !== "all") params.set("petType", selectedPetType);
             if (selectedRegion !== "전체") params.set("region", selectedRegion);
+            if (selectedDistrict) params.set("district", selectedDistrict);
             if (searchQuery) params.set("search", searchQuery);
 
             const res = await fetch(`${API.LOST_PETS}?${params.toString()}`);
@@ -64,7 +65,7 @@ export function useLostPosts() {
         } finally {
             setLoading(false);
         }
-    }, [page, selectedType, selectedPetType, selectedRegion, searchQuery]);
+    }, [page, selectedType, selectedPetType, selectedRegion, selectedDistrict, searchQuery]);
 
     // 통계 가져오기 (전체 실종/발견 수)
     const fetchStats = useCallback(async () => {
@@ -106,16 +107,16 @@ export function useLostPosts() {
     };
 
     // 검색어 debounce: 타이핑 후 300ms 후 자동 검색
+    const prevSearchRef = useRef<string>("");
     useEffect(() => {
         if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
         debounceTimerRef.current = setTimeout(() => {
             const trimmed = searchInput.trim();
-            // handleSearch에서 이미 설정된 같은 값이면 skip (이중 실행 방지)
-            setSearchQuery((prev) => {
-                if (prev === trimmed) return prev;
+            if (prevSearchRef.current !== trimmed) {
+                prevSearchRef.current = trimmed;
+                setSearchQuery(trimmed);
                 setPage(1);
-                return trimmed;
-            });
+            }
         }, 300);
         return () => {
             if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
@@ -125,7 +126,7 @@ export function useLostPosts() {
     // 필터 변경 시 페이지 리셋
     useEffect(() => {
         setPage(1);
-    }, [selectedType, selectedPetType, selectedRegion]);
+    }, [selectedType, selectedPetType, selectedRegion, selectedDistrict]);
 
     // 필터 초기화
     const resetFilters = () => {
