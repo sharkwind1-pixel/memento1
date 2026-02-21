@@ -208,6 +208,15 @@
 ---
 
 ## 다음 할 일
+
+### [긴급] 미니미 픽셀 아트 품질 수정 필요
+- **문제**: VM 터미널 Claude가 미니미 픽셀 그리드를 시각적 확인 없이 숫자만 보고 수정함. 결과물 품질이 심각하게 떨어짐
+- **대상 파일**: `src/data/minimiPixels.ts` - maltipooGrid, yorkshireGrid, goldenGrid 전부
+- **요구사항**: 4번(비주얼 디자이너) 에이전트 투입해서 기존 디자인 원칙(실루엣 우선, SD비율, 좌상단 광원, 캐릭터당 3~5색) 지키면서 품질 높은 픽셀 아트로 재작업
+- **사이즈 가이드**: 골든리트리버(대형) > 요크셔테리어(소형이지만 털 볼륨) > 말티푸(소형) 크기 차이 유지
+- **렌더링**: PNG 아닌 MinimiRenderer(CSS box-shadow)로 렌더링되므로 gridToPixels 함수에 맞는 16x16 그리드 형식 유지
+
+### 기타
 - **SQL 마이그레이션 실행**: `20260222_point_transactions_rpc.sql`을 Supabase 대시보드 SQL Editor에서 실행 (RPC 활성화)
 - **사이드바 순서 변경 (선택)**: 포인트/미니미 위젯을 네비게이션 아래로 이동 (승빈님 판단 대기)
 - **local-posts 보안**: PATCH/DELETE에 `.eq("user_id")` 이중 검증 추가 + imageUrl 검증
