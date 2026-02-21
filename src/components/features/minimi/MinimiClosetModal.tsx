@@ -32,6 +32,7 @@ interface OwnedItem {
     slug: string;
     name: string;
     imageUrl?: string;
+    displayScale?: number;
     price: number;
     resellPrice: number;
 }
@@ -47,6 +48,7 @@ export default function MinimiClosetModal({
     const [ownedCharacters, setOwnedCharacters] = useState<OwnedItem[]>([]);
     const [equippedMinimiSlug, setEquippedMinimiSlug] = useState<string | null>(null);
     const [equippedImageUrl, setEquippedImageUrl] = useState<string | null>(null);
+    const [equippedDisplayScale, setEquippedDisplayScale] = useState<number>(1.0);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [sellConfirm, setSellConfirm] = useState<{ type: "character"; slug: string; name: string; resellPrice: number } | null>(null);
@@ -64,6 +66,7 @@ export default function MinimiClosetModal({
                     slug: catalog.slug,
                     name: catalog.name,
                     imageUrl: catalog.imageUrl,
+                    displayScale: catalog.displayScale,
                     price: catalog.price,
                     resellPrice: Math.ceil(catalog.price * MINIMI.RESELL_RATIO),
                 } : null;
@@ -73,8 +76,11 @@ export default function MinimiClosetModal({
 
             // 장착 상태
             const eq = data.equipped;
-            setEquippedMinimiSlug(eq?.minimiId || null);
-            setEquippedImageUrl(eq?.imageUrl || null);
+            const eqSlug = eq?.minimiId || null;
+            const eqCatalog = eqSlug ? CHARACTER_CATALOG.find(c => c.slug === eqSlug) : null;
+            setEquippedMinimiSlug(eqSlug);
+            setEquippedImageUrl(eqCatalog?.imageUrl || eq?.imageUrl || null);
+            setEquippedDisplayScale(eqCatalog?.displayScale ?? 1.0);
         } catch {
             // 에러 무시
         } finally {
@@ -106,8 +112,11 @@ export default function MinimiClosetModal({
                 throw new Error(data.error);
             }
             const data = await res.json();
-            setEquippedMinimiSlug(data.equipped.minimiId);
-            setEquippedImageUrl(data.equipped.imageUrl || null);
+            const newSlug = data.equipped.minimiId;
+            const newCatalog = newSlug ? CHARACTER_CATALOG.find(c => c.slug === newSlug) : null;
+            setEquippedMinimiSlug(newSlug);
+            setEquippedImageUrl(newCatalog?.imageUrl || data.equipped.imageUrl || null);
+            setEquippedDisplayScale(newCatalog?.displayScale ?? 1.0);
             onChanged?.();
             toast.success(newMinimiSlug ? "미니미를 장착했습니다" : "미니미를 해제했습니다");
         } catch (err) {
@@ -181,8 +190,8 @@ export default function MinimiClosetModal({
                             <Image
                                 src={equippedImageUrl}
                                 alt="장착중인 미니미"
-                                width={80}
-                                height={80}
+                                width={Math.round(80 * equippedDisplayScale)}
+                                height={Math.round(80 * equippedDisplayScale)}
                                 className="object-contain mx-auto"
                                 style={{ imageRendering: "pixelated" }}
                             />
@@ -222,13 +231,13 @@ export default function MinimiClosetModal({
                                                 : "border-gray-200 dark:border-gray-700"
                                         }`}
                                     >
-                                        <div className="flex justify-center py-2">
+                                        <div className="flex justify-center items-center py-2 h-[88px]">
                                             {char.imageUrl ? (
                                                 <Image
                                                     src={char.imageUrl}
                                                     alt={char.name}
-                                                    width={80}
-                                                    height={80}
+                                                    width={Math.round(80 * (char.displayScale ?? 1))}
+                                                    height={Math.round(80 * (char.displayScale ?? 1))}
                                                     className="object-contain"
                                                     style={{ imageRendering: "pixelated" }}
                                                 />

@@ -56,8 +56,8 @@ export default function PointsBadge() {
                             <Image
                                 src={minimiEquip.imageUrl!}
                                 alt="내 미니미"
-                                width={48}
-                                height={48}
+                                width={Math.round(48 * (minimiEquip.displayScale ?? 1))}
+                                height={Math.round(48 * (minimiEquip.displayScale ?? 1))}
                                 className="object-contain"
                                 style={{ imageRendering: "pixelated" }}
                             />

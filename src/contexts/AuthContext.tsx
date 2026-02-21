@@ -143,6 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     pixelData: data.minimi_pixel_data || null,
                     accessoriesData: data.minimi_accessories_data || [],
                     imageUrl: catalogItem?.imageUrl || null,
+                    displayScale: catalogItem?.displayScale ?? 1.0,
                 });
             }
 
