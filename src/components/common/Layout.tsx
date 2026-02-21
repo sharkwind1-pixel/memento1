@@ -273,7 +273,7 @@ export default function Layout({
                                         onClick={() =>
                                             setIsUserMenuOpen(!isUserMenuOpen)
                                         }
-                                        className="flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 rounded-full sm:rounded-xl bg-[#E0F7FF] dark:bg-gray-800 hover:bg-[#BAE6FD] dark:hover:bg-gray-700 transition-colors"
+                                        className="flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 rounded-full sm:rounded-xl hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
                                     >
                                         <span className={pointsLoaded ? "opacity-100" : "opacity-0"} style={{ transition: "opacity 0.15s" }}>
                                             <LevelBadge

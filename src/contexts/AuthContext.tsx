@@ -18,6 +18,9 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { ADMIN_EMAILS, type PetIconType } from "@/config/constants";
 import type { OnboardingData, MinimiEquipState } from "@/types";
+import { authFetch } from "@/lib/auth-fetch";
+import { API } from "@/config/apiEndpoints";
+import { toast } from "sonner";
 
 // 삭제 계정 체크 결과 타입 (기존 호환성)
 interface DeletedAccountCheck {
@@ -202,20 +205,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
-    // 출석 체크 (RPC 시도, 실패하면 무시)
-    const checkDailyLogin = useCallback(async (userId: string) => {
+    // 출석 체크 (API 엔드포인트 사용 - 서버 인증으로 RLS 우회)
+    const checkDailyLogin = useCallback(async () => {
         try {
             const today = new Date().toISOString().split("T")[0];
             const lastCheck = localStorage.getItem("lastDailyCheck");
             if (lastCheck === today) return;
 
-            const { error } = await supabase.rpc("daily_login_check", {
-                p_user_id: userId,
+            const response = await authFetch(API.POINTS_DAILY_CHECK, {
+                method: "POST",
             });
 
-            if (!error) {
-                localStorage.setItem("lastDailyCheck", today);
+            if (!response.ok) return;
+
+            const data = await response.json();
+            localStorage.setItem("lastDailyCheck", today);
+
+            if (data.success && data.earned > 0) {
                 await refreshPoints();
+                toast.success(`출석 체크 완료! +${data.earned}P`);
             }
         } catch {
             // 출석 체크 실패해도 앱 사용에 영향 없음
@@ -235,7 +243,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 // 로그인 상태면 프로필+포인트 통합 로드 (await) + 출석 체크
                 if (session?.user) {
                     await refreshProfile();
-                    checkDailyLogin(session.user.id);
+                    checkDailyLogin();
                 }
             } catch {
                 // 세션 로드 실패해도 앱은 비로그인 상태로 동작
@@ -277,7 +285,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (event === "SIGNED_IN" && session?.user) {
                 const userId = session.user.id;
                 setTimeout(() => {
-                    refreshProfile().then(() => checkDailyLogin(userId));
+                    refreshProfile().then(() => checkDailyLogin());
                 }, 0);
             }
 
