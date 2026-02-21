@@ -45,25 +45,25 @@ const PK = "#ff9999"; // 핑크 (혀, 볼, 코)
 // ============================================
 // 특징: 둥글둥글 곱슬 아웃라인, 큰 머리, 짧은 다리
 // 실루엣만으로 알 수 있는 것: 곱슬거리는 윤곽선
-const mA = "#f5e0c0"; // cream base
-const mB = "#dcc49a"; // cream shadow
-const mC = "#c4a878"; // cream dark (outline)
+const mA = "#f0c090"; // apricot base (살구색 - 실제 말티푸 색)
+const mB = "#d49860"; // apricot shadow
+const mC = "#a07040"; // apricot dark (outline)
 
 const maltipooGrid: (string | null)[][] = [
     [_, _, _, _, _, mC, mB, mC, mB, mC, _, _, _, _, _, _],
+    [_, _, _, _, mC, mA, mA, mA, mA, mA, mC, _, _, _, _, _],
     [_, _, _, mC, mA, mA, mA, mA, mA, mA, mA, mC, _, _, _, _],
-    [_, _, mC, mA, mA, mA, mA, mA, mA, mA, mA, mA, mC, _, _, _],
+    [_, _, mC, mB, mA, mA, mA, mA, mA, mA, mA, mB, mC, _, _, _],
+    [_, _, mC, mA, BK, mA, mA, mA, mA, BK, mA, mA, mC, _, _, _],
     [_, mC, mB, mA, mA, mA, mA, mA, mA, mA, mA, mA, mB, mC, _, _],
-    [_, mC, mA, mA, mA, BK, mA, mA, mA, BK, mA, mA, mA, mC, _, _],
-    [_, mC, mA, mA, mA, mA, mA, mA, mA, mA, mA, mA, mA, mC, _, _],
-    [_, _, mC, mA, mA, mA, mA, BK, mA, mA, mA, mA, mC, _, _, _],
-    [_, _, _, mC, mA, mA, PK, PK, mA, mA, mA, mC, _, _, _, _],
+    [_, mC, mC, mA, mA, mA, mA, BK, mA, mA, mA, mC, mC, _, _, _],
+    [_, _, _, mC, mA, mA, PK, PK, mA, mA, mC, _, _, _, _, _],
     [_, _, _, _, mC, mB, mB, mB, mB, mB, mC, _, _, _, _, _],
-    [_, _, _, _, mC, mA, mA, mA, mA, mA, mC, _, _, _, _, _],
     [_, _, _, _, mC, mA, mA, WH, mA, mA, mC, _, _, _, _, _],
-    [_, _, _, _, mC, mA, mA, mA, mA, mA, mC, _, _, _, _, _],
-    [_, _, _, _, mC, mC, _, _, _, mC, mC, _, _, _, _, _],
-    [_, _, _, _, mB, mB, _, _, _, mB, mB, _, _, _, _, _],
+    [_, _, _, _, mC, mA, WH, WH, WH, mA, mC, _, _, _, _, _],
+    [_, _, _, _, mC, mA, mA, WH, mA, mA, mC, _, _, _, _, _],
+    [_, _, _, _, _, mC, _, _, _, mC, _, _, _, _, _, _],
+    [_, _, _, _, _, mB, _, _, _, mB, _, _, _, _, _, _],
     [_, _, _, _, _, _, _, _, _, _, _, mC, mB, mC, _, _],
     [_, _, _, _, _, _, _, _, _, _, _, _, mC, _, _, _],
 ];
@@ -88,14 +88,14 @@ const yorkshireGrid: (string | null)[][] = [
     [_, yC, yB, yA, yA, yA, yA, yA, yA, yA, yA, yA, yB, yC, _, _],
     [_, yC, _, yC, yA, yA, yA, BK, yA, yA, yC, _, yC, _, _, _],
     [_, yC, _, _, yC, yA, PK, PK, yA, yC, _, _, yC, _, _, _],
-    [_, yC, _, _, _, yC, yB, yB, yC, _, _, _, yC, _, _, _],
-    [_, yC, _, _, yC, yA, yA, yA, yA, yC, _, _, yC, _, _, _],
-    [_, _, yC, _, yC, yA, yA, yA, yA, yC, _, yC, _, _, _, _],
+    [_, yC, _, _, yC, yB, yB, yB, yB, yC, _, _, yC, _, _, _],
+    [_, yC, _, yC, yB, yA, yA, yA, yA, yB, yC, _, yC, _, _, _],
+    [_, _, yC, yC, yB, yA, yA, yA, yA, yB, yC, yC, _, _, _, _],
     [_, _, yC, _, yC, yB, yB, yB, yB, yC, _, yC, _, _, _, _],
     [_, _, _, yC, _, yC, _, _, yC, _, yC, _, _, _, _, _],
     [_, _, _, _, _, yC, _, _, yC, _, _, _, _, _, _, _],
     [_, _, _, _, _, _, _, _, _, _, _, yB, yC, _, _, _],
-    [_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _],
+    [_, _, _, _, _, _, _, _, _, _, _, _, yB, yC, _, _],
 ];
 
 export const YORKSHIRE: PixelData = { width: 16, height: 16, pixels: gridToPixels(yorkshireGrid) };
@@ -125,8 +125,8 @@ const goldenGrid: (string | null)[][] = [
     [_, gC, gA, gA, gA, gW, gW, gW, gA, gA, gA, gA, gC, _, _, _],
     [_, _, gC, gC, _, _, gC, gC, _, _, gC, gC, _, _, _, _],
     [_, _, gC, gC, _, _, gC, gC, _, _, gC, gC, _, _, _, _],
-    [_, _, _, _, _, _, _, _, _, _, _, gA, gB, gC, _, _],
-    [_, _, _, _, _, _, _, _, _, _, _, _, gA, gC, _, _],
+    [_, _, _, _, _, _, _, _, _, _, _, gB, gB, gC, _, _],
+    [_, _, _, _, _, _, _, _, _, _, _, _, gB, gC, _, _],
 ];
 
 export const GOLDEN_RETRIEVER: PixelData = { width: 16, height: 16, pixels: gridToPixels(goldenGrid) };

@@ -170,12 +170,12 @@ export default function PremiumModal({
                                 className="w-full bg-gradient-to-r from-violet-500 to-sky-500 hover:from-violet-600 hover:to-sky-600 text-white rounded-xl py-6 font-bold"
                                 onClick={() => {
                                     // TODO: 결제 페이지로 이동
-                                    toast.info("결제 시스템을 준비하고 있어요. 곧 만나요!");
+                                    toast.info("결제 시스템이 곧 오픈됩니다. 조금만 기다려주세요!");
                                     onClose();
                                 }}
                             >
                                 <Crown className="w-5 h-5 mr-2" />
-                                프리미엄 시작하기 (준비 중)
+                                프리미엄 시작하기
                             </Button>
                             <button
                                 onClick={onClose}

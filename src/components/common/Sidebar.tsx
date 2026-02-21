@@ -117,6 +117,25 @@ export default function Sidebar({
         }
     }, [selectedTab]);
 
+    // 모바일 사이드바 열릴 때 body 스크롤 잠금
+    useEffect(() => {
+        if (isMobile && isOpen) {
+            const scrollY = window.scrollY;
+            document.body.style.overflow = "hidden";
+            document.body.style.position = "fixed";
+            document.body.style.top = `-${scrollY}px`;
+            document.body.style.width = "100%";
+
+            return () => {
+                document.body.style.overflow = "";
+                document.body.style.position = "";
+                document.body.style.top = "";
+                document.body.style.width = "";
+                window.scrollTo(0, scrollY);
+            };
+        }
+    }, [isMobile, isOpen]);
+
     const handleMainCategoryClick = (category: MainCategory) => {
         if (category === "community") {
             // 커뮤니티는 펼침/접힘 토글
@@ -356,10 +375,11 @@ export default function Sidebar({
 
         return (
             <>
-                {/* 백드롭 */}
+                {/* 백드롭 - 터치 이벤트 전파 차단 */}
                 <div
-                    className="fixed inset-0 bg-black/50 z-40"
+                    className="fixed inset-0 bg-black/50 z-40 touch-none"
                     onClick={onClose}
+                    onTouchMove={(e) => e.preventDefault()}
                 />
 
                 {/* 사이드바 패널 - transition 제거 */}
