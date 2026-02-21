@@ -119,15 +119,15 @@ export function LevelProgress({ points, nickname, petType = "dog", isAdmin = fal
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <LevelBadge points={points} petType={petType} isAdmin={isAdmin} size="lg" showTooltip={false} />
-                    <span className={cn("text-sm font-bold", level.textColor)}>
-                        {nickname || `Lv.${level.level}`}
+                    <span className={cn("text-sm font-bold", isAdmin ? "text-amber-600" : level.textColor)}>
+                        {nickname || (isAdmin ? "ADMIN" : `Lv.${level.level}`)}
                     </span>
                 </div>
                 <span className="text-[10px] text-gray-400">
-                    Lv.{level.level}
+                    {isAdmin ? "ADMIN" : `Lv.${level.level}`}
                 </span>
             </div>
-            {nextLevel && (
+            {!isAdmin && nextLevel && (
                 <>
                     <div className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                         <div
