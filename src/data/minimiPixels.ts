@@ -51,20 +51,20 @@ const mB = "#d49860"; // apricot shadow
 const mC = "#a07040"; // apricot dark (outline)
 
 const maltipooGrid: (string | null)[][] = [
-    [_, _, _, _, mC, mB, mC, mB, mC, mB, mC, _, _, _, _, _],
+    [_, _, _, _, _, mC, mB, mC, mB, mC, _, _, _, _, _, _],
+    [_, _, _, _, mC, mA, mA, mA, mA, mA, mC, _, _, _, _, _],
     [_, _, _, mC, mA, mA, mA, mA, mA, mA, mA, mC, _, _, _, _],
-    [_, _, mC, mA, mA, mA, mA, mA, mA, mA, mA, mA, mC, _, _, _],
+    [_, _, mC, mB, mA, mA, mA, mA, mA, mA, mA, mB, mC, _, _, _],
+    [_, _, mC, mA, BK, mA, mA, mA, mA, BK, mA, mA, mC, _, _, _],
     [_, mC, mB, mA, mA, mA, mA, mA, mA, mA, mA, mA, mB, mC, _, _],
-    [_, mC, mA, mA, BK, mA, mA, mA, mA, mA, BK, mA, mA, mC, _, _],
-    [mC, mB, mA, mA, mA, mA, mA, mA, mA, mA, mA, mA, mB, mC, _, _],
-    [mC, mA, mC, mA, mA, mA, mA, BK, mA, mA, mA, mC, mA, mC, _, _],
-    [_, mC, _, mC, mA, mA, PK, PK, mA, mA, mC, _, mC, _, _, _],
+    [_, mC, mC, mA, mA, mA, mA, BK, mA, mA, mA, mC, mC, _, _, _],
+    [_, _, _, mC, mA, mA, PK, PK, mA, mA, mC, _, _, _, _, _],
     [_, _, _, _, mC, mB, mB, mB, mB, mB, mC, _, _, _, _, _],
     [_, _, _, _, mC, mA, mA, WH, mA, mA, mC, _, _, _, _, _],
     [_, _, _, _, mC, mA, WH, WH, WH, mA, mC, _, _, _, _, _],
     [_, _, _, _, mC, mA, mA, WH, mA, mA, mC, _, _, _, _, _],
-    [_, _, _, _, mC, mC, _, _, _, mC, mC, _, _, _, _, _],
-    [_, _, _, _, mB, mB, _, _, _, mB, mB, _, _, _, _, _],
+    [_, _, _, _, _, mC, _, _, _, mC, _, _, _, _, _, _],
+    [_, _, _, _, _, mB, _, _, _, mB, _, _, _, _, _, _],
     [_, _, _, _, _, _, _, _, _, _, _, mC, mB, mC, _, _],
     [_, _, _, _, _, _, _, _, _, _, _, _, mC, _, _, _],
 ];
