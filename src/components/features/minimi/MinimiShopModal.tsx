@@ -219,7 +219,7 @@ export default function MinimiShopModal({
                                                         {char.description}
                                                     </p>
 
-                                                    <div className="mt-2">
+                                                    <div className="mt-auto pt-2">
                                                         {owned ? (
                                                             <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
                                                                 보유중
