@@ -52,176 +52,143 @@
 
 ### 미니미 시스템
 - 싸이월드 감성 미니홈피 + 비트캅 스타일 픽셀 미니미
-- 미니미 상점에서 구매, 옷장에서 악세서리 착용
+- 미니미 상점에서 포인트로 구매, 옷장에서 장착
+- **악세서리 시스템 삭제 완료** (캐릭터만 남음)
+- 렌더링: PNG 이미지 아닌 CSS box-shadow 픽셀데이터(MinimiRenderer)로 통일
 
 ---
 
 ## 마지막 업데이트
-- 작성자: VS Code Claude (Opus 4.6)
+- 작성자: VM 터미널 Claude (Opus 4.6)
 - 시각: 2026-02-22
-- 브랜치: `suspicious-rhodes` (worktree)
-- 최신 커밋: `3eb8d45` (fix: 말티푸 미니미 실루엣 크기 축소) -- 푸시 완료
-- 이전 main 최신: `35f7405` (fix: authFetch 마이그레이션 등)
+- 브랜치: `main`
+- 최신 커밋: `08e00a1` (fix: 미니미 렌더링 PNG→픽셀데이터 통일)
+- **suspicious-rhodes 브랜치 → main 머지 완료** (`69c0c8a`)
 
 ## 현재 상태
-- `suspicious-rhodes` 브랜치에서 작업 중 (main 미머지)
+- `main` 브랜치, origin과 동기화 완료
 - 타입체크 통과 확인 (`npx tsc --noEmit` 에러 0건)
-- 3개 커밋 푸시 완료 (origin/suspicious-rhodes)
+- 개발 서버 미실행 상태
 
-## VM 환경 설정
-- **GitHub CLI**: `gh` v2.45.0 설치됨 (`apt`)
-- **Git 인증**: `~/.git-credentials`에 PAT 저장 (credential.helper store)
-  - 토큰 만료: 2026-05-22 (90일)
-  - 권한: `repo`
-  - remote URL은 토큰 없는 클린 상태 (`https://github.com/sharkwind1-pixel/memento1.git`)
-- **gh auth login은 미완**: `read:org` 스코프 부족으로 실패. git push/pull은 credential store로 정상 작동. gh CLI(PR 생성 등)를 쓰려면 토큰에 `read:org` 권한 추가 필요
+---
 
-## 최근 완료된 작업
+## 이번 세션 작업 내역 (2026-02-22, VM 터미널 Claude)
 
-### 이전 세션 2 (2026-02-21 심야, VS Code Claude)
-1. 포인트 상점 정리
-2. petType별 아이콘 개인화 시스템
-3. 어드민 전용 아이콘 시스템
-4. 관리자 이메일 추가
-5. 관리자 대시보드 유저 목록 개선
+### 완료 커밋 목록
 
-### 이전 세션 3 (2026-02-21 오후, VM 터미널 Claude)
+| 커밋 | 내용 |
+|------|------|
+| `69c0c8a` | suspicious-rhodes → main 머지 (모바일 UX, 사이드바 스크롤, 말티푸 크기) |
+| `2eb4e6a` | 미니미 악세서리 시스템 전체 삭제 + 캐릭터 3종 사이즈 통일 |
+| `aea93bf` | 성능 최적화 + 포인트 RPC 원자성 + CSP 헤더 + 추모 전환 애니메이션 |
+| `cf7b2aa` | 데스크탑 사이드바 w-80→w-96(384px) 확대 + 미니미 사이즈 밸런스 조정 |
+| `adac4e0` | 요크셔/골든리트리버 미니미 대폭 확대 |
+| `08e00a1` | 미니미 렌더링 PNG→픽셀데이터(MinimiRenderer)로 통일 |
 
-#### 1. AIChatPage 대형 컴포넌트 분리 (860줄 -> 276줄, 68% 감소)
-- `useAIChat.ts` (566줄): 커스텀 훅 - 상태 11개, 이펙트 6개, 핸들러 3개 (handleNewChat, handleSend, handleRetry)
-- `AIChatLoginPrompt.tsx` (84줄): 비로그인 유도 화면
-- `AIChatNoPets.tsx` (39줄): 펫 미등록 유도 화면
-- `AIChatHeader.tsx` (186줄): 상단 헤더바 (펫 선택, 새 대화, 더보기 메뉴)
+### 상세 작업 내역
 
-#### 2. LostPage 대형 컴포넌트 분리 (665줄 -> 251줄, 62% 감소)
-- `useLostPosts.ts` (175줄): 목록 조회, 필터, 검색 debounce, 페이지네이션 훅
-- `useLostPostActions.ts` (253줄): 작성/삭제/해결 액션 훅
-- `LostPageHeader.tsx` (214줄): 통계 + 필터 UI 컴포넌트
+#### 1. suspicious-rhodes 브랜치 머지 (`69c0c8a`)
+- 3개 커밋 머지 (모바일 UX 개선, 사이드바 스크롤 잠금, 말티푸 미니미 크기 축소)
+- 3개 파일 충돌 해결:
+  - AdminUsersTab.tsx: main 유지 (isAdmin prop)
+  - AIChatPage.tsx: main 유지 (리팩토링된 AIChatHeader)
+  - minimiPixels.ts: suspicious-rhodes 디자인 개선 채택 + 삭제된 6캐릭터는 main 유지
 
-#### 3. 검증 완료
-- 5번(QA): tsc --noEmit PASS, import 무결성 확인
-- 7번(비판적 사고): 수정필요 판정 -> 미사용 `selectPet` 파라미터 제거 후 통과
-- 7번 발견: LostPage `selectedDistrict` 필터 -> 리팩토링 과정에서 이미 수정됨 확인
+#### 2. 미니미 악세서리 시스템 전체 삭제 (`2eb4e6a`, -529줄)
+- minimiPixels.ts: 빨간모자/선글라스/꽃왕관 데이터 + ACCESSORY_CATALOG 삭제
+- MinimiClosetModal.tsx: accessory 탭/로직/UI 전부 제거 (캐릭터만)
+- MinimiShopModal.tsx: accessory 관련 코드 제거
+- 6개 API 라우트(catalog/purchase/sell/equip/inventory): accessory 관련 전부 제거
 
-#### 4. API URL 마이그레이션 확인
-- 조사 결과 이미 전부 완료됨 (하드코딩 `/api/` URL 0건)
-- 모든 fetch/authFetch가 `API.XXX` 상수 사용 중
+#### 3. 성능 최적화 (`aea93bf`) -- 기능 변경 없이 체감 속도 개선
+- **페이지 코드스플리팅**: 5개 페이지 `next/dynamic` 적용 (HomePage만 정적 유지). 초기 번들 크기 대폭 감소
+- **외부 API 캐싱**: usePetImages 모듈 레벨 캐시 (dog.ceo API 7건 → 세션당 1회)
+- **이벤트 리스너 누수 수정**: useSmoothAutoScroll에서 factory 함수 대신 stable 참조 사용
+- **GPU 부하 감소**: HomePage blur-3xl → blur-2xl + will-change 힌트
+- **불필요한 동적 import 제거**: PetContext requestPointAward에서 이미 정적 import된 모듈 재import 제거
+- **로딩 화면 최적화**: AuthContext에서 getSession 완료 즉시 loading=false, refreshProfile은 백그라운드 실행
 
-#### 5. 3개 긴급 작업 완료 (커밋 `70e034e`, 푸시 완료)
-- **출석 포인트 버그 수정**: 클라이언트 직접 RPC -> authFetch(API.POINTS_DAILY_CHECK) 서버 API 호출로 변경, toast 알림 추가
-- **모바일 헤더 배경 삭제**: Layout.tsx에서 bg-[#E0F7FF] 제거
-- **미니미 캐릭터 정리**: 6개 캐릭터(고양이3+앵무+도마뱀+햄스터) 삭제, 강아지 3종 + 악세서리 3종만 남김
+#### 4. 포인트 트랜잭션 원자성 RPC (`aea93bf`)
+- **SQL 마이그레이션 생성**: `supabase/migrations/20260222_point_transactions_rpc.sql`
+  - `point_transactions` CHECK 제약 수정: `points_earned > 0` → `points_earned != 0` (차감 내역 허용)
+  - `purchase_minimi_item` RPC: 중복체크+차감+지급+내역 단일 트랜잭션, FOR UPDATE 행잠금, unique_violation 예외처리
+  - `sell_minimi_item` RPC: 보유확인+장착해제+삭제+환급+내역 단일 트랜잭션
+  - `purchase_shop_item` RPC: 차감+내역+프리미엄효과 단일 트랜잭션
+- **API 라우트 수정**: purchase/sell/shop 3개 API를 RPC 단일 호출로 대체 (기존 4~7단계 → 1단계)
+- **파라미터명 수정**: points.ts `p_is_one_time` → `p_one_time` (SQL 함수와 일치)
+- **중요**: SQL 마이그레이션은 Supabase 대시보드에서 직접 실행해야 활성화됨
 
-#### 6. 에러 핸들링 개선 (4건)
-- `lost-pets/[id]/route.ts`: fire-and-forget promise 체인 -> async IIFE + try/catch로 안전 처리
-- `posts/[id]/comments/route.ts`: 포인트 적립 실패 시 console.error 로깅 추가
-- `chat/route.ts`: 포인트 적립 실패 시 console.error 로깅 추가
-- `MiniHomepyTab.tsx`: console.error -> toast.error로 사용자 피드백 제공
+#### 5. CSP 보안 헤더 추가 (`aea93bf`)
+- next.config.js에 Content-Security-Policy 헤더 설정
+- 허용 출처: self, Supabase(*.supabase.co/in), OpenAI(api.openai.com), 공공데이터(apis.data.go.kr)
+- script-src: unsafe-eval/inline (Next.js 개발모드), style-src: unsafe-inline (Tailwind)
+- object-src: none, base-uri/form-action: self
 
-#### 7. 파일 정리
-- 대용량 한국어 이름 원본 PNG 3개 삭제 (17.3MB 절약) - 최적화 영문 PNG만 유지
-- .DS_Store 파일 정리
+#### 6. 추모모드 전환 애니메이션 (`aea93bf`)
+- 일상(하늘색) ↔ 추모(황금빛) 전환 시 `transition-all duration-700 ease-in-out` 적용
+- Layout.tsx: 배경 그라데이션 + 헤더 + 하단 네비 전체 700ms 부드러운 전환
+- 전환 순간 페이드 오버레이 (amber 또는 sky 30% 투명도, 700ms)
+- Sidebar, AIChatPage, ChatHeader, ChatInputArea, ChatMessageList, PetProfileCard 등 10개 파일에 일관 적용
+- globals.css에 `@keyframes modeTransitionFade` + `.mode-transition-overlay` 추가
 
-#### 8. [치명적] authFetch 마이그레이션 (커밋 `35f7405`, 푸시 완료)
-- **문제**: 인증 필요 API 16곳에서 일반 `fetch` 사용 -> Authorization 헤더 누락 -> 401 에러로 기능 전부 실패
-- **수정**: 16곳 모두 `authFetch`로 교체
-- 대상: WritePostModal, PostDetailView(좋아요/댓글/삭제), useLostPostActions(작성/삭제/해결), LocalPage(작성/삭제/수정), MinimiClosetModal(인벤/장착/판매), MinimiShopModal(구매), PointsShopModal(구매)
+#### 7. 데스크탑 사이드바 폭 확대 (`cf7b2aa`)
+- Sidebar.tsx: `w-80`(320px) → `w-96`(384px)
+- Layout.tsx: `xl:ml-80` → `xl:ml-96`
+- 모바일 사이드바(w-64)는 변경 없음
 
-#### 9. API 에러 메시지 노출 차단 (커밋 `35f7405`)
-- **문제**: 9개 API 라우트에서 DB `error.message`를 클라이언트에 직접 반환 -> DB 스키마 정보 노출
-- **수정**: 일반 한국어 메시지만 반환, 상세 에러는 `console.error` 서버 로그에만 기록
-- 대상: daily-check, points/history, admin/points, posts, lost-pets, magazine, local-posts 등
+#### 8. 미니미 캐릭터 사이즈 밸런스 (`adac4e0`, `08e00a1`)
+- 골든리트리버: 16x16 그리드 풀 채움 (16col). 머리~몸통 양쪽 끝까지 확장
+- 요크셔테리어: 15col. 리본 4px 확대, 양옆 긴 털 col 0까지 확장
+- 말티푸: 11col 유지 (소형견)
+- 크기 순서: 골든(16) > 요크셔(15) > 말티푸(11) -- 실제 견종 크기 반영
 
-#### 10. P0 버그 수정 (커밋 `35f7405`)
-- AuthContext.tsx: SIGNED_IN 핸들러 내 미사용 `userId` 변수 제거
-- useLostPostActions.ts: 이미지 업로드 실패 시 `setSubmitting(false); return;` 추가 (사진 없이 게시 방지)
+#### 9. 미니미 렌더링 PNG→픽셀데이터 통일 (`08e00a1`)
+- **문제**: 상점/옷장에서 `imageUrl`(PNG 파일)을 우선 표시 → 픽셀 데이터 수정이 반영 안 됨
+- CHARACTER_CATALOG에서 imageUrl 필드 삭제
+- MinimiShopModal/MinimiClosetModal에서 `<img src={imageUrl}>` 분기 제거
+- catalog API에서 imageUrl 전달 제거
+- 모든 곳에서 `MinimiRenderer`(CSS box-shadow 픽셀)로 통일
+- 렌더 사이즈 lg(6x) → xl(8x)로 확대
 
-#### 11. 자체 코드 리뷰 토론 (3개 에이전트 병렬)
-- 1번(프론트엔드), 2번(백엔드/보안), 7번(비판적 사고) 3개 에이전트 동시 투입
-- 발견 이슈 총 45건+ (CRITICAL 6, HIGH 17, MEDIUM 22)
-- 이번 세션에서 수정한 것: authFetch 16곳, 에러 노출 21곳, P0 2건, 에러 핸들링 4건
+---
 
-### 현재 세션 (2026-02-22, VS Code Claude, suspicious-rhodes 브랜치)
-
-#### 1. 8에이전트 전체 팀 모바일 UX/UI 회의
-- UX(3), 비주얼(4), 고객, 비판가(7), PM(8), 프론트(1), 백엔드(2), AI(6) 전원 참여
-- 승빈님 피드백으로 부적절한 지적 걸러냄:
-  - "입양정보 2단계 깊이" -> 홈에 이미 노출되어 있으므로 불필요한 지적
-  - "Open API 이미지 최적화" -> 외부 API라 컨트롤 불가
-  - MVP는 예창패 심사위원용이므로 실사용자 최적화보다 시연 완성도 우선
-
-#### 2. 모바일 UX 수정 4건 (커밋 `4475e4d`)
-- **미니미 캐릭터 크기 통일**: MinimiShopModal, MinimiClosetModal w-20(80px) -> w-24(96px), box-shadow lg와 일치
-- **모바일 텍스트 잘림/겹침 8곳 수정**: HomePage(작성자명, 입양위치), RecordPage(펫이름), PetProfileSidebar(이름/품종/날짜), Layout(로그인버튼, 하단네비), LocalPage(지역명, 카테고리), ChatInputArea(프리미엄표시)
-- **모달 중첩 조사**: early return 패턴 이미 적용되어 비의도적 중첩 없음 (추가 수정 불필요)
-- **브라우저 뒤로가기**: page.tsx `router.replace` -> `router.push`로 탭 전환 히스토리 기록
-
-#### 3. 기타 수정 (커밋 `4475e4d`)
-- AdminUsersTab LevelBadge `isAdmin` prop 타입 에러 수정
-- PointsShopModal 리팩토링
-- DB 마이그레이션 파일 `src/db/` -> `supabase/migrations/`로 이동
-- AGENTS.md 서브에이전트 오케스트레이션 문서 추가
-- authFetch FormData 호환성 수정 (Content-Type 자동 판별)
-
-#### 4. 모바일 사이드바 스크롤 잠금 (커밋 `1e00510`)
-- 사이드바 열릴 때 body `overflow:hidden` + `position:fixed`로 뒤쪽 스크롤 차단
-- 백드롭에 `touch-none` + `onTouchMove preventDefault` 추가
-- 닫힐 때 원래 스크롤 위치 복원
-
-#### 5. 말티푸 미니미 크기 축소 (커밋 `3eb8d45`)
-- 바운딩박스 14x16 -> ~12x16으로 축소 (소형견 비율 반영)
-- 골든리트리버(15x16, 대형) > 요크셔(13x16, 초소형) > 말티푸(12x16, 소형) 크기 순서 정립
-
-#### 6. 데스크톱 사이드바 UX 리뷰
-- 3번(UX디자이너) + 7번(비판가) 리뷰 완료
-- 지적: 포인트/미니미 위젯이 네비게이션보다 위에 있어 네비게이션이 밀림
-- 7번 판단: "통과(조건부)" -- MVP 블로커 아님, 순서만 바꾸면 해결, 급하진 않음
-- **미수정 상태** (승빈님 판단 대기)
-
-## 주요 파일 변경 이력 (이번 세션, suspicious-rhodes)
-
-| 파일 | 변경 내용 | 커밋 |
-|------|----------|------|
-| `src/app/page.tsx` | router.replace -> router.push (뒤로가기 지원) | `4475e4d` |
-| `src/components/common/Layout.tsx` | 로그인 버튼 크기 확대, 하단 네비 라벨 정리 | `4475e4d` |
-| `src/components/common/Sidebar.tsx` | 모바일 사이드바 body 스크롤 잠금 + 백드롭 터치 차단 | `1e00510` |
-| `src/components/pages/HomePage.tsx` | 작성자명/입양위치 텍스트 오버플로우 수정 | `4475e4d` |
-| `src/components/pages/RecordPage.tsx` | 펫 이름 min-w-0 추가 | `4475e4d` |
-| `src/components/pages/LocalPage.tsx` | 지역명/카테고리 텍스트 수정 | `4475e4d` |
-| `src/components/features/chat/PetProfileSidebar.tsx` | 이름/품종/날짜 truncate | `4475e4d` |
-| `src/components/features/chat/ChatInputArea.tsx` | 프리미엄 표시 모바일 축약 | `4475e4d` |
-| `src/components/features/minimi/MinimiShopModal.tsx` | MinimiRenderer size="lg"로 통일 | `4475e4d` |
-| `src/components/features/minimi/MinimiClosetModal.tsx` | MinimiRenderer size="lg"로 통일 | `4475e4d` |
-| `src/components/features/points/PointsShopModal.tsx` | 리팩토링 | `4475e4d` |
-| `src/components/admin/tabs/AdminUsersTab.tsx` | isAdmin prop 타입 에러 수정 | `4475e4d` |
-| `src/data/minimiPixels.ts` | 말티푸 실루엣 축소 (14x16->12x16) | `3eb8d45` |
-| `src/lib/auth-fetch.ts` | FormData 호환성 (Content-Type 자동 판별) | `4475e4d` |
-| `AGENTS.md` | 서브에이전트 오케스트레이션 문서 추가 | `4475e4d` |
-| `CLAUDE.md` | 프로젝트 컨텍스트 업데이트 | `4475e4d` |
-| `supabase/migrations/004_lost_pets.sql` | src/db/ -> supabase/migrations/ 이동 | `4475e4d` |
-| `supabase/migrations/005_local_posts.sql` | src/db/ -> supabase/migrations/ 이동 | `4475e4d` |
-
-### 이전 세션 파일 변경 (VM 터미널 Claude, main 브랜치)
+## 파일 변경 이력 (이번 세션, main 브랜치)
 
 | 파일 | 변경 내용 |
 |------|----------|
-| `src/components/pages/AIChatPage.tsx` | 860줄 -> 276줄, 훅/서브컴포넌트 사용으로 리팩토링 |
-| `src/components/features/chat/useAIChat.ts` | **신규** - AI 펫톡 비즈니스 로직 커스텀 훅 |
-| `src/components/features/chat/AIChatLoginPrompt.tsx` | **신규** - 비로그인 유도 화면 |
-| `src/components/features/chat/AIChatNoPets.tsx` | **신규** - 펫 미등록 유도 화면 |
-| `src/components/features/chat/AIChatHeader.tsx` | **신규** - 헤더바 컴포넌트 |
-| `src/components/pages/LostPage.tsx` | 665줄 -> 251줄, 훅/서브컴포넌트 사용으로 리팩토링 |
-| `src/components/features/lost/useLostPosts.ts` | **신규** - 목록/필터/페이지네이션 훅 |
-| `src/components/features/lost/useLostPostActions.ts` | **신규** - CRUD 액션 훅 + authFetch + 이미지 실패 return |
-| `src/components/features/lost/LostPageHeader.tsx` | **신규** - 통계+필터 헤더 컴포넌트 |
-| 기타 authFetch 16곳 마이그레이션, API 에러 메시지 노출 차단 21곳 등 | 커밋 `35f7405` |
+| `next.config.js` | CSP 보안 헤더 추가 |
+| `src/app/globals.css` | 모드 전환 애니메이션 keyframes + 클래스 |
+| `src/app/page.tsx` | 5개 페이지 next/dynamic 코드스플리팅 |
+| `src/app/api/minimi/catalog/route.ts` | accessory 제거 + imageUrl 제거 |
+| `src/app/api/minimi/purchase/route.ts` | RPC 단일 호출로 대체 |
+| `src/app/api/minimi/sell/route.ts` | RPC 단일 호출로 대체 |
+| `src/app/api/minimi/equip/route.ts` | accessory 관련 제거 |
+| `src/app/api/minimi/inventory/route.ts` | accessory 관련 제거 |
+| `src/app/api/points/shop/route.ts` | RPC 단일 호출로 대체 |
+| `src/components/common/Layout.tsx` | 추모 전환 애니메이션 + xl:ml-96 |
+| `src/components/common/Sidebar.tsx` | w-96 확대 + 추모 전환 애니메이션 |
+| `src/components/features/minimi/MinimiShopModal.tsx` | accessory/imageUrl 제거, MinimiRenderer xl |
+| `src/components/features/minimi/MinimiClosetModal.tsx` | accessory/imageUrl 제거, MinimiRenderer xl |
+| `src/components/pages/AIChatPage.tsx` | 추모 전환 duration-700 |
+| `src/components/pages/HomePage.tsx` | blur-2xl + will-change 최적화 |
+| `src/components/features/chat/*.tsx` | 추모 전환 애니메이션 (5개 파일) |
+| `src/components/features/record/PetProfileCard.tsx` | 추모 전환 duration-500 |
+| `src/contexts/AuthContext.tsx` | 로딩 최적화 (getSession 후 즉시 UI) |
+| `src/contexts/PetContext.tsx` | 불필요한 동적 import 제거 |
+| `src/hooks/usePetImages.ts` | 모듈 레벨 캐시 추가 |
+| `src/hooks/useSmoothAutoScroll.ts` | 이벤트 리스너 누수 수정 |
+| `src/data/minimiPixels.ts` | 악세서리 삭제 + 캐릭터 사이즈 조정 + imageUrl 삭제 |
+| `src/lib/points.ts` | p_is_one_time → p_one_time 수정 |
+| `supabase/migrations/20260222_point_transactions_rpc.sql` | **신규** - 3개 RPC 함수 + CHECK 제약 수정 |
 
-## 코드 리뷰에서 발견했으나 미수정인 이슈 (다음 세션 참고)
+---
 
-### CRITICAL (외부 리소스/아키텍처 결정 필요)
-1. **포인트 구매 트랜잭션 원자성**: shop/backgrounds/minimi 구매 시 포인트 차감+아이템 지급이 별개 쿼리. 실패 시 포인트 영구 소실 가능. DB RPC로 원자적 트랜잭션 필요
-2. **getPointsSupabase 키 혼용**: chat에서는 anon key, comments에서는 service role key 사용. 일관성 필요
-3. **Rate Limiting 누락**: GET API 11곳+, 출석체크, 포인트 등. 현재 메모리 기반은 Vercel 서버리스에서 비효과적 -> Redis(Upstash) 권장
+## 코드 리뷰에서 발견했으나 미수정인 이슈
+
+### CRITICAL
+1. ~~**포인트 구매 트랜잭션 원자성**~~ → **이번 세션에서 해결 완료** (RPC 3개)
+2. **getPointsSupabase 키 혼용**: chat에서는 anon key, comments에서는 service role key 사용
+3. **Rate Limiting 누락**: GET API 11곳+, 현재 메모리 기반은 Vercel 서버리스에서 비효과적 → Redis(Upstash) 권장
 
 ### HIGH
 4. **useAIChat selectedPet 의존성**: 객체 참조가 의존성에 포함돼 불필요한 채팅 초기화 위험
@@ -229,42 +196,71 @@
 6. **local-posts imageUrl 미검증**: javascript: URL 등 XSS 벡터 가능
 
 ### 수정필요 (리팩토링)
-7. **타입 12개+ 파일에 흩어짐**: 7개 타입이 types/index.ts와 이름/구조 충돌
+7. **타입 12개+ 파일에 흩어짐**: types/index.ts 외 산재
 8. **미사용 export 타입 13개**: types/index.ts에서 export만 되고 사용 안 됨
 9. **REGIONS/timeAgo 중복**: lostTypes.ts vs localTypes.ts 데이터 불일치
 
+### 성능 관련 (조사 완료, 미수정)
+10. **AuthContext/PetContext 단일 거대 Context**: 23개 값이 하나의 Context → 어디든 변경 시 전체 리렌더링. Context 분리 필요하지만 기능 영향 있어 보류
+11. **탭 전환 시 완전 언마운트/재마운트**: 상태 유실 + API 재호출. display:none 또는 캐싱 고려
+12. **OAuth 후 refreshProfile 이중 호출**: callback + onAuthStateChange 양쪽에서 호출
+
+---
+
 ## 다음 할 일
-- **suspicious-rhodes 브랜치 -> main 머지**: PR 생성 또는 직접 머지 필요
-- **사이드바 순서 변경 (선택)**: 포인트/미니미 위젯을 네비게이션 아래로 이동 (3번+7번 권고, 승빈님 판단 대기)
-- 위 미수정 이슈 중 CRITICAL 우선 처리 (특히 트랜잭션 원자성)
+- **SQL 마이그레이션 실행**: `20260222_point_transactions_rpc.sql`을 Supabase 대시보드 SQL Editor에서 실행 (RPC 활성화)
+- **사이드바 순서 변경 (선택)**: 포인트/미니미 위젯을 네비게이션 아래로 이동 (승빈님 판단 대기)
+- **local-posts 보안**: PATCH/DELETE에 `.eq("user_id")` 이중 검증 추가 + imageUrl 검증
+- **Rate Limiting 업그레이드**: Upstash Redis 도입 (승빈님 계정 세팅 필요)
+- **결제 연동**: 포트원(PortOne) 연동 (승빈님 포트원 계정/상점ID 필요)
 - other 타입 전용 동물 아이콘 제작 (이미지 에셋 필요)
-- 결제 연동: 포트원(PortOne) 연동 (승빈님 포트원 계정/상점ID 필요)
+
+---
+
+## VM 환경 설정
+- **GitHub CLI**: `gh` v2.45.0 설치됨 (`apt`)
+- **Git 인증**: `~/.git-credentials`에 PAT 저장 (credential.helper store)
+  - 토큰 만료: 2026-05-22 (90일)
+  - 권한: `repo`
+  - push 시 토큰 직접 추출 방식 사용: `TOKEN=$(cat ~/.git-credentials | grep github.com | sed ...) && git push "https://${TOKEN}@github.com/..." main`
+
+---
 
 ## 아키텍처 참고
 
 ### 관리자 인증 흐름
 ```
 AuthContext.refreshProfile()
-  → supabase.from("profiles").select("is_admin, ...")
-  → emailAdmin = ADMIN_EMAILS.includes(email)
-  → dbAdmin = data.is_admin === true
-  → setIsAdminUser(emailAdmin || dbAdmin)
+  -> supabase.from("profiles").select("is_admin, ...")
+  -> emailAdmin = ADMIN_EMAILS.includes(email)
+  -> dbAdmin = data.is_admin === true
+  -> setIsAdminUser(emailAdmin || dbAdmin)
 ```
 
 ### 레벨 아이콘 표시 흐름
 ```
 LevelBadge(points, petType, isAdmin)
-  → isAdmin ? ADMIN_ICONS[petType] : level.icons[petType]
-  → showName이면 isAdmin ? "ADMIN" : "Lv.X"
+  -> isAdmin ? ADMIN_ICONS[petType] : level.icons[petType]
+  -> showName이면 isAdmin ? "ADMIN" : "Lv.X"
 ```
+
+### 미니미 렌더링 흐름 (변경됨)
+```
+CHARACTER_CATALOG[].pixelData (16x16 그리드 -> box-shadow 문자열)
+  -> MinimiRenderer(pixelData, size="xl")
+  -> CSS box-shadow로 픽셀 렌더링 (1px * scale)
+  -> 사이즈: xs(2x) sm(3x) md(4x) lg(6x) xl(8x)
+PNG imageUrl은 더 이상 사용하지 않음
+```
+
+---
 
 ## 주의사항
 - CLAUDE.md, AGENTS.md의 오케스트레이션 규칙 반드시 따를 것
 - types/index.ts에서 타입 관리 (컴포넌트 자체 정의 금지, 단 admin/types.ts는 예외)
-- 이모지 사용 금지 (서비스 톤앤매너)
-- dynamic import 사용 금지
 - 직접적 죽음/사망 표현 금지 ("무지개다리", "이곳" 등 완곡 표현 사용)
+- ~~dynamic import 사용 금지~~ → 페이지 단위 `next/dynamic`은 허용 (성능 최적화), 모달/컴포넌트 단위는 금지
 - worktree에서 수정 후 메인 폴더에도 반드시 동기화할 것
-- 배포는 메인 폴더에서 git push origin main → Vercel 자동 배포
+- 배포는 메인 폴더에서 git push origin main -> Vercel 자동 배포
 - 이미지 캐시 문제 시 URL에 `?v=N` 쿼리 파라미터 추가
 - 권한 받으면 물어보지 말고 실행 (승빈님이 자거나 외출 중이면 끝내놓기)
