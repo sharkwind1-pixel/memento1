@@ -646,7 +646,7 @@ export interface MinimiCharacter {
     slug: string;
     name: string;
     category: MinimiCategory;
-    pixelData: PixelData;
+    pixelData?: PixelData | null;
     imageUrl?: string;
     price: number;
     resellPrice: number;
@@ -693,6 +693,7 @@ export interface MinimiEquipState {
     accessoryIds: string[];
     pixelData: PixelData | null;
     accessoriesData: PixelData[];
+    imageUrl?: string | null;
 }
 
 // ============================================
@@ -731,6 +732,7 @@ export interface GuestbookEntry {
     visitorId: string;
     visitorNickname: string;
     visitorMinimiData?: PixelData | null;
+    visitorImageUrl?: string | null;
     content: string;
     createdAt: string;
 }

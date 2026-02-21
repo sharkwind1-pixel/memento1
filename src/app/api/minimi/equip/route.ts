@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
         const supabase = await createServerSupabase();
 
         // 캐릭터 보유 확인 (null이면 해제)
-        let minimiPixelData = null;
+        let minimiImageUrl: string | null = null;
         if (minimiSlug) {
             const { data: owned } = await supabase
                 .from("user_minimi")
@@ -35,19 +35,20 @@ export async function POST(request: NextRequest) {
                 return NextResponse.json({ error: "보유하지 않은 캐릭터입니다" }, { status: 400 });
             }
 
-            // 픽셀 데이터 조회
+            // 이미지 URL 조회
             const character = CHARACTER_CATALOG.find(c => c.slug === minimiSlug);
             if (character) {
-                minimiPixelData = character.pixelData;
+                minimiImageUrl = character.imageUrl;
             }
         }
 
-        // profiles 업데이트 (장착 상태 + 캐시)
+        // profiles 업데이트 (장착 상태 + 이미지URL 캐시)
         const { error: updateError } = await supabase
             .from("profiles")
             .update({
                 equipped_minimi_id: minimiSlug || null,
-                minimi_pixel_data: minimiPixelData,
+                minimi_pixel_data: null,
+                minimi_image_url: minimiImageUrl,
             })
             .eq("id", user.id);
 
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
             success: true,
             equipped: {
                 minimiId: minimiSlug || null,
-                pixelData: minimiPixelData,
+                imageUrl: minimiImageUrl,
             },
         });
     } catch {

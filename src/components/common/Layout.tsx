@@ -38,7 +38,6 @@ import AccountSettingsModal from "@/components/Auth/AccountSettingsModal";
 import Sidebar from "@/components/common/Sidebar";
 import SupportModal from "@/components/features/support/SupportModal";
 import LevelBadge from "@/components/features/points/LevelBadge";
-import MinimiRenderer from "@/components/features/minimi/MinimiRenderer";
 import MagazineBanner from "@/components/features/magazine/MagazineBanner";
 import {
     Home,
@@ -325,11 +324,14 @@ export default function Layout({
                                                 showTooltip={false}
                                             />
                                         </span>
-                                        {minimiEquip.pixelData && (
-                                            <MinimiRenderer
-                                                pixelData={minimiEquip.pixelData}
-                                                accessoriesData={minimiEquip.accessoriesData}
-                                                size="xs"
+                                        {minimiEquip.imageUrl && (
+                                            <Image
+                                                src={minimiEquip.imageUrl}
+                                                alt="미니미"
+                                                width={16}
+                                                height={16}
+                                                className="object-contain"
+                                                style={{ imageRendering: "pixelated" }}
                                             />
                                         )}
                                         <span className="text-sm font-medium text-gray-700 dark:text-gray-200 hidden sm:block max-w-[80px] truncate">
@@ -349,11 +351,14 @@ export default function Layout({
                                             <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 z-50 overflow-hidden">
                                                 <div className="p-3 border-b border-gray-200 dark:border-gray-700">
                                                     <div className="flex items-center gap-2">
-                                                        {minimiEquip.pixelData && (
-                                                            <MinimiRenderer
-                                                                pixelData={minimiEquip.pixelData}
-                                                                accessoriesData={minimiEquip.accessoriesData}
-                                                                size="sm"
+                                                        {minimiEquip.imageUrl && (
+                                                            <Image
+                                                                src={minimiEquip.imageUrl}
+                                                                alt="미니미"
+                                                                width={24}
+                                                                height={24}
+                                                                className="object-contain"
+                                                                style={{ imageRendering: "pixelated" }}
                                                             />
                                                         )}
                                                         <div className="flex-1 min-w-0">

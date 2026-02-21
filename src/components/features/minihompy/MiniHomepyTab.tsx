@@ -18,7 +18,7 @@ import { API } from "@/config/apiEndpoints";
 import type { MinihompySettings, GuestbookEntry } from "@/types";
 import MinihompyStage from "./MinihompyStage";
 import MinihompySettingsSection from "./MinihompySettingsSection";
-import MinimiRenderer from "../minimi/MinimiRenderer";
+import Image from "next/image";
 
 export default function MiniHomepyTab() {
     const { user, minimiEquip } = useAuth();
@@ -236,10 +236,14 @@ function GuestbookItem({
         <div className="flex gap-2.5 p-3 rounded-xl bg-gray-50 dark:bg-gray-700/30">
             {/* 방문자 미니미 */}
             <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-pink-50 dark:bg-pink-900/20 flex items-center justify-center overflow-hidden">
-                {entry.visitorMinimiData ? (
-                    <MinimiRenderer
-                        pixelData={entry.visitorMinimiData}
-                        size="xs"
+                {entry.visitorImageUrl ? (
+                    <Image
+                        src={entry.visitorImageUrl}
+                        alt={entry.visitorNickname}
+                        width={24}
+                        height={24}
+                        className="object-contain"
+                        style={{ imageRendering: "pixelated" }}
                     />
                 ) : (
                     <div className="w-6 h-6 rounded-full bg-gradient-to-br from-pink-300 to-purple-300 flex items-center justify-center">

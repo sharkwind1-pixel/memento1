@@ -20,7 +20,7 @@ import { API } from "@/config/apiEndpoints";
 import { MINIHOMPY } from "@/config/constants";
 import type { MinihompyViewData, GuestbookEntry, MinimiEquipState } from "@/types";
 import MinihompyStage from "./MinihompyStage";
-import MinimiRenderer from "../minimi/MinimiRenderer";
+import Image from "next/image";
 
 interface MinihompyVisitModalProps {
     isOpen: boolean;
@@ -377,10 +377,14 @@ function VisitGuestbookItem({
     return (
         <div className="flex gap-2 p-2.5 rounded-lg bg-gray-50 dark:bg-gray-800/50">
             <div className="flex-shrink-0 w-7 h-7 rounded-full overflow-hidden flex items-center justify-center">
-                {entry.visitorMinimiData ? (
-                    <MinimiRenderer
-                        pixelData={entry.visitorMinimiData}
-                        size="xs"
+                {entry.visitorImageUrl ? (
+                    <Image
+                        src={entry.visitorImageUrl}
+                        alt={entry.visitorNickname}
+                        width={20}
+                        height={20}
+                        className="object-contain"
+                        style={{ imageRendering: "pixelated" }}
                     />
                 ) : (
                     <div className="w-full h-full bg-gradient-to-br from-pink-300 to-purple-300 flex items-center justify-center">

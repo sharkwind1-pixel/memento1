@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { Music, Eye } from "lucide-react";
 import type { MinimiEquipState } from "@/types";
 import { findBackground, getDefaultBackground } from "@/data/minihompyBackgrounds";
-import MinimiRenderer from "../minimi/MinimiRenderer";
+import Image from "next/image";
 
 interface MinihompyStageProps {
     backgroundSlug: string;
@@ -36,7 +36,7 @@ export default function MinihompyStage({
 }: MinihompyStageProps) {
     const bg = findBackground(backgroundSlug) || getDefaultBackground();
     const isDarkBg = backgroundSlug === "starry_night";
-    const hasMinimi = !!minimiEquip.pixelData;
+    const hasMinimi = !!minimiEquip.imageUrl || !!minimiEquip.pixelData;
 
     return (
         <div
@@ -76,11 +76,21 @@ export default function MinihompyStage({
                             "w-16 h-3 rounded-full opacity-20",
                             isDarkBg ? "bg-white" : "bg-black"
                         )} />
-                        <MinimiRenderer
-                            pixelData={minimiEquip.pixelData}
-                            accessoriesData={minimiEquip.accessoriesData}
-                            size={compact ? "lg" : "xl"}
-                        />
+                        {minimiEquip.imageUrl ? (
+                            <Image
+                                src={minimiEquip.imageUrl}
+                                alt="미니미"
+                                width={compact ? 64 : 80}
+                                height={compact ? 64 : 80}
+                                className="object-contain"
+                                style={{ imageRendering: "pixelated" }}
+                            />
+                        ) : (
+                            <div className={cn(
+                                compact ? "w-16 h-16" : "w-20 h-20",
+                                "bg-gray-200/50 rounded-lg"
+                            )} />
+                        )}
                     </div>
                 ) : (
                     <div className={cn(

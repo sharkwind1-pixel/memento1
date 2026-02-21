@@ -16,7 +16,7 @@ import { formatPoints } from "@/lib/points";
 import PointsHistoryModal from "./PointsHistoryModal";
 import PointsShopModal from "./PointsShopModal";
 import { LevelProgress } from "./LevelBadge";
-import MinimiRenderer from "../minimi/MinimiRenderer";
+import Image from "next/image";
 import MinimiShopModal from "../minimi/MinimiShopModal";
 import MinimiClosetModal from "../minimi/MinimiClosetModal";
 
@@ -36,7 +36,7 @@ export default function PointsBadge() {
     // 비로그인 시 표시 안함
     if (!user) return null;
 
-    const hasMinimi = !!minimiEquip.pixelData;
+    const hasMinimi = !!minimiEquip.imageUrl;
 
     return (
         <>
@@ -53,10 +53,13 @@ export default function PointsBadge() {
                 )}>
                     {hasMinimi ? (
                         <div className="flex items-center gap-3 mb-2">
-                            <MinimiRenderer
-                                pixelData={minimiEquip.pixelData}
-                                accessoriesData={minimiEquip.accessoriesData}
-                                size="md"
+                            <Image
+                                src={minimiEquip.imageUrl!}
+                                alt="내 미니미"
+                                width={48}
+                                height={48}
+                                className="object-contain"
+                                style={{ imageRendering: "pixelated" }}
                             />
                             <div className="text-left flex-1 min-w-0">
                                 <p className="text-xs text-gray-500 dark:text-gray-400">내 미니미</p>

@@ -21,6 +21,7 @@ import type { OnboardingData, MinimiEquipState } from "@/types";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
 import { toast } from "sonner";
+import { CHARACTER_CATALOG } from "@/data/minimiPixels";
 
 // 삭제 계정 체크 결과 타입 (기존 호환성)
 interface DeletedAccountCheck {
@@ -95,6 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         accessoryIds: [],
         pixelData: null,
         accessoriesData: [],
+        imageUrl: null,
     });
 
     // 프로필에서 관리자/프리미엄 상태 조회
@@ -133,11 +135,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             // 미니미 장착 상태 설정
             if (!error && data) {
+                const equippedSlug = data.equipped_minimi_id || null;
+                const catalogItem = equippedSlug ? CHARACTER_CATALOG.find(c => c.slug === equippedSlug) : null;
                 setMinimiEquip({
-                    minimiId: data.equipped_minimi_id || null,
+                    minimiId: equippedSlug,
                     accessoryIds: data.equipped_accessories || [],
                     pixelData: data.minimi_pixel_data || null,
                     accessoriesData: data.minimi_accessories_data || [],
+                    imageUrl: catalogItem?.imageUrl || null,
                 });
             }
 
@@ -193,11 +198,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 .single();
 
             if (data) {
+                const equippedSlug = data.equipped_minimi_id || null;
+                const catalogItem = equippedSlug ? CHARACTER_CATALOG.find(c => c.slug === equippedSlug) : null;
                 setMinimiEquip({
-                    minimiId: data.equipped_minimi_id || null,
+                    minimiId: equippedSlug,
                     accessoryIds: data.equipped_accessories || [],
                     pixelData: data.minimi_pixel_data || null,
                     accessoriesData: data.minimi_accessories_data || [],
+                    imageUrl: catalogItem?.imageUrl || null,
                 });
             }
         } catch {
@@ -303,6 +311,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     accessoryIds: [],
                     pixelData: null,
                     accessoriesData: [],
+                    imageUrl: null,
                 });
             }
         });

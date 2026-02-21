@@ -19,9 +19,8 @@ import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
 import { MINIMI } from "@/config/constants";
 import { toast } from "sonner";
-import MinimiRenderer from "./MinimiRenderer";
+import Image from "next/image";
 import { CHARACTER_CATALOG } from "@/data/minimiPixels";
-import type { PixelData } from "@/types";
 
 interface MinimiClosetModalProps {
     isOpen: boolean;
@@ -32,7 +31,7 @@ interface MinimiClosetModalProps {
 interface OwnedItem {
     slug: string;
     name: string;
-    pixelData: PixelData;
+    imageUrl?: string;
     price: number;
     resellPrice: number;
 }
@@ -47,7 +46,7 @@ export default function MinimiClosetModal({
 
     const [ownedCharacters, setOwnedCharacters] = useState<OwnedItem[]>([]);
     const [equippedMinimiSlug, setEquippedMinimiSlug] = useState<string | null>(null);
-    const [equippedPixelData, setEquippedPixelData] = useState<PixelData | null>(null);
+    const [equippedImageUrl, setEquippedImageUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [sellConfirm, setSellConfirm] = useState<{ type: "character"; slug: string; name: string; resellPrice: number } | null>(null);
@@ -64,7 +63,7 @@ export default function MinimiClosetModal({
                 return catalog ? {
                     slug: catalog.slug,
                     name: catalog.name,
-                    pixelData: catalog.pixelData,
+                    imageUrl: catalog.imageUrl,
                     price: catalog.price,
                     resellPrice: Math.ceil(catalog.price * MINIMI.RESELL_RATIO),
                 } : null;
@@ -75,7 +74,7 @@ export default function MinimiClosetModal({
             // 장착 상태
             const eq = data.equipped;
             setEquippedMinimiSlug(eq?.minimiId || null);
-            setEquippedPixelData(eq?.pixelData || null);
+            setEquippedImageUrl(eq?.imageUrl || null);
         } catch {
             // 에러 무시
         } finally {
@@ -108,7 +107,7 @@ export default function MinimiClosetModal({
             }
             const data = await res.json();
             setEquippedMinimiSlug(data.equipped.minimiId);
-            setEquippedPixelData(data.equipped.pixelData);
+            setEquippedImageUrl(data.equipped.imageUrl || null);
             onChanged?.();
             toast.success(newMinimiSlug ? "미니미를 장착했습니다" : "미니미를 해제했습니다");
         } catch (err) {
@@ -178,11 +177,20 @@ export default function MinimiClosetModal({
                 {/* 현재 장착 미리보기 */}
                 <div className="p-4 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
                     <div className="text-center">
-                        <MinimiRenderer
-                            pixelData={equippedPixelData}
-                            size="xl"
-                            showEmpty
-                        />
+                        {equippedImageUrl ? (
+                            <Image
+                                src={equippedImageUrl}
+                                alt="장착중인 미니미"
+                                width={80}
+                                height={80}
+                                className="object-contain mx-auto"
+                                style={{ imageRendering: "pixelated" }}
+                            />
+                        ) : (
+                            <div className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center mx-auto">
+                                <span className="text-gray-400 dark:text-gray-500 text-2xl">?</span>
+                            </div>
+                        )}
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                             {equippedMinimiSlug ? "현재 장착중" : "미니미를 장착해보세요"}
                         </p>
@@ -215,7 +223,20 @@ export default function MinimiClosetModal({
                                         }`}
                                     >
                                         <div className="flex justify-center py-2">
-                                            <MinimiRenderer pixelData={char.pixelData} size="xl" />
+                                            {char.imageUrl ? (
+                                                <Image
+                                                    src={char.imageUrl}
+                                                    alt={char.name}
+                                                    width={80}
+                                                    height={80}
+                                                    className="object-contain"
+                                                    style={{ imageRendering: "pixelated" }}
+                                                />
+                                            ) : (
+                                                <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                                                    <span className="text-gray-400 text-2xl">?</span>
+                                                </div>
+                                            )}
                                         </div>
                                         <p className="font-bold text-sm text-gray-800 dark:text-gray-100">
                                             {char.name}

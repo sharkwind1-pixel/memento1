@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
             slug: c.slug,
             name: c.name,
             category: c.category,
-            pixelData: c.pixelData,
+            imageUrl: c.imageUrl,
             price: c.price,
             resellPrice: Math.ceil(c.price * MINIMI.RESELL_RATIO),
             isAvailable: true,
