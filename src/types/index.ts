@@ -647,6 +647,7 @@ export interface MinimiCharacter {
     name: string;
     category: MinimiCategory;
     pixelData: PixelData;
+    imageUrl?: string;
     price: number;
     resellPrice: number;
     isAvailable: boolean;

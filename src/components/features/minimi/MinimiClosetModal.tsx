@@ -32,6 +32,7 @@ interface OwnedItem {
     slug: string;
     name: string;
     pixelData: PixelData;
+    imageUrl?: string;
     price: number;
     resellPrice: number;
 }
@@ -68,6 +69,7 @@ export default function MinimiClosetModal({
                     slug: catalog.slug,
                     name: catalog.name,
                     pixelData: catalog.pixelData,
+                    ...("imageUrl" in catalog && catalog.imageUrl ? { imageUrl: catalog.imageUrl } : {}),
                     price: catalog.price,
                     resellPrice: Math.ceil(catalog.price * MINIMI.RESELL_RATIO),
                 } : null;
@@ -301,7 +303,16 @@ export default function MinimiClosetModal({
                                             }`}
                                         >
                                             <div className="flex justify-center py-2">
-                                                <MinimiRenderer pixelData={char.pixelData} size="lg" />
+                                                {char.imageUrl ? (
+                                                    <img
+                                                        src={char.imageUrl}
+                                                        alt={char.name}
+                                                        className="w-20 h-20 object-contain"
+                                                        style={{ imageRendering: "pixelated" }}
+                                                    />
+                                                ) : (
+                                                    <MinimiRenderer pixelData={char.pixelData} size="lg" />
+                                                )}
                                             </div>
                                             <p className="font-bold text-sm text-gray-800 dark:text-gray-100">
                                                 {char.name}
