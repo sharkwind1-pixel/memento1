@@ -129,7 +129,9 @@ export async function POST(
         // 9. 포인트 적립: 댓글 작성 (+3P, 일 50회 상한)
         const pointsSb = getPointsSupabase();
         if (pointsSb) {
-            awardPoints(pointsSb, user.id, "write_comment", { postId }).catch(() => {});
+            awardPoints(pointsSb, user.id, "write_comment", { postId }).catch((err) => {
+                console.error("[comments] 포인트 적립 실패:", err);
+            });
         }
 
         return NextResponse.json({

@@ -57,14 +57,20 @@
 
 ## 마지막 업데이트
 - 작성자: VM 터미널 Claude (Opus 4.6)
-- 시각: 2026-02-21 오후 (승빈님 기상 후)
-- 최신 커밋: `93f7c62` (아직 미커밋 변경사항 있음 - 컴포넌트 분리 작업)
+- 시각: 2026-02-21 밤
+- 최신 커밋: 이번 세션 커밋 예정 (에러 핸들링 개선 + 파일 정리)
 
 ## 현재 상태
-- main 브랜치, Vercel 자동 배포 연결됨
+- main 브랜치, origin/main과 동기화 예정
 - 타입체크 통과 확인 (`npx tsc --noEmit` 에러 0건)
-- 대형 컴포넌트 분리 완료 (미커밋)
-- API URL 마이그레이션은 이미 완료된 상태였음 (하드코딩 0건)
+
+## VM 환경 설정
+- **GitHub CLI**: `gh` v2.45.0 설치됨 (`apt`)
+- **Git 인증**: `~/.git-credentials`에 PAT 저장 (credential.helper store)
+  - 토큰 만료: 2026-05-22 (90일)
+  - 권한: `repo`
+  - remote URL은 토큰 없는 클린 상태 (`https://github.com/sharkwind1-pixel/memento1.git`)
+- **gh auth login은 미완**: `read:org` 스코프 부족으로 실패. git push/pull은 credential store로 정상 작동. gh CLI(PR 생성 등)를 쓰려면 토큰에 `read:org` 권한 추가 필요
 
 ## 최근 완료된 작업
 
@@ -91,11 +97,26 @@
 #### 3. 검증 완료
 - 5번(QA): tsc --noEmit PASS, import 무결성 확인
 - 7번(비판적 사고): 수정필요 판정 -> 미사용 `selectPet` 파라미터 제거 후 통과
-- 7번 발견 기존 버그: LostPage `selectedDistrict` 필터가 API에 전달 안 됨 (리팩토링 이전부터 존재, 미수정)
+- 7번 발견: LostPage `selectedDistrict` 필터 -> 리팩토링 과정에서 이미 수정됨 확인
 
 #### 4. API URL 마이그레이션 확인
 - 조사 결과 이미 전부 완료됨 (하드코딩 `/api/` URL 0건)
 - 모든 fetch/authFetch가 `API.XXX` 상수 사용 중
+
+#### 5. 3개 긴급 작업 완료 (커밋 `70e034e`, 푸시 완료)
+- **출석 포인트 버그 수정**: 클라이언트 직접 RPC -> authFetch(API.POINTS_DAILY_CHECK) 서버 API 호출로 변경, toast 알림 추가
+- **모바일 헤더 배경 삭제**: Layout.tsx에서 bg-[#E0F7FF] 제거
+- **미니미 캐릭터 정리**: 6개 캐릭터(고양이3+앵무+도마뱀+햄스터) 삭제, 강아지 3종 + 악세서리 3종만 남김
+
+#### 6. 에러 핸들링 개선 (4건)
+- `lost-pets/[id]/route.ts`: fire-and-forget promise 체인 -> async IIFE + try/catch로 안전 처리
+- `posts/[id]/comments/route.ts`: 포인트 적립 실패 시 console.error 로깅 추가
+- `chat/route.ts`: 포인트 적립 실패 시 console.error 로깅 추가
+- `MiniHomepyTab.tsx`: console.error -> toast.error로 사용자 피드백 제공
+
+#### 7. 파일 정리
+- 대용량 한국어 이름 원본 PNG 3개 삭제 (17.3MB 절약) - 최적화 영문 PNG만 유지
+- .DS_Store 파일 정리
 
 ## 주요 파일 변경 이력 (현재 세션)
 
@@ -110,11 +131,15 @@
 | `src/components/features/lost/useLostPosts.ts` | **신규** - 목록/필터/페이지네이션 훅 |
 | `src/components/features/lost/useLostPostActions.ts` | **신규** - CRUD 액션 훅 |
 | `src/components/features/lost/LostPageHeader.tsx` | **신규** - 통계+필터 헤더 컴포넌트 |
+| `src/contexts/AuthContext.tsx` | 출석 체크: RPC -> API 호출, toast 알림 |
+| `src/components/common/Layout.tsx` | 모바일 헤더 하늘색 배경 제거 |
+| `src/data/minimiPixels.ts` | 6개 캐릭터 삭제 (3종 강아지 + 3종 악세서리만 유지) |
+| `src/app/api/lost-pets/[id]/route.ts` | 조회수 증가 에러 핸들링 개선 |
+| `src/app/api/posts/[id]/comments/route.ts` | 포인트 적립 에러 로깅 추가 |
+| `src/app/api/chat/route.ts` | 포인트 적립 에러 로깅 추가 |
+| `src/components/features/minihompy/MiniHomepyTab.tsx` | 에러 시 사용자 toast 피드백 |
 
 ## 다음 할 일
-- **커밋 필요**: 위 리팩토링 변경사항 아직 미커밋
-- `ahaadh@hanmail.net` 계정으로 직접 로그인하여 관리자 아이콘 표시 확인 (승빈님 직접)
-- LostPage `selectedDistrict` 필터 API 전달 버그 수정 (프론트+백엔드)
 - other 타입 전용 동물 아이콘 제작 (이미지 에셋 필요)
 - 결제 연동: 포트원(PortOne) 연동 (승빈님 포트원 계정/상점ID 필요)
 

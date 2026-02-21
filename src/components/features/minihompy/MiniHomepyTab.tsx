@@ -39,7 +39,7 @@ export default function MiniHomepyTab() {
                 setSettings(data.settings);
             }
         } catch {
-            console.error("미니홈피 설정 로드 실패");
+            toast.error("미니홈피 설정을 불러오지 못했습니다.");
         }
     }, []);
 
@@ -58,7 +58,7 @@ export default function MiniHomepyTab() {
                 setGuestbookTotal(data.total);
             }
         } catch {
-            console.error("방명록 로드 실패");
+            toast.error("방명록을 불러오지 못했습니다.");
         }
     }, [user]);
 

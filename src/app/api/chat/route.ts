@@ -776,7 +776,9 @@ export async function POST(request: NextRequest) {
         try {
             const pointsSb = getPointsSupabase();
             if (pointsSb) {
-                awardPoints(pointsSb, user.id, "ai_chat").catch(() => {});
+                awardPoints(pointsSb, user.id, "ai_chat").catch((err) => {
+                    console.error("[chat] 포인트 적립 실패:", err);
+                });
             }
         } catch {
             // 포인트 적립 실패 무시
