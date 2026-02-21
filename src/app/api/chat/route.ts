@@ -602,9 +602,12 @@ export async function POST(request: NextRequest) {
         const dailyUsage = checkDailyUsage(identifier, true);
 
         if (!dailyUsage.allowed) {
+            const isMemorial = pet?.status === "memorial";
             return NextResponse.json(
                 {
-                    error: "오늘의 대화 횟수를 모두 사용했어요. 내일 다시 만나요!",
+                    error: isMemorial
+                        ? `오늘은 여기까지 이야기 나눌 수 있어요. ${pet?.name || "아이"}는 내일도 여기서 기다리고 있을게요.`
+                        : "오늘의 대화 횟수를 모두 사용했어요. 내일 다시 만나요!",
                     remaining: 0,
                     isLimitReached: true,
                 },

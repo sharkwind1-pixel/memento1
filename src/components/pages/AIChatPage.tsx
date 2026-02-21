@@ -690,14 +690,6 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                         <h1 className="font-semibold text-gray-800 dark:text-white">
                             AI 펫톡
                         </h1>
-                        <button
-                            onClick={handleNewChat}
-                            className={`p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-colors ${isMemorialMode ? "hover:bg-amber-200/50 text-amber-600" : "hover:bg-[#E0F7FF] text-[#05B2DC]"}`}
-                            title="새 대화 시작"
-                            aria-label="새 대화 시작"
-                        >
-                            <RotateCcw className="w-5 h-5" />
-                        </button>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <button
@@ -709,6 +701,10 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                                 </button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="start">
+                                <DropdownMenuItem onClick={handleNewChat}>
+                                    <RotateCcw className="w-4 h-4 mr-2" />
+                                    새 대화 시작
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setIsMemoryPanelOpen(true)}>
                                     <Brain className="w-4 h-4 mr-2" />
                                     기억 보기
