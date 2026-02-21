@@ -132,9 +132,9 @@ export const POINT_LEVELS: PointLevel[] = [
 
 /** 어드민 전용 아이콘 경로 */
 export const ADMIN_ICONS: Record<PetIconType, string> = {
-    dog: "/icons/levels/dog_admin.png",
-    cat: "/icons/levels/cat_admin.png",
-    other: "/icons/levels/dog_admin.png",  // other는 강아지 어드민 사용 (추후 교체 가능)
+    dog: "/icons/levels/dog_admin.png?v=2",
+    cat: "/icons/levels/cat_admin.png?v=2",
+    other: "/icons/levels/dog_admin.png?v=2",  // other는 강아지 어드민 사용 (추후 교체 가능)
 };
 
 /** 등급의 아이콘 경로 가져오기 (반려동물 타입별) */
