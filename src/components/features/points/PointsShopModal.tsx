@@ -11,11 +11,7 @@ import {
     X,
     ShoppingBag,
     MessageCircle,
-    Sparkles,
     Crown,
-    Gift,
-    Palette,
-    Clock,
     Check,
     AlertCircle,
 } from "lucide-react";
@@ -35,11 +31,9 @@ interface ShopItem {
     description: string;
     price: number;
     icon: typeof MessageCircle;
-    category: "boost" | "cosmetic" | "feature";
+    category: "boost" | "feature";
     color: string;
     bgColor: string;
-    available: boolean;
-    comingSoon?: boolean;
 }
 
 const SHOP_ITEMS: ShopItem[] = [
@@ -53,7 +47,6 @@ const SHOP_ITEMS: ShopItem[] = [
         category: "boost",
         color: "text-sky-500",
         bgColor: "bg-sky-50 dark:bg-sky-900/20",
-        available: true,
     },
     {
         id: "extra_chat_10",
@@ -64,7 +57,6 @@ const SHOP_ITEMS: ShopItem[] = [
         category: "boost",
         color: "text-sky-600",
         bgColor: "bg-sky-50 dark:bg-sky-900/20",
-        available: true,
     },
     {
         id: "premium_trial_1d",
@@ -75,7 +67,6 @@ const SHOP_ITEMS: ShopItem[] = [
         category: "feature",
         color: "text-violet-500",
         bgColor: "bg-violet-50 dark:bg-violet-900/20",
-        available: true,
     },
     {
         id: "premium_trial_3d",
@@ -86,50 +77,11 @@ const SHOP_ITEMS: ShopItem[] = [
         category: "feature",
         color: "text-violet-600",
         bgColor: "bg-violet-50 dark:bg-violet-900/20",
-        available: true,
-    },
-    // 코스메틱 아이템
-    {
-        id: "profile_frame_sparkle",
-        name: "프로필 반짝이 프레임",
-        description: "프로필에 반짝이 효과 프레임이 적용됩니다 (30일)",
-        price: 300,
-        icon: Sparkles,
-        category: "cosmetic",
-        color: "text-amber-500",
-        bgColor: "bg-amber-50 dark:bg-amber-900/20",
-        available: false,
-        comingSoon: true,
-    },
-    {
-        id: "nickname_color",
-        name: "닉네임 색상 변경",
-        description: "커뮤니티에서 닉네임 색상을 변경할 수 있습니다 (30일)",
-        price: 150,
-        icon: Palette,
-        category: "cosmetic",
-        color: "text-rose-500",
-        bgColor: "bg-rose-50 dark:bg-rose-900/20",
-        available: false,
-        comingSoon: true,
-    },
-    {
-        id: "post_highlight",
-        name: "게시글 상단 노출",
-        description: "다음에 작성하는 게시글 1개가 목록 상단에 고정됩니다 (24시간)",
-        price: 500,
-        icon: Gift,
-        category: "boost",
-        color: "text-emerald-500",
-        bgColor: "bg-emerald-50 dark:bg-emerald-900/20",
-        available: false,
-        comingSoon: true,
     },
 ];
 
 const CATEGORY_LABELS = {
     boost: "부스트",
-    cosmetic: "꾸미기",
     feature: "기능",
 };
 
@@ -139,7 +91,7 @@ export default function PointsShopModal({
 }: PointsShopModalProps) {
     const { user, points, refreshPoints } = useAuth();
     useEscapeClose(isOpen, onClose);
-    const [selectedCategory, setSelectedCategory] = useState<"all" | "boost" | "cosmetic" | "feature">("all");
+    const [selectedCategory, setSelectedCategory] = useState<"all" | "boost" | "feature">("all");
     const [purchasingId, setPurchasingId] = useState<string | null>(null);
 
     if (!isOpen) return null;
@@ -156,11 +108,6 @@ export default function PointsShopModal({
 
         if (points < item.price) {
             toast.error("포인트가 부족합니다");
-            return;
-        }
-
-        if (!item.available) {
-            toast.info("준비 중인 아이템입니다");
             return;
         }
 
@@ -216,7 +163,7 @@ export default function PointsShopModal({
 
                 {/* 카테고리 필터 */}
                 <div className="flex gap-2 p-4 border-b dark:border-gray-700">
-                    {(["all", "boost", "feature", "cosmetic"] as const).map((cat) => (
+                    {(["all", "boost", "feature"] as const).map((cat) => (
                         <button
                             key={cat}
                             onClick={() => setSelectedCategory(cat)}
@@ -241,21 +188,8 @@ export default function PointsShopModal({
                         return (
                             <div
                                 key={item.id}
-                                className={`relative p-4 rounded-2xl border transition-all ${
-                                    item.comingSoon
-                                        ? "opacity-60 border-gray-200 dark:border-gray-700"
-                                        : "border-gray-200 dark:border-gray-700 hover:border-amber-300 dark:hover:border-amber-600 hover:shadow-md"
-                                }`}
+                                className="relative p-4 rounded-2xl border transition-all border-gray-200 dark:border-gray-700 hover:border-amber-300 dark:hover:border-amber-600 hover:shadow-md"
                             >
-                                {item.comingSoon && (
-                                    <div className="absolute top-2 right-2">
-                                        <span className="px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded-full text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                                            <Clock className="w-3 h-3" />
-                                            준비중
-                                        </span>
-                                    </div>
-                                )}
-
                                 <div className="flex items-start gap-3">
                                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${item.bgColor}`}>
                                         <Icon className={`w-6 h-6 ${item.color}`} />
@@ -278,39 +212,33 @@ export default function PointsShopModal({
                                                 {item.price.toLocaleString()}P
                                             </span>
 
-                                            {item.available ? (
-                                                <Button
-                                                    size="sm"
-                                                    onClick={() => handlePurchase(item)}
-                                                    disabled={!canAfford || isPurchasing}
-                                                    className={`rounded-xl ${
-                                                        canAfford
-                                                            ? "bg-amber-500 hover:bg-amber-600 text-white"
-                                                            : "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
-                                                    }`}
-                                                >
-                                                    {isPurchasing ? (
-                                                        <span className="flex items-center gap-1">
-                                                            <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                            구매중
-                                                        </span>
-                                                    ) : !canAfford ? (
-                                                        <span className="flex items-center gap-1">
-                                                            <AlertCircle className="w-3.5 h-3.5" />
-                                                            포인트 부족
-                                                        </span>
-                                                    ) : (
-                                                        <span className="flex items-center gap-1">
-                                                            <Check className="w-3.5 h-3.5" />
-                                                            구매
-                                                        </span>
-                                                    )}
-                                                </Button>
-                                            ) : (
-                                                <span className="text-xs text-gray-400 italic">
-                                                    곧 출시
-                                                </span>
-                                            )}
+                                            <Button
+                                                size="sm"
+                                                onClick={() => handlePurchase(item)}
+                                                disabled={!canAfford || isPurchasing}
+                                                className={`rounded-xl ${
+                                                    canAfford
+                                                        ? "bg-amber-500 hover:bg-amber-600 text-white"
+                                                        : "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
+                                                }`}
+                                            >
+                                                {isPurchasing ? (
+                                                    <span className="flex items-center gap-1">
+                                                        <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                        구매중
+                                                    </span>
+                                                ) : !canAfford ? (
+                                                    <span className="flex items-center gap-1">
+                                                        <AlertCircle className="w-3.5 h-3.5" />
+                                                        포인트 부족
+                                                    </span>
+                                                ) : (
+                                                    <span className="flex items-center gap-1">
+                                                        <Check className="w-3.5 h-3.5" />
+                                                        구매
+                                                    </span>
+                                                )}
+                                            </Button>
                                         </div>
                                     </div>
                                 </div>
