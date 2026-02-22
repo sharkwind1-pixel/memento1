@@ -140,7 +140,7 @@ export default function PointsShopModal({
             <div className="absolute inset-0 bg-black/50" onClick={onClose} />
 
             <div
-                className="relative w-[calc(100%-2rem)] sm:max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden max-h-[calc(100vh-3.5rem-68px)] sm:max-h-[calc(100vh-4rem-1rem)] mt-2 flex flex-col"
+                className="relative w-[calc(100%-2rem)] sm:max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-clip max-h-[calc(100vh-3.5rem-68px)] sm:max-h-[calc(100vh-4rem-1rem)] mt-2 flex flex-col"
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="points-shop-title"
