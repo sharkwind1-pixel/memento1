@@ -237,7 +237,10 @@ export default function Sidebar({
             )}
 
             {/* 네비게이션 목록 - 스크롤 영역 */}
-            <nav className="flex-1 min-h-0 p-4 space-y-1 overflow-y-auto">
+            <nav
+                className="flex-1 min-h-0 p-4 space-y-1 overflow-y-auto overscroll-contain"
+                style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+            >
                 {MAIN_CATEGORIES.map((category) => (
                     <div key={category.id}>
                         {/* 메인 카테고리 버튼 */}
@@ -386,7 +389,7 @@ export default function Sidebar({
 
                 {/* 사이드바 패널 - transition 제거 */}
                 <div
-                    className="fixed top-0 left-0 h-full w-64 bg-white dark:bg-gray-900 z-50 shadow-xl flex flex-col overflow-hidden"
+                    className="fixed top-0 left-0 h-full w-64 bg-white dark:bg-gray-900 z-50 shadow-xl flex flex-col overflow-clip"
                 >
                     {sidebarContent}
                 </div>

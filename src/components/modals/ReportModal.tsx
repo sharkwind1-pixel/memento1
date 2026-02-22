@@ -106,8 +106,13 @@ export default function ReportModal({
     };
 
     return (
-        <div className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4">
-            <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-y-auto overscroll-contain touch-pan-y max-h-[90vh]" role="dialog" aria-modal="true" aria-labelledby="report-modal-title">
+        <div
+            className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50"
+            style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+            onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
+        >
+            <div className="min-h-full flex items-start justify-center pt-16 pb-20 px-4">
+            <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl relative" role="dialog" aria-modal="true" aria-labelledby="report-modal-title" onClick={(e) => e.stopPropagation()}>
                 {/* 헤더 */}
                 <div className="flex items-center justify-between p-4 border-b dark:border-gray-700 bg-red-50 dark:bg-red-900/20">
                     <div className="flex items-center gap-2">
@@ -219,6 +224,7 @@ export default function ReportModal({
                         {loading ? <InlineLoading /> : "신고하기"}
                     </Button>
                 </div>
+            </div>
             </div>
         </div>
     );

@@ -206,12 +206,14 @@ export default function AuthModal({
 
     return (
         <div
-            className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50"
+            style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
             onClick={(e) => {
                 if (e.target === e.currentTarget) onClose();
             }}
         >
-            <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-y-auto overscroll-contain touch-pan-y max-h-[90vh]" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
+            <div className="min-h-full flex items-start justify-center pt-16 pb-20 px-4">
+            <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl relative" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title" onClick={(e) => e.stopPropagation()}>
                 {/* 헤더 */}
                 <div className="relative bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] p-6 text-white">
                     <button
@@ -549,6 +551,7 @@ export default function AuthModal({
                         )}
                     </p>
                 </form>
+            </div>
             </div>
         </div>
     );

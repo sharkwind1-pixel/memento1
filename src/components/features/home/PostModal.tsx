@@ -79,14 +79,16 @@ export default function PostModal({
 
     return (
         <div
-            className="fixed inset-0 z-[9999] bg-black/70 flex items-center justify-center p-4"
+            className="fixed inset-0 z-[9999] overflow-y-auto bg-black/70"
+            style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
             onMouseDown={(e) => {
                 if (e.target === e.currentTarget) onClose();
             }}
         >
-            <div className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl overflow-clip shadow-2xl max-h-[90vh] flex flex-col" role="dialog" aria-modal="true" aria-labelledby="post-detail-title">
-                {/* 헤더 */}
-                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
+            <div className="min-h-full flex items-start justify-center pt-16 pb-20 px-4">
+            <div className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-2xl relative" role="dialog" aria-modal="true" aria-labelledby="post-detail-title" onClick={(e) => e.stopPropagation()}>
+                {/* 헤더 - sticky */}
+                <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-t-2xl">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] rounded-full flex items-center justify-center">
                             <span className="text-white font-bold text-sm">
@@ -121,8 +123,8 @@ export default function PostModal({
                     </div>
                 </div>
 
-                {/* 스크롤 가능한 컨텐츠 영역 */}
-                <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y">
+                {/* 컨텐츠 영역 */}
+                <div>
                     {/* 컨텐츠 */}
                     <div className="p-4 space-y-4">
                         {/* 배지 */}
@@ -225,8 +227,8 @@ export default function PostModal({
                     </div>
                 </div>
 
-                {/* 댓글 입력 (고정) */}
-                <div className="flex items-center gap-3 px-4 py-3 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 flex-shrink-0">
+                {/* 댓글 입력 (sticky bottom) */}
+                <div className="sticky bottom-0 z-10 flex items-center gap-3 px-4 py-3 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-b-2xl">
                     <div className="w-8 h-8 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] rounded-full flex items-center justify-center flex-shrink-0">
                         <span className="text-white font-bold text-xs">나</span>
                     </div>
@@ -250,6 +252,7 @@ export default function PostModal({
                         게시
                     </button>
                 </div>
+            </div>
             </div>
         </div>
     );

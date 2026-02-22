@@ -95,15 +95,14 @@ export default function LoginPromptModal({
     const Icon = info.icon;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* 배경 오버레이 */}
-            <div
-                className="absolute inset-0 bg-black/40"
-                onClick={onClose}
-            />
-
+        <div
+            className="fixed inset-0 z-50 overflow-y-auto bg-black/40"
+            style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+            onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+        >
+            <div className="min-h-full flex items-start justify-center pt-16 pb-20 px-4">
             {/* 모달 */}
-            <div className="relative bg-white dark:bg-gray-900 rounded-3xl max-w-sm w-full shadow-2xl overflow-y-auto overscroll-contain touch-pan-y max-h-[90vh] animate-in fade-in zoom-in-95 duration-200" role="dialog" aria-modal="true" aria-labelledby="login-prompt-title">
+            <div className="bg-white dark:bg-gray-900 rounded-3xl max-w-sm w-full shadow-2xl relative animate-in fade-in zoom-in-95 duration-200" role="dialog" aria-modal="true" aria-labelledby="login-prompt-title" onClick={(e) => e.stopPropagation()}>
                 {/* 닫기 버튼 */}
                 <button
                     onClick={onClose}
@@ -168,6 +167,7 @@ export default function LoginPromptModal({
                         </Button>
                     </div>
                 </div>
+            </div>
             </div>
         </div>
     );

@@ -147,181 +147,185 @@ export default function MinimiClosetModal({
     };
 
     return (
-        <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-14 sm:pt-16">
-            {/* 배경 오버레이 - 클릭 시 닫기 */}
-            <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-
-            <div
-                className="relative w-[calc(100%-2rem)] sm:max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-clip max-h-[calc(100vh-3.5rem-68px)] sm:max-h-[calc(100vh-4rem-1rem)] mt-2 flex flex-col"
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="minimi-closet-title"
-            >
-                {/* 헤더 - 컴팩트 */}
-                <div className="bg-gradient-to-r from-violet-400 via-purple-400 to-fuchsia-400 px-4 py-2.5 text-white shrink-0">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <Shirt className="w-5 h-5" />
-                            <div>
-                                <h2 id="minimi-closet-title" className="text-sm font-bold leading-tight">내 미니미 옷장</h2>
-                                <p className="text-white/80 text-[11px]">
-                                    보유 캐릭터 {ownedCharacters.length}개
-                                </p>
+        <div
+            className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50"
+            style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+            onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+        >
+            <div className="min-h-full flex items-start justify-center pt-16 pb-20 px-4">
+                <div
+                    className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-2xl shadow-2xl relative"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="minimi-closet-title"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    {/* 헤더 - sticky */}
+                    <div className="sticky top-0 z-10 bg-gradient-to-r from-violet-400 via-purple-400 to-fuchsia-400 px-4 py-2.5 text-white rounded-t-2xl">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Shirt className="w-5 h-5" />
+                                <div>
+                                    <h2 id="minimi-closet-title" className="text-sm font-bold leading-tight">내 미니미 옷장</h2>
+                                    <p className="text-white/80 text-[11px]">
+                                        보유 캐릭터 {ownedCharacters.length}개
+                                    </p>
+                                </div>
                             </div>
+                            <button
+                                onClick={onClose}
+                                className="p-1.5 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+                                aria-label="닫기"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
                         </div>
-                        <button
-                            onClick={onClose}
-                            className="p-1.5 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
-                            aria-label="닫기"
-                        >
-                            <X className="w-4 h-4" />
-                        </button>
                     </div>
-                </div>
 
-                {/* 현재 장착 미리보기 - 컴팩트 */}
-                <div className="px-3 py-2 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center gap-3 shrink-0">
-                    {equippedImageUrl ? (
-                        <Image
-                            src={equippedImageUrl}
-                            alt="장착중인 미니미"
-                            width={48}
-                            height={48}
-                            className="object-contain"
-                            style={{ imageRendering: "pixelated" }}
-                        />
-                    ) : (
-                        <div className="w-12 h-12 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
-                            <span className="text-gray-400 dark:text-gray-500 text-lg">?</span>
-                        </div>
-                    )}
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {equippedMinimiSlug ? "현재 장착중" : "미니미를 장착해보세요"}
-                    </p>
-                </div>
-
-                {/* 캐릭터 목록 */}
-                <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y p-3">
-                    {loading ? (
-                        <div className="flex items-center justify-center py-8">
-                            <span className="w-6 h-6 border-2 border-violet-300 border-t-violet-600 rounded-full animate-spin" />
-                        </div>
-                    ) : ownedCharacters.length === 0 ? (
-                        <p className="text-center text-gray-400 py-8 text-xs">
-                            보유한 캐릭터가 없습니다
+                    {/* 현재 장착 미리보기 */}
+                    <div className="px-3 py-2 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center gap-3">
+                        {equippedImageUrl ? (
+                            <Image
+                                src={equippedImageUrl}
+                                alt="장착중인 미니미"
+                                width={48}
+                                height={48}
+                                className="object-contain"
+                                style={{ imageRendering: "pixelated" }}
+                            />
+                        ) : (
+                            <div className="w-12 h-12 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
+                                <span className="text-gray-400 dark:text-gray-500 text-lg">?</span>
+                            </div>
+                        )}
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {equippedMinimiSlug ? "현재 장착중" : "미니미를 장착해보세요"}
                         </p>
-                    ) : (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                            {ownedCharacters.map((char) => {
-                                const isEquipped = equippedMinimiSlug === char.slug;
-                                const isLoading = actionLoading === char.slug;
+                    </div>
 
-                                return (
-                                    <div
-                                        key={char.slug}
-                                        className={`relative p-2.5 rounded-xl border transition-all text-center flex flex-col ${
-                                            isEquipped
-                                                ? "border-violet-400 bg-violet-50 dark:bg-violet-900/20 ring-2 ring-violet-300"
-                                                : "border-gray-200 dark:border-gray-700"
-                                        }`}
-                                    >
-                                        <div className="flex justify-center items-center py-1 h-[72px]">
-                                            {char.imageUrl ? (
-                                                <Image
-                                                    src={char.imageUrl}
-                                                    alt={char.name}
-                                                    width={64}
-                                                    height={64}
-                                                    className="object-contain"
-                                                    style={{ imageRendering: "pixelated" }}
-                                                />
-                                            ) : (
-                                                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-                                                    <span className="text-gray-400 text-xl">?</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <p className="font-bold text-xs text-gray-800 dark:text-gray-100">
-                                            {char.name}
-                                        </p>
-                                        <div className="mt-1.5 space-y-1">
-                                            <Button
-                                                size="sm"
-                                                onClick={() => handleEquip(char.slug)}
-                                                disabled={isLoading}
-                                                className={`w-full rounded-lg text-[11px] h-7 ${
-                                                    isEquipped
-                                                        ? "bg-violet-500 hover:bg-violet-600 text-white"
-                                                        : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200"
-                                                }`}
-                                            >
-                                                {isLoading ? (
-                                                    <span className="w-3 h-3 border-2 border-current/30 border-t-current rounded-full animate-spin" />
-                                                ) : isEquipped ? (
-                                                    <span className="flex items-center gap-1">
-                                                        <Check className="w-3 h-3" /> 장착중
-                                                    </span>
+                    {/* 캐릭터 목록 */}
+                    <div className="p-3">
+                        {loading ? (
+                            <div className="flex items-center justify-center py-8">
+                                <span className="w-6 h-6 border-2 border-violet-300 border-t-violet-600 rounded-full animate-spin" />
+                            </div>
+                        ) : ownedCharacters.length === 0 ? (
+                            <p className="text-center text-gray-400 py-8 text-xs">
+                                보유한 캐릭터가 없습니다
+                            </p>
+                        ) : (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                                {ownedCharacters.map((char) => {
+                                    const isEquipped = equippedMinimiSlug === char.slug;
+                                    const isLoading = actionLoading === char.slug;
+
+                                    return (
+                                        <div
+                                            key={char.slug}
+                                            className={`relative p-2.5 rounded-xl border transition-all text-center flex flex-col ${
+                                                isEquipped
+                                                    ? "border-violet-400 bg-violet-50 dark:bg-violet-900/20 ring-2 ring-violet-300"
+                                                    : "border-gray-200 dark:border-gray-700"
+                                            }`}
+                                        >
+                                            <div className="flex justify-center items-center py-1 h-[72px]">
+                                                {char.imageUrl ? (
+                                                    <Image
+                                                        src={char.imageUrl}
+                                                        alt={char.name}
+                                                        width={64}
+                                                        height={64}
+                                                        className="object-contain"
+                                                        style={{ imageRendering: "pixelated" }}
+                                                    />
                                                 ) : (
-                                                    "장착"
+                                                    <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                                                        <span className="text-gray-400 text-xl">?</span>
+                                                    </div>
                                                 )}
-                                            </Button>
-                                            <button
-                                                onClick={() => setSellConfirm({
-                                                    type: "character",
-                                                    slug: char.slug,
-                                                    name: char.name,
-                                                    resellPrice: char.resellPrice,
-                                                })}
-                                                className="w-full flex items-center justify-center gap-1 text-[10px] text-gray-400 hover:text-red-400 transition-colors py-0.5"
-                                            >
-                                                <Trash2 className="w-2.5 h-2.5" />
-                                                되팔기 ({char.resellPrice}P)
-                                            </button>
+                                            </div>
+                                            <p className="font-bold text-xs text-gray-800 dark:text-gray-100">
+                                                {char.name}
+                                            </p>
+                                            <div className="mt-1.5 space-y-1">
+                                                <Button
+                                                    size="sm"
+                                                    onClick={() => handleEquip(char.slug)}
+                                                    disabled={isLoading}
+                                                    className={`w-full rounded-lg text-[11px] h-7 ${
+                                                        isEquipped
+                                                            ? "bg-violet-500 hover:bg-violet-600 text-white"
+                                                            : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200"
+                                                    }`}
+                                                >
+                                                    {isLoading ? (
+                                                        <span className="w-3 h-3 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+                                                    ) : isEquipped ? (
+                                                        <span className="flex items-center gap-1">
+                                                            <Check className="w-3 h-3" /> 장착중
+                                                        </span>
+                                                    ) : (
+                                                        "장착"
+                                                    )}
+                                                </Button>
+                                                <button
+                                                    onClick={() => setSellConfirm({
+                                                        type: "character",
+                                                        slug: char.slug,
+                                                        name: char.name,
+                                                        resellPrice: char.resellPrice,
+                                                    })}
+                                                    className="w-full flex items-center justify-center gap-1 text-[10px] text-gray-400 hover:text-red-400 transition-colors py-0.5"
+                                                >
+                                                    <Trash2 className="w-2.5 h-2.5" />
+                                                    되팔기 ({char.resellPrice}P)
+                                                </button>
+                                            </div>
                                         </div>
-                                    </div>
-                                );
-                            })}
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* 되팔기 확인 다이얼로그 */}
+                    {sellConfirm && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[10000]">
+                            <div className="bg-white dark:bg-gray-800 rounded-xl p-5 mx-4 max-w-xs w-full shadow-2xl">
+                                <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100 text-center">
+                                    되팔기 확인
+                                </h3>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-1.5">
+                                    <strong>{sellConfirm.name}</strong>을(를) 되팔겠습니까?
+                                </p>
+                                <p className="text-center mt-1">
+                                    <span className="text-emerald-600 font-bold text-sm">+{sellConfirm.resellPrice}P</span>
+                                    <span className="text-[10px] text-gray-400 ml-1">환급</span>
+                                </p>
+                                <div className="flex gap-2 mt-3">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => setSellConfirm(null)}
+                                        className="flex-1 rounded-lg text-xs h-8"
+                                    >
+                                        취소
+                                    </Button>
+                                    <Button
+                                        onClick={handleSell}
+                                        disabled={actionLoading === sellConfirm.slug}
+                                        className="flex-1 rounded-lg bg-red-500 hover:bg-red-600 text-white text-xs h-8"
+                                    >
+                                        {actionLoading === sellConfirm.slug ? (
+                                            <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        ) : (
+                                            "되팔기"
+                                        )}
+                                    </Button>
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>
-
-                {/* 되팔기 확인 다이얼로그 */}
-                {sellConfirm && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10 rounded-2xl">
-                        <div className="bg-white dark:bg-gray-800 rounded-xl p-5 mx-4 max-w-xs w-full shadow-2xl">
-                            <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100 text-center">
-                                되팔기 확인
-                            </h3>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-1.5">
-                                <strong>{sellConfirm.name}</strong>을(를) 되팔겠습니까?
-                            </p>
-                            <p className="text-center mt-1">
-                                <span className="text-emerald-600 font-bold text-sm">+{sellConfirm.resellPrice}P</span>
-                                <span className="text-[10px] text-gray-400 ml-1">환급</span>
-                            </p>
-                            <div className="flex gap-2 mt-3">
-                                <Button
-                                    variant="outline"
-                                    onClick={() => setSellConfirm(null)}
-                                    className="flex-1 rounded-lg text-xs h-8"
-                                >
-                                    취소
-                                </Button>
-                                <Button
-                                    onClick={handleSell}
-                                    disabled={actionLoading === sellConfirm.slug}
-                                    className="flex-1 rounded-lg bg-red-500 hover:bg-red-600 text-white text-xs h-8"
-                                >
-                                    {actionLoading === sellConfirm.slug ? (
-                                        <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    ) : (
-                                        "되팔기"
-                                    )}
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                )}
             </div>
         </div>
     );

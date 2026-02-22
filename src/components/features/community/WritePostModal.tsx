@@ -201,17 +201,16 @@ export default function WritePostModal({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center">
-            {/* 배경 */}
-            <div
-                className="absolute inset-0 bg-black/50"
-                onClick={onClose}
-            />
-
+        <div
+            className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50"
+            style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+            onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+        >
+            <div className="min-h-full flex items-start justify-center pt-16 pb-20 px-4">
             {/* 모달 */}
-            <div className="relative w-full sm:max-w-lg sm:mx-4 bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl shadow-xl overflow-clip max-h-[calc(100vh-140px)] sm:max-h-[85vh] flex flex-col mb-[80px] sm:mb-0" role="dialog" aria-modal="true" aria-labelledby="write-post-title">
-                {/* 헤더 */}
-                <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+            <div className="bg-white dark:bg-gray-800 w-full max-w-lg rounded-2xl shadow-xl relative" role="dialog" aria-modal="true" aria-labelledby="write-post-title" onClick={(e) => e.stopPropagation()}>
+                {/* 헤더 - sticky */}
+                <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b dark:border-gray-700 bg-white dark:bg-gray-800 rounded-t-2xl">
                     <div>
                         <h2 id="write-post-title" className="text-lg font-bold text-gray-800 dark:text-white">
                             글쓰기
@@ -230,7 +229,7 @@ export default function WritePostModal({
                 </div>
 
                 {/* 내용 */}
-                <div className="p-4 space-y-4 flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y">
+                <div className="p-4 space-y-4">
                     {/* 닉네임 (자동) */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -436,8 +435,8 @@ export default function WritePostModal({
                     )}
                 </div>
 
-                {/* 푸터 */}
-                <div className="p-4 border-t dark:border-gray-700 flex justify-end gap-2">
+                {/* 푸터 - sticky */}
+                <div className="sticky bottom-0 z-10 p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-800 rounded-b-2xl flex justify-end gap-2">
                     <Button variant="outline" onClick={onClose}>
                         취소
                     </Button>
@@ -456,6 +455,7 @@ export default function WritePostModal({
                         )}
                     </Button>
                 </div>
+            </div>
             </div>
         </div>
     );

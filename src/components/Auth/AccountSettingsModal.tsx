@@ -208,8 +208,13 @@ export default function AccountSettingsModal({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[9999] bg-black/50 flex items-end sm:items-center justify-center">
-            <div className="w-full sm:max-w-md sm:mx-4 bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-y-auto overscroll-contain touch-pan-y max-h-[calc(100vh-140px)] sm:max-h-[85vh] mb-[80px] sm:mb-0" role="dialog" aria-modal="true" aria-labelledby="account-settings-title">
+        <div
+            className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50"
+            style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+            onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+        >
+            <div className="min-h-full flex items-start justify-center pt-16 pb-20 px-4">
+            <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl relative" role="dialog" aria-modal="true" aria-labelledby="account-settings-title" onClick={(e) => e.stopPropagation()}>
                 {/* 헤더 */}
                 <div className="flex items-center justify-between p-4 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
                     <div className="flex items-center gap-2">
@@ -436,6 +441,7 @@ export default function AccountSettingsModal({
                         )}
                     </div>
                 </div>
+            </div>
             </div>
         </div>
     );

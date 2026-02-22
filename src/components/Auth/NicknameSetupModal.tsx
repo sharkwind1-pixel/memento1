@@ -98,8 +98,12 @@ export default function NicknameSetupModal({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4">
-            <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-y-auto overscroll-contain touch-pan-y max-h-[90vh]" role="dialog" aria-modal="true" aria-labelledby="nickname-setup-title">
+        <div
+            className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50"
+            style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+        >
+            <div className="min-h-full flex items-center justify-center pt-16 pb-20 px-4">
+            <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl relative" role="dialog" aria-modal="true" aria-labelledby="nickname-setup-title">
                 {/* 헤더 */}
                 <div className="bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] p-6 text-white text-center">
                     <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -193,6 +197,7 @@ export default function NicknameSetupModal({
                         )}
                     </Button>
                 </form>
+            </div>
             </div>
         </div>
     );

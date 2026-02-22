@@ -111,18 +111,17 @@ export default function SupportModal({
     const ModalIcon = modalIcon;
 
     return (
-        <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center">
-            {/* 배경 */}
-            <div
-                className="absolute inset-0 bg-black/50"
-                onClick={handleClose}
-            />
-
+        <div
+            className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50"
+            style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+            onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
+        >
+            <div className="min-h-full flex items-start justify-center pt-16 pb-20 px-4">
             {/* 모달 */}
-            <div className="relative w-full sm:max-w-lg sm:mx-4 bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl shadow-xl overflow-clip max-h-[calc(100vh-140px)] sm:max-h-[85vh] flex flex-col mb-[80px] sm:mb-0" role="dialog" aria-modal="true" aria-labelledby="support-title">
-                {/* 헤더 */}
+            <div className="bg-white dark:bg-gray-800 w-full max-w-lg rounded-2xl shadow-xl relative" role="dialog" aria-modal="true" aria-labelledby="support-title" onClick={(e) => e.stopPropagation()}>
+                {/* 헤더 - sticky */}
                 <div
-                    className={`flex items-center justify-between p-4 border-b dark:border-gray-700 ${
+                    className={`sticky top-0 z-10 flex items-center justify-between p-4 border-b dark:border-gray-700 rounded-t-2xl ${
                         isInquiry
                             ? "bg-blue-50 dark:bg-blue-900/20"
                             : "bg-amber-50 dark:bg-amber-900/20"
@@ -160,7 +159,7 @@ export default function SupportModal({
                 ) : (
                     <>
                         {/* 내용 */}
-                        <div className="p-4 space-y-4 flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y">
+                        <div className="p-4 space-y-4">
                             {/* 카테고리 (질문/신고만) */}
                             {isInquiry && (
                                 <div>
@@ -282,6 +281,7 @@ export default function SupportModal({
                         </div>
                     </>
                 )}
+            </div>
             </div>
         </div>
     );

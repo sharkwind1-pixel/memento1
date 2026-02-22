@@ -89,15 +89,14 @@ export default function PremiumModal({
     const Icon = info.icon;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* 배경 오버레이 */}
-            <div
-                className="absolute inset-0 bg-black/40"
-                onClick={onClose}
-            />
-
+        <div
+            className="fixed inset-0 z-50 overflow-y-auto bg-black/40"
+            style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+            onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+        >
+            <div className="min-h-full flex items-start justify-center pt-16 pb-20 px-4">
             {/* 모달 */}
-            <div className="relative bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full shadow-2xl overflow-y-auto overscroll-contain touch-pan-y max-h-[90vh] animate-in fade-in zoom-in-95 duration-200" role="dialog" aria-modal="true" aria-labelledby="premium-modal-title">
+            <div className="bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in-95 duration-200" role="dialog" aria-modal="true" aria-labelledby="premium-modal-title" onClick={(e) => e.stopPropagation()}>
                 {/* 상단 그라데이션 */}
                 <div className="bg-gradient-to-br from-violet-500 via-purple-500 to-sky-500 p-8 text-white">
                     <button
@@ -198,6 +197,7 @@ export default function PremiumModal({
                         </div>
                     )}
                 </div>
+            </div>
             </div>
         </div>
     );
