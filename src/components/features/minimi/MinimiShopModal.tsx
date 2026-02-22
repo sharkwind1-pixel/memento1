@@ -62,6 +62,7 @@ export default function MinimiShopModal({
     const [characters, setCharacters] = useState<CatalogCharacter[]>([]);
     const [purchasingId, setPurchasingId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    const [purchaseConfirm, setPurchaseConfirm] = useState<{ slug: string; name: string; price: number } | null>(null);
 
     useEffect(() => {
         if (!isOpen) return;
@@ -77,12 +78,18 @@ export default function MinimiShopModal({
 
     if (!isOpen) return null;
 
-    const handlePurchase = async (slug: string, name: string, price: number) => {
+    const handlePurchaseConfirm = (slug: string, name: string, price: number) => {
         if (points < price) {
             toast.error("포인트가 부족합니다");
             return;
         }
+        setPurchaseConfirm({ slug, name, price });
+    };
 
+    const handlePurchase = async () => {
+        if (!purchaseConfirm) return;
+        const { slug, name, price } = purchaseConfirm;
+        setPurchaseConfirm(null);
         setPurchasingId(slug);
         try {
             const res = await authFetch(API.MINIMI_PURCHASE, {
@@ -242,7 +249,7 @@ export default function MinimiShopModal({
                                                                     </p>
                                                                     <Button
                                                                         size="sm"
-                                                                        onClick={() => handlePurchase(char.slug, char.name, char.price)}
+                                                                        onClick={() => handlePurchaseConfirm(char.slug, char.name, char.price)}
                                                                         disabled={!canAfford || isPurchasing}
                                                                         className={`w-full rounded-lg text-[11px] h-7 ${
                                                                             canAfford
@@ -291,6 +298,44 @@ export default function MinimiShopModal({
                             구매한 미니미는 영구 소유이며, {Math.round(MINIMI.RESELL_RATIO * 100)}% 가격에 되팔기 가능합니다.
                         </p>
                     </div>
+
+                    {/* 구매 확인 다이얼로그 */}
+                    {purchaseConfirm && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[10000]">
+                            <div className="bg-white dark:bg-gray-800 rounded-xl p-5 mx-4 max-w-xs w-full shadow-2xl">
+                                <h3 className="font-bold text-sm text-gray-800 dark:text-gray-100 text-center">
+                                    구매 확인
+                                </h3>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-1.5">
+                                    <strong>{purchaseConfirm.name}</strong>을(를) 구매하시겠습니까?
+                                </p>
+                                <p className="text-center mt-1">
+                                    <span className="text-red-500 font-bold text-sm">-{purchaseConfirm.price}P</span>
+                                    <span className="text-[10px] text-gray-400 ml-1">차감</span>
+                                </p>
+                                <div className="flex gap-2 mt-3">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => setPurchaseConfirm(null)}
+                                        className="flex-1 rounded-lg text-xs h-8"
+                                    >
+                                        취소
+                                    </Button>
+                                    <Button
+                                        onClick={handlePurchase}
+                                        disabled={purchasingId === purchaseConfirm.slug}
+                                        className="flex-1 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs h-8"
+                                    >
+                                        {purchasingId === purchaseConfirm.slug ? (
+                                            <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        ) : (
+                                            "구매"
+                                        )}
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

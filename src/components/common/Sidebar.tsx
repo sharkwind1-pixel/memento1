@@ -380,16 +380,16 @@ export default function Sidebar({
 
         return (
             <>
-                {/* 백드롭 - 터치 이벤트 전파 차단 */}
+                {/* 백드롭 */}
                 <div
-                    className="fixed inset-0 bg-black/50 z-40 touch-none"
+                    className="fixed inset-0 bg-black/50 z-40"
                     onClick={onClose}
-                    onTouchMove={(e) => e.preventDefault()}
                 />
 
-                {/* 사이드바 패널 - transition 제거 */}
+                {/* 사이드바 패널 */}
                 <div
-                    className="fixed top-0 left-0 h-full w-64 bg-white dark:bg-gray-900 z-50 shadow-xl flex flex-col overflow-clip"
+                    className="fixed top-0 left-0 h-full w-64 bg-white dark:bg-gray-900 z-50 shadow-xl flex flex-col overflow-y-auto overscroll-contain"
+                    style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
                 >
                     {sidebarContent}
                 </div>
