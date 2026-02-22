@@ -93,9 +93,16 @@ export default function MinimiShopModal({
                 const data = await res.json();
                 throw new Error(data.error || "구매 실패");
             }
+            // 구매 후 자동 장착
+            try {
+                await authFetch(API.MINIMI_EQUIP, {
+                    method: "POST",
+                    body: JSON.stringify({ minimiSlug: slug }),
+                });
+            } catch { /* 장착 실패해도 구매는 성공 */ }
             await refreshPoints();
             onPurchased?.();
-            toast.success(`${name}을(를) 구매했습니다!`);
+            toast.success(`${name}을(를) 구매하고 장착했습니다!`);
         } catch (err) {
             toast.error(err instanceof Error ? err.message : "구매에 실패했습니다");
         } finally {

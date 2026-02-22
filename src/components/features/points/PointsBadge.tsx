@@ -91,20 +91,18 @@ export default function PointsBadge() {
                             <ShoppingBag className="w-3.5 h-3.5" />
                             상점
                         </button>
-                        {hasMinimi && (
-                            <button
-                                onClick={() => setShowCloset(true)}
-                                className={cn(
-                                    "flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg",
-                                    "bg-purple-100/80 dark:bg-purple-900/20",
-                                    "hover:bg-purple-200/80 dark:hover:bg-purple-900/30",
-                                    "transition-all text-xs font-medium text-purple-700 dark:text-purple-300"
-                                )}
-                            >
-                                <Shirt className="w-3.5 h-3.5" />
-                                옷장
-                            </button>
-                        )}
+                        <button
+                            onClick={() => setShowCloset(true)}
+                            className={cn(
+                                "flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg",
+                                "bg-purple-100/80 dark:bg-purple-900/20",
+                                "hover:bg-purple-200/80 dark:hover:bg-purple-900/30",
+                                "transition-all text-xs font-medium text-purple-700 dark:text-purple-300"
+                            )}
+                        >
+                            <Shirt className="w-3.5 h-3.5" />
+                            옷장
+                        </button>
                     </div>
                 </div>
 
