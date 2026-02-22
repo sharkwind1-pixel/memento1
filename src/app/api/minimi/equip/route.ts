@@ -22,7 +22,6 @@ export async function POST(request: NextRequest) {
         const supabase = await createServerSupabase();
 
         // 캐릭터 보유 확인 (null이면 해제)
-        let minimiImageUrl: string | null = null;
         if (minimiSlug) {
             const { data: owned } = await supabase
                 .from("user_minimi")
@@ -34,33 +33,30 @@ export async function POST(request: NextRequest) {
             if (!owned) {
                 return NextResponse.json({ error: "보유하지 않은 캐릭터입니다" }, { status: 400 });
             }
-
-            // 이미지 URL 조회
-            const character = CHARACTER_CATALOG.find(c => c.slug === minimiSlug);
-            if (character) {
-                minimiImageUrl = character.imageUrl;
-            }
         }
 
-        // profiles 업데이트 (장착 상태 + 이미지URL 캐시)
+        // profiles 업데이트 (장착 상태)
         const { error: updateError } = await supabase
             .from("profiles")
             .update({
                 equipped_minimi_id: minimiSlug || null,
                 minimi_pixel_data: null,
-                minimi_image_url: minimiImageUrl,
             })
             .eq("id", user.id);
 
         if (updateError) {
+            console.error("[minimi/equip] Update failed:", updateError.message, updateError.code);
             return NextResponse.json({ error: "장착에 실패했습니다" }, { status: 500 });
         }
+
+        // imageUrl은 클라이언트에서 catalog 기반으로 해석
+        const character = minimiSlug ? CHARACTER_CATALOG.find(c => c.slug === minimiSlug) : null;
 
         return NextResponse.json({
             success: true,
             equipped: {
                 minimiId: minimiSlug || null,
-                imageUrl: minimiImageUrl,
+                imageUrl: character?.imageUrl || null,
             },
         });
     } catch {
