@@ -185,7 +185,7 @@ export default function PointsShopModal({
                 </div>
 
                 {/* 상품 목록 */}
-                <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
+                <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y p-3 space-y-2.5">
                     {filteredItems.map((item) => {
                         const Icon = item.icon;
                         const canAfford = points >= item.price;

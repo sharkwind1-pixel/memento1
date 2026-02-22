@@ -165,7 +165,7 @@ export default function MinimiShopModal({
                 </div>
 
                 {/* 상품 목록 */}
-                <div className="flex-1 overflow-y-auto p-3">
+                <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y p-3">
                     {loading ? (
                         <div className="flex items-center justify-center py-8">
                             <span className="w-6 h-6 border-2 border-emerald-300 border-t-emerald-600 rounded-full animate-spin" />
