@@ -398,7 +398,7 @@ export default function Sidebar({
     return (
         <aside
             className={cn(
-                "flex flex-col w-96 h-full overflow-y-auto",
+                "flex flex-col w-[420px] h-full overflow-y-auto",
                 isMemorialMode
                     ? "bg-amber-50/80 dark:bg-amber-950/80"
                     : "bg-white/80 dark:bg-gray-900/80",
