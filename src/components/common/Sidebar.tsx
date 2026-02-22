@@ -386,7 +386,7 @@ export default function Sidebar({
 
                 {/* 사이드바 패널 - transition 제거 */}
                 <div
-                    className="fixed top-0 left-0 h-full w-64 bg-white dark:bg-gray-900 z-50 shadow-xl"
+                    className="fixed top-0 left-0 h-full w-64 bg-white dark:bg-gray-900 z-50 shadow-xl flex flex-col overflow-hidden"
                 >
                     {sidebarContent}
                 </div>

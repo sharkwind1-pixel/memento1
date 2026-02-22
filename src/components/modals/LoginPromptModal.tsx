@@ -103,7 +103,7 @@ export default function LoginPromptModal({
             />
 
             {/* 모달 */}
-            <div className="relative bg-white dark:bg-gray-900 rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200" role="dialog" aria-modal="true" aria-labelledby="login-prompt-title">
+            <div className="relative bg-white dark:bg-gray-900 rounded-3xl max-w-sm w-full shadow-2xl overflow-y-auto overscroll-contain touch-pan-y max-h-[90vh] animate-in fade-in zoom-in-95 duration-200" role="dialog" aria-modal="true" aria-labelledby="login-prompt-title">
                 {/* 닫기 버튼 */}
                 <button
                     onClick={onClose}

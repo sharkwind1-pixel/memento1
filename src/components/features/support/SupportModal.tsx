@@ -119,7 +119,7 @@ export default function SupportModal({
             />
 
             {/* 모달 */}
-            <div className="relative w-full sm:max-w-lg sm:mx-4 bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl shadow-xl overflow-hidden max-h-[calc(100vh-140px)] sm:max-h-[85vh] mb-[80px] sm:mb-0" role="dialog" aria-modal="true" aria-labelledby="support-title">
+            <div className="relative w-full sm:max-w-lg sm:mx-4 bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl shadow-xl overflow-clip max-h-[calc(100vh-140px)] sm:max-h-[85vh] flex flex-col mb-[80px] sm:mb-0" role="dialog" aria-modal="true" aria-labelledby="support-title">
                 {/* 헤더 */}
                 <div
                     className={`flex items-center justify-between p-4 border-b dark:border-gray-700 ${
@@ -160,7 +160,7 @@ export default function SupportModal({
                 ) : (
                     <>
                         {/* 내용 */}
-                        <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
+                        <div className="p-4 space-y-4 flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y">
                             {/* 카테고리 (질문/신고만) */}
                             {isInquiry && (
                                 <div>

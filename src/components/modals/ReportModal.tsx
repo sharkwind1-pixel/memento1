@@ -107,7 +107,7 @@ export default function ReportModal({
 
     return (
         <div className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4">
-            <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden" role="dialog" aria-modal="true" aria-labelledby="report-modal-title">
+            <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-y-auto overscroll-contain touch-pan-y max-h-[90vh]" role="dialog" aria-modal="true" aria-labelledby="report-modal-title">
                 {/* 헤더 */}
                 <div className="flex items-center justify-between p-4 border-b dark:border-gray-700 bg-red-50 dark:bg-red-900/20">
                     <div className="flex items-center gap-2">

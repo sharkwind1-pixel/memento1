@@ -211,7 +211,7 @@ export default function AuthModal({
                 if (e.target === e.currentTarget) onClose();
             }}
         >
-            <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
+            <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-y-auto overscroll-contain touch-pan-y max-h-[90vh]" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
                 {/* 헤더 */}
                 <div className="relative bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] p-6 text-white">
                     <button

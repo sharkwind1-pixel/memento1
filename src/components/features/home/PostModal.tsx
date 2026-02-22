@@ -84,7 +84,7 @@ export default function PostModal({
                 if (e.target === e.currentTarget) onClose();
             }}
         >
-            <div className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col" role="dialog" aria-modal="true" aria-labelledby="post-detail-title">
+            <div className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl overflow-clip shadow-2xl max-h-[90vh] flex flex-col" role="dialog" aria-modal="true" aria-labelledby="post-detail-title">
                 {/* 헤더 */}
                 <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
                     <div className="flex items-center gap-3">
@@ -122,7 +122,7 @@ export default function PostModal({
                 </div>
 
                 {/* 스크롤 가능한 컨텐츠 영역 */}
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y">
                     {/* 컨텐츠 */}
                     <div className="p-4 space-y-4">
                         {/* 배지 */}

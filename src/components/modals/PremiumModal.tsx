@@ -97,7 +97,7 @@ export default function PremiumModal({
             />
 
             {/* 모달 */}
-            <div className="relative bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200" role="dialog" aria-modal="true" aria-labelledby="premium-modal-title">
+            <div className="relative bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full shadow-2xl overflow-y-auto overscroll-contain touch-pan-y max-h-[90vh] animate-in fade-in zoom-in-95 duration-200" role="dialog" aria-modal="true" aria-labelledby="premium-modal-title">
                 {/* 상단 그라데이션 */}
                 <div className="bg-gradient-to-br from-violet-500 via-purple-500 to-sky-500 p-8 text-white">
                     <button

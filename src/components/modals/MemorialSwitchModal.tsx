@@ -46,7 +46,7 @@ export default function MemorialSwitchModal({
 
     return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="memorial-switch-title">
+            <div className="bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full overflow-y-auto overscroll-contain touch-pan-y max-h-[90vh] shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="memorial-switch-title">
                 {/* Step 1: 확인 */}
                 {step === 1 && (
                     <>
