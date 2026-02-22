@@ -75,8 +75,19 @@ export async function GET(
         const onboardingData = profile?.onboarding_data as Record<string, unknown> | null;
         const ownerPetType = (onboardingData?.petType as string) || "dog";
 
+        // equipped_minimi_id는 user_minimi UUID → slug 변환 필요
+        let ownerMinimiSlug: string | null = null;
+        if (profile?.equipped_minimi_id) {
+            const { data: minimiRow } = await supabase
+                .from("user_minimi")
+                .select("minimi_id")
+                .eq("id", profile.equipped_minimi_id)
+                .maybeSingle();
+            ownerMinimiSlug = minimiRow?.minimi_id || null;
+        }
+
         const ownerMinimiEquip = {
-            minimiId: profile?.equipped_minimi_id || null,
+            minimiId: ownerMinimiSlug,
             accessoryIds: profile?.equipped_accessories || [],
             pixelData: profile?.minimi_pixel_data || null,
             accessoriesData: profile?.minimi_accessories_data || [],

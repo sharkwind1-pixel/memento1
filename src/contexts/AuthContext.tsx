@@ -133,9 +133,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // 포인트도 같이 설정
             setPoints(!error ? (data?.points ?? 0) : 0);
 
-            // 미니미 장착 상태 설정
+            // 미니미 장착 상태 설정 (equipped_minimi_id는 user_minimi UUID → slug 변환 필요)
             if (!error && data) {
-                const equippedSlug = data.equipped_minimi_id || null;
+                let equippedSlug: string | null = null;
+                const equippedUuid = data.equipped_minimi_id || null;
+
+                if (equippedUuid) {
+                    // UUID로 user_minimi 조회해서 slug 얻기
+                    const { data: minimiRow } = await supabase
+                        .from("user_minimi")
+                        .select("minimi_id")
+                        .eq("id", equippedUuid)
+                        .maybeSingle();
+                    equippedSlug = minimiRow?.minimi_id || null;
+                }
+
                 const catalogItem = equippedSlug ? CHARACTER_CATALOG.find(c => c.slug === equippedSlug) : null;
                 setMinimiEquip({
                     minimiId: equippedSlug,
@@ -198,7 +210,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 .single();
 
             if (data) {
-                const equippedSlug = data.equipped_minimi_id || null;
+                let equippedSlug: string | null = null;
+                const equippedUuid = data.equipped_minimi_id || null;
+
+                if (equippedUuid) {
+                    const { data: minimiRow } = await supabase
+                        .from("user_minimi")
+                        .select("minimi_id")
+                        .eq("id", equippedUuid)
+                        .maybeSingle();
+                    equippedSlug = minimiRow?.minimi_id || null;
+                }
+
                 const catalogItem = equippedSlug ? CHARACTER_CATALOG.find(c => c.slug === equippedSlug) : null;
                 setMinimiEquip({
                     minimiId: equippedSlug,

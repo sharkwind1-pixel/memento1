@@ -67,6 +67,30 @@ export async function POST(request: NextRequest) {
                 const err = errMap[rpcData.error] || { msg: "되팔기에 실패했습니다", status: 500 };
                 return NextResponse.json({ error: err.msg }, { status: err.status });
             }
+
+            // RPC의 UUID/slug 비교 불일치로 장착 해제가 안 될 수 있음 → 후처리
+            const { data: postProfile } = await supabase
+                .from("profiles")
+                .select("equipped_minimi_id")
+                .eq("id", user.id)
+                .single();
+
+            if (postProfile?.equipped_minimi_id) {
+                const { data: stillExists } = await supabase
+                    .from("user_minimi")
+                    .select("id")
+                    .eq("id", postProfile.equipped_minimi_id)
+                    .eq("user_id", user.id)
+                    .maybeSingle();
+
+                if (!stillExists) {
+                    await supabase
+                        .from("profiles")
+                        .update({ equipped_minimi_id: null, minimi_pixel_data: null })
+                        .eq("id", user.id);
+                }
+            }
+
             return NextResponse.json({
                 success: true,
                 refundedPoints: resellPrice,
@@ -90,14 +114,14 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "보유하지 않은 캐릭터입니다" }, { status: 400 });
         }
 
-        // 장착 중이면 해제
+        // 장착 중이면 해제 (equipped_minimi_id는 UUID, owned.id와 비교)
         const { data: profile } = await supabase
             .from("profiles")
             .select("equipped_minimi_id, points")
             .eq("id", user.id)
             .single();
 
-        if (profile?.equipped_minimi_id === itemSlug) {
+        if (profile?.equipped_minimi_id && profile.equipped_minimi_id === owned.id) {
             await supabase.from("profiles")
                 .update({ equipped_minimi_id: null, minimi_pixel_data: null })
                 .eq("id", user.id);
