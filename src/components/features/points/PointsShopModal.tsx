@@ -135,12 +135,12 @@ export default function PointsShopModal({
     };
 
     return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+        <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-14 sm:pt-16">
             {/* 배경 오버레이 - 클릭 시 닫기 */}
             <div className="absolute inset-0 bg-black/50" onClick={onClose} />
 
             <div
-                className="relative w-[calc(100%-2rem)] sm:max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden max-h-[60vh] sm:max-h-[85vh] flex flex-col"
+                className="relative w-[calc(100%-2rem)] sm:max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden max-h-[calc(100vh-3.5rem-68px)] sm:max-h-[calc(100vh-4rem-1rem)] mt-2 flex flex-col"
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="points-shop-title"
