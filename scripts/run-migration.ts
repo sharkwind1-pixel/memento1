@@ -9,6 +9,25 @@ import { createClient } from "@supabase/supabase-js";
 import * as fs from "fs";
 import * as path from "path";
 
+// .env.local 파일에서 환경변수 로딩 (dotenv 없이 직접 파싱)
+function loadEnvLocal() {
+    const envPath = path.join(__dirname, "..", ".env.local");
+    if (!fs.existsSync(envPath)) return;
+    const content = fs.readFileSync(envPath, "utf-8");
+    for (const line of content.split("\n")) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith("#")) continue;
+        const eqIdx = trimmed.indexOf("=");
+        if (eqIdx === -1) continue;
+        const key = trimmed.substring(0, eqIdx).trim();
+        const value = trimmed.substring(eqIdx + 1).trim();
+        if (!process.env[key]) {
+            process.env[key] = value;
+        }
+    }
+}
+loadEnvLocal();
+
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 

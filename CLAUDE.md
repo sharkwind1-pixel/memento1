@@ -166,6 +166,17 @@ if (selectedPet?.status === "memorial") {
 - 모드별 테마 색상 적용
 - 타입 안전성 확보
 
+### DB 변경 작업 완료 기준 (필수)
+- **SQL 파일 작성만으로는 "완료"가 아님**
+- 완료 조건 3가지:
+  1. SQL이 실제 DB에서 실행됨 (스크립트 또는 대시보드)
+  2. 관련 API 호출 테스트 통과 (curl 또는 브라우저)
+  3. 프론트엔드에서 해당 기능이 정상 동작 확인
+- SQL 실행이 불가능한 경우: **RELAY.md 최상단** "미실행 마이그레이션" 섹션에 긴급도와 함께 기재
+- `ADD COLUMN IF NOT EXISTS`는 이미 다른 타입으로 존재하는 컬럼을 무시하므로, 타입 변경이 필요하면 반드시 `ALTER COLUMN TYPE`도 함께 포함
+- 마이그레이션 SQL 작성 시 기존 컬럼 타입을 먼저 확인 (information_schema.columns 조회)
+- "승빈님이 실행하세요"로 끝내지 말 것 -- 가능한 수단을 모두 시도하고, 정말 불가능할 때만 최소한의 액션으로 요청
+
 ---
 
 ## 자주 발생하는 실수 & 디버깅
@@ -192,6 +203,12 @@ grep -n "setIsPetModalOpen\|handleAddNewPet" src/components/pages/RecordPage.tsx
 ### 5. 프리미엄 모달 안 뜸
 **문제**: 제한 체크 로직이 있는 함수를 안 쓰고 직접 setModal(true) 호출
 **해결**: 항상 래퍼 함수 (handleAddNewPet) 사용
+
+### 6. DB 스키마-코드 타입 불일치 (2026-02-22 사후분석)
+**문제**: `equipped_minimi_id`가 DB에서 UUID 타입인데 코드는 TEXT slug를 저장 → `invalid input syntax for type uuid` 에러
+**원인**: `ADD COLUMN IF NOT EXISTS`가 이미 UUID로 존재하던 컬럼을 무시하고, 마이그레이션 SQL은 만들어만 놓고 실행하지 않음
+**해결**: (1) 마이그레이션 작성 시 기존 컬럼 타입 확인 (2) SQL 실행까지 완료해야 "작업 완료" (3) API 호출 테스트로 검증
+**교훈**: 코드만 바꾸고 DB는 안 바뀌면 유저 입장에서는 아무것도 안 바뀐 것임
 
 ---
 
