@@ -147,12 +147,12 @@ export default function MinimiClosetModal({
     };
 
     return (
-        <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
             {/* 배경 오버레이 - 클릭 시 닫기 */}
             <div className="absolute inset-0 bg-black/50" onClick={onClose} />
 
             <div
-                className="relative w-full sm:max-w-lg sm:mx-4 bg-white dark:bg-gray-900 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[55vh] sm:max-h-[85vh] flex flex-col mb-[68px] sm:mb-0"
+                className="relative w-[calc(100%-2rem)] sm:max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden max-h-[60vh] sm:max-h-[85vh] flex flex-col"
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="minimi-closet-title"
