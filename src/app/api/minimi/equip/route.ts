@@ -23,30 +23,32 @@ export async function POST(request: NextRequest) {
 
         // 캐릭터 보유 확인 (null이면 해제)
         if (minimiSlug) {
-            const { data: owned } = await supabase
+            const { data: owned, error: ownedError } = await supabase
                 .from("user_minimi")
                 .select("id")
                 .eq("user_id", user.id)
                 .eq("minimi_id", minimiSlug)
                 .maybeSingle();
 
+            if (ownedError) {
+                console.error("[minimi/equip] Owned check failed:", ownedError.message, ownedError.code);
+                return NextResponse.json({ error: `보유 확인 실패: ${ownedError.message}` }, { status: 500 });
+            }
+
             if (!owned) {
                 return NextResponse.json({ error: "보유하지 않은 캐릭터입니다" }, { status: 400 });
             }
         }
 
-        // profiles 업데이트 (장착 상태)
+        // profiles 업데이트 (장착 상태만 - equipped_minimi_id)
         const { error: updateError } = await supabase
             .from("profiles")
-            .update({
-                equipped_minimi_id: minimiSlug || null,
-                minimi_pixel_data: null,
-            })
+            .update({ equipped_minimi_id: minimiSlug || null })
             .eq("id", user.id);
 
         if (updateError) {
             console.error("[minimi/equip] Update failed:", updateError.message, updateError.code);
-            return NextResponse.json({ error: "장착에 실패했습니다" }, { status: 500 });
+            return NextResponse.json({ error: `장착 실패: ${updateError.message}` }, { status: 500 });
         }
 
         // imageUrl은 클라이언트에서 catalog 기반으로 해석
