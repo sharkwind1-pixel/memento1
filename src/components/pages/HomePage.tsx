@@ -245,9 +245,10 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
             style={{ contain: 'layout style', transform: 'translateZ(0)' }}
         >
             {/* 배경 */}
-            <div className="absolute inset-0 bg-gradient-to-br from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-all duration-700 ease-in-out">
-                <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-r from-[#7DD3FC]/30 to-sky-200/30 dark:from-blue-800/20 dark:to-sky-800/20 rounded-full blur-2xl animate-pulse will-change-[opacity]" />
-                <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-gradient-to-r from-sky-200/30 to-[#BAE6FD]/30 dark:from-sky-800/20 dark:to-[#0369A1]/20 rounded-full blur-2xl animate-pulse delay-1000 will-change-[opacity]" />
+            {/* 배경 - transition/animate-pulse 제거 (모바일 깜빡임 방지) */}
+            <div className="absolute inset-0 bg-gradient-to-br from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+                <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-r from-[#7DD3FC]/30 to-sky-200/30 dark:from-blue-800/20 dark:to-sky-800/20 rounded-full blur-2xl opacity-70" />
+                <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-gradient-to-r from-sky-200/30 to-[#BAE6FD]/30 dark:from-sky-800/20 dark:to-[#0369A1]/20 rounded-full blur-2xl opacity-50" />
             </div>
 
             {/* 이미지 Lightbox */}

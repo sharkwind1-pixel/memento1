@@ -149,12 +149,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 }
 
                 const catalogItem = equippedSlug ? CHARACTER_CATALOG.find(c => c.slug === equippedSlug) : null;
-                setMinimiEquip({
-                    minimiId: equippedSlug,
-                    accessoryIds: data.equipped_accessories || [],
-                    pixelData: data.minimi_pixel_data || null,
-                    accessoriesData: data.minimi_accessories_data || [],
-                    imageUrl: catalogItem?.imageUrl || null,
+                const newAccessoryIds = data.equipped_accessories || [];
+                const newAccessoriesData = data.minimi_accessories_data || [];
+                const newImageUrl = catalogItem?.imageUrl || null;
+
+                // 구조적 비교: 값이 실제로 변경된 경우에만 setState 호출
+                // (매번 새 객체/배열 생성하면 context value useMemo가 깨져서 모든 consumer 재렌더)
+                setMinimiEquip(prev => {
+                    if (
+                        prev.minimiId === equippedSlug &&
+                        prev.imageUrl === newImageUrl &&
+                        prev.pixelData === (data.minimi_pixel_data || null) &&
+                        JSON.stringify(prev.accessoryIds) === JSON.stringify(newAccessoryIds) &&
+                        JSON.stringify(prev.accessoriesData) === JSON.stringify(newAccessoriesData)
+                    ) {
+                        return prev; // 같은 레퍼런스 유지 → 재렌더 없음
+                    }
+                    return {
+                        minimiId: equippedSlug,
+                        accessoryIds: newAccessoryIds,
+                        pixelData: data.minimi_pixel_data || null,
+                        accessoriesData: newAccessoriesData,
+                        imageUrl: newImageUrl,
+                    };
                 });
             }
 
@@ -223,12 +240,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 }
 
                 const catalogItem = equippedSlug ? CHARACTER_CATALOG.find(c => c.slug === equippedSlug) : null;
-                setMinimiEquip({
-                    minimiId: equippedSlug,
-                    accessoryIds: data.equipped_accessories || [],
-                    pixelData: data.minimi_pixel_data || null,
-                    accessoriesData: data.minimi_accessories_data || [],
-                    imageUrl: catalogItem?.imageUrl || null,
+                const newAccessoryIds = data.equipped_accessories || [];
+                const newAccessoriesData = data.minimi_accessories_data || [];
+                const newImageUrl = catalogItem?.imageUrl || null;
+
+                setMinimiEquip(prev => {
+                    if (
+                        prev.minimiId === equippedSlug &&
+                        prev.imageUrl === newImageUrl &&
+                        prev.pixelData === (data.minimi_pixel_data || null) &&
+                        JSON.stringify(prev.accessoryIds) === JSON.stringify(newAccessoryIds) &&
+                        JSON.stringify(prev.accessoriesData) === JSON.stringify(newAccessoriesData)
+                    ) {
+                        return prev;
+                    }
+                    return {
+                        minimiId: equippedSlug,
+                        accessoryIds: newAccessoryIds,
+                        pixelData: data.minimi_pixel_data || null,
+                        accessoriesData: newAccessoriesData,
+                        imageUrl: newImageUrl,
+                    };
                 });
             }
         } catch {

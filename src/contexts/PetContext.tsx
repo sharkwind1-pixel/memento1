@@ -249,7 +249,12 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
         }
     }, [selectedPetId, isLoading]);
 
-    const selectedPet = pets.find((p) => p.id === selectedPetId);
+    // useMemo로 메모이제이션: pets.find()는 매 렌더마다 새 레퍼런스를 반환하므로
+    // contextValue useMemo의 deps가 항상 변경된 것으로 판단 → 모든 consumer 재렌더 유발
+    const selectedPet = useMemo(
+        () => pets.find((p) => p.id === selectedPetId),
+        [pets, selectedPetId]
+    );
 
     // ===== Pet CRUD =====
     const addPet = useCallback(

@@ -284,33 +284,39 @@ export default function Layout({
                                 )}
                             </Button>
 
+                            {/* 모바일 auth 영역 - CSS visibility로 상태 전환 (mount/unmount 깜빡임 방지) */}
                             <div className="xl:hidden flex items-center min-w-[40px]">
-                            {loading ? (
-                                <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-full transition-opacity duration-200" />
-                            ) : user ? (
-                                <div className="relative animate-fade-in">
+                                {/* 로딩 스켈레톤 - loading일 때만 표시 */}
+                                <div
+                                    className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full"
+                                    style={{ display: loading ? 'block' : 'none' }}
+                                />
+
+                                {/* 로그인 유저 메뉴 - user일 때만 표시 */}
+                                <div
+                                    className="relative"
+                                    style={{ display: !loading && user ? 'block' : 'none' }}
+                                >
                                     <button
                                         onClick={() =>
                                             setIsUserMenuOpen(!isUserMenuOpen)
                                         }
-                                        className="flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 rounded-full sm:rounded-xl hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
+                                        className="flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 rounded-full sm:rounded-xl hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700"
                                     >
-                                        <span className="transition-opacity duration-200" style={{ opacity: pointsLoaded ? 1 : 0 }}>
-                                            <LevelBadge
-                                                points={points}
-                                                petType={userPetType}
-                                                isAdmin={isAdminUser}
-                                                size="md"
-                                                showTooltip={false}
-                                            />
-                                        </span>
+                                        <LevelBadge
+                                            points={points}
+                                            petType={userPetType}
+                                            isAdmin={isAdminUser}
+                                            size="md"
+                                            showTooltip={false}
+                                        />
                                         {minimiEquip.imageUrl && (
                                             <Image
                                                 src={minimiEquip.imageUrl}
                                                 alt="미니미"
                                                 width={16}
                                                 height={16}
-                                                className={`object-contain hidden sm:block transition-opacity duration-200 ${profileLoaded ? 'opacity-100' : 'opacity-0'}`}
+                                                className="object-contain hidden sm:block"
                                                 style={{ imageRendering: "pixelated" }}
                                             />
                                         )}
@@ -346,7 +352,7 @@ export default function Layout({
                                                                 {displayName}
                                                             </p>
                                                             <p className="text-xs text-gray-500 truncate">
-                                                                {user.email}
+                                                                {user?.email}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -376,8 +382,12 @@ export default function Layout({
                                         </>
                                     )}
                                 </div>
-                            ) : (
-                                <div className="flex items-center gap-0.5 sm:gap-2">
+
+                                {/* 비로그인 버튼 - 로딩 끝나고 user 없을 때만 표시 */}
+                                <div
+                                    className="flex items-center gap-0.5 sm:gap-2"
+                                    style={{ display: !loading && !user ? 'flex' : 'none' }}
+                                >
                                     <Button
                                         variant="outline"
                                         onClick={openLoginModal}
@@ -394,7 +404,6 @@ export default function Layout({
                                         회원가입
                                     </Button>
                                 </div>
-                            )}
                             </div>
                         </div>
                     </div>
@@ -446,11 +455,12 @@ export default function Layout({
             </div>
 
             {/* 모바일 하단 네비게이션 - 5개 메인 카테고리 */}
+            {/* 하단 네비 - backdrop-blur 제거 (모바일 GPU 과부하), 완전 불투명 배경 */}
             <nav
-                className={`xl:hidden fixed bottom-0 left-0 right-0 backdrop-blur-sm border-t z-50 pb-safe ${
+                className={`xl:hidden fixed bottom-0 left-0 right-0 border-t z-50 pb-safe ${
                     isMemorialMode
-                        ? "bg-amber-50/95 dark:bg-amber-950/95 border-amber-200 dark:border-amber-800"
-                        : "bg-white/95 dark:bg-gray-900/95 border-gray-100 dark:border-gray-800"
+                        ? "bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800"
+                        : "bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800"
                 }`}
                 style={{
                     boxShadow: '0 -1px 12px rgba(0, 0, 0, 0.04)',
@@ -472,7 +482,7 @@ export default function Layout({
                                 onClick={() => setSelectedTab(tab.id)}
                                 className={`
                                     relative flex flex-col items-center justify-center flex-1 py-1.5
-                                    min-h-[60px] min-w-[56px] transition-colors duration-500
+                                    min-h-[60px] min-w-[56px]
                                     ${isActive
                                         ? isMemorialMode
                                             ? "text-amber-500 dark:text-amber-400"
@@ -482,7 +492,7 @@ export default function Layout({
                             >
                                 <div
                                     className={`
-                                        relative flex items-center justify-center rounded-2xl transition-all duration-500
+                                        relative flex items-center justify-center rounded-2xl
                                         ${isHome
                                             ? isActive
                                                 ? isMemorialMode
@@ -499,7 +509,6 @@ export default function Layout({
                                 >
                                     <Icon
                                         className={`
-                                            transition-all duration-200
                                             ${isHome
                                                 ? isActive
                                                     ? "w-6 h-6 text-white"
@@ -515,7 +524,7 @@ export default function Layout({
                                     {tab.label}
                                 </span>
                                 {isActive && !isHome && (
-                                    <div className={`absolute bottom-1 w-1 h-1 rounded-full transition-colors duration-500 ${
+                                    <div className={`absolute bottom-1 w-1 h-1 rounded-full ${
                                         isMemorialMode ? "bg-amber-500 dark:bg-amber-400" : "bg-[#05B2DC] dark:bg-[#38BDF8]"
                                     }`} />
                                 )}

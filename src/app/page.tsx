@@ -16,9 +16,8 @@
  * - localStorage 백업 (새로고침 시 복원)
  *
  * 최적화:
- * - HomePage만 정적 import (첫 화면)
- * - 나머지 5개 페이지는 next/dynamic 코드스플리팅
- * - 초기 번들 크기 최소화
+ * - 모든 페이지 정적 import (dynamic import는 탭 전환 시 unmount/remount 유발하여 깜빡임 발생)
+ * - CLAUDE.md: "Dynamic Import 사용 금지" 원칙 준수
  *
  * ============================================================================
  */
@@ -30,8 +29,6 @@
 // ============================================================================
 import { useState, useEffect, Suspense, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
-import { Loader2 } from "lucide-react";
 import { TabType, CommunitySubcategory, getLegacyTabRedirect } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePets } from "@/contexts/PetContext";
@@ -59,37 +56,18 @@ const isValidSubcategory = (sub: string | null): sub is CommunitySubcategory => 
 };
 
 // ============================================================================
-// 페이지 컴포넌트 - HomePage만 정적, 나머지는 dynamic import (코드스플리팅)
+// 페이지 컴포넌트 - 모두 정적 import (dynamic import 금지)
 // ============================================================================
-// HomePage는 첫 화면이므로 정적 import 유지
-// 나머지 5개 페이지는 lazy loading으로 초기 번들 크기 최소화
+// dynamic import는 탭 전환마다 unmount → skeleton → remount 사이클을 유발하여
+// 모바일에서 이미지/버튼/아이콘이 껐다 켜졌다하는 깜빡임의 주범이었음
+// CLAUDE.md: "즉각적인 반응이 UX에 더 중요 - dynamic import 사용하지 않음"
 
 import HomePage from "@/components/pages/HomePage";
-
-/** 페이지 로딩 중 표시되는 스켈레톤 */
-function PageSkeleton() {
-    return (
-        <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 text-[#05B2DC] animate-spin" />
-        </div>
-    );
-}
-
-const CommunityPage = dynamic(() => import("@/components/pages/CommunityPage"), {
-    loading: () => <PageSkeleton />,
-});
-const AIChatPage = dynamic(() => import("@/components/pages/AIChatPage"), {
-    loading: () => <PageSkeleton />,
-});
-const MagazinePage = dynamic(() => import("@/components/pages/MagazinePage"), {
-    loading: () => <PageSkeleton />,
-});
-const RecordPage = dynamic(() => import("@/components/pages/RecordPage"), {
-    loading: () => <PageSkeleton />,
-});
-const AdminPage = dynamic(() => import("@/components/pages/AdminPage"), {
-    loading: () => <PageSkeleton />,
-});
+import CommunityPage from "@/components/pages/CommunityPage";
+import AIChatPage from "@/components/pages/AIChatPage";
+import MagazinePage from "@/components/pages/MagazinePage";
+import RecordPage from "@/components/pages/RecordPage";
+import AdminPage from "@/components/pages/AdminPage";
 
 // 모달 컴포넌트 - 정적 import
 import NicknameSetupModal from "@/components/Auth/NicknameSetupModal";
@@ -441,20 +419,20 @@ function HomeContent() {
                 subcategory={selectedSubcategory}
                 onSubcategoryChange={handleSubcategoryChange}
             >
-                {isContentLoading ? (
-                    <div className="space-y-4 animate-pulse py-4">
-                        {/* 히어로 영역 스켈레톤 */}
+                {/* 로딩 스켈레톤과 콘텐츠를 CSS display로 전환 (mount/unmount 방지) */}
+                <div style={{ display: isContentLoading ? 'block' : 'none' }}>
+                    <div className="space-y-4 py-4">
                         <div className="rounded-2xl bg-gray-100/60 dark:bg-gray-800/40 h-48 w-full" />
-                        {/* 카드 그리드 스켈레톤 */}
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             {[...Array(6)].map((_, i) => (
                                 <div key={i} className="rounded-xl bg-gray-100/60 dark:bg-gray-800/40 h-28" />
                             ))}
                         </div>
                     </div>
-                ) : (
-                    renderPage()
-                )}
+                </div>
+                <div style={{ display: isContentLoading ? 'none' : 'block' }}>
+                    {renderPage()}
+                </div>
             </Layout>
             {user && (
                 <>
