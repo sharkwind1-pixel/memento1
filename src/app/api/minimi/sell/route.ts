@@ -170,7 +170,6 @@ export async function POST(request: NextRequest) {
     }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function removeSoldFromPlacedMinimi(supabase: any, userId: string, slug: string) {
     try {
         const { data: settings } = await supabase

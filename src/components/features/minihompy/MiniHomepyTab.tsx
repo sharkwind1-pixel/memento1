@@ -12,7 +12,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Loader2, MessageSquare, Trash2, ChevronDown, Pencil, Check, Plus } from "lucide-react";
+import { Loader2, MessageSquare, Trash2, ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
@@ -208,7 +208,7 @@ export default function MiniHomepyTab() {
 
     return (
         <div className="space-y-4">
-            {/* 미니홈피 스테이지 */}
+            {/* 미니홈피 스테이지 - 배치 버튼이 스테이지 안에 포함 */}
             <MinihompyStage
                 backgroundSlug={currentSettings.backgroundSlug}
                 minimiEquip={minimiEquip}
@@ -220,66 +220,13 @@ export default function MiniHomepyTab() {
                 placedMinimi={displayPlaced}
                 editMode={editMode}
                 onPlacementChange={editMode ? setEditPlaced : undefined}
+                onEnterEdit={enterEditMode}
+                onCancelEdit={cancelEditMode}
+                onSaveEdit={saveAndExitEditMode}
+                onAddMinimi={() => setShowPicker(!showPicker)}
+                saving={saving}
+                maxPlaced={MINIHOMPY.MAX_PLACED_MINIMI}
             />
-
-            {/* 미니미 배치 버튼 */}
-            <div className="flex items-center gap-2">
-                {editMode ? (
-                    <>
-                        {editPlaced.length < MINIHOMPY.MAX_PLACED_MINIMI && (
-                            <button
-                                onClick={() => setShowPicker(!showPicker)}
-                                className={cn(
-                                    "flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors",
-                                    "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400",
-                                    "hover:bg-blue-100 dark:hover:bg-blue-900/30"
-                                )}
-                            >
-                                <Plus className="w-4 h-4" />
-                                미니미 추가
-                                <span className="text-xs opacity-60">
-                                    ({editPlaced.length}/{MINIHOMPY.MAX_PLACED_MINIMI})
-                                </span>
-                            </button>
-                        )}
-                        <div className="flex-1" />
-                        <button
-                            onClick={cancelEditMode}
-                            className="px-3 py-2 rounded-xl text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                        >
-                            취소
-                        </button>
-                        <button
-                            onClick={saveAndExitEditMode}
-                            disabled={saving}
-                            className={cn(
-                                "flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-colors",
-                                "bg-green-500 text-white hover:bg-green-600",
-                                saving && "opacity-50 cursor-not-allowed"
-                            )}
-                        >
-                            {saving ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                                <Check className="w-4 h-4" />
-                            )}
-                            배치 완료
-                        </button>
-                    </>
-                ) : (
-                    <button
-                        onClick={enterEditMode}
-                        className={cn(
-                            "flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors",
-                            "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300",
-                            "hover:bg-gray-200 dark:hover:bg-gray-700"
-                        )}
-                    >
-                        <Pencil className="w-3.5 h-3.5" />
-                        미니미 배치
-                    </button>
-                )}
-            </div>
 
             {/* 미니미 선택 피커 */}
             {editMode && (
