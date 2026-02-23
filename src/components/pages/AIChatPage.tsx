@@ -30,7 +30,7 @@
 // ============================================================================
 // 임포트
 // ============================================================================
-import React from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { usePets, useTimeline } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Star } from "lucide-react";
@@ -84,6 +84,32 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
     });
 
     // ========================================================================
+    // 모바일 키보드 대응: visualViewport API
+    // ========================================================================
+    const [viewportHeight, setViewportHeight] = useState<number | null>(null);
+
+    const handleViewportResize = useCallback(() => {
+        if (window.visualViewport) {
+            setViewportHeight(window.visualViewport.height);
+        }
+    }, []);
+
+    useEffect(() => {
+        const vv = window.visualViewport;
+        if (!vv) return;
+
+        // 초기값 설정
+        setViewportHeight(vv.height);
+
+        vv.addEventListener("resize", handleViewportResize);
+        vv.addEventListener("scroll", handleViewportResize);
+        return () => {
+            vv.removeEventListener("resize", handleViewportResize);
+            vv.removeEventListener("scroll", handleViewportResize);
+        };
+    }, [handleViewportResize]);
+
+    // ========================================================================
     // 조건부 렌더링: 비로그인
     // ========================================================================
     if (!user) {
@@ -107,6 +133,11 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                     ? "bg-gradient-to-b from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950 dark:via-orange-950 dark:to-gray-900"
                     : "bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
             }`}
+            style={
+                viewportHeight
+                    ? { height: `${viewportHeight}px`, minHeight: `${viewportHeight}px` }
+                    : undefined
+            }
         >
             {/* 상단 DomeGallery - 3D 사진 갤러리 */}
             {chat.galleryImages.length > 0 && (

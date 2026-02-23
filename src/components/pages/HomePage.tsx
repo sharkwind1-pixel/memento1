@@ -104,6 +104,9 @@ function HomePage({ setSelectedTab }: HomePageProps) {
     // 좋아요 상태 관리 (postId -> liked)
     const [likedPosts, setLikedPosts] = useState<Record<number, boolean>>({});
 
+    // 좋아요 애니메이션 상태 (postId -> animating)
+    const [animatingHearts, setAnimatingHearts] = useState<Record<number, boolean>>({});
+
     // 댓글 상태 관리 (postId -> comments[])
     const [postComments, setPostComments] = useState<Record<number, Comment[]>>(
         {},
@@ -138,6 +141,11 @@ function HomePage({ setSelectedTab }: HomePageProps) {
             ...prev,
             [postId]: !prev[postId],
         }));
+        // 하트 팝 애니메이션 트리거
+        setAnimatingHearts((prev) => ({ ...prev, [postId]: true }));
+        setTimeout(() => {
+            setAnimatingHearts((prev) => ({ ...prev, [postId]: false }));
+        }, 400);
     };
 
     const addComment = (postId: number, content: string) => {
@@ -336,7 +344,7 @@ function HomePage({ setSelectedTab }: HomePageProps) {
                         <Button
                             variant="ghost"
                             onClick={() => setSelectedTab("community")}
-                            className="text-[#0891B2] dark:text-[#38BDF8] hover:bg-[#E0F7FF] dark:hover:bg-gray-700 rounded-xl flex-shrink-0 px-2 sm:px-4"
+                            className="text-[#0891B2] dark:text-[#38BDF8] hover:bg-[#E0F7FF] dark:hover:bg-gray-700 rounded-xl flex-shrink-0 px-2 sm:px-4 min-h-[44px] active:scale-95 transition-transform"
                         >
                             <span className="hidden sm:inline">더 많은 이야기</span>
                             <span className="sm:hidden">더보기</span>
@@ -396,18 +404,18 @@ function HomePage({ setSelectedTab }: HomePageProps) {
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            className="absolute top-2 right-2 text-white hover:text-red-300 hover:bg-white/20 min-w-[44px] min-h-[44px] p-2"
+                                            className="absolute top-2 right-2 text-white hover:text-red-300 hover:bg-white/20 min-w-[44px] min-h-[44px] p-2 active:scale-95 transition-transform"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 toggleLike(post.id);
                                             }}
                                         >
                                             <Heart
-                                                className={`w-6 h-6 transition-all ${
+                                                className={`w-6 h-6 transition-all duration-300 ${
                                                     isLiked
                                                         ? "fill-red-400 text-red-400 scale-110"
                                                         : ""
-                                                }`}
+                                                } ${animatingHearts[post.id] ? "animate-heart-pop" : ""}`}
                                             />
                                         </Button>
                                         {/* 데코 아이콘 */}
@@ -432,11 +440,11 @@ function HomePage({ setSelectedTab }: HomePageProps) {
                                             <div className="flex items-center gap-3 text-sm text-gray-500">
                                                 <span className="flex items-center gap-1">
                                                     <Heart
-                                                        className={`w-4 h-4 ${
+                                                        className={`w-4 h-4 transition-colors duration-300 ${
                                                             isLiked
                                                                 ? "fill-red-500 text-red-500"
                                                                 : ""
-                                                        }`}
+                                                        } ${animatingHearts[post.id] ? "animate-heart-pop" : ""}`}
                                                     />
                                                     {displayLikes}
                                                 </span>
@@ -473,7 +481,7 @@ function HomePage({ setSelectedTab }: HomePageProps) {
                         <Button
                             variant="ghost"
                             onClick={() => setSelectedTab("adoption")}
-                            className="text-[#0891B2] dark:text-[#38BDF8] hover:bg-[#E0F7FF] dark:hover:bg-gray-700 rounded-xl flex-shrink-0 px-2 sm:px-4"
+                            className="text-[#0891B2] dark:text-[#38BDF8] hover:bg-[#E0F7FF] dark:hover:bg-gray-700 rounded-xl flex-shrink-0 px-2 sm:px-4 min-h-[44px] active:scale-95 transition-transform"
                         >
                             <span className="hidden sm:inline">전체 보기</span>
                             <span className="sm:hidden">더보기</span>
@@ -513,13 +521,13 @@ function HomePage({ setSelectedTab }: HomePageProps) {
                                                     <img
                                                         src={src}
                                                         alt={pet.title}
-                                                        className="w-full h-48 object-cover"
+                                                        className="w-full aspect-[4/3] object-cover"
                                                         loading="lazy"
                                                         referrerPolicy="no-referrer"
                                                     />
                                                 </button>
                                             ) : (
-                                                <div className="w-full h-48 bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD] dark:from-sky-900 dark:to-blue-900 flex items-center justify-center">
+                                                <div className="w-full aspect-[4/3] bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD] dark:from-sky-900 dark:to-blue-900 flex items-center justify-center">
                                                     <Users className="w-16 h-16 text-sky-400 opacity-50" />
                                                 </div>
                                             )}
@@ -575,7 +583,7 @@ function HomePage({ setSelectedTab }: HomePageProps) {
                         <Button
                             variant="ghost"
                             onClick={() => setSelectedTab("magazine")}
-                            className="text-[#0891B2] dark:text-[#38BDF8] hover:bg-[#E0F7FF] dark:hover:bg-gray-700 rounded-xl flex-shrink-0 px-2 sm:px-4"
+                            className="text-[#0891B2] dark:text-[#38BDF8] hover:bg-[#E0F7FF] dark:hover:bg-gray-700 rounded-xl flex-shrink-0 px-2 sm:px-4 min-h-[44px] active:scale-95 transition-transform"
                         >
                             <span className="hidden sm:inline">전체 가이드</span>
                             <span className="sm:hidden">더보기</span>
@@ -649,7 +657,7 @@ function HomePage({ setSelectedTab }: HomePageProps) {
                         <Button
                             variant="ghost"
                             onClick={() => setSelectedTab("community")}
-                            className="text-amber-500 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl flex-shrink-0 px-2 sm:px-4"
+                            className="text-amber-500 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl flex-shrink-0 px-2 sm:px-4 min-h-[44px] active:scale-95 transition-transform"
                         >
                             <span className="hidden sm:inline">더 많은 이야기</span>
                             <span className="sm:hidden">더보기</span>
@@ -668,7 +676,7 @@ function HomePage({ setSelectedTab }: HomePageProps) {
                                     key={`skeleton-${i}`}
                                     className="min-w-[260px] sm:min-w-72 flex-shrink-0 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 border-amber-100 dark:border-amber-800/50 rounded-2xl overflow-hidden shadow-sm animate-pulse"
                                 >
-                                    <div className="w-full h-48 bg-amber-200 dark:bg-amber-800" />
+                                    <div className="w-full aspect-[4/3] bg-amber-200 dark:bg-amber-800" />
                                     <CardContent className="p-4">
                                         <div className="h-5 bg-amber-200 dark:bg-amber-700 rounded w-2/3 mb-2" />
                                         <div className="h-4 bg-amber-100 dark:bg-amber-800 rounded w-1/3 mb-3" />
@@ -701,13 +709,13 @@ function HomePage({ setSelectedTab }: HomePageProps) {
                                                     <img
                                                         src={src}
                                                         alt={m.name}
-                                                        className="w-full h-48 object-cover"
+                                                        className="w-full aspect-[4/3] object-cover"
                                                         loading="lazy"
                                                         referrerPolicy="no-referrer"
                                                     />
                                                 </button>
                                             ) : (
-                                                <div className="w-full h-48 bg-gradient-to-br from-amber-200 to-orange-200 dark:from-amber-800 dark:to-orange-800 flex items-center justify-center">
+                                                <div className="w-full aspect-[4/3] bg-gradient-to-br from-amber-200 to-orange-200 dark:from-amber-800 dark:to-orange-800 flex items-center justify-center">
                                                     {(() => {
                                                         const PetIcon = getPetIcon(m.pet);
                                                         return <PetIcon className="w-16 h-16 text-amber-500/60" />;

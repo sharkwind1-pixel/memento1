@@ -213,7 +213,7 @@ export default function AuthModal({
             }}
         >
             <div className="min-h-full flex items-start justify-center pt-16 pb-20 px-4">
-            <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl relative" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title" onClick={(e) => e.stopPropagation()}>
+            <div className="w-full max-w-md sm:max-w-lg bg-white dark:bg-gray-900 rounded-3xl shadow-2xl relative max-h-[90dvh] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title" onClick={(e) => e.stopPropagation()}>
                 {/* 헤더 */}
                 <div className="relative bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] p-6 text-white">
                     <button

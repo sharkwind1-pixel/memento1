@@ -126,7 +126,7 @@ function HeaderAuthArea({
             >
                 <button
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                    className="flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 rounded-full sm:rounded-xl hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700"
+                    className="flex items-center gap-1.5 p-1.5 min-w-[44px] min-h-[44px] sm:px-3 sm:py-2 rounded-full sm:rounded-xl hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 active:scale-95 transition-transform"
                 >
                     <LevelBadge
                         points={points}
@@ -210,14 +210,14 @@ function HeaderAuthArea({
                 <Button
                     variant="outline"
                     onClick={openLoginModal}
-                    className="rounded-md border-[#05B2DC] text-[#05B2DC] hover:bg-[#E0F7FF] px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm h-auto min-h-[36px]"
+                    className="rounded-md border-[#05B2DC] text-[#05B2DC] hover:bg-[#E0F7FF] px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm h-auto min-h-[44px] active:scale-95 transition-transform"
                 >
                     <LogIn className="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
                     로그인
                 </Button>
                 <Button
                     onClick={openSignupModal}
-                    className="bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-[#05B2DC] rounded-md shadow-sm shadow-[#05B2DC]/25 px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm h-auto min-h-[36px]"
+                    className="bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-[#05B2DC] rounded-md shadow-sm shadow-[#05B2DC]/25 px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm h-auto min-h-[44px] active:scale-95 transition-transform"
                 >
                     <UserPlus className="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
                     회원가입
@@ -271,7 +271,7 @@ function BottomNav({
                             onClick={() => setSelectedTab(tab.id)}
                             className={`
                                 relative flex flex-col items-center justify-center flex-1 py-1.5
-                                min-h-[60px] min-w-[56px]
+                                min-h-[60px] min-w-[56px] active:scale-95 transition-transform
                                 ${isActive
                                     ? isMemorialMode
                                         ? "text-amber-500 dark:text-amber-400"
@@ -475,7 +475,7 @@ function Layout({
                                 alt="메멘토애니"
                                 width={160}
                                 height={48}
-                                className="h-10 sm:h-12 w-auto object-contain dark:bg-white dark:p-1 dark:rounded-lg"
+                                className="h-8 sm:h-10 md:h-12 w-auto object-contain dark:bg-white dark:p-1 dark:rounded-lg"
                                 priority
                             />
                         </button>
@@ -484,7 +484,7 @@ function Layout({
                         <MagazineBanner onNavigateToMagazine={() => setSelectedTab("magazine")} />
 
                         {/* 우측 버튼들 */}
-                        <div className="flex items-center gap-2 sm:gap-2">
+                        <div className="flex items-center gap-1 sm:gap-2">
                             {/* 모바일 햄버거 메뉴 - auth 버튼과 분리 */}
                             <Button
                                 variant="ghost"
@@ -557,7 +557,7 @@ function Layout({
             </aside>
 
             {/* 메인 컨텐츠 영역 */}
-            <div id="main-content" className="xl:ml-[420px] pb-20 xl:pb-0 flex-1">
+            <div id="main-content" className="xl:ml-[420px] flex-1">
                 <main className="max-w-6xl mx-auto px-4 py-6">{children}</main>
             </div>
 

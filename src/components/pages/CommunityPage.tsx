@@ -249,7 +249,7 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
                         </div>
                         <Button
                             onClick={handleWriteClick}
-                            className={`bg-gradient-to-r ${currentColor.bg} hover:opacity-90 rounded-xl flex-shrink-0 px-3 sm:px-4`}
+                            className={`bg-gradient-to-r ${currentColor.bg} hover:opacity-90 rounded-xl flex-shrink-0 px-3 sm:px-4 min-h-[44px] active:scale-95 transition-transform`}
                         >
                             <PenSquare className="w-4 h-4 sm:mr-2" />
                             <span className="hidden sm:inline">글쓰기</span>
@@ -266,7 +266,7 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
                                 <button
                                     key={sub.id}
                                     onClick={() => handleSubcategoryChange(sub.id)}
-                                    className={`p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border-2 transition-all ${
+                                    className={`p-2.5 sm:p-3 min-h-[44px] rounded-xl sm:rounded-2xl border-2 transition-all active:scale-95 ${
                                         isActive
                                             ? `bg-gradient-to-r ${color.bg} text-white border-transparent shadow-lg`
                                             : `bg-white/50 dark:bg-gray-700/50 ${color.border} hover:shadow-md`
@@ -297,7 +297,7 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
                         <div className="flex flex-wrap gap-2 mb-4 p-3 bg-blue-50/50 dark:bg-blue-900/20 rounded-xl border border-blue-200/50 dark:border-blue-700/30">
                             <button
                                 onClick={() => setSelectedTag("all")}
-                                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                                className={`px-3 py-1.5 min-h-[44px] rounded-full text-sm font-medium transition-all active:scale-95 ${
                                     selectedTag === "all"
                                         ? "bg-[#05B2DC] text-white shadow-md"
                                         : "bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-800/30 border border-blue-200 dark:border-blue-700/50"
@@ -311,7 +311,7 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
                                     <button
                                         key={tag.id}
                                         onClick={() => setSelectedTag(tag.id)}
-                                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all border ${
+                                        className={`px-3 py-1.5 min-h-[44px] rounded-full text-sm font-medium transition-all active:scale-95 border ${
                                             isActive
                                                 ? getTagColor(tag.color).replace("border-", "border-transparent bg-").split(" ").slice(0, 2).join(" ") + " text-white shadow-md"
                                                 : getTagColor(tag.color)
@@ -356,7 +356,7 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
                                             variant="ghost"
                                             size="sm"
                                             onClick={() => setSortBy(sort.id)}
-                                            className={`rounded-lg px-2 sm:px-3 ${sortBy === sort.id ? "bg-white dark:bg-gray-700 shadow-sm" : ""}`}
+                                            className={`rounded-lg px-2 sm:px-3 min-h-[44px] active:scale-95 transition-transform ${sortBy === sort.id ? "bg-white dark:bg-gray-700 shadow-sm" : ""}`}
                                         >
                                             <Icon className="w-4 h-4 sm:mr-1" />
                                             <span className="hidden sm:inline">{sort.label}</span>
@@ -405,7 +405,7 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
                                                     <button
-                                                        className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                                                        className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors active:scale-95 transition-transform"
                                                         onClick={(e) => e.stopPropagation()}
                                                         aria-label="더보기"
                                                     >

@@ -92,7 +92,7 @@ export default function AIChatHeader({
                     </h1>
                     <button
                         onClick={onNewChat}
-                        className={`p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-colors duration-500 ${
+                        className={`p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-all duration-500 active:scale-95 ${
                             isMemorialMode
                                 ? "hover:bg-amber-200/50 text-amber-600"
                                 : "hover:bg-[#E0F7FF] text-[#05B2DC]"
@@ -105,7 +105,7 @@ export default function AIChatHeader({
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <button
-                                className={`p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-colors duration-500 ${
+                                className={`p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-all duration-500 active:scale-95 ${
                                     isMemorialMode
                                         ? "hover:bg-amber-200/50 text-amber-600"
                                         : "hover:bg-[#E0F7FF] text-[#05B2DC]"
