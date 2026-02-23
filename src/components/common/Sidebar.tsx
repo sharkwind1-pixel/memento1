@@ -109,6 +109,7 @@ export default function Sidebar({
     const [expandedCategory, setExpandedCategory] = useState<MainCategory | null>(
         selectedTab === "community" ? "community" : null
     );
+    const [hasModalOpen, setHasModalOpen] = useState(false);
 
     // 탭이 변경되면 커뮤니티 확장 상태 업데이트
     useEffect(() => {
@@ -217,7 +218,7 @@ export default function Sidebar({
             {/* 포인트 배지 */}
             {user && (
                 <div className="border-b border-gray-200 dark:border-gray-700">
-                    <PointsBadge onCloseSidebar={isMobile ? onClose : undefined} />
+                    <PointsBadge onModalChange={isMobile ? setHasModalOpen : undefined} />
                 </div>
             )}
 
@@ -385,7 +386,10 @@ export default function Sidebar({
 
                 {/* 사이드바 패널 */}
                 <div
-                    className="fixed top-0 left-0 h-full w-64 bg-white dark:bg-gray-900 z-50 shadow-xl overflow-y-auto overscroll-contain"
+                    className={cn(
+                        "fixed top-0 left-0 h-full w-64 bg-white dark:bg-gray-900 z-50 shadow-xl overscroll-contain",
+                        hasModalOpen ? "overflow-hidden" : "overflow-y-auto"
+                    )}
                     style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
                 >
                     {sidebarContent}

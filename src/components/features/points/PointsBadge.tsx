@@ -21,16 +21,27 @@ import MinimiShopModal from "../minimi/MinimiShopModal";
 import MinimiClosetModal from "../minimi/MinimiClosetModal";
 
 interface PointsBadgeProps {
-    onCloseSidebar?: () => void;
+    onModalChange?: (isOpen: boolean) => void;
 }
 
-export default function PointsBadge({ onCloseSidebar }: PointsBadgeProps) {
+export default function PointsBadge({ onModalChange }: PointsBadgeProps) {
     const { user, points, pointsLoaded, userPetType, isAdminUser, minimiEquip, refreshMinimi, refreshPoints } = useAuth();
     const nickname = user?.user_metadata?.nickname || user?.email?.split("@")[0];
     const [showHistory, setShowHistory] = useState(false);
     const [showShop, setShowShop] = useState(false);
     const [showMinimiShop, setShowMinimiShop] = useState(false);
     const [showCloset, setShowCloset] = useState(false);
+
+    // 모달 열림/닫힘 시 부모에 알림 (사이드바 스크롤바 제어용)
+    const openModal = useCallback((setter: (v: boolean) => void) => {
+        setter(true);
+        onModalChange?.(true);
+    }, [onModalChange]);
+
+    const closeModal = useCallback((setter: (v: boolean) => void) => {
+        setter(false);
+        onModalChange?.(false);
+    }, [onModalChange]);
 
     const handleMinimiChanged = useCallback(async () => {
         await refreshMinimi();
@@ -119,7 +130,7 @@ export default function PointsBadge({ onCloseSidebar }: PointsBadgeProps) {
                     )}
                     <div className="flex gap-1.5">
                         <button
-                            onClick={() => { onCloseSidebar?.(); setShowMinimiShop(true); }}
+                            onClick={() => openModal(setShowMinimiShop)}
                             className={cn(
                                 "flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg",
                                 "bg-pink-100/80 dark:bg-pink-900/20",
@@ -131,7 +142,7 @@ export default function PointsBadge({ onCloseSidebar }: PointsBadgeProps) {
                             상점
                         </button>
                         <button
-                            onClick={() => { onCloseSidebar?.(); setShowCloset(true); }}
+                            onClick={() => openModal(setShowCloset)}
                             className={cn(
                                 "flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg",
                                 "bg-purple-100/80 dark:bg-purple-900/20",
@@ -147,7 +158,7 @@ export default function PointsBadge({ onCloseSidebar }: PointsBadgeProps) {
 
                 {/* 포인트 표시 */}
                 <button
-                    onClick={() => { onCloseSidebar?.(); setShowHistory(true); }}
+                    onClick={() => openModal(setShowHistory)}
                     className={cn(
                         "w-full flex items-center justify-between px-3 py-2.5 rounded-xl",
                         "bg-gradient-to-r from-sky-50 to-violet-50",
@@ -173,7 +184,7 @@ export default function PointsBadge({ onCloseSidebar }: PointsBadgeProps) {
 
                 {/* 포인트 상점 버튼 */}
                 <button
-                    onClick={() => { onCloseSidebar?.(); setShowShop(true); }}
+                    onClick={() => openModal(setShowShop)}
                     className={cn(
                         "w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl",
                         "bg-gradient-to-r from-amber-50 to-orange-50",
@@ -192,26 +203,26 @@ export default function PointsBadge({ onCloseSidebar }: PointsBadgeProps) {
             {showHistory && (
                 <PointsHistoryModal
                     open={showHistory}
-                    onClose={() => setShowHistory(false)}
+                    onClose={() => closeModal(setShowHistory)}
                 />
             )}
             {showShop && (
                 <PointsShopModal
                     isOpen={showShop}
-                    onClose={() => setShowShop(false)}
+                    onClose={() => closeModal(setShowShop)}
                 />
             )}
             {showMinimiShop && (
                 <MinimiShopModal
                     isOpen={showMinimiShop}
-                    onClose={() => setShowMinimiShop(false)}
+                    onClose={() => closeModal(setShowMinimiShop)}
                     onPurchased={handleMinimiChanged}
                 />
             )}
             {showCloset && (
                 <MinimiClosetModal
                     isOpen={showCloset}
-                    onClose={() => setShowCloset(false)}
+                    onClose={() => closeModal(setShowCloset)}
                     onChanged={handleMinimiChanged}
                 />
             )}
