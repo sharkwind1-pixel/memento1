@@ -94,10 +94,10 @@ const PERSONALIZED_HERO = {
         ctaTab: "ai-chat" as TabType,
     },
     memorial: {
-        title: "영원히 마음속에",
-        subtitle: "함께한 시간은 사라지지 않아요. 소중한 기억을 간직하는 공간",
-        ctaLabel: "추모 공간 가기",
-        ctaTab: "community" as TabType,
+        title: "함께한 시간, 변하지 않는 마음",
+        subtitle: "소중한 기억과 함께 새로운 하루를 시작해요",
+        ctaLabel: "우리의 기록 보기",
+        ctaTab: "record" as TabType,
     },
 };
 
@@ -296,7 +296,7 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
                                     <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold leading-tight">
                                         <EmotionalTrueFocus
                                             text={hero.title}
-                                            variant={userType === "memorial" ? "warm" : "gentle"}
+                                            variant="gentle"
                                             delay={250}
                                         />
                                     </h1>
