@@ -9,6 +9,7 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import { Star, ChevronRight, ShoppingBag, Shirt, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -32,7 +33,6 @@ export default function PointsBadge({ onModalChange }: PointsBadgeProps) {
     const [showMinimiShop, setShowMinimiShop] = useState(false);
     const [showCloset, setShowCloset] = useState(false);
 
-    // 모달 열림/닫힘 시 부모에 알림 (사이드바 스크롤바 제어용)
     const openModal = useCallback((setter: (v: boolean) => void) => {
         setter(true);
         onModalChange?.(true);
@@ -199,32 +199,37 @@ export default function PointsBadge({ onModalChange }: PointsBadgeProps) {
                 </button>
             </div>
 
-            {/* 모달 */}
-            {showHistory && (
-                <PointsHistoryModal
-                    open={showHistory}
-                    onClose={() => closeModal(setShowHistory)}
-                />
-            )}
-            {showShop && (
-                <PointsShopModal
-                    isOpen={showShop}
-                    onClose={() => closeModal(setShowShop)}
-                />
-            )}
-            {showMinimiShop && (
-                <MinimiShopModal
-                    isOpen={showMinimiShop}
-                    onClose={() => closeModal(setShowMinimiShop)}
-                    onPurchased={handleMinimiChanged}
-                />
-            )}
-            {showCloset && (
-                <MinimiClosetModal
-                    isOpen={showCloset}
-                    onClose={() => closeModal(setShowCloset)}
-                    onChanged={handleMinimiChanged}
-                />
+            {/* 모달: Portal로 document.body에 렌더링 (사이드바 stacking context 탈출) */}
+            {typeof document !== "undefined" && createPortal(
+                <>
+                    {showHistory && (
+                        <PointsHistoryModal
+                            open={showHistory}
+                            onClose={() => closeModal(setShowHistory)}
+                        />
+                    )}
+                    {showShop && (
+                        <PointsShopModal
+                            isOpen={showShop}
+                            onClose={() => closeModal(setShowShop)}
+                        />
+                    )}
+                    {showMinimiShop && (
+                        <MinimiShopModal
+                            isOpen={showMinimiShop}
+                            onClose={() => closeModal(setShowMinimiShop)}
+                            onPurchased={handleMinimiChanged}
+                        />
+                    )}
+                    {showCloset && (
+                        <MinimiClosetModal
+                            isOpen={showCloset}
+                            onClose={() => closeModal(setShowCloset)}
+                            onChanged={handleMinimiChanged}
+                        />
+                    )}
+                </>,
+                document.body
             )}
         </>
     );
