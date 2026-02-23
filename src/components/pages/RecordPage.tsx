@@ -861,15 +861,39 @@ function RecordPage({ setSelectedTab }: RecordPageProps) {
                 {activeTab === "pets" && (
                     <>
                         {petsLoading ? (
-                    <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
-                        <CardContent className="py-16">
-                            <div className="flex flex-col items-center gap-3">
-                                <div className="w-20 h-20 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" />
-                                <div className="h-5 w-40 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                                <div className="h-4 w-56 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                    <div className="space-y-6 animate-pulse">
+                        {/* 펫 카드 그리드 스켈레톤 - 실제 1:1 비율 그리드와 동일 */}
+                        <div className="mb-6">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                                {Array.from({ length: 2 }).map((_, i) => (
+                                    <div
+                                        key={`skeleton-pet-${i}`}
+                                        className="aspect-square rounded-2xl bg-gradient-to-br from-gray-200 to-gray-100 dark:from-gray-700 dark:to-gray-600 overflow-hidden relative"
+                                    >
+                                        {/* 하단 오버레이 자리 */}
+                                        <div className="absolute inset-x-0 bottom-0 p-2 pt-6">
+                                            <div className="h-4 bg-gray-300/60 dark:bg-gray-500/60 rounded w-2/3 mx-auto mb-1" />
+                                            <div className="h-3 bg-gray-300/40 dark:bg-gray-500/40 rounded w-1/2 mx-auto" />
+                                        </div>
+                                    </div>
+                                ))}
+                                {/* 추가 버튼 자리 */}
+                                <div className="aspect-square rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700" />
                             </div>
-                        </CardContent>
-                    </Card>
+                        </div>
+                        {/* 프로필 카드 스켈레톤 */}
+                        <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+                            <CardContent className="py-6">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700" />
+                                    <div className="flex-1 space-y-2">
+                                        <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-32" />
+                                        <div className="h-4 bg-gray-100 dark:bg-gray-700/70 rounded w-48" />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
                         ) : pets.length === 0 ? (
                     <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
                         <CardContent className="flex flex-col items-center justify-center py-16">

@@ -36,7 +36,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import ReportModal from "@/components/modals/ReportModal";
-import PawLoading from "@/components/ui/PawLoading";
+
 import { toast } from "sonner";
 import { usePets } from "@/contexts/PetContext";
 import { ImageIcon } from "lucide-react";
@@ -371,9 +371,35 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
                 {/* 게시글 목록 */}
                 <div className="space-y-4">
                     {isLoading ? (
-                        <div className="flex items-center justify-center py-16">
-                            <PawLoading size="lg" />
-                        </div>
+                        // 스켈레톤 로더 - 실제 게시글 카드 레이아웃과 동일한 구조
+                        Array.from({ length: 4 }).map((_, i) => (
+                            <Card
+                                key={`skeleton-${i}`}
+                                className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 rounded-2xl animate-pulse"
+                            >
+                                <CardHeader className="pb-2">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="h-5 w-12 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+                                        </div>
+                                        <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
+                                    </div>
+                                    <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mt-2" />
+                                </CardHeader>
+                                <CardContent className="pb-2">
+                                    <div className="h-4 bg-gray-100 dark:bg-gray-700/70 rounded w-full mb-1.5" />
+                                    <div className="h-4 bg-gray-100 dark:bg-gray-700/70 rounded w-2/3" />
+                                </CardContent>
+                                <CardFooter className="flex items-center justify-between pt-2">
+                                    <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
+                                    <div className="flex items-center gap-4">
+                                        <div className="h-4 w-10 bg-gray-100 dark:bg-gray-700/70 rounded" />
+                                        <div className="h-4 w-10 bg-gray-100 dark:bg-gray-700/70 rounded" />
+                                        <div className="h-4 w-10 bg-gray-100 dark:bg-gray-700/70 rounded" />
+                                    </div>
+                                </CardFooter>
+                            </Card>
+                        ))
                     ) : (
                         posts.map((post) => (
                             <Card
