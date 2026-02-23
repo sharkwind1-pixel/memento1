@@ -98,7 +98,7 @@ export default function Layout({
     // ========================================================================
     // Context & State
     // ========================================================================
-    const { user, loading, signOut, isAdminUser, points, pointsLoaded, userPetType, minimiEquip } = useAuth();
+    const { user, loading, signOut, isAdminUser, points, pointsLoaded, profileLoaded, userPetType, minimiEquip } = useAuth();
     const { selectedPet } = usePets();
 
     // 모드 전환 감지 및 페이드 오버레이
@@ -324,7 +324,7 @@ export default function Layout({
                                                 showTooltip={false}
                                             />
                                         </span>
-                                        {minimiEquip.imageUrl && (
+                                        {profileLoaded && minimiEquip.imageUrl && (
                                             <Image
                                                 src={minimiEquip.imageUrl}
                                                 alt="미니미"

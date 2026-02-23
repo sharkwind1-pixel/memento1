@@ -21,7 +21,7 @@ import MinimiShopModal from "../minimi/MinimiShopModal";
 import MinimiClosetModal from "../minimi/MinimiClosetModal";
 
 export default function PointsBadge() {
-    const { user, points, userPetType, isAdminUser, minimiEquip, refreshMinimi, refreshPoints } = useAuth();
+    const { user, points, pointsLoaded, userPetType, isAdminUser, minimiEquip, refreshMinimi, refreshPoints } = useAuth();
     const nickname = user?.user_metadata?.nickname || user?.email?.split("@")[0];
     const [showHistory, setShowHistory] = useState(false);
     const [showShop, setShowShop] = useState(false);
@@ -35,6 +35,41 @@ export default function PointsBadge() {
 
     // 비로그인 시 표시 안함
     if (!user) return null;
+
+    // 프로필 로딩 중: 스켈레톤 표시
+    if (!pointsLoaded) {
+        return (
+            <div className="px-3 py-3 space-y-2 animate-pulse">
+                {/* 등급 프로그레스 스켈레톤 */}
+                <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700" />
+                        <div className="h-3 w-20 rounded bg-gray-200 dark:bg-gray-700" />
+                    </div>
+                    <div className="h-1.5 w-full rounded-full bg-gray-200 dark:bg-gray-700" />
+                </div>
+                {/* 미니미 스켈레톤 */}
+                <div className="rounded-xl border border-gray-100 dark:border-gray-700 p-3">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="w-12 h-12 rounded-lg bg-gray-200 dark:bg-gray-700" />
+                        <div className="h-3 w-16 rounded bg-gray-200 dark:bg-gray-700" />
+                    </div>
+                    <div className="flex gap-1.5">
+                        <div className="flex-1 h-7 rounded-lg bg-gray-200 dark:bg-gray-700" />
+                        <div className="flex-1 h-7 rounded-lg bg-gray-200 dark:bg-gray-700" />
+                    </div>
+                </div>
+                {/* 포인트 스켈레톤 */}
+                <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800">
+                    <div className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-gray-700" />
+                    <div className="space-y-1">
+                        <div className="h-2.5 w-12 rounded bg-gray-200 dark:bg-gray-700" />
+                        <div className="h-3.5 w-16 rounded bg-gray-200 dark:bg-gray-700" />
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     const hasMinimi = !!minimiEquip.imageUrl;
 
