@@ -195,15 +195,15 @@ export default function MinihompyStage({
                                 )}
                                 {/* 그림자 */}
                                 <div className={cn(
-                                    "absolute -bottom-1.5 left-1/2 -translate-x-1/2",
-                                    "w-12 h-2 rounded-full opacity-20",
+                                    "absolute -bottom-2 left-1/2 -translate-x-1/2",
+                                    "w-16 h-3 rounded-full opacity-20",
                                     isDarkBg ? "bg-white" : "bg-black"
                                 )} />
                                 <Image
                                     src={imgUrl}
                                     alt="미니미"
-                                    width={compact ? 56 : 68}
-                                    height={compact ? 56 : 68}
+                                    width={compact ? 72 : 96}
+                                    height={compact ? 72 : 96}
                                     className="object-contain pointer-events-none select-none"
                                     style={{ imageRendering: "pixelated" }}
                                     draggable={false}
@@ -234,21 +234,21 @@ export default function MinihompyStage({
                         <div className="relative">
                             <div className={cn(
                                 "absolute -bottom-2 left-1/2 -translate-x-1/2",
-                                "w-16 h-3 rounded-full opacity-20",
+                                "w-20 h-3 rounded-full opacity-20",
                                 isDarkBg ? "bg-white" : "bg-black"
                             )} />
                             {minimiEquip.imageUrl ? (
                                 <Image
                                     src={minimiEquip.imageUrl}
                                     alt="미니미"
-                                    width={compact ? 64 : 80}
-                                    height={compact ? 64 : 80}
+                                    width={compact ? 80 : 112}
+                                    height={compact ? 80 : 112}
                                     className="object-contain"
                                     style={{ imageRendering: "pixelated" }}
                                 />
                             ) : (
                                 <div className={cn(
-                                    compact ? "w-16 h-16" : "w-20 h-20",
+                                    compact ? "w-20 h-20" : "w-28 h-28",
                                     "bg-gray-200/50 rounded-lg"
                                 )} />
                             )}
@@ -256,7 +256,7 @@ export default function MinihompyStage({
                     ) : (
                         <div className={cn(
                             "flex items-center justify-center",
-                            compact ? "w-16 h-16" : "w-20 h-20",
+                            compact ? "w-20 h-20" : "w-28 h-28",
                             "rounded-full border-2 border-dashed",
                             isDarkBg
                                 ? "border-white/30 text-white/40"
