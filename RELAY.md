@@ -66,38 +66,40 @@
 
 ---
 
-## 이 세션에서 수정한 것 (코드 + 커밋 완료)
+## 최근 세션들에서 구현/수정 완료된 기능 (커밋 + 푸시 완료)
 
-### 1. equipped_minimi_id UUID 호환성 (코드 수정으로 해결)
-- `equip/route.ts`: user_minimi UUID를 equipped_minimi_id에 저장
-- `inventory/route.ts`: UUID→slug 역변환하여 클라이언트에 반환
-- `sell/route.ts`: 폴백 비교 로직 수정 + RPC 후 장착해제 후처리
-- `minihompy/[userId]/route.ts`: 방문 시 UUID→slug 변환
-- `AuthContext.tsx`: refreshProfile/refreshMinimi에서 UUID→slug 조회
+### 기능 개발
 
-### 2. 미니미 구매 확인 다이얼로그
-- `MinimiShopModal.tsx`에 purchaseConfirm 상태 추가
-- 구매 클릭 → "000을(를) 구매하시겠습니까? -000P 차감" → 취소/구매
+| 기능 | 커밋 | 주요 파일 | 상태 |
+|------|------|----------|------|
+| 미니홈피 픽셀아트 이미지 배경 8종 | `6ad2f0c` | `public/icons/stages/`, `minihompyBackgrounds.ts`, `MinihompyStage.tsx`, `BackgroundShopModal.tsx` | 완료 |
+| 멀티 미니미 배치 시스템 (드래그&드롭) | `89af0b8` | `MinihompyStage.tsx`, `MiniHomepyTab.tsx`, `/api/minihompy/settings/placed-minimi` | 완료 |
+| 요크셔테리어 미니미 이미지 교체 | `7f88c29` | `public/icons/minimi/york.png`, `minimiPixels.ts` | 완료 |
+| 미니미 구매 확인 다이얼로그 | (이전) | `MinimiShopModal.tsx` | 완료 |
+| equipped_minimi_id UUID 호환성 | (이전) | equip/inventory/sell/minihompy API, `AuthContext.tsx` | 완료 |
 
-### 3. 사이드바 모바일 터치 스크롤
-- 백드롭 `touch-none` + `onTouchMove preventDefault` 제거
-- 사이드바 패널 `overflow-clip` → `overflow-y-auto overscroll-contain`
+### 버그 수정
 
-### 4. 재발 방지 규칙 (AGENTS.md 추가)
-- SQL 파일 작성 = 작업의 50%. 실행 + 검증까지 해야 100%
-- `ADD COLUMN IF NOT EXISTS`는 기존 타입 안 바꾸므로 주의
-- 실행 불가 시 RELAY.md 최상단 테이블에 기재
+| 수정 | 커밋 | 상태 |
+|------|------|------|
+| 모바일 사이드바 터치 스크롤 | (이전) | 완료 |
+| 모바일 모달 스크롤바 겹침 | `1797500` | 완료 |
+| 사이드바 모달 z-index 깨짐 (createPortal) | `2afa614` | 완료 |
+| 미니미 배치 클릭 영역 최적화 | `db0c57f` | 완료 |
+| 미니미 배치 버튼 가시성 개선 | `036a92f` | 완료 |
+| HERO 깜빡임 해결 (개인화 제거→공통 메시지) | `c11798e` | 완료 |
+| 새로고침 시 FOUC 해결 | `a53c2ec` | 완료 |
+| 골든리트리버 미니미 가격 200P 통일 | `b8acb52` | 완료 |
+| 모바일 헤더 미니미 아이콘 숨김 | `4c1e178` | 완료 |
+| 모바일 깜빡임 (6커밋, 미해결) | `43a434f`~`03f4356` | **미해결** - 위 섹션 참고 |
 
----
+### DB/규칙 관련
 
-## 미니미 표시 UI (문제 3) - 이미 구현되어 있음
-
-코드 확인 결과 **이미 구현됨**:
-- `PointsBadge.tsx`: 사이드바에 장착 미니미 48x48 표시
-- `MinihompyStage.tsx`: 미니홈피에 장착 미니미 80x80 표시
-- `AuthContext.tsx`: minimiEquip 상태 + refreshMinimi() 콜백
-
-**장착 API가 동작하면 (위 UUID 수정으로) 자동으로 보임**
+| 내용 | 상태 |
+|------|------|
+| AGENTS.md에 DB 마이그레이션 규칙 추가 | 완료 |
+| `ADD COLUMN IF NOT EXISTS` 주의사항 문서화 | 완료 |
+| equipped_minimi_id UUID 코드 호환 (DB 변경 불필요) | 완료 |
 
 ---
 
