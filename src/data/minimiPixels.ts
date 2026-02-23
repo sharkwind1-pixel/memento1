@@ -33,7 +33,7 @@ export const CHARACTER_CATALOG = [
         name: "골든리트리버",
         category: "dog" as const,
         imageUrl: "/icons/minimi/golden_v2.png?v=2",
-        price: 250,
+        price: 200,
         description: "밝고 다정한 골든리트리버",
     },
 ] as const;
