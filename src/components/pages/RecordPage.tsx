@@ -11,7 +11,7 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { usePets, Pet, PetPhoto } from "@/contexts/PetContext";
+import { usePets, useTimeline, Pet, PetPhoto } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -72,9 +72,9 @@ const moodIcons = {
     sick: { icon: Thermometer, color: "text-red-500", bg: "bg-red-100", label: "아픔" },
 };
 
-/** 타임라인 섹션 컴포넌트 */
+/** 타임라인 섹션 컴포넌트 - useTimeline()으로 분리된 context 사용 */
 function TimelineSection({ petId, petName }: { petId: string; petName: string }) {
-    const { timeline, fetchTimeline, addTimelineEntry, updateTimelineEntry, deleteTimelineEntry } = usePets();
+    const { timeline, fetchTimeline, addTimelineEntry, updateTimelineEntry, deleteTimelineEntry } = useTimeline();
     const { user } = useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingEntryId, setEditingEntryId] = useState<string | null>(null);

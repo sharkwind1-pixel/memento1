@@ -30,7 +30,7 @@
 // ============================================================================
 // 임포트
 // ============================================================================
-import { usePets } from "@/contexts/PetContext";
+import { usePets, useTimeline } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Star } from "lucide-react";
 import { TabType } from "@/types";
@@ -69,9 +69,8 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         selectedPetId,
         selectedPet,
         selectPet,
-        timeline,
-        fetchTimeline,
     } = usePets();
+    const { timeline, fetchTimeline } = useTimeline();
 
     const chat = useAIChat({
         user,

@@ -31,7 +31,9 @@ import { useState, useEffect, Suspense, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { TabType, CommunitySubcategory, getLegacyTabRedirect } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
-import { usePets } from "@/contexts/PetContext";
+// 주의: usePets()를 여기서 호출하면 PetContext consumer가 되어
+// timeline/pets 변경 시 전체 HomeContent + 모든 자식 페이지가 리렌더됨
+// → 온보딩 체크는 직접 Supabase 조회로 대체
 import Layout from "@/components/common/Layout";
 import { supabase } from "@/lib/supabase";
 
@@ -102,7 +104,8 @@ function HomeContent() {
     // Context & Hooks
     // ========================================================================
     const { user, loading } = useAuth();
-    const { pets, isLoading: petsLoading } = usePets();
+    // 주의: usePets()를 호출하면 PetContext consumer가 되어 timeline 등 변경 시 전체 리렌더
+    // 온보딩 체크에만 필요하므로 별도 effect에서 직접 Supabase 조회로 대체
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -262,10 +265,16 @@ function HomeContent() {
                 const tutorialCompletedLocal = localStorage.getItem("memento-ani-tutorial-complete") === "true";
                 const onboardingCompletedLocal = localStorage.getItem("memento-ani-onboarding-complete") === "true";
 
+                // 펫이 있는지 직접 Supabase 조회 (usePets() 구독 방지 - context 리렌더 차단)
+                const { count: petCount } = await supabase
+                    .from("pets")
+                    .select("id", { count: "exact", head: true })
+                    .eq("user_id", user.id);
+
                 // 펫이 있어도, DB에서 온보딩이 초기화되었으면 온보딩 표시
                 const isOnboardingReset = !profileData?.onboarding_completed_at || !profileData?.tutorial_completed_at;
 
-                if (pets.length > 0 && !isOnboardingReset) {
+                if ((petCount ?? 0) > 0 && !isOnboardingReset) {
                     newUserFlowCheckedRef.current = user.id;
                     supabase
                         .from("profiles")
@@ -325,10 +334,12 @@ function HomeContent() {
             newUserFlowCheckedRef.current = null;
         }
 
-        if (user && !petsLoading) {
+        // loading이 false가 되면 (auth 완료) 온보딩 체크 실행
+        if (user && !loading) {
             checkNewUserFlow();
         }
-    }, [user, petsLoading, pets.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user, loading]);
 
     // ========================================================================
     // 탭 변경 핸들러
@@ -382,16 +393,30 @@ function HomeContent() {
         handleTabChange("community", sub);
     }, [handleTabChange]);
 
-    // 한번 방문한 탭을 추적 (방문한 적 있는 탭만 렌더링하여 초기 로드 최적화)
-    const [visitedTabs, setVisitedTabs] = useState<Set<string>>(() => new Set([selectedTab]));
-    useEffect(() => {
-        setVisitedTabs(prev => {
-            if (prev.has(selectedTab)) return prev;
-            const next = new Set(prev);
-            next.add(selectedTab);
-            return next;
-        });
-    }, [selectedTab]);
+    // 페이지 렌더링 - switch문으로 현재 탭만 렌더
+    const renderPage = () => {
+        switch (selectedTab) {
+            case "home":
+                return <HomePage setSelectedTab={handleTabChange} />;
+            case "record":
+                return <RecordPage setSelectedTab={handleTabChange} />;
+            case "community":
+                return (
+                    <CommunityPage
+                        subcategory={selectedSubcategory}
+                        onSubcategoryChange={handleSubcategoryChange}
+                    />
+                );
+            case "ai-chat":
+                return <AIChatPage setSelectedTab={handleTabChange} />;
+            case "magazine":
+                return <MagazinePage setSelectedTab={handleTabChange} />;
+            case "admin":
+                return <AdminPage />;
+            default:
+                return <HomePage setSelectedTab={handleTabChange} />;
+        }
+    };
 
     // Layout은 항상 렌더 → auth 로딩 중에도 헤더/네비/사이드바 유지
     // 콘텐츠 영역만 스켈레톤으로 대체하여 FOUC 방지
@@ -405,8 +430,7 @@ function HomeContent() {
                 subcategory={selectedSubcategory}
                 onSubcategoryChange={handleSubcategoryChange}
             >
-                {/* 로딩 스켈레톤과 콘텐츠를 CSS display로 전환 (mount/unmount 방지) */}
-                <div style={{ display: isContentLoading ? 'block' : 'none' }}>
+                {isContentLoading ? (
                     <div className="space-y-4 py-4">
                         <div className="rounded-2xl bg-gray-100/60 dark:bg-gray-800/40 h-48 w-full" />
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -415,35 +439,9 @@ function HomeContent() {
                             ))}
                         </div>
                     </div>
-                </div>
-                {/* 모든 페이지를 CSS display로 전환 - unmount/remount 방지
-                    한번 방문한 페이지는 숨기기만 함 (DOM 유지) → 탭 전환 시 깜빡임 제거
-                    visitedTabs로 미방문 페이지는 렌더링하지 않아 초기 로드 최적화 */}
-                <div style={{ display: isContentLoading ? 'none' : 'block' }}>
-                    <div style={{ display: selectedTab === "home" ? "block" : "none" }}>
-                        {visitedTabs.has("home") && <HomePage setSelectedTab={handleTabChange} />}
-                    </div>
-                    <div style={{ display: selectedTab === "record" ? "block" : "none" }}>
-                        {visitedTabs.has("record") && <RecordPage setSelectedTab={handleTabChange} />}
-                    </div>
-                    <div style={{ display: selectedTab === "community" ? "block" : "none" }}>
-                        {visitedTabs.has("community") && (
-                            <CommunityPage
-                                subcategory={selectedSubcategory}
-                                onSubcategoryChange={handleSubcategoryChange}
-                            />
-                        )}
-                    </div>
-                    <div style={{ display: selectedTab === "ai-chat" ? "block" : "none" }}>
-                        {visitedTabs.has("ai-chat") && <AIChatPage setSelectedTab={handleTabChange} />}
-                    </div>
-                    <div style={{ display: selectedTab === "magazine" ? "block" : "none" }}>
-                        {visitedTabs.has("magazine") && <MagazinePage setSelectedTab={handleTabChange} />}
-                    </div>
-                    <div style={{ display: selectedTab === "admin" ? "block" : "none" }}>
-                        {visitedTabs.has("admin") && <AdminPage />}
-                    </div>
-                </div>
+                ) : (
+                    renderPage()
+                )}
             </Layout>
             {user && (
                 <>

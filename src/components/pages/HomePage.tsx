@@ -47,7 +47,8 @@ import type { LightboxItem, CommunityPost, Comment } from "@/components/features
 import PostModal from "@/components/features/home/PostModal";
 import Lightbox from "@/components/features/home/Lightbox";
 import LevelBadge from "@/components/features/points/LevelBadge";
-import { useAuth } from "@/contexts/AuthContext";
+// useAuth import 제거: HomePage는 auth 상태를 직접 사용하지 않음
+// (인증 상태 유지는 Layout/AuthContext에서 처리)
 
 
 
@@ -90,7 +91,9 @@ const HERO_CONTENT = {
 export default function HomePage({ setSelectedTab }: HomePageProps) {
     const { petImages, adoptionImages } = usePetImages();
     const scroll = useSmoothAutoScroll() as unknown as SmoothAutoScrollReturn;
-    useAuth(); // 인증 상태 유지
+    // useAuth() 제거: 인증 상태 유지는 Layout/AuthContext에서 처리됨
+    // useAuth()를 호출만 해도 AuthContext consumer가 되어
+    // points/minimiEquip 등 변경 시 HomePage 전체 + 자식 컴포넌트가 불필요하게 리렌더됨
 
     const [lightboxItem, setLightboxItem] = useState<LightboxItem | null>(null);
 

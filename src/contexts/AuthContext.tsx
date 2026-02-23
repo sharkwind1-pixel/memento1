@@ -207,10 +207,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 .eq("id", currentUser.id)
                 .single();
 
-            setPoints(profile?.points ?? 0);
-            setPointsLoaded(true);
+            const newPoints = profile?.points ?? 0;
+            // 값이 같으면 setState skip → context value 재생성 방지
+            setPoints(prev => prev === newPoints ? prev : newPoints);
+            setPointsLoaded(prev => prev ? prev : true);
         } catch {
-            setPointsLoaded(true);
+            setPointsLoaded(prev => prev ? prev : true);
         }
     }, []);
 

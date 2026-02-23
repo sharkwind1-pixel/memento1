@@ -64,10 +64,36 @@ import type {
 // Re-export for backward compatibility
 export type { Pet, PetPhoto, MediaType, TimelineEntry };
 
+// ============================================================================
+// Timeline Context (분리): timeline 변경이 Layout/HomePage 등 비관련 컴포넌트를 리렌더하지 않도록
+// timeline은 RecordPage(TimelineSection)과 AIChatPage에서만 사용됨
+// ============================================================================
+interface TimelineContextType {
+    timeline: TimelineEntry[];
+    fetchTimeline: (petId: string) => Promise<void>;
+    addTimelineEntry: (
+        petId: string,
+        entry: Omit<TimelineEntry, "id" | "petId" | "createdAt">
+    ) => Promise<TimelineEntry | null>;
+    updateTimelineEntry: (
+        entryId: string,
+        data: Partial<TimelineEntry>
+    ) => Promise<void>;
+    deleteTimelineEntry: (entryId: string) => Promise<void>;
+}
+
+const TimelineContext = createContext<TimelineContextType | undefined>(undefined);
+
+// ============================================================================
+// Pet Context (timeline 제외): pets/selectedPet 변경만 전파
+// Layout이 usePets()로 selectedPet을 구독하므로, timeline 변경이
+// contextValue를 재생성하면 Layout + 모든 자식 페이지가 리렌더됨
+// ============================================================================
 interface PetContextType {
     pets: Pet[];
     selectedPetId: string | null;
     selectedPet: Pet | undefined;
+    // 하위호환: timeline은 useTimeline()으로 접근 권장
     timeline: TimelineEntry[];
 
     // Pet CRUD
@@ -92,7 +118,7 @@ interface PetContextType {
     deletePhoto: (petId: string, photoId: string) => Promise<void>;
     deletePhotos: (petId: string, photoIds: string[]) => Promise<void>;
 
-    // Timeline CRUD
+    // Timeline CRUD (하위호환 - useTimeline() 사용 권장)
     addTimelineEntry: (
         petId: string,
         entry: Omit<TimelineEntry, "id" | "petId" | "createdAt">
@@ -820,21 +846,45 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
         [user]
     );
 
-    // 유틸리티
+    // 유틸리티 - ref 기반으로 구현하여 contextValue deps에서 제외
+    // getPetById는 pets가 바뀔 때마다 새 함수 참조가 생성되어
+    // contextValue useMemo를 무효화시키는 주범이었음
+    // petsRef는 이미 위에서 선언됨 (line ~127)
     const getPetById = useCallback(
         (id: string) => {
-            return pets.find((p) => p.id === id);
+            return petsRef.current.find((p) => p.id === id);
         },
-        [pets]
+        [] // deps 없음 - petsRef.current는 항상 최신 값
     );
 
-    // Context value를 useMemo로 메모이제이션하여 불필요한 리렌더링 방지
+    // ========================================================================
+    // Timeline Context value (별도 분리)
+    // timeline 변경은 이 context의 consumer만 리렌더 (RecordPage TimelineSection, AIChatPage)
+    // Layout, HomePage 등은 영향 없음
+    // ========================================================================
+    const timelineContextValue = useMemo(
+        () => ({
+            timeline,
+            fetchTimeline: fetchTimelineData,
+            addTimelineEntry,
+            updateTimelineEntry,
+            deleteTimelineEntry,
+        }),
+        [timeline, fetchTimelineData, addTimelineEntry, updateTimelineEntry, deleteTimelineEntry]
+    );
+
+    // ========================================================================
+    // Pet Context value (timeline 제외)
+    // pets/selectedPet 변경만 이 context를 통해 전파됨
+    // Layout(selectedPet용)은 timeline 변경에 영향받지 않음
+    // ========================================================================
     const contextValue = useMemo(
         () => ({
             pets,
             selectedPetId,
             selectedPet,
-            timeline,
+            // 하위호환: timeline은 ref로 제공 (실시간 반응 필요 시 useTimeline() 사용)
+            timeline: timelineRef.current,
             addPet,
             updatePet,
             deletePet,
@@ -843,6 +893,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
             updatePhoto,
             deletePhoto,
             deletePhotos,
+            // 하위호환: timeline 함수들도 ref로 제공
             addTimelineEntry,
             updateTimelineEntry,
             deleteTimelineEntry,
@@ -855,7 +906,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
             pets,
             selectedPetId,
             selectedPet,
-            timeline,
+            // 주의: timeline은 deps에서 제외! (TimelineContext로 분리됨)
             addPet,
             updatePet,
             deletePet,
@@ -876,15 +927,27 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
 
     return (
         <PetContext.Provider value={contextValue}>
-            {children}
+            <TimelineContext.Provider value={timelineContextValue}>
+                {children}
+            </TimelineContext.Provider>
         </PetContext.Provider>
     );
 }
 
+/** Pet 데이터 hook (timeline 제외) - Layout 등에서 사용 */
 export function usePets() {
     const context = useContext(PetContext);
     if (context === undefined) {
         throw new Error("usePets must be used within a PetProvider");
+    }
+    return context;
+}
+
+/** Timeline 전용 hook - timeline 변경 시 이 hook의 consumer만 리렌더 */
+export function useTimeline() {
+    const context = useContext(TimelineContext);
+    if (context === undefined) {
+        throw new Error("useTimeline must be used within a PetProvider");
     }
     return context;
 }
