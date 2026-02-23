@@ -19,7 +19,6 @@ import { LevelProgress } from "./LevelBadge";
 import Image from "next/image";
 import MinimiShopModal from "../minimi/MinimiShopModal";
 import MinimiClosetModal from "../minimi/MinimiClosetModal";
-import { getMinimiScale } from "@/data/minimiPixels";
 
 export default function PointsBadge() {
     const { user, points, pointsLoaded, userPetType, isAdminUser, minimiEquip, refreshMinimi, refreshPoints } = useAuth();
@@ -95,7 +94,7 @@ export default function PointsBadge() {
                                 width={48}
                                 height={48}
                                 className="object-contain"
-                                style={{ imageRendering: "pixelated", transform: `scale(${minimiEquip.minimiId ? getMinimiScale(minimiEquip.minimiId) : 1})` }}
+                                style={{ imageRendering: "pixelated" }}
                             />
                             <div className="text-left flex-1 min-w-0">
                                 <p className="text-xs text-gray-500 dark:text-gray-400">내 미니미</p>

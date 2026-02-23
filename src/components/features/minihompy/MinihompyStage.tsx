@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 import { Music, Eye, X as XIcon, Pencil, Plus, Check, Loader2 } from "lucide-react";
 import type { MinimiEquipState, PlacedMinimi } from "@/types";
 import { findBackground, getDefaultBackground } from "@/data/minihompyBackgrounds";
-import { CHARACTER_CATALOG, getMinimiScale } from "@/data/minimiPixels";
+import { CHARACTER_CATALOG } from "@/data/minimiPixels";
 import Image from "next/image";
 
 function clampPosition(x: number, y: number) {
@@ -171,14 +171,13 @@ export default function MinihompyStage({
                     if (!imgUrl) return null;
                     const isSelected = editMode && selectedIndex === index;
                     const isDragging = draggingIndex === index;
-                    const scale = getMinimiScale(placed.slug);
                     const baseSize = compact ? 72 : 96;
 
                     return (
                         <div
                             key={`${placed.slug}-${index}`}
                             className={cn(
-                                "absolute",
+                                "absolute -translate-x-1/2 -translate-y-1/2",
                                 editMode && "cursor-grab",
                                 isDragging && "cursor-grabbing",
                                 isSelected && "z-50",
@@ -187,7 +186,6 @@ export default function MinihompyStage({
                                 left: `${placed.x}%`,
                                 top: `${placed.y}%`,
                                 zIndex: isSelected ? 50 : (placed.zIndex || index + 1),
-                                transform: `translate(-50%, -50%) scale(${scale})`,
                             }}
                             onPointerDown={(e) => handlePointerDown(e, index)}
                         >
@@ -235,10 +233,9 @@ export default function MinihompyStage({
                 )}>
                     {hasMinimi ? (
                         (() => {
-                            const singleScale = minimiEquip.minimiId ? getMinimiScale(minimiEquip.minimiId) : 1;
                             const singleBase = compact ? 80 : 112;
                             return (
-                                <div className="relative" style={{ transform: `scale(${singleScale})`, transformOrigin: "center bottom" }}>
+                                <div className="relative">
                                     <div className={cn(
                                         "absolute -bottom-2 left-1/2 -translate-x-1/2",
                                         "w-20 h-3 rounded-full opacity-20",
