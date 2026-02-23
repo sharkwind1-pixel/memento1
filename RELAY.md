@@ -1,5 +1,55 @@
 # 릴레이
 
+## [!!!] 모바일 깜빡임 문제 - 미해결 (다음 세션 최우선)
+
+> **상태**: 6번의 커밋으로 수정 시도했으나 여전히 깜빡임 발생. 코드 변경이 많아져서 오히려 불안정해졌을 수 있음.
+> **증상**: 홈에서 처음엔 괜찮음 → 내기록 탭 갔다가 다른 탭으로 이동하면 이미지/버튼/아이콘이 깜빡거림
+> **원인 추정**: React Context 리렌더 캐스케이드 (PetContext/AuthContext 변경 → Layout 리렌더 → 모든 자식 리렌더)
+
+### 지금까지 시도한 것 (커밋 6개)
+
+| 커밋 | 내용 | 결과 |
+|------|------|------|
+| `43a434f` | FOUC/화면 떨림 - CSS 수정 | X |
+| `25b36c0` | 모바일 초기 진입 싸이키 조명 | X |
+| `3dab398` | transition/overlay 전면 삭제 | X |
+| `9aa6e25` | dynamic import 제거, selectedPet useMemo, minimiEquip 구조비교 | X |
+| `0c392ed` | CSS display 탭 전환 (모든 탭 마운트 유지) | 오히려 악화 |
+| `03f4356` | TimelineContext 분리, usePets/useAuth 제거, getPetById ref화 | **미확인** |
+
+### 수정된 파일 (영향 범위)
+
+| 파일 | 변경 내용 | 위험도 |
+|------|----------|--------|
+| `src/app/page.tsx` | usePets() 제거, dynamic→static import, 온보딩 직접 Supabase 조회 | 중 |
+| `src/contexts/PetContext.tsx` | TimelineContext 분리, getPetById ref화, selectedPet useMemo, timeline 구조비교 | **높** |
+| `src/contexts/AuthContext.tsx` | minimiEquip 구조비교, refreshPoints 값비교 | 중 |
+| `src/components/common/Layout.tsx` | 헤더 auth CSS display, 하단네비 transition/blur 제거 | 중 |
+| `src/components/pages/HomePage.tsx` | useAuth() 제거, background animate-pulse 제거 | 저 |
+| `src/components/pages/RecordPage.tsx` | useTimeline() 사용, switch renderPage 복원 | 중 |
+| `src/components/pages/AIChatPage.tsx` | useTimeline() 사용 | 저 |
+
+### 다음 세션에서 해야 할 것
+
+1. **먼저 Vercel 배포판에서 실제 깜빡임 테스트** - 마지막 커밋(`03f4356`)이 효과 있는지 확인
+2. **깜빡임 여전하면**: React DevTools Profiler로 실제 리렌더 컴포넌트 특정
+   - Chrome DevTools > React DevTools > Profiler > "Highlight updates" 켜고 탭 전환
+   - 어떤 컴포넌트가 불필요하게 리렌더되는지 확인
+3. **롤백 고려**: 만약 코드가 불안정해졌다면 `43a434f` 이전(`3dab398~`)으로 롤백 후 재시작
+   - `git log --oneline -10`으로 안전한 시점 확인
+   - 깜빡임 이전 안정 커밋: `43a434f` 바로 이전 커밋
+4. **근본적 접근**: Context 분리만으로 안 되면 `React.memo()` + `useMemo` 조합으로 컴포넌트 레벨 방어
+   - Layout의 children을 `React.memo`로 감싸기
+   - 각 페이지 컴포넌트를 `React.memo`로 export
+
+### 불안 요소 (검증 필요)
+
+- PetContext의 `timeline: timelineRef.current`가 하위호환으로 제공되지만, ref 값이므로 **컴포넌트가 리렌더되지 않으면 stale 값을 보게 됨** - 기존에 `usePets()`로 timeline 읽던 곳이 있으면 문제
+- `getPetById`가 빈 deps `[]`로 바뀌면서 ESLint exhaustive-deps 경고 가능 (동작에는 영향 없음)
+- `page.tsx`에서 온보딩 체크가 직접 Supabase 조회로 바뀌면서 네트워크 요청 추가됨
+
+---
+
 ## [!!] 미실행 마이그레이션 - 승빈님 액션 필요
 
 > 아래 SQL이 Supabase DB에서 실행되지 않으면 관련 기능이 동작하지 않습니다.
