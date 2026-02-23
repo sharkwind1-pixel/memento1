@@ -426,9 +426,9 @@ function HomeContent() {
         }
     };
 
-    if (loading && !forceShow) {
-        return <FullPageLoading />;
-    }
+    // Layout은 항상 렌더 → auth 로딩 중에도 헤더/네비/사이드바 유지
+    // 콘텐츠 영역만 스켈레톤으로 대체하여 FOUC 방지
+    const isContentLoading = loading && !forceShow;
 
     return (
         <>
@@ -438,7 +438,20 @@ function HomeContent() {
                 subcategory={selectedSubcategory}
                 onSubcategoryChange={handleSubcategoryChange}
             >
-                {renderPage()}
+                {isContentLoading ? (
+                    <div className="space-y-4 animate-pulse py-4">
+                        {/* 히어로 영역 스켈레톤 */}
+                        <div className="rounded-2xl bg-gray-200 dark:bg-gray-700 h-48 w-full" />
+                        {/* 카드 그리드 스켈레톤 */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            {[...Array(6)].map((_, i) => (
+                                <div key={i} className="rounded-xl bg-gray-200 dark:bg-gray-700 h-28" />
+                            ))}
+                        </div>
+                    </div>
+                ) : (
+                    renderPage()
+                )}
             </Layout>
             {user && (
                 <>

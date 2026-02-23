@@ -122,7 +122,13 @@ export default function Layout({
     }, [isMemorialMode]);
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [isDarkMode, setIsDarkMode] = useState(false);
+    // blocking script가 이미 'dark' 클래스를 적용했으므로, DOM에서 초기값 읽기
+    const [isDarkMode, setIsDarkMode] = useState(() => {
+        if (typeof document !== "undefined") {
+            return document.documentElement.classList.contains("dark");
+        }
+        return false;
+    });
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [authModalMode, setAuthModalMode] = useState<"login" | "signup">(
         "login",
@@ -150,13 +156,14 @@ export default function Layout({
         );
     };
 
-    // 다크모드 초기화 (localStorage에서 읽기)
+    // 다크모드 동기화: blocking script가 이미 클래스를 적용했으므로
+    // React state만 동기화 (DOM 조작 불필요)
     useEffect(() => {
-        const savedDarkMode = localStorage.getItem("darkMode");
-        if (savedDarkMode === "true") {
-            setIsDarkMode(true);
-            document.documentElement.classList.add("dark");
+        const hasDark = document.documentElement.classList.contains("dark");
+        if (hasDark !== isDarkMode) {
+            setIsDarkMode(hasDark);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {

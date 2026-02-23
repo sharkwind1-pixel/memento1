@@ -11,13 +11,22 @@
 
 "use client";
 
-import React, { useRef, useCallback, useState } from "react";
+import React, { useRef, useCallback, useState, useMemo, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Music, Eye, X as XIcon, Pencil, Plus, Check, Loader2 } from "lucide-react";
 import type { MinimiEquipState, PlacedMinimi } from "@/types";
 import { findBackground, getDefaultBackground } from "@/data/minihompyBackgrounds";
 import { CHARACTER_CATALOG } from "@/data/minimiPixels";
 import Image from "next/image";
+
+/** 시드 기반 난수 생성 - SSR/CSR 결과 일치 보장 */
+function seededRandom(seed: number): () => number {
+    let s = seed;
+    return () => {
+        s = (s * 16807 + 0) % 2147483647;
+        return (s - 1) / 2147483646;
+    };
+}
 
 function clampPosition(x: number, y: number) {
     return {
@@ -74,6 +83,40 @@ export default function MinihompyStage({
     const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
     const dragStartRef = useRef<{ x: number; y: number; origX: number; origY: number } | null>(null);
+
+    // isMounted: 배경 효과 파티클을 CSR에서만 렌더링 (hydration mismatch 방지)
+    const [isMounted, setIsMounted] = useState(false);
+    useEffect(() => { setIsMounted(true); }, []);
+
+    // 시드 기반 사전 계산된 랜덤 값 (SSR/CSR 동일)
+    const starPositions = useMemo(() => {
+        const rng = seededRandom(42);
+        return [...Array(20)].map(() => ({
+            top: rng() * 60,
+            left: rng() * 100,
+            delay: rng() * 3,
+            duration: 1.5 + rng() * 2,
+            opacity: 0.4 + rng() * 0.6,
+        }));
+    }, []);
+    const cherryPositions = useMemo(() => {
+        const rng = seededRandom(99);
+        return [...Array(8)].map(() => ({
+            top: rng() * 80,
+            left: rng() * 100,
+            delay: rng() * 4,
+            duration: 2 + rng() * 3,
+        }));
+    }, []);
+    const snowPositions = useMemo(() => {
+        const rng = seededRandom(137);
+        return [...Array(15)].map(() => ({
+            top: rng() * 80,
+            left: rng() * 100,
+            delay: rng() * 5,
+            duration: 3 + rng() * 4,
+        }));
+    }, []);
 
     // 배치된 미니미가 있으면 사용, 없으면 장착 미니미 1마리를 하단 중앙에 표시
     const displayPlaced = placedMinimi.length > 0;
@@ -394,36 +437,36 @@ export default function MinihompyStage({
                 </div>
             </div>
 
-            {/* 배경 효과 */}
-            {backgroundSlug === "starry_night" && (
+            {/* 배경 효과 - isMounted 가드 + seeded random으로 hydration mismatch 방지 */}
+            {isMounted && backgroundSlug === "starry_night" && (
                 <div className="absolute inset-0 pointer-events-none">
-                    {[...Array(20)].map((_, i) => (
+                    {starPositions.map((pos, i) => (
                         <div
                             key={i}
                             className="absolute w-0.5 h-0.5 bg-white rounded-full animate-pulse"
                             style={{
-                                top: `${Math.random() * 60}%`,
-                                left: `${Math.random() * 100}%`,
-                                animationDelay: `${Math.random() * 3}s`,
-                                animationDuration: `${1.5 + Math.random() * 2}s`,
-                                opacity: 0.4 + Math.random() * 0.6,
+                                top: `${pos.top}%`,
+                                left: `${pos.left}%`,
+                                animationDelay: `${pos.delay}s`,
+                                animationDuration: `${pos.duration}s`,
+                                opacity: pos.opacity,
                             }}
                         />
                     ))}
                 </div>
             )}
 
-            {backgroundSlug === "cherry_blossom" && (
+            {isMounted && backgroundSlug === "cherry_blossom" && (
                 <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                    {[...Array(8)].map((_, i) => (
+                    {cherryPositions.map((pos, i) => (
                         <div
                             key={i}
                             className="absolute text-pink-300/60 text-xs animate-bounce"
                             style={{
-                                top: `${Math.random() * 80}%`,
-                                left: `${Math.random() * 100}%`,
-                                animationDelay: `${Math.random() * 4}s`,
-                                animationDuration: `${2 + Math.random() * 3}s`,
+                                top: `${pos.top}%`,
+                                left: `${pos.left}%`,
+                                animationDelay: `${pos.delay}s`,
+                                animationDuration: `${pos.duration}s`,
                             }}
                         >
                             *
@@ -432,17 +475,17 @@ export default function MinihompyStage({
                 </div>
             )}
 
-            {backgroundSlug === "winter_snow" && (
+            {isMounted && backgroundSlug === "winter_snow" && (
                 <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                    {[...Array(15)].map((_, i) => (
+                    {snowPositions.map((pos, i) => (
                         <div
                             key={i}
                             className="absolute w-1 h-1 bg-white/70 rounded-full animate-bounce"
                             style={{
-                                top: `${Math.random() * 80}%`,
-                                left: `${Math.random() * 100}%`,
-                                animationDelay: `${Math.random() * 5}s`,
-                                animationDuration: `${3 + Math.random() * 4}s`,
+                                top: `${pos.top}%`,
+                                left: `${pos.left}%`,
+                                animationDelay: `${pos.delay}s`,
+                                animationDuration: `${pos.duration}s`,
                             }}
                         />
                     ))}

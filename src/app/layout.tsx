@@ -86,7 +86,23 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="ko">
+        <html lang="ko" suppressHydrationWarning>
+            <head>
+                <script
+                    dangerouslySetInnerHTML={{
+                        __html: `
+                            (function() {
+                                try {
+                                    var d = localStorage.getItem('darkMode');
+                                    if (d === 'true') {
+                                        document.documentElement.classList.add('dark');
+                                    }
+                                } catch(e) {}
+                            })();
+                        `,
+                    }}
+                />
+            </head>
             <body className={inter.className}>
                 <AuthProvider>
                     <PetProvider>{children}</PetProvider>
