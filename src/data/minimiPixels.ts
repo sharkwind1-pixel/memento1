@@ -24,7 +24,7 @@ export const CHARACTER_CATALOG = [
         slug: "yorkshire",
         name: "요크셔테리어",
         category: "dog" as const,
-        imageUrl: "/icons/minimi/yorkshire_v2.png?v=4",
+        imageUrl: "/icons/minimi/yorkshire_v2.png?v=5",
         price: 200,
         description: "작고 용감한 요크셔테리어",
     },
