@@ -229,7 +229,7 @@ export default function MinimiClosetModal({
                                                     : "border-gray-200 dark:border-gray-700"
                                             }`}
                                         >
-                                            <div className="flex justify-center items-center py-1 h-[72px]">
+                                            <div className="flex justify-center items-center py-1 h-[72px] overflow-hidden">
                                                 {char.imageUrl ? (
                                                     <Image
                                                         src={char.imageUrl}

@@ -214,7 +214,7 @@ export default function MinimiShopModal({
                                                             </div>
                                                         )}
 
-                                                        <div className="flex justify-center items-center py-1 h-[72px]">
+                                                        <div className="flex justify-center items-center py-1 h-[72px] overflow-hidden">
                                                             {char.imageUrl ? (
                                                                 <Image
                                                                     src={char.imageUrl}

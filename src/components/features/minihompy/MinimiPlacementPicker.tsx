@@ -112,7 +112,7 @@ export default function MinimiPlacementPicker({
                                 "transition-all"
                             )}
                         >
-                            <div className="relative w-12 h-12 flex items-center justify-center">
+                            <div className="relative w-12 h-12 flex items-center justify-center overflow-hidden">
                                 <Image
                                     src={char.imageUrl}
                                     alt={char.name}

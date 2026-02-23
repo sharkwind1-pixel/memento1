@@ -28,7 +28,7 @@ export const CHARACTER_CATALOG = [
         imageUrl: "/icons/minimi/yorkshire_v2.png?v=2",
         price: 200,
         description: "작고 용감한 요크셔테리어",
-        scale: 1.6,
+        scale: 2,
     },
     {
         slug: "golden_retriever",
