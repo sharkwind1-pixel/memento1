@@ -179,24 +179,27 @@ export default function MinihompyStage({
                     const isSelected = editMode && selectedIndex === index;
                     const isDragging = draggingIndex === index;
                     const baseSize = compact ? 72 : 96;
+                    // 히트 영역: 캐릭터의 실제 콘텐츠 부분만 (하단 60%, 중앙 50%)
+                    const hitW = Math.round(baseSize * 0.5);
+                    const hitH = Math.round(baseSize * 0.6);
 
                     return (
                         <div
                             key={`${placed.slug}-${index}`}
-                            className={cn(
-                                "absolute -translate-x-1/2 -translate-y-1/2",
-                                editMode && "cursor-grab",
-                                isDragging && "cursor-grabbing",
-                                isSelected && "z-50",
-                            )}
+                            className="absolute"
                             style={{
                                 left: `${placed.x}%`,
                                 top: `${placed.y}%`,
                                 zIndex: isSelected ? 50 : (placed.zIndex || index + 1),
+                                // 이미지를 포인터 이벤트 없이 전체 크기로 표시
+                                width: baseSize,
+                                height: baseSize,
+                                transform: "translate(-50%, -50%)",
+                                pointerEvents: "none",
                             }}
-                            onPointerDown={(e) => handlePointerDown(e, index)}
                         >
-                            <div className="relative">
+                            {/* 이미지 (포인터 이벤트 없음 - 시각적 표시만) */}
+                            <div className="relative w-full h-full">
                                 {/* 선택 표시 */}
                                 {isSelected && (
                                     <div className="absolute -inset-2 border-2 border-dashed border-blue-400 rounded-lg bg-blue-400/10" />
@@ -212,7 +215,7 @@ export default function MinihompyStage({
                                     alt="미니미"
                                     width={baseSize}
                                     height={baseSize}
-                                    className="object-contain pointer-events-none select-none"
+                                    className="object-contain select-none"
                                     style={{ imageRendering: "pixelated" }}
                                     draggable={false}
                                 />
@@ -220,6 +223,7 @@ export default function MinihompyStage({
                                 {isSelected && (
                                     <button
                                         className="absolute -top-3 -right-3 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition-colors"
+                                        style={{ pointerEvents: "auto" }}
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             handleRemove(index);
@@ -229,6 +233,22 @@ export default function MinihompyStage({
                                     </button>
                                 )}
                             </div>
+                            {/* 히트 영역: 캐릭터 실제 크기에 맞춘 작은 클릭 영역 (하단 중앙) */}
+                            <div
+                                className={cn(
+                                    "absolute",
+                                    editMode && "cursor-grab",
+                                    isDragging && "cursor-grabbing",
+                                )}
+                                style={{
+                                    pointerEvents: "auto",
+                                    width: hitW,
+                                    height: hitH,
+                                    left: (baseSize - hitW) / 2,
+                                    top: baseSize - hitH - Math.round(baseSize * 0.02),
+                                }}
+                                onPointerDown={(e) => handlePointerDown(e, index)}
+                            />
                         </div>
                     );
                 })
