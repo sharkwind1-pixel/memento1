@@ -11,7 +11,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -284,7 +284,7 @@ function InfoItem({ label, value }: { label: string; value: string }) {
 /* ================================================================ */
 /* 메인 AdoptionPage */
 /* ================================================================ */
-export default function AdoptionPage({ setSelectedTab }: AdoptionPageProps) {
+function AdoptionPage({ setSelectedTab }: AdoptionPageProps) {
     // 상태
     const [animals, setAnimals] = useState<AdoptionAnimal[]>([]);
     const [totalCount, setTotalCount] = useState(0);
@@ -809,3 +809,5 @@ function AnimalListCard({
         </button>
     );
 }
+
+export default React.memo(AdoptionPage);

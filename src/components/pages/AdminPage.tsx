@@ -29,7 +29,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 // isAdmin은 더 이상 사용하지 않음 - AuthContext의 isAdminUser 사용
@@ -82,7 +82,7 @@ const TABS: { id: AdminTab; label: string; icon: typeof LayoutDashboard }[] = [
 // 메인 컴포넌트
 // ============================================================================
 
-export default function AdminPage() {
+function AdminPage() {
     const { user, isAdminUser } = useAuth();
 
     // 현재 활성 탭
@@ -392,3 +392,5 @@ function PostsSimpleView({ posts, onRefresh }: PostsSimpleViewProps) {
         </div>
     );
 }
+
+export default React.memo(AdminPage);

@@ -5,7 +5,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
     Card,
     CardContent,
@@ -65,7 +65,7 @@ const TOPICS = [
     { id: "travel", label: "여행/외출", icon: Plane },
 ];
 
-export default function MagazinePage({ setSelectedTab }: MagazinePageProps) {
+function MagazinePage({ setSelectedTab }: MagazinePageProps) {
     const [selectedStage, setSelectedStage] = useState<string>("all");
     const [selectedTopic, setSelectedTopic] = useState<string>("all");
     const [searchQuery, setSearchQuery] = useState<string>("");
@@ -377,3 +377,5 @@ export default function MagazinePage({ setSelectedTab }: MagazinePageProps) {
         </div>
     );
 }
+
+export default React.memo(MagazinePage);

@@ -5,7 +5,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { usePets } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -59,7 +59,7 @@ const SCHEDULE_TYPES = [
 
 const DAYS_OF_WEEK = ["일", "월", "화", "수", "목", "금", "토"];
 
-export default function RemindersPage() {
+function RemindersPage() {
     const { user, loading: authLoading } = useAuth();
     const { pets, selectedPetId, isLoading: petsLoading } = usePets();
 
@@ -590,3 +590,5 @@ export default function RemindersPage() {
         </div>
     );
 }
+
+export default React.memo(RemindersPage);

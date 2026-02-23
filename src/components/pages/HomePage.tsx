@@ -88,7 +88,7 @@ const HERO_CONTENT = {
     ctaTab: "ai-chat" as TabType,
 };
 
-export default function HomePage({ setSelectedTab }: HomePageProps) {
+function HomePage({ setSelectedTab }: HomePageProps) {
     const { petImages, adoptionImages } = usePetImages();
     const scroll = useSmoothAutoScroll() as unknown as SmoothAutoScrollReturn;
     // useAuth() 제거: 인증 상태 유지는 Layout/AuthContext에서 처리됨
@@ -766,3 +766,5 @@ export default function HomePage({ setSelectedTab }: HomePageProps) {
         </div>
     );
 }
+
+export default React.memo(HomePage);

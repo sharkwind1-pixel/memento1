@@ -9,7 +9,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { usePets, useTimeline, Pet, PetPhoto } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -399,7 +399,7 @@ function TimelineSection({ petId, petName }: { petId: string; petName: string })
 }
 
 /** 메인 RecordPage */
-export default function RecordPage({ setSelectedTab }: RecordPageProps) {
+function RecordPage({ setSelectedTab }: RecordPageProps) {
     const { user, signOut, updateProfile, isPremiumUser, isAdminUser, points, userPetType } = useAuth();
     const {
         pets,
@@ -1109,3 +1109,5 @@ export default function RecordPage({ setSelectedTab }: RecordPageProps) {
         </div>
     );
 }
+
+export default React.memo(RecordPage);

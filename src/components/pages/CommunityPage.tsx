@@ -6,7 +6,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
     Card,
     CardContent,
@@ -61,7 +61,7 @@ import {
 
 
 
-export default function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps) {
+function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps) {
     const { selectedPet } = usePets();
     const { user } = useAuth();
 
@@ -540,3 +540,5 @@ export default function CommunityPage({ subcategory, onSubcategoryChange }: Comm
         </div>
     );
 }
+
+export default React.memo(CommunityPage);

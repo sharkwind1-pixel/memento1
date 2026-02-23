@@ -12,7 +12,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
     Card,
     CardContent,
@@ -58,7 +58,7 @@ interface LocalPageProps {
     setSelectedTab?: (tab: TabType) => void;
 }
 
-export default function LocalPage({ setSelectedTab }: LocalPageProps) {
+function LocalPage({ setSelectedTab }: LocalPageProps) {
     const { user } = useAuth();
 
     // 목록 상태
@@ -631,3 +631,5 @@ export default function LocalPage({ setSelectedTab }: LocalPageProps) {
         </div>
     );
 }
+
+export default React.memo(LocalPage);

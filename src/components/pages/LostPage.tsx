@@ -17,6 +17,7 @@
 
 "use client";
 
+import React from "react";
 import { Button } from "@/components/ui/button";
 import {
     ChevronLeft,
@@ -37,7 +38,7 @@ interface LostPageProps {
     setSelectedTab?: (tab: TabType) => void;
 }
 
-export default function LostPage({ setSelectedTab }: LostPageProps) {
+function LostPage({ setSelectedTab }: LostPageProps) {
     const { user } = useAuth();
 
     // 목록 조회, 필터, 검색, 페이지네이션
@@ -249,3 +250,5 @@ export default function LostPage({ setSelectedTab }: LostPageProps) {
         </div>
     );
 }
+
+export default React.memo(LostPage);

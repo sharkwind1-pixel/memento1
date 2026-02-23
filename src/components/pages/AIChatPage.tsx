@@ -30,6 +30,7 @@
 // ============================================================================
 // 임포트
 // ============================================================================
+import React from "react";
 import { usePets, useTimeline } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Star } from "lucide-react";
@@ -59,7 +60,7 @@ interface AIChatPageProps {
 // 메인 컴포넌트
 // ============================================================================
 
-export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
+function AIChatPage({ setSelectedTab }: AIChatPageProps) {
     // ========================================================================
     // Context & Hooks
     // ========================================================================
@@ -272,3 +273,5 @@ export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         </div>
     );
 }
+
+export default React.memo(AIChatPage);
