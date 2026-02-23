@@ -173,13 +173,12 @@ export default function MinihompyStage({
                     const isDragging = draggingIndex === index;
                     const scale = getMinimiScale(placed.slug);
                     const baseSize = compact ? 72 : 96;
-                    const scaledSize = Math.round(baseSize * scale);
 
                     return (
                         <div
                             key={`${placed.slug}-${index}`}
                             className={cn(
-                                "absolute -translate-x-1/2 -translate-y-1/2",
+                                "absolute",
                                 editMode && "cursor-grab",
                                 isDragging && "cursor-grabbing",
                                 isSelected && "z-50",
@@ -188,6 +187,7 @@ export default function MinihompyStage({
                                 left: `${placed.x}%`,
                                 top: `${placed.y}%`,
                                 zIndex: isSelected ? 50 : (placed.zIndex || index + 1),
+                                transform: `translate(-50%, -50%) scale(${scale})`,
                             }}
                             onPointerDown={(e) => handlePointerDown(e, index)}
                         >
@@ -205,8 +205,8 @@ export default function MinihompyStage({
                                 <Image
                                     src={imgUrl}
                                     alt="미니미"
-                                    width={scaledSize}
-                                    height={scaledSize}
+                                    width={baseSize}
+                                    height={baseSize}
                                     className="object-contain pointer-events-none select-none"
                                     style={{ imageRendering: "pixelated" }}
                                     draggable={false}
@@ -237,9 +237,8 @@ export default function MinihompyStage({
                         (() => {
                             const singleScale = minimiEquip.minimiId ? getMinimiScale(minimiEquip.minimiId) : 1;
                             const singleBase = compact ? 80 : 112;
-                            const singleSize = Math.round(singleBase * singleScale);
                             return (
-                                <div className="relative">
+                                <div className="relative" style={{ transform: `scale(${singleScale})`, transformOrigin: "center bottom" }}>
                                     <div className={cn(
                                         "absolute -bottom-2 left-1/2 -translate-x-1/2",
                                         "w-20 h-3 rounded-full opacity-20",
@@ -249,8 +248,8 @@ export default function MinihompyStage({
                                         <Image
                                             src={minimiEquip.imageUrl}
                                             alt="미니미"
-                                            width={singleSize}
-                                            height={singleSize}
+                                            width={singleBase}
+                                            height={singleBase}
                                             className="object-contain"
                                             style={{ imageRendering: "pixelated" }}
                                         />

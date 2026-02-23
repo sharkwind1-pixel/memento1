@@ -92,10 +92,10 @@ export default function PointsBadge() {
                             <Image
                                 src={minimiEquip.imageUrl!}
                                 alt="내 미니미"
-                                width={Math.round(48 * (minimiEquip.minimiId ? getMinimiScale(minimiEquip.minimiId) : 1))}
-                                height={Math.round(48 * (minimiEquip.minimiId ? getMinimiScale(minimiEquip.minimiId) : 1))}
+                                width={48}
+                                height={48}
                                 className="object-contain"
-                                style={{ imageRendering: "pixelated" }}
+                                style={{ imageRendering: "pixelated", transform: `scale(${minimiEquip.minimiId ? getMinimiScale(minimiEquip.minimiId) : 1})` }}
                             />
                             <div className="text-left flex-1 min-w-0">
                                 <p className="text-xs text-gray-500 dark:text-gray-400">내 미니미</p>
