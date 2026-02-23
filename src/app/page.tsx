@@ -453,9 +453,7 @@ function HomeContent() {
                         </div>
                     </div>
                 ) : (
-                    <div className="animate-in fade-in duration-200">
-                        {renderPage()}
-                    </div>
+                    renderPage()
                 )}
             </Layout>
             {user && (

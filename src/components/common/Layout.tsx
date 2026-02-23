@@ -27,7 +27,7 @@
 // ============================================================================
 // 임포트
 // ============================================================================
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { TabType, MainCategory, CommunitySubcategory } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -101,32 +101,8 @@ export default function Layout({
     const { user, loading, signOut, isAdminUser, points, pointsLoaded, profileLoaded, userPetType, minimiEquip } = useAuth();
     const { selectedPet } = usePets();
 
-    // 모드 전환 감지 및 페이드 오버레이
+    // 모드 전환 감지 (transition/overlay 제거 - 모바일에서 번쩍임 유발하므로 즉시 전환)
     const isMemorialMode = selectedPet?.status === "memorial";
-    const prevModeRef = useRef<boolean | undefined>(undefined);
-    const [showModeTransition, setShowModeTransition] = useState(false);
-
-    useEffect(() => {
-        // 최초 렌더링 시에는 전환 효과 없이 모드만 기록
-        if (prevModeRef.current === undefined) {
-            prevModeRef.current = isMemorialMode;
-            return;
-        }
-        // 모드가 실제로 변경된 경우에만 페이드 효과 표시
-        if (prevModeRef.current !== isMemorialMode) {
-            prevModeRef.current = isMemorialMode;
-            setShowModeTransition(true);
-            const timer = setTimeout(() => setShowModeTransition(false), 700);
-            return () => clearTimeout(timer);
-        }
-    }, [isMemorialMode]);
-
-    // 최초 마운트 시 transition 비활성화 (memorial모드 배경색 전환 번쩍임 방지)
-    const [isFirstMount, setIsFirstMount] = useState(true);
-    useEffect(() => {
-        const timer = setTimeout(() => setIsFirstMount(false), 100);
-        return () => clearTimeout(timer);
-    }, []);
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     // blocking script가 이미 'dark' 클래스를 적용했으므로, DOM에서 초기값 읽기
@@ -221,22 +197,10 @@ export default function Layout({
 
     return (
         <div className={`min-h-screen pb-safe flex flex-col xl:block ${
-            isFirstMount ? '' : 'transition-all duration-700 ease-in-out'
-        } ${
             isMemorialMode
                 ? "bg-gradient-to-b from-amber-50/80 via-orange-50/40 to-white dark:from-amber-950 dark:via-orange-950 dark:to-gray-900"
                 : "bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
         }`}>
-            {/* 모드 전환 페이드 오버레이 */}
-            {showModeTransition && (
-                <div
-                    className={`fixed inset-0 z-[100] mode-transition-overlay ${
-                        isMemorialMode
-                            ? "bg-amber-100/30"
-                            : "bg-sky-100/30"
-                    }`}
-                />
-            )}
 
             {/* 인증 모달 */}
             <AuthModal
@@ -264,8 +228,6 @@ export default function Layout({
             {/* GPU 가속으로 리페인트 최소화 */}
             <header
                 className={`sticky top-0 z-[60] xl:backdrop-blur-sm border-b ${
-                    isFirstMount ? '' : 'transition-colors duration-700 ease-in-out'
-                } ${
                     isMemorialMode
                         ? "bg-amber-50 dark:bg-amber-950 xl:bg-amber-50/90 xl:dark:bg-amber-950/90 border-amber-200 dark:border-amber-800"
                         : "bg-white dark:bg-gray-900 xl:bg-white/90 xl:dark:bg-gray-900/90 border-gray-200 dark:border-gray-700"
@@ -486,8 +448,6 @@ export default function Layout({
             {/* 모바일 하단 네비게이션 - 5개 메인 카테고리 */}
             <nav
                 className={`xl:hidden fixed bottom-0 left-0 right-0 backdrop-blur-sm border-t z-50 pb-safe ${
-                    isFirstMount ? '' : 'transition-colors duration-700 ease-in-out'
-                } ${
                     isMemorialMode
                         ? "bg-amber-50/95 dark:bg-amber-950/95 border-amber-200 dark:border-amber-800"
                         : "bg-white/95 dark:bg-gray-900/95 border-gray-100 dark:border-gray-800"
