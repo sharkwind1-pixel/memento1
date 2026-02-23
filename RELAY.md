@@ -1,12 +1,12 @@
 # 릴레이
 
-## [!!!] 모바일 깜빡임 문제 - 미해결 (다음 세션 최우선)
+## [!!] 모바일 깜빡임 문제 - 7번째 커밋으로 수정 적용 (`e3aa66f`)
 
-> **상태**: 6번의 커밋으로 수정 시도했으나 여전히 깜빡임 발생. 코드 변경이 많아져서 오히려 불안정해졌을 수 있음.
+> **상태**: React.memo + Layout 헤더/네비 분리로 근본적 해결 시도. **모바일 테스트 필요.**
 > **증상**: 홈에서 처음엔 괜찮음 → 내기록 탭 갔다가 다른 탭으로 이동하면 이미지/버튼/아이콘이 깜빡거림
-> **원인 추정**: React Context 리렌더 캐스케이드 (PetContext/AuthContext 변경 → Layout 리렌더 → 모든 자식 리렌더)
+> **근본 원인 (확정)**: Context 변경 → Layout 리렌더 → children 새 JSX reference → 모든 페이지 리렌더
 
-### 지금까지 시도한 것 (커밋 6개)
+### 커밋 히스토리
 
 | 커밋 | 내용 | 결과 |
 |------|------|------|
@@ -15,132 +15,33 @@
 | `3dab398` | transition/overlay 전면 삭제 | X |
 | `9aa6e25` | dynamic import 제거, selectedPet useMemo, minimiEquip 구조비교 | X |
 | `0c392ed` | CSS display 탭 전환 (모든 탭 마운트 유지) | 오히려 악화 |
-| `03f4356` | TimelineContext 분리, usePets/useAuth 제거, getPetById ref화 | **미확인** |
+| `03f4356` | TimelineContext 분리, usePets/useAuth 제거, getPetById ref화 | 부분 개선 |
+| **`e3aa66f`** | **React.memo 10개 페이지 + Layout 헤더/네비 분리** | **모바일 테스트 필요** |
 
-### 수정된 파일 (영향 범위)
+### 최신 수정 (`e3aa66f`) 상세
 
-| 파일 | 변경 내용 | 위험도 |
-|------|----------|--------|
-| `src/app/page.tsx` | usePets() 제거, dynamic→static import, 온보딩 직접 Supabase 조회 | 중 |
-| `src/contexts/PetContext.tsx` | TimelineContext 분리, getPetById ref화, selectedPet useMemo, timeline 구조비교 | **높** |
-| `src/contexts/AuthContext.tsx` | minimiEquip 구조비교, refreshPoints 값비교 | 중 |
-| `src/components/common/Layout.tsx` | 헤더 auth CSS display, 하단네비 transition/blur 제거 | 중 |
-| `src/components/pages/HomePage.tsx` | useAuth() 제거, background animate-pulse 제거 | 저 |
-| `src/components/pages/RecordPage.tsx` | useTimeline() 사용, switch renderPage 복원 | 중 |
-| `src/components/pages/AIChatPage.tsx` | useTimeline() 사용 | 저 |
+**1단계: 10개 페이지 컴포넌트에 React.memo 적용**
+- HomePage, RecordPage, CommunityPage, AIChatPage, MagazinePage, AdminPage, LostPage, LocalPage, AdoptionPage, RemindersPage
+- Layout이 리렌더되어도 props(useCallback된 handleTabChange 등)가 같으면 리렌더 차단
 
-### 근본 원인 (이번 세션에서 확정)
-
-**Context 분리만으로는 해결 안 됨. Layout → children 전파가 진짜 문제.**
-
-```
-AuthContext 값 변경 (points, minimiEquip, profileLoaded 등)
-  → Layout 리렌더 (useAuth() 구독)
-  → Layout의 children prop = 새 JSX reference 생성
-  → renderPage()의 반환값이 새 reference → 자식 페이지 전부 리렌더
-  → 페이지 안의 이미지/버튼/아이콘 깜빡임
-```
-
-**같은 문제**: PetContext의 `selectedPet` 변경 → Layout 리렌더 → 동일 캐스케이드
-
-### 다음 세션에서 해야 할 것 (바로 코드 수정 시작)
-
-#### 1단계: 각 페이지 컴포넌트를 React.memo()로 감싸기 (가장 효과적)
-
-Layout이 리렌더되어도 props가 같으면 자식 페이지가 리렌더되지 않음.
-**6개 파일 수정 - 모두 `export default function` → `React.memo` 패턴으로 변경:**
-
-```typescript
-// src/components/pages/HomePage.tsx (line 91)
-// BEFORE:
-export default function HomePage({ setSelectedTab }: HomePageProps) {
-// AFTER:
-function HomePage({ setSelectedTab }: HomePageProps) {
-// ... 기존 코드 그대로 ...
-}
-export default React.memo(HomePage);
-
-// src/components/pages/RecordPage.tsx (line 402)
-// BEFORE:
-export default function RecordPage({ setSelectedTab }: RecordPageProps) {
-// AFTER:
-function RecordPage({ setSelectedTab }: RecordPageProps) {
-// ... 기존 코드 그대로 ...
-}
-export default React.memo(RecordPage);
-
-// src/components/pages/CommunityPage.tsx (line 64)
-// BEFORE:
-export default function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps) {
-// AFTER:
-function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps) {
-// ... 기존 코드 그대로 ...
-}
-export default React.memo(CommunityPage);
-
-// src/components/pages/AIChatPage.tsx (line 62)
-// BEFORE:
-export default function AIChatPage({ setSelectedTab }: AIChatPageProps) {
-// AFTER:
-function AIChatPage({ setSelectedTab }: AIChatPageProps) {
-// ... 기존 코드 그대로 ...
-}
-export default React.memo(AIChatPage);
-
-// src/components/pages/MagazinePage.tsx (line 68)
-// BEFORE:
-export default function MagazinePage({ setSelectedTab }: MagazinePageProps) {
-// AFTER:
-function MagazinePage({ setSelectedTab }: MagazinePageProps) {
-// ... 기존 코드 그대로 ...
-}
-export default React.memo(MagazinePage);
-
-// src/components/pages/AdminPage.tsx (line 85)
-// BEFORE:
-export default function AdminPage() {
-// AFTER:
-function AdminPage() {
-// ... 기존 코드 그대로 ...
-}
-export default React.memo(AdminPage);
-```
-
-#### 2단계: page.tsx에서 setSelectedTab이 안정적 reference인지 확인
-
-`page.tsx`의 `handleTabChange`가 `useCallback`으로 감싸져 있음 - OK.
-BUT `handleSubcategoryChange`도 `useCallback` - OK.
-**다만** `renderPage()`가 매번 새 JSX를 반환하므로, React.memo가 핵심.
-
-#### 3단계: (선택) Layout 내부 분리
-
-Layout의 헤더에서 `useAuth()`가 반환하는 값이 많음:
-```typescript
-const { user, loading, signOut, isAdminUser, points, pointsLoaded, profileLoaded, userPetType, minimiEquip } = useAuth();
-```
-이 중 `points`, `minimiEquip`가 자주 변경되어 Layout을 자주 리렌더시킴.
-**해결**: 헤더 영역을 별도 `<HeaderContent />` 컴포넌트로 추출하면 Layout 본체의 리렌더를 줄일 수 있음.
-BUT 1단계 React.memo로 충분할 가능성이 높으므로 1단계 먼저 적용 후 테스트.
-
-### 주의사항
-
-- **React.memo의 props 비교**: `setSelectedTab`이 `useCallback`으로 안정적이어야 함 → page.tsx에서 확인 완료 (handleTabChange는 useCallback)
-- CommunityPage의 `subcategory` prop은 primitive string이므로 React.memo가 정상 동작
-- `onSubcategoryChange`도 useCallback으로 감싸져 있음 → OK
+**2단계: Layout 내부 분리**
+- `HeaderAuthArea` 컴포넌트: points/minimiEquip/isAdminUser 등 자주 변하는 Auth 값을 직접 구독
+- `BottomNav` 컴포넌트: isMemorialMode(selectedPet) 직접 구독
+- Layout 본체: `useAuth()`에서 `user, loading, signOut`만 구독 (이전: 9개 값 전부 구독)
+- Layout 자체에도 React.memo 적용
 
 ### 불안 요소 (검증 필요)
 
-- PetContext의 `timeline: timelineRef.current`가 하위호환으로 제공되지만, ref 값이므로 **컴포넌트가 리렌더되지 않으면 stale 값을 보게 됨** - 기존에 `usePets()`로 timeline 읽던 곳이 있으면 문제
-- `getPetById`가 빈 deps `[]`로 바뀌면서 ESLint exhaustive-deps 경고 가능 (동작에는 영향 없음)
-- `page.tsx`에서 온보딩 체크가 직접 Supabase 조회로 바뀌면서 네트워크 요청 추가됨
+- PetContext의 `timeline: timelineRef.current`가 하위호환으로 제공되지만, ref 값이므로 stale 가능
+- HeaderAuthArea에서 로그인/회원가입 모달 열기를 window CustomEvent로 변환 (openAuthModal/openAuthModalSignup)
+- Layout이 여전히 `usePets()`를 구독 (배경색/헤더 isMemorialMode) - selectedPet 변경 시 Layout 리렌더는 발생하지만 React.memo된 자식은 보호됨
 
 ### 롤백 플랜
 
-만약 React.memo 적용 후에도 깜빡임이 계속되면:
-1. `git log --oneline -15`로 깜빡임 이전 안정 커밋 확인
-2. `43a434f` 바로 이전 커밋으로 롤백
-3. **롤백 후 React.memo만 단독 적용** (Context 분리 없이)
-4. Context 변경은 나중에 별도로 진행
+깜빡임이 계속되면:
+1. `43a434f` 바로 이전 커밋으로 롤백
+2. React.memo만 단독 적용 (Context 분리 없이)
+3. Context 변경은 나중에 별도로 진행
 
 ---
 
