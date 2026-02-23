@@ -18,6 +18,7 @@ import { useEscapeClose } from "@/hooks/useEscapeClose";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
 import { MINIMI } from "@/config/constants";
+import { getMinimiScale } from "@/data/minimiPixels";
 import { toast } from "sonner";
 import Image from "next/image";
 import { CHARACTER_CATALOG } from "@/data/minimiPixels";
@@ -191,7 +192,7 @@ export default function MinimiClosetModal({
                                 width={48}
                                 height={48}
                                 className="object-contain"
-                                style={{ imageRendering: "pixelated" }}
+                                style={{ imageRendering: "pixelated", transform: `scale(${equippedMinimiSlug ? getMinimiScale(equippedMinimiSlug) : 1})` }}
                             />
                         ) : (
                             <div className="w-12 h-12 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
@@ -236,7 +237,7 @@ export default function MinimiClosetModal({
                                                         width={64}
                                                         height={64}
                                                         className="object-contain"
-                                                        style={{ imageRendering: "pixelated" }}
+                                                        style={{ imageRendering: "pixelated", transform: `scale(${getMinimiScale(char.slug)})` }}
                                                     />
                                                 ) : (
                                                     <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">

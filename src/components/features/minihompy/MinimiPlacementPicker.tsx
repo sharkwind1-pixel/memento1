@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { Loader2, Plus } from "lucide-react";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
-import { CHARACTER_CATALOG } from "@/data/minimiPixels";
+import { CHARACTER_CATALOG, getMinimiScale } from "@/data/minimiPixels";
 import type { PlacedMinimi } from "@/types";
 import Image from "next/image";
 
@@ -119,7 +119,7 @@ export default function MinimiPlacementPicker({
                                     width={40}
                                     height={40}
                                     className="object-contain"
-                                    style={{ imageRendering: "pixelated" }}
+                                    style={{ imageRendering: "pixelated", transform: `scale(${getMinimiScale(char.slug)})` }}
                                 />
                                 <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
                                     <Plus className="w-2.5 h-2.5 text-white" />

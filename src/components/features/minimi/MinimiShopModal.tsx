@@ -22,6 +22,7 @@ import { MINIMI } from "@/config/constants";
 import { toast } from "sonner";
 import Image from "next/image";
 import type { MinimiCategory } from "@/types";
+import { getMinimiScale } from "@/data/minimiPixels";
 
 interface MinimiShopModalProps {
     isOpen: boolean;
@@ -221,7 +222,7 @@ export default function MinimiShopModal({
                                                                     width={64}
                                                                     height={64}
                                                                     className="object-contain"
-                                                                    style={{ imageRendering: "pixelated" }}
+                                                                    style={{ imageRendering: "pixelated", transform: `scale(${getMinimiScale(char.slug)})` }}
                                                                 />
                                                             ) : (
                                                                 <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">

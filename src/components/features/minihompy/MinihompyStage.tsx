@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 import { Music, Eye, X as XIcon, Pencil, Plus, Check, Loader2 } from "lucide-react";
 import type { MinimiEquipState, PlacedMinimi } from "@/types";
 import { findBackground, getDefaultBackground } from "@/data/minihompyBackgrounds";
-import { CHARACTER_CATALOG } from "@/data/minimiPixels";
+import { CHARACTER_CATALOG, getMinimiScale } from "@/data/minimiPixels";
 import Image from "next/image";
 
 function clampPosition(x: number, y: number) {
@@ -171,6 +171,9 @@ export default function MinihompyStage({
                     if (!imgUrl) return null;
                     const isSelected = editMode && selectedIndex === index;
                     const isDragging = draggingIndex === index;
+                    const scale = getMinimiScale(placed.slug);
+                    const baseSize = compact ? 72 : 96;
+                    const scaledSize = Math.round(baseSize * scale);
 
                     return (
                         <div
@@ -202,8 +205,8 @@ export default function MinihompyStage({
                                 <Image
                                     src={imgUrl}
                                     alt="미니미"
-                                    width={compact ? 72 : 96}
-                                    height={compact ? 72 : 96}
+                                    width={scaledSize}
+                                    height={scaledSize}
                                     className="object-contain pointer-events-none select-none"
                                     style={{ imageRendering: "pixelated" }}
                                     draggable={false}
@@ -231,28 +234,35 @@ export default function MinihompyStage({
                     compact ? "bottom-[52px]" : "bottom-[64px]"
                 )}>
                     {hasMinimi ? (
-                        <div className="relative">
-                            <div className={cn(
-                                "absolute -bottom-2 left-1/2 -translate-x-1/2",
-                                "w-20 h-3 rounded-full opacity-20",
-                                isDarkBg ? "bg-white" : "bg-black"
-                            )} />
-                            {minimiEquip.imageUrl ? (
-                                <Image
-                                    src={minimiEquip.imageUrl}
-                                    alt="미니미"
-                                    width={compact ? 80 : 112}
-                                    height={compact ? 80 : 112}
-                                    className="object-contain"
-                                    style={{ imageRendering: "pixelated" }}
-                                />
-                            ) : (
-                                <div className={cn(
-                                    compact ? "w-20 h-20" : "w-28 h-28",
-                                    "bg-gray-200/50 rounded-lg"
-                                )} />
-                            )}
-                        </div>
+                        (() => {
+                            const singleScale = minimiEquip.minimiId ? getMinimiScale(minimiEquip.minimiId) : 1;
+                            const singleBase = compact ? 80 : 112;
+                            const singleSize = Math.round(singleBase * singleScale);
+                            return (
+                                <div className="relative">
+                                    <div className={cn(
+                                        "absolute -bottom-2 left-1/2 -translate-x-1/2",
+                                        "w-20 h-3 rounded-full opacity-20",
+                                        isDarkBg ? "bg-white" : "bg-black"
+                                    )} />
+                                    {minimiEquip.imageUrl ? (
+                                        <Image
+                                            src={minimiEquip.imageUrl}
+                                            alt="미니미"
+                                            width={singleSize}
+                                            height={singleSize}
+                                            className="object-contain"
+                                            style={{ imageRendering: "pixelated" }}
+                                        />
+                                    ) : (
+                                        <div className={cn(
+                                            compact ? "w-20 h-20" : "w-28 h-28",
+                                            "bg-gray-200/50 rounded-lg"
+                                        )} />
+                                    )}
+                                </div>
+                            );
+                        })()
                     ) : (
                         <div className={cn(
                             "flex items-center justify-center",
