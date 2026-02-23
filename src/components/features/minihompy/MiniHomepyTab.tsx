@@ -152,8 +152,14 @@ export default function MiniHomepyTab() {
             y: 50,
             zIndex: editPlaced.length + 1,
         };
-        setEditPlaced(prev => [...prev, newItem]);
-        setShowPicker(false);
+        setEditPlaced(prev => {
+            const next = [...prev, newItem];
+            // 최대 개수 도달 시에만 피커 자동 닫기
+            if (next.length >= MINIHOMPY.MAX_PLACED_MINIMI) {
+                setShowPicker(false);
+            }
+            return next;
+        });
     };
 
     // 방명록 삭제
