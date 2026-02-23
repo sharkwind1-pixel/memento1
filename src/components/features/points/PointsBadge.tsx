@@ -8,7 +8,7 @@
 
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import { Star, ChevronRight, ShoppingBag, Shirt, Sparkles } from "lucide-react";
@@ -32,6 +32,9 @@ export default function PointsBadge({ onModalChange }: PointsBadgeProps) {
     const [showShop, setShowShop] = useState(false);
     const [showMinimiShop, setShowMinimiShop] = useState(false);
     const [showCloset, setShowCloset] = useState(false);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => { setMounted(true); }, []);
 
     const openModal = useCallback((setter: (v: boolean) => void) => {
         setter(true);
@@ -200,7 +203,7 @@ export default function PointsBadge({ onModalChange }: PointsBadgeProps) {
             </div>
 
             {/* 모달: Portal로 document.body에 렌더링 (사이드바 stacking context 탈출) */}
-            {typeof document !== "undefined" && createPortal(
+            {mounted && createPortal(
                 <>
                     {showHistory && (
                         <PointsHistoryModal
