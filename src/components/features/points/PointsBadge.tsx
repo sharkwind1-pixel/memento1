@@ -20,7 +20,11 @@ import Image from "next/image";
 import MinimiShopModal from "../minimi/MinimiShopModal";
 import MinimiClosetModal from "../minimi/MinimiClosetModal";
 
-export default function PointsBadge() {
+interface PointsBadgeProps {
+    onCloseSidebar?: () => void;
+}
+
+export default function PointsBadge({ onCloseSidebar }: PointsBadgeProps) {
     const { user, points, pointsLoaded, userPetType, isAdminUser, minimiEquip, refreshMinimi, refreshPoints } = useAuth();
     const nickname = user?.user_metadata?.nickname || user?.email?.split("@")[0];
     const [showHistory, setShowHistory] = useState(false);
@@ -115,7 +119,7 @@ export default function PointsBadge() {
                     )}
                     <div className="flex gap-1.5">
                         <button
-                            onClick={() => setShowMinimiShop(true)}
+                            onClick={() => { onCloseSidebar?.(); setShowMinimiShop(true); }}
                             className={cn(
                                 "flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg",
                                 "bg-pink-100/80 dark:bg-pink-900/20",
@@ -127,7 +131,7 @@ export default function PointsBadge() {
                             상점
                         </button>
                         <button
-                            onClick={() => setShowCloset(true)}
+                            onClick={() => { onCloseSidebar?.(); setShowCloset(true); }}
                             className={cn(
                                 "flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg",
                                 "bg-purple-100/80 dark:bg-purple-900/20",
@@ -143,7 +147,7 @@ export default function PointsBadge() {
 
                 {/* 포인트 표시 */}
                 <button
-                    onClick={() => setShowHistory(true)}
+                    onClick={() => { onCloseSidebar?.(); setShowHistory(true); }}
                     className={cn(
                         "w-full flex items-center justify-between px-3 py-2.5 rounded-xl",
                         "bg-gradient-to-r from-sky-50 to-violet-50",
@@ -169,7 +173,7 @@ export default function PointsBadge() {
 
                 {/* 포인트 상점 버튼 */}
                 <button
-                    onClick={() => setShowShop(true)}
+                    onClick={() => { onCloseSidebar?.(); setShowShop(true); }}
                     className={cn(
                         "w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl",
                         "bg-gradient-to-r from-amber-50 to-orange-50",

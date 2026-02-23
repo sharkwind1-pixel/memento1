@@ -217,7 +217,7 @@ export default function Sidebar({
             {/* 포인트 배지 */}
             {user && (
                 <div className="border-b border-gray-200 dark:border-gray-700">
-                    <PointsBadge />
+                    <PointsBadge onCloseSidebar={isMobile ? onClose : undefined} />
                 </div>
             )}
 
