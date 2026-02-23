@@ -65,6 +65,17 @@ import type {
 export type { Pet, PetPhoto, MediaType, TimelineEntry };
 
 // ============================================================================
+// Memorial Mode Context (분리): selectedPet.status 변경이 Layout/BottomNav에만 전파
+// Layout은 isMemorialMode만 필요한데 usePets() 전체를 구독하면
+// pets/selectedPetId 등 모든 변경에 리렌더됨 → 이 Context로 분리
+// ============================================================================
+interface MemorialModeContextType {
+    isMemorialMode: boolean;
+}
+
+const MemorialModeContext = createContext<MemorialModeContextType>({ isMemorialMode: false });
+
+// ============================================================================
 // Timeline Context (분리): timeline 변경이 Layout/HomePage 등 비관련 컴포넌트를 리렌더하지 않도록
 // timeline은 RecordPage(TimelineSection)과 AIChatPage에서만 사용됨
 // ============================================================================
@@ -858,6 +869,17 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
     );
 
     // ========================================================================
+    // Memorial Mode Context value (별도 분리)
+    // selectedPet의 status가 "memorial"인지만 추적
+    // Layout/BottomNav는 이것만 구독하면 됨 (usePets() 구독 불필요)
+    // ========================================================================
+    const isMemorialMode = selectedPet?.status === "memorial";
+    const memorialModeContextValue = useMemo(
+        () => ({ isMemorialMode: !!isMemorialMode }),
+        [isMemorialMode]
+    );
+
+    // ========================================================================
     // Timeline Context value (별도 분리)
     // timeline 변경은 이 context의 consumer만 리렌더 (RecordPage TimelineSection, AIChatPage)
     // Layout, HomePage 등은 영향 없음
@@ -926,11 +948,13 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
     );
 
     return (
-        <PetContext.Provider value={contextValue}>
-            <TimelineContext.Provider value={timelineContextValue}>
-                {children}
-            </TimelineContext.Provider>
-        </PetContext.Provider>
+        <MemorialModeContext.Provider value={memorialModeContextValue}>
+            <PetContext.Provider value={contextValue}>
+                <TimelineContext.Provider value={timelineContextValue}>
+                    {children}
+                </TimelineContext.Provider>
+            </PetContext.Provider>
+        </MemorialModeContext.Provider>
     );
 }
 
@@ -950,4 +974,11 @@ export function useTimeline() {
         throw new Error("useTimeline must be used within a PetProvider");
     }
     return context;
+}
+
+/** Memorial Mode hook - isMemorialMode만 구독 (Layout/BottomNav용)
+ * selectedPet.status가 "memorial"↔"active"로 바뀔 때만 리렌더
+ * pets 배열, selectedPetId, timeline 등 변경에는 반응하지 않음 */
+export function useMemorialMode() {
+    return useContext(MemorialModeContext);
 }

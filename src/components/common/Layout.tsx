@@ -32,7 +32,7 @@ import Image from "next/image";
 import { TabType, MainCategory, CommunitySubcategory } from "@/types";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { usePets } from "@/contexts/PetContext";
+import { useMemorialMode } from "@/contexts/PetContext";
 import AuthModal from "@/components/Auth/AuthModal";
 import AccountSettingsModal from "@/components/Auth/AccountSettingsModal";
 import Sidebar from "@/components/common/Sidebar";
@@ -238,8 +238,7 @@ function BottomNav({
     selectedTab: TabType;
     setSelectedTab: (tab: TabType) => void;
 }) {
-    const { selectedPet } = usePets();
-    const isMemorialMode = selectedPet?.status === "memorial";
+    const { isMemorialMode } = useMemorialMode();
 
     const isCommunityRelated = (tab: TabType) => {
         return tab === "community" || tab === "adoption" || tab === "local" || tab === "lost";
@@ -339,14 +338,13 @@ function Layout({
 }: LayoutProps) {
     // ========================================================================
     // Context & State
-    // Layout에서는 최소한의 context만 구독: user/loading/signOut만 필요
-    // points, minimiEquip 등 자주 변하는 값은 HeaderAuthArea에서 직접 구독
+    // Layout에서는 최소한의 context만 구독:
+    // - useAuth(): user/loading/signOut (초기 로딩 시 1번만 변경)
+    // - useMemorialMode(): isMemorialMode만 (status 변경 시만 리렌더)
+    // - usePets() 직접 구독 안 함! (pets/selectedPetId 변경에 반응 안 함)
     // ========================================================================
     const { user, loading, signOut } = useAuth();
-    const { selectedPet } = usePets();
-
-    // 모드 전환 감지 (transition/overlay 제거 - 모바일에서 번쩍임 유발하므로 즉시 전환)
-    const isMemorialMode = selectedPet?.status === "memorial";
+    const { isMemorialMode } = useMemorialMode();
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     // blocking script가 이미 'dark' 클래스를 적용했으므로, DOM에서 초기값 읽기
