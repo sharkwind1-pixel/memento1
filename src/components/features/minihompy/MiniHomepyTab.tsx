@@ -99,10 +99,22 @@ export default function MiniHomepyTab() {
         }
     }, []);
 
-    // 편집모드 진입
+    // 편집모드 진입 - 장착 미니미가 배치 배열에 없으면 자동 포함
     const enterEditMode = () => {
         const current = settings?.placedMinimi || [];
-        setEditPlaced([...current]);
+        let initial = [...current];
+
+        // 장착된 미니미가 있는데 배치 배열에 없으면 자동 추가
+        if (minimiEquip.minimiId && !initial.some(p => p.slug === minimiEquip.minimiId)) {
+            initial.push({
+                slug: minimiEquip.minimiId,
+                x: 50,
+                y: 50,
+                zIndex: initial.length + 1,
+            });
+        }
+
+        setEditPlaced(initial);
         setEditMode(true);
         setShowPicker(false);
     };
