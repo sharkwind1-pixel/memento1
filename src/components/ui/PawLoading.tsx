@@ -55,7 +55,7 @@ export function FullPageLoading({ text = "로딩 중..." }: { text?: string }) {
     }, []);
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-sky-50 to-violet-50 gap-4">
+        <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-sky-50 to-violet-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 gap-4">
             <PawLoading size="lg" text={text} />
             {showRetry && (
                 <button

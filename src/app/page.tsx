@@ -37,7 +37,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePets } from "@/contexts/PetContext";
 import Layout from "@/components/common/Layout";
 import { supabase } from "@/lib/supabase";
-import { FullPageLoading } from "@/components/ui/PawLoading";
+
 
 // ============================================================================
 // 상수 및 유틸리티
@@ -105,7 +105,10 @@ import RecordPageTutorial from "@/components/features/onboarding/RecordPageTutor
 /** Suspense 래퍼 - useSearchParams는 Suspense 내부에서만 사용 가능 */
 export default function Home() {
     return (
-        <Suspense fallback={<FullPageLoading />}>
+        <Suspense fallback={
+            // Layout 배경과 동일한 색상으로 빈 화면 (색상 전환 번쩍임 방지)
+            <div className="min-h-screen bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900" />
+        }>
             <HomeContent />
         </Suspense>
     );
@@ -441,16 +444,18 @@ function HomeContent() {
                 {isContentLoading ? (
                     <div className="space-y-4 animate-pulse py-4">
                         {/* 히어로 영역 스켈레톤 */}
-                        <div className="rounded-2xl bg-gray-200 dark:bg-gray-700 h-48 w-full" />
+                        <div className="rounded-2xl bg-gray-100/60 dark:bg-gray-800/40 h-48 w-full" />
                         {/* 카드 그리드 스켈레톤 */}
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             {[...Array(6)].map((_, i) => (
-                                <div key={i} className="rounded-xl bg-gray-200 dark:bg-gray-700 h-28" />
+                                <div key={i} className="rounded-xl bg-gray-100/60 dark:bg-gray-800/40 h-28" />
                             ))}
                         </div>
                     </div>
                 ) : (
-                    renderPage()
+                    <div className="animate-in fade-in duration-200">
+                        {renderPage()}
+                    </div>
                 )}
             </Layout>
             {user && (

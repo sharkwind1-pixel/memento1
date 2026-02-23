@@ -121,6 +121,13 @@ export default function Layout({
         }
     }, [isMemorialMode]);
 
+    // 최초 마운트 시 transition 비활성화 (memorial모드 배경색 전환 번쩍임 방지)
+    const [isFirstMount, setIsFirstMount] = useState(true);
+    useEffect(() => {
+        const timer = setTimeout(() => setIsFirstMount(false), 100);
+        return () => clearTimeout(timer);
+    }, []);
+
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     // blocking script가 이미 'dark' 클래스를 적용했으므로, DOM에서 초기값 읽기
     const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -213,7 +220,9 @@ export default function Layout({
         user?.user_metadata?.nickname || user?.email?.split("@")[0] || "사용자";
 
     return (
-        <div className={`min-h-screen pb-safe flex flex-col xl:block transition-all duration-700 ease-in-out ${
+        <div className={`min-h-screen pb-safe flex flex-col xl:block ${
+            isFirstMount ? '' : 'transition-all duration-700 ease-in-out'
+        } ${
             isMemorialMode
                 ? "bg-gradient-to-b from-amber-50/80 via-orange-50/40 to-white dark:from-amber-950 dark:via-orange-950 dark:to-gray-900"
                 : "bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
@@ -254,7 +263,9 @@ export default function Layout({
             {/* 헤더 - 모바일은 완전 불투명 (성능), 데스크톱은 반투명 */}
             {/* GPU 가속으로 리페인트 최소화 */}
             <header
-                className={`sticky top-0 z-[60] xl:backdrop-blur-sm border-b transition-colors duration-700 ease-in-out ${
+                className={`sticky top-0 z-[60] xl:backdrop-blur-sm border-b ${
+                    isFirstMount ? '' : 'transition-colors duration-700 ease-in-out'
+                } ${
                     isMemorialMode
                         ? "bg-amber-50 dark:bg-amber-950 xl:bg-amber-50/90 xl:dark:bg-amber-950/90 border-amber-200 dark:border-amber-800"
                         : "bg-white dark:bg-gray-900 xl:bg-white/90 xl:dark:bg-gray-900/90 border-gray-200 dark:border-gray-700"
@@ -311,18 +322,18 @@ export default function Layout({
                                 )}
                             </Button>
 
-                            <div className="xl:hidden flex items-center">
+                            <div className="xl:hidden flex items-center min-w-[40px]">
                             {loading ? (
-                                <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-full" />
+                                <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-full transition-opacity duration-200" />
                             ) : user ? (
-                                <div className="relative">
+                                <div className="relative animate-fade-in">
                                     <button
                                         onClick={() =>
                                             setIsUserMenuOpen(!isUserMenuOpen)
                                         }
                                         className="flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 rounded-full sm:rounded-xl hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
                                     >
-                                        <span className={pointsLoaded ? "opacity-100" : "opacity-0"} style={{ transition: "opacity 0.15s" }}>
+                                        <span className="transition-opacity duration-200" style={{ opacity: pointsLoaded ? 1 : 0 }}>
                                             <LevelBadge
                                                 points={points}
                                                 petType={userPetType}
@@ -331,13 +342,13 @@ export default function Layout({
                                                 showTooltip={false}
                                             />
                                         </span>
-                                        {profileLoaded && minimiEquip.imageUrl && (
+                                        {minimiEquip.imageUrl && (
                                             <Image
                                                 src={minimiEquip.imageUrl}
                                                 alt="미니미"
                                                 width={16}
                                                 height={16}
-                                                className="object-contain hidden sm:block"
+                                                className={`object-contain hidden sm:block transition-opacity duration-200 ${profileLoaded ? 'opacity-100' : 'opacity-0'}`}
                                                 style={{ imageRendering: "pixelated" }}
                                             />
                                         )}
@@ -474,7 +485,9 @@ export default function Layout({
 
             {/* 모바일 하단 네비게이션 - 5개 메인 카테고리 */}
             <nav
-                className={`xl:hidden fixed bottom-0 left-0 right-0 backdrop-blur-sm border-t z-50 pb-safe transition-colors duration-700 ease-in-out ${
+                className={`xl:hidden fixed bottom-0 left-0 right-0 backdrop-blur-sm border-t z-50 pb-safe ${
+                    isFirstMount ? '' : 'transition-colors duration-700 ease-in-out'
+                } ${
                     isMemorialMode
                         ? "bg-amber-50/95 dark:bg-amber-950/95 border-amber-200 dark:border-amber-800"
                         : "bg-white/95 dark:bg-gray-900/95 border-gray-100 dark:border-gray-800"
