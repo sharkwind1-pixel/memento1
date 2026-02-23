@@ -103,7 +103,7 @@ export default function BackgroundShopModal({
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
             onClick={(e) => e.target === e.currentTarget && onClose()}
             role="dialog"
             aria-modal="true"
@@ -157,7 +157,12 @@ export default function BackgroundShopModal({
                                         {/* 배경 미리보기 */}
                                         <div
                                             className="h-24 relative"
-                                            style={{ background: bg.cssBackground }}
+                                            style={{
+                                                background: bg.imageUrl ? undefined : bg.cssBackground,
+                                                backgroundImage: bg.imageUrl ? `url(${bg.imageUrl})` : undefined,
+                                                backgroundSize: bg.imageUrl ? "cover" : undefined,
+                                                backgroundPosition: bg.imageUrl ? "center" : undefined,
+                                            }}
                                         >
                                             {isCurrentBg && (
                                                 <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-violet-500 flex items-center justify-center">

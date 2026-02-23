@@ -67,7 +67,8 @@ export default function MinihompyStage({
     maxPlaced = 5,
 }: MinihompyStageProps) {
     const bg = findBackground(backgroundSlug) || getDefaultBackground();
-    const isDarkBg = backgroundSlug === "starry_night";
+    const DARK_BACKGROUNDS = ["starry_night", "mystic_pond", "rooftop_glamping", "starfall_hill"];
+    const isDarkBg = DARK_BACKGROUNDS.includes(backgroundSlug);
     const hasMinimi = !!minimiEquip.imageUrl || !!minimiEquip.pixelData;
     const stageRef = useRef<HTMLDivElement>(null);
     const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
@@ -145,7 +146,13 @@ export default function MinihompyStage({
                 "border border-white/20 shadow-lg",
                 editMode && "ring-2 ring-blue-400/50"
             )}
-            style={{ background: bg.cssBackground, touchAction: editMode ? "none" : "auto" }}
+            style={{
+                background: bg.imageUrl ? undefined : bg.cssBackground,
+                backgroundImage: bg.imageUrl ? `url(${bg.imageUrl})` : undefined,
+                backgroundSize: bg.imageUrl ? "cover" : undefined,
+                backgroundPosition: bg.imageUrl ? "center" : undefined,
+                touchAction: editMode ? "none" : "auto",
+            }}
             onClick={handleStageClick}
         >
             {/* 상단 타이틀 바 */}

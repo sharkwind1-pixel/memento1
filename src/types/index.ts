@@ -710,6 +710,7 @@ export interface BackgroundTheme {
     name: string;
     category: BackgroundCategory;
     cssBackground: string;
+    imageUrl?: string;
     price: number;
     description?: string;
 }
