@@ -91,6 +91,9 @@ export async function POST(request: NextRequest) {
                 }
             }
 
+            // 스테이지 배치에서도 제거
+            await removeSoldFromPlacedMinimi(supabase, user.id, itemSlug);
+
             return NextResponse.json({
                 success: true,
                 refundedPoints: resellPrice,
@@ -152,6 +155,9 @@ export async function POST(request: NextRequest) {
             });
         } catch { /* 무시 */ }
 
+        // 스테이지 배치에서도 제거
+        await removeSoldFromPlacedMinimi(supabase, user.id, itemSlug);
+
         return NextResponse.json({
             success: true,
             refundedPoints: resellPrice,
@@ -161,5 +167,31 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         console.error("[minimi/sell] Unexpected error:", error);
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });
+    }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function removeSoldFromPlacedMinimi(supabase: any, userId: string, slug: string) {
+    try {
+        const { data: settings } = await supabase
+            .from("minihompy_settings")
+            .select("placed_minimi")
+            .eq("user_id", userId)
+            .maybeSingle();
+
+        if (!settings?.placed_minimi || !Array.isArray(settings.placed_minimi)) return;
+
+        const filtered = settings.placed_minimi.filter(
+            (item: { slug: string }) => item.slug !== slug
+        );
+
+        if (filtered.length !== settings.placed_minimi.length) {
+            await supabase
+                .from("minihompy_settings")
+                .update({ placed_minimi: filtered })
+                .eq("user_id", userId);
+        }
+    } catch {
+        // 배치 정리 실패는 무시 (핵심 로직 아님)
     }
 }

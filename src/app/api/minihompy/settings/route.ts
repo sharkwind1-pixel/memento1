@@ -161,5 +161,6 @@ function formatSettings(row: Record<string, unknown>) {
         todayVisitors: row.today_visitors,
         totalVisitors: row.total_visitors,
         totalLikes: row.total_likes,
+        placedMinimi: Array.isArray(row.placed_minimi) ? row.placed_minimi : [],
     };
 }

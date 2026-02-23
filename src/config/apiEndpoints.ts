@@ -54,6 +54,7 @@ export const API = {
     MINIHOMPY_GUESTBOOK: (userId: string) => `/api/minihompy/${userId}/guestbook`,
     MINIHOMPY_LIKE: (userId: string) => `/api/minihompy/${userId}/like`,
     MINIHOMPY_VISIT: (userId: string) => `/api/minihompy/${userId}/visit`,
+    MINIHOMPY_PLACED_MINIMI: "/api/minihompy/settings/placed-minimi",
     MINIHOMPY_BG_CATALOG: "/api/minihompy/backgrounds",
     MINIHOMPY_BG_PURCHASE: "/api/minihompy/backgrounds/purchase",
 

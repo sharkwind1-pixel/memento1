@@ -230,6 +230,7 @@ export default function MinihompyVisitModal({
                                 ownerNickname={data.ownerNickname}
                                 todayVisitors={data.settings.todayVisitors}
                                 totalVisitors={data.settings.totalVisitors}
+                                placedMinimi={data.settings.placedMinimi || []}
                                 compact
                             />
 

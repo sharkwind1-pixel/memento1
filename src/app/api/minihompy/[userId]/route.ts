@@ -40,6 +40,7 @@ export async function GET(
                 todayVisitors: 0,
                 totalVisitors: 0,
                 totalLikes: 0,
+                placedMinimi: [],
             };
         } else {
             // 비공개 체크 (본인은 항상 볼 수 있음)
@@ -61,6 +62,7 @@ export async function GET(
                 todayVisitors,
                 totalVisitors: settingsData.total_visitors,
                 totalLikes: settingsData.total_likes,
+                placedMinimi: Array.isArray(settingsData.placed_minimi) ? settingsData.placed_minimi : [],
             };
         }
 

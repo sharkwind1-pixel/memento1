@@ -714,6 +714,14 @@ export interface BackgroundTheme {
     description?: string;
 }
 
+/** 미니홈피 스테이지에 배치된 미니미 */
+export interface PlacedMinimi {
+    slug: string;
+    x: number;     // 0-100 (% 단위)
+    y: number;     // 0-100 (% 단위)
+    zIndex: number;
+}
+
 /** 미니홈피 설정 */
 export interface MinihompySettings {
     userId: string;
@@ -723,6 +731,7 @@ export interface MinihompySettings {
     todayVisitors: number;
     totalVisitors: number;
     totalLikes: number;
+    placedMinimi: PlacedMinimi[];
 }
 
 /** 방명록 엔트리 */

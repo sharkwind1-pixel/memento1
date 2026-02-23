@@ -176,10 +176,10 @@ export default function Sidebar({
     };
 
     const sidebarContent = (
-        <div className="flex flex-col h-full">
-            {/* 모바일 헤더 */}
+        <div className="flex flex-col min-h-full">
+            {/* 모바일 헤더 - sticky로 항상 접근 가능 */}
             {isMobile && (
-                <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+                <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
                     <span className="text-lg font-bold text-gray-800 dark:text-white">메뉴</span>
                     <Button
                         variant="ghost"
@@ -194,7 +194,7 @@ export default function Sidebar({
 
             {/* 비로그인 시 로그인/회원가입 - 데스크톱 사이드바 최상단 */}
             {!isMobile && !user && !authLoading && onOpenLogin && (
-                <div className="flex-shrink-0 px-3 py-3 border-b border-gray-200 dark:border-gray-700">
+                <div className="px-3 py-3 border-b border-gray-200 dark:border-gray-700">
                     <div className="space-y-2">
                         <button
                             onClick={onOpenLogin}
@@ -216,14 +216,14 @@ export default function Sidebar({
 
             {/* 포인트 배지 */}
             {user && (
-                <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-700">
+                <div className="border-b border-gray-200 dark:border-gray-700">
                     <PointsBadge />
                 </div>
             )}
 
             {/* 다크모드 토글 - 데스크톱 사이드바 전용 */}
             {!isMobile && onToggleDarkMode && (
-                <div className="flex-shrink-0 px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
                     <button
                         onClick={onToggleDarkMode}
                         className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all text-gray-700 dark:text-gray-300"
@@ -236,11 +236,8 @@ export default function Sidebar({
                 </div>
             )}
 
-            {/* 네비게이션 목록 - 스크롤 영역 */}
-            <nav
-                className="flex-1 min-h-0 p-4 space-y-1 overflow-y-auto overscroll-contain"
-                style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
-            >
+            {/* 네비게이션 목록 */}
+            <nav className="flex-1 p-4 space-y-1">
                 {MAIN_CATEGORIES.map((category) => (
                     <div key={category.id}>
                         {/* 메인 카테고리 버튼 */}
@@ -314,7 +311,7 @@ export default function Sidebar({
 
             {/* 유저 정보 영역 - 데스크톱 사이드바, 로그인 시만 */}
             {!isMobile && user && (
-                <div className="flex-shrink-0 px-3 py-3 border-t border-gray-200 dark:border-gray-700">
+                <div className="px-3 py-3 border-t border-gray-200 dark:border-gray-700">
                     {authLoading ? (
                         <div className="w-full h-10 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-xl" />
                     ) : (
@@ -344,8 +341,8 @@ export default function Sidebar({
                 </div>
             )}
 
-            {/* 하단 링크 - 항상 고정 */}
-            <div className="flex-shrink-0 p-3 border-t border-gray-200 dark:border-gray-700 space-y-1 bg-white dark:bg-gray-900">
+            {/* 하단 링크 */}
+            <div className="p-3 border-t border-gray-200 dark:border-gray-700 space-y-1">
                 <button
                     onClick={() => {
                         onOpenInquiry?.();
@@ -388,7 +385,7 @@ export default function Sidebar({
 
                 {/* 사이드바 패널 */}
                 <div
-                    className="fixed top-0 left-0 h-full w-64 bg-white dark:bg-gray-900 z-50 shadow-xl flex flex-col overflow-y-auto overscroll-contain"
+                    className="fixed top-0 left-0 h-full w-64 bg-white dark:bg-gray-900 z-50 shadow-xl overflow-y-auto overscroll-contain"
                     style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
                 >
                     {sidebarContent}

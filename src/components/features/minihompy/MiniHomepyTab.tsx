@@ -2,6 +2,7 @@
  * MiniHomepyTab.tsx
  * RecordPage 내 미니홈피 탭
  * - 내 미니홈피 스테이지 표시
+ * - 미니미 배치 편집모드
  * - 설정 (인사말, 배경, 공개/비공개)
  * - 방명록 목록
  */
@@ -11,13 +12,15 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Loader2, MessageSquare, Trash2, ChevronDown } from "lucide-react";
+import { Loader2, MessageSquare, Trash2, ChevronDown, Pencil, Check, Plus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
-import type { MinihompySettings, GuestbookEntry } from "@/types";
+import { MINIHOMPY } from "@/config/constants";
+import type { MinihompySettings, GuestbookEntry, PlacedMinimi } from "@/types";
 import MinihompyStage from "./MinihompyStage";
 import MinihompySettingsSection from "./MinihompySettingsSection";
+import MinimiPlacementPicker from "./MinimiPlacementPicker";
 import Image from "next/image";
 
 export default function MiniHomepyTab() {
@@ -29,6 +32,12 @@ export default function MiniHomepyTab() {
     const [guestbookTotal, setGuestbookTotal] = useState(0);
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
+
+    // 미니미 배치 편집모드
+    const [editMode, setEditMode] = useState(false);
+    const [editPlaced, setEditPlaced] = useState<PlacedMinimi[]>([]);
+    const [showPicker, setShowPicker] = useState(false);
+    const [saving, setSaving] = useState(false);
 
     // 설정 로드
     const loadSettings = useCallback(async () => {
@@ -90,6 +99,63 @@ export default function MiniHomepyTab() {
         }
     }, []);
 
+    // 편집모드 진입
+    const enterEditMode = () => {
+        const current = settings?.placedMinimi || [];
+        setEditPlaced([...current]);
+        setEditMode(true);
+        setShowPicker(false);
+    };
+
+    // 편집모드 종료 + 저장
+    const saveAndExitEditMode = async () => {
+        setSaving(true);
+        try {
+            const res = await authFetch(API.MINIHOMPY_PLACED_MINIMI, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ placedMinimi: editPlaced }),
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setSettings(prev => prev ? { ...prev, placedMinimi: data.placedMinimi } : prev);
+                toast.success("미니미 배치가 저장되었습니다");
+            } else {
+                const err = await res.json();
+                toast.error(err.error || "저장 실패");
+            }
+        } catch {
+            toast.error("저장 실패");
+        } finally {
+            setSaving(false);
+            setEditMode(false);
+            setShowPicker(false);
+        }
+    };
+
+    // 편집 취소
+    const cancelEditMode = () => {
+        setEditMode(false);
+        setShowPicker(false);
+        setEditPlaced([]);
+    };
+
+    // 미니미 추가
+    const handleAddMinimi = (slug: string) => {
+        if (editPlaced.length >= MINIHOMPY.MAX_PLACED_MINIMI) {
+            toast.error(`최대 ${MINIHOMPY.MAX_PLACED_MINIMI}마리까지 배치할 수 있습니다`);
+            return;
+        }
+        const newItem: PlacedMinimi = {
+            slug,
+            x: 50,
+            y: 50,
+            zIndex: editPlaced.length + 1,
+        };
+        setEditPlaced(prev => [...prev, newItem]);
+        setShowPicker(false);
+    };
+
     // 방명록 삭제
     const handleDeleteGuestbook = useCallback(async (entryId: string) => {
         if (!user) return;
@@ -135,7 +201,10 @@ export default function MiniHomepyTab() {
         todayVisitors: 0,
         totalVisitors: 0,
         totalLikes: 0,
+        placedMinimi: [],
     };
+
+    const displayPlaced = editMode ? editPlaced : (currentSettings.placedMinimi || []);
 
     return (
         <div className="space-y-4">
@@ -148,7 +217,79 @@ export default function MiniHomepyTab() {
                 todayVisitors={currentSettings.todayVisitors}
                 totalVisitors={currentSettings.totalVisitors}
                 isOwner
+                placedMinimi={displayPlaced}
+                editMode={editMode}
+                onPlacementChange={editMode ? setEditPlaced : undefined}
             />
+
+            {/* 미니미 배치 버튼 */}
+            <div className="flex items-center gap-2">
+                {editMode ? (
+                    <>
+                        {editPlaced.length < MINIHOMPY.MAX_PLACED_MINIMI && (
+                            <button
+                                onClick={() => setShowPicker(!showPicker)}
+                                className={cn(
+                                    "flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors",
+                                    "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400",
+                                    "hover:bg-blue-100 dark:hover:bg-blue-900/30"
+                                )}
+                            >
+                                <Plus className="w-4 h-4" />
+                                미니미 추가
+                                <span className="text-xs opacity-60">
+                                    ({editPlaced.length}/{MINIHOMPY.MAX_PLACED_MINIMI})
+                                </span>
+                            </button>
+                        )}
+                        <div className="flex-1" />
+                        <button
+                            onClick={cancelEditMode}
+                            className="px-3 py-2 rounded-xl text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        >
+                            취소
+                        </button>
+                        <button
+                            onClick={saveAndExitEditMode}
+                            disabled={saving}
+                            className={cn(
+                                "flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-colors",
+                                "bg-green-500 text-white hover:bg-green-600",
+                                saving && "opacity-50 cursor-not-allowed"
+                            )}
+                        >
+                            {saving ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <Check className="w-4 h-4" />
+                            )}
+                            배치 완료
+                        </button>
+                    </>
+                ) : (
+                    <button
+                        onClick={enterEditMode}
+                        className={cn(
+                            "flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors",
+                            "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300",
+                            "hover:bg-gray-200 dark:hover:bg-gray-700"
+                        )}
+                    >
+                        <Pencil className="w-3.5 h-3.5" />
+                        미니미 배치
+                    </button>
+                )}
+            </div>
+
+            {/* 미니미 선택 피커 */}
+            {editMode && (
+                <MinimiPlacementPicker
+                    isOpen={showPicker}
+                    onClose={() => setShowPicker(false)}
+                    placedMinimi={editPlaced}
+                    onSelect={handleAddMinimi}
+                />
+            )}
 
             {/* 설정 섹션 */}
             <MinihompySettingsSection
