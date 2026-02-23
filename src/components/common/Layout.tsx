@@ -330,7 +330,7 @@ export default function Layout({
                                                 alt="미니미"
                                                 width={16}
                                                 height={16}
-                                                className="object-contain"
+                                                className="object-contain hidden sm:block"
                                                 style={{ imageRendering: "pixelated" }}
                                             />
                                         )}
