@@ -670,10 +670,12 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
     );
 
     // ===== Timeline CRUD =====
+    // fetchTimeline 호출 추적: 같은 petId에 대해 이미 로드된 데이터가 있으면 skip
+    const lastFetchedPetIdRef = useRef<string | null>(null);
+
     const fetchTimelineData = useCallback(
         async (petId: string) => {
             if (!user) {
-                // localStorage에서는 타임라인 미지원 (추후 추가 가능)
                 setTimeline([]);
                 return;
             }
@@ -685,18 +687,25 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                 .order("date", { ascending: false });
 
             if (!error && data) {
-                setTimeline(
-                    data.map((entry) => ({
-                        id: entry.id,
-                        petId: entry.pet_id,
-                        date: entry.date,
-                        title: entry.title,
-                        content: entry.content || "",
-                        mood: entry.mood,
-                        mediaIds: entry.media_ids,
-                        createdAt: entry.created_at,
-                    }))
-                );
+                const newTimeline = data.map((entry) => ({
+                    id: entry.id,
+                    petId: entry.pet_id,
+                    date: entry.date,
+                    title: entry.title,
+                    content: entry.content || "",
+                    mood: entry.mood,
+                    mediaIds: entry.media_ids,
+                    createdAt: entry.created_at,
+                }));
+
+                // 구조적 비교: ID 목록이 동일하면 setTimeline 호출 skip
+                // (새 배열 레퍼런스 생성 → context value 재생성 → 모든 consumer 재렌더 방지)
+                const currentIds = timelineRef.current.map(e => e.id).join(",");
+                const newIds = newTimeline.map(e => e.id).join(",");
+                if (currentIds !== newIds) {
+                    setTimeline(newTimeline);
+                }
+                lastFetchedPetIdRef.current = petId;
             }
         },
         [user]

@@ -382,30 +382,16 @@ function HomeContent() {
         handleTabChange("community", sub);
     }, [handleTabChange]);
 
-    // 페이지 렌더링
-    const renderPage = () => {
-        switch (selectedTab) {
-            case "home":
-                return <HomePage setSelectedTab={handleTabChange} />;
-            case "record":
-                return <RecordPage setSelectedTab={handleTabChange} />;
-            case "community":
-                return (
-                    <CommunityPage
-                        subcategory={selectedSubcategory}
-                        onSubcategoryChange={handleSubcategoryChange}
-                    />
-                );
-            case "ai-chat":
-                return <AIChatPage setSelectedTab={handleTabChange} />;
-            case "magazine":
-                return <MagazinePage setSelectedTab={handleTabChange} />;
-            case "admin":
-                return <AdminPage />;
-            default:
-                return <HomePage setSelectedTab={handleTabChange} />;
-        }
-    };
+    // 한번 방문한 탭을 추적 (방문한 적 있는 탭만 렌더링하여 초기 로드 최적화)
+    const [visitedTabs, setVisitedTabs] = useState<Set<string>>(() => new Set([selectedTab]));
+    useEffect(() => {
+        setVisitedTabs(prev => {
+            if (prev.has(selectedTab)) return prev;
+            const next = new Set(prev);
+            next.add(selectedTab);
+            return next;
+        });
+    }, [selectedTab]);
 
     // Layout은 항상 렌더 → auth 로딩 중에도 헤더/네비/사이드바 유지
     // 콘텐츠 영역만 스켈레톤으로 대체하여 FOUC 방지
@@ -430,8 +416,33 @@ function HomeContent() {
                         </div>
                     </div>
                 </div>
+                {/* 모든 페이지를 CSS display로 전환 - unmount/remount 방지
+                    한번 방문한 페이지는 숨기기만 함 (DOM 유지) → 탭 전환 시 깜빡임 제거
+                    visitedTabs로 미방문 페이지는 렌더링하지 않아 초기 로드 최적화 */}
                 <div style={{ display: isContentLoading ? 'none' : 'block' }}>
-                    {renderPage()}
+                    <div style={{ display: selectedTab === "home" ? "block" : "none" }}>
+                        {visitedTabs.has("home") && <HomePage setSelectedTab={handleTabChange} />}
+                    </div>
+                    <div style={{ display: selectedTab === "record" ? "block" : "none" }}>
+                        {visitedTabs.has("record") && <RecordPage setSelectedTab={handleTabChange} />}
+                    </div>
+                    <div style={{ display: selectedTab === "community" ? "block" : "none" }}>
+                        {visitedTabs.has("community") && (
+                            <CommunityPage
+                                subcategory={selectedSubcategory}
+                                onSubcategoryChange={handleSubcategoryChange}
+                            />
+                        )}
+                    </div>
+                    <div style={{ display: selectedTab === "ai-chat" ? "block" : "none" }}>
+                        {visitedTabs.has("ai-chat") && <AIChatPage setSelectedTab={handleTabChange} />}
+                    </div>
+                    <div style={{ display: selectedTab === "magazine" ? "block" : "none" }}>
+                        {visitedTabs.has("magazine") && <MagazinePage setSelectedTab={handleTabChange} />}
+                    </div>
+                    <div style={{ display: selectedTab === "admin" ? "block" : "none" }}>
+                        {visitedTabs.has("admin") && <AdminPage />}
+                    </div>
                 </div>
             </Layout>
             {user && (
