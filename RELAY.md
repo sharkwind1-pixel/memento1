@@ -88,7 +88,22 @@
 | 새로고침 시 FOUC 해결 | `a53c2ec` | 완료 |
 | 골든리트리버 미니미 가격 200P 통일 | `b8acb52` | 완료 |
 | 모바일 헤더 미니미 아이콘 숨김 | `4c1e178` | 완료 |
-| 모바일 깜빡임 (6커밋, 미해결) | `43a434f`~`03f4356` | **미해결** - 위 섹션 참고 |
+| 모바일 깜빡임 (8커밋) | `43a434f`~`9a33015` | **React.memo + MemorialModeContext 적용** - 모바일 테스트 필요 |
+
+### 모바일 UX/UI 개선 (`3e9aa89`, `d0b69f9`)
+
+| 개선 항목 | 내용 | 커밋 |
+|-----------|------|------|
+| AI 펫톡 키보드 대응 | visualViewport API로 동적 높이 조정 + 입력창 포커스 시 scrollIntoView | `3e9aa89` |
+| 터치 타겟 44x44px | Layout/CommunityPage/HomePage/AIChatHeader 전체 인터렉티브 요소 | `3e9aa89` |
+| 버튼 피드백 | active:scale-95 전역 추가 (BottomNav/헤더/커뮤니티/채팅) | `3e9aa89` |
+| safe-area 대응 | #main-content에 calc(68px + env(safe-area-inset-bottom) + 16px) | `3e9aa89` |
+| 캐러셀 비율 | h-48 고정 → aspect-[4/3] 반응형 | `3e9aa89` |
+| 좋아요 애니메이션 | heartPop keyframe (0.4s scale pulse) | `3e9aa89` |
+| 모달 반응형 | AuthModal/WritePostModal max-h-[90dvh] + sm 브레이크포인트 확대 | `3e9aa89` |
+| 소형 디바이스 헤더 | h-8/sm:h-10/md:h-12 3단계 반응형 | `3e9aa89` |
+| 포커스 링 접근성 | focus-visible 전역 적용 (#05B2DC) | `3e9aa89` |
+| 스켈레톤 로더 | 추모/커뮤니티/기록 페이지 - 실제 레이아웃 1:1 매칭 | `d0b69f9` |
 
 ### DB/규칙 관련
 
