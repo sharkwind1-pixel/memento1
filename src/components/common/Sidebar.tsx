@@ -243,6 +243,7 @@ export default function Sidebar({
                     <div key={category.id}>
                         {/* 메인 카테고리 버튼 */}
                         <button
+                            data-tutorial-id={category.id}
                             onClick={() => handleMainCategoryClick(category.id)}
                             className={cn(
                                 "w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-500",
@@ -345,6 +346,7 @@ export default function Sidebar({
             {/* 하단 링크 */}
             <div className="p-3 border-t border-gray-200 dark:border-gray-700 space-y-1">
                 <button
+                    data-tutorial-id="sidebar-inquiry"
                     onClick={() => {
                         onOpenInquiry?.();
                         if (isMobile) onClose();
@@ -355,6 +357,7 @@ export default function Sidebar({
                     <span>질문/신고</span>
                 </button>
                 <button
+                    data-tutorial-id="sidebar-suggestion"
                     onClick={() => {
                         onOpenSuggestion?.();
                         if (isMobile) onClose();

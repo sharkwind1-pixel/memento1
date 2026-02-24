@@ -670,6 +670,7 @@ function RecordPage({ setSelectedTab }: RecordPageProps) {
                     </button>
                     <button
                         onClick={() => setActiveTab("minihompy")}
+                        data-tutorial-id="minihompy-tab"
                         className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl font-medium transition-all text-sm sm:text-base ${
                             activeTab === "minihompy"
                                 ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg"

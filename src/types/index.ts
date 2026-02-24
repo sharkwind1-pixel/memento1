@@ -468,6 +468,8 @@ export interface TutorialStep {
     title: string;
     description: string;
     icon?: React.ElementType;
+    /** 이 스텝을 보여주기 전에 이동할 탭 (onNavigate 호출) */
+    navigateTo?: string;
 }
 
 // ============================================

@@ -284,7 +284,7 @@ function HomePage({ setSelectedTab }: HomePageProps) {
 
             <div className="relative z-10 space-y-16 pb-10">
                 {/* HERO - 모든 유저 공통 */}
-                <section className="px-4 pt-8">
+                <section className="px-4 pt-8" data-tutorial-id="home-hero">
                     <div className="bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg border border-white/40 dark:border-gray-700/40 rounded-3xl p-8 md:p-12 shadow-2xl">
                         <div className="text-center space-y-4 md:space-y-6">
                             <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-bold leading-tight">
@@ -326,7 +326,7 @@ function HomePage({ setSelectedTab }: HomePageProps) {
                 </section>
 
                 {/* 인기 커뮤니티 */}
-                <section className="space-y-6 px-4">
+                <section className="space-y-6 px-4" data-tutorial-id="home-trending">
                     <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center space-x-3 min-w-0">
                             <div className="w-10 h-10 flex-shrink-0 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] rounded-xl flex items-center justify-center">

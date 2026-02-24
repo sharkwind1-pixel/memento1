@@ -12,7 +12,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { Sparkles, Heart, Camera, MessageCircle, BookOpen, Bell } from "lucide-react";
+import { Sparkles, Heart, Camera, MessageCircle, BookOpen, Home } from "lucide-react";
 import type { OnboardingUserType, TutorialStep } from "@/types";
 
 interface RecordPageTutorialProps {
@@ -43,10 +43,10 @@ const CURRENT_STEPS: TutorialStep[] = [
         icon: BookOpen,
     },
     {
-        targetId: "care-reminder-section",
-        title: "케어 알림을 설정해요",
-        description: "예방접종, 미용, 건강검진 일정을 알려드려요. 중요한 날을 놓치지 마세요!",
-        icon: Bell,
+        targetId: "minihompy-tab",
+        title: "미니홈피를 꾸며보세요",
+        description: "나만의 공간에 미니미를 배치하고, 방명록도 받을 수 있어요",
+        icon: Home,
     },
 ];
 
@@ -63,6 +63,12 @@ const MEMORIAL_STEPS: TutorialStep[] = [
         title: "추억을 남겨주세요",
         description: "사진과 영상을 올려두면 언제든 아이를 만날 수 있어요",
         icon: Camera,
+    },
+    {
+        targetId: "minihompy-tab",
+        title: "추억이 담긴 공간을 만들어요",
+        description: "미니홈피에서 아이와의 추억을 간직하고, 방명록으로 위로를 나눠요",
+        icon: Home,
     },
     {
         targetId: "ai-chat-guide",
@@ -109,8 +115,8 @@ export default function RecordPageTutorial({
         const step = steps[currentStep];
         if (!step) return;
 
-        // AI 펫톡 가이드는 화면 중앙에 표시 (타겟 불필요)
-        if (step.targetId === "ai-chat-guide") {
+        // AI 펫톡 가이드 스텝은 화면 중앙에 표시 (타겟 불필요)
+        if (step.targetId === "ai-chat-guide" ) {
             setTargetRect(null);
             lockScroll();
             return;
@@ -161,7 +167,7 @@ export default function RecordPageTutorial({
         // 리사이즈 시에만 위치 재계산 (스크롤 리스너 제거)
         const handleResize = () => {
             const step = steps[currentStep];
-            if (!step || step.targetId === "ai-chat-guide") return;
+            if (!step || step.targetId === "ai-chat-guide" ) return;
             const target = document.querySelector(`[data-tutorial-id="${step.targetId}"]`);
             if (target) {
                 setTargetRect(target.getBoundingClientRect());
@@ -213,7 +219,7 @@ export default function RecordPageTutorial({
     const step = steps[currentStep];
     const Icon = step.icon ?? Sparkles;
     const isLastStep = currentStep === steps.length - 1;
-    const isAIChatGuide = step.targetId === "ai-chat-guide";
+    const isAIChatGuide = step.targetId === "ai-chat-guide" ;
     const showAsCenter = !targetRect || isAIChatGuide;
 
     // 스크롤 중이면 렌더링 지연

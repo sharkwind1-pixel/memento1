@@ -59,7 +59,7 @@ export default function PointsBadge({ onModalChange }: PointsBadgeProps) {
         return (
             <div className="px-3 py-3 space-y-2 animate-pulse">
                 {/* 등급 프로그레스 스켈레톤 */}
-                <div className="space-y-1.5">
+                <div data-tutorial-id="sidebar-level" className="space-y-1.5">
                     <div className="flex items-center gap-2">
                         <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700" />
                         <div className="h-3 w-20 rounded bg-gray-200 dark:bg-gray-700" />
@@ -67,7 +67,7 @@ export default function PointsBadge({ onModalChange }: PointsBadgeProps) {
                     <div className="h-1.5 w-full rounded-full bg-gray-200 dark:bg-gray-700" />
                 </div>
                 {/* 미니미 스켈레톤 */}
-                <div className="rounded-xl border border-gray-100 dark:border-gray-700 p-3">
+                <div data-tutorial-id="sidebar-minimi" className="rounded-xl border border-gray-100 dark:border-gray-700 p-3">
                     <div className="flex items-center gap-3 mb-2">
                         <div className="w-12 h-12 rounded-lg bg-gray-200 dark:bg-gray-700" />
                         <div className="h-3 w-16 rounded bg-gray-200 dark:bg-gray-700" />
@@ -78,7 +78,7 @@ export default function PointsBadge({ onModalChange }: PointsBadgeProps) {
                     </div>
                 </div>
                 {/* 포인트 스켈레톤 */}
-                <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800">
+                <div data-tutorial-id="sidebar-points" className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800">
                     <div className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-gray-700" />
                     <div className="space-y-1">
                         <div className="h-2.5 w-12 rounded bg-gray-200 dark:bg-gray-700" />
@@ -95,10 +95,12 @@ export default function PointsBadge({ onModalChange }: PointsBadgeProps) {
         <>
             <div className="px-3 py-3 space-y-2">
                 {/* 등급 프로그레스 */}
-                <LevelProgress points={points} nickname={nickname} petType={userPetType} isAdmin={isAdminUser} />
+                <div data-tutorial-id="sidebar-level">
+                    <LevelProgress points={points} nickname={nickname} petType={userPetType} isAdmin={isAdminUser} />
+                </div>
 
                 {/* 미니미 섹션 */}
-                <div className={cn(
+                <div data-tutorial-id="sidebar-minimi" className={cn(
                     "rounded-xl border p-3",
                     "bg-gradient-to-r from-pink-50/80 to-purple-50/80",
                     "dark:from-pink-900/10 dark:to-purple-900/10",
@@ -161,6 +163,7 @@ export default function PointsBadge({ onModalChange }: PointsBadgeProps) {
 
                 {/* 포인트 표시 */}
                 <button
+                    data-tutorial-id="sidebar-points"
                     onClick={() => openModal(setShowHistory)}
                     className={cn(
                         "w-full flex items-center justify-between px-3 py-2.5 rounded-xl",
@@ -187,6 +190,7 @@ export default function PointsBadge({ onModalChange }: PointsBadgeProps) {
 
                 {/* 포인트 상점 버튼 */}
                 <button
+                    data-tutorial-id="sidebar-shop"
                     onClick={() => openModal(setShowShop)}
                     className={cn(
                         "w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl",

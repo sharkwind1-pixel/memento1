@@ -257,7 +257,7 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
                     </div>
 
                     {/* 서브카테고리 탭 - 모바일 최적화 (5개) */}
-                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3 mb-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3 mb-4" data-tutorial-id="community-boards">
                         {visibleSubcategories.map((sub) => {
                             const Icon = sub.icon;
                             const isActive = currentSubcategory === sub.id;

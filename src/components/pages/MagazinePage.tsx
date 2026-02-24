@@ -248,7 +248,7 @@ function MagazinePage({ setSelectedTab }: MagazinePageProps) {
 
                 {/* 아티클 목록 */}
                 {!isLoading && (
-                    <div className="space-y-4">
+                    <div className="space-y-4" data-tutorial-id="magazine-articles">
                         {(selectedStage !== "all" || selectedTopic !== "all" || searchQuery) && (
                             <div className="text-sm text-gray-500">
                                 {filteredArticles.length}개의 콘텐츠

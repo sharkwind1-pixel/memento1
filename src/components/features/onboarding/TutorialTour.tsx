@@ -1,7 +1,14 @@
 /**
  * TutorialTour.tsx
- * 스포트라이트 + 몽글몽글 코치마크 튜토리얼
- * 데스크톱/모바일 반응형
+ * 스포트라이트 + 구름 말풍선 튜토리얼
+ *
+ * 데스크톱(xl+): 사이드바 항목을 위→아래로 순차 안내 (11스텝)
+ * 모바일(<xl): 하단 네비 5개 순차 안내
+ *
+ * 스포트라이트: box-shadow 방식 (SVG 마스크보다 단순·확실)
+ * 리트라이: 타겟 요소 못 찾으면 300ms마다 최대 10회 재시도
+ *
+ * 완료 시 onClose → page.tsx에서 RecordPageTutorial로 이어짐
  */
 
 "use client";
@@ -16,36 +23,46 @@ interface TutorialTourProps {
     isOpen: boolean;
     onClose: () => void;
     onNavigate: (tab: string) => void;
-    userId?: string; // DB 저장용
+    userId?: string;
 }
 
-// 데스크톱용 튜토리얼 (헤더에 모든 메뉴가 보임)
+// ═══════════════════════════════════════════════════════════════
+// 스텝 정의
+// ═══════════════════════════════════════════════════════════════
+
 const DESKTOP_STEPS: TutorialStep[] = [
-    { targetId: "home", title: "홈", description: "메멘토애니의 시작점이에요" },
-    { targetId: "record", title: "우리의 기록", description: "반려동물 등록과 추억을 기록해요" },
-    { targetId: "community", title: "커뮤니티", description: "다른 반려인들과 소통해요" },
-    { targetId: "ai-chat", title: "AI 펫톡", description: "우리 아이와 대화해보세요" },
-    { targetId: "magazine", title: "펫 매거진", description: "유용한 반려 정보를 확인해요" },
+    { targetId: "sidebar-level", title: "내 등급", description: "활동하면 경험치가 쌓여 등급이 올라가요" },
+    { targetId: "sidebar-minimi", title: "내 미니미", description: "나만의 캐릭터를 꾸미고 미니홈피에 배치해보세요" },
+    { targetId: "sidebar-points", title: "내 포인트", description: "활동으로 모은 포인트를 확인할 수 있어요" },
+    { targetId: "sidebar-shop", title: "포인트 상점", description: "포인트로 미니미 아이템을 구매할 수 있어요" },
+    { targetId: "home", title: "홈", description: "인기 게시글, 입양 정보, 반려 꿀팁까지 한눈에 볼 수 있어요" },
+    { targetId: "record", title: "우리의 기록", description: "반려동물 등록, 사진 앨범, 미니홈피까지! 추억을 기록해요" },
+    { targetId: "community", title: "커뮤니티", description: "자유, 추모, 입양, 지역, 분실 등 5개 게시판에서 소통해요" },
+    { targetId: "ai-chat", title: "AI 펫톡", description: "우리 아이와 대화하고, 건강 일정도 관리할 수 있어요" },
+    { targetId: "magazine", title: "펫 매거진", description: "수의사 칼럼, 돌봄 팁 등 유용한 정보를 확인해요" },
+    { targetId: "sidebar-inquiry", title: "질문/신고", description: "궁금한 점이나 문제가 있으면 언제든 문의해주세요" },
+    { targetId: "sidebar-suggestion", title: "건의사항", description: "서비스 개선 아이디어를 자유롭게 남겨주세요" },
 ];
 
-// 모바일용 튜토리얼 (하단 네비 5개)
 const MOBILE_STEPS: TutorialStep[] = [
-    { targetId: "home", title: "홈", description: "메멘토애니의 시작점이에요" },
-    { targetId: "record", title: "우리의 기록", description: "반려동물 등록과 추억을 기록해요" },
-    { targetId: "community", title: "커뮤니티", description: "다른 반려인들과 소통해요" },
-    { targetId: "ai-chat", title: "AI 펫톡", description: "우리 아이와 대화해보세요" },
-    { targetId: "magazine", title: "펫 매거진", description: "유용한 반려 정보를 확인해요" },
+    { targetId: "home", title: "홈", description: "인기 게시글, 입양 정보, 반려 꿀팁까지 한눈에 볼 수 있어요" },
+    { targetId: "record", title: "우리의 기록", description: "반려동물 등록, 사진 앨범, 미니홈피까지! 추억을 기록해요" },
+    { targetId: "community", title: "커뮤니티", description: "자유, 추모, 입양, 지역, 분실 등 5개 게시판에서 소통해요" },
+    { targetId: "ai-chat", title: "AI 펫톡", description: "우리 아이와 대화하고, 건강 일정도 관리할 수 있어요" },
+    { targetId: "magazine", title: "펫 매거진", description: "수의사 칼럼, 돌봄 팁 등 유용한 정보를 확인해요" },
 ];
+
+// ═══════════════════════════════════════════════════════════════
+// localStorage / DB 관련
+// ═══════════════════════════════════════════════════════════════
 
 const TUTORIAL_STORAGE_KEY = "memento-ani-tutorial-complete";
 
-// 튜토리얼 완료 여부 확인 (localStorage 캐시)
 export function hasCompletedTutorial(): boolean {
     if (typeof window === "undefined") return true;
     return localStorage.getItem(TUTORIAL_STORAGE_KEY) === "true";
 }
 
-// DB에서 튜토리얼 상태 확인 (비동기)
 export async function checkTutorialFromDB(userId: string): Promise<boolean> {
     try {
         const { data } = await supabase
@@ -53,7 +70,6 @@ export async function checkTutorialFromDB(userId: string): Promise<boolean> {
             .select("tutorial_completed_at")
             .eq("id", userId)
             .single();
-
         if (data?.tutorial_completed_at) {
             localStorage.setItem(TUTORIAL_STORAGE_KEY, "true");
             return true;
@@ -64,12 +80,10 @@ export async function checkTutorialFromDB(userId: string): Promise<boolean> {
     }
 }
 
-// 튜토리얼 완료 표시 (localStorage)
 export function markTutorialComplete(): void {
     localStorage.setItem(TUTORIAL_STORAGE_KEY, "true");
 }
 
-// 튜토리얼 완료 DB 저장 (비동기)
 export async function saveTutorialCompleteToDb(userId: string): Promise<void> {
     try {
         await supabase
@@ -81,6 +95,37 @@ export async function saveTutorialCompleteToDb(userId: string): Promise<void> {
     }
 }
 
+// ═══════════════════════════════════════════════════════════════
+// 타겟 요소 찾기
+// ═══════════════════════════════════════════════════════════════
+
+function findTarget(targetId: string, isMobile: boolean): Element | null {
+    const all = document.querySelectorAll(`[data-tutorial-id="${targetId}"]`);
+    if (all.length === 0) return null;
+
+    const visible: Element[] = [];
+    all.forEach((el) => {
+        const r = el.getBoundingClientRect();
+        if (r.width > 0 && r.height > 0) visible.push(el);
+    });
+
+    if (visible.length === 0) return null;
+    if (visible.length === 1) return visible[0];
+
+    // 데스크톱/모바일에서 올바른 요소 선택
+    const mid = window.innerHeight / 2;
+    return (
+        visible.find((el) => {
+            const r = el.getBoundingClientRect();
+            return isMobile ? r.top > mid : r.top < mid;
+        }) || visible[0]
+    );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 메인 컴포넌트
+// ═══════════════════════════════════════════════════════════════
+
 export default function TutorialTour({
     isOpen,
     onClose,
@@ -91,375 +136,674 @@ export default function TutorialTour({
     const [mounted, setMounted] = useState(false);
     const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
     const [isMobile, setIsMobile] = useState(false);
-    const wasOpenRef = useRef(false);
+    const [ready, setReady] = useState(false); // 첫 측정 완료 후 true
     const onNavigateRef = useRef(onNavigate);
+    const retryTimerRef = useRef<ReturnType<typeof setTimeout>>();
+    const retryCountRef = useRef(0);
 
     useEffect(() => {
         onNavigateRef.current = onNavigate;
     }, [onNavigate]);
 
-    // 모바일 여부 감지
-    const checkMobile = useCallback(() => {
-        setIsMobile(window.innerWidth < 1280); // xl breakpoint
-    }, []);
-
-    // 모바일/데스크톱에 따라 다른 스텝 사용
+    const isMobileCheck = useCallback(() => window.innerWidth < 1280, []);
     const steps = isMobile ? MOBILE_STEPS : DESKTOP_STEPS;
 
-    const updateTargetRect = useCallback(() => {
-        if (!isOpen) return;
-
-        const isMobileNow = window.innerWidth < 1280;
-        const currentSteps = isMobileNow ? MOBILE_STEPS : DESKTOP_STEPS;
-        const step = currentSteps[currentStep];
-        if (!step) return;
-
-        // 같은 ID를 가진 모든 요소 중 실제로 보이는 것만 찾기
-        const targets = Array.from(document.querySelectorAll(`[data-tutorial-id="${step.targetId}"]`));
-        const screenMid = window.innerHeight / 2;
-
-        const visibleTarget = targets.find((el) => {
-            const rect = el.getBoundingClientRect();
-            // 실제로 화면에 크기가 있는 요소만 (display:none이면 width/height가 0)
-            if (rect.width > 0 && rect.height > 0) {
-                // 모바일이면 화면 하단에 있는 요소 (y > 화면 절반)
-                // 데스크톱이면 화면 상단에 있는 요소 (y < 화면 절반)
-                if (isMobileNow && rect.top > screenMid) {
-                    return true;
-                } else if (!isMobileNow && rect.top < screenMid) {
-                    return true;
-                }
+    // ─────────────────────────────────────────────────────────
+    // 타겟 측정 (리트라이 포함)
+    // ─────────────────────────────────────────────────────────
+    const measure = useCallback(
+        (stepIndex: number) => {
+            if (retryTimerRef.current) {
+                clearTimeout(retryTimerRef.current);
+                retryTimerRef.current = undefined;
             }
-            return false;
-        });
 
-        if (visibleTarget) {
-            setTargetRect(visibleTarget.getBoundingClientRect());
-        } else {
-            setTargetRect(null);
-        }
-    }, [isOpen, currentStep]);
+            const mobile = isMobileCheck();
+            const list = mobile ? MOBILE_STEPS : DESKTOP_STEPS;
+            const step = list[stepIndex];
+            if (!step) {
+                setTargetRect(null);
+                setReady(true);
+                return;
+            }
 
+            const el = findTarget(step.targetId, mobile);
+
+            if (!el) {
+                // 리트라이: 최대 10회, 300ms 간격
+                if (retryCountRef.current < 10) {
+                    retryCountRef.current += 1;
+                    retryTimerRef.current = setTimeout(() => {
+                        measure(stepIndex);
+                    }, 300);
+                } else {
+                    // 포기 — targetRect null 상태로 진행
+                    setTargetRect(null);
+                    setReady(true);
+                }
+                return;
+            }
+
+            retryCountRef.current = 0;
+
+            const rect = el.getBoundingClientRect();
+            // 뷰포트 밖이면 스크롤
+            if (rect.top < 0 || rect.bottom > window.innerHeight) {
+                el.scrollIntoView({ behavior: "smooth", block: "center" });
+                retryTimerRef.current = setTimeout(() => {
+                    setTargetRect(el.getBoundingClientRect());
+                    setReady(true);
+                }, 400);
+            } else {
+                setTargetRect(rect);
+                setReady(true);
+            }
+        },
+        [isMobileCheck],
+    );
+
+    // ─────────────────────────────────────────────────────────
+    // 마운트
+    // ─────────────────────────────────────────────────────────
     useEffect(() => {
         setMounted(true);
-        checkMobile();
-    }, [checkMobile]);
+        setIsMobile(isMobileCheck());
+    }, [isMobileCheck]);
 
+    // ─────────────────────────────────────────────────────────
+    // 열릴 때 초기화 (StrictMode 안전 패턴: wasOpenRef 대신 if(!isOpen) return)
+    // ─────────────────────────────────────────────────────────
     useEffect(() => {
-        if (isOpen && !wasOpenRef.current) {
-            document.body.style.overflow = "hidden";
-            setCurrentStep(0);
-            onNavigateRef.current("home");
-        } else if (!isOpen && wasOpenRef.current) {
-            document.body.style.overflow = "";
+        if (!isOpen) {
+            setReady(false);
+            return;
         }
-        wasOpenRef.current = isOpen;
-    }, [isOpen]);
 
-    useEffect(() => {
-        if (!isOpen) return;
+        // isOpen=true → 항상 초기화 + 측정 시작
+        setCurrentStep(0);
+        setTargetRect(null);
+        setReady(false);
+        setIsMobile(isMobileCheck());
+        retryCountRef.current = 0;
 
-        const timer = setTimeout(updateTargetRect, 150);
+        onNavigateRef.current("home");
 
-        const handleResize = () => {
-            checkMobile();
-            updateTargetRect();
-        };
-
-        window.addEventListener("resize", handleResize);
-        window.addEventListener("scroll", updateTargetRect);
+        // DOM 준비 대기 후 첫 측정
+        const timer = setTimeout(() => {
+            measure(0);
+        }, 500);
 
         return () => {
             clearTimeout(timer);
-            window.removeEventListener("resize", handleResize);
-            window.removeEventListener("scroll", updateTargetRect);
         };
-    }, [isOpen, currentStep, updateTargetRect, checkMobile]);
+    }, [isOpen, measure, isMobileCheck]);
 
+    // ─────────────────────────────────────────────────────────
+    // 안전장치: 3초 후에도 ready=false이면 강제로 ready=true (까만 화면 방지)
+    // ─────────────────────────────────────────────────────────
+    useEffect(() => {
+        if (!isOpen || ready) return;
+        const safetyTimer = setTimeout(() => {
+            setReady(true);
+        }, 3000);
+        return () => clearTimeout(safetyTimer);
+    }, [isOpen, ready]);
+
+    // ─────────────────────────────────────────────────────────
+    // 스텝 변경 시 측정
+    // ─────────────────────────────────────────────────────────
+    useEffect(() => {
+        if (!isOpen || !ready) return;
+        // currentStep이 0이면 열릴 때 이미 측정했으므로 스킵
+        if (currentStep === 0) return;
+
+        retryCountRef.current = 0;
+        measure(currentStep);
+
+        return () => {
+            if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+        };
+    }, [isOpen, currentStep, ready, measure]);
+
+    // ─────────────────────────────────────────────────────────
+    // 리사이즈
+    // ─────────────────────────────────────────────────────────
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const handleResize = () => {
+            setIsMobile(isMobileCheck());
+            retryCountRef.current = 0;
+            measure(currentStep);
+        };
+
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, [isOpen, currentStep, isMobileCheck, measure]);
+
+    // ─────────────────────────────────────────────────────────
+    // 정리
+    // ─────────────────────────────────────────────────────────
     useEffect(() => {
         return () => {
-            document.body.style.overflow = "";
+            if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
         };
     }, []);
 
+    // ─────────────────────────────────────────────────────────
+    // 렌더링 조건
+    // ─────────────────────────────────────────────────────────
     if (!isOpen || !mounted) return null;
 
     const step = steps[currentStep];
+    if (!step) return null;
 
-    const handleComplete = async () => {
+    // ─────────────────────────────────────────────────────────
+    // 핸들러 (ready 전 로딩 오버레이에서도 사용하므로 위에 정의)
+    // ─────────────────────────────────────────────────────────
+    const handleComplete = () => {
         markTutorialComplete();
-        if (userId) {
-            saveTutorialCompleteToDb(userId);
-        }
-        document.body.style.overflow = "";
-        onNavigateRef.current("home");
+        if (userId) saveTutorialCompleteToDb(userId);
         onClose();
     };
 
-    const handleSkip = async () => {
+    const handleSkip = () => {
         markTutorialComplete();
-        if (userId) {
-            saveTutorialCompleteToDb(userId);
-        }
-        document.body.style.overflow = "";
+        if (userId) saveTutorialCompleteToDb(userId);
         onNavigateRef.current("home");
         onClose();
     };
 
     const handleNext = () => {
         if (currentStep < steps.length - 1) {
-            setCurrentStep(currentStep + 1);
+            setCurrentStep((prev) => prev + 1);
         } else {
             handleComplete();
         }
     };
 
-    const spotlightPadding = 8;
-    const spotlightRect = targetRect ? {
-        x: targetRect.left - spotlightPadding,
-        y: targetRect.top - spotlightPadding,
-        width: targetRect.width + spotlightPadding * 2,
-        height: targetRect.height + spotlightPadding * 2,
-    } : null;
-
-    // 말풍선 위치 계산
-    const getBubblePosition = () => {
-        if (!targetRect) return { left: 0, top: 0, arrowLeft: 120 };
-
-        const bubbleWidth = 240;
-        const targetCenterX = targetRect.left + targetRect.width / 2;
-        let left = targetCenterX - bubbleWidth / 2;
-
-        // 화면 경계 체크
-        if (left < 16) left = 16;
-        if (left + bubbleWidth > window.innerWidth - 16) {
-            left = window.innerWidth - bubbleWidth - 16;
-        }
-
-        // 화살표가 타겟 중심을 가리키도록 (말풍선 내 상대 위치)
-        const arrowLeft = Math.max(20, Math.min(targetCenterX - left, bubbleWidth - 20));
-
-        const isTargetAtBottom = targetRect.top > window.innerHeight / 2;
-
-        if (isTargetAtBottom) {
-            return {
-                left,
-                top: targetRect.top - 170,
-                arrowLeft,
-            };
-        } else {
-            return {
-                left,
-                top: targetRect.bottom + 20,
-                arrowLeft,
-            };
-        }
-    };
-
-    const bubblePos = getBubblePosition();
-    const maskId = "tutorial-spotlight-mask";
-
-    const content = (
-        <div className="fixed inset-0 z-[9999]">
-            {/* SVG 스포트라이트 오버레이 */}
-            <svg
-                className="absolute inset-0 w-full h-full"
-                style={{ pointerEvents: "auto" }}
-                onClick={handleNext}
-            >
-                <defs>
-                    <mask id={maskId}>
-                        <rect x="0" y="0" width="100%" height="100%" fill="white" />
-                        {spotlightRect && (
-                            <rect
-                                x={spotlightRect.x}
-                                y={spotlightRect.y}
-                                width={spotlightRect.width}
-                                height={spotlightRect.height}
-                                rx="16"
-                                ry="16"
-                                fill="black"
-                            />
-                        )}
-                    </mask>
-                </defs>
-                <rect
-                    x="0"
-                    y="0"
-                    width="100%"
-                    height="100%"
-                    fill="rgba(0, 0, 0, 0.8)"
-                    mask={`url(#${maskId})`}
-                />
-            </svg>
-
-            {/* 스포트라이트 테두리 빛 효과 */}
-            {spotlightRect && (
+    // ─────────────────────────────────────────────────────────
+    // ready 전에는 로딩 오버레이 + 건너뛰기 버튼
+    // ─────────────────────────────────────────────────────────
+    if (!ready) {
+        return createPortal(
+            <>
                 <div
-                    className="absolute pointer-events-none"
                     style={{
-                        left: spotlightRect.x - 4,
-                        top: spotlightRect.y - 4,
-                        width: spotlightRect.width + 8,
-                        height: spotlightRect.height + 8,
+                        position: "fixed",
+                        inset: 0,
+                        zIndex: 9999,
+                        background: "rgba(0,0,0,0.6)",
+                        transition: "opacity 0.3s",
+                    }}
+                />
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        handleSkip();
+                    }}
+                    style={{
+                        position: "fixed",
+                        top: 16,
+                        right: 16,
+                        zIndex: 10002,
+                        padding: "8px 16px",
+                        background: "rgba(255,255,255,0.15)",
+                        backdropFilter: "blur(8px)",
+                        color: "white",
+                        fontSize: 14,
+                        borderRadius: 999,
+                        border: "none",
+                        cursor: "pointer",
+                    }}
+                >
+                    건너뛰기
+                </button>
+            </>,
+            document.body,
+        );
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // 스포트라이트 좌표 (padding 8px)
+    // ─────────────────────────────────────────────────────────
+    const pad = 8;
+    const spot = targetRect
+        ? {
+              x: targetRect.left - pad,
+              y: targetRect.top - pad,
+              w: targetRect.width + pad * 2,
+              h: targetRect.height + pad * 2,
+          }
+        : null;
+
+    // ─────────────────────────────────────────────────────────
+    // 말풍선 위치 계산
+    // ─────────────────────────────────────────────────────────
+    const bubbleW = 260;
+    const bubbleH = 200;
+
+    let bubbleLeft: number;
+    let bubbleTop: number;
+    let arrowDir: "up" | "down" | "none" = "none";
+    let arrowLeftPx = 0;
+
+    if (!spot) {
+        // 타겟 없으면 화면 중앙
+        bubbleLeft = Math.round(window.innerWidth / 2 - bubbleW / 2);
+        bubbleTop = Math.round(window.innerHeight / 2 - bubbleH / 2);
+    } else {
+        const targetCX = spot.x + spot.w / 2;
+
+        // 좌우 위치
+        bubbleLeft = Math.round(targetCX - bubbleW / 2);
+        if (bubbleLeft < 12) bubbleLeft = 12;
+        if (bubbleLeft + bubbleW > window.innerWidth - 12) {
+            bubbleLeft = window.innerWidth - bubbleW - 12;
+        }
+
+        // 상하: 타겟 아래에 배치 시도, 안 되면 위에
+        const gap = 16;
+        if (spot.y + spot.h + gap + bubbleH < window.innerHeight - 12) {
+            bubbleTop = Math.round(spot.y + spot.h + gap);
+            arrowDir = "up";
+        } else {
+            bubbleTop = Math.round(spot.y - bubbleH - gap);
+            arrowDir = "down";
+            if (bubbleTop < 12) {
+                bubbleTop = Math.round(window.innerHeight / 2 - bubbleH / 2);
+                arrowDir = "none";
+            }
+        }
+
+        arrowLeftPx = Math.round(
+            Math.max(24, Math.min(targetCX - bubbleLeft, bubbleW - 24)),
+        );
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // 렌더
+    // ─────────────────────────────────────────────────────────
+    return createPortal(
+        <>
+            {/* 1) 배경 딤 (스포트라이트 밖) - 클릭 시 다음 */}
+            <div
+                onClick={handleNext}
+                style={{
+                    position: "fixed",
+                    inset: 0,
+                    zIndex: 9998,
+                    background: "rgba(0,0,0,0.7)",
+                    cursor: "pointer",
+                }}
+            />
+
+            {/* 2) 스포트라이트 구멍 — box-shadow로 딤 위에 구멍을 뚫는 방식 */}
+            {spot && (
+                <div
+                    onClick={handleNext}
+                    style={{
+                        position: "fixed",
+                        left: spot.x,
+                        top: spot.y,
+                        width: spot.w,
+                        height: spot.h,
+                        zIndex: 9999,
+                        borderRadius: 16,
+                        boxShadow: "0 0 0 9999px rgba(0,0,0,0.7)",
+                        cursor: "pointer",
+                        pointerEvents: "auto",
+                    }}
+                />
+            )}
+
+            {/* 3) 스포트라이트 빛 테두리 */}
+            {spot && (
+                <div
+                    style={{
+                        position: "fixed",
+                        left: spot.x - 4,
+                        top: spot.y - 4,
+                        width: spot.w + 8,
+                        height: spot.h + 8,
+                        zIndex: 10000,
                         borderRadius: 20,
                         boxShadow: `
-                            0 0 0 3px rgba(56, 189, 248, 0.6),
-                            0 0 20px 4px rgba(56, 189, 248, 0.4),
-                            0 0 40px 8px rgba(5, 178, 220, 0.2)
+                            0 0 0 3px rgba(56,189,248,0.6),
+                            0 0 20px 4px rgba(56,189,248,0.4),
+                            0 0 40px 8px rgba(5,178,220,0.2)
                         `,
+                        pointerEvents: "none",
                     }}
                 />
             )}
 
-            {/* 몽글몽글 장식 */}
-            {spotlightRect && (
-                <>
+            {/* 4) 구름 말풍선 */}
+            <div
+                style={{
+                    position: "fixed",
+                    left: bubbleLeft,
+                    top: bubbleTop,
+                    zIndex: 10001,
+                    width: bubbleW,
+                    pointerEvents: "none",
+                    animation: "fadeInScale 0.3s ease-out",
+                }}
+            >
+                {/* 위 화살표 */}
+                {arrowDir === "up" && (
                     <div
-                        className="absolute w-4 h-4 bg-sky-300/70 rounded-full animate-pulse pointer-events-none"
-                        style={{ left: spotlightRect.x - 8, top: spotlightRect.y - 8 }}
+                        style={{
+                            position: "absolute",
+                            top: -12,
+                            left: arrowLeftPx - 12,
+                            width: 0,
+                            height: 0,
+                            borderLeft: "12px solid transparent",
+                            borderRight: "12px solid transparent",
+                            borderBottom: "14px solid white",
+                            filter: "drop-shadow(0 -2px 2px rgba(0,0,0,0.1))",
+                        }}
                     />
-                    <div
-                        className="absolute w-3 h-3 bg-violet-300/60 rounded-full animate-pulse pointer-events-none"
-                        style={{ left: spotlightRect.x + spotlightRect.width + 4, top: spotlightRect.y, animationDelay: "0.3s" }}
-                    />
-                    <div
-                        className="absolute w-3 h-3 bg-amber-200/60 rounded-full animate-pulse pointer-events-none"
-                        style={{ left: spotlightRect.x + spotlightRect.width / 2, top: spotlightRect.y - 10, animationDelay: "0.6s" }}
-                    />
-                </>
-            )}
+                )}
 
-            {/* 몽글몽글 구름 말풍선 */}
-            {targetRect && (
-                <div
-                    className="fixed pointer-events-none animate-in fade-in zoom-in-95 duration-300"
-                    style={{
-                        left: bubblePos.left,
-                        top: bubblePos.top,
-                    }}
-                >
-                    <div className="relative w-[240px]">
-                        {/* 화살표 - 위쪽 (타겟이 상단에 있을 때) */}
-                        {targetRect && targetRect.top <= window.innerHeight / 2 && (
+                <div style={{ position: "relative" }}>
+                    {/* 구름 장식 */}
+                    <div
+                        style={{
+                            position: "absolute",
+                            left: -12,
+                            top: 16,
+                            width: 32,
+                            height: 32,
+                            background: "white",
+                            borderRadius: "50%",
+                        }}
+                    />
+                    <div
+                        style={{
+                            position: "absolute",
+                            left: -8,
+                            top: 48,
+                            width: 28,
+                            height: 28,
+                            background: "white",
+                            borderRadius: "50%",
+                        }}
+                    />
+                    <div
+                        style={{
+                            position: "absolute",
+                            right: -12,
+                            top: 24,
+                            width: 32,
+                            height: 32,
+                            background: "white",
+                            borderRadius: "50%",
+                        }}
+                    />
+                    <div
+                        style={{
+                            position: "absolute",
+                            right: -8,
+                            top: 56,
+                            width: 24,
+                            height: 24,
+                            background: "white",
+                            borderRadius: "50%",
+                        }}
+                    />
+                    <div
+                        style={{
+                            position: "absolute",
+                            left: 24,
+                            bottom: -12,
+                            width: 28,
+                            height: 28,
+                            background: "white",
+                            borderRadius: "50%",
+                        }}
+                    />
+                    <div
+                        style={{
+                            position: "absolute",
+                            left: "50%",
+                            transform: "translateX(-50%)",
+                            bottom: -16,
+                            width: 36,
+                            height: 36,
+                            background: "white",
+                            borderRadius: "50%",
+                        }}
+                    />
+                    <div
+                        style={{
+                            position: "absolute",
+                            right: 24,
+                            bottom: -12,
+                            width: 28,
+                            height: 28,
+                            background: "white",
+                            borderRadius: "50%",
+                        }}
+                    />
+
+                    {/* 본체 */}
+                    <div
+                        style={{
+                            position: "relative",
+                            background: "white",
+                            borderRadius: 36,
+                            padding: "20px 20px 16px",
+                            boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
+                            textAlign: "center",
+                        }}
+                    >
+                        {/* 아이콘 + 제목 */}
+                        <div
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: 8,
+                                marginBottom: 8,
+                            }}
+                        >
                             <div
-                                className="absolute -top-4 w-0 h-0"
                                 style={{
-                                    left: `${bubblePos.arrowLeft - 12}px`,
-                                    borderLeft: "12px solid transparent",
-                                    borderRight: "12px solid transparent",
-                                    borderBottom: "14px solid white",
-                                    filter: "drop-shadow(0 -2px 2px rgba(0,0,0,0.1))"
+                                    padding: 6,
+                                    background:
+                                        "linear-gradient(135deg, #e0f2fe, #ede9fe)",
+                                    borderRadius: "50%",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
                                 }}
-                            />
-                        )}
-
-                        {/* 몽글몽글 구름 본체 */}
-                        <div className="relative">
-                            {/* 구름 레이어들 - 좌우 & 하단만 (상단은 꼬리 영역) */}
-                            <div className="absolute inset-0 -z-10">
-                                {/* 좌우 뭉게구름 */}
-                                <div className="absolute -left-3 top-4 w-8 h-8 bg-white rounded-full" />
-                                <div className="absolute -left-2 top-12 w-7 h-7 bg-white rounded-full" />
-                                <div className="absolute -right-3 top-6 w-8 h-8 bg-white rounded-full" />
-                                <div className="absolute -right-2 top-14 w-6 h-6 bg-white rounded-full" />
-
-                                {/* 하단 뭉게구름 */}
-                                <div className="absolute left-6 -bottom-3 w-7 h-7 bg-white rounded-full" />
-                                <div className="absolute left-1/2 -translate-x-1/2 -bottom-4 w-9 h-9 bg-white rounded-full" />
-                                <div className="absolute right-6 -bottom-3 w-7 h-7 bg-white rounded-full" />
+                            >
+                                <Sparkles
+                                    style={{
+                                        width: 16,
+                                        height: 16,
+                                        color: "#05B2DC",
+                                    }}
+                                />
                             </div>
-
-                            {/* 메인 바디 */}
-                            <div className="relative bg-white rounded-[36px] px-5 py-4 shadow-xl">
-                                {/* 내용 */}
-                                <div className="relative z-10 text-center">
-                                    <div className="flex items-center justify-center gap-2 mb-2">
-                                        <div className="p-1.5 bg-gradient-to-br from-sky-100 to-violet-100 rounded-full">
-                                            <Sparkles className="w-4 h-4 text-[#05B2DC]" />
-                                        </div>
-                                        <span className="font-bold text-gray-700 text-base">
-                                            {step.title}
-                                        </span>
-                                    </div>
-                                    <p className="text-sm text-gray-500 leading-relaxed mb-3">
-                                        {step.description}
-                                    </p>
-
-                                    {/* 진행 표시 - 더 귀엽게 */}
-                                    <div className="flex items-center justify-center gap-2 mb-2">
-                                        {steps.map((_, index) => (
-                                            <div
-                                                key={index}
-                                                className={`rounded-full transition-all duration-300 ${
-                                                    index === currentStep
-                                                        ? "w-4 h-4 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] shadow-md"
-                                                        : index < currentStep
-                                                            ? "w-2.5 h-2.5 bg-[#05B2DC]/40"
-                                                            : "w-2.5 h-2.5 bg-gray-200"
-                                                }`}
-                                            />
-                                        ))}
-                                    </div>
-
-                                    <p className="text-xs text-[#05B2DC]/80 font-medium">
-                                        탭하여 다음으로
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* 반짝이 장식 */}
-                            <div className="absolute -top-2 -right-1 w-3 h-3 bg-amber-200 rounded-full animate-pulse" />
-                            <div className="absolute top-3 -left-2 w-2 h-2 bg-sky-200 rounded-full animate-pulse" style={{ animationDelay: "0.5s" }} />
-                            <div className="absolute -bottom-1 right-4 w-2 h-2 bg-violet-200 rounded-full animate-pulse" style={{ animationDelay: "0.3s" }} />
+                            <span
+                                style={{
+                                    fontWeight: 700,
+                                    color: "#374151",
+                                    fontSize: 16,
+                                }}
+                            >
+                                {step.title}
+                            </span>
                         </div>
 
-                        {/* 화살표 - 아래쪽 (타겟이 하단에 있을 때) */}
-                        {targetRect && targetRect.top > window.innerHeight / 2 && (
-                            <div
-                                className="absolute -bottom-4 w-0 h-0"
-                                style={{
-                                    left: `${bubblePos.arrowLeft - 12}px`,
-                                    borderLeft: "12px solid transparent",
-                                    borderRight: "12px solid transparent",
-                                    borderTop: "14px solid white",
-                                    filter: "drop-shadow(0 2px 2px rgba(0,0,0,0.1))"
-                                }}
-                            />
-                        )}
-                    </div>
-                </div>
-            )}
+                        {/* 설명 */}
+                        <p
+                            style={{
+                                fontSize: 14,
+                                color: "#6b7280",
+                                lineHeight: 1.6,
+                                marginBottom: 12,
+                            }}
+                        >
+                            {step.description}
+                        </p>
 
-            {/* 탭 애니메이션 */}
-            {targetRect && (
-                <div
-                    className="absolute pointer-events-none"
-                    style={{
-                        left: targetRect.left + targetRect.width / 2 - 16,
-                        top: targetRect.top + targetRect.height / 2 - 16,
-                    }}
-                >
-                    <div className="relative animate-bounce">
-                        <div className="w-8 h-8 rounded-full border-2 border-white/80 bg-white/30 flex items-center justify-center">
-                            <div className="w-2 h-2 rounded-full bg-white animate-ping" />
+                        {/* 진행 표시 */}
+                        <div
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: 4,
+                                marginBottom: 8,
+                            }}
+                        >
+                            {steps.map((_, i) => (
+                                <div
+                                    key={i}
+                                    style={{
+                                        width:
+                                            i === currentStep ? 12 : 6,
+                                        height:
+                                            i === currentStep ? 12 : 6,
+                                        borderRadius: "50%",
+                                        background:
+                                            i === currentStep
+                                                ? "linear-gradient(135deg, #05B2DC, #38BDF8)"
+                                                : i < currentStep
+                                                  ? "rgba(5,178,220,0.4)"
+                                                  : "#e5e7eb",
+                                        transition: "all 0.3s",
+                                    }}
+                                />
+                            ))}
                         </div>
-                    </div>
-                </div>
-            )}
 
-            {/* 건너뛰기 버튼 */}
+                        {/* 안내 텍스트 */}
+                        <p
+                            style={{
+                                fontSize: 12,
+                                color: "rgba(5,178,220,0.8)",
+                                fontWeight: 500,
+                            }}
+                        >
+                            {currentStep < steps.length - 1
+                                ? "탭하여 다음으로"
+                                : "탭하여 시작하기"}
+                        </p>
+                    </div>
+
+                    {/* 반짝이 장식 */}
+                    <div
+                        style={{
+                            position: "absolute",
+                            top: -8,
+                            right: -4,
+                            width: 12,
+                            height: 12,
+                            background: "#fde68a",
+                            borderRadius: "50%",
+                            animation: "pulse 2s infinite",
+                        }}
+                    />
+                    <div
+                        style={{
+                            position: "absolute",
+                            top: 12,
+                            left: -8,
+                            width: 8,
+                            height: 8,
+                            background: "#bae6fd",
+                            borderRadius: "50%",
+                            animation: "pulse 2s infinite 0.5s",
+                        }}
+                    />
+                    <div
+                        style={{
+                            position: "absolute",
+                            bottom: -4,
+                            right: 16,
+                            width: 8,
+                            height: 8,
+                            background: "#ddd6fe",
+                            borderRadius: "50%",
+                            animation: "pulse 2s infinite 0.3s",
+                        }}
+                    />
+                </div>
+
+                {/* 아래 화살표 */}
+                {arrowDir === "down" && (
+                    <div
+                        style={{
+                            position: "absolute",
+                            bottom: -12,
+                            left: arrowLeftPx - 12,
+                            width: 0,
+                            height: 0,
+                            borderLeft: "12px solid transparent",
+                            borderRight: "12px solid transparent",
+                            borderTop: "14px solid white",
+                            filter: "drop-shadow(0 2px 2px rgba(0,0,0,0.1))",
+                        }}
+                    />
+                )}
+            </div>
+
+            {/* 5) 건너뛰기 버튼 */}
             <button
                 onClick={(e) => {
                     e.stopPropagation();
                     handleSkip();
                 }}
-                className="fixed top-4 right-4 px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white text-sm rounded-full transition-colors z-[10000]"
+                style={{
+                    position: "fixed",
+                    top: 16,
+                    right: 16,
+                    zIndex: 10002,
+                    padding: "8px 16px",
+                    background: "rgba(255,255,255,0.15)",
+                    backdropFilter: "blur(8px)",
+                    color: "white",
+                    fontSize: 14,
+                    borderRadius: 999,
+                    border: "none",
+                    cursor: "pointer",
+                    transition: "background 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                    (e.target as HTMLElement).style.background =
+                        "rgba(255,255,255,0.3)";
+                }}
+                onMouseLeave={(e) => {
+                    (e.target as HTMLElement).style.background =
+                        "rgba(255,255,255,0.15)";
+                }}
             >
                 건너뛰기
             </button>
-        </div>
-    );
 
-    return createPortal(content, document.body);
+            {/* 6) CSS 애니메이션 */}
+            <style>{`
+                @keyframes fadeInScale {
+                    from {
+                        opacity: 0;
+                        transform: scale(0.95);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: scale(1);
+                    }
+                }
+                @keyframes pulse {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0.5; }
+                }
+            `}</style>
+        </>,
+        document.body,
+    );
 }
