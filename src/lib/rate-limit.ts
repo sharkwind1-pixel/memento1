@@ -2,11 +2,12 @@
  * IP 기반 Rate Limiting & 보안 유틸리티
  * - IP별 요청 횟수 제한
  * - 의심스러운 활동 탐지
- * - 토큰 어뷰징 방지
+ * - 토큰 어뷰징 방지 (AI 채팅 일일 제한은 Supabase DB 기반)
  * - VPN/프록시 감지
  */
 
 import { headers } from "next/headers";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 // 메모리 기반 저장소 (프로덕션에서는 Redis 권장)
 const ipRequestCounts = new Map<string, { count: number; resetTime: number }>();
@@ -184,6 +185,93 @@ export function checkDailyUsage(
         remaining: Math.max(0, remaining),
         isWarning,
     };
+}
+
+// Supabase 클라이언트 (Rate-limit DB용, 지연 초기화)
+let rateLimitSupabase: SupabaseClient | null = null;
+
+function getRateLimitSupabase(): SupabaseClient | null {
+    if (rateLimitSupabase) return rateLimitSupabase;
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !key) return null;
+    rateLimitSupabase = createClient(url, key, {
+        auth: { autoRefreshToken: false, persistSession: false },
+    });
+    return rateLimitSupabase;
+}
+
+/**
+ * AI Chat 일일 사용량 체크 (DB 기반 - Vercel 서버리스 대응)
+ * user_daily_usage 테이블에서 오늘 사용량을 조회/증가
+ * KST(UTC+9) 기준 날짜 계산
+ */
+export async function checkDailyUsageDB(
+    identifier: string,
+    isAuthenticated: boolean
+): Promise<{ allowed: boolean; remaining: number; isWarning: boolean }> {
+    const limit = isAuthenticated
+        ? RATE_LIMITS.aiChat.dailyLimitAuth
+        : RATE_LIMITS.aiChat.dailyLimit;
+
+    const supabase = getRateLimitSupabase();
+    if (!supabase) {
+        // DB 접속 불가 시 메모리 기반 폴백
+        return checkDailyUsage(identifier, isAuthenticated);
+    }
+
+    try {
+        // KST 기준 오늘 날짜 계산
+        const now = new Date();
+        const kstOffset = 9 * 60 * 60 * 1000;
+        const kstDate = new Date(now.getTime() + kstOffset)
+            .toISOString()
+            .split("T")[0];
+
+        // DB에서 오늘 사용량 조회
+        const { data: existing } = await supabase
+            .from("user_daily_usage")
+            .select("id, request_count")
+            .eq("identifier", identifier)
+            .eq("usage_type", "ai_chat")
+            .eq("usage_date", kstDate)
+            .maybeSingle();
+
+        let currentCount: number;
+
+        if (existing) {
+            // 기존 레코드 카운트 증가
+            const newCount = (existing.request_count || 0) + 1;
+            await supabase
+                .from("user_daily_usage")
+                .update({ request_count: newCount })
+                .eq("id", existing.id);
+            currentCount = newCount;
+        } else {
+            // 신규 레코드 생성
+            await supabase
+                .from("user_daily_usage")
+                .insert({
+                    identifier,
+                    usage_type: "ai_chat",
+                    usage_date: kstDate,
+                    request_count: 1,
+                });
+            currentCount = 1;
+        }
+
+        const remaining = limit - currentCount;
+        const isWarning = remaining <= 10 && remaining > 0;
+
+        return {
+            allowed: currentCount <= limit,
+            remaining: Math.max(0, remaining),
+            isWarning,
+        };
+    } catch {
+        // DB 에러 시 메모리 기반 폴백
+        return checkDailyUsage(identifier, isAuthenticated);
+    }
 }
 
 // 입력값 Sanitize (SQL Injection, XSS 방지)

@@ -511,14 +511,46 @@ export async function saveMessage(
 }
 
 /**
- * 메모리 저장
+ * 메모리 저장 (중복 방지)
+ * 동일 pet_id + title + memory_type이 이미 존재하면 업데이트, 없으면 신규 저장
  */
 export async function saveMemory(
     userId: string,
     petId: string,
     memory: Omit<PetMemory, "id" | "petId" | "userId">
 ) {
-    const { data, error } = await getSupabase()
+    const supabase = getSupabase();
+
+    // 기존 동일 메모리 확인 (pet_id + title + memory_type 기준)
+    const { data: existing } = await supabase
+        .from("pet_memories")
+        .select("id, importance")
+        .eq("pet_id", petId)
+        .eq("title", memory.title)
+        .eq("memory_type", memory.memoryType)
+        .maybeSingle();
+
+    if (existing) {
+        // 기존 메모리 업데이트 (importance는 더 높은 값 유지)
+        const { data, error } = await supabase
+            .from("pet_memories")
+            .update({
+                content: memory.content,
+                importance: Math.max(memory.importance, existing.importance || 0),
+                updated_at: new Date().toISOString(),
+            })
+            .eq("id", existing.id)
+            .select()
+            .single();
+
+        if (error) {
+            return null;
+        }
+        return data;
+    }
+
+    // 신규 메모리 저장
+    const { data, error } = await supabase
         .from("pet_memories")
         .insert({
             user_id: userId,

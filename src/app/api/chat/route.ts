@@ -17,7 +17,7 @@ import { formatScheduleText } from "@/lib/schedule-utils";
 import {
     getClientIP,
     checkRateLimit,
-    checkDailyUsage,
+    checkDailyUsageDB,
     getRateLimitHeaders,
     sanitizeInput,
     checkVPN,
@@ -601,9 +601,9 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 2. 일일 사용량 체크 (토큰 어뷰징 방지)
+        // 2. 일일 사용량 체크 (DB 기반 - Vercel 서버리스 대응)
         const identifier = user.id;
-        const dailyUsage = checkDailyUsage(identifier, true);
+        const dailyUsage = await checkDailyUsageDB(identifier, true);
 
         if (!dailyUsage.allowed) {
             const isMemorial = pet?.status === "memorial";
