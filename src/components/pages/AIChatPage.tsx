@@ -67,6 +67,7 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         selectedPetId,
         selectedPet,
         selectPet,
+        isLoading: isPetsLoading,
     } = usePets();
     const { timeline, fetchTimeline } = useTimeline();
 
@@ -85,6 +86,13 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
     // ========================================================================
     if (!user) {
         return <AIChatLoginPrompt />;
+    }
+
+    // ========================================================================
+    // 조건부 렌더링: 펫 로딩 중
+    // ========================================================================
+    if (isPetsLoading) {
+        return null;
     }
 
     // ========================================================================

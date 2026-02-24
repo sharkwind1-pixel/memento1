@@ -343,13 +343,17 @@ function Layout({
     // - useMemorialMode(): isMemorialMode만 (status 변경 시만 리렌더)
     // - usePets() 직접 구독 안 함! (pets/selectedPetId 변경에 반응 안 함)
     // ========================================================================
-    const { user, loading, signOut } = useAuth();
+    const { user, loading, signOut, profileLoaded } = useAuth();
     const { isMemorialMode } = useMemorialMode();
 
-    // FOUC 방지: React 하이드레이션 완료 후 js-loading 클래스 제거
+    // FOUC 방지: auth + profile 로딩 완료 후 js-loading 클래스 제거
+    // 비로그인: loading=false 즉시 해제
+    // 로그인: profileLoaded=true (points/레벨 등 준비 완료) 후 해제
     useEffect(() => {
-        document.documentElement.classList.remove("js-loading");
-    }, []);
+        if (!loading && (!user || profileLoaded)) {
+            document.documentElement.classList.remove("js-loading");
+        }
+    }, [loading, user, profileLoaded]);
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     // blocking script가 이미 'dark' 클래스를 적용했으므로, DOM에서 초기값 읽기

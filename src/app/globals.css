@@ -297,8 +297,9 @@ body {
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* FOUC 방지: JS 하이드레이션 전까지 auth 관련 UI 숨김 */
-.js-loading [data-auth-area] {
+/* FOUC 방지: 데이터 로딩 완료 전까지 콘텐츠 숨김 */
+.js-loading [data-auth-area],
+.js-loading #main-content {
     visibility: hidden !important;
 }
 
