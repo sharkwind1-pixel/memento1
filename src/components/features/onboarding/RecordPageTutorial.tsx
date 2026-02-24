@@ -3,6 +3,9 @@
  * 우리의 기록 페이지 전용 스포트라이트 튜토리얼
  * - 키우고 있다: 반려동물 등록 → 사진/영상 → 타임라인
  * - 이별했다: 추모 등록 → 추억 사진 → AI 펫톡 안내
+ *
+ * 스크롤 제어: 스텝 전환 시 타겟으로 스크롤 후 잠금
+ * 모달은 항상 viewport 중앙 또는 타겟 근처에 표시
  */
 
 "use client";
@@ -78,7 +81,9 @@ export default function RecordPageTutorial({
     const [currentStep, setCurrentStep] = useState(0);
     const [mounted, setMounted] = useState(false);
     const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
+    const [isScrolling, setIsScrolling] = useState(false);
     const hasInitialized = useRef(false);
+    const savedOverflow = useRef("");
 
     const steps = userType === "memorial" ? MEMORIAL_STEPS : CURRENT_STEPS;
 
@@ -87,75 +92,107 @@ export default function RecordPageTutorial({
         setMounted(true);
     }, []);
 
-    // 타겟 요소 위치 찾기 + 자동 스크롤
-    const findTarget = useCallback(() => {
+    // 스크롤 잠금/해제
+    const lockScroll = useCallback(() => {
+        if (document.body.style.overflow !== "hidden") {
+            savedOverflow.current = document.body.style.overflow;
+            document.body.style.overflow = "hidden";
+        }
+    }, []);
+
+    const unlockScroll = useCallback(() => {
+        document.body.style.overflow = savedOverflow.current || "";
+    }, []);
+
+    // 타겟 요소 위치 찾기 + 자동 스크롤 후 잠금
+    const findAndScrollToTarget = useCallback(() => {
         const step = steps[currentStep];
         if (!step) return;
 
-        // AI 펫톡 가이드는 특별 처리 (화면 중앙에 표시)
+        // AI 펫톡 가이드는 화면 중앙에 표시 (타겟 불필요)
         if (step.targetId === "ai-chat-guide") {
             setTargetRect(null);
+            lockScroll();
             return;
         }
 
         const target = document.querySelector(`[data-tutorial-id="${step.targetId}"]`);
-        if (target) {
-            const rect = target.getBoundingClientRect();
-
-            // 화면 밖에 있으면 자동 스크롤
-            const isOutOfView = rect.top < 0 || rect.bottom > window.innerHeight;
-            if (isOutOfView) {
-                target.scrollIntoView({ behavior: "smooth", block: "center" });
-                // 스크롤 후 위치 재계산
-                setTimeout(() => {
-                    const newRect = target.getBoundingClientRect();
-                    setTargetRect(newRect);
-                }, 400);
-            } else {
-                setTargetRect(rect);
-            }
-        } else {
+        if (!target) {
+            // 타겟을 못 찾으면 중앙 모달로 표시
             setTargetRect(null);
+            lockScroll();
+            return;
         }
-    }, [currentStep, steps]);
 
-    // 위치 업데이트
+        const rect = target.getBoundingClientRect();
+        const isOutOfView = rect.top < 80 || rect.bottom > window.innerHeight - 80;
+
+        if (isOutOfView) {
+            // 스크롤 필요: 잠금 해제 → 스크롤 → 위치 재계산 → 다시 잠금
+            setIsScrolling(true);
+            unlockScroll();
+
+            target.scrollIntoView({ behavior: "smooth", block: "center" });
+
+            setTimeout(() => {
+                const newRect = target.getBoundingClientRect();
+                setTargetRect(newRect);
+                lockScroll();
+                setIsScrolling(false);
+            }, 500);
+        } else {
+            setTargetRect(rect);
+            lockScroll();
+        }
+    }, [currentStep, steps, lockScroll, unlockScroll]);
+
+    // 열릴 때 초기화 + 스크롤 잠금
     useEffect(() => {
         if (!isOpen) return;
 
-        // 초기화
         if (!hasInitialized.current) {
             setCurrentStep(0);
             hasInitialized.current = true;
         }
 
         // 딜레이 후 타겟 찾기 (DOM 렌더링 대기)
-        const timer = setTimeout(findTarget, 300);
+        const timer = setTimeout(findAndScrollToTarget, 300);
 
-        // 리사이즈/스크롤 대응
-        window.addEventListener("resize", findTarget);
-        window.addEventListener("scroll", findTarget, true);
+        // 리사이즈 시에만 위치 재계산 (스크롤 리스너 제거)
+        const handleResize = () => {
+            const step = steps[currentStep];
+            if (!step || step.targetId === "ai-chat-guide") return;
+            const target = document.querySelector(`[data-tutorial-id="${step.targetId}"]`);
+            if (target) {
+                setTargetRect(target.getBoundingClientRect());
+            }
+        };
+
+        window.addEventListener("resize", handleResize);
 
         return () => {
             clearTimeout(timer);
-            window.removeEventListener("resize", findTarget);
-            window.removeEventListener("scroll", findTarget, true);
+            window.removeEventListener("resize", handleResize);
         };
-    }, [isOpen, currentStep, findTarget]);
+    }, [isOpen, currentStep, findAndScrollToTarget, steps]);
 
-    // 닫힐 때 초기화
+    // 닫힐 때 정리
     useEffect(() => {
         if (!isOpen) {
             hasInitialized.current = false;
+            unlockScroll();
         }
-    }, [isOpen]);
+        // 언마운트 시 반드시 스크롤 복구
+        return () => {
+            document.body.style.overflow = savedOverflow.current || "";
+        };
+    }, [isOpen, unlockScroll]);
 
     // 다음 스텝
     const handleNext = () => {
         if (currentStep < steps.length - 1) {
             setCurrentStep(currentStep + 1);
         } else {
-            // 마지막 스텝 - memorial은 AI 펫톡으로 이동 옵션
             onClose();
         }
     };
@@ -177,6 +214,17 @@ export default function RecordPageTutorial({
     const Icon = step.icon ?? Sparkles;
     const isLastStep = currentStep === steps.length - 1;
     const isAIChatGuide = step.targetId === "ai-chat-guide";
+    const showAsCenter = !targetRect || isAIChatGuide;
+
+    // 스크롤 중이면 렌더링 지연
+    if (isScrolling) {
+        return createPortal(
+            <div className="fixed inset-0 z-[10000]">
+                <div className="absolute inset-0 bg-black/60 transition-opacity duration-300" />
+            </div>,
+            document.body
+        );
+    }
 
     // 말풍선 위치 계산
     const getBubbleStyle = (): {
@@ -186,8 +234,7 @@ export default function RecordPageTutorial({
         arrowDirection?: string;
         arrowLeft?: number;
     } => {
-        if (!targetRect || isAIChatGuide) {
-            // 중앙에 표시
+        if (showAsCenter) {
             return {
                 top: "50%",
                 left: "50%",
@@ -197,19 +244,28 @@ export default function RecordPageTutorial({
 
         const padding = 16;
         const bubbleWidth = 320;
-        const bubbleHeight = 180;
+        const bubbleHeight = 220;
         const screenWidth = window.innerWidth;
         const screenHeight = window.innerHeight;
 
         // 기본: 타겟 아래에 표시
-        let top = targetRect.bottom + padding;
-        let left = targetRect.left + targetRect.width / 2 - bubbleWidth / 2;
+        let top = targetRect!.bottom + padding;
+        let left = targetRect!.left + targetRect!.width / 2 - bubbleWidth / 2;
         let arrowDirection = "up";
 
         // 화면 아래 넘어가면 위에 표시
         if (top + bubbleHeight > screenHeight - padding) {
-            top = targetRect.top - bubbleHeight - padding;
+            top = targetRect!.top - bubbleHeight - padding;
             arrowDirection = "down";
+        }
+
+        // 위에도 공간 없으면 중앙
+        if (top < padding) {
+            return {
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+            };
         }
 
         // 좌우 경계 체크
@@ -222,13 +278,14 @@ export default function RecordPageTutorial({
             top: `${top}px`,
             left: `${left}px`,
             arrowDirection,
-            arrowLeft: targetRect.left + targetRect.width / 2 - left,
+            arrowLeft: targetRect!.left + targetRect!.width / 2 - left,
         };
     };
 
     const bubbleStyle = getBubbleStyle();
     const arrowDirection = bubbleStyle.arrowDirection || "up";
     const arrowLeft = bubbleStyle.arrowLeft || 160;
+    const isCenterMode = !!bubbleStyle.transform;
 
     return createPortal(
         <div className="fixed inset-0 z-[10000]">
@@ -238,8 +295,8 @@ export default function RecordPageTutorial({
                 onClick={handleSkip}
             />
 
-            {/* 스포트라이트 (타겟이 있을 때만) */}
-            {targetRect && !isAIChatGuide && (
+            {/* 스포트라이트 (타겟이 있고 중앙 모드가 아닐 때) */}
+            {targetRect && !isCenterMode && (
                 <div
                     className="absolute bg-transparent rounded-2xl ring-4 ring-white/50 transition-all duration-300"
                     style={{
@@ -258,11 +315,11 @@ export default function RecordPageTutorial({
                 style={{
                     top: bubbleStyle.top,
                     left: bubbleStyle.left,
-                    transform: isAIChatGuide ? "translate(-50%, -50%)" : undefined,
+                    transform: bubbleStyle.transform,
                 }}
             >
-                {/* 화살표 (중앙 모달이 아닐 때만) */}
-                {targetRect && !isAIChatGuide && (
+                {/* 화살표 (스포트라이트 모드일 때만) */}
+                {targetRect && !isCenterMode && (
                     <div
                         className="absolute w-4 h-4 bg-white transform rotate-45"
                         style={{
