@@ -539,7 +539,7 @@ export default function EmotionTracker({
                         ? "bg-gradient-to-b from-amber-50 to-white dark:from-amber-900/20 dark:to-gray-900"
                         : "bg-gradient-to-b from-sky-50 to-white dark:from-sky-900/20 dark:to-gray-900"
                 }`}
-                style={{ maxHeight: "70vh" }}
+                style={{ maxHeight: "85vh" }}
             >
                 {/* 핸들 바 */}
                 <div className="flex justify-center pt-3 pb-1">
@@ -567,7 +567,7 @@ export default function EmotionTracker({
                 </div>
 
                 {/* 본문 (스크롤) */}
-                <div className="overflow-y-auto px-5 py-4 space-y-5" style={{ maxHeight: "calc(70vh - 80px)" }}>
+                <div className="overflow-y-auto px-5 py-4 space-y-5" style={{ maxHeight: "calc(85vh - 80px)" }}>
                     {isLoading ? (
                         <div className="flex items-center justify-center h-40">
                             <div className={`w-8 h-8 border-2 border-t-transparent rounded-full animate-spin ${

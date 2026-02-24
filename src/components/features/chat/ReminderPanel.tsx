@@ -293,7 +293,7 @@ export default function ReminderPanel({
             {/* 바텀시트 패널 */}
             <div
                 className="relative w-full max-w-lg bg-white dark:bg-gray-900 rounded-t-3xl shadow-2xl animate-slide-up"
-                style={{ maxHeight: "70vh" }}
+                style={{ maxHeight: "85vh" }}
             >
                 {/* 드래그 핸들 */}
                 <div className="flex justify-center pt-3 pb-1">
@@ -319,7 +319,7 @@ export default function ReminderPanel({
                 {/* 스크롤 가능한 본문 */}
                 <div
                     className="overflow-y-auto px-4 py-3"
-                    style={{ maxHeight: "calc(70vh - 140px)" }}
+                    style={{ maxHeight: "calc(85vh - 140px)" }}
                 >
                     {/* 로딩 상태 */}
                     {isLoading ? (
