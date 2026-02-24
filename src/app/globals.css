@@ -297,6 +297,11 @@ body {
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* FOUC 방지: JS 하이드레이션 전까지 auth 관련 UI 숨김 */
+.js-loading [data-auth-area] {
+    visibility: hidden !important;
+}
+
 /* 페이지 전환 시 깜빡임 방지 */
 #main-content {
     /* 레이아웃 시프트 방지 */

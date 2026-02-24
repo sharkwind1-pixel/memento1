@@ -112,7 +112,7 @@ function HeaderAuthArea({
     };
 
     return (
-        <div className="xl:hidden flex items-center min-w-[40px]">
+        <div className="xl:hidden flex items-center min-w-[40px]" data-auth-area>
             {/* 로딩 스켈레톤 */}
             <div
                 className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full"
@@ -345,6 +345,11 @@ function Layout({
     // ========================================================================
     const { user, loading, signOut } = useAuth();
     const { isMemorialMode } = useMemorialMode();
+
+    // FOUC 방지: React 하이드레이션 완료 후 js-loading 클래스 제거
+    useEffect(() => {
+        document.documentElement.classList.remove("js-loading");
+    }, []);
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     // blocking script가 이미 'dark' 클래스를 적용했으므로, DOM에서 초기값 읽기

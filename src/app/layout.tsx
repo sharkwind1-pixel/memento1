@@ -93,6 +93,7 @@ export default function RootLayout({
                         __html: `
                             (function() {
                                 try {
+                                    document.documentElement.classList.add('js-loading');
                                     var d = localStorage.getItem('darkMode');
                                     if (d === 'true') {
                                         document.documentElement.classList.add('dark');
