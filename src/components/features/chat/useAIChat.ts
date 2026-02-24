@@ -70,13 +70,6 @@ export interface UseAIChatReturn {
     reminders: ReminderItem[];
     suggestedQuestions: string[];
     setSuggestedQuestions: Dispatch<SetStateAction<string[]>>;
-    isMemoryPanelOpen: boolean;
-    setIsMemoryPanelOpen: Dispatch<SetStateAction<boolean>>;
-    isEmotionTrackerOpen: boolean;
-    setIsEmotionTrackerOpen: Dispatch<SetStateAction<boolean>>;
-    isReminderPanelOpen: boolean;
-    setIsReminderPanelOpen: Dispatch<SetStateAction<boolean>>;
-
     // 계산된 값
     remainingChats: number;
     isLimitReached: boolean;
@@ -119,9 +112,7 @@ export function useAIChat({
     const [dailyUsage, setDailyUsage] = useState(0);
     const [reminders, setReminders] = useState<ReminderItem[]>([]);
     const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
-    const [isMemoryPanelOpen, setIsMemoryPanelOpen] = useState(false);
-    const [isEmotionTrackerOpen, setIsEmotionTrackerOpen] = useState(false);
-    const [isReminderPanelOpen, setIsReminderPanelOpen] = useState(false);
+
 
     // ========================================================================
     // 계산된 값
@@ -538,13 +529,6 @@ export function useAIChat({
         reminders,
         suggestedQuestions,
         setSuggestedQuestions,
-        isMemoryPanelOpen,
-        setIsMemoryPanelOpen,
-        isEmotionTrackerOpen,
-        setIsEmotionTrackerOpen,
-        isReminderPanelOpen,
-        setIsReminderPanelOpen,
-
         // 계산된 값
         remainingChats,
         isLimitReached,

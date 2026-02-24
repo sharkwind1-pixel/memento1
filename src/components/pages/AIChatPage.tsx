@@ -36,9 +36,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Star } from "lucide-react";
 import { TabType } from "@/types";
 import DomeGallery from "@/components/ui/DomeGallery";
-import MemoryPanel from "@/components/features/chat/MemoryPanel";
-import EmotionTracker from "@/components/features/chat/EmotionTracker";
-import ReminderPanel from "@/components/features/chat/ReminderPanel";
 import PetProfileSidebar from "@/components/features/chat/PetProfileSidebar";
 import ChatMessageList from "@/components/features/chat/ChatMessageList";
 import ChatInputArea from "@/components/features/chat/ChatInputArea";
@@ -172,9 +169,6 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                 selectedPetId={selectedPetId}
                 selectPet={selectPet}
                 onNewChat={chat.handleNewChat}
-                onOpenMemoryPanel={() => chat.setIsMemoryPanelOpen(true)}
-                onOpenEmotionTracker={() => chat.setIsEmotionTrackerOpen(true)}
-                onOpenReminderPanel={() => chat.setIsReminderPanelOpen(true)}
             />
 
             <div className="flex-1 flex flex-col lg:flex-row max-w-4xl mx-auto w-full relative z-10">
@@ -237,39 +231,6 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                 </div>
             </div>
 
-            {/* 메모리 패널 (바텀시트) */}
-            {selectedPet && (
-                <MemoryPanel
-                    isOpen={chat.isMemoryPanelOpen}
-                    onClose={() => chat.setIsMemoryPanelOpen(false)}
-                    petId={selectedPet.id}
-                    petName={selectedPet.name}
-                    isMemorialMode={chat.isMemorialMode}
-                />
-            )}
-
-            {/* 감정 분석 패널 (바텀시트) */}
-            {selectedPet && user && (
-                <EmotionTracker
-                    isOpen={chat.isEmotionTrackerOpen}
-                    onClose={() => chat.setIsEmotionTrackerOpen(false)}
-                    petId={selectedPet.id}
-                    petName={selectedPet.name}
-                    isMemorialMode={chat.isMemorialMode}
-                    userId={user.id}
-                />
-            )}
-
-            {/* 케어 알림 패널 (바텀시트) - 일상 모드에서만 */}
-            {selectedPet && !chat.isMemorialMode && (
-                <ReminderPanel
-                    isOpen={chat.isReminderPanelOpen}
-                    onClose={() => chat.setIsReminderPanelOpen(false)}
-                    petId={selectedPet.id}
-                    petName={selectedPet.name}
-                    isMemorialMode={chat.isMemorialMode}
-                />
-            )}
         </div>
     );
 }

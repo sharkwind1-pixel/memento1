@@ -316,7 +316,7 @@ export default function DomeGallery({
 
     const overlay = document.createElement('div');
     overlay.className = 'enlarge';
-    overlay.style.cssText = `position:absolute; left:${frameR.left - mainR.left}px; top:${frameR.top - mainR.top}px; width:${frameR.width}px; height:${frameR.height}px; opacity:0; z-index:30; will-change:transform,opacity; transform-origin:top left; transition:transform ${enlargeTransitionMs}ms ease, opacity ${enlargeTransitionMs}ms ease; border-radius:${openedImageBorderRadius}; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,.35);`;
+    overlay.style.cssText = `position:absolute; left:${frameR.left}px; top:${frameR.top}px; width:${frameR.width}px; height:${frameR.height}px; opacity:0; z-index:30; will-change:transform,opacity; transform-origin:top left; transition:transform ${enlargeTransitionMs}ms ease, opacity ${enlargeTransitionMs}ms ease; border-radius:${openedImageBorderRadius}; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,.35);`;
 
     const rawSrc = parent.dataset.src || (el.querySelector('img') as HTMLImageElement)?.src || '';
     const rawAlt = parent.dataset.alt || (el.querySelector('img') as HTMLImageElement)?.alt || '';
@@ -725,7 +725,7 @@ export default function DomeGallery({
 
           <div
             ref={viewerRef}
-            className="absolute inset-0 z-20 pointer-events-none flex items-center justify-center"
+            className="fixed inset-0 z-[100] pointer-events-none flex items-center justify-center"
             style={{ padding: 'var(--viewer-pad)' }}
           >
             <div
@@ -735,8 +735,12 @@ export default function DomeGallery({
             />
             <div
               ref={frameRef}
-              className="viewer-frame h-full aspect-square flex"
-              style={{ borderRadius: `var(--enlarge-radius, ${openedImageBorderRadius})` }}
+              className="viewer-frame flex"
+              style={{
+                borderRadius: `var(--enlarge-radius, ${openedImageBorderRadius})`,
+                width: `min(${openedImageWidth}, 80vw)`,
+                height: `min(${openedImageHeight}, 80vw)`,
+              }}
             />
           </div>
         </main>

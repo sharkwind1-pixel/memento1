@@ -13,9 +13,6 @@
 
 import {
     RotateCcw,
-    MoreHorizontal,
-    BarChart3,
-    Bell,
     Heart,
     Star,
 } from "lucide-react";
@@ -28,12 +25,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import {
-    DropdownMenu,
-    DropdownMenuTrigger,
-    DropdownMenuContent,
-    DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
 import type { Pet } from "@/types";
 
 // ============================================================================
@@ -46,9 +37,6 @@ interface AIChatHeaderProps {
     selectedPetId: string | null;
     selectPet: (id: string) => void;
     onNewChat: () => void;
-    onOpenMemoryPanel: () => void;
-    onOpenEmotionTracker: () => void;
-    onOpenReminderPanel: () => void;
 }
 
 // ============================================================================
@@ -61,9 +49,6 @@ export default function AIChatHeader({
     selectedPetId,
     selectPet,
     onNewChat,
-    onOpenMemoryPanel,
-    onOpenEmotionTracker,
-    onOpenReminderPanel,
 }: AIChatHeaderProps) {
     const activePets = pets.filter((p) => p.status === "active");
     const memorialPets = pets.filter((p) => p.status === "memorial");
@@ -77,52 +62,18 @@ export default function AIChatHeader({
             } backdrop-blur-lg`}
         >
             <div className="max-w-2xl mx-auto flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={onNewChat}
-                        className={`p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-all duration-500 active:scale-95 ${
-                            isMemorialMode
-                                ? "hover:bg-amber-200/50 text-amber-600"
-                                : "hover:bg-[#E0F7FF] text-[#05B2DC]"
-                        }`}
-                        title="새 대화 시작"
-                        aria-label="새 대화 시작"
-                    >
-                        <RotateCcw className="w-5 h-5" />
-                    </button>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <button
-                                className={`p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-all duration-500 active:scale-95 ${
-                                    isMemorialMode
-                                        ? "hover:bg-amber-200/50 text-amber-600"
-                                        : "hover:bg-[#E0F7FF] text-[#05B2DC]"
-                                }`}
-                                title="더보기"
-                                aria-label="더보기 메뉴"
-                            >
-                                <MoreHorizontal className="w-5 h-5" />
-                            </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="z-50">
-                            <DropdownMenuItem onClick={onOpenMemoryPanel}>
-                                기억 보기
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={onOpenEmotionTracker}>
-                                <BarChart3 className="w-4 h-4 mr-2" />
-                                감정 분석
-                            </DropdownMenuItem>
-                            {!isMemorialMode && (
-                                <DropdownMenuItem
-                                    onClick={onOpenReminderPanel}
-                                >
-                                    <Bell className="w-4 h-4 mr-2" />
-                                    케어 알림
-                                </DropdownMenuItem>
-                            )}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
+                <button
+                    onClick={onNewChat}
+                    className={`p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-all duration-500 active:scale-95 ${
+                        isMemorialMode
+                            ? "hover:bg-amber-200/50 text-amber-600"
+                            : "hover:bg-[#E0F7FF] text-[#05B2DC]"
+                    }`}
+                    title="새 대화 시작"
+                    aria-label="새 대화 시작"
+                >
+                    <RotateCcw className="w-5 h-5" />
+                </button>
                 <Select
                     value={selectedPetId || ""}
                     onValueChange={(id) => selectPet(id)}
