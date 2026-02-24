@@ -329,11 +329,33 @@ export function useAIChat({
 
     /**
      * 새 대화 시작
+     * - 이전 대화 세션 요약을 DB에 저장 (AI 기억 유지)
      * - 기존 대화 초기화
      * - 개인화된 인사말로 시작
      */
     const handleNewChat = () => {
         if (!selectedPet) return;
+
+        // 이전 대화가 충분히 길면 세션 요약 저장 (AI가 기억할 수 있도록)
+        if (messages.length >= 4 && user?.id && selectedPetId) {
+            const chatMessages = messages.map((msg) => ({
+                role: msg.role === "user" ? "user" : "assistant",
+                content: msg.content,
+            }));
+
+            // 비동기로 저장 (UI 블로킹 없음)
+            authFetch(API.CHAT_SUMMARY, {
+                method: "POST",
+                body: JSON.stringify({
+                    petId: selectedPetId,
+                    petName: selectedPet.name,
+                    messages: chatMessages,
+                    isMemorial: isMemorialMode,
+                }),
+            }).catch(() => {
+                // 요약 저장 실패 - 조용히 무시 (개별 메시지는 이미 chat_messages에 저장됨)
+            });
+        }
 
         const greeting = generatePersonalizedGreeting(
             selectedPet.name,
