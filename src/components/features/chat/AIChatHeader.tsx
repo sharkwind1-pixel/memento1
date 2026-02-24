@@ -70,7 +70,7 @@ export default function AIChatHeader({
 
     return (
         <div
-            className={`flex-shrink-0 px-4 py-3 border-b relative z-10 transition-all duration-700 ease-in-out ${
+            className={`flex-shrink-0 px-4 py-3 border-b relative z-20 transition-all duration-700 ease-in-out ${
                 isMemorialMode
                     ? "bg-gradient-to-r from-amber-100/80 to-orange-100/80 border-amber-200/50"
                     : "bg-white/80 border-gray-200/50"
@@ -104,7 +104,7 @@ export default function AIChatHeader({
                                 <MoreHorizontal className="w-5 h-5" />
                             </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start">
+                        <DropdownMenuContent align="start" className="z-50">
                             <DropdownMenuItem onClick={onOpenMemoryPanel}>
                                 기억 보기
                             </DropdownMenuItem>

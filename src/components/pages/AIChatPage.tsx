@@ -108,10 +108,10 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                     : "bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
             }`}
         >
-            {/* 상단 DomeGallery - 데스크톱 전용 3D 사진 갤러리 */}
+            {/* 상단 DomeGallery - 데스크톱 전용 3D 사진 갤러리 (모바일에서는 공간 확보를 위해 숨김) */}
             {chat.galleryImages.length > 0 && (
                 <div
-                    className={`flex-shrink-0 h-[180px] relative overflow-hidden transition-all duration-700 ease-in-out ${
+                    className={`flex-shrink-0 h-[100px] lg:h-[180px] relative overflow-hidden transition-all duration-700 ease-in-out ${
                         chat.isMemorialMode
                             ? "bg-gradient-to-b from-amber-100 to-amber-50"
                             : "bg-gradient-to-b from-sky-100 to-sky-50"
@@ -178,7 +178,7 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
             />
 
             <div className="flex-1 flex flex-col lg:flex-row max-w-4xl mx-auto w-full relative z-10">
-                {/* 좌측: 펫 프로필 영역 (데스크탑에서만 사이드바) */}
+                {/* 좌측: 펫 프로필 영역 (모바일 축소, 데스크톱 사이드바) */}
                 <PetProfileSidebar
                     selectedPet={selectedPet}
                     allPhotos={chat.allPhotos}

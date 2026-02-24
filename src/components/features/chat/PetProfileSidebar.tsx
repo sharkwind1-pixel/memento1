@@ -57,11 +57,11 @@ export default function PetProfileSidebar({
     };
 
     return (
-        <div className="flex-shrink-0 p-4 lg:w-80 lg:border-r lg:border-gray-200/50 lg:sticky lg:top-0 lg:self-start">
+        <div className="flex-shrink-0 p-2 lg:p-4 lg:w-80 lg:border-r lg:border-gray-200/50 lg:sticky lg:top-0 lg:self-start">
             {currentPhoto ? (
-                <div className="relative max-w-[280px] mx-auto lg:max-w-none">
+                <div className="relative max-w-[160px] lg:max-w-[280px] mx-auto lg:max-w-none">
                     <div
-                        className={`relative rounded-2xl overflow-hidden shadow-xl aspect-square transition-all duration-700 ${isMemorialMode ? "ring-2 ring-amber-200/50" : "ring-2 ring-[#E0F7FF]/50"}`}
+                        className={`relative rounded-2xl overflow-hidden shadow-xl aspect-[4/3] lg:aspect-square transition-all duration-700 ${isMemorialMode ? "ring-2 ring-amber-200/50" : "ring-2 ring-[#E0F7FF]/50"}`}
                         onTouchStart={handleTouchStart}
                         onTouchEnd={handleTouchEnd}
                     >
@@ -93,7 +93,7 @@ export default function PetProfileSidebar({
                             </p>
                         </div>
                         {allPhotos.length > 1 && (
-                            <>
+                            <div className="hidden lg:contents">
                                 <button
                                     onClick={() =>
                                         setCurrentPhotoIndex(
@@ -118,7 +118,7 @@ export default function PetProfileSidebar({
                                 >
                                     <ChevronRight className="w-5 h-5" />
                                 </button>
-                            </>
+                            </div>
                         )}
                     </div>
                     {allPhotos.length > 1 && (
@@ -135,9 +135,9 @@ export default function PetProfileSidebar({
                     )}
                 </div>
             ) : (
-                <div className="max-w-[280px] mx-auto">
+                <div className="max-w-[160px] lg:max-w-[280px] mx-auto">
                     <div
-                        className={`relative rounded-2xl p-6 flex flex-col items-center justify-center aspect-square shadow-xl ${isMemorialMode ? "bg-gradient-to-br from-amber-100 to-orange-100 ring-2 ring-amber-200/50" : "bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD] ring-2 ring-[#E0F7FF]/50"}`}
+                        className={`relative rounded-2xl p-4 lg:p-6 flex flex-col items-center justify-center aspect-[4/3] lg:aspect-square shadow-xl ${isMemorialMode ? "bg-gradient-to-br from-amber-100 to-orange-100 ring-2 ring-amber-200/50" : "bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD] ring-2 ring-[#E0F7FF]/50"}`}
                     >
                         <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-3 ${isMemorialMode ? "bg-amber-200/50" : "bg-white/50"}`}>
                             <PawPrint
