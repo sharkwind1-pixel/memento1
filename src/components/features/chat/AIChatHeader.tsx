@@ -12,10 +12,8 @@
 "use client";
 
 import {
-    Sparkles,
     RotateCcw,
     MoreHorizontal,
-    Brain,
     BarChart3,
     Bell,
     Heart,
@@ -79,17 +77,7 @@ export default function AIChatHeader({
             } backdrop-blur-lg`}
         >
             <div className="max-w-2xl mx-auto flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <Sparkles
-                        className={`w-5 h-5 transition-colors duration-700 ${
-                            isMemorialMode
-                                ? "text-amber-500"
-                                : "text-[#05B2DC]"
-                        }`}
-                    />
-                    <h1 className="font-semibold text-gray-800 dark:text-white">
-                        AI 펫톡
-                    </h1>
+                <div className="flex items-center gap-2">
                     <button
                         onClick={onNewChat}
                         className={`p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-all duration-500 active:scale-95 ${
@@ -118,7 +106,6 @@ export default function AIChatHeader({
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start">
                             <DropdownMenuItem onClick={onOpenMemoryPanel}>
-                                <Brain className="w-4 h-4 mr-2" />
                                 기억 보기
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={onOpenEmotionTracker}>

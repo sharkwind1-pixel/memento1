@@ -543,7 +543,7 @@ export default function MemoryPanel({
                 className={`fixed inset-x-0 bottom-0 z-50 transform transition-transform duration-300 ease-out ${
                     isOpen ? "translate-y-0" : "translate-y-full"
                 }`}
-                style={{ maxHeight: "70vh" }}
+                style={{ maxHeight: "85vh" }}
             >
                 <div
                     className={`rounded-t-2xl shadow-2xl flex flex-col overflow-hidden ${
@@ -551,7 +551,7 @@ export default function MemoryPanel({
                             ? "bg-amber-50 dark:bg-gray-900"
                             : "bg-[#F0F9FF] dark:bg-gray-900"
                     }`}
-                    style={{ maxHeight: "70vh" }}
+                    style={{ maxHeight: "85vh" }}
                 >
                     {/* 드래그 핸들 (시각적 표시) */}
                     <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
