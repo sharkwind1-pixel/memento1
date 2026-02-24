@@ -8,7 +8,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { PawPrint, RotateCcw } from "lucide-react";
 import type { Pet } from "@/types";
 import {
@@ -36,9 +36,21 @@ export default function ChatMessageList({
     onRetry,
 }: ChatMessageListProps) {
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const hasInteracted = useRef(false);
+    const prevMessageCount = useRef(messages.length);
 
     useEffect(() => {
+        // 초기 로드 시에는 자동 스크롤하지 않음 (유저가 위에서부터 시작)
+        // 유저가 메시지를 보낸 후(메시지 수 증가)에만 스크롤
+        if (!hasInteracted.current) {
+            if (messages.length > prevMessageCount.current) {
+                hasInteracted.current = true;
+            }
+            prevMessageCount.current = messages.length;
+            return;
+        }
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        prevMessageCount.current = messages.length;
     }, [messages, isTyping]);
 
     return (
