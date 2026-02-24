@@ -6,7 +6,7 @@
 
 "use client";
 
-import { useRef, useCallback } from "react";
+import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -74,14 +74,6 @@ export default function ChatInputArea({
     onSend,
 }: ChatInputAreaProps) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
-
-    /** 모바일 키보드가 올라올 때 입력 영역이 보이도록 스크롤 조정 */
-    const handleFocus = useCallback(() => {
-        setTimeout(() => {
-            containerRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-        }, 300);
-    }, []);
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.nativeEvent.isComposing) return;
@@ -103,7 +95,6 @@ export default function ChatInputArea({
 
     return (
         <div
-            ref={containerRef}
             className={`flex-shrink-0 px-4 pt-2 pb-2 border-t transition-all duration-700 ease-in-out ${isMemorialMode ? "bg-amber-50/80 border-amber-200/50" : "bg-white/80 border-gray-200/50"} backdrop-blur-lg`}
         >
             <div className="max-w-2xl mx-auto">
@@ -203,7 +194,6 @@ export default function ChatInputArea({
                                     handleTextareaInput();
                                 }}
                                 onKeyDown={handleKeyDown}
-                                onFocus={handleFocus}
                                 placeholder={`${selectedPet?.name}에게 말해보세요...`}
                                 className="flex-1 rounded-lg border-0 bg-transparent shadow-none text-base resize-none min-h-[40px] max-h-[84px] py-2 px-2 focus-visible:ring-0 focus-visible:ring-offset-0"
                                 rows={1}
