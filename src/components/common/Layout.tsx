@@ -32,7 +32,7 @@ import Image from "next/image";
 import { TabType, MainCategory, CommunitySubcategory } from "@/types";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { useMemorialMode } from "@/contexts/PetContext";
+import { useMemorialMode, usePets } from "@/contexts/PetContext";
 import AuthModal from "@/components/Auth/AuthModal";
 import AccountSettingsModal from "@/components/Auth/AccountSettingsModal";
 import Sidebar from "@/components/common/Sidebar";
@@ -341,19 +341,20 @@ function Layout({
     // Layout에서는 최소한의 context만 구독:
     // - useAuth(): user/loading/signOut (초기 로딩 시 1번만 변경)
     // - useMemorialMode(): isMemorialMode만 (status 변경 시만 리렌더)
-    // - usePets() 직접 구독 안 함! (pets/selectedPetId 변경에 반응 안 함)
+    // - usePets(): isLoading만 (FOUC 방지용, 초기 1회만 변경되므로 리렌더 영향 미미)
     // ========================================================================
     const { user, loading, signOut, profileLoaded } = useAuth();
     const { isMemorialMode } = useMemorialMode();
+    const { isLoading: isPetsLoading } = usePets();
 
-    // FOUC 방지: auth + profile 로딩 완료 후 js-loading 클래스 제거
-    // 비로그인: loading=false 즉시 해제
-    // 로그인: profileLoaded=true (points/레벨 등 준비 완료) 후 해제
+    // FOUC 방지: auth + profile + pets 모두 로딩 완료 후 js-loading 클래스 제거
+    // 비로그인: loading=false 즉시 해제 (pets 로딩도 비로그인 시 즉시 false)
+    // 로그인: profileLoaded=true + isPetsLoading=false 후 해제
     useEffect(() => {
-        if (!loading && (!user || profileLoaded)) {
+        if (!loading && (!user || profileLoaded) && !isPetsLoading) {
             document.documentElement.classList.remove("js-loading");
         }
-    }, [loading, user, profileLoaded]);
+    }, [loading, user, profileLoaded, isPetsLoading]);
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     // blocking script가 이미 'dark' 클래스를 적용했으므로, DOM에서 초기값 읽기
