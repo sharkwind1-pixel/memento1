@@ -8,6 +8,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 
+import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
     PawPrint,
@@ -35,6 +36,25 @@ export default function PetProfileSidebar({
     setSelectedTab,
 }: PetProfileSidebarProps) {
     const currentPhoto = allPhotos[currentPhotoIndex];
+    const touchStartX = useRef<number | null>(null);
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        touchStartX.current = e.touches[0].clientX;
+    };
+
+    const handleTouchEnd = (e: React.TouchEvent) => {
+        if (touchStartX.current === null || allPhotos.length <= 1) return;
+        const delta = touchStartX.current - e.changedTouches[0].clientX;
+        touchStartX.current = null;
+        if (Math.abs(delta) < 50) return;
+        if (delta > 0) {
+            // 왼쪽 스와이프 → 다음 사진
+            setCurrentPhotoIndex((prev: number) => (prev + 1) % allPhotos.length);
+        } else {
+            // 오른쪽 스와이프 → 이전 사진
+            setCurrentPhotoIndex((prev: number) => (prev - 1 + allPhotos.length) % allPhotos.length);
+        }
+    };
 
     return (
         <div className="flex-shrink-0 p-4 lg:w-80 lg:border-r lg:border-gray-200/50 lg:sticky lg:top-0 lg:self-start">
@@ -42,6 +62,8 @@ export default function PetProfileSidebar({
                 <div className="relative max-w-[280px] mx-auto lg:max-w-none">
                     <div
                         className={`relative rounded-2xl overflow-hidden shadow-xl aspect-square transition-all duration-700 ${isMemorialMode ? "ring-2 ring-amber-200/50" : "ring-2 ring-[#E0F7FF]/50"}`}
+                        onTouchStart={handleTouchStart}
+                        onTouchEnd={handleTouchEnd}
                     >
                         <img
                             src={currentPhoto.url}
