@@ -308,13 +308,9 @@ export default function TutorialTour({
     };
 
     // 확인 다이얼로그에서 "종료" 선택
-    const handleConfirmEnd = (isSkip: boolean) => {
+    const handleConfirmEnd = () => {
         setShowConfirm(false);
-        if (isSkip) {
-            handleSkip();
-        } else {
-            handleComplete();
-        }
+        handleSkip();
     };
 
     const handleNext = () => {
@@ -328,8 +324,8 @@ export default function TutorialTour({
                 measureStep(nextStep);
             });
         } else {
-            // 마지막 스텝: 확인 다이얼로그 표시
-            requestEnd();
+            // 마지막 스텝: 바로 완료
+            handleComplete();
         }
     };
 
@@ -827,9 +823,7 @@ export default function TutorialTour({
                             lineHeight: 1.5,
                             marginBottom: 20,
                         }}>
-                            {currentStep < steps.length - 1
-                                ? `아직 ${steps.length - currentStep - 1}개의 안내가 남아있어요`
-                                : "다음에 다시 볼 수 있어요"}
+                            아직 {steps.length - currentStep - 1}개의 안내가 남아있어요
                         </p>
                         <div style={{ display: "flex", gap: 8 }}>
                             <button
@@ -856,7 +850,7 @@ export default function TutorialTour({
                                 계속 볼게요
                             </button>
                             <button
-                                onClick={() => handleConfirmEnd(currentStep < steps.length - 1)}
+                                onClick={() => handleConfirmEnd()}
                                 style={{
                                     flex: 1,
                                     padding: "10px 0",
