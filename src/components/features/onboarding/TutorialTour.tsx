@@ -6,14 +6,16 @@
  * 모바일(<xl): 하단 네비 5개 순차 안내
  *
  * 스포트라이트: box-shadow 방식 (SVG 마스크보다 단순·확실)
- * 리트라이: 타겟 요소 못 찾으면 300ms마다 최대 10회 재시도
  *
  * 완료 시 onClose → page.tsx에서 RecordPageTutorial로 이어짐
+ *
+ * v3: ready 게이트 제거. 즉시 렌더링 + requestAnimationFrame 측정.
+ *     StrictMode 이중 실행에 완전 안전.
  */
 
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -99,7 +101,7 @@ export async function saveTutorialCompleteToDb(userId: string): Promise<void> {
 // 타겟 요소 찾기
 // ═══════════════════════════════════════════════════════════════
 
-function findTarget(targetId: string, isMobile: boolean): Element | null {
+function findTarget(targetId: string): Element | null {
     const all = document.querySelectorAll(`[data-tutorial-id="${targetId}"]`);
     if (all.length === 0) return null;
 
@@ -110,16 +112,7 @@ function findTarget(targetId: string, isMobile: boolean): Element | null {
     });
 
     if (visible.length === 0) return null;
-    if (visible.length === 1) return visible[0];
-
-    // 데스크톱/모바일에서 올바른 요소 선택
-    const mid = window.innerHeight / 2;
-    return (
-        visible.find((el) => {
-            const r = el.getBoundingClientRect();
-            return isMobile ? r.top > mid : r.top < mid;
-        }) || visible[0]
-    );
+    return visible[0];
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -135,158 +128,149 @@ export default function TutorialTour({
     const [currentStep, setCurrentStep] = useState(0);
     const [mounted, setMounted] = useState(false);
     const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
-    const [isMobile, setIsMobile] = useState(false);
-    const [ready, setReady] = useState(false); // 첫 측정 완료 후 true
     const onNavigateRef = useRef(onNavigate);
-    const retryTimerRef = useRef<ReturnType<typeof setTimeout>>();
-    const retryCountRef = useRef(0);
+    const onCloseRef = useRef(onClose);
+    const userIdRef = useRef(userId);
+    const pollRef = useRef<ReturnType<typeof setInterval>>();
+    const isOpenRef = useRef(isOpen);
+    const stepRef = useRef(0);
 
-    useEffect(() => {
-        onNavigateRef.current = onNavigate;
-    }, [onNavigate]);
+    // refs 동기화
+    useEffect(() => { onNavigateRef.current = onNavigate; }, [onNavigate]);
+    useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
+    useEffect(() => { userIdRef.current = userId; }, [userId]);
+    useEffect(() => { isOpenRef.current = isOpen; }, [isOpen]);
 
-    const isMobileCheck = useCallback(() => window.innerWidth < 1280, []);
+    const isMobile = typeof window !== "undefined" ? window.innerWidth < 1280 : false;
     const steps = isMobile ? MOBILE_STEPS : DESKTOP_STEPS;
 
     // ─────────────────────────────────────────────────────────
-    // 타겟 측정 (리트라이 포함)
+    // 타겟 측정 (폴링 방식 - 단순하고 StrictMode 안전)
     // ─────────────────────────────────────────────────────────
-    const measure = useCallback(
-        (stepIndex: number) => {
-            if (retryTimerRef.current) {
-                clearTimeout(retryTimerRef.current);
-                retryTimerRef.current = undefined;
-            }
+    const measureStep = (stepIndex: number) => {
+        // 기존 폴링 중단
+        if (pollRef.current) {
+            clearInterval(pollRef.current);
+            pollRef.current = undefined;
+        }
 
-            const mobile = isMobileCheck();
-            const list = mobile ? MOBILE_STEPS : DESKTOP_STEPS;
-            const step = list[stepIndex];
-            if (!step) {
-                setTargetRect(null);
-                setReady(true);
-                return;
-            }
+        const mobile = typeof window !== "undefined" ? window.innerWidth < 1280 : false;
+        const list = mobile ? MOBILE_STEPS : DESKTOP_STEPS;
+        const step = list[stepIndex];
+        if (!step) {
+            setTargetRect(null);
+            return;
+        }
 
-            const el = findTarget(step.targetId, mobile);
-
-            if (!el) {
-                // 리트라이: 최대 10회, 300ms 간격
-                if (retryCountRef.current < 10) {
-                    retryCountRef.current += 1;
-                    retryTimerRef.current = setTimeout(() => {
-                        measure(stepIndex);
-                    }, 300);
-                } else {
-                    // 포기 — targetRect null 상태로 진행
-                    setTargetRect(null);
-                    setReady(true);
-                }
-                return;
-            }
-
-            retryCountRef.current = 0;
-
+        // 즉시 한 번 시도
+        const el = findTarget(step.targetId);
+        if (el) {
             const rect = el.getBoundingClientRect();
-            // 뷰포트 밖이면 스크롤
             if (rect.top < 0 || rect.bottom > window.innerHeight) {
                 el.scrollIntoView({ behavior: "smooth", block: "center" });
-                retryTimerRef.current = setTimeout(() => {
+                // 스크롤 후 다시 측정
+                setTimeout(() => {
+                    if (!isOpenRef.current) return;
                     setTargetRect(el.getBoundingClientRect());
-                    setReady(true);
                 }, 400);
             } else {
                 setTargetRect(rect);
-                setReady(true);
             }
-        },
-        [isMobileCheck],
-    );
+            return;
+        }
+
+        // 못 찾으면 300ms 간격으로 최대 3초(10회) 폴링
+        let attempts = 0;
+        pollRef.current = setInterval(() => {
+            attempts++;
+            if (!isOpenRef.current || attempts > 10) {
+                if (pollRef.current) clearInterval(pollRef.current);
+                pollRef.current = undefined;
+                setTargetRect(null); // 못 찾아도 말풍선은 중앙에 표시됨
+                return;
+            }
+
+            const found = findTarget(step.targetId);
+            if (found) {
+                if (pollRef.current) clearInterval(pollRef.current);
+                pollRef.current = undefined;
+                const rect = found.getBoundingClientRect();
+                if (rect.top < 0 || rect.bottom > window.innerHeight) {
+                    found.scrollIntoView({ behavior: "smooth", block: "center" });
+                    setTimeout(() => {
+                        if (!isOpenRef.current) return;
+                        setTargetRect(found.getBoundingClientRect());
+                    }, 400);
+                } else {
+                    setTargetRect(rect);
+                }
+            }
+        }, 300);
+    };
 
     // ─────────────────────────────────────────────────────────
     // 마운트
     // ─────────────────────────────────────────────────────────
     useEffect(() => {
         setMounted(true);
-        setIsMobile(isMobileCheck());
-    }, [isMobileCheck]);
+    }, []);
 
     // ─────────────────────────────────────────────────────────
-    // 열릴 때 초기화 (StrictMode 안전 패턴: wasOpenRef 대신 if(!isOpen) return)
+    // isOpen 변경 시 초기화
     // ─────────────────────────────────────────────────────────
     useEffect(() => {
         if (!isOpen) {
-            setReady(false);
+            // 닫힐 때 정리
+            if (pollRef.current) {
+                clearInterval(pollRef.current);
+                pollRef.current = undefined;
+            }
             return;
         }
 
-        // isOpen=true → 항상 초기화 + 측정 시작
+        // 열릴 때 초기화
         setCurrentStep(0);
+        stepRef.current = 0;
         setTargetRect(null);
-        setReady(false);
-        setIsMobile(isMobileCheck());
-        retryCountRef.current = 0;
-
         onNavigateRef.current("home");
 
-        // DOM 준비 대기 후 첫 측정
+        // DOM 준비 대기 후 첫 측정 (500ms)
         const timer = setTimeout(() => {
-            measure(0);
+            if (!isOpenRef.current) return;
+            measureStep(0);
         }, 500);
 
         return () => {
             clearTimeout(timer);
+            if (pollRef.current) {
+                clearInterval(pollRef.current);
+                pollRef.current = undefined;
+            }
         };
-    }, [isOpen, measure, isMobileCheck]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen]);
 
     // ─────────────────────────────────────────────────────────
-    // 안전장치: 3초 후에도 ready=false이면 강제로 ready=true (까만 화면 방지)
-    // ─────────────────────────────────────────────────────────
-    useEffect(() => {
-        if (!isOpen || ready) return;
-        const safetyTimer = setTimeout(() => {
-            setReady(true);
-        }, 3000);
-        return () => clearTimeout(safetyTimer);
-    }, [isOpen, ready]);
-
-    // ─────────────────────────────────────────────────────────
-    // 스텝 변경 시 측정
-    // ─────────────────────────────────────────────────────────
-    useEffect(() => {
-        if (!isOpen || !ready) return;
-        // currentStep이 0이면 열릴 때 이미 측정했으므로 스킵
-        if (currentStep === 0) return;
-
-        retryCountRef.current = 0;
-        measure(currentStep);
-
-        return () => {
-            if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
-        };
-    }, [isOpen, currentStep, ready, measure]);
-
-    // ─────────────────────────────────────────────────────────
-    // 리사이즈
+    // 리사이즈 시 재측정
     // ─────────────────────────────────────────────────────────
     useEffect(() => {
         if (!isOpen) return;
 
         const handleResize = () => {
-            setIsMobile(isMobileCheck());
-            retryCountRef.current = 0;
-            measure(currentStep);
+            measureStep(stepRef.current);
         };
 
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
-    }, [isOpen, currentStep, isMobileCheck, measure]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen]);
 
     // ─────────────────────────────────────────────────────────
     // 정리
     // ─────────────────────────────────────────────────────────
     useEffect(() => {
         return () => {
-            if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+            if (pollRef.current) clearInterval(pollRef.current);
         };
     }, []);
 
@@ -299,70 +283,35 @@ export default function TutorialTour({
     if (!step) return null;
 
     // ─────────────────────────────────────────────────────────
-    // 핸들러 (ready 전 로딩 오버레이에서도 사용하므로 위에 정의)
+    // 핸들러
     // ─────────────────────────────────────────────────────────
     const handleComplete = () => {
         markTutorialComplete();
-        if (userId) saveTutorialCompleteToDb(userId);
-        onClose();
+        if (userIdRef.current) saveTutorialCompleteToDb(userIdRef.current);
+        onCloseRef.current();
     };
 
     const handleSkip = () => {
         markTutorialComplete();
-        if (userId) saveTutorialCompleteToDb(userId);
+        if (userIdRef.current) saveTutorialCompleteToDb(userIdRef.current);
         onNavigateRef.current("home");
-        onClose();
+        onCloseRef.current();
     };
 
     const handleNext = () => {
         if (currentStep < steps.length - 1) {
-            setCurrentStep((prev) => prev + 1);
+            const nextStep = currentStep + 1;
+            setCurrentStep(nextStep);
+            stepRef.current = nextStep;
+            setTargetRect(null);
+            // 다음 스텝 즉시 측정
+            requestAnimationFrame(() => {
+                measureStep(nextStep);
+            });
         } else {
             handleComplete();
         }
     };
-
-    // ─────────────────────────────────────────────────────────
-    // ready 전에는 로딩 오버레이 + 건너뛰기 버튼
-    // ─────────────────────────────────────────────────────────
-    if (!ready) {
-        return createPortal(
-            <>
-                <div
-                    style={{
-                        position: "fixed",
-                        inset: 0,
-                        zIndex: 9999,
-                        background: "rgba(0,0,0,0.6)",
-                        transition: "opacity 0.3s",
-                    }}
-                />
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        handleSkip();
-                    }}
-                    style={{
-                        position: "fixed",
-                        top: 16,
-                        right: 16,
-                        zIndex: 10002,
-                        padding: "8px 16px",
-                        background: "rgba(255,255,255,0.15)",
-                        backdropFilter: "blur(8px)",
-                        color: "white",
-                        fontSize: 14,
-                        borderRadius: 999,
-                        border: "none",
-                        cursor: "pointer",
-                    }}
-                >
-                    건너뛰기
-                </button>
-            </>,
-            document.body,
-        );
-    }
 
     // ─────────────────────────────────────────────────────────
     // 스포트라이트 좌표 (padding 8px)
@@ -426,19 +375,21 @@ export default function TutorialTour({
     // ─────────────────────────────────────────────────────────
     return createPortal(
         <>
-            {/* 1) 배경 딤 (스포트라이트 밖) - 클릭 시 다음 */}
-            <div
-                onClick={handleNext}
-                style={{
-                    position: "fixed",
-                    inset: 0,
-                    zIndex: 9998,
-                    background: "rgba(0,0,0,0.7)",
-                    cursor: "pointer",
-                }}
-            />
+            {/* 1) 배경 딤 — 스포트라이트가 없을 때도 어둡게 */}
+            {!spot && (
+                <div
+                    onClick={handleNext}
+                    style={{
+                        position: "fixed",
+                        inset: 0,
+                        zIndex: 9998,
+                        background: "rgba(0,0,0,0.7)",
+                        cursor: "pointer",
+                    }}
+                />
+            )}
 
-            {/* 2) 스포트라이트 구멍 — box-shadow로 딤 위에 구멍을 뚫는 방식 */}
+            {/* 2) 스포트라이트 구멍 — box-shadow로 주변을 어둡게 */}
             {spot && (
                 <div
                     onClick={handleNext}
@@ -478,6 +429,19 @@ export default function TutorialTour({
                 />
             )}
 
+            {/* 스포트라이트가 있을 때 나머지 영역도 클릭 가능하게 (다음 스텝으로) */}
+            {spot && (
+                <div
+                    onClick={handleNext}
+                    style={{
+                        position: "fixed",
+                        inset: 0,
+                        zIndex: 9997,
+                        cursor: "pointer",
+                    }}
+                />
+            )}
+
             {/* 4) 구름 말풍선 */}
             <div
                 style={{
@@ -487,7 +451,7 @@ export default function TutorialTour({
                     zIndex: 10001,
                     width: bubbleW,
                     pointerEvents: "none",
-                    animation: "fadeInScale 0.3s ease-out",
+                    animation: "tutorialFadeInScale 0.3s ease-out",
                 }}
             >
                 {/* 위 화살표 */}
@@ -706,7 +670,7 @@ export default function TutorialTour({
                             height: 12,
                             background: "#fde68a",
                             borderRadius: "50%",
-                            animation: "pulse 2s infinite",
+                            animation: "tutorialPulse 2s infinite",
                         }}
                     />
                     <div
@@ -718,7 +682,7 @@ export default function TutorialTour({
                             height: 8,
                             background: "#bae6fd",
                             borderRadius: "50%",
-                            animation: "pulse 2s infinite 0.5s",
+                            animation: "tutorialPulse 2s infinite 0.5s",
                         }}
                     />
                     <div
@@ -730,7 +694,7 @@ export default function TutorialTour({
                             height: 8,
                             background: "#ddd6fe",
                             borderRadius: "50%",
-                            animation: "pulse 2s infinite 0.3s",
+                            animation: "tutorialPulse 2s infinite 0.3s",
                         }}
                     />
                 </div>
@@ -788,7 +752,7 @@ export default function TutorialTour({
 
             {/* 6) CSS 애니메이션 */}
             <style>{`
-                @keyframes fadeInScale {
+                @keyframes tutorialFadeInScale {
                     from {
                         opacity: 0;
                         transform: scale(0.95);
@@ -798,7 +762,7 @@ export default function TutorialTour({
                         transform: scale(1);
                     }
                 }
-                @keyframes pulse {
+                @keyframes tutorialPulse {
                     0%, 100% { opacity: 1; }
                     50% { opacity: 0.5; }
                 }
