@@ -294,11 +294,11 @@ export default function PushNotificationBanner({
         : "bg-gradient-to-r from-sky-50 to-sky-100/80 border-sky-300 text-sky-900 dark:from-sky-950/60 dark:to-sky-900/40 dark:border-sky-700 dark:text-sky-100";
 
     const accentBg = isMemorialMode
-        ? "bg-amber-200/60 dark:bg-amber-800/60"
+        ? "bg-amber-200/60 dark:bg-gray-600/60"
         : "bg-sky-200/60 dark:bg-sky-800/60";
 
     const iconBg = isMemorialMode
-        ? "bg-amber-200 dark:bg-amber-800"
+        ? "bg-amber-200 dark:bg-gray-600"
         : "bg-sky-200 dark:bg-sky-800";
 
     const successIconBg = isMemorialMode
