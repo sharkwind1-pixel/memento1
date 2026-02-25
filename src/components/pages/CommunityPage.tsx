@@ -79,9 +79,13 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
     // 실제 데이터 상태
     const [posts, setPosts] = useState<Post[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
     const [showWriteModal, setShowWriteModal] = useState(false);
     const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
     const [visitUserId, setVisitUserId] = useState<string | null>(null);
+    const sentinelRef = useRef<HTMLDivElement>(null);
+    const POSTS_PER_PAGE = 15;
 
     // 신고 모달 상태
     const [reportTarget, setReportTarget] = useState<{
@@ -111,13 +115,24 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
         setSelectedTag("all"); // 말머리 필터 초기화
     };
 
-    // 게시글 불러오기
-    const fetchPosts = useCallback(async () => {
-        setIsLoading(true);
+    // 게시글 불러오기 (초기 로드 또는 추가 로드)
+    const fetchPosts = useCallback(async (loadMore = false) => {
+        if (loadMore) {
+            setIsLoadingMore(true);
+        } else {
+            setIsLoading(true);
+            setPosts([]);
+            setHasMore(true);
+        }
+
+        const offset = loadMore ? posts.length : 0;
+
         try {
             const params = new URLSearchParams({
                 board: currentSubcategory,
                 sort: sortBy,
+                limit: String(POSTS_PER_PAGE),
+                offset: String(offset),
             });
             if (selectedTag !== "all") {
                 params.append("tag", selectedTag);
@@ -132,45 +147,60 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
             }
             const data = await response.json();
 
-            if (data.posts && data.posts.length > 0) {
-                setPosts(data.posts.map((p: Post & { boardType?: string; animalType?: string }) => ({
+            if (data.posts) {
+                const mapped = data.posts.map((p: Post & { boardType?: string; animalType?: string }) => ({
                     ...p,
                     subcategory: p.subcategory || p.boardType || currentSubcategory,
                     tag: p.tag || p.animalType,
-                })));
-            } else if (data.posts) {
-                setPosts([]);
+                }));
+
+                if (loadMore) {
+                    setPosts(prev => [...prev, ...mapped]);
+                } else {
+                    setPosts(mapped);
+                }
+
+                // 더 불러올 게 있는지 판단
+                const total = data.total ?? Infinity;
+                setHasMore(offset + mapped.length < total);
             } else {
                 throw new Error("API 응답 없음");
             }
         } catch {
-            // 에러 시 목업 데이터로 폴백 + 사용자 알림
-            toast.error("게시글을 불러오지 못했습니다. 샘플 데이터를 표시합니다.");
-            const mockPosts = MOCK_POSTS[currentSubcategory] || [];
-            let filteredPosts = mockPosts;
+            if (!loadMore) {
+                // 초기 로드 실패 시 목업 데이터로 폴백
+                toast.error("게시글을 불러오지 못했습니다. 샘플 데이터를 표시합니다.");
+                const mockPosts = MOCK_POSTS[currentSubcategory] || [];
+                let filteredPosts = mockPosts;
 
-            // 자유게시판 말머리 필터링
-            if (currentSubcategory === "free" && selectedTag !== "all") {
-                filteredPosts = mockPosts.filter(p => p.tag === selectedTag);
+                if (currentSubcategory === "free" && selectedTag !== "all") {
+                    filteredPosts = mockPosts.filter(p => p.tag === selectedTag);
+                }
+
+                setPosts(filteredPosts.map((p) => ({
+                    id: String(p.id),
+                    userId: "",
+                    subcategory: currentSubcategory,
+                    tag: p.tag,
+                    badge: p.badge,
+                    title: p.title,
+                    content: p.content,
+                    authorName: p.author,
+                    likes: p.likes,
+                    views: p.views,
+                    comments: p.comments,
+                    createdAt: new Date().toISOString(),
+                })));
+                setHasMore(false);
             }
-
-            setPosts(filteredPosts.map((p) => ({
-                id: String(p.id),
-                userId: "",
-                subcategory: currentSubcategory,
-                tag: p.tag,
-                badge: p.badge,
-                title: p.title,
-                content: p.content,
-                authorName: p.author,
-                likes: p.likes,
-                views: p.views,
-                comments: p.comments,
-                createdAt: new Date().toISOString(),
-            })));
         } finally {
-            setIsLoading(false);
+            if (loadMore) {
+                setIsLoadingMore(false);
+            } else {
+                setIsLoading(false);
+            }
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentSubcategory, sortBy, selectedTag, searchQuery]);
 
     // 검색어 debounce (300ms)
@@ -186,8 +216,26 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
 
     // 서브카테고리/정렬/필터 변경 시 다시 로드
     useEffect(() => {
-        fetchPosts();
+        fetchPosts(false);
     }, [fetchPosts]);
+
+    // IntersectionObserver - 무한 스크롤
+    useEffect(() => {
+        const sentinel = sentinelRef.current;
+        if (!sentinel) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasMore && !isLoading && !isLoadingMore) {
+                    fetchPosts(true);
+                }
+            },
+            { rootMargin: "200px" }
+        );
+
+        observer.observe(sentinel);
+        return () => observer.disconnect();
+    }, [hasMore, isLoading, isLoadingMore, fetchPosts]);
 
     // 글쓰기 버튼 클릭
     const handleWriteClick = () => {
@@ -213,7 +261,7 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
                         postId={selectedPostId}
                         subcategory={currentSubcategory}
                         onBack={() => setSelectedPostId(null)}
-                        onPostDeleted={fetchPosts}
+                        onPostDeleted={() => fetchPosts(false)}
                     />
                 </div>
             </div>
@@ -504,6 +552,45 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
                             </Card>
                         ))
                     )}
+
+                    {/* 추가 로딩 스켈레톤 */}
+                    {isLoadingMore && (
+                        Array.from({ length: 3 }).map((_, i) => (
+                            <Card
+                                key={`loading-more-${i}`}
+                                className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 rounded-2xl animate-pulse"
+                            >
+                                <CardHeader className="pb-2">
+                                    <div className="flex items-start justify-between">
+                                        <div className="h-5 w-12 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+                                        <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
+                                    </div>
+                                    <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mt-2" />
+                                </CardHeader>
+                                <CardContent className="pb-2">
+                                    <div className="h-4 bg-gray-100 dark:bg-gray-700/70 rounded w-full mb-1.5" />
+                                    <div className="h-4 bg-gray-100 dark:bg-gray-700/70 rounded w-2/3" />
+                                </CardContent>
+                                <CardFooter className="flex items-center justify-between pt-2">
+                                    <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
+                                    <div className="flex items-center gap-4">
+                                        <div className="h-4 w-10 bg-gray-100 dark:bg-gray-700/70 rounded" />
+                                        <div className="h-4 w-10 bg-gray-100 dark:bg-gray-700/70 rounded" />
+                                    </div>
+                                </CardFooter>
+                            </Card>
+                        ))
+                    )}
+
+                    {/* 무한 스크롤 감지용 sentinel */}
+                    <div ref={sentinelRef} className="h-1" />
+
+                    {/* 더 이상 게시글 없음 */}
+                    {!isLoading && !hasMore && posts.length > 0 && (
+                        <p className="text-center text-sm text-gray-400 dark:text-gray-500 py-4">
+                            모든 게시글을 불러왔습니다
+                        </p>
+                    )}
                 </div>
 
                 {/* 게시글 없을 때 */}
@@ -541,7 +628,7 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
                 isOpen={showWriteModal}
                 onClose={() => setShowWriteModal(false)}
                 boardType={currentSubcategory}
-                onSuccess={fetchPosts}
+                onSuccess={() => fetchPosts(false)}
             />
 
             {/* 신고 모달 */}
