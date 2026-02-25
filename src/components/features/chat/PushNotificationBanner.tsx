@@ -27,7 +27,7 @@ interface PushNotificationBannerProps {
 }
 
 const DISMISS_KEY = "push-banner-dismissed";
-const DISMISS_DAYS = 7;
+const DISMISS_DAYS = 1;
 
 type BannerState = "loading" | "unsubscribed" | "subscribed" | "just-subscribed";
 
@@ -233,6 +233,8 @@ export default function PushNotificationBanner({
                 }
             }
 
+            // dismiss 기록 클리어 (해제 후 다시 구독 유도 배너 보이도록)
+            localStorage.removeItem(DISMISS_KEY);
             setBannerState("unsubscribed");
             setEditingTime(false);
             toast.success("알림이 해제되었습니다");
