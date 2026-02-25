@@ -82,6 +82,8 @@ export interface UseAIChatReturn {
     handleNewChat: () => void;
     handleSend: (directMessage?: string) => Promise<void>;
     handleRetry: (errorMessageId: string, retryMessage: string) => void;
+    handleReminderAccept: (messageId: string) => void;
+    handleReminderDismiss: (messageId: string) => void;
 }
 
 // ============================================================================
@@ -112,6 +114,8 @@ export function useAIChat({
     const [dailyUsage, setDailyUsage] = useState(0);
     const [reminders, setReminders] = useState<ReminderItem[]>([]);
     const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
+    /** 리마인더 안내 메시지 표시 여부 (세션당 1회) */
+    const reminderSuggestionShown = useRef(false);
 
 
     // ========================================================================
@@ -498,6 +502,22 @@ export function useAIChat({
                 emotionScore: data.emotionScore,
             };
             setMessages((prev) => [...prev, petMessage]);
+
+            // 일상 모드 + 세션 첫 대화 후 리마인더 안내 (1회만)
+            if (!isMemorialMode && !reminderSuggestionShown.current) {
+                reminderSuggestionShown.current = true;
+                // AI 응답 후 약간의 딜레이를 두고 자연스럽게 표시
+                setTimeout(() => {
+                    const reminderSuggestion: ChatMessage = {
+                        id: `reminder-suggestion-${Date.now()}`,
+                        role: "system",
+                        type: "reminder-suggestion",
+                        content: "리마인더로 알람이 필요한 시간을 적어주시면 알려드려요",
+                        timestamp: new Date(),
+                    };
+                    setMessages((prev) => [...prev, reminderSuggestion]);
+                }, 1200);
+            }
         } catch (err) {
             // 에러 유형별 시스템 메시지 표시 (채팅 내 인라인)
             const errorMessage =
@@ -535,6 +555,43 @@ export function useAIChat({
         handleSend(retryMessage);
     };
 
+    /**
+     * 리마인더 안내 "알려주세요" 클릭
+     * - 안내 카드를 확정 메시지로 교체
+     * - 푸시 알림 권한 요청은 AIChatPage에서 처리 (setSelectedTab 필요)
+     */
+    const handleReminderAccept = (messageId: string) => {
+        setMessages((prev) =>
+            prev.map((msg) =>
+                msg.id === messageId
+                    ? {
+                          ...msg,
+                          type: undefined,
+                          content: "좋아요! 케어 리마인더로 이동할게요. 알람 시간을 설정해보세요!",
+                      }
+                    : msg
+            )
+        );
+    };
+
+    /**
+     * 리마인더 안내 "괜찮아요" 클릭
+     * - 안내 카드를 거절 메시지로 교체
+     */
+    const handleReminderDismiss = (messageId: string) => {
+        setMessages((prev) =>
+            prev.map((msg) =>
+                msg.id === messageId
+                    ? {
+                          ...msg,
+                          type: undefined,
+                          content: "알겠어요! 필요할 때 언제든 우리의 기록에서 케어 리마인더를 이용해주세요.",
+                      }
+                    : msg
+            )
+        );
+    };
+
     // ========================================================================
     // 반환
     // ========================================================================
@@ -563,5 +620,7 @@ export function useAIChat({
         handleNewChat,
         handleSend,
         handleRetry,
+        handleReminderAccept,
+        handleReminderDismiss,
     };
 }
