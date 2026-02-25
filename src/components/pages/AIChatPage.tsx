@@ -43,6 +43,7 @@ import { useAIChat } from "@/components/features/chat/useAIChat";
 import AIChatLoginPrompt from "@/components/features/chat/AIChatLoginPrompt";
 import AIChatNoPets from "@/components/features/chat/AIChatNoPets";
 import AIChatHeader from "@/components/features/chat/AIChatHeader";
+import PushNotificationBanner from "@/components/features/chat/PushNotificationBanner";
 
 // ============================================================================
 // 타입 정의
@@ -192,6 +193,13 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
 
                 {/* 우측: 채팅 영역 */}
                 <div className="flex-1 flex flex-col min-h-0 lg:min-w-0" data-tutorial-id="ai-chat-area">
+                    {/* 푸시 알림 구독 유도 배너 */}
+                    <PushNotificationBanner
+                        petName={selectedPet?.name || ""}
+                        isMemorialMode={chat.isMemorialMode}
+                        hasMessages={chat.messages.length > 0}
+                    />
+
                     {/* AI 고지 배너 */}
                     <div
                         className={`mx-4 mt-2 mb-1 px-3 py-2 rounded-lg text-xs text-center transition-colors duration-700 ${

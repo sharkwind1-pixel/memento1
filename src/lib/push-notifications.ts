@@ -1,0 +1,99 @@
+/**
+ * 브라우저 푸시 알림 클라이언트 유틸리티
+ * Service Worker 등록, 푸시 구독/해제, 지원 여부 체크
+ */
+
+/**
+ * 브라우저가 푸시 알림을 지원하는지 확인
+ */
+export function isPushSupported(): boolean {
+    return (
+        typeof window !== "undefined" &&
+        "serviceWorker" in navigator &&
+        "PushManager" in window &&
+        "Notification" in window
+    );
+}
+
+/**
+ * 현재 알림 권한 상태 확인
+ */
+export function getNotificationPermission(): NotificationPermission | null {
+    if (typeof window === "undefined" || !("Notification" in window)) {
+        return null;
+    }
+    return Notification.permission;
+}
+
+/**
+ * Service Worker 등록
+ */
+export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
+    if (!isPushSupported()) return null;
+
+    try {
+        const registration = await navigator.serviceWorker.register("/sw.js");
+        return registration;
+    } catch {
+        console.error("[Push] Service Worker 등록 실패");
+        return null;
+    }
+}
+
+/**
+ * 푸시 알림 구독
+ */
+export async function subscribeToPush(
+    registration: ServiceWorkerRegistration,
+): Promise<PushSubscription | null> {
+    try {
+        const permission = await Notification.requestPermission();
+        if (permission !== "granted") return null;
+
+        const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+        if (!vapidPublicKey) {
+            console.error("[Push] VAPID 공개키가 설정되지 않았습니다");
+            return null;
+        }
+
+        const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+        });
+
+        return subscription;
+    } catch {
+        console.error("[Push] 푸시 구독 실패");
+        return null;
+    }
+}
+
+/**
+ * 현재 구독 상태 확인
+ */
+export async function getExistingSubscription(): Promise<PushSubscription | null> {
+    if (!isPushSupported()) return null;
+
+    try {
+        const registration = await navigator.serviceWorker.ready;
+        return await registration.pushManager.getSubscription();
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * VAPID 키를 Uint8Array로 변환 (Web Push API 요구사항)
+ */
+function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding)
+        .replace(/-/g, "+")
+        .replace(/_/g, "/");
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray.buffer as ArrayBuffer;
+}
