@@ -29,7 +29,7 @@ interface PushNotificationBannerProps {
 const DISMISS_KEY = "push-banner-dismissed";
 const DISMISS_DAYS = 1;
 
-type BannerState = "loading" | "unsubscribed" | "subscribed" | "just-subscribed";
+type BannerState = "loading" | "unsubscribed" | "subscribed" | "just-subscribed" | "unsupported";
 
 /** 시간 옵션 (KST 7시~22시) */
 const HOUR_OPTIONS = Array.from({ length: 16 }, (_, i) => {
@@ -59,7 +59,22 @@ export default function PushNotificationBanner({
     // 배너 표시 여부 판단 (페이지 진입 2초 후)
     useEffect(() => {
         const timer = setTimeout(async () => {
-            if (!isPushSupported()) return;
+            // 푸시 미지원 브라우저 → 안내 배너만 표시
+            if (!isPushSupported()) {
+                const dismissed = localStorage.getItem(DISMISS_KEY);
+                if (dismissed) {
+                    const dismissedAt = new Date(dismissed).getTime();
+                    if (Date.now() - dismissedAt < DISMISS_DAYS * 24 * 60 * 60 * 1000) {
+                        return;
+                    }
+                }
+                setBannerState("unsupported");
+                setVisible(true);
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => setAnimateIn(true));
+                });
+                return;
+            }
 
             const permission = getNotificationPermission();
             if (permission === "denied") return; // 이미 거부 → 배너 안 보임
@@ -410,6 +425,32 @@ export default function PushNotificationBanner({
                             </button>
                         </div>
                     </>
+                )}
+
+                {/* 미지원 브라우저 안내 */}
+                {bannerState === "unsupported" && (
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${iconBg}`}>
+                                <Bell className="w-3.5 h-3.5" />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="font-medium text-sm truncate">
+                                    {petName}이(가) 매일 먼저 인사해요
+                                </p>
+                                <p className={`text-xs mt-0.5 ${subTextColor}`}>
+                                    Chrome 또는 Safari에서 알림을 받을 수 있어요
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={handleDismiss}
+                            className="p-1 rounded-md hover:bg-black/10 dark:hover:bg-white/10 transition-colors flex-shrink-0"
+                            aria-label="닫기"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
                 )}
 
             </div>
