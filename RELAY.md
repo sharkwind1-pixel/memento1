@@ -1,5 +1,29 @@
 # 릴레이
 
+> **새 세션 필독**: 아래 "완료된 핵심 기능"을 반드시 먼저 읽고 작업할 것. 이미 구현된 기능을 모르는 상태로 작업하면 안 됨.
+
+## 완료된 핵심 기능 (코드 + 배포 완료)
+
+| 기능 | 핵심 파일 | 상태 |
+|------|----------|------|
+| **반려동물 CRUD** | `PetContext.tsx`, `PetFormModal.tsx`, `/api` routes | 완료 - 사진/영상 관리 포함 |
+| **AI 펫톡** | `AIChatPage.tsx`, `useAIChat.ts`, `/api/chat/route.ts` | 완료 - GPT-4o-mini, 일상/추모 듀얼모드, 감정분석 |
+| **케어 리마인더** | `RemindersPage.tsx`, `RemindersSection.tsx`, `ReminderPanel.tsx`, `/api/reminders` | 완료 - CRUD + 시간 설정 |
+| **푸시 알림 시스템** | `PushNotificationBanner.tsx`, `push-notifications.ts`, `/api/notifications/subscribe`, `/api/cron/daily-greeting` | 완료 - VAPID + web-push + Service Worker + 크론 발송 |
+| **리마인더↔푸시 자동 연동** | `ensurePushSubscription()` in `push-notifications.ts` | 완료 - 리마인더 저장 시 자동 푸시 구독 |
+| **알림 거부 UX** | `AIChatPage.tsx`, `PushNotificationBanner.tsx` | 완료 - denied 시 OS별 설정 안내 배너/toast |
+| **타임라인 일기** | `TimelineSection.tsx`, timeline API | 완료 - 편집 포함 |
+| **듀얼 모드 (일상/추모)** | 전체 UI, `MemorialModeContext` | 완료 - 하늘색↔황금빛 테마 전환 |
+| **무지개다리 세레모니** | `MemorialSwitchModal.tsx` | 완료 - 5단계 (마음의 준비→날짜→슬라이드쇼→작별인사→별이되다) |
+| **튜토리얼** | `TutorialTour.tsx`, `RecordPageTutorial.tsx` | 완료 - 데스크톱 11스텝, 모바일 5스텝 |
+| **미니홈피** | `MiniHomepyTab.tsx`, `MinihompyStage.tsx` | 완료 - 배경 8종, 멀티미니미 드래그&드롭 |
+| **커뮤니티** | `CommunityPage.tsx`, `/api/posts` | 완료 - 5개 게시판, 좋아요/댓글/신고, 무한스크롤 |
+| **프리미엄/무료 제한** | `AuthContext.tsx`, `PremiumModal.tsx` | 완료 - DB 기반 is_premium 체크 |
+| **관리자 페이지** | `AdminPage.tsx` | 완료 - 사용자/게시물 관리 |
+| **Vercel 환경변수** | `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | Production 설정 완료 |
+
+---
+
 ## [완료] 알림 거부 UX 개선 (`bf5f0ec`) - 배포 완료
 
 > **상태**: 커밋 + main 머지 + push 완료. Vercel 배포됨.
