@@ -197,7 +197,6 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                     <PushNotificationBanner
                         petName={selectedPet?.name || ""}
                         isMemorialMode={chat.isMemorialMode}
-                        hasMessages={chat.messages.length > 0}
                     />
 
                     {/* AI 고지 배너 */}
