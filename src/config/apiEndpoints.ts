@@ -62,6 +62,10 @@ export const API = {
     // 푸시 알림
     NOTIFICATIONS_SUBSCRIBE: "/api/notifications/subscribe",
 
+    // 추억 앨범
+    MEMORY_ALBUMS: "/api/memory-albums",
+    MEMORY_ALBUM_READ: (id: string) => `/api/memory-albums/${id}/read`,
+
     // 관리자
     ADMIN_POINTS: "/api/admin/points",
 } as const;

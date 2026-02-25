@@ -20,7 +20,44 @@
 | **커뮤니티** | `CommunityPage.tsx`, `/api/posts` | 완료 - 5개 게시판, 좋아요/댓글/신고, 무한스크롤 |
 | **프리미엄/무료 제한** | `AuthContext.tsx`, `PremiumModal.tsx` | 완료 - DB 기반 is_premium 체크 |
 | **관리자 페이지** | `AdminPage.tsx` | 완료 - 사용자/게시물 관리 |
+| **추억 앨범 (추모 전용)** | `MemoryAlbumsSection.tsx`, `MemoryAlbumViewer.tsx`, `/api/memory-albums`, cron Phase 1.75 | 완료 - 매일 자동 앨범 생성, 슬라이드쇼, 푸시 알림 |
 | **Vercel 환경변수** | `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | Production 설정 완료 |
+
+---
+
+## [완료] 추억 앨범 (Memorial Memory Album) - 배포 대기
+
+> **상태**: 코드 완료 + 빌드 성공. DB 마이그레이션 필요 (아래 미실행 마이그레이션 참고).
+
+### 개요
+추모 모드 전용 기능. 매일 KST 09시에 반려동물 사진을 자동 수집하여 추억 앨범 생성.
+푸시 알림으로 "도착했어요" 알림 → 우리의 기록 페이지에서 슬라이드쇼로 열람.
+
+### 신규/수정 파일 (8개)
+
+| 파일 | 작업 |
+|------|------|
+| `supabase/migrations/20260226_memory_albums.sql` | **신규** - memory_albums 테이블, RLS, 인덱스 |
+| `src/types/index.ts` | MemoryAlbum, MemoryAlbumConcept 타입 추가 |
+| `src/config/apiEndpoints.ts` | MEMORY_ALBUMS, MEMORY_ALBUM_READ 상수 |
+| `src/app/api/memory-albums/route.ts` | **신규** - 앨범 조회 API (GET) |
+| `src/app/api/memory-albums/[id]/read/route.ts` | **신규** - 앨범 읽음 처리 API (PATCH) |
+| `src/app/api/cron/daily-greeting/route.ts` | Phase 1.75 추가: 앨범 자동 생성 + 푸시 |
+| `src/components/features/record/MemoryAlbumViewer.tsx` | **신규** - 전체화면 슬라이드쇼 모달 |
+| `src/components/features/record/MemoryAlbumsSection.tsx` | **신규** - 앨범 카드 수평 스크롤 리스트 |
+| `src/components/pages/RecordPage.tsx` | memorial 펫일 때 MemoryAlbumsSection 렌더, URL 딥링크 |
+
+### 앨범 생성 로직 (크론 Phase 1.75)
+- 3가지 컨셉 우선순위: anniversary(같은 MM-DD) → mood(행복한 날) → random(랜덤 5-10장)
+- 최근 7일 사용된 사진 제외 (반복 방지)
+- UNIQUE(pet_id, created_date) 제약으로 하루 1번
+
+### 검증
+- `tsc --noEmit` 통과
+- `next build` 성공
+
+### 미실행 마이그레이션
+- `supabase/migrations/20260226_memory_albums.sql` - Supabase 대시보드에서 SQL Editor로 실행 필요
 
 ---
 

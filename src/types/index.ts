@@ -761,3 +761,25 @@ export interface MinihompyViewData {
     guestbookTotal: number;
     isLiked: boolean;
 }
+
+// ============================================
+// 9. 추억 앨범 관련 타입
+// ============================================
+
+/** 추억 앨범 컨셉 */
+export type MemoryAlbumConcept = "anniversary" | "mood" | "random";
+
+/** 추억 앨범 */
+export interface MemoryAlbum {
+    id: string;
+    petId: string;
+    userId: string;
+    concept: MemoryAlbumConcept;
+    title: string;
+    description?: string;
+    mediaIds: string[];
+    isRead: boolean;
+    createdDate: string;
+    createdAt: string;
+    photos?: PetPhoto[];
+}

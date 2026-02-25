@@ -61,6 +61,7 @@ import PhotoViewer from "@/components/features/record/PhotoViewer";
 import PetProfileCard from "@/components/features/record/PetProfileCard";
 import PetPhotoAlbum from "@/components/features/record/PetPhotoAlbum";
 import RemindersSection from "@/components/features/reminders/RemindersSection";
+import MemoryAlbumsSection from "@/components/features/record/MemoryAlbumsSection";
 
 interface RecordPageProps {
     setSelectedTab?: (tab: TabType) => void;
@@ -432,6 +433,17 @@ function RecordPage({ setSelectedTab }: RecordPageProps) {
     // 프리미엄 모달 상태
     const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
     const [premiumFeature, setPremiumFeature] = useState<"pet-limit" | "photo-limit">("pet-limit");
+
+    // 추억 앨범 딥링크 (푸시 알림에서 album 파라미터)
+    const [initialAlbumId, setInitialAlbumId] = useState<string | null>(null);
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const albumId = params.get("album");
+        if (albumId) {
+            setInitialAlbumId(albumId);
+        }
+    }, []);
 
     // 무료/프리미엄 회원 제한 (AuthContext에서 DB 기반 체크)
     const isPremium = isPremiumUser;
@@ -1060,6 +1072,17 @@ function RecordPage({ setSelectedTab }: RecordPageProps) {
                                     onMemorialClick={() => setIsMemorialModalOpen(true)}
                                     onRecoverToActive={handleRecoverToActive}
                                 />
+
+                                {/* 추억 앨범 섹션 (추모 모드 전용) */}
+                                {selectedPet.status === "memorial" && (
+                                    <div className="mt-6">
+                                        <MemoryAlbumsSection
+                                            petId={selectedPet.id}
+                                            petName={selectedPet.name}
+                                            initialAlbumId={initialAlbumId}
+                                        />
+                                    </div>
+                                )}
 
                                 {/* 사진/영상 앨범 */}
                                 <PetPhotoAlbum
