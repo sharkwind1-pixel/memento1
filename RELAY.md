@@ -1,5 +1,33 @@
 # 릴레이
 
+## [!!] 튜토리얼 전면 수정 (`a6b4e53`) - 테스트 필요
+
+> **상태**: 커밋 + 푸시 완료. **데스크톱/모바일 양쪽 테스트 필요.**
+
+### 변경 내용
+
+**1. TutorialTour.tsx 완전 재작성**
+- SVG 마스크 → **box-shadow 스포트라이트** 방식으로 전환 (더 단순하고 확실)
+- 데스크톱(xl+): 사이드바 항목 11스텝 순차 안내 (등급→미니미→포인트→상점→홈→기록→커뮤니티→AI펫톡→매거진→질문/신고→건의사항)
+- 모바일(<xl): 하단 네비 5스텝 순차 안내
+- 완료 시 RecordPageTutorial로 이어짐 (current/memorial 유저)
+
+**2. 데스크톱 까만 오버레이 버그 수정**
+- **원인**: React 18 StrictMode 이중 실행으로 `wasOpenRef` + `setTimeout` 패턴이 깨져서 `measure(0)`이 영영 호출되지 않음 → `ready=false` 영원 → 까만 오버레이만 표시
+- **수정**: `wasOpenRef` 제거, `if (!isOpen) return;` 패턴 적용 (RecordPageTutorial과 동일)
+- 안전장치: 3초 타임아웃으로 까만 화면 강제 탈출
+- 로딩 중에도 "건너뛰기" 버튼 표시
+
+**3. data-tutorial-id 속성 추가**
+- PointsBadge: `sidebar-level`, `sidebar-minimi`, `sidebar-points`, `sidebar-shop` (스켈레톤에도 추가)
+- Sidebar: `sidebar-inquiry`, `sidebar-suggestion`
+- HomePage/CommunityPage/AIChatPage/MagazinePage/RecordPage: 각 페이지 콘텐츠 영역
+
+### 수정 파일 (10개)
+`TutorialTour.tsx`, `RecordPageTutorial.tsx`, `PointsBadge.tsx`, `Sidebar.tsx`, `HomePage.tsx`, `CommunityPage.tsx`, `AIChatPage.tsx`, `MagazinePage.tsx`, `RecordPage.tsx`, `types/index.ts`
+
+---
+
 ## [!!] 모바일 깜빡임 문제 - 7번째 커밋으로 수정 적용 (`e3aa66f`)
 
 > **상태**: React.memo + Layout 헤더/네비 분리로 근본적 해결 시도. **모바일 테스트 필요.**
@@ -74,6 +102,7 @@
 | 사이드바 전체 스크롤 개선 | (이전) | `Sidebar.tsx` | 완료 |
 | 미니미 구매 확인 다이얼로그 | (이전) | `MinimiShopModal.tsx` | 완료 |
 | equipped_minimi_id UUID 호환성 | (이전) | equip/inventory/sell/minihompy API, `AuthContext.tsx` | 완료 |
+| **튜토리얼 전면 수정** | `a6b4e53` | `TutorialTour.tsx`, `RecordPageTutorial.tsx`, `PointsBadge.tsx`, `Sidebar.tsx`, 각 페이지 | **완료 - 테스트 필요** |
 
 ### 버그 수정
 
@@ -89,6 +118,8 @@
 | 골든리트리버 미니미 가격 200P 통일 | `b8acb52` | 완료 |
 | 모바일 헤더 미니미 아이콘 숨김 | `4c1e178` | 완료 |
 | 모바일 깜빡임 (8커밋) | `43a434f`~`9a33015` | **React.memo + MemorialModeContext 적용** - 모바일 테스트 필요 |
+| **데스크톱 튜토리얼 까만 오버레이만 표시** | `a6b4e53` | **완료** - React 18 StrictMode 이중 실행으로 wasOpenRef 패턴 깨짐 → 제거 후 수정 |
+| 우리의 기록 튜토리얼 2번째 모달 화면 밖 이탈 | `e78022b` | 완료 |
 
 ### 모바일 UX/UI 개선 (`3e9aa89`, `d0b69f9`)
 
