@@ -62,17 +62,7 @@ export default function PushNotificationBanner({
             if (!isPushSupported()) return;
 
             const permission = getNotificationPermission();
-            if (permission === "denied") {
-                // 거부 상태에서도 배너 표시 (설정 변경 안내 목적)
-                setBannerState("unsubscribed");
-                setVisible(true);
-                requestAnimationFrame(() => {
-                    requestAnimationFrame(() => {
-                        setAnimateIn(true);
-                    });
-                });
-                return;
-            }
+            if (permission === "denied") return; // 이미 거부 → 배너 안 보임
 
             const existing = await getExistingSubscription();
 
@@ -140,18 +130,9 @@ export default function PushNotificationBanner({
 
             const subscription = await subscribeToPush(registration);
             if (!subscription) {
-                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-                if (isIOS) {
-                    toast.info(
-                        "아이폰 설정 앱 > Safari > 알림에서 이 사이트를 허용해주세요",
-                        { duration: 8000 }
-                    );
-                } else {
-                    toast.info(
-                        "브라우저 설정 > 사이트 설정 > 알림에서 mementoani.com을 허용해주세요",
-                        { duration: 8000 }
-                    );
-                }
+                // 거부됨 → 배너만 숨김 (dismiss 기록은 남기지 않음 → 다음 방문 시 다시 표시)
+                setAnimateIn(false);
+                setTimeout(() => setVisible(false), 300);
                 setActionLoading(false);
                 return;
             }
