@@ -17,6 +17,7 @@ import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MemoryAlbum } from "@/types";
 import { API } from "@/config/apiEndpoints";
+import { authFetch } from "@/lib/auth-fetch";
 
 interface MemoryAlbumViewerProps {
     album: MemoryAlbum;
@@ -46,7 +47,7 @@ export default function MemoryAlbumViewer({
     // ---- Close handler: mark as read (fire-and-forget) then close ----
     const handleClose = useCallback(() => {
         if (!album.isRead) {
-            fetch(API.MEMORY_ALBUM_READ(album.id), { method: "PATCH" }).catch(
+            authFetch(API.MEMORY_ALBUM_READ(album.id), { method: "PATCH" }).catch(
                 () => {
                     /* fire-and-forget */
                 }
@@ -77,11 +78,20 @@ export default function MemoryAlbumViewer({
                 case "Escape":
                     handleClose();
                     break;
+                case " ":
+                case "Enter":
+                    e.preventDefault();
+                    if (currentIndex < totalPhotos - 1) {
+                        goToNext();
+                    } else {
+                        handleClose();
+                    }
+                    break;
             }
         };
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [goToPrev, goToNext, handleClose]);
+    }, [goToPrev, goToNext, handleClose, currentIndex, totalPhotos]);
 
     // ---- Touch swipe support ----
     const handleTouchStart = (e: React.TouchEvent) => {
@@ -200,7 +210,7 @@ export default function MemoryAlbumViewer({
                         variant="ghost"
                         size="icon"
                         onClick={goToPrev}
-                        className="absolute left-2 top-1/2 -translate-y-1/2 text-white hover:bg-white/20 rounded-full w-10 h-10"
+                        className="absolute left-2 top-1/2 -translate-y-1/2 text-white bg-black/40 hover:bg-black/60 rounded-full w-10 h-10"
                         aria-label="이전 사진"
                     >
                         <ChevronLeft className="w-6 h-6" />
@@ -213,7 +223,7 @@ export default function MemoryAlbumViewer({
                         variant="ghost"
                         size="icon"
                         onClick={goToNext}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-white hover:bg-white/20 rounded-full w-10 h-10"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-white bg-black/40 hover:bg-black/60 rounded-full w-10 h-10"
                         aria-label="다음 사진"
                     >
                         <ChevronRight className="w-6 h-6" />

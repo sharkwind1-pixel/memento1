@@ -145,7 +145,7 @@ export default function MemoryAlbumsSection({
                     {[1, 2, 3].map((i) => (
                         <div
                             key={i}
-                            className="w-40 flex-shrink-0 rounded-xl overflow-hidden"
+                            className="w-32 flex-shrink-0 rounded-xl overflow-hidden"
                         >
                             <div className="aspect-[3/4] bg-amber-100/60 animate-pulse rounded-xl" />
                             <div className="p-2 space-y-1.5">
@@ -193,7 +193,7 @@ export default function MemoryAlbumsSection({
                             <div
                                 key={album.id}
                                 onClick={() => handleAlbumClick(album)}
-                                className="w-40 flex-shrink-0 rounded-xl overflow-hidden cursor-pointer bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/50 transition-all duration-200 hover:ring-2 hover:ring-amber-300 hover:scale-[1.02] active:ring-2 active:ring-amber-300 active:scale-[1.02]"
+                                className="w-32 flex-shrink-0 rounded-xl overflow-hidden cursor-pointer bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/50 transition-all duration-200 hover:ring-2 hover:ring-amber-300 hover:scale-[1.02] active:ring-2 active:ring-amber-300 active:scale-[1.02]"
                             >
                                 {/* 커버 이미지 */}
                                 <div className="aspect-[3/4] relative bg-amber-100/40">
