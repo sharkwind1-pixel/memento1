@@ -128,6 +128,7 @@ export default function TutorialTour({
     const [currentStep, setCurrentStep] = useState(0);
     const [mounted, setMounted] = useState(false);
     const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
+    const [showConfirm, setShowConfirm] = useState(false);
     const onNavigateRef = useRef(onNavigate);
     const onCloseRef = useRef(onClose);
     const userIdRef = useRef(userId);
@@ -296,6 +297,26 @@ export default function TutorialTour({
         onCloseRef.current();
     };
 
+    // 종료 확인 요청 (건너뛰기 / 마지막 스텝 완료 시)
+    const requestEnd = () => {
+        setShowConfirm(true);
+    };
+
+    // 확인 다이얼로그에서 "계속하기" 선택
+    const handleCancelEnd = () => {
+        setShowConfirm(false);
+    };
+
+    // 확인 다이얼로그에서 "종료" 선택
+    const handleConfirmEnd = (isSkip: boolean) => {
+        setShowConfirm(false);
+        if (isSkip) {
+            handleSkip();
+        } else {
+            handleComplete();
+        }
+    };
+
     const handleNext = () => {
         if (currentStep < steps.length - 1) {
             const nextStep = currentStep + 1;
@@ -307,7 +328,8 @@ export default function TutorialTour({
                 measureStep(nextStep);
             });
         } else {
-            handleComplete();
+            // 마지막 스텝: 확인 다이얼로그 표시
+            requestEnd();
         }
     };
 
@@ -719,7 +741,7 @@ export default function TutorialTour({
             <button
                 onClick={(e) => {
                     e.stopPropagation();
-                    handleSkip();
+                    requestEnd();
                 }}
                 style={{
                     position: "fixed",
@@ -748,7 +770,120 @@ export default function TutorialTour({
                 건너뛰기
             </button>
 
-            {/* 6) CSS 애니메이션 */}
+            {/* 6) 종료 확인 다이얼로그 */}
+            {showConfirm && (
+                <div
+                    style={{
+                        position: "fixed",
+                        inset: 0,
+                        zIndex: 10010,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        background: "rgba(0,0,0,0.5)",
+                    }}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        handleCancelEnd();
+                    }}
+                >
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            background: "white",
+                            borderRadius: 20,
+                            padding: "28px 24px 20px",
+                            width: 280,
+                            textAlign: "center",
+                            boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+                            animation: "tutorialFadeInScale 0.2s ease-out",
+                        }}
+                    >
+                        <div
+                            style={{
+                                width: 48,
+                                height: 48,
+                                margin: "0 auto 12px",
+                                background: "linear-gradient(135deg, #e0f2fe, #ede9fe)",
+                                borderRadius: "50%",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                            }}
+                        >
+                            <Sparkles style={{ width: 24, height: 24, color: "#05B2DC" }} />
+                        </div>
+                        <p style={{
+                            fontSize: 17,
+                            fontWeight: 700,
+                            color: "#374151",
+                            marginBottom: 6,
+                        }}>
+                            안내를 종료할까요?
+                        </p>
+                        <p style={{
+                            fontSize: 13,
+                            color: "#9ca3af",
+                            lineHeight: 1.5,
+                            marginBottom: 20,
+                        }}>
+                            {currentStep < steps.length - 1
+                                ? `아직 ${steps.length - currentStep - 1}개의 안내가 남아있어요`
+                                : "다음에 다시 볼 수 있어요"}
+                        </p>
+                        <div style={{ display: "flex", gap: 8 }}>
+                            <button
+                                onClick={() => handleCancelEnd()}
+                                style={{
+                                    flex: 1,
+                                    padding: "10px 0",
+                                    borderRadius: 12,
+                                    border: "1px solid #e5e7eb",
+                                    background: "white",
+                                    color: "#6b7280",
+                                    fontSize: 14,
+                                    fontWeight: 600,
+                                    cursor: "pointer",
+                                    transition: "all 0.2s",
+                                }}
+                                onMouseEnter={(e) => {
+                                    (e.target as HTMLElement).style.background = "#f9fafb";
+                                }}
+                                onMouseLeave={(e) => {
+                                    (e.target as HTMLElement).style.background = "white";
+                                }}
+                            >
+                                계속 볼게요
+                            </button>
+                            <button
+                                onClick={() => handleConfirmEnd(currentStep < steps.length - 1)}
+                                style={{
+                                    flex: 1,
+                                    padding: "10px 0",
+                                    borderRadius: 12,
+                                    border: "none",
+                                    background: "linear-gradient(135deg, #05B2DC, #38BDF8)",
+                                    color: "white",
+                                    fontSize: 14,
+                                    fontWeight: 600,
+                                    cursor: "pointer",
+                                    transition: "all 0.2s",
+                                }}
+                                onMouseEnter={(e) => {
+                                    (e.target as HTMLElement).style.opacity = "0.9";
+                                }}
+                                onMouseLeave={(e) => {
+                                    (e.target as HTMLElement).style.opacity = "1";
+                                }}
+                            >
+                                종료할게요
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 7) CSS 애니메이션 */}
             <style>{`
                 @keyframes tutorialFadeInScale {
                     from {
