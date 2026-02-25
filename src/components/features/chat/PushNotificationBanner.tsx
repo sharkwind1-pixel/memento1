@@ -140,16 +140,29 @@ export default function PushNotificationBanner({
 
             const subscription = await subscribeToPush(registration);
             if (!subscription) {
-                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+                const ua = navigator.userAgent;
+                const isIOS = /iPad|iPhone|iPod/.test(ua);
+                const isSamsung = /SamsungBrowser/.test(ua);
+                const isAndroid = /Android/.test(ua);
                 if (isIOS) {
                     toast.info(
-                        "알림을 받으려면: 설정 앱 > Safari > 알림에서 이 사이트를 허용해주세요",
-                        { duration: 6000 }
+                        "설정 앱 > Safari > 알림에서 이 사이트를 허용해주세요",
+                        { duration: 8000 }
+                    );
+                } else if (isSamsung) {
+                    toast.info(
+                        "주소창 오른쪽 메뉴 > 설정 > 사이트 설정 > 알림에서 허용해주세요",
+                        { duration: 8000 }
+                    );
+                } else if (isAndroid) {
+                    toast.info(
+                        "주소창 오른쪽 점 3개 메뉴 > 설정 > 사이트 설정 > 알림에서 허용해주세요",
+                        { duration: 8000 }
                     );
                 } else {
                     toast.info(
-                        "알림을 받으려면: 주소창 왼쪽 자물쇠 > 알림 > 허용으로 변경해주세요",
-                        { duration: 6000 }
+                        "주소창 왼쪽 아이콘 클릭 > 사이트 설정 > 알림을 허용으로 변경해주세요",
+                        { duration: 8000 }
                     );
                 }
                 setActionLoading(false);

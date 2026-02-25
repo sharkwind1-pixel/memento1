@@ -105,17 +105,30 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
             const permission = Notification.permission;
 
             if (permission === "denied") {
-                // 이미 거부됨 → OS별 구체적 설정 변경 안내
-                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+                // 이미 거부됨 → OS/브라우저별 구체적 설정 변경 안내
+                const ua = navigator.userAgent;
+                const isIOS = /iPad|iPhone|iPod/.test(ua);
+                const isAndroid = /Android/.test(ua);
+                const isSamsung = /SamsungBrowser/.test(ua);
                 if (isIOS) {
                     toast.info(
-                        "알림을 받으려면: 설정 앱 > Safari > 알림에서 이 사이트를 허용해주세요",
-                        { duration: 6000 }
+                        "설정 앱 > Safari > 알림에서 이 사이트를 허용해주세요",
+                        { duration: 8000 }
+                    );
+                } else if (isSamsung) {
+                    toast.info(
+                        "주소창 오른쪽 메뉴 > 설정 > 사이트 설정 > 알림에서 허용해주세요",
+                        { duration: 8000 }
+                    );
+                } else if (isAndroid) {
+                    toast.info(
+                        "주소창 오른쪽 점 3개 메뉴 > 설정 > 사이트 설정 > 알림에서 허용해주세요",
+                        { duration: 8000 }
                     );
                 } else {
                     toast.info(
-                        "알림을 받으려면: 주소창 왼쪽 자물쇠 > 알림 > 허용으로 변경해주세요",
-                        { duration: 6000 }
+                        "주소창 왼쪽 아이콘 클릭 > 사이트 설정 > 알림을 허용으로 변경해주세요",
+                        { duration: 8000 }
                     );
                 }
             } else if (permission === "default") {
