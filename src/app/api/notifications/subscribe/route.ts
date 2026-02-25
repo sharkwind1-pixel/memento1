@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { subscription } = body;
+        const { subscription, preferredHour } = body;
 
         if (
             !subscription?.endpoint ||
@@ -45,6 +45,11 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // preferredHour 검증 (KST 7~22시, 기본 9시)
+        const hour = typeof preferredHour === "number" && preferredHour >= 0 && preferredHour <= 23
+            ? preferredHour
+            : 9;
+
         const supabase = getServiceSupabase();
 
         const { error } = await supabase
@@ -55,6 +60,7 @@ export async function POST(request: NextRequest) {
                     endpoint: subscription.endpoint,
                     p256dh: subscription.keys.p256dh,
                     auth: subscription.keys.auth,
+                    preferred_hour: hour,
                     updated_at: new Date().toISOString(),
                 },
                 { onConflict: "user_id,endpoint" },
