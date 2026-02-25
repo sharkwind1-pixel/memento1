@@ -1,7 +1,9 @@
 /**
  * 푸시 알림 발송 크론 (매시간 실행)
  *
- * Vercel Cron에 의해 매시간 실행
+ * Supabase pg_cron + pg_net으로 매시간 호출
+ * (Vercel Hobby 크론은 1일 1회 제한이므로 Supabase에서 매시간 HTTP GET 호출)
+ *
  * Phase 1: 케어 리마인더 알림 발송
  *   - 현재 KST 시간에 해당하는 리마인더 조회 (schedule_time 시간 매칭)
  *   - 스케줄 타입별 필터 (daily/weekly/monthly/once)
