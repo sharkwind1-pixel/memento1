@@ -62,7 +62,7 @@ const CATEGORY_CONFIG = {
     suggestion: {
         label: "건의",
         icon: Lightbulb,
-        color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+        color: "bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300",
     },
 } as const;
 

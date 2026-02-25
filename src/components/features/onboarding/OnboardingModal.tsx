@@ -359,7 +359,7 @@ export default function OnboardingModal({
                                     onClick={() => setData({ ...data, userType: "memorial" })}
                                     className={`w-full p-4 rounded-2xl border-2 transition-all flex items-center gap-4 ${
                                         data.userType === "memorial"
-                                            ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20"
+                                            ? "border-amber-500 bg-amber-50 dark:bg-gray-700/20"
                                             : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
                                     }`}
                                 >
@@ -422,7 +422,7 @@ export default function OnboardingModal({
                                     onClick={() => setData({ ...data, petType: "other" })}
                                     className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${
                                         data.petType === "other"
-                                            ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20"
+                                            ? "border-amber-500 bg-amber-50 dark:bg-gray-700/20"
                                             : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                                     }`}
                                 >
@@ -588,7 +588,7 @@ export default function OnboardingModal({
                                         onClick={() => setData({ ...data, togetherPeriod: option.value as TogetherPeriod })}
                                         className={`p-4 rounded-xl border-2 transition-all ${
                                             data.togetherPeriod === option.value
-                                                ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20"
+                                                ? "border-amber-500 bg-amber-50 dark:bg-gray-700/20"
                                                 : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                                         }`}
                                     >
@@ -622,7 +622,7 @@ export default function OnboardingModal({
                                         onClick={() => setData({ ...data, passedPeriod: option.value as PassedPeriod })}
                                         className={`p-4 rounded-xl border-2 transition-all ${
                                             data.passedPeriod === option.value
-                                                ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20"
+                                                ? "border-amber-500 bg-amber-50 dark:bg-gray-700/20"
                                                 : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                                         }`}
                                     >

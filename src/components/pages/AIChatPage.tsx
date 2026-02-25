@@ -269,7 +269,7 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                     <div
                         className={`mx-4 mt-2 mb-1 px-3 py-2 rounded-lg text-xs text-center transition-colors duration-700 ${
                             chat.isMemorialMode
-                                ? "bg-amber-100/80 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
+                                ? "bg-amber-100/80 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300"
                                 : "bg-sky-100/80 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300"
                         }`}
                     >

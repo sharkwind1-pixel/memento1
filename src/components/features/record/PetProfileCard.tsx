@@ -131,7 +131,7 @@ export default function PetProfileCard({
                                     onClick={onMemorialClick}
                                     variant="outline"
                                     size="sm"
-                                    className="border-amber-300 text-amber-600 hover:bg-amber-50 hover:text-amber-700 dark:border-amber-600 dark:text-amber-400 dark:hover:bg-amber-900/30"
+                                    className="border-amber-300 text-amber-600 hover:bg-amber-50 hover:text-amber-700 dark:border-amber-600 dark:text-amber-400 dark:hover:bg-gray-600/30"
                                 >
                                     <Star className="w-4 h-4 mr-2" />
                                     추억 전환

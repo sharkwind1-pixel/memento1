@@ -41,12 +41,12 @@ function getActionIcon(actionType: PointAction) {
 // 활동별 색상 매핑
 function getActionColor(actionType: PointAction) {
     switch (actionType) {
-        case "daily_login": return "text-amber-500 bg-amber-50 dark:bg-amber-900/20";
+        case "daily_login": return "text-amber-500 bg-amber-50 dark:bg-gray-700/20";
         case "write_post": return "text-sky-500 bg-sky-50 dark:bg-sky-900/20";
         case "write_comment": return "text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20";
         case "receive_like": return "text-rose-500 bg-rose-50 dark:bg-rose-900/20";
         case "ai_chat": return "text-violet-500 bg-violet-50 dark:bg-violet-900/20";
-        case "pet_registration": return "text-orange-500 bg-orange-50 dark:bg-orange-900/20";
+        case "pet_registration": return "text-orange-500 bg-orange-50 dark:bg-gray-700/20";
         case "timeline_entry": return "text-indigo-500 bg-indigo-50 dark:bg-indigo-900/20";
         case "photo_upload": return "text-teal-500 bg-teal-50 dark:bg-teal-900/20";
         case "write_guestbook": return "text-pink-500 bg-pink-50 dark:bg-pink-900/20";

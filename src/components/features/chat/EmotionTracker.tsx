@@ -135,7 +135,7 @@ function EmotionLineChart({
         return (
             <div className={`flex items-center justify-center h-[180px] rounded-xl border ${
                 isMemorialMode
-                    ? "bg-amber-50/50 dark:bg-amber-900/20 border-amber-200/50 dark:border-amber-700/50 text-amber-600 dark:text-amber-400"
+                    ? "bg-amber-50/50 dark:bg-gray-700/20 border-amber-200/50 dark:border-amber-700/50 text-amber-600 dark:text-amber-400"
                     : "bg-sky-50/50 dark:bg-sky-900/20 border-sky-200/50 dark:border-sky-700/50 text-sky-600 dark:text-sky-400"
             }`}>
                 <p className="text-sm">아직 감정 데이터가 없어요</p>
@@ -302,7 +302,7 @@ function GriefProgress({ currentStage }: { currentStage: string }) {
                             className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
                                 i <= activeIndex
                                     ? "bg-amber-500 text-white shadow-md"
-                                    : "bg-amber-100 dark:bg-amber-900/30 text-amber-400 border border-amber-200 dark:border-amber-700"
+                                    : "bg-amber-100 dark:bg-amber-400/10 text-amber-400 border border-amber-200 dark:border-amber-700"
                             } ${i === activeIndex ? "ring-2 ring-amber-300 ring-offset-1 scale-110" : ""}`}
                         >
                             {i + 1}
@@ -321,7 +321,7 @@ function GriefProgress({ currentStage }: { currentStage: string }) {
             </div>
 
             {/* 현재 단계 설명 */}
-            <div className="mt-3 bg-amber-100/60 dark:bg-amber-900/30 rounded-lg p-3 border border-amber-200/50 dark:border-amber-700/50">
+            <div className="mt-3 bg-amber-100/60 dark:bg-amber-400/10 rounded-lg p-3 border border-amber-200/50 dark:border-amber-700/50">
                 <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
                     {currentStageInfo.description}
                 </p>
@@ -536,7 +536,7 @@ export default function EmotionTracker({
             <div
                 className={`fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl shadow-2xl transition-transform duration-300 ${
                     isMemorialMode
-                        ? "bg-gradient-to-b from-amber-50 to-white dark:from-amber-900/20 dark:to-gray-900"
+                        ? "bg-gradient-to-b from-amber-50 to-white dark:from-gray-700/20 dark:to-gray-900"
                         : "bg-gradient-to-b from-sky-50 to-white dark:from-sky-900/20 dark:to-gray-900"
                 }`}
                 style={{ maxHeight: "85vh" }}
@@ -613,7 +613,7 @@ export default function EmotionTracker({
                                     {/* 총 대화 수 */}
                                     <div className={`rounded-xl p-3 text-center border ${
                                         isMemorialMode
-                                            ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200/50 dark:border-amber-700/50"
+                                            ? "bg-amber-50 dark:bg-gray-700/20 border-amber-200/50 dark:border-amber-700/50"
                                             : "bg-sky-50 dark:bg-sky-900/20 border-sky-200/50 dark:border-sky-700/50"
                                     }`}>
                                         <MessageCircle
@@ -630,7 +630,7 @@ export default function EmotionTracker({
                                     {/* 가장 많은 감정 */}
                                     <div className={`rounded-xl p-3 text-center border ${
                                         isMemorialMode
-                                            ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200/50 dark:border-amber-700/50"
+                                            ? "bg-amber-50 dark:bg-gray-700/20 border-amber-200/50 dark:border-amber-700/50"
                                             : "bg-sky-50 dark:bg-sky-900/20 border-sky-200/50 dark:border-sky-700/50"
                                     }`}>
                                         <div
@@ -648,7 +648,7 @@ export default function EmotionTracker({
                                     {/* 마지막 대화 */}
                                     <div className={`rounded-xl p-3 text-center border ${
                                         isMemorialMode
-                                            ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200/50 dark:border-amber-700/50"
+                                            ? "bg-amber-50 dark:bg-gray-700/20 border-amber-200/50 dark:border-amber-700/50"
                                             : "bg-sky-50 dark:bg-sky-900/20 border-sky-200/50 dark:border-sky-700/50"
                                     }`}>
                                         <Clock

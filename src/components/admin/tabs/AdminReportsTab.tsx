@@ -161,7 +161,7 @@ export default function AdminReportsTab({
 
             {/* 상태 범례 */}
             <div className="flex flex-wrap gap-2 text-sm">
-                <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300">
                     <Clock className="w-3 h-3 mr-1" />
                     대기중
                 </Badge>
@@ -246,7 +246,7 @@ function ReportCard({ report, onUpdateStatus, onDeleteContent }: ReportCardProps
 
                     {/* 상태 */}
                     {report.status === "pending" && (
-                        <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 text-xs">
+                        <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300 text-xs">
                             <Clock className="w-3 h-3 mr-1" />
                             대기중
                         </Badge>

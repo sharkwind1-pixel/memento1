@@ -262,7 +262,7 @@ function MemoryCard({
         <div
             className={`bg-white dark:bg-gray-800 rounded-xl p-3.5 border transition-all hover:shadow-md ${
                 isMemorialMode
-                    ? "border-amber-100 dark:border-amber-800/50 hover:border-amber-200"
+                    ? "border-amber-100 dark:border-gray-700/50 hover:border-amber-200"
                     : "border-sky-100 dark:border-sky-800/50 hover:border-sky-200"
             }`}
         >
@@ -271,7 +271,7 @@ function MemoryCard({
                 <div
                     className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
                         isMemorialMode
-                            ? "bg-amber-50 dark:bg-amber-900/30"
+                            ? "bg-amber-50 dark:bg-amber-400/10"
                             : "bg-sky-50 dark:bg-sky-900/30"
                     }`}
                 >
@@ -311,7 +311,7 @@ function MemoryCard({
                         <span
                             className={`inline-flex items-center gap-1 text-[10px] mt-1.5 px-2 py-0.5 rounded-full ${
                                 isMemorialMode
-                                    ? "bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400"
+                                    ? "bg-amber-50 text-amber-600 dark:bg-gray-700/20 dark:text-amber-400"
                                     : "bg-sky-50 text-sky-600 dark:bg-sky-900/20 dark:text-sky-400"
                             }`}
                         >
@@ -369,7 +369,7 @@ function MemoryGroup({
                 <span
                     className={`text-xs px-1.5 py-0.5 rounded-full ${
                         isMemorialMode
-                            ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
+                            ? "bg-amber-100 text-amber-600 dark:bg-amber-400/10 dark:text-amber-400"
                             : "bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400"
                     }`}
                 >
@@ -575,7 +575,7 @@ export default function MemoryPanel({
                                 <span
                                     className={`text-xs px-2 py-0.5 rounded-full ${
                                         isMemorialMode
-                                            ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
+                                            ? "bg-amber-100 text-amber-600 dark:bg-amber-400/10 dark:text-amber-400"
                                             : "bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400"
                                     }`}
                                 >
@@ -602,7 +602,7 @@ export default function MemoryPanel({
                                 <div
                                     className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
                                         isMemorialMode
-                                            ? "bg-amber-100 dark:bg-amber-900/30"
+                                            ? "bg-amber-100 dark:bg-amber-400/10"
                                             : "bg-sky-100 dark:bg-sky-900/30"
                                     }`}
                                 >

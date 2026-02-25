@@ -96,7 +96,7 @@ function LostPage({ setSelectedTab }: LostPageProps) {
         <div className="min-h-screen relative overflow-hidden">
             {/* 배경 그라데이션 */}
             <div className="absolute inset-0 bg-gradient-to-br from-orange-50 via-red-50 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
-                <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-r from-orange-200/30 to-red-200/30 dark:from-orange-800/20 dark:to-red-800/20 rounded-full blur-3xl animate-pulse" />
+                <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-r from-orange-200/30 to-red-200/30 dark:from-gray-700/20 dark:to-gray-700/20 rounded-full blur-3xl animate-pulse" />
             </div>
 
             <div className="relative z-10 space-y-6 pb-8">

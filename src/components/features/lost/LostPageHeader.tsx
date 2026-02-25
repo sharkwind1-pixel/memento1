@@ -93,7 +93,7 @@ export default function LostPageHeader({
 
             {/* 통계 */}
             <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-orange-100/50 dark:bg-orange-900/20 rounded-2xl p-4 text-center">
+                <div className="bg-orange-100/50 dark:bg-gray-700/20 rounded-2xl p-4 text-center">
                     <div className="text-3xl font-bold text-orange-600 dark:text-orange-400">
                         {lostCount}
                     </div>

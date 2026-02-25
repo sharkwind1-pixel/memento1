@@ -270,7 +270,7 @@ export default function MediaUploadModal({
                                     className={`flex gap-4 p-3 rounded-xl ${
                                         file.cropped
                                             ? "bg-green-50 dark:bg-green-900/20 border border-green-200"
-                                            : "bg-amber-50 dark:bg-amber-900/20 border border-amber-200"
+                                            : "bg-amber-50 dark:bg-gray-700/20 border border-amber-200"
                                     }`}
                                 >
                                     <div

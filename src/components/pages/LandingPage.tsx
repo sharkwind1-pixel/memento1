@@ -235,7 +235,7 @@ export default function LandingPage() {
                                 </p>
                             </div>
 
-                            <div className="bg-gradient-to-br from-violet-100/80 to-amber-100/80 dark:from-violet-900/30 dark:to-amber-900/30 backdrop-blur-sm rounded-3xl p-8 shadow-lg">
+                            <div className="bg-gradient-to-br from-violet-100/80 to-amber-100/80 dark:from-violet-900/30 dark:to-gray-700/30 backdrop-blur-sm rounded-3xl p-8 shadow-lg">
                                 <div className="flex items-center gap-4 mb-4">
                                     <div className="w-12 h-12 bg-white/60 dark:bg-gray-800/60 rounded-xl flex items-center justify-center">
                                         <Heart className="w-6 h-6 text-violet-500" />
@@ -270,7 +270,7 @@ export default function LandingPage() {
                                 <p className="text-sm text-gray-500 dark:text-gray-400">노하우 공유, 고민 상담</p>
                             </div>
                             <div className="text-center p-6">
-                                <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-xl flex items-center justify-center mx-auto mb-4">
+                                <div className="w-12 h-12 bg-orange-100 dark:bg-gray-700/30 rounded-xl flex items-center justify-center mx-auto mb-4">
                                     <MapPin className="w-6 h-6 text-orange-500" />
                                 </div>
                                 <h4 className="font-bold text-gray-800 dark:text-white mb-2">지역 정보</h4>
@@ -416,7 +416,7 @@ export default function LandingPage() {
                 {/* 마지막 CTA 섹션 */}
                 <section className="py-24 px-4 bg-gradient-to-b from-transparent to-sky-50/50 dark:to-sky-900/10">
                     <div className="max-w-3xl mx-auto text-center">
-                        <div className="bg-gradient-to-br from-sky-100/80 via-violet-100/80 to-amber-100/80 dark:from-sky-900/30 dark:via-violet-900/30 dark:to-amber-900/30 backdrop-blur-sm rounded-3xl p-12 shadow-lg">
+                        <div className="bg-gradient-to-br from-sky-100/80 via-violet-100/80 to-amber-100/80 dark:from-sky-900/30 dark:via-violet-900/30 dark:to-gray-700/30 backdrop-blur-sm rounded-3xl p-12 shadow-lg">
                             <h2 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-4">
                                 지금 시작해보세요
                             </h2>
