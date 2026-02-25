@@ -16,6 +16,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Image as ImageIcon } from "lucide-react";
 import { MemoryAlbum } from "@/types";
 import { API } from "@/config/apiEndpoints";
+import { authFetch } from "@/lib/auth-fetch";
 import MemoryAlbumViewer from "./MemoryAlbumViewer";
 
 interface MemoryAlbumsSectionProps {
@@ -43,7 +44,7 @@ export default function MemoryAlbumsSection({
         async function fetchAlbums() {
             setIsLoading(true);
             try {
-                const res = await fetch(`${API.MEMORY_ALBUMS}?petId=${petId}`);
+                const res = await authFetch(`${API.MEMORY_ALBUMS}?petId=${petId}`);
                 if (!res.ok) throw new Error("앨범 조회 실패");
 
                 const data = await res.json();
@@ -107,7 +108,7 @@ export default function MemoryAlbumsSection({
 
             // 서버에 읽음 처리 요청
             try {
-                await fetch(API.MEMORY_ALBUM_READ(selectedAlbum.id), {
+                await authFetch(API.MEMORY_ALBUM_READ(selectedAlbum.id), {
                     method: "PATCH",
                 });
             } catch {
