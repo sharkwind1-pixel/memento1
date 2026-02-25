@@ -458,7 +458,7 @@ function Layout({
                                 alt="메멘토애니"
                                 width={160}
                                 height={48}
-                                className="h-8 sm:h-10 md:h-12 w-auto object-contain dark:bg-white dark:p-1 dark:rounded-lg"
+                                className="h-8 sm:h-10 md:h-12 w-auto object-contain dark:brightness-0 dark:invert"
                                 priority
                             />
                         </button>
