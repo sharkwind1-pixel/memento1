@@ -24,6 +24,31 @@
 
 ---
 
+## [완료] 보안 취약점 수정 (`c61d817`) - 배포 완료
+
+> **상태**: 커밋 + main 푸시 완료. Vercel 배포됨.
+
+### 수정된 보안 이슈
+
+| 이슈 | 심각도 | 수정 내용 |
+|------|--------|----------|
+| CRON_SECRET 로직 오류 | 심각 | 환경변수 미설정 시 인증 스킵 → 500 에러 반환으로 변경 |
+| AI Chat 프리미엄 서버 검증 | 심각 | 클라이언트만 체크 → 서버에서 DB 조회로 검증 |
+| 무료 회원 AI 제한 | 중간 | 200회 → 10회로 수정 (FREE_LIMITS.DAILY_CHATS 적용) |
+| DELETE 에러 처리 누락 | 중간 | notifications/subscribe DELETE 에러 로깅 추가 |
+| preferredHour 범위 | 낮음 | 0-23시 → 7-22시로 제한 (새벽 제외) |
+
+### 수정 파일 (4개)
+- `src/app/api/cron/daily-greeting/route.ts` - CRON_SECRET 필수화
+- `src/app/api/chat/route.ts` - 프리미엄 서버 검증 추가
+- `src/app/api/notifications/subscribe/route.ts` - DELETE 에러 처리, 시간 범위
+- `src/lib/rate-limit.ts` - FREE_LIMITS.DAILY_CHATS 연동
+
+### DB 마이그레이션 필요 (아래 미실행 마이그레이션 참고)
+- `20260226_security_fixes.sql` - 미니미 RPC + 펫/사진 제한 트리거
+
+---
+
 ## [완료] 알림 거부 UX 개선 (`bf5f0ec`) - 배포 완료
 
 > **상태**: 커밋 + main 머지 + push 완료. Vercel 배포됨.
@@ -200,6 +225,7 @@
 
 | 파일 | SQL | 영향받는 기능 | 긴급도 |
 |------|-----|--------------|--------|
+| **`20260226_security_fixes.sql`** | 미니미 구매/판매 RPC + 펫/사진 제한 트리거 | **보안**: 포인트 원자성 + 무료 회원 제한 서버 강제 | **즉시** - 동시 구매 어뷰징 방지, 무료 제한 우회 방지 |
 | `20260225_push_preferred_hour.sql` | `ALTER TABLE push_subscriptions ADD COLUMN IF NOT EXISTS preferred_hour SMALLINT DEFAULT 9; CREATE INDEX ...` | **푸시 알림 시간 선택** (유저가 원하는 시간에 알림 발송) | **즉시** - 이 컬럼 없으면 시간별 발송 필터링 실패 |
 | (파일 없음 - 아래 SQL 직접 실행) | `ALTER TABLE minihompy_settings ADD COLUMN IF NOT EXISTS placed_minimi JSONB DEFAULT '[]'::jsonb;` | **멀티 미니미 배치** (최대 5마리 드래그앤드롭) | **즉시** - 이 컬럼 없으면 배치 저장/로드 실패 |
 | `20260222_minimi_system.sql` | 파일 전체 (user_minimi 테이블, RPC 3개) | 미니미 구매/되팔기/상점 | 즉시 (이미 실행됐을 수 있음 - 확인 필요) |
