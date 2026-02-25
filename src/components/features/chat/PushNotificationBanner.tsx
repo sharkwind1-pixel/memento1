@@ -29,7 +29,7 @@ interface PushNotificationBannerProps {
 const DISMISS_KEY = "push-banner-dismissed";
 const DISMISS_DAYS = 1;
 
-type BannerState = "loading" | "unsubscribed" | "subscribed" | "just-subscribed" | "unsupported";
+type BannerState = "loading" | "unsubscribed" | "subscribed" | "just-subscribed" | "unsupported" | "denied";
 
 /** 시간 옵션 (KST 7시~22시) */
 const HOUR_OPTIONS = Array.from({ length: 16 }, (_, i) => {
@@ -77,7 +77,22 @@ export default function PushNotificationBanner({
             }
 
             const permission = getNotificationPermission();
-            if (permission === "denied") return; // 이미 거부 → 배너 안 보임
+            if (permission === "denied") {
+                // 거부 상태에서도 설정 변경 안내 배너 표시
+                const dismissed = localStorage.getItem(DISMISS_KEY);
+                if (dismissed) {
+                    const dismissedAt = new Date(dismissed).getTime();
+                    if (Date.now() - dismissedAt < DISMISS_DAYS * 24 * 60 * 60 * 1000) {
+                        return;
+                    }
+                }
+                setBannerState("denied");
+                setVisible(true);
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => setAnimateIn(true));
+                });
+                return;
+            }
 
             const existing = await getExistingSubscription();
 
@@ -145,9 +160,13 @@ export default function PushNotificationBanner({
 
             const subscription = await subscribeToPush(registration);
             if (!subscription) {
-                // 거부됨 → 배너만 숨김 (dismiss 기록은 남기지 않음 → 다음 방문 시 다시 표시)
-                setAnimateIn(false);
-                setTimeout(() => setVisible(false), 300);
+                // 거부됨 → denied 배너로 전환 (설정 변경 안내)
+                if (getNotificationPermission() === "denied") {
+                    setBannerState("denied");
+                } else {
+                    setAnimateIn(false);
+                    setTimeout(() => setVisible(false), 300);
+                }
                 setActionLoading(false);
                 return;
             }
@@ -425,6 +444,34 @@ export default function PushNotificationBanner({
                             </button>
                         </div>
                     </>
+                )}
+
+                {/* 알림 거부됨 → 설정 변경 안내 */}
+                {bannerState === "denied" && (
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${iconBg}`}>
+                                <BellOff className="w-3.5 h-3.5" />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="font-medium text-sm truncate">
+                                    알림이 차단된 상태예요
+                                </p>
+                                <p className={`text-xs mt-0.5 ${subTextColor}`}>
+                                    {typeof navigator !== "undefined" && /iPad|iPhone|iPod/.test(navigator.userAgent)
+                                        ? "설정 > Safari > 알림에서 허용해주세요"
+                                        : "주소창 왼쪽 자물쇠 > 알림 > 허용으로 변경해주세요"}
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={handleDismiss}
+                            className="p-1 rounded-md hover:bg-black/10 dark:hover:bg-white/10 transition-colors flex-shrink-0"
+                            aria-label="닫기"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
                 )}
 
                 {/* 미지원 브라우저 안내 */}
