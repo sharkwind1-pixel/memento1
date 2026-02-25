@@ -24,7 +24,6 @@ import { supabase } from "@/lib/supabase";
 interface PushNotificationBannerProps {
     petName: string;
     isMemorialMode: boolean;
-    hasMessages: boolean;
 }
 
 const DISMISS_KEY = "push-banner-dismissed";
@@ -40,7 +39,6 @@ const HOUR_OPTIONS = Array.from({ length: 16 }, (_, i) => {
 export default function PushNotificationBanner({
     petName,
     isMemorialMode,
-    hasMessages,
 }: PushNotificationBannerProps) {
     const [visible, setVisible] = useState(false);
     const [animateIn, setAnimateIn] = useState(false);
@@ -49,10 +47,9 @@ export default function PushNotificationBanner({
     const [selectedHour, setSelectedHour] = useState(9);
     const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    // 배너 표시 여부 판단
+    // 배너 표시 여부 판단 (페이지 진입 2초 후)
     useEffect(() => {
-        const checkVisibility = async () => {
-            if (!hasMessages) return;
+        const timer = setTimeout(async () => {
             if (!isPushSupported()) return;
 
             const permission = getNotificationPermission();
@@ -76,10 +73,10 @@ export default function PushNotificationBanner({
                     setAnimateIn(true);
                 });
             });
-        };
+        }, 2000);
 
-        checkVisibility();
-    }, [hasMessages]);
+        return () => clearTimeout(timer);
+    }, []);
 
     // cleanup
     useEffect(() => {

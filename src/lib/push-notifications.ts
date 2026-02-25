@@ -75,7 +75,12 @@ export async function getExistingSubscription(): Promise<PushSubscription | null
     if (!isPushSupported()) return null;
 
     try {
-        const registration = await navigator.serviceWorker.ready;
+        // SW가 3초 내 ready 안 되면 포기 (무한 대기 방지)
+        const registration = await Promise.race([
+            navigator.serviceWorker.ready,
+            new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
+        ]);
+        if (!registration) return null;
         return await registration.pushManager.getSubscription();
     } catch {
         return null;
