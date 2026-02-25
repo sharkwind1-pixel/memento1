@@ -11,8 +11,8 @@ import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { createClient } from "@supabase/supabase-js";
 import { awardPoints } from "@/lib/points";
-import { getAuthUser } from "@/lib/supabase-server";
-import { API } from "@/config/constants";
+import { getAuthUser, createServerSupabase } from "@/lib/supabase-server";
+import { API, FREE_LIMITS } from "@/config/constants";
 import { formatScheduleText } from "@/lib/schedule-utils";
 import {
     getClientIP,
@@ -571,6 +571,17 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // 프리미엄 상태 확인 (서버 검증 - 보안 중요)
+        const supabase = await createServerSupabase();
+        const { data: profile } = await supabase
+            .from("profiles")
+            .select("is_premium, premium_expires_at")
+            .eq("id", user.id)
+            .single();
+
+        const isPremium = profile?.is_premium &&
+            (!profile.premium_expires_at || new Date(profile.premium_expires_at) > new Date());
+
         // agent 모듈 동적 import (런타임에만 로드)
         const agent = await getAgentModule();
 
@@ -601,22 +612,29 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 2. 일일 사용량 체크 (DB 기반 - Vercel 서버리스 대응)
-        const identifier = user.id;
-        const dailyUsage = await checkDailyUsageDB(identifier, true);
+        // 2. 일일 사용량 체크 (프리미엄은 무제한, 무료는 10회)
+        // 프리미엄 회원은 제한 없이 통과
+        let dailyUsage = { allowed: true, remaining: Infinity, isWarning: false };
 
-        if (!dailyUsage.allowed) {
-            const isMemorial = pet?.status === "memorial";
-            return NextResponse.json(
-                {
-                    error: isMemorial
-                        ? `오늘은 여기까지 이야기 나눌 수 있어요. ${pet?.name || "아이"}는 내일도 여기서 기다리고 있을게요.`
-                        : "오늘의 대화 횟수를 모두 사용했어요. 내일 다시 만나요!",
-                    remaining: 0,
-                    isLimitReached: true,
-                },
-                { status: 429 }
-            );
+        if (!isPremium) {
+            // 무료 회원: FREE_LIMITS.DAILY_CHATS (10회) 제한
+            const identifier = user.id;
+            dailyUsage = await checkDailyUsageDB(identifier, false); // false = 무료 회원 제한 적용
+
+            // 무료 회원 제한은 10회이므로 별도 체크
+            if (dailyUsage.remaining < 0 || !dailyUsage.allowed) {
+                const isMemorial = pet?.status === "memorial";
+                return NextResponse.json(
+                    {
+                        error: isMemorial
+                            ? `오늘은 여기까지 이야기 나눌 수 있어요. ${pet?.name || "아이"}는 내일도 여기서 기다리고 있을게요. 프리미엄 구독 시 무제한 대화가 가능합니다.`
+                            : `오늘의 무료 대화 횟수(${FREE_LIMITS.DAILY_CHATS}회)를 모두 사용했어요. 프리미엄 구독 시 무제한 대화가 가능합니다!`,
+                        remaining: 0,
+                        isLimitReached: true,
+                    },
+                    { status: 429 }
+                );
+            }
         }
 
         // 3. 입력값 검증 (XSS, 과도한 길이 방지)

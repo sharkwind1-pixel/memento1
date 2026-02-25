@@ -8,6 +8,7 @@
 
 import { headers } from "next/headers";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { FREE_LIMITS } from "@/config/constants";
 
 // 메모리 기반 저장소 (프로덕션에서는 Redis 권장)
 const ipRequestCounts = new Map<string, { count: number; resetTime: number }>();
@@ -26,8 +27,8 @@ const RATE_LIMITS = {
     aiChat: {
         windowMs: 60 * 1000, // 1분
         maxRequests: 10, // 분당 10회
-        dailyLimit: 50, // 일일 50회 (비로그인)
-        dailyLimitAuth: 200, // 일일 200회 (로그인)
+        dailyLimit: FREE_LIMITS.DAILY_CHATS, // 무료 회원 일일 제한 (10회)
+        dailyLimitAuth: 200, // 프리미엄 회원은 route.ts에서 무제한 처리
     },
     // 인증 관련 (브루트포스 방지)
     auth: {

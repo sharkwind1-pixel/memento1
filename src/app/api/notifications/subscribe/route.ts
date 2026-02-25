@@ -42,6 +42,9 @@ export async function GET() {
             .limit(1)
             .single();
 
+        if (error) {
+            console.error("[Push GET] DB 조회 실패:", error.message);
+        }
         if (error || !data) {
             return NextResponse.json({ preferredHour: 9 });
         }
@@ -79,8 +82,8 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // preferredHour 검증 (KST 7~22시, 기본 9시)
-        const hour = typeof preferredHour === "number" && preferredHour >= 0 && preferredHour <= 23
+        // preferredHour 검증 (KST 7~22시, 기본 9시 - 새벽 시간대 제외)
+        const hour = typeof preferredHour === "number" && preferredHour >= 7 && preferredHour <= 22
             ? preferredHour
             : 9;
 
@@ -132,9 +135,10 @@ export async function PATCH(request: NextRequest) {
         const body = await request.json();
         const { preferredHour } = body;
 
-        if (typeof preferredHour !== "number" || preferredHour < 0 || preferredHour > 23) {
+        // 7~22시만 허용 (새벽 시간대 제외)
+        if (typeof preferredHour !== "number" || preferredHour < 7 || preferredHour > 22) {
             return NextResponse.json(
-                { error: "유효하지 않은 시간입니다." },
+                { error: "알림 시간은 오전 7시~오후 10시 사이로 설정해주세요." },
                 { status: 400 },
             );
         }
@@ -190,11 +194,19 @@ export async function DELETE(request: NextRequest) {
 
         const supabase = getServiceSupabase();
 
-        await supabase
+        const { error } = await supabase
             .from("push_subscriptions")
             .delete()
             .eq("user_id", user.id)
             .eq("endpoint", endpoint);
+
+        if (error) {
+            console.error("[Push Unsubscribe] DB 삭제 실패:", error.message);
+            return NextResponse.json(
+                { error: "구독 해제에 실패했습니다." },
+                { status: 500 },
+            );
+        }
 
         return NextResponse.json({ success: true });
     } catch (err) {

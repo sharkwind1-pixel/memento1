@@ -23,9 +23,9 @@ import * as webpush from "web-push";
 import OpenAI from "openai";
 
 // VAPID 설정
-const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
-const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || "";
-const VAPID_SUBJECT = "mailto:sharkwind1@gmail.com";
+const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
+const VAPID_SUBJECT = process.env.VAPID_SUBJECT || "mailto:support@memento-ani.com";
 
 function getServiceSupabase() {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -197,11 +197,18 @@ async function generateGreeting(
 }
 
 export async function GET(request: NextRequest) {
-    // 1. CRON_SECRET 검증
+    // 1. CRON_SECRET 검증 (필수)
     const authHeader = request.headers.get("authorization");
     const cronSecret = process.env.CRON_SECRET;
 
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    // CRON_SECRET이 설정되지 않으면 실행 거부 (보안)
+    if (!cronSecret) {
+        console.error("[Cron] CRON_SECRET이 설정되지 않았습니다");
+        return NextResponse.json({ error: "CRON_SECRET_MISSING" }, { status: 500 });
+    }
+
+    // 인증 검증은 필수
+    if (authHeader !== `Bearer ${cronSecret}`) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
