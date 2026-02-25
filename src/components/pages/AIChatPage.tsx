@@ -100,28 +100,47 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         // 1. 채팅 내 메시지 교체
         chat.handleReminderAccept(messageId);
 
-        // 2. 푸시 알림 권한 처리 (아직 결정 안 한 경우만)
-        if (isPushSupported() && Notification.permission === "default") {
-            try {
-                const registration = await registerServiceWorker();
-                if (registration) {
-                    const subscription = await subscribeToPush(registration);
-                    if (subscription) {
-                        await authFetch(API.NOTIFICATIONS_SUBSCRIBE, {
-                            method: "POST",
-                            body: JSON.stringify({
-                                subscription: subscription.toJSON(),
-                                preferredHour: 9,
-                            }),
-                        });
-                        toast.success("알림이 설정되었습니다");
-                    }
+        // 2. 푸시 알림 권한 처리
+        if (isPushSupported()) {
+            const permission = Notification.permission;
+
+            if (permission === "denied") {
+                // 거부됨 → OS별 구체적 설정 변경 안내
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+                if (isIOS) {
+                    toast.info(
+                        "알림을 받으려면: 설정 > Safari > 알림에서 허용해주세요",
+                        { duration: 6000 },
+                    );
+                } else {
+                    toast.info(
+                        "알림을 받으려면: 주소창 왼쪽 자물쇠(또는 설정 아이콘) > 알림 > 허용으로 변경해주세요",
+                        { duration: 6000 },
+                    );
                 }
-            } catch {
-                // 푸시 구독 실패해도 탭 이동은 진행
+            } else if (permission === "default") {
+                // 아직 미결정 → 권한 요청 + 구독
+                try {
+                    const registration = await registerServiceWorker();
+                    if (registration) {
+                        const subscription = await subscribeToPush(registration);
+                        if (subscription) {
+                            await authFetch(API.NOTIFICATIONS_SUBSCRIBE, {
+                                method: "POST",
+                                body: JSON.stringify({
+                                    subscription: subscription.toJSON(),
+                                    preferredHour: 9,
+                                }),
+                            });
+                            toast.success("알림이 설정되었습니다");
+                        }
+                    }
+                } catch {
+                    // 푸시 구독 실패해도 탭 이동은 진행
+                }
             }
+            // "granted"면 이미 허용됨 → 별도 처리 불필요
         }
-        // denied면 조용히 넘어감 (리마인더 자체는 앱 내에서 확인 가능)
 
         // 3. record 탭으로 이동 (약간 딜레이)
         setTimeout(() => {
