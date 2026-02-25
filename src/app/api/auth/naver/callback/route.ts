@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     const error = searchParams.get("error");
 
     const siteUrl =
-        process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+        process.env.NEXT_PUBLIC_SITE_URL || "https://www.mementoani.com";
     const savedState = request.cookies.get("naver_oauth_state")?.value;
 
     // CSRF 검증
