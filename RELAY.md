@@ -73,6 +73,84 @@
 
 ---
 
+## [완료] 푸시 알림 시스템 전면 수정 (6커밋)
+
+> **상태**: 전체 파이프라인 정상화 완료. 크론 API 200 OK 확인. 구독자 생기면 실제 발송됨.
+
+### 문제 1: 오페라 모바일에서 푸시 배너 안 뜸
+- **원인**: 오페라 모바일은 `PushManager` API 미지원 → `isPushSupported()` false → 배너 초기화 즉시 return
+- **해결**: `"unsupported"` BannerState 추가. 미지원 브라우저에서도 "Chrome 또는 Safari에서 알림을 받을 수 있어요" 안내 배너 표시
+- **커밋**: `da4bff1`
+
+### 문제 2: 알림 거부 시 dismiss 기록 남아서 재방문 시 배너 안 뜸
+- **원인**: 구독 실패(유저가 거부)해도 `handleDismiss()` 실행 → localStorage에 dismiss 기록 → 7일간 배너 안 뜸
+- **해결**: 구독 실패 시 배너만 숨기고 dismiss 기록은 남기지 않음 → 다음 방문 시 다시 표시
+- **커밋**: `1b2d9e8`
+
+### 문제 3: 크론 API "VAPID_NOT_CONFIGURED" 에러
+- **원인**: VAPID 키가 Vercel 환경변수에 설정 안 됨
+- **해결**: `web-push generate-vapid-keys`로 생성 후 Vercel + `.env.local`에 설정
+- **키 값**:
+  - `NEXT_PUBLIC_VAPID_PUBLIC_KEY=BF2SwTyt5-7Xqca3q-RgBnRVchvyGtd0y__USA1jZXpcZqEn3sMIJJE3NwzK4ceQFebL5x3HYPILPWgOBmEJElk`
+  - `VAPID_PRIVATE_KEY=MH-cn1EvMq0rfTdICwQn2eoCwW4y1I-Pjd9mspAuZ1w`
+
+### 문제 4: 크론 API 빈 500 응답 (서버리스 함수 크래시)
+- **원인**: `import webpush from "web-push"` (default import)가 Vercel Serverless의 CJS 환경에서 호환 안 됨
+- **해결**: `import * as webpush from "web-push"` (namespace import)로 변경
+- **커밋**: `a8ecf9e`
+
+### 문제 5: "Vapid public key must be a URL safe Base 64" 에러
+- **원인**: `echo "키값" | vercel env add` 시 개행문자(`\n`)가 환경변수 값 끝에 포함됨
+- **해결**: `vercel env rm` 후 `printf "키값"` (개행 없음)으로 재설정
+- **검증**: `vercel env pull`로 깨끗한 값 확인 → 크론 API 200 OK
+
+### 문제 6: 케어 리마인더와 AI 펫톡 알림이 따로 놀음
+- **원인**: 리마인더 추가와 푸시 구독이 독립적 플로우. 유저가 리마인더만 추가하고 푸시 배너는 무시하면 알림 안 옴
+- **해결**: `ensurePushSubscription()` 유틸 함수 생성. 리마인더 저장 성공 시 자동으로 푸시 권한 요청 + 구독 + 서버 등록
+- **적용 위치**: RemindersSection.tsx, ReminderPanel.tsx, RemindersPage.tsx (3곳 모두)
+- **커밋**: `7ce1d60`
+
+### 커밋 히스토리
+
+| 커밋 | 내용 |
+|------|------|
+| `1b2d9e8` | 알림 거부 시 조용히 넘어가기 + dismiss 기록 안 남기기 |
+| `da4bff1` | 푸시 미지원 브라우저에서도 알림 배너 표시 (unsupported 상태) |
+| `8a48120` | 크론 API 에러 디버깅 추가 (임시) |
+| `a8ecf9e` | web-push import 방식 수정 (CJS 호환) |
+| `6bae1f5` | 크론 API 정상화 - 디버깅 코드 정리 |
+| `7ce1d60` | 리마인더 저장 시 푸시 구독 자동 연동 (ensurePushSubscription) |
+
+### 수정 파일
+
+| 파일 | 변경 |
+|------|------|
+| `src/components/features/chat/PushNotificationBanner.tsx` | unsupported 상태 추가, 거부 시 dismiss 기록 안 남기기 |
+| `src/app/api/cron/daily-greeting/route.ts` | `import * as webpush` CJS 호환, 디버깅 코드 정리 |
+| `src/lib/push-notifications.ts` | `ensurePushSubscription()` 유틸 함수 추가 |
+| `src/components/features/reminders/RemindersSection.tsx` | 리마인더 생성 시 ensurePushSubscription 호출 |
+| `src/components/features/chat/ReminderPanel.tsx` | 리마인더 추가 시 ensurePushSubscription 호출 |
+| `src/components/pages/RemindersPage.tsx` | 리마인더 생성 시 ensurePushSubscription 호출 |
+| `.env.local` | VAPID 키 추가 |
+
+### Vercel 환경변수 (Production 설정 완료)
+- `NEXT_PUBLIC_VAPID_PUBLIC_KEY` ✅
+- `VAPID_PRIVATE_KEY` ✅
+
+### ensurePushSubscription 동작 흐름
+```
+리마인더 저장 성공
+  → isPushSupported() 체크
+  → permission === "denied"이면 포기
+  → 이미 구독되어 있으면 건너뜀 (return true)
+  → Service Worker 등록
+  → Notification.requestPermission() 요청
+  → pushManager.subscribe() 실행
+  → POST /api/notifications/subscribe로 서버에 등록
+```
+
+---
+
 ## [!!] 미실행 마이그레이션 - 승빈님 액션 필요
 
 > 아래 SQL이 Supabase DB에서 실행되지 않으면 관련 기능이 동작하지 않습니다.
@@ -104,6 +182,8 @@
 | 미니미 구매 확인 다이얼로그 | (이전) | `MinimiShopModal.tsx` | 완료 |
 | equipped_minimi_id UUID 호환성 | (이전) | equip/inventory/sell/minihompy API, `AuthContext.tsx` | 완료 |
 | **튜토리얼 전면 수정** | `a6b4e53` | `TutorialTour.tsx`, `RecordPageTutorial.tsx`, `PointsBadge.tsx`, `Sidebar.tsx`, 각 페이지 | **완료 - 테스트 필요** |
+| **푸시 알림 시스템 정상화** | `da4bff1`~`6bae1f5` | `PushNotificationBanner.tsx`, `daily-greeting/route.ts` | 완료 |
+| **리마인더↔푸시 자동 연동** | `7ce1d60` | `push-notifications.ts`, `RemindersSection.tsx`, `ReminderPanel.tsx`, `RemindersPage.tsx` | 완료 |
 
 ### 버그 수정
 
@@ -121,6 +201,12 @@
 | 모바일 깜빡임 (8커밋) | `43a434f`~`9a33015` | **React.memo + MemorialModeContext 적용** - 모바일 테스트 필요 |
 | **데스크톱 튜토리얼 까만 오버레이만 표시** | `a6b4e53` | **완료** - React 18 StrictMode 이중 실행으로 wasOpenRef 패턴 깨짐 → 제거 후 수정 |
 | 우리의 기록 튜토리얼 2번째 모달 화면 밖 이탈 | `e78022b` | 완료 |
+| 오페라 모바일 푸시 배너 안 뜸 (PushManager 미지원) | `da4bff1` | 완료 |
+| 알림 거부 시 dismiss 기록 남아 재방문 시 배너 안 뜸 | `1b2d9e8` | 완료 |
+| 크론 API VAPID_NOT_CONFIGURED 에러 | Vercel 환경변수 설정 | 완료 |
+| 크론 API web-push CJS import 크래시 | `a8ecf9e` | 완료 |
+| 크론 API VAPID 키 개행문자 오염 | Vercel env 재설정 (printf) | 완료 |
+| 리마인더와 푸시 구독 독립적 플로우 | `7ce1d60` | 완료 |
 
 ### 모바일 UX/UI 개선 (`3e9aa89`, `d0b69f9`)
 
