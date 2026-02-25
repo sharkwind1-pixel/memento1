@@ -38,6 +38,7 @@ import {
 import { ReminderCardSkeleton } from "@/components/ui/skeleton";
 import { API } from "@/config/apiEndpoints";
 import { authFetch } from "@/lib/auth-fetch";
+import { ensurePushSubscription } from "@/lib/push-notifications";
 import type { Reminder } from "@/types";
 
 const REMINDER_TYPES = [
@@ -147,6 +148,8 @@ function RemindersPage() {
 
             if (response.ok) {
                 toast.success("리마인더가 생성되었습니다");
+                // 푸시 구독 안 되어 있으면 자동 구독 (알림 받기 위해)
+                ensurePushSubscription(authFetch, API.NOTIFICATIONS_SUBSCRIBE);
                 setIsModalOpen(false);
                 setNewReminder({
                     petId: selectedPetId || "",

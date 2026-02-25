@@ -38,6 +38,7 @@ import {
 import PawLoading from "@/components/ui/PawLoading";
 import { API } from "@/config/apiEndpoints";
 import { authFetch } from "@/lib/auth-fetch";
+import { ensurePushSubscription } from "@/lib/push-notifications";
 import { toast } from "sonner";
 import type { Reminder } from "@/types";
 
@@ -138,6 +139,8 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
 
             if (response.ok) {
                 toast.success("리마인더가 생성되었습니다");
+                // 푸시 구독 안 되어 있으면 자동 구독 (알림 받기 위해)
+                ensurePushSubscription(authFetch, API.NOTIFICATIONS_SUBSCRIBE);
                 setShowAddForm(false);
                 setNewReminder({
                     type: "walk",
