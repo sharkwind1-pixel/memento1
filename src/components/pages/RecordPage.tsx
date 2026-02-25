@@ -60,6 +60,7 @@ import PremiumModal from "@/components/modals/PremiumModal";
 import PhotoViewer from "@/components/features/record/PhotoViewer";
 import PetProfileCard from "@/components/features/record/PetProfileCard";
 import PetPhotoAlbum from "@/components/features/record/PetPhotoAlbum";
+import RemindersSection from "@/components/features/reminders/RemindersSection";
 
 interface RecordPageProps {
     setSelectedTab?: (tab: TabType) => void;
@@ -1068,6 +1069,16 @@ function RecordPage({ setSelectedTab }: RecordPageProps) {
                                     onDeletePhoto={deletePhoto}
                                     onDeletePhotos={deletePhotos}
                                 />
+
+                                {/* 케어 리마인더 섹션 */}
+                                {selectedPet.status !== "memorial" && (
+                                    <div className="mt-6">
+                                        <RemindersSection
+                                            petId={selectedPet.id}
+                                            petName={selectedPet.name}
+                                        />
+                                    </div>
+                                )}
 
                                 {/* 타임라인 일기 섹션 */}
                                 <div data-tutorial-id="timeline-section">
