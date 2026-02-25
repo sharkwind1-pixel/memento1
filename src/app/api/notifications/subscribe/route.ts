@@ -1,6 +1,8 @@
 /**
  * 푸시 알림 구독 관리 API
+ * GET: 현재 구독 설정 조회 (preferred_hour)
  * POST: 브라우저 PushSubscription 정보를 DB에 저장
+ * PATCH: 알림 시간 변경
  * DELETE: 구독 해제
  */
 export const dynamic = "force-dynamic";
@@ -18,6 +20,38 @@ function getServiceSupabase() {
     return createClient(url, key, {
         auth: { autoRefreshToken: false, persistSession: false },
     });
+}
+
+/** GET: 현재 구독 설정 조회 */
+export async function GET() {
+    try {
+        const user = await getAuthUser();
+        if (!user) {
+            return NextResponse.json(
+                { error: "로그인이 필요합니다." },
+                { status: 401 },
+            );
+        }
+
+        const supabase = getServiceSupabase();
+
+        const { data, error } = await supabase
+            .from("push_subscriptions")
+            .select("preferred_hour")
+            .eq("user_id", user.id)
+            .limit(1)
+            .single();
+
+        if (error || !data) {
+            return NextResponse.json({ preferredHour: 9 });
+        }
+
+        return NextResponse.json({
+            preferredHour: data.preferred_hour ?? 9,
+        });
+    } catch {
+        return NextResponse.json({ preferredHour: 9 });
+    }
 }
 
 /** POST: 구독 저장 */
@@ -77,6 +111,55 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: true });
     } catch (err) {
         console.error("[Push Subscribe] Error:", err instanceof Error ? err.message : "unknown");
+        return NextResponse.json(
+            { error: "서버 오류가 발생했습니다." },
+            { status: 500 },
+        );
+    }
+}
+
+/** PATCH: 알림 시간만 변경 */
+export async function PATCH(request: NextRequest) {
+    try {
+        const user = await getAuthUser();
+        if (!user) {
+            return NextResponse.json(
+                { error: "로그인이 필요합니다." },
+                { status: 401 },
+            );
+        }
+
+        const body = await request.json();
+        const { preferredHour } = body;
+
+        if (typeof preferredHour !== "number" || preferredHour < 0 || preferredHour > 23) {
+            return NextResponse.json(
+                { error: "유효하지 않은 시간입니다." },
+                { status: 400 },
+            );
+        }
+
+        const supabase = getServiceSupabase();
+
+        const { error } = await supabase
+            .from("push_subscriptions")
+            .update({
+                preferred_hour: preferredHour,
+                updated_at: new Date().toISOString(),
+            })
+            .eq("user_id", user.id);
+
+        if (error) {
+            console.error("[Push PATCH] DB 업데이트 실패:", error.message);
+            return NextResponse.json(
+                { error: "시간 변경에 실패했습니다." },
+                { status: 500 },
+            );
+        }
+
+        return NextResponse.json({ success: true });
+    } catch (err) {
+        console.error("[Push PATCH] Error:", err instanceof Error ? err.message : "unknown");
         return NextResponse.json(
             { error: "서버 오류가 발생했습니다." },
             { status: 500 },

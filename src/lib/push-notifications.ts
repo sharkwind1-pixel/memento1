@@ -88,6 +88,19 @@ export async function getExistingSubscription(): Promise<PushSubscription | null
 }
 
 /**
+ * 푸시 알림 구독 해제
+ */
+export async function unsubscribeFromPush(): Promise<boolean> {
+    const existing = await getExistingSubscription();
+    if (!existing) return false;
+    try {
+        return await existing.unsubscribe();
+    } catch {
+        return false;
+    }
+}
+
+/**
  * VAPID 키를 Uint8Array로 변환 (Web Push API 요구사항)
  */
 function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
