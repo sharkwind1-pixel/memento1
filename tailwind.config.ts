@@ -18,6 +18,16 @@ const config: Config = {
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
   		},
+  		keyframes: {
+  			wiggle: {
+  				'0%, 100%': { transform: 'rotate(0deg)' },
+  				'25%': { transform: 'rotate(-8deg)' },
+  				'75%': { transform: 'rotate(8deg)' },
+  			}
+  		},
+  		animation: {
+  			wiggle: 'wiggle 2s ease-in-out infinite',
+  		},
   		colors: {
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',

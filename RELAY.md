@@ -75,6 +75,7 @@
 
 | 파일 | SQL | 영향받는 기능 | 긴급도 |
 |------|-----|--------------|--------|
+| `20260225_push_preferred_hour.sql` | `ALTER TABLE push_subscriptions ADD COLUMN IF NOT EXISTS preferred_hour SMALLINT DEFAULT 9; CREATE INDEX ...` | **푸시 알림 시간 선택** (유저가 원하는 시간에 알림 발송) | **즉시** - 이 컬럼 없으면 시간별 발송 필터링 실패 |
 | (파일 없음 - 아래 SQL 직접 실행) | `ALTER TABLE minihompy_settings ADD COLUMN IF NOT EXISTS placed_minimi JSONB DEFAULT '[]'::jsonb;` | **멀티 미니미 배치** (최대 5마리 드래그앤드롭) | **즉시** - 이 컬럼 없으면 배치 저장/로드 실패 |
 | `20260222_minimi_system.sql` | 파일 전체 (user_minimi 테이블, RPC 3개) | 미니미 구매/되팔기/상점 | 즉시 (이미 실행됐을 수 있음 - 확인 필요) |
 | `20260222_fix_equipped_minimi_type.sql` | `ALTER TABLE profiles ALTER COLUMN equipped_minimi_id TYPE TEXT` | 미니미 장착/해제 | 선택 - **코드 수정으로 UUID 컬럼 그대로 동작 가능하게 해결됨** |

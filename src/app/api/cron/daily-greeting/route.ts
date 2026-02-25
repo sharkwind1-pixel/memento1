@@ -1,9 +1,9 @@
 /**
- * 하루 1회 AI 펫톡 인사 푸시 알림 발송
+ * AI 펫톡 인사 푸시 알림 발송 (매시간 실행)
  *
- * Vercel Cron에 의해 매일 UTC 00:00 (KST 09:00)에 호출
+ * Vercel Cron에 의해 매시간 실행
  * 1. CRON_SECRET 검증
- * 2. push_subscriptions + pets 조인 조회
+ * 2. 현재 KST 시간에 해당하는 구독자만 조회 (preferred_hour 필터)
  * 3. 유저별 AI 인사말 생성 (GPT-4o-mini)
  * 4. web-push로 발송
  */
@@ -158,14 +158,18 @@ export async function GET(request: NextRequest) {
     const openai = getOpenAI();
 
     try {
-        // 2. 모든 구독자 조회
+        // 2. 현재 KST 시간에 해당하는 구독자만 조회
+        const currentKstHour = (new Date().getUTCHours() + 9) % 24;
+
         const { data: subscriptions, error: subError } = await supabase
             .from("push_subscriptions")
-            .select("user_id, endpoint, p256dh, auth");
+            .select("user_id, endpoint, p256dh, auth, preferred_hour")
+            .eq("preferred_hour", currentKstHour);
 
         if (subError || !subscriptions?.length) {
             return NextResponse.json({
-                message: "구독자 없음",
+                message: `KST ${currentKstHour}시 대상 구독자 없음`,
+                currentKstHour,
                 count: 0,
             });
         }
@@ -252,6 +256,7 @@ export async function GET(request: NextRequest) {
 
         return NextResponse.json({
             message: "발송 완료",
+            currentKstHour,
             sent,
             failed,
             expiredCleaned: expiredEndpoints.length,
