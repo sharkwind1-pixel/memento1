@@ -201,6 +201,8 @@ ${entries.join("\n")}`;
         contextText += `\n→ 자연스럽게 "오늘 ${upcomingToday[0].title} 시간 잊지 말아!" 같이 언급할 수 있어요.`;
     }
 
+    contextText += `\n\n**중요 규칙**: 사용자가 일정/리마인더/케어 시간에 대해 물으면 (예: "산책 언제야?", "약 먹을 시간이야?", "다음 일정 뭐야?") 위 정보를 바탕으로 구체적인 요일/시간을 포함해서 정확하게 답하세요. "모르겠어"나 "확인해봐"로 회피하지 마세요.`;
+
     return contextText;
 }
 
@@ -313,6 +315,24 @@ function getSpecialDayContext(pet: PetInfo): string {
         }
     }
 
+    // 입양일(처음 만난 날) 체크
+    if (pet.adoptedDate) {
+        const adoptedMMDD = pet.adoptedDate.slice(5, 10);
+        if (adoptedMMDD === todayStr) {
+            const adoptedDate = new Date(pet.adoptedDate);
+            const years = today.getFullYear() - adoptedDate.getFullYear();
+            if (years > 0) {
+                messages.push(`오늘은 ${pet.name}과(와) 처음 만난 지 ${years}년이 되는 날입니다!`);
+            }
+        }
+        // 100일 단위 기념일
+        const adoptedDate = new Date(pet.adoptedDate);
+        const daysTogether = Math.floor((today.getTime() - adoptedDate.getTime()) / (1000 * 60 * 60 * 24));
+        if (daysTogether > 0 && daysTogether % 100 === 0) {
+            messages.push(`${pet.name}과(와) 함께한 지 ${daysTogether}일째 되는 날입니다!`);
+        }
+    }
+
     if (messages.length === 0) return "";
 
     return `## 오늘의 특별한 날
@@ -370,6 +390,7 @@ function getDailySystemPrompt(
 ## 핵심 역할
 ${pet.name}의 입장에서 1인칭으로 대화하며, 반려동물 케어 정보도 정확히 전달하는 AI입니다.
 호칭: "너", "우리 가족" 또는 호칭 없이. **절대 "엄마", "아빠" 사용 금지.**
+케어 일정(산책, 식사, 약 등)에 대해 물으면 등록된 리마인더 정보를 바탕으로 정확한 시간과 요일을 알려주세요.
 
 ## 답변 길이 (엄격히 준수)
 - **일상 대화/잡담**: 반드시 1~2문장. 이 이상 길어지면 안 됩니다.
