@@ -5,6 +5,8 @@
  * Supabase 클라이언트 SDK가 URL의 code 파라미터를 감지하여
  * 자동으로 세션 교환(exchangeCodeForSession)을 수행한다.
  *
+ * 네이버 로그인은 token_hash + type=magiclink 파라미터로 처리.
+ *
  * 서버 Route Handler에서 별도 Supabase 인스턴스를 생성하면
  * Web Locks API 충돌(AbortError)이 발생하므로,
  * 클라이언트 사이드에서 단일 인스턴스로 처리한다.
@@ -23,6 +25,8 @@ export default function AuthCallbackPage() {
         const handleCallback = async () => {
             const params = new URLSearchParams(window.location.search);
             const code = params.get("code");
+            const tokenHash = params.get("token_hash");
+            const type = params.get("type");
             const authError = params.get("error");
             const errorDescription = params.get("error_description");
 
@@ -34,7 +38,29 @@ export default function AuthCallbackPage() {
                 return;
             }
 
-            // code가 있으면 세션 교환
+            // 네이버 로그인: token_hash + magiclink으로 세션 교환
+            if (tokenHash && type === "magiclink") {
+                try {
+                    const { error: verifyError } = await supabase.auth.verifyOtp({
+                        token_hash: tokenHash,
+                        type: "magiclink",
+                    });
+
+                    if (verifyError) {
+                        console.error("[auth/callback] Magic link verify failed:", verifyError.message);
+                        setError(verifyError.message);
+                        setTimeout(() => router.replace("/"), 2000);
+                        return;
+                    }
+                } catch (err) {
+                    console.error("[auth/callback] Magic link error:", err);
+                }
+
+                router.replace("/");
+                return;
+            }
+
+            // Google/카카오: code가 있으면 세션 교환
             if (code) {
                 try {
                     const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);

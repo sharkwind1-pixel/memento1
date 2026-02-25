@@ -74,6 +74,7 @@ interface AuthContextType {
     signOut: () => Promise<void>;
     signInWithGoogle: () => Promise<{ error: Error | null }>;
     signInWithKakao: () => Promise<{ error: Error | null }>;
+    signInWithNaver: () => void;
     updateProfile: (data: { nickname?: string }) => Promise<{ error: Error | null }>;
     checkNickname: (nickname: string) => Promise<{ available: boolean; error: Error | null }>;
 }
@@ -551,6 +552,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
+    // 네이버 로그인 (커스텀 OAuth → API 라우트로 리다이렉트)
+    const signInWithNaver = useCallback(() => {
+        window.location.href = "/api/auth/naver";
+    }, []);
+
     // 프로필 업데이트
     const updateProfile = useCallback(async (data: { nickname?: string }) => {
         try {
@@ -607,6 +613,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signOut,
         signInWithGoogle,
         signInWithKakao,
+        signInWithNaver,
         updateProfile,
         checkNickname,
     }), [
@@ -614,7 +621,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         profileLoaded, userPetType, onboardingData, points, pointsLoaded,
         refreshPoints, minimiEquip, refreshMinimi,
         checkDeletedAccount, checkCanRejoin, signUp, signIn,
-        signOut, signInWithGoogle, signInWithKakao, updateProfile, checkNickname,
+        signOut, signInWithGoogle, signInWithKakao, signInWithNaver, updateProfile, checkNickname,
     ]);
 
     return (
