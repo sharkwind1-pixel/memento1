@@ -24,6 +24,29 @@
 
 ---
 
+## [완료] 보안 수정 검수 + 버그 3건 추가 수정 (`b7230db`) - 배포 완료
+
+> **상태**: 커밋 + main 푸시 완료. Vercel 배포됨.
+
+### 검수 결과
+`c61d817` (VM Claude Code 보안 수정)을 3개 검수 에이전트로 검증.
+- 10개 항목 통과 (프리미엄 서버 검증, CRON_SECRET, 무료 10회 제한 등)
+- **버그 3건 발견 → 즉시 수정**
+
+### 수정된 버그
+
+| 버그 | 파일 | 내용 |
+|------|------|------|
+| VPN 캐시 복사 오류 | `rate-limit.ts:505-509` | isProxy/isDatacenter가 모두 isVPN 값으로 복사 → 캐시 타입에 3개 필드 분리 저장 |
+| 일일 사용량 레이스 컨디션 | `rate-limit.ts:244-250` | 동시 요청 시 카운트 누락 → optimistic locking (eq request_count) + 재시도 |
+| sell_minimi_item 락 누락 | `20260226_security_fixes.sql` | profiles FOR UPDATE 없이 포인트 업데이트 → FOR UPDATE 락 추가 |
+
+### 수정 파일 (2개)
+- `src/lib/rate-limit.ts` - VPN 캐시 + optimistic locking
+- `supabase/migrations/20260226_security_fixes.sql` - sell FOR UPDATE + check_pet_limit FOR UPDATE
+
+---
+
 ## [완료] 보안 취약점 수정 (`c61d817`) - 배포 완료
 
 > **상태**: 커밋 + main 푸시 완료. Vercel 배포됨.
