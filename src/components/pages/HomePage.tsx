@@ -378,7 +378,7 @@ function HomePage({ setSelectedTab }: HomePageProps) {
                                 <Card
                                     key={post.id}
                                     onClick={() => setSelectedPost(post)}
-                                    className="min-w-[260px] sm:min-w-72 flex-shrink-0 overflow-hidden rounded-2xl cursor-pointer group border-0 shadow-lg will-change-transform"
+                                    className="w-[260px] max-w-[260px] sm:w-72 sm:max-w-72 flex-shrink-0 overflow-hidden rounded-2xl cursor-pointer group border-0 shadow-lg will-change-transform"
                                 >
                                     {/* 상단 그라데이션 배너 */}
                                     <div className={`h-24 bg-gradient-to-br ${gradients[idx % gradients.length]} relative overflow-hidden`}>
@@ -502,9 +502,9 @@ function HomePage({ setSelectedTab }: HomePageProps) {
                                 return (
                                     <Card
                                         key={i}
-                                        className="min-w-[260px] sm:min-w-72 flex-shrink-0 bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 rounded-2xl overflow-hidden shadow-sm will-change-transform"
+                                        className="w-[260px] max-w-[260px] sm:w-72 sm:max-w-72 flex-shrink-0 bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 rounded-2xl overflow-hidden shadow-sm will-change-transform"
                                     >
-                                        <CardHeader className="p-0">
+                                        <CardHeader className="p-0 overflow-hidden">
                                             {src ? (
                                                 <button
                                                     type="button"
@@ -516,12 +516,12 @@ function HomePage({ setSelectedTab }: HomePageProps) {
                                                             src,
                                                         })
                                                     }
-                                                    className="w-full"
+                                                    className="w-full overflow-hidden"
                                                 >
                                                     <img
                                                         src={src}
                                                         alt={pet.title}
-                                                        className="w-full aspect-[4/3] object-cover"
+                                                        className="block w-full max-w-full aspect-[4/3] object-cover"
                                                         loading="lazy"
                                                         referrerPolicy="no-referrer"
                                                     />
@@ -598,7 +598,7 @@ function HomePage({ setSelectedTab }: HomePageProps) {
                         {bestPosts.petcare.map((guide, i) => (
                             <Card
                                 key={i}
-                                className="min-w-[260px] sm:min-w-64 flex-shrink-0 bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 rounded-2xl shadow-sm will-change-transform"
+                                className="w-[260px] max-w-[260px] sm:w-64 sm:max-w-64 flex-shrink-0 overflow-hidden bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 rounded-2xl shadow-sm will-change-transform"
                             >
                                 <CardHeader>
                                     <div className="w-full h-40 bg-gradient-to-br from-[#E0F7FF] to-[#E0F7FF] dark:from-blue-900 dark:to-sky-900 rounded-xl mb-3 flex items-center justify-center border border-[#BAE6FD] dark:border-[#0369A1]">
@@ -674,7 +674,7 @@ function HomePage({ setSelectedTab }: HomePageProps) {
                             Array.from({ length: 3 }).map((_, i) => (
                                 <Card
                                     key={`skeleton-${i}`}
-                                    className="min-w-[260px] sm:min-w-72 flex-shrink-0 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 border-amber-100 dark:border-amber-800/50 rounded-2xl overflow-hidden shadow-sm animate-pulse"
+                                    className="w-[260px] max-w-[260px] sm:w-72 sm:max-w-72 flex-shrink-0 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 border-amber-100 dark:border-amber-800/50 rounded-2xl overflow-hidden shadow-sm animate-pulse"
                                 >
                                     {/* 이미지 영역 (CardHeader p-0 relative) */}
                                     <CardHeader className="p-0 relative">
@@ -712,9 +712,9 @@ function HomePage({ setSelectedTab }: HomePageProps) {
                                 return (
                                     <Card
                                         key={m.id}
-                                        className="min-w-[260px] sm:min-w-72 flex-shrink-0 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 border-amber-100 dark:border-amber-800/50 rounded-2xl overflow-hidden shadow-sm will-change-transform"
+                                        className="w-[260px] max-w-[260px] sm:w-72 sm:max-w-72 flex-shrink-0 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 border-amber-100 dark:border-amber-800/50 rounded-2xl overflow-hidden shadow-sm will-change-transform"
                                     >
-                                        <CardHeader className="p-0 relative">
+                                        <CardHeader className="p-0 relative overflow-hidden">
                                             {src ? (
                                                 <button
                                                     type="button"
@@ -726,12 +726,12 @@ function HomePage({ setSelectedTab }: HomePageProps) {
                                                             src,
                                                         })
                                                     }
-                                                    className="w-full"
+                                                    className="w-full overflow-hidden"
                                                 >
                                                     <img
                                                         src={src}
                                                         alt={m.name}
-                                                        className="w-full aspect-[4/3] object-cover"
+                                                        className="block w-full max-w-full aspect-[4/3] object-cover"
                                                         loading="lazy"
                                                         referrerPolicy="no-referrer"
                                                     />
