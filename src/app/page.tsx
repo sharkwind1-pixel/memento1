@@ -237,7 +237,7 @@ function HomeContent() {
             try {
                 const { data: profileData } = await supabase
                     .from("profiles")
-                    .select("nickname, tutorial_completed_at, onboarding_completed_at")
+                    .select("nickname, tutorial_completed_at, onboarding_completed_at, user_type")
                     .eq("id", user.id)
                     .single();
 
@@ -311,6 +311,9 @@ function HomeContent() {
 
                 // 온보딩 완료, 튜토리얼 미완료 → 튜토리얼 표시
                 if (profileData?.onboarding_completed_at && !profileData?.tutorial_completed_at) {
+                    // DB에서 user_type을 가져와서 튜토리얼 완료 후 후속 가이드 분기에 사용
+                    const ut = profileData?.user_type as "planning" | "current" | "memorial" | null;
+                    if (ut) setPostGuideUserType(ut);
                     setShowTutorial(true);
                     return; // ref 마킹 안함 (완료 후 재체크 필요)
                 }
