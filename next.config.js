@@ -7,7 +7,8 @@ const ContentSecurityPolicy = `
     style-src 'self' 'unsafe-inline';
     img-src 'self' data: blob: *.supabase.co *.supabase.in;
     font-src 'self';
-    connect-src 'self' *.supabase.co *.supabase.in api.openai.com apis.data.go.kr;
+    worker-src 'self';
+    connect-src 'self' *.supabase.co *.supabase.in api.openai.com apis.data.go.kr *.push.services.mozilla.com fcm.googleapis.com;
     frame-src 'self';
     object-src 'none';
     base-uri 'self';

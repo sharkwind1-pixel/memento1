@@ -359,6 +359,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setTimeout(() => {
                     Promise.all([refreshProfile(), checkDailyLogin()]);
                 }, 0);
+                // Service Worker 등록 (푸시 알림 준비)
+                if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+                    navigator.serviceWorker.register("/sw.js").catch(() => {});
+                }
             }
 
             // 로그아웃 시 상태 초기화

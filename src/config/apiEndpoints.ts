@@ -59,6 +59,9 @@ export const API = {
     MINIHOMPY_BG_CATALOG: "/api/minihompy/backgrounds",
     MINIHOMPY_BG_PURCHASE: "/api/minihompy/backgrounds/purchase",
 
+    // 푸시 알림
+    NOTIFICATIONS_SUBSCRIBE: "/api/notifications/subscribe",
+
     // 관리자
     ADMIN_POINTS: "/api/admin/points",
 } as const;

@@ -14,7 +14,7 @@ export async function GET() {
     }
 
     const siteUrl =
-        process.env.NEXT_PUBLIC_SITE_URL || "https://www.mementoani.com";
+        process.env.NEXT_PUBLIC_SITE_URL || "https://memento-ani.vercel.app";
     const redirectUri = encodeURIComponent(
         `${siteUrl}/api/auth/naver/callback`,
     );
