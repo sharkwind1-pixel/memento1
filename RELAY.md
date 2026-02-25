@@ -334,3 +334,151 @@
 | P2-4 | 치유의 여정 대시보드 | 중 |
 | P2-5 | 대화→타임라인 자동 생성 | 낮 |
 | P2-7 | 미니미 도감 + 터치 이펙트 | 낮 |
+
+---
+
+## 2026-02-26 세션: 보안 전면 리뷰 및 수정
+
+### 진행 배경
+승빈님 요청: "케어 리마인더와 AI 펫톡 푸시 알림 기능 전체 코드 리뷰 + 보안/문제점 수정"
+
+### 보안 리뷰 범위 (4개 병렬 에이전트 투입)
+
+| 영역 | 검토 파일 | 발견 문제 |
+|------|----------|----------|
+| 푸시 알림 API | `notifications/subscribe`, `cron/daily-greeting`, `push-notifications.ts` | CRON_SECRET 스킵, DELETE 에러 미처리, preferredHour 범위 |
+| 리마인더 API | `reminders/route.ts`, `reminders/[id]`, 관련 컴포넌트 | **A- 등급** - 대체로 우수, 일부 값 검증 개선 권장 |
+| AI 채팅 API | `chat/route.ts`, `agent.ts`, `AIChatPage.tsx` | 프리미엄 서버 검증 부재, Prompt Injection 필터 약함 |
+| 인증 시스템 | `AuthContext.tsx`, `supabase-server.ts` | 클라이언트 기반 피처 제한 (서버 검증 필요) |
+
+### 발견된 심각한 문제 및 수정
+
+#### 1. CRON_SECRET 로직 오류 (심각) ✅ 수정됨
+**파일**: `src/app/api/cron/daily-greeting/route.ts` (라인 204)
+
+**Before**:
+```typescript
+if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+}
+// cronSecret이 없으면 검사 스킵됨!
+```
+
+**After**:
+```typescript
+if (!cronSecret) {
+    console.error("[Cron] CRON_SECRET이 설정되지 않았습니다");
+    return NextResponse.json({ error: "CRON_SECRET_MISSING" }, { status: 500 });
+}
+if (authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+}
+```
+
+#### 2. AI Chat 프리미엄 서버 검증 부재 (심각) ✅ 수정됨
+**파일**: `src/app/api/chat/route.ts`
+
+**문제**: 클라이언트에서만 `isPremium` 체크, API 직접 호출 시 무제한 사용 가능
+
+**수정**:
+```typescript
+// 프리미엄 상태 확인 (서버 검증 - 보안 중요)
+const supabase = await createServerSupabase();
+const { data: profile } = await supabase
+    .from("profiles")
+    .select("is_premium, premium_expires_at")
+    .eq("id", user.id)
+    .single();
+
+const isPremium = profile?.is_premium &&
+    (!profile.premium_expires_at || new Date(profile.premium_expires_at) > new Date());
+
+// 무료 회원: 10회 제한, 프리미엄: 무제한
+if (!isPremium) {
+    const dailyUsage = await checkDailyUsageDB(identifier, false);
+    if (!dailyUsage.allowed) {
+        return NextResponse.json({ error: "일일 무료 제한 초과", isLimitReached: true }, { status: 429 });
+    }
+}
+```
+
+#### 3. 무료 회원 일일 제한 불일치 ✅ 수정됨
+**파일**: `src/lib/rate-limit.ts`
+
+**Before**: `dailyLimit: 50` (하드코딩)
+**After**: `dailyLimit: FREE_LIMITS.DAILY_CHATS` (10회, constants.ts 연동)
+
+#### 4. DELETE 에러 처리 누락 ✅ 수정됨
+**파일**: `src/app/api/notifications/subscribe/route.ts`
+
+**Before**:
+```typescript
+await supabase.from("push_subscriptions").delete()...
+return NextResponse.json({ success: true }); // 에러 확인 안 함
+```
+
+**After**:
+```typescript
+const { error } = await supabase.from("push_subscriptions").delete()...
+if (error) {
+    console.error("[Push Unsubscribe] DB 삭제 실패:", error.message);
+    return NextResponse.json({ error: "구독 해제에 실패했습니다." }, { status: 500 });
+}
+```
+
+#### 5. preferredHour 범위 제한 ✅ 수정됨
+**파일**: `src/app/api/notifications/subscribe/route.ts`
+
+**Before**: 0-23시 허용
+**After**: 7-22시만 허용 (새벽 알림 방지)
+
+#### 6. VAPID_SUBJECT 하드코딩 ✅ 수정됨
+**파일**: `src/app/api/cron/daily-greeting/route.ts`
+
+**Before**: `const VAPID_SUBJECT = "mailto:sharkwind1@gmail.com";`
+**After**: `const VAPID_SUBJECT = process.env.VAPID_SUBJECT || "mailto:support@memento-ani.com";`
+
+### DB 마이그레이션 생성됨
+
+**파일**: `supabase/migrations/20260226_security_fixes.sql`
+
+포함 내용:
+1. **`purchase_minimi_item` RPC**: 포인트 차감 + 아이템 추가 원자성 보장 (FOR UPDATE 락)
+2. **`sell_minimi_item` RPC**: 판매 시 원자성 보장
+3. **`check_pet_limit` 트리거**: 무료 1마리 / 프리미엄 10마리 DB 레벨 강제
+4. **`check_photo_limit` 트리거**: 무료 100장 / 프리미엄 1000장 펫당 제한
+
+### 커밋 히스토리
+
+| 커밋 | 내용 |
+|------|------|
+| `c61d817` | fix(security): 보안 취약점 수정 및 프리미엄 서버 검증 강화 |
+| `c825f42` | docs: RELAY.md 보안 수정 내역 추가 |
+
+### 수정된 파일 (5개)
+- `src/app/api/chat/route.ts` - 프리미엄 서버 검증, 무료 10회 제한
+- `src/app/api/cron/daily-greeting/route.ts` - CRON_SECRET 필수화, VAPID_SUBJECT 환경변수화
+- `src/app/api/notifications/subscribe/route.ts` - DELETE 에러 처리, 시간 범위 7-22시
+- `src/lib/rate-limit.ts` - FREE_LIMITS.DAILY_CHATS 연동
+- `supabase/migrations/20260226_security_fixes.sql` - 원자성 RPC + 제한 트리거 (신규)
+
+### 승빈님 필수 액션
+
+1. **Supabase SQL Editor에서 실행**:
+   ```
+   supabase/migrations/20260226_security_fixes.sql
+   ```
+
+2. **Vercel 환경변수 추가 (선택)**:
+   ```
+   VAPID_SUBJECT=mailto:support@memento-ani.com
+   ```
+
+### 리뷰에서 발견되었지만 미수정 (향후 권장)
+
+| 항목 | 심각도 | 설명 |
+|------|--------|------|
+| Prompt Injection 필터 강화 | 중간 | `sanitizeInput()` 패턴 감지 추가 권장 |
+| IP 기반 Rate Limit Redis 전환 | 낮음 | 현재 메모리 기반, 분산 환경에서 불완전 |
+| 입력값 런타임 타입 검증 (Zod) | 낮음 | `as` 타입 캐스팅 → Zod 스키마 검증 권장 |
+| 관리자 권한 헬퍼 표준화 | 낮음 | `requireAdmin()` 함수 일관 적용 권장 |
