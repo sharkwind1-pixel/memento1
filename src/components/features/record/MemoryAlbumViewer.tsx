@@ -152,134 +152,129 @@ export default function MemoryAlbumViewer({
 
     return (
         <div
-            className="fixed inset-0 z-[9999] bg-black/90 flex flex-col"
+            className="fixed inset-0 z-[9999] bg-black/80 flex items-center justify-center"
             onClick={handleBackdropClick}
             role="dialog"
             aria-modal="true"
             aria-labelledby="memory-album-title"
         >
-            {/* Top bar: close button */}
-            <div className="flex-shrink-0 flex justify-end p-4">
+            {/* 컴팩트 카드: 사진 + 하단 정보 */}
+            <div
+                className="relative w-full max-w-md mx-auto flex flex-col items-center"
+                onClick={(e) => e.stopPropagation()}
+            >
+                {/* 닫기 버튼 - 카드 우상단 */}
                 <Button
                     variant="ghost"
                     size="icon"
                     onClick={handleClose}
-                    className="text-white hover:bg-white/20 rounded-full"
+                    className="absolute -top-1 right-2 z-10 text-white bg-black/40 hover:bg-black/60 rounded-full w-8 h-8"
                     aria-label="닫기"
                 >
-                    <X className="w-6 h-6" />
+                    <X className="w-5 h-5" />
                 </Button>
-            </div>
 
-            {/* Center: photo carousel */}
-            <div
-                className="flex-1 relative overflow-hidden flex items-center"
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-                onClick={(e) => e.stopPropagation()}
-            >
-                {/* Slide track */}
+                {/* 사진 캐러셀 */}
                 <div
-                    className="flex w-full h-full transition-transform duration-300 ease-in-out"
-                    style={{
-                        transform: `translateX(-${currentIndex * 100}%)`,
-                    }}
+                    className="relative w-full overflow-hidden rounded-xl"
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
                 >
-                    {photos.map((photo, index) => (
-                        <div
-                            key={photo.id || index}
-                            className="w-full h-full flex-shrink-0 flex items-center justify-center px-4"
-                        >
-                            <img
-                                src={photo.url}
-                                alt={
-                                    photo.caption ||
-                                    `${album.title} - ${index + 1}`
-                                }
-                                className="w-full h-full object-contain"
-                                draggable={false}
-                            />
-                        </div>
-                    ))}
-                </div>
-
-                {/* Left arrow */}
-                {currentIndex > 0 && (
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={goToPrev}
-                        className="absolute left-2 top-1/2 -translate-y-1/2 text-white bg-black/40 hover:bg-black/60 rounded-full w-10 h-10"
-                        aria-label="이전 사진"
+                    <div
+                        className="flex transition-transform duration-300 ease-in-out"
+                        style={{
+                            transform: `translateX(-${currentIndex * 100}%)`,
+                        }}
                     >
-                        <ChevronLeft className="w-6 h-6" />
-                    </Button>
-                )}
-
-                {/* Right arrow */}
-                {currentIndex < totalPhotos - 1 && (
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={goToNext}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-white bg-black/40 hover:bg-black/60 rounded-full w-10 h-10"
-                        aria-label="다음 사진"
-                    >
-                        <ChevronRight className="w-6 h-6" />
-                    </Button>
-                )}
-            </div>
-
-            {/* Bottom section: album info + indicators */}
-            <div
-                className="flex-shrink-0 pb-6 pt-3 px-4 text-center"
-                onClick={(e) => e.stopPropagation()}
-            >
-                {/* Album title */}
-                <h2
-                    id="memory-album-title"
-                    className="text-lg font-semibold text-amber-200"
-                >
-                    {album.title}
-                </h2>
-
-                {/* Album description */}
-                {album.description && (
-                    <p className="text-sm text-amber-100/70 mt-1">
-                        {album.description}
-                    </p>
-                )}
-
-                {/* Current photo caption */}
-                {currentPhoto?.caption && (
-                    <p className="text-sm text-white/80 mt-2">
-                        {currentPhoto.caption}
-                    </p>
-                )}
-
-                {/* Dot indicators */}
-                {totalPhotos > 1 && (
-                    <div className="flex items-center justify-center gap-1.5 mt-3">
-                        {photos.map((_, index) => (
-                            <button
-                                key={index}
-                                onClick={() => setCurrentIndex(index)}
-                                className={`w-2 h-2 rounded-full transition-colors duration-200 ${
-                                    index === currentIndex
-                                        ? "bg-amber-400"
-                                        : "bg-white/30"
-                                }`}
-                                aria-label={`${index + 1}번째 사진으로 이동`}
-                            />
+                        {photos.map((photo, index) => (
+                            <div
+                                key={photo.id || index}
+                                className="w-full flex-shrink-0 flex items-center justify-center"
+                            >
+                                <img
+                                    src={photo.url}
+                                    alt={
+                                        photo.caption ||
+                                        `${album.title} - ${index + 1}`
+                                    }
+                                    className="w-full max-h-[65vh] object-contain"
+                                    draggable={false}
+                                />
+                            </div>
                         ))}
                     </div>
-                )}
 
-                {/* Photo counter */}
-                <p className="text-xs text-white/50 mt-2">
-                    {currentIndex + 1} / {totalPhotos}
-                </p>
+                    {/* 좌측 화살표 */}
+                    {currentIndex > 0 && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={goToPrev}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 text-white bg-black/40 hover:bg-black/60 rounded-full w-9 h-9"
+                            aria-label="이전 사진"
+                        >
+                            <ChevronLeft className="w-5 h-5" />
+                        </Button>
+                    )}
+
+                    {/* 우측 화살표 */}
+                    {currentIndex < totalPhotos - 1 && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={goToNext}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-white bg-black/40 hover:bg-black/60 rounded-full w-9 h-9"
+                            aria-label="다음 사진"
+                        >
+                            <ChevronRight className="w-5 h-5" />
+                        </Button>
+                    )}
+
+                    {/* 사진 카운터 - 사진 위 좌하단 */}
+                    <span className="absolute bottom-2 left-2 px-2 py-0.5 text-xs font-medium text-white bg-black/50 rounded-md backdrop-blur-sm">
+                        {currentIndex + 1} / {totalPhotos}
+                    </span>
+                </div>
+
+                {/* 하단: 앨범 정보 + dot */}
+                <div className="w-full pt-3 pb-2 px-2 text-center">
+                    <h2
+                        id="memory-album-title"
+                        className="text-base font-semibold text-amber-200"
+                    >
+                        {album.title}
+                    </h2>
+
+                    {album.description && (
+                        <p className="text-xs text-amber-100/70 mt-0.5 line-clamp-2">
+                            {album.description}
+                        </p>
+                    )}
+
+                    {currentPhoto?.caption && (
+                        <p className="text-xs text-white/80 mt-1">
+                            {currentPhoto.caption}
+                        </p>
+                    )}
+
+                    {totalPhotos > 1 && (
+                        <div className="flex items-center justify-center gap-1.5 mt-2">
+                            {photos.map((_, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => setCurrentIndex(index)}
+                                    className={`w-1.5 h-1.5 rounded-full transition-colors duration-200 ${
+                                        index === currentIndex
+                                            ? "bg-amber-400"
+                                            : "bg-white/30"
+                                    }`}
+                                    aria-label={`${index + 1}번째 사진으로 이동`}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
