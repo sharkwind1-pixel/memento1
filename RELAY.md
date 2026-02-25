@@ -1,30 +1,25 @@
 # 릴레이
 
-## [!!] 튜토리얼 전면 수정 (`a6b4e53`) - 테스트 필요
+## 튜토리얼 - 완료 (데스크톱/모바일 모두 정상 동작 확인)
 
-> **상태**: 커밋 + 푸시 완료. **데스크톱/모바일 양쪽 테스트 필요.**
+> **상태**: 완료. 데스크톱/모바일 양쪽 정상 작동.
 
-### 변경 내용
+### 커밋 히스토리
+| 커밋 | 내용 |
+|------|------|
+| `a6b4e53` | TutorialTour v3 재작성 (box-shadow 스포트라이트, StrictMode 안전) |
+| `1781f57` | v3: ready 게이트 제거, setInterval 폴링, ref 기반 |
+| `3e21287` | 모바일 튜토리얼 → RecordPageTutorial 연결 누락 수정 (user_type DB 조회) |
+| `ef060dd` | 종료 확인 다이얼로그 추가 |
+| `6f5d685` | 건너뛰기만 확인, 마지막 스텝은 바로 완료 |
+| `31169d3` | 확인 다이얼로그 제거 (바로 종료) + 말풍선 중앙 깜빡임 수정 |
 
-**1. TutorialTour.tsx 완전 재작성**
-- SVG 마스크 → **box-shadow 스포트라이트** 방식으로 전환 (더 단순하고 확실)
-- 데스크톱(xl+): 사이드바 항목 11스텝 순차 안내 (등급→미니미→포인트→상점→홈→기록→커뮤니티→AI펫톡→매거진→질문/신고→건의사항)
+### 최종 동작
+- 데스크톱(xl+): 사이드바 항목 11스텝 순차 안내
 - 모바일(<xl): 하단 네비 5스텝 순차 안내
 - 완료 시 RecordPageTutorial로 이어짐 (current/memorial 유저)
-
-**2. 데스크톱 까만 오버레이 버그 수정**
-- **원인**: React 18 StrictMode 이중 실행으로 `wasOpenRef` + `setTimeout` 패턴이 깨져서 `measure(0)`이 영영 호출되지 않음 → `ready=false` 영원 → 까만 오버레이만 표시
-- **수정**: `wasOpenRef` 제거, `if (!isOpen) return;` 패턴 적용 (RecordPageTutorial과 동일)
-- 안전장치: 3초 타임아웃으로 까만 화면 강제 탈출
-- 로딩 중에도 "건너뛰기" 버튼 표시
-
-**3. data-tutorial-id 속성 추가**
-- PointsBadge: `sidebar-level`, `sidebar-minimi`, `sidebar-points`, `sidebar-shop` (스켈레톤에도 추가)
-- Sidebar: `sidebar-inquiry`, `sidebar-suggestion`
-- HomePage/CommunityPage/AIChatPage/MagazinePage/RecordPage: 각 페이지 콘텐츠 영역
-
-### 수정 파일 (10개)
-`TutorialTour.tsx`, `RecordPageTutorial.tsx`, `PointsBadge.tsx`, `Sidebar.tsx`, `HomePage.tsx`, `CommunityPage.tsx`, `AIChatPage.tsx`, `MagazinePage.tsx`, `RecordPage.tsx`, `types/index.ts`
+- 건너뛰기: 바로 종료 (확인 없음)
+- 말풍선: 타겟 측정 전엔 숨김 (중앙 깜빡임 방지)
 
 ---
 
@@ -102,7 +97,7 @@
 | 사이드바 전체 스크롤 개선 | (이전) | `Sidebar.tsx` | 완료 |
 | 미니미 구매 확인 다이얼로그 | (이전) | `MinimiShopModal.tsx` | 완료 |
 | equipped_minimi_id UUID 호환성 | (이전) | equip/inventory/sell/minihompy API, `AuthContext.tsx` | 완료 |
-| **튜토리얼 전면 수정** | `a6b4e53` | `TutorialTour.tsx`, `RecordPageTutorial.tsx`, `PointsBadge.tsx`, `Sidebar.tsx`, 각 페이지 | **완료 - 테스트 필요** |
+| **튜토리얼 전면 수정** | `a6b4e53`~`31169d3` | `TutorialTour.tsx`, `RecordPageTutorial.tsx`, `PointsBadge.tsx`, `Sidebar.tsx`, 각 페이지, `page.tsx` | 완료 |
 
 ### 버그 수정
 
@@ -118,7 +113,9 @@
 | 골든리트리버 미니미 가격 200P 통일 | `b8acb52` | 완료 |
 | 모바일 헤더 미니미 아이콘 숨김 | `4c1e178` | 완료 |
 | 모바일 깜빡임 (8커밋) | `43a434f`~`9a33015` | **React.memo + MemorialModeContext 적용** - 모바일 테스트 필요 |
-| **데스크톱 튜토리얼 까만 오버레이만 표시** | `a6b4e53` | **완료** - React 18 StrictMode 이중 실행으로 wasOpenRef 패턴 깨짐 → 제거 후 수정 |
+| **데스크톱 튜토리얼 까만 오버레이만 표시** | `a6b4e53`~`31169d3` | 완료 |
+| 모바일 튜토리얼 → RecordPageTutorial 미연결 | `3e21287` | 완료 |
+| 튜토리얼 말풍선 중앙 깜빡임 | `31169d3` | 완료 |
 | 우리의 기록 튜토리얼 2번째 모달 화면 밖 이탈 | `e78022b` | 완료 |
 
 ### 모바일 UX/UI 개선 (`3e9aa89`, `d0b69f9`)
@@ -156,3 +153,24 @@
 - 빌드 확인 필수
 - CLAUDE.md의 서브에이전트 오케스트레이션 방식 준수
 - **DB 변경이 포함된 작업은 SQL 실행까지 완료해야 "완료"**
+
+---
+
+## 2026-02-25 세션 2: Phase 2 구현 진행
+
+### 완료 항목
+
+| 항목 | 커밋 | 내용 |
+|------|------|------|
+| **P2-3** 커뮤니티 무한 스크롤 | `f565f8b` | IntersectionObserver + offset/limit 페이지네이션, 15개씩 로드, 로딩 스켈레톤, 종료 상태 표시 |
+| **P2-6** 스켈레톤 통일 | `006f16d` | MagazinePage/AdoptionPage/RemindersPage의 PawLoading → skeleton.tsx 컴포넌트로 교체 |
+| **P2-1** 무지개다리 세레모니 5단계 | `d105547` | MemorialSwitchModal 2단계→5단계 확장 (마음의 준비→날짜→슬라이드쇼→작별인사→별이되다), 작별 메시지 timeline 저장 |
+
+### 미완료 Phase 2 항목 (다음 세션)
+
+| 항목 | 내용 | 우선순위 |
+|------|------|---------|
+| P2-2 | 대화 속 사진 연결 `[PHOTO:id]` | 중 |
+| P2-4 | 치유의 여정 대시보드 | 중 |
+| P2-5 | 대화→타임라인 자동 생성 | 낮 |
+| P2-7 | 미니미 도감 + 터치 이펙트 | 낮 |
