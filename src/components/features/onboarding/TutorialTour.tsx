@@ -157,7 +157,6 @@ export default function TutorialTour({
         const mobile = typeof window !== "undefined" ? window.innerWidth < 1280 : false;
         const list = mobile ? MOBILE_STEPS : DESKTOP_STEPS;
         const step = list[stepIndex];
-        console.log("[Tutorial] measureStep", stepIndex, "mobile=", mobile, "step=", step?.targetId);
         if (!step) {
             setTargetRect(null);
             return;
@@ -165,10 +164,8 @@ export default function TutorialTour({
 
         // 즉시 한 번 시도
         const el = findTarget(step.targetId);
-        console.log("[Tutorial] findTarget result:", step.targetId, "found=", !!el);
         if (el) {
             const rect = el.getBoundingClientRect();
-            console.log("[Tutorial] rect:", rect.top, rect.left, rect.width, rect.height);
             if (rect.top < 0 || rect.bottom > window.innerHeight) {
                 el.scrollIntoView({ behavior: "smooth", block: "center" });
                 setTimeout(() => {
@@ -186,11 +183,9 @@ export default function TutorialTour({
         pollRef.current = setInterval(() => {
             attempts++;
             const found = findTarget(step.targetId);
-            console.log("[Tutorial] polling attempt", attempts, "for", step.targetId, "found=", !!found);
             if (!isOpenRef.current || attempts > 10) {
                 if (pollRef.current) clearInterval(pollRef.current);
                 pollRef.current = undefined;
-                console.log("[Tutorial] gave up polling for", step.targetId);
                 setTargetRect(null); // 못 찾아도 말풍선은 중앙에 표시됨
                 return;
             }
@@ -223,7 +218,6 @@ export default function TutorialTour({
     // isOpen 변경 시 초기화
     // ─────────────────────────────────────────────────────────
     useEffect(() => {
-        console.log("[Tutorial] isOpen effect:", isOpen, "mounted=", mounted);
         if (!isOpen) {
             // 닫힐 때 정리
             if (pollRef.current) {
@@ -238,11 +232,8 @@ export default function TutorialTour({
         stepRef.current = 0;
         setTargetRect(null);
         onNavigateRef.current("home");
-        console.log("[Tutorial] scheduling measureStep(0) in 500ms");
-
         // DOM 준비 대기 후 첫 측정 (500ms)
         const timer = setTimeout(() => {
-            console.log("[Tutorial] timer fired, isOpenRef=", isOpenRef.current);
             if (!isOpenRef.current) return;
             measureStep(0);
         }, 500);
@@ -284,11 +275,10 @@ export default function TutorialTour({
     // ─────────────────────────────────────────────────────────
     // 렌더링 조건
     // ─────────────────────────────────────────────────────────
-    console.log("[Tutorial] render: isOpen=", isOpen, "mounted=", mounted, "currentStep=", currentStep, "targetRect=", !!targetRect, "isMobile=", isMobile);
     if (!isOpen || !mounted) return null;
 
     const step = steps[currentStep];
-    if (!step) { console.log("[Tutorial] step is null for index", currentStep); return null; }
+    if (!step) return null;
 
     // ─────────────────────────────────────────────────────────
     // 핸들러
