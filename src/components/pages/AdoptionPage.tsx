@@ -33,7 +33,7 @@ import {
     Info,
     AlertCircle,
 } from "lucide-react";
-import PawLoading from "@/components/ui/PawLoading";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { TabType } from "@/types";
 import type { AdoptionAnimal } from "@/app/api/adoption/route";
@@ -551,8 +551,20 @@ function AdoptionPage({ setSelectedTab }: AdoptionPageProps) {
 
                 {/* 메인 컨텐츠 */}
                 {isLoading ? (
-                    <div className="flex flex-col items-center justify-center py-16">
-                        <PawLoading size="lg" text="입양 정보를 불러오는 중..." />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {Array.from({ length: 6 }).map((_, i) => (
+                            <div key={i} className="rounded-2xl overflow-hidden bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-white/50 dark:border-gray-700/50">
+                                <Skeleton className="h-48 w-full" />
+                                <div className="p-4 space-y-2">
+                                    <Skeleton className="h-5 w-1/2" />
+                                    <Skeleton className="h-4 w-3/4" />
+                                    <div className="flex gap-2 pt-1">
+                                        <Skeleton className="h-6 w-14 rounded-full" />
+                                        <Skeleton className="h-6 w-14 rounded-full" />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 ) : error ? (
                     <div className="flex flex-col items-center justify-center py-16 text-gray-500 dark:text-gray-400">

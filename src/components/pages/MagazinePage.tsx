@@ -36,7 +36,7 @@ import {
 import Image from "next/image";
 import { TabType } from "@/types";
 import { getBadgeStyle, getBadgeLabel, dbArticleToMagazineArticle, type MagazineArticle } from "@/data/magazineArticles";
-import PawLoading from "@/components/ui/PawLoading";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { API } from "@/config/apiEndpoints";
 import MagazineReader from "@/components/features/magazine/MagazineReader";
@@ -225,8 +225,18 @@ function MagazinePage({ setSelectedTab }: MagazinePageProps) {
 
                 {/* 로딩 상태 */}
                 {isLoading && (
-                    <div className="flex items-center justify-center py-16">
-                        <PawLoading size="lg" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {Array.from({ length: 6 }).map((_, i) => (
+                            <div key={i} className="rounded-2xl overflow-hidden bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-white/50 dark:border-gray-700/50">
+                                <Skeleton className="h-40 w-full" />
+                                <div className="p-4 space-y-2">
+                                    <Skeleton className="h-4 w-16" />
+                                    <Skeleton className="h-5 w-3/4" />
+                                    <Skeleton className="h-4 w-full" />
+                                    <Skeleton className="h-4 w-2/3" />
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 )}
 

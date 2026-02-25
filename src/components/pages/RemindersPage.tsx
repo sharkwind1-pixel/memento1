@@ -35,7 +35,7 @@ import {
     LogIn,
     X,
 } from "lucide-react";
-import PawLoading from "@/components/ui/PawLoading";
+import { ReminderCardSkeleton } from "@/components/ui/skeleton";
 import { API } from "@/config/apiEndpoints";
 import { authFetch } from "@/lib/auth-fetch";
 import type { Reminder } from "@/types";
@@ -487,8 +487,10 @@ function RemindersPage() {
             {/* 리마인더 목록 */}
             <div className="max-w-2xl mx-auto px-4 py-6">
                 {isLoading ? (
-                    <div className="flex items-center justify-center py-12">
-                        <PawLoading size="lg" text="리마인더 불러오는 중..." />
+                    <div className="space-y-3">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                            <ReminderCardSkeleton key={i} />
+                        ))}
                     </div>
                 ) : reminders.length === 0 ? (
                     <div className="text-center py-12">
