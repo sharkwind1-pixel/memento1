@@ -107,9 +107,24 @@ export default function AuthModal({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
         setError(null);
         setSuccess(null);
+
+        // 필수 입력 검증
+        if (!email.trim()) {
+            setError("이메일을 입력해주세요.");
+            return;
+        }
+        if (!password) {
+            setError("비밀번호를 입력해주세요.");
+            return;
+        }
+        if (password.length < 6) {
+            setError("비밀번호는 최소 6자 이상이어야 합니다.");
+            return;
+        }
+
+        setLoading(true);
 
         try {
             if (mode === "signup") {
@@ -321,7 +336,7 @@ export default function AuthModal({
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 className="pl-10 h-12 rounded-xl"
-                                required
+                                autoComplete="email"
                             />
                         </div>
                     </div>
@@ -339,8 +354,7 @@ export default function AuthModal({
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 className="pl-10 pr-10 h-12 rounded-xl"
-                                required
-                                minLength={6}
+                                autoComplete="current-password"
                             />
                             <button
                                 type="button"
