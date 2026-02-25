@@ -1,6 +1,6 @@
 /**
  * AuthModal.tsx
- * 소셜 로그인 모달 (Google / 카카오)
+ * 소셜 로그인 모달 (Google / 카카오 / 네이버)
  */
 
 "use client";
@@ -17,7 +17,7 @@ interface AuthModalProps {
 }
 
 export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
-    const { signInWithGoogle, signInWithKakao } = useAuth();
+    const { signInWithGoogle, signInWithKakao, signInWithNaver } = useAuth();
     useEscapeClose(isOpen, onClose);
 
     const [loading, setLoading] = useState(false);
@@ -51,15 +51,19 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
     if (!isOpen) return null;
 
-    const handleSocialLogin = async (provider: "google" | "kakao") => {
+    const handleSocialLogin = async (provider: "google" | "kakao" | "naver") => {
         setLoading(true);
         setError(null);
 
         try {
             if (provider === "google") {
                 await signInWithGoogle();
-            } else {
+            } else if (provider === "kakao") {
                 await signInWithKakao();
+            } else {
+                // 네이버는 window.location.href로 리다이렉트 (페이지 이동)
+                signInWithNaver();
+                return;
             }
         } catch (err) {
             setError("소셜 로그인에 실패했습니다. 다시 시도해주세요.");
@@ -122,6 +126,51 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
                         {/* 소셜 로그인 버튼 */}
                         <div className="space-y-3">
+                            {/* 네이버 */}
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => handleSocialLogin("naver")}
+                                disabled={loading}
+                                className="w-full h-12 rounded-xl bg-[#03C75A] hover:bg-[#02b351] border-[#03C75A] text-white hover:text-white"
+                            >
+                                {loading ? (
+                                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                ) : (
+                                    <svg
+                                        className="w-5 h-5 mr-2"
+                                        viewBox="0 0 24 24"
+                                        fill="white"
+                                    >
+                                        <path d="M16.273 12.845 7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z" />
+                                    </svg>
+                                )}
+                                네이버로 계속하기
+                            </Button>
+
+                            {/* 카카오 */}
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => handleSocialLogin("kakao")}
+                                disabled={loading}
+                                className="w-full h-12 rounded-xl bg-[#FEE500] hover:bg-[#FDD835] border-[#FEE500] text-[#191919]"
+                            >
+                                {loading ? (
+                                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                ) : (
+                                    <svg
+                                        className="w-5 h-5 mr-2"
+                                        viewBox="0 0 24 24"
+                                        fill="#191919"
+                                    >
+                                        <path d="M12 3C6.477 3 2 6.463 2 10.691c0 2.738 1.82 5.135 4.55 6.48-.168.607-.61 2.198-.7 2.543-.112.428.157.422.33.307.135-.09 2.15-1.46 3.02-2.048.57.083 1.16.127 1.8.127 5.523 0 10-3.463 10-7.409C22 6.463 17.523 3 12 3z" />
+                                    </svg>
+                                )}
+                                카카오로 계속하기
+                            </Button>
+
+                            {/* 구글 */}
                             <Button
                                 type="button"
                                 variant="outline"
@@ -155,27 +204,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                                     </svg>
                                 )}
                                 Google로 계속하기
-                            </Button>
-
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => handleSocialLogin("kakao")}
-                                disabled={loading}
-                                className="w-full h-12 rounded-xl bg-[#FEE500] hover:bg-[#FDD835] border-[#FEE500] text-[#191919]"
-                            >
-                                {loading ? (
-                                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                ) : (
-                                    <svg
-                                        className="w-5 h-5 mr-2"
-                                        viewBox="0 0 24 24"
-                                        fill="#191919"
-                                    >
-                                        <path d="M12 3C6.477 3 2 6.463 2 10.691c0 2.738 1.82 5.135 4.55 6.48-.168.607-.61 2.198-.7 2.543-.112.428.157.422.33.307.135-.09 2.15-1.46 3.02-2.048.57.083 1.16.127 1.8.127 5.523 0 10-3.463 10-7.409C22 6.463 17.523 3 12 3z" />
-                                    </svg>
-                                )}
-                                카카오로 계속하기
                             </Button>
                         </div>
 
