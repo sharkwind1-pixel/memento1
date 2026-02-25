@@ -1,5 +1,28 @@
 # 릴레이
 
+## [완료] 알림 거부 UX 개선 (`bf5f0ec`) - 배포 완료
+
+> **상태**: 커밋 + main 머지 + push 완료. Vercel 배포됨.
+
+### 변경 내용
+
+**1. AIChatPage.tsx - handleReminderAccept**
+- 알림 `denied` 상태에서 "알려주세요" 클릭 시 OS별 구체적 설정 안내 toast 표시
+- iOS: "설정 > Safari > 알림에서 허용해주세요"
+- 기타: "주소창 왼쪽 자물쇠 > 알림 > 허용으로 변경해주세요"
+- 기존: denied면 아무 안내 없이 무시하고 record 탭 이동
+
+**2. PushNotificationBanner.tsx - denied 상태 배너**
+- `BannerState`에 `"denied"` 타입 추가
+- 페이지 진입 시 `permission === "denied"`여도 안내 배너 표시 (기존: 배너 숨김)
+- `handleSubscribe`에서 유저가 거부하면 denied 배너로 전환 (기존: 그냥 사라짐)
+- denied 배너 UI: BellOff 아이콘 + OS별 설정 변경 안내 + 닫기 버튼
+
+### 수정 파일 (2개)
+`src/components/pages/AIChatPage.tsx`, `src/components/features/chat/PushNotificationBanner.tsx`
+
+---
+
 ## 튜토리얼 - 완료 (데스크톱/모바일 모두 정상 동작 확인)
 
 > **상태**: 완료. 데스크톱/모바일 양쪽 정상 작동.
