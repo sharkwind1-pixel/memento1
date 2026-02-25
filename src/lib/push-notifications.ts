@@ -101,6 +101,47 @@ export async function unsubscribeFromPush(): Promise<boolean> {
 }
 
 /**
+ * 푸시 구독이 안 되어 있으면 자동으로 권한 요청 + 구독 + 서버 등록
+ * 리마인더 저장 시 호출하여 푸시 알림을 연동
+ * @returns 구독 성공 여부
+ */
+export async function ensurePushSubscription(
+    authFetchFn: (url: string, options: RequestInit) => Promise<Response>,
+    subscribeApiUrl: string,
+): Promise<boolean> {
+    if (!isPushSupported()) return false;
+
+    const permission = getNotificationPermission();
+    if (permission === "denied") return false;
+
+    // 이미 구독되어 있으면 건너뜀
+    const existing = await getExistingSubscription();
+    if (existing) return true;
+
+    // 아직 권한 결정 안 한 경우 또는 이미 granted인 경우
+    try {
+        const registration = await registerServiceWorker();
+        if (!registration) return false;
+
+        const subscription = await subscribeToPush(registration);
+        if (!subscription) return false;
+
+        // 서버에 구독 등록
+        const res = await authFetchFn(subscribeApiUrl, {
+            method: "POST",
+            body: JSON.stringify({
+                subscription: subscription.toJSON(),
+                preferredHour: 9,
+            }),
+        });
+
+        return res.ok;
+    } catch {
+        return false;
+    }
+}
+
+/**
  * VAPID 키를 Uint8Array로 변환 (Web Push API 요구사항)
  */
 function urlBase64ToUint8Array(base64String: string): ArrayBuffer {

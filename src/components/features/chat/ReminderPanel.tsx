@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { API } from "@/config/apiEndpoints";
 import { authFetch } from "@/lib/auth-fetch";
+import { ensurePushSubscription } from "@/lib/push-notifications";
 import { toast } from "sonner";
 import type { Reminder } from "@/types";
 
@@ -242,6 +243,8 @@ export default function ReminderPanel({
             }
 
             toast.success("알림이 추가되었어요!");
+            // 푸시 구독 안 되어 있으면 자동 구독 (알림 받기 위해)
+            ensurePushSubscription(authFetch, API.NOTIFICATIONS_SUBSCRIBE);
             setShowAddForm(false);
             setForm({
                 type: "walk",
