@@ -230,10 +230,10 @@ export default function PetFormModal({
                 onClick={handleBackdropClose}
             >
                 {/* 모달 정렬 래퍼 */}
-                <div className="min-h-full flex items-start justify-center pt-16 pb-4 px-4">
+                <div className="min-h-full flex items-start justify-center pt-4 sm:pt-16 pb-4 px-3 sm:px-4">
                     {/* 모달 본체 */}
                     <div
-                        className="bg-white dark:bg-gray-900 w-full max-w-md rounded-2xl shadow-xl relative"
+                        className="bg-white dark:bg-gray-900 w-full max-w-md rounded-2xl shadow-xl relative max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-9rem)] overflow-y-auto"
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="pet-form-title"

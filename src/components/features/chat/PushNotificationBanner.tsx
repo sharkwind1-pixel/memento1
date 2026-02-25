@@ -62,7 +62,17 @@ export default function PushNotificationBanner({
             if (!isPushSupported()) return;
 
             const permission = getNotificationPermission();
-            if (permission === "denied") return;
+            if (permission === "denied") {
+                // 거부 상태에서도 배너 표시 (설정 변경 안내 목적)
+                setBannerState("unsubscribed");
+                setVisible(true);
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        setAnimateIn(true);
+                    });
+                });
+                return;
+            }
 
             const existing = await getExistingSubscription();
 
@@ -130,7 +140,18 @@ export default function PushNotificationBanner({
 
             const subscription = await subscribeToPush(registration);
             if (!subscription) {
-                toast.error("알림 권한이 거부되었습니다. 브라우저 설정에서 변경해주세요.");
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+                if (isIOS) {
+                    toast.info(
+                        "알림을 받으려면: 설정 앱 > Safari > 알림에서 이 사이트를 허용해주세요",
+                        { duration: 6000 }
+                    );
+                } else {
+                    toast.info(
+                        "알림을 받으려면: 주소창 왼쪽 자물쇠 > 알림 > 허용으로 변경해주세요",
+                        { duration: 6000 }
+                    );
+                }
                 setActionLoading(false);
                 return;
             }
