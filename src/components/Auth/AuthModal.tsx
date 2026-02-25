@@ -81,6 +81,8 @@ export default function AuthModal({
     }, [isOpen, resetNickname]);
 
     // 페이지가 다시 보일 때 (OAuth 뒤로가기 등) 로딩 리셋
+    // window "focus" 이벤트는 제거 - 윈도우 한글 IME에서 Shift 키 누를 때
+    // window blur/focus가 발생하면서 리렌더 → 포커스 이동 문제 유발
     useEffect(() => {
         const handleVisibilityChange = () => {
             if (document.visibilityState === "visible" && isOpen) {
@@ -88,18 +90,10 @@ export default function AuthModal({
             }
         };
 
-        const handleFocus = () => {
-            if (isOpen) {
-                setLoading(false);
-            }
-        };
-
         document.addEventListener("visibilitychange", handleVisibilityChange);
-        window.addEventListener("focus", handleFocus);
 
         return () => {
             document.removeEventListener("visibilitychange", handleVisibilityChange);
-            window.removeEventListener("focus", handleFocus);
         };
     }, [isOpen]);
 
@@ -332,12 +326,11 @@ export default function AuthModal({
                             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                             <Input
                                 type="text"
-                                inputMode="email"
                                 placeholder="이메일을 입력하세요"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 className="pl-10 h-12 rounded-xl"
-                                autoComplete="email"
+                                autoComplete="off"
                             />
                         </div>
                     </div>
@@ -355,7 +348,7 @@ export default function AuthModal({
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 className="pl-10 pr-10 h-12 rounded-xl"
-                                autoComplete="current-password"
+                                autoComplete="off"
                             />
                             <button
                                 type="button"
