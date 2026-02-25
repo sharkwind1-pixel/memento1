@@ -14,7 +14,7 @@ import { FREE_LIMITS } from "@/config/constants";
 const ipRequestCounts = new Map<string, { count: number; resetTime: number }>();
 const ipBlockList = new Map<string, number>(); // IP -> 차단 해제 시간
 const userDailyUsage = new Map<string, { count: number; date: string }>();
-const vpnCheckCache = new Map<string, { isVPN: boolean; checkedAt: number }>(); // VPN 체크 캐시
+const vpnCheckCache = new Map<string, { isVPN: boolean; isProxy: boolean; isDatacenter: boolean; checkedAt: number }>(); // VPN 체크 캐시
 
 // Rate Limit 설정
 const RATE_LIMITS = {
@@ -241,13 +241,35 @@ export async function checkDailyUsageDB(
         let currentCount: number;
 
         if (existing) {
-            // 기존 레코드 카운트 증가
-            const newCount = (existing.request_count || 0) + 1;
-            await supabase
+            // 기존 레코드 카운트 증가 (optimistic locking으로 레이스 컨디션 방지)
+            const oldCount = existing.request_count || 0;
+            const newCount = oldCount + 1;
+            const { data: updated } = await supabase
                 .from("user_daily_usage")
                 .update({ request_count: newCount })
-                .eq("id", existing.id);
-            currentCount = newCount;
+                .eq("id", existing.id)
+                .eq("request_count", oldCount) // 다른 요청이 먼저 증가시켰으면 매칭 실패 → 0 rows updated
+                .select("request_count")
+                .maybeSingle();
+
+            if (!updated) {
+                // 동시 요청으로 카운트가 변경됨 → 최신값 재조회 후 재시도
+                const { data: fresh } = await supabase
+                    .from("user_daily_usage")
+                    .select("request_count")
+                    .eq("id", existing.id)
+                    .single();
+                const freshCount = (fresh?.request_count || 0);
+                const retryCount = freshCount + 1;
+                await supabase
+                    .from("user_daily_usage")
+                    .update({ request_count: retryCount })
+                    .eq("id", existing.id)
+                    .eq("request_count", freshCount);
+                currentCount = retryCount;
+            } else {
+                currentCount = updated.request_count;
+            }
         } else {
             // 신규 레코드 생성
             await supabase
@@ -504,8 +526,8 @@ export async function detectVPNByAPI(ip: string): Promise<{
     if (cached && Date.now() - cached.checkedAt < 24 * 60 * 60 * 1000) {
         return {
             isVPN: cached.isVPN,
-            isProxy: cached.isVPN,
-            isDatacenter: cached.isVPN,
+            isProxy: cached.isProxy,
+            isDatacenter: cached.isDatacenter,
         };
     }
 
@@ -543,6 +565,8 @@ export async function detectVPNByAPI(ip: string): Promise<{
         // 캐시 저장
         vpnCheckCache.set(ip, {
             isVPN: isVPN || isProxy || isDatacenter,
+            isProxy,
+            isDatacenter,
             checkedAt: Date.now(),
         });
 

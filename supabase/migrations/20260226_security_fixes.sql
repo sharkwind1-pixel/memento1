@@ -85,9 +85,20 @@ SECURITY DEFINER
 AS $$
 DECLARE
     v_user_minimi_id UUID;
+    v_current_points INTEGER;
     v_new_points INTEGER;
 BEGIN
-    -- 1. 보유 확인 (FOR UPDATE로 락)
+    -- 1. 프로필 행 잠금 (포인트 동시성 보호)
+    SELECT points INTO v_current_points
+    FROM profiles
+    WHERE id = p_user_id
+    FOR UPDATE;
+
+    IF v_current_points IS NULL THEN
+        RETURN jsonb_build_object('success', false, 'error', 'user_not_found');
+    END IF;
+
+    -- 2. 보유 확인 (FOR UPDATE로 락)
     SELECT id INTO v_user_minimi_id
     FROM user_minimi
     WHERE user_id = p_user_id AND minimi_id = p_minimi_id
@@ -97,21 +108,22 @@ BEGIN
         RETURN jsonb_build_object('success', false, 'error', 'not_owned');
     END IF;
 
-    -- 2. 장착 해제 (판매 전)
+    -- 3. 장착 해제 (판매 전)
     UPDATE profiles
     SET equipped_minimi_id = NULL
     WHERE id = p_user_id AND equipped_minimi_id = v_user_minimi_id::TEXT;
 
-    -- 3. 아이템 삭제
+    -- 4. 아이템 삭제
     DELETE FROM user_minimi WHERE id = v_user_minimi_id;
 
-    -- 4. 포인트 지급
+    -- 5. 포인트 지급
+    v_new_points := v_current_points + p_sell_price;
     UPDATE profiles
-    SET points = points + p_sell_price
+    SET points = v_new_points
     WHERE id = p_user_id
     RETURNING points INTO v_new_points;
 
-    -- 5. 거래 내역 기록
+    -- 6. 거래 내역 기록
     INSERT INTO point_transactions (user_id, action_type, points_earned, metadata)
     VALUES (
         p_user_id,
@@ -142,11 +154,12 @@ DECLARE
     v_premium_expires_at TIMESTAMPTZ;
     v_max_pets INTEGER;
 BEGIN
-    -- 프리미엄 상태 확인
+    -- 프리미엄 상태 확인 (FOR UPDATE로 동시 INSERT 방지)
     SELECT is_premium, premium_expires_at
     INTO v_is_premium, v_premium_expires_at
     FROM profiles
-    WHERE id = NEW.user_id;
+    WHERE id = NEW.user_id
+    FOR UPDATE;
 
     -- 프리미엄 만료 체크
     IF v_is_premium AND v_premium_expires_at IS NOT NULL AND v_premium_expires_at <= NOW() THEN
