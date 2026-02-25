@@ -181,7 +181,7 @@ export default function MemoryAlbumViewer({
 
     return (
         <div
-            className={`fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-4 transition-opacity duration-300 ${
+            className={`fixed inset-0 z-[9999] bg-black/60 flex items-start justify-center pt-12 sm:pt-16 p-4 overflow-y-auto transition-opacity duration-300 ${
                 isEntering ? "opacity-0" : "opacity-100"
             }`}
             onClick={handleBackdropClick}
