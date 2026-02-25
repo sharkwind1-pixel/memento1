@@ -111,11 +111,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 return;
             }
 
-            const { data, error } = await supabase
-                .from("profiles")
-                .select("is_admin, is_premium, premium_expires_at, points, onboarding_data, equipped_minimi_id, equipped_accessories, minimi_pixel_data, minimi_accessories_data")
-                .eq("id", currentUser.id)
-                .single();
+            // profiles와 user_minimi를 병렬 조회 (순차→병렬로 ~300ms 단축)
+            const [profileResult, minimiListResult] = await Promise.all([
+                supabase
+                    .from("profiles")
+                    .select("is_admin, is_premium, premium_expires_at, points, onboarding_data, equipped_minimi_id, equipped_accessories, minimi_pixel_data, minimi_accessories_data")
+                    .eq("id", currentUser.id)
+                    .single(),
+                supabase
+                    .from("user_minimi")
+                    .select("id, minimi_id")
+                    .eq("user_id", currentUser.id),
+            ]);
+
+            const { data, error } = profileResult;
+            const minimiList = minimiListResult.data || [];
 
             // 관리자 체크
             const emailAdmin = ADMIN_EMAILS.includes(currentUser.email || "");
@@ -139,12 +149,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const equippedUuid = data.equipped_minimi_id || null;
 
                 if (equippedUuid) {
-                    // UUID로 user_minimi 조회해서 slug 얻기
-                    const { data: minimiRow } = await supabase
-                        .from("user_minimi")
-                        .select("minimi_id")
-                        .eq("id", equippedUuid)
-                        .maybeSingle();
+                    // 이미 병렬로 조회한 minimiList에서 찾기 (추가 API 호출 없음)
+                    const minimiRow = minimiList.find(m => m.id === equippedUuid);
                     equippedSlug = minimiRow?.minimi_id || null;
                 }
 
@@ -350,7 +356,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // (lock 바깥에서 비동기 실행하여 데드락 방지)
             if (event === "SIGNED_IN" && session?.user) {
                 setTimeout(() => {
-                    refreshProfile().then(() => checkDailyLogin());
+                    Promise.all([refreshProfile(), checkDailyLogin()]);
                 }, 0);
             }
 
