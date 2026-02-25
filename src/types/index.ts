@@ -190,6 +190,8 @@ export interface ChatMessage {
     emotionScore?: number;
     isError?: boolean;
     retryMessage?: string;
+    /** 시스템 메시지 서브타입 (리마인더 안내 등) */
+    type?: "reminder-suggestion";
 }
 
 /** 감정 타입 */

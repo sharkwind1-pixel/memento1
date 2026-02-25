@@ -8,8 +8,8 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { useRef, useEffect, useState } from "react";
-import { PawPrint, RotateCcw } from "lucide-react";
+import { useRef, useEffect } from "react";
+import { PawPrint, RotateCcw, Bell } from "lucide-react";
 import type { Pet } from "@/types";
 import {
     ChatMessage,
@@ -26,6 +26,8 @@ interface ChatMessageListProps {
     isMemorialMode: boolean;
     selectedPet: Pet | null | undefined;
     onRetry: (errorMessageId: string, retryMessage: string) => void;
+    onReminderAccept?: (messageId: string) => void;
+    onReminderDismiss?: (messageId: string) => void;
 }
 
 export default function ChatMessageList({
@@ -34,6 +36,8 @@ export default function ChatMessageList({
     isMemorialMode,
     selectedPet,
     onRetry,
+    onReminderAccept,
+    onReminderDismiss,
 }: ChatMessageListProps) {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const hasInteracted = useRef(false);
@@ -73,7 +77,38 @@ export default function ChatMessageList({
                             </div>
                         )}
 
-                        {message.role === "system" && message.isError ? (
+                        {/* 리마인더 안내 카드 */}
+                        {message.role === "system" && message.type === "reminder-suggestion" ? (
+                            <div className="flex justify-center chat-bubble-enter my-3">
+                                <div className="bg-gradient-to-br from-sky-50 to-blue-50 dark:from-sky-900/30 dark:to-blue-900/30 border border-sky-200 dark:border-sky-700 rounded-2xl px-5 py-4 max-w-[90%] shadow-sm">
+                                    <div className="flex items-center gap-2 mb-2.5">
+                                        <div className="w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-800 flex items-center justify-center">
+                                            <Bell className="w-4 h-4 text-sky-600 dark:text-sky-300" />
+                                        </div>
+                                        <span className="text-sm font-semibold text-sky-800 dark:text-sky-200">
+                                            케어 리마인더
+                                        </span>
+                                    </div>
+                                    <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed mb-3">
+                                        {message.content}
+                                    </p>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => onReminderAccept?.(message.id)}
+                                            className="flex-1 px-4 py-2 rounded-xl text-sm font-medium bg-sky-500 hover:bg-sky-600 text-white transition-all hover:scale-[1.02] active:scale-95 shadow-sm"
+                                        >
+                                            알려주세요
+                                        </button>
+                                        <button
+                                            onClick={() => onReminderDismiss?.(message.id)}
+                                            className="flex-1 px-4 py-2 rounded-xl text-sm font-medium bg-white hover:bg-gray-50 text-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 border border-gray-200 dark:border-gray-600 transition-all hover:scale-[1.02] active:scale-95"
+                                        >
+                                            괜찮아요
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : message.role === "system" && message.isError ? (
                             <div className="flex justify-center chat-bubble-enter my-2">
                                 <div className="bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 max-w-[85%] text-center">
                                     <p className="text-sm text-gray-600 dark:text-gray-300">

@@ -30,7 +30,7 @@
 // ============================================================================
 // 임포트
 // ============================================================================
-import React from "react";
+import React, { useCallback } from "react";
 import { usePets, useTimeline } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Star } from "lucide-react";
@@ -44,6 +44,13 @@ import AIChatLoginPrompt from "@/components/features/chat/AIChatLoginPrompt";
 import AIChatNoPets from "@/components/features/chat/AIChatNoPets";
 import AIChatHeader from "@/components/features/chat/AIChatHeader";
 import PushNotificationBanner from "@/components/features/chat/PushNotificationBanner";
+import {
+    isPushSupported,
+    registerServiceWorker,
+    subscribeToPush,
+} from "@/lib/push-notifications";
+import { authFetch } from "@/lib/auth-fetch";
+import { API } from "@/config/apiEndpoints";
 
 // ============================================================================
 // 타입 정의
@@ -81,6 +88,44 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         timeline,
         fetchTimeline,
     });
+
+    /**
+     * 리마인더 안내 "알려주세요" 클릭 핸들러
+     * 1. 푸시 알림 권한 요청 + 구독 (아직 허용 안 한 경우)
+     * 2. 채팅 내 안내 카드 → 확정 메시지로 교체
+     * 3. record 탭으로 이동 (케어 리마인더 섹션)
+     */
+    const handleReminderAccept = useCallback(async (messageId: string) => {
+        // 1. 채팅 내 메시지 교체
+        chat.handleReminderAccept(messageId);
+
+        // 2. 푸시 알림 권한 요청 (아직 미허용 시)
+        if (isPushSupported() && Notification.permission === "default") {
+            try {
+                const registration = await registerServiceWorker();
+                if (registration) {
+                    const subscription = await subscribeToPush(registration);
+                    if (subscription) {
+                        // 서버에 구독 정보 저장
+                        await authFetch(API.NOTIFICATIONS_SUBSCRIBE, {
+                            method: "POST",
+                            body: JSON.stringify({
+                                subscription: subscription.toJSON(),
+                                preferredHour: 9,
+                            }),
+                        });
+                    }
+                }
+            } catch {
+                // 푸시 구독 실패해도 탭 이동은 진행
+            }
+        }
+
+        // 3. record 탭으로 이동 (약간 딜레이)
+        setTimeout(() => {
+            setSelectedTab?.("record");
+        }, 800);
+    }, [chat, setSelectedTab]);
 
     // ========================================================================
     // 조건부 렌더링: 비로그인
@@ -229,6 +274,8 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                         isMemorialMode={chat.isMemorialMode}
                         selectedPet={selectedPet}
                         onRetry={chat.handleRetry}
+                        onReminderAccept={handleReminderAccept}
+                        onReminderDismiss={chat.handleReminderDismiss}
                     />
                     <ChatInputArea
                         inputValue={chat.inputValue}
