@@ -234,7 +234,7 @@ export default function AuthModal({
                 </div>
 
                 {/* 폼 */}
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                <form onSubmit={handleSubmit} noValidate className="p-6 space-y-4">
                     {/* 에러 메시지 */}
                     {error && (
                         <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl text-sm">
