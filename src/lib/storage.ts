@@ -15,11 +15,70 @@ export interface UploadResult {
     error?: string;
 }
 
+// 허용된 파일 확장자 화이트리스트 (보안)
+const ALLOWED_IMAGE_EXTENSIONS = ["jpg", "jpeg", "png", "gif", "webp", "heic", "heif"];
+const ALLOWED_VIDEO_EXTENSIONS = ["mp4", "mov", "webm", "m4v"];
+const ALLOWED_EXTENSIONS = [...ALLOWED_IMAGE_EXTENSIONS, ...ALLOWED_VIDEO_EXTENSIONS];
+
+// 허용된 MIME 타입 (보안)
+const ALLOWED_IMAGE_MIMES = [
+    "image/jpeg", "image/png", "image/gif", "image/webp",
+    "image/heic", "image/heif"
+];
+const ALLOWED_VIDEO_MIMES = [
+    "video/mp4", "video/quicktime", "video/webm", "video/x-m4v"
+];
+const ALLOWED_MIMES = [...ALLOWED_IMAGE_MIMES, ...ALLOWED_VIDEO_MIMES];
+
 // 파일 확장자로 미디어 타입 결정
 export function getMediaType(filename: string): MediaType {
     const ext = filename.split(".").pop()?.toLowerCase() || "";
-    const videoExtensions = ["mp4", "mov", "avi", "webm", "mkv", "m4v"];
-    return videoExtensions.includes(ext) ? "video" : "image";
+    return ALLOWED_VIDEO_EXTENSIONS.includes(ext) ? "video" : "image";
+}
+
+// 파일 확장자 검증
+function validateExtension(filename: string): { valid: boolean; ext: string; error?: string } {
+    const ext = filename.split(".").pop()?.toLowerCase() || "";
+
+    // 이중 확장자 방지 (예: image.jpg.exe)
+    const parts = filename.split(".");
+    if (parts.length > 2) {
+        const secondLast = parts[parts.length - 2]?.toLowerCase();
+        if (ALLOWED_EXTENSIONS.includes(secondLast)) {
+            return { valid: false, ext, error: "잘못된 파일 형식입니다." };
+        }
+    }
+
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+        return { valid: false, ext, error: `지원하지 않는 파일 형식입니다. (${ALLOWED_EXTENSIONS.join(", ")})` };
+    }
+
+    return { valid: true, ext };
+}
+
+// MIME 타입 검증
+function validateMimeType(file: File, expectedType: MediaType): { valid: boolean; error?: string } {
+    const mime = file.type.toLowerCase();
+
+    // MIME 타입이 없으면 거부
+    if (!mime) {
+        return { valid: false, error: "파일 형식을 확인할 수 없습니다." };
+    }
+
+    // 허용 목록에 없으면 거부
+    if (!ALLOWED_MIMES.includes(mime)) {
+        return { valid: false, error: "지원하지 않는 파일 형식입니다." };
+    }
+
+    // 확장자와 MIME 타입 일관성 검증
+    if (expectedType === "image" && !ALLOWED_IMAGE_MIMES.includes(mime)) {
+        return { valid: false, error: "이미지 파일만 업로드할 수 있습니다." };
+    }
+    if (expectedType === "video" && !ALLOWED_VIDEO_MIMES.includes(mime)) {
+        return { valid: false, error: "동영상 파일만 업로드할 수 있습니다." };
+    }
+
+    return { valid: true };
 }
 
 // 파일 크기 검증 (이미지 10MB, 영상 100MB)
@@ -46,17 +105,30 @@ export async function uploadMedia(
     petId: string
 ): Promise<UploadResult> {
     try {
-        const mediaType = getMediaType(file.name);
-        const validation = validateFileSize(file, mediaType);
-
-        if (!validation.valid) {
-            return { success: false, error: validation.error };
+        // 1. 확장자 검증
+        const extValidation = validateExtension(file.name);
+        if (!extValidation.valid) {
+            return { success: false, error: extValidation.error };
         }
 
-        // 고유한 파일 경로 생성
+        const mediaType = getMediaType(file.name);
+
+        // 2. MIME 타입 검증
+        const mimeValidation = validateMimeType(file, mediaType);
+        if (!mimeValidation.valid) {
+            return { success: false, error: mimeValidation.error };
+        }
+
+        // 3. 파일 크기 검증
+        const sizeValidation = validateFileSize(file, mediaType);
+        if (!sizeValidation.valid) {
+            return { success: false, error: sizeValidation.error };
+        }
+
+        // 고유한 파일 경로 생성 (검증된 확장자 사용)
         const timestamp = Date.now();
         const randomId = Math.random().toString(36).substring(2, 9);
-        const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+        const ext = extValidation.ext;
         const path = `${userId}/${petId}/${timestamp}-${randomId}.${ext}`;
 
         // Supabase Storage에 업로드
@@ -129,20 +201,48 @@ export async function deleteMedia(path: string): Promise<boolean> {
     }
 }
 
+// 이미지 전용 검증 (공통 헬퍼)
+function validateImageFile(file: File): { valid: boolean; ext: string; error?: string } {
+    // 1. 확장자 검증
+    const extValidation = validateExtension(file.name);
+    if (!extValidation.valid) {
+        return { valid: false, ext: "", error: extValidation.error };
+    }
+
+    // 이미지 확장자만 허용
+    if (!ALLOWED_IMAGE_EXTENSIONS.includes(extValidation.ext)) {
+        return { valid: false, ext: "", error: "이미지 파일만 업로드할 수 있습니다." };
+    }
+
+    // 2. MIME 타입 검증
+    const mimeValidation = validateMimeType(file, "image");
+    if (!mimeValidation.valid) {
+        return { valid: false, ext: "", error: mimeValidation.error };
+    }
+
+    // 3. 파일 크기 검증
+    const sizeValidation = validateFileSize(file, "image");
+    if (!sizeValidation.valid) {
+        return { valid: false, ext: "", error: sizeValidation.error };
+    }
+
+    return { valid: true, ext: extValidation.ext };
+}
+
 /** 매거진 기사 썸네일 업로드 */
 export async function uploadMagazineImage(
     file: File,
     userId: string
 ): Promise<UploadResult> {
     try {
-        const validation = validateFileSize(file, "image");
+        const validation = validateImageFile(file);
         if (!validation.valid) {
             return { success: false, error: validation.error };
         }
 
         const timestamp = Date.now();
         const randomId = Math.random().toString(36).substring(2, 9);
-        const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+        const ext = validation.ext;
         const path = `magazine/${userId}/${timestamp}-${randomId}.${ext}`;
 
         const { data, error } = await supabase.storage
@@ -176,14 +276,14 @@ export async function uploadCommunityImage(
     userId: string
 ): Promise<UploadResult> {
     try {
-        const validation = validateFileSize(file, "image");
+        const validation = validateImageFile(file);
         if (!validation.valid) {
             return { success: false, error: validation.error };
         }
 
         const timestamp = Date.now();
         const randomId = Math.random().toString(36).substring(2, 9);
-        const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+        const ext = validation.ext;
         const path = `community/${userId}/${timestamp}-${randomId}.${ext}`;
 
         const { data, error } = await supabase.storage
@@ -217,14 +317,14 @@ export async function uploadLocalPostImage(
     userId: string
 ): Promise<UploadResult> {
     try {
-        const validation = validateFileSize(file, "image");
+        const validation = validateImageFile(file);
         if (!validation.valid) {
             return { success: false, error: validation.error };
         }
 
         const timestamp = Date.now();
         const randomId = Math.random().toString(36).substring(2, 9);
-        const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+        const ext = validation.ext;
         const path = `local-posts/${userId}/${timestamp}-${randomId}.${ext}`;
 
         const { data, error } = await supabase.storage
@@ -258,14 +358,14 @@ export async function uploadLostPetImage(
     userId: string
 ): Promise<UploadResult> {
     try {
-        const validation = validateFileSize(file, "image");
+        const validation = validateImageFile(file);
         if (!validation.valid) {
             return { success: false, error: validation.error };
         }
 
         const timestamp = Date.now();
         const randomId = Math.random().toString(36).substring(2, 9);
-        const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+        const ext = validation.ext;
         const path = `lost-pets/${userId}/${timestamp}-${randomId}.${ext}`;
 
         const { data, error } = await supabase.storage
