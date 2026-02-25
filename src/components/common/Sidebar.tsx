@@ -397,11 +397,11 @@ export default function Sidebar({
             className={cn(
                 "flex flex-col w-[420px] h-full overflow-y-auto",
                 isMemorialMode
-                    ? "bg-amber-50/80 dark:bg-amber-950/80"
+                    ? "bg-amber-50/80 dark:bg-gray-900/80"
                     : "bg-white/80 dark:bg-gray-900/80",
                 "backdrop-blur-lg",
                 isMemorialMode
-                    ? "border-r border-amber-200/50 dark:border-amber-800/50"
+                    ? "border-r border-amber-200/50 dark:border-gray-700/50"
                     : "border-r border-gray-200/50 dark:border-gray-700/50",
                 "transition-all duration-700 ease-in-out"
             )}

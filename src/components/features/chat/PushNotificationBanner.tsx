@@ -290,7 +290,7 @@ export default function PushNotificationBanner({
     if (!visible || bannerState === "loading") return null;
 
     const themeClasses = isMemorialMode
-        ? "bg-gradient-to-r from-amber-50 to-amber-100/80 border-amber-300 text-amber-900 dark:from-amber-950/60 dark:to-amber-900/40 dark:border-amber-700 dark:text-amber-100"
+        ? "bg-gradient-to-r from-amber-50 to-amber-100/80 border-amber-300 text-amber-900 dark:from-gray-800/60 dark:to-gray-800/40 dark:border-amber-700/50 dark:text-amber-100"
         : "bg-gradient-to-r from-sky-50 to-sky-100/80 border-sky-300 text-sky-900 dark:from-sky-950/60 dark:to-sky-900/40 dark:border-sky-700 dark:text-sky-100";
 
     const accentBg = isMemorialMode

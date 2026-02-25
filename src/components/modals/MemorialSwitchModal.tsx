@@ -98,7 +98,7 @@ export default function MemorialSwitchModal({
         title: string;
         subtitle: string;
     }) => (
-        <div className="bg-gradient-to-br from-amber-100 via-orange-100 to-yellow-100 dark:from-amber-900/50 dark:via-orange-900/50 dark:to-yellow-900/50 p-8 text-center relative">
+        <div className="bg-gradient-to-br from-amber-100 via-orange-100 to-yellow-100 dark:from-gray-800/80 dark:via-gray-800/60 dark:to-gray-800/40 p-8 text-center relative">
             <button
                 onClick={handleClose}
                 className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/50 transition-colors"
@@ -279,7 +279,7 @@ export default function MemorialSwitchModal({
                     {/* Step 3: 추억 슬라이드쇼 */}
                     {step === 3 && (
                         <>
-                            <div className="bg-gradient-to-br from-amber-100 via-orange-100 to-yellow-100 dark:from-amber-900/50 dark:via-orange-900/50 dark:to-yellow-900/50 p-4 text-center relative">
+                            <div className="bg-gradient-to-br from-amber-100 via-orange-100 to-yellow-100 dark:from-gray-800/80 dark:via-gray-800/60 dark:to-gray-800/40 p-4 text-center relative">
                                 <button
                                     onClick={handleClose}
                                     className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/50 transition-colors z-10"

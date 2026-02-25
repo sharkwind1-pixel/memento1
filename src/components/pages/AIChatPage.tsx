@@ -176,7 +176,7 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         <div
             className={`min-h-screen flex flex-col relative transition-all duration-700 ease-in-out ${
                 chat.isMemorialMode
-                    ? "bg-gradient-to-b from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950 dark:via-orange-950 dark:to-gray-900"
+                    ? "bg-gradient-to-b from-amber-50 via-orange-50 to-yellow-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-950"
                     : "bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
             }`}
         >

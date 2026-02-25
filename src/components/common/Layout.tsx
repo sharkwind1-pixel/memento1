@@ -235,7 +235,7 @@ function BottomNav({
         <nav
             className={`xl:hidden fixed bottom-0 left-0 right-0 border-t z-50 pb-safe ${
                 isMemorialMode
-                    ? "bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800"
+                    ? "bg-amber-50 dark:bg-gray-900 border-amber-200 dark:border-gray-700"
                     : "bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800"
             }`}
             style={{
@@ -408,7 +408,7 @@ function Layout({
     return (
         <div className={`min-h-screen pb-safe flex flex-col xl:block ${
             isMemorialMode
-                ? "bg-gradient-to-b from-amber-50/80 via-orange-50/40 to-white dark:from-amber-950 dark:via-orange-950 dark:to-gray-900"
+                ? "bg-gradient-to-b from-amber-50/80 via-orange-50/40 to-white dark:from-gray-900 dark:via-gray-900 dark:to-gray-950"
                 : "bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
         }`}>
 
@@ -438,7 +438,7 @@ function Layout({
             <header
                 className={`fixed top-0 left-0 right-0 z-[60] xl:backdrop-blur-sm border-b ${
                     isMemorialMode
-                        ? "bg-amber-50 dark:bg-amber-950 xl:bg-amber-50/90 xl:dark:bg-amber-950/90 border-amber-200 dark:border-amber-800"
+                        ? "bg-amber-50 dark:bg-gray-900 xl:bg-amber-50/90 xl:dark:bg-gray-900/90 border-amber-200 dark:border-gray-700"
                         : "bg-white dark:bg-gray-900 xl:bg-white/90 xl:dark:bg-gray-900/90 border-gray-200 dark:border-gray-700"
                 }`}
                 style={{
