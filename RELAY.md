@@ -583,3 +583,54 @@ if (error) {
 | IP 기반 Rate Limit Redis 전환 | 낮음 | 현재 메모리 기반, 분산 환경에서 불완전 |
 | 입력값 런타임 타입 검증 (Zod) | 낮음 | `as` 타입 캐스팅 → Zod 스키마 검증 권장 |
 | 관리자 권한 헬퍼 표준화 | 낮음 | `requireAdmin()` 함수 일관 적용 권장 |
+
+---
+
+## 2026-02-26 세션 2: 전체 보안 스캔 및 수정 (`025ec39`)
+
+> **상태**: 커밋 + 푸시 완료
+
+### 검사 방법
+6개 병렬 에이전트로 전체 코드베이스 보안 스캔:
+1. API 인증/권한 보안
+2. 프론트엔드 보안 (XSS, 민감 정보 노출)
+3. 파일 업로드/스토리지 보안
+4. 환경변수/시크릿 관리
+5. 레이스 컨디션/동시성 버그
+6. 타입 안전성/런타임 에러
+
+### 발견 및 수정된 문제
+
+#### 1. 레이스 컨디션 (Critical) ✅ 수정됨
+
+| 파일 | 문제 | 수정 |
+|------|------|------|
+| `points/shop/route.ts` | fallback read-modify-write | 원자적 업데이트 + `.gte("points", price)` |
+| `minimi/purchase/route.ts` | fallback 포인트 중복 차감 | 원자적 업데이트 + `.gte()` 조건 |
+| `minimi/sell/route.ts` | delete 중복 실행 + 포인트 중복 지급 | `delete().select().single()` + 원자적 증가 |
+
+#### 2. 파일 업로드 보안 (High) ✅ 수정됨
+
+| 문제 | 수정 |
+|------|------|
+| 확장자 화이트리스트 없음 | `ALLOWED_IMAGE_EXTENSIONS`, `ALLOWED_VIDEO_EXTENSIONS` 추가 |
+| MIME 타입 검증 없음 | `validateMimeType()` 함수 추가 |
+| 이중 확장자 허용 (image.jpg.exe) | 두 번째 마지막 확장자 검사 추가 |
+
+#### 3. VPN 체크 누락 (High) ✅ 수정됨
+
+| 파일 | 수정 |
+|------|------|
+| `points/shop/route.ts` | VPN 체크 추가 |
+| `points/daily-check/route.ts` | VPN 체크 + Rate Limit 추가 |
+| `minimi/purchase/route.ts` | VPN 체크 추가 |
+| `minimi/sell/route.ts` | VPN 체크 추가 |
+
+### 미수정 (낮은 우선순위)
+
+| 항목 | 심각도 | 이유 |
+|------|--------|------|
+| GET API Rate Limiting | 중간 | 서비스 영향 미미, 추후 대응 |
+| 방문자 카운터 레이스 컨디션 | 낮음 | 금전적 영향 없음 |
+| userId UUID 형식 검증 | 낮음 | DB에서 에러 처리됨 |
+| CSP 헤더 추가 | 낮음 | XSS는 DOMPurify로 방어 중 |
