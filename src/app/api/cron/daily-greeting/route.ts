@@ -479,11 +479,14 @@ export async function GET(request: NextRequest) {
         let albumCreatedCount = 0;
 
         try {
-            if (currentKstHour === 9) {
-                // KST 날짜 계산
-                const albumNow = new Date();
-                const albumKstOffset = 9 * 60 * 60 * 1000;
-                const albumKstNow = new Date(albumNow.getTime() + albumKstOffset);
+            // KST 날짜 계산
+            const albumNow = new Date();
+            const albumKstOffset = 9 * 60 * 60 * 1000;
+            const albumKstNow = new Date(albumNow.getTime() + albumKstOffset);
+            const albumKstDay = albumKstNow.getUTCDate();
+
+            // 매월 1일 09시(KST)에만 실행 (월 1회)
+            if (currentKstHour === 9 && albumKstDay === 1) {
                 const albumKstDateStr = albumKstNow.toISOString().slice(0, 10); // "YYYY-MM-DD"
                 const albumKstMmDd = albumKstDateStr.slice(5); // "MM-DD"
 
@@ -508,16 +511,16 @@ export async function GET(request: NextRequest) {
 
                             if (!mediaCount || mediaCount < 3) continue;
 
-                            // 최근 7일간 사용된 media_ids 수집 (중복 방지)
-                            const sevenDaysAgo = new Date(albumKstNow);
-                            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-                            const sevenDaysAgoStr = sevenDaysAgo.toISOString().slice(0, 10);
+                            // 최근 30일간 사용된 media_ids 수집 (중복 방지)
+                            const thirtyDaysAgo = new Date(albumKstNow);
+                            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                            const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().slice(0, 10);
 
                             const { data: recentAlbums } = await supabase
                                 .from("memory_albums")
                                 .select("media_ids")
                                 .eq("pet_id", pet.id)
-                                .gte("created_date", sevenDaysAgoStr);
+                                .gte("created_date", thirtyDaysAgoStr);
 
                             const recentlyUsedIds = new Set<string>();
                             if (recentAlbums) {
