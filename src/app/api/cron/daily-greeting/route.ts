@@ -197,6 +197,7 @@ async function generateGreeting(
 }
 
 export async function GET(request: NextRequest) {
+    try {
     // 1. CRON_SECRET 검증
     const authHeader = request.headers.get("authorization");
     const cronSecret = process.env.CRON_SECRET;
@@ -208,7 +209,11 @@ export async function GET(request: NextRequest) {
     // 환경변수 체크
     if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
         console.error("[Cron] VAPID 키가 설정되지 않았습니다");
-        return NextResponse.json({ error: "VAPID_NOT_CONFIGURED" }, { status: 500 });
+        return NextResponse.json({
+            error: "VAPID_NOT_CONFIGURED",
+            publicKeySet: !!VAPID_PUBLIC_KEY,
+            privateKeySet: !!VAPID_PRIVATE_KEY,
+        }, { status: 500 });
     }
 
     webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
@@ -439,7 +444,14 @@ export async function GET(request: NextRequest) {
     } catch (err) {
         console.error("[Cron] Error:", err instanceof Error ? err.message : "unknown");
         return NextResponse.json(
-            { error: "크론 실행 중 오류 발생" },
+            { error: "크론 실행 중 오류 발생", detail: err instanceof Error ? err.message : "unknown" },
+            { status: 500 },
+        );
+    }
+    } catch (outerErr) {
+        console.error("[Cron] Outer Error:", outerErr instanceof Error ? outerErr.message : "unknown");
+        return NextResponse.json(
+            { error: "초기화 오류", detail: outerErr instanceof Error ? outerErr.message : String(outerErr) },
             { status: 500 },
         );
     }
