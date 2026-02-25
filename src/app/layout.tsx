@@ -49,8 +49,8 @@ export const metadata: Metadata = {
     authors: [{ name: "메멘토애니" }],
     creator: "메멘토애니",
     icons: {
-        icon: "/logo.png",
-        apple: "/logo.png",
+        icon: "/icon-192.png",
+        apple: "/icon-192.png",
     },
     openGraph: {
         type: "website",
