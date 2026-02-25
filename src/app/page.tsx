@@ -27,7 +27,7 @@
 // ============================================================================
 // 임포트
 // ============================================================================
-import { useState, useEffect, Suspense, useCallback, useRef } from "react";
+import { useState, useEffect, Suspense, useCallback, useRef, useTransition } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { TabType, CommunitySubcategory, getLegacyTabRedirect } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
@@ -160,6 +160,10 @@ function HomeContent() {
     const [selectedTab, setSelectedTab] = useState<TabType>(() => getInitialState().tab);
     const [selectedSubcategory, setSelectedSubcategory] = useState<CommunitySubcategory | undefined>(() => getInitialState().sub);
 
+    // 방문한 탭 유지: 한 번 mount된 페이지는 display:none으로 숨기기만 (unmount 방지)
+    const [mountedTabs, setMountedTabs] = useState<Set<TabType>>(() => new Set([getInitialState().tab]));
+    const [, startTransition] = useTransition();
+
     const [showNicknameSetup, setShowNicknameSetup] = useState(false);
     const [showOnboarding, setShowOnboarding] = useState(false);
     const [showTutorial, setShowTutorial] = useState(false);
@@ -171,6 +175,14 @@ function HomeContent() {
     // 현재 상태를 ref로 추적 (useEffect에서 stale closure 방지)
     const currentStateRef = useRef({ tab: selectedTab, sub: selectedSubcategory });
     currentStateRef.current = { tab: selectedTab, sub: selectedSubcategory };
+
+    // 방문한 탭 추적: selectedTab 변경 시 mountedTabs에 추가
+    useEffect(() => {
+        setMountedTabs(prev => {
+            if (prev.has(selectedTab)) return prev;
+            return new Set(prev).add(selectedTab);
+        });
+    }, [selectedTab]);
 
     // URL 변경 시 탭/서브카테고리 동기화 (브라우저 뒤로가기/앞으로가기 처리)
     useEffect(() => {
@@ -359,8 +371,10 @@ function HomeContent() {
         // 레거시 탭 처리
         const redirect = getLegacyTabRedirect(tab);
         if (redirect) {
-            setSelectedTab(redirect.main as TabType);
-            setSelectedSubcategory(redirect.sub);
+            startTransition(() => {
+                setSelectedTab(redirect.main as TabType);
+                setSelectedSubcategory(redirect.sub);
+            });
             localStorage.setItem("memento-current-tab", redirect.main);
             if (redirect.sub) {
                 localStorage.setItem("memento-current-subcategory", redirect.sub);
@@ -369,9 +383,11 @@ function HomeContent() {
             return;
         }
 
-        // 상태 변경
-        setSelectedTab(tab);
-        setSelectedSubcategory(sub);
+        // 상태 변경 (startTransition으로 비긴급 업데이트 처리)
+        startTransition(() => {
+            setSelectedTab(tab);
+            setSelectedSubcategory(sub);
+        });
 
         localStorage.setItem("memento-current-tab", tab);
 
@@ -389,37 +405,52 @@ function HomeContent() {
         } else {
             router.push(`/?tab=${tab}`, { scroll: false });
         }
-    }, [router]);
+    }, [router, startTransition]);
 
     // 서브카테고리 변경 핸들러 (커뮤니티 내부에서 사용)
     const handleSubcategoryChange = useCallback((sub: CommunitySubcategory) => {
         handleTabChange("community", sub);
     }, [handleTabChange]);
 
-    // 페이지 렌더링 - switch문으로 현재 탭만 렌더
-    const renderPage = () => {
-        switch (selectedTab) {
-            case "home":
-                return <HomePage setSelectedTab={handleTabChange} />;
-            case "record":
-                return <RecordPage setSelectedTab={handleTabChange} />;
-            case "community":
-                return (
+    // 페이지 렌더링 - 방문한 탭은 display:none으로 유지 (unmount 방지)
+    // 한 번 방문한 페이지는 다시 갈 때 즉시 표시됨 (API 재호출 없음)
+    const renderPages = () => (
+        <>
+            {mountedTabs.has("home") && (
+                <div style={{ display: selectedTab === "home" ? "block" : "none" }}>
+                    <HomePage setSelectedTab={handleTabChange} />
+                </div>
+            )}
+            {mountedTabs.has("record") && (
+                <div style={{ display: selectedTab === "record" ? "block" : "none" }}>
+                    <RecordPage setSelectedTab={handleTabChange} />
+                </div>
+            )}
+            {mountedTabs.has("community") && (
+                <div style={{ display: selectedTab === "community" ? "block" : "none" }}>
                     <CommunityPage
                         subcategory={selectedSubcategory}
                         onSubcategoryChange={handleSubcategoryChange}
                     />
-                );
-            case "ai-chat":
-                return <AIChatPage setSelectedTab={handleTabChange} />;
-            case "magazine":
-                return <MagazinePage setSelectedTab={handleTabChange} />;
-            case "admin":
-                return <AdminPage />;
-            default:
-                return <HomePage setSelectedTab={handleTabChange} />;
-        }
-    };
+                </div>
+            )}
+            {mountedTabs.has("ai-chat") && (
+                <div style={{ display: selectedTab === "ai-chat" ? "block" : "none" }}>
+                    <AIChatPage setSelectedTab={handleTabChange} />
+                </div>
+            )}
+            {mountedTabs.has("magazine") && (
+                <div style={{ display: selectedTab === "magazine" ? "block" : "none" }}>
+                    <MagazinePage setSelectedTab={handleTabChange} />
+                </div>
+            )}
+            {mountedTabs.has("admin") && (
+                <div style={{ display: selectedTab === "admin" ? "block" : "none" }}>
+                    <AdminPage />
+                </div>
+            )}
+        </>
+    );
 
     // Layout은 항상 렌더 → auth 로딩 중에도 헤더/네비/사이드바 유지
     // 콘텐츠 영역만 스켈레톤으로 대체하여 FOUC 방지
@@ -443,7 +474,7 @@ function HomeContent() {
                         </div>
                     </div>
                 ) : (
-                    renderPage()
+                    renderPages()
                 )}
             </Layout>
             {user && (
