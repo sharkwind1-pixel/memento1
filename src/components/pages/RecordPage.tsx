@@ -13,6 +13,7 @@ import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { usePets, useTimeline, Pet, PetPhoto } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -482,13 +483,26 @@ function RecordPage({ setSelectedTab }: RecordPageProps) {
     };
 
     // 추억 전환 처리
-    const handleMemorialSwitch = async (memorialDate: string) => {
+    const handleMemorialSwitch = async (memorialDate: string, farewellMessage?: string) => {
         if (!selectedPet) return;
         try {
             await updatePet(selectedPet.id, {
                 status: "memorial",
                 memorialDate: memorialDate,
             });
+
+            // 작별 인사가 있으면 타임라인에 특별 항목으로 저장
+            if (farewellMessage && user) {
+                await supabase.from("timeline_entries").insert({
+                    pet_id: selectedPet.id,
+                    user_id: user.id,
+                    date: memorialDate,
+                    title: "작별 인사",
+                    content: farewellMessage,
+                    mood: "sad",
+                });
+            }
+
             toast.success("무지개다리를 건넜어요. 소중한 기억을 간직합니다.");
         } catch {
             toast.error("상태 전환에 실패했어요. 다시 시도해주세요.");
