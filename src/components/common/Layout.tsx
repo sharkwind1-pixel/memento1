@@ -52,7 +52,6 @@ import {
     LogOut,
     User,
     ChevronDown,
-    UserPlus,
 } from "lucide-react";
 
 // ============================================================================
@@ -105,10 +104,6 @@ function HeaderAuthArea({
 
     const openLoginModal = () => {
         window.dispatchEvent(new CustomEvent("openAuthModal"));
-    };
-
-    const openSignupModal = () => {
-        window.dispatchEvent(new CustomEvent("openAuthModalSignup"));
     };
 
     return (
@@ -204,23 +199,15 @@ function HeaderAuthArea({
 
             {/* 비로그인 버튼 */}
             <div
-                className="flex items-center gap-0.5 sm:gap-2"
+                className="flex items-center"
                 style={{ display: !loading && !user ? 'flex' : 'none' }}
             >
                 <Button
-                    variant="outline"
                     onClick={openLoginModal}
-                    className="rounded-md border-[#05B2DC] text-[#05B2DC] hover:bg-[#E0F7FF] px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm h-auto min-h-[44px] active:scale-95 transition-transform"
-                >
-                    <LogIn className="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
-                    로그인
-                </Button>
-                <Button
-                    onClick={openSignupModal}
                     className="bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-[#05B2DC] rounded-md shadow-sm shadow-[#05B2DC]/25 px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm h-auto min-h-[44px] active:scale-95 transition-transform"
                 >
-                    <UserPlus className="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
-                    회원가입
+                    <LogIn className="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
+                    시작하기
                 </Button>
             </div>
         </div>
@@ -365,9 +352,6 @@ function Layout({
         return false;
     });
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-    const [authModalMode, setAuthModalMode] = useState<"login" | "signup">(
-        "login",
-    );
     const [supportModalType, setSupportModalType] = useState<
         "inquiry" | "suggestion" | null
     >(null);
@@ -385,18 +369,14 @@ function Layout({
 
     useEffect(() => {
         const handleOpenAuthModal = () => {
-            setAuthModalMode("login");
-            setIsAuthModalOpen(true);
-        };
-        const handleOpenAuthModalSignup = () => {
-            setAuthModalMode("signup");
             setIsAuthModalOpen(true);
         };
         window.addEventListener("openAuthModal", handleOpenAuthModal);
-        window.addEventListener("openAuthModalSignup", handleOpenAuthModalSignup);
+        // 하위 호환: openAuthModalSignup도 같은 모달 열기
+        window.addEventListener("openAuthModalSignup", handleOpenAuthModal);
         return () => {
             window.removeEventListener("openAuthModal", handleOpenAuthModal);
-            window.removeEventListener("openAuthModalSignup", handleOpenAuthModalSignup);
+            window.removeEventListener("openAuthModalSignup", handleOpenAuthModal);
         };
     }, []);
 
@@ -422,12 +402,6 @@ function Layout({
     };
 
     const openLoginModal = () => {
-        setAuthModalMode("login");
-        setIsAuthModalOpen(true);
-    };
-
-    const openSignupModal = () => {
-        setAuthModalMode("signup");
         setIsAuthModalOpen(true);
     };
 
@@ -442,7 +416,6 @@ function Layout({
             <AuthModal
                 isOpen={isAuthModalOpen}
                 onClose={() => setIsAuthModalOpen(false)}
-                initialMode={authModalMode}
             />
 
             {/* 질문/신고 & 건의사항 모달 */}
@@ -559,7 +532,7 @@ function Layout({
                     isDarkMode={isDarkMode}
                     onToggleDarkMode={toggleDarkMode}
                     onOpenLogin={openLoginModal}
-                    onOpenSignup={openSignupModal}
+                    onOpenSignup={openLoginModal}
                     onSignOut={handleSignOut}
                     onOpenAccountSettings={() => setSelectedTab("record")}
                     authLoading={loading}
