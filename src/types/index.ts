@@ -767,7 +767,7 @@ export interface MinihompyViewData {
 // ============================================
 
 /** 추억 앨범 컨셉 */
-export type MemoryAlbumConcept = "anniversary" | "mood" | "random";
+export type MemoryAlbumConcept = "anniversary" | "mood" | "random" | "birthday" | "adoption" | "memorial";
 
 /** 추억 앨범 */
 export interface MemoryAlbum {

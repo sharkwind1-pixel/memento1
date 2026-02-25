@@ -34,3 +34,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# 환경변수 체크 파일 (시크릿 포함 가능)
+.env.check
+.env.check2
+.env.vercel
