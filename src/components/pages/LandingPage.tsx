@@ -460,7 +460,6 @@ export default function LandingPage() {
             <AuthModal
                 isOpen={isAuthModalOpen}
                 onClose={() => setIsAuthModalOpen(false)}
-                initialMode="login"
             />
         </div>
     );

@@ -29,7 +29,6 @@ import {
     Sun,
     LogIn,
     LogOut,
-    UserPlus,
     Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -193,25 +192,16 @@ export default function Sidebar({
                 </div>
             )}
 
-            {/* 비로그인 시 로그인/회원가입 - 데스크톱 사이드바 최상단 */}
+            {/* 비로그인 시 시작하기 - 데스크톱 사이드바 최상단 */}
             {!isMobile && !user && !authLoading && onOpenLogin && (
                 <div className="px-3 py-3 border-b border-gray-200 dark:border-gray-700">
-                    <div className="space-y-2">
-                        <button
-                            onClick={onOpenLogin}
-                            className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border border-[#05B2DC] text-[#05B2DC] hover:bg-[#E0F7FF] transition-all text-sm font-medium"
-                        >
-                            <LogIn className="w-4 h-4" />
-                            로그인
-                        </button>
-                        <button
-                            onClick={onOpenSignup}
-                            className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white hover:opacity-90 transition-all text-sm font-medium"
-                        >
-                            <UserPlus className="w-4 h-4" />
-                            회원가입
-                        </button>
-                    </div>
+                    <button
+                        onClick={onOpenLogin}
+                        className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white hover:opacity-90 transition-all text-sm font-medium"
+                    >
+                        <LogIn className="w-4 h-4" />
+                        시작하기
+                    </button>
                 </div>
             )}
 
