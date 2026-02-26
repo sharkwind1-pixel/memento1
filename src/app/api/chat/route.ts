@@ -1094,15 +1094,28 @@ ${emergencyDetection.isEmergency ? "이것은 즉시 병원에 가야 하는 상
             }
         }
 
-        // 세션 요약 생성 (10번째 메시지마다 비동기로) — 모드 태깅 포함
+        // 세션 요약 생성 (10번째 메시지마다 비동기로) — 모드 태깅 포함 + 타임라인 자동 생성
         if (enableAgent && pet.id && chatHistory.length > 0 && chatHistory.length % 10 === 0) {
             const petIdForSummary = pet.id; // 클로저 안에서 non-null 보장
             const modeForSummary = mode; // 클로저 안에서 현재 모드 캡처
+            const isMemorialForSummary = isMemorialMode; // 클로저 안에서 모드 캡처
             const allMessages = [...chatHistory, { role: "user", content: sanitizedMessage }, { role: "assistant", content: reply }];
             agent.generateConversationSummary(allMessages, pet.name, isMemorialMode)
                 .then(async (summary) => {
                     if (summary) {
+                        // 대화 세션 요약 저장
                         await agent.saveConversationSummary(user.id, petIdForSummary, summary, modeForSummary);
+
+                        // 대화 내용을 타임라인에도 자동 저장 (의미 있는 대화만)
+                        // 키 토픽이 2개 이상이고 중요 언급이 있는 경우에만 저장
+                        if (summary.keyTopics.length >= 2 || summary.importantMentions.length > 0) {
+                            await agent.saveAutoTimelineEntry(
+                                user.id,
+                                petIdForSummary,
+                                summary,
+                                isMemorialForSummary
+                            );
+                        }
                     }
                 })
                 .catch((err) => { console.error("[chat/session-summary]", err instanceof Error ? err.message : err); });

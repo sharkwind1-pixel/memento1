@@ -88,6 +88,22 @@ export default function MinihompyStage({
     const [isMounted, setIsMounted] = useState(false);
     useEffect(() => { setIsMounted(true); }, []);
 
+    // 터치 이펙트 상태 (미니미 클릭 시 애니메이션)
+    const [touchEffectIndex, setTouchEffectIndex] = useState<number | null>(null);
+    const [touchEffectMessage, setTouchEffectMessage] = useState<string>("");
+
+    // 미니미 터치 이펙트 메시지 목록
+    const TOUCH_MESSAGES = [
+        "안녕!",
+        "놀아줘~",
+        "기분 좋아!",
+        "반가워!",
+        "뭐해?",
+        "좋아!",
+        "오늘도 힘내!",
+        "나 여기있어!",
+    ];
+
     // 시드 기반 사전 계산된 랜덤 값 (SSR/CSR 동일)
     const starPositions = useMemo(() => {
         const rng = seededRandom(42);
@@ -180,6 +196,22 @@ export default function MinihompyStage({
         }
     }, [editMode]);
 
+    // 미니미 터치 이펙트 핸들러 (비편집 모드에서만)
+    const handleMinimiTouch = useCallback((index: number) => {
+        if (editMode) return;
+
+        // 랜덤 메시지 선택
+        const randomMessage = TOUCH_MESSAGES[Math.floor(Math.random() * TOUCH_MESSAGES.length)];
+        setTouchEffectMessage(randomMessage);
+        setTouchEffectIndex(index);
+
+        // 1.5초 후 이펙트 제거
+        setTimeout(() => {
+            setTouchEffectIndex(null);
+            setTouchEffectMessage("");
+        }, 1500);
+    }, [editMode]);
+
     return (
         <div
             ref={stageRef}
@@ -226,6 +258,8 @@ export default function MinihompyStage({
                     const hitW = Math.round(baseSize * 0.5);
                     const hitH = Math.round(baseSize * 0.6);
 
+                    const hasTouchEffect = touchEffectIndex === index;
+
                     return (
                         <div
                             key={`${placed.slug}-${index}`}
@@ -233,7 +267,7 @@ export default function MinihompyStage({
                             style={{
                                 left: `${placed.x}%`,
                                 top: `${placed.y}%`,
-                                zIndex: isSelected ? 50 : (placed.zIndex || index + 1),
+                                zIndex: isSelected ? 50 : hasTouchEffect ? 40 : (placed.zIndex || index + 1),
                                 // 이미지를 포인터 이벤트 없이 전체 크기로 표시
                                 width: baseSize,
                                 height: baseSize,
@@ -241,17 +275,43 @@ export default function MinihompyStage({
                                 pointerEvents: "none",
                             }}
                         >
+                            {/* 터치 이펙트: 말풍선 */}
+                            {hasTouchEffect && touchEffectMessage && (
+                                <div
+                                    className="absolute -top-8 left-1/2 -translate-x-1/2 z-50 animate-bounce"
+                                    style={{
+                                        animation: "minimiPop 0.3s ease-out, minimiFadeOut 0.3s ease-in 1.2s forwards",
+                                    }}
+                                >
+                                    <div className="relative bg-white dark:bg-gray-800 px-3 py-1.5 rounded-full shadow-lg whitespace-nowrap">
+                                        <span className="text-xs font-medium text-gray-700 dark:text-gray-200">
+                                            {touchEffectMessage}
+                                        </span>
+                                        {/* 말풍선 꼬리 */}
+                                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-white dark:bg-gray-800 rotate-45" />
+                                    </div>
+                                </div>
+                            )}
                             {/* 이미지 (포인터 이벤트 없음 - 시각적 표시만) */}
-                            <div className="relative w-full h-full">
+                            <div
+                                className={cn(
+                                    "relative w-full h-full transition-transform duration-150",
+                                    hasTouchEffect && "scale-110"
+                                )}
+                                style={{
+                                    animation: hasTouchEffect ? "minimiJump 0.3s ease-out" : undefined,
+                                }}
+                            >
                                 {/* 선택 표시 */}
                                 {isSelected && (
                                     <div className="absolute -inset-2 border-2 border-dashed border-blue-400 rounded-lg bg-blue-400/10" />
                                 )}
                                 {/* 그림자 */}
                                 <div className={cn(
-                                    "absolute -bottom-2 left-1/2 -translate-x-1/2",
-                                    "w-16 h-3 rounded-full opacity-20",
-                                    isDarkBg ? "bg-white" : "bg-black"
+                                    "absolute -bottom-2 left-1/2 -translate-x-1/2 transition-all duration-150",
+                                    "w-16 h-3 rounded-full",
+                                    isDarkBg ? "bg-white" : "bg-black",
+                                    hasTouchEffect ? "opacity-30 scale-90" : "opacity-20"
                                 )} />
                                 <Image
                                     src={imgUrl}
@@ -275,12 +335,31 @@ export default function MinihompyStage({
                                         <XIcon className="w-3 h-3" />
                                     </button>
                                 )}
+                                {/* 터치 이펙트: 하트/별 파티클 */}
+                                {hasTouchEffect && (
+                                    <div className="absolute inset-0 pointer-events-none overflow-visible">
+                                        {[...Array(4)].map((_, i) => (
+                                            <div
+                                                key={i}
+                                                className="absolute text-pink-400 text-sm"
+                                                style={{
+                                                    left: `${50 + (i - 1.5) * 20}%`,
+                                                    top: "30%",
+                                                    animation: `minimiParticle 0.6s ease-out ${i * 0.1}s forwards`,
+                                                    opacity: 0,
+                                                }}
+                                            >
+                                                {i % 2 === 0 ? "♥" : "★"}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                             {/* 히트 영역: 캐릭터 실제 크기에 맞춘 작은 클릭 영역 (하단 중앙) */}
                             <div
                                 className={cn(
                                     "absolute",
-                                    editMode && "cursor-grab",
+                                    editMode ? "cursor-grab" : "cursor-pointer",
                                     isDragging && "cursor-grabbing",
                                 )}
                                 style={{
@@ -291,6 +370,7 @@ export default function MinihompyStage({
                                     top: baseSize - hitH - Math.round(baseSize * 0.02),
                                 }}
                                 onPointerDown={(e) => handlePointerDown(e, index)}
+                                onClick={() => !editMode && handleMinimiTouch(index)}
                             />
                         </div>
                     );

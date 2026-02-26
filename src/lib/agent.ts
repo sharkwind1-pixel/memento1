@@ -1226,6 +1226,89 @@ ${entries.join("\n\n")}
 ${usageGuide}`;
 }
 
+/**
+ * AI 대화에서 자동 생성된 타임라인 엔트리 저장
+ * 의미 있는 대화 내용을 타임라인에 기록 (일상 기록의 보조)
+ *
+ * @param userId 사용자 ID
+ * @param petId 반려동물 ID
+ * @param summary 대화 세션 요약
+ * @param isMemorialMode 추모 모드 여부
+ * @returns 저장된 타임라인 엔트리 또는 null
+ */
+export async function saveAutoTimelineEntry(
+    userId: string,
+    petId: string,
+    summary: Omit<ConversationSummary, "id" | "userId" | "petId" | "createdAt">,
+    isMemorialMode: boolean = false
+): Promise<{ id: string } | null> {
+    // 너무 짧거나 의미 없는 요약은 저장하지 않음
+    if (!summary.summary || summary.summary.length < 20) {
+        return null;
+    }
+
+    // 키 토픽이 없으면 저장하지 않음 (일상적 대화만 한 경우)
+    if (!summary.keyTopics || summary.keyTopics.length === 0) {
+        return null;
+    }
+
+    try {
+        // 제목 생성: 주요 토픽들을 조합
+        const titleTopics = summary.keyTopics.slice(0, 2).join(", ");
+        const title = isMemorialMode
+            ? `${titleTopics} 이야기를 나눴어요`
+            : `${titleTopics}에 대해 대화했어요`;
+
+        // 감정 톤을 mood로 매핑
+        let mood: "happy" | "normal" | "sad" | "sick" = "normal";
+        if (["happy", "excited", "grateful", "peaceful"].includes(summary.emotionalTone)) {
+            mood = "happy";
+        } else if (["sad", "lonely", "anxious"].includes(summary.emotionalTone)) {
+            mood = "sad";
+        }
+
+        // 내용 구성 (AI 생성 태그 포함)
+        const contentLines: string[] = [];
+        contentLines.push(summary.summary);
+
+        if (summary.importantMentions && summary.importantMentions.length > 0) {
+            contentLines.push("");
+            contentLines.push(`기억할 것: ${summary.importantMentions.join(", ")}`);
+        }
+
+        // 추모 모드는 별도 표시
+        if (isMemorialMode) {
+            contentLines.push("");
+            contentLines.push("[무지개다리 너머에서 나눈 대화]");
+        }
+
+        const content = contentLines.join("\n");
+
+        const { data, error } = await getSupabase()
+            .from("timeline_entries")
+            .insert({
+                pet_id: petId,
+                user_id: userId,
+                date: summary.sessionDate,
+                title: `[AI 펫톡] ${title}`, // AI 채팅에서 자동 생성됨을 제목에 표시
+                content,
+                mood,
+            })
+            .select("id")
+            .single();
+
+        if (error) {
+            console.error("[agent/saveAutoTimelineEntry]", error.message);
+            return null;
+        }
+
+        return data;
+    } catch (err) {
+        console.error("[agent/saveAutoTimelineEntry]", err instanceof Error ? err.message : err);
+        return null;
+    }
+}
+
 // 날짜 차이 계산 헬퍼
 function getDaysAgo(dateStr: string): number {
     const date = new Date(dateStr);

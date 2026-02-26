@@ -472,6 +472,36 @@ body {
     animation: heartPop 0.4s ease-out;
 }
 
+/* 미니미 터치 이펙트 애니메이션 */
+@keyframes minimiJump {
+    0% { transform: translateY(0) scale(1); }
+    30% { transform: translateY(-15%) scale(1.1); }
+    60% { transform: translateY(-5%) scale(1.05); }
+    100% { transform: translateY(0) scale(1.1); }
+}
+
+@keyframes minimiPop {
+    0% { transform: translateX(-50%) scale(0); opacity: 0; }
+    60% { transform: translateX(-50%) scale(1.1); opacity: 1; }
+    100% { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+
+@keyframes minimiFadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+@keyframes minimiParticle {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.5);
+    }
+}
+
 /* 매거진 스와이프 리더 */
 .magazine-page-container {
     transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
