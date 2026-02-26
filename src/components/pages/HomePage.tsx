@@ -657,7 +657,7 @@ function HomePage({ setSelectedTab }: HomePageProps) {
                         <Button
                             variant="ghost"
                             onClick={() => setSelectedTab("community")}
-                            className="text-amber-500 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl flex-shrink-0 px-2 sm:px-4 min-h-[44px] active:scale-95 transition-transform"
+                            className="text-amber-500 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-gray-700/20 rounded-xl flex-shrink-0 px-2 sm:px-4 min-h-[44px] active:scale-95 transition-transform"
                         >
                             <span className="hidden sm:inline">더 많은 이야기</span>
                             <span className="sm:hidden">더보기</span>

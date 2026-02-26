@@ -558,7 +558,7 @@ function UserCard({
                     <Button
                         size="sm"
                         variant="outline"
-                        className="text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                        className="text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-gray-700/20"
                         onClick={onOpenPremiumModal}
                     >
                         <Crown className="w-3 h-3 mr-1" />

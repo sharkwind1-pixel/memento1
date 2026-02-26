@@ -349,7 +349,7 @@ function MemoryGroup({
                 onClick={() => setIsExpanded(!isExpanded)}
                 className={`flex items-center gap-2 w-full px-2 py-2 rounded-lg transition-colors ${
                     isMemorialMode
-                        ? "hover:bg-amber-50 dark:hover:bg-amber-900/10"
+                        ? "hover:bg-amber-50 dark:hover:bg-gray-700/10"
                         : "hover:bg-sky-50 dark:hover:bg-sky-900/10"
                 }`}
             >
