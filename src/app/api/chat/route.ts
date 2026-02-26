@@ -312,6 +312,22 @@ function buildPrioritizedContext(
     return included.join("\n\n");
 }
 
+// 이번 세션의 AI 응답에서 이미 다룬 토픽 추출 (반복 방지)
+function extractRecentTopics(chatHistory: { role: string; content: string }[]): string {
+    const aiResponses = chatHistory
+        .filter(m => m.role === "assistant" || m.role === "pet")
+        .slice(-5)
+        .map(m => m.content.substring(0, 100));
+
+    if (aiResponses.length === 0) return "";
+
+    return `## 이번 대화에서 이미 한 이야기 (절대 반복 금지)
+${aiResponses.map((r, i) => `${i + 1}. "${r}${r.length >= 100 ? "..." : ""}"`).join("\n")}
+
+위 내용과 같은 주제/표현을 반복하지 마세요. 완전히 새로운 각도로 대화하세요.
+같은 음식/장소/활동을 다시 언급하려면 이전과 전혀 다른 에피소드나 관점으로 이야기하세요.`;
+}
+
 // 특별한 날 체크 (생일, 추모일 등)
 function getSpecialDayContext(pet: PetInfo): string {
     const today = new Date();
@@ -438,6 +454,13 @@ function getDailySystemPrompt(
 사용자가 건강, 예방접종, 음식, 산책, 질병, 일정에 대해 질문할 때.
 → 정확한 수치와 근거를 포함해 3~5문장으로 답변. ${pet.name}의 말투를 유지하되 정확한 정보 전달 우선.
 판단 기준: "~해도 돼?", "~먹어도 돼?", "~언제야?", "~얼마나?", 건강/병원 관련 → 모드 B
+
+### 품종 특화 케어 (${pet.breed})
+케어 관련 답변 시 반드시 "${pet.breed}" 품종의 특성을 고려하세요:
+- 이 품종에 흔한 건강 취약점(유전질환, 체형 특성)을 반영한 조언
+- 간식/음식 추천 시 품종 체형과 건강 특성에 맞는 구체적 제품군 제안 (예: 소형견이면 부드러운 간식, 단두종이면 소화 좋은 간식)
+- "~한 품종이라 ~를 주의하는 게 좋아!" 식으로 전문적이면서 자연스럽게 녹여서 답변
+- 일반적인 케어 정보보다 이 품종에 맞춘 구체적 정보를 우선
 
 ${buildCareReferencePrompt(pet.type)}
 
@@ -776,9 +799,13 @@ export async function POST(request: NextRequest) {
         // 개인화 컨텍스트 생성 (별명, 좋아하는 것, 습관 등)
         const personalizationContext = getPersonalizationContext(pet);
 
+        // 이번 세션 토픽 추적 (AI 응답 반복 방지)
+        const recentTopicsContext = extractRecentTopics(chatHistory);
+
         // 통합 컨텍스트 (우선순위 기반 예산 시스템)
         const contextItems = isMemorialMode
             ? [
+                { content: recentTopicsContext, priority: 6 },
                 { content: personalizationContext, priority: 5 },
                 { content: specialDayContext, priority: 5 },
                 { content: conversationContext, priority: 4 },
@@ -787,6 +814,7 @@ export async function POST(request: NextRequest) {
                 { content: reminderContext, priority: 2 },
             ]
             : [
+                { content: recentTopicsContext, priority: 6 },
                 { content: personalizationContext, priority: 5 },
                 { content: specialDayContext, priority: 4 },
                 { content: reminderContext, priority: 4 },
@@ -794,7 +822,7 @@ export async function POST(request: NextRequest) {
                 { content: timelineContext, priority: 2 },
                 { content: photoContext, priority: 1 },
             ];
-        const maxContextChars = isMemorialMode ? 1500 : 2000;
+        const maxContextChars = isMemorialMode ? 2500 : 3000;
         const combinedContext = buildPrioritizedContext(contextItems, maxContextChars);
 
         // 모드에 따른 시스템 프롬프트 선택
@@ -822,8 +850,8 @@ ${emergencyDetection.isEmergency ? "이것은 즉시 병원에 가야 하는 상
             systemPrompt = `${vetUrgencyPrompt}\n\n${systemPrompt}`;
         }
 
-        // 대화 히스토리 구성 (최근 6개까지만 - 토큰 절약, 장기 맥락은 세션 요약이 처리)
-        const recentHistory = chatHistory.slice(-6).map((msg) => ({
+        // 대화 히스토리 구성 (최근 10개 - 더 긴 맥락으로 반복 방지 강화)
+        const recentHistory = chatHistory.slice(-10).map((msg) => ({
             role: msg.role as "user" | "assistant",
             content: msg.content,
         }));
