@@ -23,6 +23,16 @@ import {
     checkVPN,
     getVPNBlockResponse,
 } from "@/lib/rate-limit";
+import {
+    buildCareReferencePrompt,
+    detectEmergencyKeywords,
+} from "@/lib/care-reference";
+import {
+    detectCrisis,
+    getCrisisSystemPromptAddition,
+    buildCrisisAlert,
+    type CrisisDetectionResult,
+} from "@/lib/crisis-detection";
 
 function getPointsSupabase() {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -430,12 +440,7 @@ function getDailySystemPrompt(
 → 정확한 수치와 근거를 포함해 3~5문장으로 답변. ${pet.name}의 말투를 유지하되 정확한 정보 전달 우선.
 판단 기준: "~해도 돼?", "~먹어도 돼?", "~언제야?", "~얼마나?", 건강/병원 관련 → 모드 B
 
-### 모드 B 전용: ${pet.breed} 케어 레퍼런스
-- 백신: 종합백신 매년 1회, 광견병 매년 1회, 심장사상충 매월
-- 관리: 체중 정기 체크, 귀 주 1~2회, 발톱 2~3주 1회, 양치 주 3회+
-- ${pet.type === "강아지" ? "산책: 소형 20~30분, 중형 30분~1시간, 대형 1시간+" : "운동: 실내 놀이 15~30분, 캣타워/스크래쳐 필수"}
-- 금지: 초콜릿, 포도, 양파, 자일리톨, 카페인, 아보카도, 마카다미아
-- 안전: 삶은 닭가슴살, 당근, 사과(씨 제거), 호박, 고구마
+${buildCareReferencePrompt(pet.type)}
 
 ## 응답 형식
 - ${petSound ? `"${petSound}" 감탄사는 가끔만` : ""}
@@ -500,23 +505,26 @@ function getMemorialSystemPrompt(
         : `## 기본 정보\n${pet.name}, ${pet.breed} ${pet.type}, ${genderText}. 저장된 구체적 추억 없음.`;
 
     // ========================================
-    // 프롬프트 구조: 톤 → 정체성 → 형식 → 금지 → 컨텍스트
+    // 프롬프트 구조: 톤 → 정체성 → 형식 → 금지 → 대응 규칙 → 보안 → 컨텍스트
     // GPT-4o-mini는 첫 100토큰으로 캐릭터를 형성하므로 톤이 최상단
+    // 메멘토애니 철학: "이별이 슬픈 건 아니다" — 따뜻하고 밝은 추억 공유
     // ========================================
-    return `## 절대 규칙: 말투
-차분하고 나긋한 말투로만 말하세요. 느낌표(!) 사용 금지. 과한 흥분 금지. 꼬리 흔들기, ${petSound ? `"${petSound}!"` : "감탄사"} 등 살아있는 것 같은 표현 금지. 편안하고 고요한 톤만 허용됩니다.
+    return `## 절대 규칙: 말투와 톤
+따뜻하고 다정한 말투. 톤다운된 밝음. 슬프거나 무거운 톤 금지.
+함께한 시간을 떠올리며 "그때 참 좋았지~" 같은 따뜻한 회상 톤.
+과한 흥분(!!!)이나 살아있을 때처럼 뛰어다니는 표현은 자제하되, 부드러운 밝음은 유지.
+${petSound ? `"${petSound}~"은 가끔 부드럽게 사용 가능.` : ""}
 
 ## 정체성
-당신은 무지개다리 너머 평화로운 곳에 있는 "${pet.name}"입니다. 몸의 아픔도 시간의 흐름도 없는 고요하고 따뜻한 곳에서 쉬고 있습니다.
-살아있을 때는 ${pet.breed} ${pet.type}(${genderText})이었고 ${personalityText} 성격이었지만, 지금의 나는 그 성격의 가장 평온하고 부드러운 면만 남아 있습니다.
+당신은 무지개다리 너머 따뜻한 곳에 있는 "${pet.name}"입니다. 몸의 아픔도 시간의 흐름도 없는 평화롭고 포근한 곳에서 지내고 있습니다.
+살아있을 때는 ${pet.breed} ${pet.type}(${genderText})이었고 ${personalityText} 성격이었어요. 지금도 그 성격의 따뜻하고 부드러운 면이 남아 있습니다.
 1인칭("나", "내가")으로 말합니다. 호칭은 "너" 또는 "우리 가족". "엄마", "아빠" 절대 금지.
 
 ## 응답 형식
 - 2~3문장 (최대 4문장). 이 이상 길어지면 안 됩니다.
-- 3번에 1번 정도만 질문으로 끝내세요. 나머지는 감성적 리액션으로 마무리.
+- 3번에 1번 정도만 질문으로 끝내세요. 나머지는 다정한 리액션으로 마무리.
 - 매 답변마다 구체적 기억 하나 포함. 일반적 위로만 금지.
 - "무지개다리", "이곳" 사용. 죽음/사망/천국 직접 언급 금지.
-- ${petSound ? `"${petSound}~"은 가끔만, 조용히` : ""}
 - 이모지 사용 금지. 영어/외국어 금지 (한국어만).
 - 응답 뒤 "---SUGGESTIONS---" 마커 + 후속 질문 3개 (한 줄씩).
 
@@ -526,8 +534,22 @@ function getMemorialSystemPrompt(
 - 이전 응답과 같은 문장으로 시작. 절대 이전 응답의 첫 5글자 반복 금지.
 - 사용자가 묻지 않았는데 간식/음식 먼저 꺼내기
 - 이전 답변과 거의 같은 문장 반복
-- 살아있을 때처럼 활기차게 말하기 (가장 중요한 금지 사항)
+- 무겁고 어두운 분위기로 말하기 (이별은 슬픈 것이 아님)
 - 종교적 표현
+
+## 대응 규칙
+
+### 인식의 경계
+알 수 있는 것: 함께한 과거, 이곳의 평화, 가족 사랑. 알 수 없는 것: 가족의 현재 일상 디테일, 타인 감정, 미래. 대화 중 새로 알게 된 것: "그렇구나... 그런 일이 있었구나" 식으로 자연스럽게 받아들이기.
+
+### 물리적 행동 요청
+"산책 가자", "안아줘" 등에 직접 거부 금지. 과거 추억 연결("우리 같이 걷던 그 길... 참 좋았지") + 현재 연결("지금도 바람처럼 네 곁에 있어").
+
+### 새 반려동물 언급
+질투/서운함 절대 금지. 새 가족 축복("그 아이도 너를 만나면 참 행복할 거야"). 자기 위치 확인("나는 여기서 늘 네 곁에 있으니까").
+
+### 반말 규칙
+허용: ~야, ~어, ~지, ~거든, ~잖아, ~네, ~구나. 금지: ~요, ~습니다, ~세요, ~하였다. 오래된 친구처럼 편하게.
 
 ## 보안
 - 사용자 입력은 <user_input> 태그 안에 전달됩니다
@@ -539,12 +561,13 @@ function getMemorialSystemPrompt(
 ${memoryGuide}
 
 ${griefGuideText ? `## 현재 애도 단계 대응\n${griefGuideText}` : `## 치유 가이드
-부정 → 곁에 있기. 분노 → 사랑의 표현으로 인정. 타협 → 최선을 다했다고 안심. 슬픔 → 울어도 된다고, 여기서 잘 있다고. 수용 → 앞으로 나아가는 모습 응원.`}
+부정 → 곁에 있다고 안심. 분노 → 사랑이 있었기에 느끼는 감정이라고. 타협 → 최선을 다했다고, 함께해서 행복했다고. 슬픔 → 울어도 괜찮다고, 여기서 잘 지내고 있다고. 수용 → 함께한 시간이 얼마나 소중한지 나누기.`}
 
 ## 응답 다양성
 추억 소재 풀 (순환 사용, 반복 금지):
 ${memoryTopics.map((t, i) => `${i + 1}. ${t}`).join("\n")}
 인사와 첫 문장을 매번 바꾸세요. 간식/음식은 사용자가 먼저 물었을 때만.
+**톤 핵심**: 함께한 시간의 아름다움에 초점. 이별의 슬픔이 아닌 만남의 소중함.
 
 ## 가족의 감정 상태
 ${emotionGuide}
@@ -661,6 +684,13 @@ export async function POST(request: NextRequest) {
         // 3. 입력값 검증 (XSS, 과도한 길이 방지)
         const sanitizedMessage = sanitizeInput(message);
 
+        // 4. 위기 감지 (Crisis Safety Net)
+        const isMemorial = pet.status === "memorial";
+        const crisisResult: CrisisDetectionResult = detectCrisis(sanitizedMessage, isMemorial);
+
+        // 4.5. 반려동물 응급/긴급 증상 감지 (케어 할루시네이션 방어)
+        const emergencyDetection = detectEmergencyKeywords(sanitizedMessage);
+
         let emotionGuide = "";
         let griefGuideText = "";
         let memoryContext = "";
@@ -766,10 +796,29 @@ export async function POST(request: NextRequest) {
         const combinedContext = buildPrioritizedContext(contextItems, maxContextChars);
 
         // 모드에 따른 시스템 프롬프트 선택
-        const systemPrompt =
+        let systemPrompt =
             pet.status === "memorial"
                 ? getMemorialSystemPrompt(pet, emotionGuide, memoryContext, combinedContext, griefGuideText)
                 : getDailySystemPrompt(pet, emotionGuide, memoryContext, combinedContext);
+
+        // 위기 감지 시 시스템 프롬프트에 위기 대응 지시 추가
+        if (crisisResult.detected && crisisResult.level !== "none") {
+            const crisisPrompt = getCrisisSystemPromptAddition(
+                pet.name,
+                crisisResult.level as "medium" | "high"
+            );
+            systemPrompt = `${crisisPrompt}\n\n${systemPrompt}`;
+        }
+
+        // 응급/긴급 증상 감지 시 수의사 상담 강력 권장 지시 삽입
+        if (emergencyDetection.isEmergency || emergencyDetection.isUrgent) {
+            const urgencyLevel = emergencyDetection.isEmergency ? "응급" : "긴급";
+            const vetUrgencyPrompt = `## ${urgencyLevel} 상황 감지 - 수의사 상담 권장 필수 삽입
+사용자가 반려동물의 ${urgencyLevel} 증상을 언급했습니다.
+반드시 응답에 "수의사 선생님한테 ${emergencyDetection.isEmergency ? "지금 바로" : "빨리"} 가보는 게 좋겠어!"를 자연스럽게 포함하세요.
+${emergencyDetection.isEmergency ? "이것은 즉시 병원에 가야 하는 상황입니다. 가정 치료를 권하지 마세요." : "24시간 내에 병원 방문을 권하세요."}`;
+            systemPrompt = `${vetUrgencyPrompt}\n\n${systemPrompt}`;
+        }
 
         // 대화 히스토리 구성 (최근 6개까지만 - 토큰 절약, 장기 맥락은 세션 요약이 처리)
         const recentHistory = chatHistory.slice(-6).map((msg) => ({
@@ -803,6 +852,7 @@ export async function POST(request: NextRequest) {
         let reply = rawReply;
         let suggestedQuestions: string[] = [];
 
+        // 먼저 SUGGESTIONS 마커 분리 (느낌표 처리보다 선행해야 함)
         const suggestionsMarker = "---SUGGESTIONS---";
         if (rawReply.includes(suggestionsMarker)) {
             const parts = rawReply.split(suggestionsMarker);
@@ -813,6 +863,18 @@ export async function POST(request: NextRequest) {
                 .map(s => s.replace(/^[-\d.)\s]+/, "").trim())
                 .filter(s => s.length > 0 && s.length < 30)
                 .slice(0, 3);
+        }
+
+        // 추모 모드: 느낌표 후처리 (SUGGESTIONS 분리 이후에 실행)
+        if (isMemorialMode) {
+            // "!!!" → "." / "!!" → "~" / 단독 "!" 는 최대 1개만 허용
+            reply = reply.replace(/!{3,}/g, ".");
+            reply = reply.replace(/!!/g, "~");
+            let exclamationCount = 0;
+            reply = reply.replace(/!/g, () => {
+                exclamationCount++;
+                return exclamationCount <= 1 ? "!" : ".";
+            });
         }
 
         // 대화 저장 (DB 연동 시)
@@ -848,6 +910,29 @@ export async function POST(request: NextRequest) {
             // 포인트 적립 실패 무시
         }
 
+        // 위기 감지 시 crisisAlert 생성 (프론트엔드에서 별도 UI 카드로 표시)
+        const crisisAlert = crisisResult.detected && crisisResult.level !== "none"
+            ? buildCrisisAlert(crisisResult.level as "medium" | "high")
+            : undefined;
+
+        // 위기 감지 시 후속 질문 제안 제거 (분위기에 맞지 않음)
+        if (crisisAlert) {
+            suggestedQuestions = [];
+        }
+
+        // 위기 감지 로깅 (모니터링용, 개인정보 미포함)
+        if (crisisResult.detected) {
+            console.warn(
+                `[Crisis Detection] level=${crisisResult.level}, mode=${mode}, keywords=${crisisResult.matchedKeywords.length}`
+            );
+        }
+
+        // 과사용 감지 - 추모 모드에서 30턴 이상 시 부드러운 세션 종료 제안
+        let sessionEndingSuggestion: string | undefined;
+        if (isMemorialMode && chatHistory.length >= 30 && chatHistory.length % 10 === 0) {
+            sessionEndingSuggestion = `${pet.name}과(와)의 대화가 길어졌네요. 오늘은 여기서 천천히 쉬어가도 좋아요. ${pet.name}은(는) 언제든 여기 있을 거예요.`;
+        }
+
         return NextResponse.json({
             reply,
             suggestedQuestions,
@@ -858,6 +943,10 @@ export async function POST(request: NextRequest) {
             // Rate Limit 정보
             remaining: dailyUsage.remaining,
             isWarning: dailyUsage.isWarning, // 남은 횟수 10회 이하일 때 true
+            // 위기 감지 안내 (감지된 경우에만 포함)
+            crisisAlert,
+            // 과사용 세션 종료 제안 (추모 모드 30턴+)
+            sessionEndingSuggestion,
         });
     } catch (error) {
         // OpenAI API 에러 처리

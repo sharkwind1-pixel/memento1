@@ -23,7 +23,7 @@ import {
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
 import { ChatMessage } from "@/components/features/chat/chatTypes";
-import type { Pet, TimelineEntry, PhotoItem } from "@/types";
+import type { Pet, TimelineEntry, PhotoItem, CrisisAlertInfo } from "@/types";
 import type { User } from "@supabase/supabase-js";
 
 // ============================================================================
@@ -502,6 +502,35 @@ export function useAIChat({
                 emotionScore: data.emotionScore,
             };
             setMessages((prev) => [...prev, petMessage]);
+
+            // 과사용 세션 종료 제안 (추모 모드 30턴+ 시)
+            if (data.sessionEndingSuggestion) {
+                setTimeout(() => {
+                    const sessionEndingMessage: ChatMessage = {
+                        id: `session-ending-${Date.now()}`,
+                        role: "system",
+                        content: data.sessionEndingSuggestion,
+                        timestamp: new Date(),
+                    };
+                    setMessages((prev) => [...prev, sessionEndingMessage]);
+                }, 800);
+            }
+
+            // 위기 감지 시 상담 안내 카드 표시 (AI 응답 아래에 별도 UI)
+            if (data.crisisAlert) {
+                const crisisMessage: ChatMessage = {
+                    id: `crisis-alert-${Date.now()}`,
+                    role: "system",
+                    type: "crisis-alert",
+                    content: data.crisisAlert.message,
+                    timestamp: new Date(),
+                    crisisAlert: data.crisisAlert as CrisisAlertInfo,
+                };
+                // 약간의 딜레이를 두어 AI 응답 이후 자연스럽게 표시
+                setTimeout(() => {
+                    setMessages((prev) => [...prev, crisisMessage]);
+                }, 600);
+            }
 
             // 일상 모드 + 세션 첫 대화 후 리마인더 안내 (1회만)
             if (!isMemorialMode && !reminderSuggestionShown.current) {

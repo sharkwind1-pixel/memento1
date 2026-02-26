@@ -190,8 +190,10 @@ export interface ChatMessage {
     emotionScore?: number;
     isError?: boolean;
     retryMessage?: string;
-    /** 시스템 메시지 서브타입 (리마인더 안내 등) */
-    type?: "reminder-suggestion";
+    /** 시스템 메시지 서브타입 (리마인더 안내, 위기 감지 안내 등) */
+    type?: "reminder-suggestion" | "crisis-alert";
+    /** 위기 감지 시 상담 안내 정보 */
+    crisisAlert?: CrisisAlertInfo;
 }
 
 /** 감정 타입 */
@@ -547,6 +549,28 @@ export interface APIError {
     msg: string;
 }
 
+/** 위기 상담 기관 정보 */
+export interface CrisisResource {
+    /** 기관명 */
+    name: string;
+    /** 전화번호 */
+    phone: string;
+    /** 설명 */
+    description: string;
+    /** 운영 시간 */
+    hours: string;
+}
+
+/** 위기 감지 안내 정보 (프론트엔드 UI 카드용) */
+export interface CrisisAlertInfo {
+    /** 위험 수준 */
+    level: "medium" | "high";
+    /** 안내 메시지 */
+    message: string;
+    /** 상담 기관 목록 */
+    resources: CrisisResource[];
+}
+
 /** AI 채팅 API 응답 */
 export interface AIChatResponse {
     reply: string;
@@ -557,6 +581,8 @@ export interface AIChatResponse {
         completion_tokens: number;
         total_tokens: number;
     };
+    /** 위기 감지 시 상담 안내 정보 (감지된 경우에만 존재) */
+    crisisAlert?: CrisisAlertInfo;
 }
 
 // ============================================

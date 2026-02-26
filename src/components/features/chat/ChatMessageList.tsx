@@ -9,7 +9,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useRef, useEffect } from "react";
-import { PawPrint, RotateCcw, Bell } from "lucide-react";
+import { PawPrint, RotateCcw, Bell, Phone, Heart } from "lucide-react";
 import type { Pet } from "@/types";
 import {
     ChatMessage,
@@ -98,6 +98,47 @@ export default function ChatMessageList({
                                         >
                                             괜찮아요
                                         </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : message.role === "system" && message.type === "crisis-alert" && message.crisisAlert ? (
+                            /* 위기 감지 상담 안내 카드 */
+                            <div className="flex justify-center chat-bubble-enter my-3">
+                                <div className="bg-gradient-to-br from-rose-50 to-amber-50 dark:from-rose-950/40 dark:to-amber-950/30 border border-rose-200 dark:border-rose-800/50 rounded-2xl px-5 py-4 max-w-[90%] shadow-sm">
+                                    <div className="flex items-center gap-2 mb-2.5">
+                                        <div className="w-8 h-8 rounded-full bg-rose-100 dark:bg-rose-900/50 flex items-center justify-center">
+                                            <Heart className="w-4 h-4 text-rose-500 dark:text-rose-400" />
+                                        </div>
+                                        <span className="text-sm font-semibold text-rose-800 dark:text-rose-200">
+                                            혼자 감당하지 않아도 돼요
+                                        </span>
+                                    </div>
+                                    <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed mb-3">
+                                        {message.crisisAlert.message}
+                                    </p>
+                                    <div className="space-y-2">
+                                        {message.crisisAlert.resources.map((resource, idx) => (
+                                            <a
+                                                key={idx}
+                                                href={`tel:${resource.phone}`}
+                                                className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white/80 dark:bg-gray-800/60 border border-rose-100 dark:border-rose-800/30 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all hover:scale-[1.01] active:scale-[0.99]"
+                                            >
+                                                <div className="w-9 h-9 rounded-full bg-rose-100 dark:bg-rose-900/40 flex items-center justify-center flex-shrink-0">
+                                                    <Phone className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="text-sm font-medium text-gray-800 dark:text-gray-100">
+                                                        {resource.name}
+                                                    </div>
+                                                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                        {resource.description} | {resource.hours}
+                                                    </div>
+                                                </div>
+                                                <span className="text-base font-bold text-rose-600 dark:text-rose-400 flex-shrink-0">
+                                                    {resource.phone}
+                                                </span>
+                                            </a>
+                                        ))}
                                     </div>
                                 </div>
                             </div>
