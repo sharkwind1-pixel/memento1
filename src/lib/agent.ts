@@ -1108,7 +1108,7 @@ export async function saveConversationSummary(
 export async function getRecentSummaries(
     userId: string,
     petId: string,
-    limit: number = 5,
+    limit: number = 7,
     isMemorialMode?: boolean
 ): Promise<ConversationSummary[]> {
     let query = getSupabase()
@@ -1259,30 +1259,34 @@ export async function buildConversationContext(
     isMemorial: boolean = false
 ): Promise<string> {
     try {
-        // 1. 최근 세션 요약 가져오기 (최대 3개, 모드 필터링 적용)
-        const summaries = await getRecentSummaries(userId, petId, 3, isMemorial);
+        // 1. 최근 세션 요약 가져오기 (최대 5개, 모드 필터링 적용)
+        const summaries = await getRecentSummaries(userId, petId, 5, isMemorial);
 
         // 2. 요약을 컨텍스트로 변환
         const summaryContext = summariesToContext(summaries, petName, isMemorial);
 
         // 3. 마지막 대화 일부 가져오기 (연속성을 위해, 모드 필터링 적용)
-        const recentMessages = await getRecentMessages(userId, petId, 6, isMemorial);
+        const recentMessages = await getRecentMessages(userId, petId, 10, isMemorial);
 
         let recentContext = "";
         if (recentMessages.length > 0) {
             const lastMsgTime = new Date(recentMessages[recentMessages.length - 1]?.created_at || Date.now());
             const hoursSinceLastMsg = (Date.now() - lastMsgTime.getTime()) / (1000 * 60 * 60);
 
-            // 24시간 이내 대화만 직접 참조
-            if (hoursSinceLastMsg < 24) {
-                const lastMessages = recentMessages.slice(-4).map(m =>
-                    `- ${m.role === "user" ? "가족" : petName}: ${m.content.substring(0, 100)}${m.content.length > 100 ? "..." : ""}`
-                );
-                recentContext = `## 직전 대화 (${Math.round(hoursSinceLastMsg)}시간 전)
+            // 시간 무관하게 마지막 대화 항상 포함 (영구 기억)
+            const timeLabel = hoursSinceLastMsg < 1
+                ? "방금 전"
+                : hoursSinceLastMsg < 24
+                    ? `${Math.round(hoursSinceLastMsg)}시간 전`
+                    : `${Math.round(hoursSinceLastMsg / 24)}일 전`;
+
+            const lastMessages = recentMessages.slice(-6).map(m =>
+                `- ${m.role === "user" ? "가족" : petName}: ${m.content.substring(0, 100)}${m.content.length > 100 ? "..." : ""}`
+            );
+            recentContext = `## 직전 대화 (${timeLabel})
 ${lastMessages.join("\n")}
 
-**참고**: 직전 대화를 이어서 자연스럽게 대화하세요.`;
-            }
+**참고**: 직전 대화 내용을 기억하고 자연스럽게 이어가세요. 같은 주제를 반복하지 말고 새로운 이야기를 하세요.`;
         }
 
         return [summaryContext, recentContext].filter(Boolean).join("\n\n");
