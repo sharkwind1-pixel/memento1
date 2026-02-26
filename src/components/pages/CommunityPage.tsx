@@ -7,59 +7,23 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import {
-    Card,
-    CardContent,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import {
-    Users,
-    Heart,
-    MessageCircle,
-    Clock,
-    PenSquare,
-    Search,
-    TrendingUp,
-    Eye,
-    MoreHorizontal,
-    Flag,
-} from "lucide-react";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import ReportModal from "@/components/modals/ReportModal";
-
 import { toast } from "sonner";
 import { usePets } from "@/contexts/PetContext";
-import { ImageIcon } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import WritePostModal from "@/components/features/community/WritePostModal";
 import PostDetailView from "@/components/features/community/PostDetailView";
+import CommunityHeader from "@/components/features/community/CommunityHeader";
+import CommunityPostList from "@/components/features/community/CommunityPostList";
 import MinihompyVisitModal from "@/components/features/minihompy/MinihompyVisitModal";
+import ReportModal from "@/components/modals/ReportModal";
 import type { CommunitySubcategory, PostTag, CommunityPageProps } from "@/types";
 import { API } from "@/config/apiEndpoints";
 import type { Post } from "@/components/features/community/communityTypes";
 import {
     SUBCATEGORIES,
-    POST_TAGS,
     MOCK_POSTS,
-    getBadgeStyle,
-    getTagColor,
     getCategoryColor,
-    formatTime,
 } from "@/components/features/community/communityTypes";
-
-
-
-
 
 function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps) {
     const { selectedPet } = usePets();
@@ -112,7 +76,7 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
         } else {
             setInternalSubcategory(subId);
         }
-        setSelectedTag("all"); // 말머리 필터 초기화
+        setSelectedTag("all");
     };
 
     // 게시글 불러오기 (초기 로드 또는 추가 로드)
@@ -160,7 +124,6 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
                     setPosts(mapped);
                 }
 
-                // 더 불러올 게 있는지 판단
                 const total = data.total ?? Infinity;
                 setHasMore(offset + mapped.length < total);
             } else {
@@ -168,7 +131,6 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
             }
         } catch {
             if (!loadMore) {
-                // 초기 로드 실패 시 목업 데이터로 폴백
                 toast.error("게시글을 불러오지 못했습니다. 샘플 데이터를 표시합니다.");
                 const mockPosts = MOCK_POSTS[currentSubcategory] || [];
                 let filteredPosts = mockPosts;
@@ -279,348 +241,40 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
             </div>
 
             <div className="relative z-10 space-y-6 pb-8">
-                {/* 헤더 */}
-                <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg border border-white/50 dark:border-gray-700/50 rounded-3xl p-6">
-                    <div className="flex items-center justify-between gap-3 mb-6">
-                        <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] rounded-xl flex items-center justify-center flex-shrink-0">
-                                <Users className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                            </div>
-                            <div className="min-w-0">
-                                <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">
-                                    커뮤니티
-                                </h1>
-                                <p className="text-sm text-gray-600 dark:text-gray-300">
-                                    함께 나누는 이야기
-                                </p>
-                            </div>
-                        </div>
-                        <Button
-                            onClick={handleWriteClick}
-                            className={`bg-gradient-to-r ${currentColor.bg} hover:opacity-90 rounded-xl flex-shrink-0 px-3 sm:px-4 min-h-[44px] active:scale-95 transition-transform`}
-                        >
-                            <PenSquare className="w-4 h-4 sm:mr-2" />
-                            <span className="hidden sm:inline">글쓰기</span>
-                        </Button>
-                    </div>
+                <CommunityHeader
+                    currentSubcategory={currentSubcategory}
+                    visibleSubcategories={visibleSubcategories}
+                    selectedTag={selectedTag}
+                    searchInput={searchInput}
+                    sortBy={sortBy}
+                    currentColor={currentColor}
+                    onSubcategoryChange={handleSubcategoryChange}
+                    onTagChange={setSelectedTag}
+                    onSearchInputChange={setSearchInput}
+                    onSearchSubmit={() => {
+                        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+                        setSearchQuery(searchInput.trim());
+                    }}
+                    onSortChange={setSortBy}
+                    onWriteClick={handleWriteClick}
+                />
 
-                    {/* 서브카테고리 탭 - 모바일 최적화 (5개) */}
-                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3 mb-4" data-tutorial-id="community-boards">
-                        {visibleSubcategories.map((sub) => {
-                            const Icon = sub.icon;
-                            const isActive = currentSubcategory === sub.id;
-                            const color = getCategoryColor(sub.color);
-                            return (
-                                <button
-                                    key={sub.id}
-                                    onClick={() => handleSubcategoryChange(sub.id)}
-                                    className={`p-2.5 sm:p-3 min-h-[44px] rounded-xl sm:rounded-2xl border-2 transition-all active:scale-95 ${
-                                        isActive
-                                            ? `bg-gradient-to-r ${color.bg} text-white border-transparent shadow-lg`
-                                            : `bg-white/50 dark:bg-gray-700/50 ${color.border} hover:shadow-md`
-                                    }`}
-                                >
-                                    <div className="flex items-center justify-center sm:justify-start gap-1.5">
-                                        <Icon
-                                            className={`w-4 h-4 flex-shrink-0 ${isActive ? "text-white" : color.text}`}
-                                        />
-                                        <span
-                                            className={`font-bold text-xs sm:text-sm whitespace-nowrap ${isActive ? "text-white" : "text-gray-800 dark:text-gray-100"}`}
-                                        >
-                                            {sub.label}
-                                        </span>
-                                    </div>
-                                    <p
-                                        className={`text-xs mt-1 hidden sm:block truncate ${isActive ? "text-white/80" : "text-gray-500 dark:text-gray-400"}`}
-                                    >
-                                        {sub.description}
-                                    </p>
-                                </button>
-                            );
-                        })}
-                    </div>
-
-                    {/* 말머리 필터 - 자유게시판일 때만 표시 */}
-                    {currentSubcategory === "free" && (
-                        <div className="flex flex-wrap gap-2 mb-4 p-3 bg-blue-50/50 dark:bg-blue-900/20 rounded-xl border border-blue-200/50 dark:border-blue-700/30">
-                            <button
-                                onClick={() => setSelectedTag("all")}
-                                className={`px-3 py-1.5 min-h-[44px] rounded-full text-sm font-medium transition-all active:scale-95 ${
-                                    selectedTag === "all"
-                                        ? "bg-[#05B2DC] text-white shadow-md"
-                                        : "bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-800/30 border border-blue-200 dark:border-blue-700/50"
-                                }`}
-                            >
-                                전체
-                            </button>
-                            {POST_TAGS.map((tag) => {
-                                const isActive = selectedTag === tag.id;
-                                return (
-                                    <button
-                                        key={tag.id}
-                                        onClick={() => setSelectedTag(tag.id)}
-                                        className={`px-3 py-1.5 min-h-[44px] rounded-full text-sm font-medium transition-all active:scale-95 border ${
-                                            isActive
-                                                ? getTagColor(tag.color).replace("border-", "border-transparent bg-").split(" ").slice(0, 2).join(" ") + " text-white shadow-md"
-                                                : getTagColor(tag.color)
-                                        }`}
-                                    >
-                                        {tag.label}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    )}
-
-                    {/* 검색 & 정렬 - 모바일 최적화 */}
-                    <div className="space-y-3">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                            <Input
-                                placeholder="검색어를 입력하세요"
-                                value={searchInput}
-                                onChange={(e) => setSearchInput(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === "Enter") {
-                                        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-                                        setSearchQuery(searchInput.trim());
-                                    }
-                                }}
-                                maxLength={100}
-                                className="pl-10 rounded-xl bg-white/70 dark:bg-gray-700/70"
-                            />
-                        </div>
-                        <div className="flex justify-center sm:justify-end">
-                            <div className="inline-flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
-                                {[
-                                    { id: "latest", label: "최신", icon: Clock },
-                                    { id: "popular", label: "인기", icon: TrendingUp },
-                                    { id: "comments", label: "댓글", icon: MessageCircle },
-                                ].map((sort) => {
-                                    const Icon = sort.icon;
-                                    return (
-                                        <Button
-                                            key={sort.id}
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => setSortBy(sort.id)}
-                                            className={`rounded-lg px-2 sm:px-3 min-h-[44px] active:scale-95 transition-transform ${sortBy === sort.id ? "bg-white dark:bg-gray-700 shadow-sm" : ""}`}
-                                        >
-                                            <Icon className="w-4 h-4 sm:mr-1" />
-                                            <span className="hidden sm:inline">{sort.label}</span>
-                                        </Button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* 게시글 목록 */}
-                <div className="space-y-4">
-                    {isLoading ? (
-                        // 스켈레톤 로더 - 실제 게시글 카드 레이아웃과 동일한 구조
-                        Array.from({ length: 4 }).map((_, i) => (
-                            <Card
-                                key={`skeleton-${i}`}
-                                className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 rounded-2xl animate-pulse"
-                            >
-                                <CardHeader className="pb-2">
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <div className="h-5 w-12 bg-gray-200 dark:bg-gray-700 rounded-lg" />
-                                        </div>
-                                        <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
-                                    </div>
-                                    <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mt-2" />
-                                </CardHeader>
-                                <CardContent className="pb-2">
-                                    <div className="h-4 bg-gray-100 dark:bg-gray-700/70 rounded w-full mb-1.5" />
-                                    <div className="h-4 bg-gray-100 dark:bg-gray-700/70 rounded w-2/3" />
-                                </CardContent>
-                                <CardFooter className="flex items-center justify-between pt-2">
-                                    <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
-                                    <div className="flex items-center gap-4">
-                                        <div className="h-4 w-10 bg-gray-100 dark:bg-gray-700/70 rounded" />
-                                        <div className="h-4 w-10 bg-gray-100 dark:bg-gray-700/70 rounded" />
-                                        <div className="h-4 w-10 bg-gray-100 dark:bg-gray-700/70 rounded" />
-                                    </div>
-                                </CardFooter>
-                            </Card>
-                        ))
-                    ) : (
-                        posts.map((post) => (
-                            <Card
-                                key={post.id}
-                                onClick={() => setSelectedPostId(post.id)}
-                                className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 hover:bg-white/80 dark:hover:bg-gray-700/60 transition-all duration-300 rounded-2xl cursor-pointer"
-                            >
-                                <CardHeader className="pb-2">
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <Badge
-                                                className={`${getBadgeStyle(post.badge, currentSubcategory)} rounded-lg`}
-                                            >
-                                                {post.badge}
-                                            </Badge>
-                                            {/* 자유게시판 말머리 표시 */}
-                                            {currentSubcategory === "free" && post.tag && (
-                                                <Badge variant="outline" className="rounded-lg text-xs">
-                                                    {post.tag}
-                                                </Badge>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm text-gray-400 flex items-center gap-1">
-                                                <Clock className="w-3 h-3" />
-                                                {formatTime(post.createdAt)}
-                                            </span>
-                                            {/* 더보기 메뉴 (신고) */}
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <button
-                                                        className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors active:scale-95 transition-transform"
-                                                        onClick={(e) => e.stopPropagation()}
-                                                        aria-label="더보기"
-                                                    >
-                                                        <MoreHorizontal className="w-4 h-4 text-gray-400" />
-                                                    </button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            if (!user) {
-                                                                window.dispatchEvent(new CustomEvent("openAuthModal"));
-                                                                return;
-                                                            }
-                                                            setReportTarget({
-                                                                id: post.id,
-                                                                type: "post",
-                                                                title: post.title,
-                                                            });
-                                                        }}
-                                                        className="text-red-500 focus:text-red-600"
-                                                    >
-                                                        <Flag className="w-4 h-4 mr-2" />
-                                                        신고하기
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </div>
-                                    </div>
-                                    <CardTitle className="text-lg text-gray-800 dark:text-gray-100 mt-2 line-clamp-1">
-                                        {post.title}
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="pb-2">
-                                    <p className="text-gray-600 dark:text-gray-300 line-clamp-2">
-                                        {post.content}
-                                    </p>
-                                    {post.imageUrls && post.imageUrls.length > 0 && (
-                                        <div className="flex items-center gap-1 mt-2 text-xs text-sky-500">
-                                            <ImageIcon className="w-3.5 h-3.5" />
-                                            <span>이미지 {post.imageUrls.length}장</span>
-                                        </div>
-                                    )}
-                                </CardContent>
-                                <CardFooter className="flex items-center justify-between pt-2">
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (post.userId) setVisitUserId(post.userId);
-                                        }}
-                                        className="text-sm text-gray-500 dark:text-gray-400 hover:text-[#05B2DC] dark:hover:text-[#38BDF8] hover:underline transition-colors"
-                                    >
-                                        {post.authorName}
-                                    </button>
-                                    <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                                        <span className="flex items-center gap-1">
-                                            <Eye className="w-4 h-4" />
-                                            {post.views.toLocaleString()}
-                                        </span>
-                                        <span className="flex items-center gap-1">
-                                            <Heart className="w-4 h-4" />
-                                            {post.likes}
-                                        </span>
-                                        <span className="flex items-center gap-1">
-                                            <MessageCircle className="w-4 h-4" />
-                                            {post.comments}
-                                        </span>
-                                    </div>
-                                </CardFooter>
-                            </Card>
-                        ))
-                    )}
-
-                    {/* 추가 로딩 스켈레톤 */}
-                    {isLoadingMore && (
-                        Array.from({ length: 3 }).map((_, i) => (
-                            <Card
-                                key={`loading-more-${i}`}
-                                className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 rounded-2xl animate-pulse"
-                            >
-                                <CardHeader className="pb-2">
-                                    <div className="flex items-start justify-between">
-                                        <div className="h-5 w-12 bg-gray-200 dark:bg-gray-700 rounded-lg" />
-                                        <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
-                                    </div>
-                                    <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mt-2" />
-                                </CardHeader>
-                                <CardContent className="pb-2">
-                                    <div className="h-4 bg-gray-100 dark:bg-gray-700/70 rounded w-full mb-1.5" />
-                                    <div className="h-4 bg-gray-100 dark:bg-gray-700/70 rounded w-2/3" />
-                                </CardContent>
-                                <CardFooter className="flex items-center justify-between pt-2">
-                                    <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
-                                    <div className="flex items-center gap-4">
-                                        <div className="h-4 w-10 bg-gray-100 dark:bg-gray-700/70 rounded" />
-                                        <div className="h-4 w-10 bg-gray-100 dark:bg-gray-700/70 rounded" />
-                                    </div>
-                                </CardFooter>
-                            </Card>
-                        ))
-                    )}
-
-                    {/* 무한 스크롤 감지용 sentinel */}
-                    <div ref={sentinelRef} className="h-1" />
-
-                    {/* 더 이상 게시글 없음 */}
-                    {!isLoading && !hasMore && posts.length > 0 && (
-                        <p className="text-center text-sm text-gray-400 dark:text-gray-500 py-4">
-                            모든 게시글을 불러왔습니다
-                        </p>
-                    )}
-                </div>
-
-                {/* 게시글 없을 때 */}
-                {!isLoading && posts.length === 0 && (
-                    <div className="text-center py-16">
-                        <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Search className="w-10 h-10 text-gray-400" />
-                        </div>
-                        <p className="text-gray-500 dark:text-gray-400">
-                            {searchQuery ? "검색 결과가 없습니다" : "아직 게시글이 없습니다"}
-                        </p>
-                        {searchQuery ? (
-                            <Button
-                                variant="outline"
-                                className="mt-4 rounded-xl"
-                                onClick={() => { setSearchInput(""); setSearchQuery(""); }}
-                            >
-                                전체 보기
-                            </Button>
-                        ) : (
-                            <Button
-                                onClick={handleWriteClick}
-                                className={`mt-4 bg-gradient-to-r ${currentColor.bg} rounded-xl`}
-                            >
-                                <PenSquare className="w-4 h-4 mr-2" />
-                                첫 글 작성하기
-                            </Button>
-                        )}
-                    </div>
-                )}
+                <CommunityPostList
+                    posts={posts}
+                    isLoading={isLoading}
+                    isLoadingMore={isLoadingMore}
+                    hasMore={hasMore}
+                    currentSubcategory={currentSubcategory}
+                    searchQuery={searchQuery}
+                    currentColorBg={currentColor.bg}
+                    userId={user?.id}
+                    sentinelRef={sentinelRef}
+                    onSelectPost={setSelectedPostId}
+                    onVisitUser={setVisitUserId}
+                    onReportPost={(post) => setReportTarget({ id: post.id, type: "post", title: post.title })}
+                    onWriteClick={handleWriteClick}
+                    onClearSearch={() => { setSearchInput(""); setSearchQuery(""); }}
+                />
             </div>
 
             {/* 글쓰기 모달 */}

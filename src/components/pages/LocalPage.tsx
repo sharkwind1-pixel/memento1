@@ -13,36 +13,6 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import {
-    Card,
-    CardContent,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import {
-    MapPin,
-    Search,
-    Heart,
-    MessageCircle,
-    Clock,
-    PenSquare,
-    X,
-    ChevronLeft,
-    ChevronRight,
-    Loader2,
-    Eye,
-} from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/auth-fetch";
@@ -50,9 +20,11 @@ import { uploadLocalPostImage } from "@/lib/storage";
 import { TabType } from "@/types";
 import { API } from "@/config/apiEndpoints";
 import type { LocalPost, PostFormData } from "@/components/features/local/localTypes";
-import { REGIONS, CATEGORIES, INITIAL_FORM, getBadgeStyle, getCategoryLabel, timeAgo } from "@/components/features/local/localTypes";
+import { REGIONS, INITIAL_FORM } from "@/components/features/local/localTypes";
 import LocalDetailModal from "@/components/features/local/LocalDetailModal";
 import LocalCreateModal from "@/components/features/local/LocalCreateModal";
+import LocalHeader from "@/components/features/local/LocalHeader";
+import LocalPostList from "@/components/features/local/LocalPostList";
 
 interface LocalPageProps {
     setSelectedTab?: (tab: TabType) => void;
@@ -92,7 +64,6 @@ function LocalPage({ setSelectedTab }: LocalPageProps) {
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const districts = selectedRegion ? REGIONS[selectedRegion] || [] : [];
     const formDistricts = form.region ? REGIONS[form.region] || [] : [];
 
     // ==========================================
@@ -145,7 +116,6 @@ function LocalPage({ setSelectedTab }: LocalPageProps) {
         if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
         debounceTimerRef.current = setTimeout(() => {
             const trimmed = searchInput.trim();
-            // handleSearch에서 이미 설정된 같은 값이면 skip (이중 실행 방지)
             setSearchQuery((prev) => {
                 if (prev === trimmed) return prev;
                 setPage(1);
@@ -172,7 +142,6 @@ function LocalPage({ setSelectedTab }: LocalPageProps) {
                 setSelectedPost(data.post);
             }
         } catch {
-            // 상세 조회 실패 시 목록 데이터로 대체 표시 + 사용자 알림
             toast.error("상세 정보를 불러오지 못했습니다. 기본 정보로 표시합니다.");
         } finally {
             setDetailLoading(false);
@@ -303,302 +272,40 @@ function LocalPage({ setSelectedTab }: LocalPageProps) {
             </div>
 
             <div className="relative z-10 space-y-6 pb-8">
-                {/* 헤더 */}
-                <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg border border-white/50 dark:border-gray-700/50 rounded-3xl p-6">
-                    <div className="flex items-center justify-between gap-3 mb-6">
-                        <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-500 to-sky-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                                <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                            </div>
-                            <div className="min-w-0">
-                                <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">
-                                    지역정보
-                                </h1>
-                                <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
-                                    우리 동네 반려동물 이야기
-                                </p>
-                            </div>
-                        </div>
-                        <Button
-                            onClick={openCreateModal}
-                            className="bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 rounded-xl flex-shrink-0 px-3 sm:px-4"
-                        >
-                            <PenSquare className="w-4 h-4 sm:mr-2" />
-                            <span className="hidden sm:inline">글쓰기</span>
-                        </Button>
-                    </div>
+                <LocalHeader
+                    selectedRegion={selectedRegion}
+                    selectedDistrict={selectedDistrict}
+                    selectedCategory={selectedCategory}
+                    searchInput={searchInput}
+                    onRegionChange={setSelectedRegion}
+                    onDistrictChange={setSelectedDistrict}
+                    onCategoryChange={setSelectedCategory}
+                    onSearchInputChange={setSearchInput}
+                    onSearchSubmit={handleSearch}
+                    onClearRegion={() => { setSelectedRegion(""); setSelectedDistrict(""); }}
+                    onWriteClick={openCreateModal}
+                />
 
-                    {/* 지역 선택 */}
-                    <div className="space-y-3 mb-4">
-                        <div className="flex gap-2">
-                            <Select
-                                value={selectedRegion}
-                                onValueChange={(v) => {
-                                    setSelectedRegion(v);
-                                    setSelectedDistrict("");
-                                }}
-                            >
-                                <SelectTrigger className="flex-1 rounded-xl bg-white/70 dark:bg-gray-700/70 dark:border-gray-600">
-                                    <SelectValue placeholder="시/도" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {Object.keys(REGIONS).map((region) => (
-                                        <SelectItem key={region} value={region}>
-                                            {region}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-
-                            <Select
-                                value={selectedDistrict}
-                                onValueChange={setSelectedDistrict}
-                                disabled={!selectedRegion}
-                            >
-                                <SelectTrigger className="flex-1 rounded-xl bg-white/70 dark:bg-gray-700/70 dark:border-gray-600">
-                                    <SelectValue placeholder="구/군" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {districts.map((district) => (
-                                        <SelectItem key={district} value={district}>
-                                            {district}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-
-                            {selectedRegion && (
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                        setSelectedRegion("");
-                                        setSelectedDistrict("");
-                                    }}
-                                    aria-label="지역 선택 초기화"
-                                    className="rounded-xl dark:border-gray-600 px-3"
-                                >
-                                    <X className="w-4 h-4" />
-                                </Button>
-                            )}
-                        </div>
-
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                            <Input
-                                placeholder="검색어를 입력하세요"
-                                value={searchInput}
-                                onChange={(e) => setSearchInput(e.target.value)}
-                                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                                className="pl-10 rounded-xl bg-white/70 dark:bg-gray-700/70 dark:border-gray-600"
-                            />
-                        </div>
-                    </div>
-
-                    {/* 카테고리 필터 */}
-                    <div className="grid grid-cols-4 sm:flex sm:flex-wrap gap-1.5 sm:gap-2">
-                        {CATEGORIES.map((cat) => {
-                            const Icon = cat.icon;
-                            const isActive = selectedCategory === cat.id;
-                            return (
-                                <Button
-                                    key={cat.id}
-                                    variant={isActive ? "default" : "outline"}
-                                    size="sm"
-                                    onClick={() => setSelectedCategory(cat.id)}
-                                    className={`rounded-xl flex-col sm:flex-row h-auto py-2 sm:py-1.5 px-1 sm:px-3 ${
-                                        isActive
-                                            ? "bg-gradient-to-r from-blue-500 to-sky-500 text-white border-0"
-                                            : "bg-white/50 dark:bg-gray-700/50 border-blue-200 dark:border-blue-700 dark:text-gray-300"
-                                    }`}
-                                >
-                                    <Icon className="w-4 h-4 sm:mr-1" />
-                                    <span className="text-[11px] sm:text-sm mt-0.5 sm:mt-0 leading-tight">{cat.label}</span>
-                                </Button>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                {/* 현재 위치 & 결과 수 */}
-                {(selectedRegion || totalCount > 0) && (
-                    <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300 px-1">
-                        {selectedRegion && (
-                            <>
-                                <MapPin className="w-4 h-4" />
-                                <span className="font-medium">
-                                    {selectedRegion} {selectedDistrict}
-                                </span>
-                            </>
-                        )}
-                        {totalCount > 0 && (
-                            <span className="text-sm text-gray-400 dark:text-gray-500">
-                                ({totalCount}개의 글)
-                            </span>
-                        )}
-                    </div>
-                )}
-
-                {/* 로딩 */}
-                {loading ? (
-                    <div className="flex items-center justify-center py-20">
-                        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-                        <span className="ml-3 text-gray-500 dark:text-gray-400">게시글을 불러오는 중...</span>
-                    </div>
-                ) : (
-                    <>
-                        {/* 게시글 목록 */}
-                        <div className="space-y-4">
-                            {posts.map((post) => (
-                                <Card
-                                    key={post.id}
-                                    onClick={() => openDetail(post)}
-                                    className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 hover:bg-white/80 dark:hover:bg-gray-700/60 transition-all duration-300 rounded-2xl cursor-pointer"
-                                >
-                                    <CardHeader className="pb-2">
-                                        <div className="flex items-start justify-between">
-                                            <div className="flex items-center gap-2 flex-wrap">
-                                                <Badge className={`${getBadgeStyle(post.badge)} rounded-lg`}>
-                                                    {post.badge}
-                                                </Badge>
-                                                {post.region && (
-                                                    <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 min-w-0">
-                                                        <MapPin className="w-3 h-3 flex-shrink-0" />
-                                                        <span className="truncate">{post.region} {post.district}</span>
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <span className="text-sm text-gray-400 dark:text-gray-500 flex items-center gap-1 flex-shrink-0">
-                                                <Clock className="w-3 h-3" />
-                                                {timeAgo(post.createdAt)}
-                                            </span>
-                                        </div>
-                                        <CardTitle className="text-lg text-gray-800 dark:text-gray-100 mt-2">
-                                            {post.title}
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="pb-2">
-                                        {post.content && (
-                                            <p className="text-gray-600 dark:text-gray-300 line-clamp-2">
-                                                {post.content}
-                                            </p>
-                                        )}
-                                        {post.imageUrl && (
-                                            <div className="mt-2 rounded-xl overflow-hidden h-40 bg-gray-100 dark:bg-gray-700">
-                                                <img src={post.imageUrl} alt="" className="w-full h-full object-cover" />
-                                            </div>
-                                        )}
-                                    </CardContent>
-                                    <CardFooter className="flex items-center justify-between pt-2">
-                                        <span className="text-xs text-gray-400 dark:text-gray-500">
-                                            {getCategoryLabel(post.category)}
-                                        </span>
-                                        <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                                            <span className="flex items-center gap-1">
-                                                <Eye className="w-3 h-3" />
-                                                {post.views}
-                                            </span>
-                                            <span className="flex items-center gap-1">
-                                                <Heart className="w-4 h-4" />
-                                                {post.likesCount}
-                                            </span>
-                                            <span className="flex items-center gap-1">
-                                                <MessageCircle className="w-4 h-4" />
-                                                {post.commentsCount}
-                                            </span>
-                                        </div>
-                                    </CardFooter>
-                                </Card>
-                            ))}
-                        </div>
-
-                        {/* 빈 상태 */}
-                        {posts.length === 0 && (
-                            <div className="text-center py-16">
-                                <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <MapPin className="w-10 h-10 text-gray-400 dark:text-gray-500" />
-                                </div>
-                                <p className="text-gray-500 dark:text-gray-400">
-                                    해당 조건의 게시글이 없습니다
-                                </p>
-                                <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
-                                    첫 번째 글을 작성해보세요!
-                                </p>
-                                <div className="flex gap-2 justify-center mt-4">
-                                    <Button
-                                        variant="outline"
-                                        className="rounded-xl dark:border-gray-600"
-                                        onClick={() => {
-                                            setSelectedCategory("all");
-                                            setSelectedRegion("");
-                                            setSelectedDistrict("");
-                                            setSearchQuery("");
-                                            setSearchInput("");
-                                            setPage(1);
-                                        }}
-                                    >
-                                        필터 초기화
-                                    </Button>
-                                    <Button
-                                        onClick={openCreateModal}
-                                        className="rounded-xl bg-gradient-to-r from-blue-500 to-sky-500"
-                                    >
-                                        <PenSquare className="w-4 h-4 mr-1" />
-                                        글쓰기
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* 페이지네이션 */}
-                        {totalPages > 1 && (
-                            <div className="flex items-center justify-center gap-2 pt-4">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                                    disabled={page <= 1}
-                                    aria-label="이전 페이지"
-                                    className="rounded-xl dark:border-gray-600"
-                                >
-                                    <ChevronLeft className="w-4 h-4" />
-                                </Button>
-                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                                    let pageNum: number;
-                                    if (totalPages <= 5) { pageNum = i + 1; }
-                                    else if (page <= 3) { pageNum = i + 1; }
-                                    else if (page >= totalPages - 2) { pageNum = totalPages - 4 + i; }
-                                    else { pageNum = page - 2 + i; }
-                                    return (
-                                        <Button
-                                            key={pageNum}
-                                            variant={pageNum === page ? "default" : "outline"}
-                                            size="sm"
-                                            onClick={() => setPage(pageNum)}
-                                            className={`rounded-xl min-w-[36px] ${
-                                                pageNum === page
-                                                    ? "bg-gradient-to-r from-blue-500 to-sky-500 border-0"
-                                                    : "dark:border-gray-600"
-                                            }`}
-                                        >
-                                            {pageNum}
-                                        </Button>
-                                    );
-                                })}
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                                    disabled={page >= totalPages}
-                                    aria-label="다음 페이지"
-                                    className="rounded-xl dark:border-gray-600"
-                                >
-                                    <ChevronRight className="w-4 h-4" />
-                                </Button>
-                            </div>
-                        )}
-                    </>
-                )}
+                <LocalPostList
+                    posts={posts}
+                    loading={loading}
+                    totalPages={totalPages}
+                    totalCount={totalCount}
+                    page={page}
+                    selectedRegion={selectedRegion}
+                    selectedDistrict={selectedDistrict}
+                    onPageChange={setPage}
+                    onSelectPost={openDetail}
+                    onWriteClick={openCreateModal}
+                    onClearFilters={() => {
+                        setSelectedCategory("all");
+                        setSelectedRegion("");
+                        setSelectedDistrict("");
+                        setSearchQuery("");
+                        setSearchInput("");
+                        setPage(1);
+                    }}
+                />
             </div>
 
             {/* 상세 모달 */}

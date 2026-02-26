@@ -1,4 +1,10 @@
 export { default as PostModal } from "./PostModal";
 export { default as Lightbox } from "./Lightbox";
 export { default as TileGallery } from "./TileGallery";
+export { default as HeroSection } from "./HeroSection";
+export { default as CommunitySection } from "./CommunitySection";
+export { default as AdoptionSection } from "./AdoptionSection";
+export { default as CareGuideSection } from "./CareGuideSection";
+export { default as MemorialSection } from "./MemorialSection";
+export { useHomePage } from "./useHomePage";
 export type { LightboxItem, CommunityPost, Comment } from "./types";

@@ -635,3 +635,99 @@ if (error) {
 | 방문자 카운터 레이스 컨디션 | 낮음 | 금전적 영향 없음 |
 | userId UUID 형식 검증 | 낮음 | DB에서 에러 처리됨 |
 | CSP 헤더 추가 | 낮음 | XSS는 DOMPurify로 방어 중 |
+
+---
+
+## [완료] 대형 페이지 컴포넌트 분리 리팩토링 (5개 페이지)
+
+> **상태**: 완료. `next build` 타입 에러 0개 확인.
+
+### 목적
+800~1,140줄짜리 대형 페이지 컴포넌트를 신입 개발자가 바로 이해할 수 있도록 분리.
+UI 서브 컴포넌트를 `features/{domain}/` 폴더로 추출, 상태/로직은 커스텀 훅으로 분리.
+
+### 분리 결과 요약
+
+| 페이지 | Before | After | 추출 파일 수 |
+|--------|--------|-------|-------------|
+| AdoptionPage | 825줄 | ~238줄 | 8개 |
+| RecordPage | 1,140줄 | ~495줄 | 4개 |
+| HomePage | 800줄 | ~130줄 | 7개 |
+| CommunityPage | 657줄 | ~290줄 | 2개 |
+| LocalPage | 635줄 | ~300줄 | 2개 |
+
+RemindersPage(599줄)는 분석 후 분리 불필요로 판단 (모달 폼 상태가 페이지 로직과 밀접하게 결합되어 분리하면 오히려 복잡도 증가).
+
+### 신규/수정 파일 상세
+
+#### AdoptionPage (8개 신규)
+
+| 파일 | 내용 |
+|------|------|
+| `src/components/features/adoption/adoptionTypes.ts` | REGIONS, genderLabel, neuterLabel, formatDate 유틸 |
+| `src/components/features/adoption/useAdoption.ts` | 상태 11개 + 핸들러 5개 + useEffect |
+| `src/components/features/adoption/AnimalDetailModal.tsx` | 상세 모달 + InfoItem 컴포넌트 |
+| `src/components/features/adoption/AnimalGridCard.tsx` | 그리드 뷰 카드 |
+| `src/components/features/adoption/AnimalListCard.tsx` | 리스트 뷰 카드 |
+| `src/components/features/adoption/AdoptionFilters.tsx` | 검색바 + 종류 탭 + 확장 필터 |
+| `src/components/features/adoption/AdoptionPagination.tsx` | 페이지네이션 UI |
+| `src/components/features/adoption/index.ts` | barrel export |
+
+#### RecordPage (4개 신규)
+
+| 파일 | 내용 |
+|------|------|
+| `src/components/features/record/TimelineSection.tsx` | 같은 파일 내 독립 컴포넌트를 별도 파일로 이동 (288줄) |
+| `src/components/features/record/ProfileTab.tsx` | "내 정보" 탭 JSX (프로필 카드 + 통계 + 계정관리) |
+| `src/components/features/record/PetCardGrid.tsx` | 펫 선택 그리드 + 드롭다운 메뉴 |
+| `src/components/features/record/RecordPageGuest.tsx` | 비로그인 상태 UI |
+
+#### HomePage (7개 신규)
+
+| 파일 | 내용 |
+|------|------|
+| `src/components/features/home/useHomePage.ts` | 상태 7개 + 핸들러 3개 + useMemo 4개 |
+| `src/components/features/home/homeUtils.ts` | safeStringSrc, getPetIcon, HERO_CONTENT 상수 |
+| `src/components/features/home/types.ts` | LightboxItem, CommunityPost, Comment 타입 |
+| `src/components/features/home/HeroSection.tsx` | HERO 배너 |
+| `src/components/features/home/CommunitySection.tsx` | 인기 커뮤니티 카드 캐러셀 |
+| `src/components/features/home/AdoptionSection.tsx` | 입양정보 카드 캐러셀 |
+| `src/components/features/home/CareGuideSection.tsx` | 케어 가이드 카드 캐러셀 |
+| `src/components/features/home/MemorialSection.tsx` | 추모 섹션 |
+
+#### CommunityPage (2개 신규)
+
+| 파일 | 내용 |
+|------|------|
+| `src/components/features/community/CommunityHeader.tsx` | 서브카테고리 탭, 말머리 필터, 검색바, 정렬 (~170줄) |
+| `src/components/features/community/CommunityPostList.tsx` | 게시글 카드, 스켈레톤 로더, 무한 스크롤, 빈 상태 (~210줄) |
+
+#### LocalPage (2개 신규)
+
+| 파일 | 내용 |
+|------|------|
+| `src/components/features/local/LocalHeader.tsx` | 지역 Select(시/도, 구/군), 검색바, 카테고리 필터 (~160줄) |
+| `src/components/features/local/LocalPostList.tsx` | 게시글 카드, 이미지, 위치/통계, 빈 상태, 페이지네이션 (~230줄) |
+
+#### 수정된 기존 파일
+
+| 파일 | 변경 |
+|------|------|
+| `src/components/pages/AdoptionPage.tsx` | 825줄 → 238줄 (서브컴포넌트 import로 교체) |
+| `src/components/pages/RecordPage.tsx` | 1,140줄 → 495줄 |
+| `src/components/pages/HomePage.tsx` | 800줄 → 130줄 |
+| `src/components/pages/CommunityPage.tsx` | 657줄 → 290줄 |
+| `src/components/pages/LocalPage.tsx` | 635줄 → 300줄 |
+| `src/components/features/home/index.ts` | barrel export 업데이트 |
+| `src/components/features/community/index.ts` | barrel export 업데이트 |
+| `src/components/features/record/ProfileTab.tsx` | 타입 수정: `userPetType: string | null` → `"dog" | "cat" | "other"` |
+
+### 분리 원칙
+- 순수 리팩토링 (로직 변경 없음, 기능 동작 동일)
+- 기존 패턴(useAIChat, useLostPosts) 따라 일관된 구조
+- Props 기반 통신 (부모 페이지 → 서브 컴포넌트)
+- 각 서브 컴포넌트에 JSDoc 주석으로 역할 설명
+
+### 검증
+- `next build` 통과 (타입 에러 0개)
+- 기존 img warning만 존재 (pre-existing)
