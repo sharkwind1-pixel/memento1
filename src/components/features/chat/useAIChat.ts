@@ -180,8 +180,9 @@ export function useAIChat({
     useEffect(() => {
         if (!selectedPetId || !user?.id) return;
 
-        // 펫 전환 시 이전 메시지 즉시 초기화 (모드 분리)
+        // 펫 전환 시 이전 메시지 + 추천 질문 즉시 초기화 (펫 간 데이터 분리)
         setMessages([]);
+        setSuggestedQuestions([]);
 
         const loadChatFromSupabase = async () => {
             try {
