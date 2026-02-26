@@ -5,6 +5,7 @@
 
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
+import type { EmotionType, GriefStage } from "@/types";
 
 // Supabase 서버 클라이언트 (지연 초기화 - service role key로 RLS 우회)
 let supabaseServer: SupabaseClient | null = null;
@@ -45,17 +46,8 @@ function getOpenAI(): OpenAI {
     return openaiClient;
 }
 
-// 감정 타입
-export type EmotionType =
-    | "happy"      // 행복, 기쁨
-    | "sad"        // 슬픔, 우울
-    | "anxious"    // 불안, 걱정
-    | "angry"      // 화남, 짜증
-    | "grateful"   // 감사, 고마움
-    | "lonely"     // 외로움, 그리움
-    | "peaceful"   // 평화, 안정
-    | "excited"    // 신남, 흥분
-    | "neutral";   // 중립
+// EmotionType → types/index.ts에서 import (중앙 관리)
+export type { EmotionType } from "@/types";
 
 // 메모리 타입
 export interface PetMemory {
@@ -134,14 +126,8 @@ export interface EmotionAnalysis {
     griefStage?: GriefStage; // 추모 모드용 애도 단계
 }
 
-// 애도 단계 (Kübler-Ross 모델 기반)
-export type GriefStage =
-    | "denial"      // 부정 - "믿기 어려워", "꿈인 것 같아"
-    | "anger"       // 분노 - "왜 우리에게", "화가 나"
-    | "bargaining"  // 타협 - "그때 그랬으면", "후회돼"
-    | "depression"  // 슬픔 - "너무 보고싶어", "힘들어"
-    | "acceptance"  // 수용 - "이제 조금 괜찮아", "추억이 소중해"
-    | "unknown";    // 판단 불가
+// GriefStage → types/index.ts에서 import (중앙 관리)
+export type { GriefStage } from "@/types";
 
 // 한국어 감정 키워드 사전 (빠른 1차 분석용)
 const EMOTION_KEYWORDS: Record<EmotionType, string[]> = {
@@ -559,6 +545,7 @@ export async function saveMemory(
             title: memory.title,
             content: memory.content,
             importance: memory.importance,
+            time_info: memory.timeInfo || null,
         })
         .select()
         .single();

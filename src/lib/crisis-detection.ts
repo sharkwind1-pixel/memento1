@@ -225,8 +225,8 @@ export function detectCrisis(
     }
 
     // 추모 모드: 중간 키워드 1개 이상이면 위기 판정
-    // 일반 모드: 중간 키워드 2개 이상이면 위기 판정
-    const mediumThreshold = isMemorialMode ? 1 : 2;
+    // 일반 모드: 중간 키워드 3개 이상이면 위기 판정 (false positive 방지 강화)
+    const mediumThreshold = isMemorialMode ? 1 : 3;
 
     if (mediumMatches.length >= mediumThreshold) {
         return {
@@ -278,29 +278,9 @@ export function getCrisisSystemPromptAddition(
 8. 후속 질문(---SUGGESTIONS---)은 생략하세요.`;
 }
 
-/**
- * 프론트엔드에서 표시할 위기 안내 정보 (crisisAlert 필드)
- * AI 응답(reply)에는 포함하지 않고, 별도 UI 카드로 표시
- */
-export interface CrisisAlertInfo {
-    /** 위험 수준 */
-    level: "medium" | "high";
-    /** 안내 메시지 (사용자에게 표시) */
-    message: string;
-    /** 상담 기관 목록 */
-    resources: CrisisResource[];
-}
-
-export interface CrisisResource {
-    /** 기관명 */
-    name: string;
-    /** 전화번호 */
-    phone: string;
-    /** 설명 */
-    description: string;
-    /** 운영 시간 */
-    hours: string;
-}
+// CrisisAlertInfo, CrisisResource → types/index.ts에서 중앙 관리
+import type { CrisisAlertInfo, CrisisResource } from "@/types";
+export type { CrisisAlertInfo, CrisisResource };
 
 /** 상담 기관 정보 (한국) */
 const CRISIS_RESOURCES: CrisisResource[] = [

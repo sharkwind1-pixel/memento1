@@ -42,9 +42,8 @@ function getPointsSupabase() {
 }
 
 // agent 모듈은 런타임에만 동적 import (빌드 시점 환경변수 에러 방지)
-// EmotionType, GriefStage 타입만 여기서 정의
-type EmotionType = "happy" | "sad" | "anxious" | "angry" | "grateful" | "lonely" | "peaceful" | "excited" | "neutral";
-type GriefStage = "denial" | "anger" | "bargaining" | "depression" | "acceptance" | "unknown";
+// EmotionType, GriefStage는 types/index.ts에서 중앙 관리
+import type { EmotionType, GriefStage } from "@/types";
 
 // OpenAI 클라이언트 (지연 초기화)
 let openaiInstance: OpenAI | null = null;
@@ -656,7 +655,10 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 2. 일일 사용량 체크 (프리미엄은 무제한, 무료는 10회)
+        // 2. 모드 결정 (isMemorialMode 하나로 통합)
+        const isMemorialMode = pet.status === "memorial";
+
+        // 3. 일일 사용량 체크 (프리미엄은 무제한, 무료는 10회)
         // 프리미엄 회원은 제한 없이 통과
         let dailyUsage = { allowed: true, remaining: Infinity, isWarning: false };
 
@@ -667,10 +669,9 @@ export async function POST(request: NextRequest) {
 
             // 무료 회원 제한은 10회이므로 별도 체크
             if (dailyUsage.remaining < 0 || !dailyUsage.allowed) {
-                const isMemorial = pet?.status === "memorial";
                 return NextResponse.json(
                     {
-                        error: isMemorial
+                        error: isMemorialMode
                             ? `오늘은 여기까지 이야기 나눌 수 있어요. ${pet?.name || "아이"}는 내일도 여기서 기다리고 있을게요. 프리미엄 구독 시 무제한 대화가 가능합니다.`
                             : `오늘의 무료 대화 횟수(${FREE_LIMITS.DAILY_CHATS}회)를 모두 사용했어요. 프리미엄 구독 시 무제한 대화가 가능합니다!`,
                         remaining: 0,
@@ -681,12 +682,11 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // 3. 입력값 검증 (XSS, 과도한 길이 방지)
+        // 4. 입력값 검증 (XSS, 과도한 길이 방지)
         const sanitizedMessage = sanitizeInput(message);
 
-        // 4. 위기 감지 (Crisis Safety Net)
-        const isMemorial = pet.status === "memorial";
-        const crisisResult: CrisisDetectionResult = detectCrisis(sanitizedMessage, isMemorial);
+        // 4.1 위기 감지 (Crisis Safety Net)
+        const crisisResult: CrisisDetectionResult = detectCrisis(sanitizedMessage, isMemorialMode);
 
         // 4.5. 반려동물 응급/긴급 증상 감지 (케어 할루시네이션 방어)
         const emergencyDetection = detectEmergencyKeywords(sanitizedMessage);
@@ -698,9 +698,8 @@ export async function POST(request: NextRequest) {
         let emotionScore = 0.5;
         let griefStage: GriefStage | undefined;
 
-        // 모드 결정
-        const mode = pet.status === "memorial" ? "memorial" : "daily";
-        const isMemorialMode = mode === "memorial";
+        // mode 문자열 (API 파라미터용)
+        const mode = isMemorialMode ? "memorial" : "daily";
 
         // 에이전트 기능 활성화 시
         if (enableAgent) {
@@ -730,10 +729,11 @@ export async function POST(request: NextRequest) {
 
             // 5. 새로운 메모리 추출 (비동기로 처리)
             if (pet.id) {
+                const petIdForMemory = pet.id; // 클로저 안에서 non-null 보장
                 agent.extractMemories(sanitizedMessage, pet.name).then(async (newMemories) => {
                     if (newMemories && newMemories.length > 0) {
                         for (const mem of newMemories) {
-                            await agent.saveMemory(user.id, pet.id!, mem);
+                            await agent.saveMemory(user.id, petIdForMemory, mem);
                         }
                     }
                 }).catch((err) => { console.error("[chat/memory-extract]", err instanceof Error ? err.message : err); });
@@ -767,15 +767,15 @@ export async function POST(request: NextRequest) {
         // 리마인더 컨텍스트 생성
         // 일상 모드: 케어 일정으로 활용
         // 추모 모드: 함께했던 일상 루틴을 추억으로 활용
-        const reminderContext = pet.status !== "memorial"
-            ? remindersToContext(reminders, pet.name)
-            : remindersToMemorialContext(reminders, pet.name);
+        const reminderContext = isMemorialMode
+            ? remindersToMemorialContext(reminders, pet.name)
+            : remindersToContext(reminders, pet.name);
 
         // 개인화 컨텍스트 생성 (별명, 좋아하는 것, 습관 등)
         const personalizationContext = getPersonalizationContext(pet);
 
         // 통합 컨텍스트 (우선순위 기반 예산 시스템)
-        const contextItems = pet.status === "memorial"
+        const contextItems = isMemorialMode
             ? [
                 { content: personalizationContext, priority: 5 },
                 { content: specialDayContext, priority: 5 },
@@ -792,12 +792,12 @@ export async function POST(request: NextRequest) {
                 { content: timelineContext, priority: 2 },
                 { content: photoContext, priority: 1 },
             ];
-        const maxContextChars = pet.status === "memorial" ? 1500 : 2000;
+        const maxContextChars = isMemorialMode ? 1500 : 2000;
         const combinedContext = buildPrioritizedContext(contextItems, maxContextChars);
 
         // 모드에 따른 시스템 프롬프트 선택
         let systemPrompt =
-            pet.status === "memorial"
+            isMemorialMode
                 ? getMemorialSystemPrompt(pet, emotionGuide, memoryContext, combinedContext, griefGuideText)
                 : getDailySystemPrompt(pet, emotionGuide, memoryContext, combinedContext);
 
@@ -888,11 +888,12 @@ ${emergencyDetection.isEmergency ? "이것은 즉시 병원에 가야 하는 상
 
         // 세션 요약 생성 (10번째 메시지마다 비동기로)
         if (enableAgent && pet.id && chatHistory.length > 0 && chatHistory.length % 10 === 0) {
+            const petIdForSummary = pet.id; // 클로저 안에서 non-null 보장
             const allMessages = [...chatHistory, { role: "user", content: sanitizedMessage }, { role: "assistant", content: reply }];
             agent.generateConversationSummary(allMessages, pet.name, isMemorialMode)
                 .then(async (summary) => {
                     if (summary) {
-                        await agent.saveConversationSummary(user.id, pet.id!, summary);
+                        await agent.saveConversationSummary(user.id, petIdForSummary, summary);
                     }
                 })
                 .catch((err) => { console.error("[chat/session-summary]", err instanceof Error ? err.message : err); });
@@ -951,6 +952,7 @@ ${emergencyDetection.isEmergency ? "이것은 즉시 병원에 가야 하는 상
     } catch (error) {
         // OpenAI API 에러 처리
         if (error instanceof OpenAI.APIError) {
+            console.error(`[chat/openai-error] status=${error.status} message=${error.message}`);
             if (error.status === 401) {
                 return NextResponse.json(
                     { error: "OpenAI API 인증에 실패했습니다." },
@@ -963,8 +965,15 @@ ${emergencyDetection.isEmergency ? "이것은 즉시 병원에 가야 하는 상
                     { status: 429 }
                 );
             }
+            if (error.status === 500 || error.status === 502 || error.status === 503) {
+                return NextResponse.json(
+                    { error: "AI 서버가 일시적으로 불안정합니다. 잠시 후 다시 시도해주세요." },
+                    { status: 503 }
+                );
+            }
         }
 
+        console.error("[chat/error]", error instanceof Error ? error.message : error);
         return NextResponse.json(
             { error: "AI 응답을 생성하는 중 오류가 발생했습니다." },
             { status: 500 }

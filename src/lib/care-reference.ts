@@ -30,6 +30,10 @@ export const DOG_TOXIC_FOODS: ToxicFood[] = [
     { name: "포도/건포도", level: "fatal", reason: "신부전 유발. 품종/양 무관하게 소량도 위험" },
     { name: "양파/파/부추/마늘", level: "fatal", reason: "적혈구 파괴, 용혈성 빈혈. 익혀도 독성 유지" },
     { name: "마카다미아", level: "fatal", reason: "구토, 떨림, 고체온. 체중 1kg당 2g 이상 위험" },
+    // 사람 약물 (절대 투여 금지)
+    { name: "아세트아미노펜(타이레놀)", level: "fatal", reason: "특히 고양이 치명적. 간 괴사, 적혈구 손상. 절대 투여 금지" },
+    { name: "이부프로펜(애드빌)", level: "fatal", reason: "위장관 출혈, 신부전. 사람 진통제 절대 투여 금지" },
+    { name: "나프록센(탁센)", level: "fatal", reason: "NSAIDs 계열. 위궤양, 신장 손상. 사람 약 절대 금지" },
     // 위험 (중등도)
     { name: "아보카도", level: "dangerous", reason: "페르신 성분. 구토, 설사 유발" },
     { name: "카페인(커피/차)", level: "dangerous", reason: "심박수 증가, 발작 가능" },

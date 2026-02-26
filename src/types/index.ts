@@ -208,6 +208,9 @@ export type EmotionType =
     | "excited"
     | "neutral";
 
+/** 애도 단계 (Kubler-Ross 모델 기반) */
+export type GriefStage = "denial" | "anger" | "bargaining" | "depression" | "acceptance" | "unknown";
+
 /** AI API 요청용 펫 정보 (Pet에서 필요한 필드만 추출) */
 export interface PetInfoForAPI {
     id?: string;

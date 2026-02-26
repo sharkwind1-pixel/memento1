@@ -103,7 +103,7 @@ export default function ChatMessageList({
                             </div>
                         ) : message.role === "system" && message.type === "crisis-alert" && message.crisisAlert ? (
                             /* 위기 감지 상담 안내 카드 */
-                            <div className="flex justify-center chat-bubble-enter my-3">
+                            <div className="flex justify-center chat-bubble-enter my-3" role="alert" aria-live="assertive">
                                 <div className="bg-gradient-to-br from-rose-50 to-amber-50 dark:from-rose-950/40 dark:to-amber-950/30 border border-rose-200 dark:border-rose-800/50 rounded-2xl px-5 py-4 max-w-[90%] shadow-sm">
                                     <div className="flex items-center gap-2 mb-2.5">
                                         <div className="w-8 h-8 rounded-full bg-rose-100 dark:bg-rose-900/50 flex items-center justify-center">
