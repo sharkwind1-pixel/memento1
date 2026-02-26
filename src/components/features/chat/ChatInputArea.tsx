@@ -192,7 +192,7 @@ export default function ChatInputArea({
                                 }}
                                 onKeyDown={handleKeyDown}
                                 placeholder={`${selectedPet?.name}에게 말해보세요...`}
-                                className="flex-1 rounded-lg border-0 bg-transparent shadow-none text-base resize-none min-h-[40px] max-h-[84px] py-2 px-2 focus-visible:ring-0 focus-visible:ring-offset-0"
+                                className={`flex-1 rounded-lg border-0 bg-transparent shadow-none text-base resize-none min-h-[40px] max-h-[84px] py-2 px-2 focus-visible:ring-0 focus-visible:ring-offset-0 ${isMemorialMode ? "text-amber-900 placeholder:text-amber-400" : "text-sky-900 placeholder:text-sky-400"}`}
                                 rows={1}
                                 style={{ height: "40px" }}
                             />

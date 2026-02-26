@@ -57,7 +57,7 @@ export default function PetProfileSidebar({
     };
 
     return (
-        <div className="flex-shrink-0 p-2 lg:p-4 lg:w-80 lg:border-r lg:border-gray-200/50 lg:sticky lg:top-0 lg:self-start">
+        <div className="flex-shrink-0 p-2 lg:p-4 lg:w-80 lg:border-r lg:border-sky-200/50 lg:sticky lg:top-0 lg:self-start">
             {currentPhoto ? (
                 <div className={`relative mx-auto lg:max-w-none ${isMemorialMode ? "max-w-[220px] lg:max-w-[280px]" : "max-w-[160px] lg:max-w-[280px]"}`}>
                     <div
@@ -128,7 +128,7 @@ export default function PetProfileSidebar({
                                     key={index}
                                     onClick={() => setCurrentPhotoIndex(index)}
                                     aria-label={`사진 ${index + 1}`}
-                                    className={`h-1.5 rounded-full transition-all ${index === currentPhotoIndex ? (isMemorialMode ? "bg-amber-500 w-4" : "bg-[#05B2DC] w-4") : "bg-gray-300 w-1.5"}`}
+                                    className={`h-1.5 rounded-full transition-all ${index === currentPhotoIndex ? (isMemorialMode ? "bg-amber-500 w-4" : "bg-[#05B2DC] w-4") : (isMemorialMode ? "bg-amber-300 w-1.5" : "bg-sky-300 w-1.5")}`}
                                 />
                             ))}
                         </div>
@@ -144,10 +144,10 @@ export default function PetProfileSidebar({
                                 className={`w-10 h-10 ${isMemorialMode ? "text-amber-500" : "text-[#05B2DC]"}`}
                             />
                         </div>
-                        <h2 className={`text-xl font-bold mb-1 ${isMemorialMode ? "text-amber-800" : "text-gray-800"}`}>
+                        <h2 className={`text-xl font-bold mb-1 ${isMemorialMode ? "text-amber-800" : "text-sky-800"}`}>
                             {selectedPet?.name}
                         </h2>
-                        <p className="text-sm text-gray-600 mb-1">
+                        <p className={`text-sm mb-1 ${isMemorialMode ? "text-amber-600" : "text-sky-700"}`}>
                             {selectedPet?.type} · {selectedPet?.breed}
                         </p>
                         <p className={`text-xs mb-3 ${isMemorialMode ? "text-amber-600" : "text-[#0891B2]"}`}>
