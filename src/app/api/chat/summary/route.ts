@@ -52,8 +52,9 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ saved: false, reason: "요약 생성 실패" });
         }
 
-        // 요약 저장
-        const result = await agent.saveConversationSummary(user.id, petId, summary);
+        // 요약 저장 — 모드 태깅으로 일상/추모 데이터 분리
+        const chatMode = isMemorial ? "memorial" : "daily";
+        const result = await agent.saveConversationSummary(user.id, petId, summary, chatMode);
 
         if (!result) {
             return NextResponse.json({ saved: false, reason: "저장 실패" });

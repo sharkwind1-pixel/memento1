@@ -423,19 +423,35 @@ export async function extractMemories(
 
 /**
  * 최근 대화 기록 가져오기
+ * @param isMemorialMode true면 추모 모드 메시지만, false면 일상 모드 메시지만 가져옴
+ *   - 일상 → 추모 데이터 차단 (살아있는 펫이 추모 대화를 알 수 없음)
+ *   - 추모 → 일상 데이터 포함 가능 (함께한 기억의 연장)
  */
 export async function getRecentMessages(
     userId: string,
     petId: string,
-    limit: number = 20
+    limit: number = 20,
+    isMemorialMode?: boolean
 ) {
-    const { data, error } = await getSupabase()
+    let query = getSupabase()
         .from("chat_messages")
         .select("*")
         .eq("user_id", userId)
         .eq("pet_id", petId)
         .order("created_at", { ascending: false })
         .limit(limit);
+
+    // 모드 필터링: chat_mode 컬럼이 있는 경우에만 적용
+    // 일상 모드: 추모 대화 제외 (chat_mode가 null이거나 'daily'인 것만)
+    // 추모 모드: 모든 대화 포함 (일상 기억은 추모에서 활용 가능)
+    if (isMemorialMode === false) {
+        // 일상 모드: memorial 데이터 제외
+        // chat_mode IS NULL (레거시) OR chat_mode = 'daily'
+        query = query.or("chat_mode.is.null,chat_mode.eq.daily");
+    }
+    // 추모 모드(isMemorialMode === true): 필터 없음 — 모든 대화 포함
+
+    const { data, error } = await query;
 
     if (error) {
         return [];
@@ -467,6 +483,7 @@ export async function getPetMemories(
 
 /**
  * 대화 메시지 저장
+ * @param chatMode 대화 모드 ('daily' | 'memorial') - 모드별 데이터 분리용
  */
 export async function saveMessage(
     userId: string,
@@ -474,7 +491,8 @@ export async function saveMessage(
     role: "user" | "assistant",
     content: string,
     emotion?: EmotionType,
-    emotionScore?: number
+    emotionScore?: number,
+    chatMode?: "daily" | "memorial"
 ) {
     const { data, error } = await getSupabase()
         .from("chat_messages")
@@ -485,6 +503,7 @@ export async function saveMessage(
             content,
             emotion,
             emotion_score: emotionScore,
+            ...(chatMode ? { chat_mode: chatMode } : {}),
         })
         .select()
         .single();
@@ -1016,11 +1035,13 @@ ${isMemorial ? "- griefProgress: 애도 과정에서 현재 단계 (Kübler-Ross
 
 /**
  * 대화 세션 요약 저장
+ * @param chatMode 대화 모드 ('daily' | 'memorial') - 모드별 데이터 분리용
  */
 export async function saveConversationSummary(
     userId: string,
     petId: string,
-    summary: Omit<ConversationSummary, "id" | "userId" | "petId" | "createdAt">
+    summary: Omit<ConversationSummary, "id" | "userId" | "petId" | "createdAt">,
+    chatMode?: "daily" | "memorial"
 ) {
     const { data, error } = await getSupabase()
         .from("conversation_summaries")
@@ -1033,6 +1054,7 @@ export async function saveConversationSummary(
             emotional_tone: summary.emotionalTone,
             grief_progress: summary.griefProgress,
             important_mentions: summary.importantMentions,
+            ...(chatMode ? { chat_mode: chatMode } : {}),
         })
         .select()
         .single();
@@ -1046,19 +1068,37 @@ export async function saveConversationSummary(
 
 /**
  * 최근 대화 세션 요약 가져오기
+ * @param isMemorialMode 모드별 필터링
+ *   - false(일상): 추모 모드 요약 제외 (chat_mode='memorial' 또는 grief_progress 있는 것 제외)
+ *   - true(추모): 모든 요약 포함 (일상 기억은 추모에서 활용 가능)
+ *   - undefined: 필터 없음 (기존 호환)
  */
 export async function getRecentSummaries(
     userId: string,
     petId: string,
-    limit: number = 5
+    limit: number = 5,
+    isMemorialMode?: boolean
 ): Promise<ConversationSummary[]> {
-    const { data, error } = await getSupabase()
+    let query = getSupabase()
         .from("conversation_summaries")
         .select("*")
         .eq("user_id", userId)
         .eq("pet_id", petId)
         .order("session_date", { ascending: false })
         .limit(limit);
+
+    // 모드 필터링: 일상 모드에서 추모 데이터 차단
+    if (isMemorialMode === false) {
+        // 일상 모드: 추모 세션 요약 제외
+        // 조건 1: chat_mode가 'memorial'인 것 제외
+        // 조건 2: 레거시 데이터(chat_mode 없음) 중 grief_progress가 있는 것 제외
+        // → chat_mode IS NULL AND grief_progress IS NULL (레거시 일상)
+        //   OR chat_mode = 'daily'
+        query = query.or("and(chat_mode.is.null,grief_progress.is.null),chat_mode.eq.daily");
+    }
+    // 추모 모드(true) 또는 undefined: 필터 없음 — 모든 요약 포함
+
+    const { data, error } = await query;
 
     if (error) {
         return [];
@@ -1170,6 +1210,10 @@ function getGriefStageLabel(stage: GriefStage): string {
 /**
  * 대화 시작 시 이전 맥락 컨텍스트 생성
  * 최근 요약 + 마지막 대화 몇 개를 조합
+ *
+ * 모드별 데이터 흐름 규칙:
+ * - 일상 → 추모: OK (함께한 기억이 추모로 이어짐)
+ * - 추모 → 일상: 차단 (추모 데이터가 일상으로 역류하면 논리적 괴리 발생)
  */
 export async function buildConversationContext(
     userId: string,
@@ -1178,14 +1222,14 @@ export async function buildConversationContext(
     isMemorial: boolean = false
 ): Promise<string> {
     try {
-        // 1. 최근 세션 요약 가져오기 (최대 3개)
-        const summaries = await getRecentSummaries(userId, petId, 3);
+        // 1. 최근 세션 요약 가져오기 (최대 3개, 모드 필터링 적용)
+        const summaries = await getRecentSummaries(userId, petId, 3, isMemorial);
 
         // 2. 요약을 컨텍스트로 변환
         const summaryContext = summariesToContext(summaries, petName, isMemorial);
 
-        // 3. 마지막 대화 일부 가져오기 (연속성을 위해)
-        const recentMessages = await getRecentMessages(userId, petId, 6);
+        // 3. 마지막 대화 일부 가져오기 (연속성을 위해, 모드 필터링 적용)
+        const recentMessages = await getRecentMessages(userId, petId, 6, isMemorial);
 
         let recentContext = "";
         if (recentMessages.length > 0) {

@@ -879,23 +879,24 @@ ${emergencyDetection.isEmergency ? "이것은 즉시 병원에 가야 하는 상
             });
         }
 
-        // 대화 저장 (DB 연동 시)
+        // 대화 저장 (DB 연동 시) — 모드 태깅으로 일상/추모 데이터 분리
         if (enableAgent && pet.id) {
             // 비동기로 저장 (응답 속도에 영향 없음)
             Promise.all([
-                agent.saveMessage(user.id, pet.id, "user", sanitizedMessage, userEmotion, emotionScore),
-                agent.saveMessage(user.id, pet.id, "assistant", reply),
+                agent.saveMessage(user.id, pet.id, "user", sanitizedMessage, userEmotion, emotionScore, mode),
+                agent.saveMessage(user.id, pet.id, "assistant", reply, undefined, undefined, mode),
             ]).catch((err) => { console.error("[chat/save-message]", err instanceof Error ? err.message : err); });
         }
 
-        // 세션 요약 생성 (10번째 메시지마다 비동기로)
+        // 세션 요약 생성 (10번째 메시지마다 비동기로) — 모드 태깅 포함
         if (enableAgent && pet.id && chatHistory.length > 0 && chatHistory.length % 10 === 0) {
             const petIdForSummary = pet.id; // 클로저 안에서 non-null 보장
+            const modeForSummary = mode; // 클로저 안에서 현재 모드 캡처
             const allMessages = [...chatHistory, { role: "user", content: sanitizedMessage }, { role: "assistant", content: reply }];
             agent.generateConversationSummary(allMessages, pet.name, isMemorialMode)
                 .then(async (summary) => {
                     if (summary) {
-                        await agent.saveConversationSummary(user.id, petIdForSummary, summary);
+                        await agent.saveConversationSummary(user.id, petIdForSummary, summary, modeForSummary);
                     }
                 })
                 .catch((err) => { console.error("[chat/session-summary]", err instanceof Error ? err.message : err); });
