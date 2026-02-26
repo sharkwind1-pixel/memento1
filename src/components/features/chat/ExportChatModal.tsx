@@ -7,7 +7,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { X, Download, Image, FileText, Star, Heart, Loader2 } from "lucide-react";
+import { X, Download, Image as ImageIcon, FileText, Star, Heart, Loader2 } from "lucide-react";
 import html2canvas from "html2canvas";
 import { toast } from "sonner";
 import type { Pet } from "@/types";
@@ -32,7 +32,7 @@ const TEMPLATES: { id: CardTemplate; name: string; icon: React.ReactNode; descri
     {
         id: "polaroid",
         name: "폴라로이드",
-        icon: <Image className="w-5 h-5" />,
+        icon: <ImageIcon className="w-5 h-5" />,
         description: "심플한 사진 스타일",
     },
     {

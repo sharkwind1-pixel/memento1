@@ -210,6 +210,7 @@ export default function MinihompyStage({
             setTouchEffectIndex(null);
             setTouchEffectMessage("");
         }, 1500);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- TOUCH_MESSAGES is a static constant
     }, [editMode]);
 
     return (
