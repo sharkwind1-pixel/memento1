@@ -10,6 +10,9 @@ import type { EmotionType, GriefStage } from "@/types";
 // Supabase 서버 클라이언트 (지연 초기화 - service role key로 RLS 우회)
 let supabaseServer: SupabaseClient | null = null;
 
+// chat_mode 컬럼 존재 여부 캐시 (DB 마이그레이션 전후 호환)
+let chatModeColumnExists: boolean | null = null;
+
 function getSupabase(): SupabaseClient {
     if (!supabaseServer) {
         const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -32,6 +35,28 @@ function getSupabase(): SupabaseClient {
         });
     }
     return supabaseServer;
+}
+
+/**
+ * chat_mode 컬럼 존재 여부 확인 (1회 체크 후 캐시)
+ * DB 마이그레이션(20260226_chat_mode_column.sql) 실행 전후 모두 안전하게 동작
+ */
+async function hasChatModeColumn(): Promise<boolean> {
+    if (chatModeColumnExists !== null) return chatModeColumnExists;
+
+    try {
+        // chat_messages 테이블에서 chat_mode 컬럼 조회 시도
+        const { error } = await getSupabase()
+            .from("chat_messages")
+            .select("chat_mode")
+            .limit(0);
+
+        chatModeColumnExists = !error;
+    } catch {
+        chatModeColumnExists = false;
+    }
+
+    return chatModeColumnExists;
 }
 
 // OpenAI 클라이언트 (지연 초기화)
@@ -444,7 +469,8 @@ export async function getRecentMessages(
     // 모드 필터링: chat_mode 컬럼이 있는 경우에만 적용
     // 일상 모드: 추모 대화 제외 (chat_mode가 null이거나 'daily'인 것만)
     // 추모 모드: 모든 대화 포함 (일상 기억은 추모에서 활용 가능)
-    if (isMemorialMode === false) {
+    const hasModeCol = await hasChatModeColumn();
+    if (hasModeCol && isMemorialMode === false) {
         // 일상 모드: memorial 데이터 제외
         // chat_mode IS NULL (레거시) OR chat_mode = 'daily'
         query = query.or("chat_mode.is.null,chat_mode.eq.daily");
@@ -494,6 +520,9 @@ export async function saveMessage(
     emotionScore?: number,
     chatMode?: "daily" | "memorial"
 ) {
+    // chat_mode 컬럼 존재 여부에 따라 조건부 포함 (마이그레이션 전후 호환)
+    const hasModeCol = await hasChatModeColumn();
+
     const { data, error } = await getSupabase()
         .from("chat_messages")
         .insert({
@@ -503,7 +532,7 @@ export async function saveMessage(
             content,
             emotion,
             emotion_score: emotionScore,
-            ...(chatMode ? { chat_mode: chatMode } : {}),
+            ...(hasModeCol && chatMode ? { chat_mode: chatMode } : {}),
         })
         .select()
         .single();
@@ -1043,6 +1072,9 @@ export async function saveConversationSummary(
     summary: Omit<ConversationSummary, "id" | "userId" | "petId" | "createdAt">,
     chatMode?: "daily" | "memorial"
 ) {
+    // chat_mode 컬럼 존재 여부에 따라 조건부 포함 (마이그레이션 전후 호환)
+    const hasModeCol = await hasChatModeColumn();
+
     const { data, error } = await getSupabase()
         .from("conversation_summaries")
         .insert({
@@ -1054,7 +1086,7 @@ export async function saveConversationSummary(
             emotional_tone: summary.emotionalTone,
             grief_progress: summary.griefProgress,
             important_mentions: summary.importantMentions,
-            ...(chatMode ? { chat_mode: chatMode } : {}),
+            ...(hasModeCol && chatMode ? { chat_mode: chatMode } : {}),
         })
         .select()
         .single();
@@ -1088,13 +1120,18 @@ export async function getRecentSummaries(
         .limit(limit);
 
     // 모드 필터링: 일상 모드에서 추모 데이터 차단
+    const hasModeCol = await hasChatModeColumn();
     if (isMemorialMode === false) {
-        // 일상 모드: 추모 세션 요약 제외
-        // 조건 1: chat_mode가 'memorial'인 것 제외
-        // 조건 2: 레거시 데이터(chat_mode 없음) 중 grief_progress가 있는 것 제외
-        // → chat_mode IS NULL AND grief_progress IS NULL (레거시 일상)
-        //   OR chat_mode = 'daily'
-        query = query.or("and(chat_mode.is.null,grief_progress.is.null),chat_mode.eq.daily");
+        if (hasModeCol) {
+            // chat_mode 컬럼 있음: 정확한 모드 필터링
+            // chat_mode IS NULL AND grief_progress IS NULL (레거시 일상)
+            // OR chat_mode = 'daily'
+            query = query.or("and(chat_mode.is.null,grief_progress.is.null),chat_mode.eq.daily");
+        } else {
+            // chat_mode 컬럼 없음 (마이그레이션 전): grief_progress 휴리스틱만 사용
+            // grief_progress IS NULL → 일상 모드 데이터로 간주
+            query = query.is("grief_progress", null);
+        }
     }
     // 추모 모드(true) 또는 undefined: 필터 없음 — 모든 요약 포함
 
