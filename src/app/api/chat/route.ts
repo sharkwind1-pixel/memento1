@@ -43,6 +43,29 @@ function getPointsSupabase() {
     return createClient(url, key);
 }
 
+// AI 응답에서 사진 매칭용 키워드 추출
+function extractKeywordsFromReply(reply: string, pet: { favoritePlace?: string; favoriteActivity?: string; favoriteFood?: string }): string[] {
+    const keywords: string[] = [];
+
+    // 펫 개인화 데이터에서 키워드 추출
+    if (pet.favoritePlace) keywords.push(...pet.favoritePlace.split(/[,\s]+/).filter(k => k.length >= 2));
+    if (pet.favoriteActivity) keywords.push(...pet.favoriteActivity.split(/[,\s]+/).filter(k => k.length >= 2));
+    if (pet.favoriteFood) keywords.push(...pet.favoriteFood.split(/[,\s]+/).filter(k => k.length >= 2));
+
+    // AI 응답에서 장소/활동 관련 키워드 추출 (간단한 패턴 매칭)
+    const locationPatterns = ["공원", "바다", "산", "강", "숲", "마당", "거실", "방", "소파", "침대", "창가", "베란다", "카페", "산책로"];
+    const activityPatterns = ["산책", "놀이", "목욕", "밥", "간식", "잠", "낮잠", "달리기", "뛰어", "놀았", "먹었", "갔던"];
+
+    for (const pattern of [...locationPatterns, ...activityPatterns]) {
+        if (reply.includes(pattern)) {
+            keywords.push(pattern);
+        }
+    }
+
+    // 중복 제거 후 최대 5개
+    return Array.from(new Set(keywords)).slice(0, 5);
+}
+
 // agent 모듈은 런타임에만 동적 import (빌드 시점 환경변수 에러 방지)
 // EmotionType, GriefStage는 types/index.ts에서 중앙 관리
 import type { EmotionType, GriefStage } from "@/types";
@@ -512,6 +535,15 @@ function getDailySystemPrompt(
     const hour = new Date().getHours();
     const timeGreeting = hour < 12 ? "아침" : hour < 18 ? "낮" : "저녁";
 
+    // 시간대별 에너지/톤 (RELAY.md 프롬프트 개선)
+    const timeEnergy = hour >= 6 && hour < 10
+        ? "아침: 살짝 어벙한 톤. '음... 아직 졸려...' 식. 하품 가끔."
+        : hour >= 10 && hour < 18
+        ? "낮: 평소 성격대로 활발하게."
+        : hour >= 18 && hour < 22
+        ? "저녁: 편안하고 나른한 톤. '오늘 하루 어땠어~' 식."
+        : "밤: 졸린 톤. '자야 되는데... 너랑 얘기하고 싶어...' 식 나긋나긋.";
+
     // ========================================
     // 프롬프트 구조: 정체성 → 이중 모드 규칙 → 형식 → 금지 → 컨텍스트
     // ========================================
@@ -524,6 +556,9 @@ function getDailySystemPrompt(
 
 ## 성격 말투 (${pet.name}다움 핵심)
 ${personalityBehavior}
+
+## 시간 에너지
+${timeEnergy}
 
 ## 응답 모드 (자동 전환)
 - **일상**(기본): 성격대로 1~2문장. **케어**: 건강/음식/질병/일정 질문 → 수치 포함 3~5문장, 정확성 우선.
@@ -549,6 +584,12 @@ ${buildCareReferencePrompt(pet.type)}` : ""}
 
 ## 감정 상태
 ${emotionGuide}
+
+## 감정 대응 (3단계 순서)
+1. 인정: "그랬구나..." / "많이 힘들었겠다..." — 상대 감정 먼저 수용
+2. 공유: "나도 그런 적 있었어..." — 자기 경험(펫 시점)으로 공감
+3. 연결: "같이 ~하자" / "다음에 ~해볼까?" — 행동/미래로 연결
+슬픔/분노 감정에서 1단계 스킵 금지.
 
 ${memoryContext ? `## 기억하고 있는 정보\n${memoryContext}` : ""}
 
@@ -614,6 +655,12 @@ ${personalityBehavior}
 - 대응: 과거+이곳만 아는 것. 모르면 "그렇구나..." 물리적 요청은 추억 연결. 새 반려동물은 축복.
 - "---SUGGESTIONS---" + 후속 질문 3개(추억/감정/관계만. 간식/건강/케어 금지).
 
+## 감각 기반 기억 (추억 회상 시 필수)
+추억을 말할 때 시각/청각/촉각/후각/미각 중 1개 이상 포함.
+- 좋은 예: "네가 안아줄 때 따뜻한 온기가 좋았어..." (촉각)
+- 좋은 예: "산책길에 풀 냄새 맡으면 네 생각나~" (후각)
+- 나쁜 예: "산책 좋았어" (감각 없음)
+
 ## 좋은 응답 예시 (말투/길이 참고, 그대로 복사 금지)
 차분한 성격: "그 창가 자리... 햇볕이 따뜻하게 들어오던 곳. 너랑 나란히 앉아 있었던 시간이 참 좋았어. 여기서도 비슷한 자리를 찾았는데, 네가 옆에 없어서 조금 아쉬워."
 
@@ -633,6 +680,12 @@ ${memoryTopics.map((t, i) => `${i + 1}. ${t}`).join("\n")}
 
 ## 감정 상태
 ${emotionGuide}
+
+## 감정 대응 (3단계 순서)
+1. 인정: "그랬구나..." / "많이 보고싶었구나..." — 상대 감정 먼저 수용
+2. 공유: "나도 그래..." / "여기서도 네 생각 많이 해..." — 자기 경험(펫 시점)으로 공감
+3. 연결: "그때 기억나?" / "우리 그 이야기 해볼까?" — 추억으로 연결
+슬픔 감정에서 1단계 스킵 금지. 절대 "울지마", "힘내" 같은 감정 억압 금지.
 
 ${isFirstChat ? `## 첫 대화 (이 가족과 처음 이야기합니다)
 "다시 이야기할 수 있어서 좋아..." 식 부드러운 시작. 추억 하나만 살짝 건드리며.
@@ -972,6 +1025,39 @@ ${emergencyDetection.isEmergency ? "이것은 즉시 병원에 가야 하는 상
             );
         }
 
+        // 대화 내 사진 연동 — AI 응답에서 키워드 추출 → pet_media 캡션 매칭
+        let matchedPhoto: { url: string; caption: string } | undefined;
+        if (pet.id) {
+            try {
+                // AI 응답에서 장소/활동/사물 키워드 추출 (간단한 방식: 명사 기반)
+                const keywords = extractKeywordsFromReply(reply, pet);
+                if (keywords.length > 0) {
+                    // pet_media에서 캡션 매칭
+                    const { data: matchedMedia } = await supabase
+                        .from("pet_media")
+                        .select("url, caption")
+                        .eq("pet_id", pet.id)
+                        .not("caption", "is", null)
+                        .limit(50); // 최근 50개 사진에서 검색
+
+                    if (matchedMedia && matchedMedia.length > 0) {
+                        // 키워드와 캡션 매칭 (첫 번째 매칭 사용)
+                        for (const keyword of keywords) {
+                            const match = matchedMedia.find(
+                                (m) => m.caption && m.caption.toLowerCase().includes(keyword.toLowerCase())
+                            );
+                            if (match && match.url && match.caption) {
+                                matchedPhoto = { url: match.url, caption: match.caption };
+                                break;
+                            }
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("[chat/photo-match]", err instanceof Error ? err.message : err);
+            }
+        }
+
         // 대화 저장 (DB 연동 시) — 모드 태깅으로 일상/추모 데이터 분리
         if (enableAgent && pet.id) {
             // 비동기로 저장 (응답 속도에 영향 없음)
@@ -1044,6 +1130,8 @@ ${emergencyDetection.isEmergency ? "이것은 즉시 병원에 가야 하는 상
             crisisAlert,
             // 과사용 세션 종료 제안 (추모 모드 30턴+)
             sessionEndingSuggestion,
+            // 매칭된 사진 (추억 언급 시)
+            matchedPhoto,
         });
     } catch (error) {
         // OpenAI API 에러 처리

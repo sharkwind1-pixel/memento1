@@ -12,9 +12,9 @@
 **요약: 6개 카테고리**
 1. **긴급: 승빈님 직접** — DB 마이그레이션 6개
 2. **MVP 런칭 필수** — 결제 연동 + 프리미엄 전환 UX
-3. **AI 펫톡 킬러 기능** — 대화 내보내기 + 사진 연동
-4. **AI 프롬프트 개선** — 감각/거울링/시간대/pending_topic
-5. **UI/UX 비주얼** — 애니메이션 + 타이핑 인디케이터 + 깜빡임 확인
+3. **AI 펫톡 킬러 기능** — ✅ 대화 내보내기 + ✅ 사진 연동
+4. **AI 프롬프트 개선** — ✅ 감각/거울링/시간대 (pending_topic 미완)
+5. **UI/UX 비주얼** — ✅ 애니메이션 + ✅ 타이핑 인디케이터 (깜빡임 테스트 필요)
 6. **기존 미완료** — API URL, 대시보드 등
 
 ---
@@ -81,99 +81,33 @@
 
 ### AI 펫톡 킬러 기능 (시연용)
 
-#### 대화 내보내기 (편지/카드)
+#### ✅ 대화 내보내기 (편지/카드) — 완료 (2026-02-26)
 
-**목적**: AI 대화를 예쁜 카드 이미지로 변환 → 저장/공유. 시연 임팩트 + 바이럴 도구 + 프리미엄 전용 가능.
+**구현 완료 내용**:
+- `ExportChatModal.tsx` — 템플릿 선택 + 미리보기 + PNG/JPG 다운로드 + Web Share API 공유
+- `ExportChatCard.tsx` — 4개 템플릿 (편지/폴라로이드/추모/귀여운), html2canvas로 캡처
+- `AIChatHeader.tsx` — 내보내기 버튼 (대화 2개 이상일 때 표시)
+- 일상/추모 모드별 컬러 테마 자동 적용
+- 펫 프로필 사진 + 대화 내용 + 날짜 + 워터마크 포함
 
-**구현 가이드**:
-1. **라이브러리**: `html2canvas` (또는 `@vercel/og` 서버사이드) 로 DOM → 이미지 변환
-2. **UI 위치**: `ChatMessageList.tsx`에 "이 대화 저장하기" 버튼 추가
-   - 메시지 롱프레스 또는 메시지 옆 더보기(⋯) 메뉴
-   - 선택한 메시지 범위 → 카드 템플릿에 렌더 → 이미지 다운로드/공유
-3. **카드 템플릿 컴포넌트**: `src/components/features/chat/ChatCard.tsx` (신규)
-   - 배경: 파스텔 그라데이션 (일상: 하늘색, 추모: 황금빛) — `CLAUDE.md` 컬러 시스템 참조
-   - 레이아웃: 펫 프로필 사진 + 대화 내용 + 날짜 + 메멘토애니 워터마크
-   - 규격: 1080x1920 (인스타 스토리) / 1080x1080 (인스타 피드)
-4. **공유 기능**: Web Share API (`navigator.share`) — 모바일에서 카카오/인스타 공유
-5. **프리미엄 제한 (선택)**: 무료 월 3장 / 프리미엄 무제한
-6. **참고 파일**:
-   - `src/components/features/chat/ChatMessageList.tsx` — 메시지 버블 렌더링 (여기에 버튼 추가)
-   - `src/components/features/chat/chatTypes.ts` — `ChatMessage` 타입 정의
-   - `src/types/index.ts` — 전역 타입
-   - 메시지는 `{role: "user"|"assistant", content: string, timestamp: string}` 구조
+#### ✅ 대화 내 사진 연동 — 완료 (2026-02-26)
 
-#### 대화 내 사진 연동
-
-**목적**: AI가 추억 언급 시 `pet_media`에서 매칭되는 사진 썸네일 표시. "진짜 내 강아지 같다" 핵심 트리거.
-
-**구현 가이드**:
-1. **서버 (route.ts)**: GPT 응답 생성 후, 응답 텍스트에서 키워드 추출 → `pet_media` 캡션 매칭
-   - `src/app/api/chat/route.ts` 966~973줄 (validateAIResponse 직후) 근처에 추가
-   - DB 쿼리: `supabase.from('pet_media').select('id, url, caption').eq('pet_id', pet.id).ilike('caption', '%키워드%').limit(1)`
-   - 응답에 `matchedPhoto?: { url: string; caption: string }` 추가
-2. **키워드 추출 로직**: GPT 응답에서 장소/활동/사물 명사 추출
-   - 간단 방식: `pet_media` 캡션 목록을 미리 로드 → 응답 텍스트에 캡션 단어가 포함되면 매치
-   - 고급 방식: GPT에게 `[PHOTO:캡션키워드]` 마커를 응답에 포함하도록 프롬프트 지시 (SUGGESTIONS 마커 패턴 참고)
-3. **프론트엔드**: `ChatMessageList.tsx`에서 AI 메시지 아래에 사진 썸네일 렌더
-   - `ChatMessage` 타입에 `matchedPhoto` 필드 추가 (`chatTypes.ts`)
-   - 클릭 시 라이트박스 (기존 `RecordPage`의 사진 뷰어 패턴 참고)
-4. **참고 파일**:
-   - `src/components/features/chat/ChatMessageList.tsx` — 메시지 렌더링
-   - `src/components/features/chat/chatTypes.ts` — ChatMessage 타입
-   - `src/app/api/chat/route.ts` — API 응답 구조 (1033줄 `NextResponse.json({...})`)
-   - `pet_media` 테이블: `id, pet_id, url, media_type, caption, created_at`
+**구현 완료 내용**:
+- `route.ts` — `extractKeywordsFromReply()` 함수 추가, AI 응답에서 장소/활동 키워드 추출
+- `route.ts` — pet_media 캡션 매칭 로직, 응답에 `matchedPhoto` 필드 추가
+- `types/index.ts` — ChatMessage에 `matchedPhoto?: { url: string; caption: string }` 추가
+- `useAIChat.ts` — API 응답의 matchedPhoto를 메시지에 전달
+- `ChatMessageList.tsx` — AI 메시지 아래 매칭 사진 썸네일 + 캡션 렌더링
 
 ---
 
-### AI 펫톡 프롬프트 개선
+### ✅ AI 펫톡 프롬프트 개선 — 완료 (2026-02-26)
 
-> 모두 `src/app/api/chat/route.ts`의 프롬프트 함수 수정. 빌드 확인 필수.
+> 모두 `src/app/api/chat/route.ts` 프롬프트 함수에 적용됨.
 
-#### 감각 기반 기억
-
-**수정 파일**: `src/app/api/chat/route.ts` — `getMemorialSystemPrompt()` (567줄~)
-
-**변경 내용**: 추모 프롬프트의 "응답 원칙" 섹션에 오감 묘사 지시 추가
-```
-## 감각 기반 기억 (추억 회상 시 반드시 적용)
-추억을 말할 때 시각/청각/촉각/후각/미각 중 1개 이상 포함.
-- 좋은 예: "네가 안아줄 때 따뜻한 온기가 좋았어..." (촉각)
-- 좋은 예: "산책길에 풀 냄새 맡으면 네 생각나~" (후각)
-- 나쁜 예: "산책 좋았어" (감각 없음)
-```
-프롬프트 내 위치: `## 응답 원칙` 바로 뒤, `## 보안` 바로 앞.
-
-#### 감정 거울링 3단계
-
-**수정 파일**: `src/app/api/chat/route.ts` — `getMemorialSystemPrompt()`, `getDailySystemPrompt()`
-
-**변경 내용**: 감정 대응 섹션에 3단계 순서 명시
-```
-## 감정 대응 (3단계 순서 엄수)
-1. 인정: "그랬구나..." / "많이 힘들었겠다..." — 상대 감정 먼저 수용
-2. 공유: "나도 그런 적 있었어..." — 자기 경험(펫 시점)으로 공감
-3. 연결: "같이 ~하자" / "다음에 ~해볼까?" — 행동/미래로 연결
-1단계 없이 2, 3으로 넘어가지 말 것. 특히 슬픔/분노 감정에서 1단계 스킵 금지.
-```
-프롬프트 내 위치: `## 감정 상태` 바로 뒤에 삽입 (emotionGuide 변수 아래).
-
-#### 시간대별 에너지
-
-**수정 파일**: `src/app/api/chat/route.ts` — `getDailySystemPrompt()` (471줄~)
-
-**현재**: 512줄에 `const timeGreeting = hour < 12 ? "아침" : hour < 18 ? "낮" : "저녁"` 변수 있음 (인사용으로만 사용).
-
-**변경 내용**: 시간대별 톤 지시를 프롬프트에 추가
-```typescript
-const timeEnergy = hour >= 6 && hour < 10
-    ? "아침: 살짝 어벙한 톤. '음... 아직 졸려...' 식. 하품 가끔."
-    : hour >= 10 && hour < 18
-    ? "낮: 평소 성격대로 활발하게."
-    : hour >= 18 && hour < 22
-    ? "저녁: 편안하고 나른한 톤. '오늘 하루 어땠어~' 식."
-    : "밤: 졸린 톤. '자야 되는데... 너랑 얘기하고 싶어...' 식 나긋나긋.";
-```
-프롬프트 내 삽입 위치: `## 성격 말투` 섹션 바로 뒤에 `## 시간 에너지\n${timeEnergy}` 추가.
+- **감각 기반 기억**: `getMemorialSystemPrompt()`에 오감 묘사 지시 추가 (## 형식 + 규칙 뒤)
+- **감정 거울링 3단계**: 일상/추모 모두 `## 감정 상태` 뒤에 3단계 대응 지침 삽입
+- **시간대별 에너지**: `getDailySystemPrompt()`에 `timeEnergy` 변수 + `## 시간 에너지` 섹션 추가
 
 #### pending_topic — "다음에 물어볼 것" 메모리
 
@@ -195,61 +129,22 @@ const timeEnergy = hour >= 6 && hour < 10
 
 ---
 
-### UI/UX 비주얼
+### ✅ UI/UX 비주얼 — 완료 (2026-02-26)
 
-#### 추모 별 float-up 애니메이션
+#### 추모 별 float-up 애니메이션 ✅
+- `globals.css` — `@keyframes memorial-float-up` + `.memorial-star` 클래스 추가
+- `AIChatPage.tsx` — 추모 모드에서 10개 float-up 별 렌더링 (기존 정적 별과 병존)
 
-**현재**: 추모 모드 배경에 `animate-pulse` CSS. 밋밋함.
-
-**구현 가이드**:
-1. **수정 파일**: `src/app/globals.css` (키프레임 정의) + 추모 모드 배경 컴포넌트
-2. **애니메이션**: 작은 별/반짝이가 아래에서 위로 천천히 올라가며 사라지는 float-up
-```css
-@keyframes float-up {
-    0% { transform: translateY(0) scale(1); opacity: 0.7; }
-    100% { transform: translateY(-100vh) scale(0.3); opacity: 0; }
-}
-```
-3. **구현**: 작은 div(2~4px)를 랜덤 x 위치에 10~15개 배치, animation-duration 8~15s 랜덤, infinite
-4. **참고**: 추모 모드 판별은 `selectedPet?.status === "memorial"` (전역 패턴)
-
-#### 타이핑 인디케이터 감성 텍스트
-
-**현재**: `ChatMessageList.tsx` 하단에 기본 "..." 타이핑 인디케이터.
-
-**구현 가이드**:
-1. **수정 파일**: `src/components/features/chat/ChatMessageList.tsx`
-2. **현재 코드 위치**: `isTyping` prop이 true일 때 렌더링되는 영역
-3. **변경**: "..." 대신 랜덤 감성 텍스트 순환 표시
-```typescript
-const TYPING_TEXTS_DAILY = [
-    "꼬리 흔들며 생각 중...", "킁킁 냄새 맡는 중...", "고개 갸웃하는 중...",
-    "발로 톡톡 치는 중...", "귀 쫑긋 세우는 중..."
-];
-const TYPING_TEXTS_MEMORIAL = [
-    "조용히 곁에 앉는 중...", "따뜻한 기억 떠올리는 중...", "별빛 아래 생각하는 중..."
-];
-```
-4. **pet.type 분기**: 강아지/고양이/기타별 텍스트 다르게 (고양이: "그루밍하며 생각 중...")
-5. **순환**: `useEffect` + `setInterval(3000)` 으로 텍스트 순환
+#### 타이핑 인디케이터 감성 텍스트 ✅
+- `ChatMessageList.tsx` — pet.type별 (강아지/고양이/기타) 감성 텍스트 배열
+- 일상/추모 모드별 다른 텍스트
+- `useEffect` + `setInterval(2500ms)` 로 텍스트 순환
 
 #### 발자국 버블 데코
-
-**목적**: AI 메시지 버블 옆에 작은 발자국 아이콘/패턴으로 일반 채팅앱과 시각 차별화.
-
-**구현 가이드**:
-1. **수정 파일**: `src/components/features/chat/ChatMessageList.tsx`
-2. **구현**: AI(assistant) 메시지 버블의 왼쪽 아바타 영역에 PawPrint 아이콘 (이미 import됨)
-   - 현재 `PawPrint`는 import만 되어있고 특정 위치에서만 사용
-   - AI 메시지 버블 좌상단에 작은(16px) PawPrint 아이콘 배치
-   - 추모 모드: amber 색상, 일상 모드: sky 색상
-3. **선택 추가**: 연속 AI 메시지 사이에 점선 발자국 trail (작은 발자국 3개가 이어지는 모양)
+AI 메시지 버블에 이미 PawPrint 아이콘이 아바타 영역에 표시됨 (기존 구현 완료)
 
 #### 모바일 깜빡임 최종 확인
-
-**상태**: `e3aa66f` 커밋으로 React.memo 10개 페이지 + Layout 헤더/네비 분리 적용. 모바일 테스트 필요.
-**방법**: 실기기(아이폰/안드로이드)에서 홈 → 내기록 → 다른 탭 이동 시 이미지/버튼 깜빡임 확인.
-**롤백**: 깜빡임 계속되면 `e3aa66f` 이전 커밋 `03f4356`으로 롤백 후 React.memo만 단독 적용.
+**상태**: `e3aa66f` 커밋으로 React.memo 적용 완료. 실기기 테스트 필요.
 
 ---
 
@@ -439,6 +334,10 @@ Few-shot 예시도 성격별로 1개씩 넣어서 GPT가 톤을 잡게 함.
 | **프리미엄/무료 제한** | `AuthContext.tsx`, `PremiumModal.tsx` | 완료 - DB 기반 is_premium 체크 |
 | **관리자 페이지** | `AdminPage.tsx` | 완료 - 사용자/게시물 관리 |
 | **추억 앨범 (추모 전용)** | `MemoryAlbumsSection.tsx`, `MemoryAlbumViewer.tsx`, `/api/memory-albums`, cron Phase 1.75 | 완료 - 매일 자동 앨범 생성, 슬라이드쇼, 푸시 알림 |
+| **대화 내보내기** | `ExportChatModal.tsx`, `ExportChatCard.tsx`, `AIChatHeader.tsx` | 완료 - 4개 템플릿(편지/폴라로이드/추모/귀여운), PNG/JPG 저장, Web Share API |
+| **대화 내 사진 연동** | `route.ts`, `ChatMessageList.tsx`, `useAIChat.ts` | 완료 - AI 응답 키워드 → pet_media 캡션 매칭 → 썸네일 표시 |
+| **AI 프롬프트 개선** | `route.ts` (getDailySystemPrompt, getMemorialSystemPrompt) | 완료 - 감각 기반 기억, 감정 거울링 3단계, 시간대별 에너지 |
+| **UI/UX 비주얼** | `globals.css`, `AIChatPage.tsx`, `ChatMessageList.tsx` | 완료 - 추모 별 float-up, 타이핑 감성 텍스트 순환 |
 | **Vercel 환경변수** | `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | Production 설정 완료 |
 
 ---

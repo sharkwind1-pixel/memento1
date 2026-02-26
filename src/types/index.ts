@@ -194,6 +194,11 @@ export interface ChatMessage {
     type?: "reminder-suggestion" | "crisis-alert";
     /** 위기 감지 시 상담 안내 정보 */
     crisisAlert?: CrisisAlertInfo;
+    /** AI 응답에 매칭된 사진 (추억 언급 시) */
+    matchedPhoto?: {
+        url: string;
+        caption: string;
+    };
 }
 
 /** 감정 타입 */
