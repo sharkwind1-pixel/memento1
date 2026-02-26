@@ -306,15 +306,17 @@ export async function GET(request: NextRequest) {
             const timeFrom = `${hourStr}:00:00`;
             const timeTo = `${hourStr}:59:59`;
 
+            // 추모 모드(memorial) 펫의 리마인더는 스킵 - 떠나보낸 반려동물에게 케어 알림이 울리면 안 됨
             const { data: allReminders, error: remError } = await supabase
                 .from("pet_reminders")
                 .select(`
                     id, pet_id, type, title,
                     schedule_type, schedule_time,
                     schedule_day_of_week, schedule_day_of_month, schedule_date,
-                    pets!inner(user_id, name)
+                    pets!inner(user_id, name, status)
                 `)
                 .eq("enabled", true)
+                .eq("pets.status", "active")
                 .gte("schedule_time", timeFrom)
                 .lte("schedule_time", timeTo);
 
@@ -823,6 +825,7 @@ export async function GET(request: NextRequest) {
             }
 
             // 유저별 인사말 생성 + 발송 (배치 5명씩)
+            // 추모 모드 펫은 기념일(생일/기일/입양 기념일)에만 푸시 발송
             for (let i = 0; i < userIds.length; i += 5) {
                 const batch = userIds.slice(i, i + 5);
 
@@ -830,6 +833,39 @@ export async function GET(request: NextRequest) {
                     batch.map(async (userId) => {
                         const pet = userPetMap.get(userId);
                         if (!pet) return;
+
+                        // 추모 모드 펫 기념일 체크 - 기념일이 아니면 일상 인사 푸시 스킵
+                        if (pet.status === "memorial") {
+                            const today = new Date();
+                            const todayMm = today.getMonth();
+                            const todayDd = today.getDate();
+                            let isAnniversary = false;
+
+                            // 생일 체크
+                            if (pet.birthday) {
+                                const bday = new Date(pet.birthday);
+                                if (bday.getMonth() === todayMm && bday.getDate() === todayDd) {
+                                    isAnniversary = true;
+                                }
+                            }
+                            // 입양일 기념일 체크
+                            if (!isAnniversary && pet.adopted_date) {
+                                const adopted = new Date(pet.adopted_date);
+                                const diffDays = Math.floor((today.getTime() - adopted.getTime()) / (1000 * 60 * 60 * 24));
+                                if (diffDays > 0 && diffDays % 100 === 0) isAnniversary = true;
+                                if (adopted.getMonth() === todayMm && adopted.getDate() === todayDd && diffDays >= 365) isAnniversary = true;
+                            }
+                            // 추모일 기념일 체크
+                            if (!isAnniversary && pet.memorial_date) {
+                                const memorial = new Date(pet.memorial_date);
+                                const diffDays = Math.floor((today.getTime() - memorial.getTime()) / (1000 * 60 * 60 * 24));
+                                if (diffDays > 0 && diffDays % 100 === 0) isAnniversary = true;
+                                if (memorial.getMonth() === todayMm && memorial.getDate() === todayDd && diffDays >= 365) isAnniversary = true;
+                            }
+
+                            // 기념일이 아니면 추모 펫 인사 스킵
+                            if (!isAnniversary) return;
+                        }
 
                         const greeting = await generateGreeting(openai, pet);
                         const userSubs = subscriptions.filter((s) => s.user_id === userId);

@@ -259,11 +259,13 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
 
                 {/* 우측: 채팅 영역 */}
                 <div className="flex-1 flex flex-col min-h-0 lg:min-w-0" data-tutorial-id="ai-chat-area">
-                    {/* 푸시 알림 구독 유도 배너 */}
-                    <PushNotificationBanner
-                        petName={selectedPet?.name || ""}
-                        isMemorialMode={chat.isMemorialMode}
-                    />
+                    {/* 푸시 알림 구독 유도 배너 (추모 모드에서는 숨김 - 기념일 푸시만 발송) */}
+                    {!chat.isMemorialMode && (
+                        <PushNotificationBanner
+                            petName={selectedPet?.name || ""}
+                            isMemorialMode={chat.isMemorialMode}
+                        />
+                    )}
 
                     {/* AI 고지 배너 */}
                     <div
