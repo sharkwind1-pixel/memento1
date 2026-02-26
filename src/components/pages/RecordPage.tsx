@@ -69,10 +69,10 @@ interface RecordPageProps {
 
 // 기분 아이콘 매핑
 const moodIcons = {
-    happy: { icon: Smile, color: "text-green-500", bg: "bg-green-100", label: "좋음" },
-    normal: { icon: Meh, color: "text-blue-500", bg: "bg-blue-100", label: "보통" },
-    sad: { icon: Frown, color: "text-amber-500", bg: "bg-amber-100", label: "우울" },
-    sick: { icon: Thermometer, color: "text-red-500", bg: "bg-red-100", label: "아픔" },
+    happy: { icon: Smile, color: "text-green-500", bg: "bg-green-100 dark:bg-green-400/15", label: "좋음" },
+    normal: { icon: Meh, color: "text-blue-500", bg: "bg-blue-100 dark:bg-blue-400/15", label: "보통" },
+    sad: { icon: Frown, color: "text-amber-500", bg: "bg-amber-100 dark:bg-amber-400/15", label: "우울" },
+    sick: { icon: Thermometer, color: "text-red-500", bg: "bg-red-100 dark:bg-red-400/15", label: "아픔" },
 };
 
 /** 타임라인 섹션 컴포넌트 - useTimeline()으로 분리된 context 사용 */
@@ -338,7 +338,7 @@ function TimelineSection({ petId, petName }: { petId: string; petName: string })
                                                     }
                                                     className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all ${
                                                         formData.mood === mood
-                                                            ? `${info.bg} ring-2 ring-offset-2 ring-[#05B2DC]`
+                                                            ? `${info.bg} ring-2 ring-offset-2 ring-[#05B2DC] dark:ring-offset-gray-800`
                                                             : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-700"
                                                     }`}
                                                 >
@@ -603,19 +603,19 @@ function RecordPage({ setSelectedTab }: RecordPageProps) {
                     {/* 기능 미리보기 */}
                     <div className="w-full bg-white/80 dark:bg-gray-800/80 rounded-2xl p-4 mb-6 space-y-3">
                         <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
-                            <div className="w-8 h-8 bg-violet-100 rounded-lg flex items-center justify-center">
+                            <div className="w-8 h-8 bg-violet-100 dark:bg-violet-400/15 rounded-lg flex items-center justify-center">
                                 <Camera className="w-4 h-4 text-violet-500" />
                             </div>
                             <span>사진 갤러리로 추억 모아보기</span>
                         </div>
                         <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
-                            <div className="w-8 h-8 bg-sky-100 rounded-lg flex items-center justify-center">
+                            <div className="w-8 h-8 bg-sky-100 dark:bg-sky-400/15 rounded-lg flex items-center justify-center">
                                 <BookOpen className="w-4 h-4 text-sky-500" />
                             </div>
                             <span>타임라인으로 일상 기록하기</span>
                         </div>
                         <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
-                            <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
+                            <div className="w-8 h-8 bg-amber-100 dark:bg-amber-400/15 rounded-lg flex items-center justify-center">
                                 <Bell className="w-4 h-4 text-amber-500" />
                             </div>
                             <span>예방접종, 미용 리마인더</span>
