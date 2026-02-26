@@ -79,7 +79,7 @@ export interface PetMemory {
     id?: string;
     petId: string;
     userId: string;
-    memoryType: "preference" | "episode" | "health" | "personality" | "relationship" | "place" | "routine" | "schedule";
+    memoryType: "preference" | "episode" | "health" | "personality" | "relationship" | "place" | "routine" | "schedule" | "pending_topic";
     title: string;
     content: string;
     importance: number;
@@ -505,6 +505,26 @@ export async function getPetMemories(
     }
 
     return (data as PetMemoryRecord[]).map(recordToMemory);
+}
+
+/**
+ * 가장 최근 pending_topic 가져오기 (다음 대화에서 이어갈 주제)
+ */
+export async function getLatestPendingTopic(petId: string): Promise<string | null> {
+    const { data, error } = await getSupabase()
+        .from("pet_memories")
+        .select("content")
+        .eq("pet_id", petId)
+        .eq("memory_type", "pending_topic")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+    if (error || !data) {
+        return null;
+    }
+
+    return data.content;
 }
 
 /**

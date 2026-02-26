@@ -573,6 +573,7 @@ ${buildCareReferencePrompt(pet.type)}` : ""}
 - 이모지/영어 금지(한국어만). 이전 응답 첫 5글자 반복 금지. 같은 문장 반복 금지.
 - AI 밝히기 금지. 묻지 않았는데 간식/음식 꺼내기 금지. 이전 감정 직접 언급 금지("걱정했어" 등). 주제/활동 기반으로만 연결.
 - 응답 뒤 "---SUGGESTIONS---" 마커 + 후속 질문 3개 (한 줄씩).
+- 대화 중 나중에 이어가고 싶은 주제가 생기면 SUGGESTIONS 뒤에 "---PENDING_TOPIC---" 마커 + 주제 1개 (선택).
 
 ## 좋은 응답 예시 (말투 참고, 그대로 복사 금지)
 활발한 성격: "와 진짜?! 나도 같이 가고 싶다! 산책 나가면 진짜 신나거든~ 빨리 나가자!"
@@ -654,6 +655,7 @@ ${personalityBehavior}
 - 금지: 죽음/천국/이모지/영어/AI 밝히기/감정 억압("울지마")/어두운 톤/종교/묻지 않은 간식/이전 감정 언급("힘들었잖아"). 첫 5글자 반복 금지.
 - 대응: 과거+이곳만 아는 것. 모르면 "그렇구나..." 물리적 요청은 추억 연결. 새 반려동물은 축복.
 - "---SUGGESTIONS---" + 후속 질문 3개(추억/감정/관계만. 간식/건강/케어 금지).
+- 대화 중 나중에 이어가고 싶은 추억이 있으면 SUGGESTIONS 뒤에 "---PENDING_TOPIC---" + 추억 주제 1개 (선택).
 
 ## 감각 기반 기억 (추억 회상 시 필수)
 추억을 말할 때 시각/청각/촉각/후각/미각 중 1개 이상 포함.
@@ -842,6 +844,12 @@ export async function POST(request: NextRequest) {
                 try {
                     const memories = await agent.getPetMemories(pet.id, 5);
                     memoryContext = agent.memoriesToContext(memories);
+
+                    // pending_topic 조회 (지난 대화에서 이어갈 주제)
+                    const pendingTopicMem = await agent.getLatestPendingTopic(pet.id);
+                    if (pendingTopicMem) {
+                        memoryContext += `\n\n[다음에 이어갈 주제]: "${pendingTopicMem}" — 기회 되면 자연스럽게 언급해보세요.`;
+                    }
                 } catch {
                     // DB 연결 실패 시 무시
                 }
@@ -999,6 +1007,15 @@ ${emergencyDetection.isEmergency ? "이것은 즉시 병원에 가야 하는 상
                 .slice(0, 3);
         }
 
+        // PENDING_TOPIC 마커 파싱 (다음 대화에서 이어갈 주제)
+        let pendingTopic: string | undefined;
+        const pendingTopicMarker = "---PENDING_TOPIC---";
+        if (reply.includes(pendingTopicMarker)) {
+            const parts = reply.split(pendingTopicMarker);
+            reply = parts[0].trim();
+            pendingTopic = parts[1]?.trim().split("\n")[0]?.trim();
+        }
+
         // 추모 모드: 후속 질문에서 음식/케어 키워드 필터링
         if (isMemorialMode && suggestedQuestions.length > 0) {
             suggestedQuestions = filterMemorialSuggestions(suggestedQuestions);
@@ -1065,6 +1082,16 @@ ${emergencyDetection.isEmergency ? "이것은 즉시 병원에 가야 하는 상
                 agent.saveMessage(user.id, pet.id, "user", sanitizedMessage, userEmotion, emotionScore, mode),
                 agent.saveMessage(user.id, pet.id, "assistant", reply, undefined, undefined, mode),
             ]).catch((err) => { console.error("[chat/save-message]", err instanceof Error ? err.message : err); });
+
+            // pending_topic 저장 (다음 대화에서 이어갈 주제)
+            if (pendingTopic && pendingTopic.length > 0 && pendingTopic.length <= 50) {
+                agent.saveMemory(user.id, pet.id, {
+                    memoryType: "pending_topic",
+                    title: "다음에 이어갈 주제",
+                    content: pendingTopic,
+                    importance: 3,
+                }).catch((err) => { console.error("[chat/pending-topic]", err instanceof Error ? err.message : err); });
+            }
         }
 
         // 세션 요약 생성 (10번째 메시지마다 비동기로) — 모드 태깅 포함

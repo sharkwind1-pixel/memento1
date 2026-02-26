@@ -45,6 +45,7 @@ import AIChatNoPets from "@/components/features/chat/AIChatNoPets";
 import AIChatHeader from "@/components/features/chat/AIChatHeader";
 import PushNotificationBanner from "@/components/features/chat/PushNotificationBanner";
 import ExportChatModal from "@/components/features/chat/ExportChatModal";
+import PremiumModal from "@/components/modals/PremiumModal";
 import {
     isPushSupported,
     registerServiceWorker,
@@ -93,6 +94,8 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
 
     // 내보내기 모달 상태
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+    // 프리미엄 모달 상태
+    const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
 
     /**
      * 리마인더 안내 "알려주세요" 클릭 핸들러
@@ -331,6 +334,7 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                         setSuggestedQuestions={chat.setSuggestedQuestions}
                         selectedPet={selectedPet}
                         onSend={chat.handleSend}
+                        onOpenPremiumModal={() => setIsPremiumModalOpen(true)}
                     />
                 </div>
             </div>
@@ -345,6 +349,13 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                     isMemorialMode={chat.isMemorialMode}
                 />
             )}
+
+            {/* 프리미엄 전환 모달 */}
+            <PremiumModal
+                isOpen={isPremiumModalOpen}
+                onClose={() => setIsPremiumModalOpen(false)}
+                feature="ai-chat-limit"
+            />
         </div>
     );
 }
