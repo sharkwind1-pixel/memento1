@@ -4,92 +4,419 @@
 
 ---
 
-## 2026-02-26 (목) — AI 펫톡 품질 대폭 개선 [배포 완료]
+## TODO — 앞으로 할 것
 
-> **상태**: 전부 main 푸시 + Vercel 배포 완료
+> 승빈님이 우선순위/순서 바꾸고 싶으면 여기서 직접 수정. 위에 있을수록 먼저.
+> **각 항목에 구현 가이드 포함** — 새 세션에서 바로 작업 시작할 수 있도록.
 
-### 이 세션에서 한 것 (커밋 6개, 전부 main 배포됨)
-
-| # | 커밋 | 내용 |
-|---|------|------|
-| 1 | `fb2d2cf` | 할루시네이션 방지 프롬프트 최적화 — HALLUCINATION_GUARD_RULES 7섹션→4원칙+2 Few-shot으로 압축, isCareRelatedQuery 조건부 프롬프트 삽입 (잡담엔 케어 규칙 안 넣음 → 토큰 절약) |
-| 2 | `42b630b` | AI 응답 후처리 검증 레이어 (validateAIResponse) — GPT 응답에서 약 용량/과도한 단정/브랜드명/확률 날조/사람 약 감지 후 코드 레벨 수정 |
-| 3 | `83d6972` | AI 대화 품질 대폭 개선 — getPersonalityBehavior() 7성격 매핑 (활발/차분/호기심/겁쟁이/애교/도도/식탐), 추모 프롬프트 완전 재작성, filterMemorialSuggestions 코드 레벨 필터 |
-| 4 | `bbf8dea` | 펫 전환 시 추천 질문 공유 버그 수정 — setSuggestedQuestions([]) 누락 |
-| 5 | `8a46810` | 추천 질문 버튼 UX 개선 — flex-wrap + max-w-[200px] + truncate + 클릭 안정성 |
-| 6 | `3e532f6` | **Phase 1 통합**: 프롬프트 30% 압축 + 추천 필터 fallback + validateAIResponse 오탐 3건 수정 + 신규 유저 첫 대화 강화 |
-
-### 주요 변경 파일
-
-| 파일 | 변경 내용 |
-|------|----------|
-| `src/app/api/chat/route.ts` | 시스템 프롬프트 ~30% 압축 (4,041→2,744자), getPersonalityBehavior() 7성격 매핑, filterMemorialSuggestions 블록리스트+fallback, isCareQuery 조건부 프롬프트, isFirstChat 첫 대화 감지, 추천 글자수 제한 30→20자 |
-| `src/lib/care-reference.ts` | HALLUCINATION_GUARD_RULES 압축, CARE_FRAMING_RULES 압축(525→239자), validateAIResponse 함수 추가 + 오탐 3건 수정 (독성 음식 경고 보존, 유저 언급 브랜드 예외, 수분 섭취량 예외) |
-| `src/components/features/chat/useAIChat.ts` | 펫 전환 시 setSuggestedQuestions([]) 추가 |
-| `src/components/features/chat/ChatInputArea.tsx` | 추천 버튼 flex-wrap + max-w-[200px] + truncate + cursor-pointer |
-
-### 현재 AI 펫톡 아키텍처 요약
-
-```
-유저 메시지 → sanitizeInput → 위기 감지 → 응급 감지
-           → isCareRelatedQuery 판단 (케어 질문이면 케어 프롬프트 삽입)
-           → isFirstChat 판단 (첫 대화면 온보딩 프롬프트 삽입)
-           → 감정 분석 → 메모리 로드 → 시스템 프롬프트 생성
-           → GPT-4o-mini 호출
-           → SUGGESTIONS 파싱 → 추모 모드면 filterMemorialSuggestions
-           → 추모 모드면 느낌표 후처리
-           → validateAIResponse (케어 응답 검증)
-           → DB 저장 + 응답 반환
-```
-
-### 7성격 매핑 (getPersonalityBehavior)
-
-| 성격 | 일상 모드 | 추모 모드 |
-|------|----------|----------|
-| 활발 | 짧은 감탄사, 신난 어조 | 밝고 경쾌한 회상 |
-| 차분 | 느긋한 톤, 여유 | 고요한 따뜻함 |
-| 호기심 | 질문 많이 | 궁금해하는 관심 |
-| 겁쟁이 | 조심스럽고 귀여운 | 쭈뼛하는 다정함 |
-| 애교 | 응석부리기 | 달콤한 애정 표현 |
-| 도도 | 자기 주장 강한 | 츤데레 |
-| 식탐 | 음식 화제, 간식 노림 | 맛있는 것 관련 추억 |
+**요약: 6개 카테고리**
+1. **긴급: 승빈님 직접** — DB 마이그레이션 6개
+2. **MVP 런칭 필수** — 결제 연동 + 프리미엄 전환 UX
+3. **AI 펫톡 킬러 기능** — 대화 내보내기 + 사진 연동
+4. **AI 프롬프트 개선** — 감각/거울링/시간대/pending_topic
+5. **UI/UX 비주얼** — 애니메이션 + 타이핑 인디케이터 + 깜빡임 확인
+6. **기존 미완료** — API URL, 대시보드 등
 
 ---
 
-### 다음에 할 것 (Phase 2~3)
+### 긴급: 승빈님이 직접 해야 하는 것
 
-**Phase 2 — 킬러 기능 (시연/과금용, 3-5일)**
+> Supabase 대시보드 > SQL Editor에서 복사-붙여넣기
 
-| # | 작업 | 근거 | 소요 |
-|---|------|------|------|
-| 5 | **대화 내보내기 (편지/카드)** — AI 대화를 예쁜 카드 이미지로 변환+저장+공유 | 시연 임팩트 최상 + 바이럴 + 프리미엄 전용 가능 | 2-3일 |
-| 6 | **스마트 프리미엄 전환 UX** — isWarning(3회 남음) 활용 + 직전 대화 주제 반영 동적 문구 | 수익 모델 실증 (창업지원금 핵심) | 1일 |
-| 7 | **대화 내 사진 연동** — AI 추억 언급 시 pet_media 캡션 매칭 사진 썸네일 표시 | "진짜 내 강아지 같다" 핵심 트리거 | 2-3일 |
+- [ ] `20260226_chat_mode_column.sql` — AI 펫톡 추모/일상 데이터 분리 **(이거 안 하면 추모 대화가 일상으로 섞임)**
+- [ ] `20260226_security_fixes.sql` — 미니미 RPC + 펫/사진 제한 트리거 **(보안: 동시 구매 어뷰징 방지)**
+- [ ] `20260225_push_preferred_hour.sql` — 푸시 알림 시간 선택
+- [ ] `ALTER TABLE minihompy_settings ADD COLUMN IF NOT EXISTS placed_minimi JSONB DEFAULT '[]'::jsonb;` — 멀티 미니미
+- [ ] `20260222_minimi_system.sql` — 미니미 구매/되팔기 (이미 실행됐을 수 있음, 확인)
+- [ ] `20260226_memory_albums.sql` — 추억 앨범 테이블
 
-**Phase 3 — 프롬프트 + 비주얼 마무리 (3월 초)**
+---
 
-| # | 작업 | 효과 |
+### MVP 런칭 필수 (창업지원금 신청 전)
+
+#### 결제 연동 — 포트원(PortOne) 프리미엄 구독 실결제
+
+**현재 상태**: `is_premium` + `premium_expires_at` 컬럼은 `profiles` 테이블에 이미 있음. `AuthContext.tsx`에서 체크 로직 완료. 결제 흐름만 없음.
+
+**구현 가이드**:
+1. **포트원 SDK 설치**: `npm install @portone/browser-sdk` (또는 스크립트 태그 방식)
+2. **API 엔드포인트 생성**: `src/app/api/payments/route.ts`
+   - `POST /api/payments` — 결제 요청 생성 (포트원 결제 ID 발급)
+   - `POST /api/payments/verify` — 결제 완료 후 검증 (포트원 서버에서 결제 상태 확인)
+   - 검증 성공 시: `profiles.is_premium = true`, `premium_expires_at = NOW() + 30일`
+   - **중요**: 서버에서 포트원 API로 결제 금액 검증 필수 (클라이언트 금액 조작 방지)
+3. **결제 흐름 UI**: `PremiumModal.tsx` (이미 존재, `src/components/modals/PremiumModal.tsx`)
+   - 현재: "구매하기" 버튼이 `toast("준비 중!")` 표시
+   - 변경: 버튼 클릭 → 포트원 결제창 호출 → 완료 콜백에서 `/api/payments/verify` 호출
+   - 월 7,900원 / 연 79,000원 (가격: `src/config/constants.ts` `PRICING` 참조)
+4. **참고 파일**:
+   - `src/config/constants.ts` — `FREE_LIMITS`, `PREMIUM_LIMITS`, `PRICING` 상수
+   - `src/contexts/AuthContext.tsx` — `isPremium` 체크 로직 (결제 후 이 값 갱신 필요)
+   - `src/components/modals/PremiumModal.tsx` — 결제 UI 연결 대상
+5. **DB**: 추가 마이그레이션 필요 없음 (is_premium, premium_expires_at 이미 존재)
+6. **포트원 대시보드**: 승빈님이 포트원 계정 생성 + 가맹점 등록 + API 키 발급 필요
+   - 환경변수: `PORTONE_API_KEY`, `PORTONE_API_SECRET`, `NEXT_PUBLIC_PORTONE_STORE_ID`
+
+#### 스마트 프리미엄 전환 UX
+
+**현재 상태**: API가 `isWarning: true` (남은 횟수 10회 이하)를 응답에 포함. 프론트엔드에서 `remainingChats <= 3`일 때 빨간 텍스트 표시. 하지만 프리미엄 전환 동기 부여가 약함.
+
+**구현 가이드**:
+1. **수정 파일**: `src/components/features/chat/ChatInputArea.tsx`
+   - 현재 241~247줄에 `remainingChats` 표시 있음
+   - `remainingChats === 3`일 때 부드러운 프리미엄 안내 배너 삽입
+   - `remainingChats === 0`일 때 `PremiumModal` 자동 오픈 (현재는 텍스트만 표시)
+2. **동적 문구**: `useAIChat.ts`에서 마지막 대화 주제 추출 (마지막 AI 응답의 첫 문장)
+   - 예: "오늘 {펫이름}과(와) {마지막 주제} 이야기가 즐거웠나요? 내일도 계속하려면..."
+   - `src/components/features/chat/useAIChat.ts` 124~126줄 근처에 로직 추가
+3. **PremiumModal 개선**: feature prop에 대화 주제 전달
+   - `PremiumModal.tsx`의 `PremiumFeature` 타입에 커스텀 description 지원 추가
+   - 또는 새 prop: `customDescription?: string`
+4. **참고**: API 응답 구조 (`src/app/api/chat/route.ts` 1033~1047줄):
+   ```typescript
+   { reply, suggestedQuestions, emotion, emotionScore, remaining, isWarning, ... }
+   ```
+
+---
+
+### AI 펫톡 킬러 기능 (시연용)
+
+#### 대화 내보내기 (편지/카드)
+
+**목적**: AI 대화를 예쁜 카드 이미지로 변환 → 저장/공유. 시연 임팩트 + 바이럴 도구 + 프리미엄 전용 가능.
+
+**구현 가이드**:
+1. **라이브러리**: `html2canvas` (또는 `@vercel/og` 서버사이드) 로 DOM → 이미지 변환
+2. **UI 위치**: `ChatMessageList.tsx`에 "이 대화 저장하기" 버튼 추가
+   - 메시지 롱프레스 또는 메시지 옆 더보기(⋯) 메뉴
+   - 선택한 메시지 범위 → 카드 템플릿에 렌더 → 이미지 다운로드/공유
+3. **카드 템플릿 컴포넌트**: `src/components/features/chat/ChatCard.tsx` (신규)
+   - 배경: 파스텔 그라데이션 (일상: 하늘색, 추모: 황금빛) — `CLAUDE.md` 컬러 시스템 참조
+   - 레이아웃: 펫 프로필 사진 + 대화 내용 + 날짜 + 메멘토애니 워터마크
+   - 규격: 1080x1920 (인스타 스토리) / 1080x1080 (인스타 피드)
+4. **공유 기능**: Web Share API (`navigator.share`) — 모바일에서 카카오/인스타 공유
+5. **프리미엄 제한 (선택)**: 무료 월 3장 / 프리미엄 무제한
+6. **참고 파일**:
+   - `src/components/features/chat/ChatMessageList.tsx` — 메시지 버블 렌더링 (여기에 버튼 추가)
+   - `src/components/features/chat/chatTypes.ts` — `ChatMessage` 타입 정의
+   - `src/types/index.ts` — 전역 타입
+   - 메시지는 `{role: "user"|"assistant", content: string, timestamp: string}` 구조
+
+#### 대화 내 사진 연동
+
+**목적**: AI가 추억 언급 시 `pet_media`에서 매칭되는 사진 썸네일 표시. "진짜 내 강아지 같다" 핵심 트리거.
+
+**구현 가이드**:
+1. **서버 (route.ts)**: GPT 응답 생성 후, 응답 텍스트에서 키워드 추출 → `pet_media` 캡션 매칭
+   - `src/app/api/chat/route.ts` 966~973줄 (validateAIResponse 직후) 근처에 추가
+   - DB 쿼리: `supabase.from('pet_media').select('id, url, caption').eq('pet_id', pet.id).ilike('caption', '%키워드%').limit(1)`
+   - 응답에 `matchedPhoto?: { url: string; caption: string }` 추가
+2. **키워드 추출 로직**: GPT 응답에서 장소/활동/사물 명사 추출
+   - 간단 방식: `pet_media` 캡션 목록을 미리 로드 → 응답 텍스트에 캡션 단어가 포함되면 매치
+   - 고급 방식: GPT에게 `[PHOTO:캡션키워드]` 마커를 응답에 포함하도록 프롬프트 지시 (SUGGESTIONS 마커 패턴 참고)
+3. **프론트엔드**: `ChatMessageList.tsx`에서 AI 메시지 아래에 사진 썸네일 렌더
+   - `ChatMessage` 타입에 `matchedPhoto` 필드 추가 (`chatTypes.ts`)
+   - 클릭 시 라이트박스 (기존 `RecordPage`의 사진 뷰어 패턴 참고)
+4. **참고 파일**:
+   - `src/components/features/chat/ChatMessageList.tsx` — 메시지 렌더링
+   - `src/components/features/chat/chatTypes.ts` — ChatMessage 타입
+   - `src/app/api/chat/route.ts` — API 응답 구조 (1033줄 `NextResponse.json({...})`)
+   - `pet_media` 테이블: `id, pet_id, url, media_type, caption, created_at`
+
+---
+
+### AI 펫톡 프롬프트 개선
+
+> 모두 `src/app/api/chat/route.ts`의 프롬프트 함수 수정. 빌드 확인 필수.
+
+#### 감각 기반 기억
+
+**수정 파일**: `src/app/api/chat/route.ts` — `getMemorialSystemPrompt()` (567줄~)
+
+**변경 내용**: 추모 프롬프트의 "응답 원칙" 섹션에 오감 묘사 지시 추가
+```
+## 감각 기반 기억 (추억 회상 시 반드시 적용)
+추억을 말할 때 시각/청각/촉각/후각/미각 중 1개 이상 포함.
+- 좋은 예: "네가 안아줄 때 따뜻한 온기가 좋았어..." (촉각)
+- 좋은 예: "산책길에 풀 냄새 맡으면 네 생각나~" (후각)
+- 나쁜 예: "산책 좋았어" (감각 없음)
+```
+프롬프트 내 위치: `## 응답 원칙` 바로 뒤, `## 보안` 바로 앞.
+
+#### 감정 거울링 3단계
+
+**수정 파일**: `src/app/api/chat/route.ts` — `getMemorialSystemPrompt()`, `getDailySystemPrompt()`
+
+**변경 내용**: 감정 대응 섹션에 3단계 순서 명시
+```
+## 감정 대응 (3단계 순서 엄수)
+1. 인정: "그랬구나..." / "많이 힘들었겠다..." — 상대 감정 먼저 수용
+2. 공유: "나도 그런 적 있었어..." — 자기 경험(펫 시점)으로 공감
+3. 연결: "같이 ~하자" / "다음에 ~해볼까?" — 행동/미래로 연결
+1단계 없이 2, 3으로 넘어가지 말 것. 특히 슬픔/분노 감정에서 1단계 스킵 금지.
+```
+프롬프트 내 위치: `## 감정 상태` 바로 뒤에 삽입 (emotionGuide 변수 아래).
+
+#### 시간대별 에너지
+
+**수정 파일**: `src/app/api/chat/route.ts` — `getDailySystemPrompt()` (471줄~)
+
+**현재**: 512줄에 `const timeGreeting = hour < 12 ? "아침" : hour < 18 ? "낮" : "저녁"` 변수 있음 (인사용으로만 사용).
+
+**변경 내용**: 시간대별 톤 지시를 프롬프트에 추가
+```typescript
+const timeEnergy = hour >= 6 && hour < 10
+    ? "아침: 살짝 어벙한 톤. '음... 아직 졸려...' 식. 하품 가끔."
+    : hour >= 10 && hour < 18
+    ? "낮: 평소 성격대로 활발하게."
+    : hour >= 18 && hour < 22
+    ? "저녁: 편안하고 나른한 톤. '오늘 하루 어땠어~' 식."
+    : "밤: 졸린 톤. '자야 되는데... 너랑 얘기하고 싶어...' 식 나긋나긋.";
+```
+프롬프트 내 삽입 위치: `## 성격 말투` 섹션 바로 뒤에 `## 시간 에너지\n${timeEnergy}` 추가.
+
+#### pending_topic — "다음에 물어볼 것" 메모리
+
+**목적**: 대화 중 "다음에 이것 물어봐야지" 같은 주제를 저장해두고 다음 대화 시작 시 활용.
+
+**구현 가이드**:
+1. **DB**: `pet_memories` 테이블에 `memory_type = 'pending_topic'` 저장 (기존 memory_type 필드 재활용)
+   - `pet_memories` 스키마: `id, user_id, pet_id, memory_type, content, created_at`
+   - 기존 memory_type 값: `'preference'`, `'habit'`, `'health'`, `'relationship'`
+   - 추가할 값: `'pending_topic'`
+2. **GPT에게 마커 지시**: SUGGESTIONS 마커처럼 `---PENDING_TOPIC---` 마커로 다음에 물어볼 주제 출력
+   - 프롬프트 추가: "대화 중 나중에 이어가고 싶은 주제가 있으면 응답 뒤에 ---PENDING_TOPIC--- 마커 + 주제 1개"
+   - `route.ts` 937줄 SUGGESTIONS 파싱 근처에 PENDING_TOPIC 파싱 추가
+3. **다음 대화 시 활용**: `getPetMemories()` (route.ts의 agent.ts)에서 pending_topic 조회 → 프롬프트에 삽입
+   - "지난번에 {topic}에 대해 이야기하다 말았는데, 기회 되면 물어보세요."
+4. **참고 파일**:
+   - `src/lib/agent.ts` — `getPetMemories()`, `saveMemory()` 함수
+   - `src/app/api/chat/route.ts` — SUGGESTIONS 파싱 패턴 (937~947줄)
+
+---
+
+### UI/UX 비주얼
+
+#### 추모 별 float-up 애니메이션
+
+**현재**: 추모 모드 배경에 `animate-pulse` CSS. 밋밋함.
+
+**구현 가이드**:
+1. **수정 파일**: `src/app/globals.css` (키프레임 정의) + 추모 모드 배경 컴포넌트
+2. **애니메이션**: 작은 별/반짝이가 아래에서 위로 천천히 올라가며 사라지는 float-up
+```css
+@keyframes float-up {
+    0% { transform: translateY(0) scale(1); opacity: 0.7; }
+    100% { transform: translateY(-100vh) scale(0.3); opacity: 0; }
+}
+```
+3. **구현**: 작은 div(2~4px)를 랜덤 x 위치에 10~15개 배치, animation-duration 8~15s 랜덤, infinite
+4. **참고**: 추모 모드 판별은 `selectedPet?.status === "memorial"` (전역 패턴)
+
+#### 타이핑 인디케이터 감성 텍스트
+
+**현재**: `ChatMessageList.tsx` 하단에 기본 "..." 타이핑 인디케이터.
+
+**구현 가이드**:
+1. **수정 파일**: `src/components/features/chat/ChatMessageList.tsx`
+2. **현재 코드 위치**: `isTyping` prop이 true일 때 렌더링되는 영역
+3. **변경**: "..." 대신 랜덤 감성 텍스트 순환 표시
+```typescript
+const TYPING_TEXTS_DAILY = [
+    "꼬리 흔들며 생각 중...", "킁킁 냄새 맡는 중...", "고개 갸웃하는 중...",
+    "발로 톡톡 치는 중...", "귀 쫑긋 세우는 중..."
+];
+const TYPING_TEXTS_MEMORIAL = [
+    "조용히 곁에 앉는 중...", "따뜻한 기억 떠올리는 중...", "별빛 아래 생각하는 중..."
+];
+```
+4. **pet.type 분기**: 강아지/고양이/기타별 텍스트 다르게 (고양이: "그루밍하며 생각 중...")
+5. **순환**: `useEffect` + `setInterval(3000)` 으로 텍스트 순환
+
+#### 발자국 버블 데코
+
+**목적**: AI 메시지 버블 옆에 작은 발자국 아이콘/패턴으로 일반 채팅앱과 시각 차별화.
+
+**구현 가이드**:
+1. **수정 파일**: `src/components/features/chat/ChatMessageList.tsx`
+2. **구현**: AI(assistant) 메시지 버블의 왼쪽 아바타 영역에 PawPrint 아이콘 (이미 import됨)
+   - 현재 `PawPrint`는 import만 되어있고 특정 위치에서만 사용
+   - AI 메시지 버블 좌상단에 작은(16px) PawPrint 아이콘 배치
+   - 추모 모드: amber 색상, 일상 모드: sky 색상
+3. **선택 추가**: 연속 AI 메시지 사이에 점선 발자국 trail (작은 발자국 3개가 이어지는 모양)
+
+#### 모바일 깜빡임 최종 확인
+
+**상태**: `e3aa66f` 커밋으로 React.memo 10개 페이지 + Layout 헤더/네비 분리 적용. 모바일 테스트 필요.
+**방법**: 실기기(아이폰/안드로이드)에서 홈 → 내기록 → 다른 탭 이동 시 이미지/버튼 깜빡임 확인.
+**롤백**: 깜빡임 계속되면 `e3aa66f` 이전 커밋 `03f4356`으로 롤백 후 React.memo만 단독 적용.
+
+---
+
+### 기존 미완료
+
+- [ ] **API URL 마이그레이션**: 코드 전체에서 `/api/...` 하드코딩 → `src/config/apiEndpoints.ts` 상수 사용
+  - `grep -rn '"/api/' src/components/` 로 남은 하드코딩 URL 검색
+  - `apiEndpoints.ts`에 상수 추가 후 import 교체
+- [ ] **치유의 여정 대시보드**: 유저 비노출 DB 전용 — `pet_memories`의 감정 추이 집계 API 생성
+- [ ] **대화→타임라인 자동 생성**: GPT 응답에서 의미 있는 대화를 자동으로 `timeline_entries`에 저장
+  - 10턴마다 `generateConversationSummary()` 이미 있음 (`route.ts` 985줄) — 이걸 확장
+- [ ] **미니미 도감 + 터치 이펙트**: `MiniHomepyTab.tsx`에 수집한 미니미 도감 UI + 미니미 클릭 시 반응 애니메이션
+
+---
+
+## 2026-02-26 (목) — AI 펫톡 품질 대폭 개선 [배포 완료]
+
+> **상태**: 전부 main 푸시 + Vercel 배포 완료. 커밋 7개.
+
+### 배경: 왜 이 작업을 했는가
+
+승빈님이 실제 서비스 테스트 후 피드백:
+- **"AI가 개저능아처럼 얘기한다"** — 모든 펫이 똑같은 로봇 말투. 성격이 죽어있음
+- **"추모모드 강아지한테 츄르 추천하고 개판"** — 죽은 펫에게 간식/산책 제안
+- **"두 마리 펫인데 추천 질문이 공유된다"** — 펫 전환해도 이전 펫 질문 남아있음
+- **"추천 버튼 크기 중구난방, 가끔 안 눌림"** — 모바일에서 snap-x 터치 충돌
+
+이 4가지 문제 + 6번 AI 엔지니어 에이전트의 할루시네이션 방지 5단계 권고를 한 세션에서 전부 처리.
+
+### 구체적으로 뭘 바꿨나
+
+#### 1. 성격이 살아있는 AI (`83d6972`, `3e532f6`)
+
+**문제**: GPT에게 "활발한 성격이야"라고만 알려주면 무시함. 모든 펫이 "그렇구나~ 좋겠다~" 로봇.
+
+**해결**: `getPersonalityBehavior()` 함수 추가 — 성격 텍스트를 구체적 말투/행동 지시로 변환.
+
+```typescript
+// route.ts 419~466줄
+// "활발" 키워드 → 일상: "짧은 감탄사('와!', '진짜?!'), 신난 어조"
+//                추모: "밝고 경쾌한 회상 톤. '그때 진짜 재밌었지~'"
+// "도도" 키워드 → 일상: "자기 주장 강한 톤. '양보 못 해.'"
+//                추모: "쿨한 말투. '뭐, 보고 싶긴 했어.' 같은 츤데레"
+```
+
+7개 성격 (활발/차분/호기심/겁쟁이/애교/도도/식탐) x 2모드 = 14개 분기.
+Few-shot 예시도 성격별로 1개씩 넣어서 GPT가 톤을 잡게 함.
+
+#### 2. 추모 모드 추천 필터 (`83d6972`, `3e532f6`)
+
+**문제**: GPT가 프롬프트에서 "간식 금지"라고 써도 SUGGESTIONS에서 "츄르 줘볼까?" 생성.
+
+**해결**: 이중 방어
+- 프롬프트: "후속 질문은 추억/감정/관계만. 간식/건강/케어 금지"
+- 코드: `filterMemorialSuggestions()` — 22개 키워드 블록리스트 (츄르/간식/산책/병원 등)
+- fallback: 필터링 후 0개면 원본 반환 (추천 질문 아예 없는 것보다 나음)
+- "먹" → "먹방/먹이주/먹자"로 구체화 (기존 "먹"은 너무 넓어서 추억 질문도 다 걸림)
+
+#### 3. 할루시네이션 방지 5단계 (`fb2d2cf`, `42b630b`, `3e532f6`)
+
+6번 AI 엔지니어 에이전트 권고사항 전부 적용:
+
+| 단계 | 내용 | 파일 |
+|------|------|------|
+| 1. CoV 삭제 | Chain-of-Verification 프롬프트 제거 (GPT-4o-mini에서 역효과) | 이전 세션에서 완료 |
+| 2. 프롬프트 압축 | HALLUCINATION_GUARD_RULES 7섹션→4원칙+2 Few-shot (토큰 50% 감소) | `care-reference.ts` |
+| 3. Few-shot | "~해도 돼?" → "수의사 확인이 가장 정확해! 일반적으로는~" 패턴 2개 | `care-reference.ts` |
+| 4. 조건부 삽입 | `isCareRelatedQuery()` — 잡담엔 케어 규칙 안 넣음 → 토큰 절약 | `route.ts` |
+| 5. 후처리 검증 | `validateAIResponse()` — GPT 응답에서 위험 패턴 코드 레벨 수정 | `care-reference.ts` |
+
+`validateAIResponse` 5가지 체크:
+1. 약 용량/처방 패턴 → "수의사 상담 권장" 추가
+2. 과도한 단정 ("무조건", "반드시") → "가능하면"으로 완화. **단, 독성 음식 경고("절대 안 돼")는 예외 보존**
+3. 브랜드명 20+ 감지 → "좋은 제품"으로 교체. **단, 유저가 직접 물어본 브랜드는 예외**
+4. 확률 날조 ("70% 확률") → "경우에 따라"로 교체
+5. 사람 약 감지 → 강력 경고 삽입
+
+#### 4. 프롬프트 30% 압축 (`3e532f6`)
+
+**문제**: 케어 모드에서 시스템 프롬프트 ~2,900 토큰. GPT-4o-mini가 뒤쪽 규칙 무시.
+
+**해결**: 4,041자 → 2,744자 (32.1% 감소)
+- Few-shot 3개 → 1개 (일상: 활발, 추모: 차분)
+- "절대 하지 말 것" 5줄 + "응답 형식" 4줄 → "응답 형식 + 금지" 4줄로 통합
+- "두 가지 응답 모드" A/B 설명 8줄 → 인라인 1줄
+- CARE_FRAMING_RULES: 525자 → 239자 (54.5% 감소)
+
+#### 5. 펫 전환 버그 (`bbf8dea`)
+
+**문제**: 2마리 등록 계정에서 펫 바꾸면 이전 펫 추천 질문 그대로.
+
+**원인**: `useAIChat.ts`에서 `setMessages([])` 하면서 `setSuggestedQuestions([])` 누락.
+
+**수정**: 1줄 추가.
+
+#### 6. 추천 버튼 UX (`8a46810`)
+
+**문제**: `overflow-x-auto snap-x`로 가로 스크롤인데 모바일에서 snap이 터치 이벤트 먹음 + 긴 텍스트 잘림.
+
+**수정**:
+- 레이아웃: `overflow-x-auto snap-x` → `flex flex-wrap` (세로 줄바꿈)
+- 크기: `max-w-[200px]` + `truncate` + `min-h-[40px]`
+- 글자수: 서버에서 30자 → 20자 제한
+- 클릭: `hover:scale` 제거 (모바일에서 불안정), `cursor-pointer` 추가
+
+#### 7. 신규 유저 첫 대화 (`3e532f6`)
+
+**문제**: 데이터 없는 첫 대화가 가장 밋밋 — "안녕!" 하면 "안녕~ 반가워~" 끝.
+
+**수정**: `isFirstChat = chatHistory.length === 0` 감지 후:
+- 일상: "나는 {이름}이야! {품종} {성별}!" 자기소개 + 질문 1개 + SUGGESTIONS를 "뭐 좋아해?"/"같이 놀자!" 온보딩 주제로
+- 추모: "다시 이야기할 수 있어서 좋아..." 부드러운 시작 + SUGGESTIONS를 "그때 기억나?"/"보고싶었어" 주제로
+
+### 에이전트 회의 (승빈님 요청)
+
+"AI 펫톡 어떻게 극대화시킬지 에이전트 총출동 회의해" → 3번(UX)+4번(비주얼)+5번(QA)+6번(AI)+7번(비판)+8번(PM) 6명 병렬 투입.
+
+7번 비판 에이전트가 **존재하지 않는 기능을 상상으로 비판**하는 실수 발생:
+- "TTS 음성 대화 하지 마" → 만든 적 없음
+- "프로액티브 추모 푸시 하지 마" → 일상 모드 케어 리마인더만 있음
+- "감정 대시보드 잔인하다" → 유저에게 노출 안 됨, DB 내부 관리용
+- "잠든 유저 리인게이지먼트 하지 마" → 그런 기능 없음
+
+**→ 7번의 "절대 하지 말 것" 목록은 전부 무시.**
+7번이 제대로 짚은 것은 프롬프트 비대화 + 후처리 오탐 + 추천 필터 오탐 3개뿐이고, 이건 Phase 1에서 전부 수정 완료.
+
+### 커밋 히스토리
+
+| # | 커밋 | 내용 |
 |---|------|------|
-| 8 | 감각 기반 기억 — 추모 프롬프트에 오감 묘사 지시 | 감정적 공명 강화 |
-| 9 | 감정 거울링 3단계 — 인정→공유→연결 순서 명시 | 진짜 위로 |
-| 10 | 시간대별 에너지 — 밤엔 졸린 톤, 아침엔 어벙한 톤 | 자연스러움 향상 |
-| 11 | pending_topic — "다음에 물어볼 것" 메모리 타입 | "기억하고 성장" 느낌 |
-| 12 | 추모 별 float-up 애니메이션 | 고급스러움 |
-| 13 | 타이핑 인디케이터 감성 텍스트 — "꼬리 흔들며 생각 중..." | 차별화 |
-| 14 | 발자국 버블 데코 | 시각 차별화 |
+| 1 | `fb2d2cf` | 할루시네이션 방지: HALLUCINATION_GUARD_RULES 압축 + isCareRelatedQuery 조건부 삽입 |
+| 2 | `42b630b` | validateAIResponse 후처리 검증 레이어 추가 |
+| 3 | `83d6972` | 성격 살리기 + 추모 추천 필터 + 추모 프롬프트 재작성 |
+| 4 | `bbf8dea` | 펫 전환 시 추천 질문 공유 버그 수정 |
+| 5 | `8a46810` | 추천 질문 버튼 UX (flex-wrap + truncate + 클릭 안정성) |
+| 6 | `3e532f6` | Phase 1 통합: 프롬프트 30% 압축 + 필터 fallback + 오탐 수정 + 첫 대화 강화 |
+| 7 | `9555374` | RELAY.md 업데이트 |
 
-**Phase 2~3 실행 시 주의:**
-- 승빈님이 우선순위/순서 확인 후 진행
-- 7번 비판 에이전트의 "절대 하지 말 것" 목록은 **존재하지 않는 기능을 비판한 것이므로 무시** (TTS 없음, 프로액티브 추모 푸시 없음, 감정 대시보드는 유저 노출 안 됨, 리인게이지먼트 알림 없음)
+### 수정 파일
 
-### 이전 Phase 2 미완료 항목 (2026-02-25 세션)
+| 파일 | 뭘 바꿨나 |
+|------|----------|
+| `src/app/api/chat/route.ts` | getPersonalityBehavior(), filterMemorialSuggestions()+fallback, isCareQuery 조건부, isFirstChat 첫 대화, 프롬프트 30% 압축, 추천 20자 제한 |
+| `src/lib/care-reference.ts` | HALLUCINATION_GUARD_RULES 압축, CARE_FRAMING_RULES 압축, validateAIResponse()+오탐 3건 수정 |
+| `src/components/features/chat/useAIChat.ts` | 펫 전환 시 setSuggestedQuestions([]) 추가 |
+| `src/components/features/chat/ChatInputArea.tsx` | flex-wrap + max-w-[200px] + truncate + cursor-pointer |
 
-| 항목 | 내용 | 우선순위 |
-|------|------|---------|
-| P2-2 | 대화 속 사진 연결 `[PHOTO:id]` | 중 — Phase 2 #7과 통합 가능 |
-| P2-4 | 치유의 여정 대시보드 (유저 비노출, DB만) | 중 |
-| P2-5 | 대화→타임라인 자동 생성 | 낮 |
-| P2-7 | 미니미 도감 + 터치 이펙트 | 낮 |
+### 현재 AI 펫톡 처리 흐름
+
+```
+유저 메시지
+  → sanitizeInput (XSS 방지)
+  → detectCrisis (자해/위기 감지)
+  → detectEmergencyKeywords (반려동물 응급 증상)
+  → isCareRelatedQuery (케어 질문이면 케어 프롬프트 삽입, 아니면 토큰 절약)
+  → isFirstChat (chatHistory.length === 0이면 온보딩 프롬프트)
+  → analyzeEmotion (감정 분석 + 추모 모드면 애도 단계)
+  → getPetMemories (DB에서 장기 메모리 로드)
+  → getPersonalityBehavior (성격→말투 매핑)
+  → getDailySystemPrompt / getMemorialSystemPrompt (모드별 프롬프트 생성)
+  → GPT-4o-mini 호출
+  → SUGGESTIONS 파싱 (---SUGGESTIONS--- 마커)
+  → filterMemorialSuggestions (추모 모드면 간식/케어 키워드 필터)
+  → 느낌표 후처리 (추모 모드면 "!!!" → ".", "!!" → "~")
+  → validateAIResponse (약 용량/브랜드/단정/확률/사람약 체크)
+  → DB 저장 + 응답 반환
+```
 
 ---
 
