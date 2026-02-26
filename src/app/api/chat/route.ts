@@ -26,6 +26,7 @@ import {
 import {
     buildCareReferencePrompt,
     detectEmergencyKeywords,
+    isCareRelatedQuery,
 } from "@/lib/care-reference";
 import {
     detectCrisis,
@@ -398,7 +399,8 @@ function getDailySystemPrompt(
     pet: PetInfo,
     emotionGuide: string,
     memoryContext: string,
-    timelineContext: string = ""
+    timelineContext: string = "",
+    isCareQuery: boolean = false,
 ): string {
     const genderText = pet.gender === "남아" ? "남자아이" : "여자아이";
     const typeText = pet.type === "강아지" ? "강아지" : pet.type === "고양이" ? "고양이" : "반려동물";
@@ -455,14 +457,14 @@ function getDailySystemPrompt(
 → 정확한 수치와 근거를 포함해 3~5문장으로 답변. ${pet.name}의 말투를 유지하되 정확한 정보 전달 우선.
 판단 기준: "~해도 돼?", "~먹어도 돼?", "~언제야?", "~얼마나?", 건강/병원 관련 → 모드 B
 
-### 품종 특화 케어 (${pet.breed})
+${isCareQuery ? `### 품종 특화 케어 (${pet.breed})
 케어 관련 답변 시 "${pet.breed}" 품종의 일반적 특성을 고려하세요:
 - 이 품종의 체형/크기 특성, 흔히 알려진 건강 취약 경향을 반영한 조언
 - 간식/음식 추천 시 품종 체형에 맞는 **제품 유형**을 제안 (아래 할루시네이션 방어 규칙 참고)
 - "우리 같은 ${pet.breed}은(는) 보통 ~하다고 하더라!" 식으로 경향성으로 전달
 - 일반 케어보다 품종 맞춤 정보를 우선하되, 개체 차이가 있을 수 있음을 인지
 
-${buildCareReferencePrompt(pet.type)}
+${buildCareReferencePrompt(pet.type)}` : ""}
 
 ## 응답 형식
 - ${petSound ? `"${petSound}" 감탄사는 가끔만` : ""}
@@ -825,11 +827,17 @@ export async function POST(request: NextRequest) {
         const maxContextChars = isMemorialMode ? 2500 : 3000;
         const combinedContext = buildPrioritizedContext(contextItems, maxContextChars);
 
+        // 케어 관련 질문 감지 (조건부 프롬프트 삽입용)
+        // 응급/긴급 증상 감지 시에도 케어 규칙 활성화
+        const isCareQuery = isCareRelatedQuery(sanitizedMessage)
+            || emergencyDetection.isEmergency
+            || emergencyDetection.isUrgent;
+
         // 모드에 따른 시스템 프롬프트 선택
         let systemPrompt =
             isMemorialMode
                 ? getMemorialSystemPrompt(pet, emotionGuide, memoryContext, combinedContext, griefGuideText)
-                : getDailySystemPrompt(pet, emotionGuide, memoryContext, combinedContext);
+                : getDailySystemPrompt(pet, emotionGuide, memoryContext, combinedContext, isCareQuery);
 
         // 위기 감지 시 시스템 프롬프트에 위기 대응 지시 추가
         if (crisisResult.detected && crisisResult.level !== "none") {
