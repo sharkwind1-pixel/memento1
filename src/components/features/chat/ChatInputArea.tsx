@@ -22,7 +22,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { MAX_MESSAGE_LENGTH } from "@/components/features/chat";
-import { emotionIcons } from "./chatTypes";
 import type { Pet } from "@/types";
 import type { LucideIcon } from "lucide-react";
 
@@ -33,7 +32,6 @@ interface ChatInputAreaProps {
     isLimitReached: boolean;
     isPremium: boolean;
     remainingChats: number;
-    lastEmotion: string;
     suggestedQuestions: string[];
     setSuggestedQuestions: (questions: string[]) => void;
     selectedPet: Pet | null | undefined;
@@ -67,7 +65,6 @@ export default function ChatInputArea({
     isLimitReached,
     isPremium,
     remainingChats,
-    lastEmotion,
     suggestedQuestions,
     setSuggestedQuestions,
     selectedPet,
@@ -244,12 +241,6 @@ export default function ChatInputArea({
                                         : "bg-sky-100 text-sky-600"
                                 }`}>
                                     오늘 {remainingChats}회 남음
-                                </span>
-                            )}
-                            {lastEmotion !== "neutral" && (
-                                <span className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full flex items-center gap-1">
-                                    <span>{emotionIcons[lastEmotion] || "\u{1F610}"}</span>
-                                    <span className="text-gray-500">감정 인식됨</span>
                                 </span>
                             )}
                         </div>

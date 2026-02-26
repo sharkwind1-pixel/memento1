@@ -13,9 +13,6 @@ import { PawPrint, RotateCcw, Bell } from "lucide-react";
 import type { Pet } from "@/types";
 import {
     ChatMessage,
-    emotionIcons,
-    emotionBubbleTint,
-    emotionLabels,
     formatTimestamp,
     hasTimeGap,
 } from "./chatTypes";
@@ -64,10 +61,6 @@ export default function ChatMessageList({
                     index === 0 ||
                     hasTimeGap(messages[index - 1].timestamp, message.timestamp);
 
-                const emotionTintClass =
-                    message.role === "pet" && message.emotion && emotionBubbleTint[message.emotion]
-                        ? emotionBubbleTint[message.emotion]
-                        : "";
 
                 return (
                     <div key={message.id}>
@@ -168,9 +161,7 @@ export default function ChatMessageList({
                                                 ? (isMemorialMode
                                                     ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-br-sm"
                                                     : "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white rounded-br-sm")
-                                                : emotionTintClass
-                                                    ? `${emotionTintClass} text-gray-800 rounded-bl-sm border`
-                                                    : isMemorialMode
+                                                : isMemorialMode
                                                         ? "bg-amber-100 text-amber-900 rounded-bl-sm border border-amber-200/50"
                                                         : "bg-white text-gray-800 rounded-bl-sm border border-sky-100"
                                         }`}
@@ -179,12 +170,6 @@ export default function ChatMessageList({
                                             {message.content}
                                         </p>
                                     </div>
-                                    {message.role === "pet" && message.emotion && message.emotion !== "neutral" && (
-                                        <span className="text-[11px] text-gray-400 mt-1 ml-1 flex items-center gap-1">
-                                            <span>{emotionIcons[message.emotion]}</span>
-                                            <span>{emotionLabels[message.emotion] || message.emotion}</span>
-                                        </span>
-                                    )}
                                 </div>
                             </div>
                         )}

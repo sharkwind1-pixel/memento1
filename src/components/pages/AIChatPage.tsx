@@ -307,7 +307,6 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                         isLimitReached={chat.isLimitReached}
                         isPremium={isPremiumUser}
                         remainingChats={chat.remainingChats}
-                        lastEmotion={chat.lastEmotion}
                         suggestedQuestions={chat.suggestedQuestions}
                         setSuggestedQuestions={chat.setSuggestedQuestions}
                         selectedPet={selectedPet}
