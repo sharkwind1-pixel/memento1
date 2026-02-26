@@ -124,7 +124,7 @@ export default function SupportModal({
                     className={`sticky top-0 z-10 flex items-center justify-between p-4 border-b dark:border-gray-700 rounded-t-2xl ${
                         isInquiry
                             ? "bg-blue-50 dark:bg-blue-900/20"
-                            : "bg-amber-50 dark:bg-amber-900/20"
+                            : "bg-amber-50 dark:bg-gray-700/20"
                     }`}
                 >
                     <div className="flex items-center gap-2">
@@ -198,7 +198,7 @@ export default function SupportModal({
 
                             {/* 비로그인 안내 */}
                             {!user && (
-                                <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                                <div className="p-4 bg-amber-50 dark:bg-gray-700/20 rounded-lg border border-amber-200 dark:border-gray-700">
                                     <p className="text-sm text-amber-700 dark:text-amber-300 font-medium">
                                         로그인 후 문의하실 수 있습니다
                                     </p>

@@ -119,7 +119,7 @@ export default function ChatMessageList({
                                             onClick={() => onRetry(message.id, message.retryMessage!)}
                                             className={`mt-2 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all hover:scale-[1.03] active:scale-95 ${
                                                 isMemorialMode
-                                                    ? "bg-amber-100 hover:bg-amber-200 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300"
+                                                    ? "bg-amber-100 hover:bg-amber-200 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300"
                                                     : "bg-sky-100 hover:bg-sky-200 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300"
                                             }`}
                                         >

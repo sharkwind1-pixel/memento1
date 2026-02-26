@@ -240,7 +240,7 @@ export default function Sidebar({
                                 "hover:bg-gray-100 dark:hover:bg-gray-800",
                                 isMainCategoryActive(category.id)
                                     ? isMemorialMode
-                                        ? "bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 font-medium"
+                                        ? "bg-amber-50 dark:bg-amber-400/10 text-amber-600 dark:text-amber-400 font-medium"
                                         : "bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 font-medium"
                                     : "text-gray-700 dark:text-gray-300"
                             )}
@@ -397,11 +397,11 @@ export default function Sidebar({
             className={cn(
                 "flex flex-col w-[420px] h-full overflow-y-auto",
                 isMemorialMode
-                    ? "bg-amber-50/80 dark:bg-amber-950/80"
+                    ? "bg-amber-50/80 dark:bg-gray-900/80"
                     : "bg-white/80 dark:bg-gray-900/80",
                 "backdrop-blur-lg",
                 isMemorialMode
-                    ? "border-r border-amber-200/50 dark:border-amber-800/50"
+                    ? "border-r border-amber-200/50 dark:border-gray-700/50"
                     : "border-r border-gray-200/50 dark:border-gray-700/50",
                 "transition-all duration-700 ease-in-out"
             )}

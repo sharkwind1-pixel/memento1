@@ -178,7 +178,7 @@ export default function AdminDashboardTab({
                 <Card>
                     <CardContent className="p-4">
                         <div className="flex items-center gap-3">
-                            <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-full">
+                            <div className="p-3 bg-amber-100 dark:bg-amber-400/10 rounded-full">
                                 <Crown className="w-6 h-6 text-amber-600" />
                             </div>
                             <div>

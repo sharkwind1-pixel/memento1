@@ -59,9 +59,9 @@ export default function PetProfileSidebar({
     return (
         <div className="flex-shrink-0 p-2 lg:p-4 lg:w-80 lg:border-r lg:border-gray-200/50 lg:sticky lg:top-0 lg:self-start">
             {currentPhoto ? (
-                <div className="relative max-w-[160px] lg:max-w-[280px] mx-auto lg:max-w-none">
+                <div className={`relative mx-auto lg:max-w-none ${isMemorialMode ? "max-w-[220px] lg:max-w-[280px]" : "max-w-[160px] lg:max-w-[280px]"}`}>
                     <div
-                        className={`relative rounded-2xl overflow-hidden shadow-xl aspect-[4/3] lg:aspect-square transition-all duration-700 ${isMemorialMode ? "ring-2 ring-amber-200/50" : "ring-2 ring-[#E0F7FF]/50"}`}
+                        className={`relative rounded-2xl overflow-hidden shadow-xl lg:aspect-square transition-all duration-700 ${isMemorialMode ? "aspect-[3/4] ring-2 ring-amber-200/50" : "aspect-[4/3] ring-2 ring-[#E0F7FF]/50"}`}
                         onTouchStart={handleTouchStart}
                         onTouchEnd={handleTouchEnd}
                     >

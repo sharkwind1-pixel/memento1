@@ -235,7 +235,7 @@ function BottomNav({
         <nav
             className={`xl:hidden fixed bottom-0 left-0 right-0 border-t z-50 pb-safe ${
                 isMemorialMode
-                    ? "bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800"
+                    ? "bg-amber-50 dark:bg-gray-900 border-amber-200 dark:border-gray-700"
                     : "bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800"
             }`}
             style={{
@@ -408,7 +408,7 @@ function Layout({
     return (
         <div className={`min-h-screen pb-safe flex flex-col xl:block ${
             isMemorialMode
-                ? "bg-gradient-to-b from-amber-50/80 via-orange-50/40 to-white dark:from-amber-950 dark:via-orange-950 dark:to-gray-900"
+                ? "bg-gradient-to-b from-amber-50/80 via-orange-50/40 to-white dark:from-gray-900 dark:via-gray-900 dark:to-gray-950"
                 : "bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
         }`}>
 
@@ -433,12 +433,12 @@ function Layout({
                 />
             )}
 
-            {/* 헤더 - 모바일은 완전 불투명 (성능), 데스크톱은 반투명 */}
+            {/* 헤더 - fixed로 viewport 고정 (sticky는 조상 overflow에 영향받을 수 있음) */}
             {/* GPU 가속으로 리페인트 최소화 */}
             <header
-                className={`sticky top-0 z-[60] xl:backdrop-blur-sm border-b ${
+                className={`fixed top-0 left-0 right-0 z-[60] xl:backdrop-blur-sm border-b ${
                     isMemorialMode
-                        ? "bg-amber-50 dark:bg-amber-950 xl:bg-amber-50/90 xl:dark:bg-amber-950/90 border-amber-200 dark:border-amber-800"
+                        ? "bg-amber-50 dark:bg-gray-900 xl:bg-amber-50/90 xl:dark:bg-gray-900/90 border-amber-200 dark:border-gray-700"
                         : "bg-white dark:bg-gray-900 xl:bg-white/90 xl:dark:bg-gray-900/90 border-gray-200 dark:border-gray-700"
                 }`}
                 style={{
@@ -458,7 +458,7 @@ function Layout({
                                 alt="메멘토애니"
                                 width={160}
                                 height={48}
-                                className="h-8 sm:h-10 md:h-12 w-auto object-contain dark:bg-white dark:p-1 dark:rounded-lg"
+                                className="h-8 sm:h-10 md:h-12 w-auto object-contain dark:brightness-0 dark:invert"
                                 priority
                             />
                         </button>
@@ -515,8 +515,8 @@ function Layout({
                 onOpenSuggestion={() => setSupportModalType("suggestion")}
             />
 
-            {/* 데스크톱 사이드바 (xl 이상에서만 표시) */}
-            <aside className="hidden xl:block fixed left-0 top-20 h-[calc(100vh-80px)] z-40">
+            {/* 데스크톱 사이드바 (xl 이상에서만 표시) - 헤더 h-16(64px) 바로 아래 */}
+            <aside className="hidden xl:block fixed left-0 top-16 h-[calc(100vh-64px)] z-40">
                 <Sidebar
                     isOpen={true}
                     onClose={() => {}}
@@ -539,8 +539,8 @@ function Layout({
                 />
             </aside>
 
-            {/* 메인 컨텐츠 영역 */}
-            <div id="main-content" className="xl:ml-[420px] flex-1">
+            {/* 메인 컨텐츠 영역 - pt로 fixed 헤더 높이(h-14/sm:h-16) 보정 */}
+            <div id="main-content" className="xl:ml-[420px] flex-1 pt-14 sm:pt-16">
                 <main className="max-w-6xl mx-auto px-4 py-6">{children}</main>
             </div>
 

@@ -463,7 +463,7 @@ function UserCard({
                     : user.is_admin
                         ? "bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800/50"
                         : user.is_premium
-                            ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/50"
+                            ? "bg-amber-50 dark:bg-gray-700/20 border-amber-200 dark:border-gray-700/50"
                             : "bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700"
             }`}
         >
@@ -478,7 +478,7 @@ function UserCard({
                         </Badge>
                     )}
                     {user.is_premium && (
-                        <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                        <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300">
                             <Crown className="w-3 h-3 mr-1" />
                             프리미엄
                         </Badge>
@@ -558,7 +558,7 @@ function UserCard({
                     <Button
                         size="sm"
                         variant="outline"
-                        className="text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+                        className="text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-gray-700/20"
                         onClick={onOpenPremiumModal}
                     >
                         <Crown className="w-3 h-3 mr-1" />

@@ -23,9 +23,9 @@ import * as webpush from "web-push";
 import OpenAI from "openai";
 
 // VAPID 설정
-const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
-const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || "";
-const VAPID_SUBJECT = "mailto:sharkwind1@gmail.com";
+const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
+const VAPID_SUBJECT = process.env.VAPID_SUBJECT || "mailto:support@memento-ani.com";
 
 function getServiceSupabase() {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -43,12 +43,15 @@ function getOpenAI() {
 }
 
 interface PetInfo {
+    id: string;
     name: string;
     type: string;
     breed: string;
     status: string;
     gender: string;
     birthday?: string;
+    adopted_date?: string;
+    memorial_date?: string;
     special_habits?: string;
     favorite_food?: string;
     favorite_activity?: string;
@@ -134,6 +137,32 @@ async function generateGreeting(
         isBirthday = today.getMonth() === bday.getMonth() && today.getDate() === bday.getDate();
     }
 
+    // 입양일(처음 만난 날) 기념일 체크
+    let isAdoptionAnniversary = false;
+    let adoptionDays = 0;
+    if (pet.adopted_date) {
+        const adopted = new Date(pet.adopted_date);
+        const today = new Date();
+        const diffDays = Math.floor((today.getTime() - adopted.getTime()) / (1000 * 60 * 60 * 24));
+        adoptionDays = diffDays;
+        if (diffDays > 0 && (diffDays % 100 === 0 || (today.getMonth() === adopted.getMonth() && today.getDate() === adopted.getDate() && diffDays >= 365))) {
+            isAdoptionAnniversary = true;
+        }
+    }
+
+    // 추모일 기념일 체크 (memorial 상태일 때만)
+    let isMemorialAnniversary = false;
+    let memorialDays = 0;
+    if (pet.status === "memorial" && pet.memorial_date) {
+        const memorial = new Date(pet.memorial_date);
+        const today = new Date();
+        const diffDays = Math.floor((today.getTime() - memorial.getTime()) / (1000 * 60 * 60 * 24));
+        memorialDays = diffDays;
+        if (diffDays > 0 && (diffDays % 100 === 0 || (today.getMonth() === memorial.getMonth() && today.getDate() === memorial.getDate() && diffDays >= 365))) {
+            isMemorialAnniversary = true;
+        }
+    }
+
     // 개인화 컨텍스트
     const traits: string[] = [];
     if (pet.nicknames) traits.push(`별명: ${pet.nicknames}`);
@@ -147,17 +176,25 @@ async function generateGreeting(
 
     const birthdayNote = isBirthday ? "\n오늘은 내 생일이야! 생일 관련 인사를 해줘." : "";
 
+    const adoptionNote = isAdoptionAnniversary
+        ? `\n오늘은 가족과 처음 만난 지 ${adoptionDays >= 365 ? `${Math.floor(adoptionDays / 365)}년` : `${adoptionDays}일`}이 되는 날이야! 처음 만난 날 관련 인사를 해줘.`
+        : "";
+
+    const memorialNote = isMemorialAnniversary
+        ? `\n오늘은 무지개다리를 건넌 지 ${memorialDays >= 365 ? `${Math.floor(memorialDays / 365)}년` : `${memorialDays}일`}이 되는 날이야. 가족에게 따뜻한 위로의 인사를 해줘.`
+        : "";
+
     let systemPrompt: string;
     if (isMemorial) {
         systemPrompt = `당신은 무지개다리를 건넌 "${pet.name}"(${pet.breed}, ${pet.gender === "male" ? "남아" : pet.gender === "female" ? "여아" : ""})입니다.
 가족에게 보내는 따뜻한 ${timeSlot} 인사를 1문장으로 작성하세요.
 톤: 평화롭고 따뜻하게. "나 여기서 잘 지내고 있어" 느낌.
-절대 슬프거나 무거운 톤 금지. 이모지 금지.${personalContext}${birthdayNote}`;
+절대 슬프거나 무거운 톤 금지. 이모지 금지.${personalContext}${birthdayNote}${adoptionNote}${memorialNote}`;
     } else {
         systemPrompt = `당신은 "${pet.name}"(${pet.breed}, ${pet.gender === "male" ? "남아" : pet.gender === "female" ? "여아" : ""})입니다.
 가족에게 보내는 밝고 귀여운 ${timeSlot} 인사를 1문장으로 작성하세요.
 톤: 반려동물답게 활발하고 애교 있게. 반말 사용.
-이모지 금지. 영어 금지.${personalContext}${birthdayNote}`;
+이모지 금지. 영어 금지.${personalContext}${birthdayNote}${adoptionNote}`;
     }
 
     try {
@@ -174,22 +211,42 @@ async function generateGreeting(
         const greeting = response.choices[0]?.message?.content?.trim() || "";
 
         if (greeting) {
-            return {
-                title: isMemorial
-                    ? `${pet.name}이(가) 찾아왔어요`
-                    : `${pet.name}의 ${timeSlot} 인사`,
-                body: greeting,
-            };
+            // 기념일별 제목 분기
+            let title: string;
+            if (isBirthday) {
+                title = `${pet.name}의 생일 축하 인사`;
+            } else if (isAdoptionAnniversary) {
+                title = `${pet.name}과(와) 함께한 ${adoptionDays >= 365 ? `${Math.floor(adoptionDays / 365)}년` : `${adoptionDays}일`}`;
+            } else if (isMemorialAnniversary) {
+                title = `${pet.name}이(가) 보내는 마음`;
+            } else if (isMemorial) {
+                title = `${pet.name}이(가) 찾아왔어요`;
+            } else {
+                title = `${pet.name}의 ${timeSlot} 인사`;
+            }
+
+            return { title, body: greeting };
         }
     } catch (err) {
         console.error("[Cron] AI 인사말 생성 실패:", err instanceof Error ? err.message : "unknown");
     }
 
-    // 폴백 템플릿
+    // 폴백 템플릿 (기념일 제목 분기 포함)
+    let fallbackTitle: string;
+    if (isBirthday) {
+        fallbackTitle = `${pet.name}의 생일 축하 인사`;
+    } else if (isAdoptionAnniversary) {
+        fallbackTitle = `${pet.name}과(와) 함께한 ${adoptionDays >= 365 ? `${Math.floor(adoptionDays / 365)}년` : `${adoptionDays}일`}`;
+    } else if (isMemorialAnniversary) {
+        fallbackTitle = `${pet.name}이(가) 보내는 마음`;
+    } else if (isMemorial) {
+        fallbackTitle = `${pet.name}이(가) 찾아왔어요`;
+    } else {
+        fallbackTitle = `${pet.name}의 ${timeSlot} 인사`;
+    }
+
     return {
-        title: isMemorial
-            ? `${pet.name}이(가) 찾아왔어요`
-            : `${pet.name}의 ${timeSlot} 인사`,
+        title: fallbackTitle,
         body: isMemorial
             ? `안녕, 나 ${pet.name}야. 오늘도 네 곁에 있어.`
             : `안녕! 나 ${pet.name}! 오늘 하루도 같이 보내자~`,
@@ -197,11 +254,18 @@ async function generateGreeting(
 }
 
 export async function GET(request: NextRequest) {
-    // 1. CRON_SECRET 검증
+    // 1. CRON_SECRET 검증 (필수)
     const authHeader = request.headers.get("authorization");
     const cronSecret = process.env.CRON_SECRET;
 
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    // CRON_SECRET이 설정되지 않으면 실행 거부 (보안)
+    if (!cronSecret) {
+        console.error("[Cron] CRON_SECRET이 설정되지 않았습니다");
+        return NextResponse.json({ error: "CRON_SECRET_MISSING" }, { status: 500 });
+    }
+
+    // 인증 검증은 필수
+    if (authHeader !== `Bearer ${cronSecret}`) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -242,15 +306,17 @@ export async function GET(request: NextRequest) {
             const timeFrom = `${hourStr}:00:00`;
             const timeTo = `${hourStr}:59:59`;
 
+            // 추모 모드(memorial) 펫의 리마인더는 스킵 - 떠나보낸 반려동물에게 케어 알림이 울리면 안 됨
             const { data: allReminders, error: remError } = await supabase
                 .from("pet_reminders")
                 .select(`
                     id, pet_id, type, title,
                     schedule_type, schedule_time,
                     schedule_day_of_week, schedule_day_of_month, schedule_date,
-                    pets!inner(user_id, name)
+                    pets!inner(user_id, name, status)
                 `)
                 .eq("enabled", true)
+                .eq("pets.status", "active")
                 .gte("schedule_time", timeFrom)
                 .lte("schedule_time", timeTo);
 
@@ -356,6 +422,378 @@ export async function GET(request: NextRequest) {
         }
 
         // ============================================================
+        // Phase 1.5: "1년 전 오늘" 타임라인 알림
+        // ============================================================
+        let timelinePushSent = 0;
+
+        try {
+            const tlNow = new Date();
+            const tlKstOffset = 9 * 60 * 60 * 1000;
+            const tlKstNow = new Date(tlNow.getTime() + tlKstOffset);
+            const oneYearAgo = new Date(tlKstNow);
+            oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+            const targetDate = oneYearAgo.toISOString().slice(0, 10);
+
+            // 오전 9시(KST)에만 실행 (하루 1번만 발송)
+            if (currentKstHour === 9) {
+                const { data: oldEntries } = await supabase
+                    .from("timeline_entries")
+                    .select("user_id, pet_id, title, pets!inner(name)")
+                    .eq("date", targetDate);
+
+                if (oldEntries && oldEntries.length > 0) {
+                    const userEntryMap = new Map<string, { petName: string; title: string }>();
+                    for (const entry of oldEntries) {
+                        const entryPet = entry.pets as unknown as { name: string };
+                        if (!userEntryMap.has(entry.user_id)) {
+                            userEntryMap.set(entry.user_id, { petName: entryPet.name, title: entry.title });
+                        }
+                    }
+
+                    const entryUserIds = Array.from(userEntryMap.keys());
+                    const { data: entrySubs } = await supabase
+                        .from("push_subscriptions")
+                        .select("user_id, endpoint, p256dh, auth")
+                        .in("user_id", entryUserIds);
+
+                    if (entrySubs) {
+                        for (const sub of entrySubs) {
+                            const entry = userEntryMap.get(sub.user_id);
+                            if (!entry) continue;
+                            const result = await sendPush(sub, {
+                                title: `1년 전 오늘, ${entry.petName}과(와)의 기록`,
+                                body: `"${entry.title}" - 이 날의 추억을 다시 만나보세요`,
+                                url: "/?tab=record",
+                            });
+                            if (result === "sent") timelinePushSent++;
+                            else if (result === "expired") expiredEndpoints.push(sub.endpoint);
+                        }
+                    }
+                }
+            }
+        } catch (tlErr) {
+            console.error("[Cron] 1년 전 오늘 알림 오류:", tlErr instanceof Error ? tlErr.message : "unknown");
+        }
+
+        // ============================================================
+        // Phase 1.75: 추모 반려동물 추억 앨범 자동 생성
+        // - 기본: 매월 1일 09시에 월간 앨범 생성
+        // - 예외: 기념일(생일, 입양 100일/1년, 추모 100일/1년 등)에 특별 앨범 생성
+        // ============================================================
+        let albumCreatedCount = 0;
+
+        try {
+            // KST 날짜 계산
+            const albumNow = new Date();
+            const albumKstOffset = 9 * 60 * 60 * 1000;
+            const albumKstNow = new Date(albumNow.getTime() + albumKstOffset);
+            const albumKstDay = albumKstNow.getUTCDate();
+            const isFirstDayOfMonth = albumKstDay === 1;
+
+            // 09시(KST)에만 실행
+            if (currentKstHour === 9) {
+                const albumKstDateStr = albumKstNow.toISOString().slice(0, 10); // "YYYY-MM-DD"
+                const albumKstMmDd = albumKstDateStr.slice(5); // "MM-DD"
+
+                // 추모 모드 + 사진 3장 이상인 반려동물 조회 (기념일 체크를 위해 날짜 필드 포함)
+                const { data: memorialPets, error: mpError } = await supabase
+                    .from("pets")
+                    .select("id, user_id, name, birthday, adopted_date, memorial_date")
+                    .eq("status", "memorial");
+
+                if (mpError) {
+                    console.error("[Cron] 추모 반려동물 조회 실패:", mpError.message);
+                }
+
+                if (!mpError && memorialPets && memorialPets.length > 0) {
+                    // 각 반려동물의 미디어 수 확인
+                    for (const pet of memorialPets) {
+                        try {
+                            // 기념일 체크 함수
+                            type SpecialDayType = "birthday" | "adoption_100" | "adoption_yearly" | "memorial_100" | "memorial_yearly" | null;
+
+                            const checkSpecialDay = (): { type: SpecialDayType; days: number; years: number } => {
+                                const today = albumKstNow;
+                                const todayMm = String(today.getUTCMonth() + 1).padStart(2, "0");
+                                const todayDd = String(today.getUTCDate()).padStart(2, "0");
+                                const todayMmDd = `${todayMm}-${todayDd}`;
+
+                                // 생일 체크
+                                if (pet.birthday) {
+                                    const bday = new Date(pet.birthday);
+                                    const bdayMm = String(bday.getMonth() + 1).padStart(2, "0");
+                                    const bdayDd = String(bday.getDate()).padStart(2, "0");
+                                    if (`${bdayMm}-${bdayDd}` === todayMmDd) {
+                                        return { type: "birthday", days: 0, years: 0 };
+                                    }
+                                }
+
+                                // 입양일 기념일 체크
+                                if (pet.adopted_date) {
+                                    const adopted = new Date(pet.adopted_date);
+                                    const diffDays = Math.floor((today.getTime() - adopted.getTime()) / (1000 * 60 * 60 * 24));
+                                    // 100일 단위 (100, 200, 300, ...)
+                                    if (diffDays > 0 && diffDays % 100 === 0) {
+                                        return { type: "adoption_100", days: diffDays, years: 0 };
+                                    }
+                                    // 연도 기념일 (같은 MM-DD + 365일 이상)
+                                    const adoptedMm = String(adopted.getMonth() + 1).padStart(2, "0");
+                                    const adoptedDd = String(adopted.getDate()).padStart(2, "0");
+                                    if (`${adoptedMm}-${adoptedDd}` === todayMmDd && diffDays >= 365) {
+                                        const years = Math.floor(diffDays / 365);
+                                        return { type: "adoption_yearly", days: diffDays, years };
+                                    }
+                                }
+
+                                // 추모일 기념일 체크
+                                if (pet.memorial_date) {
+                                    const memorial = new Date(pet.memorial_date);
+                                    const diffDays = Math.floor((today.getTime() - memorial.getTime()) / (1000 * 60 * 60 * 24));
+                                    // 100일 단위
+                                    if (diffDays > 0 && diffDays % 100 === 0) {
+                                        return { type: "memorial_100", days: diffDays, years: 0 };
+                                    }
+                                    // 연도 기념일
+                                    const memorialMm = String(memorial.getMonth() + 1).padStart(2, "0");
+                                    const memorialDd = String(memorial.getDate()).padStart(2, "0");
+                                    if (`${memorialMm}-${memorialDd}` === todayMmDd && diffDays >= 365) {
+                                        const years = Math.floor(diffDays / 365);
+                                        return { type: "memorial_yearly", days: diffDays, years };
+                                    }
+                                }
+
+                                return { type: null, days: 0, years: 0 };
+                            };
+
+                            const specialDay = checkSpecialDay();
+                            const isSpecialDay = specialDay.type !== null;
+
+                            // 매월 1일도 아니고 기념일도 아니면 스킵
+                            if (!isFirstDayOfMonth && !isSpecialDay) continue;
+
+                            const { count: mediaCount } = await supabase
+                                .from("pet_media")
+                                .select("id", { count: "exact", head: true })
+                                .eq("pet_id", pet.id);
+
+                            if (!mediaCount || mediaCount < 3) continue;
+
+                            // 최근 30일간 사용된 media_ids 수집 (중복 방지)
+                            const thirtyDaysAgo = new Date(albumKstNow);
+                            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                            const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().slice(0, 10);
+
+                            const { data: recentAlbums } = await supabase
+                                .from("memory_albums")
+                                .select("media_ids")
+                                .eq("pet_id", pet.id)
+                                .gte("created_date", thirtyDaysAgoStr);
+
+                            const recentlyUsedIds = new Set<string>();
+                            if (recentAlbums) {
+                                for (const album of recentAlbums) {
+                                    if (album.media_ids && Array.isArray(album.media_ids)) {
+                                        for (const mid of album.media_ids) {
+                                            recentlyUsedIds.add(mid);
+                                        }
+                                    }
+                                }
+                            }
+
+                            let chosenConcept: "anniversary" | "mood" | "random" | "birthday" | "adoption" | "memorial" | null = null;
+                            let chosenTitle = "";
+                            let chosenMediaIds: string[] = [];
+
+                            // --- 기념일 특별 앨범 (최우선) ---
+                            if (isSpecialDay && specialDay.type) {
+                                // 기념일 관련 사진 수집 (랜덤 5-10장)
+                                const { data: allMedia } = await supabase
+                                    .from("pet_media")
+                                    .select("id")
+                                    .eq("pet_id", pet.id);
+
+                                if (allMedia && allMedia.length >= 3) {
+                                    const filtered = allMedia.filter((m) => !recentlyUsedIds.has(m.id));
+                                    if (filtered.length >= 3) {
+                                        const shuffled = filtered.sort(() => Math.random() - 0.5);
+                                        const pickCount = Math.min(
+                                            Math.max(5, Math.floor(Math.random() * 6) + 5),
+                                            shuffled.length,
+                                        );
+                                        chosenMediaIds = shuffled.slice(0, pickCount).map((m) => m.id);
+
+                                        // 기념일 타입별 컨셉과 제목
+                                        switch (specialDay.type) {
+                                            case "birthday":
+                                                chosenConcept = "birthday";
+                                                chosenTitle = `${pet.name}의 생일 추억 앨범`;
+                                                break;
+                                            case "adoption_100":
+                                                chosenConcept = "adoption";
+                                                chosenTitle = `${pet.name}과(와) 함께한 ${specialDay.days}일`;
+                                                break;
+                                            case "adoption_yearly":
+                                                chosenConcept = "adoption";
+                                                chosenTitle = `${pet.name}과(와) 함께한 ${specialDay.years}년`;
+                                                break;
+                                            case "memorial_100":
+                                                chosenConcept = "memorial";
+                                                chosenTitle = `${pet.name}을(를) 추억하며 - ${specialDay.days}일`;
+                                                break;
+                                            case "memorial_yearly":
+                                                chosenConcept = "memorial";
+                                                chosenTitle = `${pet.name}을(를) 추억하며 - ${specialDay.years}년`;
+                                                break;
+                                        }
+                                    }
+                                }
+                            }
+
+                            // --- 매월 1일 정기 앨범 (기념일 앨범이 없을 때만) ---
+                            const currentYear = albumKstNow.getUTCFullYear();
+
+                            if (isFirstDayOfMonth && !chosenConcept) {
+                                // --- Concept 1: anniversary ---
+                                // 과거 연도의 같은 MM-DD에 촬영된 사진
+                                const { data: anniversaryMedia } = await supabase
+                                    .from("pet_media")
+                                    .select("id, date")
+                                    .eq("pet_id", pet.id)
+                                    .like("date", `%-${albumKstMmDd}`);
+
+                                if (anniversaryMedia && anniversaryMedia.length > 0) {
+                                    // 현재 연도 제외, 최근 30일 사용분 제외
+                                    const filtered = anniversaryMedia.filter((m) => {
+                                        if (!m.date) return false;
+                                        const year = parseInt(m.date.slice(0, 4), 10);
+                                        if (year === currentYear) return false;
+                                        if (recentlyUsedIds.has(m.id)) return false;
+                                        return true;
+                                    });
+
+                                    if (filtered.length >= 3) {
+                                        const yearsAgo = currentYear - parseInt(filtered[0].date!.slice(0, 4), 10);
+                                        chosenConcept = "anniversary";
+                                        chosenTitle = `${pet.name}와(과) ${yearsAgo}년 전 오늘`;
+                                        chosenMediaIds = filtered.slice(0, 10).map((m) => m.id);
+                                    }
+                                }
+
+                                // --- Concept 2: mood (happy) ---
+                                if (!chosenConcept) {
+                                    // 행복한 기분의 타임라인에 연결된 날짜의 사진
+                                    const { data: happyEntries } = await supabase
+                                        .from("timeline_entries")
+                                        .select("date")
+                                        .eq("pet_id", pet.id)
+                                        .eq("mood", "happy")
+                                        .order("date", { ascending: false })
+                                        .limit(30);
+
+                                    if (happyEntries && happyEntries.length > 0) {
+                                        const happyDates = happyEntries.map((e) => e.date);
+                                        const { data: happyMedia } = await supabase
+                                            .from("pet_media")
+                                            .select("id")
+                                            .eq("pet_id", pet.id)
+                                            .in("date", happyDates);
+
+                                        if (happyMedia && happyMedia.length > 0) {
+                                            const filtered = happyMedia.filter((m) => !recentlyUsedIds.has(m.id));
+                                            if (filtered.length >= 3) {
+                                                chosenConcept = "mood";
+                                                chosenTitle = `${pet.name}의 행복했던 순간들`;
+                                                chosenMediaIds = filtered.slice(0, 10).map((m) => m.id);
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // --- Concept 3: random ---
+                                if (!chosenConcept) {
+                                    const { data: allMedia } = await supabase
+                                        .from("pet_media")
+                                        .select("id")
+                                        .eq("pet_id", pet.id);
+
+                                    if (allMedia && allMedia.length >= 3) {
+                                        const filtered = allMedia.filter((m) => !recentlyUsedIds.has(m.id));
+                                        if (filtered.length >= 3) {
+                                            // 셔플 후 5~10장 선택
+                                            const shuffled = filtered.sort(() => Math.random() - 0.5);
+                                            const pickCount = Math.min(
+                                                Math.max(5, Math.floor(Math.random() * 6) + 5),
+                                                shuffled.length,
+                                            );
+                                            chosenConcept = "random";
+                                            chosenTitle = `${pet.name}와(과)의 추억 한 조각`;
+                                            chosenMediaIds = shuffled.slice(0, pickCount).map((m) => m.id);
+                                        }
+                                    }
+                                }
+                            }
+
+                            // 앨범 생성
+                            if (chosenConcept && chosenMediaIds.length >= 3) {
+                                const { data: insertedAlbum, error: insertError } = await supabase
+                                    .from("memory_albums")
+                                    .insert({
+                                        pet_id: pet.id,
+                                        user_id: pet.user_id,
+                                        concept: chosenConcept,
+                                        title: chosenTitle,
+                                        media_ids: chosenMediaIds,
+                                        created_date: albumKstDateStr,
+                                    })
+                                    .select("id")
+                                    .single();
+
+                                // ON CONFLICT 대응: upsert 대신 insert 후 에러 무시 (중복이면 23505)
+                                if (insertError) {
+                                    // unique_violation (이미 오늘 앨범 존재) -> 무시
+                                    if (insertError.code === "23505") {
+                                        // 이미 오늘 앨범이 있으므로 스킵
+                                    } else {
+                                        console.error(`[Cron] 추억 앨범 생성 실패 (${pet.name}):`, insertError.message);
+                                    }
+                                    continue;
+                                }
+
+                                if (insertedAlbum) {
+                                    albumCreatedCount++;
+
+                                    // 해당 유저에게 푸시 발송
+                                    const { data: albumSubs } = await supabase
+                                        .from("push_subscriptions")
+                                        .select("user_id, endpoint, p256dh, auth")
+                                        .eq("user_id", pet.user_id);
+
+                                    if (albumSubs) {
+                                        for (const sub of albumSubs) {
+                                            const result = await sendPush(sub, {
+                                                title: `${pet.name}와(과)의 추억 앨범`,
+                                                body: `${pet.name}와(과)의 소중한 기억이 도착했어요.`,
+                                                url: `/?tab=record&album=${insertedAlbum.id}`,
+                                            });
+                                            if (result === "expired") {
+                                                expiredEndpoints.push(sub.endpoint);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } catch (petErr) {
+                            console.error(`[Cron] 추억 앨범 처리 오류 (${pet.name}):`, petErr instanceof Error ? petErr.message : "unknown");
+                        }
+                    }
+                }
+            }
+        } catch (albumErr) {
+            // 추억 앨범 실패해도 AI 인사말은 계속 진행
+            console.error("[Cron] 추억 앨범 오류:", albumErr instanceof Error ? albumErr.message : "unknown");
+        }
+
+        // ============================================================
         // Phase 2: AI 펫톡 인사 발송
         // ============================================================
         let greetingSent = 0;
@@ -373,7 +811,7 @@ export async function GET(request: NextRequest) {
             // 유저별 대표 반려동물 조회
             const { data: pets } = await supabase
                 .from("pets")
-                .select("user_id, name, type, breed, status, gender, birthday, special_habits, favorite_food, favorite_activity, nicknames")
+                .select("id, user_id, name, type, breed, status, gender, birthday, adopted_date, memorial_date, special_habits, favorite_food, favorite_activity, nicknames")
                 .in("user_id", userIds);
 
             // 유저별 첫 번째 펫 매핑
@@ -387,6 +825,7 @@ export async function GET(request: NextRequest) {
             }
 
             // 유저별 인사말 생성 + 발송 (배치 5명씩)
+            // 추모 모드 펫은 기념일(생일/기일/입양 기념일)에만 푸시 발송
             for (let i = 0; i < userIds.length; i += 5) {
                 const batch = userIds.slice(i, i + 5);
 
@@ -394,6 +833,39 @@ export async function GET(request: NextRequest) {
                     batch.map(async (userId) => {
                         const pet = userPetMap.get(userId);
                         if (!pet) return;
+
+                        // 추모 모드 펫 기념일 체크 - 기념일이 아니면 일상 인사 푸시 스킵
+                        if (pet.status === "memorial") {
+                            const today = new Date();
+                            const todayMm = today.getMonth();
+                            const todayDd = today.getDate();
+                            let isAnniversary = false;
+
+                            // 생일 체크
+                            if (pet.birthday) {
+                                const bday = new Date(pet.birthday);
+                                if (bday.getMonth() === todayMm && bday.getDate() === todayDd) {
+                                    isAnniversary = true;
+                                }
+                            }
+                            // 입양일 기념일 체크
+                            if (!isAnniversary && pet.adopted_date) {
+                                const adopted = new Date(pet.adopted_date);
+                                const diffDays = Math.floor((today.getTime() - adopted.getTime()) / (1000 * 60 * 60 * 24));
+                                if (diffDays > 0 && diffDays % 100 === 0) isAnniversary = true;
+                                if (adopted.getMonth() === todayMm && adopted.getDate() === todayDd && diffDays >= 365) isAnniversary = true;
+                            }
+                            // 추모일 기념일 체크
+                            if (!isAnniversary && pet.memorial_date) {
+                                const memorial = new Date(pet.memorial_date);
+                                const diffDays = Math.floor((today.getTime() - memorial.getTime()) / (1000 * 60 * 60 * 24));
+                                if (diffDays > 0 && diffDays % 100 === 0) isAnniversary = true;
+                                if (memorial.getMonth() === todayMm && memorial.getDate() === todayDd && diffDays >= 365) isAnniversary = true;
+                            }
+
+                            // 기념일이 아니면 추모 펫 인사 스킵
+                            if (!isAnniversary) return;
+                        }
 
                         const greeting = await generateGreeting(openai, pet);
                         const userSubs = subscriptions.filter((s) => s.user_id === userId);
@@ -434,6 +906,8 @@ export async function GET(request: NextRequest) {
             currentKstHour,
             reminder: { sent: reminderSent, failed: reminderFailed },
             greeting: { sent: greetingSent, failed: greetingFailed },
+            timelinePush: { sent: timelinePushSent },
+            memoryAlbum: { created: albumCreatedCount },
             expiredCleaned: uniqueExpired.length,
         });
     } catch (err) {

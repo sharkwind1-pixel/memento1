@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
-import { getClientIP, checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
+import { getClientIP, checkRateLimit, getRateLimitHeaders, checkVPN, getVPNBlockResponse } from "@/lib/rate-limit";
 import { CHARACTER_CATALOG } from "@/data/minimiPixels";
 import { MINIMI } from "@/config/constants";
 
@@ -24,7 +24,14 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 2. 인증
+        // 2. VPN 체크 (결제 어뷰징 방지)
+        const vpnResult = await checkVPN(clientIP);
+        if (vpnResult.isVPN) {
+            const vpnErr = getVPNBlockResponse();
+            return NextResponse.json({ error: vpnErr.error }, { status: 403 });
+        }
+
+        // 3. 인증
         const user = await getAuthUser();
         if (!user) {
             return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
@@ -130,20 +137,32 @@ export async function POST(request: NextRequest) {
                 .eq("id", user.id);
         }
 
-        // 아이템 삭제
-        const { error: deleteError } = await supabase
+        // 아이템 삭제 (원자적 - 레이스 컨디션 방지)
+        const { data: deleted, error: deleteError } = await supabase
             .from("user_minimi")
             .delete()
             .eq("user_id", user.id)
-            .eq("minimi_id", itemSlug);
+            .eq("minimi_id", itemSlug)
+            .select("id")
+            .single();  // 삭제된 행이 없으면 에러 발생 → 중복 요청 방지
 
-        if (deleteError) {
-            return NextResponse.json({ error: "아이템 삭제에 실패했습니다" }, { status: 500 });
+        if (deleteError || !deleted) {
+            // 이미 삭제됨 (동시 요청) 또는 오류
+            return NextResponse.json({ error: "아이템 삭제에 실패했습니다" }, { status: 400 });
         }
 
-        // 포인트 환급
-        const newPoints = (profile?.points || 0) + resellPrice;
-        await supabase.from("profiles").update({ points: newPoints }).eq("id", user.id);
+        // 포인트 환급 (원자적 증가)
+        const { data: updatedProfile, error: pointError } = await supabase
+            .from("profiles")
+            .update({ points: (profile?.points || 0) + resellPrice })
+            .eq("id", user.id)
+            .select("points")
+            .single();
+
+        const newPoints = updatedProfile?.points ?? ((profile?.points || 0) + resellPrice);
+        if (pointError) {
+            console.error("[minimi/sell] Point update failed:", pointError.message);
+        }
 
         // 거래 내역 (실패해도 무시)
         try {

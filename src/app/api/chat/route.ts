@@ -11,8 +11,8 @@ import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { createClient } from "@supabase/supabase-js";
 import { awardPoints } from "@/lib/points";
-import { getAuthUser } from "@/lib/supabase-server";
-import { API } from "@/config/constants";
+import { getAuthUser, createServerSupabase } from "@/lib/supabase-server";
+import { API, FREE_LIMITS } from "@/config/constants";
 import { formatScheduleText } from "@/lib/schedule-utils";
 import {
     getClientIP,
@@ -201,6 +201,8 @@ ${entries.join("\n")}`;
         contextText += `\n→ 자연스럽게 "오늘 ${upcomingToday[0].title} 시간 잊지 말아!" 같이 언급할 수 있어요.`;
     }
 
+    contextText += `\n\n**중요 규칙**: 사용자가 일정/리마인더/케어 시간에 대해 물으면 (예: "산책 언제야?", "약 먹을 시간이야?", "다음 일정 뭐야?") 위 정보를 바탕으로 구체적인 요일/시간을 포함해서 정확하게 답하세요. "모르겠어"나 "확인해봐"로 회피하지 마세요.`;
+
     return contextText;
 }
 
@@ -313,6 +315,24 @@ function getSpecialDayContext(pet: PetInfo): string {
         }
     }
 
+    // 입양일(처음 만난 날) 체크
+    if (pet.adoptedDate) {
+        const adoptedMMDD = pet.adoptedDate.slice(5, 10);
+        if (adoptedMMDD === todayStr) {
+            const adoptedDate = new Date(pet.adoptedDate);
+            const years = today.getFullYear() - adoptedDate.getFullYear();
+            if (years > 0) {
+                messages.push(`오늘은 ${pet.name}과(와) 처음 만난 지 ${years}년이 되는 날입니다!`);
+            }
+        }
+        // 100일 단위 기념일
+        const adoptedDate = new Date(pet.adoptedDate);
+        const daysTogether = Math.floor((today.getTime() - adoptedDate.getTime()) / (1000 * 60 * 60 * 24));
+        if (daysTogether > 0 && daysTogether % 100 === 0) {
+            messages.push(`${pet.name}과(와) 함께한 지 ${daysTogether}일째 되는 날입니다!`);
+        }
+    }
+
     if (messages.length === 0) return "";
 
     return `## 오늘의 특별한 날
@@ -370,6 +390,7 @@ function getDailySystemPrompt(
 ## 핵심 역할
 ${pet.name}의 입장에서 1인칭으로 대화하며, 반려동물 케어 정보도 정확히 전달하는 AI입니다.
 호칭: "너", "우리 가족" 또는 호칭 없이. **절대 "엄마", "아빠" 사용 금지.**
+케어 일정(산책, 식사, 약 등)에 대해 물으면 등록된 리마인더 정보를 바탕으로 정확한 시간과 요일을 알려주세요.
 
 ## 답변 길이 (엄격히 준수)
 - **일상 대화/잡담**: 반드시 1~2문장. 이 이상 길어지면 안 됩니다.
@@ -571,6 +592,17 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // 프리미엄 상태 확인 (서버 검증 - 보안 중요)
+        const supabase = await createServerSupabase();
+        const { data: profile } = await supabase
+            .from("profiles")
+            .select("is_premium, premium_expires_at")
+            .eq("id", user.id)
+            .single();
+
+        const isPremium = profile?.is_premium &&
+            (!profile.premium_expires_at || new Date(profile.premium_expires_at) > new Date());
+
         // agent 모듈 동적 import (런타임에만 로드)
         const agent = await getAgentModule();
 
@@ -601,22 +633,29 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 2. 일일 사용량 체크 (DB 기반 - Vercel 서버리스 대응)
-        const identifier = user.id;
-        const dailyUsage = await checkDailyUsageDB(identifier, true);
+        // 2. 일일 사용량 체크 (프리미엄은 무제한, 무료는 10회)
+        // 프리미엄 회원은 제한 없이 통과
+        let dailyUsage = { allowed: true, remaining: Infinity, isWarning: false };
 
-        if (!dailyUsage.allowed) {
-            const isMemorial = pet?.status === "memorial";
-            return NextResponse.json(
-                {
-                    error: isMemorial
-                        ? `오늘은 여기까지 이야기 나눌 수 있어요. ${pet?.name || "아이"}는 내일도 여기서 기다리고 있을게요.`
-                        : "오늘의 대화 횟수를 모두 사용했어요. 내일 다시 만나요!",
-                    remaining: 0,
-                    isLimitReached: true,
-                },
-                { status: 429 }
-            );
+        if (!isPremium) {
+            // 무료 회원: FREE_LIMITS.DAILY_CHATS (10회) 제한
+            const identifier = user.id;
+            dailyUsage = await checkDailyUsageDB(identifier, false); // false = 무료 회원 제한 적용
+
+            // 무료 회원 제한은 10회이므로 별도 체크
+            if (dailyUsage.remaining < 0 || !dailyUsage.allowed) {
+                const isMemorial = pet?.status === "memorial";
+                return NextResponse.json(
+                    {
+                        error: isMemorial
+                            ? `오늘은 여기까지 이야기 나눌 수 있어요. ${pet?.name || "아이"}는 내일도 여기서 기다리고 있을게요. 프리미엄 구독 시 무제한 대화가 가능합니다.`
+                            : `오늘의 무료 대화 횟수(${FREE_LIMITS.DAILY_CHATS}회)를 모두 사용했어요. 프리미엄 구독 시 무제한 대화가 가능합니다!`,
+                        remaining: 0,
+                        isLimitReached: true,
+                    },
+                    { status: 429 }
+                );
+            }
         }
 
         // 3. 입력값 검증 (XSS, 과도한 길이 방지)

@@ -159,7 +159,7 @@ function AnimalDetailModal({
                         <div className="flex flex-wrap gap-2">
                             <Badge className={
                                 animal.status.includes("공고")
-                                    ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300"
+                                    ? "bg-orange-100 text-orange-700 dark:bg-gray-700/30 dark:text-orange-300"
                                     : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
                             }>
                                 {animal.status || "보호중"}
@@ -436,7 +436,7 @@ function AdoptionPage({ setSelectedTab }: AdoptionPageProps) {
 
                 {/* 목업 안내 배너 */}
                 {isMock && !isLoading && (
-                    <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-xl text-sm text-amber-700 dark:text-amber-300">
+                    <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-50 dark:bg-gray-700/20 border border-amber-200 dark:border-gray-700/50 rounded-xl text-sm text-amber-700 dark:text-amber-300">
                         <Info className="w-4 h-4 flex-shrink-0" />
                         <span>
                             공공데이터 API 키 미설정 - 샘플 데이터를 표시합니다.
@@ -789,7 +789,7 @@ function AnimalListCard({
                         <Badge
                             className={`flex-shrink-0 text-[10px] ${
                                 animal.status.includes("공고")
-                                    ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300"
+                                    ? "bg-orange-100 text-orange-700 dark:bg-gray-700/30 dark:text-orange-300"
                                     : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
                             }`}
                         >

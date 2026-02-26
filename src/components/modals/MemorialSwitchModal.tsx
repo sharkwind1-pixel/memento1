@@ -98,7 +98,7 @@ export default function MemorialSwitchModal({
         title: string;
         subtitle: string;
     }) => (
-        <div className="bg-gradient-to-br from-amber-100 via-orange-100 to-yellow-100 dark:from-amber-900/50 dark:via-orange-900/50 dark:to-yellow-900/50 p-8 text-center relative">
+        <div className="bg-gradient-to-br from-amber-100 via-orange-100 to-yellow-100 dark:from-gray-800/80 dark:via-gray-800/60 dark:to-gray-800/40 p-8 text-center relative">
             <button
                 onClick={handleClose}
                 className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/50 transition-colors"
@@ -175,7 +175,7 @@ export default function MemorialSwitchModal({
                                             이어집니다
                                         </p>
                                     </div>
-                                    <div className="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-900/30 rounded-xl">
+                                    <div className="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-400/10 rounded-xl">
                                         <Star className="w-5 h-5 text-amber-500 flex-shrink-0" />
                                         <p className="text-sm text-gray-700 dark:text-gray-300">
                                             AI 펫톡이{" "}
@@ -244,7 +244,7 @@ export default function MemorialSwitchModal({
                                         className="mt-2 text-center text-lg"
                                     />
                                 </div>
-                                <div className="bg-amber-50 dark:bg-amber-900/30 rounded-xl p-4 mb-6">
+                                <div className="bg-amber-50 dark:bg-amber-400/10 rounded-xl p-4 mb-6">
                                     <p className="text-center text-amber-700 dark:text-amber-300 text-sm">
                                         {pet.name}는 이제 따뜻한 햇살이 비치는
                                         <br />
@@ -279,7 +279,7 @@ export default function MemorialSwitchModal({
                     {/* Step 3: 추억 슬라이드쇼 */}
                     {step === 3 && (
                         <>
-                            <div className="bg-gradient-to-br from-amber-100 via-orange-100 to-yellow-100 dark:from-amber-900/50 dark:via-orange-900/50 dark:to-yellow-900/50 p-4 text-center relative">
+                            <div className="bg-gradient-to-br from-amber-100 via-orange-100 to-yellow-100 dark:from-gray-800/80 dark:via-gray-800/60 dark:to-gray-800/40 p-4 text-center relative">
                                 <button
                                     onClick={handleClose}
                                     className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/50 transition-colors z-10"
@@ -382,7 +382,7 @@ export default function MemorialSwitchModal({
                                         setFarewellMessage(e.target.value)
                                     }
                                     placeholder={`${pet.name}에게 하고 싶은 말을 적어주세요...`}
-                                    className="w-full h-32 p-4 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/20 text-gray-700 dark:text-gray-300 placeholder:text-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm leading-relaxed"
+                                    className="w-full h-32 p-4 rounded-xl border border-amber-200 dark:border-gray-700 bg-amber-50/50 dark:bg-gray-700/20 text-gray-700 dark:text-gray-300 placeholder:text-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm leading-relaxed"
                                     maxLength={500}
                                 />
                                 <p className="text-right text-xs text-gray-400 mt-1">

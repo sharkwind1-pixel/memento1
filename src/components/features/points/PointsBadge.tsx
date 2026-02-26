@@ -195,7 +195,7 @@ export default function PointsBadge({ onModalChange }: PointsBadgeProps) {
                     className={cn(
                         "w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl",
                         "bg-gradient-to-r from-amber-50 to-orange-50",
-                        "dark:from-amber-900/20 dark:to-orange-900/20",
+                        "dark:from-gray-700/20 dark:to-gray-700/20",
                         "hover:from-amber-100 hover:to-orange-100",
                         "dark:hover:from-amber-900/30 dark:hover:to-orange-900/30",
                         "transition-all text-sm font-medium text-amber-700 dark:text-amber-300"

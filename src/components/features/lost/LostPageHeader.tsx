@@ -75,7 +75,7 @@ export default function LostPageHeader({
                 <div className="grid grid-cols-2 gap-2">
                     <Button
                         variant="outline"
-                        className="rounded-xl border-orange-300 dark:border-orange-600 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/30"
+                        className="rounded-xl border-orange-300 dark:border-orange-600 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-gray-700/30"
                         onClick={onCreateLost}
                     >
                         <AlertTriangle className="w-4 h-4 mr-1 sm:mr-2" />
@@ -93,7 +93,7 @@ export default function LostPageHeader({
 
             {/* 통계 */}
             <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-orange-100/50 dark:bg-orange-900/20 rounded-2xl p-4 text-center">
+                <div className="bg-orange-100/50 dark:bg-gray-700/20 rounded-2xl p-4 text-center">
                     <div className="text-3xl font-bold text-orange-600 dark:text-orange-400">
                         {lostCount}
                     </div>

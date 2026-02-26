@@ -176,7 +176,7 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         <div
             className={`min-h-screen flex flex-col relative transition-all duration-700 ease-in-out ${
                 chat.isMemorialMode
-                    ? "bg-gradient-to-b from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950 dark:via-orange-950 dark:to-gray-900"
+                    ? "bg-gradient-to-b from-amber-50 via-orange-50 to-yellow-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-950"
                     : "bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
             }`}
         >
@@ -259,17 +259,19 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
 
                 {/* 우측: 채팅 영역 */}
                 <div className="flex-1 flex flex-col min-h-0 lg:min-w-0" data-tutorial-id="ai-chat-area">
-                    {/* 푸시 알림 구독 유도 배너 */}
-                    <PushNotificationBanner
-                        petName={selectedPet?.name || ""}
-                        isMemorialMode={chat.isMemorialMode}
-                    />
+                    {/* 푸시 알림 구독 유도 배너 (추모 모드에서는 숨김 - 기념일 푸시만 발송) */}
+                    {!chat.isMemorialMode && (
+                        <PushNotificationBanner
+                            petName={selectedPet?.name || ""}
+                            isMemorialMode={chat.isMemorialMode}
+                        />
+                    )}
 
                     {/* AI 고지 배너 */}
                     <div
                         className={`mx-4 mt-2 mb-1 px-3 py-2 rounded-lg text-xs text-center transition-colors duration-700 ${
                             chat.isMemorialMode
-                                ? "bg-amber-100/80 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
+                                ? "bg-amber-100/80 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300"
                                 : "bg-sky-100/80 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300"
                         }`}
                     >

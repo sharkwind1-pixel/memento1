@@ -657,7 +657,7 @@ function HomePage({ setSelectedTab }: HomePageProps) {
                         <Button
                             variant="ghost"
                             onClick={() => setSelectedTab("community")}
-                            className="text-amber-500 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl flex-shrink-0 px-2 sm:px-4 min-h-[44px] active:scale-95 transition-transform"
+                            className="text-amber-500 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-gray-700/20 rounded-xl flex-shrink-0 px-2 sm:px-4 min-h-[44px] active:scale-95 transition-transform"
                         >
                             <span className="hidden sm:inline">더 많은 이야기</span>
                             <span className="sm:hidden">더보기</span>
@@ -674,34 +674,34 @@ function HomePage({ setSelectedTab }: HomePageProps) {
                             Array.from({ length: 3 }).map((_, i) => (
                                 <Card
                                     key={`skeleton-${i}`}
-                                    className="w-[260px] max-w-[260px] sm:w-72 sm:max-w-72 flex-shrink-0 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 border-amber-100 dark:border-amber-800/50 rounded-2xl overflow-hidden shadow-sm animate-pulse"
+                                    className="w-[260px] max-w-[260px] sm:w-72 sm:max-w-72 flex-shrink-0 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-gray-800/50 dark:to-gray-800/30 border-amber-100 dark:border-gray-700/50 rounded-2xl overflow-hidden shadow-sm animate-pulse"
                                 >
                                     {/* 이미지 영역 (CardHeader p-0 relative) */}
                                     <CardHeader className="p-0 relative">
-                                        <div className="w-full aspect-[4/3] bg-amber-200 dark:bg-amber-800" />
+                                        <div className="w-full aspect-[4/3] bg-amber-200 dark:bg-gray-700" />
                                         {/* 하단 뱃지 자리 */}
                                         <div className="absolute bottom-3 left-3 flex items-center gap-2">
-                                            <div className="h-5 w-12 bg-amber-300/60 rounded-full" />
+                                            <div className="h-5 w-12 bg-amber-300/60 dark:bg-gray-600/60 rounded-full" />
                                         </div>
                                     </CardHeader>
                                     <CardContent className="p-4">
                                         {/* 이름 + 년도 행 */}
                                         <div className="flex items-start justify-between mb-2">
                                             <div>
-                                                <div className="h-5 bg-amber-200 dark:bg-amber-700 rounded w-20 mb-1" />
-                                                <div className="h-3 bg-amber-100 dark:bg-amber-800 rounded w-24" />
+                                                <div className="h-5 bg-amber-200 dark:bg-gray-600 rounded w-20 mb-1" />
+                                                <div className="h-3 bg-amber-100 dark:bg-gray-700 rounded w-24" />
                                             </div>
                                         </div>
                                         {/* 메시지 (line-clamp-2) */}
-                                        <div className="h-4 bg-amber-100 dark:bg-amber-800 rounded w-full mb-1" />
-                                        <div className="h-4 bg-amber-100 dark:bg-amber-800 rounded w-3/4 mb-3" />
+                                        <div className="h-4 bg-amber-100 dark:bg-gray-700 rounded w-full mb-1" />
+                                        <div className="h-4 bg-amber-100 dark:bg-gray-700 rounded w-3/4 mb-3" />
                                         {/* 좋아요/댓글 + 함께 기억해요 행 */}
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-3">
-                                                <div className="h-4 w-10 bg-amber-100 dark:bg-amber-800 rounded" />
-                                                <div className="h-4 w-10 bg-amber-100 dark:bg-amber-800 rounded" />
+                                                <div className="h-4 w-10 bg-amber-100 dark:bg-gray-700 rounded" />
+                                                <div className="h-4 w-10 bg-amber-100 dark:bg-gray-700 rounded" />
                                             </div>
-                                            <div className="h-3 w-16 bg-amber-100 dark:bg-amber-800 rounded" />
+                                            <div className="h-3 w-16 bg-amber-100 dark:bg-gray-700 rounded" />
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -712,7 +712,7 @@ function HomePage({ setSelectedTab }: HomePageProps) {
                                 return (
                                     <Card
                                         key={m.id}
-                                        className="w-[260px] max-w-[260px] sm:w-72 sm:max-w-72 flex-shrink-0 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 border-amber-100 dark:border-amber-800/50 rounded-2xl overflow-hidden shadow-sm will-change-transform"
+                                        className="w-[260px] max-w-[260px] sm:w-72 sm:max-w-72 flex-shrink-0 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-gray-800/50 dark:to-gray-800/30 border-amber-100 dark:border-gray-700/50 rounded-2xl overflow-hidden shadow-sm will-change-transform"
                                     >
                                         <CardHeader className="p-0 relative overflow-hidden">
                                             {src ? (
@@ -737,7 +737,7 @@ function HomePage({ setSelectedTab }: HomePageProps) {
                                                     />
                                                 </button>
                                             ) : (
-                                                <div className="w-full aspect-[4/3] bg-gradient-to-br from-amber-200 to-orange-200 dark:from-amber-800 dark:to-orange-800 flex items-center justify-center">
+                                                <div className="w-full aspect-[4/3] bg-gradient-to-br from-amber-200 to-orange-200 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center">
                                                     {(() => {
                                                         const PetIcon = getPetIcon(m.pet);
                                                         return <PetIcon className="w-16 h-16 text-amber-500/60" />;

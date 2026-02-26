@@ -218,7 +218,7 @@ export default function BackgroundShopModal({
                                                         className={cn(
                                                             "w-full py-1 rounded-lg text-[10px] font-medium transition-colors",
                                                             points >= bg.price
-                                                                ? "bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/30"
+                                                                ? "bg-amber-100 dark:bg-gray-700/20 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-gray-600/30"
                                                                 : "bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
                                                         )}
                                                     >

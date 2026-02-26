@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
-import { getClientIP, checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
+import { getClientIP, checkRateLimit, getRateLimitHeaders, checkVPN, getVPNBlockResponse } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -55,7 +55,14 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 2. 인증
+        // 2. VPN 체크 (결제 어뷰징 방지)
+        const vpnResult = await checkVPN(clientIP);
+        if (vpnResult.isVPN) {
+            const vpnErr = getVPNBlockResponse();
+            return NextResponse.json({ error: vpnErr.error }, { status: 403 });
+        }
+
+        // 3. 인증
         const user = await getAuthUser();
         if (!user) {
             return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
@@ -118,9 +125,20 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "포인트가 부족합니다" }, { status: 400 });
         }
 
-        // 5b. 포인트 차감
-        const newPoints = profile.points - item.price;
-        await supabase.from("profiles").update({ points: newPoints }).eq("id", user.id);
+        // 5b. 포인트 차감 (원자적 업데이트 - 레이스 컨디션 방지)
+        const { data: updated, error: updateErr } = await supabase
+            .from("profiles")
+            .update({ points: profile.points - item.price })
+            .eq("id", user.id)
+            .gte("points", item.price)  // 포인트가 충분한 경우에만 차감
+            .select("points")
+            .single();
+
+        if (updateErr || !updated) {
+            // 동시 요청으로 포인트 부족해진 경우
+            return NextResponse.json({ error: "포인트가 부족합니다" }, { status: 400 });
+        }
+        const newPoints = updated.points;
 
         // 5c. 거래 내역
         try {

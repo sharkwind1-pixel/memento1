@@ -50,8 +50,8 @@ interface AdminWithdrawalsTabProps {
 const TYPE_CONFIG = {
     abuse_concern: {
         label: "악용 우려",
-        color: "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/50",
-        badge: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+        color: "bg-amber-50 dark:bg-gray-700/20 border-amber-200 dark:border-gray-700/50",
+        badge: "bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300",
     },
     banned: {
         label: "영구 차단",
@@ -153,7 +153,7 @@ export default function AdminWithdrawalsTab({
 
             {/* 유형 범례 */}
             <div className="flex flex-wrap gap-2 text-sm">
-                <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300">
                     <Clock className="w-3 h-3 mr-1" />
                     악용 우려 (30일 대기)
                 </Badge>

@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
-import { getClientIP, checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
+import { getClientIP, checkRateLimit, getRateLimitHeaders, checkVPN, getVPNBlockResponse } from "@/lib/rate-limit";
 import { CHARACTER_CATALOG } from "@/data/minimiPixels";
 import { MINIMI } from "@/config/constants";
 
@@ -24,7 +24,14 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 2. 인증
+        // 2. VPN 체크 (결제 어뷰징 방지)
+        const vpnResult = await checkVPN(clientIP);
+        if (vpnResult.isVPN) {
+            const vpnErr = getVPNBlockResponse();
+            return NextResponse.json({ error: vpnErr.error }, { status: 403 });
+        }
+
+        // 3. 인증
         const user = await getAuthUser();
         if (!user) {
             return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
@@ -108,17 +115,20 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "포인트가 부족합니다" }, { status: 400 });
         }
 
-        // 4c. 포인트 차감
-        const newPoints = profile.points - itemPrice;
-        const { error: updateError } = await supabase
+        // 4c. 포인트 차감 (원자적 업데이트 - 레이스 컨디션 방지)
+        const { data: updated, error: updateError } = await supabase
             .from("profiles")
-            .update({ points: newPoints })
-            .eq("id", user.id);
+            .update({ points: profile.points - itemPrice })
+            .eq("id", user.id)
+            .gte("points", itemPrice)  // 포인트가 충분한 경우에만 차감
+            .select("points")
+            .single();
 
-        if (updateError) {
-            console.error("[minimi/purchase] Points update failed:", updateError.message, updateError.code);
-            return NextResponse.json({ error: "포인트 차감에 실패했습니다" }, { status: 500 });
+        if (updateError || !updated) {
+            // 동시 요청으로 포인트 부족해진 경우
+            return NextResponse.json({ error: "포인트가 부족합니다" }, { status: 400 });
         }
+        const newPoints = updated.points;
 
         // 4d. 아이템 추가
         const { error: insertError } = await supabase

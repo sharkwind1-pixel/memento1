@@ -319,7 +319,7 @@ export const getBadgeStyle = (badge: string, subcategory: CommunitySubcategory) 
             case "정보":
                 return "bg-[#BAE6FD] text-[#0369A1] dark:bg-blue-900/50 dark:text-blue-300";
             case "고민":
-                return "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300";
+                return "bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300";
             default:
                 return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
         }
@@ -331,7 +331,7 @@ export const getBadgeStyle = (badge: string, subcategory: CommunitySubcategory) 
             case "일상":
                 return "bg-[#E0F7FF] text-sky-700 dark:bg-sky-900/50 dark:text-sky-300";
             case "질문":
-                return "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300";
+                return "bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300";
             case "꿀팁":
                 return "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300";
             default:
@@ -371,7 +371,7 @@ export const getBadgeStyle = (badge: string, subcategory: CommunitySubcategory) 
             case "완료":
                 return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
             default:
-                return "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300";
+                return "bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300";
         }
     }
     return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
@@ -382,8 +382,8 @@ export const getTagColor = (color: string) => {
     const colors: Record<string, string> = {
         sky: "bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300 border-sky-200 dark:border-sky-700",
         emerald: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300 border-emerald-200 dark:border-emerald-700",
-        amber: "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300 border-amber-200 dark:border-amber-700",
-        orange: "bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300 border-orange-200 dark:border-orange-700",
+        amber: "bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300 border-amber-200 dark:border-amber-700",
+        orange: "bg-orange-100 text-orange-700 dark:bg-gray-700/30 dark:text-orange-300 border-orange-200 dark:border-orange-700",
         pink: "bg-pink-100 text-pink-700 dark:bg-pink-900/50 dark:text-pink-300 border-pink-200 dark:border-pink-700",
         cyan: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-300 border-cyan-200 dark:border-cyan-700",
         blue: "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 border-blue-200 dark:border-blue-700",
@@ -422,7 +422,7 @@ export const getCategoryColor = (color: string) => {
                 bg: "from-amber-500 to-orange-500",
                 text: "text-amber-600 dark:text-amber-400",
                 border: "border-amber-200 dark:border-amber-700",
-                light: "bg-amber-50 dark:bg-amber-900/30",
+                light: "bg-amber-50 dark:bg-amber-400/10",
             };
         case "rose":
             return {
