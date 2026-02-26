@@ -65,7 +65,7 @@ export default function ChatMessageList({
                 return (
                     <div key={message.id}>
                         {showTimestamp && (
-                            <div className="chat-timestamp my-2">
+                            <div className={`chat-timestamp my-2 ${isMemorialMode ? "chat-timestamp-memorial" : ""}`}>
                                 <span>{formatTimestamp(message.timestamp)}</span>
                             </div>
                         )}
@@ -82,7 +82,7 @@ export default function ChatMessageList({
                                             케어 리마인더
                                         </span>
                                     </div>
-                                    <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed mb-3">
+                                    <p className="text-sm text-sky-800 dark:text-sky-100 leading-relaxed mb-3">
                                         {message.content}
                                     </p>
                                     <div className="flex gap-2">
@@ -94,7 +94,7 @@ export default function ChatMessageList({
                                         </button>
                                         <button
                                             onClick={() => onReminderDismiss?.(message.id)}
-                                            className="flex-1 px-4 py-2 rounded-xl text-sm font-medium bg-white hover:bg-gray-50 text-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 border border-gray-200 dark:border-gray-600 transition-all hover:scale-[1.02] active:scale-95"
+                                            className="flex-1 px-4 py-2 rounded-xl text-sm font-medium bg-white hover:bg-sky-50 text-sky-600 dark:bg-sky-900/30 dark:hover:bg-sky-800/40 dark:text-sky-200 border border-sky-200 dark:border-sky-600 transition-all hover:scale-[1.02] active:scale-95"
                                         >
                                             괜찮아요
                                         </button>
@@ -113,7 +113,7 @@ export default function ChatMessageList({
                                             혼자 감당하지 않아도 돼요
                                         </span>
                                     </div>
-                                    <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed mb-3">
+                                    <p className="text-sm text-rose-800 dark:text-rose-100 leading-relaxed mb-3">
                                         {message.crisisAlert.message}
                                     </p>
                                     <div className="space-y-2">
@@ -127,10 +127,10 @@ export default function ChatMessageList({
                                                     <Phone className="w-4 h-4 text-rose-600 dark:text-rose-400" />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="text-sm font-medium text-gray-800 dark:text-gray-100">
+                                                    <div className="text-sm font-medium text-rose-900 dark:text-rose-100">
                                                         {resource.name}
                                                     </div>
-                                                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                    <div className="text-xs text-rose-500 dark:text-rose-300">
                                                         {resource.description} | {resource.hours}
                                                     </div>
                                                 </div>
@@ -144,8 +144,16 @@ export default function ChatMessageList({
                             </div>
                         ) : message.role === "system" && message.isError ? (
                             <div className="flex justify-center chat-bubble-enter my-2">
-                                <div className="bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 max-w-[85%] text-center">
-                                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                                <div className={`rounded-xl px-4 py-3 max-w-[85%] text-center ${
+                                    isMemorialMode
+                                        ? "bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-700"
+                                        : "bg-sky-50 dark:bg-sky-900/20 border border-sky-200/50 dark:border-sky-700"
+                                }`}>
+                                    <p className={`text-sm ${
+                                        isMemorialMode
+                                            ? "text-amber-700 dark:text-amber-300"
+                                            : "text-sky-700 dark:text-sky-300"
+                                    }`}>
                                         {message.content}
                                     </p>
                                     {message.retryMessage && (
@@ -204,7 +212,7 @@ export default function ChatMessageList({
                                                     : "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white rounded-br-sm")
                                                 : isMemorialMode
                                                         ? "bg-amber-100 text-amber-900 rounded-bl-sm border border-amber-200/50"
-                                                        : "bg-white text-gray-800 rounded-bl-sm border border-sky-100"
+                                                        : "bg-white text-sky-900 rounded-bl-sm border border-sky-100"
                                         }`}
                                     >
                                         <p className="text-[15px] leading-relaxed">

@@ -58,7 +58,7 @@ export default function AIChatHeader({
             className={`flex-shrink-0 px-4 py-3 border-b relative z-20 transition-all duration-700 ease-in-out ${
                 isMemorialMode
                     ? "bg-gradient-to-r from-amber-100/80 to-orange-100/80 border-amber-200/50"
-                    : "bg-white/80 border-gray-200/50"
+                    : "bg-white/80 border-sky-200/50"
             } backdrop-blur-lg`}
         >
             <div className="max-w-2xl mx-auto flex items-center justify-between">
@@ -78,7 +78,9 @@ export default function AIChatHeader({
                     value={selectedPetId || ""}
                     onValueChange={(id) => selectPet(id)}
                 >
-                    <SelectTrigger className="w-auto min-w-[140px] border-0 bg-white/50 dark:bg-gray-800/50">
+                    <SelectTrigger className={`w-auto min-w-[140px] border-0 ${
+                        isMemorialMode ? "bg-amber-50/50 dark:bg-amber-900/30" : "bg-sky-50/50 dark:bg-sky-900/30"
+                    }`}>
                         <SelectValue placeholder="반려동물 선택" />
                     </SelectTrigger>
                     <SelectContent>

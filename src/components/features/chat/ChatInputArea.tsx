@@ -92,14 +92,14 @@ export default function ChatInputArea({
 
     return (
         <div
-            className={`flex-shrink-0 px-4 pt-2 pb-2 border-t transition-all duration-700 ease-in-out ${isMemorialMode ? "bg-amber-50/80 border-amber-200/50" : "bg-white/80 border-gray-200/50"} backdrop-blur-lg`}
+            className={`flex-shrink-0 px-4 pt-2 pb-2 border-t transition-all duration-700 ease-in-out ${isMemorialMode ? "bg-amber-50/80 border-amber-200/50" : "bg-white/80 border-sky-200/50"} backdrop-blur-lg`}
         >
             <div className="max-w-2xl mx-auto">
                 {isLimitReached ? (
                     <div className="text-center py-4">
                         {isMemorialMode ? (
                             <div className="bg-gradient-to-r from-amber-100 to-orange-100 rounded-2xl p-6 mb-3">
-                                <p className="text-gray-700 font-medium mb-2">
+                                <p className="text-amber-800 font-medium mb-2">
                                     오늘은 여기까지 이야기 나눌 수 있어요
                                 </p>
                                 <p className="text-sm text-amber-700 mb-4">
@@ -118,10 +118,10 @@ export default function ChatInputArea({
                             </div>
                         ) : (
                             <div className="bg-gradient-to-r from-violet-100 to-sky-100 rounded-2xl p-6 mb-3">
-                                <p className="text-gray-700 font-medium mb-2">
+                                <p className="text-violet-800 font-medium mb-2">
                                     오늘의 무료 대화를 모두 사용했어요
                                 </p>
-                                <p className="text-sm text-gray-500 mb-4">
+                                <p className="text-sm text-sky-700 mb-4">
                                     프리미엄으로 {selectedPet?.name}와(과) 무제한 대화하세요
                                 </p>
                                 <Button
@@ -138,7 +138,7 @@ export default function ChatInputArea({
                                 </p>
                             </div>
                         )}
-                        <p className="text-xs text-gray-400">
+                        <p className={`text-xs ${isMemorialMode ? "text-amber-500" : "text-sky-500"}`}>
                             내일 다시 10회 무료 대화가 충전돼요
                         </p>
                     </div>
@@ -181,8 +181,8 @@ export default function ChatInputArea({
                             )}
                         </div>
                         <div className={`flex gap-2 sm:gap-3 items-end rounded-xl border transition-all ${
-                            isMemorialMode ? "textarea-glow-amber" : "textarea-glow-sky"
-                        } border-gray-200 bg-white p-1.5`}>
+                            isMemorialMode ? "textarea-glow-amber border-amber-200 bg-amber-50/30" : "textarea-glow-sky border-sky-200 bg-white"
+                        } p-1.5`}>
                             <Textarea
                                 ref={textareaRef}
                                 value={inputValue}
@@ -205,7 +205,9 @@ export default function ChatInputArea({
                                         ? isMemorialMode
                                             ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg"
                                             : "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-[#05B2DC] shadow-lg"
-                                        : "bg-gray-200 text-gray-400"
+                                        : isMemorialMode
+                                            ? "bg-amber-200/60 text-amber-400"
+                                            : "bg-sky-100 text-sky-300"
                                 } active:scale-95 transition-transform`}
                             >
                                 <Send className="w-5 h-5" />
@@ -219,7 +221,9 @@ export default function ChatInputArea({
                                         ? "text-red-500 font-medium"
                                         : inputValue.length >= MAX_MESSAGE_LENGTH - 30
                                         ? "text-amber-500"
-                                        : "text-gray-400"
+                                        : isMemorialMode
+                                            ? "text-amber-400"
+                                            : "text-sky-400"
                                 }`}>
                                     {inputValue.length}/{MAX_MESSAGE_LENGTH}
                                 </span>
