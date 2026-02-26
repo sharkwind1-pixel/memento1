@@ -209,10 +209,9 @@ export function useAIChat({
                 // 저장된 대화가 없으면 개인화된 인사말로 시작
                 if (selectedPet) {
                     const greeting = generatePersonalizedGreeting(
-                        selectedPet.name,
+                        selectedPet,
                         isMemorialMode,
                         timelineRef.current,
-                        selectedPet.type
                     );
                     setMessages([
                         {
@@ -230,10 +229,9 @@ export function useAIChat({
                 );
                 if (selectedPet) {
                     const greeting = generatePersonalizedGreeting(
-                        selectedPet.name,
+                        selectedPet,
                         isMemorialMode,
                         timelineRef.current,
-                        selectedPet.type
                     );
                     setMessages([
                         {
@@ -362,10 +360,9 @@ export function useAIChat({
         }
 
         const greeting = generatePersonalizedGreeting(
-            selectedPet.name,
+            selectedPet,
             isMemorialMode,
             timeline,
-            selectedPet.type
         );
 
         setMessages([
