@@ -978,7 +978,7 @@ ${emergencyDetection.isEmergency ? "이것은 즉시 병원에 가야 하는 상
                 .trim()
                 .split("\n")
                 .map(s => s.replace(/^[-\d.)\s]+/, "").trim())
-                .filter(s => s.length > 0 && s.length < 30)
+                .filter(s => s.length > 0 && s.length <= 20)
                 .slice(0, 3);
         }
 
