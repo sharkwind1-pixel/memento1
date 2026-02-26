@@ -92,7 +92,7 @@ export default function ChatInputArea({
 
     return (
         <div
-            className={`flex-shrink-0 px-4 pt-2 pb-2 border-t transition-all duration-700 ease-in-out ${isMemorialMode ? "bg-amber-50/80 border-amber-200/50" : "bg-white/80 border-sky-200/50"} backdrop-blur-lg`}
+            className={`flex-shrink-0 px-4 pt-2 pb-2 border-t transition-all duration-700 ease-in-out ${isMemorialMode ? "bg-amber-50/80 dark:bg-gray-900/80 border-amber-200/50 dark:border-amber-700/50" : "bg-white/80 dark:bg-gray-900/80 border-sky-200/50 dark:border-sky-700/50"} backdrop-blur-lg`}
         >
             <div className="max-w-2xl mx-auto">
                 {isLimitReached ? (
@@ -181,7 +181,7 @@ export default function ChatInputArea({
                             )}
                         </div>
                         <div className={`flex gap-2 sm:gap-3 items-end rounded-xl border transition-all ${
-                            isMemorialMode ? "textarea-glow-amber border-amber-200 bg-amber-50/30" : "textarea-glow-sky border-sky-200 bg-white"
+                            isMemorialMode ? "textarea-glow-amber border-amber-200 dark:border-amber-700 bg-amber-50/30 dark:bg-amber-950/30" : "textarea-glow-sky border-sky-200 dark:border-sky-700 bg-white dark:bg-gray-800"
                         } p-1.5`}>
                             <Textarea
                                 ref={textareaRef}
@@ -192,7 +192,7 @@ export default function ChatInputArea({
                                 }}
                                 onKeyDown={handleKeyDown}
                                 placeholder={`${selectedPet?.name}에게 말해보세요...`}
-                                className={`flex-1 rounded-lg border-0 bg-transparent shadow-none text-base resize-none min-h-[40px] max-h-[84px] py-2 px-2 focus-visible:ring-0 focus-visible:ring-offset-0 ${isMemorialMode ? "text-amber-900 placeholder:text-amber-400" : "text-sky-900 placeholder:text-sky-400"}`}
+                                className={`flex-1 rounded-lg border-0 bg-transparent shadow-none text-base resize-none min-h-[40px] max-h-[84px] py-2 px-2 focus-visible:ring-0 focus-visible:ring-offset-0 ${isMemorialMode ? "text-amber-900 dark:text-amber-100 placeholder:text-amber-400 dark:placeholder:text-amber-600" : "text-sky-900 dark:text-sky-100 placeholder:text-sky-400 dark:placeholder:text-sky-600"}`}
                                 rows={1}
                                 style={{ height: "40px" }}
                             />

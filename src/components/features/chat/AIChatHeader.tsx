@@ -57,8 +57,8 @@ export default function AIChatHeader({
         <div
             className={`flex-shrink-0 px-4 py-3 border-b relative z-20 transition-all duration-700 ease-in-out ${
                 isMemorialMode
-                    ? "bg-gradient-to-r from-amber-100/80 to-orange-100/80 border-amber-200/50"
-                    : "bg-white/80 border-sky-200/50"
+                    ? "bg-gradient-to-r from-amber-100/80 to-orange-100/80 dark:from-amber-900/40 dark:to-amber-800/40 border-amber-200/50 dark:border-amber-700/50"
+                    : "bg-white/80 dark:bg-gray-900/80 border-sky-200/50 dark:border-sky-700/50"
             } backdrop-blur-lg`}
         >
             <div className="max-w-2xl mx-auto flex items-center justify-between">

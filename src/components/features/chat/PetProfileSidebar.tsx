@@ -57,7 +57,7 @@ export default function PetProfileSidebar({
     };
 
     return (
-        <div className="flex-shrink-0 p-2 lg:p-4 lg:w-80 lg:border-r lg:border-sky-200/50 lg:sticky lg:top-0 lg:self-start">
+        <div className="flex-shrink-0 p-2 lg:p-4 lg:w-80 lg:border-r lg:border-sky-200/50 dark:lg:border-sky-700/50 lg:sticky lg:top-0 lg:self-start">
             {currentPhoto ? (
                 <div className={`relative mx-auto lg:max-w-none ${isMemorialMode ? "max-w-[220px] lg:max-w-[280px]" : "max-w-[160px] lg:max-w-[280px]"}`}>
                     <div

@@ -211,8 +211,8 @@ export default function ChatMessageList({
                                                     ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-br-sm"
                                                     : "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white rounded-br-sm")
                                                 : isMemorialMode
-                                                        ? "bg-amber-100 text-amber-900 rounded-bl-sm border border-amber-200/50"
-                                                        : "bg-white text-sky-900 rounded-bl-sm border border-sky-100"
+                                                        ? "bg-amber-100 dark:bg-amber-900/40 text-amber-900 dark:text-amber-100 rounded-bl-sm border border-amber-200/50 dark:border-amber-700/50"
+                                                        : "bg-white dark:bg-sky-900/40 text-sky-900 dark:text-sky-100 rounded-bl-sm border border-sky-100 dark:border-sky-700/50"
                                         }`}
                                     >
                                         <p className="text-[15px] leading-relaxed">
@@ -248,7 +248,7 @@ export default function ChatMessageList({
                         )}
                     </div>
                     <div
-                        className={`px-5 py-3 rounded-2xl rounded-bl-sm transition-all duration-500 ${isMemorialMode ? "bg-amber-100 border border-amber-200/50" : "bg-white shadow-sm border border-sky-100"}`}
+                        className={`px-5 py-3 rounded-2xl rounded-bl-sm transition-all duration-500 ${isMemorialMode ? "bg-amber-100 dark:bg-amber-900/40 border border-amber-200/50 dark:border-amber-700/50" : "bg-white dark:bg-sky-900/40 shadow-sm border border-sky-100 dark:border-sky-700/50"}`}
                     >
                         <div className="flex items-end gap-1.5">
                             {[0, 1, 2].map((i) => (
