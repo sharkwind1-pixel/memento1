@@ -323,3 +323,121 @@ export function detectEmergencyKeywords(message: string): {
         matchedSymptoms: [...matchedEmergency, ...matchedUrgent],
     };
 }
+
+// ============================================
+// 8. 응답 후 검증 레이어 (Post-Response Validation)
+// ============================================
+
+/** 검증 결과 */
+export interface ResponseValidation {
+    /** 원본 또는 수정된 응답 */
+    reply: string;
+    /** 수정이 발생했는지 */
+    wasModified: boolean;
+    /** 감지된 위반 목록 (로깅용) */
+    violations: string[];
+}
+
+/**
+ * GPT 응답에서 할루시네이션 위험 패턴을 코드 레벨로 검증/수정
+ * - 프롬프트만으로는 100% 방지 불가 → 코드에서 후처리
+ * - 케어 관련 응답에서만 실행 (일상 잡담에는 불필요)
+ */
+export function validateAIResponse(
+    reply: string,
+    isCareQuery: boolean,
+): ResponseValidation {
+    // 케어 질문이 아니면 검증 스킵
+    if (!isCareQuery) {
+        return { reply, wasModified: false, violations: [] };
+    }
+
+    let modified = reply;
+    const violations: string[] = [];
+
+    // 1. 약 용량/처방 패턴 감지 → 수의사 권장 문구 추가
+    const dosagePatterns = [
+        /(\d+)\s*(mg|ml|밀리|그램|cc|정|알)/gi,
+        /하루\s*(\d+)\s*(번|회|알|정)/g,
+        /(\d+)\s*(시간|일)\s*간격/g,
+    ];
+    for (const pattern of dosagePatterns) {
+        if (pattern.test(modified)) {
+            violations.push(`dosage_detected: ${modified.match(pattern)?.[0]}`);
+            // 용량 수치를 "수의사 상담 필요" 문구로 대체하지는 않음
+            // (맥락 파괴 위험) → 대신 끝에 경고 추가
+            if (!modified.includes("수의사") && !modified.includes("병원")) {
+                modified = modified.trimEnd() + " 정확한 용량은 수의사 선생님한테 꼭 확인해봐!";
+            }
+            break; // 중복 추가 방지
+        }
+    }
+
+    // 2. 과도한 단정 표현 완화
+    const assertionReplacements: [RegExp, string][] = [
+        [/100%\s*(확실|안전|괜찮)/g, "보통은 괜찮다고"],
+        [/무조건\s*(~?해야|먹어야|가야|줘야)/g, "가능하면 $1"],
+        [/반드시\s*(~?해야|먹어야|줘야)/g, "되도록 $1"],
+        [/절대로?\s*(안\s*돼|하면\s*안)/g, "안 하는 게 좋"],
+    ];
+    for (const [pattern, replacement] of assertionReplacements) {
+        if (pattern.test(modified)) {
+            violations.push(`assertion: ${modified.match(pattern)?.[0]}`);
+            modified = modified.replace(pattern, replacement);
+        }
+    }
+
+    // 3. 브랜드명/상품명 감지 (한국 펫 시장 주요 브랜드)
+    const brandPatterns = [
+        // 사료/간식 브랜드
+        "로얄캐닌", "힐스", "뉴트로", "오리젠", "아카나", "퓨리나",
+        "네츄럴코어", "하림펫푸드", "지위픽", "인스팅트", "블루버팔로",
+        "나우프레시", "고프로", "웰니스", "캣츠파인푸드",
+        // 영양제/약품 브랜드
+        "뉴트리플러스", "펫에이지", "코세퀸", "다사퀸",
+        // 용품 브랜드
+        "페토이", "독터독",
+    ];
+    const replyLower = modified.toLowerCase().replace(/\s/g, "");
+    for (const brand of brandPatterns) {
+        if (replyLower.includes(brand.toLowerCase().replace(/\s/g, ""))) {
+            violations.push(`brand_detected: ${brand}`);
+            // 브랜드명을 제품 유형으로 대체
+            const brandRegex = new RegExp(brand, "gi");
+            modified = modified.replace(brandRegex, "좋은 제품");
+        }
+    }
+
+    // 4. 확률 날조 감지 ("30% 확률", "70%가" 등)
+    const probabilityPattern = /(\d{1,3})\s*(%|퍼센트)\s*(확률|가능성|이상이|정도가)/g;
+    if (probabilityPattern.test(modified)) {
+        violations.push(`probability_fabrication: ${modified.match(probabilityPattern)?.[0]}`);
+        modified = modified.replace(probabilityPattern, "경우에 따라");
+    }
+
+    // 5. 사람 약 추천 감지
+    const humanDrugPatterns = [
+        "타이레놀", "아세트아미노펜", "이부프로펜", "아스피린",
+        "게보린", "판콜", "부루펜", "인사돌", "판피린",
+    ];
+    for (const drug of humanDrugPatterns) {
+        if (replyLower.includes(drug.toLowerCase())) {
+            violations.push(`human_drug: ${drug}`);
+            const drugRegex = new RegExp(drug, "gi");
+            modified = modified.replace(
+                drugRegex,
+                "사람 약(위험!)"
+            );
+            // 사람 약 감지 시 강력 경고 추가
+            if (!modified.includes("절대") || !modified.includes("수의사")) {
+                modified = modified.trimEnd() + " 사람 약은 절대 주면 안 돼! 수의사 선생님한테 바로 가자!";
+            }
+        }
+    }
+
+    return {
+        reply: modified,
+        wasModified: modified !== reply,
+        violations,
+    };
+}

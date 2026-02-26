@@ -27,6 +27,7 @@ import {
     buildCareReferencePrompt,
     detectEmergencyKeywords,
     isCareRelatedQuery,
+    validateAIResponse,
 } from "@/lib/care-reference";
 import {
     detectCrisis,
@@ -913,6 +914,15 @@ ${emergencyDetection.isEmergency ? "이것은 즉시 병원에 가야 하는 상
                 exclamationCount++;
                 return exclamationCount <= 1 ? "!" : ".";
             });
+        }
+
+        // 응답 후 검증 레이어 — 케어 응답에서 할루시네이션 위험 패턴 코드 레벨 검증
+        const validation = validateAIResponse(reply, isCareQuery);
+        if (validation.wasModified) {
+            reply = validation.reply;
+            console.warn(
+                `[chat/post-validation] 응답 수정됨: violations=${validation.violations.join(", ")}`
+            );
         }
 
         // 대화 저장 (DB 연동 시) — 모드 태깅으로 일상/추모 데이터 분리
