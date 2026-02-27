@@ -40,6 +40,7 @@ interface AIChatHeaderProps {
     onNewChat: () => void;
     onExport?: () => void;
     hasMessages?: boolean;
+    messageCount?: number;
 }
 
 // ============================================================================
@@ -54,9 +55,21 @@ export default function AIChatHeader({
     onNewChat,
     onExport,
     hasMessages = false,
+    messageCount = 0,
 }: AIChatHeaderProps) {
     const activePets = pets.filter((p) => p.status === "active");
     const memorialPets = pets.filter((p) => p.status === "memorial");
+
+    /** 새 대화 시작 - 대화 2개 이상이면 확인 후 시작 */
+    const handleNewChatClick = () => {
+        if (messageCount > 1) {
+            const confirmed = window.confirm(
+                "현재 대화가 초기화됩니다. 새 대화를 시작할까요?"
+            );
+            if (!confirmed) return;
+        }
+        onNewChat();
+    };
 
     return (
         <div
@@ -69,7 +82,7 @@ export default function AIChatHeader({
             <div className="max-w-2xl mx-auto flex items-center justify-between">
                 <div className="flex items-center gap-1">
                     <button
-                        onClick={onNewChat}
+                        onClick={handleNewChatClick}
                         className={`p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-all duration-500 active:scale-95 ${
                             isMemorialMode
                                 ? "hover:bg-amber-200/50 text-amber-600"
