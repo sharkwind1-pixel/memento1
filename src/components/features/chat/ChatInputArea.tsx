@@ -166,13 +166,13 @@ export default function ChatInputArea({
                 ) : (
                     <>
                         {/* 추천 대화 버튼 */}
-                        <div className="flex flex-wrap gap-2 mb-2">
+                        <div className="flex flex-wrap gap-x-2 gap-y-2.5 mb-3">
                             {suggestedQuestions.length > 0 ? (
                                 suggestedQuestions.map((question, idx) => (
                                     <button
                                         key={question}
                                         onClick={() => { setSuggestedQuestions([]); onSend(question); }}
-                                        className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium max-w-[200px] min-h-[40px] shadow-sm cursor-pointer active:scale-95 transition-transform chip-enter ${
+                                        className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium min-h-[44px] shadow-sm cursor-pointer active:scale-95 transition-transform chip-enter ${
                                             isMemorialMode
                                                 ? "bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-200"
                                                 : "bg-[#E0F7FF] hover:bg-[#BAE6FD] text-[#0891B2] border border-[#BAE6FD]"
@@ -188,7 +188,7 @@ export default function ChatInputArea({
                                     <button
                                         key={suggestion.text}
                                         onClick={() => { onSend(suggestion.text); }}
-                                        className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium max-w-[200px] min-h-[40px] shadow-sm cursor-pointer active:scale-95 transition-transform chip-enter ${
+                                        className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium min-h-[44px] shadow-sm cursor-pointer active:scale-95 transition-transform chip-enter ${
                                             isMemorialMode
                                                 ? "bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-200"
                                                 : "bg-[#E0F7FF] hover:bg-[#BAE6FD] text-[#0891B2] border border-[#BAE6FD]"
