@@ -513,8 +513,21 @@ export default function VideoGenerateModal({
             </div>
 
             {/* Quota info */}
-            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl px-4 py-3 mb-6">
+            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl px-4 py-3 mb-4">
                 {renderQuotaInfo()}
+            </div>
+
+            {/* 안내 문구 */}
+            <div className="bg-memento-50 dark:bg-memento-900/20 border border-memento-200 dark:border-memento-800/30 rounded-xl px-4 py-3 mb-6">
+                <p className="text-sm text-memento-700 dark:text-memento-300 font-medium leading-relaxed">
+                    AI가 사진을 분석해 영상을 만들어요.
+                    <br />
+                    보통 5~10분 정도 걸리며, 완성되면 알려드릴게요.
+                    <br />
+                    <span className="text-memento-500">
+                        이 페이지를 떠나셔도 괜찮아요!
+                    </span>
+                </p>
             </div>
 
             {/* Footer buttons */}

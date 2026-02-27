@@ -356,6 +356,9 @@ export default function VideoGenerationSection({
                                             경과 시간: {getElapsedTime(activeGeneration.createdAt)}
                                         </p>
                                     </div>
+                                    <p className="text-xs text-gray-400 mt-1">
+                                        보통 5~10분 정도 소요돼요. 다른 페이지를 둘러보셔도 괜찮아요!
+                                    </p>
                                 </div>
                                 <Loader2 className="w-5 h-5 text-memento-500 animate-spin" />
                             </div>
