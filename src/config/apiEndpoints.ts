@@ -66,6 +66,9 @@ export const API = {
     MEMORY_ALBUMS: "/api/memory-albums",
     MEMORY_ALBUM_READ: (id: string) => `/api/memory-albums/${id}/read`,
 
+    // 크론
+    CRON_MAGAZINE_GENERATE: "/api/cron/magazine-generate",
+
     // 관리자
     ADMIN_POINTS: "/api/admin/points",
 
