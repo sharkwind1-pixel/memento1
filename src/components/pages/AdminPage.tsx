@@ -85,8 +85,19 @@ const TABS: { id: AdminTab; label: string; icon: typeof LayoutDashboard }[] = [
 function AdminPage() {
     const { user, isAdminUser } = useAuth();
 
-    // 현재 활성 탭
-    const [activeTab, setActiveTab] = useState<AdminTab>("dashboard");
+    // 현재 활성 탭 — localStorage로 새로고침 시 복원
+    const [activeTab, setActiveTab] = useState<AdminTab>(() => {
+        if (typeof window !== "undefined") {
+            const saved = localStorage.getItem("memento-admin-tab");
+            if (saved && ["dashboard", "users", "posts", "inquiries", "reports", "withdrawals", "magazine"].includes(saved)) {
+                return saved as AdminTab;
+            }
+        }
+        return "dashboard";
+    });
+
+    // 탭 변경 시 localStorage에 저장
+    useEffect(() => { localStorage.setItem("memento-admin-tab", activeTab); }, [activeTab]);
 
     // 탈퇴 처리 모달 상태
     const [withdrawalModalUser, setWithdrawalModalUser] = useState<UserRow | null>(null);

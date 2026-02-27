@@ -66,12 +66,26 @@ const TOPICS = [
 ];
 
 function MagazinePage({ setSelectedTab }: MagazinePageProps) {
-    const [selectedStage, setSelectedStage] = useState<string>("all");
-    const [selectedTopic, setSelectedTopic] = useState<string>("all");
+    const [selectedStage, setSelectedStage] = useState<string>(() => {
+        if (typeof window !== "undefined") {
+            return localStorage.getItem("memento-magazine-stage") || "all";
+        }
+        return "all";
+    });
+    const [selectedTopic, setSelectedTopic] = useState<string>(() => {
+        if (typeof window !== "undefined") {
+            return localStorage.getItem("memento-magazine-topic") || "all";
+        }
+        return "all";
+    });
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [articles, setArticles] = useState<MagazineArticle[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedArticle, setSelectedArticle] = useState<MagazineArticle | null>(null);
+
+    // 필터 변경 시 localStorage에 저장
+    useEffect(() => { localStorage.setItem("memento-magazine-stage", selectedStage); }, [selectedStage]);
+    useEffect(() => { localStorage.setItem("memento-magazine-topic", selectedTopic); }, [selectedTopic]);
 
     // DB에서 기사 불러오기 (발행된 기사만)
     useEffect(() => {
