@@ -90,7 +90,7 @@ export default function Footer() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center pt-4">
               <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
                 <p>2026 메멘토애니. 모든 권리 보유.</p>
-                <p>이 페이지에는 ㈜여기어때컴퍼니가 제공한 여기어때 잘난체가 적용되어 있습니다.</p>
+                <p>이 페이지에는 ㈜여기어때컴퍼니가 제공한 <a href="/fonts/Jalnan2-LICENSE.txt" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-700 dark:hover:text-gray-300 transition-colors">여기어때 잘난체</a>가 적용되어 있습니다.</p>
               </div>
               <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mt-2 md:mt-0">
                 특별한 매일을 함께
