@@ -18,6 +18,7 @@ export const runtime = "nodejs";
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser, createServerSupabase } from "@/lib/supabase-server";
 import type { EmotionType, GriefStage } from "@/types";
+import { isValidEmotion, isValidGriefStage } from "@/types";
 
 // 애도 단계 순서 (치유 진행 방향)
 const GRIEF_STAGE_ORDER: GriefStage[] = ["denial", "anger", "bargaining", "depression", "acceptance", "unknown"];
@@ -124,8 +125,8 @@ export async function GET(request: NextRequest) {
 
         for (const s of summaries || []) {
             const date = s.session_date;
-            const emotion = s.emotional_tone as EmotionType;
-            const grief = s.grief_progress as GriefStage | null;
+            const emotion: EmotionType = isValidEmotion(s.emotional_tone) ? s.emotional_tone : "neutral";
+            const grief: GriefStage | null = isValidGriefStage(s.grief_progress) ? s.grief_progress : null;
 
             // 감정 카운트
             if (!emotionByDate[date]) {

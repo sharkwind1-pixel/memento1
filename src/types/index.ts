@@ -216,6 +216,17 @@ export type EmotionType =
 /** 애도 단계 (Kubler-Ross 모델 기반) */
 export type GriefStage = "denial" | "anger" | "bargaining" | "depression" | "acceptance" | "unknown";
 
+/** 런타임 타입 가드 — DB 조회 데이터 검증용 */
+const VALID_EMOTIONS: readonly string[] = ["happy", "sad", "anxious", "angry", "grateful", "lonely", "peaceful", "excited", "neutral"];
+const VALID_GRIEF_STAGES: readonly string[] = ["denial", "anger", "bargaining", "depression", "acceptance", "unknown"];
+
+export function isValidEmotion(value: unknown): value is EmotionType {
+    return typeof value === "string" && VALID_EMOTIONS.includes(value);
+}
+export function isValidGriefStage(value: unknown): value is GriefStage {
+    return typeof value === "string" && VALID_GRIEF_STAGES.includes(value);
+}
+
 /** AI API 요청용 펫 정보 (Pet에서 필요한 필드만 추출) */
 export interface PetInfoForAPI {
     id?: string;
