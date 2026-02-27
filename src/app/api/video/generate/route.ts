@@ -1,0 +1,187 @@
+/**
+ * AI 영상 생성 API
+ * POST: 반려동물 사진 기반 AI 영상 생성 요청
+ *
+ * 보안:
+ * - 세션 기반 인증 필수
+ * - Rate Limiting (write)
+ * - VPN/프록시 차단
+ * - 서버 사이드 쿼터 검증 (무료: 평생 1회, 프리미엄: 월 3회)
+ */
+
+import { NextRequest, NextResponse } from "next/server";
+import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
+import {
+    getClientIP,
+    checkRateLimit,
+    getRateLimitHeaders,
+    sanitizeInput,
+    checkVPN,
+    getVPNBlockResponse,
+} from "@/lib/rate-limit";
+import { submitVideoGeneration } from "@/lib/fal";
+import { VIDEO } from "@/config/constants";
+import { VIDEO_TEMPLATES } from "@/config/videoTemplates";
+
+export const dynamic = "force-dynamic";
+export const maxDuration = 30;
+
+export async function POST(request: NextRequest) {
+    try {
+        // 1. Rate Limiting (스팸 방지)
+        const clientIP = await getClientIP();
+        const rateLimit = checkRateLimit(clientIP, "write");
+
+        if (!rateLimit.allowed) {
+            return NextResponse.json(
+                { error: "요청이 너무 빠릅니다. 잠시 후 다시 시도해주세요." },
+                {
+                    status: 429,
+                    headers: getRateLimitHeaders(rateLimit.remaining, rateLimit.resetIn),
+                }
+            );
+        }
+
+        // 2. VPN/프록시 감지
+        const vpnCheck = await checkVPN(clientIP);
+        if (vpnCheck.blocked) {
+            console.warn(`[Security] VPN blocked (video generate): ${clientIP} - ${vpnCheck.reason}`);
+            return NextResponse.json(getVPNBlockResponse(), { status: 403 });
+        }
+
+        // 3. 인증 확인
+        const user = await getAuthUser();
+        if (!user) {
+            return NextResponse.json(
+                { error: "로그인이 필요합니다." },
+                { status: 401 }
+            );
+        }
+
+        const supabase = await createServerSupabase();
+        const body = await request.json();
+
+        const { petId, petName, sourcePhotoUrl, templateId, customPrompt } = body;
+
+        // 4. 필수 필드 검증
+        if (!sourcePhotoUrl) {
+            return NextResponse.json(
+                { error: "원본 사진 URL이 필요합니다." },
+                { status: 400 }
+            );
+        }
+
+        // 5. 서버 사이드 쿼터 검증
+        // 5-1. 프리미엄 여부 확인
+        const { data: profile } = await supabase
+            .from("profiles")
+            .select("is_premium, premium_expires_at")
+            .eq("id", user.id)
+            .single();
+
+        const isPremium = profile?.is_premium &&
+            (!profile.premium_expires_at || new Date(profile.premium_expires_at) > new Date());
+
+        // 5-2. 이번 달 생성 횟수 (월간 쿼터용, 실패 제외)
+        const now = new Date();
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+        const { count: monthlyCount } = await supabase
+            .from("video_generations")
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", user.id)
+            .neq("status", "failed")
+            .gte("created_at", monthStart);
+
+        // 5-3. 전체 생성 횟수 (평생 무료 쿼터용, 실패 제외)
+        const { count: lifetimeCount } = await supabase
+            .from("video_generations")
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", user.id)
+            .neq("status", "failed");
+
+        // 5-4. 쿼터 초과 검사
+        if (!isPremium) {
+            // 무료 회원: 평생 FREE_LIFETIME회
+            if ((lifetimeCount ?? 0) >= VIDEO.FREE_LIFETIME) {
+                return NextResponse.json(
+                    { error: "무료 체험 영상 생성 횟수를 모두 사용했습니다. 프리미엄으로 업그레이드하면 매달 더 많은 영상을 만들 수 있어요." },
+                    { status: 403 }
+                );
+            }
+        } else {
+            // 프리미엄 회원: 월 BASIC_MONTHLY회
+            if ((monthlyCount ?? 0) >= VIDEO.BASIC_MONTHLY) {
+                return NextResponse.json(
+                    { error: `이번 달 영상 생성 횟수(${VIDEO.BASIC_MONTHLY}회)를 모두 사용했습니다. 다음 달에 다시 이용해주세요.` },
+                    { status: 403 }
+                );
+            }
+        }
+
+        // 6. 프롬프트 결정
+        let finalPrompt: string | null = null;
+
+        if (templateId) {
+            const template = VIDEO_TEMPLATES.find(t => t.id === templateId);
+            if (!template) {
+                return NextResponse.json(
+                    { error: "존재하지 않는 템플릿입니다." },
+                    { status: 400 }
+                );
+            }
+            finalPrompt = template.prompt;
+        } else if (customPrompt) {
+            finalPrompt = sanitizeInput(customPrompt);
+        }
+
+        if (!finalPrompt) {
+            return NextResponse.json(
+                { error: "템플릿 또는 커스텀 프롬프트를 선택해주세요." },
+                { status: 400 }
+            );
+        }
+
+        // 7. Webhook URL 구성
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://memento-ani.vercel.app";
+        const webhookUrl = `${baseUrl}/api/video/webhook?secret=${process.env.VIDEO_WEBHOOK_SECRET}`;
+
+        // 8. fal.ai 큐에 영상 생성 요청 제출
+        const falRequestId = await submitVideoGeneration(sourcePhotoUrl, finalPrompt, webhookUrl);
+
+        // 9. DB에 생성 기록 저장
+        const { data: generation, error: insertError } = await supabase
+            .from("video_generations")
+            .insert({
+                user_id: user.id,
+                pet_id: petId || null,
+                pet_name: petName ? sanitizeInput(petName) : null,
+                source_photo_url: sourcePhotoUrl,
+                template_id: templateId || null,
+                custom_prompt: customPrompt ? sanitizeInput(customPrompt) : null,
+                fal_request_id: falRequestId,
+                status: "pending",
+            })
+            .select("id, status")
+            .single();
+
+        if (insertError) {
+            console.error("[Video Generate] DB 저장 에러:", insertError);
+            return NextResponse.json(
+                { error: "영상 생성 요청 저장 중 오류가 발생했습니다." },
+                { status: 500 }
+            );
+        }
+
+        return NextResponse.json({
+            id: generation.id,
+            status: "pending",
+        });
+    } catch (err) {
+        console.error("[Video Generate] 서버 오류:", err);
+        return NextResponse.json(
+            { error: "영상 생성 요청 중 오류가 발생했습니다." },
+            { status: 500 }
+        );
+    }
+}

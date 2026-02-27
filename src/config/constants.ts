@@ -196,6 +196,16 @@ export const MINIHOMPY = {
     MAX_PLACED_MINIMI: 5,
 } as const;
 
+// ===== AI 영상 생성 =====
+export const VIDEO = {
+    FREE_LIFETIME: 1,           // 무료 회원 평생 1회
+    BASIC_MONTHLY: 3,           // 베이직(현 프리미엄) 월 3회
+    PREMIUM_MONTHLY: 6,         // 프리미엄 월 6회
+    SINGLE_PRICE: 3500,         // 단품 구매 가격 (원)
+    POLL_INTERVAL_MS: 15000,    // 상태 폴링 간격 (15초)
+    MAX_POLL_COUNT: 60,         // 최대 폴링 횟수 (15분)
+} as const;
+
 // ===== PostgreSQL 에러 코드 =====
 export const PG_ERROR_CODES = {
     UNIQUE_VIOLATION: "23505",

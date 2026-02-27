@@ -66,6 +66,13 @@ export const API = {
     MEMORY_ALBUMS: "/api/memory-albums",
     MEMORY_ALBUM_READ: (id: string) => `/api/memory-albums/${id}/read`,
 
+    // AI 영상 생성
+    VIDEO_GENERATE: "/api/video/generate",
+    VIDEO_WEBHOOK: "/api/video/webhook",
+    VIDEO_STATUS: (id: string) => `/api/video/status/${id}`,
+    VIDEO_LIST: "/api/video/list",
+    VIDEO_QUOTA: "/api/video/quota",
+
     // 크론
     CRON_MAGAZINE_GENERATE: "/api/cron/magazine-generate",
 

@@ -37,6 +37,7 @@
 | 치유의 여정 대시보드 (감정 추이, 애도 단계, 마일스톤) | 완료 |
 | 보안 전면 리뷰 + 수정 (레이스 컨디션, 파일 업로드, VPN 체크 등) | 완료 |
 | 대형 컴포넌트 분리 (5개 페이지 리팩토링) | 완료 |
+| AI 영상 생성 (fal.ai Minimax Hailuo, 8템플릿, 쿼터 시스템, 폴링 UI) | 코드 완료 (DB 미실행) |
 
 ---
 
@@ -50,6 +51,7 @@
 | `ALTER TABLE minihompy_settings ADD COLUMN IF NOT EXISTS placed_minimi JSONB DEFAULT '[]'::jsonb;` | 멀티 미니미 배치 | 즉시 |
 | `20260222_minimi_system.sql` | 미니미 구매/되팔기 (이미 실행됐을 수 있음) | 확인 |
 | `20260226_memory_albums.sql` | 추억 앨범 테이블 | 즉시 |
+| `sql/video_generations.sql` | AI 영상 생성 테이블 + RLS + 인덱스 | 즉시 |
 
 ---
 
@@ -68,6 +70,16 @@
 4. 환경변수: `PORTONE_API_KEY`, `PORTONE_API_SECRET`, `NEXT_PUBLIC_PORTONE_STORE_ID`
 5. 가격: `src/config/constants.ts` `PRICING` 참조 (월 7,900원 / 연 79,000원)
 6. **승빈님 필요**: 포트원 계정 생성 + 가맹점 등록 + API 키 발급
+
+### AI 영상 생성 — 승빈님 설정 필요
+
+1. **DB 마이그레이션**: `sql/video_generations.sql`을 Supabase SQL Editor에서 실행
+2. **Storage 버킷**: Supabase Dashboard > Storage에서 `videos` 버킷 생성 (Public, video/mp4 허용)
+3. **환경변수**: `.env.local`에 추가
+   - `FAL_KEY` — fal.ai API 키 (https://fal.ai/dashboard/keys 에서 발급)
+   - `VIDEO_WEBHOOK_SECRET` — 랜덤 시크릿 (예: `openssl rand -hex 32`)
+   - `NEXT_PUBLIC_APP_URL` — 배포 URL (예: `https://memento-ani.vercel.app`)
+4. **Vercel 환경변수**: 위 3개를 Vercel Dashboard에도 설정
 
 ### 모바일 깜빡임 최종 확인
 

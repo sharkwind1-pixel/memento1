@@ -41,6 +41,7 @@ import TimelineSection from "@/components/features/record/TimelineSection";
 import ProfileTab from "@/components/features/record/ProfileTab";
 import PetCardGrid from "@/components/features/record/PetCardGrid";
 import RecordPageGuest from "@/components/features/record/RecordPageGuest";
+import VideoGenerationSection from "@/components/features/video/VideoGenerationSection";
 
 interface RecordPageProps {
     setSelectedTab?: (tab: TabType) => void;
@@ -432,6 +433,15 @@ function RecordPage({ setSelectedTab }: RecordPageProps) {
                                             onDeletePhoto={deletePhoto}
                                             onDeletePhotos={deletePhotos}
                                         />
+
+                                        {selectedPet.photos.length > 0 && (
+                                            <div className="mt-6">
+                                                <VideoGenerationSection
+                                                    pet={selectedPet}
+                                                    isPremium={isPremiumUser}
+                                                />
+                                            </div>
+                                        )}
 
                                         {selectedPet.status !== "memorial" && (
                                             <div className="mt-6">
