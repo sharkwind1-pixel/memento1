@@ -20,7 +20,9 @@ import { fal } from "@fal-ai/client";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
-fal.config({ credentials: process.env.FAL_KEY! });
+function ensureFalConfig() {
+    fal.config({ credentials: process.env.FAL_KEY! });
+}
 
 function getServiceSupabase() {
     return createClient(
@@ -68,6 +70,7 @@ export async function GET(
             data.fal_request_id
         ) {
             try {
+                ensureFalConfig();
                 const falStatus = await fal.queue.status(
                     "fal-ai/minimax/video-01-live/image-to-video",
                     { requestId: data.fal_request_id, logs: false }
