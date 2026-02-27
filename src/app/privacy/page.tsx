@@ -13,7 +13,7 @@ export default function PrivacyPage() {
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4">
             <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
-                <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-8 text-center">
+                <h1 className="text-3xl font-display font-bold text-gray-800 dark:text-white mb-8 text-center">
                     개인정보처리방침
                 </h1>
 
@@ -27,7 +27,7 @@ export default function PrivacyPage() {
                     </p>
 
                     <section>
-                        <h2 className="text-xl font-bold text-gray-800 dark:text-white">제1조 (개인정보의 처리 목적)</h2>
+                        <h2 className="text-xl font-display font-bold text-gray-800 dark:text-white">제1조 (개인정보의 처리 목적)</h2>
                         <p className="text-gray-600 dark:text-gray-300">
                             회사는 다음의 목적을 위하여 개인정보를 처리합니다. 처리한 개인정보는 다음의 목적 이외의 용도로는 사용되지 않으며, 이용 목적이 변경될 시에는 사전 동의를 구할 예정입니다.
                         </p>
@@ -42,7 +42,7 @@ export default function PrivacyPage() {
                     </section>
 
                     <section>
-                        <h2 className="text-xl font-bold text-gray-800 dark:text-white">제2조 (수집하는 개인정보의 항목)</h2>
+                        <h2 className="text-xl font-display font-bold text-gray-800 dark:text-white">제2조 (수집하는 개인정보의 항목)</h2>
                         <div className="overflow-x-auto">
                             <table className="min-w-full border dark:border-gray-700">
                                 <thead className="bg-gray-100 dark:bg-gray-700">
@@ -84,7 +84,7 @@ export default function PrivacyPage() {
                     </section>
 
                     <section>
-                        <h2 className="text-xl font-bold text-gray-800 dark:text-white">제3조 (개인정보의 처리 및 보유 기간)</h2>
+                        <h2 className="text-xl font-display font-bold text-gray-800 dark:text-white">제3조 (개인정보의 처리 및 보유 기간)</h2>
                         <p className="text-gray-600 dark:text-gray-300">
                             회사는 법령에 따른 개인정보 보유 및 이용 기간 또는 정보주체로부터 동의받은 기간 내에서 개인정보를 처리 및 보유합니다.
                         </p>
@@ -124,7 +124,7 @@ export default function PrivacyPage() {
                     </section>
 
                     <section>
-                        <h2 className="text-xl font-bold text-gray-800 dark:text-white">제4조 (개인정보의 제3자 제공)</h2>
+                        <h2 className="text-xl font-display font-bold text-gray-800 dark:text-white">제4조 (개인정보의 제3자 제공)</h2>
                         <p className="text-gray-600 dark:text-gray-300">
                             회사는 원칙적으로 정보주체의 개인정보를 제3자에게 제공하지 않습니다. 다만, 다음의 경우에 해당할 때에는 개인정보를 제3자에게 제공할 수 있습니다.
                         </p>
@@ -154,7 +154,7 @@ export default function PrivacyPage() {
                     </section>
 
                     <section>
-                        <h2 className="text-xl font-bold text-gray-800 dark:text-white">제5조 (개인정보의 국외 이전)</h2>
+                        <h2 className="text-xl font-display font-bold text-gray-800 dark:text-white">제5조 (개인정보의 국외 이전)</h2>
                         <p className="text-gray-600 dark:text-gray-300">
                             회사는 AI 펫톡 서비스 제공을 위해 다음과 같이 개인정보를 국외로 이전합니다.
                         </p>
@@ -200,7 +200,7 @@ export default function PrivacyPage() {
                     </section>
 
                     <section>
-                        <h2 className="text-xl font-bold text-gray-800 dark:text-white">제6조 (개인정보의 파기 절차 및 방법)</h2>
+                        <h2 className="text-xl font-display font-bold text-gray-800 dark:text-white">제6조 (개인정보의 파기 절차 및 방법)</h2>
                         <ol className="list-decimal list-inside text-gray-600 dark:text-gray-300 space-y-2">
                             <li><strong>파기 절차</strong>: 회원이 입력한 정보는 목적이 달성된 후 별도의 DB로 옮겨져(종이의 경우 별도의 서류함) 내부 방침 및 관련 법령에 따라 일정 기간 저장된 후 파기됩니다.</li>
                             <li><strong>파기 방법</strong>: 전자적 파일 형태의 정보는 기록을 재생할 수 없는 기술적 방법을 사용합니다. 종이에 출력된 개인정보는 분쇄기로 분쇄하거나 소각합니다.</li>
@@ -209,7 +209,7 @@ export default function PrivacyPage() {
                     </section>
 
                     <section>
-                        <h2 className="text-xl font-bold text-gray-800 dark:text-white">제7조 (AI 서비스 이용 관련 안내)</h2>
+                        <h2 className="text-xl font-display font-bold text-gray-800 dark:text-white">제7조 (AI 서비스 이용 관련 안내)</h2>
                         <ul className="list-disc list-inside text-gray-600 dark:text-gray-300 space-y-2">
                             <li>&quot;AI 펫톡&quot; 서비스는 인공지능(AI) 기술을 활용하여 제공됩니다. (인공지능기본법 제27조에 의한 고지)</li>
                             <li>AI와의 대화 내용은 서비스 제공을 위해 OpenAI의 API로 전송되며, OpenAI는 API를 통해 수신한 데이터를 모델 학습에 사용하지 않습니다.</li>
@@ -220,7 +220,7 @@ export default function PrivacyPage() {
                     </section>
 
                     <section>
-                        <h2 className="text-xl font-bold text-gray-800 dark:text-white">제8조 (정보주체의 권리 및 행사 방법)</h2>
+                        <h2 className="text-xl font-display font-bold text-gray-800 dark:text-white">제8조 (정보주체의 권리 및 행사 방법)</h2>
                         <ol className="list-decimal list-inside text-gray-600 dark:text-gray-300 space-y-2">
                             <li>정보주체는 회사에 대해 언제든지 다음 각 호의 개인정보 보호 관련 권리를 행사할 수 있습니다.
                                 <ul className="list-disc list-inside ml-4 mt-1 space-y-1">
@@ -236,7 +236,7 @@ export default function PrivacyPage() {
                     </section>
 
                     <section>
-                        <h2 className="text-xl font-bold text-gray-800 dark:text-white">제9조 (개인정보의 안전성 확보 조치)</h2>
+                        <h2 className="text-xl font-display font-bold text-gray-800 dark:text-white">제9조 (개인정보의 안전성 확보 조치)</h2>
                         <p className="text-gray-600 dark:text-gray-300">회사는 개인정보의 안전성 확보를 위해 다음과 같은 조치를 취하고 있습니다.</p>
                         <ul className="list-disc list-inside text-gray-600 dark:text-gray-300 space-y-1">
                             <li><strong>기술적 조치</strong>: 개인정보의 암호화(비밀번호는 해시 처리), HTTPS를 통한 데이터 전송 암호화, 접근 권한 관리</li>
@@ -246,7 +246,7 @@ export default function PrivacyPage() {
                     </section>
 
                     <section>
-                        <h2 className="text-xl font-bold text-gray-800 dark:text-white">제10조 (쿠키 및 자동 수집 장치의 운용)</h2>
+                        <h2 className="text-xl font-display font-bold text-gray-800 dark:text-white">제10조 (쿠키 및 자동 수집 장치의 운용)</h2>
                         <ol className="list-decimal list-inside text-gray-600 dark:text-gray-300 space-y-2">
                             <li>회사는 이용자에게 개별적인 맞춤 서비스를 제공하기 위해 쿠키(Cookie) 및 로컬 스토리지를 사용합니다.</li>
                             <li>쿠키는 웹사이트를 운영하는 데 이용되는 서버가 이용자의 브라우저에 보내는 소량의 정보로, 이용자의 컴퓨터에 저장됩니다.</li>
@@ -255,7 +255,7 @@ export default function PrivacyPage() {
                     </section>
 
                     <section>
-                        <h2 className="text-xl font-bold text-gray-800 dark:text-white">제11조 (만 14세 미만 아동의 개인정보 처리)</h2>
+                        <h2 className="text-xl font-display font-bold text-gray-800 dark:text-white">제11조 (만 14세 미만 아동의 개인정보 처리)</h2>
                         <ol className="list-decimal list-inside text-gray-600 dark:text-gray-300 space-y-2">
                             <li>회사는 만 14세 미만 아동의 개인정보를 수집할 때 법정대리인의 동의를 받아야 함을 알고 있으며, 이를 위한 절차를 마련합니다.</li>
                             <li>만 14세 미만 아동의 법정대리인은 아동의 개인정보에 대한 열람, 정정, 삭제, 처리 정지를 요구할 수 있습니다.</li>
@@ -263,7 +263,7 @@ export default function PrivacyPage() {
                     </section>
 
                     <section>
-                        <h2 className="text-xl font-bold text-gray-800 dark:text-white">제12조 (개인정보 보호책임자)</h2>
+                        <h2 className="text-xl font-display font-bold text-gray-800 dark:text-white">제12조 (개인정보 보호책임자)</h2>
                         <p className="text-gray-600 dark:text-gray-300 mb-2">
                             회사는 개인정보 처리에 관한 업무를 총괄하여 책임지고, 개인정보 처리와 관련한 정보주체의 불만 처리 및 피해 구제 등을 위하여 아래와 같이 개인정보 보호책임자를 지정하고 있습니다.
                         </p>
@@ -288,7 +288,7 @@ export default function PrivacyPage() {
                     </section>
 
                     <section>
-                        <h2 className="text-xl font-bold text-gray-800 dark:text-white">제13조 (권익침해 구제방법)</h2>
+                        <h2 className="text-xl font-display font-bold text-gray-800 dark:text-white">제13조 (권익침해 구제방법)</h2>
                         <p className="text-gray-600 dark:text-gray-300 mb-2">
                             정보주체는 개인정보 침해로 인한 구제를 받기 위하여 아래의 기관에 분쟁 해결이나 상담 등을 신청할 수 있습니다.
                         </p>
@@ -301,7 +301,7 @@ export default function PrivacyPage() {
                     </section>
 
                     <section>
-                        <h2 className="text-xl font-bold text-gray-800 dark:text-white">제14조 (개인정보 처리방침 변경)</h2>
+                        <h2 className="text-xl font-display font-bold text-gray-800 dark:text-white">제14조 (개인정보 처리방침 변경)</h2>
                         <p className="text-gray-600 dark:text-gray-300">
                             이 개인정보 처리방침은 시행일로부터 적용되며, 법령 및 방침에 따른 변경 내용의 추가, 삭제 및 정정이 있는 경우에는 변경사항의 시행 7일 전부터 공지사항을 통하여 고지할 것입니다.
                         </p>

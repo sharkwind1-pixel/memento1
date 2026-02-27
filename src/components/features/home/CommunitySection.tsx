@@ -62,7 +62,7 @@ export default function CommunitySection({
                         <TrendingUp className="w-5 h-5 text-white" />
                     </div>
                     <div className="min-w-0">
-                        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 dark:text-gray-100 leading-tight">
+                        <h2 className="text-lg sm:text-xl md:text-2xl font-display font-bold text-gray-800 dark:text-gray-100 leading-tight">
                             지금 인기 있는 이야기
                         </h2>
                         <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 hidden sm:block">

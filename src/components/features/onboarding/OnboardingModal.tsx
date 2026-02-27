@@ -290,7 +290,7 @@ export default function OnboardingModal({
                             <div className="w-20 h-20 bg-gradient-to-br from-sky-400 to-violet-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
                                 <Sparkles className="w-10 h-10 text-white" />
                             </div>
-                            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-3">
+                            <h2 className="text-2xl font-display font-bold text-gray-800 dark:text-white mb-3">
                                 환영해요!
                             </h2>
                             <p className="text-gray-600 dark:text-gray-300 leading-relaxed">

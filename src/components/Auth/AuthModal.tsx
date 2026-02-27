@@ -100,7 +100,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                         </button>
                         <h2
                             id="auth-modal-title"
-                            className="text-2xl font-bold"
+                            className="text-2xl font-display font-bold"
                         >
                             시작하기
                         </h2>

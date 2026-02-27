@@ -218,7 +218,7 @@ function AdminPage() {
                 <Card className="max-w-md w-full mx-4">
                     <CardContent className="p-8 text-center">
                         <Shield className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                        <h2 className="text-xl font-bold text-gray-800 mb-2">
+                        <h2 className="text-xl font-display font-bold text-gray-800 mb-2">
                             접근 권한 없음
                         </h2>
                         <p className="text-gray-500">
@@ -238,7 +238,7 @@ function AdminPage() {
             <div className="max-w-7xl mx-auto space-y-6">
                 {/* 헤더 */}
                 <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold text-gray-800">관리자 대시보드</h1>
+                    <h1 className="text-2xl font-display font-bold text-gray-800">관리자 대시보드</h1>
                 </div>
 
                 {/* 탭 네비게이션 */}

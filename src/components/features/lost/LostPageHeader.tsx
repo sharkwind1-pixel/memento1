@@ -63,7 +63,7 @@ export default function LostPageHeader({
                         <Search className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                     </div>
                     <div>
-                        <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">
+                        <h1 className="text-xl sm:text-2xl font-display font-bold text-gray-800 dark:text-gray-100">
                             분실동물 찾기
                         </h1>
                         <p className="text-sm text-gray-600 dark:text-gray-300">

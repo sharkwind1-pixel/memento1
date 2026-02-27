@@ -513,7 +513,7 @@ function CoverCard({ article }: { article: MagazineArticle }) {
                     </Badge>
                 )}
 
-                <h1 className="text-3xl sm:text-4xl font-bold text-white leading-tight mb-4">
+                <h1 className="text-3xl sm:text-4xl font-display font-bold text-white leading-tight mb-4">
                     {article.title}
                 </h1>
 
@@ -558,7 +558,7 @@ function SummaryCard({ article }: { article: MagazineArticle }) {
                 </Badge>
             )}
 
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100 leading-tight mb-6">
+            <h2 className="text-2xl sm:text-3xl font-display font-bold text-gray-800 dark:text-gray-100 leading-tight mb-6">
                 {article.title}
             </h2>
 

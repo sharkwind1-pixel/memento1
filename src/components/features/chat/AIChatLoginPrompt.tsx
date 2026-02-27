@@ -27,7 +27,7 @@ export default function AIChatLoginPrompt() {
                 </div>
 
                 {/* 타이틀 */}
-                <h2 className="text-2xl font-bold text-sky-900 dark:text-white mb-2 text-center">
+                <h2 className="text-2xl font-display font-bold text-sky-900 dark:text-white mb-2 text-center">
                     AI 펫톡으로 대화해보세요
                 </h2>
                 <p className="text-sky-600 dark:text-gray-400 text-center mb-6">

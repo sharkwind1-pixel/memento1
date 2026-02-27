@@ -61,7 +61,7 @@ export default function MemorialSection({
                         <Cloud className="w-5 h-5 text-white" />
                     </div>
                     <div className="min-w-0">
-                        <h2 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-amber-500 to-orange-500 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent leading-tight">
+                        <h2 className="text-lg sm:text-xl md:text-2xl font-display font-bold bg-gradient-to-r from-amber-500 to-orange-500 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent leading-tight">
                             마음속에 영원히
                         </h2>
                         <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 hidden sm:block">

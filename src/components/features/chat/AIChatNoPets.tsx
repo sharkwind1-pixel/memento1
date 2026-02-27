@@ -16,7 +16,7 @@ export default function AIChatNoPets() {
             <div className="w-24 h-24 rounded-full bg-gradient-to-br from-memento-100 to-memento-200 flex items-center justify-center mb-6">
                 <PawPrint className="w-12 h-12 text-memento-600" />
             </div>
-            <h2 className="text-2xl font-bold text-sky-900 dark:text-white mb-2 text-center">
+            <h2 className="text-2xl font-display font-bold text-sky-900 dark:text-white mb-2 text-center">
                 반려동물을 등록해주세요
             </h2>
             <p className="text-sky-600 dark:text-gray-400 text-center mb-6">

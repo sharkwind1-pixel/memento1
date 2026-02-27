@@ -13,7 +13,7 @@ export default function TermsPage() {
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4">
             <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
-                <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-8 text-center">
+                <h1 className="text-3xl font-display font-bold text-gray-800 dark:text-white mb-8 text-center">
                     메멘토애니 서비스 이용약관
                 </h1>
 
@@ -24,7 +24,7 @@ export default function TermsPage() {
 
                     {/* 제1장 총칙 */}
                     <section>
-                        <h2 className="text-xl font-bold text-gray-800 dark:text-white">제1장 총칙</h2>
+                        <h2 className="text-xl font-display font-bold text-gray-800 dark:text-white">제1장 총칙</h2>
 
                         <h3 className="text-lg font-semibold mt-4">제1조 (목적)</h3>
                         <p className="text-gray-600 dark:text-gray-300">
@@ -61,7 +61,7 @@ export default function TermsPage() {
 
                     {/* 제2장 서비스 이용 */}
                     <section>
-                        <h2 className="text-xl font-bold text-gray-800 dark:text-white">제2장 서비스 이용</h2>
+                        <h2 className="text-xl font-display font-bold text-gray-800 dark:text-white">제2장 서비스 이용</h2>
 
                         <h3 className="text-lg font-semibold mt-4">제5조 (서비스의 제공)</h3>
                         <p className="text-gray-600 dark:text-gray-300">회사는 회원에게 다음과 같은 서비스를 제공합니다.</p>
@@ -103,7 +103,7 @@ export default function TermsPage() {
 
                     {/* 제3장 회원의 의무 */}
                     <section>
-                        <h2 className="text-xl font-bold text-gray-800 dark:text-white">제3장 회원의 의무 및 게시물 관리</h2>
+                        <h2 className="text-xl font-display font-bold text-gray-800 dark:text-white">제3장 회원의 의무 및 게시물 관리</h2>
 
                         <h3 className="text-lg font-semibold mt-4">제9조 (회원의 의무)</h3>
                         <p className="text-gray-600 dark:text-gray-300">회원은 다음 행위를 하여서는 안 됩니다.</p>
@@ -136,7 +136,7 @@ export default function TermsPage() {
 
                     {/* 제4장 기타 */}
                     <section>
-                        <h2 className="text-xl font-bold text-gray-800 dark:text-white">제4장 기타</h2>
+                        <h2 className="text-xl font-display font-bold text-gray-800 dark:text-white">제4장 기타</h2>
 
                         <h3 className="text-lg font-semibold mt-4">제12조 (면책조항)</h3>
                         <ol className="list-decimal list-inside text-gray-600 dark:text-gray-300 space-y-2">

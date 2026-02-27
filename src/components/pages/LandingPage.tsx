@@ -86,7 +86,7 @@ export default function LandingPage() {
                         </div>
 
                         {/* 메인 타이틀 */}
-                        <h1 className="text-4xl md:text-6xl font-bold leading-tight">
+                        <h1 className="text-4xl md:text-6xl font-display font-bold leading-tight">
                             <span className="text-gray-800 dark:text-white">소중한 시간을</span>
                             <br />
                             <span className="bg-gradient-to-r from-sky-500 via-violet-500 to-amber-500 bg-clip-text text-transparent">
@@ -147,7 +147,7 @@ export default function LandingPage() {
                 <section ref={featuresRef} className="py-24 px-4">
                     <div className="max-w-5xl mx-auto">
                         <div className="text-center mb-16">
-                            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-4">
+                            <h2 className="text-3xl md:text-4xl font-display font-bold text-gray-800 dark:text-white mb-4">
                                 함께하는 모든 순간을 특별하게
                             </h2>
                             <p className="text-lg text-gray-600 dark:text-gray-300">
@@ -212,7 +212,7 @@ export default function LandingPage() {
                                 <Cloud className="w-4 h-4 text-sky-500" />
                                 <span className="text-sm font-medium text-sky-600">메모리얼 기능</span>
                             </div>
-                            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-4">
+                            <h2 className="text-3xl md:text-4xl font-display font-bold text-gray-800 dark:text-white mb-4">
                                 무지개 다리 너머에서도 함께
                             </h2>
                             <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
@@ -291,7 +291,7 @@ export default function LandingPage() {
                 <section className="py-24 px-4 bg-gradient-to-b from-transparent via-violet-50/50 dark:via-violet-900/10 to-transparent">
                     <div className="max-w-5xl mx-auto">
                         <div className="text-center mb-12">
-                            <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white">
+                            <h2 className="text-2xl md:text-3xl font-display font-bold text-gray-800 dark:text-white">
                                 사용자 후기
                             </h2>
                         </div>
@@ -326,7 +326,7 @@ export default function LandingPage() {
                 <section className="py-24 px-4">
                     <div className="max-w-4xl mx-auto">
                         <div className="text-center mb-12">
-                            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-4">
+                            <h2 className="text-3xl md:text-4xl font-display font-bold text-gray-800 dark:text-white mb-4">
                                 심플한 요금제
                             </h2>
                             <p className="text-gray-600 dark:text-gray-300">
@@ -417,7 +417,7 @@ export default function LandingPage() {
                 <section className="py-24 px-4 bg-gradient-to-b from-transparent to-sky-50/50 dark:to-sky-900/10">
                     <div className="max-w-3xl mx-auto text-center">
                         <div className="bg-gradient-to-br from-sky-100/80 via-violet-100/80 to-amber-100/80 dark:from-sky-900/30 dark:via-violet-900/30 dark:to-gray-700/30 backdrop-blur-sm rounded-3xl p-12 shadow-lg">
-                            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-4">
+                            <h2 className="text-3xl md:text-4xl font-display font-bold text-gray-800 dark:text-white mb-4">
                                 지금 시작해보세요
                             </h2>
                             <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">
