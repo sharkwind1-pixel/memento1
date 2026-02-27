@@ -204,13 +204,25 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
         checkTouch();
     }, []);
 
-    // 카드 이동
+    // 카드 이동 (전환 시 스크롤 맨 위로 리셋)
     const goToCard = useCallback(
         (idx: number) => {
-            setCurrentCard(Math.max(0, Math.min(idx, totalCards - 1)));
+            const clamped = Math.max(0, Math.min(idx, totalCards - 1));
+            setCurrentCard(clamped);
+            requestAnimationFrame(() => {
+                const container = containerRef.current;
+                if (!container) return;
+                container.querySelectorAll<HTMLElement>(".h-full.overflow-y-auto")
+                    .forEach((el) => { el.scrollTop = 0; });
+            });
         },
         [totalCards]
     );
+
+    // 최초 마운트 시 페이지 스크롤 맨 위로
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
 
     const goNext = useCallback(
         () => goToCard(currentCard + 1),
@@ -221,12 +233,17 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
         [currentCard, goToCard]
     );
 
-    // 키보드 네비게이션
+    // 키보드 네비게이션 (스페이스/엔터로도 다음 카드)
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "ArrowRight") goNext();
-            else if (e.key === "ArrowLeft") goPrev();
-            else if (e.key === "Escape") onBack();
+            if (e.key === "ArrowRight" || e.key === " " || e.key === "Enter") {
+                e.preventDefault();
+                goNext();
+            } else if (e.key === "ArrowLeft") {
+                goPrev();
+            } else if (e.key === "Escape") {
+                onBack();
+            }
         };
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
