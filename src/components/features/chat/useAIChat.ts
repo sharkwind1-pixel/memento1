@@ -498,6 +498,7 @@ export function useAIChat({
                 timestamp: new Date(),
                 emotion: data.emotion,
                 emotionScore: data.emotionScore,
+                matchedPhoto: data.matchedPhoto,
             };
             setMessages((prev) => [...prev, petMessage]);
 

@@ -21,6 +21,7 @@ import type { MinihompySettings, GuestbookEntry, PlacedMinimi } from "@/types";
 import MinihompyStage from "./MinihompyStage";
 import MinihompySettingsSection from "./MinihompySettingsSection";
 import MinimiPlacementPicker from "./MinimiPlacementPicker";
+import MinimiCollection from "./MinimiCollection";
 import Image from "next/image";
 
 export default function MiniHomepyTab() {
@@ -261,6 +262,9 @@ export default function MiniHomepyTab() {
                 settings={currentSettings}
                 onUpdate={handleSettingsUpdate}
             />
+
+            {/* 미니미 도감 */}
+            <MinimiCollection />
 
             {/* 방명록 섹션 */}
             <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border-0 shadow-lg p-4">

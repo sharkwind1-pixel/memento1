@@ -30,7 +30,7 @@
 // ============================================================================
 // 임포트
 // ============================================================================
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { usePets, useTimeline } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Star } from "lucide-react";
@@ -44,6 +44,8 @@ import AIChatLoginPrompt from "@/components/features/chat/AIChatLoginPrompt";
 import AIChatNoPets from "@/components/features/chat/AIChatNoPets";
 import AIChatHeader from "@/components/features/chat/AIChatHeader";
 import PushNotificationBanner from "@/components/features/chat/PushNotificationBanner";
+import ExportChatModal from "@/components/features/chat/ExportChatModal";
+import PremiumModal from "@/components/modals/PremiumModal";
 import {
     isPushSupported,
     registerServiceWorker,
@@ -89,6 +91,11 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         timeline,
         fetchTimeline,
     });
+
+    // 내보내기 모달 상태
+    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+    // 프리미엄 모달 상태
+    const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
 
     /**
      * 리마인더 안내 "알려주세요" 클릭 핸들러
@@ -214,12 +221,13 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                 </div>
             )}
 
-            {/* 추모 모드 배경 장식 - 반짝이는 별 애니메이션 */}
+            {/* 추모 모드 배경 장식 - 반짝이는 별 + float-up 애니메이션 */}
             {chat.isMemorialMode && (
                 <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                    {/* 정적 반짝이는 별 */}
                     {[...Array(12)].map((_, i) => (
                         <div
-                            key={i}
+                            key={`static-${i}`}
                             className="absolute animate-pulse"
                             style={{
                                 left: `${10 + ((i * 7) % 80)}%`,
@@ -234,6 +242,19 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                             />
                         </div>
                     ))}
+                    {/* Float-up 별 (아래에서 위로 떠오름) */}
+                    {[...Array(10)].map((_, i) => (
+                        <div
+                            key={`float-${i}`}
+                            className="memorial-star"
+                            style={{
+                                left: `${5 + (i * 9.5)}%`,
+                                bottom: `-10px`,
+                                animationDuration: `${10 + (i % 5) * 2}s`,
+                                animationDelay: `${i * 1.2}s`,
+                            }}
+                        />
+                    ))}
                 </div>
             )}
 
@@ -244,6 +265,8 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                 selectedPetId={selectedPetId}
                 selectPet={selectPet}
                 onNewChat={chat.handleNewChat}
+                onExport={() => setIsExportModalOpen(true)}
+                hasMessages={chat.messages.filter(m => m.role === "user" || m.role === "pet").length >= 2}
             />
 
             <div className="flex-1 flex flex-col lg:flex-row max-w-4xl mx-auto w-full relative z-10">
@@ -311,10 +334,28 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                         setSuggestedQuestions={chat.setSuggestedQuestions}
                         selectedPet={selectedPet}
                         onSend={chat.handleSend}
+                        onOpenPremiumModal={() => setIsPremiumModalOpen(true)}
                     />
                 </div>
             </div>
 
+            {/* 대화 내보내기 모달 */}
+            {selectedPet && (
+                <ExportChatModal
+                    isOpen={isExportModalOpen}
+                    onClose={() => setIsExportModalOpen(false)}
+                    messages={chat.messages}
+                    pet={selectedPet}
+                    isMemorialMode={chat.isMemorialMode}
+                />
+            )}
+
+            {/* 프리미엄 전환 모달 */}
+            <PremiumModal
+                isOpen={isPremiumModalOpen}
+                onClose={() => setIsPremiumModalOpen(false)}
+                feature="ai-chat-limit"
+            />
         </div>
     );
 }

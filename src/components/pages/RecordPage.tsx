@@ -36,6 +36,7 @@ import PetProfileCard from "@/components/features/record/PetProfileCard";
 import PetPhotoAlbum from "@/components/features/record/PetPhotoAlbum";
 import RemindersSection from "@/components/features/reminders/RemindersSection";
 import MemoryAlbumsSection from "@/components/features/record/MemoryAlbumsSection";
+import HealingJourneySection from "@/components/features/record/HealingJourneySection";
 import TimelineSection from "@/components/features/record/TimelineSection";
 import ProfileTab from "@/components/features/record/ProfileTab";
 import PetCardGrid from "@/components/features/record/PetCardGrid";
@@ -396,13 +397,21 @@ function RecordPage({ setSelectedTab }: RecordPageProps) {
                                         />
 
                                         {selectedPet.status === "memorial" && (
-                                            <div className="mt-6">
-                                                <MemoryAlbumsSection
-                                                    petId={selectedPet.id}
-                                                    petName={selectedPet.name}
-                                                    initialAlbumId={initialAlbumId}
-                                                />
-                                            </div>
+                                            <>
+                                                <div className="mt-6">
+                                                    <MemoryAlbumsSection
+                                                        petId={selectedPet.id}
+                                                        petName={selectedPet.name}
+                                                        initialAlbumId={initialAlbumId}
+                                                    />
+                                                </div>
+                                                <div className="mt-6">
+                                                    <HealingJourneySection
+                                                        petId={selectedPet.id}
+                                                        petName={selectedPet.name}
+                                                    />
+                                                </div>
+                                            </>
                                         )}
 
                                         <PetPhotoAlbum

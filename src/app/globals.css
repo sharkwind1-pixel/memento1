@@ -296,6 +296,32 @@ body {
     pointer-events: none;
 }
 
+/* 추모 모드 별 float-up 애니메이션 */
+@keyframes memorial-float-up {
+    0% {
+        transform: translateY(0) scale(1);
+        opacity: 0.6;
+    }
+    50% {
+        opacity: 0.8;
+    }
+    100% {
+        transform: translateY(-100vh) scale(0.3);
+        opacity: 0;
+    }
+}
+
+.memorial-star {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: linear-gradient(135deg, #fcd34d, #fbbf24);
+    border-radius: 50%;
+    box-shadow: 0 0 4px 1px rgba(251, 191, 36, 0.5);
+    animation: memorial-float-up linear infinite;
+    pointer-events: none;
+}
+
 /* 모드 전환용 부드러운 색상 전환 유틸리티 */
 .mode-transition {
     transition-property: background-color, background-image, border-color, color, box-shadow, ring-color;
@@ -444,6 +470,36 @@ body {
 }
 .animate-heart-pop {
     animation: heartPop 0.4s ease-out;
+}
+
+/* 미니미 터치 이펙트 애니메이션 */
+@keyframes minimiJump {
+    0% { transform: translateY(0) scale(1); }
+    30% { transform: translateY(-15%) scale(1.1); }
+    60% { transform: translateY(-5%) scale(1.05); }
+    100% { transform: translateY(0) scale(1.1); }
+}
+
+@keyframes minimiPop {
+    0% { transform: translateX(-50%) scale(0); opacity: 0; }
+    60% { transform: translateX(-50%) scale(1.1); opacity: 1; }
+    100% { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+
+@keyframes minimiFadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+@keyframes minimiParticle {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.5);
+    }
 }
 
 /* 매거진 스와이프 리더 */

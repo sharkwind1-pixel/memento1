@@ -6,7 +6,7 @@
 
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -19,6 +19,8 @@ import {
     Footprints,
     Cookie,
     Star,
+    Crown,
+    X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { MAX_MESSAGE_LENGTH } from "@/components/features/chat";
@@ -36,6 +38,7 @@ interface ChatInputAreaProps {
     setSuggestedQuestions: (questions: string[]) => void;
     selectedPet: Pet | null | undefined;
     onSend: (directMessage?: string) => void;
+    onOpenPremiumModal?: () => void;
 }
 
 /** 기본 추천 대화 버튼 정의 */
@@ -69,8 +72,26 @@ export default function ChatInputArea({
     setSuggestedQuestions,
     selectedPet,
     onSend,
+    onOpenPremiumModal,
 }: ChatInputAreaProps) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const [showPremiumBanner, setShowPremiumBanner] = useState(false);
+    const hasShownZeroModal = useRef(false);
+
+    // remainingChats <= 3일 때 프리미엄 배너 표시
+    useEffect(() => {
+        if (!isPremium && remainingChats <= 3 && remainingChats > 0) {
+            setShowPremiumBanner(true);
+        }
+    }, [remainingChats, isPremium]);
+
+    // remainingChats === 0일 때 PremiumModal 자동 오픈 (1회만)
+    useEffect(() => {
+        if (!isPremium && remainingChats === 0 && onOpenPremiumModal && !hasShownZeroModal.current) {
+            hasShownZeroModal.current = true;
+            onOpenPremiumModal();
+        }
+    }, [remainingChats, isPremium, onOpenPremiumModal]);
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.nativeEvent.isComposing) return;
@@ -237,15 +258,28 @@ export default function ChatInputArea({
                                     <span className="sm:hidden">프리미엄 무제한</span>
                                 </span>
                             ) : (
-                                <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 ${
-                                    remainingChats <= 3
-                                        ? "bg-red-100 text-red-600"
-                                        : remainingChats <= 7
-                                        ? "bg-amber-100 text-amber-600"
-                                        : "bg-sky-100 text-sky-600"
-                                }`}>
-                                    오늘 {remainingChats}회 남음
-                                </span>
+                                <>
+                                    <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                                        remainingChats <= 3
+                                            ? "bg-red-100 text-red-600"
+                                            : remainingChats <= 7
+                                            ? "bg-amber-100 text-amber-600"
+                                            : "bg-sky-100 text-sky-600"
+                                    }`}>
+                                        오늘 {remainingChats}회 남음
+                                    </span>
+                                    {/* 프리미엄 전환 안내 배너 (3회 이하) */}
+                                    {showPremiumBanner && remainingChats > 0 && onOpenPremiumModal && (
+                                        <button
+                                            onClick={onOpenPremiumModal}
+                                            className="ml-1 text-xs px-2 py-0.5 rounded-full flex items-center gap-1 bg-gradient-to-r from-violet-100 to-purple-100 text-violet-700 hover:from-violet-200 hover:to-purple-200 transition-all"
+                                        >
+                                            <Crown className="w-3 h-3" />
+                                            <span className="hidden sm:inline">프리미엄으로 무제한</span>
+                                            <span className="sm:hidden">무제한</span>
+                                        </button>
+                                    )}
+                                </>
                             )}
                         </div>
                     </>

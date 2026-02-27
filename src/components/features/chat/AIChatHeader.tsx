@@ -15,6 +15,7 @@ import {
     RotateCcw,
     Heart,
     Star,
+    Share2,
 } from "lucide-react";
 import {
     Select,
@@ -37,6 +38,8 @@ interface AIChatHeaderProps {
     selectedPetId: string | null;
     selectPet: (id: string) => void;
     onNewChat: () => void;
+    onExport?: () => void;
+    hasMessages?: boolean;
 }
 
 // ============================================================================
@@ -49,6 +52,8 @@ export default function AIChatHeader({
     selectedPetId,
     selectPet,
     onNewChat,
+    onExport,
+    hasMessages = false,
 }: AIChatHeaderProps) {
     const activePets = pets.filter((p) => p.status === "active");
     const memorialPets = pets.filter((p) => p.status === "memorial");
@@ -62,18 +67,34 @@ export default function AIChatHeader({
             } backdrop-blur-lg`}
         >
             <div className="max-w-2xl mx-auto flex items-center justify-between">
-                <button
-                    onClick={onNewChat}
-                    className={`p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-all duration-500 active:scale-95 ${
-                        isMemorialMode
-                            ? "hover:bg-amber-200/50 text-amber-600"
-                            : "hover:bg-[#E0F7FF] text-[#05B2DC]"
-                    }`}
-                    title="새 대화 시작"
-                    aria-label="새 대화 시작"
-                >
-                    <RotateCcw className="w-5 h-5" />
-                </button>
+                <div className="flex items-center gap-1">
+                    <button
+                        onClick={onNewChat}
+                        className={`p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-all duration-500 active:scale-95 ${
+                            isMemorialMode
+                                ? "hover:bg-amber-200/50 text-amber-600"
+                                : "hover:bg-[#E0F7FF] text-[#05B2DC]"
+                        }`}
+                        title="새 대화 시작"
+                        aria-label="새 대화 시작"
+                    >
+                        <RotateCcw className="w-5 h-5" />
+                    </button>
+                    {hasMessages && onExport && (
+                        <button
+                            onClick={onExport}
+                            className={`p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-all duration-500 active:scale-95 ${
+                                isMemorialMode
+                                    ? "hover:bg-amber-200/50 text-amber-600"
+                                    : "hover:bg-[#E0F7FF] text-[#05B2DC]"
+                            }`}
+                            title="대화 내보내기"
+                            aria-label="대화 내보내기"
+                        >
+                            <Share2 className="w-5 h-5" />
+                        </button>
+                    )}
+                </div>
                 <Select
                     value={selectedPetId || ""}
                     onValueChange={(id) => selectPet(id)}

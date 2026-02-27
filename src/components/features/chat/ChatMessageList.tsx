@@ -8,8 +8,25 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { PawPrint, RotateCcw, Bell, Phone, Heart } from "lucide-react";
+
+// 타이핑 인디케이터 감성 텍스트 (pet.type별 분기)
+const TYPING_TEXTS_DOG_DAILY = [
+    "꼬리 흔들며 생각 중...", "킁킁 냄새 맡는 중...", "고개 갸웃하는 중...",
+    "발로 톡톡 치는 중...", "귀 쫑긋 세우는 중..."
+];
+const TYPING_TEXTS_CAT_DAILY = [
+    "그루밍하며 생각 중...", "꼬리 살랑살랑...", "고개 갸웃하는 중...",
+    "앞발로 콕콕 치는 중...", "귀 쫑긋 세우는 중..."
+];
+const TYPING_TEXTS_OTHER_DAILY = [
+    "생각하는 중...", "고개 갸웃하는 중...", "귀 쫑긋 세우는 중..."
+];
+const TYPING_TEXTS_MEMORIAL = [
+    "조용히 곁에 앉는 중...", "따뜻한 기억 떠올리는 중...", "별빛 아래 생각하는 중...",
+    "이곳에서 너를 생각하는 중...", "소중한 추억 찾는 중..."
+];
 import type { Pet } from "@/types";
 import {
     ChatMessage,
@@ -39,6 +56,27 @@ export default function ChatMessageList({
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const hasInteracted = useRef(false);
     const prevMessageCount = useRef(messages.length);
+
+    // 타이핑 인디케이터 감성 텍스트 순환
+    const [typingTextIndex, setTypingTextIndex] = useState(0);
+    const getTypingTexts = () => {
+        if (isMemorialMode) return TYPING_TEXTS_MEMORIAL;
+        if (selectedPet?.type === "고양이") return TYPING_TEXTS_CAT_DAILY;
+        if (selectedPet?.type === "강아지") return TYPING_TEXTS_DOG_DAILY;
+        return TYPING_TEXTS_OTHER_DAILY;
+    };
+    const typingTexts = getTypingTexts();
+
+    useEffect(() => {
+        if (!isTyping) {
+            setTypingTextIndex(0);
+            return;
+        }
+        const interval = setInterval(() => {
+            setTypingTextIndex((prev) => (prev + 1) % typingTexts.length);
+        }, 2500);
+        return () => clearInterval(interval);
+    }, [isTyping, typingTexts.length]);
 
     useEffect(() => {
         // 초기 로드 시에는 자동 스크롤하지 않음 (유저가 위에서부터 시작)
@@ -219,6 +257,26 @@ export default function ChatMessageList({
                                             {message.content}
                                         </p>
                                     </div>
+                                    {/* 매칭된 추억 사진 */}
+                                    {message.role === "pet" && message.matchedPhoto && (
+                                        <div className={`mt-2 rounded-xl overflow-hidden shadow-md border ${
+                                            isMemorialMode ? "border-amber-200" : "border-sky-200"
+                                        }`}>
+                                            <img
+                                                src={message.matchedPhoto.url}
+                                                alt={message.matchedPhoto.caption}
+                                                className="w-full max-w-[200px] h-auto object-cover"
+                                            />
+                                            <div className={`px-2 py-1.5 text-xs flex items-center gap-1 ${
+                                                isMemorialMode
+                                                    ? "bg-amber-50 text-amber-700"
+                                                    : "bg-sky-50 text-sky-700"
+                                            }`}>
+                                                <Heart className="w-3 h-3" />
+                                                <span className="truncate">{message.matchedPhoto.caption}</span>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -273,15 +331,13 @@ export default function ChatMessageList({
                                 </div>
                             ))}
                         </div>
-                        {isMemorialMode ? (
-                            <p className="text-xs mt-1.5 memorial-shimmer-text font-medium">
-                                이곳에서 생각하고 있어요...
-                            </p>
-                        ) : (
-                            <p className="text-xs mt-1 text-sky-500">
-                                {selectedPet?.name}가 신나게 답변 중...
-                            </p>
-                        )}
+                        <p className={`text-xs mt-1.5 font-medium transition-opacity duration-300 ${
+                            isMemorialMode
+                                ? "memorial-shimmer-text"
+                                : "text-sky-500"
+                        }`}>
+                            {typingTexts[typingTextIndex]}
+                        </p>
                     </div>
                 </div>
             )}
