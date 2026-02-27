@@ -90,7 +90,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* 헤더 */}
-                    <div className="relative bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] p-6 rounded-t-3xl text-white">
+                    <div className="relative bg-gradient-to-r from-memento-500 to-memento-400 p-6 rounded-t-3xl text-white">
                         <button
                             onClick={onClose}
                             className="absolute top-4 right-4 p-2 hover:bg-white/20 rounded-full transition-colors"

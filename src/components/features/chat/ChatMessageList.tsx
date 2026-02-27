@@ -232,10 +232,10 @@ export default function ChatMessageList({
                                             />
                                         ) : (
                                             <div
-                                                className={`w-full h-full flex items-center justify-center ${isMemorialMode ? "bg-gradient-to-br from-amber-100 to-orange-100" : "bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD]"}`}
+                                                className={`w-full h-full flex items-center justify-center ${isMemorialMode ? "bg-gradient-to-br from-amber-100 to-orange-100" : "bg-gradient-to-br from-memento-100 to-memento-200"}`}
                                             >
                                                 <PawPrint
-                                                    className={`w-4 h-4 ${isMemorialMode ? "text-amber-500" : "text-[#05B2DC]"}`}
+                                                    className={`w-4 h-4 ${isMemorialMode ? "text-amber-500" : "text-memento-600"}`}
                                                 />
                                             </div>
                                         )}
@@ -247,7 +247,7 @@ export default function ChatMessageList({
                                             message.role === "user"
                                                 ? (isMemorialMode
                                                     ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-br-sm"
-                                                    : "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white rounded-br-sm")
+                                                    : "bg-gradient-to-r from-memento-500 to-memento-400 text-white rounded-br-sm")
                                                 : isMemorialMode
                                                         ? "bg-amber-100 dark:bg-amber-900/40 text-amber-900 dark:text-amber-100 rounded-bl-sm border border-amber-200/50 dark:border-amber-700/50"
                                                         : "bg-white dark:bg-sky-900/40 text-sky-900 dark:text-sky-100 rounded-bl-sm border border-sky-100 dark:border-sky-700/50"
@@ -297,10 +297,10 @@ export default function ChatMessageList({
                             />
                         ) : (
                             <div
-                                className={`w-full h-full flex items-center justify-center transition-all duration-500 ${isMemorialMode ? "bg-gradient-to-br from-amber-100 to-orange-100" : "bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD]"}`}
+                                className={`w-full h-full flex items-center justify-center transition-all duration-500 ${isMemorialMode ? "bg-gradient-to-br from-amber-100 to-orange-100" : "bg-gradient-to-br from-memento-100 to-memento-200"}`}
                             >
                                 <PawPrint
-                                    className={`w-4 h-4 transition-colors duration-500 ${isMemorialMode ? "text-amber-500" : "text-[#05B2DC]"}`}
+                                    className={`w-4 h-4 transition-colors duration-500 ${isMemorialMode ? "text-amber-500" : "text-memento-600"}`}
                                 />
                             </div>
                         )}

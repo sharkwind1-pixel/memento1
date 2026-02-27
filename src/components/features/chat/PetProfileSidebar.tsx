@@ -61,7 +61,7 @@ export default function PetProfileSidebar({
             {currentPhoto ? (
                 <div className={`relative mx-auto lg:max-w-none ${isMemorialMode ? "max-w-[220px] lg:max-w-[280px]" : "max-w-[160px] lg:max-w-[280px]"}`}>
                     <div
-                        className={`relative rounded-2xl overflow-hidden shadow-xl lg:aspect-square transition-all duration-700 ${isMemorialMode ? "aspect-[3/4] ring-2 ring-amber-200/50" : "aspect-[4/3] ring-2 ring-[#E0F7FF]/50"}`}
+                        className={`relative rounded-2xl overflow-hidden shadow-xl lg:aspect-square transition-all duration-700 ${isMemorialMode ? "aspect-[3/4] ring-2 ring-amber-200/50" : "aspect-[4/3] ring-2 ring-memento-100/50"}`}
                         onTouchStart={handleTouchStart}
                         onTouchEnd={handleTouchEnd}
                     >
@@ -128,7 +128,7 @@ export default function PetProfileSidebar({
                                     key={index}
                                     onClick={() => setCurrentPhotoIndex(index)}
                                     aria-label={`사진 ${index + 1}`}
-                                    className={`h-1.5 rounded-full transition-all ${index === currentPhotoIndex ? (isMemorialMode ? "bg-amber-500 w-4" : "bg-[#05B2DC] w-4") : (isMemorialMode ? "bg-amber-300 w-1.5" : "bg-sky-300 w-1.5")}`}
+                                    className={`h-1.5 rounded-full transition-all ${index === currentPhotoIndex ? (isMemorialMode ? "bg-amber-500 w-4" : "bg-memento-500 w-4") : (isMemorialMode ? "bg-amber-300 w-1.5" : "bg-sky-300 w-1.5")}`}
                                 />
                             ))}
                         </div>
@@ -137,11 +137,11 @@ export default function PetProfileSidebar({
             ) : (
                 <div className="max-w-[160px] lg:max-w-[280px] mx-auto">
                     <div
-                        className={`relative rounded-2xl p-4 lg:p-6 flex flex-col items-center justify-center aspect-[4/3] lg:aspect-square shadow-xl ${isMemorialMode ? "bg-gradient-to-br from-amber-100 to-orange-100 ring-2 ring-amber-200/50" : "bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD] ring-2 ring-[#E0F7FF]/50"}`}
+                        className={`relative rounded-2xl p-4 lg:p-6 flex flex-col items-center justify-center aspect-[4/3] lg:aspect-square shadow-xl ${isMemorialMode ? "bg-gradient-to-br from-amber-100 to-orange-100 ring-2 ring-amber-200/50" : "bg-gradient-to-br from-memento-100 to-memento-200 ring-2 ring-memento-100/50"}`}
                     >
                         <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-3 ${isMemorialMode ? "bg-amber-200/50" : "bg-white/50"}`}>
                             <PawPrint
-                                className={`w-10 h-10 ${isMemorialMode ? "text-amber-500" : "text-[#05B2DC]"}`}
+                                className={`w-10 h-10 ${isMemorialMode ? "text-amber-500" : "text-memento-600"}`}
                             />
                         </div>
                         <h2 className={`text-xl font-bold mb-1 ${isMemorialMode ? "text-amber-800" : "text-sky-800"}`}>
@@ -150,7 +150,7 @@ export default function PetProfileSidebar({
                         <p className={`text-sm mb-1 ${isMemorialMode ? "text-amber-600" : "text-sky-700"}`}>
                             {selectedPet?.type} · {selectedPet?.breed}
                         </p>
-                        <p className={`text-xs mb-3 ${isMemorialMode ? "text-amber-600" : "text-[#0891B2]"}`}>
+                        <p className={`text-xs mb-3 ${isMemorialMode ? "text-amber-600" : "text-memento-600"}`}>
                             {isMemorialMode && selectedPet?.memorialDate
                                 ? `무지개다리를 건넌 지 ${Math.floor((new Date().getTime() - new Date(selectedPet.memorialDate).getTime()) / (1000 * 60 * 60 * 24))}일`
                                 : selectedPet?.birthday
@@ -161,7 +161,7 @@ export default function PetProfileSidebar({
                             variant="outline"
                             size="sm"
                             onClick={() => setSelectedTab?.("record")}
-                            className={`rounded-xl ${isMemorialMode ? "border-amber-400 text-amber-600 hover:bg-amber-50" : "border-[#05B2DC] text-[#05B2DC] hover:bg-[#E0F7FF]"}`}
+                            className={`rounded-xl ${isMemorialMode ? "border-amber-400 text-amber-600 hover:bg-amber-50" : "border-memento-500 text-memento-600 hover:bg-memento-100"}`}
                         >
                             <ImageIcon className="w-4 h-4 mr-1" />
                             사진 등록하기

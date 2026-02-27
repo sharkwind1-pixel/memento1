@@ -229,7 +229,7 @@ function RecordPage({ setSelectedTab }: RecordPageProps) {
             className="min-h-screen relative overflow-hidden pb-24"
             style={{ contain: 'layout style', transform: 'translateZ(0)' }}
         >
-            <div className="absolute inset-0 bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900" />
+            <div className="absolute inset-0 bg-gradient-to-b from-memento-50 via-memento-75 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900" />
             <div className="relative z-10 max-w-4xl mx-auto px-4 py-6">
                 {/* 페이지 헤더 */}
                 <div className="flex items-center justify-between mb-4">
@@ -244,7 +244,7 @@ function RecordPage({ setSelectedTab }: RecordPageProps) {
                         onClick={() => setActiveTab("pets")}
                         className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl font-medium transition-all text-sm sm:text-base ${
                             activeTab === "pets"
-                                ? "bg-[#05B2DC] text-white shadow-lg"
+                                ? "bg-memento-500 text-white shadow-lg"
                                 : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                         }`}
                     >
@@ -256,7 +256,7 @@ function RecordPage({ setSelectedTab }: RecordPageProps) {
                         onClick={() => setActiveTab("profile")}
                         className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl font-medium transition-all text-sm sm:text-base ${
                             activeTab === "profile"
-                                ? "bg-[#05B2DC] text-white shadow-lg"
+                                ? "bg-memento-500 text-white shadow-lg"
                                 : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                         }`}
                     >
@@ -282,7 +282,7 @@ function RecordPage({ setSelectedTab }: RecordPageProps) {
                         <Button
                             onClick={handleAddNewPet}
                             size="sm"
-                            className="bg-[#05B2DC] hover:bg-[#0891B2] text-sm"
+                            className="bg-memento-500 hover:bg-memento-600 text-sm"
                             data-tutorial-id="add-pet-button"
                         >
                             <Plus className="w-4 h-4 sm:mr-1" />
@@ -354,8 +354,8 @@ function RecordPage({ setSelectedTab }: RecordPageProps) {
                         ) : pets.length === 0 ? (
                             <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
                                 <CardContent className="flex flex-col items-center justify-center py-16">
-                                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD] flex items-center justify-center mb-4">
-                                        <PawPrint className="w-10 h-10 text-[#05B2DC]" />
+                                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-memento-100 to-memento-200 flex items-center justify-center mb-4">
+                                        <PawPrint className="w-10 h-10 text-memento-600" />
                                     </div>
                                     <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">
                                         아직 등록된 반려동물이 없어요
@@ -367,7 +367,7 @@ function RecordPage({ setSelectedTab }: RecordPageProps) {
                                     </p>
                                     <Button
                                         onClick={handleAddNewPet}
-                                        className="bg-gradient-to-r from-[#05B2DC] to-[#38BDF8]"
+                                        className="bg-gradient-to-r from-memento-500 to-memento-400"
                                     >
                                         <Plus className="w-4 h-4 mr-2" />
                                         반려동물 등록하기

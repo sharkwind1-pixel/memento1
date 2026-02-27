@@ -197,7 +197,7 @@ export default function Sidebar({
                 <div className="px-3 py-3 border-b border-gray-200 dark:border-gray-700">
                     <button
                         onClick={onOpenLogin}
-                        className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white hover:opacity-90 transition-all text-sm font-medium"
+                        className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-memento-500 to-memento-400 text-white hover:opacity-90 transition-all text-sm font-medium"
                     >
                         <LogIn className="w-4 h-4" />
                         시작하기

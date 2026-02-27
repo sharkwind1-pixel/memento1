@@ -34,8 +34,8 @@ export default function PetFormStep1({
                             ? "border-amber-400"
                             : profilePreview
                               ? "border-green-400"
-                              : "border-dashed border-[#05B2DC] hover:border-solid"
-                    } shadow-lg bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD]`}
+                              : "border-dashed border-memento-500 hover:border-solid"
+                    } shadow-lg bg-gradient-to-br from-memento-100 to-memento-200`}
                 >
                     {profilePreview ? (
                         <img
@@ -48,7 +48,7 @@ export default function PetFormStep1({
                             }}
                         />
                     ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center text-[#05B2DC]">
+                        <div className="w-full h-full flex flex-col items-center justify-center text-memento-600">
                             <Camera className="w-10 h-10 mb-2" />
                             <span className="text-sm font-medium">사진 등록</span>
                         </div>
@@ -117,7 +117,7 @@ export default function PetFormStep1({
                             onClick={() => setFormData((prev) => ({ ...prev, type }))}
                             className={
                                 formData.type === type
-                                    ? "bg-[#05B2DC] hover:bg-[#0891B2]"
+                                    ? "bg-memento-500 hover:bg-memento-600"
                                     : ""
                             }
                         >

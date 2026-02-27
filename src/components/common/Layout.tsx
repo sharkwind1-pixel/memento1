@@ -6,7 +6,7 @@
  * 메인 레이아웃 컴포넌트
  *
  * 컬러 시스템:
- * - Primary: #05B2DC (하늘색)
+ * - Primary: memento-500 (#05B2DC, 하늘색)
  * - Background: 뭉게구름 화이트 그라데이션
  *
  * 레이아웃 구조:
@@ -180,7 +180,7 @@ function HeaderAuthArea({
                                     setSelectedTab("record");
                                     setIsUserMenuOpen(false);
                                 }}
-                                className="w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-[#E0F7FF] dark:hover:bg-gray-700 flex items-center gap-2"
+                                className="w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-memento-100 dark:hover:bg-gray-700 flex items-center gap-2"
                             >
                                 <User className="w-4 h-4" />
                                 내 정보
@@ -204,7 +204,7 @@ function HeaderAuthArea({
             >
                 <Button
                     onClick={openLoginModal}
-                    className="bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-[#05B2DC] rounded-md shadow-sm shadow-[#05B2DC]/25 px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm h-auto min-h-[44px] active:scale-95 transition-transform"
+                    className="bg-gradient-to-r from-memento-500 to-memento-400 hover:from-memento-600 hover:to-memento-500 rounded-md shadow-sm shadow-memento-500/25 px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm h-auto min-h-[44px] active:scale-95 transition-transform"
                 >
                     <LogIn className="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
                     시작하기
@@ -262,7 +262,7 @@ function BottomNav({
                                 ${isActive
                                     ? isMemorialMode
                                         ? "text-amber-500 dark:text-amber-400"
-                                        : "text-[#05B2DC] dark:text-[#38BDF8]"
+                                        : "text-memento-600 dark:text-memento-400"
                                     : "text-gray-400 dark:text-gray-500"}
                             `}
                         >
@@ -273,12 +273,12 @@ function BottomNav({
                                         ? isActive
                                             ? isMemorialMode
                                                 ? "w-12 h-8 bg-gradient-to-r from-amber-500 to-orange-500 shadow-md shadow-amber-500/25"
-                                                : "w-12 h-8 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] shadow-md shadow-[#05B2DC]/25"
+                                                : "w-12 h-8 bg-gradient-to-r from-memento-500 to-memento-400 shadow-md shadow-memento-500/25"
                                             : "w-12 h-8"
                                         : isActive
                                             ? isMemorialMode
                                                 ? "w-10 h-8 bg-amber-100 dark:bg-amber-500/15"
-                                                : "w-10 h-8 bg-[#E0F7FF] dark:bg-[#05B2DC]/15"
+                                                : "w-10 h-8 bg-memento-100 dark:bg-memento-500/15"
                                             : "w-10 h-8"
                                     }
                                 `}
@@ -301,7 +301,7 @@ function BottomNav({
                             </span>
                             {isActive && !isHome && (
                                 <div className={`absolute bottom-1 w-1 h-1 rounded-full ${
-                                    isMemorialMode ? "bg-amber-500 dark:bg-amber-400" : "bg-[#05B2DC] dark:bg-[#38BDF8]"
+                                    isMemorialMode ? "bg-amber-500 dark:bg-amber-400" : "bg-memento-500 dark:bg-memento-400"
                                 }`} />
                             )}
                         </button>
@@ -409,7 +409,7 @@ function Layout({
         <div className={`min-h-screen pb-safe flex flex-col xl:block ${
             isMemorialMode
                 ? "bg-gradient-to-b from-amber-50/80 via-orange-50/40 to-white dark:from-gray-900 dark:via-gray-900 dark:to-gray-950"
-                : "bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
+                : "bg-gradient-to-b from-memento-50 via-memento-75 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
         }`}>
 
             {/* 인증 모달 */}

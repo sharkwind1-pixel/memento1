@@ -88,7 +88,7 @@ export default function MinimiPlacementPicker({
 
             {loading ? (
                 <div className="flex items-center justify-center py-6">
-                    <Loader2 className="w-5 h-5 text-[#05B2DC] animate-spin" />
+                    <Loader2 className="w-5 h-5 text-memento-600 animate-spin" />
                 </div>
             ) : available.length === 0 ? (
                 <div className="text-center py-6 text-gray-400 dark:text-gray-500">

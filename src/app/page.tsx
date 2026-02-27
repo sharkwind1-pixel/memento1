@@ -87,7 +87,7 @@ export default function Home() {
     return (
         <Suspense fallback={
             // Layout 배경과 동일한 색상으로 빈 화면 (색상 전환 번쩍임 방지)
-            <div className="min-h-screen bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900" />
+            <div className="min-h-screen bg-gradient-to-b from-memento-50 via-memento-75 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900" />
         }>
             <HomeContent />
         </Suspense>

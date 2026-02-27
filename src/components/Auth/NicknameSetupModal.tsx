@@ -105,7 +105,7 @@ export default function NicknameSetupModal({
             <div className="min-h-full flex items-center justify-center pt-16 pb-20 px-4">
             <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl relative" role="dialog" aria-modal="true" aria-labelledby="nickname-setup-title">
                 {/* 헤더 */}
-                <div className="bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] p-6 text-white text-center">
+                <div className="bg-gradient-to-r from-memento-500 to-memento-400 p-6 text-white text-center">
                     <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
                         <Sparkles className="w-8 h-8" />
                     </div>
@@ -188,7 +188,7 @@ export default function NicknameSetupModal({
                     <Button
                         type="submit"
                         disabled={loading || nicknameStatus === "taken" || nicknameStatus === "checking" || nickname.trim().length < 2}
-                        className="w-full h-12 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-blue-600 hover:to-sky-600 rounded-xl text-base disabled:opacity-50"
+                        className="w-full h-12 bg-gradient-to-r from-memento-500 to-memento-400 hover:from-blue-600 hover:to-sky-600 rounded-xl text-base disabled:opacity-50"
                     >
                         {loading ? (
                             <InlineLoading />

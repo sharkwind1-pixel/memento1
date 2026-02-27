@@ -231,7 +231,7 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
             >
                 <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2 text-lg">
-                        <Bell className="w-5 h-5 text-[#05B2DC]" />
+                        <Bell className="w-5 h-5 text-memento-600" />
                         케어 리마인더
                         {reminders.length > 0 && (
                             <span className="text-sm font-normal text-gray-500">
@@ -290,7 +290,7 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
                                                         onClick={() => handleToggle(reminder.id, reminder.enabled)}
                                                         className={`p-1.5 rounded-lg transition-colors ${
                                                             reminder.enabled
-                                                                ? "text-[#05B2DC] hover:bg-[#E0F7FF]"
+                                                                ? "text-memento-600 hover:bg-memento-100"
                                                                 : "text-gray-400 hover:bg-gray-100"
                                                         }`}
                                                     >
@@ -434,7 +434,7 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
                                     <Button
                                         onClick={handleCreateReminder}
                                         disabled={!newReminder.title}
-                                        className="w-full bg-[#05B2DC] hover:bg-[#0891B2] text-white h-9"
+                                        className="w-full bg-memento-500 hover:bg-memento-600 text-white h-9"
                                     >
                                         추가하기
                                     </Button>
@@ -443,7 +443,7 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
                                 <Button
                                     variant="outline"
                                     onClick={() => setShowAddForm(true)}
-                                    className="w-full border-dashed border-[#05B2DC] text-[#05B2DC] hover:bg-[#E0F7FF]"
+                                    className="w-full border-dashed border-memento-500 text-memento-600 hover:bg-memento-100"
                                 >
                                     <Plus className="w-4 h-4 mr-1" />
                                     리마인더 추가

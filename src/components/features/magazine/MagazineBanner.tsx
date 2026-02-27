@@ -67,7 +67,7 @@ export default function MagazineBanner({ onNavigateToMagazine }: MagazineBannerP
                 onClick={onNavigateToMagazine}
                 className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors w-full max-w-xl group"
             >
-                <BookOpen className="w-4 h-4 text-[#05B2DC] flex-shrink-0" />
+                <BookOpen className="w-4 h-4 text-memento-600 flex-shrink-0" />
 
                 <div className="relative h-6 overflow-hidden flex-1 text-left">
                     <div
@@ -97,7 +97,7 @@ export default function MagazineBanner({ onNavigateToMagazine }: MagazineBannerP
                             key={i}
                             className={`w-1 h-1 rounded-full transition-colors duration-300 ${
                                 i === currentIndex
-                                    ? "bg-[#05B2DC]"
+                                    ? "bg-memento-500"
                                     : "bg-gray-300 dark:bg-gray-600"
                             }`}
                         />

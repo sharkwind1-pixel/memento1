@@ -549,7 +549,7 @@ export default function MemoryPanel({
                     className={`rounded-t-2xl shadow-2xl flex flex-col overflow-hidden ${
                         isMemorialMode
                             ? "bg-amber-50 dark:bg-gray-900"
-                            : "bg-[#F0F9FF] dark:bg-gray-900"
+                            : "bg-memento-50 dark:bg-gray-900"
                     }`}
                     style={{ maxHeight: "85vh" }}
                 >

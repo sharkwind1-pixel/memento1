@@ -54,7 +54,7 @@ export default function PetCardGrid({
                                 onClick={() => onSelectPet(pet.id)}
                                 className={`relative w-full aspect-square rounded-2xl overflow-hidden transition-all ${
                                     selectedPetId === pet.id
-                                        ? "ring-4 ring-[#05B2DC] shadow-lg scale-[1.02]"
+                                        ? "ring-4 ring-memento-500 shadow-lg scale-[1.02]"
                                         : "ring-2 ring-transparent hover:ring-gray-200 dark:hover:ring-gray-600"
                                 }`}
                             >
@@ -72,8 +72,8 @@ export default function PetCardGrid({
                                         }}
                                     />
                                 ) : (
-                                    <div className="w-full h-full bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD] flex items-center justify-center">
-                                        <PawPrint className="w-10 h-10 text-[#05B2DC]" />
+                                    <div className="w-full h-full bg-gradient-to-br from-memento-100 to-memento-200 flex items-center justify-center">
+                                        <PawPrint className="w-10 h-10 text-memento-600" />
                                     </div>
                                 )}
 
@@ -97,7 +97,7 @@ export default function PetCardGrid({
 
                                 {/* 선택됨 표시 */}
                                 {selectedPetId === pet.id && (
-                                    <div className="absolute top-2 left-2 w-5 h-5 bg-[#05B2DC] rounded-full flex items-center justify-center">
+                                    <div className="absolute top-2 left-2 w-5 h-5 bg-memento-500 rounded-full flex items-center justify-center">
                                         <Check className="w-3 h-3 text-white" />
                                     </div>
                                 )}
@@ -150,7 +150,7 @@ export default function PetCardGrid({
                     {/* 새 펫 추가 버튼 - 1:1 비율 */}
                     <button
                         onClick={onAddNewPet}
-                        className="aspect-square rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex flex-col items-center justify-center hover:border-[#05B2DC] hover:bg-[#05B2DC]/5 active:scale-95 transition-all min-h-[80px]"
+                        className="aspect-square rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex flex-col items-center justify-center hover:border-memento-500 hover:bg-memento-500/5 active:scale-95 transition-all min-h-[80px]"
                     >
                         <Plus className="w-8 h-8 text-gray-400 mb-1" />
                         <span className="text-xs text-gray-400">추가</span>

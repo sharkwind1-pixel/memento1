@@ -60,7 +60,7 @@ export default function CommunityHeader({
         <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg border border-white/50 dark:border-gray-700/50 rounded-3xl p-6">
             <div className="flex items-center justify-between gap-3 mb-6">
                 <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] rounded-xl flex items-center justify-center flex-shrink-0">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-memento-500 to-memento-400 rounded-xl flex items-center justify-center flex-shrink-0">
                         <Users className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                     </div>
                     <div className="min-w-0">
@@ -124,7 +124,7 @@ export default function CommunityHeader({
                         onClick={() => onTagChange("all")}
                         className={`px-3 py-1.5 min-h-[44px] rounded-full text-sm font-medium transition-all active:scale-95 ${
                             selectedTag === "all"
-                                ? "bg-[#05B2DC] text-white shadow-md"
+                                ? "bg-memento-500 text-white shadow-md"
                                 : "bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-blue-100 dark:hover:bg-blue-800/30 border border-blue-200 dark:border-blue-700/50"
                         }`}
                     >

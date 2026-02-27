@@ -175,7 +175,7 @@ export default function ChatInputArea({
                                         className={`flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 rounded-full text-sm sm:text-[15px] font-medium min-h-[44px] shadow-sm cursor-pointer active:scale-95 hover:scale-[1.03] hover:shadow-md transition-all chip-enter ${
                                             isMemorialMode
                                                 ? "bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-200"
-                                                : "bg-[#E0F7FF] hover:bg-[#BAE6FD] text-[#0891B2] border border-[#BAE6FD]"
+                                                : "bg-memento-100 hover:bg-memento-200 text-memento-600 border border-memento-200"
                                         }`}
                                         style={{ animationDelay: `${idx * 80}ms` }}
                                     >
@@ -191,7 +191,7 @@ export default function ChatInputArea({
                                         className={`flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 rounded-full text-sm sm:text-[15px] font-medium min-h-[44px] shadow-sm cursor-pointer active:scale-95 hover:scale-[1.03] hover:shadow-md transition-all chip-enter ${
                                             isMemorialMode
                                                 ? "bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-200"
-                                                : "bg-[#E0F7FF] hover:bg-[#BAE6FD] text-[#0891B2] border border-[#BAE6FD]"
+                                                : "bg-memento-100 hover:bg-memento-200 text-memento-600 border border-memento-200"
                                         }`}
                                         style={{ animationDelay: `${idx * 80}ms` }}
                                     >
@@ -225,7 +225,7 @@ export default function ChatInputArea({
                                     inputValue.trim()
                                         ? isMemorialMode
                                             ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg"
-                                            : "bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-[#05B2DC] shadow-lg"
+                                            : "bg-gradient-to-r from-memento-500 to-memento-400 hover:from-memento-600 hover:to-memento-500 shadow-lg"
                                         : isMemorialMode
                                             ? "bg-amber-200/60 text-amber-400"
                                             : "bg-sky-100 text-sky-300"

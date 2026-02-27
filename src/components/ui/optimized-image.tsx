@@ -160,13 +160,13 @@ export function PetProfileImage({
         return (
             <div
                 className={cn(
-                    "rounded-full bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD] flex items-center justify-center",
+                    "rounded-full bg-gradient-to-br from-memento-100 to-memento-200 flex items-center justify-center",
                     className
                 )}
                 style={{ width: size, height: size }}
             >
                 <span
-                    className="text-[#05B2DC] font-bold"
+                    className="text-memento-600 font-bold"
                     style={{ fontSize: size * 0.4 }}
                 >
                     {name.charAt(0).toUpperCase()}

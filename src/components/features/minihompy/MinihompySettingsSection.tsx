@@ -47,7 +47,7 @@ export default function MinihompySettingsSection({
         <>
             <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border-0 shadow-lg p-4">
                 <div className="flex items-center gap-2 mb-3">
-                    <Settings className="w-5 h-5 text-[#05B2DC]" />
+                    <Settings className="w-5 h-5 text-memento-600" />
                     <h3 className="font-semibold text-gray-800 dark:text-white">
                         미니홈피 설정
                     </h3>
@@ -95,7 +95,7 @@ export default function MinihompySettingsSection({
                                         setGreetingDraft(settings.greeting);
                                         setIsEditingGreeting(true);
                                     }}
-                                    className="text-gray-400 hover:text-[#05B2DC] transition-colors"
+                                    className="text-gray-400 hover:text-memento-600 transition-colors"
                                 >
                                     <Pencil className="w-3.5 h-3.5" />
                                 </button>
@@ -114,7 +114,7 @@ export default function MinihompySettingsSection({
                                         "bg-white dark:bg-gray-700",
                                         "border-gray-200 dark:border-gray-600",
                                         "text-gray-700 dark:text-gray-200",
-                                        "focus:outline-none focus:ring-2 focus:ring-[#05B2DC]/50"
+                                        "focus:outline-none focus:ring-2 focus:ring-memento-500/50"
                                     )}
                                     autoFocus
                                     maxLength={MINIHOMPY.GREETING_MAX_LENGTH}

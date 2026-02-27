@@ -216,7 +216,7 @@ export default function MediaUploadModal({
 
                     <div
                         onClick={() => fileInputRef.current?.click()}
-                        className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center cursor-pointer hover:border-[#05B2DC] transition-colors"
+                        className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center cursor-pointer hover:border-memento-500 transition-colors"
                     >
                         <div className="flex justify-center gap-4 mb-2">
                             <ImageIcon className="w-8 h-8 text-gray-400" />
@@ -248,7 +248,7 @@ export default function MediaUploadModal({
                                 {[0, 1, 2].map((i) => (
                                     <span
                                         key={i}
-                                        className="text-[#05B2DC] animate-bounce text-xl"
+                                        className="text-memento-600 animate-bounce text-xl"
                                         style={{
                                             animationDelay: `${i * 0.15}s`,
                                             animationDuration: "0.5s",
@@ -391,7 +391,7 @@ export default function MediaUploadModal({
                         <Button
                             onClick={handleUpload}
                             disabled={!allCropped || isLoading}
-                            className="flex-1 bg-[#05B2DC] hover:bg-[#0891B2]"
+                            className="flex-1 bg-memento-500 hover:bg-memento-600"
                         >
                             <Upload className="w-4 h-4 mr-2" />
                             {imageCount > 0 && `사진 ${imageCount}장`}

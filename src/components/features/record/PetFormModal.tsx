@@ -277,7 +277,7 @@ export default function PetFormModal({
                             {step < TOTAL_STEPS ? (
                                 <Button
                                     onClick={handleNext}
-                                    className="flex-1 bg-[#05B2DC] hover:bg-[#0891B2]"
+                                    className="flex-1 bg-memento-500 hover:bg-memento-600"
                                 >
                                     다음
                                     <ChevronRight className="w-4 h-4 ml-1" />
@@ -286,7 +286,7 @@ export default function PetFormModal({
                                 <Button
                                     onClick={handleSubmit}
                                     disabled={isSubmitting}
-                                    className="flex-1 bg-[#05B2DC] hover:bg-[#0891B2] disabled:opacity-50"
+                                    className="flex-1 bg-memento-500 hover:bg-memento-600 disabled:opacity-50"
                                 >
                                     <Check className="w-4 h-4 mr-2" />
                                     {isSubmitting ? "저장 중..." : pet ? "수정하기" : "등록하기"}
