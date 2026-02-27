@@ -166,20 +166,20 @@ export default function ChatInputArea({
                 ) : (
                     <>
                         {/* 추천 대화 버튼 */}
-                        <div className="flex flex-wrap gap-x-2 gap-y-2.5 mb-3">
+                        <div className="flex flex-wrap gap-x-2 gap-y-2.5 sm:gap-x-3 sm:gap-y-3 mb-3">
                             {suggestedQuestions.length > 0 ? (
                                 suggestedQuestions.map((question, idx) => (
                                     <button
                                         key={question}
                                         onClick={() => { setSuggestedQuestions([]); onSend(question); }}
-                                        className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium min-h-[44px] shadow-sm cursor-pointer active:scale-95 transition-transform chip-enter ${
+                                        className={`flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 rounded-full text-sm sm:text-[15px] font-medium min-h-[44px] shadow-sm cursor-pointer active:scale-95 hover:scale-[1.03] hover:shadow-md transition-all chip-enter ${
                                             isMemorialMode
                                                 ? "bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-200"
                                                 : "bg-[#E0F7FF] hover:bg-[#BAE6FD] text-[#0891B2] border border-[#BAE6FD]"
                                         }`}
                                         style={{ animationDelay: `${idx * 80}ms` }}
                                     >
-                                        <Sparkles className="w-3.5 h-3.5 flex-shrink-0" />
+                                        <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
                                         <span className="truncate">{question}</span>
                                     </button>
                                 ))
@@ -188,14 +188,14 @@ export default function ChatInputArea({
                                     <button
                                         key={suggestion.text}
                                         onClick={() => { onSend(suggestion.text); }}
-                                        className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium min-h-[44px] shadow-sm cursor-pointer active:scale-95 transition-transform chip-enter ${
+                                        className={`flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 rounded-full text-sm sm:text-[15px] font-medium min-h-[44px] shadow-sm cursor-pointer active:scale-95 hover:scale-[1.03] hover:shadow-md transition-all chip-enter ${
                                             isMemorialMode
                                                 ? "bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-200"
                                                 : "bg-[#E0F7FF] hover:bg-[#BAE6FD] text-[#0891B2] border border-[#BAE6FD]"
                                         }`}
                                         style={{ animationDelay: `${idx * 80}ms` }}
                                     >
-                                        <suggestion.Icon className="w-3.5 h-3.5 flex-shrink-0" />
+                                        <suggestion.Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
                                         <span className="truncate">{suggestion.text}</span>
                                     </button>
                                 ))
