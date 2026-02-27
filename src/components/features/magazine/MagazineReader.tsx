@@ -639,8 +639,14 @@ function TextCard({
                     prose-ol:text-gray-700 dark:prose-ol:text-gray-300
                     prose-li:my-1
                     prose-strong:text-gray-800 dark:prose-strong:text-gray-100
-                    prose-blockquote:border-emerald-300 prose-blockquote:text-gray-600 dark:prose-blockquote:text-gray-400"
-                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
+                    prose-blockquote:border-emerald-300 prose-blockquote:text-gray-600 dark:prose-blockquote:text-gray-400
+                    prose-img:rounded-xl prose-img:my-4 prose-img:mx-auto prose-img:max-h-[400px] prose-img:object-contain"
+                dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(html, {
+                        ADD_TAGS: ["img"],
+                        ADD_ATTR: ["src", "alt", "width", "height", "loading"],
+                    })
+                }}
             />
         </div>
     );

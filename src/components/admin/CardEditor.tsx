@@ -53,9 +53,11 @@ function generateCardId(): string {
     return `card-${Date.now()}-${cardIdCounter}`;
 }
 
-/** Tiptap 빈 콘텐츠 체크 */
+/** Tiptap 빈 콘텐츠 체크 (이미지/figure 포함 시 비어있지 않음) */
 function isEditorEmpty(html: string): boolean {
     if (!html) return true;
+    // 이미지나 figure가 포함되어 있으면 빈 카드가 아님
+    if (/<img\s/i.test(html) || /<figure\s/i.test(html)) return false;
     const stripped = html
         .replace(/<[^>]*>/g, "")
         .replace(/&nbsp;/g, "")
