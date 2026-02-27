@@ -40,10 +40,19 @@ function LocalPage({ setSelectedTab }: LocalPageProps) {
     const [totalCount, setTotalCount] = useState(0);
     const [page, setPage] = useState(1);
 
-    // 필터 상태
-    const [selectedRegion, setSelectedRegion] = useState<string>("");
-    const [selectedDistrict, setSelectedDistrict] = useState<string>("");
-    const [selectedCategory, setSelectedCategory] = useState<string>("all");
+    // 필터 상태 — localStorage로 새로고침 시 복원
+    const [selectedRegion, setSelectedRegion] = useState<string>(() => {
+        if (typeof window !== "undefined") return localStorage.getItem("memento-local-region") || "";
+        return "";
+    });
+    const [selectedDistrict, setSelectedDistrict] = useState<string>(() => {
+        if (typeof window !== "undefined") return localStorage.getItem("memento-local-district") || "";
+        return "";
+    });
+    const [selectedCategory, setSelectedCategory] = useState<string>(() => {
+        if (typeof window !== "undefined") return localStorage.getItem("memento-local-category") || "all";
+        return "all";
+    });
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [searchInput, setSearchInput] = useState<string>("");
 
@@ -65,6 +74,11 @@ function LocalPage({ setSelectedTab }: LocalPageProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const formDistricts = form.region ? REGIONS[form.region] || [] : [];
+
+    // 필터 변경 시 localStorage에 저장
+    useEffect(() => { localStorage.setItem("memento-local-region", selectedRegion); }, [selectedRegion]);
+    useEffect(() => { localStorage.setItem("memento-local-district", selectedDistrict); }, [selectedDistrict]);
+    useEffect(() => { localStorage.setItem("memento-local-category", selectedCategory); }, [selectedCategory]);
 
     // ==========================================
     // API 호출

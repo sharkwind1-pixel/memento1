@@ -68,8 +68,14 @@ function RecordPage({ setSelectedTab }: RecordPageProps) {
     const [viewingPhoto, setViewingPhoto] = useState<PetPhoto | null>(null);
     const [petToDelete, setPetToDelete] = useState<Pet | null>(null);
 
-    // 마이페이지 상태
-    const [activeTab, setActiveTab] = useState<"pets" | "profile" | "minihompy">("pets");
+    // 마이페이지 상태 — localStorage로 새로고침 시 복원
+    const [activeTab, setActiveTab] = useState<"pets" | "profile" | "minihompy">(() => {
+        if (typeof window !== "undefined") {
+            const saved = localStorage.getItem("memento-record-tab");
+            if (saved === "profile" || saved === "minihompy") return saved;
+        }
+        return "pets";
+    });
     const [isEditingNickname, setIsEditingNickname] = useState(false);
     const [nickname, setNickname] = useState("");
     const [isSavingProfile, setIsSavingProfile] = useState(false);
@@ -77,6 +83,11 @@ function RecordPage({ setSelectedTab }: RecordPageProps) {
     // 프리미엄 모달 상태
     const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
     const [premiumFeature, setPremiumFeature] = useState<"pet-limit" | "photo-limit">("pet-limit");
+
+    // activeTab 변경 시 localStorage에 저장
+    useEffect(() => {
+        localStorage.setItem("memento-record-tab", activeTab);
+    }, [activeTab]);
 
     // 추모 전환 모달
     const [isMemorialModalOpen, setIsMemorialModalOpen] = useState(false);

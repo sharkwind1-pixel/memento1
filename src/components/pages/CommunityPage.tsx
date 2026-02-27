@@ -33,12 +33,22 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
     const [internalSubcategory, setInternalSubcategory] = useState<CommunitySubcategory>(subcategory || "free");
     const currentSubcategory = subcategory || internalSubcategory;
 
-    // 말머리 필터 (자유게시판용)
-    const [selectedTag, setSelectedTag] = useState<PostTag | "all">("all");
+    // 말머리 필터 (자유게시판용) — localStorage로 새로고침 시 복원
+    const [selectedTag, setSelectedTag] = useState<PostTag | "all">(() => {
+        if (typeof window !== "undefined") {
+            return (localStorage.getItem("memento-community-tag") as PostTag | "all") || "all";
+        }
+        return "all";
+    });
     const [searchInput, setSearchInput] = useState<string>("");
     const [searchQuery, setSearchQuery] = useState<string>("");
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-    const [sortBy, setSortBy] = useState<string>("latest");
+    const [sortBy, setSortBy] = useState<string>(() => {
+        if (typeof window !== "undefined") {
+            return localStorage.getItem("memento-community-sort") || "latest";
+        }
+        return "latest";
+    });
 
     // 실제 데이터 상태
     const [posts, setPosts] = useState<Post[]>([]);
@@ -57,6 +67,10 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
         type: "post" | "comment" | "user";
         title?: string;
     } | null>(null);
+
+    // 필터 변경 시 localStorage에 저장
+    useEffect(() => { localStorage.setItem("memento-community-tag", selectedTag); }, [selectedTag]);
+    useEffect(() => { localStorage.setItem("memento-community-sort", sortBy); }, [sortBy]);
 
     // 추모 모드 여부 확인
     const isMemorialMode = selectedPet?.status === "memorial";
