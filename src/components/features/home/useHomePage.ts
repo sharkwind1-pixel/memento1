@@ -11,13 +11,18 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { bestPosts, memorialCards } from "@/data/posts";
 import { usePetImages } from "@/hooks/usePetImages";
 import { getPublicMemorialPosts, MemorialPost } from "@/lib/memorialService";
+import { API } from "@/config/apiEndpoints";
 import { safeStringSrc } from "./homeUtils";
-import type { LightboxItem, CommunityPost, Comment } from "./types";
+import type { LightboxItem, CommunityPost, Comment, ShowcasePost } from "./types";
 
 export function useHomePage() {
     const { petImages, adoptionImages } = usePetImages();
 
     const [lightboxItem, setLightboxItem] = useState<LightboxItem | null>(null);
+
+    // 자랑하기 게시글 상태
+    const [showcasePosts, setShowcasePosts] = useState<ShowcasePost[]>([]);
+    const [isLoadingShowcase, setIsLoadingShowcase] = useState(true);
 
     // 공개 추모글 상태
     const [publicMemorialPosts, setPublicMemorialPosts] = useState<MemorialPost[]>([]);
@@ -77,6 +82,34 @@ export function useHomePage() {
         }));
     };
 
+    // 자랑하기 게시글 가져오기
+    const fetchShowcasePosts = useCallback(async () => {
+        setIsLoadingShowcase(true);
+        try {
+            const params = new URLSearchParams({
+                board: "free",
+                badge: "자랑",
+                sort: "popular",
+                limit: "8",
+            });
+            const res = await fetch(`${API.POSTS}?${params}`);
+            if (res.ok) {
+                const data = await res.json();
+                // 이미지 있는 글 우선 정렬
+                const sorted = (data.posts || []).sort((a: ShowcasePost, b: ShowcasePost) => {
+                    const aHasImg = (a.imageUrls?.length ?? 0) > 0 ? 1 : 0;
+                    const bHasImg = (b.imageUrls?.length ?? 0) > 0 ? 1 : 0;
+                    return bHasImg - aHasImg;
+                });
+                setShowcasePosts(sorted);
+            }
+        } catch {
+            // 실패 시 빈 배열 유지 - 섹션이 숨겨짐
+        } finally {
+            setIsLoadingShowcase(false);
+        }
+    }, []);
+
     // 공개 추모글 가져오기
     const fetchPublicMemorialPosts = useCallback(async () => {
         setIsLoadingMemorial(true);
@@ -91,8 +124,9 @@ export function useHomePage() {
     }, []);
 
     useEffect(() => {
+        fetchShowcasePosts();
         fetchPublicMemorialPosts();
-    }, [fetchPublicMemorialPosts]);
+    }, [fetchShowcasePosts, fetchPublicMemorialPosts]);
 
     // 입양 타일 아이템
     const adoptionTileItems = useMemo<LightboxItem[]>(() => {
@@ -182,6 +216,10 @@ export function useHomePage() {
 
         // 커뮤니티
         communityPosts,
+
+        // 자랑하기
+        showcasePosts,
+        isLoadingShowcase,
 
         // 추모
         isLoadingMemorial,

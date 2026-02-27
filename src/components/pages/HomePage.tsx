@@ -14,6 +14,7 @@ import {
     useHomePage,
     HeroSection,
     CommunitySection,
+    ShowcaseSection,
     AdoptionSection,
     CareGuideSection,
     MemorialSection,
@@ -27,6 +28,7 @@ interface HomePageProps {
 
 type SmoothAutoScrollReturn = {
     communityScrollRef: React.RefObject<HTMLDivElement>;
+    showcaseScrollRef: React.RefObject<HTMLDivElement>;
     adoptionScrollRef: React.RefObject<HTMLDivElement>;
     petcareScrollRef: React.RefObject<HTMLDivElement>;
     memorialScrollRef: React.RefObject<HTMLDivElement>;
@@ -48,6 +50,7 @@ function HomePage({ setSelectedTab }: HomePageProps) {
         toggleLike,
         addComment,
         communityPosts,
+        showcasePosts,
         isLoadingMemorial,
         displayMemorialData,
     } = useHomePage();
@@ -102,6 +105,14 @@ function HomePage({ setSelectedTab }: HomePageProps) {
                     scrollRef={scroll.communityScrollRef}
                     setSelectedTab={setSelectedTab}
                 />
+
+                {showcasePosts.length > 0 && (
+                    <ShowcaseSection
+                        showcasePosts={showcasePosts}
+                        scrollRef={scroll.showcaseScrollRef}
+                        setSelectedTab={setSelectedTab}
+                    />
+                )}
 
                 <AdoptionSection
                     adoptionImages={adoptionImages}

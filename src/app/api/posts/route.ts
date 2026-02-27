@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
 
         const boardType = searchParams.get("board") || searchParams.get("subcategory") || "free";
         const animalType = searchParams.get("animal") || searchParams.get("tag");
+        const badge = searchParams.get("badge");
         const sortBy = searchParams.get("sort") || "latest";
         const search = searchParams.get("search");
         const limit = parseInt(searchParams.get("limit") || "20");
@@ -41,6 +42,11 @@ export async function GET(request: NextRequest) {
             .from("community_posts")
             .select("*, post_comments(count)", { count: "exact" })
             .eq("board_type", boardType);
+
+        // 뱃지 필터
+        if (badge) {
+            query = query.eq("badge", badge);
+        }
 
         // 동물 종류 필터
         if (animalType && animalType !== "all") {
