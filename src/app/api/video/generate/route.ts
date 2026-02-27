@@ -142,12 +142,31 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // 6.5. 환경변수 확인
+        if (!process.env.FAL_KEY) {
+            console.error("[Video Generate] FAL_KEY 환경변수가 설정되지 않았습니다.");
+            return NextResponse.json(
+                { error: "영상 생성 서비스가 아직 설정되지 않았습니다. 관리자에게 문의해주세요." },
+                { status: 503 }
+            );
+        }
+
         // 7. Webhook URL 구성
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://memento-ani.vercel.app";
         const webhookUrl = `${baseUrl}/api/video/webhook?secret=${process.env.VIDEO_WEBHOOK_SECRET}`;
 
         // 8. fal.ai 큐에 영상 생성 요청 제출
-        const falRequestId = await submitVideoGeneration(sourcePhotoUrl, finalPrompt, webhookUrl);
+        let falRequestId: string;
+        try {
+            falRequestId = await submitVideoGeneration(sourcePhotoUrl, finalPrompt, webhookUrl);
+        } catch (falErr) {
+            const msg = falErr instanceof Error ? falErr.message : String(falErr);
+            console.error("[Video Generate] fal.ai 요청 실패:", msg);
+            return NextResponse.json(
+                { error: "AI 영상 생성 서비스 연결에 실패했습니다. 잠시 후 다시 시도해주세요.", detail: msg },
+                { status: 502 }
+            );
+        }
 
         // 9. DB에 생성 기록 저장
         const { data: generation, error: insertError } = await supabase
@@ -178,9 +197,11 @@ export async function POST(request: NextRequest) {
             status: "pending",
         });
     } catch (err) {
-        console.error("[Video Generate] 서버 오류:", err);
+        const errMsg = err instanceof Error ? err.message : String(err);
+        const errStack = err instanceof Error ? err.stack : "";
+        console.error("[Video Generate] 서버 오류:", errMsg, errStack);
         return NextResponse.json(
-            { error: "영상 생성 요청 중 오류가 발생했습니다." },
+            { error: "영상 생성 요청 중 오류가 발생했습니다.", detail: errMsg },
             { status: 500 }
         );
     }
