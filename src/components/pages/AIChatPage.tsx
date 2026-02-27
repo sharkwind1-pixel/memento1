@@ -46,6 +46,7 @@ import AIChatHeader from "@/components/features/chat/AIChatHeader";
 import PushNotificationBanner from "@/components/features/chat/PushNotificationBanner";
 import ExportChatModal from "@/components/features/chat/ExportChatModal";
 import PremiumModal from "@/components/modals/PremiumModal";
+import PawLoading from "@/components/ui/PawLoading";
 import {
     isPushSupported,
     registerServiceWorker,
@@ -166,7 +167,11 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
     // 조건부 렌더링: 펫 로딩 중
     // ========================================================================
     if (isPetsLoading) {
-        return null;
+        return (
+            <div className="flex items-center justify-center h-full">
+                <PawLoading size="lg" text="반려동물 정보를 불러오는 중..." />
+            </div>
+        );
     }
 
     // ========================================================================
@@ -267,6 +272,7 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                 onNewChat={chat.handleNewChat}
                 onExport={() => setIsExportModalOpen(true)}
                 hasMessages={chat.messages.filter(m => m.role === "user" || m.role === "pet").length >= 2}
+                messageCount={chat.messages.length}
             />
 
             <div className="flex-1 flex flex-col lg:flex-row max-w-4xl mx-auto w-full relative z-10">

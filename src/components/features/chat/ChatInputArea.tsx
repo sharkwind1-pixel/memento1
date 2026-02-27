@@ -212,7 +212,7 @@ export default function ChatInputArea({
                                     handleTextareaInput();
                                 }}
                                 onKeyDown={handleKeyDown}
-                                placeholder={`${selectedPet?.name}에게 말해보세요...`}
+                                placeholder={isMemorialMode ? `${selectedPet?.name}에게 하고 싶은 말을 적어보세요...` : `${selectedPet?.name}에게 말해보세요...`}
                                 className={`flex-1 rounded-lg border-0 bg-transparent shadow-none text-base resize-none min-h-[40px] max-h-[84px] py-2 px-2 focus-visible:ring-0 focus-visible:ring-offset-0 ${isMemorialMode ? "text-amber-900 dark:text-amber-100 placeholder:text-amber-400 dark:placeholder:text-amber-600" : "text-sky-900 dark:text-sky-100 placeholder:text-sky-400 dark:placeholder:text-sky-600"}`}
                                 rows={1}
                                 style={{ height: "40px" }}
