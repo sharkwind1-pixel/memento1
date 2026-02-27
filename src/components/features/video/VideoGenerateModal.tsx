@@ -555,11 +555,10 @@ export default function VideoGenerateModal({
     // ============================================
     return (
         <div
-            className="fixed inset-0 z-50 overflow-y-auto bg-black/50"
-            style={{ WebkitOverflowScrolling: "touch" } as React.CSSProperties}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
             onClick={handleOverlayClick}
         >
-            <div className="min-h-full flex items-start justify-center pt-16 pb-20 px-4">
+            <div className="w-full max-w-lg">
                 <div
                     role="dialog"
                     aria-modal="true"
