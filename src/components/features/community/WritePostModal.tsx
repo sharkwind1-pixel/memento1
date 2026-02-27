@@ -6,6 +6,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import useHorizontalScroll from "@/hooks/useHorizontalScroll";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -69,6 +70,7 @@ export default function WritePostModal({
     const { user } = useAuth();
     useEscapeClose(isOpen, onClose);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const imageScrollRef = useHorizontalScroll();
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
     const [badge, setBadge] = useState("");
@@ -327,7 +329,7 @@ export default function WritePostModal({
 
                         {/* 이미지 미리보기 */}
                         {imageUrls.length > 0 && (
-                            <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
+                            <div ref={imageScrollRef} className="flex gap-2 mb-3 overflow-x-auto pb-2">
                                 {imageUrls.map((url, index) => (
                                     <div key={index} className="relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border dark:border-gray-600">
                                         <Image

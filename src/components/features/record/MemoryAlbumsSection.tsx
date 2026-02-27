@@ -14,6 +14,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Image as ImageIcon } from "lucide-react";
+import useHorizontalScroll from "@/hooks/useHorizontalScroll";
 import { MemoryAlbum } from "@/types";
 import { API } from "@/config/apiEndpoints";
 import { authFetch } from "@/lib/auth-fetch";
@@ -36,6 +37,7 @@ export default function MemoryAlbumsSection({
     const [isLoading, setIsLoading] = useState(true);
     const [selectedAlbum, setSelectedAlbum] = useState<MemoryAlbum | null>(null);
     const [initialAlbumHandled, setInitialAlbumHandled] = useState(false);
+    const albumScrollRef = useHorizontalScroll();
 
     // 앨범 목록 fetch
     useEffect(() => {
@@ -182,6 +184,7 @@ export default function MemoryAlbumsSection({
 
                 {/* 수평 스크롤 카드 리스트 */}
                 <div
+                    ref={albumScrollRef}
                     className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide"
                     style={{ WebkitOverflowScrolling: "touch" }}
                 >

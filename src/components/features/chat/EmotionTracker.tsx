@@ -20,6 +20,7 @@ import { MEMENTO_COLORS } from "@/config/colors";
 
 import { useState, useEffect, useCallback } from "react";
 import { X, MessageCircle, Clock, TrendingUp } from "lucide-react";
+import useHorizontalScroll from "@/hooks/useHorizontalScroll";
 import { supabase } from "@/lib/supabase";
 
 // ============================================================================
@@ -133,6 +134,8 @@ function EmotionLineChart({
     data: DailyEmotion[];
     isMemorialMode: boolean;
 }) {
+    const chartScrollRef = useHorizontalScroll();
+
     if (data.length === 0) {
         return (
             <div className={`flex items-center justify-center h-[180px] rounded-xl border ${
@@ -172,7 +175,7 @@ function EmotionLineChart({
     const yLabels = [0, 0.25, 0.5, 0.75, 1.0];
 
     return (
-        <div className="w-full overflow-x-auto scrollbar-hide">
+        <div ref={chartScrollRef} className="w-full overflow-x-auto scrollbar-hide">
             <svg
                 viewBox={`0 0 ${width} ${height}`}
                 className="w-full max-w-[400px] mx-auto"

@@ -6,6 +6,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import useHorizontalScroll from "@/hooks/useHorizontalScroll";
 import { Button } from "@/components/ui/button";
 import {
     X,
@@ -58,6 +59,7 @@ export default function MinimiShopModal({
 }: MinimiShopModalProps) {
     const { points, refreshPoints } = useAuth();
     useEscapeClose(isOpen, onClose);
+    const categoryScrollRef = useHorizontalScroll();
     const [selectedFilter, setSelectedFilter] = useState<FilterCategory>("all");
     const [characters, setCharacters] = useState<CatalogCharacter[]>([]);
     const [purchasingId, setPurchasingId] = useState<string | null>(null);
@@ -158,7 +160,7 @@ export default function MinimiShopModal({
                     </div>
 
                     {/* 카테고리 필터 */}
-                    <div className="flex items-center gap-1.5 px-3 py-2 border-b dark:border-gray-700 overflow-x-auto">
+                    <div ref={categoryScrollRef} className="flex items-center gap-1.5 px-3 py-2 border-b dark:border-gray-700 overflow-x-auto">
                         {(Object.keys(FILTER_LABELS) as FilterCategory[]).map((cat) => (
                             <button
                                 key={cat}
