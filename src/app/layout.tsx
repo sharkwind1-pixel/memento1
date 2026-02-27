@@ -10,7 +10,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { PetProvider } from "@/contexts/PetContext";
 import { Toaster } from "sonner";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const viewport: Viewport = {
     width: "device-width",
@@ -104,7 +104,7 @@ export default function RootLayout({
                     }}
                 />
             </head>
-            <body className={inter.className}>
+            <body className={`${inter.variable} font-sans`}>
                 <AuthProvider>
                     <PetProvider>{children}</PetProvider>
                 </AuthProvider>
