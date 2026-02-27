@@ -140,7 +140,7 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                                     preferredHour: 9,
                                 }),
                             });
-                            toast.success("알림이 설정되었습니다");
+                            toast.success("알림 받을 준비가 됐어요!");
                         }
                     }
                 } catch {
@@ -316,8 +316,7 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                                     clipRule="evenodd"
                                 />
                             </svg>
-                            이 대화는 AI가 생성합니다. 실제 반려동물의 의사가
-                            아닌 참고용 서비스입니다.
+                            AI가 도와주는 대화예요. 참고용으로 봐주세요!
                         </span>
                     </div>
                     <ChatMessageList

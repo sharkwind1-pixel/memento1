@@ -30,7 +30,7 @@ export const getPetIcon = (petType: string): LucideIcon => {
 // HERO 메시지 (모든 유저 공통)
 export const HERO_CONTENT = {
     title: "특별한 매일을 함께",
-    subtitle: "일상부터 기억까지, 시간이 쌓이고 의미가 바뀌는 기록 플랫폼",
-    ctaLabel: "시작하기",
+    subtitle: "하루하루가 추억이 되는 곳",
+    ctaLabel: "지금 만나러 가기",
     ctaTab: "ai-chat" as TabType,
 };

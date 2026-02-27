@@ -99,10 +99,10 @@ export default function HealingJourneySection({
                 setError(null);
             } else {
                 const err = await res.json();
-                setError(err.error || "데이터를 불러올 수 없습니다.");
+                setError(err.error || "지금은 불러올 수 없어요");
             }
         } catch {
-            setError("네트워크 오류가 발생했습니다.");
+            setError("인터넷 연결을 확인해주세요");
         } finally {
             setLoading(false);
         }

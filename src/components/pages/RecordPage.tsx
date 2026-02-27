@@ -113,21 +113,21 @@ function RecordPage({ setSelectedTab }: RecordPageProps) {
         const { error } = await updateProfile({ nickname: nickname.trim() });
         setIsSavingProfile(false);
         if (error) {
-            toast.error("닉네임 변경에 실패했습니다");
+            toast.error("닉네임을 바꾸지 못했어요");
         } else {
-            toast.success("닉네임이 변경되었습니다");
+            toast.success("닉네임이 바뀌었어요!");
             setIsEditingNickname(false);
         }
     };
 
     // 로그아웃
     const handleSignOut = async () => {
-        toast("로그아웃 하시겠습니까?", {
+        toast("정말 로그아웃할까요?", {
             action: {
                 label: "로그아웃",
                 onClick: async () => {
                     await signOut();
-                    toast.success("로그아웃 되었습니다");
+                    toast.success("로그아웃했어요");
                 },
             },
             cancel: {
@@ -188,15 +188,15 @@ function RecordPage({ setSelectedTab }: RecordPageProps) {
         try {
             if (editingPet) {
                 await updatePet(editingPet.id, petData);
-                toast.success(`${petData.name} 정보가 수정되었습니다`);
+                toast.success(`${petData.name} 정보를 바꿨어요`);
             } else {
                 await addPet(petData);
-                toast.success(`${petData.name}이(가) 등록되었습니다`);
+                toast.success(`${petData.name}을(를) 등록했어요!`);
             }
             setEditingPet(null);
             setIsPetModalOpen(false);
         } catch {
-            toast.error("저장 중 오류가 발생했습니다");
+            toast.error("저장하지 못했어요");
         }
     };
 
@@ -213,9 +213,9 @@ function RecordPage({ setSelectedTab }: RecordPageProps) {
                 captions,
                 files.map(() => new Date().toISOString().split("T")[0]),
             );
-            toast.success("사진이 업로드되었습니다");
+            toast.success("사진을 올렸어요!");
         } catch {
-            toast.error("업로드 중 오류가 발생했습니다");
+            toast.error("사진을 올리지 못했어요");
         }
     };
 
