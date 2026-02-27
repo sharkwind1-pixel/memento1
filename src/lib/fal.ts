@@ -8,10 +8,14 @@
 
 import { fal } from "@fal-ai/client";
 
-// fal.ai 인증 설정
-fal.config({
-    credentials: process.env.FAL_KEY!,
-});
+/**
+ * fal.ai 클라이언트 초기화 (호출 시점에 환경변수 보장)
+ */
+function ensureFalConfig() {
+    fal.config({
+        credentials: process.env.FAL_KEY!,
+    });
+}
 
 /**
  * 영상 생성 요청을 fal.ai 큐에 제출
@@ -25,12 +29,15 @@ export async function submitVideoGeneration(
     prompt: string,
     webhookUrl: string
 ): Promise<string> {
+    ensureFalConfig();
+
     const result = await fal.queue.submit(
         "fal-ai/minimax/video-01-live/image-to-video",
         {
             input: {
                 prompt,
                 image_url: imageUrl,
+                prompt_optimizer: false,
             },
             webhookUrl,
         }
@@ -44,6 +51,7 @@ export async function submitVideoGeneration(
  * webhook이 실패했을 때 수동으로 상태를 확인
  */
 export async function checkVideoStatus(requestId: string) {
+    ensureFalConfig();
     const status = await fal.queue.status(
         "fal-ai/minimax/video-01-live/image-to-video",
         {

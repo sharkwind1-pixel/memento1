@@ -210,9 +210,9 @@ export default function VideoGenerateModal({
 
             if (!res.ok) {
                 const errorData = await res.json().catch(() => null);
-                throw new Error(
-                    errorData?.error || errorData?.msg || "영상 생성 요청에 실패했습니다."
-                );
+                const errorMsg = errorData?.error || errorData?.msg || "영상 생성 요청에 실패했습니다.";
+                const detail = errorData?.detail ? ` (${errorData.detail})` : "";
+                throw new Error(errorMsg + detail);
             }
 
             const data = await res.json();
