@@ -565,8 +565,10 @@ export async function saveMessage(
 }
 
 /**
- * 메모리 저장 (중복 방지)
- * 동일 pet_id + title + memory_type이 이미 존재하면 업데이트, 없으면 신규 저장
+ * 메모리 저장 (중복 방지 + 타입별 분기)
+ * - episode: 항상 새로 저장 (특정 에피소드는 덮어쓰면 안 됨)
+ * - preference/routine/schedule 등: 동일 title+type이면 최신 내용으로 업데이트
+ * - pending_topic: 동일 title+type이면 업데이트 (다음 대화 주제 갱신)
  */
 export async function saveMemory(
     userId: string,
@@ -575,32 +577,36 @@ export async function saveMemory(
 ) {
     const supabase = getSupabase();
 
-    // 기존 동일 메모리 확인 (pet_id + title + memory_type 기준)
-    const { data: existing } = await supabase
-        .from("pet_memories")
-        .select("id, importance")
-        .eq("pet_id", petId)
-        .eq("title", memory.title)
-        .eq("memory_type", memory.memoryType)
-        .maybeSingle();
-
-    if (existing) {
-        // 기존 메모리 업데이트 (importance는 더 높은 값 유지)
-        const { data, error } = await supabase
+    // episode 타입은 항상 신규 저장 (추억은 덮어쓰지 않음)
+    const alwaysInsertTypes = ["episode"];
+    if (!alwaysInsertTypes.includes(memory.memoryType)) {
+        // 기존 동일 메모리 확인 (pet_id + title + memory_type 기준)
+        const { data: existing } = await supabase
             .from("pet_memories")
-            .update({
-                content: memory.content,
-                importance: Math.max(memory.importance, existing.importance || 0),
-                updated_at: new Date().toISOString(),
-            })
-            .eq("id", existing.id)
-            .select()
-            .single();
+            .select("id, importance")
+            .eq("pet_id", petId)
+            .eq("title", memory.title)
+            .eq("memory_type", memory.memoryType)
+            .maybeSingle();
 
-        if (error) {
-            return null;
+        if (existing) {
+            // 기존 메모리 업데이트 (importance는 더 높은 값 유지)
+            const { data, error } = await supabase
+                .from("pet_memories")
+                .update({
+                    content: memory.content,
+                    importance: Math.max(memory.importance, existing.importance || 0),
+                    updated_at: new Date().toISOString(),
+                })
+                .eq("id", existing.id)
+                .select()
+                .single();
+
+            if (error) {
+                return null;
+            }
+            return data;
         }
-        return data;
     }
 
     // 신규 메모리 저장

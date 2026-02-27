@@ -43,7 +43,14 @@ function getPointsSupabase() {
     return createClient(url, key);
 }
 
-// AI 응답에서 사진 매칭용 키워드 추출
+/**
+ * 사진 매칭용 키워드 추출
+ * 1) 펫 프로필 필드(favoritePlace, Activity, Food)에서 개인화 키워드 수집
+ * 2) AI 응답 텍스트에서 고정 패턴(장소/활동 20종) 매칭
+ * - NLP/형태소 분석 없이 includes() 기반 → 빠르고 토큰 소비 0
+ * - 정확도보다 재현율(Recall) 우선 (매칭 기회 최대화)
+ * @returns 최대 5개 키워드 배열 (pet_media 캡션과 매칭용)
+ */
 function extractKeywordsFromReply(reply: string, pet: { favoritePlace?: string; favoriteActivity?: string; favoriteFood?: string }): string[] {
     const keywords: string[] = [];
 
@@ -52,7 +59,7 @@ function extractKeywordsFromReply(reply: string, pet: { favoritePlace?: string; 
     if (pet.favoriteActivity) keywords.push(...pet.favoriteActivity.split(/[,\s]+/).filter(k => k.length >= 2));
     if (pet.favoriteFood) keywords.push(...pet.favoriteFood.split(/[,\s]+/).filter(k => k.length >= 2));
 
-    // AI 응답에서 장소/활동 관련 키워드 추출 (간단한 패턴 매칭)
+    // AI 응답 텍스트에서 장소/활동 고정 패턴 매칭
     const locationPatterns = ["공원", "바다", "산", "강", "숲", "마당", "거실", "방", "소파", "침대", "창가", "베란다", "카페", "산책로"];
     const activityPatterns = ["산책", "놀이", "목욕", "밥", "간식", "잠", "낮잠", "달리기", "뛰어", "놀았", "먹었", "갔던"];
 
@@ -990,31 +997,34 @@ ${emergencyDetection.isEmergency ? "이것은 즉시 병원에 가야 하는 상
             seed: randomSeed,
         });
 
-        // 응답에서 후속 질문 제안 파싱
+        // 응답에서 마커 파싱 (PENDING_TOPIC, SUGGESTIONS 순서)
+        // GPT가 본문---SUGGESTIONS---질문---PENDING_TOPIC---주제 순서로 출력할 수 있으므로
+        // rawReply에서 모든 마커를 먼저 분리한 뒤 reply에 본문만 남김
         const rawReply = completion.choices[0]?.message?.content || "";
         let reply = rawReply;
         let suggestedQuestions: string[] = [];
+        let pendingTopic: string | undefined;
 
-        // 먼저 SUGGESTIONS 마커 분리 (느낌표 처리보다 선행해야 함)
         const suggestionsMarker = "---SUGGESTIONS---";
-        if (rawReply.includes(suggestionsMarker)) {
-            const parts = rawReply.split(suggestionsMarker);
-            reply = parts[0].trim();
-            suggestedQuestions = parts[1]
+        const pendingTopicMarker = "---PENDING_TOPIC---";
+
+        // 1. PENDING_TOPIC을 rawReply에서 먼저 분리 (SUGGESTIONS 뒤에 있을 수 있음)
+        if (rawReply.includes(pendingTopicMarker)) {
+            const ptParts = rawReply.split(pendingTopicMarker);
+            reply = ptParts[0].trim();
+            pendingTopic = ptParts[1]?.trim().split("\n")[0]?.trim();
+        }
+
+        // 2. SUGGESTIONS 분리 (reply에서 — PENDING_TOPIC은 이미 제거됨)
+        if (reply.includes(suggestionsMarker)) {
+            const sgParts = reply.split(suggestionsMarker);
+            reply = sgParts[0].trim();
+            suggestedQuestions = sgParts[1]
                 .trim()
                 .split("\n")
                 .map(s => s.replace(/^[-\d.)\s]+/, "").trim())
                 .filter(s => s.length > 0 && s.length <= 20)
                 .slice(0, 3);
-        }
-
-        // PENDING_TOPIC 마커 파싱 (다음 대화에서 이어갈 주제)
-        let pendingTopic: string | undefined;
-        const pendingTopicMarker = "---PENDING_TOPIC---";
-        if (reply.includes(pendingTopicMarker)) {
-            const parts = reply.split(pendingTopicMarker);
-            reply = parts[0].trim();
-            pendingTopic = parts[1]?.trim().split("\n")[0]?.trim();
         }
 
         // 추모 모드: 후속 질문에서 음식/케어 키워드 필터링
