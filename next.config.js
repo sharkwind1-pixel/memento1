@@ -5,10 +5,11 @@ const ContentSecurityPolicy = `
     default-src 'self';
     script-src 'self' 'unsafe-eval' 'unsafe-inline';
     style-src 'self' 'unsafe-inline';
-    img-src 'self' data: blob: *.supabase.co *.supabase.in images.dog.ceo cdn2.thecatapi.com 25.media.tumblr.com images.unsplash.com via.placeholder.com;
+    img-src 'self' data: blob: *.supabase.co *.supabase.in images.dog.ceo cdn2.thecatapi.com 25.media.tumblr.com images.unsplash.com via.placeholder.com *.fal.ai;
+    media-src 'self' blob: *.supabase.co *.supabase.in *.fal.ai;
     font-src 'self';
     worker-src 'self';
-    connect-src 'self' *.supabase.co *.supabase.in api.openai.com apis.data.go.kr dog.ceo api.thecatapi.com *.push.services.mozilla.com fcm.googleapis.com;
+    connect-src 'self' *.supabase.co *.supabase.in api.openai.com apis.data.go.kr dog.ceo api.thecatapi.com *.push.services.mozilla.com fcm.googleapis.com *.fal.ai;
     frame-src 'self';
     object-src 'none';
     base-uri 'self';
@@ -102,6 +103,17 @@ const nextConfig = {
             {
                 protocol: "https",
                 hostname: "via.placeholder.com",
+                pathname: "/**",
+            },
+            // fal.ai 영상 생성 결과 (썸네일 등)
+            {
+                protocol: "https",
+                hostname: "*.fal.ai",
+                pathname: "/**",
+            },
+            {
+                protocol: "https",
+                hostname: "fal.media",
                 pathname: "/**",
             },
         ],

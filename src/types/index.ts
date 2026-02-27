@@ -828,3 +828,53 @@ export interface MemoryAlbum {
     createdAt: string;
     photos?: PetPhoto[];
 }
+
+// ============================================
+// 10. AI 영상 생성 관련 타입
+// ============================================
+
+/** 영상 생성 상태 */
+export type VideoGenerationStatus = "pending" | "processing" | "completed" | "failed";
+
+/** 영상 생성 레코드 */
+export interface VideoGeneration {
+    id: string;
+    userId: string;
+    petId: string | null;
+    petName: string | null;
+    sourcePhotoUrl: string;
+    templateId: string | null;
+    customPrompt: string | null;
+    falRequestId: string | null;
+    status: VideoGenerationStatus;
+    videoUrl: string | null;
+    falVideoUrl: string | null;
+    thumbnailUrl: string | null;
+    durationSeconds: number | null;
+    errorMessage: string | null;
+    isSinglePurchase: boolean;
+    createdAt: string;
+    completedAt: string | null;
+}
+
+/** 영상 템플릿 카테고리 */
+export type VideoTemplateCategory = "fun" | "memorial" | "transform";
+
+/** 영상 생성 템플릿 */
+export interface VideoTemplate {
+    id: string;
+    name: string;
+    description: string;
+    prompt: string;
+    icon: string;
+    category: VideoTemplateCategory;
+}
+
+/** 영상 생성 쿼터 정보 */
+export interface VideoQuota {
+    used: number;
+    limit: number;
+    isLifetimeFree: boolean;
+    lifetimeFreeUsed: boolean;
+    tier: "free" | "basic" | "premium";
+}
