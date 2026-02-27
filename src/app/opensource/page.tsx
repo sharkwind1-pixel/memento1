@@ -208,7 +208,7 @@ export default function OpenSourcePage() {
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4">
             <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
-                <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-4 text-center">
+                <h1 className="text-3xl font-display font-bold text-gray-800 dark:text-white mb-4 text-center">
                     오픈소스 라이선스 고지
                 </h1>
                 <p className="text-center text-gray-500 dark:text-gray-400 mb-8">
@@ -220,7 +220,7 @@ export default function OpenSourcePage() {
 
                     {/* 요약 테이블 */}
                     <section>
-                        <h2 className="text-xl font-bold text-gray-800 dark:text-white">라이선스 요약</h2>
+                        <h2 className="text-xl font-display font-bold text-gray-800 dark:text-white">라이선스 요약</h2>
                         <div className="overflow-x-auto">
                             <table className="min-w-full text-sm">
                                 <thead>
@@ -258,7 +258,7 @@ export default function OpenSourcePage() {
 
                     {/* 폰트 라이선스 */}
                     <section>
-                        <h2 className="text-xl font-bold text-gray-800 dark:text-white">폰트</h2>
+                        <h2 className="text-xl font-display font-bold text-gray-800 dark:text-white">폰트</h2>
                         <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 space-y-2">
                             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                                 <span className="font-semibold text-gray-800 dark:text-gray-200">여기어때 잘난체 (Jalnan2)</span>
@@ -279,6 +279,38 @@ export default function OpenSourcePage() {
                             </p>
                             <p className="text-sm text-gray-600 dark:text-gray-400">
                                 인쇄, 웹, 영상, 임베딩(앱/게임) 등 자유 사용 가능. 단독 재배포 및 유료 판매 불가.
+                            </p>
+                        </div>
+
+                        <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4 space-y-2 mt-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                <span className="font-semibold text-gray-800 dark:text-gray-200">Pretendard</span>
+                                <span className="text-xs bg-green-100 dark:bg-green-800/40 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full w-fit">
+                                    SIL Open Font License 1.1
+                                </span>
+                            </div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                                Copyright (c) 2021 Kil Hyung-jin |{" "}
+                                <a
+                                    href="/fonts/Pretendard-LICENSE.txt"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-green-600 dark:text-green-400 underline hover:no-underline"
+                                >
+                                    라이선스 전문 보기
+                                </a>{" "}
+                                |{" "}
+                                <a
+                                    href="https://github.com/orioncactus/pretendard"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-green-600 dark:text-green-400 underline hover:no-underline"
+                                >
+                                    GitHub
+                                </a>
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                                본문 기본 폰트. 상업적 사용 포함 자유 사용 가능.
                             </p>
                         </div>
 
@@ -305,7 +337,7 @@ export default function OpenSourcePage() {
 
                     {/* 전체 목록 */}
                     <section>
-                        <h2 className="text-xl font-bold text-gray-800 dark:text-white">오픈소스 소프트웨어 목록</h2>
+                        <h2 className="text-xl font-display font-bold text-gray-800 dark:text-white">오픈소스 소프트웨어 목록</h2>
                         <div className="space-y-3">
                             {dependencies.map((dep) => (
                                 <div
@@ -338,7 +370,7 @@ export default function OpenSourcePage() {
 
                     {/* MIT 라이선스 전문 */}
                     <section>
-                        <h2 className="text-xl font-bold text-gray-800 dark:text-white">MIT License (전문)</h2>
+                        <h2 className="text-xl font-display font-bold text-gray-800 dark:text-white">MIT License (전문)</h2>
                         <div className="bg-gray-50 dark:bg-gray-700/30 rounded-xl p-4">
                             <pre className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap font-mono leading-relaxed">
 {`MIT License
@@ -368,7 +400,7 @@ SOFTWARE.`}
 
                     {/* Apache 2.0 라이선스 전문 */}
                     <section>
-                        <h2 className="text-xl font-bold text-gray-800 dark:text-white">Apache License 2.0 (전문)</h2>
+                        <h2 className="text-xl font-display font-bold text-gray-800 dark:text-white">Apache License 2.0 (전문)</h2>
                         <div className="bg-gray-50 dark:bg-gray-700/30 rounded-xl p-4">
                             <pre className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap font-mono leading-relaxed">
 {`Apache License
@@ -466,7 +498,7 @@ END OF TERMS AND CONDITIONS`}
 
                     {/* ISC 라이선스 전문 */}
                     <section>
-                        <h2 className="text-xl font-bold text-gray-800 dark:text-white">ISC License (전문)</h2>
+                        <h2 className="text-xl font-display font-bold text-gray-800 dark:text-white">ISC License (전문)</h2>
                         <div className="bg-gray-50 dark:bg-gray-700/30 rounded-xl p-4">
                             <pre className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap font-mono leading-relaxed">
 {`ISC License

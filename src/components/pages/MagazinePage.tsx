@@ -156,7 +156,7 @@ function MagazinePage({ setSelectedTab }: MagazinePageProps) {
                                 <BookOpen className="w-6 h-6 text-white" />
                             </div>
                             <div>
-                                <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+                                <h1 className="text-2xl font-display font-bold text-gray-800 dark:text-gray-100">
                                     펫매거진
                                 </h1>
                                 <p className="text-gray-600 dark:text-gray-300">

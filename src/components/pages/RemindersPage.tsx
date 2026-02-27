@@ -254,7 +254,7 @@ function RemindersPage() {
                     <div className="w-24 h-24 rounded-full bg-gradient-to-br from-memento-100 to-memento-200 flex items-center justify-center mb-6">
                         <LogIn className="w-12 h-12 text-memento-600" />
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                    <h2 className="text-2xl font-display font-bold text-gray-800 mb-2">
                         로그인이 필요해요
                     </h2>
                     <p className="text-gray-500 text-center mb-6">

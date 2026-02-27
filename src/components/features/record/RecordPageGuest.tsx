@@ -26,7 +26,7 @@ export default function RecordPageGuest() {
                 </div>
 
                 {/* 타이틀 */}
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2 text-center">
+                <h2 className="text-2xl font-display font-bold text-gray-800 dark:text-white mb-2 text-center">
                     소중한 순간을 기록해보세요
                 </h2>
                 <p className="text-gray-500 dark:text-gray-400 text-center mb-6">

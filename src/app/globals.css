@@ -2,7 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 잘난체 (여기어때) — 한글 전용, unicode-range로 영문은 Inter 폴백 */
+/* Pretendard — 본문 기본 폰트 (SIL OFL 1.1) */
+@font-face {
+    font-family: 'Pretendard';
+    src: url('/fonts/Pretendard-Regular.subset.woff2') format('woff2');
+    font-weight: 400;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Pretendard';
+    src: url('/fonts/Pretendard-Medium.subset.woff2') format('woff2');
+    font-weight: 500;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Pretendard';
+    src: url('/fonts/Pretendard-SemiBold.subset.woff2') format('woff2');
+    font-weight: 600;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Pretendard';
+    src: url('/fonts/Pretendard-Bold.subset.woff2') format('woff2');
+    font-weight: 700;
+    font-display: swap;
+}
+
+/* 잘난체 (여기어때) — 제목 전용 (font-display), unicode-range로 한글만 */
 @font-face {
     font-family: 'Jalnan2';
     src: url('/fonts/Jalnan2TTF.ttf') format('truetype');

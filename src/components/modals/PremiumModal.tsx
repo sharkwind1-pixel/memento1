@@ -112,7 +112,7 @@ export default function PremiumModal({
                             <Icon className="w-8 h-8" />
                         </div>
                         <div>
-                            <h2 id="premium-modal-title" className="text-xl font-bold">{info.title}</h2>
+                            <h2 id="premium-modal-title" className="text-xl font-display font-bold">{info.title}</h2>
                             <p className="text-white/80 text-sm mt-1">{info.description}</p>
                         </div>
                     </div>
@@ -134,7 +134,7 @@ export default function PremiumModal({
                             <span className="text-gray-500 text-sm">커피 한 잔 값으로</span>
                         </div>
                         <div className="flex items-baseline justify-center gap-1">
-                            <span className="text-4xl font-bold text-gray-800 dark:text-white">7,900</span>
+                            <span className="text-4xl font-display font-bold text-gray-800 dark:text-white">7,900</span>
                             <span className="text-gray-500">원/월</span>
                         </div>
                         <p className="text-sm text-gray-400 mt-2">

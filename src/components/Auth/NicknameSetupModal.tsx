@@ -109,7 +109,7 @@ export default function NicknameSetupModal({
                     <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
                         <Sparkles className="w-8 h-8" />
                     </div>
-                    <h2 id="nickname-setup-title" className="text-2xl font-bold">환영합니다!</h2>
+                    <h2 id="nickname-setup-title" className="text-2xl font-display font-bold">환영합니다!</h2>
                     <p className="text-white/80 mt-1">
                         메멘토애니에서 사용할 닉네임을 설정해주세요
                     </p>

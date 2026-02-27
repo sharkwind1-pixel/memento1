@@ -12,7 +12,8 @@ const config: Config = {
   theme: {
   	extend: {
   		fontFamily: {
-  			sans: ['Jalnan2', 'var(--font-inter)', 'system-ui', '-apple-system', 'sans-serif'],
+  			sans: ['Pretendard', 'var(--font-inter)', 'system-ui', '-apple-system', 'sans-serif'],
+  			display: ['Jalnan2', 'Pretendard', 'var(--font-inter)', 'system-ui', 'sans-serif'],
   		},
   		backgroundImage: {
   			'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
