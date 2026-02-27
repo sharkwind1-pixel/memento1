@@ -104,13 +104,12 @@ export default function VideoResultModal({
 
     return (
         <div
-            className="fixed inset-0 z-50 overflow-y-auto bg-black/50"
-            style={{ WebkitOverflowScrolling: "touch" } as React.CSSProperties}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
             onClick={(e) => {
                 if (e.target === e.currentTarget) onClose();
             }}
         >
-            <div className="min-h-full flex items-start justify-center pt-16 pb-20 px-4">
+            <div className="w-full max-w-lg">
                 <div
                     className="bg-white dark:bg-gray-800 rounded-2xl max-w-lg w-full shadow-2xl relative animate-in fade-in zoom-in-95 duration-200"
                     role="dialog"
