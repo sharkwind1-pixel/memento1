@@ -5,6 +5,7 @@
 "use client";
 
 import { Check, ChevronRight } from "lucide-react";
+import useHorizontalScroll from "@/hooks/useHorizontalScroll";
 import { STEP_INFO } from "./petFormTypes";
 
 interface StepIndicatorProps {
@@ -12,8 +13,10 @@ interface StepIndicatorProps {
 }
 
 export default function StepIndicator({ currentStep }: StepIndicatorProps) {
+    const stepScrollRef = useHorizontalScroll();
+
     return (
-        <div className="sticky top-[57px] z-10 flex items-center justify-center gap-1 py-3 px-4 bg-gray-50 dark:bg-gray-800 overflow-x-auto">
+        <div ref={stepScrollRef} className="sticky top-[57px] z-10 flex items-center justify-center gap-1 py-3 px-4 bg-gray-50 dark:bg-gray-800 overflow-x-auto">
             {STEP_INFO.map((info, idx) => {
                 const Icon = info.icon;
                 const stepNum = idx + 1;

@@ -129,6 +129,28 @@ export function useSmoothAutoScroll() {
             },
         }));
 
+        // 휠 → 가로 스크롤 핸들러 (캐러셀별)
+        const wheelHandlers = refs.map((_, index) => (e: WheelEvent) => {
+            const container = refs[index].current;
+            if (!container || e.deltaY === 0) return;
+
+            const canScrollLeft = container.scrollLeft > 0;
+            const canScrollRight = container.scrollLeft < container.scrollWidth - container.clientWidth - 1;
+            if ((e.deltaY > 0 && !canScrollRight) || (e.deltaY < 0 && !canScrollLeft)) return;
+
+            e.preventDefault();
+            pausedRef.current[index] = true;
+            container.scrollLeft += e.deltaY;
+            scrollPosRef.current[index] = container.scrollLeft;
+
+            // 2초 후 자동 스크롤 재개
+            clearTimeout(wheelResumeTimers[index]);
+            wheelResumeTimers[index] = window.setTimeout(() => {
+                pausedRef.current[index] = false;
+            }, 2000);
+        });
+        const wheelResumeTimers: number[] = [0, 0, 0, 0];
+
         // DOM 렌더링 대기 후 시작
         const startTimer = setTimeout(() => {
             refs.forEach((ref, index) => {
@@ -148,6 +170,7 @@ export function useSmoothAutoScroll() {
                 container.addEventListener("touchstart", h.touchstart, { passive: true });
                 container.addEventListener("touchmove", h.touchmove, { passive: true });
                 container.addEventListener("touchend", h.touchend, { passive: true });
+                container.addEventListener("wheel", wheelHandlers[index], { passive: false });
 
                 // 애니메이션 루프
                 let lastTime = 0;
@@ -186,6 +209,7 @@ export function useSmoothAutoScroll() {
 
         return () => {
             clearTimeout(startTimer);
+            wheelResumeTimers.forEach((t) => clearTimeout(t));
 
             // 애니메이션 정리
             animationIdsRef.current.forEach((id) => {
@@ -207,6 +231,7 @@ export function useSmoothAutoScroll() {
                 container.removeEventListener("touchstart", h.touchstart);
                 container.removeEventListener("touchmove", h.touchmove);
                 container.removeEventListener("touchend", h.touchend);
+                container.removeEventListener("wheel", wheelHandlers[index]);
             });
         };
     }, []);

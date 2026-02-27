@@ -7,6 +7,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import useHorizontalScroll from "@/hooks/useHorizontalScroll";
 import { X, Download, Image as ImageIcon, FileText, Star, Heart, Loader2 } from "lucide-react";
 import html2canvas from "html2canvas";
 import { toast } from "sonner";
@@ -62,6 +63,7 @@ export default function ExportChatModal({
     const [isExporting, setIsExporting] = useState(false);
     const [format, setFormat] = useState<"png" | "jpg">("png");
     const cardRef = useRef<HTMLDivElement>(null);
+    const previewScrollRef = useHorizontalScroll();
 
     const handleExport = useCallback(async () => {
         if (!cardRef.current) return;
@@ -288,7 +290,7 @@ export default function ExportChatModal({
                         <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                             미리보기
                         </h3>
-                        <div className="flex justify-center overflow-x-auto pb-4">
+                        <div ref={previewScrollRef} className="flex justify-center overflow-x-auto pb-4">
                             <div className="transform scale-[0.85] origin-top">
                                 <ExportChatCard
                                     ref={cardRef}

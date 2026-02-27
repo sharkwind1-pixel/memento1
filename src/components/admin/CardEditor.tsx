@@ -23,6 +23,7 @@ import {
     Quote,
 } from "lucide-react";
 import RichTextEditor from "./RichTextEditor";
+import useHorizontalScroll from "@/hooks/useHorizontalScroll";
 
 // ──────────────────────────────────────────────
 //  타입
@@ -112,6 +113,7 @@ export default function CardEditor({ content, onChange, onImageUpload }: CardEdi
     const [cards, setCards] = useState<EditorCard[]>(() => parseContentToCards(content));
     const [activeIndex, setActiveIndex] = useState(0);
     const cardsRef = useRef(cards);
+    const cardTabScrollRef = useHorizontalScroll();
     cardsRef.current = cards;
 
     // 드래그 앤 드롭 상태
@@ -265,7 +267,7 @@ export default function CardEditor({ content, onChange, onImageUpload }: CardEdi
     return (
         <div className="space-y-3">
             {/* 상단: 카드 탭 목록 */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            <div ref={cardTabScrollRef} className="flex items-center gap-2 overflow-x-auto pb-1">
                 {cards.map((card, i) => {
                     const Icon = getCardTypeIcon(card.html);
                     const isActive = i === activeIndex;

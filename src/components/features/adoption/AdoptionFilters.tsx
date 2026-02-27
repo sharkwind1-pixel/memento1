@@ -6,6 +6,7 @@
 "use client";
 
 import React from "react";
+import useHorizontalScroll from "@/hooks/useHorizontalScroll";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Dog, Cat, RefreshCw } from "lucide-react";
@@ -38,6 +39,8 @@ export function AdoptionFilters({
     stateFilter,
     onStateChange,
 }: AdoptionFiltersProps) {
+    const filterScrollRef = useHorizontalScroll();
+
     return (
         <>
             {/* 검색바 */}
@@ -70,7 +73,7 @@ export function AdoptionFilters({
             </div>
 
             {/* 종류 필터 탭 */}
-            <div className="flex gap-2 overflow-x-auto pb-1">
+            <div ref={filterScrollRef} className="flex gap-2 overflow-x-auto pb-1">
                 {[
                     { value: "all" as const, label: "전체", icon: null },
                     { value: "dog" as const, label: "강아지", icon: Dog },

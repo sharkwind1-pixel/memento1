@@ -30,6 +30,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import useHorizontalScroll from "@/hooks/useHorizontalScroll";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 // isAdmin은 더 이상 사용하지 않음 - AuthContext의 isAdminUser 사용
@@ -84,6 +85,7 @@ const TABS: { id: AdminTab; label: string; icon: typeof LayoutDashboard }[] = [
 
 function AdminPage() {
     const { user, isAdminUser } = useAuth();
+    const tabScrollRef = useHorizontalScroll();
 
     // 현재 활성 탭 — localStorage로 새로고침 시 복원
     const [activeTab, setActiveTab] = useState<AdminTab>(() => {
@@ -242,7 +244,7 @@ function AdminPage() {
                 </div>
 
                 {/* 탭 네비게이션 */}
-                <div className="flex gap-2 overflow-x-auto pb-2">
+                <div ref={tabScrollRef} className="flex gap-2 overflow-x-auto pb-2">
                     {TABS.map((tab) => {
                         const Icon = tab.icon;
                         const isActive = activeTab === tab.id;

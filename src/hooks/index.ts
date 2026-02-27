@@ -4,3 +4,4 @@
 
 export { usePetImages } from './usePetImages'
 export { useSmoothAutoScroll, useAutoScroll } from './useSmoothAutoScroll'
+export { default as useHorizontalScroll } from './useHorizontalScroll'
