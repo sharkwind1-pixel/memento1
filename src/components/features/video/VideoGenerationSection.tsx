@@ -295,7 +295,7 @@ export default function VideoGenerationSection({
                         {[1, 2, 3].map((i) => (
                             <div
                                 key={i}
-                                className="w-36 flex-shrink-0 rounded-lg overflow-hidden"
+                                className="w-52 flex-shrink-0 rounded-xl overflow-hidden"
                             >
                                 <div className="aspect-video bg-gray-100 animate-pulse" />
                                 <div className="p-2 space-y-1">
@@ -378,7 +378,7 @@ export default function VideoGenerationSection({
                                     <div
                                         key={video.id}
                                         onClick={() => handleVideoClick(video)}
-                                        className="w-40 flex-shrink-0 rounded-lg overflow-hidden cursor-pointer bg-white border border-gray-200 transition-all duration-200 hover:ring-2 hover:ring-memento-300 hover:shadow-md active:scale-[0.98]"
+                                        className="w-52 flex-shrink-0 rounded-xl overflow-hidden cursor-pointer bg-white border border-gray-200 transition-all duration-200 hover:ring-2 hover:ring-memento-300 hover:shadow-md active:scale-[0.98]"
                                     >
                                         {/* 썸네일 */}
                                         <div className="aspect-video relative bg-gray-100">
@@ -395,7 +395,7 @@ export default function VideoGenerationSection({
                                             )}
                                             {/* 재생 아이콘 오버레이 */}
                                             <div className="absolute inset-0 flex items-center justify-center">
-                                                <PlayCircle className="w-10 h-10 text-white/80 drop-shadow-lg" />
+                                                <PlayCircle className="w-12 h-12 text-white/80 drop-shadow-lg" />
                                             </div>
                                             {/* 재생 시간 */}
                                             {video.durationSeconds && (
@@ -406,11 +406,11 @@ export default function VideoGenerationSection({
                                         </div>
 
                                         {/* 텍스트 영역 */}
-                                        <div className="p-2">
-                                            <p className="text-sm font-medium text-gray-800 truncate">
+                                        <div className="p-3">
+                                            <p className="text-base font-medium text-gray-800 truncate">
                                                 {video.petName || pet.name}
                                             </p>
-                                            <p className="text-xs text-gray-400 mt-0.5">
+                                            <p className="text-sm text-gray-400 mt-0.5">
                                                 {formatDate(video.createdAt)}
                                             </p>
                                         </div>

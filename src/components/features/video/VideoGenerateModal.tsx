@@ -256,8 +256,8 @@ export default function VideoGenerateModal({
 
     /** Step 1: Photo selection */
     const renderStep1 = () => (
-        <div className="p-5">
-            <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4">
+        <div className="p-6">
+            <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
                 영상으로 만들 사진을 선택해주세요
             </h3>
 
@@ -320,8 +320,8 @@ export default function VideoGenerateModal({
 
     /** Step 2: Template selection */
     const renderStep2 = () => (
-        <div className="p-5">
-            <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4">
+        <div className="p-6">
+            <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
                 어떤 영상을 만들까요?
             </h3>
 
@@ -480,15 +480,15 @@ export default function VideoGenerateModal({
 
     /** Step 3: Confirmation */
     const renderStep3 = () => (
-        <div className="p-5">
-            <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4">
+        <div className="p-6">
+            <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">
                 영상 생성 확인
             </h3>
 
             {/* Selected photo */}
             <div className="flex items-start gap-4 mb-5">
                 {selectedPhotoUrl && (
-                    <div className="w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
+                    <div className="w-28 h-28 flex-shrink-0 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
                         <img
                             src={selectedPhotoUrl}
                             alt="선택된 사진"
@@ -571,20 +571,20 @@ export default function VideoGenerateModal({
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
             onClick={handleOverlayClick}
         >
-            <div className="w-full max-w-lg">
+            <div className="w-full max-w-2xl">
                 <div
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby="video-generate-modal-title"
-                    className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl max-w-lg w-full shadow-lg relative animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto"
+                    className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl max-w-2xl w-full shadow-lg relative animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto"
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* Header */}
-                    <div className="flex items-center justify-between px-5 pt-5 pb-2">
+                    <div className="flex items-center justify-between px-6 pt-5 pb-2">
                         <div className="flex items-center gap-3">
                             <h2
                                 id="video-generate-modal-title"
-                                className="text-base font-bold text-gray-800 dark:text-white"
+                                className="text-lg font-bold text-gray-800 dark:text-white"
                             >
                                 AI 영상 만들기
                             </h2>

@@ -109,9 +109,9 @@ export default function VideoResultModal({
                 if (e.target === e.currentTarget) onClose();
             }}
         >
-            <div className="w-full max-w-lg">
+            <div className="w-full max-w-2xl">
                 <div
-                    className="bg-white dark:bg-gray-800 rounded-2xl max-w-lg w-full shadow-2xl relative animate-in fade-in zoom-in-95 duration-200"
+                    className="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full shadow-2xl relative animate-in fade-in zoom-in-95 duration-200"
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby="video-result-modal-title"
@@ -127,7 +127,7 @@ export default function VideoResultModal({
                     </button>
 
                     {/* 영상 플레이어 */}
-                    <div className="p-4 pb-0">
+                    <div className="p-5 pb-0">
                         <video
                             src={video.videoUrl}
                             controls
@@ -139,10 +139,10 @@ export default function VideoResultModal({
                     </div>
 
                     {/* 정보 섹션 */}
-                    <div className="px-6 pt-4 pb-2">
+                    <div className="px-6 pt-5 pb-2">
                         <h2
                             id="video-result-modal-title"
-                            className="text-lg font-display font-bold text-gray-800 dark:text-white"
+                            className="text-xl font-display font-bold text-gray-800 dark:text-white"
                         >
                             {video.petName
                                 ? `${video.petName}의 특별한 영상`
@@ -160,15 +160,15 @@ export default function VideoResultModal({
                     </div>
 
                     {/* 액션 버튼 */}
-                    <div className="px-6 pt-2 pb-6">
+                    <div className="px-6 pt-3 pb-6">
                         <div className="flex items-stretch gap-3">
                             {/* 저장하기 */}
                             <button
                                 onClick={handleDownload}
-                                className="flex-1 flex flex-col items-center gap-2 py-4 px-3 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                className="flex-1 flex flex-col items-center gap-2 py-5 px-4 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                             >
-                                <Download className="w-6 h-6 text-gray-600 dark:text-gray-300" />
-                                <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                                <Download className="w-7 h-7 text-gray-600 dark:text-gray-300" />
+                                <span className="text-base font-medium text-gray-700 dark:text-gray-200">
                                     저장하기
                                 </span>
                             </button>
@@ -176,10 +176,10 @@ export default function VideoResultModal({
                             {/* 자랑하기 */}
                             <button
                                 onClick={handleShowOff}
-                                className="flex-1 flex flex-col items-center gap-2 py-4 px-3 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                className="flex-1 flex flex-col items-center gap-2 py-5 px-4 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                             >
-                                <Users className="w-6 h-6 text-gray-600 dark:text-gray-300" />
-                                <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                                <Users className="w-7 h-7 text-gray-600 dark:text-gray-300" />
+                                <span className="text-base font-medium text-gray-700 dark:text-gray-200">
                                     자랑하기
                                 </span>
                             </button>
@@ -187,10 +187,10 @@ export default function VideoResultModal({
                             {/* 공유하기 */}
                             <button
                                 onClick={handleShare}
-                                className="flex-1 flex flex-col items-center gap-2 py-4 px-3 rounded-xl bg-sky-50 dark:bg-sky-900/30 hover:bg-sky-100 dark:hover:bg-sky-900/50 transition-colors"
+                                className="flex-1 flex flex-col items-center gap-2 py-5 px-4 rounded-xl bg-sky-50 dark:bg-sky-900/30 hover:bg-sky-100 dark:hover:bg-sky-900/50 transition-colors"
                             >
-                                <Share2 className="w-6 h-6 text-memento-500" />
-                                <span className="text-sm font-medium text-memento-500">
+                                <Share2 className="w-7 h-7 text-memento-500" />
+                                <span className="text-base font-medium text-memento-500">
                                     공유하기
                                 </span>
                             </button>
