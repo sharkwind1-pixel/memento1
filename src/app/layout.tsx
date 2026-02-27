@@ -110,10 +110,11 @@ export default function RootLayout({
                 </AuthProvider>
                 <Toaster
                     position="top-center"
+                    duration={5000}
                     toastOptions={{
-                        className: 'shadow-lg !bg-white dark:!bg-gray-800 !border-gray-200 dark:!border-gray-700 !text-gray-800 dark:!text-gray-100',
+                        className: 'shadow-2xl !bg-white dark:!bg-gray-800 !border-2 !border-gray-200 dark:!border-gray-700 !text-gray-800 dark:!text-gray-100 !text-base !font-medium !py-4 !px-5',
                         style: {
-                            borderRadius: '12px',
+                            borderRadius: '14px',
                         },
                     }}
                     richColors
