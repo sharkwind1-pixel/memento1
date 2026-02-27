@@ -56,7 +56,7 @@ export default function MinimiCollection({ onMinimiClick }: MinimiCollectionProp
         return (
             <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border-0 shadow-lg p-4">
                 <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-6 h-6 text-[#05B2DC] animate-spin" />
+                    <Loader2 className="w-6 h-6 text-memento-600 animate-spin" />
                 </div>
             </div>
         );

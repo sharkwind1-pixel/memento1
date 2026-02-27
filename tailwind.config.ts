@@ -6,6 +6,8 @@ const config: Config = {
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/constants/**/*.{js,ts}",
+    "./src/data/**/*.{js,ts}",
   ],
   theme: {
   	extend: {
@@ -32,6 +34,19 @@ const config: Config = {
   			wiggle: 'wiggle 2s ease-in-out infinite',
   		},
   		colors: {
+  			// 메멘토 브랜드 색상
+  			memento: {
+  				50:  '#F0F9FF',  // 페이지 배경 시작
+  				75:  '#FAFCFF',  // 페이지 배경 중간
+  				100: '#E0F7FF',  // Surface (카드, 호버, 배지)
+  				200: '#BAE6FD',  // Light Surface
+  				300: '#7DD3FC',  // Border Accent
+  				400: '#38BDF8',  // Primary Light (그라데이션, dark 텍스트)
+  				500: '#05B2DC',  // Primary (CTA 배경, 아이콘)
+  				600: '#0891B2',  // Hover + 텍스트 (AA 5.9:1)
+  				700: '#0369A1',  // Dark Text (AAA 7.1:1)
+  			},
+  			// shadcn/ui 색상
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {

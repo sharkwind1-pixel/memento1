@@ -86,7 +86,7 @@ export default function AIChatHeader({
                         className={`p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-all duration-500 active:scale-95 ${
                             isMemorialMode
                                 ? "hover:bg-amber-200/50 text-amber-600"
-                                : "hover:bg-[#E0F7FF] text-[#05B2DC]"
+                                : "hover:bg-memento-100 text-memento-600"
                         }`}
                         title="새 대화 시작"
                         aria-label="새 대화 시작"
@@ -99,7 +99,7 @@ export default function AIChatHeader({
                             className={`p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-all duration-500 active:scale-95 ${
                                 isMemorialMode
                                     ? "hover:bg-amber-200/50 text-amber-600"
-                                    : "hover:bg-[#E0F7FF] text-[#05B2DC]"
+                                    : "hover:bg-memento-100 text-memento-600"
                             }`}
                             title="대화 내보내기"
                             aria-label="대화 내보내기"
@@ -121,7 +121,7 @@ export default function AIChatHeader({
                         {/* 일상 모드 펫 */}
                         {activePets.length > 0 && (
                             <SelectGroup>
-                                <SelectLabel className="flex items-center gap-2 text-[#05B2DC]">
+                                <SelectLabel className="flex items-center gap-2 text-memento-600">
                                     <Heart className="w-3 h-3" />
                                     일상 모드
                                 </SelectLabel>

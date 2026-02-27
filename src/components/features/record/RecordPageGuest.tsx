@@ -18,7 +18,7 @@ export default function RecordPageGuest() {
 
     return (
         <div className="min-h-screen relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900" />
+            <div className="absolute inset-0 bg-gradient-to-b from-memento-50 via-memento-75 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900" />
             <div className="relative z-10 flex flex-col items-center justify-center min-h-[60vh] px-4 max-w-md mx-auto">
                 {/* 아이콘 */}
                 <div className="w-24 h-24 rounded-full bg-gradient-to-br from-violet-100 to-amber-100 flex items-center justify-center mb-6 shadow-lg">

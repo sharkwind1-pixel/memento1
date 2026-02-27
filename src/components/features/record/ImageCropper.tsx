@@ -235,7 +235,7 @@ export default function ImageCropper({
 
                 <div
                     ref={containerRef}
-                    className="relative w-full aspect-square rounded-xl overflow-hidden cursor-move border-4 border-[#05B2DC]"
+                    className="relative w-full aspect-square rounded-xl overflow-hidden cursor-move border-4 border-memento-500"
                     onMouseDown={handleMouseDown}
                     onTouchStart={handleTouchStart}
                 >
@@ -305,7 +305,7 @@ export default function ImageCropper({
                     </Button>
                     <Button
                         onClick={() => onSave(position)}
-                        className="flex-1 bg-[#05B2DC] hover:bg-[#0891B2]"
+                        className="flex-1 bg-memento-500 hover:bg-memento-600"
                     >
                         <Check className="w-4 h-4 mr-2" />
                         적용

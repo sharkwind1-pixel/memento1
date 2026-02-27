@@ -32,7 +32,7 @@ export default function PawLoading({
                 {[0, 1, 2].map((i) => (
                     <PawPrint
                         key={i}
-                        className={`${sizes[size]} text-[#05B2DC] animate-bounce`}
+                        className={`${sizes[size]} text-memento-600 animate-bounce`}
                         style={{
                             animationDelay: `${i * 0.15}s`,
                             animationDuration: "0.5s",

@@ -74,8 +74,8 @@ export const NOTICE_LIST = [
 /** 배지 스타일 (게시판별) */
 export const BADGE_STYLES = {
     free: {
-        자랑: "bg-[#BAE6FD] text-[#0369A1] dark:bg-blue-900/50 dark:text-blue-300",
-        일상: "bg-[#E0F7FF] text-sky-700 dark:bg-sky-900/50 dark:text-sky-300",
+        자랑: "bg-memento-200 text-memento-700 dark:bg-blue-900/50 dark:text-blue-300",
+        일상: "bg-memento-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300",
         질문: "bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300",
         default: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
     },
@@ -96,7 +96,7 @@ export const BADGE_STYLES = {
     healing: {
         위로: "bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300",
         추억: "bg-pink-100 text-pink-700 dark:bg-pink-900/50 dark:text-pink-300",
-        정보: "bg-[#BAE6FD] text-[#0369A1] dark:bg-blue-900/50 dark:text-blue-300",
+        정보: "bg-memento-200 text-memento-700 dark:bg-blue-900/50 dark:text-blue-300",
         고민: "bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300",
         default: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
     },

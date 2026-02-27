@@ -61,7 +61,7 @@ export default function ProfileTab({
             <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
                 <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
-                        <User className="w-5 h-5 text-[#05B2DC]" />
+                        <User className="w-5 h-5 text-memento-600" />
                         프로필 정보
                     </CardTitle>
                 </CardHeader>
@@ -100,7 +100,7 @@ export default function ProfileTab({
                                     size="sm"
                                     onClick={onSaveNickname}
                                     disabled={isSavingProfile}
-                                    className="bg-[#05B2DC] hover:bg-[#0891B2]"
+                                    className="bg-memento-500 hover:bg-memento-600"
                                 >
                                     {isSavingProfile ? "저장 중..." : "저장"}
                                 </Button>
@@ -161,8 +161,8 @@ export default function ProfileTab({
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-3 gap-4">
-                        <div className="text-center p-4 bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD] rounded-xl">
-                            <p className="text-2xl font-bold text-[#05B2DC]">{pets.length}</p>
+                        <div className="text-center p-4 bg-gradient-to-br from-memento-100 to-memento-200 rounded-xl">
+                            <p className="text-2xl font-bold text-memento-600">{pets.length}</p>
                             <p className="text-sm text-gray-600">반려동물</p>
                         </div>
                         <div className="text-center p-4 bg-gradient-to-br from-pink-50 to-pink-100 rounded-xl">

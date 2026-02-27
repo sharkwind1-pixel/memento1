@@ -83,8 +83,8 @@ interface PostDetailViewProps {
 // 배지 색상
 const getBadgeStyle = (badge: string) => {
     const styles: Record<string, string> = {
-        "자랑": "bg-[#BAE6FD] text-[#0369A1]",
-        "일상": "bg-[#E0F7FF] text-sky-700",
+        "자랑": "bg-memento-200 text-memento-700",
+        "일상": "bg-memento-100 text-sky-700",
         "질문": "bg-amber-100 text-amber-700",
         "꿀팁": "bg-emerald-100 text-emerald-700",
         "위로": "bg-violet-100 text-violet-700",
@@ -374,7 +374,7 @@ export default function PostDetailView({
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={() => post.user_id && setVisitUserId(post.user_id)}
-                                className="font-medium text-gray-700 dark:text-gray-300 hover:text-[#05B2DC] dark:hover:text-[#38BDF8] hover:underline transition-colors"
+                                className="font-medium text-gray-700 dark:text-gray-300 hover:text-memento-600 dark:hover:text-memento-400 hover:underline transition-colors"
                             >
                                 {post.author_name}
                             </button>
@@ -483,7 +483,7 @@ export default function PostDetailView({
                                                 const uid = comment.userId || comment.user_id;
                                                 if (uid) setVisitUserId(uid);
                                             }}
-                                            className="font-medium text-sm text-gray-800 dark:text-gray-200 hover:text-[#05B2DC] dark:hover:text-[#38BDF8] hover:underline transition-colors"
+                                            className="font-medium text-sm text-gray-800 dark:text-gray-200 hover:text-memento-600 dark:hover:text-memento-400 hover:underline transition-colors"
                                         >
                                             {comment.authorNickname}
                                         </button>

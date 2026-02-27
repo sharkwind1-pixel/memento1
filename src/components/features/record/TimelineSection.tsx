@@ -130,7 +130,7 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
             <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm mt-6">
                 <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
-                        <BookOpen className="w-5 h-5 text-[#05B2DC]" />
+                        <BookOpen className="w-5 h-5 text-memento-600" />
                         타임라인 일기
                     </CardTitle>
                 </CardHeader>
@@ -149,7 +149,7 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
             <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm mt-6">
                 <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="text-lg flex items-center gap-2">
-                        <BookOpen className="w-5 h-5 text-[#05B2DC]" />
+                        <BookOpen className="w-5 h-5 text-memento-600" />
                         타임라인 일기
                         <span className="text-sm font-normal text-gray-500">
                             {timeline.length}개
@@ -158,7 +158,7 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                     <Button
                         size="sm"
                         onClick={openAddModal}
-                        className="bg-[#05B2DC] hover:bg-[#0891B2]"
+                        className="bg-memento-500 hover:bg-memento-600"
                     >
                         <Plus className="w-4 h-4 mr-1" />
                         일기 쓰기
@@ -167,8 +167,8 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                 <CardContent>
                     {timeline.length === 0 ? (
                         <div className="text-center py-10">
-                            <div className="w-16 h-16 rounded-full bg-[#E0F7FF] flex items-center justify-center mx-auto mb-4">
-                                <BookOpen className="w-8 h-8 text-[#05B2DC]" />
+                            <div className="w-16 h-16 rounded-full bg-memento-100 flex items-center justify-center mx-auto mb-4">
+                                <BookOpen className="w-8 h-8 text-memento-600" />
                             </div>
                             <h3 className="font-medium text-gray-700 mb-2">
                                 아직 기록된 일기가 없어요
@@ -179,7 +179,7 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                             <Button
                                 onClick={openAddModal}
                                 variant="outline"
-                                className="border-[#05B2DC] text-[#05B2DC] hover:bg-[#E0F7FF]"
+                                className="border-memento-500 text-memento-600 hover:bg-memento-100"
                             >
                                 <Pencil className="w-4 h-4 mr-2" />
                                 첫 일기 쓰기
@@ -191,10 +191,10 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                                 return (
                                     <div
                                         key={entry.id}
-                                        className="relative pl-6 pb-4 border-l-2 border-[#05B2DC]/30 last:pb-0"
+                                        className="relative pl-6 pb-4 border-l-2 border-memento-500/30 last:pb-0"
                                     >
                                         {/* 타임라인 dot */}
-                                        <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-[#05B2DC] border-2 border-white" />
+                                        <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-memento-500 border-2 border-white" />
 
                                         <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 group">
                                             <div className="flex items-start justify-between mb-2">
@@ -206,7 +206,7 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                                                 <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                                     <button
                                                         onClick={() => openEditModal(entry)}
-                                                        className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-[#05B2DC] hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                                        className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-memento-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                                                         aria-label="일기 수정"
                                                     >
                                                         <Pencil className="w-5 h-5" />
@@ -243,7 +243,7 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                     <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-md w-full" role="dialog" aria-modal="true" aria-labelledby="timeline-modal-title">
                         <div className="flex items-center justify-between mb-4">
                             <h3 id="timeline-modal-title" className="text-lg font-semibold flex items-center gap-2">
-                                <BookOpen className="w-5 h-5 text-[#05B2DC]" />
+                                <BookOpen className="w-5 h-5 text-memento-600" />
                                 {editingEntryId ? "일기 수정" : `${petName}의 일기`}
                             </h3>
                             <Button
@@ -306,7 +306,7 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                             </Button>
                             <Button
                                 onClick={handleSave}
-                                className="flex-1 bg-[#05B2DC] hover:bg-[#0891B2]"
+                                className="flex-1 bg-memento-500 hover:bg-memento-600"
                             >
                                 <Check className="w-4 h-4 mr-2" />
                                 {editingEntryId ? "수정" : "저장"}

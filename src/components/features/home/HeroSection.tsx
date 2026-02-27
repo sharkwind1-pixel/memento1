@@ -41,7 +41,7 @@ export default function HeroSection({ setSelectedTab }: HeroSectionProps) {
                         <Button
                             size="lg"
                             onClick={() => setSelectedTab(HERO_CONTENT.ctaTab)}
-                            className="w-full sm:w-auto bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-sky-600 text-white border-0 rounded-xl px-8 py-3 min-h-[48px] shadow-lg hover:scale-105 active:scale-95 transition-all"
+                            className="w-full sm:w-auto bg-gradient-to-r from-memento-500 to-memento-400 hover:from-memento-600 hover:to-sky-600 text-white border-0 rounded-xl px-8 py-3 min-h-[48px] shadow-lg hover:scale-105 active:scale-95 transition-all"
                         >
                             {HERO_CONTENT.ctaLabel}
                         </Button>
@@ -49,7 +49,7 @@ export default function HeroSection({ setSelectedTab }: HeroSectionProps) {
                             size="lg"
                             variant="outline"
                             onClick={() => setSelectedTab("community")}
-                            className="w-full sm:w-auto bg-white/50 dark:bg-gray-700/50 border-[#7DD3FC] dark:border-[#0891B2] text-[#0369A1] dark:text-blue-300 hover:bg-[#E0F7FF] dark:hover:bg-gray-600 rounded-xl px-8 py-3 min-h-[48px] active:scale-95 transition-all"
+                            className="w-full sm:w-auto bg-white/50 dark:bg-gray-700/50 border-memento-300 dark:border-memento-600 text-memento-700 dark:text-blue-300 hover:bg-memento-100 dark:hover:bg-gray-600 rounded-xl px-8 py-3 min-h-[48px] active:scale-95 transition-all"
                         >
                             서비스 둘러보기
                             <ArrowRight className="w-5 h-5 ml-2" />

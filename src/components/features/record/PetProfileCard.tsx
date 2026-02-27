@@ -66,8 +66,8 @@ export default function PetProfileCard({
                                     }}
                                 />
                             ) : (
-                                <div className="w-full h-full bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD] flex items-center justify-center">
-                                    <PawPrint className="w-10 h-10 text-[#05B2DC]" />
+                                <div className="w-full h-full bg-gradient-to-br from-memento-100 to-memento-200 flex items-center justify-center">
+                                    <PawPrint className="w-10 h-10 text-memento-600" />
                                 </div>
                             )}
                         </div>

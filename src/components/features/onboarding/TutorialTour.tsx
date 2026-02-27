@@ -20,6 +20,7 @@ import { createPortal } from "react-dom";
 import { Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { TutorialStep } from "@/types";
+import { MEMENTO_COLORS } from "@/config/colors";
 
 interface TutorialTourProps {
     isOpen: boolean;
@@ -422,7 +423,7 @@ export default function TutorialTour({
                             0 0 0 3px rgba(56,189,248,0.6),
                             0 0 20px 4px rgba(56,189,248,0.4),
                             0 0 40px 8px rgba(5,178,220,0.2)
-                        `,
+                        `, /* memento-400, memento-500 */
                         pointerEvents: "none",
                     }}
                 />
@@ -587,7 +588,7 @@ export default function TutorialTour({
                                     style={{
                                         width: 16,
                                         height: 16,
-                                        color: "#05B2DC",
+                                        color: MEMENTO_COLORS[500],
                                     }}
                                 />
                             </div>
@@ -635,9 +636,9 @@ export default function TutorialTour({
                                         borderRadius: "50%",
                                         background:
                                             i === currentStep
-                                                ? "linear-gradient(135deg, #05B2DC, #38BDF8)"
+                                                ? `linear-gradient(135deg, ${MEMENTO_COLORS[500]}, ${MEMENTO_COLORS[400]})`
                                                 : i < currentStep
-                                                  ? "rgba(5,178,220,0.4)"
+                                                  ? "rgba(5,178,220,0.4)" /* memento-500 */
                                                   : "#e5e7eb",
                                         transition: "all 0.3s",
                                     }}
@@ -649,7 +650,7 @@ export default function TutorialTour({
                         <p
                             style={{
                                 fontSize: 12,
-                                color: "rgba(5,178,220,0.8)",
+                                color: "rgba(5,178,220,0.8)", /* memento-500 */
                                 fontWeight: 500,
                             }}
                         >

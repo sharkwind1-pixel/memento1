@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export default function NotFound() {
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#F0F9FF] via-[#FAFCFF] to-white p-4">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-memento-50 via-memento-75 to-white p-4">
             <div className="max-w-md w-full text-center">
                 <div className="text-7xl font-bold text-sky-200 mb-4">404</div>
                 <h2 className="text-xl font-bold text-gray-800 mb-2">

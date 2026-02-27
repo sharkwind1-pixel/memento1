@@ -181,7 +181,7 @@ export default function CommunityPostList({
                                         e.stopPropagation();
                                         if (post.userId) onVisitUser(post.userId);
                                     }}
-                                    className="text-sm text-gray-500 dark:text-gray-400 hover:text-[#05B2DC] dark:hover:text-[#38BDF8] hover:underline transition-colors"
+                                    className="text-sm text-gray-500 dark:text-gray-400 hover:text-memento-600 dark:hover:text-memento-400 hover:underline transition-colors"
                                 >
                                     {post.authorName}
                                 </button>

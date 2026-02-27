@@ -240,10 +240,10 @@ label {
     animation: slideUp 0.3s ease-out forwards;
 }
 
-/* Textarea focus glow for daily mode */
+/* Textarea focus glow for daily mode — memento-500 */
 .textarea-glow-sky:focus-within {
     box-shadow: 0 0 0 2px rgba(5, 178, 220, 0.2), 0 0 12px rgba(5, 178, 220, 0.1);
-    border-color: #05B2DC;
+    border-color: #05B2DC; /* memento-500 */
 }
 
 /* Textarea focus glow for memorial mode */
@@ -558,7 +558,7 @@ body {
     }
     /* 접근성: 키보드 포커스 링 */
     *:focus-visible {
-        outline: 2px solid #05B2DC;
+        outline: 2px solid #05B2DC; /* memento-500 */
         outline-offset: 2px;
         border-radius: 4px;
     }

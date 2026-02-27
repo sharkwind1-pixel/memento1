@@ -22,7 +22,7 @@ export default function Error({
     }, [error]);
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#F0F9FF] via-[#FAFCFF] to-white p-4">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-memento-50 via-memento-75 to-white p-4">
             <div className="max-w-md w-full bg-white/80 backdrop-blur-sm rounded-3xl border border-white/50 shadow-xl p-8 text-center">
                 <div className="w-16 h-16 bg-sky-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                     <svg

@@ -90,7 +90,7 @@ export default function PostModal({
                 {/* 헤더 - sticky */}
                 <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-t-2xl">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] rounded-full flex items-center justify-center">
+                        <div className="w-10 h-10 bg-gradient-to-r from-memento-500 to-memento-400 rounded-full flex items-center justify-center">
                             <span className="text-white font-bold text-sm">
                                 {post.author.charAt(0)}
                             </span>
@@ -130,9 +130,9 @@ export default function PostModal({
                         {/* 배지 */}
                         <Badge
                             className={`
-                                ${post.badge === "인기" ? "bg-[#BAE6FD] text-[#0369A1] dark:bg-blue-900/50 dark:text-blue-300" : ""}
+                                ${post.badge === "인기" ? "bg-memento-200 text-memento-700 dark:bg-blue-900/50 dark:text-blue-300" : ""}
                                 ${post.badge === "꿀팁" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300" : ""}
-                                ${post.badge === "후기" ? "bg-[#E0F7FF] text-[#0369A1] dark:bg-sky-900/50 dark:text-sky-300" : ""}
+                                ${post.badge === "후기" ? "bg-memento-100 text-memento-700 dark:bg-sky-900/50 dark:text-sky-300" : ""}
                                 rounded-lg
                             `}
                         >
@@ -156,7 +156,7 @@ export default function PostModal({
                         </div>
 
                         {/* 이미지 플레이스홀더 */}
-                        <div className="aspect-video bg-gradient-to-br from-[#BAE6FD] to-[#E0F7FF] dark:from-blue-900/30 dark:to-sky-900/30 rounded-xl flex items-center justify-center">
+                        <div className="aspect-video bg-gradient-to-br from-memento-200 to-memento-100 dark:from-blue-900/30 dark:to-sky-900/30 rounded-xl flex items-center justify-center">
                             <div className="text-center text-gray-500 dark:text-gray-400">
                                 <MessageCircle className="w-12 h-12 mx-auto mb-2 opacity-50" />
                                 <p className="text-sm">커뮤니티 게시글</p>
@@ -229,7 +229,7 @@ export default function PostModal({
 
                 {/* 댓글 입력 (sticky bottom) */}
                 <div className="sticky bottom-0 z-10 flex items-center gap-3 px-4 py-3 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-b-2xl">
-                    <div className="w-8 h-8 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] rounded-full flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 h-8 bg-gradient-to-r from-memento-500 to-memento-400 rounded-full flex items-center justify-center flex-shrink-0">
                         <span className="text-white font-bold text-xs">나</span>
                     </div>
                     <input
@@ -244,8 +244,8 @@ export default function PostModal({
                         onClick={handleSubmitComment}
                         className={`font-semibold transition-colors ${
                             comment.trim()
-                                ? "text-[#05B2DC] hover:text-[#0891B2]"
-                                : "text-[#BAE6FD] cursor-not-allowed"
+                                ? "text-memento-600 hover:text-memento-600"
+                                : "text-memento-200 cursor-not-allowed"
                         }`}
                         disabled={!comment.trim()}
                     >

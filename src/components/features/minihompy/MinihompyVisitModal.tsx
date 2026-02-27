@@ -214,7 +214,7 @@ export default function MinihompyVisitModal({
                 <div className="flex-1 overflow-y-auto">
                     {loading ? (
                         <div className="flex items-center justify-center py-20">
-                            <Loader2 className="w-8 h-8 text-[#05B2DC] animate-spin" />
+                            <Loader2 className="w-8 h-8 text-memento-600 animate-spin" />
                         </div>
                     ) : error ? (
                         <div className="text-center py-20 text-gray-400">

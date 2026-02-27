@@ -58,7 +58,7 @@ export default function CommunitySection({
         <section className="space-y-6 px-4" data-tutorial-id="home-trending">
             <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center space-x-3 min-w-0">
-                    <div className="w-10 h-10 flex-shrink-0 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] rounded-xl flex items-center justify-center">
+                    <div className="w-10 h-10 flex-shrink-0 bg-gradient-to-r from-memento-500 to-memento-400 rounded-xl flex items-center justify-center">
                         <TrendingUp className="w-5 h-5 text-white" />
                     </div>
                     <div className="min-w-0">
@@ -73,7 +73,7 @@ export default function CommunitySection({
                 <Button
                     variant="ghost"
                     onClick={() => setSelectedTab("community")}
-                    className="text-[#0891B2] dark:text-[#38BDF8] hover:bg-[#E0F7FF] dark:hover:bg-gray-700 rounded-xl flex-shrink-0 px-2 sm:px-4 min-h-[44px] active:scale-95 transition-transform"
+                    className="text-memento-600 dark:text-memento-400 hover:bg-memento-100 dark:hover:bg-gray-700 rounded-xl flex-shrink-0 px-2 sm:px-4 min-h-[44px] active:scale-95 transition-transform"
                 >
                     <span className="hidden sm:inline">더 많은 이야기</span>
                     <span className="sm:hidden">더보기</span>
@@ -140,7 +140,7 @@ export default function CommunitySection({
                             </div>
 
                             <CardContent className="p-4 bg-white dark:bg-gray-800">
-                                <h3 className="font-bold text-gray-800 dark:text-white text-base mb-1 line-clamp-2 group-hover:text-[#05B2DC] transition-colors">
+                                <h3 className="font-bold text-gray-800 dark:text-white text-base mb-1 line-clamp-2 group-hover:text-memento-600 transition-colors">
                                     {post.title}
                                 </h3>
                                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-1.5 min-w-0">
@@ -168,7 +168,7 @@ export default function CommunitySection({
                                             {totalComments}
                                         </span>
                                     </div>
-                                    <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-[#05B2DC] group-hover:translate-x-1 transition-all" />
+                                    <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-memento-600 group-hover:translate-x-1 transition-all" />
                                 </div>
                             </CardContent>
                         </Card>

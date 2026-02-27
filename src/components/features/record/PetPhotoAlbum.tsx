@@ -152,7 +152,7 @@ export default function PetPhotoAlbum({
                             <Button
                                 onClick={onUploadClick}
                                 size="sm"
-                                className="bg-[#05B2DC] hover:bg-[#0891B2]"
+                                className="bg-memento-500 hover:bg-memento-600"
                                 data-tutorial-id="add-photo-button"
                             >
                                 <Plus className="w-4 h-4 mr-1" />
@@ -165,8 +165,8 @@ export default function PetPhotoAlbum({
             <CardContent>
                 {selectedPet.photos.length === 0 ? (
                     <div className="text-center py-12">
-                        <div className="w-16 h-16 rounded-full bg-[#E0F7FF] dark:bg-[#05B2DC]/20 flex items-center justify-center mx-auto mb-4">
-                            <Camera className="w-8 h-8 text-[#05B2DC]" />
+                        <div className="w-16 h-16 rounded-full bg-memento-100 dark:bg-memento-500/20 flex items-center justify-center mx-auto mb-4">
+                            <Camera className="w-8 h-8 text-memento-600" />
                         </div>
                         <h3 className="font-medium text-gray-700 dark:text-gray-200 mb-2">
                             아직 등록된 사진이 없어요
@@ -177,7 +177,7 @@ export default function PetPhotoAlbum({
                         <Button
                             onClick={onUploadClick}
                             variant="outline"
-                            className="border-[#05B2DC] text-[#05B2DC] hover:bg-[#E0F7FF]"
+                            className="border-memento-500 text-memento-600 hover:bg-memento-100"
                         >
                             <Plus className="w-4 h-4 mr-2" />
                             첫 사진 추가하기
@@ -195,7 +195,7 @@ export default function PetPhotoAlbum({
                                         onPhotoClick(photo);
                                     }
                                 }}
-                                className={`aspect-square rounded-xl overflow-hidden cursor-pointer transition-all relative group ${isSelectMode && selectedPhotos.includes(photo.id) ? "ring-4 ring-[#05B2DC]" : "hover:opacity-90"}`}
+                                className={`aspect-square rounded-xl overflow-hidden cursor-pointer transition-all relative group ${isSelectMode && selectedPhotos.includes(photo.id) ? "ring-4 ring-memento-500" : "hover:opacity-90"}`}
                             >
                                 {photo.type === "video" ? (
                                     <>
@@ -224,7 +224,7 @@ export default function PetPhotoAlbum({
                                 )}
                                 {isSelectMode && (
                                     <div
-                                        className={`absolute top-2 left-2 w-7 h-7 rounded-full border-2 flex items-center justify-center ${selectedPhotos.includes(photo.id) ? "bg-[#05B2DC] border-[#05B2DC]" : "bg-white/80 border-gray-300"}`}
+                                        className={`absolute top-2 left-2 w-7 h-7 rounded-full border-2 flex items-center justify-center ${selectedPhotos.includes(photo.id) ? "bg-memento-500 border-memento-500" : "bg-white/80 border-gray-300"}`}
                                     >
                                         {selectedPhotos.includes(photo.id) && (
                                             <Check className="w-4 h-4 text-white" />
@@ -267,11 +267,11 @@ export default function PetPhotoAlbum({
                                     if (isSelectMode) togglePhotoSelect(photo.id);
                                     else onPhotoClick(photo);
                                 }}
-                                className={`flex gap-4 p-3 rounded-xl cursor-pointer transition-colors group ${isSelectMode && selectedPhotos.includes(photo.id) ? "bg-[#E0F7FF] ring-2 ring-[#05B2DC]" : "bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100"}`}
+                                className={`flex gap-4 p-3 rounded-xl cursor-pointer transition-colors group ${isSelectMode && selectedPhotos.includes(photo.id) ? "bg-memento-100 ring-2 ring-memento-500" : "bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100"}`}
                             >
                                 {isSelectMode && (
                                     <div
-                                        className={`self-center w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${selectedPhotos.includes(photo.id) ? "bg-[#05B2DC] border-[#05B2DC]" : "bg-white border-gray-300"}`}
+                                        className={`self-center w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${selectedPhotos.includes(photo.id) ? "bg-memento-500 border-memento-500" : "bg-white border-gray-300"}`}
                                     >
                                         {selectedPhotos.includes(photo.id) && (
                                             <Check className="w-4 h-4 text-white" />

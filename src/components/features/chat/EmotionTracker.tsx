@@ -14,6 +14,8 @@
  * ============================================================================
  */
 
+import { MEMENTO_COLORS } from "@/config/colors";
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -181,12 +183,12 @@ function EmotionLineChart({
                     <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
                         <stop
                             offset="0%"
-                            stopColor={isMemorialMode ? "#F59E0B" : "#05B2DC"}
+                            stopColor={isMemorialMode ? "#F59E0B" : MEMENTO_COLORS[500]}
                             stopOpacity="0.3"
                         />
                         <stop
                             offset="100%"
-                            stopColor={isMemorialMode ? "#F59E0B" : "#05B2DC"}
+                            stopColor={isMemorialMode ? "#F59E0B" : MEMENTO_COLORS[500]}
                             stopOpacity="0.02"
                         />
                     </linearGradient>
@@ -226,7 +228,7 @@ function EmotionLineChart({
                 <polyline
                     points={polylinePoints}
                     fill="none"
-                    stroke={isMemorialMode ? "#F59E0B" : "#05B2DC"}
+                    stroke={isMemorialMode ? "#F59E0B" : MEMENTO_COLORS[500]}
                     strokeWidth="2.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"

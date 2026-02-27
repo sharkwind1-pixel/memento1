@@ -189,7 +189,7 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
             className={`min-h-screen flex flex-col relative transition-all duration-700 ease-in-out ${
                 chat.isMemorialMode
                     ? "bg-gradient-to-b from-amber-50 via-orange-50 to-yellow-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-950"
-                    : "bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
+                    : "bg-gradient-to-b from-memento-50 via-memento-75 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
             }`}
         >
             {/* 상단 DomeGallery - 데스크톱 전용 3D 사진 갤러리 (모바일에서는 공간 확보를 위해 숨김) */}
@@ -220,7 +220,7 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                         className={`absolute bottom-0 left-0 right-0 h-12 pointer-events-none transition-all duration-700 ease-in-out ${
                             chat.isMemorialMode
                                 ? "bg-gradient-to-t from-amber-50 to-transparent"
-                                : "bg-gradient-to-t from-[#F0F9FF] to-transparent"
+                                : "bg-gradient-to-t from-memento-50 to-transparent"
                         }`}
                     />
                 </div>

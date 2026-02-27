@@ -249,10 +249,10 @@ function RemindersPage() {
     if (!user) {
         return (
             <div className="min-h-screen relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white" />
+                <div className="absolute inset-0 bg-gradient-to-b from-memento-50 via-memento-75 to-white" />
                 <div className="relative z-10 flex flex-col items-center justify-center min-h-[60vh] px-4">
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD] flex items-center justify-center mb-6">
-                        <LogIn className="w-12 h-12 text-[#05B2DC]" />
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-memento-100 to-memento-200 flex items-center justify-center mb-6">
+                        <LogIn className="w-12 h-12 text-memento-600" />
                     </div>
                     <h2 className="text-2xl font-bold text-gray-800 mb-2">
                         로그인이 필요해요
@@ -262,7 +262,7 @@ function RemindersPage() {
                     </p>
                     <Button
                         onClick={() => window.dispatchEvent(new CustomEvent("openAuthModal"))}
-                        className="bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-[#05B2DC] text-white px-8"
+                        className="bg-gradient-to-r from-memento-500 to-memento-400 hover:from-memento-600 hover:to-memento-500 text-white px-8"
                     >
                         <LogIn className="w-4 h-4 mr-2" />
                         로그인하기
@@ -273,19 +273,19 @@ function RemindersPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-[#F0F9FF] via-[#FAFCFF] to-white">
+        <div className="min-h-screen bg-gradient-to-b from-memento-50 via-memento-75 to-white">
             {/* 헤더 */}
             <div className="bg-white/80 backdrop-blur-lg border-b border-gray-200/50 px-4 py-3 sticky top-0 z-10">
                 <div className="max-w-2xl mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <Bell className="w-5 h-5 text-[#05B2DC]" />
+                        <Bell className="w-5 h-5 text-memento-600" />
                         <h1 className="font-semibold text-gray-800">케어 리마인더</h1>
                     </div>
 
                     <Button
                         size="sm"
                         onClick={() => setIsModalOpen(true)}
-                        className="bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-[#05B2DC] text-white"
+                        className="bg-gradient-to-r from-memento-500 to-memento-400 hover:from-memento-600 hover:to-memento-500 text-white"
                     >
                         <Plus className="w-4 h-4 mr-1" />
                         리마인더 추가
@@ -303,7 +303,7 @@ function RemindersPage() {
                     <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="reminder-modal-title">
                         <div className="sticky top-0 bg-white border-b px-4 py-3 flex items-center justify-between rounded-t-2xl">
                             <h2 id="reminder-modal-title" className="font-semibold text-gray-800 flex items-center gap-2">
-                                <Bell className="w-5 h-5 text-[#05B2DC]" />
+                                <Bell className="w-5 h-5 text-memento-600" />
                                 새 리마인더
                             </h2>
                             <button
@@ -478,7 +478,7 @@ function RemindersPage() {
                             <Button
                                 onClick={handleCreateReminder}
                                 disabled={!newReminder.petId || !newReminder.title}
-                                className="w-full bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] hover:from-[#0891B2] hover:to-[#05B2DC] text-white"
+                                className="w-full bg-gradient-to-r from-memento-500 to-memento-400 hover:from-memento-600 hover:to-memento-500 text-white"
                             >
                                 리마인더 추가
                             </Button>
@@ -509,7 +509,7 @@ function RemindersPage() {
                         <Button
                             onClick={() => setIsModalOpen(true)}
                             variant="outline"
-                            className="border-[#05B2DC] text-[#05B2DC] hover:bg-[#E0F7FF]"
+                            className="border-memento-500 text-memento-600 hover:bg-memento-100"
                         >
                             <Plus className="w-4 h-4 mr-1" />
                             첫 리마인더 만들기
@@ -533,7 +533,7 @@ function RemindersPage() {
                                     <div className="flex items-start gap-3">
                                         {/* 아이콘 */}
                                         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                                            reminder.enabled ? "bg-[#E0F7FF]" : "bg-gray-100"
+                                            reminder.enabled ? "bg-memento-100" : "bg-gray-100"
                                         }`}>
                                             <TypeIcon className={`w-5 h-5 ${
                                                 reminder.enabled ? typeInfo.color : "text-gray-400"
@@ -564,7 +564,7 @@ function RemindersPage() {
                                                 onClick={() => handleToggle(reminder.id, reminder.enabled)}
                                                 className={`p-2 rounded-lg transition-colors ${
                                                     reminder.enabled
-                                                        ? "text-[#05B2DC] hover:bg-[#E0F7FF]"
+                                                        ? "text-memento-600 hover:bg-memento-100"
                                                         : "text-gray-400 hover:bg-gray-100"
                                                 }`}
                                                 title={reminder.enabled ? "비활성화" : "활성화"}

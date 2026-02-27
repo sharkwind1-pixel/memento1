@@ -317,7 +317,7 @@ export const getBadgeStyle = (badge: string, subcategory: CommunitySubcategory) 
             case "추억":
                 return "bg-pink-100 text-pink-700 dark:bg-pink-900/50 dark:text-pink-300";
             case "정보":
-                return "bg-[#BAE6FD] text-[#0369A1] dark:bg-blue-900/50 dark:text-blue-300";
+                return "bg-memento-200 text-memento-700 dark:bg-blue-900/50 dark:text-blue-300";
             case "고민":
                 return "bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300";
             default:
@@ -327,9 +327,9 @@ export const getBadgeStyle = (badge: string, subcategory: CommunitySubcategory) 
     if (subcategory === "free") {
         switch (badge) {
             case "자랑":
-                return "bg-[#BAE6FD] text-[#0369A1] dark:bg-blue-900/50 dark:text-blue-300";
+                return "bg-memento-200 text-memento-700 dark:bg-blue-900/50 dark:text-blue-300";
             case "일상":
-                return "bg-[#E0F7FF] text-sky-700 dark:bg-sky-900/50 dark:text-sky-300";
+                return "bg-memento-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300";
             case "질문":
                 return "bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300";
             case "꿀팁":
@@ -405,10 +405,10 @@ export const getCategoryColor = (color: string) => {
             };
         case "blue":
             return {
-                bg: "from-[#05B2DC] to-[#38BDF8]",
-                text: "text-[#0891B2] dark:text-[#38BDF8]",
-                border: "border-[#7DD3FC] dark:border-[#0369A1]",
-                light: "bg-[#E0F7FF] dark:bg-blue-900/30",
+                bg: "from-memento-500 to-memento-400",
+                text: "text-memento-600 dark:text-memento-400",
+                border: "border-memento-300 dark:border-memento-700",
+                light: "bg-memento-100 dark:bg-blue-900/30",
             };
         case "emerald":
             return {

@@ -13,8 +13,8 @@ import { PawPrint, Plus } from "lucide-react";
 export default function AIChatNoPets() {
     return (
         <div className="flex flex-col items-center justify-center px-4 py-20">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#E0F7FF] to-[#BAE6FD] flex items-center justify-center mb-6">
-                <PawPrint className="w-12 h-12 text-[#05B2DC]" />
+            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-memento-100 to-memento-200 flex items-center justify-center mb-6">
+                <PawPrint className="w-12 h-12 text-memento-600" />
             </div>
             <h2 className="text-2xl font-bold text-sky-900 dark:text-white mb-2 text-center">
                 반려동물을 등록해주세요
@@ -29,7 +29,7 @@ export default function AIChatNoPets() {
                 onClick={() => {
                     window.location.href = "/?tab=record";
                 }}
-                className="flex items-center justify-center gap-2 bg-gradient-to-r from-[#05B2DC] to-[#38BDF8] text-white px-8 py-4 rounded-xl font-medium text-base active:scale-95 transition-transform touch-manipulation"
+                className="flex items-center justify-center gap-2 bg-gradient-to-r from-memento-500 to-memento-400 text-white px-8 py-4 rounded-xl font-medium text-base active:scale-95 transition-transform touch-manipulation"
             >
                 <Plus className="w-5 h-5" />
                 반려동물 등록하기
