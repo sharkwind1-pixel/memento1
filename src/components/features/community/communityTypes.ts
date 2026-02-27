@@ -91,6 +91,15 @@ export const POST_TAGS: { id: PostTag; label: string; color: string }[] = [
     { id: "파충류", label: "파충류", color: "green" },
 ];
 
+// 자유게시판 뱃지(게시글 유형) 필터 옵션
+export const FREE_BADGES: { id: string; label: string; color: string }[] = [
+    { id: "일상", label: "일상", color: "sky" },
+    { id: "자랑", label: "함께 보기", color: "blue" },
+    { id: "질문", label: "질문", color: "amber" },
+    { id: "수다", label: "수다", color: "pink" },
+    { id: "꿀팁", label: "꿀팁", color: "emerald" },
+];
+
 // 목업 게시글 데이터 (서브카테고리별)
 export const MOCK_POSTS: Record<CommunitySubcategory, {
     id: number;

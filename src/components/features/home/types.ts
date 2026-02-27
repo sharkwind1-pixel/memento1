@@ -28,3 +28,15 @@ export type Comment = {
     time: string;
     likes: number;
 };
+
+// 자랑하기 게시글 타입 (홈 섹션용)
+export type ShowcasePost = {
+    id: string;
+    title: string;
+    content: string;
+    authorName: string;
+    imageUrls?: string[];
+    likes: number;
+    comments: number;
+    createdAt: string;
+};

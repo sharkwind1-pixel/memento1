@@ -40,6 +40,19 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
         }
         return "all";
     });
+
+    // 뱃지(게시글 유형) 필터 — 홈에서 딥링크 시 sessionStorage, 그 외 localStorage
+    const [selectedBadge, setSelectedBadge] = useState<string>(() => {
+        if (typeof window !== "undefined") {
+            const fromHome = sessionStorage.getItem("memento-community-badge");
+            if (fromHome) {
+                sessionStorage.removeItem("memento-community-badge");
+                return fromHome;
+            }
+            return localStorage.getItem("memento-community-badge") || "all";
+        }
+        return "all";
+    });
     const [searchInput, setSearchInput] = useState<string>("");
     const [searchQuery, setSearchQuery] = useState<string>("");
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -70,6 +83,7 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
 
     // 필터 변경 시 localStorage에 저장
     useEffect(() => { localStorage.setItem("memento-community-tag", selectedTag); }, [selectedTag]);
+    useEffect(() => { localStorage.setItem("memento-community-badge", selectedBadge); }, [selectedBadge]);
     useEffect(() => { localStorage.setItem("memento-community-sort", sortBy); }, [sortBy]);
 
     // 추모 모드 여부 확인
@@ -91,6 +105,7 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
             setInternalSubcategory(subId);
         }
         setSelectedTag("all");
+        setSelectedBadge("all");
     };
 
     // 게시글 불러오기 (초기 로드 또는 추가 로드)
@@ -114,6 +129,9 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
             });
             if (selectedTag !== "all") {
                 params.append("tag", selectedTag);
+            }
+            if (currentSubcategory === "free" && selectedBadge !== "all") {
+                params.append("badge", selectedBadge);
             }
             if (searchQuery) {
                 params.append("search", searchQuery);
@@ -177,7 +195,7 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
             }
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentSubcategory, sortBy, selectedTag, searchQuery]);
+    }, [currentSubcategory, sortBy, selectedTag, selectedBadge, searchQuery]);
 
     // 검색어 debounce (300ms)
     useEffect(() => {
@@ -259,11 +277,13 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
                     currentSubcategory={currentSubcategory}
                     visibleSubcategories={visibleSubcategories}
                     selectedTag={selectedTag}
+                    selectedBadge={selectedBadge}
                     searchInput={searchInput}
                     sortBy={sortBy}
                     currentColor={currentColor}
                     onSubcategoryChange={handleSubcategoryChange}
                     onTagChange={setSelectedTag}
+                    onBadgeChange={setSelectedBadge}
                     onSearchInputChange={setSearchInput}
                     onSearchSubmit={() => {
                         if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);

@@ -6,5 +6,6 @@ export { default as CommunitySection } from "./CommunitySection";
 export { default as AdoptionSection } from "./AdoptionSection";
 export { default as CareGuideSection } from "./CareGuideSection";
 export { default as MemorialSection } from "./MemorialSection";
+export { default as ShowcaseSection } from "./ShowcaseSection";
 export { useHomePage } from "./useHomePage";
-export type { LightboxItem, CommunityPost, Comment } from "./types";
+export type { LightboxItem, CommunityPost, Comment, ShowcasePost } from "./types";

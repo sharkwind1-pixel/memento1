@@ -1,0 +1,161 @@
+/**
+ * ShowcaseSection.tsx
+ * 홈페이지 "함께 보기" 캐러셀 섹션
+ * DB에서 badge="자랑"인 인기 게시글을 이미지 중심 카드로 표시
+ */
+
+"use client";
+
+import React from "react";
+import {
+    Card,
+    CardContent,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+    Heart,
+    MessageCircle,
+    Star,
+    ArrowRight,
+    PawPrint,
+    ImageIcon,
+} from "lucide-react";
+import type { ShowcasePost } from "./types";
+import { TabType } from "@/types";
+
+interface ShowcaseSectionProps {
+    showcasePosts: ShowcasePost[];
+    scrollRef: React.RefObject<HTMLDivElement>;
+    setSelectedTab: (tab: TabType) => void;
+}
+
+export default function ShowcaseSection({
+    showcasePosts,
+    scrollRef,
+    setSelectedTab,
+}: ShowcaseSectionProps) {
+    const gradients = [
+        "from-sky-400 to-blue-300",
+        "from-pink-400 to-rose-300",
+        "from-violet-400 to-purple-300",
+        "from-emerald-400 to-teal-300",
+        "from-amber-400 to-orange-300",
+    ];
+
+    const handleMoreClick = () => {
+        sessionStorage.setItem("memento-community-badge", "자랑");
+        setSelectedTab("community");
+    };
+
+    /** 상대 시간 포맷 */
+    const formatTime = (dateStr: string) => {
+        const diff = Date.now() - new Date(dateStr).getTime();
+        const mins = Math.floor(diff / 60000);
+        if (mins < 1) return "방금 전";
+        if (mins < 60) return `${mins}분 전`;
+        const hours = Math.floor(mins / 60);
+        if (hours < 24) return `${hours}시간 전`;
+        const days = Math.floor(hours / 24);
+        if (days < 7) return `${days}일 전`;
+        return new Date(dateStr).toLocaleDateString("ko-KR", { month: "short", day: "numeric" });
+    };
+
+    return (
+        <section className="space-y-6 px-4">
+            <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center space-x-3 min-w-0">
+                    <div className="w-10 h-10 flex-shrink-0 bg-gradient-to-r from-amber-400 to-yellow-300 rounded-xl flex items-center justify-center">
+                        <Star className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="min-w-0">
+                        <h2 className="text-lg sm:text-xl md:text-2xl font-display font-bold text-gray-800 dark:text-gray-100 leading-tight">
+                            함께 보기
+                        </h2>
+                        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 hidden sm:block">
+                            우리 아이들의 사진과 영상
+                        </p>
+                    </div>
+                </div>
+                <Button
+                    variant="ghost"
+                    onClick={handleMoreClick}
+                    className="text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-gray-700 rounded-xl flex-shrink-0 px-2 sm:px-4 min-h-[44px] active:scale-95 transition-transform"
+                >
+                    <span className="hidden sm:inline">더 많은 이야기</span>
+                    <span className="sm:hidden">더보기</span>
+                    <ArrowRight className="w-4 h-4 ml-1 sm:ml-2" />
+                </Button>
+            </div>
+
+            <div
+                ref={scrollRef}
+                className="flex gap-4 overflow-x-auto pb-4 px-4 -mx-4 scrollbar-hide carousel-touch"
+            >
+                {showcasePosts.map((post, idx) => {
+                    const hasImage = (post.imageUrls?.length ?? 0) > 0;
+                    const firstImage = hasImage ? post.imageUrls![0] : null;
+
+                    return (
+                        <Card
+                            key={post.id}
+                            onClick={handleMoreClick}
+                            className="w-[260px] max-w-[260px] sm:w-72 sm:max-w-72 flex-shrink-0 overflow-hidden rounded-2xl cursor-pointer group border-0 shadow-lg will-change-transform"
+                        >
+                            {/* 이미지 / 그라데이션 헤더 */}
+                            <div className="h-40 relative overflow-hidden">
+                                {firstImage ? (
+                                    <>
+                                        <img
+                                            src={firstImage}
+                                            alt={post.title}
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                            loading="lazy"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                                        {(post.imageUrls?.length ?? 0) > 1 && (
+                                            <div className="absolute top-3 right-3 bg-black/50 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                                                <ImageIcon className="w-3 h-3" />
+                                                {post.imageUrls!.length}
+                                            </div>
+                                        )}
+                                    </>
+                                ) : (
+                                    <div className={`w-full h-full bg-gradient-to-br ${gradients[idx % gradients.length]} flex items-center justify-center`}>
+                                        <PawPrint className="w-16 h-16 text-white/30" />
+                                    </div>
+                                )}
+                                <div className="absolute bottom-3 left-3">
+                                    <span className="bg-amber-400/90 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">
+                                        함께 보기
+                                    </span>
+                                </div>
+                            </div>
+
+                            <CardContent className="p-4 bg-white dark:bg-gray-800">
+                                <h3 className="font-bold text-gray-800 dark:text-white text-base mb-1.5 line-clamp-2 group-hover:text-amber-600 transition-colors">
+                                    {post.title}
+                                </h3>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 truncate">
+                                    {post.authorName}님 · {formatTime(post.createdAt)}
+                                </p>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3 text-sm text-gray-500">
+                                        <span className="flex items-center gap-1">
+                                            <Heart className="w-4 h-4" />
+                                            {post.likes}
+                                        </span>
+                                        <span className="flex items-center gap-1">
+                                            <MessageCircle className="w-4 h-4" />
+                                            {post.comments}
+                                        </span>
+                                    </div>
+                                    <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-amber-500 group-hover:translate-x-1 transition-all" />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    );
+                })}
+            </div>
+        </section>
+    );
+}

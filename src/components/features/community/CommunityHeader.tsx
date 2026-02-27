@@ -23,6 +23,7 @@ import type { CommunitySubcategory, PostTag } from "@/types";
 import {
     SUBCATEGORIES,
     POST_TAGS,
+    FREE_BADGES,
     getTagColor,
     getCategoryColor,
 } from "./communityTypes";
@@ -31,11 +32,13 @@ interface CommunityHeaderProps {
     currentSubcategory: CommunitySubcategory;
     visibleSubcategories: typeof SUBCATEGORIES;
     selectedTag: PostTag | "all";
+    selectedBadge: string;
     searchInput: string;
     sortBy: string;
     currentColor: ReturnType<typeof getCategoryColor>;
     onSubcategoryChange: (subId: CommunitySubcategory) => void;
     onTagChange: (tag: PostTag | "all") => void;
+    onBadgeChange: (badge: string) => void;
     onSearchInputChange: (value: string) => void;
     onSearchSubmit: () => void;
     onSortChange: (sort: string) => void;
@@ -46,11 +49,13 @@ export default function CommunityHeader({
     currentSubcategory,
     visibleSubcategories,
     selectedTag,
+    selectedBadge,
     searchInput,
     sortBy,
     currentColor,
     onSubcategoryChange,
     onTagChange,
+    onBadgeChange,
     onSearchInputChange,
     onSearchSubmit,
     onSortChange,
@@ -117,9 +122,43 @@ export default function CommunityHeader({
                 })}
             </div>
 
+            {/* 뱃지(게시글 유형) 필터 - 자유게시판일 때만 */}
+            {currentSubcategory === "free" && (
+                <div className="flex flex-wrap gap-2 mb-3 p-3 bg-memento-50/50 dark:bg-memento-900/20 rounded-xl border border-memento-200/50 dark:border-memento-700/30">
+                    <span className="text-xs text-gray-500 dark:text-gray-400 w-full mb-1 font-medium">게시글 유형</span>
+                    <button
+                        onClick={() => onBadgeChange("all")}
+                        className={`px-3 py-1.5 min-h-[44px] rounded-full text-sm font-medium transition-all active:scale-95 ${
+                            selectedBadge === "all"
+                                ? "bg-memento-500 text-white shadow-md"
+                                : "bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-memento-100 dark:hover:bg-memento-800/30 border border-memento-200 dark:border-memento-700/50"
+                        }`}
+                    >
+                        전체
+                    </button>
+                    {FREE_BADGES.map((b) => {
+                        const isActive = selectedBadge === b.id;
+                        return (
+                            <button
+                                key={b.id}
+                                onClick={() => onBadgeChange(b.id)}
+                                className={`px-3 py-1.5 min-h-[44px] rounded-full text-sm font-medium transition-all active:scale-95 border ${
+                                    isActive
+                                        ? getTagColor(b.color).replace("border-", "border-transparent bg-").split(" ").slice(0, 2).join(" ") + " text-white shadow-md"
+                                        : getTagColor(b.color)
+                                }`}
+                            >
+                                {b.label}
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
+
             {/* 말머리 필터 - 자유게시판일 때만 */}
             {currentSubcategory === "free" && (
                 <div className="flex flex-wrap gap-2 mb-4 p-3 bg-blue-50/50 dark:bg-blue-900/20 rounded-xl border border-blue-200/50 dark:border-blue-700/30">
+                    <span className="text-xs text-gray-500 dark:text-gray-400 w-full mb-1 font-medium">말머리</span>
                     <button
                         onClick={() => onTagChange("all")}
                         className={`px-3 py-1.5 min-h-[44px] rounded-full text-sm font-medium transition-all active:scale-95 ${

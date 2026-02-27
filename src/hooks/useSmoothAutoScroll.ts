@@ -11,28 +11,29 @@ import { useRef, useEffect, useCallback } from "react";
 
 export function useSmoothAutoScroll() {
     const communityScrollRef = useRef<HTMLDivElement>(null);
+    const showcaseScrollRef = useRef<HTMLDivElement>(null);
     const adoptionScrollRef = useRef<HTMLDivElement>(null);
     const petcareScrollRef = useRef<HTMLDivElement>(null);
     const memorialScrollRef = useRef<HTMLDivElement>(null);
     const animationIdsRef = useRef<number[]>([]);
-    const pausedRef = useRef<boolean[]>([false, false, false, false]);
-    const scrollPosRef = useRef<number[]>([0, 0, 0, 0]);
+    const pausedRef = useRef<boolean[]>([false, false, false, false, false]);
+    const scrollPosRef = useRef<number[]>([0, 0, 0, 0, 0]);
 
     useEffect(() => {
         const SPEED = 0.5;
-        const refs = [communityScrollRef, adoptionScrollRef, petcareScrollRef, memorialScrollRef];
+        const refs = [communityScrollRef, showcaseScrollRef, adoptionScrollRef, petcareScrollRef, memorialScrollRef];
 
         // 드래그 상태
-        const isDragging = [false, false, false, false];
-        const startX = [0, 0, 0, 0];
-        const scrollStart = [0, 0, 0, 0];
+        const isDragging = [false, false, false, false, false];
+        const startX = [0, 0, 0, 0, 0];
+        const scrollStart = [0, 0, 0, 0, 0];
 
         // 터치 이벤트 상태
-        const touchStartX = [0, 0, 0, 0];
-        const touchScrollStart = [0, 0, 0, 0];
-        const lastTouchX = [0, 0, 0, 0];
-        const lastTouchTime = [0, 0, 0, 0];
-        const velocity = [0, 0, 0, 0];
+        const touchStartX = [0, 0, 0, 0, 0];
+        const touchScrollStart = [0, 0, 0, 0, 0];
+        const lastTouchX = [0, 0, 0, 0, 0];
+        const lastTouchTime = [0, 0, 0, 0, 0];
+        const velocity = [0, 0, 0, 0, 0];
 
         // 바인딩된 핸들러 참조 저장 (removeEventListener에서 동일 참조 사용)
         const boundHandlers: Array<{
@@ -149,7 +150,7 @@ export function useSmoothAutoScroll() {
                 pausedRef.current[index] = false;
             }, 2000);
         });
-        const wheelResumeTimers: number[] = [0, 0, 0, 0];
+        const wheelResumeTimers: number[] = [0, 0, 0, 0, 0];
 
         // DOM 렌더링 대기 후 시작
         const startTimer = setTimeout(() => {
@@ -242,6 +243,7 @@ export function useSmoothAutoScroll() {
 
     return {
         communityScrollRef,
+        showcaseScrollRef,
         adoptionScrollRef,
         petcareScrollRef,
         memorialScrollRef,
