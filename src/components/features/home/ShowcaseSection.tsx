@@ -19,6 +19,7 @@ import {
     ArrowRight,
     PawPrint,
     ImageIcon,
+    Play,
 } from "lucide-react";
 import type { ShowcasePost } from "./types";
 import { TabType } from "@/types";
@@ -101,10 +102,33 @@ export default function ShowcaseSection({
                             onClick={handleMoreClick}
                             className="w-[260px] max-w-[260px] sm:w-72 sm:max-w-72 flex-shrink-0 overflow-hidden rounded-2xl cursor-pointer group border-0 shadow-lg will-change-transform"
                         >
-                            {/* 이미지 / 그라데이션 헤더 */}
+                            {/* 영상 / 이미지 / 그라데이션 헤더 */}
                             <div className="h-40 relative overflow-hidden">
-                                {firstImage ? (
+                                {post.videoUrl ? (
                                     <>
+                                        <video
+                                            src={post.videoUrl}
+                                            poster={firstImage || undefined}
+                                            muted
+                                            playsInline
+                                            loop
+                                            className="w-full h-full object-cover"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                                        {/* 재생 아이콘 오버레이 */}
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <div className="w-10 h-10 rounded-full bg-white/80 flex items-center justify-center shadow-lg">
+                                                <Play className="w-5 h-5 text-amber-600 ml-0.5" />
+                                            </div>
+                                        </div>
+                                        {/* AI 영상 뱃지 */}
+                                        <div className="absolute top-3 right-3 bg-amber-500/90 text-white text-xs font-bold px-2 py-1 rounded-full">
+                                            AI 영상
+                                        </div>
+                                    </>
+                                ) : firstImage ? (
+                                    <>
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img
                                             src={firstImage}
                                             alt={post.title}

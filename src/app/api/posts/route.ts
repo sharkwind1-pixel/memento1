@@ -94,6 +94,7 @@ export async function GET(request: NextRequest) {
             views: post.views ?? 0,
             comments: post.post_comments?.[0]?.count || (post.comments ?? post.comments_count ?? 0),
             imageUrls: post.image_urls || [],
+            videoUrl: post.video_url || null,
             isPublic: post.is_public ?? false,
             createdAt: post.created_at,
         }));
@@ -140,7 +141,7 @@ export async function POST(request: NextRequest) {
         const supabase = await createServerSupabase();
         const body = await request.json();
 
-        const { boardType: rawBoardType, subcategory, animalType, tag, badge, title, content, authorName, imageUrls, isPublic } = body;
+        const { boardType: rawBoardType, subcategory, animalType, tag, badge, title, content, authorName, imageUrls, videoUrl, isPublic } = body;
         const boardType = rawBoardType || subcategory || "free";
 
         // 3. 필수 필드 검증
@@ -162,6 +163,11 @@ export async function POST(request: NextRequest) {
             ? imageUrls.filter((url: string) => typeof url === "string" && url.startsWith("http")).slice(0, 5)
             : [];
 
+        // 5.5. 영상 URL 검증 (단일 URL, "자랑하기"에서 AI 영상 공유 시 사용)
+        const validVideoUrl = typeof videoUrl === "string" && videoUrl.startsWith("http")
+            ? videoUrl
+            : null;
+
         // 6. 게시글 저장 (세션에서 가져온 userId 사용)
         const { data, error } = await supabase
             .from("community_posts")
@@ -175,6 +181,7 @@ export async function POST(request: NextRequest) {
                 content: sanitizedContent,
                 author_name: sanitizedAuthorName,
                 ...(validImageUrls.length > 0 && { image_urls: validImageUrls }),
+                ...(validVideoUrl && { video_url: validVideoUrl }),
                 ...(boardType === "memorial" && { is_public: isPublic ?? false }),
             }])
             .select()

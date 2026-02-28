@@ -318,19 +318,13 @@ export const MOCK_POSTS: Record<CommunitySubcategory, {
 };
 
 // "함께 보기" 목업 데이터 (DB 게시글 없을 때 폴백)
-export const MOCK_SHOWCASE_POSTS: {
-    id: string;
-    title: string;
-    content: string;
-    authorName: string;
-    imageUrls: string[];
-    likes: number;
-    comments: number;
-    createdAt: string;
-}[] = [
+// 실제로는 AI 영상 게시글이 DB에서 로드됨. 목업은 발표/데모용 이미지 폴백
+import type { ShowcasePost } from "@/components/features/home/types";
+
+export const MOCK_SHOWCASE_POSTS: ShowcasePost[] = [
     {
         id: "showcase-1",
-        title: "우리 뭉치 첫 산책 성공!",
+        title: "뭉치의 AI 영상을 만들었어요!",
         content: "드디어 밖을 무서워하던 뭉치가 산책에 성공했어요!",
         authorName: "뭉치맘",
         imageUrls: ["https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=300&fit=crop"],
@@ -340,7 +334,7 @@ export const MOCK_SHOWCASE_POSTS: {
     },
     {
         id: "showcase-2",
-        title: "냥이의 낮잠 시간",
+        title: "냥이의 특별한 AI 영상",
         content: "오늘도 평화로운 우리 고양이의 하루",
         authorName: "냥집사",
         imageUrls: ["https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&h=300&fit=crop"],
@@ -350,7 +344,7 @@ export const MOCK_SHOWCASE_POSTS: {
     },
     {
         id: "showcase-3",
-        title: "우리 집 앵무새가 노래를 배웠어요",
+        title: "앵무새의 AI 영상 너무 귀여워요",
         content: "'안녕'이랑 '밥줘' 할 줄 알아요!",
         authorName: "앵무집사",
         imageUrls: ["https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=400&h=300&fit=crop"],
@@ -360,7 +354,7 @@ export const MOCK_SHOWCASE_POSTS: {
     },
     {
         id: "showcase-4",
-        title: "토끼랑 소풍 다녀왔어요",
+        title: "토끼의 특별한 AI 영상",
         content: "날씨 좋은 날 토끼와 함께한 나들이",
         authorName: "토끼아빠",
         imageUrls: ["https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=400&h=300&fit=crop"],
@@ -370,7 +364,7 @@ export const MOCK_SHOWCASE_POSTS: {
     },
     {
         id: "showcase-5",
-        title: "강아지 수영 첫 도전!",
+        title: "해피의 수영 AI 영상!",
         content: "처음엔 무서워하더니 이제 물놀이 좋아해요",
         authorName: "해피맘",
         imageUrls: ["https://images.unsplash.com/photo-1530281700549-e82e7bf110d6?w=400&h=300&fit=crop"],
@@ -380,7 +374,7 @@ export const MOCK_SHOWCASE_POSTS: {
     },
     {
         id: "showcase-6",
-        title: "고양이 형제의 일상",
+        title: "고양이 형제의 특별한 영상",
         content: "항상 붙어다니는 우리 냥이들",
         authorName: "쌍냥집사",
         imageUrls: ["https://images.unsplash.com/photo-1495360010541-f48722b34f7d?w=400&h=300&fit=crop"],
@@ -390,7 +384,7 @@ export const MOCK_SHOWCASE_POSTS: {
     },
     {
         id: "showcase-7",
-        title: "우리 골든 리트리버 생일파티",
+        title: "보리의 생일 AI 영상",
         content: "3살 생일 축하해 우리 보리야!",
         authorName: "보리네",
         imageUrls: ["https://images.unsplash.com/photo-1601979031925-424e53b6caaa?w=400&h=300&fit=crop"],
@@ -400,7 +394,7 @@ export const MOCK_SHOWCASE_POSTS: {
     },
     {
         id: "showcase-8",
-        title: "햄스터 미로 탈출 대작전",
+        title: "햄찌의 특별한 AI 영상",
         content: "직접 만든 미로에서 노는 햄찌",
         authorName: "햄찌맘",
         imageUrls: ["https://images.unsplash.com/photo-1425082661507-6af0db6d2f32?w=400&h=300&fit=crop"],

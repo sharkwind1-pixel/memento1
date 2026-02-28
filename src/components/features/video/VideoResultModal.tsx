@@ -2,15 +2,17 @@
  * VideoResultModal.tsx
  * AI 생성 영상 결과 모달
  * - 완성된 영상 재생 + 저장/자랑/공유 액션 버튼
+ * - "자랑하기" 클릭 시 커뮤니티 "함께 보기"에 실제 게시글 등록
  * - Web Share API 지원, 미지원 시 클립보드 복사 폴백
  */
 
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
 import { VIDEO_TEMPLATES } from "@/config/videoTemplates";
-import { X, Download, Users, Share2 } from "lucide-react";
+import { API } from "@/config/apiEndpoints";
+import { X, Download, Users, Share2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface VideoResultModalProps {
@@ -23,6 +25,10 @@ interface VideoResultModalProps {
         templateId: string | null;
         createdAt: string;
     } | null;
+    /** 자랑하기 성공 후 콜백 */
+    onShowOffSuccess?: () => void;
+    /** 게시글 작성자 이름 (없으면 "익명") */
+    authorName?: string;
 }
 
 /** createdAt ISO 문자열을 "X월 X일" 형식으로 변환 */
@@ -44,8 +50,12 @@ export default function VideoResultModal({
     isOpen,
     onClose,
     video,
+    onShowOffSuccess,
+    authorName,
 }: VideoResultModalProps) {
     useEscapeClose(isOpen, onClose);
+
+    const [isPosting, setIsPosting] = useState(false);
 
     const handleDownload = useCallback(() => {
         if (!video || !video.videoUrl) return;
@@ -58,14 +68,46 @@ export default function VideoResultModal({
         toast.success("영상이 저장되었어요");
     }, [video]);
 
-    const handleShowOff = useCallback(() => {
-        if (!video || !video.videoUrl) return;
-        navigator.clipboard.writeText(video.videoUrl).then(() => {
-            toast.info("커뮤니티 공유 기능은 곧 출시됩니다!");
-        }).catch(() => {
-            toast.info("커뮤니티 공유 기능은 곧 출시됩니다!");
-        });
-    }, [video]);
+    const handleShowOff = useCallback(async () => {
+        if (!video || !video.videoUrl || isPosting) return;
+
+        setIsPosting(true);
+        try {
+            const res = await fetch(API.POSTS, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    boardType: "free",
+                    badge: "자랑",
+                    title: video.petName
+                        ? `${video.petName}의 특별한 영상`
+                        : "우리 아이의 AI 영상",
+                    content: video.petName
+                        ? `${video.petName}의 AI 영상을 만들었어요! 함께 감상해주세요.`
+                        : "AI로 만든 우리 아이의 특별한 영상이에요!",
+                    authorName: authorName || "익명",
+                    videoUrl: video.videoUrl,
+                }),
+            });
+
+            if (res.ok) {
+                toast.success("함께 보기에 영상이 등록되었어요!");
+                onShowOffSuccess?.();
+            } else {
+                const data = await res.json();
+                if (res.status === 401) {
+                    toast.error("로그인이 필요합니다");
+                    window.dispatchEvent(new CustomEvent("openAuthModal"));
+                } else {
+                    toast.error(data.error || "등록에 실패했어요");
+                }
+            }
+        } catch {
+            toast.error("네트워크 오류가 발생했어요");
+        } finally {
+            setIsPosting(false);
+        }
+    }, [video, isPosting, onShowOffSuccess, authorName]);
 
     const handleShare = useCallback(async () => {
         if (!video || !video.videoUrl) return;
@@ -176,11 +218,24 @@ export default function VideoResultModal({
                             {/* 자랑하기 */}
                             <button
                                 onClick={handleShowOff}
-                                className="flex-1 flex flex-col items-center gap-2 py-5 px-4 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                disabled={isPosting}
+                                className={`flex-1 flex flex-col items-center gap-2 py-5 px-4 rounded-xl transition-colors ${
+                                    isPosting
+                                        ? "bg-gray-100 dark:bg-gray-700 opacity-60 cursor-not-allowed"
+                                        : "bg-amber-50 dark:bg-amber-900/30 hover:bg-amber-100 dark:hover:bg-amber-900/50"
+                                }`}
                             >
-                                <Users className="w-7 h-7 text-gray-600 dark:text-gray-300" />
-                                <span className="text-base font-medium text-gray-700 dark:text-gray-200">
-                                    자랑하기
+                                {isPosting ? (
+                                    <Loader2 className="w-7 h-7 text-amber-500 animate-spin" />
+                                ) : (
+                                    <Users className="w-7 h-7 text-amber-600 dark:text-amber-400" />
+                                )}
+                                <span className={`text-base font-medium ${
+                                    isPosting
+                                        ? "text-gray-500 dark:text-gray-400"
+                                        : "text-amber-700 dark:text-amber-300"
+                                }`}>
+                                    {isPosting ? "등록 중..." : "자랑하기"}
                                 </span>
                             </button>
 

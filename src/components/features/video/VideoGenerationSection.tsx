@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { authFetch } from "@/lib/auth-fetch";
+import { useAuth } from "@/contexts/AuthContext";
 import { API } from "@/config/apiEndpoints";
 import { VIDEO } from "@/config/constants";
 import { VideoGeneration, VideoQuota } from "@/types";
@@ -39,6 +40,7 @@ export default function VideoGenerationSection({
     pet,
     isPremium,
 }: VideoGenerationSectionProps) {
+    const { user } = useAuth();
     const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
     const [selectedVideo, setSelectedVideo] = useState<VideoGeneration | null>(null);
     const [videos, setVideos] = useState<VideoGeneration[]>([]);
@@ -469,6 +471,10 @@ export default function VideoGenerationSection({
                     isOpen={!!selectedVideo}
                     onClose={handleCloseResultModal}
                     video={selectedVideo}
+                    authorName={user?.user_metadata?.nickname || user?.email?.split("@")[0] || "익명"}
+                    onShowOffSuccess={() => {
+                        handleCloseResultModal();
+                    }}
                 />
             )}
         </>
