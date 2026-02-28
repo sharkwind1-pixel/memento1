@@ -306,8 +306,7 @@ export function sanitizeInput(input: string): string {
         .replace(/[';\\]/g, "")
         // XSS 방지
         .replace(/[<>]/g, "")
-        // 길이 제한
-        .slice(0, 1000)
+        // 길이 제한은 호출부에서 용도별로 적용 (제목 200자, 본문 10000자 등)
         .trim();
 }
 

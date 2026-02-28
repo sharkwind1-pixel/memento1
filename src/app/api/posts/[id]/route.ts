@@ -40,30 +40,30 @@ export async function GET(
         const { id } = await params;
 
         // 조회수 원자적 증가 (RPC 사용, 폴백: read-modify-write)
-        supabase.rpc("increment_field", {
-            table_name: "community_posts",
-            field_name: "views",
-            row_id: id,
-            amount: 1,
-        }).then(({ error: rpcErr }) => {
+        try {
+            const { error: rpcErr } = await supabase.rpc("increment_field", {
+                table_name: "community_posts",
+                field_name: "views",
+                row_id: id,
+                amount: 1,
+            });
             if (rpcErr) {
                 // RPC 없으면 폴백
-                supabase
+                const { data: p } = await supabase
                     .from("community_posts")
                     .select("views")
                     .eq("id", id)
-                    .single()
-                    .then(({ data: p }) => {
-                        if (p) {
-                            supabase
-                                .from("community_posts")
-                                .update({ views: (p.views || 0) + 1 })
-                                .eq("id", id)
-                                .then();
-                        }
-                    });
+                    .single();
+                if (p) {
+                    await supabase
+                        .from("community_posts")
+                        .update({ views: (p.views || 0) + 1 })
+                        .eq("id", id);
+                }
             }
-        });
+        } catch {
+            // 조회수 증가 실패는 무시
+        }
 
         // 게시글 조회
         const { data: post, error } = await supabase
@@ -74,6 +74,14 @@ export async function GET(
 
         if (error) {
             return NextResponse.json({ error: "게시글을 찾을 수 없습니다" }, { status: 404 });
+        }
+
+        // 숨긴 게시글은 본인만 접근 가능
+        if (post.is_hidden) {
+            const user = await getAuthUser().catch(() => null);
+            if (!user || post.user_id !== user.id) {
+                return NextResponse.json({ error: "게시글을 찾을 수 없습니다" }, { status: 404 });
+            }
         }
 
         // 댓글 조회

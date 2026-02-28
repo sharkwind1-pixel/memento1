@@ -34,7 +34,6 @@ import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
 import ReportModal from "@/components/modals/ReportModal";
 import MinihompyVisitModal from "@/components/features/minihompy/MinihompyVisitModal";
-import Image from "next/image";
 import type { CommunitySubcategory } from "@/types";
 
 interface PostComment {
@@ -57,20 +56,15 @@ interface PostData {
     id: string;
     user_id: string;
     board_type?: string;
-    category?: string;
     animal_type?: string;
     badge?: string;
     title: string;
     content: string;
     author_name: string;
     likes: number;
-    likes_count?: number;
     views: number;
     comments: PostComment[] | number;
-    comments_count?: number;
-    image_urls?: string[];
     video_url?: string;
-    is_public?: boolean;
     is_hidden?: boolean;
     created_at: string;
     updated_at?: string;
@@ -206,7 +200,7 @@ export default function PostDetailView({
             setIsLiked(data.liked);
             setLikeCount(data.likes);
         } catch {
-            // 실패 무시
+            alert("좋아요 처리에 실패했습니다");
         } finally {
             setIsLiking(false);
         }
@@ -246,7 +240,7 @@ export default function PostDetailView({
             }]);
             setCommentText("");
         } catch {
-            // 실패 무시
+            alert("댓글 작성에 실패했습니다. 다시 시도해주세요");
         } finally {
             setIsSubmittingComment(false);
         }
@@ -352,8 +346,9 @@ export default function PostDetailView({
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="rounded-lg text-gray-500 hover:text-blue-600"
-                                onClick={() => {/* TODO: 수정 모드 */}}
+                                className="rounded-lg text-gray-300 cursor-not-allowed"
+                                disabled
+                                title="수정 기능 준비 중"
                             >
                                 <Edit3 className="w-4 h-4" />
                             </Button>
@@ -466,32 +461,7 @@ export default function PostDetailView({
                         </div>
                     )}
 
-                    {/* 첨부 이미지 */}
-                    {post.image_urls && post.image_urls.length > 0 && (() => {
-                        const images = post.image_urls!;
-                        return (
-                            <div className={`mt-4 gap-2 ${
-                                images.length === 1 ? "flex" : "grid grid-cols-2"
-                            }`}>
-                                {images.map((url: string, index: number) => (
-                                    <div
-                                        key={index}
-                                        className={`relative rounded-xl overflow-hidden border dark:border-gray-600 ${
-                                            images.length === 1 ? "w-full aspect-video" : "aspect-square"
-                                        }`}
-                                    >
-                                        <Image
-                                            src={url}
-                                            alt={`첨부 이미지 ${index + 1}`}
-                                            fill
-                                            className="object-cover"
-                                            sizes={images.length === 1 ? "600px" : "300px"}
-                                        />
-                                    </div>
-                                ))}
-                            </div>
-                        );
-                    })()}
+                    {/* 첨부 이미지 (향후 image_urls 컬럼 추가 시 활성화) */}
                 </div>
 
                 {/* 좋아요 + 댓글 수 */}
