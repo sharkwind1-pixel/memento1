@@ -173,7 +173,7 @@ function AdminPage() {
 
         setIsProcessingWithdrawal(true);
         try {
-            // 1. withdrawn_users 테이블에 추가
+            // 1. withdrawn_users 테이블에 기록 추가
             const rejoinDate = type === "abuse_concern"
                 ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
                 : null;
@@ -192,12 +192,25 @@ function AdminPage() {
 
             if (insertError) throw insertError;
 
-            // 2. 영구 차단인 경우 유저 밴 처리
-            if (type === "banned") {
-                await supabase
-                    .from("profiles")
-                    .update({ is_banned: true })
-                    .eq("id", withdrawalModalUser.id);
+            // 2. 서버 API로 auth.users + profiles 삭제
+            const session = await supabase.auth.getSession();
+            const token = session.data.session?.access_token;
+
+            if (token) {
+                const res = await fetch("/api/admin/delete-user", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ targetUserId: withdrawalModalUser.id }),
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    console.error("유저 삭제 API 오류:", errData);
+                    // API 실패해도 withdrawn_users 기록은 남으므로 계속 진행
+                }
             }
 
             toast.success("탈퇴 처리가 완료되었습니다.");

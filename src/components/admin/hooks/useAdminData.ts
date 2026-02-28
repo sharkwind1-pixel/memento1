@@ -194,6 +194,14 @@ export function useAdminData(): UseAdminDataReturn {
     // ========================================================================
     const loadUsers = useCallback(async () => {
         try {
+            // 탈퇴 처리된 유저 ID 목록 조회
+            const { data: withdrawnData } = await supabase
+                .from("withdrawn_users")
+                .select("user_id");
+            const withdrawnIds = new Set(
+                (withdrawnData || []).map((w: { user_id: string }) => w.user_id)
+            );
+
             const { data, error } = await supabase
                 .from("profiles")
                 .select("id, email, nickname, created_at, is_banned, is_premium, is_admin, points, onboarding_data")
@@ -203,7 +211,12 @@ export function useAdminData(): UseAdminDataReturn {
             if (error) throw error;
 
             if (data) {
-                setUsers(data.map(profile => {
+                // 탈퇴 처리된 유저는 목록에서 제외
+                const activeProfiles = data.filter(
+                    profile => !withdrawnIds.has(profile.id)
+                );
+
+                setUsers(activeProfiles.map(profile => {
                     // onboarding_data에서 petType 추출
                     const obData = profile.onboarding_data as Record<string, unknown> | null;
                     const pt = obData?.petType;
