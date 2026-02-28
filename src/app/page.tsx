@@ -171,6 +171,8 @@ function HomeContent() {
     const [postGuideUserType, setPostGuideUserType] = useState<"planning" | "current" | "memorial" | null>(null);
     const [showRecordTutorial, setShowRecordTutorial] = useState(false);
     const [recordTutorialUserType, setRecordTutorialUserType] = useState<"current" | "memorial" | null>(null);
+    // 닉네임 설정 완료 후 플로우 재실행 트리거
+    const [flowRecheck, setFlowRecheck] = useState(0);
 
     // 현재 상태를 ref로 추적 (useEffect에서 stale closure 방지)
     const currentStateRef = useRef({ tab: selectedTab, sub: selectedSubcategory });
@@ -237,6 +239,11 @@ function HomeContent() {
     // 순서: 1. 닉네임 설정 → 2. 온보딩 질문 → 3. 튜토리얼 투어 → 4. 가이드
     // 크로스탭 재트리거 방지: 같은 user.id에 대해 한 번만 체크
     const newUserFlowCheckedRef = useRef<string | null>(null);
+    // 모달 중복 방지: 어떤 모달이든 열려 있으면 재진입 차단
+    const modalOpenRef = useRef(false);
+    useEffect(() => {
+        modalOpenRef.current = showNicknameSetup || showOnboarding || showTutorial || showPostGuide || showRecordTutorial;
+    }, [showNicknameSetup, showOnboarding, showTutorial, showPostGuide, showRecordTutorial]);
 
     useEffect(() => {
         const checkNewUserFlow = async () => {
@@ -244,6 +251,9 @@ function HomeContent() {
 
             // 같은 유저에 대해 이미 체크 완료했으면 스킵 (크로스탭 SIGNED_IN 재트리거 방지)
             if (newUserFlowCheckedRef.current === user.id) return;
+
+            // 이미 모달이 열려 있으면 중복 실행 방지 (Safari 복귀 시 중복 모달 버그 수정)
+            if (modalOpenRef.current) return;
 
             // 1. 먼저 닉네임 설정 여부 확인
             try {
@@ -355,7 +365,7 @@ function HomeContent() {
             checkNewUserFlow();
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user, loading, profileLoaded]);
+    }, [user, loading, profileLoaded, flowRecheck]);
 
     // ========================================================================
     // 탭 변경 핸들러
@@ -484,16 +494,9 @@ function HomeContent() {
                         isOpen={showNicknameSetup}
                         onComplete={() => {
                             setShowNicknameSetup(false);
-                            // 닉네임 설정 완료 후 온보딩 질문 시작 (순서: 온보딩 → 튜토리얼)
-                            const onboardingCompletedLocal = localStorage.getItem("memento-ani-onboarding-complete") === "true";
-                            if (!onboardingCompletedLocal) {
-                                setShowOnboarding(true);
-                            } else {
-                                const tutorialCompletedLocal = localStorage.getItem("memento-ani-tutorial-complete") === "true";
-                                if (!tutorialCompletedLocal) {
-                                    setShowTutorial(true);
-                                }
-                            }
+                            // 닉네임 설정 완료 후 전체 플로우 재체크 (DB 기반으로 다음 단계 결정)
+                            newUserFlowCheckedRef.current = null;
+                            setFlowRecheck(prev => prev + 1);
                         }}
                     />
                     <OnboardingModal
@@ -503,25 +506,10 @@ function HomeContent() {
                         onGoToHome={() => handleTabChange("home")}
                         onGoToAIChat={() => handleTabChange("ai-chat")}
                         onShowPostGuide={(userType) => {
-                            // 온보딩 완료 후 유저 타입별 분기
+                            // 온보딩 완료 후 → 전체 플로우 재체크 (DB 기반으로 다음 단계 결정)
                             setPostGuideUserType(userType);
-
-                            const tutorialCompletedLocal = localStorage.getItem("memento-ani-tutorial-complete") === "true";
-
-                            if (!tutorialCompletedLocal) {
-                                // 튜토리얼 미완료 → TutorialTour 먼저
-                                setShowTutorial(true);
-                            } else if (userType === "planning") {
-                                // planning 유저: PostOnboardingGuide 표시
-                                setShowPostGuide(true);
-                            } else {
-                                // current/memorial 유저: 바로 Record 페이지 + RecordPageTutorial
-                                handleTabChange("record");
-                                setTimeout(() => {
-                                    setRecordTutorialUserType(userType);
-                                    setShowRecordTutorial(true);
-                                }, 500);
-                            }
+                            newUserFlowCheckedRef.current = null;
+                            setFlowRecheck(prev => prev + 1);
                         }}
                     />
                     <PostOnboardingGuide
