@@ -24,7 +24,6 @@ import type { Post } from "@/components/features/community/communityTypes";
 import {
     SUBCATEGORIES,
     MOCK_POSTS,
-    MOCK_SHOWCASE_POSTS,
     getCategoryColor,
 } from "@/components/features/community/communityTypes";
 
@@ -89,12 +88,30 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
     const sentinelRef = useRef<HTMLDivElement>(null);
     const POSTS_PER_PAGE = 15;
 
+    // "함께 보기" 배너용 실데이터
+    const [showcasePostCount, setShowcasePostCount] = useState(0);
+
     // 신고 모달 상태
     const [reportTarget, setReportTarget] = useState<{
         id: string;
         type: "post" | "comment" | "user";
         title?: string;
     } | null>(null);
+
+    // "함께 보기" 배너용 게시글 수 조회
+    useEffect(() => {
+        const fetchShowcaseCount = async () => {
+            try {
+                const params = new URLSearchParams({ board: "free", badge: "자랑", limit: "1" });
+                const res = await fetch(`${API.POSTS}?${params}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setShowcasePostCount(data.total ?? data.posts?.length ?? 0);
+                }
+            } catch { /* 실패 시 0 유지 */ }
+        };
+        fetchShowcaseCount();
+    }, []);
 
     // 필터 변경 시 localStorage에 저장
     useEffect(() => { localStorage.setItem("memento-community-tag", selectedTag); }, [selectedTag]);
@@ -303,9 +320,6 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
         );
     }
 
-    // 배너용 미리보기 이미지
-    const showcasePreviewImages = MOCK_SHOWCASE_POSTS.slice(0, 4).map(p => p.imageUrls?.[0] ?? "").filter(Boolean);
-
     return (
         <div
             className="min-h-screen relative overflow-hidden"
@@ -339,8 +353,8 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
 
                 {/* "함께 보기" 배너 - 모든 서브카테고리에서 항상 표시 */}
                 <ShowcaseBanner
-                    previewImages={showcasePreviewImages}
-                    postCount={MOCK_SHOWCASE_POSTS.length}
+                    previewImages={[]}
+                    postCount={showcasePostCount}
                     onOpen={() => setShowcaseView(true)}
                 />
 
