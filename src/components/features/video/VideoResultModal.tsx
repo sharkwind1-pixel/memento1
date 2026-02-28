@@ -12,6 +12,7 @@ import { useCallback, useState } from "react";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
 import { VIDEO_TEMPLATES } from "@/config/videoTemplates";
 import { API } from "@/config/apiEndpoints";
+import { authFetch } from "@/lib/auth-fetch";
 import { X, Download, Users, Share2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -73,9 +74,8 @@ export default function VideoResultModal({
 
         setIsPosting(true);
         try {
-            const res = await fetch(API.POSTS, {
+            const res = await authFetch(API.POSTS, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     boardType: "free",
                     badge: "자랑",
