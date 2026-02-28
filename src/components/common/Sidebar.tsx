@@ -140,7 +140,15 @@ export default function Sidebar({
         checkPending();
         // 30초마다 갱신
         const interval = setInterval(checkPending, 30000);
-        return () => clearInterval(interval);
+
+        // 관리자 탭에서 상태 변경 시 즉시 재조회 (커스텀 이벤트)
+        const handleAdminUpdate = () => checkPending();
+        window.addEventListener("adminDataUpdated", handleAdminUpdate);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener("adminDataUpdated", handleAdminUpdate);
+        };
     }, [isAdminUser, selectedTab]);
 
     // 탭이 변경되면 커뮤니티 확장 상태 업데이트

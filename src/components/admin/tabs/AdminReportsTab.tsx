@@ -86,6 +86,7 @@ export default function AdminReportsTab({
             if (error) throw error;
             toast.success("신고 상태가 업데이트되었습니다");
             onRefresh();
+            window.dispatchEvent(new CustomEvent("adminDataUpdated"));
         } catch {
             toast.error("상태 업데이트 중 오류가 발생했습니다");
         }
