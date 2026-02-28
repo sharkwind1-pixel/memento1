@@ -34,6 +34,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePets } from "@/contexts/PetContext";
+import { supabase } from "@/lib/supabase";
 import PointsBadge from "@/components/features/points/PointsBadge";
 import type { MainCategory, CommunitySubcategory, TabType } from "@/types";
 
@@ -109,6 +110,37 @@ export default function Sidebar({
         selectedTab === "community" ? "community" : null
     );
     const [hasModalOpen, setHasModalOpen] = useState(false);
+    const [hasPendingAdmin, setHasPendingAdmin] = useState(false);
+
+    // 관리자일 때 미처리 신고/문의 건수 체크
+    useEffect(() => {
+        if (!isAdminUser) return;
+
+        const checkPending = async () => {
+            try {
+                const [reportsRes, inquiriesRes] = await Promise.all([
+                    supabase
+                        .from("reports")
+                        .select("id", { count: "exact", head: true })
+                        .eq("status", "pending"),
+                    supabase
+                        .from("support_inquiries")
+                        .select("id", { count: "exact", head: true })
+                        .eq("status", "pending"),
+                ]);
+
+                const total = (reportsRes.count || 0) + (inquiriesRes.count || 0);
+                setHasPendingAdmin(total > 0);
+            } catch {
+                // 조회 실패 시 표시 안 함
+            }
+        };
+
+        checkPending();
+        // 60초마다 갱신
+        const interval = setInterval(checkPending, 60000);
+        return () => clearInterval(interval);
+    }, [isAdminUser]);
 
     // 탭이 변경되면 커뮤니티 확장 상태 업데이트
     useEffect(() => {
@@ -295,8 +327,18 @@ export default function Sidebar({
                                 : "text-violet-600 dark:text-violet-400"
                         )}
                     >
-                        <Shield className="w-5 h-5" />
+                        <div className="relative">
+                            <Shield className="w-5 h-5" />
+                            {hasPendingAdmin && (
+                                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
+                            )}
+                        </div>
                         <span>관리자</span>
+                        {hasPendingAdmin && (
+                            <span className="ml-auto text-xs bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                                !
+                            </span>
+                        )}
                     </button>
                 )}
             </nav>

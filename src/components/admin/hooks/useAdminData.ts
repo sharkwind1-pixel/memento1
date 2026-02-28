@@ -285,20 +285,37 @@ export function useAdminData(): UseAdminDataReturn {
         try {
             const { data, error } = await supabase
                 .from("reports")
-                .select(`*, reporter:profiles!reporter_id(email, nickname)`)
+                .select("*")
                 .order("created_at", { ascending: false })
                 .limit(100);
 
             if (error) throw error;
 
             if (data) {
+                // reporter_id로 프로필 이메일을 별도 조회
+                const reporterIds = Array.from(new Set(data.map((r: Record<string, unknown>) => r.reporter_id as string).filter(Boolean)));
+                let emailMap: Record<string, string> = {};
+
+                if (reporterIds.length > 0) {
+                    const { data: profiles } = await supabase
+                        .from("profiles")
+                        .select("id, email, nickname")
+                        .in("id", reporterIds);
+
+                    if (profiles) {
+                        emailMap = Object.fromEntries(
+                            profiles.map((p: { id: string; email?: string }) => [p.id, p.email || "알 수 없음"])
+                        );
+                    }
+                }
+
                 setReports(data.map((r: Record<string, unknown>) => ({
                     ...r,
-                    reporter_email: (r.reporter as { email?: string } | null)?.email || "알 수 없음",
+                    reporter_email: emailMap[r.reporter_id as string] || "알 수 없음",
                 })) as ReportRow[]);
             }
         } catch {
-            // [useAdminData] 신고 목록 로드 실패:", error);
+            // 신고 목록 로드 실패 시 빈 배열 유지
         }
     }, []);
 
