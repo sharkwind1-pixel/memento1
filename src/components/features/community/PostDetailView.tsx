@@ -18,6 +18,7 @@ import {
     Flag,
     Trash2,
     Edit3,
+    EyeOff,
 } from "lucide-react";
 import {
     DropdownMenu,
@@ -69,6 +70,7 @@ interface PostData {
     comments_count?: number;
     image_urls?: string[];
     is_public?: boolean;
+    is_hidden?: boolean;
     created_at: string;
     updated_at?: string;
 }
@@ -122,6 +124,8 @@ export default function PostDetailView({
     const [isSubmittingComment, setIsSubmittingComment] = useState(false);
     const [isLiking, setIsLiking] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isHidden, setIsHidden] = useState(false);
+    const [isTogglingHidden, setIsTogglingHidden] = useState(false);
     const [reportTarget, setReportTarget] = useState<{
         id: string;
         type: "post" | "comment";
@@ -142,6 +146,7 @@ export default function PostDetailView({
 
             setPost(postData);
             setLikeCount(postData.likes ?? postData.likes_count ?? 0);
+            setIsHidden(postData.is_hidden ?? false);
 
             // 댓글 매핑
             const rawComments = Array.isArray(postData.comments) ? postData.comments : [];
@@ -264,6 +269,35 @@ export default function PostDetailView({
         }
     };
 
+    // 게시글 숨기기/공개 토글
+    const handleToggleHidden = async () => {
+        const newHidden = !isHidden;
+        const msg = newHidden
+            ? "이 게시글을 숨기시겠어요? 다른 사람들에게 보이지 않게 됩니다."
+            : "이 게시글을 다시 공개하시겠어요?";
+        if (!confirm(msg)) return;
+
+        setIsTogglingHidden(true);
+        try {
+            const response = await authFetch(API.POST_DETAIL(postId), {
+                method: "PATCH",
+                body: JSON.stringify({ isHidden: newHidden }),
+            });
+            if (!response.ok) throw new Error("숨기기 변경 실패");
+
+            setIsHidden(newHidden);
+            if (newHidden) {
+                // 숨기면 목록으로 돌아가기
+                onPostDeleted?.();
+                onBack();
+            }
+        } catch {
+            alert("숨기기 변경에 실패했습니다");
+        } finally {
+            setIsTogglingHidden(false);
+        }
+    };
+
     // 본인 글 여부
     const isOwner = user && post && user.id === post.user_id;
 
@@ -303,6 +337,17 @@ export default function PostDetailView({
                 <div className="flex items-center gap-1">
                     {isOwner && (
                         <>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="rounded-lg text-gray-500 hover:text-amber-600"
+                                onClick={handleToggleHidden}
+                                disabled={isTogglingHidden}
+                                title={isHidden ? "다시 공개" : "숨기기"}
+                            >
+                                <EyeOff className="w-4 h-4" />
+                                <span className="text-xs ml-1">{isHidden ? "공개" : "숨기기"}</span>
+                            </Button>
                             <Button
                                 variant="ghost"
                                 size="sm"
@@ -350,6 +395,16 @@ export default function PostDetailView({
                     </DropdownMenu>
                 </div>
             </div>
+
+            {/* 숨김 상태 안내 */}
+            {isHidden && isOwner && (
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-xl px-4 py-3 flex items-center gap-2">
+                    <EyeOff className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                    <p className="text-sm text-amber-700 dark:text-amber-300">
+                        이 게시글은 숨김 상태입니다. 다른 사람들에게 보이지 않습니다.
+                    </p>
+                </div>
+            )}
 
             {/* 게시글 본문 */}
             <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-white/50 dark:border-gray-700/50 rounded-2xl overflow-hidden">

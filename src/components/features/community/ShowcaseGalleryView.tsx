@@ -4,11 +4,12 @@
  * 커뮤니티 페이지에서 PostDetailView와 동일한 패턴으로 동작
  * DB 게시글이 없으면 목업 데이터로 폴백
  * AI 생성 영상을 비디오 플레이어로 재생
+ * 카드 클릭 시 PostDetailView로 이동하여 좋아요/댓글 상호작용 가능
  */
 
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
     ArrowLeft,
     Star,
@@ -17,10 +18,12 @@ import {
     PawPrint,
     Pen,
     Play,
+    ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { API } from "@/config/apiEndpoints";
 import { MOCK_SHOWCASE_POSTS, formatTime } from "./communityTypes";
+import PostDetailView from "./PostDetailView";
 import type { ShowcasePost } from "@/components/features/home/types";
 
 interface ShowcaseGalleryViewProps {
@@ -31,6 +34,7 @@ interface ShowcaseGalleryViewProps {
 export default function ShowcaseGalleryView({ onBack, onWriteClick }: ShowcaseGalleryViewProps) {
     const [posts, setPosts] = useState<ShowcasePost[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
     const gradients = [
         "from-sky-400 to-blue-300",
@@ -40,43 +44,64 @@ export default function ShowcaseGalleryView({ onBack, onWriteClick }: ShowcaseGa
         "from-amber-400 to-orange-300",
     ];
 
-    useEffect(() => {
-        const fetchPosts = async () => {
-            setIsLoading(true);
-            try {
-                const params = new URLSearchParams({
-                    board: "free",
-                    badge: "자랑",
-                    sort: "popular",
-                    limit: "20",
-                });
-                const res = await fetch(`${API.POSTS}?${params}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.posts?.length > 0) {
-                        // 영상 있는 글 우선, 그 다음 이미지
-                        const sorted = data.posts.sort((a: ShowcasePost, b: ShowcasePost) => {
-                            const aHasVideo = a.videoUrl ? 2 : 0;
-                            const bHasVideo = b.videoUrl ? 2 : 0;
-                            const aHasImg = (a.imageUrls?.length ?? 0) > 0 ? 1 : 0;
-                            const bHasImg = (b.imageUrls?.length ?? 0) > 0 ? 1 : 0;
-                            return (bHasVideo + bHasImg) - (aHasVideo + aHasImg);
-                        });
-                        setPosts(sorted);
-                    } else {
-                        setPosts(MOCK_SHOWCASE_POSTS);
-                    }
+    const fetchPosts = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const params = new URLSearchParams({
+                board: "free",
+                badge: "자랑",
+                sort: "popular",
+                limit: "20",
+            });
+            const res = await fetch(`${API.POSTS}?${params}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.posts?.length > 0) {
+                    // 영상 있는 글 우선, 그 다음 이미지
+                    const sorted = data.posts.sort((a: ShowcasePost, b: ShowcasePost) => {
+                        const aHasVideo = a.videoUrl ? 2 : 0;
+                        const bHasVideo = b.videoUrl ? 2 : 0;
+                        const aHasImg = (a.imageUrls?.length ?? 0) > 0 ? 1 : 0;
+                        const bHasImg = (b.imageUrls?.length ?? 0) > 0 ? 1 : 0;
+                        return (bHasVideo + bHasImg) - (aHasVideo + aHasImg);
+                    });
+                    setPosts(sorted);
                 } else {
                     setPosts(MOCK_SHOWCASE_POSTS);
                 }
-            } catch {
+            } else {
                 setPosts(MOCK_SHOWCASE_POSTS);
-            } finally {
-                setIsLoading(false);
             }
-        };
-        fetchPosts();
+        } catch {
+            setPosts(MOCK_SHOWCASE_POSTS);
+        } finally {
+            setIsLoading(false);
+        }
     }, []);
+
+    useEffect(() => {
+        fetchPosts();
+    }, [fetchPosts]);
+
+    // 게시글 상세보기 모드
+    if (selectedPostId) {
+        return (
+            <div
+                className="min-h-screen relative overflow-hidden"
+                style={{ contain: "layout style", transform: "translateZ(0)" }}
+            >
+                <PostDetailView
+                    postId={selectedPostId}
+                    subcategory="free"
+                    onBack={() => setSelectedPostId(null)}
+                    onPostDeleted={() => {
+                        setSelectedPostId(null);
+                        fetchPosts();
+                    }}
+                />
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen relative overflow-hidden">
@@ -156,6 +181,12 @@ export default function ShowcaseGalleryView({ onBack, onWriteClick }: ShowcaseGa
                                     key={post.id}
                                     post={post}
                                     gradientClass={gradients[idx % gradients.length]}
+                                    onSelect={() => {
+                                        // 목업 게시글(showcase-)은 상세보기 불가
+                                        if (!post.id.startsWith("showcase-")) {
+                                            setSelectedPostId(post.id);
+                                        }
+                                    }}
                                 />
                             ))}
                         </div>
@@ -166,13 +197,15 @@ export default function ShowcaseGalleryView({ onBack, onWriteClick }: ShowcaseGa
     );
 }
 
-/** 개별 카드 컴포넌트 (영상 호버 재생 지원) */
+/** 개별 카드 컴포넌트 (영상 호버 재생 지원 + 상세보기 이동) */
 function ShowcaseCard({
     post,
     gradientClass,
+    onSelect,
 }: {
     post: ShowcasePost;
     gradientClass: string;
+    onSelect: () => void;
 }) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -199,13 +232,16 @@ function ShowcaseCard({
             className="group overflow-hidden rounded-2xl bg-white dark:bg-gray-800 shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer active:scale-[0.98]"
             onMouseEnter={post.videoUrl ? handlePlay : undefined}
             onMouseLeave={post.videoUrl ? handlePause : undefined}
-            onClick={post.videoUrl ? () => {
-                if (isPlaying) handlePause();
-                else handlePlay();
-            } : undefined}
         >
-            {/* 미디어 영역 */}
-            <div className="aspect-[4/3] relative overflow-hidden">
+            {/* 미디어 영역 - 클릭 시 영상 재생/중지 */}
+            <div
+                className="aspect-[4/3] relative overflow-hidden"
+                onClick={post.videoUrl ? (e) => {
+                    e.stopPropagation();
+                    if (isPlaying) handlePause();
+                    else handlePlay();
+                } : undefined}
+            >
                 {post.videoUrl ? (
                     <>
                         <video
@@ -248,23 +284,26 @@ function ShowcaseCard({
                 )}
             </div>
 
-            {/* 텍스트 영역 */}
-            <div className="p-3">
+            {/* 텍스트 영역 - 클릭 시 상세보기 */}
+            <div className="p-3" onClick={onSelect}>
                 <h3 className="font-bold text-sm text-gray-800 dark:text-white line-clamp-2 mb-1 group-hover:text-amber-600 transition-colors">
                     {post.title}
                 </h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 truncate">
                     {post.authorName} · {formatTime(post.createdAt)}
                 </p>
-                <div className="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500">
-                    <span className="flex items-center gap-1">
-                        <Heart className="w-3.5 h-3.5" />
-                        {post.likes}
-                    </span>
-                    <span className="flex items-center gap-1">
-                        <MessageCircle className="w-3.5 h-3.5" />
-                        {post.comments}
-                    </span>
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500">
+                        <span className="flex items-center gap-1">
+                            <Heart className="w-3.5 h-3.5" />
+                            {post.likes}
+                        </span>
+                        <span className="flex items-center gap-1">
+                            <MessageCircle className="w-3.5 h-3.5" />
+                            {post.comments}
+                        </span>
+                    </div>
+                    <ArrowRight className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 group-hover:text-amber-400 transition-colors" />
                 </div>
             </div>
         </div>
