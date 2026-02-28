@@ -301,29 +301,13 @@ function ShowcaseCard({
                             loop
                             className="w-full h-full object-cover"
                         />
-                        {/* 재생 오버레이 - 클릭 시 영상 재생 (상세보기 이동 방지) */}
+                        {/* 재생 아이콘 (장식용 - 호버 시 자동재생, 클릭은 상세보기) */}
                         {!isPlaying && (
-                            <div
-                                className="absolute inset-0 flex items-center justify-center bg-black/20"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handlePlay();
-                                }}
-                            >
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none">
                                 <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
                                     <Play className="w-6 h-6 text-amber-600 ml-0.5" />
                                 </div>
                             </div>
-                        )}
-                        {/* 재생 중 클릭 시 중지 (상세보기 이동 방지) */}
-                        {isPlaying && (
-                            <div
-                                className="absolute inset-0"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handlePause();
-                                }}
-                            />
                         )}
                         {/* AI 영상 뱃지 */}
                         <div className="absolute top-2 left-2 bg-amber-500/90 text-white text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
