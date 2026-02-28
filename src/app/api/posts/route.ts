@@ -41,7 +41,13 @@ export async function GET(request: NextRequest) {
         let query = supabase
             .from("community_posts")
             .select("*, post_comments(count)", { count: "exact" })
-            .eq("board_type", boardType);
+            .eq("board_type", boardType)
+            .or("is_hidden.is.null,is_hidden.eq.false");
+
+        // 뱃지 필터
+        if (badge) {
+            query = query.eq("badge", badge);
+        }
 
         // 뱃지 필터
         if (badge) {

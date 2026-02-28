@@ -127,7 +127,7 @@ export async function PATCH(
         const { id } = await params;
         const body = await request.json();
 
-        const { title, content, badge } = body;
+        const { title, content, badge, isHidden } = body;
 
         // 4. 본인 글인지 확인 (세션의 user.id 사용)
         const { data: existing } = await supabase
@@ -141,10 +141,11 @@ export async function PATCH(
         }
 
         // 5. 입력값 검증 및 sanitize
-        const updateData: Record<string, string> = { updated_at: new Date().toISOString() };
+        const updateData: Record<string, string | boolean> = { updated_at: new Date().toISOString() };
         if (title) updateData.title = sanitizeInput(title).slice(0, 200);
         if (content) updateData.content = sanitizeInput(content).slice(0, 10000);
         if (badge) updateData.badge = sanitizeInput(badge).slice(0, 50);
+        if (typeof isHidden === "boolean") updateData.is_hidden = isHidden;
 
         const { data, error } = await supabase
             .from("community_posts")

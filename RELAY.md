@@ -53,6 +53,7 @@
 | `20260226_memory_albums.sql` | 추억 앨범 테이블 | 즉시 |
 | `sql/video_generations.sql` | AI 영상 생성 테이블 + RLS + 인덱스 | 즉시 |
 | `sql/add_video_url_to_posts.sql` | community_posts에 video_url 컬럼 추가 (자랑하기 영상 공유) | 즉시 |
+| `sql/add_is_hidden_to_posts.sql` | community_posts에 is_hidden 컬럼 추가 (게시글 숨기기) | 즉시 |
 
 ---
 

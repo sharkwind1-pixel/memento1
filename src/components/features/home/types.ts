@@ -32,6 +32,7 @@ export type Comment = {
 // 자랑하기 게시글 타입 (홈 섹션용 + 함께 보기 갤러리)
 export type ShowcasePost = {
     id: string;
+    userId?: string;
     title: string;
     content: string;
     authorName: string;
