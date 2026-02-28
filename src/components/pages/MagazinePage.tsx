@@ -307,6 +307,7 @@ function MagazinePage({ setSelectedTab }: MagazinePageProps) {
                                                     size="sm"
                                                     aria-label="북마크"
                                                     className="h-8 w-8 p-0 rounded-lg"
+                                                    onClick={(e) => { e.stopPropagation(); toast.info("북마크 기능 준비 중이에요"); }}
                                                 >
                                                     <Bookmark className="w-4 h-4" />
                                                 </Button>
@@ -315,6 +316,7 @@ function MagazinePage({ setSelectedTab }: MagazinePageProps) {
                                                     size="sm"
                                                     aria-label="공유"
                                                     className="h-8 w-8 p-0 rounded-lg"
+                                                    onClick={(e) => { e.stopPropagation(); toast.info("공유 기능 준비 중이에요"); }}
                                                 >
                                                     <Share2 className="w-4 h-4" />
                                                 </Button>
