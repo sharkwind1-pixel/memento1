@@ -304,7 +304,7 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
     }
 
     // 배너용 미리보기 이미지
-    const showcasePreviewImages = MOCK_SHOWCASE_POSTS.slice(0, 4).map(p => p.imageUrls[0]);
+    const showcasePreviewImages = MOCK_SHOWCASE_POSTS.slice(0, 4).map(p => p.imageUrls?.[0] ?? "").filter(Boolean);
 
     return (
         <div

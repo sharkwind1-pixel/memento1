@@ -29,13 +29,14 @@ export type Comment = {
     likes: number;
 };
 
-// 자랑하기 게시글 타입 (홈 섹션용)
+// 자랑하기 게시글 타입 (홈 섹션용 + 함께 보기 갤러리)
 export type ShowcasePost = {
     id: string;
     title: string;
     content: string;
     authorName: string;
     imageUrls?: string[];
+    videoUrl?: string;
     likes: number;
     comments: number;
     createdAt: string;

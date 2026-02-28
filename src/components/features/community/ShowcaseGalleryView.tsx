@@ -3,11 +3,12 @@
  * "함께 보기" 전체화면 갤러리 뷰
  * 커뮤니티 페이지에서 PostDetailView와 동일한 패턴으로 동작
  * DB 게시글이 없으면 목업 데이터로 폴백
+ * AI 생성 영상을 비디오 플레이어로 재생
  */
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
     ArrowLeft,
     Star,
@@ -15,7 +16,7 @@ import {
     MessageCircle,
     PawPrint,
     Pen,
-    ImageIcon,
+    Play,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { API } from "@/config/apiEndpoints";
@@ -53,11 +54,13 @@ export default function ShowcaseGalleryView({ onBack, onWriteClick }: ShowcaseGa
                 if (res.ok) {
                     const data = await res.json();
                     if (data.posts?.length > 0) {
-                        // 이미지 있는 글 우선
+                        // 영상 있는 글 우선, 그 다음 이미지
                         const sorted = data.posts.sort((a: ShowcasePost, b: ShowcasePost) => {
-                            const aHas = (a.imageUrls?.length ?? 0) > 0 ? 1 : 0;
-                            const bHas = (b.imageUrls?.length ?? 0) > 0 ? 1 : 0;
-                            return bHas - aHas;
+                            const aHasVideo = a.videoUrl ? 2 : 0;
+                            const bHasVideo = b.videoUrl ? 2 : 0;
+                            const aHasImg = (a.imageUrls?.length ?? 0) > 0 ? 1 : 0;
+                            const bHasImg = (b.imageUrls?.length ?? 0) > 0 ? 1 : 0;
+                            return (bHasVideo + bHasImg) - (aHasVideo + aHasImg);
                         });
                         setPosts(sorted);
                     } else {
@@ -103,7 +106,7 @@ export default function ShowcaseGalleryView({ onBack, onWriteClick }: ShowcaseGa
                                     함께 보기
                                 </h1>
                                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                                    우리 아이들의 사진과 영상
+                                    우리 아이들의 AI 영상 갤러리
                                 </p>
                             </div>
                         </div>
@@ -137,7 +140,7 @@ export default function ShowcaseGalleryView({ onBack, onWriteClick }: ShowcaseGa
                                 아직 게시글이 없어요
                             </p>
                             <p className="text-gray-400 dark:text-gray-500 text-sm mb-4">
-                                우리 아이의 모습을 공유해보세요
+                                우리 아이의 AI 영상을 만들고 자랑해보세요
                             </p>
                             <Button
                                 onClick={onWriteClick}
@@ -148,64 +151,120 @@ export default function ShowcaseGalleryView({ onBack, onWriteClick }: ShowcaseGa
                         </div>
                     ) : (
                         <div className="grid grid-cols-2 gap-3">
-                            {posts.map((post, idx) => {
-                                const hasImage = (post.imageUrls?.length ?? 0) > 0;
-                                const firstImage = hasImage ? post.imageUrls![0] : null;
-
-                                return (
-                                    <div
-                                        key={post.id}
-                                        className="group overflow-hidden rounded-2xl bg-white dark:bg-gray-800 shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer active:scale-[0.98]"
-                                    >
-                                        {/* 이미지 영역 */}
-                                        <div className="aspect-[4/3] relative overflow-hidden">
-                                            {firstImage ? (
-                                                <>
-                                                    <img
-                                                        src={firstImage}
-                                                        alt={post.title}
-                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                                        loading="lazy"
-                                                    />
-                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-                                                    {(post.imageUrls?.length ?? 0) > 1 && (
-                                                        <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-                                                            <ImageIcon className="w-3 h-3" />
-                                                            {post.imageUrls!.length}
-                                                        </div>
-                                                    )}
-                                                </>
-                                            ) : (
-                                                <div className={`w-full h-full bg-gradient-to-br ${gradients[idx % gradients.length]} flex items-center justify-center`}>
-                                                    <PawPrint className="w-12 h-12 text-white/30" />
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* 텍스트 영역 */}
-                                        <div className="p-3">
-                                            <h3 className="font-bold text-sm text-gray-800 dark:text-white line-clamp-2 mb-1 group-hover:text-amber-600 transition-colors">
-                                                {post.title}
-                                            </h3>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 truncate">
-                                                {post.authorName} · {formatTime(post.createdAt)}
-                                            </p>
-                                            <div className="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500">
-                                                <span className="flex items-center gap-1">
-                                                    <Heart className="w-3.5 h-3.5" />
-                                                    {post.likes}
-                                                </span>
-                                                <span className="flex items-center gap-1">
-                                                    <MessageCircle className="w-3.5 h-3.5" />
-                                                    {post.comments}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                            {posts.map((post, idx) => (
+                                <ShowcaseCard
+                                    key={post.id}
+                                    post={post}
+                                    gradientClass={gradients[idx % gradients.length]}
+                                />
+                            ))}
                         </div>
                     )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+/** 개별 카드 컴포넌트 (영상 호버 재생 지원) */
+function ShowcaseCard({
+    post,
+    gradientClass,
+}: {
+    post: ShowcasePost;
+    gradientClass: string;
+}) {
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const hasImage = (post.imageUrls?.length ?? 0) > 0;
+    const firstImage = hasImage ? post.imageUrls![0] : null;
+
+    const handlePlay = () => {
+        if (videoRef.current) {
+            videoRef.current.play().catch(() => {});
+            setIsPlaying(true);
+        }
+    };
+
+    const handlePause = () => {
+        if (videoRef.current) {
+            videoRef.current.pause();
+            videoRef.current.currentTime = 0;
+            setIsPlaying(false);
+        }
+    };
+
+    return (
+        <div
+            className="group overflow-hidden rounded-2xl bg-white dark:bg-gray-800 shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer active:scale-[0.98]"
+            onMouseEnter={post.videoUrl ? handlePlay : undefined}
+            onMouseLeave={post.videoUrl ? handlePause : undefined}
+            onClick={post.videoUrl ? () => {
+                if (isPlaying) handlePause();
+                else handlePlay();
+            } : undefined}
+        >
+            {/* 미디어 영역 */}
+            <div className="aspect-[4/3] relative overflow-hidden">
+                {post.videoUrl ? (
+                    <>
+                        <video
+                            ref={videoRef}
+                            src={post.videoUrl}
+                            poster={firstImage || undefined}
+                            muted
+                            playsInline
+                            loop
+                            className="w-full h-full object-cover"
+                        />
+                        {/* 재생 오버레이 */}
+                        {!isPlaying && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                                <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
+                                    <Play className="w-6 h-6 text-amber-600 ml-0.5" />
+                                </div>
+                            </div>
+                        )}
+                        {/* AI 영상 뱃지 */}
+                        <div className="absolute top-2 left-2 bg-amber-500/90 text-white text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                            AI 영상
+                        </div>
+                    </>
+                ) : firstImage ? (
+                    <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                            src={firstImage}
+                            alt={post.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+                    </>
+                ) : (
+                    <div className={`w-full h-full bg-gradient-to-br ${gradientClass} flex items-center justify-center`}>
+                        <PawPrint className="w-12 h-12 text-white/30" />
+                    </div>
+                )}
+            </div>
+
+            {/* 텍스트 영역 */}
+            <div className="p-3">
+                <h3 className="font-bold text-sm text-gray-800 dark:text-white line-clamp-2 mb-1 group-hover:text-amber-600 transition-colors">
+                    {post.title}
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 truncate">
+                    {post.authorName} · {formatTime(post.createdAt)}
+                </p>
+                <div className="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500">
+                    <span className="flex items-center gap-1">
+                        <Heart className="w-3.5 h-3.5" />
+                        {post.likes}
+                    </span>
+                    <span className="flex items-center gap-1">
+                        <MessageCircle className="w-3.5 h-3.5" />
+                        {post.comments}
+                    </span>
                 </div>
             </div>
         </div>
