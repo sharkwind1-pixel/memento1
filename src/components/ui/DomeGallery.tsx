@@ -550,8 +550,9 @@ export default function DomeGallery({
   useEffect(() => {
     return () => {
       document.body.classList.remove('dg-scroll-lock');
+      stopInertia();
     };
-  }, []);
+  }, [stopInertia]);
 
   const cssStyles = `
     .sphere-root {

@@ -31,23 +31,27 @@ export function TrueFocus({
   const characters = text.split('')
 
   useEffect(() => {
+    let intervalId: ReturnType<typeof setInterval> | null = null
+
     const startAnimation = setTimeout(() => {
       let currentIndex = 0
-      
-      const interval = setInterval(() => {
+
+      intervalId = setInterval(() => {
         if (currentIndex < characters.length) {
           setFocusedIndex(currentIndex)
           currentIndex++
         } else {
-          clearInterval(interval)
+          if (intervalId) clearInterval(intervalId)
+          intervalId = null
           setIsComplete(true)
         }
       }, staggerDelay * 1000)
-
-      return () => clearInterval(interval)
     }, delay)
 
-    return () => clearTimeout(startAnimation)
+    return () => {
+      clearTimeout(startAnimation)
+      if (intervalId) clearInterval(intervalId)
+    }
   }, [characters.length, delay, staggerDelay])
 
   // 단어 단위로 묶어서 줄바꿈 방지
