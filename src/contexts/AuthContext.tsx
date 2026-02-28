@@ -312,12 +312,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setSession(session);
                 setUser(session?.user ?? null);
 
-                // 세션 확인 즉시 로딩 해제 (UI를 빠르게 표시)
-                setLoading(false);
-
-                // 로그인 상태면 프로필+포인트를 백그라운드에서 로드 (UI 블로킹 없음)
                 if (session?.user) {
-                    refreshProfile().then(() => checkDailyLogin());
+                    // 로그인 상태: 프로필 로드 완료 후 로딩 해제
+                    // (프로필 로드 전에 UI 표시하면 닉네임 설정창, Lv1 아이콘 등 깜빡임 발생)
+                    await refreshProfile();
+                    setLoading(false);
+                    checkDailyLogin();
+                } else {
+                    // 비로그인 상태: 즉시 로딩 해제
+                    setLoading(false);
                 }
             } catch {
                 // 세션 로드 실패해도 앱은 비로그인 상태로 동작

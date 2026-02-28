@@ -103,7 +103,7 @@ function HomeContent() {
     // ========================================================================
     // Context & Hooks
     // ========================================================================
-    const { user, loading } = useAuth();
+    const { user, loading, profileLoaded } = useAuth();
     // 주의: usePets()를 호출하면 PetContext consumer가 되어 timeline 등 변경 시 전체 리렌더
     // 온보딩 체크에만 필요하므로 별도 effect에서 직접 Supabase 조회로 대체
     const router = useRouter();
@@ -349,12 +349,13 @@ function HomeContent() {
             newUserFlowCheckedRef.current = null;
         }
 
-        // loading이 false가 되면 (auth 완료) 온보딩 체크 실행
-        if (user && !loading) {
+        // loading이 false이고 프로필 로드 완료 후 온보딩 체크 실행
+        // (profileLoaded 전에 실행하면 닉네임이 아직 로드 안 돼서 설정창이 잘못 뜸)
+        if (user && !loading && profileLoaded) {
             checkNewUserFlow();
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user, loading]);
+    }, [user, loading, profileLoaded]);
 
     // ========================================================================
     // 탭 변경 핸들러

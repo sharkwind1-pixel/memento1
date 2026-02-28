@@ -96,11 +96,11 @@ export function useHomePage() {
             const res = await fetch(`${API.POSTS}?${params}`);
             if (res.ok) {
                 const data = await res.json();
-                // 이미지 있는 글 우선 정렬
+                // 영상 있는 글 > 이미지 있는 글 우선 정렬
                 const sorted = (data.posts || []).sort((a: ShowcasePost, b: ShowcasePost) => {
-                    const aHasImg = (a.imageUrls?.length ?? 0) > 0 ? 1 : 0;
-                    const bHasImg = (b.imageUrls?.length ?? 0) > 0 ? 1 : 0;
-                    return bHasImg - aHasImg;
+                    const aScore = (a.videoUrl ? 2 : 0) + ((a.imageUrls?.length ?? 0) > 0 ? 1 : 0);
+                    const bScore = (b.videoUrl ? 2 : 0) + ((b.imageUrls?.length ?? 0) > 0 ? 1 : 0);
+                    return bScore - aScore;
                 });
                 // DB 게시글 있으면 사용, 없으면 목업 폴백
                 setShowcasePosts(sorted.length > 0 ? sorted : MOCK_SHOWCASE_POSTS);
