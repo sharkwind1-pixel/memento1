@@ -129,9 +129,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const minimiList = minimiListResult.data || [];
 
             // 관리자 체크
+            // 1) auth.users.email 기반
             const emailAdmin = ADMIN_EMAILS.includes(currentUser.email || "");
+            // 2) user_metadata/identities에서 이메일 추출 (카카오 등 소셜 로그인 시 email이 null일 수 있음)
+            const metaEmail = currentUser.user_metadata?.email as string | undefined;
+            const identityEmails = (currentUser.identities || [])
+                .map(id => id.identity_data?.email as string | undefined)
+                .filter(Boolean) as string[];
+            const allEmails = [currentUser.email, metaEmail, ...identityEmails].filter(Boolean) as string[];
+            const metaAdmin = allEmails.some(e => ADMIN_EMAILS.includes(e));
+            // 3) profiles.is_admin DB 기반
             const dbAdmin = !error && data?.is_admin === true;
-            setIsAdminUser(emailAdmin || dbAdmin);
+            setIsAdminUser(emailAdmin || metaAdmin || dbAdmin);
 
             // 프리미엄 체크
             if (!error && data?.is_premium === true) {
@@ -551,7 +560,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 provider: "kakao",
                 options: {
                     redirectTo: `${window.location.origin}/auth/callback`,
-                    scopes: "profile_nickname profile_image",
+                    scopes: "profile_nickname profile_image account_email",
                 },
             });
             return { error };
