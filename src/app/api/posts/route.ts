@@ -27,6 +27,16 @@ export const dynamic = "force-dynamic";
 // 게시글 목록 조회
 export async function GET(request: NextRequest) {
     try {
+        // Rate Limit 체크
+        const clientIP = await getClientIP();
+        const rateLimit = checkRateLimit(clientIP, "general");
+        if (!rateLimit.allowed) {
+            return NextResponse.json(
+                { error: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요" },
+                { status: 429, headers: getRateLimitHeaders(rateLimit.remaining, rateLimit.resetIn) }
+            );
+        }
+
         const supabase = await createServerSupabase();
         const { searchParams } = new URL(request.url);
 
@@ -135,7 +145,7 @@ export async function POST(request: NextRequest) {
         const user = await getAuthUser();
         if (!user) {
             return NextResponse.json(
-                { error: "로그인이 필요합니다." },
+                { error: "로그인이 필요합니다" },
                 { status: 401 }
             );
         }
@@ -157,7 +167,7 @@ export async function POST(request: NextRequest) {
         const sanitizedAuthorName = sanitizeInput(authorName).slice(0, 50);
 
         if (!sanitizedTitle || !sanitizedContent) {
-            return NextResponse.json({ error: "유효하지 않은 입력입니다." }, { status: 400 });
+            return NextResponse.json({ error: "유효하지 않은 입력입니다" }, { status: 400 });
         }
 
         // 5. 이미지 URL 검증 (최대 5개, URL 형식)
