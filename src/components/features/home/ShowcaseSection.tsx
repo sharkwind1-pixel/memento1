@@ -43,7 +43,7 @@ export default function ShowcaseSection({
     ];
 
     const handleMoreClick = () => {
-        sessionStorage.setItem("memento-community-badge", "자랑");
+        sessionStorage.setItem("memento-community-view", "showcase");
         setSelectedTab("community");
     };
 

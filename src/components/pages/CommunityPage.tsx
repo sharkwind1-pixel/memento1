@@ -14,6 +14,8 @@ import WritePostModal from "@/components/features/community/WritePostModal";
 import PostDetailView from "@/components/features/community/PostDetailView";
 import CommunityHeader from "@/components/features/community/CommunityHeader";
 import CommunityPostList from "@/components/features/community/CommunityPostList";
+import ShowcaseBanner from "@/components/features/community/ShowcaseBanner";
+import ShowcaseGalleryView from "@/components/features/community/ShowcaseGalleryView";
 import MinihompyVisitModal from "@/components/features/minihompy/MinihompyVisitModal";
 import ReportModal from "@/components/modals/ReportModal";
 import type { CommunitySubcategory, PostTag, CommunityPageProps } from "@/types";
@@ -22,6 +24,7 @@ import type { Post } from "@/components/features/community/communityTypes";
 import {
     SUBCATEGORIES,
     MOCK_POSTS,
+    MOCK_SHOWCASE_POSTS,
     getCategoryColor,
 } from "@/components/features/community/communityTypes";
 
@@ -53,6 +56,18 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
         }
         return "all";
     });
+    // "함께 보기" 독립 갤러리 뷰 상태
+    const [showcaseView, setShowcaseView] = useState<boolean>(() => {
+        if (typeof window !== "undefined") {
+            const fromHome = sessionStorage.getItem("memento-community-view");
+            if (fromHome === "showcase") {
+                sessionStorage.removeItem("memento-community-view");
+                return true;
+            }
+        }
+        return false;
+    });
+
     const [searchInput, setSearchInput] = useState<string>("");
     const [searchQuery, setSearchQuery] = useState<string>("");
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -262,6 +277,35 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
         );
     }
 
+    // "함께 보기" 갤러리 뷰 모드
+    if (showcaseView) {
+        return (
+            <div
+                className="min-h-screen relative overflow-hidden"
+                style={{ contain: 'layout style', transform: 'translateZ(0)' }}
+            >
+                <ShowcaseGalleryView
+                    onBack={() => setShowcaseView(false)}
+                    onWriteClick={handleWriteClick}
+                />
+
+                {/* 글쓰기 모달 (갤러리 뷰에서도 접근 가능) */}
+                <WritePostModal
+                    isOpen={showWriteModal}
+                    onClose={() => setShowWriteModal(false)}
+                    boardType="free"
+                    onSuccess={() => {
+                        fetchPosts(false);
+                        setShowcaseView(false);
+                    }}
+                />
+            </div>
+        );
+    }
+
+    // 배너용 미리보기 이미지
+    const showcasePreviewImages = MOCK_SHOWCASE_POSTS.slice(0, 4).map(p => p.imageUrls[0]);
+
     return (
         <div
             className="min-h-screen relative overflow-hidden"
@@ -291,6 +335,13 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
                     }}
                     onSortChange={setSortBy}
                     onWriteClick={handleWriteClick}
+                />
+
+                {/* "함께 보기" 배너 - 모든 서브카테고리에서 항상 표시 */}
+                <ShowcaseBanner
+                    previewImages={showcasePreviewImages}
+                    postCount={MOCK_SHOWCASE_POSTS.length}
+                    onOpen={() => setShowcaseView(true)}
                 />
 
                 <CommunityPostList
