@@ -284,18 +284,12 @@ function ShowcaseCard({
     return (
         <div
             className="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer active:scale-[0.98]"
+            onClick={onSelect}
             onMouseEnter={post.videoUrl ? handlePlay : undefined}
             onMouseLeave={post.videoUrl ? handlePause : undefined}
         >
-            {/* 미디어 영역 - 클릭 시 영상 재생/중지 */}
-            <div
-                className="aspect-[4/3] relative overflow-hidden"
-                onClick={post.videoUrl ? (e) => {
-                    e.stopPropagation();
-                    if (isPlaying) handlePause();
-                    else handlePlay();
-                } : undefined}
-            >
+            {/* 미디어 영역 */}
+            <div className="aspect-[4/3] relative overflow-hidden">
                 {post.videoUrl ? (
                     <>
                         <video
@@ -307,13 +301,29 @@ function ShowcaseCard({
                             loop
                             className="w-full h-full object-cover"
                         />
-                        {/* 재생 오버레이 */}
+                        {/* 재생 오버레이 - 클릭 시 영상 재생 (상세보기 이동 방지) */}
                         {!isPlaying && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                            <div
+                                className="absolute inset-0 flex items-center justify-center bg-black/20"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePlay();
+                                }}
+                            >
                                 <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
                                     <Play className="w-6 h-6 text-amber-600 ml-0.5" />
                                 </div>
                             </div>
+                        )}
+                        {/* 재생 중 클릭 시 중지 (상세보기 이동 방지) */}
+                        {isPlaying && (
+                            <div
+                                className="absolute inset-0"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePause();
+                                }}
+                            />
                         )}
                         {/* AI 영상 뱃지 */}
                         <div className="absolute top-2 left-2 bg-amber-500/90 text-white text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
@@ -364,8 +374,8 @@ function ShowcaseCard({
                 </div>
             )}
 
-            {/* 텍스트 영역 - 클릭 시 상세보기 */}
-            <div className="p-3" onClick={onSelect}>
+            {/* 텍스트 영역 */}
+            <div className="p-3">
                 <h3 className="font-bold text-sm text-gray-800 dark:text-white line-clamp-2 mb-1 group-hover:text-amber-600 transition-colors">
                     {post.title}
                 </h3>
