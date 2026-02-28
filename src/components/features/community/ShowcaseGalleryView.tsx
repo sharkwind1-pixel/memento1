@@ -19,11 +19,22 @@ import {
     Pen,
     Play,
     ArrowRight,
+    MoreVertical,
+    Trash2,
+    EyeOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { API } from "@/config/apiEndpoints";
 import { MOCK_SHOWCASE_POSTS, formatTime } from "./communityTypes";
 import PostDetailView from "./PostDetailView";
+import { useAuth } from "@/contexts/AuthContext";
+import { authFetch } from "@/lib/auth-fetch";
 import type { ShowcasePost } from "@/components/features/home/types";
 
 interface ShowcaseGalleryViewProps {
@@ -32,6 +43,7 @@ interface ShowcaseGalleryViewProps {
 }
 
 export default function ShowcaseGalleryView({ onBack, onWriteClick }: ShowcaseGalleryViewProps) {
+    const { user } = useAuth();
     const [posts, setPosts] = useState<ShowcasePost[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
@@ -82,6 +94,39 @@ export default function ShowcaseGalleryView({ onBack, onWriteClick }: ShowcaseGa
     useEffect(() => {
         fetchPosts();
     }, [fetchPosts]);
+
+    // 카드에서 바로 삭제
+    const handleDeletePost = async (postId: string) => {
+        if (!confirm("정말 삭제하시겠습니까? 삭제하면 복구할 수 없습니다.")) return;
+        try {
+            const res = await authFetch(API.POST_DETAIL(postId), { method: "DELETE" });
+            if (res.ok) {
+                setPosts(prev => prev.filter(p => p.id !== postId));
+            } else {
+                alert("삭제에 실패했습니다");
+            }
+        } catch {
+            alert("삭제에 실패했습니다");
+        }
+    };
+
+    // 카드에서 바로 숨기기
+    const handleHidePost = async (postId: string) => {
+        if (!confirm("이 게시글을 숨기시겠어요? 다른 사람들에게 보이지 않게 됩니다.")) return;
+        try {
+            const res = await authFetch(API.POST_DETAIL(postId), {
+                method: "PATCH",
+                body: JSON.stringify({ isHidden: true }),
+            });
+            if (res.ok) {
+                setPosts(prev => prev.filter(p => p.id !== postId));
+            } else {
+                alert("숨기기에 실패했습니다");
+            }
+        } catch {
+            alert("숨기기에 실패했습니다");
+        }
+    };
 
     // 게시글 상세보기 모드
     if (selectedPostId) {
@@ -181,12 +226,14 @@ export default function ShowcaseGalleryView({ onBack, onWriteClick }: ShowcaseGa
                                     key={post.id}
                                     post={post}
                                     gradientClass={gradients[idx % gradients.length]}
+                                    currentUserId={user?.id}
                                     onSelect={() => {
-                                        // 목업 게시글(showcase-)은 상세보기 불가
                                         if (!post.id.startsWith("showcase-")) {
                                             setSelectedPostId(post.id);
                                         }
                                     }}
+                                    onDelete={() => handleDeletePost(post.id)}
+                                    onHide={() => handleHidePost(post.id)}
                                 />
                             ))}
                         </div>
@@ -201,12 +248,19 @@ export default function ShowcaseGalleryView({ onBack, onWriteClick }: ShowcaseGa
 function ShowcaseCard({
     post,
     gradientClass,
+    currentUserId,
     onSelect,
+    onDelete,
+    onHide,
 }: {
     post: ShowcasePost;
     gradientClass: string;
+    currentUserId?: string;
     onSelect: () => void;
+    onDelete: () => void;
+    onHide: () => void;
 }) {
+    const isOwner = currentUserId && post.userId === currentUserId;
     const videoRef = useRef<HTMLVideoElement>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const hasImage = (post.imageUrls?.length ?? 0) > 0;
@@ -229,7 +283,7 @@ function ShowcaseCard({
 
     return (
         <div
-            className="group overflow-hidden rounded-2xl bg-white dark:bg-gray-800 shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer active:scale-[0.98]"
+            className="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer active:scale-[0.98]"
             onMouseEnter={post.videoUrl ? handlePlay : undefined}
             onMouseLeave={post.videoUrl ? handlePause : undefined}
         >
@@ -283,6 +337,32 @@ function ShowcaseCard({
                     </div>
                 )}
             </div>
+
+            {/* 본인 글 더보기 메뉴 (삭제/숨기기) */}
+            {isOwner && (
+                <div className="absolute top-2 right-2 z-10" onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button
+                                className="w-7 h-7 rounded-full bg-black/40 hover:bg-black/60 flex items-center justify-center transition-colors"
+                                aria-label="더보기"
+                            >
+                                <MoreVertical className="w-4 h-4 text-white" />
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="min-w-[120px]">
+                            <DropdownMenuItem onClick={onHide} className="text-amber-600">
+                                <EyeOff className="w-4 h-4 mr-2" />
+                                숨기기
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={onDelete} className="text-red-500">
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                삭제
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            )}
 
             {/* 텍스트 영역 - 클릭 시 상세보기 */}
             <div className="p-3" onClick={onSelect}>
