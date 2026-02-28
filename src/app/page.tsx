@@ -263,92 +263,79 @@ function HomeContent() {
                     .eq("id", user.id)
                     .single();
 
-                // 닉네임이 없거나 이메일 앞부분과 같으면 (자동 생성된 경우) 닉네임 설정 필요
-                const emailPrefix = user.email?.split("@")[0] || "";
-                const needsNickname = !profileData?.nickname ||
-                    profileData.nickname === emailPrefix ||
-                    profileData.nickname === user.user_metadata?.full_name; // OAuth에서 가져온 이름
-
-                if (needsNickname) {
+                // 닉네임이 없으면 설정 필요 (단, 어떤 값이든 있으면 통과)
+                if (!profileData?.nickname) {
                     setShowNicknameSetup(true);
                     return; // 닉네임 설정 후 다시 체크 (ref 마킹 안함)
                 }
 
-                // 2. DB 상태가 null이면 localStorage 동기화 (관리자 초기화 대응)
-                // DB가 진실의 원천 (Source of Truth)
-                if (!profileData?.tutorial_completed_at) {
-                    localStorage.removeItem("memento-ani-tutorial-complete");
+                // 2. 온보딩/튜토리얼 완료 여부: DB 또는 localStorage 중 하나라도 있으면 완료로 간주
+                const onboardingDone = !!profileData?.onboarding_completed_at ||
+                    localStorage.getItem("memento-ani-onboarding-complete") === "true";
+                const tutorialDone = !!profileData?.tutorial_completed_at ||
+                    localStorage.getItem("memento-ani-tutorial-complete") === "true";
+
+                // DB ↔ localStorage 양방향 동기화
+                if (profileData?.onboarding_completed_at) {
+                    localStorage.setItem("memento-ani-onboarding-complete", "true");
+                } else if (onboardingDone && !profileData?.onboarding_completed_at) {
+                    // localStorage에만 있고 DB에 없으면 DB에 기록
+                    supabase.from("profiles").update({
+                        onboarding_completed_at: new Date().toISOString(),
+                    }).eq("id", user.id);
                 }
-                if (!profileData?.onboarding_completed_at) {
-                    localStorage.removeItem("memento-ani-onboarding-complete");
+                if (profileData?.tutorial_completed_at) {
+                    localStorage.setItem("memento-ani-tutorial-complete", "true");
+                } else if (tutorialDone && !profileData?.tutorial_completed_at) {
+                    supabase.from("profiles").update({
+                        tutorial_completed_at: new Date().toISOString(),
+                    }).eq("id", user.id);
                 }
 
-                // 3. 기존 플로우 진행 (순서 변경: 온보딩 질문 먼저 → 튜토리얼 나중에)
-                const tutorialCompletedLocal = localStorage.getItem("memento-ani-tutorial-complete") === "true";
-                const onboardingCompletedLocal = localStorage.getItem("memento-ani-onboarding-complete") === "true";
+                // 3. 둘 다 완료 → 기존 유저, 바로 통과
+                if (onboardingDone && tutorialDone) {
+                    newUserFlowCheckedRef.current = user.id;
+                    supabase.from("profiles").update({
+                        last_seen_at: new Date().toISOString(),
+                    }).eq("id", user.id);
+                    return;
+                }
 
-                // 펫이 있는지 직접 Supabase 조회 (usePets() 구독 방지 - context 리렌더 차단)
+                // 4. 펫이 있고 둘 다 완료 → 통과
                 const { count: petCount } = await supabase
                     .from("pets")
                     .select("id", { count: "exact", head: true })
                     .eq("user_id", user.id);
 
-                // 펫이 있어도, DB에서 온보딩이 초기화되었으면 온보딩 표시
-                const isOnboardingReset = !profileData?.onboarding_completed_at || !profileData?.tutorial_completed_at;
-
-                if ((petCount ?? 0) > 0 && !isOnboardingReset) {
+                if ((petCount ?? 0) > 0 && onboardingDone) {
+                    // 펫이 있으면 온보딩은 확실히 한 것 → 튜토리얼만 스킵 가능
                     newUserFlowCheckedRef.current = user.id;
-                    supabase
-                        .from("profiles")
-                        .update({ last_seen_at: new Date().toISOString() })
-                        .eq("id", user.id);
+                    supabase.from("profiles").update({
+                        last_seen_at: new Date().toISOString(),
+                    }).eq("id", user.id);
                     return;
                 }
 
-                if (onboardingCompletedLocal && tutorialCompletedLocal && !isOnboardingReset) {
-                    newUserFlowCheckedRef.current = user.id;
-                    return;
-                }
-
-                // localStorage 동기화
-                if (profileData?.onboarding_completed_at) {
-                    localStorage.setItem("memento-ani-onboarding-complete", "true");
-                }
-                if (profileData?.tutorial_completed_at) {
-                    localStorage.setItem("memento-ani-tutorial-complete", "true");
-                }
-
-                // DB 둘 다 완료 상태면 리턴
-                if (profileData?.onboarding_completed_at && profileData?.tutorial_completed_at) {
-                    newUserFlowCheckedRef.current = user.id;
-                    return;
-                }
-
-                // 순서: 온보딩 질문 먼저!
-                // 온보딩 미완료 → 온보딩 표시
-                if (!profileData?.onboarding_completed_at) {
+                // 5. 온보딩 미완료 → 온보딩 표시
+                if (!onboardingDone) {
                     setShowOnboarding(true);
-                    return; // ref 마킹 안함 (완료 후 재체크 필요)
+                    return;
                 }
 
-                // 온보딩 완료, 튜토리얼 미완료 → 튜토리얼 표시
-                if (profileData?.onboarding_completed_at && !profileData?.tutorial_completed_at) {
-                    // DB에서 user_type을 가져와서 튜토리얼 완료 후 후속 가이드 분기에 사용
+                // 6. 온보딩 완료, 튜토리얼 미완료 → 튜토리얼 표시
+                if (onboardingDone && !tutorialDone) {
                     const ut = profileData?.user_type as "planning" | "current" | "memorial" | null;
                     if (ut) setPostGuideUserType(ut);
                     setShowTutorial(true);
-                    return; // ref 마킹 안함 (완료 후 재체크 필요)
+                    return;
                 }
 
                 newUserFlowCheckedRef.current = user.id;
-                await supabase
-                    .from("profiles")
-                    .update({ last_seen_at: new Date().toISOString() })
-                    .eq("id", user.id);
             } catch {
-                // 에러 시에도 온보딩 먼저
-                const onboardingCompletedLocal = localStorage.getItem("memento-ani-onboarding-complete") === "true";
-                if (!onboardingCompletedLocal) {
+                // 에러 시 → localStorage라도 있으면 온보딩 건너뛰기
+                if (localStorage.getItem("memento-ani-onboarding-complete") === "true") {
+                    newUserFlowCheckedRef.current = user?.id || null;
+                } else {
                     setShowOnboarding(true);
                 }
             }

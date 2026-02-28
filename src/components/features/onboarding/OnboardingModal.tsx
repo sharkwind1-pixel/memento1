@@ -114,7 +114,7 @@ export default function OnboardingModal({
     onGoToAIChat,
     onShowPostGuide,
 }: OnboardingModalProps) {
-    const { user } = useAuth();
+    const { user, refreshProfile } = useAuth();
     const [step, setStep] = useState(0);
     const [data, setData] = useState<OnboardingData>({
         userType: null,
@@ -135,7 +135,7 @@ export default function OnboardingModal({
 
     if (!isOpen) return null;
 
-    // 데이터 저장
+    // 데이터 저장 (DB + localStorage 동시 저장)
     const saveOnboardingData = async () => {
         if (!user) return;
 
@@ -150,8 +150,12 @@ export default function OnboardingModal({
                 })
                 .eq("id", user.id);
 
-        } catch {}
- finally {
+            if (error) {
+                console.error("[Onboarding] DB 저장 실패:", error);
+            }
+        } catch (err) {
+            console.error("[Onboarding] 저장 오류:", err);
+        } finally {
             setSaving(false);
         }
     };
@@ -160,6 +164,8 @@ export default function OnboardingModal({
     const handleComplete = async () => {
         await saveOnboardingData();
         markOnboardingComplete();
+        // DB 저장 후 프로필 새로고침 (petType 아이콘 즉시 반영)
+        await refreshProfile();
         onClose();
 
         // 유저 타입별 PostOnboardingGuide 표시
@@ -168,8 +174,16 @@ export default function OnboardingModal({
         }
     };
 
-    // 건너뛰기
-    const handleSkip = () => {
+    // 건너뛰기 - DB에도 완료 기록 (Safari localStorage 초기화 대응)
+    const handleSkip = async () => {
+        if (user) {
+            await supabase
+                .from("profiles")
+                .update({
+                    onboarding_completed_at: new Date().toISOString(),
+                })
+                .eq("id", user.id);
+        }
         markOnboardingComplete();
         onClose();
     };
