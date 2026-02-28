@@ -1481,7 +1481,7 @@ CREATE POLICY "Admins can manage all reports" ON reports
         EXISTS (
             SELECT 1 FROM profiles
             WHERE profiles.id = auth.uid()
-            AND profiles.email IN ('sharkwind1@gmail.com')
+            AND profiles.is_admin = true
         )
     );
 
@@ -1505,7 +1505,7 @@ CREATE POLICY "Admin only access" ON deleted_accounts
         EXISTS (
             SELECT 1 FROM profiles
             WHERE profiles.id = auth.uid()
-            AND profiles.email IN ('sharkwind1@gmail.com')
+            AND profiles.is_admin = true
         )
     );
 
