@@ -80,22 +80,23 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: "게시글 처리 중 오류가 발생했습니다" }, { status: 500 });
         }
 
-        // 댓글 수 계산 (신규/레거시 컬럼 모두 지원)
+        // 댓글 수 계산
+        // DB 실제 컬럼: id, user_id, board_type, animal_type, badge, title, content,
+        //               author_name, likes, views, created_at, updated_at, video_url
         const posts = (data || []).map(post => ({
             id: post.id,
             userId: post.user_id,
-            boardType: post.board_type || post.category || "free",
+            boardType: post.board_type || "free",
             animalType: post.animal_type,
             badge: post.badge || "",
             title: post.title,
             content: post.content,
             authorName: post.author_name,
-            likes: post.likes ?? post.likes_count ?? 0,
+            likes: post.likes ?? 0,
             views: post.views ?? 0,
-            comments: post.post_comments?.[0]?.count || (post.comments ?? post.comments_count ?? 0),
-            imageUrls: post.image_urls || [],
+            comments: post.post_comments?.[0]?.count ?? 0,
+            imageUrls: [],
             videoUrl: post.video_url || null,
-            isPublic: post.is_public ?? false,
             createdAt: post.created_at,
         }));
 
@@ -169,37 +170,22 @@ export async function POST(request: NextRequest) {
             : null;
 
         // 6. 게시글 저장 (세션에서 가져온 userId 사용)
-        const baseRow = {
-            user_id: user.id, // 세션에서 가져온 userId 사용 (보안!)
-            board_type: boardType,
-            category: boardType, // 레거시 호환
-            animal_type: animalType || tag || null,
-            badge,
-            title: sanitizedTitle,
-            content: sanitizedContent,
-            author_name: sanitizedAuthorName,
-            ...(validImageUrls.length > 0 && { image_urls: validImageUrls }),
-            ...(boardType === "memorial" && { is_public: isPublic ?? false }),
-        };
-
-        // video_url 컬럼이 DB에 아직 없을 수 있으므로, 실패 시 video_url 없이 재시도
-        let result = await supabase
+        // DB 실제 컬럼: id, user_id, board_type, animal_type, badge, title, content,
+        //               author_name, likes, views, created_at, updated_at, video_url
+        const { data, error } = await supabase
             .from("community_posts")
-            .insert([{ ...baseRow, ...(validVideoUrl && { video_url: validVideoUrl }) }])
+            .insert([{
+                user_id: user.id,
+                board_type: boardType,
+                animal_type: animalType || tag || null,
+                badge,
+                title: sanitizedTitle,
+                content: sanitizedContent,
+                author_name: sanitizedAuthorName,
+                ...(validVideoUrl && { video_url: validVideoUrl }),
+            }])
             .select()
             .single();
-
-        if (result.error && validVideoUrl && result.error.code === "PGRST204") {
-            // video_url 컬럼이 아직 없는 경우 — video_url 빼고 재시도
-            console.warn("[Posts POST] video_url 컬럼 미존재, video_url 없이 재시도");
-            result = await supabase
-                .from("community_posts")
-                .insert([baseRow])
-                .select()
-                .single();
-        }
-
-        const { data, error } = result;
 
         if (error) {
             console.error("[Posts POST] 작성 에러:", error);
