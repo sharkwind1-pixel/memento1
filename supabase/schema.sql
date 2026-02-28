@@ -1497,6 +1497,15 @@ CREATE POLICY "Authenticated users can create inquiries" ON support_inquiries
 CREATE POLICY "Service role can manage all inquiries" ON support_inquiries
     FOR ALL USING (auth.jwt() ->> 'role' = 'service_role');
 
+CREATE POLICY "Admins can manage all inquiries" ON support_inquiries
+    FOR ALL USING (
+        EXISTS (
+            SELECT 1 FROM profiles
+            WHERE profiles.id = auth.uid()
+            AND profiles.is_admin = true
+        )
+    );
+
 -- Deleted Accounts (관리자만 접근)
 ALTER TABLE deleted_accounts ENABLE ROW LEVEL SECURITY;
 
