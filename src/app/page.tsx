@@ -171,8 +171,8 @@ function HomeContent() {
     const [postGuideUserType, setPostGuideUserType] = useState<"planning" | "current" | "memorial" | null>(null);
     const [showRecordTutorial, setShowRecordTutorial] = useState(false);
     const [recordTutorialUserType, setRecordTutorialUserType] = useState<"current" | "memorial" | null>(null);
-    // 닉네임 설정 완료 후 플로우 재실행 트리거
-    const [flowRecheck, setFlowRecheck] = useState(0);
+    // 온보딩 플로우 1회 트리거 여부 (세션 내 중복 방지)
+    const onboardingTriggeredRef = useRef(false);
 
     // 현재 상태를 ref로 추적 (useEffect에서 stale closure 방지)
     const currentStateRef = useRef({ tab: selectedTab, sub: selectedSubcategory });
@@ -249,13 +249,18 @@ function HomeContent() {
         const checkNewUserFlow = async () => {
             if (!user) return;
 
-            // 같은 유저에 대해 이미 체크 완료했으면 스킵 (크로스탭 SIGNED_IN 재트리거 방지)
+            // 같은 유저에 대해 이미 체크 완료했으면 스킵
             if (newUserFlowCheckedRef.current === user.id) return;
 
-            // 이미 모달이 열려 있으면 중복 실행 방지 (Safari 복귀 시 중복 모달 버그 수정)
+            // 이미 모달이 열려 있으면 중복 방지
             if (modalOpenRef.current) return;
 
-            // 1. 먼저 닉네임 설정 여부 확인
+            // 이번 세션에서 이미 온보딩을 한 번 트리거했으면 다시 안 띄움
+            if (onboardingTriggeredRef.current) {
+                newUserFlowCheckedRef.current = user.id;
+                return;
+            }
+
             try {
                 const { data: profileData } = await supabase
                     .from("profiles")
@@ -263,37 +268,28 @@ function HomeContent() {
                     .eq("id", user.id)
                     .single();
 
-                // 닉네임이 없으면 설정 필요 (단, 어떤 값이든 있으면 통과)
+                // 1. 닉네임이 없으면 설정 필요
                 if (!profileData?.nickname) {
                     setShowNicknameSetup(true);
-                    return; // 닉네임 설정 후 다시 체크 (ref 마킹 안함)
+                    return;
                 }
 
-                // 2. 온보딩/튜토리얼 완료 여부: DB 또는 localStorage 중 하나라도 있으면 완료로 간주
+                // 2. 온보딩 완료 여부: DB 또는 localStorage
                 const onboardingDone = !!profileData?.onboarding_completed_at ||
                     localStorage.getItem("memento-ani-onboarding-complete") === "true";
                 const tutorialDone = !!profileData?.tutorial_completed_at ||
                     localStorage.getItem("memento-ani-tutorial-complete") === "true";
 
-                // DB ↔ localStorage 양방향 동기화
+                // DB ↔ localStorage 동기화
                 if (profileData?.onboarding_completed_at) {
                     localStorage.setItem("memento-ani-onboarding-complete", "true");
-                } else if (onboardingDone && !profileData?.onboarding_completed_at) {
-                    // localStorage에만 있고 DB에 없으면 DB에 기록
-                    supabase.from("profiles").update({
-                        onboarding_completed_at: new Date().toISOString(),
-                    }).eq("id", user.id);
                 }
                 if (profileData?.tutorial_completed_at) {
                     localStorage.setItem("memento-ani-tutorial-complete", "true");
-                } else if (tutorialDone && !profileData?.tutorial_completed_at) {
-                    supabase.from("profiles").update({
-                        tutorial_completed_at: new Date().toISOString(),
-                    }).eq("id", user.id);
                 }
 
-                // 3. 둘 다 완료 → 기존 유저, 바로 통과
-                if (onboardingDone && tutorialDone) {
+                // 3. 온보딩 완료된 유저 → 통과
+                if (onboardingDone) {
                     newUserFlowCheckedRef.current = user.id;
                     supabase.from("profiles").update({
                         last_seen_at: new Date().toISOString(),
@@ -301,58 +297,42 @@ function HomeContent() {
                     return;
                 }
 
-                // 4. 펫이 있고 둘 다 완료 → 통과
+                // 4. 펫이 있으면 기존 유저 → 온보딩 건너뛰기
                 const { count: petCount } = await supabase
                     .from("pets")
                     .select("id", { count: "exact", head: true })
                     .eq("user_id", user.id);
 
-                if ((petCount ?? 0) > 0 && onboardingDone) {
-                    // 펫이 있으면 온보딩은 확실히 한 것 → 튜토리얼만 스킵 가능
+                if ((petCount ?? 0) > 0) {
                     newUserFlowCheckedRef.current = user.id;
+                    // 펫 있는 기존 유저 → DB에 완료 기록
                     supabase.from("profiles").update({
+                        onboarding_completed_at: new Date().toISOString(),
                         last_seen_at: new Date().toISOString(),
                     }).eq("id", user.id);
+                    localStorage.setItem("memento-ani-onboarding-complete", "true");
                     return;
                 }
 
-                // 5. 온보딩 미완료 → 온보딩 표시
-                if (!onboardingDone) {
-                    setShowOnboarding(true);
-                    return;
-                }
-
-                // 6. 온보딩 완료, 튜토리얼 미완료 → 튜토리얼 표시
-                if (onboardingDone && !tutorialDone) {
-                    const ut = profileData?.user_type as "planning" | "current" | "memorial" | null;
-                    if (ut) setPostGuideUserType(ut);
-                    setShowTutorial(true);
-                    return;
-                }
-
-                newUserFlowCheckedRef.current = user.id;
+                // 5. 신규 유저: 온보딩 표시 (1회만)
+                onboardingTriggeredRef.current = true;
+                setShowOnboarding(true);
             } catch {
-                // 에러 시 → localStorage라도 있으면 온보딩 건너뛰기
-                if (localStorage.getItem("memento-ani-onboarding-complete") === "true") {
-                    newUserFlowCheckedRef.current = user?.id || null;
-                } else {
-                    setShowOnboarding(true);
-                }
+                // 에러 시 → 온보딩 건너뛰기 (무한 루프 방지)
+                newUserFlowCheckedRef.current = user?.id || null;
             }
         };
 
-        // user가 없으면 ref 초기화 (로그아웃 대응)
         if (!user) {
             newUserFlowCheckedRef.current = null;
+            onboardingTriggeredRef.current = false;
         }
 
-        // loading이 false이고 프로필 로드 완료 후 온보딩 체크 실행
-        // (profileLoaded 전에 실행하면 닉네임이 아직 로드 안 돼서 설정창이 잘못 뜸)
         if (user && !loading && profileLoaded) {
             checkNewUserFlow();
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user, loading, profileLoaded, flowRecheck]);
+    }, [user, loading, profileLoaded]);
 
     // ========================================================================
     // 탭 변경 핸들러
@@ -481,9 +461,11 @@ function HomeContent() {
                         isOpen={showNicknameSetup}
                         onComplete={() => {
                             setShowNicknameSetup(false);
-                            // 닉네임 설정 완료 후 전체 플로우 재체크 (DB 기반으로 다음 단계 결정)
-                            newUserFlowCheckedRef.current = null;
-                            setFlowRecheck(prev => prev + 1);
+                            // 닉네임 설정 완료 → 온보딩 시작
+                            if (localStorage.getItem("memento-ani-onboarding-complete") !== "true") {
+                                onboardingTriggeredRef.current = true;
+                                setShowOnboarding(true);
+                            }
                         }}
                     />
                     <OnboardingModal
@@ -493,10 +475,22 @@ function HomeContent() {
                         onGoToHome={() => handleTabChange("home")}
                         onGoToAIChat={() => handleTabChange("ai-chat")}
                         onShowPostGuide={(userType) => {
-                            // 온보딩 완료 후 → 전체 플로우 재체크 (DB 기반으로 다음 단계 결정)
+                            // 온보딩 완료 → 유저 타입별 다음 단계 직접 실행
                             setPostGuideUserType(userType);
-                            newUserFlowCheckedRef.current = null;
-                            setFlowRecheck(prev => prev + 1);
+                            newUserFlowCheckedRef.current = user?.id || null;
+
+                            const tutDone = localStorage.getItem("memento-ani-tutorial-complete") === "true";
+                            if (!tutDone) {
+                                setShowTutorial(true);
+                            } else if (userType === "planning") {
+                                setShowPostGuide(true);
+                            } else {
+                                handleTabChange("record");
+                                setTimeout(() => {
+                                    setRecordTutorialUserType(userType as "current" | "memorial");
+                                    setShowRecordTutorial(true);
+                                }, 500);
+                            }
                         }}
                     />
                     <PostOnboardingGuide
