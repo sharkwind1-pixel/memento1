@@ -69,6 +69,7 @@ interface PostData {
     comments: PostComment[] | number;
     comments_count?: number;
     image_urls?: string[];
+    video_url?: string;
     is_public?: boolean;
     is_hidden?: boolean;
     created_at: string;
@@ -452,6 +453,18 @@ export default function PostDetailView({
                     <div className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap break-words">
                         {post.content}
                     </div>
+
+                    {/* 첨부 영상 */}
+                    {post.video_url && (
+                        <div className="mt-4 rounded-xl overflow-hidden border dark:border-gray-600">
+                            <video
+                                src={post.video_url}
+                                controls
+                                playsInline
+                                className="w-full"
+                            />
+                        </div>
+                    )}
 
                     {/* 첨부 이미지 */}
                     {post.image_urls && post.image_urls.length > 0 && (() => {

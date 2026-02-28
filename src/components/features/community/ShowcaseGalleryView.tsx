@@ -299,7 +299,7 @@ function ShowcaseCard({
                             muted
                             playsInline
                             loop
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover pointer-events-none"
                         />
                         {/* 재생 아이콘 (장식용 - 호버 시 자동재생, 클릭은 상세보기) */}
                         {!isPlaying && (
