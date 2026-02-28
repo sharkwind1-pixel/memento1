@@ -12,6 +12,7 @@ import { bestPosts, memorialCards } from "@/data/posts";
 import { usePetImages } from "@/hooks/usePetImages";
 import { getPublicMemorialPosts, MemorialPost } from "@/lib/memorialService";
 import { API } from "@/config/apiEndpoints";
+import { MOCK_SHOWCASE_POSTS } from "@/components/features/community/communityTypes";
 import { safeStringSrc } from "./homeUtils";
 import type { LightboxItem, CommunityPost, Comment, ShowcasePost } from "./types";
 
@@ -82,7 +83,7 @@ export function useHomePage() {
         }));
     };
 
-    // 자랑하기 게시글 가져오기
+    // 자랑하기 게시글 가져오기 (DB 없으면 목업 폴백 → 항상 표시)
     const fetchShowcasePosts = useCallback(async () => {
         setIsLoadingShowcase(true);
         try {
@@ -101,10 +102,14 @@ export function useHomePage() {
                     const bHasImg = (b.imageUrls?.length ?? 0) > 0 ? 1 : 0;
                     return bHasImg - aHasImg;
                 });
-                setShowcasePosts(sorted);
+                // DB 게시글 있으면 사용, 없으면 목업 폴백
+                setShowcasePosts(sorted.length > 0 ? sorted : MOCK_SHOWCASE_POSTS);
+            } else {
+                setShowcasePosts(MOCK_SHOWCASE_POSTS);
             }
         } catch {
-            // 실패 시 빈 배열 유지 - 섹션이 숨겨짐
+            // 실패 시 목업 데이터 사용 (발표/데모용)
+            setShowcasePosts(MOCK_SHOWCASE_POSTS);
         } finally {
             setIsLoadingShowcase(false);
         }

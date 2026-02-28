@@ -92,9 +92,9 @@ export const POST_TAGS: { id: PostTag; label: string; color: string }[] = [
 ];
 
 // 자유게시판 뱃지(게시글 유형) 필터 옵션
+// "함께 보기"는 독립 뷰로 분리됨 (ShowcaseGalleryView)
 export const FREE_BADGES: { id: string; label: string; color: string }[] = [
     { id: "일상", label: "일상", color: "sky" },
-    { id: "자랑", label: "함께 보기", color: "blue" },
     { id: "질문", label: "질문", color: "amber" },
     { id: "수다", label: "수다", color: "pink" },
     { id: "꿀팁", label: "꿀팁", color: "emerald" },
@@ -316,6 +316,99 @@ export const MOCK_POSTS: Record<CommunitySubcategory, {
         },
     ],
 };
+
+// "함께 보기" 목업 데이터 (DB 게시글 없을 때 폴백)
+export const MOCK_SHOWCASE_POSTS: {
+    id: string;
+    title: string;
+    content: string;
+    authorName: string;
+    imageUrls: string[];
+    likes: number;
+    comments: number;
+    createdAt: string;
+}[] = [
+    {
+        id: "showcase-1",
+        title: "우리 뭉치 첫 산책 성공!",
+        content: "드디어 밖을 무서워하던 뭉치가 산책에 성공했어요!",
+        authorName: "뭉치맘",
+        imageUrls: ["https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=300&fit=crop"],
+        likes: 342,
+        comments: 56,
+        createdAt: new Date(Date.now() - 1800000).toISOString(),
+    },
+    {
+        id: "showcase-2",
+        title: "냥이의 낮잠 시간",
+        content: "오늘도 평화로운 우리 고양이의 하루",
+        authorName: "냥집사",
+        imageUrls: ["https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&h=300&fit=crop"],
+        likes: 567,
+        comments: 89,
+        createdAt: new Date(Date.now() - 3600000).toISOString(),
+    },
+    {
+        id: "showcase-3",
+        title: "우리 집 앵무새가 노래를 배웠어요",
+        content: "'안녕'이랑 '밥줘' 할 줄 알아요!",
+        authorName: "앵무집사",
+        imageUrls: ["https://images.unsplash.com/photo-1552728089-57bdde30beb3?w=400&h=300&fit=crop"],
+        likes: 890,
+        comments: 156,
+        createdAt: new Date(Date.now() - 7200000).toISOString(),
+    },
+    {
+        id: "showcase-4",
+        title: "토끼랑 소풍 다녀왔어요",
+        content: "날씨 좋은 날 토끼와 함께한 나들이",
+        authorName: "토끼아빠",
+        imageUrls: ["https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=400&h=300&fit=crop"],
+        likes: 234,
+        comments: 45,
+        createdAt: new Date(Date.now() - 10800000).toISOString(),
+    },
+    {
+        id: "showcase-5",
+        title: "강아지 수영 첫 도전!",
+        content: "처음엔 무서워하더니 이제 물놀이 좋아해요",
+        authorName: "해피맘",
+        imageUrls: ["https://images.unsplash.com/photo-1530281700549-e82e7bf110d6?w=400&h=300&fit=crop"],
+        likes: 445,
+        comments: 78,
+        createdAt: new Date(Date.now() - 14400000).toISOString(),
+    },
+    {
+        id: "showcase-6",
+        title: "고양이 형제의 일상",
+        content: "항상 붙어다니는 우리 냥이들",
+        authorName: "쌍냥집사",
+        imageUrls: ["https://images.unsplash.com/photo-1495360010541-f48722b34f7d?w=400&h=300&fit=crop"],
+        likes: 678,
+        comments: 123,
+        createdAt: new Date(Date.now() - 18000000).toISOString(),
+    },
+    {
+        id: "showcase-7",
+        title: "우리 골든 리트리버 생일파티",
+        content: "3살 생일 축하해 우리 보리야!",
+        authorName: "보리네",
+        imageUrls: ["https://images.unsplash.com/photo-1601979031925-424e53b6caaa?w=400&h=300&fit=crop"],
+        likes: 912,
+        comments: 201,
+        createdAt: new Date(Date.now() - 21600000).toISOString(),
+    },
+    {
+        id: "showcase-8",
+        title: "햄스터 미로 탈출 대작전",
+        content: "직접 만든 미로에서 노는 햄찌",
+        authorName: "햄찌맘",
+        imageUrls: ["https://images.unsplash.com/photo-1425082661507-6af0db6d2f32?w=400&h=300&fit=crop"],
+        likes: 321,
+        comments: 67,
+        createdAt: new Date(Date.now() - 25200000).toISOString(),
+    },
+];
 
 // 배지 색상 (서브카테고리별)
 export const getBadgeStyle = (badge: string, subcategory: CommunitySubcategory) => {
