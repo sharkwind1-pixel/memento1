@@ -169,23 +169,37 @@ export async function POST(request: NextRequest) {
             : null;
 
         // 6. 게시글 저장 (세션에서 가져온 userId 사용)
-        const { data, error } = await supabase
+        const baseRow = {
+            user_id: user.id, // 세션에서 가져온 userId 사용 (보안!)
+            board_type: boardType,
+            category: boardType, // 레거시 호환
+            animal_type: animalType || tag || null,
+            badge,
+            title: sanitizedTitle,
+            content: sanitizedContent,
+            author_name: sanitizedAuthorName,
+            ...(validImageUrls.length > 0 && { image_urls: validImageUrls }),
+            ...(boardType === "memorial" && { is_public: isPublic ?? false }),
+        };
+
+        // video_url 컬럼이 DB에 아직 없을 수 있으므로, 실패 시 video_url 없이 재시도
+        let result = await supabase
             .from("community_posts")
-            .insert([{
-                user_id: user.id, // 세션에서 가져온 userId 사용 (보안!)
-                board_type: boardType,
-                category: boardType, // 레거시 호환
-                animal_type: animalType || tag || null,
-                badge,
-                title: sanitizedTitle,
-                content: sanitizedContent,
-                author_name: sanitizedAuthorName,
-                ...(validImageUrls.length > 0 && { image_urls: validImageUrls }),
-                ...(validVideoUrl && { video_url: validVideoUrl }),
-                ...(boardType === "memorial" && { is_public: isPublic ?? false }),
-            }])
+            .insert([{ ...baseRow, ...(validVideoUrl && { video_url: validVideoUrl }) }])
             .select()
             .single();
+
+        if (result.error && validVideoUrl && result.error.code === "PGRST204") {
+            // video_url 컬럼이 아직 없는 경우 — video_url 빼고 재시도
+            console.warn("[Posts POST] video_url 컬럼 미존재, video_url 없이 재시도");
+            result = await supabase
+                .from("community_posts")
+                .insert([baseRow])
+                .select()
+                .single();
+        }
+
+        const { data, error } = result;
 
         if (error) {
             console.error("[Posts POST] 작성 에러:", error);
