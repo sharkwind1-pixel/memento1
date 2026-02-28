@@ -267,6 +267,11 @@ function InquiryCard({ inquiry, onUpdateStatus, onOpenResponse }: InquiryCardPro
                             답변완료
                         </Badge>
                     )}
+                    {inquiry.status === "closed" && (
+                        <Badge className="bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 text-xs">
+                            종료
+                        </Badge>
+                    )}
                 </div>
                 <span className="text-xs text-gray-500 dark:text-gray-400">
                     {new Date(inquiry.created_at).toLocaleDateString("ko-KR")}
@@ -302,7 +307,7 @@ function InquiryCard({ inquiry, onUpdateStatus, onOpenResponse }: InquiryCardPro
                         처리 시작
                     </Button>
                 )}
-                {inquiry.status !== "resolved" && (
+                {(inquiry.status === "pending" || inquiry.status === "in_progress") && (
                     <Button
                         size="sm"
                         className="bg-green-500 hover:bg-green-600"
@@ -310,6 +315,17 @@ function InquiryCard({ inquiry, onUpdateStatus, onOpenResponse }: InquiryCardPro
                     >
                         <Send className="w-3 h-3 mr-1" />
                         답변하기
+                    </Button>
+                )}
+                {(inquiry.status === "pending" || inquiry.status === "in_progress") && (
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-green-300 text-green-700 hover:bg-green-50 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-900/20"
+                        onClick={() => onUpdateStatus("resolved")}
+                    >
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        확인 완료
                     </Button>
                 )}
                 {inquiry.status === "resolved" && (

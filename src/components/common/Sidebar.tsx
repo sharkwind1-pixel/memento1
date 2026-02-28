@@ -113,6 +113,7 @@ export default function Sidebar({
     const [hasPendingAdmin, setHasPendingAdmin] = useState(false);
 
     // 관리자일 때 미처리 신고/문의 건수 체크
+    // selectedTab이 바뀔 때도 재조회 (관리자 탭에서 처리 후 다른 탭 갔다 오면 갱신)
     useEffect(() => {
         if (!isAdminUser) return;
 
@@ -137,10 +138,10 @@ export default function Sidebar({
         };
 
         checkPending();
-        // 60초마다 갱신
-        const interval = setInterval(checkPending, 60000);
+        // 30초마다 갱신
+        const interval = setInterval(checkPending, 30000);
         return () => clearInterval(interval);
-    }, [isAdminUser]);
+    }, [isAdminUser, selectedTab]);
 
     // 탭이 변경되면 커뮤니티 확장 상태 업데이트
     useEffect(() => {
