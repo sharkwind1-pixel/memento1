@@ -21,10 +21,16 @@ import {
     Trash2,
     AlertTriangle,
     Edit3,
+    Ban,
+    UserX,
+    Download,
 } from "lucide-react";
 import { InlineLoading } from "@/components/ui/PawLoading";
 import { toast } from "sonner";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
+import { authFetch } from "@/lib/auth-fetch";
+import { API } from "@/config/apiEndpoints";
+import type { UserBlock } from "@/types";
 
 interface AccountSettingsModalProps {
     isOpen: boolean;
@@ -59,6 +65,12 @@ export default function AccountSettingsModal({
     const [isDeleting, setIsDeleting] = useState(false);
     const [deleteError, setDeleteError] = useState<string | null>(null);
 
+    // 차단 유저 관리
+    const [blockedUsers, setBlockedUsers] = useState<UserBlock[]>([]);
+    const [isLoadingBlocks, setIsLoadingBlocks] = useState(false);
+    const [showBlockedUsers, setShowBlockedUsers] = useState(false);
+    const [unblockingId, setUnblockingId] = useState<string | null>(null);
+
     // 현재 닉네임 로드
     useEffect(() => {
         const loadProfile = async () => {
@@ -85,6 +97,104 @@ export default function AccountSettingsModal({
             setNicknameSuccess(false);
         }
     }, [isOpen, user]);
+
+    // 차단 목록 로드
+    const loadBlockedUsers = async () => {
+        setIsLoadingBlocks(true);
+        try {
+            const res = await authFetch(API.BLOCKS);
+            if (res.ok) {
+                const data = await res.json();
+                setBlockedUsers(data.blocks || []);
+            }
+        } catch {
+            // 로드 실패 시 빈 목록
+        } finally {
+            setIsLoadingBlocks(false);
+        }
+    };
+
+    // 차단 해제
+    const handleUnblock = async (blockedUserId: string, nickname: string) => {
+        if (!confirm(`"${nickname}" 님의 차단을 해제하시겠습니까?`)) return;
+
+        setUnblockingId(blockedUserId);
+        try {
+            const res = await authFetch(`${API.BLOCKS}?blockedUserId=${blockedUserId}`, {
+                method: "DELETE",
+            });
+            if (res.ok) {
+                setBlockedUsers(prev => prev.filter(b => b.blockedUserId !== blockedUserId));
+                toast.success(`"${nickname}" 님의 차단이 해제되었습니다`);
+            } else {
+                toast.error("차단 해제에 실패했습니다");
+            }
+        } catch {
+            toast.error("차단 해제에 실패했습니다");
+        } finally {
+            setUnblockingId(null);
+        }
+    };
+
+    // 개인정보 다운로드
+    const [isDownloading, setIsDownloading] = useState(false);
+    const handleDownloadData = async () => {
+        if (!user) return;
+        setIsDownloading(true);
+
+        try {
+            // 프로필
+            const { data: profile } = await supabase
+                .from("profiles")
+                .select("*")
+                .eq("id", user.id)
+                .single();
+
+            // 반려동물
+            const { data: pets } = await supabase
+                .from("pets")
+                .select("*")
+                .eq("user_id", user.id);
+
+            // 게시글
+            const { data: posts } = await supabase
+                .from("community_posts")
+                .select("id, title, content, board_type, badge, created_at")
+                .eq("user_id", user.id);
+
+            // 댓글
+            const { data: comments } = await supabase
+                .from("post_comments")
+                .select("id, content, post_id, created_at")
+                .eq("user_id", user.id);
+
+            const exportData = {
+                exportedAt: new Date().toISOString(),
+                email: user.email,
+                profile: profile || {},
+                pets: pets || [],
+                posts: posts || [],
+                comments: comments || [],
+            };
+
+            // JSON 파일로 다운로드
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `memento-ani-data-${new Date().toISOString().split("T")[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            toast.success("개인정보가 다운로드되었습니다");
+        } catch {
+            toast.error("데이터 다운로드에 실패했습니다");
+        } finally {
+            setIsDownloading(false);
+        }
+    };
 
     // 닉네임 저장
     const handleSaveNickname = async () => {
@@ -350,6 +460,100 @@ export default function AccountSettingsModal({
                                 )}
                             </div>
                         )}
+                    </div>
+
+                    {/* 구분선 */}
+                    <hr className="border-gray-200 dark:border-gray-700" />
+
+                    {/* 차단 유저 관리 */}
+                    <div>
+                        <div className="flex items-center justify-between mb-2">
+                            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                                <Ban className="w-4 h-4" />
+                                차단 유저 관리
+                            </h3>
+                            <button
+                                onClick={() => {
+                                    setShowBlockedUsers(!showBlockedUsers);
+                                    if (!showBlockedUsers) loadBlockedUsers();
+                                }}
+                                className="text-xs text-sky-500 hover:text-sky-600"
+                            >
+                                {showBlockedUsers ? "접기" : "보기"}
+                            </button>
+                        </div>
+
+                        {showBlockedUsers && (
+                            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
+                                {isLoadingBlocks ? (
+                                    <div className="flex justify-center py-4">
+                                        <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                                    </div>
+                                ) : blockedUsers.length === 0 ? (
+                                    <p className="text-xs text-gray-400 text-center py-3">
+                                        차단한 유저가 없습니다
+                                    </p>
+                                ) : (
+                                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                                        {blockedUsers.map((block) => (
+                                            <div
+                                                key={block.id}
+                                                className="flex items-center justify-between bg-white dark:bg-gray-700 rounded-lg px-3 py-2"
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <UserX className="w-4 h-4 text-gray-400" />
+                                                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                                                        {block.blockedNickname || "알 수 없음"}
+                                                    </span>
+                                                </div>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => handleUnblock(block.blockedUserId, block.blockedNickname || "알 수 없음")}
+                                                    disabled={unblockingId === block.blockedUserId}
+                                                    className="text-xs text-sky-500 hover:text-sky-600 h-7 px-2"
+                                                >
+                                                    {unblockingId === block.blockedUserId ? (
+                                                        <Loader2 className="w-3 h-3 animate-spin" />
+                                                    ) : (
+                                                        "해제"
+                                                    )}
+                                                </Button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* 구분선 */}
+                    <hr className="border-gray-200 dark:border-gray-700" />
+
+                    {/* 개인정보 다운로드 */}
+                    <div>
+                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5 mb-2">
+                            <Download className="w-4 h-4" />
+                            내 데이터
+                        </h3>
+                        <Button
+                            variant="outline"
+                            onClick={handleDownloadData}
+                            disabled={isDownloading}
+                            className="w-full rounded-xl"
+                        >
+                            {isDownloading ? (
+                                <InlineLoading />
+                            ) : (
+                                <>
+                                    <Download className="w-4 h-4 mr-2" />
+                                    내 개인정보 다운로드 (JSON)
+                                </>
+                            )}
+                        </Button>
+                        <p className="text-[10px] text-gray-400 mt-1.5">
+                            프로필, 반려동물 기록, 게시글, 댓글 등 모든 데이터를 다운로드합니다
+                        </p>
                     </div>
 
                     {/* 구분선 */}

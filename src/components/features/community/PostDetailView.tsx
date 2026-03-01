@@ -6,6 +6,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
@@ -130,6 +131,12 @@ export default function PostDetailView({
     } | null>(null);
     const commentInputRef = useRef<HTMLTextAreaElement>(null);
     const [visitUserId, setVisitUserId] = useState<string | null>(null);
+
+    // 게시글 수정 상태
+    const [isEditing, setIsEditing] = useState(false);
+    const [editTitle, setEditTitle] = useState("");
+    const [editContent, setEditContent] = useState("");
+    const [isSavingEdit, setIsSavingEdit] = useState(false);
 
     // 게시글 상세 로드
     const fetchPost = useCallback(async () => {
@@ -327,6 +334,67 @@ export default function PostDetailView({
         }
     };
 
+    // 게시글 수정 시작
+    const handleStartEdit = () => {
+        if (!post) return;
+        setEditTitle(post.title);
+        setEditContent(post.content);
+        setIsEditing(true);
+    };
+
+    // 게시글 수정 저장
+    const handleSaveEdit = async () => {
+        if (!editTitle.trim() || !editContent.trim()) {
+            toast.error("제목과 내용을 입력해주세요");
+            return;
+        }
+
+        setIsSavingEdit(true);
+        try {
+            const response = await authFetch(API.POST_DETAIL(postId), {
+                method: "PATCH",
+                body: JSON.stringify({
+                    title: editTitle.trim(),
+                    content: editContent.trim(),
+                }),
+            });
+
+            if (!response.ok) throw new Error("수정 실패");
+
+            const data = await response.json();
+            setPost(data.post);
+            setIsEditing(false);
+            toast.success("게시글이 수정되었습니다");
+        } catch {
+            toast.error("게시글 수정에 실패했습니다");
+        } finally {
+            setIsSavingEdit(false);
+        }
+    };
+
+    // 댓글 삭제
+    const handleDeleteComment = async (commentId: string) => {
+        if (!user || !post) return;
+        if (!confirm("이 댓글을 삭제하시겠습니까?")) return;
+
+        try {
+            const response = await authFetch(
+                `${API.POST_COMMENTS(postId)}?commentId=${commentId}`,
+                { method: "DELETE" }
+            );
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || "삭제 실패");
+            }
+
+            setComments(prev => prev.filter(c => c.id !== commentId));
+            toast.success("댓글이 삭제되었습니다");
+        } catch {
+            toast.error("댓글 삭제에 실패했습니다");
+        }
+    };
+
     // 본인 글 여부
     const isOwner = user && post && user.id === post.user_id;
 
@@ -380,9 +448,9 @@ export default function PostDetailView({
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="rounded-lg text-gray-300 cursor-not-allowed"
-                                disabled
-                                title="수정 기능 준비 중"
+                                className="rounded-lg text-gray-500 hover:text-sky-600"
+                                onClick={handleStartEdit}
+                                title="수정"
                             >
                                 <Edit3 className="w-4 h-4" />
                             </Button>
@@ -462,9 +530,19 @@ export default function PostDetailView({
                             </Badge>
                         )}
                     </div>
-                    <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-3">
-                        {post.title}
-                    </h1>
+                    {isEditing ? (
+                        <Input
+                            value={editTitle}
+                            onChange={(e) => setEditTitle(e.target.value)}
+                            className="text-xl font-bold mb-3 rounded-xl"
+                            maxLength={200}
+                            placeholder="제목을 입력하세요"
+                        />
+                    ) : (
+                        <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-3">
+                            {post.title}
+                        </h1>
+                    )}
                     <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
                         <div className="flex items-center gap-3">
                             <button
@@ -489,9 +567,39 @@ export default function PostDetailView({
 
                 {/* 본문 */}
                 <div className="p-5">
-                    <div className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap break-words">
-                        {post.content}
-                    </div>
+                    {isEditing ? (
+                        <div className="space-y-3">
+                            <Textarea
+                                value={editContent}
+                                onChange={(e) => setEditContent(e.target.value)}
+                                className="min-h-[200px] rounded-xl resize-none"
+                                maxLength={10000}
+                                placeholder="내용을 입력하세요"
+                            />
+                            <div className="flex justify-end gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setIsEditing(false)}
+                                    className="rounded-xl"
+                                >
+                                    취소
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    onClick={handleSaveEdit}
+                                    disabled={isSavingEdit || !editTitle.trim() || !editContent.trim()}
+                                    className="rounded-xl bg-sky-500 hover:bg-sky-600"
+                                >
+                                    {isSavingEdit ? <InlineLoading /> : "저장"}
+                                </Button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap break-words">
+                            {post.content}
+                        </div>
+                    )}
 
                     {/* 첨부 영상 */}
                     {post.video_url && (
@@ -585,22 +693,35 @@ export default function PostDetailView({
                                             </button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
-                                            <DropdownMenuItem
-                                                onClick={() => {
-                                                    if (!user) {
-                                                        window.dispatchEvent(new CustomEvent("openAuthModal"));
-                                                        return;
-                                                    }
-                                                    setReportTarget({
-                                                        id: comment.id,
-                                                        type: "comment",
-                                                    });
-                                                }}
-                                                className="text-red-500"
-                                            >
-                                                <Flag className="w-4 h-4 mr-2" />
-                                                신고
-                                            </DropdownMenuItem>
+                                            {/* 본인 댓글이면 삭제 */}
+                                            {user && (comment.userId || comment.user_id) === user.id && (
+                                                <DropdownMenuItem
+                                                    onClick={() => handleDeleteComment(comment.id)}
+                                                    className="text-red-500"
+                                                >
+                                                    <Trash2 className="w-4 h-4 mr-2" />
+                                                    삭제
+                                                </DropdownMenuItem>
+                                            )}
+                                            {/* 타인 댓글이면 신고/차단 */}
+                                            {(!user || (comment.userId || comment.user_id) !== user?.id) && (
+                                                <DropdownMenuItem
+                                                    onClick={() => {
+                                                        if (!user) {
+                                                            window.dispatchEvent(new CustomEvent("openAuthModal"));
+                                                            return;
+                                                        }
+                                                        setReportTarget({
+                                                            id: comment.id,
+                                                            type: "comment",
+                                                        });
+                                                    }}
+                                                    className="text-red-500"
+                                                >
+                                                    <Flag className="w-4 h-4 mr-2" />
+                                                    신고
+                                                </DropdownMenuItem>
+                                            )}
                                             {/* 댓글 작성자 차단 (본인이 아닐 때만) */}
                                             {user && (comment.userId || comment.user_id) && (comment.userId || comment.user_id) !== user.id && (
                                                 <DropdownMenuItem

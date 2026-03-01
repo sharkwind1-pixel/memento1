@@ -1,6 +1,7 @@
 /**
  * 댓글 API
  * POST: 댓글 작성 + 포인트 적립
+ * DELETE: 댓글 삭제 (본인 댓글만)
  *
  * 보안: 세션 기반 인증, Rate Limiting, VPN 차단, 입력값 검증
  */
@@ -27,6 +28,94 @@ function getPointsSupabase() {
     return createClient(url, key);
 }
 
+// 댓글 삭제 (본인 댓글만)
+export async function DELETE(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const clientIP = await getClientIP();
+        const rateLimit = checkRateLimit(clientIP, "write");
+        if (!rateLimit.allowed) {
+            return NextResponse.json(
+                { error: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요." },
+                { status: 429, headers: getRateLimitHeaders(rateLimit.remaining, rateLimit.resetIn) }
+            );
+        }
+
+        const user = await getAuthUser();
+        if (!user) {
+            return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
+        }
+
+        const supabase = await createServerSupabase();
+        const { id: postId } = await params;
+        const { searchParams } = new URL(request.url);
+        const commentId = searchParams.get("commentId");
+
+        if (!commentId) {
+            return NextResponse.json({ error: "댓글 ID가 필요합니다" }, { status: 400 });
+        }
+
+        // 본인 댓글인지 확인
+        const { data: comment } = await supabase
+            .from("post_comments")
+            .select("id, user_id")
+            .eq("id", commentId)
+            .eq("post_id", postId)
+            .single();
+
+        if (!comment) {
+            return NextResponse.json({ error: "댓글을 찾을 수 없습니다" }, { status: 404 });
+        }
+
+        if (comment.user_id !== user.id) {
+            return NextResponse.json({ error: "본인 댓글만 삭제할 수 있습니다" }, { status: 403 });
+        }
+
+        // 댓글 삭제
+        const { error } = await supabase
+            .from("post_comments")
+            .delete()
+            .eq("id", commentId)
+            .eq("user_id", user.id);
+
+        if (error) {
+            console.error("[Comments DELETE] 삭제 에러:", error);
+            return NextResponse.json({ error: "댓글 삭제에 실패했습니다" }, { status: 500 });
+        }
+
+        // 댓글 수 감소
+        try {
+            const { error: rpcErr } = await supabase.rpc("increment_field", {
+                table_name: "community_posts",
+                field_name: "comments",
+                row_id: postId,
+                amount: -1,
+            });
+            if (rpcErr) {
+                const { data: currentPost } = await supabase
+                    .from("community_posts")
+                    .select("comments")
+                    .eq("id", postId)
+                    .single();
+                const currentCount = (currentPost as { comments?: number })?.comments || 0;
+                await supabase
+                    .from("community_posts")
+                    .update({ comments: Math.max(0, currentCount - 1) })
+                    .eq("id", postId);
+            }
+        } catch {
+            // 댓글 수 감소 실패해도 삭제 자체는 완료됨
+        }
+
+        return NextResponse.json({ success: true });
+    } catch {
+        return NextResponse.json({ error: "서버 오류" }, { status: 500 });
+    }
+}
+
+// 댓글 작성
 export async function POST(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
