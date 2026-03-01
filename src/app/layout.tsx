@@ -9,6 +9,7 @@ import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PetProvider } from "@/contexts/PetContext";
 import { Toaster } from "sonner";
+import CookieConsentBanner from "@/components/features/cookie/CookieConsentBanner";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -108,6 +109,7 @@ export default function RootLayout({
                 <AuthProvider>
                     <PetProvider>{children}</PetProvider>
                 </AuthProvider>
+                <CookieConsentBanner />
                 <Toaster
                     position="top-center"
                     duration={5000}

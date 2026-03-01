@@ -759,6 +759,7 @@ export default function PostDetailView({
                                 value={commentText}
                                 onChange={(e) => setCommentText(e.target.value)}
                                 placeholder="댓글을 입력하세요..."
+                                aria-label="댓글 입력"
                                 rows={2}
                                 maxLength={2000}
                                 className="flex-1 rounded-xl bg-white dark:bg-gray-800 resize-none text-sm"
