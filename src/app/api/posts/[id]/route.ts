@@ -84,12 +84,37 @@ export async function GET(
             }
         }
 
+        // 차단된 유저 목록 조회
+        let blockedUserIds: string[] = [];
+        const currentUser = await getAuthUser().catch(() => null);
+        if (currentUser) {
+            const { data: blocks } = await supabase
+                .from("user_blocks")
+                .select("blocked_user_id")
+                .eq("blocker_id", currentUser.id);
+            if (blocks && blocks.length > 0) {
+                blockedUserIds = blocks.map(b => b.blocked_user_id);
+            }
+        }
+
+        // 차단된 유저의 게시글인 경우 404 반환
+        if (blockedUserIds.includes(post.user_id)) {
+            return NextResponse.json({ error: "게시글을 찾을 수 없습니다" }, { status: 404 });
+        }
+
         // 댓글 조회
-        const { data: comments } = await supabase
+        let commentQuery = supabase
             .from("post_comments")
             .select("*")
             .eq("post_id", id)
             .order("created_at", { ascending: true });
+
+        // 차단된 유저의 댓글 필터링
+        if (blockedUserIds.length > 0) {
+            commentQuery = commentQuery.not("user_id", "in", `(${blockedUserIds.join(",")})`);
+        }
+
+        const { data: comments } = await commentQuery;
 
         return NextResponse.json({
             post: {

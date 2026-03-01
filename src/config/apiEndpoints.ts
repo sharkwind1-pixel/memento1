@@ -76,6 +76,9 @@ export const API = {
     // 크론
     CRON_MAGAZINE_GENERATE: "/api/cron/magazine-generate",
 
+    // 유저 차단
+    BLOCKS: "/api/blocks",
+
     // 관리자
     ADMIN_POINTS: "/api/admin/points",
     ADMIN_DELETE_USER: "/api/admin/delete-user",

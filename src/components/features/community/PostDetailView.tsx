@@ -7,6 +7,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 import {
     ArrowLeft,
     Heart,
@@ -19,6 +20,7 @@ import {
     Trash2,
     Edit3,
     EyeOff,
+    Ban,
 } from "lucide-react";
 import {
     DropdownMenu,
@@ -293,6 +295,38 @@ export default function PostDetailView({
         }
     };
 
+    // 유저 차단
+    const handleBlockUser = async (targetUserId: string, targetName: string) => {
+        if (!user) {
+            window.dispatchEvent(new CustomEvent("openAuthModal"));
+            return;
+        }
+        if (targetUserId === user.id) return;
+
+        if (!confirm(`"${targetName}" 님을 차단하시겠습니까?\n\n차단하면 이 유저의 게시글과 댓글이 더 이상 보이지 않습니다.\n설정에서 차단을 해제할 수 있습니다.`)) return;
+
+        try {
+            const response = await authFetch(API.BLOCKS, {
+                method: "POST",
+                body: JSON.stringify({ blockedUserId: targetUserId }),
+            });
+
+            if (response.status === 409) {
+                toast.info("이미 차단한 유저입니다");
+                return;
+            }
+
+            if (!response.ok) throw new Error("차단 실패");
+
+            toast.success(`"${targetName}" 님을 차단했습니다`);
+            // 차단 후 목록으로 돌아가기
+            onPostDeleted?.();
+            onBack();
+        } catch {
+            toast.error("차단에 실패했습니다. 다시 시도해주세요.");
+        }
+    };
+
     // 본인 글 여부
     const isOwner = user && post && user.id === post.user_id;
 
@@ -387,6 +421,16 @@ export default function PostDetailView({
                                 <Flag className="w-4 h-4 mr-2" />
                                 신고하기
                             </DropdownMenuItem>
+                            {/* 차단하기 (본인 글이 아닐 때만) */}
+                            {!isOwner && post.user_id && (
+                                <DropdownMenuItem
+                                    onClick={() => handleBlockUser(post.user_id, post.author_name)}
+                                    className="text-orange-500 focus:text-orange-600"
+                                >
+                                    <Ban className="w-4 h-4 mr-2" />
+                                    이 유저 차단
+                                </DropdownMenuItem>
+                            )}
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
@@ -557,6 +601,19 @@ export default function PostDetailView({
                                                 <Flag className="w-4 h-4 mr-2" />
                                                 신고
                                             </DropdownMenuItem>
+                                            {/* 댓글 작성자 차단 (본인이 아닐 때만) */}
+                                            {user && (comment.userId || comment.user_id) && (comment.userId || comment.user_id) !== user.id && (
+                                                <DropdownMenuItem
+                                                    onClick={() => handleBlockUser(
+                                                        comment.userId || comment.user_id || "",
+                                                        comment.authorNickname
+                                                    )}
+                                                    className="text-orange-500"
+                                                >
+                                                    <Ban className="w-4 h-4 mr-2" />
+                                                    차단
+                                                </DropdownMenuItem>
+                                            )}
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </div>

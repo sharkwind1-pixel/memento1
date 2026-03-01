@@ -82,12 +82,12 @@ interface Pet { ... }  // 금지!
 |---|---------|-----|
 | 홈 | HomePage | ✅ 완료 |
 | 우리의 기록 | RecordPage | ✅ 완료 |
-| 커뮤니티 | CommunityPage | 🟡 목업 |
+| 커뮤니티 | CommunityPage | ✅ 완료 |
 | AI 펫톡 | AIChatPage | ✅ 완료 |
-| 입양정보 | AdoptionPage | 🟡 목업 |
-| 지역정보 | LocalPage | 🟡 목업 |
-| 분실동물 | LostPage | 🟡 목업 |
-| 펫매거진 | MagazinePage | 🟡 목업 |
+| 입양정보 | AdoptionPage | ✅ 완료 |
+| 지역정보 | LocalPage | ✅ 완료 |
+| 분실동물 | LostPage | ✅ 완료 |
+| 펫매거진 | MagazinePage | ✅ 완료 |
 
 ---
 
@@ -119,36 +119,10 @@ if (selectedPet?.status === "memorial") {
 
 ---
 
-## 현재 상태 및 우선순위
+## 현재 상태
 
-### 완료된 기능 ✅
-- 반려동물 CRUD + 사진/영상 관리
-- AI 펫톡 (일상/추모 모드, 감정 분석)
-- 타임라인 일기 + 편집
-- 케어 리마인더 시스템
-- 듀얼 모드 UI 전환
-- 동물별 게시판 분류
-- **API 보안**: reminders API 세션 기반 인증 완료 (supabase-server.ts)
-- **관리자 페이지**: AdminPage.tsx (사용자/게시물 관리, 대시보드)
-- **프리미엄 모달**: PremiumModal.tsx (커피 한 잔 값 설득)
-- **로그인 프롬프트**: LoginPromptModal.tsx (비로그인 유저 유도)
-- **랜딩 페이지 제거**: 비로그인자도 홈 화면 바로 접근 가능
-- **isPremium DB 연동**: AuthContext에서 profiles.is_premium + premium_expires_at 체크
-- **커뮤니티 DB 연동**: /api/posts CRUD, 5개 게시판 분류, 좋아요/댓글/신고
-- **입양정보 DB 연동**: /api/adoption 공공데이터 연동 + 폴백 목업
-- **분실동물 DB 연동**: /api/lost-pets 완전 CRUD + 이미지 업로드
-- **펫매거진 DB 연동**: /api/magazine 관리자 작성 + 본문 이미지 삽입
-- **지역정보 DB 연동**: /api/local-posts CRUD + 지역 필터
-- **접근성**: 모달 19개 aria 속성 (role, aria-modal, aria-labelledby)
-- **컴포넌트 분리**: RecordPage에서 PetProfileCard, PetPhotoAlbum 추출
-- **개인화**: 온보딩 데이터 기반 홈페이지 HERO 개인화 (planning/current/memorial)
-- **레벨 아이콘**: petType별 (dog/cat/other) 7단계 아이콘 시스템
-- **API 엔드포인트 상수화**: src/config/apiEndpoints.ts
-
-### 개선 필요 🔧
-1. **결제 연동**: 포트원(PortOne) 연동 - 프리미엄 구독 실결제
-2. **대형 컴포넌트 분리**: AIChatPage(1408줄), LostPage(1356줄) 서브컴포넌트 추출
-3. **API URL 마이그레이션**: 기존 하드코딩 URL → apiEndpoints.ts 상수 사용으로 점진 전환
+대부분의 핵심 기능 구현 완료. 남은 작업은 `RELAY.md` 참조.
+완료된 기능 상세 목록은 `RELAY-ARCHIVE.md` 참조.
 
 ---
 
@@ -233,16 +207,40 @@ const isPremium = data?.is_premium && (!expiresAt || new Date(expiresAt) > new D
 ## 관리자 시스템
 
 ```typescript
-// types/index.ts
+// config/constants.ts
 export const ADMIN_EMAILS = ["sharkwind1@gmail.com"];
 
-export function isAdmin(email?: string | null): boolean {
-    if (!email) return false;
-    return ADMIN_EMAILS.includes(email);
-}
+// Layout.tsx에서 관리자 탭 조건부 표시: 이메일 OR DB is_admin
+{(isAdmin(user?.email) || profile?.is_admin) && <AdminTab />}
 
-// Layout.tsx에서 관리자 탭 조건부 표시
-{isAdmin(user?.email) && <AdminTab />}
+// API에서 관리자 검증: 이메일 + DB is_admin 이중 체크
+// src/lib/supabase-server.ts의 getAuthUser() + profiles.is_admin
+```
+
+---
+
+## AI 펫톡 처리 흐름 (코드 수정 시 필독)
+
+```
+유저 메시지
+  → sanitizeInput (XSS 방지)
+  → detectCrisis (자해/위기 감지)
+  → detectEmergencyKeywords (반려동물 응급 증상)
+  → isCareRelatedQuery (케어 질문이면 케어 프롬프트 삽입, 아니면 토큰 절약)
+  → isFirstChat (chatHistory.length === 0이면 온보딩 프롬프트)
+  → analyzeEmotion (감정 분석 + 추모 모드면 애도 단계)
+  → getPetMemories (DB에서 장기 메모리 로드)
+  → getPersonalityBehavior (성격→말투 매핑, 7종x2모드=14분기)
+  → getDailySystemPrompt / getMemorialSystemPrompt (모드별 프롬프트 생성)
+  → GPT-4o-mini 호출
+  → SUGGESTIONS 파싱 (---SUGGESTIONS--- 마커)
+  → PENDING_TOPIC 파싱 (---PENDING_TOPIC--- 마커)
+  → filterMemorialSuggestions (추모 모드면 간식/케어 키워드 필터)
+  → extractKeywordsFromReply → pet_media 캡션 매칭 (사진 연동)
+  → 느낌표 후처리 (추모 모드면 "!!!" → ".", "!!" → "~")
+  → validateAIResponse (약 용량/브랜드/단정/확률/사람약 체크)
+  → saveAutoTimelineEntry (10턴마다 자동 타임라인)
+  → DB 저장 + 응답 반환
 ```
 
 ---
@@ -254,7 +252,20 @@ src/types/index.ts          # 타입 추가/수정
 src/contexts/PetContext.tsx # 펫 데이터 로직
 src/app/api/chat/route.ts   # AI 프롬프트 수정
 src/components/pages/*.tsx  # 각 페이지 UI
+src/config/apiEndpoints.ts  # API URL 상수
+src/config/constants.ts     # 제한/가격/관리자 이메일
 ```
+
+---
+
+## 작업 규칙 (RELAY에서 이동)
+
+- **Claude Code 실행 시 반드시 `claude --dangerously-skip-permissions` 로 시작**
+- 커밋/푸시는 물어보지 말고 바로 진행
+- 빌드 확인 필수 (`next build`)
+- AGENTS.md의 서브에이전트 오케스트레이션 방식 준수
+- **DB 변경이 포함된 작업은 SQL 실행까지 완료해야 "완료"**
+- 모달 스크롤 안 되면 `PetFormModal.tsx` 224~264줄 패턴 적용
 
 ---
 
