@@ -166,6 +166,10 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
             if (currentSubcategory === "free" && selectedBadge !== "all") {
                 params.append("badge", selectedBadge);
             }
+            // 자유게시판 전체보기 시 자랑 게시글 숨기기 (함께보기 갤러리에서만 표시)
+            if (currentSubcategory === "free" && selectedBadge === "all") {
+                params.append("exclude_badge", "자랑");
+            }
             if (searchQuery) {
                 params.append("search", searchQuery);
             }
