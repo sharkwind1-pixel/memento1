@@ -242,7 +242,8 @@ export default function NicknameSetupModal({
                                 <span className="text-sky-500 font-medium">[선택]</span>{" "}
                                 위치기반 서비스 이용에 동의합니다
                                 <span className="block text-[10px] text-gray-400 mt-0.5">
-                                    주변 동물병원, 지역 정보 등 맞춤 서비스 제공에 활용됩니다
+                                    주변 동물병원, 지역 정보 등 맞춤 서비스 제공에 활용됩니다.{" "}
+                                    <a href="/location-terms" target="_blank" className="underline hover:text-memento-500">약관 보기</a>
                                 </span>
                             </span>
                         </label>

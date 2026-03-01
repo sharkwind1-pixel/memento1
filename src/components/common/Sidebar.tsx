@@ -227,6 +227,7 @@ export default function Sidebar({
                         size="sm"
                         onClick={onClose}
                         className="p-2"
+                        aria-label="메뉴 닫기"
                     >
                         <X className="w-5 h-5" />
                     </Button>
@@ -276,6 +277,7 @@ export default function Sidebar({
                         <button
                             data-tutorial-id={category.id}
                             onClick={() => handleMainCategoryClick(category.id)}
+                            aria-expanded={category.hasSubcategories ? expandedCategory === "community" : undefined}
                             className={cn(
                                 "w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-500",
                                 "hover:bg-gray-100 dark:hover:bg-gray-800",

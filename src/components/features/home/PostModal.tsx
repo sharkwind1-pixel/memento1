@@ -235,6 +235,7 @@ export default function PostModal({
                     <input
                         type="text"
                         placeholder="댓글 달기..."
+                        aria-label="댓글 입력"
                         value={comment}
                         onChange={(e) => setComment(e.target.value)}
                         onKeyDown={handleKeyDown}
@@ -242,6 +243,7 @@ export default function PostModal({
                     />
                     <button
                         onClick={handleSubmitComment}
+                        aria-label="댓글 게시"
                         className={`font-semibold transition-colors ${
                             comment.trim()
                                 ? "text-memento-600 hover:text-memento-600"

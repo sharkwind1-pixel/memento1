@@ -233,6 +233,7 @@ function BottomNav({
 
     return (
         <nav
+            aria-label="메인 네비게이션"
             className={`xl:hidden fixed bottom-0 left-0 right-0 border-t z-50 pb-safe ${
                 isMemorialMode
                     ? "bg-amber-50 dark:bg-gray-900 border-amber-200 dark:border-gray-700"
@@ -256,6 +257,8 @@ function BottomNav({
                             key={tab.id}
                             data-tutorial-id={tab.id}
                             onClick={() => setSelectedTab(tab.id)}
+                            aria-current={isActive ? "page" : undefined}
+                            aria-label={tab.label}
                             className={`
                                 relative flex flex-col items-center justify-center flex-1 py-1.5
                                 min-h-[60px] min-w-[56px] active:scale-95 transition-transform
@@ -433,6 +436,14 @@ function Layout({
                 />
             )}
 
+            {/* 스킵 네비게이션 - 키보드 접근성 */}
+            <a
+                href="#main-content"
+                className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:bg-white focus:dark:bg-gray-800 focus:px-4 focus:py-2 focus:rounded-xl focus:shadow-lg focus:text-memento-600 focus:text-sm focus:font-medium"
+            >
+                본문으로 건너뛰기
+            </a>
+
             {/* 헤더 - fixed로 viewport 고정 (sticky는 조상 overflow에 영향받을 수 있음) */}
             {/* GPU 가속으로 리페인트 최소화 */}
             <header
@@ -474,7 +485,8 @@ function Layout({
                                 size="icon"
                                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                                 className="xl:hidden rounded-xl"
-                                aria-label="메뉴 열기"
+                                aria-label={isSidebarOpen ? "메뉴 닫기" : "메뉴 열기"}
+                                aria-expanded={isSidebarOpen}
                             >
                                 <Menu className="w-5 h-5" />
                             </Button>

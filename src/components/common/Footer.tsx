@@ -77,6 +77,7 @@ export default function Footer() {
               <a href="/terms" className="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">이용약관</a>
               <a href="/privacy" className="text-sm font-medium text-gray-800 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">개인정보처리방침</a>
               <a href="/community-guidelines" className="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">커뮤니티 가이드라인</a>
+              <a href="/location-terms" className="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">위치기반 서비스 이용약관</a>
               <a href="/opensource" className="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">오픈소스 라이선스</a>
             </div>
 
