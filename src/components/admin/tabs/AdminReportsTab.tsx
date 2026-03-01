@@ -59,6 +59,7 @@ export default function AdminReportsTab({
     userId,
 }: AdminReportsTabProps) {
     const [searchQuery, setSearchQuery] = useState("");
+    const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
 
     // ========================================================================
     // 신고 상태 변경
@@ -133,9 +134,10 @@ export default function AdminReportsTab({
     // ========================================================================
     const filteredReports = reports.filter(
         (r) =>
-            searchQuery === "" ||
-            r.reason.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (r.description || "").toLowerCase().includes(searchQuery.toLowerCase())
+            (searchQuery === "" ||
+                r.reason.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (r.description || "").toLowerCase().includes(searchQuery.toLowerCase())) &&
+            (selectedStatus === null || r.status === selectedStatus)
     );
 
     // ========================================================================
@@ -160,21 +162,66 @@ export default function AdminReportsTab({
                 </Button>
             </div>
 
-            {/* 상태 범례 */}
-            <div className="flex flex-wrap gap-2 text-sm">
-                <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300">
+            {/* 상태 필터 */}
+            <div className="flex flex-wrap gap-2 text-sm select-none">
+                <button
+                    type="button"
+                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
+                        selectedStatus === null
+                            ? "bg-gray-800 text-white dark:bg-gray-200 dark:text-gray-900"
+                            : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 opacity-60 hover:opacity-100"
+                    }`}
+                    onClick={() => setSelectedStatus(null)}
+                >
+                    전체 ({reports.length})
+                </button>
+                <button
+                    type="button"
+                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
+                        selectedStatus === "pending"
+                            ? "bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300"
+                            : "bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300 opacity-60 hover:opacity-100"
+                    }`}
+                    onClick={() => setSelectedStatus(selectedStatus === "pending" ? null : "pending")}
+                >
                     <Clock className="w-3 h-3 mr-1" />
-                    대기중
-                </Badge>
-                <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                    대기중 ({reports.filter((r) => r.status === "pending").length})
+                </button>
+                <button
+                    type="button"
+                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
+                        selectedStatus === "reviewing"
+                            ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                            : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 opacity-60 hover:opacity-100"
+                    }`}
+                    onClick={() => setSelectedStatus(selectedStatus === "reviewing" ? null : "reviewing")}
+                >
                     <Eye className="w-3 h-3 mr-1" />
-                    검토중
-                </Badge>
-                <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                    검토중 ({reports.filter((r) => r.status === "reviewing").length})
+                </button>
+                <button
+                    type="button"
+                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
+                        selectedStatus === "resolved"
+                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                            : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 opacity-60 hover:opacity-100"
+                    }`}
+                    onClick={() => setSelectedStatus(selectedStatus === "resolved" ? null : "resolved")}
+                >
                     <CheckCircle className="w-3 h-3 mr-1" />
-                    처리완료
-                </Badge>
-                <Badge className="bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">반려</Badge>
+                    처리완료 ({reports.filter((r) => r.status === "resolved").length})
+                </button>
+                <button
+                    type="button"
+                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
+                        selectedStatus === "rejected"
+                            ? "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
+                            : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 opacity-60 hover:opacity-100"
+                    }`}
+                    onClick={() => setSelectedStatus(selectedStatus === "rejected" ? null : "rejected")}
+                >
+                    반려 ({reports.filter((r) => r.status === "rejected").length})
+                </button>
             </div>
 
             {/* 신고 목록 */}

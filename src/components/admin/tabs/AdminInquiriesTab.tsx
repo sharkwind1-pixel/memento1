@@ -75,6 +75,7 @@ export default function AdminInquiriesTab({
     onRefresh,
 }: AdminInquiriesTabProps) {
     const [searchQuery, setSearchQuery] = useState("");
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [selectedInquiry, setSelectedInquiry] = useState<InquiryRow | null>(null);
     const [adminResponse, setAdminResponse] = useState("");
     const [isResponding, setIsResponding] = useState(false);
@@ -134,9 +135,10 @@ export default function AdminInquiriesTab({
     // ========================================================================
     const filteredInquiries = inquiries.filter(
         (i) =>
-            searchQuery === "" ||
-            i.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            i.email.toLowerCase().includes(searchQuery.toLowerCase())
+            (searchQuery === "" ||
+                i.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                i.email.toLowerCase().includes(searchQuery.toLowerCase())) &&
+            (selectedCategory === null || i.category === selectedCategory)
     );
 
     // ========================================================================
@@ -161,15 +163,38 @@ export default function AdminInquiriesTab({
                 </Button>
             </div>
 
-            {/* 카테고리 범례 */}
-            <div className="flex flex-wrap gap-2 text-sm">
+            {/* 카테고리 필터 */}
+            <div className="flex flex-wrap gap-2 text-sm select-none">
+                <button
+                    type="button"
+                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
+                        selectedCategory === null
+                            ? "bg-gray-800 text-white dark:bg-gray-200 dark:text-gray-900"
+                            : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 opacity-60 hover:opacity-100"
+                    }`}
+                    onClick={() => setSelectedCategory(null)}
+                >
+                    전체 ({inquiries.length})
+                </button>
                 {Object.entries(CATEGORY_CONFIG).map(([key, config]) => {
                     const Icon = config.icon;
+                    const count = inquiries.filter((i) => i.category === key).length;
                     return (
-                        <Badge key={key} className={config.color}>
+                        <button
+                            type="button"
+                            key={key}
+                            className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
+                                selectedCategory === key
+                                    ? config.color
+                                    : config.color + " opacity-60 hover:opacity-100"
+                            }`}
+                            onClick={() =>
+                                setSelectedCategory(selectedCategory === key ? null : key)
+                            }
+                        >
                             <Icon className="w-3 h-3 mr-1" />
-                            {config.label}
-                        </Badge>
+                            {config.label} ({count})
+                        </button>
                     );
                 })}
             </div>
