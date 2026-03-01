@@ -112,8 +112,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 return;
             }
 
-            // profiles와 user_minimi를 병렬 조회 (순차→병렬로 ~300ms 단축)
-            const [profileResult, minimiListResult] = await Promise.all([
+            // profiles, user_minimi, 첫 번째 펫을 병렬 조회
+            const [profileResult, minimiListResult, firstPetResult] = await Promise.all([
                 supabase
                     .from("profiles")
                     .select("is_admin, is_premium, premium_expires_at, points, onboarding_data, equipped_minimi_id, equipped_accessories, minimi_pixel_data, minimi_accessories_data")
@@ -123,10 +123,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     .from("user_minimi")
                     .select("id, minimi_id")
                     .eq("user_id", currentUser.id),
+                supabase
+                    .from("pets")
+                    .select("type")
+                    .eq("user_id", currentUser.id)
+                    .order("created_at", { ascending: true })
+                    .limit(1)
+                    .single(),
             ]);
 
             const { data, error } = profileResult;
             const minimiList = minimiListResult.data || [];
+            const firstPet = firstPetResult.data;
 
             // 관리자 체크
             // 1) auth.users.email 기반
@@ -202,15 +210,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             } else {
                 setOnboardingData(null);
                 // 온보딩 데이터 없으면 등록된 펫의 type으로 아이콘 결정
-                const { data: petData } = await supabase
-                    .from("pets")
-                    .select("type")
-                    .eq("user_id", currentUser.id)
-                    .order("created_at", { ascending: true })
-                    .limit(1)
-                    .single();
-                if (petData?.type) {
-                    const t = petData.type;
+                // (firstPet은 위에서 병렬 쿼리로 이미 가져옴)
+                if (firstPet?.type) {
+                    const t = firstPet.type;
                     if (t === "고양이") setUserPetType("cat");
                     else if (t === "강아지") setUserPetType("dog");
                     else setUserPetType("other");

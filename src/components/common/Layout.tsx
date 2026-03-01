@@ -109,107 +109,104 @@ function HeaderAuthArea({
     return (
         <div className="xl:hidden flex items-center min-w-[40px]" data-auth-area>
             {/* 로딩 스켈레톤 */}
-            <div
-                className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full"
-                style={{ display: loading ? 'block' : 'none' }}
-            />
+            {loading && (
+                <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full" />
+            )}
 
-            {/* 로그인 유저 메뉴 */}
-            <div
-                className="relative"
-                style={{ display: !loading && user ? 'block' : 'none' }}
-            >
-                <button
-                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                    className="flex items-center gap-1.5 p-1.5 min-w-[44px] min-h-[44px] sm:px-3 sm:py-2 rounded-full sm:rounded-xl hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 active:scale-95 transition-transform"
-                >
-                    <LevelBadge
-                        points={points}
-                        petType={userPetType}
-                        isAdmin={isAdminUser}
-                        size="md"
-                        showTooltip={false}
-                    />
-                    {minimiEquip.imageUrl && (
-                        <Image
-                            src={minimiEquip.imageUrl}
-                            alt="미니미"
-                            width={16}
-                            height={16}
-                            className="object-contain hidden sm:block"
-                            style={{ imageRendering: "pixelated" }}
+            {/* 로그인 유저 메뉴 - 조건부 렌더링 (로그아웃 시 DOM에서 완전 제거) */}
+            {!loading && user && (
+                <div className="relative">
+                    <button
+                        onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                        className="flex items-center gap-1.5 p-1.5 min-w-[44px] min-h-[44px] sm:px-3 sm:py-2 rounded-full sm:rounded-xl hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 active:scale-95 transition-transform"
+                    >
+                        <LevelBadge
+                            points={points}
+                            petType={userPetType}
+                            isAdmin={isAdminUser}
+                            size="md"
+                            showTooltip={false}
                         />
-                    )}
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200 hidden sm:block max-w-[80px] truncate">
-                        {displayName}
-                    </span>
-                    <ChevronDown className="w-4 h-4 text-gray-500 hidden sm:block" />
-                </button>
+                        {minimiEquip.imageUrl && (
+                            <Image
+                                src={minimiEquip.imageUrl}
+                                alt="미니미"
+                                width={16}
+                                height={16}
+                                className="object-contain hidden sm:block"
+                                style={{ imageRendering: "pixelated" }}
+                            />
+                        )}
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-200 hidden sm:block max-w-[80px] truncate">
+                            {displayName}
+                        </span>
+                        <ChevronDown className="w-4 h-4 text-gray-500 hidden sm:block" />
+                    </button>
 
-                {isUserMenuOpen && (
-                    <>
-                        <div
-                            className="fixed inset-0 z-40"
-                            onClick={() => setIsUserMenuOpen(false)}
-                        />
-                        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 z-50 overflow-hidden">
-                            <div className="p-3 border-b border-gray-200 dark:border-gray-700">
-                                <div className="flex items-center gap-2">
-                                    {minimiEquip.imageUrl && (
-                                        <Image
-                                            src={minimiEquip.imageUrl}
-                                            alt="미니미"
-                                            width={24}
-                                            height={24}
-                                            className="object-contain"
-                                            style={{ imageRendering: "pixelated" }}
-                                        />
-                                    )}
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                                            {displayName}
-                                        </p>
-                                        <p className="text-xs text-gray-500 truncate">
-                                            {user?.email}
-                                        </p>
+                    {isUserMenuOpen && (
+                        <>
+                            <div
+                                className="fixed inset-0 z-40"
+                                onClick={() => setIsUserMenuOpen(false)}
+                            />
+                            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 z-50 overflow-hidden">
+                                <div className="p-3 border-b border-gray-200 dark:border-gray-700">
+                                    <div className="flex items-center gap-2">
+                                        {minimiEquip.imageUrl && (
+                                            <Image
+                                                src={minimiEquip.imageUrl}
+                                                alt="미니미"
+                                                width={24}
+                                                height={24}
+                                                className="object-contain"
+                                                style={{ imageRendering: "pixelated" }}
+                                            />
+                                        )}
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                                {displayName}
+                                            </p>
+                                            <p className="text-xs text-gray-500 truncate">
+                                                {user?.email}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
+                                <button
+                                    onClick={() => {
+                                        setSelectedTab("record");
+                                        setIsUserMenuOpen(false);
+                                    }}
+                                    className="w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-memento-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                >
+                                    <User className="w-4 h-4" />
+                                    내 정보
+                                </button>
+                                <button
+                                    onClick={handleSignOut}
+                                    className="w-full px-4 py-3 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                                >
+                                    <LogOut className="w-4 h-4" />
+                                    로그아웃
+                                </button>
                             </div>
-                            <button
-                                onClick={() => {
-                                    setSelectedTab("record");
-                                    setIsUserMenuOpen(false);
-                                }}
-                                className="w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-memento-100 dark:hover:bg-gray-700 flex items-center gap-2"
-                            >
-                                <User className="w-4 h-4" />
-                                내 정보
-                            </button>
-                            <button
-                                onClick={handleSignOut}
-                                className="w-full px-4 py-3 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
-                            >
-                                <LogOut className="w-4 h-4" />
-                                로그아웃
-                            </button>
-                        </div>
-                    </>
-                )}
-            </div>
+                        </>
+                    )}
+                </div>
+            )}
 
             {/* 비로그인 버튼 */}
-            <div
-                className="flex items-center"
-                style={{ display: !loading && !user ? 'flex' : 'none' }}
-            >
-                <Button
-                    onClick={openLoginModal}
-                    className="bg-gradient-to-r from-memento-500 to-memento-400 hover:from-memento-600 hover:to-memento-500 rounded-md shadow-sm shadow-memento-500/25 px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm h-auto min-h-[44px] active:scale-95 transition-transform"
-                >
-                    <LogIn className="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
-                    시작하기
-                </Button>
-            </div>
+            {!loading && !user && (
+                <div className="flex items-center">
+                    <Button
+                        onClick={openLoginModal}
+                        className="bg-gradient-to-r from-memento-500 to-memento-400 hover:from-memento-600 hover:to-memento-500 rounded-md shadow-sm shadow-memento-500/25 px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm h-auto min-h-[44px] active:scale-95 transition-transform"
+                    >
+                        <LogIn className="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
+                        시작하기
+                    </Button>
+                </div>
+            )}
         </div>
     );
 }
