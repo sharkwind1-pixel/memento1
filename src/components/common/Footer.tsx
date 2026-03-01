@@ -2,7 +2,7 @@
  * 메멘토애니 푸터 컴포넌트
  */
 
-import { Heart, Mail, Phone, MapPin } from 'lucide-react'
+import { Heart, Mail } from 'lucide-react'
 
 export default function Footer() {
   return (
@@ -58,16 +58,8 @@ export default function Footer() {
               <h4 className="font-semibold text-gray-800 dark:text-gray-200">연락처</h4>
               <div className="space-y-3 text-sm">
                 <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
-                  <Phone className="w-4 h-4" />
-                  <span>1588-1234</span>
-                </div>
-                <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
                   <Mail className="w-4 h-4" />
-                  <span>help@memento-ani.com</span>
-                </div>
-                <div className="flex items-start space-x-2 text-gray-600 dark:text-gray-400">
-                  <MapPin className="w-4 h-4 mt-0.5" />
-                  <span>서울특별시 강남구<br />테헤란로 427, 10층</span>
+                  <span>sharkwind1@gmail.com</span>
                 </div>
               </div>
             </div>
@@ -77,15 +69,15 @@ export default function Footer() {
 
           <div className="space-y-4">
             <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
-              <p><strong className="text-gray-700 dark:text-gray-300">(주) 메멘토애니</strong> | 대표 안승빈</p>
-              <p>사업자번호 123-45-67890 | 통신판매업 신고번호 2026-서울강남-1234</p>
+              <p><strong className="text-gray-700 dark:text-gray-300">메멘토애니</strong> | 대표 안승빈</p>
+              <p>사업자등록 준비 중 | 문의: sharkwind1@gmail.com</p>
             </div>
 
             <div className="flex flex-wrap gap-4">
               <a href="/terms" className="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">이용약관</a>
               <a href="/privacy" className="text-sm font-medium text-gray-800 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">개인정보처리방침</a>
+              <a href="/community-guidelines" className="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">커뮤니티 가이드라인</a>
               <a href="/opensource" className="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">오픈소스 라이선스</a>
-              <a href="#" className="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">운영정책</a>
             </div>
 
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center pt-4">

@@ -6,6 +6,45 @@
 
 ---
 
+## 완료된 핵심 기능 (한 줄 요약)
+
+| 기능 | 상태 |
+|------|------|
+| 반려동물 CRUD + 사진/영상 | 완료 |
+| AI 펫톡 (일상/추모 듀얼모드, 감정분석, 성격 7종, 할루시네이션 방지 5단계) | 완료 |
+| 케어 리마인더 + 푸시 알림 (VAPID, Service Worker, 크론) | 완료 |
+| 타임라인 일기 + 대화→타임라인 자동 생성 | 완료 |
+| 듀얼 모드 (하늘색↔황금빛) + 무지개다리 세레모니 5단계 | 완료 |
+| 튜토리얼 (데스크톱 11스텝, 모바일 5스텝) | 완료 |
+| 미니홈피 (배경 8종, 멀티미니미 드래그&드롭, 도감, 터치 이펙트) | 완료 |
+| 커뮤니티 (5개 게시판, 좋아요/댓글/신고, 무한스크롤) | 완료 |
+| 프리미엄/무료 제한 (DB is_premium 체크) + 스마트 전환 UX | 완료 |
+| 관리자 페이지 (대시보드, 유저/게시물/문의/신고/탈퇴 관리) | 완료 |
+| 추억 앨범 (자동 생성, 기념일, 슬라이드쇼) | 완료 |
+| 대화 내보내기 (4개 템플릿, PNG/JPG, Web Share) | 완료 |
+| 대화 내 사진 연동 (키워드→pet_media 캡션 매칭) | 완료 |
+| AI 프롬프트 개선 (감각 기억, 거울링 3단계, 시간대 에너지, pending_topic) | 완료 |
+| UI/UX (추모 별 float-up, 타이핑 감성 텍스트, 발자국 버블) | 완료 |
+| 치유의 여정 대시보드 (감정 추이, 애도 단계, 마일스톤) | 완료 |
+| 보안 전면 리뷰 + 수정 (레이스 컨디션, 파일 업로드, VPN 체크 등) | 완료 |
+| 대형 컴포넌트 분리 (5개 페이지 리팩토링) | 완료 |
+| 온보딩 플로우 (Safari 대응, DB+localStorage 이중 저장) | 완료 |
+| 관리자 탈퇴 처리 (auth.users 삭제 API, CASCADE) | 완료 |
+| AI 영상 생성 (fal.ai Minimax Hailuo, 8템플릿, 쿼터 시스템, 폴링 UI) | 코드 완료 (DB 미실행) |
+
+## 최근 수정된 핵심 파일 (2026-02-28)
+
+| 파일 | 뭘 바꿨나 |
+|------|----------|
+| `src/app/page.tsx` | 온보딩 플로우 3차 수정 (Safari 무한루프 해결, onboardingTriggeredRef) |
+| `src/components/features/onboarding/OnboardingModal.tsx` | handleSkip DB 저장, refreshProfile 추가, 고양이 아이콘 버그 수정 |
+| `src/app/api/admin/delete-user/route.ts` | 신규 — 관리자 유저 삭제 API (service_role) |
+| `src/components/pages/AdminPage.tsx` | processWithdrawal에 auth.users 삭제 연동 |
+| `src/components/admin/hooks/useAdminData.ts` | loadUsers에서 탈퇴 유저 필터링 |
+| `src/config/apiEndpoints.ts` | ADMIN_DELETE_USER 추가 |
+
+---
+
 ## TODO — 앞으로 할 것
 
 > 승빈님이 우선순위/순서 바꾸고 싶으면 여기서 직접 수정. 위에 있을수록 먼저.

@@ -35,6 +35,8 @@ export default function NicknameSetupModal({
     const [nicknameStatus, setNicknameStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [ageConfirmed, setAgeConfirmed] = useState(false);
+    const [termsAgreed, setTermsAgreed] = useState(false);
 
     // 닉네임 변경 시 중복 체크 (디바운스)
     useEffect(() => {
@@ -55,6 +57,16 @@ export default function NicknameSetupModal({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!ageConfirmed) {
+            setError("만 14세 이상 확인이 필요합니다.");
+            return;
+        }
+
+        if (!termsAgreed) {
+            setError("이용약관 및 개인정보처리방침에 동의해주세요.");
+            return;
+        }
 
         if (nickname.trim().length < 2) {
             setError("닉네임은 2자 이상이어야 합니다.");
@@ -184,10 +196,41 @@ export default function NicknameSetupModal({
                         커뮤니티 활동 시 사용됩니다.
                     </p>
 
+                    {/* 약관 동의 및 연령 확인 */}
+                    <div className="space-y-3 pt-2 border-t dark:border-gray-700">
+                        <label className="flex items-start gap-2 cursor-pointer select-none">
+                            <input
+                                type="checkbox"
+                                checked={ageConfirmed}
+                                onChange={(e) => setAgeConfirmed(e.target.checked)}
+                                className="mt-0.5 w-4 h-4 rounded border-gray-300 text-memento-500 focus:ring-memento-500"
+                            />
+                            <span className="text-xs text-gray-600 dark:text-gray-400">
+                                <span className="text-red-500 font-medium">[필수]</span>{" "}
+                                만 14세 이상입니다
+                            </span>
+                        </label>
+                        <label className="flex items-start gap-2 cursor-pointer select-none">
+                            <input
+                                type="checkbox"
+                                checked={termsAgreed}
+                                onChange={(e) => setTermsAgreed(e.target.checked)}
+                                className="mt-0.5 w-4 h-4 rounded border-gray-300 text-memento-500 focus:ring-memento-500"
+                            />
+                            <span className="text-xs text-gray-600 dark:text-gray-400">
+                                <span className="text-red-500 font-medium">[필수]</span>{" "}
+                                <a href="/terms" target="_blank" className="underline hover:text-memento-500">이용약관</a>,{" "}
+                                <a href="/privacy" target="_blank" className="underline hover:text-memento-500">개인정보처리방침</a>,{" "}
+                                <a href="/community-guidelines" target="_blank" className="underline hover:text-memento-500">커뮤니티 가이드라인</a>에
+                                동의합니다
+                            </span>
+                        </label>
+                    </div>
+
                     {/* 제출 버튼 */}
                     <Button
                         type="submit"
-                        disabled={loading || nicknameStatus === "taken" || nicknameStatus === "checking" || nickname.trim().length < 2}
+                        disabled={loading || nicknameStatus === "taken" || nicknameStatus === "checking" || nickname.trim().length < 2 || !ageConfirmed || !termsAgreed}
                         className="w-full h-12 bg-gradient-to-r from-memento-500 to-memento-400 hover:from-blue-600 hover:to-sky-600 rounded-xl text-base disabled:opacity-50"
                     >
                         {loading ? (

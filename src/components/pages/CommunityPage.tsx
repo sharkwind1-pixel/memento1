@@ -10,6 +10,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { usePets } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { authFetch } from "@/lib/auth-fetch";
 import WritePostModal from "@/components/features/community/WritePostModal";
 import PostDetailView from "@/components/features/community/PostDetailView";
 import CommunityHeader from "@/components/features/community/CommunityHeader";
@@ -263,6 +264,37 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
         return () => observer.disconnect();
     }, [hasMore, isLoading, isLoadingMore, fetchPosts]);
 
+    // 유저 차단 핸들러
+    const handleBlockUser = async (targetUserId: string, targetName: string) => {
+        if (!user) {
+            window.dispatchEvent(new CustomEvent("openAuthModal"));
+            return;
+        }
+        if (targetUserId === user.id) return;
+
+        if (!confirm(`"${targetName}" 님을 차단하시겠습니까?\n\n차단하면 이 유저의 게시글과 댓글이 더 이상 보이지 않습니다.\n설정에서 차단을 해제할 수 있습니다.`)) return;
+
+        try {
+            const response = await authFetch(API.BLOCKS, {
+                method: "POST",
+                body: JSON.stringify({ blockedUserId: targetUserId }),
+            });
+
+            if (response.status === 409) {
+                toast.info("이미 차단한 유저입니다");
+                return;
+            }
+
+            if (!response.ok) throw new Error("차단 실패");
+
+            toast.success(`"${targetName}" 님을 차단했습니다`);
+            // 차단 후 게시글 목록 새로고침
+            fetchPosts(false);
+        } catch {
+            toast.error("차단에 실패했습니다. 다시 시도해주세요.");
+        }
+    };
+
     // 글쓰기 버튼 클릭
     const handleWriteClick = () => {
         if (!user) {
@@ -371,6 +403,7 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
                     onSelectPost={setSelectedPostId}
                     onVisitUser={setVisitUserId}
                     onReportPost={(post) => setReportTarget({ id: post.id, type: "post", title: post.title })}
+                    onBlockUser={handleBlockUser}
                     onWriteClick={handleWriteClick}
                     onClearSearch={() => { setSearchInput(""); setSearchQuery(""); }}
                 />

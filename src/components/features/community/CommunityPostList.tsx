@@ -27,6 +27,7 @@ import {
     MoreHorizontal,
     Flag,
     ImageIcon,
+    Ban,
 } from "lucide-react";
 import {
     DropdownMenu,
@@ -51,6 +52,7 @@ interface CommunityPostListProps {
     onSelectPost: (postId: string) => void;
     onVisitUser: (userId: string) => void;
     onReportPost: (post: Post) => void;
+    onBlockUser?: (userId: string, authorName: string) => void;
     onWriteClick: () => void;
     onClearSearch: () => void;
 }
@@ -68,6 +70,7 @@ export default function CommunityPostList({
     onSelectPost,
     onVisitUser,
     onReportPost,
+    onBlockUser,
     onWriteClick,
     onClearSearch,
 }: CommunityPostListProps) {
@@ -156,6 +159,19 @@ export default function CommunityPostList({
                                                     <Flag className="w-4 h-4 mr-2" />
                                                     신고하기
                                                 </DropdownMenuItem>
+                                                {/* 차단하기 (본인 글이 아닐 때만) */}
+                                                {userId && post.userId && post.userId !== userId && onBlockUser && (
+                                                    <DropdownMenuItem
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            onBlockUser(post.userId, post.authorName);
+                                                        }}
+                                                        className="text-orange-500 focus:text-orange-600"
+                                                    >
+                                                        <Ban className="w-4 h-4 mr-2" />
+                                                        이 유저 차단
+                                                    </DropdownMenuItem>
+                                                )}
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </div>

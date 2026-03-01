@@ -48,6 +48,19 @@ export async function GET(request: NextRequest) {
         const limit = parseInt(searchParams.get("limit") || "20");
         const offset = parseInt(searchParams.get("offset") || "0");
 
+        // 차단된 유저 목록 조회 (로그인 시)
+        let blockedUserIds: string[] = [];
+        const currentUser = await getAuthUser().catch(() => null);
+        if (currentUser) {
+            const { data: blocks } = await supabase
+                .from("user_blocks")
+                .select("blocked_user_id")
+                .eq("blocker_id", currentUser.id);
+            if (blocks && blocks.length > 0) {
+                blockedUserIds = blocks.map(b => b.blocked_user_id);
+            }
+        }
+
         let query = supabase
             .from("community_posts")
             .select("*, post_comments(count)", { count: "exact" })
@@ -75,6 +88,12 @@ export async function GET(request: NextRequest) {
             if (sanitizedSearch) {
                 query = query.or(`title.ilike.%${sanitizedSearch}%,content.ilike.%${sanitizedSearch}%`);
             }
+        }
+
+        // 차단된 유저의 게시글 제외
+        if (blockedUserIds.length > 0) {
+            // Supabase에서 NOT IN은 .not("user_id", "in", (...)) 사용
+            query = query.not("user_id", "in", `(${blockedUserIds.join(",")})`);
         }
 
         // 정렬

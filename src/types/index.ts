@@ -294,6 +294,23 @@ export interface BoardCategory {
 }
 
 // ============================================
+// 4-1. 유저 차단 관련 타입
+// ============================================
+
+/** 유저 차단 기록 */
+export interface UserBlock {
+    id: string;
+    blockerId: string;
+    blockedUserId: string;
+    blockedNickname?: string;
+    reason?: BlockReason;
+    createdAt: string;
+}
+
+/** 차단 사유 */
+export type BlockReason = "harassment" | "spam" | "inappropriate" | "other";
+
+// ============================================
 // 5. 입양/분실동물 관련 타입
 // ============================================
 
