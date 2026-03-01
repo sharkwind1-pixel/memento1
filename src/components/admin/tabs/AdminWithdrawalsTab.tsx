@@ -75,6 +75,7 @@ export default function AdminWithdrawalsTab({
     userId,
 }: AdminWithdrawalsTabProps) {
     const [searchQuery, setSearchQuery] = useState("");
+    const [selectedType, setSelectedType] = useState<string | null>(null);
 
     // ========================================================================
     // 재가입 허용
@@ -124,9 +125,10 @@ export default function AdminWithdrawalsTab({
     // ========================================================================
     const filteredWithdrawals = withdrawals.filter(
         (w) =>
-            searchQuery === "" ||
-            w.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (w.nickname || "").toLowerCase().includes(searchQuery.toLowerCase())
+            (searchQuery === "" ||
+                w.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (w.nickname || "").toLowerCase().includes(searchQuery.toLowerCase())) &&
+            (selectedType === null || w.withdrawal_type === selectedType)
     );
 
     // ========================================================================
@@ -151,19 +153,50 @@ export default function AdminWithdrawalsTab({
                 </Button>
             </div>
 
-            {/* 유형 범례 */}
+            {/* 유형 필터 */}
             <div className="flex flex-wrap gap-2 text-sm">
-                <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300">
+                <Badge
+                    className={`cursor-pointer transition-opacity ${
+                        selectedType === null
+                            ? "bg-gray-800 text-white dark:bg-gray-200 dark:text-gray-900"
+                            : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 opacity-60 hover:opacity-100"
+                    }`}
+                    onClick={() => setSelectedType(null)}
+                >
+                    전체 ({withdrawals.length})
+                </Badge>
+                <Badge
+                    className={`cursor-pointer transition-opacity ${
+                        selectedType === "abuse_concern"
+                            ? "bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300"
+                            : "bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300 opacity-60 hover:opacity-100"
+                    }`}
+                    onClick={() => setSelectedType(selectedType === "abuse_concern" ? null : "abuse_concern")}
+                >
                     <Clock className="w-3 h-3 mr-1" />
-                    악용 우려 (30일 대기)
+                    악용 우려 ({withdrawals.filter((w) => w.withdrawal_type === "abuse_concern").length})
                 </Badge>
-                <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
+                <Badge
+                    className={`cursor-pointer transition-opacity ${
+                        selectedType === "banned"
+                            ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                            : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 opacity-60 hover:opacity-100"
+                    }`}
+                    onClick={() => setSelectedType(selectedType === "banned" ? null : "banned")}
+                >
                     <Ban className="w-3 h-3 mr-1" />
-                    영구 차단
+                    영구 차단 ({withdrawals.filter((w) => w.withdrawal_type === "banned").length})
                 </Badge>
-                <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                <Badge
+                    className={`cursor-pointer transition-opacity ${
+                        selectedType === "error_resolution"
+                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                            : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 opacity-60 hover:opacity-100"
+                    }`}
+                    onClick={() => setSelectedType(selectedType === "error_resolution" ? null : "error_resolution")}
+                >
                     <CheckCircle className="w-3 h-3 mr-1" />
-                    오류 해결 (즉시 가능)
+                    오류 해결 ({withdrawals.filter((w) => w.withdrawal_type === "error_resolution").length})
                 </Badge>
             </div>
 
