@@ -37,6 +37,7 @@ export default function NicknameSetupModal({
     const [error, setError] = useState<string | null>(null);
     const [ageConfirmed, setAgeConfirmed] = useState(false);
     const [termsAgreed, setTermsAgreed] = useState(false);
+    const [locationConsent, setLocationConsent] = useState(false);
 
     // 닉네임 변경 시 중복 체크 (디바운스)
     useEffect(() => {
@@ -91,10 +92,15 @@ export default function NicknameSetupModal({
             const { error: authError } = await updateProfile({ nickname: nickname.trim() });
             if (authError) throw authError;
 
-            // 2. profiles 테이블 업데이트
+            // 2. profiles 테이블 업데이트 (닉네임 + 동의 기록)
             const { error: profileError } = await supabase
                 .from("profiles")
-                .update({ nickname: nickname.trim() })
+                .update({
+                    nickname: nickname.trim(),
+                    terms_agreed_at: new Date().toISOString(),
+                    location_consent: locationConsent,
+                    location_consent_at: locationConsent ? new Date().toISOString() : null,
+                })
                 .eq("id", user?.id);
 
             if (profileError) throw profileError;
@@ -223,6 +229,21 @@ export default function NicknameSetupModal({
                                 <a href="/privacy" target="_blank" className="underline hover:text-memento-500">개인정보처리방침</a>,{" "}
                                 <a href="/community-guidelines" target="_blank" className="underline hover:text-memento-500">커뮤니티 가이드라인</a>에
                                 동의합니다
+                            </span>
+                        </label>
+                        <label className="flex items-start gap-2 cursor-pointer select-none">
+                            <input
+                                type="checkbox"
+                                checked={locationConsent}
+                                onChange={(e) => setLocationConsent(e.target.checked)}
+                                className="mt-0.5 w-4 h-4 rounded border-gray-300 text-memento-500 focus:ring-memento-500"
+                            />
+                            <span className="text-xs text-gray-600 dark:text-gray-400">
+                                <span className="text-sky-500 font-medium">[선택]</span>{" "}
+                                위치기반 서비스 이용에 동의합니다
+                                <span className="block text-[10px] text-gray-400 mt-0.5">
+                                    주변 동물병원, 지역 정보 등 맞춤 서비스 제공에 활용됩니다
+                                </span>
                             </span>
                         </label>
                     </div>
