@@ -201,6 +201,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 else setUserPetType("dog");
             } else {
                 setOnboardingData(null);
+                // 온보딩 데이터 없으면 등록된 펫의 type으로 아이콘 결정
+                const { data: petData } = await supabase
+                    .from("pets")
+                    .select("type")
+                    .eq("user_id", currentUser.id)
+                    .order("created_at", { ascending: true })
+                    .limit(1)
+                    .single();
+                if (petData?.type) {
+                    const t = petData.type;
+                    if (t === "고양이") setUserPetType("cat");
+                    else if (t === "강아지") setUserPetType("dog");
+                    else setUserPetType("other");
+                }
             }
 
             setPointsLoaded(true);

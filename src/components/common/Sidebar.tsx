@@ -386,8 +386,8 @@ export default function Sidebar({
                 </div>
             )}
 
-            {/* 하단 링크 */}
-            <div className="p-3 border-t border-gray-200 dark:border-gray-700 space-y-1">
+            {/* 하단 링크 - pb-20으로 모바일 하단 네비(68px) 겹침 방지 */}
+            <div className="p-3 pb-20 border-t border-gray-200 dark:border-gray-700 space-y-1">
                 <button
                     data-tutorial-id="sidebar-inquiry"
                     onClick={() => {
