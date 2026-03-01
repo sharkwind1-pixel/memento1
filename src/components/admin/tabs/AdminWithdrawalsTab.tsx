@@ -154,9 +154,10 @@ export default function AdminWithdrawalsTab({
             </div>
 
             {/* 유형 필터 */}
-            <div className="flex flex-wrap gap-2 text-sm">
-                <Badge
-                    className={`cursor-pointer transition-opacity ${
+            <div className="flex flex-wrap gap-2 text-sm select-none">
+                <button
+                    type="button"
+                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
                         selectedType === null
                             ? "bg-gray-800 text-white dark:bg-gray-200 dark:text-gray-900"
                             : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 opacity-60 hover:opacity-100"
@@ -164,9 +165,10 @@ export default function AdminWithdrawalsTab({
                     onClick={() => setSelectedType(null)}
                 >
                     전체 ({withdrawals.length})
-                </Badge>
-                <Badge
-                    className={`cursor-pointer transition-opacity ${
+                </button>
+                <button
+                    type="button"
+                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
                         selectedType === "abuse_concern"
                             ? "bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300"
                             : "bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300 opacity-60 hover:opacity-100"
@@ -175,9 +177,10 @@ export default function AdminWithdrawalsTab({
                 >
                     <Clock className="w-3 h-3 mr-1" />
                     악용 우려 ({withdrawals.filter((w) => w.withdrawal_type === "abuse_concern").length})
-                </Badge>
-                <Badge
-                    className={`cursor-pointer transition-opacity ${
+                </button>
+                <button
+                    type="button"
+                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
                         selectedType === "banned"
                             ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
                             : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 opacity-60 hover:opacity-100"
@@ -186,9 +189,10 @@ export default function AdminWithdrawalsTab({
                 >
                     <Ban className="w-3 h-3 mr-1" />
                     영구 차단 ({withdrawals.filter((w) => w.withdrawal_type === "banned").length})
-                </Badge>
-                <Badge
-                    className={`cursor-pointer transition-opacity ${
+                </button>
+                <button
+                    type="button"
+                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
                         selectedType === "error_resolution"
                             ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
                             : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 opacity-60 hover:opacity-100"
@@ -197,7 +201,7 @@ export default function AdminWithdrawalsTab({
                 >
                     <CheckCircle className="w-3 h-3 mr-1" />
                     오류 해결 ({withdrawals.filter((w) => w.withdrawal_type === "error_resolution").length})
-                </Badge>
+                </button>
             </div>
 
             {/* 탈퇴자 목록 */}

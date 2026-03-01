@@ -163,9 +163,10 @@ export default function AdminReportsTab({
             </div>
 
             {/* 상태 필터 */}
-            <div className="flex flex-wrap gap-2 text-sm">
-                <Badge
-                    className={`cursor-pointer transition-opacity ${
+            <div className="flex flex-wrap gap-2 text-sm select-none">
+                <button
+                    type="button"
+                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
                         selectedStatus === null
                             ? "bg-gray-800 text-white dark:bg-gray-200 dark:text-gray-900"
                             : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 opacity-60 hover:opacity-100"
@@ -173,9 +174,10 @@ export default function AdminReportsTab({
                     onClick={() => setSelectedStatus(null)}
                 >
                     전체 ({reports.length})
-                </Badge>
-                <Badge
-                    className={`cursor-pointer transition-opacity ${
+                </button>
+                <button
+                    type="button"
+                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
                         selectedStatus === "pending"
                             ? "bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300"
                             : "bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300 opacity-60 hover:opacity-100"
@@ -184,9 +186,10 @@ export default function AdminReportsTab({
                 >
                     <Clock className="w-3 h-3 mr-1" />
                     대기중 ({reports.filter((r) => r.status === "pending").length})
-                </Badge>
-                <Badge
-                    className={`cursor-pointer transition-opacity ${
+                </button>
+                <button
+                    type="button"
+                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
                         selectedStatus === "reviewing"
                             ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
                             : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 opacity-60 hover:opacity-100"
@@ -195,9 +198,10 @@ export default function AdminReportsTab({
                 >
                     <Eye className="w-3 h-3 mr-1" />
                     검토중 ({reports.filter((r) => r.status === "reviewing").length})
-                </Badge>
-                <Badge
-                    className={`cursor-pointer transition-opacity ${
+                </button>
+                <button
+                    type="button"
+                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
                         selectedStatus === "resolved"
                             ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
                             : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 opacity-60 hover:opacity-100"
@@ -206,9 +210,10 @@ export default function AdminReportsTab({
                 >
                     <CheckCircle className="w-3 h-3 mr-1" />
                     처리완료 ({reports.filter((r) => r.status === "resolved").length})
-                </Badge>
-                <Badge
-                    className={`cursor-pointer transition-opacity ${
+                </button>
+                <button
+                    type="button"
+                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
                         selectedStatus === "rejected"
                             ? "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
                             : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 opacity-60 hover:opacity-100"
@@ -216,7 +221,7 @@ export default function AdminReportsTab({
                     onClick={() => setSelectedStatus(selectedStatus === "rejected" ? null : "rejected")}
                 >
                     반려 ({reports.filter((r) => r.status === "rejected").length})
-                </Badge>
+                </button>
             </div>
 
             {/* 신고 목록 */}

@@ -164,9 +164,10 @@ export default function AdminInquiriesTab({
             </div>
 
             {/* 카테고리 필터 */}
-            <div className="flex flex-wrap gap-2 text-sm">
-                <Badge
-                    className={`cursor-pointer transition-opacity ${
+            <div className="flex flex-wrap gap-2 text-sm select-none">
+                <button
+                    type="button"
+                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
                         selectedCategory === null
                             ? "bg-gray-800 text-white dark:bg-gray-200 dark:text-gray-900"
                             : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 opacity-60 hover:opacity-100"
@@ -174,14 +175,15 @@ export default function AdminInquiriesTab({
                     onClick={() => setSelectedCategory(null)}
                 >
                     전체 ({inquiries.length})
-                </Badge>
+                </button>
                 {Object.entries(CATEGORY_CONFIG).map(([key, config]) => {
                     const Icon = config.icon;
                     const count = inquiries.filter((i) => i.category === key).length;
                     return (
-                        <Badge
+                        <button
+                            type="button"
                             key={key}
-                            className={`cursor-pointer transition-opacity ${
+                            className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
                                 selectedCategory === key
                                     ? config.color
                                     : config.color + " opacity-60 hover:opacity-100"
@@ -192,7 +194,7 @@ export default function AdminInquiriesTab({
                         >
                             <Icon className="w-3 h-3 mr-1" />
                             {config.label} ({count})
-                        </Badge>
+                        </button>
                     );
                 })}
             </div>
