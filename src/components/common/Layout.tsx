@@ -92,7 +92,7 @@ function HeaderAuthArea({
 }: {
     setSelectedTab: (tab: TabType) => void;
 }) {
-    const { user, loading, signOut, isAdminUser, points, userPetType, minimiEquip } = useAuth();
+    const { user, loading, signOut, isAdminUser, points, userPetType, minimiEquip, profileLoaded } = useAuth();
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
     const displayName = user?.user_metadata?.nickname || user?.email?.split("@")[0] || "사용자";
@@ -108,13 +108,13 @@ function HeaderAuthArea({
 
     return (
         <div className="xl:hidden flex items-center min-w-[40px]" data-auth-area>
-            {/* 로딩 스켈레톤 */}
-            {loading && (
+            {/* 로딩 스켈레톤 (프로필 로드 전까지도 표시) */}
+            {(loading || (user && !profileLoaded)) && (
                 <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full" />
             )}
 
-            {/* 로그인 유저 메뉴 - 조건부 렌더링 (로그아웃 시 DOM에서 완전 제거) */}
-            {!loading && user && (
+            {/* 로그인 유저 메뉴 - 프로필 로드 완료 후에만 렌더링 (기본값 "dog" 노출 방지) */}
+            {!loading && user && profileLoaded && (
                 <div className="relative">
                     <button
                         onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
