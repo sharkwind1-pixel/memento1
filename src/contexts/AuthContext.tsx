@@ -200,23 +200,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
 
             // 온보딩 데이터 설정 + petType 추출
+            // 우선순위: (1) onboarding_data.petType → (2) pets.type → (3) 기본값 "dog"
+            let petTypeResolved = false;
             if (!error && data?.onboarding_data) {
                 const obData = data.onboarding_data as OnboardingData;
                 setOnboardingData(obData);
                 const pt = obData.petType;
-                if (pt === "cat") setUserPetType("cat");
-                else if (pt === "other") setUserPetType("other");
-                else setUserPetType("dog");
+                if (pt === "cat" || pt === "dog" || pt === "other") {
+                    setUserPetType(pt);
+                    petTypeResolved = true;
+                }
             } else {
                 setOnboardingData(null);
-                // 온보딩 데이터 없으면 등록된 펫의 type으로 아이콘 결정
-                // (firstPet은 위에서 병렬 쿼리로 이미 가져옴)
-                if (firstPet?.type) {
-                    const t = firstPet.type;
-                    if (t === "고양이") setUserPetType("cat");
-                    else if (t === "강아지") setUserPetType("dog");
-                    else setUserPetType("other");
-                }
+            }
+            // onboarding_data에서 petType을 못 찾으면 등록된 펫의 type으로 결정
+            if (!petTypeResolved && firstPet?.type) {
+                const t = firstPet.type;
+                if (t === "고양이") setUserPetType("cat");
+                else if (t === "강아지") setUserPetType("dog");
+                else setUserPetType("other");
             }
 
             setPointsLoaded(true);
