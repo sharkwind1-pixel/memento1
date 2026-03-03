@@ -83,6 +83,9 @@ export const metadata: Metadata = {
             "반려동물과 함께하는 모든 순간을 기록하고, 이별 후에도 따뜻한 추억을 간직하세요.",
         images: ["/og-image.png"],
     },
+    other: {
+        "naver-site-verification": "079ddcf23ad1ee15036c259a96423de3684e9d01",
+    },
 };
 
 export default function RootLayout({
