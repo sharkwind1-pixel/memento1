@@ -27,5 +27,23 @@ export default function sitemap(): MetadataRoute.Sitemap {
             changeFrequency: "monthly",
             priority: 0.3,
         },
+        {
+            url: `${siteUrl}/community-guidelines`,
+            lastModified: new Date(),
+            changeFrequency: "monthly",
+            priority: 0.3,
+        },
+        {
+            url: `${siteUrl}/location-terms`,
+            lastModified: new Date(),
+            changeFrequency: "monthly",
+            priority: 0.3,
+        },
+        {
+            url: `${siteUrl}/opensource`,
+            lastModified: new Date(),
+            changeFrequency: "yearly",
+            priority: 0.2,
+        },
     ];
 }

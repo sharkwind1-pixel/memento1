@@ -21,10 +21,10 @@ export const viewport: Viewport = {
     viewportFit: "cover",
 };
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://mementoani.com";
+
 export const metadata: Metadata = {
-    metadataBase: new URL(
-        process.env.NEXT_PUBLIC_SITE_URL || "https://mementoani.com"
-    ),
+    metadataBase: new URL(siteUrl),
     title: {
         default: "메멘토애니 - 특별한 매일을 함께",
         template: "%s | 메멘토애니",
@@ -49,35 +49,39 @@ export const metadata: Metadata = {
     ],
     authors: [{ name: "메멘토애니" }],
     creator: "메멘토애니",
+    alternates: {
+        canonical: siteUrl,
+    },
     icons: {
-        icon: "/icon-192.png",
+        icon: [
+            { url: "/favicon.ico", sizes: "32x32" },
+            { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+        ],
         apple: "/icon-192.png",
     },
     openGraph: {
         type: "website",
         locale: "ko_KR",
+        url: siteUrl,
         siteName: "메멘토애니",
         title: "메멘토애니 - 특별한 매일을 함께",
         description:
             "반려동물과 함께하는 모든 순간을 기록하고, 이별 후에도 따뜻한 추억을 간직하세요.",
         images: [
             {
-                url: "/logo.png",
-                width: 512,
-                height: 512,
-                alt: "메멘토애니 로고",
+                url: "/og-image.png",
+                width: 1200,
+                height: 630,
+                alt: "메멘토애니 - 반려동물 메모리얼 커뮤니티 플랫폼",
             },
         ],
     },
     twitter: {
-        card: "summary",
+        card: "summary_large_image",
         title: "메멘토애니 - 특별한 매일을 함께",
         description:
             "반려동물과 함께하는 모든 순간을 기록하고, 이별 후에도 따뜻한 추억을 간직하세요.",
-        images: ["/logo.png"],
-    },
-    other: {
-        "naver-site-verification": "",
+        images: ["/og-image.png"],
     },
 };
 
@@ -102,6 +106,28 @@ export default function RootLayout({
                                 } catch(e) {}
                             })();
                         `,
+                    }}
+                />
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{
+                        __html: JSON.stringify({
+                            "@context": "https://schema.org",
+                            "@graph": [
+                                {
+                                    "@type": "WebSite",
+                                    "name": "메멘토애니",
+                                    "url": siteUrl,
+                                    "description": "반려동물과 함께하는 모든 순간을 기록하고, 이별 후에도 따뜻한 추억을 간직할 수 있는 메모리얼 커뮤니티 플랫폼",
+                                },
+                                {
+                                    "@type": "Organization",
+                                    "name": "메멘토애니",
+                                    "url": siteUrl,
+                                    "logo": `${siteUrl}/logo.png`,
+                                },
+                            ],
+                        }),
                     }}
                 />
             </head>
