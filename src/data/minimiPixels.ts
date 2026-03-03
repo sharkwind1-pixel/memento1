@@ -3,8 +3,8 @@
  * 미니미 캐릭터 카탈로그
  * PNG 이미지 기반 렌더링
  *
- * PNG 이미지는 256x256 캔버스에 트림+리사이즈 처리됨
- * 모든 캐릭터는 256x256 캔버스에 비슷한 크기로 배치됨
+ * footPadding: 이미지 하단 투명 영역 비율 (PIL getbbox 기준 실측값)
+ * imageAspect: 원본 가로/세로 비율 (object-contain 그림자 보정용)
  */
 
 // ============================================
@@ -19,8 +19,8 @@ export const CHARACTER_CATALOG = [
         imageUrl: "/icons/minimi/maltipoo_v2.png?v=2",
         price: 200,
         description: "곱슬곱슬 크림색 말티푸",
-        /** 이미지 원본 가로:세로 비율 (object-contain 그림자 보정용) */
         imageAspect: 1,
+        footPadding: 0.047,
     },
     {
         slug: "yorkshire",
@@ -30,6 +30,7 @@ export const CHARACTER_CATALOG = [
         price: 200,
         description: "작고 용감한 요크셔테리어",
         imageAspect: 1,
+        footPadding: 0.023,
     },
     {
         slug: "golden_retriever",
@@ -39,6 +40,7 @@ export const CHARACTER_CATALOG = [
         price: 200,
         description: "밝고 다정한 골든리트리버",
         imageAspect: 1,
+        footPadding: 0.023,
     },
     {
         slug: "russian_blue",
@@ -47,8 +49,8 @@ export const CHARACTER_CATALOG = [
         imageUrl: "/icons/minimi/russian_blue.png",
         price: 200,
         description: "영롱한 초록 눈의 러시안블루",
-        /** 고양이 PNG는 677x369 (가로형) → 정사각 컨테이너에서 상하 여백 발생 */
         imageAspect: 677 / 369,
+        footPadding: 0.022,
     },
     {
         slug: "ragdoll",
@@ -58,6 +60,7 @@ export const CHARACTER_CATALOG = [
         price: 200,
         description: "파란 눈의 우아한 랙돌",
         imageAspect: 677 / 369,
+        footPadding: 0.022,
     },
     {
         slug: "cheese_cat",
@@ -67,5 +70,6 @@ export const CHARACTER_CATALOG = [
         price: 200,
         description: "따뜻한 주황빛 치즈 고양이",
         imageAspect: 677 / 369,
+        footPadding: 0.022,
     },
 ] as const;

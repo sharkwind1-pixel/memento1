@@ -142,28 +142,19 @@ export default function MinihompyStage({
     };
 
     /**
-     * 미니미 그림자 위치를 자동 계산 (object-contain 하단 여백 보정)
-     * 가로형 이미지(고양이)는 정사각형 컨테이너에서 상하 여백이 생기므로,
-     * imageAspect(가로/세로)로 실제 렌더링 높이를 구해 그림자를 발 아래에 배치
+     * 미니미 그림자 위치를 자동 계산
+     * object-contain 하단 여백 + 이미지 내 발 아래 투명 영역(footPadding)을 모두 보정
      */
     const getShadowBottom = (slug: string, containerSize: number): number => {
         const character = CHARACTER_CATALOG.find(c => c.slug === slug);
         const aspect = character?.imageAspect ?? 1;
+        const footPad = character?.footPadding ?? 0.03;
 
-        if (aspect <= 1) {
-            // 정사각형 또는 세로형: 하단 여백 없음 → 기본 위치
-            return -8;
-        }
+        const renderedH = aspect > 1 ? containerSize / aspect : containerSize;
+        const bottomGap = (containerSize - renderedH) / 2;
+        const footPadPx = renderedH * footPad;
 
-        // 가로형 이미지: object-contain 시 세로가 축소됨
-        // renderedHeight = containerSize / aspect
-        // bottomGap = (containerSize - renderedHeight) / 2
-        const renderedHeight = containerSize / aspect;
-        const bottomGap = (containerSize - renderedHeight) / 2;
-
-        // 그림자를 이미지 내 하단 여백(~2%)까지 고려하여 완전 밀착 배치
-        const contentBottomPadding = renderedHeight * 0.02;
-        return bottomGap + contentBottomPadding;
+        return bottomGap + footPadPx;
     };
 
     const handlePointerDown = useCallback((e: React.PointerEvent, index: number) => {
@@ -188,30 +179,48 @@ export default function MinihompyStage({
             const dy = moveEvent.clientY - dragStartRef.current.y;
             const percentX = (dx / rect.width) * 100;
             const percentY = (dy / rect.height) * 100;
-            const clamped = clampPosition(
-                dragStartRef.current.origX + percentX,
-                dragStartRef.current.origY + percentY,
-            );
+            // 드래그 중에는 clamp 하지 않음 → 스테이지 밖으로 끌 수 있음
+            const rawX = dragStartRef.current.origX + percentX;
+            const rawY = dragStartRef.current.origY + percentY;
             const updated = [...placedMinimi];
-            updated[index] = { ...updated[index], ...clamped };
+            updated[index] = { ...updated[index], x: rawX, y: rawY };
             onPlacementChange?.(updated);
         };
 
         const handlePointerUp = (upEvent: PointerEvent) => {
-            setDraggingIndex(null);
-            dragStartRef.current = null;
             window.removeEventListener("pointermove", handlePointerMove);
             window.removeEventListener("pointerup", handlePointerUp);
 
-            // 스테이지 하단 밖으로 드래그하면 보관함으로 이동
+            // 스테이지 밖으로 드래그하면 보관함으로 이동
             if (stageRef.current && onRemoveMinimi) {
                 const stageRect = stageRef.current.getBoundingClientRect();
-                if (upEvent.clientY > stageRect.bottom) {
+                if (upEvent.clientY > stageRect.bottom || upEvent.clientY < stageRect.top
+                    || upEvent.clientX < stageRect.left || upEvent.clientX > stageRect.right) {
+                    setDraggingIndex(null);
+                    dragStartRef.current = null;
                     onRemoveMinimi(index);
                     toast.success("보관함으로 이동했습니다");
                     return;
                 }
             }
+
+            // 스테이지 안에 놓으면 clamp 적용하여 위치 보정
+            if (dragStartRef.current) {
+                const dx = upEvent.clientX - dragStartRef.current.x;
+                const dy = upEvent.clientY - dragStartRef.current.y;
+                const pctX = (dx / rect.width) * 100;
+                const pctY = (dy / rect.height) * 100;
+                const clamped = clampPosition(
+                    dragStartRef.current.origX + pctX,
+                    dragStartRef.current.origY + pctY,
+                );
+                const updated = [...placedMinimi];
+                updated[index] = { ...updated[index], ...clamped };
+                onPlacementChange?.(updated);
+            }
+
+            setDraggingIndex(null);
+            dragStartRef.current = null;
         };
 
         window.addEventListener("pointermove", handlePointerMove);
@@ -251,7 +260,8 @@ export default function MinihompyStage({
         <div
             ref={stageRef}
             className={cn(
-                "relative rounded-2xl overflow-hidden",
+                "relative rounded-2xl",
+                draggingIndex !== null ? "overflow-visible" : "overflow-hidden",
                 compact ? "h-[200px]" : "h-[280px]",
                 "border border-white/20 shadow-lg",
                 editMode && "ring-2 ring-blue-400/50"
@@ -289,9 +299,6 @@ export default function MinihompyStage({
                     const isSelected = editMode && selectedIndex === index;
                     const isDragging = draggingIndex === index;
                     const baseSize = compact ? 72 : 96;
-                    // 히트 영역: 캐릭터의 실제 콘텐츠 부분만 (하단 60%, 중앙 50%)
-                    const hitW = Math.round(baseSize * 0.5);
-                    const hitH = Math.round(baseSize * 0.6);
 
                     const hasTouchEffect = touchEffectIndex === index;
 
@@ -330,8 +337,9 @@ export default function MinihompyStage({
                             {/* 이미지 (포인터 이벤트 없음 - 시각적 표시만) */}
                             <div
                                 className={cn(
-                                    "relative w-full h-full transition-transform duration-150",
-                                    hasTouchEffect && "scale-110"
+                                    "relative w-full h-full transition-all duration-150",
+                                    hasTouchEffect && "scale-110",
+                                    isDragging && "opacity-60 scale-90"
                                 )}
                                 style={{
                                     animation: hasTouchEffect ? "minimiJump 0.3s ease-out" : undefined,
@@ -390,20 +398,14 @@ export default function MinihompyStage({
                                     </div>
                                 )}
                             </div>
-                            {/* 히트 영역: 캐릭터 실제 크기에 맞춘 작은 클릭 영역 (하단 중앙) */}
+                            {/* 히트 영역: 전체 컨테이너 크기로 확장 (클릭 편의성) */}
                             <div
                                 className={cn(
-                                    "absolute",
+                                    "absolute inset-0",
                                     editMode ? "cursor-grab" : "cursor-pointer",
                                     isDragging && "cursor-grabbing",
                                 )}
-                                style={{
-                                    pointerEvents: "auto",
-                                    width: hitW,
-                                    height: hitH,
-                                    left: (baseSize - hitW) / 2,
-                                    top: baseSize - hitH - Math.round(baseSize * 0.02),
-                                }}
+                                style={{ pointerEvents: "auto" }}
                                 onPointerDown={(e) => handlePointerDown(e, index)}
                                 onClick={() => !editMode && handleMinimiTouch(index)}
                             />
