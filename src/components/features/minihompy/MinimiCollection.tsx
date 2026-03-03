@@ -13,14 +13,20 @@ import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
 import { CHARACTER_CATALOG } from "@/data/minimiPixels";
 import Image from "next/image";
-import type { UserMinimi } from "@/types";
+
+interface OwnedCharRow {
+    id: string;
+    minimi_id: string;
+    purchased_at: string;
+    purchase_price: number;
+}
 
 interface MinimiCollectionProps {
     onMinimiClick?: (slug: string, owned: boolean) => void;
 }
 
 export default function MinimiCollection({ onMinimiClick }: MinimiCollectionProps) {
-    const [ownedMinimi, setOwnedMinimi] = useState<UserMinimi[]>([]);
+    const [ownedMinimi, setOwnedMinimi] = useState<OwnedCharRow[]>([]);
     const [loading, setLoading] = useState(true);
 
     // 보유 미니미 로드
@@ -29,7 +35,7 @@ export default function MinimiCollection({ onMinimiClick }: MinimiCollectionProp
             const res = await authFetch(API.MINIMI_INVENTORY);
             if (res.ok) {
                 const data = await res.json();
-                setOwnedMinimi(data.inventory || []);
+                setOwnedMinimi(data.characters || []);
             }
         } catch {
             // 에러 무시
@@ -44,7 +50,7 @@ export default function MinimiCollection({ onMinimiClick }: MinimiCollectionProp
 
     // 보유 여부 체크
     const isOwned = (slug: string): boolean => {
-        return ownedMinimi.some(m => m.character?.slug === slug || m.minimiId === slug);
+        return ownedMinimi.some(m => m.minimi_id === slug);
     };
 
     // 보유 미니미 수
