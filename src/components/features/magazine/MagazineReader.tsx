@@ -134,9 +134,11 @@ function splitContentIntoCards(html: string, respectBoundaries = false): CardDat
                 continue;
             }
 
-            // <h2> → 새 카드 시작
+            // <h2> → 새 카드 시작 (명시적 경계 모드에서는 <hr>만 카드 경계이므로 flush 안 함)
             if (/^<h2/i.test(block)) {
-                flushTextBuffer();
+                if (!respectBoundaries) {
+                    flushTextBuffer();
+                }
                 textBuffer.push(block);
                 continue;
             }
