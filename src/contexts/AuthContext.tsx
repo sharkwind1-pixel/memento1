@@ -236,24 +236,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     else setUserPetType("other");
                     petTypeResolved = true;
                 }
-                // 병렬 쿼리 실패 시 단독 재시도
+                // 클라이언트 쿼리 실패 시 서버 API로 fallback (RLS 문제 우회)
                 if (!petTypeResolved) {
                     try {
-                        const { data: retryPet } = await supabase
-                            .from("pets")
-                            .select("type")
-                            .eq("user_id", currentUser.id)
-                            .order("created_at", { ascending: true })
-                            .limit(1)
-                            .maybeSingle();
-                        console.log("[PetType] 재시도 결과:", retryPet);
-                        if (retryPet?.type) {
-                            const t = retryPet.type;
-                            if (t === "고양이") setUserPetType("cat");
-                            else if (t === "강아지") setUserPetType("dog");
-                            else setUserPetType("other");
+                        const { data: { session: currentSession } } = await supabase.auth.getSession();
+                        if (currentSession?.access_token) {
+                            const res = await fetch("/api/me/pet-type", {
+                                headers: { Authorization: `Bearer ${currentSession.access_token}` },
+                            });
+                            if (res.ok) {
+                                const { petType: serverPetType } = await res.json();
+                                console.log("[PetType] 서버 API 결과:", serverPetType);
+                                if (serverPetType === "cat" || serverPetType === "dog" || serverPetType === "other") {
+                                    setUserPetType(serverPetType);
+                                }
+                            }
                         }
-                    } catch { /* 재시도도 실패하면 기본값 유지 */ }
+                    } catch { /* 서버 API도 실패하면 기본값 유지 */ }
                 }
             }
 
