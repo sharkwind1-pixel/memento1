@@ -831,41 +831,56 @@ export async function POST(request: NextRequest) {
         // mode 문자열 (API 파라미터용)
         const mode = isMemorialMode ? "memorial" : "daily";
 
-        // 에이전트 기능 활성화 시
+        // 에이전트 기능 활성화 시 — 독립적인 비동기 작업을 병렬 실행하여 응답 속도 개선
+        let conversationContext = "";
         if (enableAgent) {
-            // 1. 감정 분석 (추모 모드일 때 애도 단계도 분석)
-            const emotionResult = await agent.analyzeEmotion(sanitizedMessage, isMemorialMode);
+            // Promise.all로 독립적인 작업 4개를 병렬 실행:
+            // A. 감정 분석 (GPT 호출 가능)
+            // B. 메모리 조회 (DB)
+            // C. pending_topic 조회 (DB)
+            // D. 대화 맥락 컨텍스트 빌드 (DB 2개)
+            const [emotionResult, memories, pendingTopicMem, convCtx] = await Promise.all([
+                // A. 감정 분석
+                agent.analyzeEmotion(sanitizedMessage, isMemorialMode),
+                // B. 메모리 조회
+                pet.id
+                    ? agent.getPetMemories(pet.id, 5).catch(() => [])
+                    : Promise.resolve([]),
+                // C. pending_topic 조회
+                pet.id
+                    ? agent.getLatestPendingTopic(pet.id).catch(() => null)
+                    : Promise.resolve(null),
+                // D. 대화 맥락 컨텍스트
+                pet.id
+                    ? agent.buildConversationContext(user.id, pet.id, pet.name, isMemorialMode).catch(() => "")
+                    : Promise.resolve(""),
+            ]);
+
+            // 감정 분석 결과 적용
             userEmotion = emotionResult.emotion;
             emotionScore = emotionResult.score;
             griefStage = emotionResult.griefStage;
 
-            // 2. 감정 응답 가이드 생성 (예시 문장 없는 행동 지시만)
+            // 감정 응답 가이드 생성 (동기, 빠름)
             emotionGuide = agent.getEmotionResponseGuide(userEmotion, mode);
 
-            // 3. 추모 모드에서 애도 단계 가이드 별도 분리
+            // 추모 모드에서 애도 단계 가이드
             if (isMemorialMode && griefStage && griefStage !== "unknown") {
                 griefGuideText = agent.getGriefStageResponseGuide(griefStage);
             }
 
-            // 4. 메모리 컨텍스트 (DB 연동 시)
-            if (pet.id) {
-                try {
-                    const memories = await agent.getPetMemories(pet.id, 5);
-                    memoryContext = agent.memoriesToContext(memories);
-
-                    // pending_topic 조회 (지난 대화에서 이어갈 주제)
-                    const pendingTopicMem = await agent.getLatestPendingTopic(pet.id);
-                    if (pendingTopicMem) {
-                        memoryContext += `\n\n[다음에 이어갈 주제]: "${pendingTopicMem}" — 기회 되면 자연스럽게 언급해보세요.`;
-                    }
-                } catch {
-                    // DB 연결 실패 시 무시
-                }
+            // 메모리 컨텍스트 조합
+            memoryContext = agent.memoriesToContext(memories);
+            if (pendingTopicMem) {
+                memoryContext += `\n\n[다음에 이어갈 주제]: "${pendingTopicMem}" — 기회 되면 자연스럽게 언급해보세요.`;
             }
 
-            // 5. 새로운 메모리 추출 (비동기로 처리)
+            // 대화 맥락 컨텍스트
+            conversationContext = convCtx;
+
+            // 새로운 메모리 추출 (fire-and-forget, 응답 속도에 영향 없음)
             if (pet.id) {
-                const petIdForMemory = pet.id; // 클로저 안에서 non-null 보장
+                const petIdForMemory = pet.id;
                 agent.extractMemories(sanitizedMessage, pet.name).then(async (newMemories) => {
                     if (newMemories && newMemories.length > 0) {
                         for (const mem of newMemories) {
@@ -873,21 +888,6 @@ export async function POST(request: NextRequest) {
                         }
                     }
                 }).catch((err) => { console.error("[chat/memory-extract]", err instanceof Error ? err.message : err); });
-            }
-        }
-
-        // 6. 대화 맥락 컨텍스트 생성 (이전 세션 요약 + 최근 대화)
-        let conversationContext = "";
-        if (pet.id && enableAgent) {
-            try {
-                conversationContext = await agent.buildConversationContext(
-                    user.id,
-                    pet.id,
-                    pet.name,
-                    isMemorialMode
-                );
-            } catch {
-                // 컨텍스트 빌드 실패 시 무시
             }
         }
 
