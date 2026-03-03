@@ -76,7 +76,7 @@ export default function MinimiPlacementPicker({
         <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border-0 shadow-lg p-4">
             <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-semibold text-gray-800 dark:text-white">
-                    배치할 미니미 선택
+                    보관함
                 </h3>
                 <button
                     onClick={onClose}
@@ -94,8 +94,8 @@ export default function MinimiPlacementPicker({
                 <div className="text-center py-6 text-gray-400 dark:text-gray-500">
                     <p className="text-sm">
                         {owned.length === 0
-                            ? "보유한 미니미가 없습니다"
-                            : "모든 미니미가 이미 배치되었습니다"}
+                            ? "보관함이 비어있어요. 미니미 상점에서 구매해보세요!"
+                            : "모든 미니미가 스테이지에 배치중이에요"}
                     </p>
                 </div>
             ) : (

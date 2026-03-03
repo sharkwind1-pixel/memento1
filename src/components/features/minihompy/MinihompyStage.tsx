@@ -13,7 +13,8 @@
 
 import React, { useRef, useCallback, useState, useMemo, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Music, Eye, X as XIcon, Pencil, Plus, Check, Loader2 } from "lucide-react";
+import { Music, Eye, Archive, Pencil, Plus, Check, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import type { MinimiEquipState, PlacedMinimi } from "@/types";
 import { findBackground, getDefaultBackground } from "@/data/minihompyBackgrounds";
 import { CHARACTER_CATALOG } from "@/data/minimiPixels";
@@ -353,14 +354,15 @@ export default function MinihompyStage({
                                 {/* 삭제 버튼 */}
                                 {isSelected && (
                                     <button
-                                        className="absolute -top-3 -right-3 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition-colors"
+                                        className="absolute -top-3 -right-3 w-5 h-5 bg-amber-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-amber-600 transition-colors"
                                         style={{ pointerEvents: "auto" }}
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             handleRemove(index);
+                                            toast.success("보관함으로 이동했습니다");
                                         }}
                                     >
-                                        <XIcon className="w-3 h-3" />
+                                        <Archive className="w-3 h-3" />
                                     </button>
                                 )}
                                 {/* 터치 이펙트: 하트/별 파티클 */}
@@ -463,13 +465,13 @@ export default function MinihompyStage({
                 <div className="absolute top-0 left-0 right-0 z-30 bg-blue-500/90 backdrop-blur-sm px-3 py-2.5 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <span className="text-white text-xs font-medium">편집모드</span>
-                        {onAddMinimi && placedMinimi.length < maxPlaced && (
+                        {onAddMinimi && (
                             <button
                                 onClick={(e) => { e.stopPropagation(); onAddMinimi(); }}
                                 className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-white/20 text-white hover:bg-white/30 transition-colors"
                             >
-                                <Plus className="w-3.5 h-3.5" />
-                                추가 ({placedMinimi.length}/{maxPlaced})
+                                <Archive className="w-3.5 h-3.5" />
+                                보관함
                             </button>
                         )}
                     </div>
