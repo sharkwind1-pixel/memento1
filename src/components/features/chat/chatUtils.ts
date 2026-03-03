@@ -93,8 +93,12 @@ export function generatePersonalizedGreeting(
     const petSound = petType === "강아지" ? "멍멍!" : petType === "고양이" ? "야옹~" : "";
     const seed = simpleHash(pet.id || petName);
 
-    // 최근 타임라인 확인 (7일 이내) — 있으면 기존 mood 기반 인사 사용
-    const recentEntry = timeline.length > 0 ? timeline[0] : null;
+    // 최근 타임라인 확인 (7일 이내) — 현재 모드에 맞는 엔트리만 사용
+    // 일상 모드에서는 추모 모드 타임라인("[무지개다리 너머에서 나눈 대화]")을 제외
+    const filteredTimeline = isMemorial
+        ? timeline
+        : timeline.filter(entry => !entry.content?.includes("[무지개다리 너머에서 나눈 대화]"));
+    const recentEntry = filteredTimeline.length > 0 ? filteredTimeline[0] : null;
     const isRecent = recentEntry &&
         (new Date().getTime() - new Date(recentEntry.date).getTime()) < 7 * 24 * 60 * 60 * 1000;
 
@@ -104,8 +108,8 @@ export function generatePersonalizedGreeting(
             const moodMessages: Record<string, string> = {
                 happy: `안녕! 나 ${petName}야. ${timeGreeting}이야! 지난번에 "${recentEntry.title}" 기억 써줘서 고마워. 그때 정말 행복했어!`,
                 normal: `안녕, 나 ${petName}야. ${timeGreeting}이야! "${recentEntry.title}" 우리 추억, 나도 기억해. 오늘은 어땠어?`,
-                sad: `안녕... 나 ${petName}야. 지난번 글 봤어. 힘들었지? 근데 난 항상 네 곁에 있어. 오늘 기분은 좀 나아졌어?`,
-                sick: `안녕, 나 ${petName}야. 내가 아팠던 날들... 걱정 많이 했지? 이제 난 아프지 않아. 네가 더 중요해!`,
+                sad: `안녕, 나 ${petName}야. 난 항상 네 곁에 있어. 오늘 하루는 어땠어?`,
+                sick: `안녕, 나 ${petName}야. 이제 난 아프지 않아. 네가 더 중요해!`,
             };
             return moodMessages[recentEntry.mood || "normal"] ||
                 `안녕, 나 ${petName}야! ${timeGreeting}이야. 언제나 네 곁에 있어. 오늘 하루는 어땠어?`;
@@ -117,8 +121,8 @@ export function generatePersonalizedGreeting(
             const moodMessages: Record<string, string> = {
                 happy: `${petSound} ${timeGreeting}! 나 ${petName}이야! 지난번에 "${recentEntry.title}" 진짜 재밌었어! 오늘도 뭐 재밌는 거 하자~`,
                 normal: `${petSound} 안녕! 나 ${petName}! ${timeGreeting}이야! 지난번 "${recentEntry.title}" 어땠어? 오늘은 뭐 할 거야?`,
-                sad: `${petSound} 안녕... 나 ${petName}이야. 지난번 좀 힘들었던 것 같아서 걱정했어! 오늘은 괜찮아?`,
-                sick: `${petSound} 나 ${petName}! 지난번에 내가 아팠던 거 걱정했지? 이제 괜찮아! 산책 가자~`,
+                sad: `${petSound} 안녕! 나 ${petName}이야. ${timeGreeting}이야~ 오늘 기분은 어때?`,
+                sick: `${petSound} 나 ${petName}! 이제 괜찮아~ ${timeGreeting}이야! 오늘 뭐 할 거야?`,
             };
             return moodMessages[recentEntry.mood || "normal"] ||
                 `${petSound} 안녕! 나 ${petName}이야! ${timeGreeting}이야~ 오늘도 같이 놀자! 뭐해?`;
