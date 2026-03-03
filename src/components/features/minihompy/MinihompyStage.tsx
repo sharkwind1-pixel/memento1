@@ -13,7 +13,7 @@
 
 import React, { useRef, useCallback, useState, useMemo, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Music, Eye, Archive, Pencil, Plus, Check, Loader2 } from "lucide-react";
+import { Music, Eye, Pencil, Check, Loader2, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
 import type { MinimiEquipState, PlacedMinimi } from "@/types";
 import { findBackground, getDefaultBackground } from "@/data/minihompyBackgrounds";
@@ -48,13 +48,12 @@ interface MinihompyStageProps {
     placedMinimi?: PlacedMinimi[];
     editMode?: boolean;
     onPlacementChange?: (placed: PlacedMinimi[]) => void;
+    onRemoveMinimi?: (index: number) => void;
     // 편집모드 컨트롤 콜백 (스테이지 안에 버튼 표시)
     onEnterEdit?: () => void;
     onCancelEdit?: () => void;
     onSaveEdit?: () => void;
-    onAddMinimi?: () => void;
     saving?: boolean;
-    maxPlaced?: number;
 }
 
 export default function MinihompyStage({
@@ -69,12 +68,11 @@ export default function MinihompyStage({
     placedMinimi = [],
     editMode = false,
     onPlacementChange,
+    onRemoveMinimi,
     onEnterEdit,
     onCancelEdit,
     onSaveEdit,
-    onAddMinimi,
     saving = false,
-    maxPlaced = 5,
 }: MinihompyStageProps) {
     const bg = findBackground(backgroundSlug) || getDefaultBackground();
     const DARK_BACKGROUNDS = ["starry_night", "mystic_pond", "rooftop_glamping", "starfall_hill"];
@@ -163,8 +161,9 @@ export default function MinihompyStage({
         const renderedHeight = containerSize / aspect;
         const bottomGap = (containerSize - renderedHeight) / 2;
 
-        // 그림자를 하단 여백 바로 위에 밀착 배치 (발 아래 1px 여유)
-        return bottomGap - 1;
+        // 그림자를 이미지 내 하단 여백(~2%)까지 고려하여 완전 밀착 배치
+        const contentBottomPadding = renderedHeight * 0.02;
+        return bottomGap + contentBottomPadding;
     };
 
     const handlePointerDown = useCallback((e: React.PointerEvent, index: number) => {
@@ -198,16 +197,26 @@ export default function MinihompyStage({
             onPlacementChange?.(updated);
         };
 
-        const handlePointerUp = () => {
+        const handlePointerUp = (upEvent: PointerEvent) => {
             setDraggingIndex(null);
             dragStartRef.current = null;
             window.removeEventListener("pointermove", handlePointerMove);
             window.removeEventListener("pointerup", handlePointerUp);
+
+            // 스테이지 하단 밖으로 드래그하면 보관함으로 이동
+            if (stageRef.current && onRemoveMinimi) {
+                const stageRect = stageRef.current.getBoundingClientRect();
+                if (upEvent.clientY > stageRect.bottom) {
+                    onRemoveMinimi(index);
+                    toast.success("보관함으로 이동했습니다");
+                    return;
+                }
+            }
         };
 
         window.addEventListener("pointermove", handlePointerMove);
         window.addEventListener("pointerup", handlePointerUp);
-    }, [editMode, placedMinimi, onPlacementChange]);
+    }, [editMode, placedMinimi, onPlacementChange, onRemoveMinimi]);
 
     const handleRemove = useCallback((index: number) => {
         const updated = placedMinimi.filter((_, i) => i !== index);
@@ -351,20 +360,15 @@ export default function MinihompyStage({
                                     style={{ imageRendering: "pixelated" }}
                                     draggable={false}
                                 />
-                                {/* 보관함으로 이동 버튼 */}
-                                {isSelected && (
-                                    <button
-                                        className="absolute -top-4 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-1 bg-amber-500 text-white rounded-full shadow-md hover:bg-amber-600 transition-colors whitespace-nowrap"
-                                        style={{ pointerEvents: "auto", zIndex: 60 }}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleRemove(index);
-                                            toast.success("보관함으로 이동했습니다");
-                                        }}
+                                {/* 드래그 힌트 - 선택된 미니미에 표시 */}
+                                {isSelected && !isDragging && (
+                                    <div
+                                        className="absolute -top-5 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 bg-black/50 text-white rounded-full whitespace-nowrap pointer-events-none"
+                                        style={{ zIndex: 60 }}
                                     >
-                                        <Archive className="w-3 h-3" />
-                                        <span className="text-[10px] font-medium">보관</span>
-                                    </button>
+                                        <ArrowDown className="w-2.5 h-2.5" />
+                                        <span className="text-[9px]">아래로 끌어서 보관</span>
+                                    </div>
                                 )}
                                 {/* 터치 이펙트: 하트/별 파티클 */}
                                 {hasTouchEffect && (
@@ -464,18 +468,7 @@ export default function MinihompyStage({
             {/* 편집모드: 상단 컨트롤 바 */}
             {editMode && (
                 <div className="absolute top-0 left-0 right-0 z-30 bg-blue-500/90 backdrop-blur-sm px-3 py-2.5 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <span className="text-white text-xs font-medium">편집모드</span>
-                        {onAddMinimi && (
-                            <button
-                                onClick={(e) => { e.stopPropagation(); onAddMinimi(); }}
-                                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-white/20 text-white hover:bg-white/30 transition-colors"
-                            >
-                                <Archive className="w-3.5 h-3.5" />
-                                보관함
-                            </button>
-                        )}
-                    </div>
+                    <span className="text-white text-xs font-medium">편집모드</span>
                     <div className="flex items-center gap-2">
                         {onCancelEdit && (
                             <button
@@ -498,6 +491,16 @@ export default function MinihompyStage({
                                 완료
                             </button>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {/* 편집모드: 드래그 드롭존 힌트 (하단) */}
+            {editMode && draggingIndex !== null && (
+                <div className="absolute bottom-0 left-0 right-0 h-14 z-40 flex items-center justify-center bg-amber-500/40 border-t-2 border-dashed border-amber-400 backdrop-blur-sm">
+                    <div className="flex items-center gap-1.5 text-amber-800">
+                        <ArrowDown className="w-4 h-4 animate-bounce" />
+                        <span className="text-xs font-medium">여기에 놓으면 보관함으로 이동</span>
                     </div>
                 </div>
             )}

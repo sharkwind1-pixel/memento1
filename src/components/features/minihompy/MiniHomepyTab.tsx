@@ -12,17 +12,23 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Loader2, MessageSquare, Trash2, ChevronDown } from "lucide-react";
+import { Loader2, MessageSquare, Trash2, ChevronDown, Archive, Plus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
 import { MINIHOMPY } from "@/config/constants";
 import type { MinihompySettings, GuestbookEntry, PlacedMinimi } from "@/types";
+import { CHARACTER_CATALOG } from "@/data/minimiPixels";
 import MinihompyStage from "./MinihompyStage";
 import MinihompySettingsSection from "./MinihompySettingsSection";
-import MinimiPlacementPicker from "./MinimiPlacementPicker";
 import MinimiCollection from "./MinimiCollection";
 import Image from "next/image";
+
+interface OwnedChar {
+    slug: string;
+    name: string;
+    imageUrl: string;
+}
 
 export default function MiniHomepyTab() {
     const { user, minimiEquip } = useAuth();
@@ -37,8 +43,11 @@ export default function MiniHomepyTab() {
     // 미니미 배치 편집모드
     const [editMode, setEditMode] = useState(false);
     const [editPlaced, setEditPlaced] = useState<PlacedMinimi[]>([]);
-    const [showPicker, setShowPicker] = useState(false);
     const [saving, setSaving] = useState(false);
+
+    // 보관함 (보유 미니미 목록)
+    const [ownedMinimis, setOwnedMinimis] = useState<OwnedChar[]>([]);
+    const [loadingOwned, setLoadingOwned] = useState(false);
 
     // 설정 로드
     const loadSettings = useCallback(async () => {
@@ -50,6 +59,28 @@ export default function MiniHomepyTab() {
             }
         } catch {
             toast.error("미니홈피 설정을 불러오지 못했습니다.");
+        }
+    }, []);
+
+    // 보유 미니미 로드
+    const loadOwnedMinimis = useCallback(async () => {
+        setLoadingOwned(true);
+        try {
+            const res = await authFetch(API.MINIMI_INVENTORY);
+            if (!res.ok) return;
+            const data = await res.json();
+            const chars: OwnedChar[] = (data.characters || [])
+                .map((c: { minimi_id: string }) => {
+                    const catalog = CHARACTER_CATALOG.find(cat => cat.slug === c.minimi_id);
+                    if (!catalog) return null;
+                    return { slug: catalog.slug, name: catalog.name, imageUrl: catalog.imageUrl };
+                })
+                .filter(Boolean) as OwnedChar[];
+            setOwnedMinimis(chars);
+        } catch {
+            // ignore
+        } finally {
+            setLoadingOwned(false);
         }
     }, []);
 
@@ -117,7 +148,7 @@ export default function MiniHomepyTab() {
 
         setEditPlaced(initial);
         setEditMode(true);
-        setShowPicker(false);
+        loadOwnedMinimis();
     };
 
     // 편집모드 종료 + 저장
@@ -142,18 +173,16 @@ export default function MiniHomepyTab() {
         } finally {
             setSaving(false);
             setEditMode(false);
-            setShowPicker(false);
         }
     };
 
     // 편집 취소
     const cancelEditMode = () => {
         setEditMode(false);
-        setShowPicker(false);
         setEditPlaced([]);
     };
 
-    // 미니미 추가
+    // 보관함에서 미니미 꺼내 배치
     const handleAddMinimi = (slug: string) => {
         if (editPlaced.length >= MINIHOMPY.MAX_PLACED_MINIMI) {
             toast.error(`최대 ${MINIHOMPY.MAX_PLACED_MINIMI}마리까지 배치할 수 있습니다`);
@@ -165,14 +194,12 @@ export default function MiniHomepyTab() {
             y: 50,
             zIndex: editPlaced.length + 1,
         };
-        setEditPlaced(prev => {
-            const next = [...prev, newItem];
-            // 최대 개수 도달 시에만 피커 자동 닫기
-            if (next.length >= MINIHOMPY.MAX_PLACED_MINIMI) {
-                setShowPicker(false);
-            }
-            return next;
-        });
+        setEditPlaced(prev => [...prev, newItem]);
+    };
+
+    // 드래그로 보관함에 넣기
+    const handleRemoveMinimi = (index: number) => {
+        setEditPlaced(prev => prev.filter((_, i) => i !== index));
     };
 
     // 방명록 삭제
@@ -227,7 +254,7 @@ export default function MiniHomepyTab() {
 
     return (
         <div className="space-y-4">
-            {/* 미니홈피 스테이지 - 배치 버튼이 스테이지 안에 포함 */}
+            {/* 미니홈피 스테이지 */}
             <MinihompyStage
                 backgroundSlug={currentSettings.backgroundSlug}
                 minimiEquip={minimiEquip}
@@ -239,21 +266,21 @@ export default function MiniHomepyTab() {
                 placedMinimi={displayPlaced}
                 editMode={editMode}
                 onPlacementChange={editMode ? setEditPlaced : undefined}
+                onRemoveMinimi={editMode ? handleRemoveMinimi : undefined}
                 onEnterEdit={enterEditMode}
                 onCancelEdit={cancelEditMode}
                 onSaveEdit={saveAndExitEditMode}
-                onAddMinimi={() => setShowPicker(!showPicker)}
                 saving={saving}
-                maxPlaced={MINIHOMPY.MAX_PLACED_MINIMI}
             />
 
-            {/* 미니미 선택 피커 */}
+            {/* 편집모드: 인라인 보관함 트레이 */}
             {editMode && (
-                <MinimiPlacementPicker
-                    isOpen={showPicker}
-                    onClose={() => setShowPicker(false)}
+                <StorageTray
+                    ownedMinimis={ownedMinimis}
                     placedMinimi={editPlaced}
+                    loading={loadingOwned}
                     onSelect={handleAddMinimi}
+                    maxPlaced={MINIHOMPY.MAX_PLACED_MINIMI}
                 />
             )}
 
@@ -385,6 +412,91 @@ function GuestbookItem({
                     {entry.content}
                 </p>
             </div>
+        </div>
+    );
+}
+
+/** 보관함 트레이 - 편집모드에서 스테이지 바로 아래에 표시 */
+function StorageTray({
+    ownedMinimis,
+    placedMinimi,
+    loading,
+    onSelect,
+    maxPlaced,
+}: {
+    ownedMinimis: OwnedChar[];
+    placedMinimi: PlacedMinimi[];
+    loading: boolean;
+    onSelect: (slug: string) => void;
+    maxPlaced: number;
+}) {
+    const placedSlugs = new Set(placedMinimi.map(p => p.slug));
+    const available = ownedMinimis.filter(o => !placedSlugs.has(o.slug));
+    const isFull = placedMinimi.length >= maxPlaced;
+
+    return (
+        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border-0 shadow-lg p-3">
+            <div className="flex items-center gap-2 mb-2">
+                <Archive className="w-4 h-4 text-amber-500" />
+                <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-200">
+                    보관함
+                </h4>
+                <span className="text-[10px] text-gray-400">
+                    터치하여 배치 / 스테이지에서 아래로 끌어서 보관
+                </span>
+            </div>
+
+            {loading ? (
+                <div className="flex items-center justify-center py-4">
+                    <Loader2 className="w-4 h-4 text-amber-500 animate-spin" />
+                </div>
+            ) : available.length === 0 ? (
+                <div className="text-center py-3 text-gray-400 dark:text-gray-500">
+                    <p className="text-xs">
+                        {ownedMinimis.length === 0
+                            ? "보관함이 비어있어요. 미니미 상점에서 구매해보세요!"
+                            : "모든 미니미가 스테이지에 배치중이에요"}
+                    </p>
+                </div>
+            ) : (
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                    {available.map((char) => (
+                        <button
+                            key={char.slug}
+                            onClick={() => !isFull && onSelect(char.slug)}
+                            disabled={isFull}
+                            className={cn(
+                                "flex-shrink-0 flex flex-col items-center gap-1 p-2 rounded-xl",
+                                "bg-gray-50 dark:bg-gray-700/50",
+                                isFull
+                                    ? "opacity-40 cursor-not-allowed"
+                                    : "hover:bg-blue-50 dark:hover:bg-blue-900/20 active:scale-95",
+                                "border border-transparent hover:border-blue-300 dark:hover:border-blue-600",
+                                "transition-all"
+                            )}
+                        >
+                            <div className="relative w-12 h-12 flex items-center justify-center">
+                                <Image
+                                    src={char.imageUrl}
+                                    alt={char.name}
+                                    width={40}
+                                    height={40}
+                                    className="object-contain"
+                                    style={{ imageRendering: "pixelated" }}
+                                />
+                                {!isFull && (
+                                    <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                                        <Plus className="w-2.5 h-2.5 text-white" />
+                                    </div>
+                                )}
+                            </div>
+                            <span className="text-[10px] text-gray-600 dark:text-gray-300 truncate w-full text-center">
+                                {char.name}
+                            </span>
+                        </button>
+                    ))}
+                </div>
+            )}
         </div>
     );
 }
