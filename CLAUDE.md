@@ -192,11 +192,11 @@ grep -n "setIsPetModalOpen\|handleAddNewPet" src/components/pages/RecordPage.tsx
 |-----|-----|---------------------|
 | AI 펫톡 | 하루 10회 | 무제한 |
 | 반려동물 등록 | 1마리 | 무제한 |
-| 사진 저장 | 100장 | 무제한 |
+| 사진 저장 | 50장 | 무제한 |
 
 ```typescript
 // config/constants.ts - 중앙 관리
-export const FREE_LIMITS = { PETS: 1, PHOTOS: 100, DAILY_CHAT: 10 };
+export const FREE_LIMITS = { PETS: 1, PHOTOS: 50, DAILY_CHAT: 10 };
 
 // AuthContext.tsx - DB 기반 프리미엄 체크 (완료)
 const isPremium = data?.is_premium && (!expiresAt || new Date(expiresAt) > new Date());

@@ -9,7 +9,7 @@ export const ADMIN_EMAILS = ["sharkwind1@gmail.com", "ahaadh@hanmail.net"];
 // ===== 무료/프리미엄 제한 =====
 export const FREE_LIMITS = {
     PETS: 1,                    // 무료 회원 반려동물 등록 수
-    PHOTOS_PER_PET: 100,        // 무료 회원 펫당 사진 수
+    PHOTOS_PER_PET: 50,         // 무료 회원 펫당 사진 수
     DAILY_CHATS: 10,            // 무료 회원 일일 AI 펫톡 횟수
     MESSAGE_LENGTH: 200,        // 무료 회원 메시지 글자 수
 } as const;
