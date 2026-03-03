@@ -216,11 +216,45 @@ export function useAdminData(): UseAdminDataReturn {
                     profile => !withdrawnIds.has(profile.id)
                 );
 
+                // onboarding_data에 petType이 없는 유저들의 pets 조회
+                const needsPetLookup = activeProfiles.filter(p => {
+                    const ob = p.onboarding_data as Record<string, unknown> | null;
+                    const pt = ob?.petType;
+                    return pt !== "cat" && pt !== "dog" && pt !== "other";
+                });
+
+                // pets 테이블에서 첫 번째 펫의 type을 가져와 매핑
+                const petTypeMap: Record<string, "dog" | "cat" | "other"> = {};
+                if (needsPetLookup.length > 0) {
+                    const userIds = needsPetLookup.map(p => p.id);
+                    const { data: petsData } = await supabase
+                        .from("pets")
+                        .select("user_id, type")
+                        .in("user_id", userIds)
+                        .order("created_at", { ascending: true });
+                    if (petsData) {
+                        // 유저별 첫 번째 펫만 사용 (created_at 오름차순이므로 첫 번째가 가장 오래된 것)
+                        for (const pet of petsData) {
+                            if (!petTypeMap[pet.user_id]) {
+                                const t = pet.type as string;
+                                if (t === "고양이") petTypeMap[pet.user_id] = "cat";
+                                else if (t === "강아지") petTypeMap[pet.user_id] = "dog";
+                                else petTypeMap[pet.user_id] = "other";
+                            }
+                        }
+                    }
+                }
+
                 setUsers(activeProfiles.map(profile => {
-                    // onboarding_data에서 petType 추출
+                    // petType 결정: (1) onboarding_data.petType → (2) pets.type → (3) 기본값 "dog"
                     const obData = profile.onboarding_data as Record<string, unknown> | null;
                     const pt = obData?.petType;
-                    const petType: "dog" | "cat" | "other" = pt === "cat" ? "cat" : pt === "other" ? "other" : "dog";
+                    let petType: "dog" | "cat" | "other";
+                    if (pt === "cat" || pt === "dog" || pt === "other") {
+                        petType = pt;
+                    } else {
+                        petType = petTypeMap[profile.id] || "dog";
+                    }
 
                     return {
                         id: profile.id,
