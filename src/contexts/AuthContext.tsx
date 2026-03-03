@@ -136,16 +136,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const minimiList = minimiListResult.data || [];
             const { data: firstPet, error: firstPetError } = firstPetResult;
 
-            // [디버그] petType 결정에 필요한 데이터 확인 (문제 해결 후 제거)
-            console.log("[PetType Debug]", {
-                userId: currentUser.id,
-                onboardingData: data?.onboarding_data ? "exists" : null,
-                onboardingPetType: (data?.onboarding_data as OnboardingData | null)?.petType,
-                firstPet,
-                firstPetError: firstPetError?.message,
-                profileError: error?.message,
-            });
-
             // 관리자 체크
             // 1) auth.users.email 기반
             const emailAdmin = ADMIN_EMAILS.includes(currentUser.email || "");
@@ -225,9 +215,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
             // onboarding_data에서 petType을 못 찾으면 등록된 펫의 type으로 결정
             if (!petTypeResolved) {
-                if (firstPetError) {
-                    console.warn("[PetType] pets 조회 에러:", firstPetError.message);
-                }
+                // firstPetError는 무시 (서버 API fallback으로 처리)
                 // 병렬 쿼리 결과로 펫 타입 설정
                 if (firstPet?.type) {
                     const t = firstPet.type;
@@ -246,7 +234,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                             });
                             if (res.ok) {
                                 const { petType: serverPetType } = await res.json();
-                                console.log("[PetType] 서버 API 결과:", serverPetType);
                                 if (serverPetType === "cat" || serverPetType === "dog" || serverPetType === "other") {
                                     setUserPetType(serverPetType);
                                 }
