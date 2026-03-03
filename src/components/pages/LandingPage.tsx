@@ -353,7 +353,7 @@ export default function LandingPage() {
                                     </li>
                                     <li className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                                         <Check className="w-5 h-5 text-green-500" />
-                                        사진 저장 100장
+                                        사진 저장 50장
                                     </li>
                                     <li className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                                         <Check className="w-5 h-5 text-green-500" />
