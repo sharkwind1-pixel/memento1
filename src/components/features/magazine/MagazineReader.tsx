@@ -511,8 +511,9 @@ function CardRenderer({
 
 function CoverCard({ article }: { article: MagazineArticle }) {
     return (
-        <div className="relative h-full flex flex-col justify-end">
-            <div className="absolute inset-0">
+        <div className="h-full flex flex-col">
+            {/* 이미지 영역: 상단 55% — 세로로 과도하게 잘리지 않도록 제한 */}
+            <div className="relative w-full" style={{ height: "55%" }}>
                 <Image
                     src={article.image}
                     alt={article.title}
@@ -520,30 +521,31 @@ function CoverCard({ article }: { article: MagazineArticle }) {
                     className="object-cover"
                     priority
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
             </div>
 
-            <div className="relative z-10 p-6 pb-20 sm:p-8 sm:pb-24">
+            {/* 텍스트 영역: 하단 45% */}
+            <div className="flex-1 flex flex-col justify-center px-6 py-6 sm:px-8 bg-white dark:bg-gray-900">
                 {article.badge && (
                     <Badge
-                        className={`${getBadgeStyle(article.badge)} rounded-lg text-sm px-3 py-1 mb-4`}
+                        className={`${getBadgeStyle(article.badge)} rounded-lg text-sm px-3 py-1 mb-3 w-fit`}
                     >
                         {getBadgeLabel(article.badge)}
                     </Badge>
                 )}
 
-                <h1 className="text-3xl sm:text-4xl font-display font-bold text-white leading-tight mb-4">
+                <h1 className="text-2xl sm:text-3xl font-display font-bold text-gray-800 dark:text-gray-100 leading-tight mb-4">
                     {article.title}
                 </h1>
 
-                <div className="flex items-center gap-3 text-white/80 text-sm">
+                <div className="flex items-center gap-3 text-gray-500 dark:text-gray-400 text-sm">
                     <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
-                            <User className="w-4 h-4 text-white" />
+                        <div className="w-8 h-8 bg-emerald-100 dark:bg-emerald-800 rounded-full flex items-center justify-center">
+                            <User className="w-4 h-4 text-emerald-600 dark:text-emerald-300" />
                         </div>
-                        <span className="font-medium">{article.author}</span>
+                        <span className="font-medium text-gray-700 dark:text-gray-200">{article.author}</span>
                     </div>
-                    <span className="text-white/50">|</span>
+                    <span className="text-gray-300 dark:text-gray-600">|</span>
                     <span>{article.date}</span>
                     <span className="flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5" />
@@ -551,7 +553,7 @@ function CoverCard({ article }: { article: MagazineArticle }) {
                     </span>
                 </div>
 
-                <div className="mt-8 flex items-center justify-center gap-2 text-white/60 text-xs animate-pulse">
+                <div className="mt-6 flex items-center justify-center gap-2 text-gray-400 dark:text-gray-500 text-xs animate-pulse">
                     <ChevronLeft className="w-4 h-4" />
                     <span className="sm:hidden">스와이프하여 읽기</span>
                     <span className="hidden sm:inline">화살표 버튼으로 읽기</span>
