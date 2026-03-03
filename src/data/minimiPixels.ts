@@ -19,6 +19,7 @@ export const CHARACTER_CATALOG = [
         imageUrl: "/icons/minimi/maltipoo_v2.png?v=2",
         price: 200,
         description: "곱슬곱슬 크림색 말티푸",
+        shadowOffset: 0,
     },
     {
         slug: "yorkshire",
@@ -27,6 +28,7 @@ export const CHARACTER_CATALOG = [
         imageUrl: "/icons/minimi/yorkshire_v2.png?v=5",
         price: 200,
         description: "작고 용감한 요크셔테리어",
+        shadowOffset: 0,
     },
     {
         slug: "golden_retriever",
@@ -35,6 +37,7 @@ export const CHARACTER_CATALOG = [
         imageUrl: "/icons/minimi/golden_v2.png?v=2",
         price: 200,
         description: "밝고 다정한 골든리트리버",
+        shadowOffset: 0,
     },
     {
         slug: "russian_blue",
@@ -43,6 +46,7 @@ export const CHARACTER_CATALOG = [
         imageUrl: "/icons/minimi/russian_blue.png",
         price: 200,
         description: "영롱한 초록 눈의 러시안블루",
+        shadowOffset: -6,
     },
     {
         slug: "ragdoll",
@@ -51,6 +55,7 @@ export const CHARACTER_CATALOG = [
         imageUrl: "/icons/minimi/ragdoll.png",
         price: 200,
         description: "파란 눈의 우아한 랙돌",
+        shadowOffset: -6,
     },
     {
         slug: "cheese_cat",
@@ -59,5 +64,6 @@ export const CHARACTER_CATALOG = [
         imageUrl: "/icons/minimi/cheese_cat.png",
         price: 200,
         description: "따뜻한 주황빛 치즈 고양이",
+        shadowOffset: -6,
     },
 ] as const;

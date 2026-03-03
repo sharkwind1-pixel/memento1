@@ -142,6 +142,12 @@ export default function MinihompyStage({
         return character?.imageUrl || null;
     };
 
+    /** 미니미별 그림자 오프셋 (고양이 PNG는 하단 여백이 달라 보정 필요) */
+    const getShadowOffset = (slug: string): number => {
+        const character = CHARACTER_CATALOG.find(c => c.slug === slug);
+        return character?.shadowOffset ?? 0;
+    };
+
     const handlePointerDown = useCallback((e: React.PointerEvent, index: number) => {
         if (!editMode || !stageRef.current) return;
         e.preventDefault();
@@ -307,13 +313,16 @@ export default function MinihompyStage({
                                 {isSelected && (
                                     <div className="absolute -inset-2 border-2 border-dashed border-blue-400 rounded-lg bg-blue-400/10" />
                                 )}
-                                {/* 그림자 */}
-                                <div className={cn(
-                                    "absolute -bottom-2 left-1/2 -translate-x-1/2 transition-all duration-150",
-                                    "w-16 h-3 rounded-full",
-                                    isDarkBg ? "bg-white" : "bg-black",
-                                    hasTouchEffect ? "opacity-30 scale-90" : "opacity-20"
-                                )} />
+                                {/* 그림자 (미니미별 오프셋 적용) */}
+                                <div
+                                    className={cn(
+                                        "absolute left-1/2 -translate-x-1/2 transition-all duration-150",
+                                        "w-16 h-3 rounded-full",
+                                        isDarkBg ? "bg-white" : "bg-black",
+                                        hasTouchEffect ? "opacity-30 scale-90" : "opacity-20"
+                                    )}
+                                    style={{ bottom: `${-8 + getShadowOffset(placed.slug)}px` }}
+                                />
                                 <Image
                                     src={imgUrl}
                                     alt="미니미"
@@ -387,11 +396,14 @@ export default function MinihompyStage({
                             const singleBase = compact ? 80 : 112;
                             return (
                                 <div className="relative">
-                                    <div className={cn(
-                                        "absolute -bottom-2 left-1/2 -translate-x-1/2",
-                                        "w-20 h-3 rounded-full opacity-20",
-                                        isDarkBg ? "bg-white" : "bg-black"
-                                    )} />
+                                    <div
+                                        className={cn(
+                                            "absolute left-1/2 -translate-x-1/2",
+                                            "w-20 h-3 rounded-full opacity-20",
+                                            isDarkBg ? "bg-white" : "bg-black"
+                                        )}
+                                        style={{ bottom: `${-8 + getShadowOffset(minimiEquip.minimiId || "")}px` }}
+                                    />
                                     {minimiEquip.imageUrl ? (
                                         <Image
                                             src={minimiEquip.imageUrl}
