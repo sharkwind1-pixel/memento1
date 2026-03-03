@@ -163,8 +163,8 @@ export default function MinihompyStage({
         const renderedHeight = containerSize / aspect;
         const bottomGap = (containerSize - renderedHeight) / 2;
 
-        // 그림자를 하단 여백 바로 위에 배치 (발 아래 4px 여유)
-        return bottomGap - 4;
+        // 그림자를 하단 여백 바로 위에 밀착 배치 (발 아래 1px 여유)
+        return bottomGap - 1;
     };
 
     const handlePointerDown = useCallback((e: React.PointerEvent, index: number) => {
@@ -351,11 +351,11 @@ export default function MinihompyStage({
                                     style={{ imageRendering: "pixelated" }}
                                     draggable={false}
                                 />
-                                {/* 삭제 버튼 */}
+                                {/* 보관함으로 이동 버튼 */}
                                 {isSelected && (
                                     <button
-                                        className="absolute -top-3 -right-3 w-5 h-5 bg-amber-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-amber-600 transition-colors"
-                                        style={{ pointerEvents: "auto" }}
+                                        className="absolute -top-4 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-1 bg-amber-500 text-white rounded-full shadow-md hover:bg-amber-600 transition-colors whitespace-nowrap"
+                                        style={{ pointerEvents: "auto", zIndex: 60 }}
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             handleRemove(index);
@@ -363,6 +363,7 @@ export default function MinihompyStage({
                                         }}
                                     >
                                         <Archive className="w-3 h-3" />
+                                        <span className="text-[10px] font-medium">보관</span>
                                     </button>
                                 )}
                                 {/* 터치 이펙트: 하트/별 파티클 */}
