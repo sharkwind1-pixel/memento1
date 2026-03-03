@@ -134,7 +134,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             const { data, error } = profileResult;
             const minimiList = minimiListResult.data || [];
-            const firstPet = firstPetResult.data;
+            const { data: firstPet, error: firstPetError } = firstPetResult;
+
+            // [디버그] petType 결정에 필요한 데이터 확인 (문제 해결 후 제거)
+            console.log("[PetType Debug]", {
+                userId: currentUser.id,
+                onboardingData: data?.onboarding_data ? "exists" : null,
+                onboardingPetType: (data?.onboarding_data as OnboardingData | null)?.petType,
+                firstPet,
+                firstPetError: firstPetError?.message,
+                profileError: error?.message,
+            });
 
             // 관리자 체크
             // 1) auth.users.email 기반
@@ -214,11 +224,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setOnboardingData(null);
             }
             // onboarding_data에서 petType을 못 찾으면 등록된 펫의 type으로 결정
-            if (!petTypeResolved && firstPet?.type) {
-                const t = firstPet.type;
-                if (t === "고양이") setUserPetType("cat");
-                else if (t === "강아지") setUserPetType("dog");
-                else setUserPetType("other");
+            if (!petTypeResolved) {
+                if (firstPetError) {
+                    console.warn("[PetType] pets 조회 에러:", firstPetError.message);
+                }
+                // 병렬 쿼리 결과로 펫 타입 설정
+                if (firstPet?.type) {
+                    const t = firstPet.type;
+                    if (t === "고양이") setUserPetType("cat");
+                    else if (t === "강아지") setUserPetType("dog");
+                    else setUserPetType("other");
+                    petTypeResolved = true;
+                }
+                // 병렬 쿼리 실패 시 단독 재시도
+                if (!petTypeResolved) {
+                    try {
+                        const { data: retryPet } = await supabase
+                            .from("pets")
+                            .select("type")
+                            .eq("user_id", currentUser.id)
+                            .order("created_at", { ascending: true })
+                            .limit(1)
+                            .maybeSingle();
+                        console.log("[PetType] 재시도 결과:", retryPet);
+                        if (retryPet?.type) {
+                            const t = retryPet.type;
+                            if (t === "고양이") setUserPetType("cat");
+                            else if (t === "강아지") setUserPetType("dog");
+                            else setUserPetType("other");
+                        }
+                    } catch { /* 재시도도 실패하면 기본값 유지 */ }
+                }
             }
 
             setPointsLoaded(true);
