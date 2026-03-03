@@ -142,10 +142,28 @@ export default function MinihompyStage({
         return character?.imageUrl || null;
     };
 
-    /** 미니미별 그림자 오프셋 (고양이 PNG는 하단 여백이 달라 보정 필요) */
-    const getShadowOffset = (slug: string): number => {
+    /**
+     * 미니미 그림자 위치를 자동 계산 (object-contain 하단 여백 보정)
+     * 가로형 이미지(고양이)는 정사각형 컨테이너에서 상하 여백이 생기므로,
+     * imageAspect(가로/세로)로 실제 렌더링 높이를 구해 그림자를 발 아래에 배치
+     */
+    const getShadowBottom = (slug: string, containerSize: number): number => {
         const character = CHARACTER_CATALOG.find(c => c.slug === slug);
-        return character?.shadowOffset ?? 0;
+        const aspect = character?.imageAspect ?? 1;
+
+        if (aspect <= 1) {
+            // 정사각형 또는 세로형: 하단 여백 없음 → 기본 위치
+            return -8;
+        }
+
+        // 가로형 이미지: object-contain 시 세로가 축소됨
+        // renderedHeight = containerSize / aspect
+        // bottomGap = (containerSize - renderedHeight) / 2
+        const renderedHeight = containerSize / aspect;
+        const bottomGap = (containerSize - renderedHeight) / 2;
+
+        // 그림자를 하단 여백 바로 위에 배치 (발 아래 4px 여유)
+        return bottomGap - 4;
     };
 
     const handlePointerDown = useCallback((e: React.PointerEvent, index: number) => {
@@ -321,7 +339,7 @@ export default function MinihompyStage({
                                         isDarkBg ? "bg-white" : "bg-black",
                                         hasTouchEffect ? "opacity-30 scale-90" : "opacity-20"
                                     )}
-                                    style={{ bottom: `${-8 + getShadowOffset(placed.slug)}px` }}
+                                    style={{ bottom: `${getShadowBottom(placed.slug, baseSize)}px` }}
                                 />
                                 <Image
                                     src={imgUrl}
@@ -402,7 +420,7 @@ export default function MinihompyStage({
                                             "w-20 h-3 rounded-full opacity-20",
                                             isDarkBg ? "bg-white" : "bg-black"
                                         )}
-                                        style={{ bottom: `${-8 + getShadowOffset(minimiEquip.minimiId || "")}px` }}
+                                        style={{ bottom: `${getShadowBottom(minimiEquip.minimiId || "", singleBase)}px` }}
                                     />
                                     {minimiEquip.imageUrl ? (
                                         <Image
