@@ -128,6 +128,11 @@ export default function CommunityPostList({
                                                 {post.tag}
                                             </Badge>
                                         )}
+                                        {currentSubcategory === "local" && post.region && (
+                                            <Badge variant="outline" className="rounded-lg text-xs border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300">
+                                                {post.region}
+                                            </Badge>
+                                        )}
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-sm text-gray-400 flex items-center gap-1">

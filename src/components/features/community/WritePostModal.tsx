@@ -20,6 +20,7 @@ import { API } from "@/config/apiEndpoints";
 import { toast } from "sonner";
 import Image from "next/image";
 import type { CommunitySubcategory, PostTag } from "@/types";
+import { LOCAL_REGIONS } from "./communityTypes";
 
 interface WritePostModalProps {
     isOpen: boolean;
@@ -75,6 +76,7 @@ export default function WritePostModal({
     const [content, setContent] = useState("");
     const [badge, setBadge] = useState("");
     const [tag, setTag] = useState<PostTag | "">("");
+    const [region, setRegion] = useState("");
     const [isPublic, setIsPublic] = useState(false); // 홈화면 공개 여부
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
@@ -89,6 +91,7 @@ export default function WritePostModal({
 
     const isMemorial = boardType === "memorial";
     const isFreeBoard = boardType === "free";
+    const isLocalBoard = boardType === "local";
     const badges =
         BADGES_BY_SUBCATEGORY[boardType] || BADGES_BY_SUBCATEGORY.free;
 
@@ -96,6 +99,7 @@ export default function WritePostModal({
     useEffect(() => {
         setBadge("");
         setTag("");
+        setRegion("");
         setIsPublic(false);
     }, [boardType]);
 
@@ -158,6 +162,12 @@ export default function WritePostModal({
             return;
         }
 
+        // 지역정보 게시판은 지역 필수
+        if (isLocalBoard && !region) {
+            setError("지역을 선택해주세요");
+            return;
+        }
+
         setIsSubmitting(true);
         setError("");
 
@@ -168,6 +178,7 @@ export default function WritePostModal({
                     boardType,
                     badge,
                     animalType: isFreeBoard ? tag : undefined,
+                    region: isLocalBoard ? region : undefined,
                     title: title.trim(),
                     content: content.trim(),
                     authorName: userNickname,
@@ -186,6 +197,7 @@ export default function WritePostModal({
             setContent("");
             setBadge("");
             setTag("");
+            setRegion("");
             setIsPublic(false);
             setImageUrls([]);
             toast.success("게시글이 등록되었습니다");
@@ -260,6 +272,31 @@ export default function WritePostModal({
                                         }`}
                                     >
                                         {t.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 지역 선택 (지역정보 게시판만) */}
+                    {isLocalBoard && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                지역 <span className="text-red-500">*</span>
+                            </label>
+                            <div className="flex flex-wrap gap-2">
+                                {LOCAL_REGIONS.map((r) => (
+                                    <button
+                                        key={r.id}
+                                        type="button"
+                                        onClick={() => setRegion(r.id)}
+                                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                                            region === r.id
+                                                ? "bg-emerald-500 text-white"
+                                                : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200"
+                                        }`}
+                                    >
+                                        {r.label}
                                     </button>
                                 ))}
                             </div>

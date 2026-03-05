@@ -24,6 +24,7 @@ import {
     SUBCATEGORIES,
     POST_TAGS,
     FREE_BADGES,
+    LOCAL_REGIONS,
     getTagColor,
     getCategoryColor,
 } from "./communityTypes";
@@ -33,12 +34,14 @@ interface CommunityHeaderProps {
     visibleSubcategories: typeof SUBCATEGORIES;
     selectedTag: PostTag | "all";
     selectedBadge: string;
+    selectedRegion: string;
     searchInput: string;
     sortBy: string;
     currentColor: ReturnType<typeof getCategoryColor>;
     onSubcategoryChange: (subId: CommunitySubcategory) => void;
     onTagChange: (tag: PostTag | "all") => void;
     onBadgeChange: (badge: string) => void;
+    onRegionChange: (region: string) => void;
     onSearchInputChange: (value: string) => void;
     onSearchSubmit: () => void;
     onSortChange: (sort: string) => void;
@@ -50,12 +53,14 @@ export default function CommunityHeader({
     visibleSubcategories,
     selectedTag,
     selectedBadge,
+    selectedRegion,
     searchInput,
     sortBy,
     currentColor,
     onSubcategoryChange,
     onTagChange,
     onBadgeChange,
+    onRegionChange,
     onSearchInputChange,
     onSearchSubmit,
     onSortChange,
@@ -185,6 +190,36 @@ export default function CommunityHeader({
                             </button>
                         );
                     })}
+                </div>
+            )}
+
+            {/* 지역 필터 - 지역정보 게시판일 때만 */}
+            {currentSubcategory === "local" && (
+                <div className="flex flex-wrap gap-2 mb-4 p-3 bg-emerald-50/50 dark:bg-emerald-900/20 rounded-xl border border-emerald-200/50 dark:border-emerald-700/30">
+                    <span className="text-xs text-gray-500 dark:text-gray-400 w-full mb-1 font-medium">지역</span>
+                    <button
+                        onClick={() => onRegionChange("all")}
+                        className={`px-3 py-1.5 min-h-[44px] rounded-full text-sm font-medium transition-all active:scale-95 ${
+                            selectedRegion === "all"
+                                ? "bg-emerald-500 text-white shadow-md"
+                                : "bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-emerald-100 dark:hover:bg-emerald-800/30 border border-emerald-200 dark:border-emerald-700/50"
+                        }`}
+                    >
+                        전체
+                    </button>
+                    {LOCAL_REGIONS.map((r) => (
+                        <button
+                            key={r.id}
+                            onClick={() => onRegionChange(r.id)}
+                            className={`px-3 py-1.5 min-h-[44px] rounded-full text-sm font-medium transition-all active:scale-95 ${
+                                selectedRegion === r.id
+                                    ? "bg-emerald-500 text-white shadow-md border border-transparent"
+                                    : "bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-emerald-100 dark:hover:bg-emerald-800/30 border border-emerald-200 dark:border-emerald-700/50"
+                            }`}
+                        >
+                            {r.label}
+                        </button>
+                    ))}
                 </div>
             )}
 

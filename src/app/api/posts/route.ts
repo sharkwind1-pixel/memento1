@@ -83,6 +83,12 @@ export async function GET(request: NextRequest) {
             query = query.eq("animal_type", animalType);
         }
 
+        // 지역 필터 (지역정보 게시판)
+        const region = searchParams.get("region");
+        if (region && region !== "all") {
+            query = query.eq("region", region);
+        }
+
         // 검색어 필터 (SQL Injection 방지)
         if (search) {
             const sanitizedSearch = sanitizeSearchQuery(search);
@@ -133,6 +139,7 @@ export async function GET(request: NextRequest) {
             comments: post.post_comments?.[0]?.count ?? 0,
             imageUrls: [],
             videoUrl: post.video_url || null,
+            region: post.region || null,
             createdAt: post.created_at,
         }));
 
@@ -178,7 +185,7 @@ export async function POST(request: NextRequest) {
         const supabase = await createServerSupabase();
         const body = await request.json();
 
-        const { boardType: rawBoardType, subcategory, animalType, tag, badge, title, content, authorName, imageUrls, videoUrl, isPublic } = body;
+        const { boardType: rawBoardType, subcategory, animalType, tag, badge, title, content, authorName, imageUrls, videoUrl, isPublic, region } = body;
         const boardType = rawBoardType || subcategory || "free";
 
         // 3. 필수 필드 검증
@@ -219,6 +226,7 @@ export async function POST(request: NextRequest) {
                 content: sanitizedContent,
                 author_name: sanitizedAuthorName,
                 ...(validVideoUrl && { video_url: validVideoUrl }),
+                ...(boardType === "local" && region ? { region: sanitizeInput(region).slice(0, 20) } : {}),
             }])
             .select()
             .single();

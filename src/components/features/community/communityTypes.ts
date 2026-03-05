@@ -29,6 +29,7 @@ export interface Post {
     imageUrls?: string[];
     createdAt: string;
     isPublic?: boolean;
+    region?: string; // 지역 (지역정보 게시판)
 }
 
 // 서브카테고리 정의 (5개)
@@ -100,6 +101,27 @@ export const FREE_BADGES: { id: string; label: string; color: string }[] = [
     { id: "꿀팁", label: "꿀팁", color: "emerald" },
 ];
 
+// 지역정보 게시판 지역 필터 옵션 (17개 시/도)
+export const LOCAL_REGIONS: { id: string; label: string }[] = [
+    { id: "서울", label: "서울" },
+    { id: "경기", label: "경기" },
+    { id: "부산", label: "부산" },
+    { id: "대구", label: "대구" },
+    { id: "인천", label: "인천" },
+    { id: "광주", label: "광주" },
+    { id: "대전", label: "대전" },
+    { id: "울산", label: "울산" },
+    { id: "세종", label: "세종" },
+    { id: "강원", label: "강원" },
+    { id: "충북", label: "충북" },
+    { id: "충남", label: "충남" },
+    { id: "전북", label: "전북" },
+    { id: "전남", label: "전남" },
+    { id: "경북", label: "경북" },
+    { id: "경남", label: "경남" },
+    { id: "제주", label: "제주" },
+];
+
 // 목업 게시글 데이터 (서브카테고리별)
 export const MOCK_POSTS: Record<CommunitySubcategory, {
     id: number;
@@ -112,6 +134,7 @@ export const MOCK_POSTS: Record<CommunitySubcategory, {
     views: number;
     badge: string;
     tag?: PostTag;
+    region?: string;
 }[]> = {
     free: [
         {
@@ -256,6 +279,7 @@ export const MOCK_POSTS: Record<CommunitySubcategory, {
             comments: 45,
             views: 1234,
             badge: "추천",
+            region: "서울",
         },
         {
             id: 31,
@@ -267,6 +291,7 @@ export const MOCK_POSTS: Record<CommunitySubcategory, {
             comments: 34,
             views: 890,
             badge: "정보",
+            region: "경기",
         },
         {
             id: 32,
@@ -278,6 +303,7 @@ export const MOCK_POSTS: Record<CommunitySubcategory, {
             comments: 23,
             views: 456,
             badge: "모임",
+            region: "서울",
         },
     ],
     lost: [
