@@ -443,12 +443,14 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive }: Community
                     onWriteClick={handleWriteClick}
                 />
 
-                {/* "함께 보기" 배너 - 모든 서브카테고리에서 항상 표시 */}
-                <ShowcaseBanner
-                    previewImages={[]}
-                    postCount={showcasePostCount}
-                    onOpen={() => setShowcaseView(true)}
-                />
+                {/* "함께 보기" 배너 - 자유게시판에서만 표시 (추모 등 다른 게시판 톤앤매너 보호) */}
+                {currentSubcategory === "free" && showcasePostCount > 0 && (
+                    <ShowcaseBanner
+                        previewImages={[]}
+                        postCount={showcasePostCount}
+                        onOpen={() => setShowcaseView(true)}
+                    />
+                )}
 
                 <CommunityPostList
                     posts={posts}

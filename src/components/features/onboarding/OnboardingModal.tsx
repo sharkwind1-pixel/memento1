@@ -702,8 +702,6 @@ export default function OnboardingModal({
 
                 {/* 버튼 영역 */}
                 <div className="p-6 pt-0">
-                    {/* Step 9는 카드 클릭으로 자동 진행되므로 버튼 숨김 */}
-                    {step !== 9 && (
                     <div className="flex gap-3">
                         {step > 0 && (
                             <Button
@@ -715,33 +713,44 @@ export default function OnboardingModal({
                                 이전
                             </Button>
                         )}
-                        <Button
-                            onClick={handleNext}
-                            disabled={!canProceed() || saving}
-                            className={`flex-1 rounded-xl ${
-                                data.userType === "memorial"
-                                    ? "bg-gradient-to-r from-amber-500 to-orange-500"
-                                    : data.userType === "current"
-                                        ? "bg-gradient-to-r from-emerald-500 to-teal-500"
-                                        : "bg-gradient-to-r from-sky-500 to-violet-500"
-                            }`}
-                        >
-                            {saving ? (
-                                "저장 중..."
-                            ) : getNextStep() === 100 ? (
-                                <>
-                                    <Sparkles className="w-4 h-4 mr-1" />
-                                    시작하기
-                                </>
-                            ) : (
-                                <>
-                                    다음
-                                    <ArrowRight className="w-4 h-4 ml-1" />
-                                </>
-                            )}
-                        </Button>
+                        {step === 9 ? (
+                            /* Step 9: 카드 클릭으로 자동 진행되므로 "건너뛰기" 표시 */
+                            <Button
+                                variant="ghost"
+                                onClick={handleNext}
+                                className="flex-1 rounded-xl text-gray-500"
+                            >
+                                건너뛰기
+                                <ArrowRight className="w-4 h-4 ml-1" />
+                            </Button>
+                        ) : (
+                            <Button
+                                onClick={handleNext}
+                                disabled={!canProceed() || saving}
+                                className={`flex-1 rounded-xl ${
+                                    data.userType === "memorial"
+                                        ? "bg-gradient-to-r from-amber-500 to-orange-500"
+                                        : data.userType === "current"
+                                            ? "bg-gradient-to-r from-emerald-500 to-teal-500"
+                                            : "bg-gradient-to-r from-sky-500 to-violet-500"
+                                }`}
+                            >
+                                {saving ? (
+                                    "저장 중..."
+                                ) : getNextStep() === 100 ? (
+                                    <>
+                                        <Sparkles className="w-4 h-4 mr-1" />
+                                        시작하기
+                                    </>
+                                ) : (
+                                    <>
+                                        다음
+                                        <ArrowRight className="w-4 h-4 ml-1" />
+                                    </>
+                                )}
+                            </Button>
+                        )}
                     </div>
-                    )}
 
                     {step === 0 && (
                         <button

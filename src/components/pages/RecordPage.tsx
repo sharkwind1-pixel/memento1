@@ -8,7 +8,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { usePets, Pet, PetPhoto } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -92,6 +92,26 @@ function RecordPage({ setSelectedTab }: RecordPageProps) {
 
     // 추모 전환 모달
     const [isMemorialModalOpen, setIsMemorialModalOpen] = useState(false);
+
+    // 펫 0마리일 때 자동으로 등록 모달 열기 (세션 내 1회만)
+    const hasAutoOpenedPetModal = useRef(false);
+    useEffect(() => {
+        if (
+            !petsLoading &&
+            pets.length === 0 &&
+            user &&
+            !isPetModalOpen &&
+            !editingPet &&
+            !hasAutoOpenedPetModal.current
+        ) {
+            hasAutoOpenedPetModal.current = true;
+            const timer = setTimeout(() => {
+                setEditingPet(null);
+                setIsPetModalOpen(true);
+            }, 800);
+            return () => clearTimeout(timer);
+        }
+    }, [petsLoading, pets.length, user, isPetModalOpen, editingPet]);
 
     // 추억 앨범 딥링크 (푸시 알림에서 album 파라미터)
     const [initialAlbumId, setInitialAlbumId] = useState<string | null>(null);
