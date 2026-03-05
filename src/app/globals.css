@@ -36,6 +36,11 @@
     unicode-range: U+AC00-D7AF, U+1100-11FF, U+3130-318F, U+A960-A97F, U+D7B0-D7FF, U+FFA0-FFDC;
 }
 
+/* 간편모드 (크게 보기) - html font-size를 키워서 모든 rem 기반 값 자동 확대 */
+html.simple-mode {
+    font-size: 20px; /* 기본 16px → 20px (1.25배) */
+}
+
 /* 모바일 최적화 */
 html,
 body {

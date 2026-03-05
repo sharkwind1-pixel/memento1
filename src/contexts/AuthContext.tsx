@@ -170,11 +170,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // 포인트도 같이 설정
             setPoints(!error ? (data?.points ?? 0) : 0);
 
-            // 간편모드 설정 (DB 값으로 동기화)
+            // 간편모드 설정 (DB 값으로 동기화 + html 클래스)
             if (!error && data) {
                 const dbSimpleMode = data.is_simple_mode === true;
                 setIsSimpleModeState(dbSimpleMode);
                 localStorage.setItem("memento-simple-mode", String(dbSimpleMode));
+                if (dbSimpleMode) {
+                    document.documentElement.classList.add("simple-mode");
+                } else {
+                    document.documentElement.classList.remove("simple-mode");
+                }
             }
 
             // 미니미 장착 상태 설정 (equipped_minimi_id는 user_minimi UUID → slug 변환 필요)
@@ -342,11 +347,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
-    // 간편모드 토글 (DB + localStorage 동기화)
+    // 간편모드 토글 (DB + localStorage + html 클래스 동기화)
     const toggleSimpleMode = useCallback(async () => {
         const newValue = !isSimpleMode;
         setIsSimpleModeState(newValue);
         localStorage.setItem("memento-simple-mode", String(newValue));
+        // html 클래스 동기화 (전체 폰트 크기 제어)
+        if (newValue) {
+            document.documentElement.classList.add("simple-mode");
+        } else {
+            document.documentElement.classList.remove("simple-mode");
+        }
         try {
             const { data: { user: currentUser } } = await supabase.auth.getUser();
             if (currentUser) {
@@ -468,6 +479,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 });
                 setIsSimpleModeState(false);
                 localStorage.removeItem("memento-simple-mode");
+                document.documentElement.classList.remove("simple-mode");
             }
         });
 

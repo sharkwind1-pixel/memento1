@@ -106,6 +106,10 @@ export default function RootLayout({
                                     if (d === 'true') {
                                         document.documentElement.classList.add('dark');
                                     }
+                                    var s = localStorage.getItem('memento-simple-mode');
+                                    if (s === 'true') {
+                                        document.documentElement.classList.add('simple-mode');
+                                    }
                                 } catch(e) {}
                             })();
                         `,
