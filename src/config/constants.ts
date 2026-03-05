@@ -6,12 +6,19 @@
 // ===== 관리자 설정 =====
 export const ADMIN_EMAILS = ["sharkwind1@gmail.com", "ahaadh@hanmail.net"];
 
-// ===== 무료/프리미엄 제한 =====
+// ===== 무료/베이직/프리미엄 제한 =====
 export const FREE_LIMITS = {
     PETS: 1,                    // 무료 회원 반려동물 등록 수
     PHOTOS_PER_PET: 50,         // 무료 회원 펫당 사진 수
     DAILY_CHATS: 10,            // 무료 회원 일일 AI 펫톡 횟수
     MESSAGE_LENGTH: 200,        // 무료 회원 메시지 글자 수
+} as const;
+
+export const BASIC_LIMITS = {
+    PETS: 3,                    // 베이직 회원 반려동물 등록 수
+    PHOTOS_PER_PET: 200,        // 베이직 회원 펫당 사진 수
+    DAILY_CHATS: 50,            // 베이직 회원 일일 AI 펫톡 횟수
+    MESSAGE_LENGTH: 500,        // 베이직 회원 메시지 글자 수
 } as const;
 
 export const PREMIUM_LIMITS = {
@@ -23,8 +30,8 @@ export const PREMIUM_LIMITS = {
 
 // ===== 가격 (원) =====
 export const PRICING = {
-    PREMIUM_MONTHLY: 7900,      // 프리미엄 월 구독
-    PREMIUM_YEARLY: 79000,      // 프리미엄 연 구독 (2개월 무료)
+    BASIC_MONTHLY: 7900,        // 베이직 월 구독
+    PREMIUM_MONTHLY: 14900,     // 프리미엄 월 구독
 } as const;
 
 // ===== UI 설정 =====
@@ -199,7 +206,7 @@ export const MINIHOMPY = {
 // ===== AI 영상 생성 =====
 export const VIDEO = {
     FREE_LIFETIME: 1,           // 무료 회원 평생 1회
-    BASIC_MONTHLY: 3,           // 베이직(현 프리미엄) 월 3회
+    BASIC_MONTHLY: 3,           // 베이직 월 3회
     PREMIUM_MONTHLY: 6,         // 프리미엄 월 6회
     SINGLE_PRICE: 3500,         // 단품 구매 가격 (원)
     POLL_INTERVAL_MS: 15000,    // 상태 폴링 간격 (15초)

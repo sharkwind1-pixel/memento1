@@ -324,90 +324,128 @@ export default function LandingPage() {
 
                 {/* 가격 섹션 */}
                 <section className="py-24 px-4">
-                    <div className="max-w-4xl mx-auto">
+                    <div className="max-w-5xl mx-auto">
                         <div className="text-center mb-12">
                             <h2 className="text-3xl md:text-4xl font-display font-bold text-gray-800 dark:text-white mb-4">
-                                심플한 요금제
+                                나에게 맞는 요금제
                             </h2>
                             <p className="text-gray-600 dark:text-gray-300">
-                                무료로 시작하고, 필요하면 프리미엄으로
+                                무료로 시작하고, 필요하면 업그레이드
                             </p>
                         </div>
 
-                        <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+                        <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
                             {/* 무료 플랜 */}
-                            <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-gray-100 dark:border-gray-700">
-                                <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">무료</h3>
+                            <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-lg border border-gray-100 dark:border-gray-700">
+                                <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-2">무료</h3>
                                 <div className="flex items-baseline gap-1 mb-6">
-                                    <span className="text-4xl font-bold text-gray-800 dark:text-white">0</span>
-                                    <span className="text-gray-500">원/월</span>
+                                    <span className="text-3xl sm:text-4xl font-bold text-gray-800 dark:text-white">0</span>
+                                    <span className="text-gray-500 text-sm">원/월</span>
                                 </div>
-                                <ul className="space-y-3 mb-8">
-                                    <li className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                                        <Check className="w-5 h-5 text-green-500" />
-                                        AI 펫톡 하루 15회
+                                <ul className="space-y-2.5 mb-8">
+                                    <li className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                                        <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                                        AI 펫톡 하루 10회
                                     </li>
-                                    <li className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                                        <Check className="w-5 h-5 text-green-500" />
-                                        반려동물 기록 1마리
+                                    <li className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                                        <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                                        반려동물 1마리
                                     </li>
-                                    <li className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                                        <Check className="w-5 h-5 text-green-500" />
-                                        사진 저장 50장
+                                    <li className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                                        <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                                        사진 펫당 50장
                                     </li>
-                                    <li className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                                        <Check className="w-5 h-5 text-green-500" />
+                                    <li className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                                        <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
                                         커뮤니티 이용
+                                    </li>
+                                    <li className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                                        <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                                        AI 영상 평생 1회
                                     </li>
                                 </ul>
                                 <Button
                                     onClick={handleOpenAuth}
                                     variant="outline"
-                                    className="w-full rounded-xl border-gray-200 py-6"
+                                    className="w-full rounded-xl border-gray-200 py-5"
                                 >
                                     무료로 시작하기
                                 </Button>
                             </div>
 
+                            {/* 베이직 플랜 */}
+                            <div className="bg-gradient-to-br from-sky-500 to-blue-500 rounded-3xl p-6 sm:p-8 shadow-xl text-white relative overflow-hidden">
+                                <h3 className="text-lg font-bold mb-2">베이직</h3>
+                                <div className="flex items-baseline gap-1 mb-6">
+                                    <span className="text-3xl sm:text-4xl font-bold">7,900</span>
+                                    <span className="text-white/80 text-sm">원/월</span>
+                                </div>
+                                <ul className="space-y-2.5 mb-8">
+                                    <li className="flex items-center gap-2 text-sm">
+                                        <Check className="w-4 h-4 text-sky-200 flex-shrink-0" />
+                                        AI 펫톡 하루 50회
+                                    </li>
+                                    <li className="flex items-center gap-2 text-sm">
+                                        <Check className="w-4 h-4 text-sky-200 flex-shrink-0" />
+                                        반려동물 3마리
+                                    </li>
+                                    <li className="flex items-center gap-2 text-sm">
+                                        <Check className="w-4 h-4 text-sky-200 flex-shrink-0" />
+                                        사진 펫당 200장
+                                    </li>
+                                    <li className="flex items-center gap-2 text-sm">
+                                        <Check className="w-4 h-4 text-sky-200 flex-shrink-0" />
+                                        AI 영상 월 3회
+                                    </li>
+                                    <li className="flex items-center gap-2 text-sm">
+                                        <Check className="w-4 h-4 text-sky-200 flex-shrink-0" />
+                                        메모리얼 펫톡
+                                    </li>
+                                </ul>
+                                <Button
+                                    onClick={handleOpenAuth}
+                                    className="w-full bg-white text-sky-600 hover:bg-gray-100 rounded-xl py-5 font-bold"
+                                >
+                                    베이직 시작하기
+                                </Button>
+                            </div>
+
                             {/* 프리미엄 플랜 */}
-                            <div className="bg-gradient-to-br from-violet-500 to-sky-500 rounded-3xl p-8 shadow-xl text-white relative overflow-hidden">
+                            <div className="bg-gradient-to-br from-violet-500 to-purple-600 rounded-3xl p-6 sm:p-8 shadow-xl text-white relative overflow-hidden">
                                 <div className="absolute top-4 right-4 bg-amber-400 text-amber-900 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
                                     <Zap className="w-3 h-3" />
-                                    인기
+                                    추천
                                 </div>
-                                <h3 className="text-xl font-bold mb-2">프리미엄</h3>
-                                <div className="flex items-baseline gap-1 mb-1">
-                                    <span className="text-4xl font-bold">7,900</span>
-                                    <span className="text-white/80">원/월</span>
+                                <h3 className="text-lg font-bold mb-2">프리미엄</h3>
+                                <div className="flex items-baseline gap-1 mb-6">
+                                    <span className="text-3xl sm:text-4xl font-bold">14,900</span>
+                                    <span className="text-white/80 text-sm">원/월</span>
                                 </div>
-                                <p className="text-white/60 text-sm mb-5">
-                                    연 구독 시 79,000원 (2개월 무료)
-                                </p>
-                                <ul className="space-y-3 mb-8">
-                                    <li className="flex items-center gap-2">
-                                        <Check className="w-5 h-5 text-amber-300" />
+                                <ul className="space-y-2.5 mb-8">
+                                    <li className="flex items-center gap-2 text-sm">
+                                        <Check className="w-4 h-4 text-amber-300 flex-shrink-0" />
                                         AI 펫톡 무제한
                                     </li>
-                                    <li className="flex items-center gap-2">
-                                        <Check className="w-5 h-5 text-amber-300" />
-                                        반려동물 기록 무제한
+                                    <li className="flex items-center gap-2 text-sm">
+                                        <Check className="w-4 h-4 text-amber-300 flex-shrink-0" />
+                                        반려동물 10마리
                                     </li>
-                                    <li className="flex items-center gap-2">
-                                        <Check className="w-5 h-5 text-amber-300" />
-                                        사진 저장 무제한
+                                    <li className="flex items-center gap-2 text-sm">
+                                        <Check className="w-4 h-4 text-amber-300 flex-shrink-0" />
+                                        사진 펫당 1,000장
                                     </li>
-                                    <li className="flex items-center gap-2">
-                                        <Check className="w-5 h-5 text-amber-300" />
-                                        메모리얼 펫톡 지원
+                                    <li className="flex items-center gap-2 text-sm">
+                                        <Check className="w-4 h-4 text-amber-300 flex-shrink-0" />
+                                        AI 영상 월 6회
                                     </li>
-                                    <li className="flex items-center gap-2">
-                                        <Check className="w-5 h-5 text-amber-300" />
+                                    <li className="flex items-center gap-2 text-sm">
+                                        <Check className="w-4 h-4 text-amber-300 flex-shrink-0" />
                                         우선 고객 지원
                                     </li>
                                 </ul>
                                 <Button
                                     onClick={handleOpenAuth}
-                                    className="w-full bg-white text-violet-600 hover:bg-gray-100 rounded-xl py-6 font-bold"
+                                    className="w-full bg-white text-violet-600 hover:bg-gray-100 rounded-xl py-5 font-bold"
                                 >
                                     프리미엄 시작하기
                                 </Button>

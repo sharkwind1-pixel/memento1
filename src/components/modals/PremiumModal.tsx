@@ -1,8 +1,8 @@
 /**
  * PremiumModal.tsx
  * 프리미엄 기능 유도 모달
+ * - 베이직(7,900원/월) / 프리미엄(14,900원/월) 2단계 플랜
  * - 부드럽고 친근한 톤
- * - 커피 한 잔 값으로 설득
  */
 
 "use client";
@@ -16,13 +16,12 @@ import {
     MessageCircle,
     Camera,
     Heart,
-    Coffee,
     Check,
     Crown,
-    Tag,
+    Star,
 } from "lucide-react";
 import { toast } from "sonner";
-import { PRICING } from "@/config/constants";
+import { PRICING, BASIC_LIMITS, PREMIUM_LIMITS, VIDEO } from "@/config/constants";
 
 export type PremiumFeature =
     | "ai-chat-limit"      // AI 펫톡 무제한
@@ -48,21 +47,21 @@ const featureInfo: Record<PremiumFeature, {
 }> = {
     "ai-chat-limit": {
         icon: MessageCircle,
-        title: "AI 펫톡 무제한",
+        title: "AI 펫톡 더 많이",
         description: "오늘의 무료 대화를 다 사용했어요",
-        benefit: "프리미엄이면 하루 종일 우리 아이와 대화할 수 있어요",
+        benefit: "베이직 플랜부터 하루 50회, 프리미엄이면 무제한으로 대화할 수 있어요",
     },
     "pet-limit": {
         icon: Heart,
-        title: "반려동물 등록 무제한",
+        title: "반려동물 등록 더 많이",
         description: "무료는 1마리만 등록할 수 있어요",
-        benefit: "여러 아이를 키우신다면 모두 등록하고 기록해보세요",
+        benefit: "여러 아이를 키우신다면 베이직(3마리) 또는 프리미엄(10마리)으로 모두 등록하세요",
     },
     "photo-limit": {
         icon: Camera,
-        title: "사진 저장 무제한",
+        title: "사진 저장 더 많이",
         description: "무료 저장 공간이 가득 찼어요",
-        benefit: "소중한 순간들을 제한 없이 간직하세요",
+        benefit: "소중한 순간들을 더 많이 간직하세요",
     },
     "memorial-chat": {
         icon: Sparkles,
@@ -78,11 +77,10 @@ const featureInfo: Record<PremiumFeature, {
     },
 };
 
-type PlanType = "monthly" | "yearly";
+type PlanType = "basic" | "premium";
 
-const monthlyPrice = PRICING.PREMIUM_MONTHLY.toLocaleString();
-const yearlyPrice = PRICING.PREMIUM_YEARLY.toLocaleString();
-const yearlyMonthly = Math.round(PRICING.PREMIUM_YEARLY / 12).toLocaleString();
+const basicPrice = PRICING.BASIC_MONTHLY.toLocaleString();
+const premiumPrice = PRICING.PREMIUM_MONTHLY.toLocaleString();
 
 export default function PremiumModal({
     isOpen,
@@ -91,7 +89,7 @@ export default function PremiumModal({
     onLogin,
     isLoggedIn = true,
 }: PremiumModalProps) {
-    const [selectedPlan, setSelectedPlan] = useState<PlanType>("yearly");
+    const [selectedPlan, setSelectedPlan] = useState<PlanType>("basic");
     useEscapeClose(isOpen, onClose);
     if (!isOpen) return null;
 
@@ -108,7 +106,7 @@ export default function PremiumModal({
             {/* 모달 */}
             <div className="bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in-95 duration-200" role="dialog" aria-modal="true" aria-labelledby="premium-modal-title" onClick={(e) => e.stopPropagation()}>
                 {/* 상단 그라데이션 */}
-                <div className="bg-gradient-to-br from-violet-500 via-purple-500 to-sky-500 p-8 text-white">
+                <div className="bg-gradient-to-br from-violet-500 via-purple-500 to-sky-500 p-6 sm:p-8 text-white rounded-t-3xl">
                     <button
                         onClick={onClose}
                         className="absolute top-4 right-4 p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
@@ -118,106 +116,133 @@ export default function PremiumModal({
                     </button>
 
                     <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
-                            <Icon className="w-8 h-8" />
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+                            <Icon className="w-7 h-7 sm:w-8 sm:h-8" />
                         </div>
-                        <div>
-                            <h2 id="premium-modal-title" className="text-xl font-display font-bold">{info.title}</h2>
+                        <div className="min-w-0">
+                            <h2 id="premium-modal-title" className="text-lg sm:text-xl font-display font-bold">{info.title}</h2>
                             <p className="text-white/80 text-sm mt-1">{info.description}</p>
                         </div>
                     </div>
                 </div>
 
                 {/* 본문 */}
-                <div className="p-6">
+                <div className="p-5 sm:p-6">
                     {/* 혜택 설명 */}
-                    <div className="bg-violet-50 dark:bg-violet-900/20 rounded-2xl p-4 mb-6">
-                        <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                    <div className="bg-violet-50 dark:bg-violet-900/20 rounded-2xl p-4 mb-5">
+                        <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
                             {info.benefit}
                         </p>
                     </div>
 
-                    {/* 플랜 선택 */}
-                    <div className="grid grid-cols-2 gap-3 mb-6">
-                        {/* 월 구독 */}
+                    {/* 플랜 선택 - 베이직 / 프리미엄 */}
+                    <div className="grid grid-cols-2 gap-3 mb-5">
+                        {/* 베이직 */}
                         <button
-                            onClick={() => setSelectedPlan("monthly")}
-                            className={`relative rounded-2xl p-4 text-left transition-all duration-200 border-2 ${
-                                selectedPlan === "monthly"
-                                    ? "border-violet-500 bg-violet-50 dark:bg-violet-900/20"
+                            onClick={() => setSelectedPlan("basic")}
+                            className={`relative rounded-2xl p-3.5 sm:p-4 text-left transition-all duration-200 border-2 ${
+                                selectedPlan === "basic"
+                                    ? "border-sky-500 bg-sky-50 dark:bg-sky-900/20 shadow-sm"
                                     : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                             }`}
                         >
-                            <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">월 구독</div>
+                            <div className="flex items-center gap-1.5 mb-2">
+                                <Star className="w-4 h-4 text-sky-500" />
+                                <span className="text-sm font-bold text-gray-800 dark:text-white">베이직</span>
+                            </div>
                             <div className="flex items-baseline gap-0.5">
-                                <span className="text-2xl font-display font-bold text-gray-800 dark:text-white">{monthlyPrice}</span>
+                                <span className="text-xl sm:text-2xl font-display font-bold text-gray-800 dark:text-white">{basicPrice}</span>
                                 <span className="text-xs text-gray-400">원/월</span>
                             </div>
-                            <p className="text-xs text-gray-400 mt-1.5">
-                                하루 약 260원
-                            </p>
+                            <ul className="mt-2.5 space-y-1">
+                                <li className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1">
+                                    <Check className="w-3 h-3 text-sky-500 flex-shrink-0 mt-0.5" />
+                                    AI 펫톡 하루 {BASIC_LIMITS.DAILY_CHATS}회
+                                </li>
+                                <li className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1">
+                                    <Check className="w-3 h-3 text-sky-500 flex-shrink-0 mt-0.5" />
+                                    반려동물 {BASIC_LIMITS.PETS}마리
+                                </li>
+                                <li className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1">
+                                    <Check className="w-3 h-3 text-sky-500 flex-shrink-0 mt-0.5" />
+                                    사진 펫당 {BASIC_LIMITS.PHOTOS_PER_PET}장
+                                </li>
+                                <li className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1">
+                                    <Check className="w-3 h-3 text-sky-500 flex-shrink-0 mt-0.5" />
+                                    AI 영상 월 {VIDEO.BASIC_MONTHLY}회
+                                </li>
+                            </ul>
                         </button>
 
-                        {/* 연 구독 */}
+                        {/* 프리미엄 */}
                         <button
-                            onClick={() => setSelectedPlan("yearly")}
-                            className={`relative rounded-2xl p-4 text-left transition-all duration-200 border-2 ${
-                                selectedPlan === "yearly"
-                                    ? "border-violet-500 bg-violet-50 dark:bg-violet-900/20"
+                            onClick={() => setSelectedPlan("premium")}
+                            className={`relative rounded-2xl p-3.5 sm:p-4 text-left transition-all duration-200 border-2 ${
+                                selectedPlan === "premium"
+                                    ? "border-violet-500 bg-violet-50 dark:bg-violet-900/20 shadow-sm"
                                     : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                             }`}
                         >
-                            {/* 할인 뱃지 */}
-                            <div className="absolute -top-2.5 right-3 flex items-center gap-1 bg-gradient-to-r from-rose-500 to-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                <Tag className="w-2.5 h-2.5" />
-                                2개월 무료
+                            {/* 추천 뱃지 */}
+                            <div className="absolute -top-2.5 right-3 bg-gradient-to-r from-violet-500 to-purple-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                추천
                             </div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">연 구독</div>
+                            <div className="flex items-center gap-1.5 mb-2">
+                                <Crown className="w-4 h-4 text-violet-500" />
+                                <span className="text-sm font-bold text-gray-800 dark:text-white">프리미엄</span>
+                            </div>
                             <div className="flex items-baseline gap-0.5">
-                                <span className="text-2xl font-display font-bold text-gray-800 dark:text-white">{yearlyPrice}</span>
-                                <span className="text-xs text-gray-400">원/년</span>
+                                <span className="text-xl sm:text-2xl font-display font-bold text-gray-800 dark:text-white">{premiumPrice}</span>
+                                <span className="text-xs text-gray-400">원/월</span>
                             </div>
-                            <p className="text-xs text-gray-400 mt-1.5">
-                                월 {yearlyMonthly}원 (17% 할인)
-                            </p>
+                            <ul className="mt-2.5 space-y-1">
+                                <li className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1">
+                                    <Check className="w-3 h-3 text-violet-500 flex-shrink-0 mt-0.5" />
+                                    AI 펫톡 무제한
+                                </li>
+                                <li className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1">
+                                    <Check className="w-3 h-3 text-violet-500 flex-shrink-0 mt-0.5" />
+                                    반려동물 {PREMIUM_LIMITS.PETS}마리
+                                </li>
+                                <li className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1">
+                                    <Check className="w-3 h-3 text-violet-500 flex-shrink-0 mt-0.5" />
+                                    사진 펫당 {PREMIUM_LIMITS.PHOTOS_PER_PET}장
+                                </li>
+                                <li className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1">
+                                    <Check className="w-3 h-3 text-violet-500 flex-shrink-0 mt-0.5" />
+                                    AI 영상 월 {VIDEO.PREMIUM_MONTHLY}회
+                                </li>
+                                <li className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1">
+                                    <Check className="w-3 h-3 text-violet-500 flex-shrink-0 mt-0.5" />
+                                    우선 고객 지원
+                                </li>
+                            </ul>
                         </button>
-                    </div>
-
-                    {/* 프리미엄 혜택 리스트 */}
-                    <div className="space-y-2 mb-6">
-                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                            <Check className="w-4 h-4 text-green-500" />
-                            AI 펫톡 무제한
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                            <Check className="w-4 h-4 text-green-500" />
-                            반려동물 & 사진 무제한
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                            <Check className="w-4 h-4 text-green-500" />
-                            메모리얼 펫톡 지원
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                            <Check className="w-4 h-4 text-green-500" />
-                            언제든 해지 가능
-                        </div>
                     </div>
 
                     {/* CTA 버튼 */}
                     {isLoggedIn ? (
                         <div className="space-y-3">
                             <Button
-                                className="w-full bg-gradient-to-r from-violet-500 to-sky-500 hover:from-violet-600 hover:to-sky-600 text-white rounded-xl py-6 font-bold"
+                                className={`w-full text-white rounded-xl py-6 font-bold transition-all ${
+                                    selectedPlan === "premium"
+                                        ? "bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700"
+                                        : "bg-gradient-to-r from-sky-500 to-blue-500 hover:from-sky-600 hover:to-blue-600"
+                                }`}
                                 onClick={() => {
                                     // TODO: 결제 페이지로 이동
                                     toast.info("결제 시스템이 곧 오픈됩니다. 조금만 기다려주세요!");
                                     onClose();
                                 }}
                             >
-                                <Crown className="w-5 h-5 mr-2" />
-                                {selectedPlan === "yearly"
-                                    ? `연 ${yearlyPrice}원으로 시작하기`
-                                    : `월 ${monthlyPrice}원으로 시작하기`
+                                {selectedPlan === "premium" ? (
+                                    <Crown className="w-5 h-5 mr-2" />
+                                ) : (
+                                    <Star className="w-5 h-5 mr-2" />
+                                )}
+                                {selectedPlan === "premium"
+                                    ? `프리미엄 ${premiumPrice}원/월 시작`
+                                    : `베이직 ${basicPrice}원/월 시작`
                                 }
                             </Button>
                             <button
@@ -236,7 +261,7 @@ export default function PremiumModal({
                                 로그인하고 시작하기
                             </Button>
                             <p className="text-center text-gray-400 text-sm">
-                                무료로 시작하고, 마음에 들면 프리미엄으로
+                                무료로 시작하고, 마음에 들면 업그레이드
                             </p>
                         </div>
                     )}
