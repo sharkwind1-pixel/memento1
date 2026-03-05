@@ -557,6 +557,7 @@ export interface AIChatPageProps extends PageProps {}
 export interface CommunityPageProps extends PageProps {
     subcategory?: CommunitySubcategory;
     onSubcategoryChange?: (sub: CommunitySubcategory) => void;
+    isActive?: boolean;
 }
 
 /** AdoptionPage Props */

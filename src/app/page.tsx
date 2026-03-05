@@ -419,6 +419,7 @@ function HomeContent() {
                     <CommunityPage
                         subcategory={selectedSubcategory}
                         onSubcategoryChange={handleSubcategoryChange}
+                        isActive={selectedTab === "community"}
                     />
                 </div>
             )}

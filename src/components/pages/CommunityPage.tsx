@@ -28,7 +28,7 @@ import {
     getCategoryColor,
 } from "@/components/features/community/communityTypes";
 
-function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps) {
+function CommunityPage({ subcategory, onSubcategoryChange, isActive }: CommunityPageProps) {
     const { selectedPet } = usePets();
     const { user } = useAuth();
 
@@ -94,6 +94,13 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
     const [showWriteModal, setShowWriteModal] = useState(false);
     const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
     const isNavigatingBackRef = useRef(false);
+
+    // 다른 탭으로 이동하면 게시글 상세 닫기 (목록으로 복원)
+    useEffect(() => {
+        if (!isActive && selectedPostId) {
+            setSelectedPostId(null);
+        }
+    }, [isActive]); // eslint-disable-line react-hooks/exhaustive-deps
     const [visitUserId, setVisitUserId] = useState<string | null>(null);
     const sentinelRef = useRef<HTMLDivElement>(null);
     const POSTS_PER_PAGE = 15;
