@@ -36,9 +36,10 @@
     unicode-range: U+AC00-D7AF, U+1100-11FF, U+3130-318F, U+A960-A97F, U+D7B0-D7FF, U+FFA0-FFDC;
 }
 
-/* 간편모드 (크게 보기) - html font-size를 키워서 모든 rem 기반 값 자동 확대 */
+/* 간편모드 (크게 보기) - 전체 UI를 비례적으로 확대 */
+/* zoom은 px/rem/em 모든 단위를 동일 비율로 확대하여 레이아웃 깨짐 없음 */
 html.simple-mode {
-    font-size: 20px; /* 기본 16px → 20px (1.25배) */
+    zoom: 1.25;
 }
 
 /* 모바일 최적화 */
