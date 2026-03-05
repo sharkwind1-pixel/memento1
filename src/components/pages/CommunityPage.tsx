@@ -95,10 +95,13 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive }: Community
     const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
     const isNavigatingBackRef = useRef(false);
 
-    // 다른 탭으로 이동하면 게시글 상세 닫기 (목록으로 복원)
+    // 다른 탭으로 이동하면 상세/오버레이 상태 초기화 (목록으로 복원)
     useEffect(() => {
-        if (!isActive && selectedPostId) {
-            setSelectedPostId(null);
+        if (!isActive) {
+            if (selectedPostId) setSelectedPostId(null);
+            if (showcaseView) setShowcaseView(false);
+            if (visitUserId) setVisitUserId(null);
+            if (reportTarget) setReportTarget(null);
         }
     }, [isActive]); // eslint-disable-line react-hooks/exhaustive-deps
     const [visitUserId, setVisitUserId] = useState<string | null>(null);

@@ -27,6 +27,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 interface HomePageProps {
     setSelectedTab: (tab: TabType, sub?: CommunitySubcategory) => void;
+    isActive?: boolean;
 }
 
 type SmoothAutoScrollReturn = {
@@ -38,7 +39,7 @@ type SmoothAutoScrollReturn = {
     startAutoScroll?: (start?: boolean) => void | (() => void);
 };
 
-function HomePage({ setSelectedTab }: HomePageProps) {
+function HomePage({ setSelectedTab, isActive }: HomePageProps) {
     const { isSimpleMode } = useAuth();
     const scroll = useSmoothAutoScroll() as unknown as SmoothAutoScrollReturn;
 
@@ -65,6 +66,14 @@ function HomePage({ setSelectedTab }: HomePageProps) {
         return typeof cleanup === "function" ? cleanup : undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isSimpleMode]);
+
+    // 다른 탭으로 이동하면 모달/오버레이 닫기
+    useEffect(() => {
+        if (!isActive) {
+            if (selectedPost) setSelectedPost(null);
+            if (lightboxItem) setLightboxItem(null);
+        }
+    }, [isActive]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // 간편모드: 큰 카드 런처 화면
     if (isSimpleMode) {

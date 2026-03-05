@@ -406,7 +406,7 @@ function HomeContent() {
         <>
             {mountedTabs.has("home") && (
                 <div style={{ display: selectedTab === "home" ? "block" : "none" }}>
-                    <HomePage setSelectedTab={handleTabChange} />
+                    <HomePage setSelectedTab={handleTabChange} isActive={selectedTab === "home"} />
                 </div>
             )}
             {mountedTabs.has("record") && (
@@ -430,7 +430,7 @@ function HomeContent() {
             )}
             {mountedTabs.has("magazine") && (
                 <div style={{ display: selectedTab === "magazine" ? "block" : "none" }}>
-                    <MagazinePage setSelectedTab={handleTabChange} />
+                    <MagazinePage setSelectedTab={handleTabChange} isActive={selectedTab === "magazine"} />
                 </div>
             )}
             {mountedTabs.has("admin") && (

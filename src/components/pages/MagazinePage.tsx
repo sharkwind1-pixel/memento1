@@ -44,6 +44,7 @@ import PopularArticleCarousel from "@/components/features/magazine/PopularArticl
 
 interface MagazinePageProps {
     setSelectedTab?: (tab: TabType) => void;
+    isActive?: boolean;
 }
 
 // 단계별 필터 (상단)
@@ -65,7 +66,7 @@ const TOPICS = [
     { id: "travel", label: "여행/외출", icon: Plane },
 ];
 
-function MagazinePage({ setSelectedTab }: MagazinePageProps) {
+function MagazinePage({ setSelectedTab, isActive }: MagazinePageProps) {
     const [selectedStage, setSelectedStage] = useState<string>(() => {
         if (typeof window !== "undefined") {
             return localStorage.getItem("memento-magazine-stage") || "all";
@@ -82,6 +83,13 @@ function MagazinePage({ setSelectedTab }: MagazinePageProps) {
     const [articles, setArticles] = useState<MagazineArticle[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedArticle, setSelectedArticle] = useState<MagazineArticle | null>(null);
+
+    // 다른 탭으로 이동하면 기사 상세 닫기 (목록으로 복원)
+    useEffect(() => {
+        if (!isActive && selectedArticle) {
+            setSelectedArticle(null);
+        }
+    }, [isActive]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // 필터 변경 시 localStorage에 저장
     useEffect(() => { localStorage.setItem("memento-magazine-stage", selectedStage); }, [selectedStage]);
