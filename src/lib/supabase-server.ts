@@ -36,6 +36,18 @@ export async function createServerSupabase() {
 }
 
 /**
+ * RLS를 우회하는 Admin Supabase 클라이언트 (서버 전용)
+ * 다른 유저의 public 데이터 조회 시 사용 (미니미, 프로필 등)
+ * 주의: 데이터 수정에는 사용하지 말 것 - 읽기 전용 용도
+ */
+export function createAdminSupabase() {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!url || !serviceKey) throw new Error("Supabase Admin 환경변수가 설정되지 않았습니다.");
+    return createClient(url, serviceKey);
+}
+
+/**
  * 현재 인증된 사용자 가져오기
  * Authorization 헤더의 JWT 토큰으로 사용자 조회
  */

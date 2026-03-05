@@ -10,7 +10,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
+import { createServerSupabase, createAdminSupabase, getAuthUser } from "@/lib/supabase-server";
 import { awardPoints } from "@/lib/points";
 import {
     getClientIP,
@@ -123,11 +123,13 @@ export async function GET(request: NextRequest) {
         }
 
         // 작성자 미니미 slug 일괄 조회 (미니홈피 아바타 표시용)
+        // RLS 우회를 위해 admin 클라이언트 사용 (profiles/user_minimi는 auth.uid()=id 정책)
         const userIds = Array.from(new Set((data || []).map(p => p.user_id).filter(Boolean)));
         let userIdToMinimiSlug: Record<string, string> = {};
         if (userIds.length > 0) {
             try {
-                const { data: profileRows } = await supabase
+                const adminSupabase = createAdminSupabase();
+                const { data: profileRows } = await adminSupabase
                     .from("profiles")
                     .select("id, equipped_minimi_id")
                     .in("id", userIds);
@@ -135,7 +137,7 @@ export async function GET(request: NextRequest) {
                     .map(p => p.equipped_minimi_id)
                     .filter(Boolean) as string[];
                 if (minimiUuids.length > 0) {
-                    const { data: minimiRows } = await supabase
+                    const { data: minimiRows } = await adminSupabase
                         .from("user_minimi")
                         .select("id, minimi_id")
                         .in("id", minimiUuids);

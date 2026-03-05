@@ -8,7 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
+import { createServerSupabase, createAdminSupabase, getAuthUser } from "@/lib/supabase-server";
 import {
     getClientIP,
     checkRateLimit,
@@ -117,16 +117,18 @@ export async function GET(
         const { data: comments } = await commentQuery;
 
         // 작성자 미니미 slug 조회
+        // RLS 우회를 위해 admin 클라이언트 사용 (profiles/user_minimi는 auth.uid()=id 정책)
         let authorMinimiSlug: string | null = null;
         if (post.user_id) {
             try {
-                const { data: profile } = await supabase
+                const adminSupabase = createAdminSupabase();
+                const { data: profile } = await adminSupabase
                     .from("profiles")
                     .select("equipped_minimi_id")
                     .eq("id", post.user_id)
                     .maybeSingle();
                 if (profile?.equipped_minimi_id) {
-                    const { data: minimiRow } = await supabase
+                    const { data: minimiRow } = await adminSupabase
                         .from("user_minimi")
                         .select("minimi_id")
                         .eq("id", profile.equipped_minimi_id)
