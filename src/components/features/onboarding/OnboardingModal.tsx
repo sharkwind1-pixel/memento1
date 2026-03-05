@@ -182,6 +182,8 @@ export default function OnboardingModal({
                 .from("profiles")
                 .update({
                     onboarding_completed_at: new Date().toISOString(),
+                    // user_type이 NULL이면 기본값 설정 (온보딩 리셋 후 재진입 루프 방지)
+                    ...(data.userType ? { user_type: data.userType } : { user_type: "owner" }),
                 })
                 .eq("id", user.id);
         }

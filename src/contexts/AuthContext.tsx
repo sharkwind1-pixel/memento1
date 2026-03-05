@@ -660,15 +660,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         window.location.href = "/api/auth/naver";
     }, []);
 
-    // 프로필 업데이트
+    // 프로필 업데이트 (auth.users + profiles 동시 갱신)
     const updateProfile = useCallback(async (data: { nickname?: string }) => {
         try {
+            // 1. auth.users user_metadata 업데이트
             const { error } = await supabase.auth.updateUser({
                 data: {
                     nickname: data.nickname,
                 },
             });
-            return { error };
+            if (error) return { error };
+
+            // 2. profiles 테이블도 동시 업데이트 (닉네임 불일치 방지)
+            const currentUser = (await supabase.auth.getUser()).data.user;
+            if (currentUser && data.nickname) {
+                await supabase
+                    .from("profiles")
+                    .update({ nickname: data.nickname })
+                    .eq("id", currentUser.id);
+            }
+
+            // 3. React 상태의 user 객체도 즉시 동기화
+            setUser(prev => {
+                if (!prev) return prev;
+                return {
+                    ...prev,
+                    user_metadata: {
+                        ...prev.user_metadata,
+                        nickname: data.nickname,
+                    },
+                };
+            });
+
+            return { error: null };
         } catch (error) {
             return { error: error as Error };
         }
