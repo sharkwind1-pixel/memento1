@@ -262,14 +262,21 @@ function HomeContent() {
             }
 
             try {
-                const { data: profileData } = await supabase
+                const { data: profileData, error: profileError } = await supabase
                     .from("profiles")
                     .select("nickname, tutorial_completed_at, onboarding_completed_at, user_type")
                     .eq("id", user.id)
                     .single();
 
+                // 프로필 조회 실패 시 (RLS/세션 문제 등) → 온보딩 강제 안 함
+                if (profileError || !profileData) {
+                    console.error("[checkNewUserFlow] 프로필 조회 실패:", profileError?.message);
+                    newUserFlowCheckedRef.current = user.id;
+                    return;
+                }
+
                 // 1. 닉네임이 없으면 설정 필요
-                if (!profileData?.nickname) {
+                if (!profileData.nickname) {
                     setShowNicknameSetup(true);
                     return;
                 }
