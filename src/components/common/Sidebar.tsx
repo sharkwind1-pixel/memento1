@@ -354,8 +354,8 @@ export default function Sidebar({
                 )}
             </nav>
 
-            {/* 유저 정보 영역 - 데스크톱 사이드바, 로그인 시만 */}
-            {!isMobile && user && (
+            {/* 유저 정보 영역 - 로그인 시 표시 (데스크톱+모바일) */}
+            {user && (
                 <div className="px-3 py-3 border-t border-gray-200 dark:border-gray-700">
                     {authLoading ? (
                         <div className="w-full h-10 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-xl" />
@@ -368,7 +368,10 @@ export default function Sidebar({
                                 <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
                             </div>
                             <button
-                                onClick={onOpenAccountSettings}
+                                onClick={() => {
+                                    onOpenAccountSettings?.();
+                                    if (isMobile) onClose();
+                                }}
                                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
                             >
                                 <Settings className="w-4 h-4" />
@@ -378,6 +381,7 @@ export default function Sidebar({
                                 onClick={() => {
                                     localStorage.setItem("memento-record-tab", "minihompy");
                                     onTabChange("record");
+                                    if (isMobile) onClose();
                                 }}
                                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-memento-600 dark:text-memento-400 hover:bg-memento-50 dark:hover:bg-memento-900/20 transition-all"
                             >
@@ -385,7 +389,10 @@ export default function Sidebar({
                                 <span>내 미니홈피</span>
                             </button>
                             <button
-                                onClick={onSignOut}
+                                onClick={() => {
+                                    onSignOut?.();
+                                    if (isMobile) onClose();
+                                }}
                                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
                             >
                                 <LogOut className="w-4 h-4" />
