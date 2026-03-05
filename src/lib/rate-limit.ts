@@ -311,6 +311,86 @@ export function sanitizeInput(input: string): string {
 }
 
 /**
+ * AI 펫톡 프롬프트 인젝션(탈옥) 감지
+ * 유저 입력에서 시스템 프롬프트 조작/역할 변경 시도를 감지
+ * @returns { detected: boolean, type: string } 탈옥 시도 여부 + 유형
+ */
+export function detectPromptInjection(input: string): { detected: boolean; type: string } {
+    if (!input) return { detected: false, type: "" };
+
+    const normalized = input
+        .toLowerCase()
+        .replace(/\s+/g, " ")
+        .replace(/[.,!?~]+/g, "")
+        .trim();
+
+    // 1. 역할 변경 / 시스템 프롬프트 무시 시도 (영어)
+    const EN_INJECTION_PATTERNS = [
+        /ignore\s*(all\s*)?(previous|above|prior|earlier)\s*(instructions?|prompts?|rules?|commands?)/,
+        /forget\s*(all\s*)?(your|the|previous)?\s*(instructions?|prompts?|rules?|system)/,
+        /disregard\s*(all\s*)?(previous|above|prior)?\s*(instructions?|prompts?|rules?)/,
+        /you\s*are\s*now\s*(a|an|the)?\s*(different|new|evil|unrestricted|dan|jailbr)/,
+        /pretend\s*(you\s*are|to\s*be|you're)\s*(a|an|the)?\s*(different|new|human|evil|unrestricted)/,
+        /act\s*as\s*(a|an|the)?\s*(different|new|evil|unrestricted|dan|jailbr)/,
+        /system\s*prompt/,
+        /\bdan\s*mode\b/,
+        /do\s*anything\s*now/,
+        /jailbreak/,
+        /bypass\s*(the\s*)?(filter|safety|restriction|rule|guard)/,
+        /override\s*(the\s*)?(system|safety|filter|rule)/,
+        /new\s*instruction/,
+        /from\s*now\s*on\s*(you\s*are|ignore|forget)/,
+    ];
+
+    // 2. 역할 변경 / 시스템 프롬프트 무시 시도 (한국어)
+    const KR_INJECTION_PATTERNS = [
+        /이전\s*(지시|명령|프롬프트|규칙|설정).*(무시|잊어|삭제|취소|제거)/,
+        /(무시|잊어|삭제|취소|제거).*이전\s*(지시|명령|프롬프트|규칙|설정)/,
+        /시스템\s*(프롬프트|설정|명령|규칙).*(무시|알려|보여|출력|말해)/,
+        /너(는|의)?\s*(역할|성격|설정).*(바꿔|변경|수정|무시)/,
+        /(다른|새로운)\s*(역할|캐릭터|인격|성격)(으로|을|를)\s*(바꿔|변경|해|맡|연기)/,
+        /지금부터\s*(너는|넌)\s*(다른|새로운|악|자유)/,
+        /(반려동물|펫|강아지|고양이)\s*(역할|행동).*(그만|멈춰|중단|벗어)/,
+        /원래\s*(너|네)\s*(모습|정체).*(뭐|알려|말해|보여)/,
+        /프롬프트\s*(인젝션|주입|탈옥|해킹)/,
+        /필터\s*(우회|무시|해제|끄|꺼)/,
+        /제한\s*(풀어|해제|무시|없애)/,
+        /규칙\s*(무시|어겨|깨|벗어나)/,
+    ];
+
+    // 3. 시스템 역할 사칭
+    const ROLE_SPOOF_PATTERNS = [
+        /\[system\]/i,
+        /\[assistant\]/i,
+        /\[admin\]/i,
+        /###\s*(system|instruction|rule)/i,
+        /<system>/i,
+        /\bsystem:\s/i,
+        /\bassistant:\s/i,
+    ];
+
+    for (const pattern of EN_INJECTION_PATTERNS) {
+        if (pattern.test(normalized)) {
+            return { detected: true, type: "en_injection" };
+        }
+    }
+
+    for (const pattern of KR_INJECTION_PATTERNS) {
+        if (pattern.test(normalized)) {
+            return { detected: true, type: "kr_injection" };
+        }
+    }
+
+    for (const pattern of ROLE_SPOOF_PATTERNS) {
+        if (pattern.test(input)) { // 원본 입력 검사 (대소문자 유지)
+            return { detected: true, type: "role_spoof" };
+        }
+    }
+
+    return { detected: false, type: "" };
+}
+
+/**
  * 리치 텍스트 HTML 콘텐츠 Sanitize
  * Tiptap 에디터 출력용 — 안전한 HTML 태그는 보존하고 XSS 벡터만 제거
  */

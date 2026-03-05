@@ -455,6 +455,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setTimeout(() => {
                     Promise.all([refreshProfile(), checkDailyLogin()]);
                 }, 0);
+                // IP 기록 + 동일 IP 다중 계정 제한 체크 (비동기, 로그인 차단)
+                setTimeout(async () => {
+                    try {
+                        const token = session.access_token;
+                        const res = await fetch("/api/auth/record-ip", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                            },
+                        });
+                        const result = await res.json();
+                        if (result.allowed === false) {
+                            // 같은 IP에 다른 계정이 존재 → 강제 로그아웃
+                            toast.error(result.reason || "이 네트워크에서 이미 다른 계정이 사용 중입니다.");
+                            await supabase.auth.signOut();
+                        }
+                    } catch {
+                        // IP 체크 실패 시 무시 (가용성 우선)
+                    }
+                }, 100);
                 // Service Worker 등록 (푸시 알림 준비)
                 if (typeof window !== "undefined" && "serviceWorker" in navigator) {
                     navigator.serviceWorker.register("/sw.js").catch(() => {});

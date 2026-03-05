@@ -76,6 +76,9 @@ export const API = {
     // 크론
     CRON_MAGAZINE_GENERATE: "/api/cron/magazine-generate",
 
+    // 인증/보안
+    AUTH_RECORD_IP: "/api/auth/record-ip",
+
     // 유저 차단
     BLOCKS: "/api/blocks",
 

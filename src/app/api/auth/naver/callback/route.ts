@@ -8,6 +8,8 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { getClientIP } from "@/lib/rate-limit";
+import { ADMIN_EMAILS } from "@/config/constants";
 
 function getSupabaseAdmin() {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -158,6 +160,40 @@ export async function GET(request: NextRequest) {
             });
         } else {
             userId = newUser.user!.id;
+        }
+
+        // 3.5 IP 기반 다중 계정 제한 체크 (관리자 예외)
+        const clientIP = await getClientIP();
+        const isNaverAdmin = ADMIN_EMAILS.includes(naverEmail);
+
+        if (!isNaverAdmin && clientIP !== "unknown") {
+            // 같은 IP를 사용하는 다른 비관리자 계정이 있는지 확인
+            const { data: ipConflict } = await supabaseAdmin
+                .from("profiles")
+                .select("id, email, is_admin")
+                .eq("last_ip", clientIP)
+                .neq("id", userId);
+
+            const hasNonAdminConflict = ipConflict?.some(p => {
+                if (p.is_admin === true) return false;
+                if (p.email && ADMIN_EMAILS.includes(p.email)) return false;
+                return true;
+            });
+
+            if (hasNonAdminConflict) {
+                console.warn(`[Naver Auth] IP conflict: ip=${clientIP}, userId=${userId}`);
+                return NextResponse.redirect(
+                    `${siteUrl}/?error=${encodeURIComponent("이 네트워크에서 이미 다른 계정이 사용 중입니다.")}`,
+                );
+            }
+        }
+
+        // IP 기록 갱신
+        if (clientIP !== "unknown") {
+            await supabaseAdmin
+                .from("profiles")
+                .update({ last_ip: clientIP })
+                .eq("id", userId);
         }
 
         // 4. 매직링크 생성하여 세션 발급
