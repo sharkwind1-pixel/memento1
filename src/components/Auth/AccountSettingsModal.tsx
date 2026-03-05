@@ -5,7 +5,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
@@ -45,7 +45,35 @@ export default function AccountSettingsModal({
     onClose,
 }: AccountSettingsModalProps) {
     const { user, updateProfile, signOut, isSimpleMode, toggleSimpleMode } = useAuth();
-    useEscapeClose(isOpen, onClose);
+
+    // X 버튼 / ESC / 배경 클릭으로 닫을 때: pushState된 히스토리도 되돌리기
+    const closedByButtonRef = React.useRef(false);
+    const handleClose = useCallback(() => {
+        closedByButtonRef.current = true;
+        // pushState로 추가된 히스토리 엔트리 제거
+        if (window.history.state?.modal === "account-settings") {
+            window.history.back();
+        } else {
+            onClose();
+        }
+    }, [onClose]);
+
+    useEscapeClose(isOpen, handleClose);
+
+    // 모바일 뒤로가기 버튼으로 모달 닫기
+    useEffect(() => {
+        if (!isOpen) return;
+        closedByButtonRef.current = false;
+        // 모달 열릴 때 히스토리 엔트리 추가
+        window.history.pushState({ modal: "account-settings" }, "");
+        const handlePopState = () => {
+            onClose();
+        };
+        window.addEventListener("popstate", handlePopState);
+        return () => {
+            window.removeEventListener("popstate", handlePopState);
+        };
+    }, [isOpen, onClose]);
 
     const [currentNickname, setCurrentNickname] = useState("");
     const [nickname, setNickname] = useState("");
@@ -389,7 +417,7 @@ export default function AccountSettingsModal({
         <div
             className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50"
             style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
-            onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+            onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
         >
             <div className="min-h-full flex items-start justify-center pt-16 pb-20 px-4">
             <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl relative" role="dialog" aria-modal="true" aria-labelledby="account-settings-title" onClick={(e) => e.stopPropagation()}>
@@ -402,7 +430,7 @@ export default function AccountSettingsModal({
                         </h2>
                     </div>
                     <button
-                        onClick={onClose}
+                        onClick={handleClose}
                         className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors"
                         aria-label="닫기"
                     >

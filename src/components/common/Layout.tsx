@@ -538,7 +538,7 @@ function Layout({
                 onOpenLogin={openLoginModal}
                 onOpenSignup={openLoginModal}
                 onSignOut={handleSignOut}
-                onOpenAccountSettings={() => setSelectedTab("record")}
+                onOpenAccountSettings={() => setIsAccountSettingsOpen(true)}
                 authLoading={loading}
             />
 
@@ -561,7 +561,7 @@ function Layout({
                     onOpenLogin={openLoginModal}
                     onOpenSignup={openLoginModal}
                     onSignOut={handleSignOut}
-                    onOpenAccountSettings={() => setSelectedTab("record")}
+                    onOpenAccountSettings={() => setIsAccountSettingsOpen(true)}
                     authLoading={loading}
                 />
             </aside>
