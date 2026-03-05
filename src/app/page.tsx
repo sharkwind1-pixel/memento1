@@ -297,21 +297,24 @@ function HomeContent() {
                     return;
                 }
 
-                // 4. 펫이 있으면 기존 유저 → 온보딩 건너뛰기
-                const { count: petCount } = await supabase
-                    .from("pets")
-                    .select("id", { count: "exact", head: true })
-                    .eq("user_id", user.id);
+                // 4. 펫이 있고 user_type이 있으면 기존 유저 → 온보딩 건너뛰기
+                // (user_type이 NULL이면 관리자가 리셋한 것이므로 온보딩 다시 표시)
+                if (profileData?.user_type) {
+                    const { count: petCount } = await supabase
+                        .from("pets")
+                        .select("id", { count: "exact", head: true })
+                        .eq("user_id", user.id);
 
-                if ((petCount ?? 0) > 0) {
-                    newUserFlowCheckedRef.current = user.id;
-                    // 펫 있는 기존 유저 → DB에 완료 기록
-                    supabase.from("profiles").update({
-                        onboarding_completed_at: new Date().toISOString(),
-                        last_seen_at: new Date().toISOString(),
-                    }).eq("id", user.id);
-                    localStorage.setItem("memento-ani-onboarding-complete", "true");
-                    return;
+                    if ((petCount ?? 0) > 0) {
+                        newUserFlowCheckedRef.current = user.id;
+                        // 펫 있는 기존 유저 → DB에 완료 기록
+                        supabase.from("profiles").update({
+                            onboarding_completed_at: new Date().toISOString(),
+                            last_seen_at: new Date().toISOString(),
+                        }).eq("id", user.id);
+                        localStorage.setItem("memento-ani-onboarding-complete", "true");
+                        return;
+                    }
                 }
 
                 // 5. 신규 유저: 온보딩 표시 (1회만)
