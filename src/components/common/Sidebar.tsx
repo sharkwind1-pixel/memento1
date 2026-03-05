@@ -30,6 +30,7 @@ import {
     LogIn,
     LogOut,
     Settings,
+    Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -103,7 +104,7 @@ export default function Sidebar({
     onOpenAccountSettings,
     authLoading,
 }: SidebarProps) {
-    const { user, isAdminUser } = useAuth();
+    const { user, isAdminUser, isSimpleMode, toggleSimpleMode } = useAuth();
     const { selectedPet } = usePets();
     const isMemorialMode = selectedPet?.status === "memorial";
     const [expandedCategory, setExpandedCategory] = useState<MainCategory | null>(
@@ -264,6 +265,24 @@ export default function Sidebar({
                         <div className="flex items-center gap-3">
                             {isDarkMode ? <Sun className="w-5 h-5 text-amber-500" /> : <Moon className="w-5 h-5 text-gray-500" />}
                             <span className="text-sm">{isDarkMode ? "라이트 모드" : "다크 모드"}</span>
+                        </div>
+                    </button>
+                </div>
+            )}
+
+            {/* 간편모드(크게 보기) 토글 - 데스크톱 사이드바 전용 */}
+            {!isMobile && (
+                <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                    <button
+                        onClick={toggleSimpleMode}
+                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all text-gray-700 dark:text-gray-300"
+                    >
+                        <div className="flex items-center gap-3">
+                            <Eye className="w-5 h-5 text-memento-500" />
+                            <span className="text-sm">크게 보기</span>
+                        </div>
+                        <div className={`relative w-10 h-5 rounded-full transition-colors ${isSimpleMode ? "bg-memento-500" : "bg-gray-300 dark:bg-gray-600"}`}>
+                            <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${isSimpleMode ? "translate-x-5" : ""}`} />
                         </div>
                     </button>
                 </div>
