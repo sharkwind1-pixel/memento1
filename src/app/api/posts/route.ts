@@ -37,7 +37,11 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        const supabase = await createServerSupabase();
+        // supabase 클라이언트 생성과 인증을 병렬로 시작
+        const [supabase, currentUser] = await Promise.all([
+            createServerSupabase(),
+            getAuthUser().catch(() => null),
+        ]);
         const { searchParams } = new URL(request.url);
 
         const boardType = searchParams.get("board") || searchParams.get("subcategory") || "free";
@@ -51,7 +55,6 @@ export async function GET(request: NextRequest) {
 
         // 차단된 유저 목록 조회 (로그인 시)
         let blockedUserIds: string[] = [];
-        const currentUser = await getAuthUser().catch(() => null);
         if (currentUser) {
             const { data: blocks } = await supabase
                 .from("user_blocks")
@@ -123,31 +126,31 @@ export async function GET(request: NextRequest) {
         }
 
         // 작성자 미니미 slug 일괄 조회 (미니홈피 아바타 표시용)
-        // RLS 우회를 위해 admin 클라이언트 사용 (profiles/user_minimi는 auth.uid()=id 정책)
+        // RLS 우회를 위해 admin 클라이언트 사용 + 병렬 쿼리로 속도 최적화
         const userIds = Array.from(new Set((data || []).map(p => p.user_id).filter(Boolean)));
         let userIdToMinimiSlug: Record<string, string> = {};
         if (userIds.length > 0) {
             try {
                 const adminSupabase = createAdminSupabase();
-                const { data: profileRows } = await adminSupabase
-                    .from("profiles")
-                    .select("id, equipped_minimi_id")
-                    .in("id", userIds);
-                const minimiUuids = (profileRows || [])
-                    .map(p => p.equipped_minimi_id)
-                    .filter(Boolean) as string[];
-                if (minimiUuids.length > 0) {
-                    const { data: minimiRows } = await adminSupabase
+                // profiles(equipped_minimi_id)와 user_minimi를 병렬 조회
+                const [{ data: profileRows }, { data: minimiRows }] = await Promise.all([
+                    adminSupabase
+                        .from("profiles")
+                        .select("id, equipped_minimi_id")
+                        .in("id", userIds)
+                        .not("equipped_minimi_id", "is", null),
+                    adminSupabase
                         .from("user_minimi")
-                        .select("id, minimi_id")
-                        .in("id", minimiUuids);
-                    const uuidToSlug = Object.fromEntries(
-                        (minimiRows || []).map(m => [m.id, m.minimi_id])
-                    );
-                    for (const p of (profileRows || [])) {
-                        if (p.equipped_minimi_id && uuidToSlug[p.equipped_minimi_id]) {
-                            userIdToMinimiSlug[p.id] = uuidToSlug[p.equipped_minimi_id];
-                        }
+                        .select("id, minimi_id, user_id")
+                        .in("user_id", userIds),
+                ]);
+                // user_minimi.id → slug 맵
+                const uuidToSlug = Object.fromEntries(
+                    (minimiRows || []).map(m => [m.id, m.minimi_id])
+                );
+                for (const p of (profileRows || [])) {
+                    if (p.equipped_minimi_id && uuidToSlug[p.equipped_minimi_id]) {
+                        userIdToMinimiSlug[p.id] = uuidToSlug[p.equipped_minimi_id];
                     }
                 }
             } catch {

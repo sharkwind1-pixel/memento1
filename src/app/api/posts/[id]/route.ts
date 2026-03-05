@@ -36,34 +36,31 @@ export async function GET(
             );
         }
 
-        const supabase = await createServerSupabase();
-        const { id } = await params;
+        // supabase 클라이언트 생성, 인증, params를 병렬로
+        const [supabase, currentUser, resolvedParams] = await Promise.all([
+            createServerSupabase(),
+            getAuthUser().catch(() => null),
+            params,
+        ]);
+        const { id } = resolvedParams;
 
-        // 조회수 원자적 증가 (RPC 사용, 폴백: read-modify-write)
-        try {
-            const { error: rpcErr } = await supabase.rpc("increment_field", {
+        // 조회수 증가는 fire-and-forget (응답 대기 안 함)
+        Promise.resolve(
+            supabase.rpc("increment_field", {
                 table_name: "community_posts",
                 field_name: "views",
                 row_id: id,
                 amount: 1,
-            });
+            })
+        ).then(({ error: rpcErr }) => {
             if (rpcErr) {
-                // RPC 없으면 폴백
-                const { data: p } = await supabase
-                    .from("community_posts")
-                    .select("views")
-                    .eq("id", id)
-                    .single();
-                if (p) {
-                    await supabase
-                        .from("community_posts")
-                        .update({ views: (p.views || 0) + 1 })
-                        .eq("id", id);
-                }
+                Promise.resolve(
+                    supabase.from("community_posts").select("views").eq("id", id).single()
+                ).then(({ data: p }) => {
+                    if (p) supabase.from("community_posts").update({ views: (p.views || 0) + 1 }).eq("id", id);
+                });
             }
-        } catch {
-            // 조회수 증가 실패는 무시
-        }
+        }).catch(() => {});
 
         // 게시글 조회
         const { data: post, error } = await supabase
@@ -78,15 +75,13 @@ export async function GET(
 
         // 숨긴 게시글은 본인만 접근 가능
         if (post.is_hidden) {
-            const user = await getAuthUser().catch(() => null);
-            if (!user || post.user_id !== user.id) {
+            if (!currentUser || post.user_id !== currentUser.id) {
                 return NextResponse.json({ error: "게시글을 찾을 수 없습니다" }, { status: 404 });
             }
         }
 
         // 차단된 유저 목록 조회
         let blockedUserIds: string[] = [];
-        const currentUser = await getAuthUser().catch(() => null);
         if (currentUser) {
             const { data: blocks } = await supabase
                 .from("user_blocks")
@@ -102,48 +97,40 @@ export async function GET(
             return NextResponse.json({ error: "게시글을 찾을 수 없습니다" }, { status: 404 });
         }
 
-        // 댓글 조회
+        // 댓글 + 미니미를 병렬 조회
         let commentQuery = supabase
             .from("post_comments")
             .select("*")
             .eq("post_id", id)
             .order("created_at", { ascending: true });
-
-        // 차단된 유저의 댓글 필터링
         if (blockedUserIds.length > 0) {
             commentQuery = commentQuery.not("user_id", "in", `(${blockedUserIds.join(",")})`);
         }
 
-        const { data: comments } = await commentQuery;
-
-        // 작성자 미니미 slug 조회
-        // RLS 우회를 위해 admin 클라이언트 사용 (profiles/user_minimi는 auth.uid()=id 정책)
-        let authorMinimiSlug: string | null = null;
-        if (post.user_id) {
-            try {
-                const adminSupabase = createAdminSupabase();
-                const { data: profile } = await adminSupabase
-                    .from("profiles")
-                    .select("equipped_minimi_id")
-                    .eq("id", post.user_id)
-                    .maybeSingle();
-                if (profile?.equipped_minimi_id) {
-                    const { data: minimiRow } = await adminSupabase
-                        .from("user_minimi")
-                        .select("minimi_id")
-                        .eq("id", profile.equipped_minimi_id)
-                        .maybeSingle();
-                    authorMinimiSlug = minimiRow?.minimi_id || null;
-                }
-            } catch {
-                // 미니미 조회 실패 무시
-            }
-        }
+        const adminSupabase = createAdminSupabase();
+        const [{ data: comments }, minimiResult] = await Promise.all([
+            commentQuery,
+            // 미니미 조회: profiles + user_minimi 병렬
+            (async () => {
+                if (!post.user_id) return null;
+                try {
+                    const [{ data: profile }, { data: minimiRows }] = await Promise.all([
+                        adminSupabase.from("profiles").select("equipped_minimi_id").eq("id", post.user_id).maybeSingle(),
+                        adminSupabase.from("user_minimi").select("id, minimi_id").eq("user_id", post.user_id),
+                    ]);
+                    if (profile?.equipped_minimi_id && minimiRows) {
+                        const match = minimiRows.find(m => m.id === profile.equipped_minimi_id);
+                        return match?.minimi_id || null;
+                    }
+                    return null;
+                } catch { return null; }
+            })(),
+        ]);
 
         return NextResponse.json({
             post: {
                 ...post,
-                authorMinimiSlug,
+                authorMinimiSlug: minimiResult,
                 comments: comments || [],
             },
         });
