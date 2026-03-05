@@ -82,7 +82,7 @@ export default function CareGuideSection({
                                     {guide.difficulty}
                                 </Badge>
                             </div>
-                            <CardTitle className="text-sm leading-snug text-gray-800 dark:text-gray-100">
+                            <CardTitle className="text-sm leading-snug text-gray-800 dark:text-gray-100 line-clamp-2">
                                 {guide.title}
                             </CardTitle>
                             <CardDescription className="text-gray-600 dark:text-gray-300">

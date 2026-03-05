@@ -75,8 +75,8 @@ export default function PetProfileCard({
 
                     {/* 펫 정보 */}
                     <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <h2 className="text-xl font-bold text-gray-800 dark:text-white">
+                        <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                            <h2 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">
                                 {pet.name}
                             </h2>
                             {pet.isPrimary && (
@@ -101,7 +101,7 @@ export default function PetProfileCard({
                                 )}
                             </Badge>
                         </div>
-                        <p className="text-gray-500 dark:text-gray-400 text-sm mb-3">
+                        <p className="text-gray-500 dark:text-gray-400 text-sm mb-3 truncate">
                             {pet.type} · {pet.breed} · {pet.gender}
                         </p>
                         <div className="flex flex-wrap gap-2 text-sm">

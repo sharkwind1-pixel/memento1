@@ -304,7 +304,7 @@ export default function PetPhotoAlbum({
                                     )}
                                 </div>
                                 <div className="flex-1">
-                                    <p className="font-medium text-gray-800 dark:text-white">
+                                    <p className="font-medium text-gray-800 dark:text-white truncate">
                                         {photo.caption || selectedPet.name}
                                     </p>
                                     <p className="text-sm text-gray-500">

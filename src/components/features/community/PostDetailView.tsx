@@ -683,7 +683,7 @@ export default function PostDetailView({
                                                 const uid = comment.userId || comment.user_id;
                                                 if (uid) setVisitUserId(uid);
                                             }}
-                                            className="font-medium text-sm text-gray-800 dark:text-gray-200 hover:text-memento-600 dark:hover:text-memento-400 hover:underline transition-colors"
+                                            className="font-medium text-sm text-gray-800 dark:text-gray-200 hover:text-memento-600 dark:hover:text-memento-400 hover:underline transition-colors truncate max-w-[150px]"
                                         >
                                             {comment.authorNickname}
                                         </button>

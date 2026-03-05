@@ -220,7 +220,7 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                                                     </button>
                                                 </div>
                                             </div>
-                                            <h4 className="font-medium text-gray-800 dark:text-white mb-1">
+                                            <h4 className="font-medium text-gray-800 dark:text-white mb-1 line-clamp-2">
                                                 {entry.title}
                                             </h4>
                                             {entry.content && (

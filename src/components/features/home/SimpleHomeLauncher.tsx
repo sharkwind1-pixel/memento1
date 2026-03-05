@@ -114,27 +114,27 @@ export default function SimpleHomeLauncher({ setSelectedTab, onSubcategoryChange
                 </div>
 
                 {/* 카드 그리드 */}
-                <div className="grid grid-cols-2 gap-4 max-w-lg mx-auto">
+                <div className="grid grid-cols-2 gap-3 max-w-lg mx-auto">
                     {LAUNCHER_ITEMS.map((item) => {
                         const Icon = item.icon;
                         return (
                             <button
                                 key={item.id}
                                 onClick={() => handleCardClick(item.id)}
-                                className={`flex flex-col items-center justify-center gap-3
-                                    bg-white dark:bg-gray-800 rounded-2xl p-6
+                                className={`flex flex-col items-center justify-center gap-2
+                                    bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-6
                                     shadow-md hover:shadow-lg active:scale-95
-                                    transition-all min-h-[140px]
+                                    transition-all min-h-[120px] sm:min-h-[140px]
                                     border border-gray-100 dark:border-gray-700`}
                             >
-                                <div className={`w-14 h-14 rounded-xl ${item.bgColor} flex items-center justify-center`}>
-                                    <Icon className={`w-8 h-8 ${item.color}`} />
+                                <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl ${item.bgColor} flex items-center justify-center`}>
+                                    <Icon className={`w-7 h-7 sm:w-8 sm:h-8 ${item.color}`} />
                                 </div>
                                 <div className="text-center">
-                                    <span className="text-lg font-semibold text-gray-800 dark:text-gray-100 block">
+                                    <span className="text-base sm:text-lg font-semibold text-gray-800 dark:text-gray-100 block whitespace-nowrap">
                                         {item.label}
                                     </span>
-                                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                                    <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
                                         {item.description}
                                     </span>
                                 </div>

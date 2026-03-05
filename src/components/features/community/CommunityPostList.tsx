@@ -225,7 +225,7 @@ export default function CommunityPostList({
                                             style={{ imageRendering: "pixelated" }}
                                         />
                                     )}
-                                    <span>{post.authorName}</span>
+                                    <span className="truncate max-w-[120px]">{post.authorName}</span>
                                 </button>
                                 <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                                     <span className="flex items-center gap-1">
