@@ -341,7 +341,7 @@ function Layout({
     // - useMemorialMode(): isMemorialMode만 (status 변경 시만 리렌더)
     // - usePets(): isLoading만 (FOUC 방지용, 초기 1회만 변경되므로 리렌더 영향 미미)
     // ========================================================================
-    const { user, loading, signOut, profileLoaded } = useAuth();
+    const { user, loading, signOut, profileLoaded, isSimpleMode } = useAuth();
     const { isMemorialMode } = useMemorialMode();
     const { isLoading: isPetsLoading } = usePets();
 

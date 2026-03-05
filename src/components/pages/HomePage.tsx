@@ -2,13 +2,14 @@
  * 메멘토애니 홈페이지
  * - 좋아요 버튼 실제 토글
  * - 카드 클릭 시 인스타그램 스타일 모달
+ * - 간편모드: 큰 카드 런처로 대체
  */
 
 "use client";
 
 import React, { useEffect } from "react";
 
-import { TabType } from "@/types";
+import { TabType, CommunitySubcategory } from "@/types";
 import { useSmoothAutoScroll } from "@/hooks/useSmoothAutoScroll";
 import {
     useHomePage,
@@ -21,9 +22,11 @@ import {
 } from "@/components/features/home";
 import PostModal from "@/components/features/home/PostModal";
 import Lightbox from "@/components/features/home/Lightbox";
+import SimpleHomeLauncher from "@/components/features/home/SimpleHomeLauncher";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface HomePageProps {
-    setSelectedTab: (tab: TabType) => void;
+    setSelectedTab: (tab: TabType, sub?: CommunitySubcategory) => void;
 }
 
 type SmoothAutoScrollReturn = {
@@ -36,6 +39,7 @@ type SmoothAutoScrollReturn = {
 };
 
 function HomePage({ setSelectedTab }: HomePageProps) {
+    const { isSimpleMode } = useAuth();
     const scroll = useSmoothAutoScroll() as unknown as SmoothAutoScrollReturn;
 
     const {
@@ -56,10 +60,21 @@ function HomePage({ setSelectedTab }: HomePageProps) {
     } = useHomePage();
 
     useEffect(() => {
+        if (isSimpleMode) return; // 간편모드에서는 자동스크롤 불필요
         const cleanup = scroll.startAutoScroll?.(true);
         return typeof cleanup === "function" ? cleanup : undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [isSimpleMode]);
+
+    // 간편모드: 큰 카드 런처 화면
+    if (isSimpleMode) {
+        return (
+            <SimpleHomeLauncher
+                setSelectedTab={setSelectedTab}
+                onSubcategoryChange={(sub) => setSelectedTab("community", sub)}
+            />
+        );
+    }
 
     return (
         <div

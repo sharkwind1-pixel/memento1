@@ -1,0 +1,158 @@
+/**
+ * SimpleHomeLauncher.tsx
+ * 간편모드 홈 화면 - 큰 카드 런처 그리드
+ * 노인 사용자를 위한 간결한 메인 화면
+ */
+
+"use client";
+
+import React from "react";
+import {
+    Camera,
+    MessageCircle,
+    Users,
+    BookOpen,
+    Home,
+    Heart,
+} from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { TabType, CommunitySubcategory } from "@/types";
+
+interface SimpleHomeLauncherProps {
+    setSelectedTab: (tab: TabType) => void;
+    onSubcategoryChange?: (sub: CommunitySubcategory) => void;
+}
+
+const LAUNCHER_ITEMS: {
+    id: string;
+    label: string;
+    description: string;
+    icon: React.ElementType;
+    color: string;
+    bgColor: string;
+}[] = [
+    {
+        id: "record",
+        label: "내 반려동물",
+        description: "사진, 일기, 기록",
+        icon: Camera,
+        color: "text-sky-600 dark:text-sky-400",
+        bgColor: "bg-sky-50 dark:bg-sky-900/20",
+    },
+    {
+        id: "ai-chat",
+        label: "AI와 대화",
+        description: "AI 펫톡 상담",
+        icon: MessageCircle,
+        color: "text-emerald-600 dark:text-emerald-400",
+        bgColor: "bg-emerald-50 dark:bg-emerald-900/20",
+    },
+    {
+        id: "community",
+        label: "커뮤니티",
+        description: "자유게시판, 소통",
+        icon: Users,
+        color: "text-blue-600 dark:text-blue-400",
+        bgColor: "bg-blue-50 dark:bg-blue-900/20",
+    },
+    {
+        id: "magazine",
+        label: "펫매거진",
+        description: "반려동물 정보",
+        icon: BookOpen,
+        color: "text-purple-600 dark:text-purple-400",
+        bgColor: "bg-purple-50 dark:bg-purple-900/20",
+    },
+    {
+        id: "minihompy",
+        label: "내 미니홈피",
+        description: "나만의 공간",
+        icon: Home,
+        color: "text-memento-600 dark:text-memento-400",
+        bgColor: "bg-memento-50 dark:bg-memento-900/20",
+    },
+    {
+        id: "adoption",
+        label: "입양정보",
+        description: "유기동물 입양",
+        icon: Heart,
+        color: "text-rose-600 dark:text-rose-400",
+        bgColor: "bg-rose-50 dark:bg-rose-900/20",
+    },
+];
+
+export default function SimpleHomeLauncher({ setSelectedTab, onSubcategoryChange }: SimpleHomeLauncherProps) {
+    const { user, toggleSimpleMode } = useAuth();
+    const nickname = user?.user_metadata?.nickname || user?.email?.split("@")[0] || "사용자";
+
+    const handleCardClick = (id: string) => {
+        if (id === "minihompy") {
+            localStorage.setItem("memento-record-tab", "minihompy");
+            setSelectedTab("record");
+        } else if (id === "adoption") {
+            setSelectedTab("community");
+            onSubcategoryChange?.("adoption");
+        } else {
+            setSelectedTab(id as TabType);
+        }
+    };
+
+    return (
+        <div className="min-h-screen relative overflow-hidden">
+            {/* 배경 */}
+            <div className="absolute inset-0 bg-gradient-to-br from-memento-50 via-memento-75 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900" />
+
+            <div className="relative z-10 px-4 pt-8 pb-10">
+                {/* 인사말 */}
+                <div className="text-center mb-8">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+                        안녕하세요, {nickname}님
+                    </h1>
+                    <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400">
+                        어떤 것을 하시겠어요?
+                    </p>
+                </div>
+
+                {/* 카드 그리드 */}
+                <div className="grid grid-cols-2 gap-4 max-w-lg mx-auto">
+                    {LAUNCHER_ITEMS.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                            <button
+                                key={item.id}
+                                onClick={() => handleCardClick(item.id)}
+                                className={`flex flex-col items-center justify-center gap-3
+                                    bg-white dark:bg-gray-800 rounded-2xl p-6
+                                    shadow-md hover:shadow-lg active:scale-95
+                                    transition-all min-h-[140px]
+                                    border border-gray-100 dark:border-gray-700`}
+                            >
+                                <div className={`w-14 h-14 rounded-xl ${item.bgColor} flex items-center justify-center`}>
+                                    <Icon className={`w-8 h-8 ${item.color}`} />
+                                </div>
+                                <div className="text-center">
+                                    <span className="text-lg font-semibold text-gray-800 dark:text-gray-100 block">
+                                        {item.label}
+                                    </span>
+                                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                                        {item.description}
+                                    </span>
+                                </div>
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* 일반모드 전환 버튼 */}
+                <div className="text-center mt-8">
+                    <button
+                        onClick={toggleSimpleMode}
+                        className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 underline underline-offset-4 transition-colors"
+                    >
+                        일반모드로 전환
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}

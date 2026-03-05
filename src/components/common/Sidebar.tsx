@@ -103,7 +103,7 @@ export default function Sidebar({
     onOpenAccountSettings,
     authLoading,
 }: SidebarProps) {
-    const { user, isAdminUser } = useAuth();
+    const { user, isAdminUser, isSimpleMode, toggleSimpleMode } = useAuth();
     const { selectedPet } = usePets();
     const isMemorialMode = selectedPet?.status === "memorial";
     const [expandedCategory, setExpandedCategory] = useState<MainCategory | null>(
@@ -387,6 +387,22 @@ export default function Sidebar({
                             >
                                 <Home className="w-4 h-4" />
                                 <span>내 미니홈피</span>
+                            </button>
+                            {/* 간편모드 토글 */}
+                            <button
+                                onClick={() => {
+                                    toggleSimpleMode();
+                                    if (isMobile) onClose();
+                                }}
+                                className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+                            >
+                                <div className="flex items-center gap-2.5">
+                                    <Settings className="w-4 h-4" />
+                                    <span>간편모드</span>
+                                </div>
+                                <div className={`w-9 h-5 rounded-full transition-colors relative ${isSimpleMode ? 'bg-memento-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                                    <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${isSimpleMode ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                                </div>
                             </button>
                             <button
                                 onClick={() => {

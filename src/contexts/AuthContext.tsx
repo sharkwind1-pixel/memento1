@@ -77,6 +77,9 @@ interface AuthContextType {
     signInWithNaver: () => void;
     updateProfile: (data: { nickname?: string }) => Promise<{ error: Error | null }>;
     checkNickname: (nickname: string) => Promise<{ available: boolean; error: Error | null }>;
+    // 간편모드
+    isSimpleMode: boolean;
+    toggleSimpleMode: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -99,6 +102,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         accessoriesData: [],
         imageUrl: null,
     });
+    const [isSimpleMode, setIsSimpleModeState] = useState(() => {
+        if (typeof window !== "undefined") {
+            return localStorage.getItem("memento-simple-mode") === "true";
+        }
+        return false;
+    });
 
     // 프로필에서 관리자/프리미엄 상태 조회
     // 프로필+포인트 통합 조회 (단일 쿼리)
@@ -116,7 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const [profileResult, minimiListResult, firstPetResult] = await Promise.all([
                 supabase
                     .from("profiles")
-                    .select("is_admin, is_premium, premium_expires_at, points, onboarding_data, equipped_minimi_id, equipped_accessories, minimi_pixel_data, minimi_accessories_data")
+                    .select("is_admin, is_premium, premium_expires_at, points, onboarding_data, equipped_minimi_id, equipped_accessories, minimi_pixel_data, minimi_accessories_data, is_simple_mode")
                     .eq("id", currentUser.id)
                     .single(),
                 supabase
@@ -160,6 +169,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             // 포인트도 같이 설정
             setPoints(!error ? (data?.points ?? 0) : 0);
+
+            // 간편모드 설정 (DB 값으로 동기화)
+            if (!error && data) {
+                const dbSimpleMode = data.is_simple_mode === true;
+                setIsSimpleModeState(dbSimpleMode);
+                localStorage.setItem("memento-simple-mode", String(dbSimpleMode));
+            }
 
             // 미니미 장착 상태 설정 (equipped_minimi_id는 user_minimi UUID → slug 변환 필요)
             if (!error && data) {
@@ -326,6 +342,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
+    // 간편모드 토글 (DB + localStorage 동기화)
+    const toggleSimpleMode = useCallback(async () => {
+        const newValue = !isSimpleMode;
+        setIsSimpleModeState(newValue);
+        localStorage.setItem("memento-simple-mode", String(newValue));
+        try {
+            const { data: { user: currentUser } } = await supabase.auth.getUser();
+            if (currentUser) {
+                await supabase.from("profiles").update({ is_simple_mode: newValue }).eq("id", currentUser.id);
+            }
+        } catch {
+            // DB 업데이트 실패해도 로컬 상태는 유지
+        }
+    }, [isSimpleMode]);
+
     // 출석 체크 (API 엔드포인트 사용 - 서버 인증으로 RLS 우회)
     const checkDailyLogin = useCallback(async () => {
         try {
@@ -435,6 +466,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     accessoriesData: [],
                     imageUrl: null,
                 });
+                setIsSimpleModeState(false);
+                localStorage.removeItem("memento-simple-mode");
             }
         });
 
@@ -674,12 +707,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signInWithNaver,
         updateProfile,
         checkNickname,
+        isSimpleMode,
+        toggleSimpleMode,
     }), [
         user, session, loading, isAdminUser, isPremiumUser, refreshProfile,
         profileLoaded, userPetType, onboardingData, points, pointsLoaded,
         refreshPoints, minimiEquip, refreshMinimi,
         checkDeletedAccount, checkCanRejoin, signUp, signIn,
         signOut, signInWithGoogle, signInWithKakao, signInWithNaver, updateProfile, checkNickname,
+        isSimpleMode, toggleSimpleMode,
     ]);
 
     return (

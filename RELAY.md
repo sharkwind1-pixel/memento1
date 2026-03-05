@@ -21,6 +21,7 @@
 | `sql/add_video_url_to_posts.sql` | community_posts에 video_url 컬럼 | 즉시 |
 | `sql/add_is_hidden_to_posts.sql` | community_posts에 is_hidden 컬럼 | 즉시 |
 | `20260301_user_blocks.sql` | 유저 차단 기능 (테이블 + RLS + 인덱스) | 즉시 |
+| `sql/20260305_simple_mode.sql` | profiles에 is_simple_mode 컬럼 (간편모드) | 즉시 |
 
 ---
 
