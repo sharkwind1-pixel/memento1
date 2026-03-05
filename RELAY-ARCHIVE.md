@@ -38,10 +38,22 @@
 | 커뮤니티 미니미 아바타 (게시글 작성자 미니미 표시, 닉네임 옆 40/44px) | 완료 |
 | 미니홈피 전략적 노출 (사이드바 바로가기, 헤더 드롭다운) | 완료 |
 | 게시판 API 속도 최적화 (쿼리 병렬화, fire-and-forget 조회수) | 완료 |
+| 간편모드 (노인용 큰 카드 런처 홈, 토글 스위치) | 완료 |
 
 ## 변경 로그 (최신순)
 
 > 형식: `[YYYY-MM-DD HH:MM]` 커밋해시 | 작업 요약 | 변경 파일 | 상세
+
+---
+
+### [2026-03-05 22:30] 간편모드 (Simple Mode) 구현
+
+| 항목 | 내용 |
+|------|------|
+| 커밋 | `d2c258d` feat: 간편모드 구현 - 노인 사용자용 큰 카드 런처 홈 |
+| 원인 | 노인 사용자를 위한 간편 UI 모드 필요 |
+| 변경 파일 | `AuthContext.tsx`, `SimpleHomeLauncher.tsx`(신규), `HomePage.tsx`, `Sidebar.tsx`, `Layout.tsx`, `sql/20260305_simple_mode.sql`(신규), `RELAY.md` |
+| 수정 내용 | AuthContext에 isSimpleMode + toggleSimpleMode 추가 (DB+localStorage 동기화) / SimpleHomeLauncher: 6개 큰 카드 그리드 (내 반려동물, AI대화, 커뮤니티, 매거진, 미니홈피, 입양정보) / Sidebar에 간편모드 토글 스위치 UI / HomePage에서 isSimpleMode일 때 런처로 분기 / 기존 일반모드 100% 보존 |
 
 ---
 
