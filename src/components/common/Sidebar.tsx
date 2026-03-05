@@ -375,6 +375,16 @@ export default function Sidebar({
                                 <span>내 정보</span>
                             </button>
                             <button
+                                onClick={() => {
+                                    localStorage.setItem("memento-record-tab", "minihompy");
+                                    onTabChange("record");
+                                }}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-memento-600 dark:text-memento-400 hover:bg-memento-50 dark:hover:bg-memento-900/20 transition-all"
+                            >
+                                <Home className="w-4 h-4" />
+                                <span>내 미니홈피</span>
+                            </button>
+                            <button
                                 onClick={onSignOut}
                                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
                             >

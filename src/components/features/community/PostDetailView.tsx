@@ -556,7 +556,7 @@ export default function PostDetailView({
                                     const slug = post.authorMinimiSlug;
                                     const char = slug ? CHARACTER_CATALOG.find(c => c.slug === slug) : null;
                                     return char ? (
-                                        <Image src={char.imageUrl} alt="" width={28} height={28} className="object-contain flex-shrink-0" style={{ imageRendering: "pixelated" }} />
+                                        <Image src={char.imageUrl} alt="" width={36} height={36} className="object-contain flex-shrink-0" style={{ imageRendering: "pixelated" }} />
                                     ) : null;
                                 })()}
                                 <span>{post.author_name}</span>

@@ -219,8 +219,8 @@ export default function CommunityPostList({
                                         <Image
                                             src={minimiMap[post.authorMinimiSlug]}
                                             alt=""
-                                            width={24}
-                                            height={24}
+                                            width={32}
+                                            height={32}
                                             className="object-contain flex-shrink-0"
                                             style={{ imageRendering: "pixelated" }}
                                         />
