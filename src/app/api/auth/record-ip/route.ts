@@ -6,7 +6,7 @@
  * - 같은 IP에서는 1개 계정만 허용 (관리자 예외)
  * - 관리자(ADMIN_EMAILS) 계정은 IP 제한 없음
  * - 관리자 IP에서 접속하는 모든 계정도 제한 없음
- * - last_login_at도 함께 갱신
+ * - last_ip 컬럼 갱신
  */
 
 export const dynamic = "force-dynamic";
@@ -35,13 +35,17 @@ export async function POST() {
 
         const clientIP = await getClientIP();
         if (clientIP === "unknown") {
-            // IP를 알 수 없으면 일단 통과 (로컬 개발 환경 등)
-            return NextResponse.json({ allowed: true });
+            // IP를 알 수 없으면 로깅 후 통과 (로컬 개발 환경)
+            // 프로덕션에서는 Vercel이 항상 IP를 제공하므로 여기 도달하면 비정상
+            console.warn(`[Security] IP unknown for user=${user.id}, allowing with warning`);
+            return NextResponse.json({ allowed: true, warning: "ip_unknown" });
         }
 
         const supabase = getServiceSupabase();
         if (!supabase) {
-            return NextResponse.json({ allowed: true }); // DB 접속 불가 시 통과
+            // DB 접속 불가 시 로깅만 (프로덕션에서 발생하면 안 되는 상황)
+            console.error("[auth/record-ip] Service Supabase unavailable");
+            return NextResponse.json({ allowed: true, warning: "db_unavailable" });
         }
 
         // 현재 유저의 이메일 추출 (소셜 로그인도 포함)
@@ -104,7 +108,7 @@ export async function POST() {
         return NextResponse.json({ allowed: true });
     } catch (error) {
         console.error("[auth/record-ip] Error:", error instanceof Error ? error.message : error);
-        // 에러 시 통과 (보안보다 가용성 우선)
-        return NextResponse.json({ allowed: true });
+        // 에러 시 통과 + 경고 플래그 (프론트에서 모니터링 가능)
+        return NextResponse.json({ allowed: true, warning: "check_error" });
     }
 }

@@ -22,6 +22,7 @@
 | `sql/add_is_hidden_to_posts.sql` | community_posts에 is_hidden 컬럼 | 즉시 |
 | `20260301_user_blocks.sql` | 유저 차단 기능 (테이블 + RLS + 인덱스) | 즉시 |
 | `sql/20260305_simple_mode.sql` | profiles에 is_simple_mode 컬럼 (간편모드) | 즉시 |
+| `sql/20260306_protect_sensitive_columns.sql` | **[CRITICAL 보안]** profiles 민감 컬럼(is_admin, is_premium, points 등) 일반 유저 변경 차단 트리거. 미실행 시 아무 유저나 관리자/프리미엄 자가 승격 가능 | **최우선** |
 
 ---
 

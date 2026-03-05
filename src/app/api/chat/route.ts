@@ -792,6 +792,26 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // 입력 크기 제한 (토큰 비용 폭증 + DoS 방지)
+        if (typeof message !== "string" || message.length > 1000) {
+            return NextResponse.json(
+                { error: "메시지가 너무 길어요. 1000자 이내로 작성해주세요." },
+                { status: 400 }
+            );
+        }
+        if (chatHistory.length > 30) {
+            chatHistory.splice(0, chatHistory.length - 30); // 최근 30개만 유지
+        }
+        if (timeline.length > 20) {
+            timeline.splice(0, timeline.length - 20);
+        }
+        if (photoMemories.length > 20) {
+            photoMemories.splice(0, photoMemories.length - 20);
+        }
+        if (reminders.length > 30) {
+            reminders.splice(0, reminders.length - 30);
+        }
+
         // 2. 모드 결정 (isMemorialMode 하나로 통합)
         const isMemorialMode = pet.status === "memorial";
 

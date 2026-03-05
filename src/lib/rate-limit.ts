@@ -51,26 +51,40 @@ const RATE_LIMITS = {
 const BLOCK_DURATION = 30 * 60 * 1000; // 30분 차단
 const SUSPICIOUS_THRESHOLD = 3; // 3회 위반 시 차단
 
-// IP 추출
+// IP 추출 (스푸핑 방지)
+// Vercel: x-forwarded-for의 가장 오른쪽 값이 실제 클라이언트 IP
+// (클라이언트가 직접 설정한 가짜 IP는 왼쪽에 위치)
 export async function getClientIP(): Promise<string> {
     const headersList = await headers();
 
-    // Vercel/Cloudflare 등 프록시 환경
-    const forwardedFor = headersList.get("x-forwarded-for");
-    if (forwardedFor) {
-        return forwardedFor.split(",")[0].trim();
+    // 1순위: Vercel이 주입하는 헤더 (클라이언트 조작 불가)
+    const vercelForwardedFor = headersList.get("x-vercel-forwarded-for");
+    if (vercelForwardedFor) {
+        // Vercel은 실제 클라이언트 IP를 첫 번째로 넣음
+        return vercelForwardedFor.split(",")[0].trim();
     }
 
-    // 기타 헤더
+    // 2순위: Cloudflare가 주입하는 헤더 (클라이언트 조작 불가)
+    const cfIP = headersList.get("cf-connecting-ip");
+    if (cfIP) {
+        return cfIP;
+    }
+
+    // 3순위: x-real-ip (프록시 설정에 따라 신뢰도 다름)
     const realIP = headersList.get("x-real-ip");
     if (realIP) {
         return realIP;
     }
 
-    // Cloudflare
-    const cfIP = headersList.get("cf-connecting-ip");
-    if (cfIP) {
-        return cfIP;
+    // 4순위: x-forwarded-for의 가장 오른쪽 값 (rightmost trustworthy IP)
+    // 공격자가 X-Forwarded-For: fake 를 보내면 프록시가 "fake, real" 로 만듦
+    // 따라서 마지막 값이 프록시가 실제로 본 IP
+    const forwardedFor = headersList.get("x-forwarded-for");
+    if (forwardedFor) {
+        const ips = forwardedFor.split(",").map(ip => ip.trim());
+        // Vercel 환경: 마지막 IP가 실제 클라이언트
+        // 단일 IP면 그것이 실제 클라이언트
+        return ips[ips.length - 1];
     }
 
     return "unknown";
