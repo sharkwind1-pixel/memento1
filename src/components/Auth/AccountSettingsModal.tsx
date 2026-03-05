@@ -26,6 +26,7 @@ import {
     Download,
     Bell,
     MapPin,
+    Eye,
 } from "lucide-react";
 import { InlineLoading } from "@/components/ui/PawLoading";
 import { toast } from "sonner";
@@ -43,7 +44,7 @@ export default function AccountSettingsModal({
     isOpen,
     onClose,
 }: AccountSettingsModalProps) {
-    const { user, updateProfile, signOut } = useAuth();
+    const { user, updateProfile, signOut, isSimpleMode, toggleSimpleMode } = useAuth();
     useEscapeClose(isOpen, onClose);
 
     const [currentNickname, setCurrentNickname] = useState("");
@@ -594,6 +595,41 @@ export default function AccountSettingsModal({
                         <p className="text-[10px] text-gray-400 mt-1.5">
                             푸시 알림은 추후 업데이트에서 지원됩니다
                         </p>
+                    </div>
+
+                    {/* 구분선 */}
+                    <hr className="border-gray-200 dark:border-gray-700" />
+
+                    {/* 화면 설정 (간편모드) */}
+                    <div>
+                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5 mb-3">
+                            <Eye className="w-4 h-4" />
+                            화면 설정
+                        </h3>
+                        <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
+                            <label className="flex items-center justify-between cursor-pointer">
+                                <div>
+                                    <span className="text-sm text-gray-600 dark:text-gray-400">크게 보기</span>
+                                    <p className="text-[10px] text-gray-400 mt-0.5">
+                                        홈 화면을 큰 버튼으로 간편하게 표시합니다
+                                    </p>
+                                </div>
+                                <button
+                                    role="switch"
+                                    aria-checked={isSimpleMode}
+                                    onClick={toggleSimpleMode}
+                                    className={`relative w-10 h-6 rounded-full transition-colors flex-shrink-0 ml-3 ${
+                                        isSimpleMode ? "bg-memento-500" : "bg-gray-300 dark:bg-gray-600"
+                                    }`}
+                                >
+                                    <span
+                                        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                                            isSimpleMode ? "translate-x-4" : ""
+                                        }`}
+                                    />
+                                </button>
+                            </label>
+                        </div>
                     </div>
 
                     {/* 구분선 */}

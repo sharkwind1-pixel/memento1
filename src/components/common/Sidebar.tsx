@@ -103,7 +103,7 @@ export default function Sidebar({
     onOpenAccountSettings,
     authLoading,
 }: SidebarProps) {
-    const { user, isAdminUser, isSimpleMode, toggleSimpleMode } = useAuth();
+    const { user, isAdminUser } = useAuth();
     const { selectedPet } = usePets();
     const isMemorialMode = selectedPet?.status === "memorial";
     const [expandedCategory, setExpandedCategory] = useState<MainCategory | null>(
@@ -268,24 +268,6 @@ export default function Sidebar({
                     </button>
                 </div>
             )}
-
-            {/* 간편모드 토글 - 로그인 무관 항상 표시 */}
-            <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-                <button
-                    onClick={() => {
-                        toggleSimpleMode();
-                        if (isMobile) onClose();
-                    }}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all text-gray-700 dark:text-gray-300"
-                >
-                    <div className="flex items-center gap-3">
-                        <span className="text-sm font-medium">간편모드</span>
-                    </div>
-                    <div className={`w-10 h-5 rounded-full transition-colors relative ${isSimpleMode ? 'bg-memento-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
-                        <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${isSimpleMode ? 'translate-x-5' : 'translate-x-0.5'}`} />
-                    </div>
-                </button>
-            </div>
 
             {/* 네비게이션 목록 */}
             <nav className="flex-1 p-4 space-y-1">

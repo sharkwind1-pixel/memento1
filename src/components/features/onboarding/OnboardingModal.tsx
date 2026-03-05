@@ -27,6 +27,7 @@ import {
     HelpCircle,
     Calendar,
     Check,
+    Eye,
 } from "lucide-react";
 
 interface OnboardingModalProps {
@@ -114,7 +115,7 @@ export default function OnboardingModal({
     onGoToAIChat,
     onShowPostGuide,
 }: OnboardingModalProps) {
-    const { user, refreshProfile } = useAuth();
+    const { user, refreshProfile, toggleSimpleMode, isSimpleMode } = useAuth();
     const [step, setStep] = useState(0);
     const [data, setData] = useState<OnboardingData>({
         userType: null,
@@ -190,7 +191,8 @@ export default function OnboardingModal({
 
     // 다음 단계 결정
     const getNextStep = () => {
-        if (step === 0) return 1; // 환영 -> 유형 선택
+        if (step === 0) return 9; // 환영 -> 크게 보기 선택
+        if (step === 9) return 1; // 크게 보기 -> 유형 선택
         if (step === 1) return 2; // 유형 선택 -> 반려동물 종류
 
         // 유형별 분기
@@ -214,7 +216,8 @@ export default function OnboardingModal({
 
     // 이전 단계 결정
     const getPrevStep = () => {
-        if (step === 1) return 0;
+        if (step === 9) return 0;
+        if (step === 1) return 9;
         if (step === 2) return 1;
         if (step === 3) return 2;
         if (step === 4) return 3;
@@ -241,6 +244,7 @@ export default function OnboardingModal({
     // 선택 가능 여부
     const canProceed = () => {
         if (step === 0) return true;
+        if (step === 9) return true; // 크게 보기는 선택 안 해도 진행 가능
         if (step === 1) return data.userType !== null;
         if (step === 2) return data.petType !== null;
         if (step === 3) return data.adoptionTiming !== null;
@@ -255,18 +259,24 @@ export default function OnboardingModal({
     // 진행률 계산
     const getProgress = () => {
         if (data.userType === "planning") {
-            const steps = [0, 1, 2, 3, 4, 5];
-            return ((steps.indexOf(step) + 1) / 6) * 100;
+            const steps = [0, 9, 1, 2, 3, 4, 5];
+            const idx = steps.indexOf(step);
+            return ((Math.max(idx, 0) + 1) / steps.length) * 100;
         }
         if (data.userType === "current") {
-            const steps = [0, 1, 2];
-            return ((steps.indexOf(step) + 1) / 3) * 100;
+            const steps = [0, 9, 1, 2];
+            const idx = steps.indexOf(step);
+            return ((Math.max(idx, 0) + 1) / steps.length) * 100;
         }
         if (data.userType === "memorial") {
-            const steps = [0, 1, 2, 6, 7, 8];
-            return ((steps.indexOf(step) + 1) / 6) * 100;
+            const steps = [0, 9, 1, 2, 6, 7, 8];
+            const idx = steps.indexOf(step);
+            return ((Math.max(idx, 0) + 1) / steps.length) * 100;
         }
-        return ((step + 1) / 3) * 100;
+        // userType 선택 전
+        const steps = [0, 9, 1, 2];
+        const idx = steps.indexOf(step);
+        return ((Math.max(idx, 0) + 1) / steps.length) * 100;
     };
 
     // 렌더링
@@ -312,6 +322,44 @@ export default function OnboardingModal({
                                 몇 가지 질문에 답해주시면<br/>
                                 맞춤 서비스를 제공해드릴게요.
                             </p>
+                        </div>
+                    )}
+
+                    {/* Step 9: 크게 보기 (간편모드) */}
+                    {step === 9 && (
+                        <div className="text-center py-4">
+                            <div className="w-20 h-20 bg-gradient-to-br from-memento-400 to-sky-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                                <Eye className="w-10 h-10 text-white" />
+                            </div>
+                            <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-3">
+                                크게 보여드릴까요?
+                            </h2>
+                            <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+                                홈 화면을 큰 버튼으로<br/>
+                                간편하게 볼 수 있어요
+                            </p>
+                            <div className="grid grid-cols-2 gap-3 max-w-xs mx-auto">
+                                <button
+                                    onClick={() => {
+                                        if (!isSimpleMode) toggleSimpleMode();
+                                        handleNext();
+                                    }}
+                                    className="p-5 rounded-2xl border-2 border-memento-400 bg-memento-50 dark:bg-memento-900/20 transition-all flex flex-col items-center gap-2"
+                                >
+                                    <span className="text-2xl font-bold text-memento-600 dark:text-memento-400">크게</span>
+                                    <span className="text-xs text-gray-500">간편하게 볼래요</span>
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        if (isSimpleMode) toggleSimpleMode();
+                                        handleNext();
+                                    }}
+                                    className="p-5 rounded-2xl border-2 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all flex flex-col items-center gap-2"
+                                >
+                                    <span className="text-base font-medium text-gray-600 dark:text-gray-300">기본</span>
+                                    <span className="text-xs text-gray-500">지금 그대로</span>
+                                </button>
+                            </div>
                         </div>
                     )}
 
@@ -652,6 +700,8 @@ export default function OnboardingModal({
 
                 {/* 버튼 영역 */}
                 <div className="p-6 pt-0">
+                    {/* Step 9는 카드 클릭으로 자동 진행되므로 버튼 숨김 */}
+                    {step !== 9 && (
                     <div className="flex gap-3">
                         {step > 0 && (
                             <Button
@@ -689,6 +739,7 @@ export default function OnboardingModal({
                             )}
                         </Button>
                     </div>
+                    )}
 
                     {step === 0 && (
                         <button
