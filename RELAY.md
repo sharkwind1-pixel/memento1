@@ -9,20 +9,22 @@
 
 ## 미실행 마이그레이션 — Supabase SQL Editor에서 실행
 
+> 모든 파일은 `supabase/migrations/` 기준. 상세 상태는 `supabase/migrations/_STATUS.md` 참조.
+
 | 파일 | 영향 | 긴급도 |
 |------|------|--------|
 | `20260226_chat_mode_column.sql` | 추모/일상 대화 분리 (안 하면 섞임) | 즉시 |
 | `20260226_security_fixes.sql` | 미니미 RPC + 펫/사진 제한 트리거 | 즉시 |
 | `20260225_push_preferred_hour.sql` | 푸시 시간 선택 | 즉시 |
-| `ALTER TABLE minihompy_settings ADD COLUMN IF NOT EXISTS placed_minimi JSONB DEFAULT '[]'::jsonb;` | 멀티 미니미 배치 | 즉시 |
+| `20260222_placed_minimi.sql` | 멀티 미니미 배치 | 즉시 |
 | `20260222_minimi_system.sql` | 미니미 구매/되팔기 (이미 실행됐을 수 있음) | 확인 |
 | `20260226_memory_albums.sql` | 추억 앨범 테이블 | 즉시 |
-| `sql/video_generations.sql` | AI 영상 생성 테이블 + RLS + 인덱스 | 즉시 |
-| `sql/add_video_url_to_posts.sql` | community_posts에 video_url 컬럼 | 즉시 |
-| `sql/add_is_hidden_to_posts.sql` | community_posts에 is_hidden 컬럼 | 즉시 |
+| `20260304_video_generations.sql` | AI 영상 생성 테이블 + RLS + 인덱스 | 즉시 |
+| `20260304_add_video_url_to_posts.sql` | community_posts에 video_url 컬럼 | 즉시 |
+| `20260304_add_is_hidden_to_posts.sql` | community_posts에 is_hidden 컬럼 | 즉시 |
 | `20260301_user_blocks.sql` | 유저 차단 기능 (테이블 + RLS + 인덱스) | 즉시 |
-| `sql/20260305_simple_mode.sql` | profiles에 is_simple_mode 컬럼 (간편모드) | 즉시 |
-| `sql/20260306_protect_sensitive_columns.sql` | **[CRITICAL 보안]** profiles 민감 컬럼(is_admin, is_premium, points 등) 일반 유저 변경 차단 트리거. 미실행 시 아무 유저나 관리자/프리미엄 자가 승격 가능 | **최우선** |
+| `20260305_simple_mode.sql` | profiles에 is_simple_mode 컬럼 (간편모드) | 즉시 |
+| `20260306_protect_sensitive_columns.sql` | **[CRITICAL 보안]** profiles 민감 컬럼(is_admin, is_premium, points 등) 일반 유저 변경 차단 트리거. 미실행 시 아무 유저나 관리자/프리미엄 자가 승격 가능 | **최우선** |
 
 ---
 
