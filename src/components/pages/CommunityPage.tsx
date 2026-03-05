@@ -85,6 +85,7 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
     const [hasMore, setHasMore] = useState(true);
     const [showWriteModal, setShowWriteModal] = useState(false);
     const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+    const isNavigatingBackRef = useRef(false);
     const [visitUserId, setVisitUserId] = useState<string | null>(null);
     const sentinelRef = useRef<HTMLDivElement>(null);
     const POSTS_PER_PAGE = 15;
@@ -113,6 +114,36 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
         };
         fetchShowcaseCount();
     }, []);
+
+    // 게시글 선택 (히스토리 push)
+    const handleSelectPost = useCallback((postId: string) => {
+        setSelectedPostId(postId);
+        window.history.pushState({ communityPost: postId }, "");
+    }, []);
+
+    // 게시글 목록으로 돌아가기
+    const handleBackToList = useCallback(() => {
+        if (selectedPostId) {
+            isNavigatingBackRef.current = true;
+            window.history.back();
+        }
+    }, [selectedPostId]);
+
+    // 브라우저 뒤로가기 처리
+    useEffect(() => {
+        const handlePopState = () => {
+            if (isNavigatingBackRef.current) {
+                // handleBackToList에서 호출한 history.back()
+                isNavigatingBackRef.current = false;
+                setSelectedPostId(null);
+            } else if (selectedPostId) {
+                // 브라우저 뒤로가기 버튼
+                setSelectedPostId(null);
+            }
+        };
+        window.addEventListener("popstate", handlePopState);
+        return () => window.removeEventListener("popstate", handlePopState);
+    }, [selectedPostId]);
 
     // 필터 변경 시 localStorage에 저장
     useEffect(() => { localStorage.setItem("memento-community-tag", selectedTag); }, [selectedTag]);
@@ -322,7 +353,7 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
                     <PostDetailView
                         postId={selectedPostId}
                         subcategory={currentSubcategory}
-                        onBack={() => setSelectedPostId(null)}
+                        onBack={handleBackToList}
                         onPostDeleted={() => fetchPosts(false)}
                     />
                 </div>
@@ -404,7 +435,7 @@ function CommunityPage({ subcategory, onSubcategoryChange }: CommunityPageProps)
                     currentColorBg={currentColor.bg}
                     userId={user?.id}
                     sentinelRef={sentinelRef}
-                    onSelectPost={setSelectedPostId}
+                    onSelectPost={handleSelectPost}
                     onVisitUser={setVisitUserId}
                     onReportPost={(post) => setReportTarget({ id: post.id, type: "post", title: post.title })}
                     onBlockUser={handleBlockUser}
