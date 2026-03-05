@@ -51,7 +51,7 @@ const featureInfo: Record<LoginFeature, {
     },
     "record": {
         icon: Camera,
-        title: "우리의 기록",
+        title: "내 기록",
         description: "소중한 순간을 기록하고 싶으신가요?",
         encouragement: "로그인하면 사진과 일상을 안전하게 저장할 수 있어요",
     },

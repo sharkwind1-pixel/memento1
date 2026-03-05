@@ -246,7 +246,7 @@ function RecordPage({ setSelectedTab }: RecordPageProps) {
                 {/* 페이지 헤더 */}
                 <div className="flex items-center justify-between mb-4">
                     <h1 className="text-2xl font-display font-bold text-gray-800 dark:text-white">
-                        우리의 기록
+                        내 기록
                     </h1>
                 </div>
 

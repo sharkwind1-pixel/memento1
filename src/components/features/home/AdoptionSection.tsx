@@ -125,6 +125,7 @@ export default function AdoptionSection({
                                 </CardDescription>
                                 <Button
                                     variant="outline"
+                                    onClick={() => setSelectedTab("adoption")}
                                     className="w-full mt-2 border-sky-200 dark:border-sky-600 text-memento-700 dark:text-sky-300 hover:bg-memento-100 dark:hover:bg-sky-900/50 rounded-xl min-h-[44px] active:scale-95 transition-transform"
                                 >
                                     만나러 가기

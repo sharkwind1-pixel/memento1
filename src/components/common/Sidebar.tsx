@@ -47,10 +47,10 @@ const MAIN_CATEGORIES: {
     hasSubcategories?: boolean;
 }[] = [
     { id: "home", label: "홈", icon: Home },
-    { id: "record", label: "우리의 기록", icon: Camera },
+    { id: "record", label: "내 기록", icon: Camera },
     { id: "community", label: "커뮤니티", icon: Users, hasSubcategories: true },
     { id: "ai-chat", label: "AI 펫톡", icon: MessageCircle },
-    { id: "magazine", label: "펫매거진", icon: BookOpen },
+    { id: "magazine", label: "매거진", icon: BookOpen },
 ];
 
 // 커뮤니티 서브카테고리 정의

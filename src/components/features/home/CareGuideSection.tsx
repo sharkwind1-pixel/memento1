@@ -92,6 +92,7 @@ export default function CareGuideSection({
                         <CardFooter>
                             <Button
                                 variant="outline"
+                                onClick={() => setSelectedTab("magazine")}
                                 className="w-full border-memento-300 dark:border-memento-600 text-memento-700 dark:text-blue-300 hover:bg-memento-100 dark:hover:bg-blue-900/50 rounded-xl min-h-[44px] active:scale-95 transition-transform"
                             >
                                 가이드 보기

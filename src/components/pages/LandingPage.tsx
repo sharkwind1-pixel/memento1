@@ -177,7 +177,7 @@ export default function LandingPage() {
                                     <Camera className="w-8 h-8 text-violet-500" />
                                 </div>
                                 <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-3">
-                                    우리의 기록
+                                    내 기록
                                 </h3>
                                 <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
                                     사진, 타임라인, 특별한 날들을 기록해요.

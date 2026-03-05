@@ -3,14 +3,19 @@
  * 반려동물 미등록 사용자에게 등록을 유도하는 화면
  *
  * 표시 조건: 로그인했지만 pets.length === 0일 때
- * 동작: "반려동물 등록하기" 버튼 클릭 시 ?tab=record 페이지로 이동
+ * 동작: "반려동물 등록하기" 버튼 클릭 시 SPA 내부에서 record 탭으로 이동
  */
 
 "use client";
 
 import { PawPrint, Plus } from "lucide-react";
+import { TabType } from "@/types";
 
-export default function AIChatNoPets() {
+interface AIChatNoPetsProps {
+    setSelectedTab?: (tab: TabType) => void;
+}
+
+export default function AIChatNoPets({ setSelectedTab }: AIChatNoPetsProps) {
     return (
         <div className="flex flex-col items-center justify-center px-4 py-20">
             <div className="w-24 h-24 rounded-full bg-gradient-to-br from-memento-100 to-memento-200 flex items-center justify-center mb-6">
@@ -27,7 +32,11 @@ export default function AIChatNoPets() {
             <button
                 type="button"
                 onClick={() => {
-                    window.location.href = "/?tab=record";
+                    if (setSelectedTab) {
+                        setSelectedTab("record");
+                    } else {
+                        window.location.href = "/?tab=record";
+                    }
                 }}
                 className="flex items-center justify-center gap-2 bg-gradient-to-r from-memento-500 to-memento-400 text-white px-8 py-4 rounded-xl font-medium text-base active:scale-95 transition-transform touch-manipulation"
             >

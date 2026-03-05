@@ -40,7 +40,7 @@ type SmoothAutoScrollReturn = {
 };
 
 function HomePage({ setSelectedTab, isActive }: HomePageProps) {
-    const { isSimpleMode } = useAuth();
+    const { isSimpleMode, user } = useAuth();
     const scroll = useSmoothAutoScroll() as unknown as SmoothAutoScrollReturn;
 
     const {
@@ -116,8 +116,8 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
                 onAddComment={addComment}
             />
 
-            <div className="relative z-10 space-y-16 pb-10">
-                <HeroSection setSelectedTab={setSelectedTab} />
+            <div className="relative z-10 space-y-16 pb-24">
+                <HeroSection setSelectedTab={setSelectedTab} user={user} />
 
                 <CommunitySection
                     communityPosts={communityPosts}

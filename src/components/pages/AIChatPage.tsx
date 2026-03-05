@@ -178,7 +178,7 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
     // 조건부 렌더링: 펫 미등록
     // ========================================================================
     if (pets.length === 0) {
-        return <AIChatNoPets />;
+        return <AIChatNoPets setSelectedTab={setSelectedTab} />;
     }
 
     // ========================================================================

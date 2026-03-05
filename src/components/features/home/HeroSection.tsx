@@ -1,6 +1,8 @@
 /**
  * HeroSection.tsx
  * 홈페이지 HERO 배너 섹션
+ * 비로그인: "시작하기" CTA -> 로그인 모달
+ * 로그인: "지금 만나러 가기" CTA -> AI 펫톡
  */
 
 "use client";
@@ -11,12 +13,22 @@ import { ArrowRight } from "lucide-react";
 import { EmotionalTrueFocus } from "@/components/ui/TrueFocus";
 import { HERO_CONTENT } from "./homeUtils";
 import { TabType } from "@/types";
+import type { User } from "@supabase/supabase-js";
 
 interface HeroSectionProps {
     setSelectedTab: (tab: TabType) => void;
+    user: User | null;
 }
 
-export default function HeroSection({ setSelectedTab }: HeroSectionProps) {
+export default function HeroSection({ setSelectedTab, user }: HeroSectionProps) {
+    const handleCtaClick = () => {
+        if (!user) {
+            window.dispatchEvent(new CustomEvent("openAuthModal"));
+        } else {
+            setSelectedTab(HERO_CONTENT.ctaTab);
+        }
+    };
+
     return (
         <section className="px-4 pt-8" data-tutorial-id="home-hero">
             <div className="bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg border border-white/40 dark:border-gray-700/40 rounded-3xl p-8 md:p-12 shadow-2xl">
@@ -40,10 +52,10 @@ export default function HeroSection({ setSelectedTab }: HeroSectionProps) {
                     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center pt-3 px-4 sm:px-0">
                         <Button
                             size="lg"
-                            onClick={() => setSelectedTab(HERO_CONTENT.ctaTab)}
+                            onClick={handleCtaClick}
                             className="w-full sm:w-auto bg-gradient-to-r from-memento-500 to-memento-400 hover:from-memento-600 hover:to-sky-600 text-white border-0 rounded-xl px-6 sm:px-8 py-3 min-h-[48px] shadow-lg hover:scale-105 active:scale-95 transition-all whitespace-nowrap"
                         >
-                            {HERO_CONTENT.ctaLabel}
+                            {user ? HERO_CONTENT.ctaLabel : "시작하기"}
                         </Button>
                         <Button
                             size="lg"
