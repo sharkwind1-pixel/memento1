@@ -118,7 +118,7 @@ function HeaderAuthArea({
                 <div className="relative">
                     <button
                         onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                        className="flex items-center gap-1.5 p-1.5 min-w-[44px] min-h-[44px] sm:px-3 sm:py-2 rounded-full sm:rounded-xl hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 active:scale-95 transition-transform"
+                        className="flex items-center gap-1.5 p-1.5 min-w-[44px] min-h-[44px] sm:px-3 sm:py-2 rounded-full sm:rounded-xl hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 active:scale-95 transition-all duration-200"
                     >
                         <LevelBadge
                             points={points}
@@ -211,7 +211,7 @@ function HeaderAuthArea({
                 <div className="flex items-center">
                     <Button
                         onClick={openLoginModal}
-                        className="bg-gradient-to-r from-memento-500 to-memento-400 hover:from-memento-600 hover:to-memento-500 rounded-md shadow-sm shadow-memento-500/25 px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm h-auto min-h-[44px] active:scale-95 transition-transform"
+                        className="bg-gradient-to-r from-memento-500 to-memento-400 hover:from-memento-600 hover:to-memento-500 rounded-md shadow-sm shadow-memento-500/25 px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm h-auto min-h-[44px] active:scale-95 transition-all duration-200"
                     >
                         <LogIn className="w-3 h-3 sm:w-4 sm:h-4 mr-0.5 sm:mr-1" />
                         시작하기
@@ -269,7 +269,7 @@ function BottomNav({
                             aria-label={tab.label}
                             className={`
                                 relative flex flex-col items-center justify-center flex-1 py-1.5
-                                min-h-[60px] min-w-[56px] active:scale-95 transition-transform
+                                min-h-[60px] min-w-[56px] active:scale-95 transition-all duration-200
                                 ${isActive
                                     ? isMemorialMode
                                         ? "text-amber-500 dark:text-amber-400"
@@ -279,7 +279,7 @@ function BottomNav({
                         >
                             <div
                                 className={`
-                                    relative flex items-center justify-center rounded-2xl
+                                    relative flex items-center justify-center rounded-2xl transition-all duration-300
                                     ${isHome
                                         ? isActive
                                             ? isMemorialMode
@@ -295,7 +295,7 @@ function BottomNav({
                                 `}
                             >
                                 <Icon
-                                    className={`
+                                    className={`transition-all duration-300
                                         ${isHome
                                             ? isActive
                                                 ? "w-6 h-6 text-white"
@@ -341,7 +341,7 @@ function Layout({
     // - useMemorialMode(): isMemorialMode만 (status 변경 시만 리렌더)
     // - usePets(): isLoading만 (FOUC 방지용, 초기 1회만 변경되므로 리렌더 영향 미미)
     // ========================================================================
-    const { user, loading, signOut, profileLoaded, isSimpleMode } = useAuth();
+    const { user, loading, signOut, profileLoaded } = useAuth();
     const { isMemorialMode } = useMemorialMode();
     const { isLoading: isPetsLoading } = usePets();
 

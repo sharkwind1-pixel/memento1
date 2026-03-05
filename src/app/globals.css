@@ -56,7 +56,7 @@ body {
     overscroll-behavior-x: none;
 }
 
-/* 모바일 터치 반응 개선 - 300ms 탭 딜레이 제거 (버튼/링크만) */
+/* 모바일 터치 반응 개선 - 300ms 탭 딜레이 제거 + 부드러운 전환 */
 button,
 a,
 [role="button"],
@@ -66,6 +66,23 @@ textarea,
 label {
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+}
+
+/* 전역 터치 인터랙션 부드럽게 - 인터랙티브 요소 기본 전환 */
+/* Tailwind의 duration-300 등 명시적 클래스가 있으면 그쪽이 우선 (specificity 높음) */
+button,
+a,
+[role="button"],
+.cursor-pointer {
+    transition-duration: 200ms;
+    transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* 눌림 피드백: 빠르게 반응(120ms), 뗄 때는 기본 200ms로 부드럽게 복원 */
+button:active,
+a:active,
+[role="button"]:active {
+    transition-duration: 120ms;
 }
 
 :root {
@@ -140,12 +157,24 @@ label {
         min-height: 44px;
     }
 
-    /* Mobile-friendly active state */
+    /* Mobile-friendly active state - 부드러운 눌림/복원 */
     .active-scale {
-        transition: transform 0.1s ease-out;
+        transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     }
     .active-scale:active {
         transform: scale(0.95);
+        transition-duration: 0.12s;
+    }
+
+    /* 카드 전용: 부드러운 눌림 + 그림자 축소 */
+    .touch-card {
+        transition: transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                    box-shadow 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .touch-card:active {
+        transform: scale(0.97);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        transition-duration: 0.12s;
     }
 
     /* Enhanced scroll snap for cards */
@@ -275,7 +304,7 @@ label {
 }
 
 .animate-slide-up {
-    animation: slideUp 0.3s ease-out forwards;
+    animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Textarea focus glow for daily mode — memento-500 */
@@ -373,6 +402,21 @@ body {
     transition-property: background-color, background-image, border-color, color, box-shadow, ring-color;
     transition-duration: 700ms;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 탭 전환 시 부드러운 페이드인 */
+@keyframes tabFadeIn {
+    from {
+        opacity: 0.6;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* 페이지 컨테이너가 display:block으로 전환될 때 부드러운 등장 */
+#main-content > div > div[style*="display: block"] {
+    animation: tabFadeIn 0.2s ease-out;
 }
 
 /* FOUC 방지: 데이터 로딩 완료 전까지 콘텐츠 숨김 */

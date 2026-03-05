@@ -123,8 +123,8 @@ export default function SimpleHomeLauncher({ setSelectedTab, onSubcategoryChange
                                 onClick={() => handleCardClick(item.id)}
                                 className={`flex flex-col items-center justify-center gap-2
                                     bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-6
-                                    shadow-md hover:shadow-lg active:scale-95
-                                    transition-all min-h-[120px] sm:min-h-[140px]
+                                    shadow-md hover:shadow-lg active:scale-[0.97] active:shadow-sm
+                                    transition-all duration-200 min-h-[120px] sm:min-h-[140px]
                                     border border-gray-100 dark:border-gray-700`}
                             >
                                 <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl ${item.bgColor} flex items-center justify-center`}>
