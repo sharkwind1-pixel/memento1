@@ -52,6 +52,7 @@ import {
     LogOut,
     User,
     ChevronDown,
+    Smartphone,
 } from "lucide-react";
 
 // ============================================================================
@@ -341,7 +342,7 @@ function Layout({
     // - useMemorialMode(): isMemorialMode만 (status 변경 시만 리렌더)
     // - usePets(): isLoading만 (FOUC 방지용, 초기 1회만 변경되므로 리렌더 영향 미미)
     // ========================================================================
-    const { user, loading, signOut, profileLoaded, isSimpleMode } = useAuth();
+    const { user, loading, signOut, profileLoaded, isSimpleMode, toggleSimpleMode } = useAuth();
     const { isMemorialMode } = useMemorialMode();
     const { isLoading: isPetsLoading } = usePets();
 
@@ -487,6 +488,20 @@ function Layout({
 
                         {/* 우측 버튼들 */}
                         <div className="flex items-center gap-1 sm:gap-2">
+                            {/* 간편모드 토글 - 헤더에서 항상 접근 가능 */}
+                            <button
+                                onClick={toggleSimpleMode}
+                                className={`xl:hidden flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                                    isSimpleMode
+                                        ? "bg-memento-100 dark:bg-memento-900/30 text-memento-600 dark:text-memento-400"
+                                        : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+                                }`}
+                                aria-label="간편모드 전환"
+                            >
+                                <Smartphone className="w-3.5 h-3.5" />
+                                <span className="hidden sm:inline">{isSimpleMode ? "간편" : "일반"}</span>
+                            </button>
+
                             {/* 모바일 햄버거 메뉴 - auth 버튼과 분리 */}
                             <Button
                                 variant="ghost"
