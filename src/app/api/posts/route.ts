@@ -122,6 +122,37 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: "게시글 처리 중 오류가 발생했습니다" }, { status: 500 });
         }
 
+        // 작성자 미니미 slug 일괄 조회 (미니홈피 아바타 표시용)
+        const userIds = Array.from(new Set((data || []).map(p => p.user_id).filter(Boolean)));
+        let userIdToMinimiSlug: Record<string, string> = {};
+        if (userIds.length > 0) {
+            try {
+                const { data: profileRows } = await supabase
+                    .from("profiles")
+                    .select("id, equipped_minimi_id")
+                    .in("id", userIds);
+                const minimiUuids = (profileRows || [])
+                    .map(p => p.equipped_minimi_id)
+                    .filter(Boolean) as string[];
+                if (minimiUuids.length > 0) {
+                    const { data: minimiRows } = await supabase
+                        .from("user_minimi")
+                        .select("id, minimi_id")
+                        .in("id", minimiUuids);
+                    const uuidToSlug = Object.fromEntries(
+                        (minimiRows || []).map(m => [m.id, m.minimi_id])
+                    );
+                    for (const p of (profileRows || [])) {
+                        if (p.equipped_minimi_id && uuidToSlug[p.equipped_minimi_id]) {
+                            userIdToMinimiSlug[p.id] = uuidToSlug[p.equipped_minimi_id];
+                        }
+                    }
+                }
+            } catch {
+                // 미니미 조회 실패 시 무시 (게시글은 정상 반환)
+            }
+        }
+
         // 댓글 수 계산
         // DB 실제 컬럼: id, user_id, board_type, animal_type, badge, title, content,
         //               author_name, likes, views, created_at, updated_at, video_url
@@ -140,6 +171,7 @@ export async function GET(request: NextRequest) {
             imageUrls: [],
             videoUrl: post.video_url || null,
             region: post.region || null,
+            authorMinimiSlug: userIdToMinimiSlug[post.user_id] || null,
             createdAt: post.created_at,
         }));
 

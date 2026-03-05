@@ -7,7 +7,8 @@
 
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
+import Image from "next/image";
 import {
     Card,
     CardContent,
@@ -38,6 +39,7 @@ import {
 import type { CommunitySubcategory } from "@/types";
 import type { Post } from "./communityTypes";
 import { getBadgeStyle, formatTime } from "./communityTypes";
+import { CHARACTER_CATALOG } from "@/data/minimiPixels";
 
 interface CommunityPostListProps {
     posts: Post[];
@@ -74,6 +76,15 @@ export default function CommunityPostList({
     onWriteClick,
     onClearSearch,
 }: CommunityPostListProps) {
+    // slug → imageUrl 매핑 (미니미 아바타용)
+    const minimiMap = useMemo(() => {
+        const map: Record<string, string> = {};
+        for (const c of CHARACTER_CATALOG) {
+            map[c.slug] = c.imageUrl;
+        }
+        return map;
+    }, []);
+
     // 스켈레톤 카드
     const SkeletonCard = ({ keyId }: { keyId: string }) => (
         <Card className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 rounded-2xl animate-pulse">
@@ -202,9 +213,19 @@ export default function CommunityPostList({
                                         e.stopPropagation();
                                         if (post.userId) onVisitUser(post.userId);
                                     }}
-                                    className="text-sm text-gray-500 dark:text-gray-400 hover:text-memento-600 dark:hover:text-memento-400 hover:underline transition-colors"
+                                    className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-memento-600 dark:hover:text-memento-400 hover:underline transition-colors"
                                 >
-                                    {post.authorName}
+                                    {post.authorMinimiSlug && minimiMap[post.authorMinimiSlug] && (
+                                        <Image
+                                            src={minimiMap[post.authorMinimiSlug]}
+                                            alt=""
+                                            width={24}
+                                            height={24}
+                                            className="object-contain flex-shrink-0"
+                                            style={{ imageRendering: "pixelated" }}
+                                        />
+                                    )}
+                                    <span>{post.authorName}</span>
                                 </button>
                                 <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                                     <span className="flex items-center gap-1">

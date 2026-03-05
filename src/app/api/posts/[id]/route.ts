@@ -116,9 +116,32 @@ export async function GET(
 
         const { data: comments } = await commentQuery;
 
+        // 작성자 미니미 slug 조회
+        let authorMinimiSlug: string | null = null;
+        if (post.user_id) {
+            try {
+                const { data: profile } = await supabase
+                    .from("profiles")
+                    .select("equipped_minimi_id")
+                    .eq("id", post.user_id)
+                    .maybeSingle();
+                if (profile?.equipped_minimi_id) {
+                    const { data: minimiRow } = await supabase
+                        .from("user_minimi")
+                        .select("minimi_id")
+                        .eq("id", profile.equipped_minimi_id)
+                        .maybeSingle();
+                    authorMinimiSlug = minimiRow?.minimi_id || null;
+                }
+            } catch {
+                // 미니미 조회 실패 무시
+            }
+        }
+
         return NextResponse.json({
             post: {
                 ...post,
+                authorMinimiSlug,
                 comments: comments || [],
             },
         });

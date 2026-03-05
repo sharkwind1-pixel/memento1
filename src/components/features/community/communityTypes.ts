@@ -30,6 +30,7 @@ export interface Post {
     createdAt: string;
     isPublic?: boolean;
     region?: string; // 지역 (지역정보 게시판)
+    authorMinimiSlug?: string | null; // 작성자 미니미 slug (미니홈피 아바타 표시용)
 }
 
 // 서브카테고리 정의 (5개)

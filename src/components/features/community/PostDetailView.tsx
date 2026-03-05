@@ -32,11 +32,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { InlineLoading } from "@/components/ui/PawLoading";
 import PawLoading from "@/components/ui/PawLoading";
+import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
 import ReportModal from "@/components/modals/ReportModal";
 import MinihompyVisitModal from "@/components/features/minihompy/MinihompyVisitModal";
+import { CHARACTER_CATALOG } from "@/data/minimiPixels";
 import type { CommunitySubcategory } from "@/types";
 
 interface PostComment {
@@ -69,6 +71,7 @@ interface PostData {
     comments: PostComment[] | number;
     video_url?: string;
     is_hidden?: boolean;
+    authorMinimiSlug?: string | null;
     created_at: string;
     updated_at?: string;
 }
@@ -547,9 +550,16 @@ export default function PostDetailView({
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={() => post.user_id && setVisitUserId(post.user_id)}
-                                className="font-medium text-gray-700 dark:text-gray-300 hover:text-memento-600 dark:hover:text-memento-400 hover:underline transition-colors"
+                                className="flex items-center gap-1.5 font-medium text-gray-700 dark:text-gray-300 hover:text-memento-600 dark:hover:text-memento-400 hover:underline transition-colors"
                             >
-                                {post.author_name}
+                                {(() => {
+                                    const slug = post.authorMinimiSlug;
+                                    const char = slug ? CHARACTER_CATALOG.find(c => c.slug === slug) : null;
+                                    return char ? (
+                                        <Image src={char.imageUrl} alt="" width={28} height={28} className="object-contain flex-shrink-0" style={{ imageRendering: "pixelated" }} />
+                                    ) : null;
+                                })()}
+                                <span>{post.author_name}</span>
                             </button>
                             <span className="flex items-center gap-1">
                                 <Clock className="w-3.5 h-3.5" />
