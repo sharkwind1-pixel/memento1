@@ -31,17 +31,66 @@
 | 온보딩 플로우 (Safari 대응, DB+localStorage 이중 저장) | 완료 |
 | 관리자 탈퇴 처리 (auth.users 삭제 API, CASCADE) | 완료 |
 | AI 영상 생성 (fal.ai Minimax Hailuo, 8템플릿, 쿼터 시스템, 폴링 UI) | 코드 완료 (DB 미실행) |
+| 커뮤니티 미니미 아바타 (게시글 작성자 미니미 표시, 닉네임 옆 40/44px) | 완료 |
+| 미니홈피 전략적 노출 (사이드바 바로가기, 헤더 드롭다운) | 완료 |
+| 게시판 API 속도 최적화 (쿼리 병렬화, fire-and-forget 조회수) | 완료 |
 
-## 최근 수정된 핵심 파일 (2026-02-28)
+## 최근 수정된 핵심 파일 (2026-03-05)
 
 | 파일 | 뭘 바꿨나 |
 |------|----------|
-| `src/app/page.tsx` | 온보딩 플로우 3차 수정 (Safari 무한루프 해결, onboardingTriggeredRef) |
-| `src/components/features/onboarding/OnboardingModal.tsx` | handleSkip DB 저장, refreshProfile 추가, 고양이 아이콘 버그 수정 |
-| `src/app/api/admin/delete-user/route.ts` | 신규 — 관리자 유저 삭제 API (service_role) |
-| `src/components/pages/AdminPage.tsx` | processWithdrawal에 auth.users 삭제 연동 |
-| `src/components/admin/hooks/useAdminData.ts` | loadUsers에서 탈퇴 유저 필터링 |
-| `src/config/apiEndpoints.ts` | ADMIN_DELETE_USER 추가 |
+| `src/lib/supabase-server.ts` | `createAdminSupabase()` 추가 (service_role_key로 RLS 우회, 읽기 전용) |
+| `src/app/api/posts/route.ts` | 미니미 일괄 조회 (admin client), 쿼리 병렬화 (Promise.all) |
+| `src/app/api/posts/[id]/route.ts` | 미니미 조회 (admin client), getAuthUser 중복 제거, 조회수 fire-and-forget, 댓글+미니미 병렬 |
+| `src/components/features/community/communityTypes.ts` | `Post` 인터페이스에 `authorMinimiSlug` 추가 |
+| `src/components/features/community/CommunityPostList.tsx` | 게시글 목록에 미니미 아바타 (40px) 표시 |
+| `src/components/features/community/PostDetailView.tsx` | 게시글 상세에 미니미 아바타 (44px) 표시 + `PostData`에 `authorMinimiSlug` 추가 |
+| `src/components/common/Sidebar.tsx` | "내 미니홈피" 바로가기 (모바일+데스크탑), 유저 영역 `!isMobile` 조건 제거 |
+| `src/components/common/Layout.tsx` | 헤더 드롭다운에 "내 미니홈피" 버튼 추가 |
+
+---
+
+## 2026-03-05 세션 작업 상세
+
+### 미니홈피 전략적 노출 (커뮤니티 미니미 아바타 + 바로가기)
+
+**배경**: 미니홈피가 커뮤니티에서 전혀 노출되지 않아 사용률이 낮음. 전략적 노출 방안 기획 후 구현.
+
+**구현 내용**:
+1. **커뮤니티 게시글에 미니미 아바타 표시**
+   - 게시글 목록: 닉네임 옆에 40px 픽셀아트 미니미
+   - 게시글 상세: 닉네임 옆에 44px 픽셀아트 미니미
+   - `profiles.equipped_minimi_id` (UUID) → `user_minimi.minimi_id` (slug) → `CHARACTER_CATALOG` (PNG)
+   - API에서 batch 조회 (`Promise.all`로 병렬)
+
+2. **"내 미니홈피" 바로가기**
+   - 모바일 사이드바(햄버거 메뉴) + 데스크탑 사이드바 하단 유저 영역
+   - 헤더 드롭다운 (xl 미만)
+   - `localStorage("memento-record-tab", "minihompy")` → RecordPage의 미니홈피 서브탭으로 이동
+
+**버그 수정 (RLS)**:
+- `profiles`, `user_minimi` 테이블의 RLS가 `auth.uid() = id`로 제한
+- 비로그인/다른 유저가 게시글 작성자의 미니미를 조회할 수 없었음
+- 해결: `createAdminSupabase()` (service_role_key) 함수 추가, 미니미 조회에만 사용
+
+**커밋**:
+- `6cb0e4c` 미니홈피 전략적 노출: 미니미 아바타 + 헤더 바로가기
+- `fdbd720` fix: 미니미 아바타 미표시 - RLS 우회를 위한 admin 클라이언트 적용
+- `3f9a345` 미니미 아바타 크기 키우고 사이드바에 내 미니홈피 버튼 추가
+- `0ab2971` 미니미 크기 확대 + 내 미니홈피 버튼 모바일 사이드바에도 추가
+
+### 게시판 API 속도 최적화
+
+**원인**: GET 핸들러에서 6~8개 DB 쿼리가 순차 실행 → TTFB 1.5~1.7초
+
+**최적화**:
+- `createServerSupabase()` + `getAuthUser()` 병렬 시작 (Promise.all)
+- `profiles` + `user_minimi` 미니미 조회 병렬화
+- `getAuthUser()` 중복 호출 제거 (posts/[id]에서 2회→1회)
+- 조회수 증가 fire-and-forget (응답 대기 안 함)
+- 댓글 + 미니미 조회 병렬화
+
+**커밋**: `8797134` perf: 게시판 API 응답 속도 최적화
 
 ---
 
