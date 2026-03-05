@@ -376,10 +376,13 @@ export default function LandingPage() {
                                     인기
                                 </div>
                                 <h3 className="text-xl font-bold mb-2">프리미엄</h3>
-                                <div className="flex items-baseline gap-1 mb-6">
+                                <div className="flex items-baseline gap-1 mb-1">
                                     <span className="text-4xl font-bold">7,900</span>
                                     <span className="text-white/80">원/월</span>
                                 </div>
+                                <p className="text-white/60 text-sm mb-5">
+                                    연 구독 시 79,000원 (2개월 무료)
+                                </p>
                                 <ul className="space-y-3 mb-8">
                                     <li className="flex items-center gap-2">
                                         <Check className="w-5 h-5 text-amber-300" />

@@ -7,6 +7,7 @@
 
 "use client";
 
+import { useState } from "react";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,8 +19,10 @@ import {
     Coffee,
     Check,
     Crown,
+    Tag,
 } from "lucide-react";
 import { toast } from "sonner";
+import { PRICING } from "@/config/constants";
 
 export type PremiumFeature =
     | "ai-chat-limit"      // AI 펫톡 무제한
@@ -75,6 +78,12 @@ const featureInfo: Record<PremiumFeature, {
     },
 };
 
+type PlanType = "monthly" | "yearly";
+
+const monthlyPrice = PRICING.PREMIUM_MONTHLY.toLocaleString();
+const yearlyPrice = PRICING.PREMIUM_YEARLY.toLocaleString();
+const yearlyMonthly = Math.round(PRICING.PREMIUM_YEARLY / 12).toLocaleString();
+
 export default function PremiumModal({
     isOpen,
     onClose,
@@ -82,6 +91,7 @@ export default function PremiumModal({
     onLogin,
     isLoggedIn = true,
 }: PremiumModalProps) {
+    const [selectedPlan, setSelectedPlan] = useState<PlanType>("yearly");
     useEscapeClose(isOpen, onClose);
     if (!isOpen) return null;
 
@@ -127,19 +137,50 @@ export default function PremiumModal({
                         </p>
                     </div>
 
-                    {/* 가격 및 설득 */}
-                    <div className="text-center mb-6">
-                        <div className="flex items-center justify-center gap-2 mb-2">
-                            <Coffee className="w-5 h-5 text-amber-500" />
-                            <span className="text-gray-500 text-sm">커피 한 잔 값으로</span>
-                        </div>
-                        <div className="flex items-baseline justify-center gap-1">
-                            <span className="text-4xl font-display font-bold text-gray-800 dark:text-white">7,900</span>
-                            <span className="text-gray-500">원/월</span>
-                        </div>
-                        <p className="text-sm text-gray-400 mt-2">
-                            하루에 약 260원, 부담 없이 시작해보세요
-                        </p>
+                    {/* 플랜 선택 */}
+                    <div className="grid grid-cols-2 gap-3 mb-6">
+                        {/* 월 구독 */}
+                        <button
+                            onClick={() => setSelectedPlan("monthly")}
+                            className={`relative rounded-2xl p-4 text-left transition-all duration-200 border-2 ${
+                                selectedPlan === "monthly"
+                                    ? "border-violet-500 bg-violet-50 dark:bg-violet-900/20"
+                                    : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                            }`}
+                        >
+                            <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">월 구독</div>
+                            <div className="flex items-baseline gap-0.5">
+                                <span className="text-2xl font-display font-bold text-gray-800 dark:text-white">{monthlyPrice}</span>
+                                <span className="text-xs text-gray-400">원/월</span>
+                            </div>
+                            <p className="text-xs text-gray-400 mt-1.5">
+                                하루 약 260원
+                            </p>
+                        </button>
+
+                        {/* 연 구독 */}
+                        <button
+                            onClick={() => setSelectedPlan("yearly")}
+                            className={`relative rounded-2xl p-4 text-left transition-all duration-200 border-2 ${
+                                selectedPlan === "yearly"
+                                    ? "border-violet-500 bg-violet-50 dark:bg-violet-900/20"
+                                    : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                            }`}
+                        >
+                            {/* 할인 뱃지 */}
+                            <div className="absolute -top-2.5 right-3 flex items-center gap-1 bg-gradient-to-r from-rose-500 to-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                <Tag className="w-2.5 h-2.5" />
+                                2개월 무료
+                            </div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">연 구독</div>
+                            <div className="flex items-baseline gap-0.5">
+                                <span className="text-2xl font-display font-bold text-gray-800 dark:text-white">{yearlyPrice}</span>
+                                <span className="text-xs text-gray-400">원/년</span>
+                            </div>
+                            <p className="text-xs text-gray-400 mt-1.5">
+                                월 {yearlyMonthly}원 (17% 할인)
+                            </p>
+                        </button>
                     </div>
 
                     {/* 프리미엄 혜택 리스트 */}
@@ -174,7 +215,10 @@ export default function PremiumModal({
                                 }}
                             >
                                 <Crown className="w-5 h-5 mr-2" />
-                                프리미엄 시작하기
+                                {selectedPlan === "yearly"
+                                    ? `연 ${yearlyPrice}원으로 시작하기`
+                                    : `월 ${monthlyPrice}원으로 시작하기`
+                                }
                             </Button>
                             <button
                                 onClick={onClose}

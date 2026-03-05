@@ -533,6 +533,13 @@ function Layout({
                 isMobile={true}
                 onOpenInquiry={() => setSupportModalType("inquiry")}
                 onOpenSuggestion={() => setSupportModalType("suggestion")}
+                isDarkMode={isDarkMode}
+                onToggleDarkMode={toggleDarkMode}
+                onOpenLogin={openLoginModal}
+                onOpenSignup={openLoginModal}
+                onSignOut={handleSignOut}
+                onOpenAccountSettings={() => setSelectedTab("record")}
+                authLoading={loading}
             />
 
             {/* 데스크톱 사이드바 (xl 이상에서만 표시) - 헤더 h-16(64px) 바로 아래 */}
