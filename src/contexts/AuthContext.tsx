@@ -686,6 +686,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // 한쪽만 업데이트되면 화면마다 다른 닉네임이 표시되므로 양쪽 모두 성공해야 함
     const updateProfile = useCallback(async (data: { nickname?: string }) => {
         try {
+            // user.id를 미리 캡처 (auth.updateUser 후 getUser 재호출 시 토큰 갱신 타이밍 이슈 방지)
+            const userId = user?.id;
+            if (!userId) return { error: new Error("로그인이 필요합니다.") };
+
             // 1. auth.users user_metadata 업데이트
             const { error } = await supabase.auth.updateUser({
                 data: {
@@ -695,14 +699,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (error) return { error };
 
             // 2. profiles 테이블도 동시 업데이트 (닉네임 불일치 방지)
-            const currentUser = (await supabase.auth.getUser()).data.user;
-            if (currentUser && data.nickname) {
+            // 주의: getUser() 재호출 대신 미리 캡처한 userId 사용 (토큰 갱신 타이밍 이슈 방지)
+            if (data.nickname) {
                 const { error: profileError } = await supabase
                     .from("profiles")
                     .update({ nickname: data.nickname })
-                    .eq("id", currentUser.id);
+                    .eq("id", userId);
                 if (profileError) {
-                    // profiles 업데이트 실패 → 에러로 처리 (안 하면 화면마다 닉네임 불일치)
                     console.error("[Auth] profiles 닉네임 동기화 실패:", profileError.message);
                     return { error: new Error("닉네임 저장에 실패했어요. 다시 시도해주세요.") };
                 }
@@ -724,7 +727,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (error) {
             return { error: error as Error };
         }
-    }, []);
+    }, [user?.id]);
 
     // 닉네임 중복 체크
     const checkNickname = useCallback(async (nickname: string) => {

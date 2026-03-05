@@ -300,26 +300,18 @@ export default function AccountSettingsModal({
         setIsSavingNickname(true);
 
         try {
-            // Auth user_metadata 업데이트
-            const { error: authError } = await updateProfile({
+            // updateProfile이 auth.users + profiles 양쪽 모두 업데이트
+            const { error } = await updateProfile({
                 nickname: nickname.trim(),
             });
-            if (authError) throw authError;
-
-            // profiles 테이블 업데이트
-            const { error: profileError } = await supabase
-                .from("profiles")
-                .update({ nickname: nickname.trim() })
-                .eq("id", user?.id);
-
-            if (profileError) throw profileError;
+            if (error) throw error;
 
             setCurrentNickname(nickname.trim());
             setIsEditingNickname(false);
             setNicknameSuccess(true);
             setTimeout(() => setNicknameSuccess(false), 3000);
         } catch {
-            // 닉네임 업데이트 실패
+            toast.error("닉네임 변경에 실패했어요. 다시 시도해주세요.");
         } finally {
             setIsSavingNickname(false);
         }
