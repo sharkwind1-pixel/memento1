@@ -90,7 +90,7 @@ export async function getClientIP(): Promise<string> {
     return "unknown";
 }
 
-// IP 차단 여부 확인
+// IP 차단 여부 확인 (메모리 캐시)
 export function isIPBlocked(ip: string): boolean {
     const blockUntil = ipBlockList.get(ip);
     if (!blockUntil) return false;
@@ -103,10 +103,57 @@ export function isIPBlocked(ip: string): boolean {
     return true;
 }
 
-// IP 차단
+// IP 차단 (메모리 + DB 동시 기록 → 서버 재시작에도 유지)
 export function blockIP(ip: string): void {
     ipBlockList.set(ip, Date.now() + BLOCK_DURATION);
     console.warn(`[Security] IP blocked: ${ip}`);
+
+    // DB에도 차단 기록 (비동기, 실패해도 메모리 차단은 유지)
+    const supabase = getRateLimitSupabase();
+    if (supabase) {
+        const blockedUntil = new Date(Date.now() + BLOCK_DURATION).toISOString();
+        supabase
+            .from("ip_blocks")
+            .upsert({
+                ip_address: ip,
+                blocked_until: blockedUntil,
+                reason: "rate_limit_violation",
+                created_at: new Date().toISOString(),
+            }, { onConflict: "ip_address" })
+            .then(({ error }) => {
+                if (error) console.error("[Security] IP 차단 DB 기록 실패:", error.message);
+            });
+    }
+}
+
+/**
+ * DB 기반 IP 차단 확인 (서버리스 환경 대응)
+ * 메모리 캐시 먼저 확인 → 없으면 DB 조회 → 결과 캐싱
+ */
+export async function isIPBlockedDB(ip: string): Promise<boolean> {
+    // 1. 메모리 캐시 먼저 (빠름)
+    if (isIPBlocked(ip)) return true;
+
+    // 2. DB 조회 (서버 재시작 후에도 유지)
+    const supabase = getRateLimitSupabase();
+    if (!supabase) return false;
+
+    try {
+        const { data } = await supabase
+            .from("ip_blocks")
+            .select("blocked_until")
+            .eq("ip_address", ip)
+            .single();
+
+        if (data && new Date(data.blocked_until) > new Date()) {
+            // DB에서 차단 확인 → 메모리에도 캐싱
+            ipBlockList.set(ip, new Date(data.blocked_until).getTime());
+            return true;
+        }
+        return false;
+    } catch {
+        return false;
+    }
 }
 
 // Rate Limit 체크

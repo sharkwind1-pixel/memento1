@@ -3,7 +3,7 @@
  * POST: fal.ai에서 영상 생성 완료/실패 시 콜백
  *
  * 보안:
- * - VIDEO_WEBHOOK_SECRET 쿼리 파라미터 검증
+ * - VIDEO_WEBHOOK_SECRET 헤더 검증 (x-webhook-secret, 쿼리 파라미터 폴백)
  * - Service Role Supabase 사용 (사용자 인증 불필요)
  *
  * fal.ai webhook payload 구조:
@@ -13,6 +13,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
 
@@ -26,12 +27,45 @@ function getServiceSupabase() {
 
 export async function POST(request: NextRequest) {
     try {
-        // 1. Webhook Secret 검증
+        // 1. Webhook 인증: HMAC 서명 검증 (시크릿 노출 방지)
         const { searchParams } = new URL(request.url);
-        const secret = searchParams.get("secret");
+        const timestamp = searchParams.get("ts");
+        const signature = searchParams.get("sig");
+        const uid = searchParams.get("uid");
+        const legacySecret = searchParams.get("secret");
+        const webhookSecret = process.env.VIDEO_WEBHOOK_SECRET || "";
 
-        if (!secret || secret !== process.env.VIDEO_WEBHOOK_SECRET) {
-            console.warn("[Video Webhook] 인증 실패: 잘못된 secret");
+        let isAuthorized = false;
+
+        // 새 방식: HMAC 서명 검증 (시크릿 자체는 URL에 노출되지 않음)
+        if (timestamp && signature && uid) {
+            const expectedSig = crypto
+                .createHmac("sha256", webhookSecret)
+                .update(`${uid}:${timestamp}`)
+                .digest("hex");
+            // 타이밍 공격 방지를 위한 상수 시간 비교
+            isAuthorized = signature.length === expectedSig.length &&
+                crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSig));
+            // 서명 유효기간: 1시간 (영상 생성 시간 고려)
+            if (isAuthorized) {
+                const age = Date.now() - parseInt(timestamp, 10);
+                if (age > 60 * 60 * 1000) {
+                    console.warn("[Video Webhook] 만료된 서명:", { age, uid });
+                    isAuthorized = false;
+                }
+            }
+        }
+
+        // 레거시 호환: 기존 secret 쿼리 파라미터 방식 (이행기)
+        if (!isAuthorized && legacySecret) {
+            isAuthorized = legacySecret === webhookSecret;
+            if (isAuthorized) {
+                console.warn("[Video Webhook] 레거시 secret 방식 사용됨 - HMAC으로 전환 필요");
+            }
+        }
+
+        if (!isAuthorized) {
+            console.warn("[Video Webhook] 인증 실패");
             return NextResponse.json(
                 { error: "Unauthorized" },
                 { status: 401 }

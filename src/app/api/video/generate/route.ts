@@ -22,6 +22,7 @@ import {
 import { submitVideoGeneration } from "@/lib/fal";
 import { VIDEO } from "@/config/constants";
 import { VIDEO_TEMPLATES } from "@/config/videoTemplates";
+import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -151,9 +152,15 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 7. Webhook URL 구성
+        // 7. Webhook URL 구성 (HMAC 서명 기반 - 시크릿 노출 방지)
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://memento-ani.vercel.app";
-        const webhookUrl = `${baseUrl}/api/video/webhook?secret=${process.env.VIDEO_WEBHOOK_SECRET}`;
+        const webhookSecret = process.env.VIDEO_WEBHOOK_SECRET || "";
+        const timestamp = Date.now().toString();
+        const hmacSignature = crypto
+            .createHmac("sha256", webhookSecret)
+            .update(`${user.id}:${timestamp}`)
+            .digest("hex");
+        const webhookUrl = `${baseUrl}/api/video/webhook?ts=${timestamp}&sig=${hmacSignature}&uid=${user.id}`;
 
         // 8. fal.ai 큐에 영상 생성 요청 제출
         let falRequestId: string;
