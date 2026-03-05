@@ -682,6 +682,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     // 프로필 업데이트 (auth.users + profiles 동시 갱신)
+    // 닉네임은 auth.users.user_metadata와 profiles 테이블 양쪽에 저장됨
+    // 한쪽만 업데이트되면 화면마다 다른 닉네임이 표시되므로 양쪽 모두 성공해야 함
     const updateProfile = useCallback(async (data: { nickname?: string }) => {
         try {
             // 1. auth.users user_metadata 업데이트
@@ -695,10 +697,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // 2. profiles 테이블도 동시 업데이트 (닉네임 불일치 방지)
             const currentUser = (await supabase.auth.getUser()).data.user;
             if (currentUser && data.nickname) {
-                await supabase
+                const { error: profileError } = await supabase
                     .from("profiles")
                     .update({ nickname: data.nickname })
                     .eq("id", currentUser.id);
+                if (profileError) {
+                    // profiles 업데이트 실패 → 에러로 처리 (안 하면 화면마다 닉네임 불일치)
+                    console.error("[Auth] profiles 닉네임 동기화 실패:", profileError.message);
+                    return { error: new Error("닉네임 저장에 실패했어요. 다시 시도해주세요.") };
+                }
             }
 
             // 3. React 상태의 user 객체도 즉시 동기화

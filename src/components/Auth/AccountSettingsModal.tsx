@@ -109,7 +109,7 @@ export default function AccountSettingsModal({
     const [showBlockedUsers, setShowBlockedUsers] = useState(false);
     const [unblockingId, setUnblockingId] = useState<string | null>(null);
 
-    // 현재 닉네임 + 설정 로드
+    // 현재 닉네임 + 설정 로드 (모달이 열릴 때마다 최신 데이터 fetch)
     useEffect(() => {
         const loadProfile = async () => {
             if (!user) return;
