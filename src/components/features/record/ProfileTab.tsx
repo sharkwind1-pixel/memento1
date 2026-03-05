@@ -160,22 +160,22 @@ export default function ProfileTab({
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="text-center p-4 bg-gradient-to-br from-memento-100 to-memento-200 rounded-xl">
+                    <div className="grid grid-cols-3 gap-3">
+                        <div className="text-center p-3 bg-gradient-to-br from-memento-100 to-memento-200 rounded-xl">
                             <p className="text-2xl font-bold text-memento-600">{pets.length}</p>
-                            <p className="text-sm text-gray-600">반려동물</p>
+                            <p className="text-xs sm:text-sm text-gray-600 whitespace-nowrap">반려동물</p>
                         </div>
-                        <div className="text-center p-4 bg-gradient-to-br from-pink-50 to-pink-100 rounded-xl">
+                        <div className="text-center p-3 bg-gradient-to-br from-pink-50 to-pink-100 rounded-xl">
                             <p className="text-2xl font-bold text-pink-500">
                                 {pets.reduce((acc, pet) => acc + pet.photos.length, 0)}
                             </p>
-                            <p className="text-sm text-gray-600">사진/영상</p>
+                            <p className="text-xs sm:text-sm text-gray-600 whitespace-nowrap">사진/영상</p>
                         </div>
-                        <div className="text-center p-4 bg-gradient-to-br from-violet-50 to-violet-100 rounded-xl">
+                        <div className="text-center p-3 bg-gradient-to-br from-violet-50 to-violet-100 rounded-xl">
                             <p className="text-2xl font-bold text-violet-500">
                                 {pets.filter((p) => p.status === "memorial").length}
                             </p>
-                            <p className="text-sm text-gray-600">추억 속에</p>
+                            <p className="text-xs sm:text-sm text-gray-600 whitespace-nowrap">추억 속에</p>
                         </div>
                     </div>
                 </CardContent>
