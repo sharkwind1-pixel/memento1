@@ -4,12 +4,17 @@
  * Supabase pg_cron에서 매일 06:00 KST(UTC 21:00)에 호출.
  * 코드 내부에서 월/수/금만 실행, 나머지 요일은 스킵.
  * GPT-4o-mini로 기사 생성 → draft 상태로 DB INSERT → 관리자가 검토 후 발행.
+ *
+ * 안전장치:
+ * - 실패 시 1회 자동 재시도 (3초 대기 후)
+ * - 오늘 이미 생성된 기사가 있으면 중복 생성 방지
  */
 export const dynamic = "force-dynamic";
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
 import { MAGAZINE_AUTO } from "@/config/constants";
 import {
@@ -37,6 +42,90 @@ function getOpenAI() {
     return new OpenAI({ apiKey });
 }
 
+// ===== KST 유틸 =====
+
+function getKSTNow(): Date {
+    return new Date(Date.now() + 9 * 60 * 60 * 1000);
+}
+
+/** KST 기준 오늘 날짜 문자열 (YYYY-MM-DD) */
+function getKSTDateString(date: Date): string {
+    return date.toISOString().split("T")[0];
+}
+
+// ===== 오늘 이미 생성되었는지 체크 =====
+
+async function hasArticleToday(supabase: SupabaseClient): Promise<boolean> {
+    const kstNow = getKSTNow();
+    const todayStr = getKSTDateString(kstNow);
+
+    // KST 기준 오늘 00:00 ~ 23:59 범위 (UTC로 변환)
+    const startUTC = new Date(`${todayStr}T00:00:00+09:00`).toISOString();
+    const endUTC = new Date(`${todayStr}T23:59:59+09:00`).toISOString();
+
+    const { data } = await supabase
+        .from("magazine_articles")
+        .select("id")
+        .eq("author", MAGAZINE_AUTO.AUTHOR_NAME)
+        .gte("created_at", startUTC)
+        .lte("created_at", endUTC)
+        .limit(1);
+
+    return (data?.length ?? 0) > 0;
+}
+
+// ===== 기사 생성 핵심 로직 (재시도 가능하도록 분리) =====
+
+async function createMagazineArticle(
+    supabase: SupabaseClient,
+    openai: OpenAI
+): Promise<{ id: string; title: string; category: string; badge: string; status: string }> {
+    // 카테고리/배지 로테이션
+    const { category, badge } = await getNextCategoryAndBadge(supabase);
+
+    // 중복 방지용 최근 제목
+    const recentTitles = await getRecentTitles(supabase);
+
+    // AI로 기사 생성
+    const article = await generateArticle(openai, category, badge, recentTitles);
+
+    // Unsplash 이미지
+    const imageUrl = await fetchUnsplashImage(category);
+
+    // DB INSERT (draft 상태)
+    const articleStatus = MAGAZINE_AUTO.AUTO_PUBLISH ? "published" : "draft";
+    const { data: inserted, error: insertError } = await supabase
+        .from("magazine_articles")
+        .insert({
+            category,
+            title: article.title,
+            summary: article.summary,
+            content: article.content,
+            author: MAGAZINE_AUTO.AUTHOR_NAME,
+            author_role: MAGAZINE_AUTO.AUTHOR_ROLE,
+            image_url: imageUrl,
+            read_time: article.readTime,
+            badge,
+            tags: article.tags,
+            status: articleStatus,
+            published_at: articleStatus === "published" ? new Date().toISOString() : null,
+        })
+        .select("id, title")
+        .single();
+
+    if (insertError) {
+        throw new Error(`DB INSERT 실패: ${insertError.message}`);
+    }
+
+    return {
+        id: inserted?.id,
+        title: inserted?.title,
+        category,
+        badge,
+        status: articleStatus,
+    };
+}
+
 // ===== 메인 핸들러 =====
 
 export async function GET(request: NextRequest) {
@@ -53,10 +142,14 @@ export async function GET(request: NextRequest) {
     }
 
     // 2. 요일 체크 (KST 기준 월/수/금만 실행)
-    const kstNow = new Date(Date.now() + 9 * 60 * 60 * 1000);
+    const kstNow = getKSTNow();
     const dayOfWeek = kstNow.getUTCDay(); // 0=일, 1=월, ... 6=토
 
-    if (!(MAGAZINE_AUTO.PUBLISH_DAYS as readonly number[]).includes(dayOfWeek)) {
+    // force 파라미터: 요일 체크 무시 (보정 크론에서 사용)
+    const url = new URL(request.url);
+    const isForced = url.searchParams.get("force") === "true";
+
+    if (!isForced && !(MAGAZINE_AUTO.PUBLISH_DAYS as readonly number[]).includes(dayOfWeek)) {
         return NextResponse.json({
             message: "오늘은 매거진 생성일이 아닙니다",
             dayOfWeek,
@@ -69,59 +162,54 @@ export async function GET(request: NextRequest) {
         const supabase = getServiceSupabase();
         const openai = getOpenAI();
 
-        // 3. 카테고리/배지 로테이션
-        const { category, badge } = await getNextCategoryAndBadge(supabase);
-
-        // 4. 중복 방지용 최근 제목
-        const recentTitles = await getRecentTitles(supabase);
-
-        // 5. AI로 기사 생성
-        const article = await generateArticle(openai, category, badge, recentTitles);
-
-        // 6. Unsplash 이미지
-        const imageUrl = await fetchUnsplashImage(category);
-
-        // 7. DB INSERT (draft 상태)
-        const status = MAGAZINE_AUTO.AUTO_PUBLISH ? "published" : "draft";
-        const { data: inserted, error: insertError } = await supabase
-            .from("magazine_articles")
-            .insert({
-                category,
-                title: article.title,
-                summary: article.summary,
-                content: article.content,
-                author: MAGAZINE_AUTO.AUTHOR_NAME,
-                author_role: MAGAZINE_AUTO.AUTHOR_ROLE,
-                image_url: imageUrl,
-                read_time: article.readTime,
-                badge,
-                tags: article.tags,
-                status,
-                published_at: status === "published" ? new Date().toISOString() : null,
-            })
-            .select("id, title")
-            .single();
-
-        if (insertError) {
-            throw new Error(`DB INSERT 실패: ${insertError.message}`);
+        // 3. 오늘 이미 생성되었으면 중복 방지
+        const alreadyExists = await hasArticleToday(supabase);
+        if (alreadyExists) {
+            return NextResponse.json({
+                message: "오늘 매거진이 이미 생성되어 있습니다",
+                skipped: true,
+                reason: "duplicate_prevention",
+            });
         }
 
-        const result: GenerationResult = {
+        // 4. 기사 생성 (실패 시 1회 재시도)
+        let result;
+        try {
+            result = await createMagazineArticle(supabase, openai);
+        } catch (firstError) {
+            const firstMsg = firstError instanceof Error ? firstError.message : "알 수 없는 오류";
+            console.error("[magazine-generate] 1차 시도 실패:", firstMsg, "→ 3초 후 재시도");
+
+            // 3초 대기 후 재시도
+            await new Promise((r) => setTimeout(r, 3000));
+
+            try {
+                result = await createMagazineArticle(supabase, openai);
+                console.log("[magazine-generate] 재시도 성공:", result.title);
+            } catch (retryError) {
+                const retryMsg = retryError instanceof Error ? retryError.message : "알 수 없는 오류";
+                console.error("[magazine-generate] 재시도도 실패:", retryMsg);
+                throw retryError;
+            }
+        }
+
+        const response: GenerationResult = {
             success: true,
-            category,
-            badge,
-            title: inserted?.title,
+            category: result.category,
+            badge: result.badge,
+            title: result.title,
         };
 
         return NextResponse.json({
-            ...result,
-            id: inserted?.id,
-            status,
+            ...response,
+            id: result.id,
+            status: result.status,
+            retried: false,
             generatedAt: new Date().toISOString(),
         });
     } catch (err) {
         const message = err instanceof Error ? err.message : "알 수 없는 오류";
-        console.error("[magazine-generate] 실패:", message);
+        console.error("[magazine-generate] 최종 실패:", message);
 
         return NextResponse.json(
             { success: false, error: message },
