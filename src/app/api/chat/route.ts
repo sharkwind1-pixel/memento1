@@ -792,6 +792,22 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // pet.id 소유권 검증 (클라이언트가 다른 유저의 pet UUID를 넣는 것 방지)
+        if (pet.id) {
+            const { data: ownedPet } = await supabase
+                .from("pets")
+                .select("id")
+                .eq("id", pet.id)
+                .eq("user_id", user.id)
+                .single();
+            if (!ownedPet) {
+                return NextResponse.json(
+                    { error: "잘못된 접근입니다." },
+                    { status: 403 }
+                );
+            }
+        }
+
         // 입력 크기 제한 (토큰 비용 폭증 + DoS 방지)
         if (typeof message !== "string" || message.length > 1000) {
             return NextResponse.json(
@@ -1014,10 +1030,13 @@ ${emergencyDetection.isEmergency ? "이것은 즉시 병원에 가야 하는 상
         }
 
         // 대화 히스토리 구성 (최근 10개 - 더 긴 맥락으로 반복 방지 강화)
-        const recentHistory = chatHistory.slice(-10).map((msg) => ({
-            role: msg.role as "user" | "assistant",
-            content: msg.content,
-        }));
+        // role 필터링: "system" 주입 방지 (런타임에서 user/assistant만 허용)
+        const recentHistory = chatHistory.slice(-10)
+            .filter((msg) => msg.role === "user" || msg.role === "assistant")
+            .map((msg) => ({
+                role: msg.role as "user" | "assistant",
+                content: String(msg.content).slice(0, 1000),
+            }));
 
         // OpenAI API 호출 (모드별 설정 최적화)
         // 랜덤 seed로 매 요청마다 다른 응답 유도

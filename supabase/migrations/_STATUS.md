@@ -30,24 +30,24 @@
 - [x] `20260212_admin_update_policy.sql`
 - [x] `20260219_security_fixes.sql`
 - [x] `20260222_fix_equipped_minimi_type.sql`
-- [ ] `20260222_minimi_system.sql` -- 이미 실행됐을 수 있음, 확인 필요
-- [ ] `20260222_placed_minimi.sql` -- 멀티 미니미 배치
+- [x] `20260222_minimi_system.sql` -- 2026-03-06 실행 완료
+- [x] `20260222_placed_minimi.sql` -- 2026-03-06 실행 완료
 - [x] `20260224_user_daily_usage.sql`
 - [x] `20260225_hourly_cron_pgcron.sql`
-- [ ] `20260225_push_preferred_hour.sql` -- 푸시 시간 선택
+- [x] `20260225_push_preferred_hour.sql` -- 2026-03-06 실행 완료
 - [x] `20260225_push_subscriptions.sql`
-- [ ] `20260226_chat_mode_column.sql` -- 추모/일상 대화 분리
-- [ ] `20260226_memory_albums.sql` -- 추억 앨범 테이블
-- [ ] `20260226_security_fixes.sql` -- 미니미 RPC + 펫/사진 제한 트리거
+- [x] `20260226_chat_mode_column.sql` -- 2026-03-06 실행 완료
+- [x] `20260226_memory_albums.sql` -- 2026-03-06 실행 완료
+- [x] `20260226_security_fixes.sql` -- 2026-03-06 실행 완료
 - [x] `20260227_magazine_cron.sql`
 - [x] `20260301_all_pending.sql`
 - [x] `20260301_consent_columns.sql`
-- [ ] `20260301_user_blocks.sql` -- 유저 차단 기능
+- [x] `20260301_user_blocks.sql` -- 2026-03-06 실행 완료
 - [x] `20260303_fix_admin_rls.sql`
-- [ ] `20260304_add_is_hidden_to_posts.sql` -- community_posts에 is_hidden 컬럼
-- [ ] `20260304_add_video_url_to_posts.sql` -- community_posts에 video_url 컬럼
-- [ ] `20260304_video_generations.sql` -- AI 영상 생성 테이블 + RLS + 인덱스
+- [x] `20260304_add_is_hidden_to_posts.sql` -- 2026-03-06 실행 완료
+- [x] `20260304_add_video_url_to_posts.sql` -- 2026-03-06 실행 완료
+- [x] `20260304_video_generations.sql` -- 2026-03-06 실행 완료
 - [x] `20260305_community_region.sql`
 - [x] `20260305_magazine_check_cron.sql`
-- [ ] `20260305_simple_mode.sql` -- profiles에 is_simple_mode 컬럼 (간편모드)
-- [ ] `20260306_protect_sensitive_columns.sql` -- **[CRITICAL]** profiles 민감 컬럼 보호 트리거
+- [x] `20260305_simple_mode.sql` -- 2026-03-06 실행 완료
+- [x] `20260306_protect_sensitive_columns.sql` -- 2026-03-06 실행 완료
