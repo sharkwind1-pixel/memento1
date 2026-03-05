@@ -39,82 +39,103 @@
 | 미니홈피 전략적 노출 (사이드바 바로가기, 헤더 드롭다운) | 완료 |
 | 게시판 API 속도 최적화 (쿼리 병렬화, fire-and-forget 조회수) | 완료 |
 
-## 최근 수정된 핵심 파일 (2026-03-05)
+## 변경 로그 (최신순)
 
-| 파일 | 뭘 바꿨나 |
-|------|----------|
-| `src/lib/supabase-server.ts` | `createAdminSupabase()` 추가 (service_role_key로 RLS 우회, 읽기 전용) |
-| `src/app/api/posts/route.ts` | 미니미 일괄 조회 (admin client), 쿼리 병렬화 (Promise.all) |
-| `src/app/api/posts/[id]/route.ts` | 미니미 조회 (admin client), getAuthUser 중복 제거, 조회수 fire-and-forget, 댓글+미니미 병렬 |
-| `src/components/features/community/communityTypes.ts` | `Post` 인터페이스에 `authorMinimiSlug` 추가 |
-| `src/components/features/community/CommunityPostList.tsx` | 게시글 목록에 미니미 아바타 (40px) 표시 |
-| `src/components/features/community/PostDetailView.tsx` | 게시글 상세에 미니미 아바타 (44px) 표시 + `PostData`에 `authorMinimiSlug` 추가 |
-| `src/components/common/Sidebar.tsx` | "내 미니홈피" 바로가기 (모바일+데스크탑), 유저 영역 `!isMobile` 조건 제거 |
-| `src/components/common/Layout.tsx` | 헤더 드롭다운에 "내 미니홈피" 버튼 추가 |
+> 형식: `[YYYY-MM-DD HH:MM]` 커밋해시 | 작업 요약 | 변경 파일 | 상세
 
 ---
 
-## 2026-03-05 세션 작업 상세
+### [2026-03-05 21:30] 게시판 API 속도 최적화
 
-### 미니홈피 전략적 노출 (커뮤니티 미니미 아바타 + 바로가기)
+| 항목 | 내용 |
+|------|------|
+| 커밋 | `8797134` perf: 게시판 API 응답 속도 최적화 |
+| 원인 | GET 핸들러에서 6~8개 DB 쿼리가 순차 실행, TTFB 1.5~1.7초 |
+| 변경 파일 | `src/app/api/posts/route.ts`, `src/app/api/posts/[id]/route.ts` |
+| 수정 내용 | createServerSupabase + getAuthUser 병렬 실행 (Promise.all) / profiles + user_minimi 미니미 조회 병렬화 / getAuthUser 중복 호출 제거 (2회→1회) / 조회수 증가 fire-and-forget (응답 대기 안 함) / 댓글 + 미니미 조회 병렬화 |
 
-**배경**: 미니홈피가 커뮤니티에서 전혀 노출되지 않아 사용률이 낮음. 전략적 노출 방안 기획 후 구현.
+---
 
-**구현 내용**:
-1. **커뮤니티 게시글에 미니미 아바타 표시**
-   - 게시글 목록: 닉네임 옆에 40px 픽셀아트 미니미
-   - 게시글 상세: 닉네임 옆에 44px 픽셀아트 미니미
-   - `profiles.equipped_minimi_id` (UUID) → `user_minimi.minimi_id` (slug) → `CHARACTER_CATALOG` (PNG)
-   - API에서 batch 조회 (`Promise.all`로 병렬)
+### [2026-03-05 21:00] 미니미 크기 확대 + 내 미니홈피 버튼 모바일 사이드바 추가
 
-2. **"내 미니홈피" 바로가기**
-   - 모바일 사이드바(햄버거 메뉴) + 데스크탑 사이드바 하단 유저 영역
-   - 헤더 드롭다운 (xl 미만)
-   - `localStorage("memento-record-tab", "minihompy")` → RecordPage의 미니홈피 서브탭으로 이동
+| 항목 | 내용 |
+|------|------|
+| 커밋 | `0ab2971` 미니미 크기 확대 + 내 미니홈피 버튼 모바일 사이드바에도 추가 |
+| 원인 | 승빈님 피드백 "미니미가 너무 작다", "미니홈피 버튼 안보여" |
+| 변경 파일 | `CommunityPostList.tsx`, `PostDetailView.tsx`, `Sidebar.tsx` |
+| 수정 내용 | 목록 미니미 32px→40px, 상세 미니미 36px→44px / Sidebar 유저 영역의 `!isMobile` 조건 제거 → 모바일+데스크탑 모두 표시 / 모바일에서 버튼 클릭 시 사이드바 자동 닫힘 |
 
-**버그 수정 (RLS)**:
-- `profiles`, `user_minimi` 테이블의 RLS가 `auth.uid() = id`로 제한
-- 비로그인/다른 유저가 게시글 작성자의 미니미를 조회할 수 없었음
-- 해결: `createAdminSupabase()` (service_role_key) 함수 추가, 미니미 조회에만 사용
+---
 
-**커밋**:
-- `6cb0e4c` 미니홈피 전략적 노출: 미니미 아바타 + 헤더 바로가기
-- `fdbd720` fix: 미니미 아바타 미표시 - RLS 우회를 위한 admin 클라이언트 적용
-- `3f9a345` 미니미 아바타 크기 키우고 사이드바에 내 미니홈피 버튼 추가
-- `0ab2971` 미니미 크기 확대 + 내 미니홈피 버튼 모바일 사이드바에도 추가
+### [2026-03-05 20:40] 미니미 아바타 크기 + 데스크탑 사이드바 내 미니홈피 버튼
 
-### 게시판 API 속도 최적화
+| 항목 | 내용 |
+|------|------|
+| 커밋 | `3f9a345` 미니미 아바타 크기 키우고 사이드바에 내 미니홈피 버튼 추가 |
+| 변경 파일 | `CommunityPostList.tsx`, `PostDetailView.tsx`, `Sidebar.tsx` |
+| 수정 내용 | 목록 미니미 24px→32px, 상세 28px→36px / 데스크탑 사이드바 하단 유저 영역에 "내 미니홈피" 버튼 추가 (내 정보 아래, 로그아웃 위) |
 
-**원인**: GET 핸들러에서 6~8개 DB 쿼리가 순차 실행 → TTFB 1.5~1.7초
+---
 
-**최적화**:
-- `createServerSupabase()` + `getAuthUser()` 병렬 시작 (Promise.all)
-- `profiles` + `user_minimi` 미니미 조회 병렬화
-- `getAuthUser()` 중복 호출 제거 (posts/[id]에서 2회→1회)
-- 조회수 증가 fire-and-forget (응답 대기 안 함)
-- 댓글 + 미니미 조회 병렬화
+### [2026-03-05 20:20] 미니미 아바타 미표시 버그 수정 (RLS)
 
-**커밋**: `8797134` perf: 게시판 API 응답 속도 최적화
+| 항목 | 내용 |
+|------|------|
+| 커밋 | `fdbd720` fix: 미니미 아바타 미표시 - RLS 우회를 위한 admin 클라이언트 적용 |
+| 원인 | profiles, user_minimi 테이블의 RLS가 `auth.uid() = id`로 제한. API에서 anon key로 다른 유저 데이터 조회 불가 → authorMinimiSlug가 항상 null |
+| 변경 파일 | `src/lib/supabase-server.ts`, `src/app/api/posts/route.ts`, `src/app/api/posts/[id]/route.ts` |
+| 수정 내용 | `createAdminSupabase()` 함수 신규 추가 (service_role_key, RLS 우회, 읽기 전용). 미니미 조회 쿼리에만 admin 클라이언트 사용 |
+| 디버깅 과정 | DB 직접 조회로 데이터 존재 확인 → anon key로 profiles 조회 시 빈 배열 반환 확인 → RLS 원인 특정 |
 
-### 이전 세션 미기록 작업 (2026-03-04~05)
+---
 
-#### 매거진 크론 안정성 강화
-- 실패 시 자동 재시도 로직 + 보정 크론 추가
-- **커밋**: `16c5df4` 매거진 크론 안정성 강화: 실패 시 자동 재시도 + 보정 크론 추가
+### [2026-03-05 19:00] 미니홈피 전략적 노출 (초기 구현)
 
-#### 커뮤니티 게시글 뒤로가기 버그 수정
-- 게시글 상세에서 뒤로가기 시 history API와 연동되지 않던 문제 해결
-- **커밋**: `f3d86c7` 커뮤니티 게시글 뒤로가기 버그 수정: history API 연동
+| 항목 | 내용 |
+|------|------|
+| 커밋 | `6cb0e4c` 미니홈피 전략적 노출: 미니미 아바타 + 헤더 바로가기 |
+| 배경 | 미니홈피가 커뮤니티에서 전혀 노출되지 않아 사용률 낮음. PM+UX 에이전트 컨설팅으로 전략 수립 후 상위 2개 구현 |
+| 변경 파일 (6개) | `communityTypes.ts`, `posts/route.ts`, `posts/[id]/route.ts`, `CommunityPostList.tsx`, `PostDetailView.tsx`, `Layout.tsx` |
+| 수정 내용 | Post 인터페이스에 authorMinimiSlug 추가 / API에서 profiles→user_minimi 체인으로 slug 조회 및 응답에 포함 / 게시글 목록+상세에 닉네임 옆 미니미 아바타 렌더링 / 헤더 드롭다운에 "내 미니홈피" 바로가기 추가 (localStorage로 탭 전환) |
+| 데이터 흐름 | `profiles.equipped_minimi_id (UUID)` → `user_minimi.minimi_id (slug)` → `CHARACTER_CATALOG.imageUrl (PNG)` |
 
-#### 지역정보 게시판 지역별 필터링
-- 지역정보 게시판(`local`)에 지역 선택 필터 추가
-- `community_posts.region` 컬럼 활용, API에 `region` 파라미터 추가
-- **커밋**: `f0b1cd0` feat: 지역정보 게시판에 지역별 필터링 추가
+---
 
-#### 커뮤니티 필터 UI 모바일 최적화
-- 뱃지/태그 필터를 수평 스크롤 + 콤팩트 칩 UI로 변경
-- 모바일에서 필터가 화면을 많이 차지하던 문제 해결
-- **커밋**: `3697553` 커뮤니티 필터 UI 모바일 최적화: 수평 스크롤 + 콤팩트 칩
+### [2026-03-04 ~] 커뮤니티 필터 UI 모바일 최적화
+
+| 항목 | 내용 |
+|------|------|
+| 커밋 | `3697553` 커뮤니티 필터 UI 모바일 최적화: 수평 스크롤 + 콤팩트 칩 |
+| 원인 | 모바일에서 뱃지/태그 필터가 화면을 많이 차지함 |
+| 수정 내용 | 필터를 수평 스크롤 + 콤팩트 칩 UI로 변경 |
+
+---
+
+### [2026-03-04 ~] 지역정보 게시판 지역별 필터링
+
+| 항목 | 내용 |
+|------|------|
+| 커밋 | `f0b1cd0` feat: 지역정보 게시판에 지역별 필터링 추가 |
+| 수정 내용 | 지역정보 게시판(local)에 지역 선택 필터 추가. community_posts.region 컬럼 활용, API에 region 파라미터 추가 |
+
+---
+
+### [2026-03-04 ~] 커뮤니티 게시글 뒤로가기 버그 수정
+
+| 항목 | 내용 |
+|------|------|
+| 커밋 | `f3d86c7` 커뮤니티 게시글 뒤로가기 버그 수정: history API 연동 |
+| 원인 | 게시글 상세에서 브라우저 뒤로가기 시 history API와 연동되지 않음 |
+| 수정 내용 | popstate 이벤트 리스너로 history API 연동 |
+
+---
+
+### [2026-03-04 ~] 매거진 크론 안정성 강화
+
+| 항목 | 내용 |
+|------|------|
+| 커밋 | `16c5df4` 매거진 크론 안정성 강화: 실패 시 자동 재시도 + 보정 크론 추가 |
+| 수정 내용 | 크론 실패 시 자동 재시도 로직 + 보정 크론(누락 감지/재실행) 추가 |
 
 ---
 
