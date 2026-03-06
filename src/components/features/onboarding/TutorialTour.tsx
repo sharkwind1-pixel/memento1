@@ -480,94 +480,34 @@ export default function TutorialTour({
                 )}
 
                 <div style={{ position: "relative" }}>
-                    {/* 구름 장식 */}
-                    <div
+                    {/* SVG 구름 배경 */}
+                    <svg
+                        viewBox="0 0 280 210"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
                         style={{
                             position: "absolute",
-                            left: -12,
-                            top: 16,
-                            width: 32,
-                            height: 32,
-                            background: bubbleBg,
-                            borderRadius: "50%",
+                            top: -18,
+                            left: -10,
+                            width: 280,
+                            height: 210,
+                            pointerEvents: "none",
+                            filter: isDark
+                                ? "drop-shadow(0 12px 40px rgba(0,0,0,0.5))"
+                                : "drop-shadow(0 12px 40px rgba(0,0,0,0.12))",
                         }}
-                    />
-                    <div
-                        style={{
-                            position: "absolute",
-                            left: -8,
-                            top: 48,
-                            width: 28,
-                            height: 28,
-                            background: bubbleBg,
-                            borderRadius: "50%",
-                        }}
-                    />
-                    <div
-                        style={{
-                            position: "absolute",
-                            right: -12,
-                            top: 24,
-                            width: 32,
-                            height: 32,
-                            background: bubbleBg,
-                            borderRadius: "50%",
-                        }}
-                    />
-                    <div
-                        style={{
-                            position: "absolute",
-                            right: -8,
-                            top: 56,
-                            width: 24,
-                            height: 24,
-                            background: bubbleBg,
-                            borderRadius: "50%",
-                        }}
-                    />
-                    <div
-                        style={{
-                            position: "absolute",
-                            left: 24,
-                            bottom: -12,
-                            width: 28,
-                            height: 28,
-                            background: bubbleBg,
-                            borderRadius: "50%",
-                        }}
-                    />
-                    <div
-                        style={{
-                            position: "absolute",
-                            left: "50%",
-                            transform: "translateX(-50%)",
-                            bottom: -16,
-                            width: 36,
-                            height: 36,
-                            background: bubbleBg,
-                            borderRadius: "50%",
-                        }}
-                    />
-                    <div
-                        style={{
-                            position: "absolute",
-                            right: 24,
-                            bottom: -12,
-                            width: 28,
-                            height: 28,
-                            background: bubbleBg,
-                            borderRadius: "50%",
-                        }}
-                    />
+                    >
+                        <path
+                            d="M50 170 C20 170, 0 150, 8 130 C-2 115, 5 95, 25 88 C15 70, 30 48, 55 48 C60 30, 80 15, 105 18 C120 5, 150 0, 172 12 C190 2, 215 8, 228 25 C250 18, 272 30, 270 52 C285 62, 285 85, 272 98 C282 115, 275 140, 255 150 C262 168, 250 180, 230 178 C220 192, 195 198, 175 190 C160 200, 135 202, 118 192 C100 202, 75 198, 60 185 C55 182, 52 176, 50 170 Z"
+                            fill={bubbleBg}
+                        />
+                    </svg>
 
-                    {/* 본체 */}
+                    {/* 본체 (구름 위에 텍스트) */}
                     <div
                         style={{
                             position: "relative",
-                            background: bubbleBg,
-                            borderRadius: 36,
                             padding: "20px 20px 16px",
-                            boxShadow: isDark ? "0 20px 60px rgba(0,0,0,0.4)" : "0 20px 60px rgba(0,0,0,0.15)",
                             textAlign: "center",
                         }}
                     >
@@ -646,8 +586,8 @@ export default function TutorialTour({
                                             i === currentStep
                                                 ? `linear-gradient(135deg, ${MEMENTO_COLORS[500]}, ${MEMENTO_COLORS[400]})`
                                                 : i < currentStep
-                                                  ? "rgba(5,178,220,0.4)" /* memento-500 */
-                                                  : "#e5e7eb",
+                                                  ? "rgba(5,178,220,0.4)"
+                                                  : isDark ? "#4b5563" : "#e5e7eb",
                                         transition: "all 0.3s",
                                     }}
                                 />
