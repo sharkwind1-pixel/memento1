@@ -94,7 +94,7 @@ export interface UseAIChatReturn {
 
 /** 장소 질문 감지 키워드 */
 const PLACE_PATTERNS: { pattern: RegExp; keyword: string }[] = [
-    { pattern: /산책|공원|놀이터|야외|걷기|뛰기/, keyword: "공원" },
+    { pattern: /산책|공원|놀이터|야외|걷기|뛰기/, keyword: "산책로 공원" },
     { pattern: /병원|수의사|진료|응급|건강검진/, keyword: "동물병원" },
     { pattern: /펫카페|카페|놀 곳/, keyword: "펫카페" },
     { pattern: /미용|그루밍|목욕|트리밍/, keyword: "애견미용" },

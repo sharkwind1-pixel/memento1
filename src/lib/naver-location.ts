@@ -39,7 +39,7 @@ interface NaverSearchItem {
 
 /** 유저 메시지에서 장소 질문 감지 + 검색 키워드 반환 */
 const PLACE_PATTERNS: { pattern: RegExp; keyword: string }[] = [
-    { pattern: /산책|공원|놀이터|야외|걷기|뛰기/, keyword: "공원" },
+    { pattern: /산책|공원|놀이터|야외|걷기|뛰기/, keyword: "산책로 공원" },
     { pattern: /병원|수의사|진료|응급|건강검진|예방접종/, keyword: "동물병원" },
     { pattern: /펫카페|카페|놀 곳|놀이/, keyword: "펫카페" },
     { pattern: /미용|그루밍|목욕|트리밍/, keyword: "애견미용" },
@@ -176,7 +176,7 @@ async function searchLocal(query: string, display = 5): Promise<NaverSearchItem[
     }
 
     try {
-        const url = `https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent(query)}&display=${display}&sort=random`;
+        const url = `https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent(query)}&display=${display}&sort=comment`;
 
         const res = await fetch(url, {
             headers: {
@@ -227,9 +227,18 @@ export async function findNearbyPlaces(
 
     if (items.length === 0) return [];
 
+    // 카테고리 기반 필터: 검색 키워드와 무관한 결과 제외
+    const EXCLUDED_CATEGORIES = /한식|중식|일식|양식|분식|육류|고기|치킨|피자|패스트푸드|카페|커피|디저트|제과|주점|술집|편의점|마트|세탁|부동산|학원|금융|보험/;
+    // 단, 키워드가 카페 관련이면 카페 필터 해제
+    const isPlaceCategory = keyword.includes("카페") || keyword.includes("용품");
+    const filteredItems = isPlaceCategory
+        ? items
+        : items.filter((item) => !EXCLUDED_CATEGORIES.test(item.category));
+    const searchItems = filteredItems.length > 0 ? filteredItems : items; // 필터 후 0개면 원본 사용
+
     // 3단계: 거리 계산 + 필터 + 정렬
     const radiusKm = LOCATION.SEARCH_RADIUS_KM;
-    const places: NearbyPlace[] = items
+    const places: NearbyPlace[] = searchItems
         .map((item) => {
             // HTML 태그 제거 (네이버 검색 결과에 <b> 태그 포함)
             const name = item.title.replace(/<[^>]+>/g, "");
