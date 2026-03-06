@@ -59,6 +59,13 @@ export const API = {
     AI_TEMPERATURE_MEMORIAL: 0.65,  // 추모 모드 온도 (따뜻한 밝음 + 지시 준수 균형)
 } as const;
 
+// ===== 위치 기반 장소 검색 =====
+export const LOCATION = {
+    SEARCH_RADIUS_KM: 2,        // 검색 반경 (km)
+    MAX_RESULTS: 5,             // 최대 결과 수
+    GEOLOCATION_TIMEOUT: 5000,  // GPS 타임아웃 (ms)
+} as const;
+
 // ===== 포인트 시스템 =====
 export const POINTS = {
     /** 활동별 적립 포인트 */

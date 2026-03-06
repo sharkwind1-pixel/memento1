@@ -37,6 +37,7 @@ import {
     buildCrisisAlert,
     type CrisisDetectionResult,
 } from "@/lib/crisis-detection";
+import { detectPlaceQuery, findNearbyPlaces, type NearbyPlace } from "@/lib/naver-location";
 
 // 로컬 헬퍼/타입 & 프롬프트
 import type { EmotionType, GriefStage } from "@/types";
@@ -157,6 +158,8 @@ export async function POST(request: NextRequest) {
             photoMemories = [],
             reminders = [],
             enableAgent = true,
+            userLocation,
+            placeKeyword,
         } = body as {
             message: string;
             pet: PetInfo;
@@ -165,6 +168,8 @@ export async function POST(request: NextRequest) {
             photoMemories?: PhotoMemory[];
             reminders?: ReminderInfo[];
             enableAgent?: boolean;
+            userLocation?: { lat: number; lng: number };
+            placeKeyword?: string;
         };
 
         // 유효성 검사
@@ -350,6 +355,32 @@ export async function POST(request: NextRequest) {
             }
         }
 
+        // 위치 기반 장소 검색 (클라이언트에서 좌표 + 키워드를 보낸 경우)
+        let nearbyPlaces: NearbyPlace[] = [];
+        let placeContext = "";
+        if (userLocation && placeKeyword) {
+            try {
+                // 서버 측 장소 질문 감지 재검증 (클라이언트 조작 방지)
+                const serverDetection = detectPlaceQuery(sanitizedMessage);
+                if (serverDetection.detected) {
+                    nearbyPlaces = await findNearbyPlaces(
+                        userLocation.lat,
+                        userLocation.lng,
+                        serverDetection.keyword || placeKeyword,
+                    );
+                    if (nearbyPlaces.length > 0) {
+                        placeContext = `\n[주변 장소 검색 결과 (${placeKeyword})]:\n` +
+                            nearbyPlaces.map((p, i) =>
+                                `${i + 1}. ${p.name} (${p.distance}) - ${p.address}`
+                            ).join("\n") +
+                            "\n위 장소들을 자연스럽게 추천해주세요. 이름과 거리를 언급하면 좋습니다.";
+                    }
+                }
+            } catch (err) {
+                console.error("[chat/place-search]", err instanceof Error ? err.message : err);
+            }
+        }
+
         // 타임라인 컨텍스트 생성
         const timelineContext = timelineToContext(timeline);
 
@@ -378,6 +409,7 @@ export async function POST(request: NextRequest) {
         // 통합 컨텍스트 (우선순위 기반 예산 시스템)
         const contextItems = isMemorialMode
             ? [
+                { content: placeContext, priority: 9 },   // 장소 검색 결과 (최우선)
                 { content: onboardingContext, priority: 7 },
                 { content: emotionTrendContext, priority: 6 },
                 { content: recentTopicsContext, priority: 6 },
@@ -389,6 +421,7 @@ export async function POST(request: NextRequest) {
                 { content: reminderContext, priority: 2 },
             ]
             : [
+                { content: placeContext, priority: 9 },   // 장소 검색 결과 (최우선)
                 { content: onboardingContext, priority: 7 },
                 { content: emotionTrendContext, priority: 6 },
                 { content: recentTopicsContext, priority: 6 },
@@ -684,6 +717,19 @@ ${emergencyDetection.isEmergency ? "이것은 즉시 병원에 가야 하는 상
                         matchedPhoto,
                         matchedTimeline,
                         suggestedReminder,
+                        // 위치 기반 추천 장소
+                        ...(nearbyPlaces.length > 0 ? {
+                            nearbyPlaces: {
+                                query: placeKeyword,
+                                places: nearbyPlaces.map(p => ({
+                                    name: p.name,
+                                    category: p.category,
+                                    distance: p.distance,
+                                    address: p.address,
+                                    mapUrl: p.mapUrl,
+                                })),
+                            },
+                        } : {}),
                     })}\n\n`));
 
                     // 대화 저장 (fire-and-forget)

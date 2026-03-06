@@ -22,6 +22,7 @@ import {
 } from "@/components/features/chat";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
+import { LOCATION } from "@/config/constants";
 import { ChatMessage } from "@/components/features/chat/chatTypes";
 import type { Pet, TimelineEntry, PhotoItem, CrisisAlertInfo } from "@/types";
 import type { User } from "@supabase/supabase-js";
@@ -85,6 +86,45 @@ export interface UseAIChatReturn {
     handleRetry: (errorMessageId: string, retryMessage: string) => void;
     handleReminderAccept: (messageId: string) => void;
     handleReminderDismiss: (messageId: string) => void;
+}
+
+// ============================================================================
+// 위치 유틸리티 (장소 질문 감지 + GPS 좌표 수집)
+// ============================================================================
+
+/** 장소 질문 감지 키워드 */
+const PLACE_PATTERNS: { pattern: RegExp; keyword: string }[] = [
+    { pattern: /산책|공원|놀이터|야외|걷기|뛰기/, keyword: "공원" },
+    { pattern: /병원|수의사|진료|응급|건강검진/, keyword: "동물병원" },
+    { pattern: /펫카페|카페|놀 곳/, keyword: "펫카페" },
+    { pattern: /미용|그루밍|목욕|트리밍/, keyword: "애견미용" },
+    { pattern: /호텔|펫호텔|맡길|돌봄/, keyword: "펫호텔" },
+    { pattern: /용품|사료|간식.*사/, keyword: "애견용품" },
+];
+
+/** 유저 메시지에서 장소 질문 감지 */
+function detectPlaceQueryClient(text: string): { detected: boolean; keyword?: string } {
+    const questionPattern = /어디|어느|가까운|근처|주변|추천|갈까|가볼|찾아/;
+    if (!questionPattern.test(text)) return { detected: false };
+    for (const { pattern, keyword } of PLACE_PATTERNS) {
+        if (pattern.test(text)) return { detected: true, keyword };
+    }
+    return { detected: false };
+}
+
+/** Geolocation 권한 요청 + 좌표 수집 (5초 타임아웃) */
+function getUserLocation(): Promise<{ lat: number; lng: number } | null> {
+    return new Promise((resolve) => {
+        if (typeof navigator === "undefined" || !navigator.geolocation) {
+            resolve(null);
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(
+            (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+            () => resolve(null),
+            { timeout: LOCATION.GEOLOCATION_TIMEOUT, enableHighAccuracy: false },
+        );
+    });
 }
 
 // ============================================================================
@@ -442,6 +482,13 @@ export function useAIChat({
                         caption: photo.caption,
                     })) || [];
 
+            // 장소 질문 감지 + GPS 좌표 수집
+            const placeDetection = detectPlaceQueryClient(currentInput);
+            let userLocation: { lat: number; lng: number } | null = null;
+            if (placeDetection.detected) {
+                userLocation = await getUserLocation();
+            }
+
             // OpenAI API 호출 (에이전트 기능 포함 + 타임라인 데이터)
             const response = await authFetch(API.CHAT, {
                 method: "POST",
@@ -475,6 +522,11 @@ export function useAIChat({
                     photoMemories, // 사진 캡션 데이터
                     reminders, // 케어 리마인더 데이터
                     enableAgent: true,
+                    // 위치 기반 장소 검색 데이터
+                    ...(userLocation && placeDetection.keyword ? {
+                        userLocation,
+                        placeKeyword: placeDetection.keyword,
+                    } : {}),
                 }),
             });
 
@@ -545,6 +597,7 @@ export function useAIChat({
                                                     emotionScore: event.emotionScore,
                                                     matchedPhoto: event.matchedPhoto,
                                                     matchedTimeline: event.matchedTimeline,
+                                                    nearbyPlaces: event.nearbyPlaces,
                                                     isStreaming: false,
                                                 }
                                                 : msg

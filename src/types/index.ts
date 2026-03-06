@@ -213,6 +213,17 @@ export interface ChatMessage {
         title: string;
         schedule: { type: string; time: string };
     };
+    /** 위치 기반 주변 추천 장소 (네이버 API) */
+    nearbyPlaces?: {
+        query: string;
+        places: {
+            name: string;
+            category: string;
+            distance: string;
+            address: string;
+            mapUrl?: string;
+        }[];
+    };
 }
 
 /** 감정 타입 */

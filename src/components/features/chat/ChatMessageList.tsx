@@ -9,7 +9,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useRef, useEffect, useState } from "react";
-import { PawPrint, RotateCcw, Bell, Phone, Heart, BookOpen } from "lucide-react";
+import { PawPrint, RotateCcw, Bell, Phone, Heart, BookOpen, MapPin, ExternalLink } from "lucide-react";
 
 // 타이핑 인디케이터 감성 텍스트 (pet.type별 분기)
 const TYPING_TEXTS_DOG_DAILY = [
@@ -327,6 +327,57 @@ export default function ChatMessageList({
                                                         isMemorialMode ? "text-amber-600/80 dark:text-amber-300/80" : "text-sky-600/80 dark:text-sky-300/80"
                                                     }`}>{message.matchedTimeline.content}</p>
                                                 )}
+                                            </div>
+                                        </div>
+                                    )}
+                                    {/* 주변 장소 추천 카드 */}
+                                    {message.role === "pet" && message.nearbyPlaces && message.nearbyPlaces.places.length > 0 && (
+                                        <div className={`mt-2 rounded-xl overflow-hidden shadow-sm border ${
+                                            isMemorialMode ? "border-amber-200 bg-amber-50/50 dark:bg-amber-900/20" : "border-emerald-200 bg-emerald-50/50 dark:bg-emerald-900/20"
+                                        }`}>
+                                            <div className="px-3 py-2.5">
+                                                <div className={`flex items-center gap-1.5 mb-2 ${
+                                                    isMemorialMode ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"
+                                                }`}>
+                                                    <MapPin className="w-3.5 h-3.5" />
+                                                    <span className="text-xs font-medium">주변 {message.nearbyPlaces.query}</span>
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    {message.nearbyPlaces.places.map((place, pIdx) => (
+                                                        <a
+                                                            key={pIdx}
+                                                            href={place.mapUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className={`block px-2.5 py-2 rounded-lg transition-all hover:scale-[1.01] active:scale-[0.99] ${
+                                                                isMemorialMode
+                                                                    ? "bg-amber-100/60 dark:bg-amber-800/20 hover:bg-amber-100 dark:hover:bg-amber-800/30"
+                                                                    : "bg-emerald-100/60 dark:bg-emerald-800/20 hover:bg-emerald-100 dark:hover:bg-emerald-800/30"
+                                                            }`}
+                                                        >
+                                                            <div className="flex items-start justify-between gap-2">
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <p className={`text-sm font-medium truncate ${
+                                                                            isMemorialMode ? "text-amber-800 dark:text-amber-200" : "text-emerald-800 dark:text-emerald-200"
+                                                                        }`}>{place.name}</p>
+                                                                        <ExternalLink className={`w-3 h-3 flex-shrink-0 ${
+                                                                            isMemorialMode ? "text-amber-400" : "text-emerald-400"
+                                                                        }`} />
+                                                                    </div>
+                                                                    <p className={`text-[11px] mt-0.5 truncate ${
+                                                                        isMemorialMode ? "text-amber-600/70 dark:text-amber-300/70" : "text-emerald-600/70 dark:text-emerald-300/70"
+                                                                    }`}>{place.address}</p>
+                                                                </div>
+                                                                <span className={`text-xs font-semibold flex-shrink-0 px-1.5 py-0.5 rounded-full ${
+                                                                    isMemorialMode
+                                                                        ? "bg-amber-200/60 dark:bg-amber-700/40 text-amber-700 dark:text-amber-300"
+                                                                        : "bg-emerald-200/60 dark:bg-emerald-700/40 text-emerald-700 dark:text-emerald-300"
+                                                                }`}>{place.distance}</span>
+                                                            </div>
+                                                        </a>
+                                                    ))}
+                                                </div>
                                             </div>
                                         </div>
                                     )}
