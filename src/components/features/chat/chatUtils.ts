@@ -1,13 +1,14 @@
 // AI 채팅 관련 유틸리티 함수
 
 import { FREE_LIMITS } from "@/config/constants";
+import { STORAGE_KEYS } from "@/constants/storage";
 import type { Pet } from "@/types";
 
 // config에서 가져온 값을 re-export (하위 호환성)
 export const DAILY_FREE_LIMIT = FREE_LIMITS.DAILY_CHATS;
 export const MAX_MESSAGE_LENGTH = FREE_LIMITS.MESSAGE_LENGTH;
 
-export const USAGE_STORAGE_KEY = "memento-ani-chat-usage";
+export const USAGE_STORAGE_KEY = STORAGE_KEYS.CHAT_USAGE;
 
 // 일일 사용량 관리 함수
 export function getTodayKey(): string {

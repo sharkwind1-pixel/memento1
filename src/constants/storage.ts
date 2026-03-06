@@ -23,6 +23,9 @@ export const STORAGE_KEYS = {
 
     /** 온보딩 완료 여부 */
     ONBOARDING_COMPLETED: "memento-ani-onboarding",
+
+    /** AI 펫톡 일일 사용량 */
+    CHAT_USAGE: "memento-ani-chat-usage",
 } as const;
 
 /** 스토리지 키 타입 */

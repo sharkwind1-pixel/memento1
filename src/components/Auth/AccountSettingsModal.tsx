@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNicknameCheck } from "@/hooks/useNicknameCheck";
 import { supabase } from "@/lib/supabase";
+import { STORAGE_KEYS } from "@/constants/storage";
 import {
     X,
     User,
@@ -345,7 +346,7 @@ export default function AccountSettingsModal({
             );
 
             // AI 사용량은 localStorage에서 가져오기
-            const aiUsageData = localStorage.getItem("memento-ani-chat-usage");
+            const aiUsageData = localStorage.getItem(STORAGE_KEYS.CHAT_USAGE);
             let totalAiUsage = 0;
             if (aiUsageData) {
                 try {
@@ -387,7 +388,7 @@ export default function AccountSettingsModal({
             localStorage.removeItem("memento-ani-tutorial-complete");
             localStorage.removeItem("memento-ani-onboarding-complete");
             localStorage.removeItem("memento-current-tab");
-            localStorage.removeItem("memento-ani-chat-usage");
+            localStorage.removeItem(STORAGE_KEYS.CHAT_USAGE);
 
             toast.success(
                 "회원탈퇴가 완료되었습니다. 이용해 주셔서 감사합니다.",
