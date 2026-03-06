@@ -215,13 +215,13 @@ export default function MinimiShopModal({
                                                             </div>
                                                         )}
 
-                                                        <div className="flex justify-center items-center py-1 h-[80px]">
+                                                        <div className="flex justify-center items-center py-1 h-[72px]">
                                                             {char.imageUrl ? (
                                                                 <Image
                                                                     src={char.imageUrl}
                                                                     alt={char.name}
-                                                                    width={72}
-                                                                    height={72}
+                                                                    width={64}
+                                                                    height={64}
                                                                     className="object-contain"
                                                                     style={{ imageRendering: "pixelated" }}
                                                                 />
