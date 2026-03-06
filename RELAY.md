@@ -7,7 +7,9 @@
 
 ---
 
-## 미실행 마이그레이션 — 없음 (2026-03-06 전부 실행 완료)
+## 미실행 마이그레이션
+
+- [ ] `20260306_qa_security_fixes.sql` — RPC IDOR 방지(auth.uid 검증) + JWT 트리거 수정(current_setting)
 
 > 상세 상태: `supabase/migrations/_STATUS.md` 참조.
 
@@ -31,12 +33,15 @@
 - `reports`, `deleted_accounts` 테이블 RLS가 이메일 하드코딩 → `is_admin = true`로 변경 필요
 - 상세 SQL → `.claude/plans/iterative-inventing-rabbit.md`
 
-### 5. 전체 코드 QA 스캔 결과 (2026-03-06)
+### 5. QA 스캔 잔여 이슈
 - **상세 보고서**: `docs/QA_SCAN_REPORT_20260306.md`
-- CRITICAL 7건: RPC IDOR, CSP, JWT 트리거, hydration, 메모리 누수, 에러 삼킴
-- MAJOR 15건: fail-open, 모달 scroll lock, alert(), 타입 중복, bare catch
-- P0 다크모드 5개 파일 미대응: Reminders, Admin, MemoryAlbum, Video, RemindersSection
-- 수정 우선순위: Phase 1(보안) → Phase 2(안정성) → Phase 3(UX) → Phase 4(아키텍처)
+- [완료] Phase 1 보안: RPC IDOR, JWT 트리거, fail-open (`9bc18b5`)
+- [완료] Phase 2 안정성: hydration, 메모리 누수, 에러 삼킴, bare catch (`9bc18b5`)
+- [완료] Phase 3 일부: alert→toast, RemindersSection/VideoGeneration 다크모드 (`9bc18b5`)
+- [미완] CSP unsafe-eval 제거 (Next.js 설정 연동 필요)
+- [미완] 인메모리 rate limit → Redis/KV 전환 (인프라 의존)
+- [미완] AdminPage, MemoryAlbumViewer 다크모드
+- [미완] 12개 모달 body scroll lock, 타입 중복 통합
 
 ### [완료] 간편모드 — 코드+DB 모두 완료
 ### [완료] 관리자 대시보드 모바일 compact UX
