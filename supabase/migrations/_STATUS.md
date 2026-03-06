@@ -52,4 +52,4 @@
 - [x] `20260305_simple_mode.sql` -- 2026-03-06 실행 완료
 - [x] `20260306_protect_sensitive_columns.sql` -- 2026-03-06 실행 완료
 - [x] `20260306_fix_trigger_missing_columns.sql` -- 2026-03-06 실행 완료 (ban_reason/banned_at/last_ip 컬럼 참조 제거)
-- [ ] `20260306_qa_security_fixes.sql` -- RPC IDOR auth.uid() 검증 + JWT 트리거 current_setting('role') 수정
+- [x] `20260306_qa_security_fixes.sql` -- 2026-03-06 실행 완료 (RPC IDOR auth.uid() 검증 + JWT 트리거 current_setting('role') 수정)

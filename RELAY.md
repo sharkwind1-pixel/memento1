@@ -7,9 +7,7 @@
 
 ---
 
-## 미실행 마이그레이션
-
-- [ ] `20260306_qa_security_fixes.sql` — RPC IDOR 방지(auth.uid 검증) + JWT 트리거 수정(current_setting)
+## 미실행 마이그레이션 — 없음 (2026-03-06 전부 실행 완료)
 
 > 상세 상태: `supabase/migrations/_STATUS.md` 참조.
 
