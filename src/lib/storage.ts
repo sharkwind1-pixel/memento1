@@ -229,10 +229,17 @@ function validateImageFile(file: File): { valid: boolean; ext: string; error?: s
     return { valid: true, ext: extValidation.ext };
 }
 
-/** 매거진 기사 썸네일 업로드 */
-export async function uploadMagazineImage(
+/**
+ * 공통 이미지 업로드 (검증 + Storage 업로드 + 공개 URL 반환)
+ * path prefix만 다른 4개 함수를 통합한 내부 함수.
+ * @param file 업로드할 이미지 파일
+ * @param userId 사용자 ID
+ * @param pathPrefix Storage 경로 접두사 (예: "magazine", "community")
+ */
+async function uploadImage(
     file: File,
-    userId: string
+    userId: string,
+    pathPrefix: string
 ): Promise<UploadResult> {
     try {
         const validation = validateImageFile(file);
@@ -243,7 +250,7 @@ export async function uploadMagazineImage(
         const timestamp = Date.now();
         const randomId = Math.random().toString(36).substring(2, 9);
         const ext = validation.ext;
-        const path = `magazine/${userId}/${timestamp}-${randomId}.${ext}`;
+        const path = `${pathPrefix}/${userId}/${timestamp}-${randomId}.${ext}`;
 
         const { data, error } = await supabase.storage
             .from("pet-media")
@@ -266,131 +273,28 @@ export async function uploadMagazineImage(
             path: data.path,
         };
     } catch {
-        return { success: false, error: "업로드 중 오류가 발생했습니다." };
+        return { success: false, error: "이미지 업로드 중 오류가 발생했습니다." };
     }
+}
+
+/** 매거진 기사 썸네일 업로드 */
+export async function uploadMagazineImage(file: File, userId: string): Promise<UploadResult> {
+    return uploadImage(file, userId, "magazine");
 }
 
 /** 커뮤니티 게시글 이미지 업로드 */
-export async function uploadCommunityImage(
-    file: File,
-    userId: string
-): Promise<UploadResult> {
-    try {
-        const validation = validateImageFile(file);
-        if (!validation.valid) {
-            return { success: false, error: validation.error };
-        }
-
-        const timestamp = Date.now();
-        const randomId = Math.random().toString(36).substring(2, 9);
-        const ext = validation.ext;
-        const path = `community/${userId}/${timestamp}-${randomId}.${ext}`;
-
-        const { data, error } = await supabase.storage
-            .from("pet-media")
-            .upload(path, file, {
-                cacheControl: "3600",
-                upsert: false,
-            });
-
-        if (error) {
-            return { success: false, error: error.message };
-        }
-
-        const {
-            data: { publicUrl },
-        } = supabase.storage.from("pet-media").getPublicUrl(path);
-
-        return {
-            success: true,
-            url: publicUrl,
-            path: data.path,
-        };
-    } catch {
-        return { success: false, error: "이미지 업로드 중 오류가 발생했습니다." };
-    }
+export async function uploadCommunityImage(file: File, userId: string): Promise<UploadResult> {
+    return uploadImage(file, userId, "community");
 }
 
 /** 지역정보 게시글 이미지 업로드 */
-export async function uploadLocalPostImage(
-    file: File,
-    userId: string
-): Promise<UploadResult> {
-    try {
-        const validation = validateImageFile(file);
-        if (!validation.valid) {
-            return { success: false, error: validation.error };
-        }
-
-        const timestamp = Date.now();
-        const randomId = Math.random().toString(36).substring(2, 9);
-        const ext = validation.ext;
-        const path = `local-posts/${userId}/${timestamp}-${randomId}.${ext}`;
-
-        const { data, error } = await supabase.storage
-            .from("pet-media")
-            .upload(path, file, {
-                cacheControl: "3600",
-                upsert: false,
-            });
-
-        if (error) {
-            return { success: false, error: error.message };
-        }
-
-        const {
-            data: { publicUrl },
-        } = supabase.storage.from("pet-media").getPublicUrl(path);
-
-        return {
-            success: true,
-            url: publicUrl,
-            path: data.path,
-        };
-    } catch {
-        return { success: false, error: "이미지 업로드 중 오류가 발생했습니다." };
-    }
+export async function uploadLocalPostImage(file: File, userId: string): Promise<UploadResult> {
+    return uploadImage(file, userId, "local-posts");
 }
 
 /** 분실/발견 동물 게시글 이미지 업로드 */
-export async function uploadLostPetImage(
-    file: File,
-    userId: string
-): Promise<UploadResult> {
-    try {
-        const validation = validateImageFile(file);
-        if (!validation.valid) {
-            return { success: false, error: validation.error };
-        }
-
-        const timestamp = Date.now();
-        const randomId = Math.random().toString(36).substring(2, 9);
-        const ext = validation.ext;
-        const path = `lost-pets/${userId}/${timestamp}-${randomId}.${ext}`;
-
-        const { data, error } = await supabase.storage
-            .from("pet-media")
-            .upload(path, file, {
-                cacheControl: "3600",
-                upsert: false,
-            });
-
-        if (error) {
-            return { success: false, error: error.message };
-        }
-
-        const {
-            data: { publicUrl },
-        } = supabase.storage.from("pet-media").getPublicUrl(path);
-
-        return {
-            success: true,
-            url: publicUrl,
-            path: data.path,
-        };
-    } catch {
-        return { success: false, error: "이미지 업로드 중 오류가 발생했습니다." };
-    }
+export async function uploadLostPetImage(file: File, userId: string): Promise<UploadResult> {
+    return uploadImage(file, userId, "lost-pets");
 }
 
 // Base64를 File로 변환 (기존 localStorage 데이터 마이그레이션용)
