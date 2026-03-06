@@ -27,9 +27,6 @@ import {
     HelpCircle,
     AlertTriangle,
     Lightbulb,
-    CheckCircle,
-    Clock,
-    Send,
 } from "lucide-react";
 import { InquiryRow } from "../types";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
@@ -309,28 +306,43 @@ function InquiryCard({ inquiry, onUpdateStatus, onOpenResponse }: InquiryCardPro
                 </div>
             )}
 
-            {/* 액션 버튼 */}
+            {/* 액션 버튼 - 네이티브 button */}
             <div className="flex gap-1 pt-1.5 border-t border-gray-200 dark:border-gray-700">
                 {inquiry.status === "pending" && (
-                    <Button size="sm" variant="outline" onClick={() => onUpdateStatus("in_progress")} className="text-[10px] h-6 px-2">
-                        처리 시작
-                    </Button>
+                    <button
+                        type="button"
+                        onClick={() => onUpdateStatus("in_progress")}
+                        className="h-7 px-2 rounded border border-blue-300 dark:border-blue-700 text-blue-600 dark:text-blue-400 bg-white dark:bg-gray-800 text-[10px] font-medium transition-colors"
+                    >
+                        처리시작
+                    </button>
                 )}
                 {(inquiry.status === "pending" || inquiry.status === "in_progress") && (
-                    <Button size="sm" className="bg-green-500 hover:bg-green-600 text-[10px] h-6 px-2" onClick={onOpenResponse}>
-                        <Send className="w-2.5 h-2.5 mr-0.5" />
+                    <button
+                        type="button"
+                        onClick={onOpenResponse}
+                        className="h-7 px-2 rounded bg-green-500 text-white text-[10px] font-medium transition-colors hover:bg-green-600"
+                    >
                         답변
-                    </Button>
+                    </button>
                 )}
                 {(inquiry.status === "pending" || inquiry.status === "in_progress") && (
-                    <Button size="sm" variant="outline" className="border-green-300 text-green-700 dark:border-green-700 dark:text-green-400 text-[10px] h-6 px-2" onClick={() => onUpdateStatus("resolved")}>
+                    <button
+                        type="button"
+                        onClick={() => onUpdateStatus("resolved")}
+                        className="h-7 px-2 rounded border border-green-300 dark:border-green-700 text-green-600 dark:text-green-400 bg-white dark:bg-gray-800 text-[10px] font-medium transition-colors"
+                    >
                         완료
-                    </Button>
+                    </button>
                 )}
                 {inquiry.status === "resolved" && (
-                    <Button size="sm" variant="outline" onClick={() => onUpdateStatus("closed")} className="text-[10px] h-6 px-2">
+                    <button
+                        type="button"
+                        onClick={() => onUpdateStatus("closed")}
+                        className="h-7 px-2 rounded border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 text-[10px] font-medium transition-colors"
+                    >
                         종료
-                    </Button>
+                    </button>
                 )}
             </div>
         </div>
