@@ -45,3 +45,14 @@
 ### 4. RLS 정책 수정 — 카카오 관리자 로그인
 - `reports`, `deleted_accounts` 테이블 RLS가 이메일 하드코딩 → `is_admin = true`로 변경 필요
 - 상세 SQL → `.claude/plans/iterative-inventing-rabbit.md`
+
+### 5. 간편모드 구현 — 플랜 승인됨
+- 플랜 파일: `.claude/plans/unified-scribbling-knuth.md`
+- DB: `is_simple_mode` 컬럼 (마이그레이션 위 목록에 등록됨)
+- 구현: AuthContext + SimpleHomeLauncher + HomePage 분기 + Layout 폰트 확대 + Sidebar 토글
+
+### [완료] 관리자 대시보드 모바일 compact UX
+- 6개 탭 전부 완료 (대시보드/유저/문의/신고/탈퇴/매거진)
+- shadcn Button → 네이티브 `<button>` 통일 (gap/svg override 문제)
+- 패턴: h-7 text-[10px], flex-1 필터, p-3 카드, truncate 이메일
+- HEAD: `064b496` (angry-haibt + main 동기화)
