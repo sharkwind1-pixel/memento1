@@ -61,7 +61,7 @@ export const API = {
 
 // ===== 위치 기반 장소 검색 =====
 export const LOCATION = {
-    SEARCH_RADIUS_KM: 2,        // 검색 반경 (km)
+    SEARCH_RADIUS_KM: 3,        // 검색 반경 (km)
     MAX_RESULTS: 5,             // 최대 결과 수
     GEOLOCATION_TIMEOUT: 5000,  // GPS 타임아웃 (ms)
 } as const;

@@ -202,7 +202,7 @@ async function searchLocal(query: string, display = 5): Promise<NaverSearchItem[
 
 /**
  * GPS 좌표 기반 주변 장소 검색 (2단계)
- * 1) Reverse Geocoding으로 행정구역 파악 (실패 시 키워드만으로 검색)
+ * 1) Reverse Geocoding으로 행정구역 파악 (실패 시 좌표 기반 추정)
  * 2) "행정구역 + 키워드"로 네이버 검색
  * 3) 거리 계산 + 반경 필터 + 정렬
  */
@@ -211,23 +211,24 @@ export async function findNearbyPlaces(
     lng: number,
     keyword: string,
 ): Promise<NearbyPlace[]> {
-    // 1단계: 좌표 → 행정구역명 (실패해도 계속 진행)
-    const regionName = await reverseGeocode(lat, lng);
+    // 1단계: 좌표 → 행정구역명
+    // NCP Reverse Geocoding 시도, 실패 시 좌표 기반 추정
+    let regionName = await reverseGeocode(lat, lng);
+    if (!regionName) {
+        regionName = estimateRegionFromCoords(lat, lng);
+    }
 
-    // 2단계: 검색 쿼리 구성
-    // Reverse Geocoding 성공: "강남구 공원"
-    // 실패 (NCP 키 없음 등): "공원" 만으로 검색 + 거리 필터로 보정
+    // 2단계: 검색 쿼리 구성 ("강남구 공원" 형태)
     const searchQuery = regionName
-        ? `${regionName.split(" ").pop()} ${keyword}`
+        ? `${regionName} ${keyword}`
         : keyword;
-    const fetchCount = regionName
-        ? LOCATION.MAX_RESULTS + 3
-        : LOCATION.MAX_RESULTS + 10; // fallback: 많이 가져와서 거리 필터
+    const fetchCount = LOCATION.MAX_RESULTS + 5;
     const items = await searchLocal(searchQuery, fetchCount);
 
     if (items.length === 0) return [];
 
     // 3단계: 거리 계산 + 필터 + 정렬
+    const radiusKm = LOCATION.SEARCH_RADIUS_KM;
     const places: NearbyPlace[] = items
         .map((item) => {
             // HTML 태그 제거 (네이버 검색 결과에 <b> 태그 포함)
@@ -248,12 +249,95 @@ export async function findNearbyPlaces(
                 mapUrl,
             };
         })
-        // 반경 필터 (Reverse Geocoding 성공 시 2km, 실패 시 5km로 넓힘)
-        .filter((p) => p.distanceMeters <= (regionName ? LOCATION.SEARCH_RADIUS_KM : 5) * 1000)
+        // 반경 필터
+        .filter((p) => p.distanceMeters <= radiusKm * 1000)
         // 거리순 정렬
         .sort((a, b) => a.distanceMeters - b.distanceMeters)
         // 최대 결과 수 제한
         .slice(0, LOCATION.MAX_RESULTS);
 
+    // 반경 내 결과 없으면 거리순 상위 5개라도 반환 (더 넓은 범위)
+    if (places.length === 0 && items.length > 0) {
+        return items
+            .map((item) => {
+                const name = item.title.replace(/<[^>]+>/g, "");
+                const coords = katecToWGS84(item.mapx, item.mapy);
+                const distKm = haversineDistance(lat, lng, coords.lat, coords.lng);
+                const mapUrl = `https://map.naver.com/v5/search/${encodeURIComponent(name)}`;
+                return {
+                    name,
+                    category: item.category || keyword,
+                    distance: formatDistance(distKm),
+                    distanceMeters: Math.round(distKm * 1000),
+                    address: item.roadAddress || item.address,
+                    mapUrl,
+                };
+            })
+            .sort((a, b) => a.distanceMeters - b.distanceMeters)
+            .slice(0, LOCATION.MAX_RESULTS);
+    }
+
     return places;
+}
+
+// ---- 좌표 기반 지역 추정 (NCP Reverse Geocoding 대안) ----
+
+/** GPS 좌표로 대략적인 구/군 이름 추정 (서울/수도권 주요 지역) */
+function estimateRegionFromCoords(lat: number, lng: number): string | null {
+    // 서울 주요 구 좌표 범위 (대략적)
+    const regions: { name: string; lat: [number, number]; lng: [number, number] }[] = [
+        { name: "강남구", lat: [37.49, 37.53], lng: [127.01, 127.07] },
+        { name: "서초구", lat: [37.47, 37.51], lng: [126.97, 127.03] },
+        { name: "송파구", lat: [37.49, 37.53], lng: [127.08, 127.14] },
+        { name: "강동구", lat: [37.52, 37.56], lng: [127.12, 127.17] },
+        { name: "마포구", lat: [37.54, 37.57], lng: [126.89, 126.96] },
+        { name: "용산구", lat: [37.52, 37.55], lng: [126.96, 127.00] },
+        { name: "종로구", lat: [37.57, 37.60], lng: [126.96, 127.02] },
+        { name: "중구", lat: [37.55, 37.57], lng: [126.97, 127.01] },
+        { name: "성동구", lat: [37.55, 37.57], lng: [127.03, 127.06] },
+        { name: "광진구", lat: [37.53, 37.56], lng: [127.07, 127.10] },
+        { name: "동대문구", lat: [37.57, 37.60], lng: [127.03, 127.06] },
+        { name: "중랑구", lat: [37.58, 37.61], lng: [127.07, 127.10] },
+        { name: "성북구", lat: [37.58, 37.61], lng: [126.99, 127.03] },
+        { name: "강북구", lat: [37.61, 37.65], lng: [126.99, 127.03] },
+        { name: "도봉구", lat: [37.65, 37.69], lng: [127.01, 127.06] },
+        { name: "노원구", lat: [37.63, 37.67], lng: [127.05, 127.10] },
+        { name: "은평구", lat: [37.60, 37.64], lng: [126.91, 126.95] },
+        { name: "서대문구", lat: [37.56, 37.59], lng: [126.93, 126.97] },
+        { name: "영등포구", lat: [37.51, 37.54], lng: [126.89, 126.93] },
+        { name: "동작구", lat: [37.49, 37.52], lng: [126.93, 126.98] },
+        { name: "관악구", lat: [37.46, 37.49], lng: [126.93, 126.97] },
+        { name: "금천구", lat: [37.44, 37.47], lng: [126.89, 126.92] },
+        { name: "구로구", lat: [37.48, 37.51], lng: [126.85, 126.90] },
+        { name: "양천구", lat: [37.51, 37.54], lng: [126.85, 126.89] },
+        { name: "강서구", lat: [37.54, 37.58], lng: [126.81, 126.86] },
+        // 수도권 주요 도시
+        { name: "성남시 분당구", lat: [37.35, 37.40], lng: [127.05, 127.14] },
+        { name: "수원시 영통구", lat: [37.25, 37.30], lng: [127.04, 127.09] },
+        { name: "고양시 일산동구", lat: [37.66, 37.70], lng: [126.75, 126.80] },
+        { name: "인천시 남동구", lat: [37.40, 37.44], lng: [126.72, 126.76] },
+        { name: "용인시 수지구", lat: [37.30, 37.34], lng: [127.07, 127.11] },
+    ];
+
+    for (const r of regions) {
+        if (lat >= r.lat[0] && lat <= r.lat[1] && lng >= r.lng[0] && lng <= r.lng[1]) {
+            return r.name;
+        }
+    }
+
+    // 매칭 안 되면 가장 가까운 지역 반환
+    let closest = regions[0];
+    let minDist = Infinity;
+    for (const r of regions) {
+        const centerLat = (r.lat[0] + r.lat[1]) / 2;
+        const centerLng = (r.lng[0] + r.lng[1]) / 2;
+        const d = haversineDistance(lat, lng, centerLat, centerLng);
+        if (d < minDist) {
+            minDist = d;
+            closest = r;
+        }
+    }
+    // 50km 이내면 가장 가까운 지역 반환
+    if (minDist < 50) return closest.name;
+    return null;
 }
