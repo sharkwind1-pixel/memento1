@@ -195,7 +195,7 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
             {/* 상단 DomeGallery - 데스크톱 전용 3D 사진 갤러리 (모바일에서는 공간 확보를 위해 숨김) */}
             {chat.galleryImages.length > 0 && (
                 <div
-                    className={`flex-shrink-0 h-[100px] lg:h-[180px] relative overflow-hidden transition-all duration-700 ease-in-out ${
+                    className={`flex-shrink-0 hidden lg:block lg:h-[180px] relative overflow-hidden transition-all duration-700 ease-in-out ${
                         chat.isMemorialMode
                             ? "bg-gradient-to-b from-amber-100 to-amber-50"
                             : "bg-gradient-to-b from-sky-100 to-sky-50"

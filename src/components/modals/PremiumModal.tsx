@@ -9,6 +9,7 @@
 
 import { useState } from "react";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { Button } from "@/components/ui/button";
 import {
     X,
@@ -91,6 +92,7 @@ export default function PremiumModal({
 }: PremiumModalProps) {
     const [selectedPlan, setSelectedPlan] = useState<PlanType>("basic");
     useEscapeClose(isOpen, onClose);
+    useBodyScrollLock(isOpen);
     if (!isOpen) return null;
 
     const info = featureInfo[feature];
@@ -98,7 +100,7 @@ export default function PremiumModal({
 
     return (
         <div
-            className="fixed inset-0 z-50 overflow-y-auto bg-black/40"
+            className="fixed inset-0 z-[9999] overflow-y-auto bg-black/40"
             style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
             onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >

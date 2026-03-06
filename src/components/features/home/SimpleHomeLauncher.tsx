@@ -144,7 +144,7 @@ export default function SimpleHomeLauncher({ setSelectedTab, onSubcategoryChange
                 </div>
 
                 {/* 일반모드 전환 버튼 */}
-                <div className="text-center mt-8">
+                <div className="text-center mt-8 pb-4">
                     <button
                         onClick={toggleSimpleMode}
                         className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 underline underline-offset-4 transition-colors"

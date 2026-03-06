@@ -8,6 +8,7 @@
 "use client";
 
 import { useEscapeClose } from "@/hooks/useEscapeClose";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { Button } from "@/components/ui/button";
 import {
     X,
@@ -89,6 +90,7 @@ export default function LoginPromptModal({
     onSignup,
 }: LoginPromptModalProps) {
     useEscapeClose(isOpen, onClose);
+    useBodyScrollLock(isOpen);
     if (!isOpen) return null;
 
     const info = featureInfo[feature];
@@ -96,7 +98,7 @@ export default function LoginPromptModal({
 
     return (
         <div
-            className="fixed inset-0 z-50 overflow-y-auto bg-black/40"
+            className="fixed inset-0 z-[9999] overflow-y-auto bg-black/40"
             style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
             onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >

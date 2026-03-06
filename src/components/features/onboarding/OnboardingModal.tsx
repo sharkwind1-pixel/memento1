@@ -293,7 +293,7 @@ export default function OnboardingModal({
                     </div>
                     <button
                         onClick={handleSkip}
-                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
                         aria-label="닫기"
                     >
                         <X className="w-5 h-5" />

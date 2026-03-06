@@ -133,7 +133,7 @@ export default function CommunityHeader({
                         <span className="text-xs text-gray-400 dark:text-gray-500 font-medium flex-shrink-0">유형</span>
                         <button
                             onClick={() => onBadgeChange("all")}
-                            className={`px-3 py-1 rounded-full text-xs font-medium transition-all active:scale-95 flex-shrink-0 ${
+                            className={`px-3 py-2 rounded-full text-xs font-medium transition-all active:scale-95 flex-shrink-0 min-h-[36px] ${
                                 selectedBadge === "all"
                                     ? "bg-memento-500 text-white shadow-sm"
                                     : "bg-gray-100 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600/50"
@@ -147,7 +147,7 @@ export default function CommunityHeader({
                                 <button
                                     key={b.id}
                                     onClick={() => onBadgeChange(b.id)}
-                                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all active:scale-95 flex-shrink-0 ${
+                                    className={`px-3 py-2 rounded-full text-xs font-medium transition-all active:scale-95 flex-shrink-0 min-h-[36px] ${
                                         isActive
                                             ? getTagColor(b.color).replace("border-", "border-transparent bg-").split(" ").slice(0, 2).join(" ") + " text-white shadow-sm"
                                             : "bg-gray-100 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600/50"
@@ -169,7 +169,7 @@ export default function CommunityHeader({
                         <span className="text-xs text-gray-400 dark:text-gray-500 font-medium flex-shrink-0">말머리</span>
                         <button
                             onClick={() => onTagChange("all")}
-                            className={`px-3 py-1 rounded-full text-xs font-medium transition-all active:scale-95 flex-shrink-0 ${
+                            className={`px-3 py-2 rounded-full text-xs font-medium transition-all active:scale-95 flex-shrink-0 min-h-[36px] ${
                                 selectedTag === "all"
                                     ? "bg-memento-500 text-white shadow-sm"
                                     : "bg-gray-100 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600/50"
@@ -183,7 +183,7 @@ export default function CommunityHeader({
                                 <button
                                     key={tag.id}
                                     onClick={() => onTagChange(tag.id)}
-                                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all active:scale-95 flex-shrink-0 ${
+                                    className={`px-3 py-2 rounded-full text-xs font-medium transition-all active:scale-95 flex-shrink-0 min-h-[36px] ${
                                         isActive
                                             ? getTagColor(tag.color).replace("border-", "border-transparent bg-").split(" ").slice(0, 2).join(" ") + " text-white shadow-sm"
                                             : "bg-gray-100 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600/50"
@@ -205,7 +205,7 @@ export default function CommunityHeader({
                         <span className="text-xs text-gray-400 dark:text-gray-500 font-medium flex-shrink-0">지역</span>
                         <button
                             onClick={() => onRegionChange("all")}
-                            className={`px-3 py-1 rounded-full text-xs font-medium transition-all active:scale-95 flex-shrink-0 ${
+                            className={`px-3 py-2 rounded-full text-xs font-medium transition-all active:scale-95 flex-shrink-0 min-h-[36px] ${
                                 selectedRegion === "all"
                                     ? "bg-emerald-500 text-white shadow-sm"
                                     : "bg-gray-100 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600/50"
@@ -217,7 +217,7 @@ export default function CommunityHeader({
                             <button
                                 key={r.id}
                                 onClick={() => onRegionChange(r.id)}
-                                className={`px-3 py-1 rounded-full text-xs font-medium transition-all active:scale-95 flex-shrink-0 ${
+                                className={`px-3 py-2 rounded-full text-xs font-medium transition-all active:scale-95 flex-shrink-0 min-h-[36px] ${
                                     selectedRegion === r.id
                                         ? "bg-emerald-500 text-white shadow-sm"
                                         : "bg-gray-100 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600/50"

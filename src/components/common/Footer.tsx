@@ -6,7 +6,7 @@ import { Heart, Mail } from 'lucide-react'
 
 export default function Footer() {
   return (
-    <footer className="relative mt-16 overflow-hidden">
+    <footer className="relative mt-16 overflow-hidden pb-24 xl:pb-0">
       <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-blue-50/30 to-sky-50/30 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <div className="absolute top-8 left-1/4 w-64 h-64 bg-blue-200/20 dark:bg-blue-800/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-8 right-1/4 w-64 h-64 bg-sky-200/20 dark:bg-sky-800/10 rounded-full blur-3xl"></div>

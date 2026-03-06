@@ -14,6 +14,7 @@ import { X, Send, Home, Eye, EyeOff, ImagePlus, Loader2 } from "lucide-react";
 import { InlineLoading } from "@/components/ui/PawLoading";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { uploadCommunityImage } from "@/lib/storage";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
@@ -70,6 +71,7 @@ export default function WritePostModal({
 }: WritePostModalProps) {
     const { user } = useAuth();
     useEscapeClose(isOpen, onClose);
+    useBodyScrollLock(isOpen);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const imageScrollRef = useHorizontalScroll();
     const [title, setTitle] = useState("");
@@ -265,7 +267,7 @@ export default function WritePostModal({
                                     <button
                                         key={t.id}
                                         onClick={() => setTag(t.id)}
-                                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                                        className={`px-3 py-2.5 rounded-full text-sm font-medium transition-all min-h-[40px] ${
                                             tag === t.id
                                                 ? "bg-sky-500 text-white"
                                                 : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200"
@@ -290,7 +292,7 @@ export default function WritePostModal({
                                         key={r.id}
                                         type="button"
                                         onClick={() => setRegion(r.id)}
-                                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                                        className={`px-3 py-2.5 rounded-full text-sm font-medium transition-all min-h-[40px] ${
                                             region === r.id
                                                 ? "bg-emerald-500 text-white"
                                                 : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200"
@@ -313,7 +315,7 @@ export default function WritePostModal({
                                 <button
                                     key={b}
                                     onClick={() => setBadge(b)}
-                                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                                    className={`px-3 py-2.5 rounded-full text-sm font-medium transition-all min-h-[40px] ${
                                         badge === b
                                             ? "bg-sky-500 text-white"
                                             : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200"
@@ -378,7 +380,7 @@ export default function WritePostModal({
                                         />
                                         <button
                                             onClick={() => handleRemoveImage(index)}
-                                            className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/60 rounded-full flex items-center justify-center"
+                                            className="absolute top-1 right-1 w-7 h-7 bg-black/60 rounded-full flex items-center justify-center"
                                             aria-label="이미지 삭제"
                                         >
                                             <X className="w-3 h-3 text-white" />

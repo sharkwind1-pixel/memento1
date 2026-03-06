@@ -141,7 +141,7 @@ export default function MemorialSwitchModal({
 
     return (
         <div
-            className="fixed inset-0 z-50 overflow-y-auto bg-black/60"
+            className="fixed inset-0 z-[9999] overflow-y-auto bg-black/60"
             style={{ WebkitOverflowScrolling: "touch" } as React.CSSProperties}
             onClick={(e) => {
                 if (e.target === e.currentTarget) handleClose();
