@@ -36,7 +36,7 @@ export default function ShowcaseSection({
     setSelectedTab,
 }: ShowcaseSectionProps) {
     const gradients = [
-        "from-sky-400 to-blue-300",
+        "from-memento-400 to-memento-300",
         "from-pink-400 to-rose-300",
         "from-violet-400 to-purple-300",
         "from-emerald-400 to-teal-300",

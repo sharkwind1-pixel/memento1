@@ -122,12 +122,12 @@ export default function SimpleHomeLauncher({ setSelectedTab, onSubcategoryChange
                                 key={item.id}
                                 onClick={() => handleCardClick(item.id)}
                                 className={`flex flex-col items-center justify-center gap-2
-                                    bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-6
+                                    ${item.bgColor} rounded-2xl p-4 sm:p-6
                                     shadow-md hover:shadow-lg active:scale-[0.97] active:shadow-sm
                                     transition-all duration-200 min-h-[120px] sm:min-h-[140px]
-                                    border border-gray-100 dark:border-gray-700`}
+                                    border border-white/60 dark:border-gray-700`}
                             >
-                                <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl ${item.bgColor} flex items-center justify-center`}>
+                                <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-white/70 dark:bg-gray-800/60 flex items-center justify-center`}>
                                     <Icon className={`w-7 h-7 sm:w-8 sm:h-8 ${item.color}`} />
                                 </div>
                                 <div className="text-center">

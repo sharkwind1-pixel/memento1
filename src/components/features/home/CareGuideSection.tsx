@@ -65,7 +65,7 @@ export default function CareGuideSection({
                         className="w-[260px] max-w-[260px] sm:w-64 sm:max-w-64 flex-shrink-0 overflow-hidden bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 rounded-2xl shadow-sm will-change-transform"
                     >
                         <CardHeader>
-                            <div className="w-full h-40 bg-gradient-to-br from-memento-100 to-memento-100 dark:from-blue-900 dark:to-sky-900 rounded-xl mb-3 flex items-center justify-center border border-memento-200 dark:border-memento-700">
+                            <div className="w-full h-40 bg-gradient-to-br from-memento-50 to-memento-200 dark:from-blue-900 dark:to-sky-900 rounded-xl mb-3 flex items-center justify-center border border-memento-200 dark:border-memento-700">
                                 <Stethoscope className="w-16 h-16 text-memento-600 dark:text-memento-400 opacity-70" />
                             </div>
                             <div className="flex justify-between items-start">

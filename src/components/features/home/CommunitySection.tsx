@@ -47,11 +47,11 @@ export default function CommunitySection({
     setSelectedTab,
 }: CommunitySectionProps) {
     const gradients = [
-        "from-rose-500 to-orange-400",
-        "from-violet-500 to-purple-400",
-        "from-cyan-500 to-blue-400",
-        "from-emerald-500 to-teal-400",
-        "from-amber-500 to-yellow-400",
+        "from-memento-500 to-memento-400",
+        "from-rose-400 to-pink-300",
+        "from-violet-400 to-purple-300",
+        "from-emerald-400 to-teal-300",
+        "from-amber-400 to-orange-300",
     ];
 
     return (

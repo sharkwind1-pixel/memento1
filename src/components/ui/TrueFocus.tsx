@@ -23,8 +23,8 @@ export function TrueFocus({
   delay = 0,
   duration = 0.8,
   staggerDelay = 0.03,
-  focusColor = 'text-blue-600 dark:text-blue-400',
-  blurColor = 'text-gray-300 dark:text-gray-600'
+  focusColor = 'text-memento-600 dark:text-memento-400',
+  blurColor = 'text-memento-200 dark:text-memento-700'
 }: TrueFocusProps) {
   const [focusedIndex, setFocusedIndex] = useState(-1)
   const [isComplete, setIsComplete] = useState(false)
@@ -108,26 +108,26 @@ export function EmotionalTrueFocus({
 }: EmotionalTrueFocusProps) {
   const variants = {
     gentle: {
-      focusColor: 'text-blue-600 dark:text-blue-400',
-      blurColor: 'text-blue-200 dark:text-blue-800',
+      focusColor: 'text-memento-600 dark:text-memento-400',
+      blurColor: 'text-memento-200 dark:text-memento-700',
       duration: 0.6,
       staggerDelay: 0.03
     },
     warm: {
-      focusColor: 'text-sky-600 dark:text-sky-400',
-      blurColor: 'text-sky-200 dark:text-sky-800',
+      focusColor: 'text-gray-700 dark:text-gray-200',
+      blurColor: 'text-gray-300 dark:text-gray-600',
       duration: 0.5,
       staggerDelay: 0.025
     },
     memorial: {
-      focusColor: 'text-blue-700 dark:text-blue-300',
-      blurColor: 'text-blue-300 dark:text-blue-700',
+      focusColor: 'text-amber-600 dark:text-amber-400',
+      blurColor: 'text-amber-200 dark:text-amber-700',
       duration: 1.0,
       staggerDelay: 0.05
     },
     joyful: {
-      focusColor: 'text-sky-500 dark:text-sky-400',
-      blurColor: 'text-sky-200 dark:text-sky-700',
+      focusColor: 'text-memento-500 dark:text-memento-400',
+      blurColor: 'text-memento-200 dark:text-memento-700',
       duration: 0.4,
       staggerDelay: 0.02
     }
