@@ -65,16 +65,16 @@ interface StatCardProps {
 function StatCard({ title, value, icon, color, subValue }: StatCardProps) {
     return (
         <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-3">
                 <div className="flex items-center justify-between">
-                    <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{title}</p>
-                        <p className="text-2xl font-bold">{value.toLocaleString()}</p>
+                    <div className="min-w-0">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{title}</p>
+                        <p className="text-lg font-bold">{value.toLocaleString()}</p>
                         {subValue && (
-                            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{subValue}</p>
+                            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">{subValue}</p>
                         )}
                     </div>
-                    <div className={`p-3 rounded-full ${color}`}>
+                    <div className={`p-2 rounded-full flex-shrink-0 ${color}`}>
                         {icon}
                     </div>
                 </div>
@@ -105,30 +105,30 @@ export default function AdminDashboardTab({
             {/* ================================================================
                 섹션 1: 핵심 지표 카드
             ================================================================ */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 gap-2">
                 <StatCard
                     title="전체 회원"
                     value={stats.totalUsers}
-                    icon={<Users className="w-6 h-6 text-blue-600" />}
+                    icon={<Users className="w-5 h-5 text-blue-600" />}
                     color="bg-blue-100 dark:bg-blue-900/30"
                     subValue={`오늘 +${stats.todayUsers}`}
                 />
                 <StatCard
                     title="반려동물"
                     value={stats.totalPets}
-                    icon={<PawPrint className="w-6 h-6 text-pink-600" />}
+                    icon={<PawPrint className="w-5 h-5 text-pink-600" />}
                     color="bg-pink-100 dark:bg-pink-900/30"
                 />
                 <StatCard
                     title="게시글"
                     value={stats.totalPosts}
-                    icon={<FileText className="w-6 h-6 text-green-600" />}
+                    icon={<FileText className="w-5 h-5 text-green-600" />}
                     color="bg-green-100 dark:bg-green-900/30"
                 />
                 <StatCard
                     title="AI 채팅"
                     value={stats.totalChats}
-                    icon={<MessageCircle className="w-6 h-6 text-purple-600" />}
+                    icon={<MessageCircle className="w-5 h-5 text-purple-600" />}
                     color="bg-purple-100 dark:bg-purple-900/30"
                     subValue={`오늘 +${stats.todayChats}`}
                 />
@@ -139,36 +139,33 @@ export default function AdminDashboardTab({
             ================================================================ */}
             <Card>
                 <CardHeader className="pb-2">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                        <Activity className="w-5 h-5 text-green-500" />
+                    <CardTitle className="text-base flex items-center gap-2">
+                        <Activity className="w-4 h-4 text-green-500" />
                         활성 사용자
                     </CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                <CardContent className="px-3 pb-3">
+                    <div className="flex gap-2">
                         {/* DAU */}
-                        <div className="text-center p-2 sm:p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
-                            <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mb-1">DAU</p>
-                            <p className="text-xl sm:text-2xl font-bold text-green-600">
+                        <div className="flex-1 text-center py-2 px-1 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                            <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">DAU</p>
+                            <p className="text-lg font-bold text-green-600 leading-tight">
                                 {stats.todayActiveUsers.toLocaleString()}
                             </p>
-                            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 hidden sm:block">일간</p>
                         </div>
                         {/* WAU */}
-                        <div className="text-center p-2 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-                            <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mb-1">WAU</p>
-                            <p className="text-xl sm:text-2xl font-bold text-blue-600">
+                        <div className="flex-1 text-center py-2 px-1 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                            <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">WAU</p>
+                            <p className="text-lg font-bold text-blue-600 leading-tight">
                                 {stats.weeklyActiveUsers.toLocaleString()}
                             </p>
-                            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 hidden sm:block">주간</p>
                         </div>
                         {/* MAU */}
-                        <div className="text-center p-2 sm:p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
-                            <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mb-1">MAU</p>
-                            <p className="text-xl sm:text-2xl font-bold text-purple-600">
+                        <div className="flex-1 text-center py-2 px-1 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                            <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">MAU</p>
+                            <p className="text-lg font-bold text-purple-600 leading-tight">
                                 {stats.monthlyActiveUsers.toLocaleString()}
                             </p>
-                            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 hidden sm:block">월간</p>
                         </div>
                     </div>
                 </CardContent>
@@ -177,29 +174,29 @@ export default function AdminDashboardTab({
             {/* ================================================================
                 섹션 3: 프리미엄/차단 현황
             ================================================================ */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-2">
                 <Card>
-                    <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                            <div className="p-3 bg-amber-100 dark:bg-amber-400/10 rounded-full">
-                                <Crown className="w-6 h-6 text-amber-600" />
+                    <CardContent className="p-3">
+                        <div className="flex items-center gap-2">
+                            <div className="p-2 bg-amber-100 dark:bg-amber-400/10 rounded-full flex-shrink-0">
+                                <Crown className="w-4 h-4 text-amber-600" />
                             </div>
-                            <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">프리미엄 회원</p>
-                                <p className="text-xl font-bold">{stats.premiumUsers}</p>
+                            <div className="min-w-0">
+                                <p className="text-xs text-gray-500 dark:text-gray-400">프리미엄</p>
+                                <p className="text-lg font-bold">{stats.premiumUsers}</p>
                             </div>
                         </div>
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                            <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
-                                <Ban className="w-6 h-6 text-red-600" />
+                    <CardContent className="p-3">
+                        <div className="flex items-center gap-2">
+                            <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-full flex-shrink-0">
+                                <Ban className="w-4 h-4 text-red-600" />
                             </div>
-                            <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">차단된 회원</p>
-                                <p className="text-xl font-bold">{stats.bannedUsers}</p>
+                            <div className="min-w-0">
+                                <p className="text-xs text-gray-500 dark:text-gray-400">차단</p>
+                                <p className="text-lg font-bold">{stats.bannedUsers}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -211,19 +208,19 @@ export default function AdminDashboardTab({
             ================================================================ */}
             <Card>
                 <CardHeader className="pb-2">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                        <TrendingUp className="w-5 h-5 text-sky-500" />
+                    <CardTitle className="text-base flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4 text-sky-500" />
                         최근 7일 추이
                     </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-2 pb-3">
                     {chartData.length > 0 ? (
-                        <div className="h-64">
+                        <div className="h-48">
                             <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={chartData}>
+                                <AreaChart data={chartData} margin={{ left: -20, right: 5, top: 5, bottom: 0 }}>
                                     <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="date" />
-                                    <YAxis />
+                                    <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                                    <YAxis tick={{ fontSize: 11 }} />
                                     <Tooltip />
                                     <Area
                                         type="monotone"
@@ -250,8 +247,8 @@ export default function AdminDashboardTab({
                             </ResponsiveContainer>
                         </div>
                     ) : (
-                        <div className="h-64 flex items-center justify-center text-gray-400 dark:text-gray-500">
-                            <Calendar className="w-8 h-8 mr-2" />
+                        <div className="h-48 flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm">
+                            <Calendar className="w-6 h-6 mr-2" />
                             차트 데이터 로딩 중...
                         </div>
                     )}

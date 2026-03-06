@@ -457,7 +457,7 @@ function UserCard({
 }: UserCardProps) {
     return (
         <div
-            className={`p-4 rounded-xl border transition-colors ${
+            className={`p-3 rounded-xl border transition-colors ${
                 user.is_banned
                     ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/50"
                     : user.is_admin
@@ -467,146 +467,125 @@ function UserCard({
                             : "bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700"
             }`}
         >
-            {/* 상단: 이메일, 날짜 */}
-            <div className="flex items-start justify-between gap-2 mb-1">
-                <span className="font-medium text-sm truncate min-w-0">{user.email}</span>
-                <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap flex-shrink-0">
-                    {new Date(user.created_at).toLocaleDateString("ko-KR")}
-                </span>
-            </div>
-            {/* 뱃지 */}
-            {(user.is_admin || user.is_premium || user.is_banned) && (
-                <div className="flex items-center gap-1.5 flex-wrap mb-2">
-                    {user.is_admin && (
-                        <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 text-[10px] px-1.5 py-0.5">
-                            <Shield className="w-3 h-3 mr-0.5" />
-                            관리자
-                        </Badge>
-                    )}
-                    {user.is_premium && (
-                        <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300 text-[10px] px-1.5 py-0.5">
-                            <Crown className="w-3 h-3 mr-0.5" />
-                            프리미엄
-                        </Badge>
-                    )}
-                    {user.is_banned && (
-                        <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 text-[10px] px-1.5 py-0.5">
-                            <Ban className="w-3 h-3 mr-0.5" />
-                            차단
-                        </Badge>
-                    )}
-                </div>
-            )}
+            {/* 이메일 */}
+            <p className="font-medium text-xs truncate">{user.email}</p>
 
-            {/* 닉네임 + 등급 */}
-            <div className="flex items-center gap-2 mb-2 flex-wrap">
+            {/* 닉네임 + 날짜 + 뱃지 한 줄 */}
+            <div className="flex items-center gap-1 mt-1 flex-wrap">
                 {user.user_metadata?.nickname && (
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                        닉네임: {user.user_metadata.nickname}
+                    <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                        {user.user_metadata.nickname}
                     </span>
                 )}
-                <span className="flex items-center gap-1">
-                    <LevelBadge points={user.points ?? 0} petType={user.petType} isAdmin={user.is_admin} size="lg" showName />
-                    <span className="text-xs text-gray-400 dark:text-gray-500 ml-1">
-                        ({(user.points ?? 0).toLocaleString()}P)
-                    </span>
+                <span className="text-[10px] text-gray-400 dark:text-gray-500">
+                    {new Date(user.created_at).toLocaleDateString("ko-KR")}
+                </span>
+                {user.is_admin && (
+                    <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 text-[9px] px-1 py-0 leading-tight">
+                        관리자
+                    </Badge>
+                )}
+                {user.is_premium && (
+                    <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300 text-[9px] px-1 py-0 leading-tight">
+                        프리미엄
+                    </Badge>
+                )}
+                {user.is_banned && (
+                    <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 text-[9px] px-1 py-0 leading-tight">
+                        차단
+                    </Badge>
+                )}
+            </div>
+
+            {/* 등급 */}
+            <div className="flex items-center gap-1 mt-1">
+                <LevelBadge points={user.points ?? 0} petType={user.petType} isAdmin={user.is_admin} size="lg" showName />
+                <span className="text-[10px] text-gray-400 dark:text-gray-500">
+                    {(user.points ?? 0).toLocaleString()}P
                 </span>
             </div>
 
             {/* 프리미엄 만료일 */}
             {user.is_premium && user.premium_expires_at && (
-                <p className="text-xs text-amber-600 mb-2">
-                    <Clock className="w-3 h-3 inline mr-1" />
+                <p className="text-[10px] text-amber-600 mt-1">
                     만료: {new Date(user.premium_expires_at).toLocaleDateString("ko-KR")}
                 </p>
             )}
 
-            {/* 액션 버튼 */}
-            <div className="grid grid-cols-3 sm:flex sm:flex-wrap gap-1.5 sm:gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                {/* 밴/해제 버튼 */}
+            {/* 액션 버튼 - 항상 3열 그리드, 아이콘+최소 텍스트 */}
+            <div className="grid grid-cols-3 gap-1 pt-2 mt-2 border-t border-gray-200 dark:border-gray-700">
                 <Button
                     size="sm"
                     variant={user.is_banned ? "outline" : "destructive"}
                     onClick={onToggleBan}
-                    className="text-xs h-8"
+                    className="text-[10px] h-7 px-1"
                 >
-                    <Ban className="w-3 h-3 sm:mr-1" />
-                    <span className="hidden sm:inline">{user.is_banned ? "차단 해제" : "차단"}</span>
-                    <span className="sm:hidden">{user.is_banned ? "해제" : "차단"}</span>
+                    <Ban className="w-3 h-3 mr-0.5 flex-shrink-0" />
+                    {user.is_banned ? "해제" : "차단"}
                 </Button>
 
-                {/* 관리자 권한 버튼 */}
                 <Button
                     size="sm"
                     variant="outline"
-                    className={`text-xs h-8 ${user.is_admin
-                        ? "text-purple-600 dark:text-purple-400 border-purple-300 dark:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-900/20"
-                        : "text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
+                    className={`text-[10px] h-7 px-1 ${user.is_admin
+                        ? "text-purple-600 dark:text-purple-400 border-purple-300 dark:border-purple-700"
+                        : ""
                     }`}
                     onClick={onToggleAdmin}
                 >
-                    <Shield className="w-3 h-3 sm:mr-1" />
-                    <span className="hidden sm:inline">{user.is_admin ? "관리자 해제" : "관리자 부여"}</span>
-                    <span className="sm:hidden">관리자</span>
+                    <Shield className="w-3 h-3 mr-0.5 flex-shrink-0" />
+                    관리자
                 </Button>
 
-                {/* 프리미엄 버튼 */}
                 {user.is_premium ? (
                     <Button
                         size="sm"
                         variant="outline"
                         onClick={onRevokePremium}
-                        className="text-xs h-8"
+                        className="text-[10px] h-7 px-1"
                     >
-                        <Crown className="w-3 h-3 sm:mr-1" />
-                        <span className="hidden sm:inline">프리미엄 해제</span>
-                        <span className="sm:hidden">해제</span>
+                        <Crown className="w-3 h-3 mr-0.5 flex-shrink-0" />
+                        해제
                     </Button>
                 ) : (
                     <Button
                         size="sm"
                         variant="outline"
-                        className="text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-gray-700/20 text-xs h-8"
+                        className="text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700 text-[10px] h-7 px-1"
                         onClick={onOpenPremiumModal}
                     >
-                        <Crown className="w-3 h-3 sm:mr-1" />
-                        <span className="hidden sm:inline">프리미엄 부여</span>
-                        <span className="sm:hidden">프리미엄</span>
+                        <Crown className="w-3 h-3 mr-0.5 flex-shrink-0" />
+                        프리미엄
                     </Button>
                 )}
 
-                {/* 포인트 지급 */}
                 <Button
                     size="sm"
                     variant="outline"
-                    className="text-sky-600 dark:text-sky-400 border-sky-300 dark:border-sky-700 hover:bg-sky-50 dark:hover:bg-sky-900/20 text-xs h-8"
+                    className="text-sky-600 dark:text-sky-400 border-sky-300 dark:border-sky-700 text-[10px] h-7 px-1"
                     onClick={onOpenPointsModal}
                 >
-                    <Star className="w-3 h-3 sm:mr-1" />
-                    <span className="hidden sm:inline">포인트 지급</span>
-                    <span className="sm:hidden">포인트</span>
+                    <Star className="w-3 h-3 mr-0.5 flex-shrink-0" />
+                    포인트
                 </Button>
 
-                {/* 온보딩 리셋 */}
                 <Button
                     size="sm"
                     variant="outline"
                     onClick={onResetOnboarding}
-                    className="text-xs h-8"
+                    className="text-[10px] h-7 px-1"
                 >
-                    <RotateCcw className="w-3 h-3 sm:mr-1" />
-                    <span className="hidden sm:inline">온보딩 리셋</span>
-                    <span className="sm:hidden">리셋</span>
+                    <RotateCcw className="w-3 h-3 mr-0.5 flex-shrink-0" />
+                    리셋
                 </Button>
 
-                {/* 탈퇴 처리 */}
                 <Button
                     size="sm"
                     variant="outline"
-                    className="text-red-600 dark:text-red-400 border-red-300 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 text-xs h-8"
+                    className="text-red-600 dark:text-red-400 border-red-300 dark:border-red-700 text-[10px] h-7 px-1"
                     onClick={onOpenWithdrawalModal}
                 >
-                    <span>탈퇴</span>
+                    탈퇴
                 </Button>
             </div>
         </div>

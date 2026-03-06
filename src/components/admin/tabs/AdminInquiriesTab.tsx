@@ -149,34 +149,33 @@ export default function AdminInquiriesTab({
     return (
         <div className="space-y-4">
             {/* 검색 & 새로고침 */}
-            <div className="flex gap-2">
+            <div className="flex gap-1.5">
                 <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                     <Input
-                        placeholder="제목 또는 이메일로 검색..."
+                        placeholder="제목/이메일 검색..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10"
+                        className="pl-8 h-8 text-xs"
                     />
                 </div>
-                <Button variant="outline" onClick={onRefresh}>
-                    <RefreshCw className="w-4 h-4 mr-1" />
-                    새로고침
+                <Button variant="outline" onClick={onRefresh} className="h-8 px-2 text-xs">
+                    <RefreshCw className="w-3.5 h-3.5" />
                 </Button>
             </div>
 
-            {/* 카테고리 필터 */}
-            <div className="flex flex-wrap gap-2 text-sm select-none">
+            {/* 카테고리 필터 - 한 줄에 4개 */}
+            <div className="flex gap-1 select-none">
                 <button
                     type="button"
-                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
+                    className={`flex-1 inline-flex items-center justify-center rounded-md px-1.5 py-1 text-[10px] font-semibold transition-all ${
                         selectedCategory === null
                             ? "bg-gray-800 text-white dark:bg-gray-200 dark:text-gray-900"
                             : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 opacity-60 hover:opacity-100"
                     }`}
                     onClick={() => setSelectedCategory(null)}
                 >
-                    전체 ({inquiries.length})
+                    전체 {inquiries.length}
                 </button>
                 {Object.entries(CATEGORY_CONFIG).map(([key, config]) => {
                     const Icon = config.icon;
@@ -185,7 +184,7 @@ export default function AdminInquiriesTab({
                         <button
                             type="button"
                             key={key}
-                            className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
+                            className={`flex-1 inline-flex items-center justify-center rounded-md px-1.5 py-1 text-[10px] font-semibold transition-all ${
                                 selectedCategory === key
                                     ? config.color
                                     : config.color + " opacity-60 hover:opacity-100"
@@ -194,8 +193,8 @@ export default function AdminInquiriesTab({
                                 setSelectedCategory(selectedCategory === key ? null : key)
                             }
                         >
-                            <Icon className="w-3 h-3 mr-1" />
-                            {config.label} ({count})
+                            <Icon className="w-3 h-3 mr-0.5" />
+                            {config.label} {count}
                         </button>
                     );
                 })}
@@ -268,57 +267,42 @@ function InquiryCard({ inquiry, onUpdateStatus, onOpenResponse }: InquiryCardPro
     };
 
     return (
-        <div className={`p-4 rounded-xl border transition-colors ${getBgColor()}`}>
-            {/* 상단: 카테고리, 상태, 날짜 */}
-            <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center gap-2 flex-wrap">
-                    {/* 카테고리 뱃지 */}
-                    <Badge className={categoryConfig.color}>
-                        <CategoryIcon className="w-3 h-3 mr-1" />
-                        {categoryConfig.label}
-                    </Badge>
-
-                    {/* 상태 뱃지 */}
-                    {inquiry.status === "pending" && (
-                        <Badge variant="secondary" className="text-xs">
-                            <Clock className="w-3 h-3 mr-1" />
-                            대기중
-                        </Badge>
-                    )}
-                    {inquiry.status === "in_progress" && (
-                        <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 text-xs">
-                            처리중
-                        </Badge>
-                    )}
-                    {inquiry.status === "resolved" && (
-                        <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 text-xs">
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                            답변완료
-                        </Badge>
-                    )}
-                    {inquiry.status === "closed" && (
-                        <Badge className="bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 text-xs">
-                            종료
-                        </Badge>
-                    )}
-                </div>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
+        <div className={`p-3 rounded-xl border transition-colors ${getBgColor()}`}>
+            {/* 상단: 카테고리+상태+날짜 한 줄 */}
+            <div className="flex items-center gap-1 mb-1.5 flex-wrap">
+                <Badge className={`${categoryConfig.color} text-[10px] px-1.5 py-0`}>
+                    <CategoryIcon className="w-2.5 h-2.5 mr-0.5" />
+                    {categoryConfig.label}
+                </Badge>
+                {inquiry.status === "pending" && (
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">대기</Badge>
+                )}
+                {inquiry.status === "in_progress" && (
+                    <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 text-[10px] px-1.5 py-0">처리중</Badge>
+                )}
+                {inquiry.status === "resolved" && (
+                    <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 text-[10px] px-1.5 py-0">완료</Badge>
+                )}
+                {inquiry.status === "closed" && (
+                    <Badge className="bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 text-[10px] px-1.5 py-0">종료</Badge>
+                )}
+                <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-auto flex-shrink-0">
                     {new Date(inquiry.created_at).toLocaleDateString("ko-KR")}
                 </span>
             </div>
 
             {/* 제목 & 내용 */}
-            <h4 className="font-medium text-gray-800 dark:text-gray-100 mb-1">{inquiry.title}</h4>
-            <p className="text-sm text-gray-600 dark:text-gray-300 mb-2 line-clamp-2">{inquiry.content}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">보낸 사람: {inquiry.email}</p>
+            <h4 className="font-medium text-xs text-gray-800 dark:text-gray-100 mb-0.5 truncate">{inquiry.title}</h4>
+            <p className="text-[11px] text-gray-600 dark:text-gray-300 mb-1 line-clamp-2">{inquiry.content}</p>
+            <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-2 truncate">{inquiry.email}</p>
 
             {/* 관리자 답변 */}
             {inquiry.admin_response && (
-                <div className="p-3 bg-white dark:bg-gray-900 rounded-lg border border-green-200 dark:border-green-800/50 mb-3">
-                    <p className="text-xs text-green-600 dark:text-green-400 font-medium mb-1">관리자 답변</p>
-                    <p className="text-sm text-gray-700 dark:text-gray-200">{inquiry.admin_response}</p>
+                <div className="p-2 bg-white dark:bg-gray-900 rounded-lg border border-green-200 dark:border-green-800/50 mb-2">
+                    <p className="text-[10px] text-green-600 dark:text-green-400 font-medium mb-0.5">관리자 답변</p>
+                    <p className="text-[11px] text-gray-700 dark:text-gray-200 line-clamp-3">{inquiry.admin_response}</p>
                     {inquiry.responded_at && (
-                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                        <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
                             {new Date(inquiry.responded_at).toLocaleString("ko-KR")}
                         </p>
                     )}
@@ -326,43 +310,25 @@ function InquiryCard({ inquiry, onUpdateStatus, onOpenResponse }: InquiryCardPro
             )}
 
             {/* 액션 버튼 */}
-            <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex gap-1 pt-1.5 border-t border-gray-200 dark:border-gray-700">
                 {inquiry.status === "pending" && (
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => onUpdateStatus("in_progress")}
-                    >
+                    <Button size="sm" variant="outline" onClick={() => onUpdateStatus("in_progress")} className="text-[10px] h-6 px-2">
                         처리 시작
                     </Button>
                 )}
                 {(inquiry.status === "pending" || inquiry.status === "in_progress") && (
-                    <Button
-                        size="sm"
-                        className="bg-green-500 hover:bg-green-600"
-                        onClick={onOpenResponse}
-                    >
-                        <Send className="w-3 h-3 mr-1" />
-                        답변하기
+                    <Button size="sm" className="bg-green-500 hover:bg-green-600 text-[10px] h-6 px-2" onClick={onOpenResponse}>
+                        <Send className="w-2.5 h-2.5 mr-0.5" />
+                        답변
                     </Button>
                 )}
                 {(inquiry.status === "pending" || inquiry.status === "in_progress") && (
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        className="border-green-300 text-green-700 hover:bg-green-50 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-900/20"
-                        onClick={() => onUpdateStatus("resolved")}
-                    >
-                        <CheckCircle className="w-3 h-3 mr-1" />
-                        확인 완료
+                    <Button size="sm" variant="outline" className="border-green-300 text-green-700 dark:border-green-700 dark:text-green-400 text-[10px] h-6 px-2" onClick={() => onUpdateStatus("resolved")}>
+                        완료
                     </Button>
                 )}
                 {inquiry.status === "resolved" && (
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => onUpdateStatus("closed")}
-                    >
+                    <Button size="sm" variant="outline" onClick={() => onUpdateStatus("closed")} className="text-[10px] h-6 px-2">
                         종료
                     </Button>
                 )}
