@@ -31,10 +31,12 @@
 - `reports`, `deleted_accounts` 테이블 RLS가 이메일 하드코딩 → `is_admin = true`로 변경 필요
 - 상세 SQL → `.claude/plans/iterative-inventing-rabbit.md`
 
-### 5. 5번 QA 보고 이슈 (2026-03-06 세션)
-- 에러 사일런트 실패 패턴: catch 블록에서 console.error 없이 삼키는 곳 전체 스캔
-- 다크모드 구현 방식 통일: TutorialTour(인라인) vs RecordPageTutorial(Tailwind dark:) 혼재
-- body overflow 모달 체인 관리: 모달 중첩 시 스크롤 잠금 해제 타이밍
+### 5. 전체 코드 QA 스캔 결과 (2026-03-06)
+- **상세 보고서**: `docs/QA_SCAN_REPORT_20260306.md`
+- CRITICAL 7건: RPC IDOR, CSP, JWT 트리거, hydration, 메모리 누수, 에러 삼킴
+- MAJOR 15건: fail-open, 모달 scroll lock, alert(), 타입 중복, bare catch
+- P0 다크모드 5개 파일 미대응: Reminders, Admin, MemoryAlbum, Video, RemindersSection
+- 수정 우선순위: Phase 1(보안) → Phase 2(안정성) → Phase 3(UX) → Phase 4(아키텍처)
 
 ### [완료] 간편모드 — 코드+DB 모두 완료
 ### [완료] 관리자 대시보드 모바일 compact UX

@@ -50,6 +50,24 @@
 
 ---
 
+### [2026-03-06] 전체 코드베이스 QA 스캔 (세션 2)
+
+> 6개 병렬 에이전트로 src/ 전체 전수 검사 수행
+
+| 에이전트 | 영역 | 발견 건수 |
+|---------|------|----------|
+| 프론트엔드 | pages, features, common, modals | Critical 4 / Major 9 / Minor 11 |
+| 백엔드 | API routes, lib, services | Critical 3 / Major 11 / Minor 10 |
+| 보안 | RLS, CSP, Auth, XSS | Critical 2 / High 5 / Medium 8 |
+| 타입/상태 | types, contexts, hooks | 타입 중복 4건 / 무검증 캐스팅 2건 |
+| 다크모드/UI | 전 컴포넌트 | P0 5파일 / P1 10+파일 |
+| 에러처리 | catch 블록, Promise 체인 | Critical 5 / Major 11 / Minor 15+ |
+
+- **상세 보고서**: `docs/QA_SCAN_REPORT_20260306.md`
+- 수정 우선순위: Phase 1(보안 SQL) → Phase 2(안정성) → Phase 3(UX) → Phase 4(아키텍처)
+
+---
+
 ### [2026-03-06] 세션 요약 — 온보딩/매거진 디자인 + 버그수정 + QA 검증
 
 > 5번(QA) + 7번(비판적 사고) 에이전트 검증 완료 세션
