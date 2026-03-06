@@ -202,7 +202,7 @@ async function searchLocal(query: string, display = 5): Promise<NaverSearchItem[
 
 /**
  * GPS 좌표 기반 주변 장소 검색 (2단계)
- * 1) Reverse Geocoding으로 행정구역 파악
+ * 1) Reverse Geocoding으로 행정구역 파악 (실패 시 키워드만으로 검색)
  * 2) "행정구역 + 키워드"로 네이버 검색
  * 3) 거리 계산 + 반경 필터 + 정렬
  */
@@ -211,16 +211,19 @@ export async function findNearbyPlaces(
     lng: number,
     keyword: string,
 ): Promise<NearbyPlace[]> {
-    // 1단계: 좌표 → 행정구역명
+    // 1단계: 좌표 → 행정구역명 (실패해도 계속 진행)
     const regionName = await reverseGeocode(lat, lng);
-    if (!regionName) {
-        // NCP 키 없으면 빈 배열 반환 (graceful degradation)
-        return [];
-    }
 
-    // 2단계: "강남구 공원" 같은 키워드로 검색
-    const searchQuery = `${regionName.split(" ").pop()} ${keyword}`;
-    const items = await searchLocal(searchQuery, LOCATION.MAX_RESULTS + 3); // 여분 확보 (거리 필터 후 줄어들 수 있음)
+    // 2단계: 검색 쿼리 구성
+    // Reverse Geocoding 성공: "강남구 공원"
+    // 실패 (NCP 키 없음 등): "공원" 만으로 검색 + 거리 필터로 보정
+    const searchQuery = regionName
+        ? `${regionName.split(" ").pop()} ${keyword}`
+        : keyword;
+    const fetchCount = regionName
+        ? LOCATION.MAX_RESULTS + 3
+        : LOCATION.MAX_RESULTS + 10; // fallback: 많이 가져와서 거리 필터
+    const items = await searchLocal(searchQuery, fetchCount);
 
     if (items.length === 0) return [];
 
@@ -245,8 +248,8 @@ export async function findNearbyPlaces(
                 mapUrl,
             };
         })
-        // 반경 필터 (설정된 km 이내만)
-        .filter((p) => p.distanceMeters <= LOCATION.SEARCH_RADIUS_KM * 1000)
+        // 반경 필터 (Reverse Geocoding 성공 시 2km, 실패 시 5km로 넓힘)
+        .filter((p) => p.distanceMeters <= (regionName ? LOCATION.SEARCH_RADIUS_KM : 5) * 1000)
         // 거리순 정렬
         .sort((a, b) => a.distanceMeters - b.distanceMeters)
         // 최대 결과 수 제한
