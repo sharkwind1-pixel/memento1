@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
+import { createAdminSupabase, getAuthUser } from "@/lib/supabase-server";
 import { getClientIP, checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 import { BACKGROUND_CATALOG, findBackground } from "@/data/minihompyBackgrounds";
 import { PG_ERROR_CODES } from "@/config/constants";
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "무료 배경은 구매할 필요 없습니다" }, { status: 400 });
         }
 
-        const supabase = await createServerSupabase();
+        const supabase = createAdminSupabase();
 
         // 중복 구매 체크
         const { data: existing } = await supabase

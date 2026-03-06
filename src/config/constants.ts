@@ -199,7 +199,7 @@ export const MINIHOMPY = {
     GREETING_MAX_LENGTH: 50,
     GUESTBOOK_MAX_LENGTH: 200,
     GUESTBOOK_PAGE_SIZE: 10,
-    DEFAULT_BACKGROUND: "default_sky",
+    DEFAULT_BACKGROUND: "cherry_hangang",
     MAX_PLACED_MINIMI: 5,
 } as const;
 

@@ -1,22 +1,13 @@
 /**
  * minihompyBackgrounds.ts
  * 미니홈피 배경 테마 카탈로그
- * - 기본 배경 1종 (무료) + 픽셀아트 이미지 배경 8종 = 총 9종
+ * - 픽셀아트 이미지 배경 8종, 200포인트 통일
  * - imageUrl이 있으면 이미지 배경, 없으면 CSS gradient
  */
 
 import type { BackgroundTheme } from "@/types";
 
 export const BACKGROUND_CATALOG: BackgroundTheme[] = [
-    {
-        id: "bg_default",
-        slug: "default_sky",
-        name: "맑은 하늘",
-        category: "sky",
-        price: 0,
-        description: "기본 배경 - 맑은 하늘과 푸른 들판",
-        cssBackground: "linear-gradient(180deg, #87CEEB 0%, #E0F7FF 40%, #A8E6CF 75%, #228B22 100%)",
-    },
     // ============================================
     // 픽셀아트 이미지 배경 (8종, 200포인트 통일)
     // ============================================
@@ -102,12 +93,17 @@ export const BACKGROUND_CATALOG: BackgroundTheme[] = [
     },
 ];
 
-/** slug으로 배경 테마 찾기 */
+/** slug으로 배경 테마 찾기 (삭제된 배경 slug이면 첫 번째 배경 폴백) */
 export function findBackground(slug: string): BackgroundTheme | undefined {
     return BACKGROUND_CATALOG.find((bg) => bg.slug === slug);
 }
 
-/** 기본 배경 */
+/** 기본 배경 (첫 번째 카탈로그 항목) */
 export function getDefaultBackground(): BackgroundTheme {
     return BACKGROUND_CATALOG[0];
+}
+
+/** 배경 조회 + 폴백 (삭제된 배경이면 기본 배경 반환) */
+export function findBackgroundOrDefault(slug: string): BackgroundTheme {
+    return findBackground(slug) || getDefaultBackground();
 }
