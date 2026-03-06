@@ -1,9 +1,12 @@
 /** @type {import('next').NextConfig} */
 
+const isDev = process.env.NODE_ENV === "development";
+
 // Content-Security-Policy 헤더 값
+// unsafe-eval: 개발 모드에서만 허용 (Next.js HMR 필요), 프로덕션에서는 제거
 const ContentSecurityPolicy = `
     default-src 'self';
-    script-src 'self' 'unsafe-eval' 'unsafe-inline';
+    script-src 'self' ${isDev ? "'unsafe-eval'" : ""} 'unsafe-inline';
     style-src 'self' 'unsafe-inline';
     img-src 'self' data: blob: *.supabase.co *.supabase.in images.dog.ceo cdn2.thecatapi.com 25.media.tumblr.com images.unsplash.com via.placeholder.com *.fal.ai *.fal.media;
     media-src 'self' blob: *.supabase.co *.supabase.in *.fal.ai *.fal.media;
