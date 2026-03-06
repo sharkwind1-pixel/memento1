@@ -93,7 +93,7 @@ export default function ChatMessageList({
     }, [messages, isTyping]);
 
     return (
-        <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-3">
+        <div className="flex-1 overflow-y-auto px-4 pt-3 pb-4 space-y-3">
             {messages.map((message, index) => {
                 const showTimestamp =
                     index === 0 ||
@@ -241,13 +241,13 @@ export default function ChatMessageList({
                                         )}
                                     </div>
                                 )}
-                                <div className="flex flex-col max-w-[75%]">
+                                <div className="flex flex-col max-w-[80%] lg:max-w-[70%]">
                                     <div
                                         className={`px-4 py-3 rounded-2xl shadow-md transition-all duration-500 hover:shadow-lg ${
                                             message.role === "user"
                                                 ? (isMemorialMode
                                                     ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-br-sm"
-                                                    : "bg-gradient-to-r from-memento-500 to-memento-400 text-white rounded-br-sm")
+                                                    : "bg-gradient-to-r from-memento-600 to-memento-500 text-white rounded-br-sm")
                                                 : isMemorialMode
                                                         ? "bg-amber-100 dark:bg-amber-900/40 text-amber-900 dark:text-amber-100 rounded-bl-sm border border-amber-200/50 dark:border-amber-700/50"
                                                         : "bg-white dark:bg-sky-900/40 text-sky-900 dark:text-sky-100 rounded-bl-sm border border-sky-100 dark:border-sky-700/50"

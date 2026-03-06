@@ -138,15 +138,15 @@ export default function ChatInputArea({
                                 </p>
                             </div>
                         ) : (
-                            <div className="bg-gradient-to-r from-violet-100 to-sky-100 rounded-2xl p-6 mb-3">
-                                <p className="text-violet-800 font-medium mb-2">
+                            <div className="bg-gradient-to-r from-memento-100 to-sky-100 dark:from-sky-900/30 dark:to-gray-800/30 rounded-2xl p-6 mb-3">
+                                <p className="text-memento-700 dark:text-sky-200 font-medium mb-2">
                                     오늘의 무료 대화를 모두 사용했어요
                                 </p>
-                                <p className="text-sm text-sky-700 mb-4">
+                                <p className="text-sm text-sky-700 dark:text-sky-300 mb-4">
                                     프리미엄으로 {selectedPet?.name}와(과) 무제한 대화하세요
                                 </p>
                                 <Button
-                                    className="bg-gradient-to-r from-violet-500 to-sky-500 hover:from-violet-600 hover:to-sky-600 text-white rounded-full px-6"
+                                    className="bg-gradient-to-r from-memento-500 to-sky-500 hover:from-memento-600 hover:to-sky-600 text-white rounded-full px-6"
                                     onClick={() => {
                                         toast.info("결제 시스템이 곧 오픈됩니다. 조금만 기다려주세요!");
                                     }}
@@ -154,7 +154,7 @@ export default function ChatInputArea({
                                     <Sparkles className="w-4 h-4 mr-2" />
                                     프리미엄 시작하기
                                 </Button>
-                                <p className="text-xs text-violet-500 mt-2">
+                                <p className="text-xs text-memento-500 dark:text-sky-400 mt-2">
                                     커피 한 잔 값, 월 7,900원
                                 </p>
                             </div>
@@ -180,7 +180,7 @@ export default function ChatInputArea({
                                         style={{ animationDelay: `${idx * 80}ms` }}
                                     >
                                         <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                                        <span className="truncate">{question}</span>
+                                        <span className="line-clamp-1" title={question}>{question}</span>
                                     </button>
                                 ))
                             ) : (
@@ -250,7 +250,7 @@ export default function ChatInputArea({
                                 </span>
                             </div>
                         )}
-                        <div className="flex items-center justify-center gap-2 mt-1 flex-wrap">
+                        <div className="flex items-center justify-center gap-2 mt-2 flex-wrap">
                             {isPremium ? (
                                 <span className="text-xs px-2 py-0.5 rounded-full flex items-center gap-1 bg-violet-100 text-violet-600 whitespace-nowrap">
                                     <Sparkles className="w-3 h-3 flex-shrink-0" />
