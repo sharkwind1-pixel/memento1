@@ -28,6 +28,7 @@ import {
     Calendar,
     Check,
     Eye,
+    BookOpen,
 } from "lucide-react";
 
 interface OnboardingModalProps {
@@ -309,12 +310,17 @@ export default function OnboardingModal({
                 </div>
 
                 {/* 콘텐츠 */}
-                <div className="p-6">
+                <div className="p-6 animate-in fade-in-0 duration-300" key={step}>
                     {/* Step 0: 환영 */}
                     {step === 0 && (
                         <div className="text-center py-4">
-                            <div className="w-20 h-20 bg-gradient-to-br from-sky-400 to-violet-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-                                <Sparkles className="w-10 h-10 text-white" />
+                            <div className="relative w-24 h-24 mx-auto mb-6">
+                                <div className="w-24 h-24 bg-gradient-to-br from-sky-400 to-violet-500 rounded-full flex items-center justify-center shadow-lg">
+                                    <PawPrint className="w-12 h-12 text-white" />
+                                </div>
+                                <div className="absolute -top-1 -right-1 w-8 h-8 bg-gradient-to-br from-amber-300 to-amber-400 rounded-full flex items-center justify-center shadow-md">
+                                    <Sparkles className="w-4 h-4 text-white" />
+                                </div>
                             </div>
                             <h2 className="text-2xl font-display font-bold text-gray-800 dark:text-white mb-3">
                                 환영해요!
@@ -346,20 +352,22 @@ export default function OnboardingModal({
                                         if (!isSimpleMode) toggleSimpleMode();
                                         handleNext();
                                     }}
-                                    className="p-5 rounded-2xl border-2 border-memento-400 bg-memento-50 dark:bg-memento-900/20 transition-all flex flex-col items-center gap-2"
+                                    className="p-5 rounded-2xl border-2 border-memento-400 bg-memento-50 dark:bg-memento-900/20 transition-all flex flex-col items-center gap-3 hover:shadow-md"
                                 >
-                                    <span className="text-2xl font-bold text-memento-600 dark:text-memento-400">크게</span>
-                                    <span className="text-xs text-gray-500">간편하게 볼래요</span>
+                                    <Eye className="w-8 h-8 text-memento-500" />
+                                    <span className="text-xl font-bold text-memento-600 dark:text-memento-400">크게</span>
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">간편하게 볼래요</span>
                                 </button>
                                 <button
                                     onClick={() => {
                                         if (isSimpleMode) toggleSimpleMode();
                                         handleNext();
                                     }}
-                                    className="p-5 rounded-2xl border-2 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all flex flex-col items-center gap-2"
+                                    className="p-5 rounded-2xl border-2 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-all flex flex-col items-center gap-3 hover:shadow-md"
                                 >
-                                    <span className="text-base font-medium text-gray-600 dark:text-gray-300">기본</span>
-                                    <span className="text-xs text-gray-500">지금 그대로</span>
+                                    <BookOpen className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                                    <span className="text-xl font-bold text-gray-600 dark:text-gray-300">기본</span>
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">지금 그대로</span>
                                 </button>
                             </div>
                         </div>
@@ -669,7 +677,7 @@ export default function OnboardingModal({
                     {step === 8 && data.userType === "memorial" && (
                         <div>
                             <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2 text-center">
-                                {data.petName}가(이) 떠난 지 얼마나 됐나요?
+                                {data.petName}가(이) 무지개다리를 건넌 지 얼마나 됐나요?
                             </h2>
                             <p className="text-gray-500 text-sm text-center mb-6">
                                 편하게 알려주세요

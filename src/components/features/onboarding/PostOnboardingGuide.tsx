@@ -33,15 +33,15 @@ export default function PostOnboardingGuide({
     // 키울 예정인 유저 - 환영 팝업 (로그인 상태 유지!)
     return (
         <div className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4">
-            <div className="w-full max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl">
+            <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl overflow-hidden shadow-2xl">
                 <div className="p-8 text-center">
                     <div className="w-20 h-20 bg-gradient-to-br from-sky-400 to-violet-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
                         <Heart className="w-10 h-10 text-white" />
                     </div>
-                    <h2 className="text-2xl font-display font-bold text-gray-800 mb-3">
+                    <h2 className="text-2xl font-display font-bold text-gray-800 dark:text-white mb-3">
                         환영해요!<br/>함께 준비해요
                     </h2>
-                    <p className="text-gray-600 leading-relaxed mb-6">
+                    <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-6">
                         커뮤니티에서 다른 반려인들의 경험을 들어보고,<br/>
                         매거진에서 유용한 정보도 확인해보세요.<br/>
                         새 가족을 맞이할 준비를 도와드릴게요!

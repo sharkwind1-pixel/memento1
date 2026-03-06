@@ -209,7 +209,7 @@ export default function NicknameSetupModal({
                                 type="checkbox"
                                 checked={ageConfirmed}
                                 onChange={(e) => setAgeConfirmed(e.target.checked)}
-                                className="mt-0.5 w-4 h-4 rounded border-gray-300 text-memento-500 focus:ring-memento-500"
+                                className="mt-0.5 w-5 h-5 rounded border-gray-300 dark:border-gray-500 text-memento-500 focus:ring-memento-500 dark:bg-gray-700 flex-shrink-0"
                             />
                             <span className="text-xs text-gray-600 dark:text-gray-400">
                                 <span className="text-red-500 font-medium">[필수]</span>{" "}
@@ -221,7 +221,7 @@ export default function NicknameSetupModal({
                                 type="checkbox"
                                 checked={termsAgreed}
                                 onChange={(e) => setTermsAgreed(e.target.checked)}
-                                className="mt-0.5 w-4 h-4 rounded border-gray-300 text-memento-500 focus:ring-memento-500"
+                                className="mt-0.5 w-5 h-5 rounded border-gray-300 dark:border-gray-500 text-memento-500 focus:ring-memento-500 dark:bg-gray-700 flex-shrink-0"
                             />
                             <span className="text-xs text-gray-600 dark:text-gray-400">
                                 <span className="text-red-500 font-medium">[필수]</span>{" "}
@@ -236,7 +236,7 @@ export default function NicknameSetupModal({
                                 type="checkbox"
                                 checked={locationConsent}
                                 onChange={(e) => setLocationConsent(e.target.checked)}
-                                className="mt-0.5 w-4 h-4 rounded border-gray-300 text-memento-500 focus:ring-memento-500"
+                                className="mt-0.5 w-5 h-5 rounded border-gray-300 dark:border-gray-500 text-memento-500 focus:ring-memento-500 dark:bg-gray-700 flex-shrink-0"
                             />
                             <span className="text-xs text-gray-600 dark:text-gray-400">
                                 <span className="text-sky-500 font-medium">[선택]</span>{" "}

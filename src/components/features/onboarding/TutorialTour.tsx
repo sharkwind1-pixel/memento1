@@ -143,7 +143,15 @@ export default function TutorialTour({
     useEffect(() => { isOpenRef.current = isOpen; }, [isOpen]);
 
     const isMobile = typeof window !== "undefined" ? window.innerWidth < 1280 : false;
+    const isDark = typeof window !== "undefined" ? document.documentElement.classList.contains("dark") : false;
     const steps = isMobile ? MOBILE_STEPS : DESKTOP_STEPS;
+
+    // 다크모드 대응 색상
+    const bubbleBg = isDark ? "#1f2937" : "white"; // gray-800
+    const titleColor = isDark ? "#f3f4f6" : "#374151"; // gray-100 / gray-700
+    const descColor = isDark ? "#9ca3af" : "#6b7280"; // gray-400 / gray-500
+    const hintColor = isDark ? "rgba(56,189,248,0.8)" : "rgba(5,178,220,0.8)";
+    const arrowBorderColor = isDark ? "#1f2937" : "white";
 
     // ─────────────────────────────────────────────────────────
     // 타겟 측정 (폴링 방식 - 단순하고 StrictMode 안전)
@@ -465,7 +473,7 @@ export default function TutorialTour({
                             height: 0,
                             borderLeft: "12px solid transparent",
                             borderRight: "12px solid transparent",
-                            borderBottom: "14px solid white",
+                            borderBottom: `14px solid ${arrowBorderColor}`,
                             filter: "drop-shadow(0 -2px 2px rgba(0,0,0,0.1))",
                         }}
                     />
@@ -480,7 +488,7 @@ export default function TutorialTour({
                             top: 16,
                             width: 32,
                             height: 32,
-                            background: "white",
+                            background: bubbleBg,
                             borderRadius: "50%",
                         }}
                     />
@@ -491,7 +499,7 @@ export default function TutorialTour({
                             top: 48,
                             width: 28,
                             height: 28,
-                            background: "white",
+                            background: bubbleBg,
                             borderRadius: "50%",
                         }}
                     />
@@ -502,7 +510,7 @@ export default function TutorialTour({
                             top: 24,
                             width: 32,
                             height: 32,
-                            background: "white",
+                            background: bubbleBg,
                             borderRadius: "50%",
                         }}
                     />
@@ -513,7 +521,7 @@ export default function TutorialTour({
                             top: 56,
                             width: 24,
                             height: 24,
-                            background: "white",
+                            background: bubbleBg,
                             borderRadius: "50%",
                         }}
                     />
@@ -524,7 +532,7 @@ export default function TutorialTour({
                             bottom: -12,
                             width: 28,
                             height: 28,
-                            background: "white",
+                            background: bubbleBg,
                             borderRadius: "50%",
                         }}
                     />
@@ -536,7 +544,7 @@ export default function TutorialTour({
                             bottom: -16,
                             width: 36,
                             height: 36,
-                            background: "white",
+                            background: bubbleBg,
                             borderRadius: "50%",
                         }}
                     />
@@ -547,7 +555,7 @@ export default function TutorialTour({
                             bottom: -12,
                             width: 28,
                             height: 28,
-                            background: "white",
+                            background: bubbleBg,
                             borderRadius: "50%",
                         }}
                     />
@@ -556,10 +564,10 @@ export default function TutorialTour({
                     <div
                         style={{
                             position: "relative",
-                            background: "white",
+                            background: bubbleBg,
                             borderRadius: 36,
                             padding: "20px 20px 16px",
-                            boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
+                            boxShadow: isDark ? "0 20px 60px rgba(0,0,0,0.4)" : "0 20px 60px rgba(0,0,0,0.15)",
                             textAlign: "center",
                         }}
                     >
@@ -595,7 +603,7 @@ export default function TutorialTour({
                             <span
                                 style={{
                                     fontWeight: 700,
-                                    color: "#374151",
+                                    color: titleColor,
                                     fontSize: 16,
                                 }}
                             >
@@ -607,7 +615,7 @@ export default function TutorialTour({
                         <p
                             style={{
                                 fontSize: 14,
-                                color: "#6b7280",
+                                color: descColor,
                                 lineHeight: 1.6,
                                 marginBottom: 12,
                             }}
@@ -650,7 +658,7 @@ export default function TutorialTour({
                         <p
                             style={{
                                 fontSize: 12,
-                                color: "rgba(5,178,220,0.8)", /* memento-500 */
+                                color: hintColor,
                                 fontWeight: 500,
                             }}
                         >
@@ -710,7 +718,7 @@ export default function TutorialTour({
                             height: 0,
                             borderLeft: "12px solid transparent",
                             borderRight: "12px solid transparent",
-                            borderTop: "14px solid white",
+                            borderTop: `14px solid ${arrowBorderColor}`,
                             filter: "drop-shadow(0 2px 2px rgba(0,0,0,0.1))",
                         }}
                     />

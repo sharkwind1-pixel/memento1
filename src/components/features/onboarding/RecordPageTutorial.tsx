@@ -317,7 +317,7 @@ export default function RecordPageTutorial({
 
             {/* 말풍선 */}
             <div
-                className="absolute bg-white rounded-3xl shadow-2xl p-6 w-80 transition-all duration-300 animate-in fade-in-0 zoom-in-95"
+                className="absolute bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-6 w-80 transition-all duration-300 animate-in fade-in-0 zoom-in-95"
                 style={{
                     top: bubbleStyle.top,
                     left: bubbleStyle.left,
@@ -327,7 +327,7 @@ export default function RecordPageTutorial({
                 {/* 화살표 (스포트라이트 모드일 때만) */}
                 {targetRect && !isCenterMode && (
                     <div
-                        className="absolute w-4 h-4 bg-white transform rotate-45"
+                        className="absolute w-4 h-4 bg-white dark:bg-gray-800 transform rotate-45"
                         style={{
                             ...(arrowDirection === "up"
                                 ? { top: -8 }
@@ -343,12 +343,12 @@ export default function RecordPageTutorial({
                 </div>
 
                 {/* 제목 */}
-                <h3 className="text-lg font-bold text-gray-800 text-center mb-2">
+                <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 text-center mb-2">
                     {step.title}
                 </h3>
 
                 {/* 설명 */}
-                <p className="text-gray-600 text-center text-sm leading-relaxed mb-5">
+                <p className="text-gray-600 dark:text-gray-400 text-center text-sm leading-relaxed mb-5">
                     {step.description}
                 </p>
 
@@ -362,7 +362,7 @@ export default function RecordPageTutorial({
                                     ? "w-6 bg-sky-500"
                                     : idx < currentStep
                                         ? "bg-sky-300"
-                                        : "bg-gray-200"
+                                        : "bg-gray-200 dark:bg-gray-600"
                             }`}
                         />
                     ))}
@@ -372,7 +372,7 @@ export default function RecordPageTutorial({
                 <div className="flex gap-3">
                     <button
                         onClick={handleSkip}
-                        className="flex-1 py-3 text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors"
+                        className="flex-1 py-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-sm font-medium transition-colors"
                     >
                         건너뛰기
                     </button>
