@@ -20,6 +20,7 @@ export interface PetInfo {
     birthday?: string;
     status: "active" | "memorial";
     memorialDate?: string;
+    weight?: string;
     // AI 개인화 필드
     nicknames?: string;
     specialHabits?: string;
@@ -31,6 +32,13 @@ export interface PetInfo {
     // 추모 모드 추가 정보
     togetherPeriod?: string;
     memorableMemory?: string;
+}
+
+/** 온보딩 데이터 (profiles.onboarding_data에서 가져온 정보) */
+export interface OnboardingContext {
+    userType?: "planning" | "current" | "memorial" | null;
+    previousExperience?: "first" | "experienced" | null;
+    passedPeriod?: "under1month" | "1to6months" | "6to12months" | "over1year" | null;
 }
 
 export interface ChatMessage {
@@ -223,6 +231,9 @@ ${entries.join("\n")}
 export function getPersonalizationContext(pet: PetInfo): string {
     const items: string[] = [];
 
+    if (pet.weight) {
+        items.push(`- 체중: ${pet.weight}`);
+    }
     if (pet.nicknames) {
         items.push(`- 별명: ${pet.nicknames}`);
     }
@@ -260,6 +271,90 @@ ${items.join("\n")}
 이 정보는 ${pet.name}을(를) 다른 반려동물과 구별 짓는 고유한 특성입니다.
 대화할 때 일반적인 ${pet.breed} 이야기보다 위 정보를 우선 활용하세요.
 단, 같은 정보를 매번 반복하지 말고 돌아가며 자연스럽게 언급하세요.`;
+}
+
+/**
+ * 온보딩 데이터를 프롬프트용 컨텍스트로 변환
+ * - 처음 키우는 사용자: 더 친절하고 기초적인 설명
+ * - 추모 사용자 + 떠나보낸 기간: 애도 톤 강도 조절
+ */
+export function getOnboardingContext(onboarding: OnboardingContext | null, isMemorialMode: boolean): string {
+    if (!onboarding) return "";
+
+    const items: string[] = [];
+
+    // 반려동물 경험 수준
+    if (onboarding.previousExperience === "first") {
+        items.push("- 이 사용자는 반려동물을 처음 키우는 초보입니다. 전문 용어를 피하고 친절하게 설명하세요.");
+    }
+
+    // 추모 모드: 떠나보낸 기간에 따른 톤 조절
+    if (isMemorialMode && onboarding.passedPeriod) {
+        const periodGuide: Record<string, string> = {
+            under1month: "떠나보낸 지 1개월 미만입니다. 극초기 애도 상태이므로 매우 조심스럽고 따뜻하게 대해주세요. 긍정적 전환을 시도하지 마세요.",
+            "1to6months": "떠나보낸 지 1~6개월입니다. 아직 깊은 슬픔 속에 있을 수 있으니 충분히 공감하세요.",
+            "6to12months": "떠나보낸 지 6개월~1년입니다. 슬픔과 그리움이 공존하는 시기입니다.",
+            over1year: "떠나보낸 지 1년 이상입니다. 추억을 따뜻하게 회상할 수 있는 시기입니다.",
+        };
+        const guide = periodGuide[onboarding.passedPeriod];
+        if (guide) items.push(`- ${guide}`);
+    }
+
+    // 입양 예정자
+    if (onboarding.userType === "planning") {
+        items.push("- 이 사용자는 아직 반려동물을 키우지 않고 입양을 준비 중입니다. 입양 준비에 도움이 되는 정보를 제공하세요.");
+    }
+
+    if (items.length === 0) return "";
+
+    return `## 사용자 배경 정보
+${items.join("\n")}`;
+}
+
+/**
+ * 최근 감정 기록을 분석하여 추세 컨텍스트 생성
+ * @param recentEmotions - DB에서 가져온 최근 감정 배열 [{emotion, created_at}]
+ */
+export function buildEmotionTrendContext(
+    recentEmotions: { emotion: string; created_at: string }[]
+): string {
+    if (!recentEmotions || recentEmotions.length < 3) return "";
+
+    // 감정별 카운트
+    const counts: Record<string, number> = {};
+    for (const e of recentEmotions) {
+        if (e.emotion) {
+            counts[e.emotion] = (counts[e.emotion] || 0) + 1;
+        }
+    }
+
+    const total = recentEmotions.length;
+    const dominant = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+    if (!dominant) return "";
+
+    const [dominantEmotion, dominantCount] = dominant;
+    const ratio = dominantCount / total;
+
+    // 60% 이상 같은 감정이면 추세로 판단
+    if (ratio < 0.6) return "";
+
+    const EMOTION_LABELS: Record<string, string> = {
+        happy: "기쁨/행복",
+        sad: "슬픔",
+        anxious: "불안/걱정",
+        angry: "화남/답답함",
+        lonely: "외로움",
+        grateful: "감사/따뜻함",
+        neutral: "평온",
+        depressed: "우울",
+        nostalgic: "그리움",
+    };
+
+    const label = EMOTION_LABELS[dominantEmotion] || dominantEmotion;
+
+    return `## 최근 감정 추세
+- 최근 ${total}번의 대화에서 "${label}" 감정이 ${Math.round(ratio * 100)}% 비율로 감지됨
+- ${ratio >= 0.8 ? "지속적인 감정 상태이므로 더욱 세심하게 공감하세요." : "이 감정에 자연스럽게 공감하되, 다양한 주제로 대화를 유도해보세요."}`;
 }
 
 // ---- 컨텍스트 예산 시스템 ----

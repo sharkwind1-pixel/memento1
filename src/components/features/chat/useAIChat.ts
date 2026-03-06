@@ -454,6 +454,7 @@ export function useAIChat({
                         birthday: selectedPet.birthday,
                         status: selectedPet.status,
                         memorialDate: selectedPet.memorialDate,
+                        weight: selectedPet.weight,
                         // AI 개인화 필드
                         nicknames: selectedPet.nicknames,
                         specialHabits: selectedPet.specialHabits,

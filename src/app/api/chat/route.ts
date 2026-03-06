@@ -46,12 +46,15 @@ import {
     type TimelineEntry,
     type PhotoMemory,
     type ReminderInfo,
+    type OnboardingContext,
     extractKeywordsFromReply,
     timelineToContext,
     photoMemoriesToContext,
     remindersToContext,
     remindersToMemorialContext,
     getPersonalizationContext,
+    getOnboardingContext,
+    buildEmotionTrendContext,
     buildPrioritizedContext,
     extractRecentTopics,
     filterMemorialSuggestions,
@@ -132,12 +135,15 @@ export async function POST(request: NextRequest) {
         const supabase = await createServerSupabase();
         const { data: profile } = await supabase
             .from("profiles")
-            .select("is_premium, premium_expires_at")
+            .select("is_premium, premium_expires_at, onboarding_data, user_type")
             .eq("id", user.id)
             .single();
 
         const isPremium = profile?.is_premium &&
             (!profile.premium_expires_at || new Date(profile.premium_expires_at) > new Date());
+
+        // 온보딩 데이터 추출 (AI 개인화에 활용)
+        const onboardingData = profile?.onboarding_data as OnboardingContext | null;
 
         // agent 모듈 동적 import (런타임에만 로드)
         const agent = await getAgentModule();
@@ -269,13 +275,15 @@ export async function POST(request: NextRequest) {
 
         // 에이전트 기능 활성화 시 -- 독립적인 비동기 작업을 병렬 실행하여 응답 속도 개선
         let conversationContext = "";
+        let emotionTrendContext = "";
         if (enableAgent) {
-            // Promise.all로 독립적인 작업 4개를 병렬 실행:
+            // Promise.all로 독립적인 작업 5개를 병렬 실행:
             // A. 감정 분석 (GPT 호출 가능)
             // B. 메모리 조회 (DB)
             // C. pending_topic 조회 (DB)
             // D. 대화 맥락 컨텍스트 빌드 (DB 2개)
-            const [emotionResult, memories, pendingTopicMem, convCtx] = await Promise.all([
+            // E. 최근 감정 추세 조회 (DB)
+            const [emotionResult, memories, pendingTopicMem, convCtx, recentEmotions] = await Promise.all([
                 // A. 감정 분석
                 agent.analyzeEmotion(sanitizedMessage, isMemorialMode),
                 // B. 메모리 조회
@@ -290,6 +298,18 @@ export async function POST(request: NextRequest) {
                 pet.id
                     ? agent.buildConversationContext(user.id, pet.id, pet.name, isMemorialMode).catch(() => "")
                     : Promise.resolve(""),
+                // E. 최근 감정 추세 (최근 10개 대화의 감정)
+                pet.id
+                    ? supabase
+                        .from("chat_messages")
+                        .select("emotion, created_at")
+                        .eq("pet_id", pet.id)
+                        .eq("role", "user")
+                        .not("emotion", "is", null)
+                        .order("created_at", { ascending: false })
+                        .limit(10)
+                        .then(({ data, error }) => error ? [] : (data || []))
+                    : Promise.resolve([] as { emotion: string; created_at: string }[]),
             ]);
 
             // 감정 분석 결과 적용
@@ -313,6 +333,9 @@ export async function POST(request: NextRequest) {
 
             // 대화 맥락 컨텍스트
             conversationContext = convCtx;
+
+            // 감정 추세 컨텍스트
+            emotionTrendContext = buildEmotionTrendContext(recentEmotions);
 
             // 새로운 메모리 추출 (fire-and-forget, 응답 속도에 영향 없음)
             if (pet.id) {
@@ -343,8 +366,11 @@ export async function POST(request: NextRequest) {
             ? remindersToMemorialContext(reminders, pet.name)
             : remindersToContext(reminders, pet.name);
 
-        // 개인화 컨텍스트 생성 (별명, 좋아하는 것, 습관 등)
+        // 개인화 컨텍스트 생성 (별명, 좋아하는 것, 습관, 체중 등)
         const personalizationContext = getPersonalizationContext(pet);
+
+        // 온보딩 컨텍스트 생성 (사용자 배경: 초보/경험자, 떠나보낸 기간 등)
+        const onboardingContext = getOnboardingContext(onboardingData, isMemorialMode);
 
         // 이번 세션 토픽 추적 (AI 응답 반복 방지)
         const recentTopicsContext = extractRecentTopics(chatHistory);
@@ -352,6 +378,8 @@ export async function POST(request: NextRequest) {
         // 통합 컨텍스트 (우선순위 기반 예산 시스템)
         const contextItems = isMemorialMode
             ? [
+                { content: onboardingContext, priority: 7 },
+                { content: emotionTrendContext, priority: 6 },
                 { content: recentTopicsContext, priority: 6 },
                 { content: personalizationContext, priority: 5 },
                 { content: specialDayContext, priority: 5 },
@@ -361,6 +389,8 @@ export async function POST(request: NextRequest) {
                 { content: reminderContext, priority: 2 },
             ]
             : [
+                { content: onboardingContext, priority: 7 },
+                { content: emotionTrendContext, priority: 6 },
                 { content: recentTopicsContext, priority: 6 },
                 { content: personalizationContext, priority: 5 },
                 { content: specialDayContext, priority: 4 },
