@@ -23,6 +23,7 @@ import {
     ChevronRight,
     BookOpen,
     Quote,
+    Share2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -512,8 +513,8 @@ function CardRenderer({
 function CoverCard({ article }: { article: MagazineArticle }) {
     return (
         <div className="h-full flex flex-col">
-            {/* 이미지 영역: 상단 55% — 세로로 과도하게 잘리지 않도록 제한 */}
-            <div className="relative w-full" style={{ height: "55%" }}>
+            {/* 이미지 영역: 모바일 45% / 데스크톱 50% — 텍스트 잘림 방지 */}
+            <div className="relative w-full" style={{ height: "45%" }}>
                 <Image
                     src={article.image}
                     alt={article.title}
@@ -524,7 +525,7 @@ function CoverCard({ article }: { article: MagazineArticle }) {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
             </div>
 
-            {/* 텍스트 영역: 하단 45% */}
+            {/* 텍스트 영역: 하단 55% */}
             <div className="flex-1 flex flex-col justify-center px-6 py-6 sm:px-8 bg-white dark:bg-gray-900">
                 {article.badge && (
                     <Badge
@@ -774,6 +775,18 @@ function EndCard({
                 {article.title}
             </p>
 
+            {/* 조회수 / 좋아요 */}
+            <div className="flex items-center gap-6 mb-6 text-gray-500 dark:text-gray-400">
+                <span className="flex items-center gap-1.5 text-sm">
+                    <Eye className="w-4 h-4" />
+                    {article.views.toLocaleString()}
+                </span>
+                <span className="flex items-center gap-1.5 text-sm">
+                    <Heart className="w-4 h-4" />
+                    {article.likes}
+                </span>
+            </div>
+
             {article.tags.length > 0 && (
                 <div className="flex flex-wrap justify-center gap-2 mb-8">
                     {article.tags.map((tag) => (
@@ -787,13 +800,29 @@ function EndCard({
                 </div>
             )}
 
-            <Button
-                onClick={onBack}
-                className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl px-6"
-            >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                목록으로 돌아가기
-            </Button>
+            <div className="flex gap-3">
+                <Button
+                    onClick={onBack}
+                    className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl px-6"
+                >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    목록으로
+                </Button>
+                <Button
+                    variant="outline"
+                    className="rounded-xl px-6 border-gray-300 dark:border-gray-600"
+                    onClick={() => {
+                        if (navigator.share) {
+                            navigator.share({ title: article.title, text: article.summary });
+                        } else {
+                            navigator.clipboard.writeText(article.title);
+                        }
+                    }}
+                >
+                    <Share2 className="w-4 h-4 mr-2" />
+                    공유
+                </Button>
+            </div>
         </div>
     );
 }

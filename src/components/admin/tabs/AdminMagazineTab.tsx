@@ -37,8 +37,9 @@ import {
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
 import { uploadMagazineImage } from "@/lib/storage";
-import { getBadgeLabel } from "@/data/magazineArticles";
+import { getBadgeLabel, dbArticleToMagazineArticle, type MagazineArticle } from "@/data/magazineArticles";
 import CardEditor from "@/components/admin/CardEditor";
+import MagazineReader from "@/components/features/magazine/MagazineReader";
 import type { MagazineArticleRow, MagazineStatus } from "../types";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
@@ -141,6 +142,7 @@ export default function AdminMagazineTab({
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
     const [isTogglingStatus, setIsTogglingStatus] = useState<string | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [previewArticle, setPreviewArticle] = useState<MagazineArticle | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null!);
 
     // ========================================================================
@@ -420,6 +422,26 @@ export default function AdminMagazineTab({
                                     key={article.id}
                                     article={article}
                                     onEdit={() => openEditModal(article)}
+                                    onPreview={() => {
+                                        const converted = dbArticleToMagazineArticle({
+                                            id: article.id,
+                                            category: article.category,
+                                            title: article.title,
+                                            summary: article.summary,
+                                            content: article.content,
+                                            author: article.author,
+                                            authorRole: article.author_role,
+                                            imageUrl: article.image_url,
+                                            readTime: article.read_time,
+                                            views: article.views,
+                                            likes: article.likes,
+                                            badge: article.badge,
+                                            tags: article.tags,
+                                            publishedAt: article.published_at,
+                                            createdAt: article.created_at,
+                                        });
+                                        setPreviewArticle(converted);
+                                    }}
                                     onToggleStatus={() => toggleStatus(article)}
                                     onDelete={() => deleteArticle(article)}
                                     isTogglingStatus={isTogglingStatus === article.id}
@@ -451,6 +473,16 @@ export default function AdminMagazineTab({
                     onClose={closeModal}
                 />
             )}
+
+            {/* 기사 미리보기 (풀스크린 리더) */}
+            {previewArticle && (
+                <div className="fixed inset-0 z-[60] bg-white dark:bg-gray-900">
+                    <MagazineReader
+                        article={previewArticle}
+                        onBack={() => setPreviewArticle(null)}
+                    />
+                </div>
+            )}
         </div>
     );
 }
@@ -462,6 +494,7 @@ export default function AdminMagazineTab({
 interface ArticleCardProps {
     article: MagazineArticleRow;
     onEdit: () => void;
+    onPreview: () => void;
     onToggleStatus: () => void;
     onDelete: () => void;
     isTogglingStatus: boolean;
@@ -471,6 +504,7 @@ interface ArticleCardProps {
 function ArticleCard({
     article,
     onEdit,
+    onPreview,
     onToggleStatus,
     onDelete,
     isTogglingStatus,
@@ -543,6 +577,13 @@ function ArticleCard({
             <div className="flex gap-1 pt-1.5 mt-2 border-t border-gray-200 dark:border-gray-700">
                 <button
                     type="button"
+                    onClick={onPreview}
+                    className="h-7 px-2 rounded border border-sky-300 dark:border-sky-700 text-sky-600 dark:text-sky-400 bg-white dark:bg-gray-800 text-[10px] font-medium transition-colors"
+                >
+                    미리보기
+                </button>
+                <button
+                    type="button"
                     onClick={onEdit}
                     className="h-7 px-2 rounded border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 text-[10px] font-medium transition-colors"
                 >
@@ -602,6 +643,7 @@ function ArticleFormModal({
     onSubmit,
     onClose,
 }: ArticleFormModalProps) {
+    const [showUrlInput, setShowUrlInput] = useState(false);
     useEscapeClose(true, onClose);
     useBodyScrollLock(true);
 
@@ -792,15 +834,21 @@ function ArticleFormModal({
                                     )}
                                     {isUploading ? "업로드 중..." : "이미지 업로드"}
                                 </Button>
-                                <p className="text-xs text-gray-400 dark:text-gray-500">
-                                    또는 URL을 직접 입력하세요
-                                </p>
-                                <Input
-                                    value={form.imageUrl}
-                                    onChange={(e) => updateField("imageUrl", e.target.value)}
-                                    placeholder="https://..."
-                                    className="text-xs"
-                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowUrlInput(!showUrlInput)}
+                                    className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors text-left"
+                                >
+                                    {showUrlInput ? "URL 입력 닫기" : "URL 직접 입력"}
+                                </button>
+                                {showUrlInput && (
+                                    <Input
+                                        value={form.imageUrl}
+                                        onChange={(e) => updateField("imageUrl", e.target.value)}
+                                        placeholder="https://..."
+                                        className="text-xs"
+                                    />
+                                )}
                             </div>
                         </div>
                         <input
