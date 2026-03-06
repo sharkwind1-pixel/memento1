@@ -39,10 +39,78 @@
 | 미니홈피 전략적 노출 (사이드바 바로가기, 헤더 드롭다운) | 완료 |
 | 게시판 API 속도 최적화 (쿼리 병렬화, fire-and-forget 조회수) | 완료 |
 | 간편모드 (노인용 큰 카드 런처 홈, 토글 스위치) | 완료 |
+| 온보딩/튜토리얼 다크모드 + UX 전면 개선 | 완료 |
+| 펫매거진 P1~P2 디자인 마무리 (커버 비율, 엔딩 CTA, 관리자 미리보기) | 완료 |
+| 온보딩 리셋 버그 수정 (select 체이닝 + 트리거 컬럼 참조) | 완료 |
+| TutorialTour 구름 말풍선 SVG 교체 | 완료 |
 
 ## 변경 로그 (최신순)
 
 > 형식: `[YYYY-MM-DD HH:MM]` 커밋해시 | 작업 요약 | 변경 파일 | 상세
+
+---
+
+### [2026-03-06] 세션 요약 — 온보딩/매거진 디자인 + 버그수정 + QA 검증
+
+> 5번(QA) + 7번(비판적 사고) 에이전트 검증 완료 세션
+
+#### 1. 펫매거진 P1~P2 마무리 (`5dabf4f`)
+
+| 항목 | 내용 |
+|------|------|
+| 커밋 | `5dabf4f` feat(magazine): 커버 비율 조정, 엔딩 CTA 강화, 관리자 미리보기 추가 |
+| 변경 파일 | `AdminMagazineTab.tsx`, `MagazineReader.tsx` |
+| 수정 내용 | 커버 카드 이미지 비율 55%→45% / 엔딩 카드에 Eye·Heart 조회수·좋아요 표시 + Share2 공유 버튼 (navigator.share, clipboard 폴백) / 관리자 매거진탭에 "미리보기" 버튼 추가 (dbArticleToMagazineArticle 변환 → MagazineReader 풀스크린 오버레이) / URL 직접 입력 접기/펼치기 토글 |
+
+#### 2. 온보딩/튜토리얼 다크모드 + UX 전면 개선 (`8abfe20`)
+
+| 항목 | 내용 |
+|------|------|
+| 커밋 | `8abfe20` fix(onboarding): 다크모드 대응 + UX 개선 전면 수정 |
+| 배경 | 4번(비주얼 디자이너) 에이전트 리뷰 결과 82/100점. P0~P2 항목 도출 후 전부 구현 |
+| 변경 파일 | `NicknameSetupModal.tsx`, `PostOnboardingGuide.tsx`, `TutorialTour.tsx`, `RecordPageTutorial.tsx`, `OnboardingModal.tsx` |
+| P0 | NicknameSetupModal 체크박스 다크모드 (`dark:border-gray-500 dark:bg-gray-700`) + 터치타겟 w-4→w-5 |
+| P1 | PostOnboardingGuide 다크모드 (`bg-white dark:bg-gray-900` 등) |
+| P1 | TutorialTour 다크모드 (isDark 변수 방식, 인라인 스타일이라 Tailwind dark: 불가) |
+| P1 | RecordPageTutorial 다크모드 (Tailwind dark: 클래스) |
+| P1 | OnboardingModal Step 0: PawPrint+Sparkles 아이콘 조합 / Step 9: 양쪽 카드에 Eye·BookOpen 아이콘 + 통일된 타이포 |
+| P1 | 추모 워딩 "떠난 지" → "무지개다리를 건넌 지" (CLAUDE.md 규칙 준수) |
+| P2 | 스텝 전환 fade-in 애니메이션 (`animate-in fade-in-0 duration-300`) |
+
+#### 3. 구름 말풍선 SVG 교체 (`4628427`)
+
+| 항목 | 내용 |
+|------|------|
+| 커밋 | `4628427` feat(tutorial): 구름 말풍선 div 7개 → SVG path 구름으로 교체 |
+| 변경 파일 | `TutorialTour.tsx` |
+| 수정 내용 | CSS div 7개(82줄)로 구현한 구름 → SVG viewBox="0 0 280 210" 단일 path(22줄)로 교체. 다크모드 대응 (fill={bubbleBg}). 유저 피드백: "와 구름 이쁘다 굿" |
+
+#### 4. 온보딩 리셋 버그 수정 — 1차: .select() 체이닝 (`b585b30`)
+
+| 항목 | 내용 |
+|------|------|
+| 커밋 | `b585b30` fix(admin): 온보딩 리셋 실패 수정 - .select() 체이닝 제거 + 에러 로깅 |
+| 변경 파일 | `AdminUsersTab.tsx` |
+| 원인 | `.update().eq().select()` 체이닝 → RLS 충돌로 빈 결과 → `data.length === 0` 분기로 빠져서 성공인데 "실패" 표시 |
+| 수정 | `.select()` 제거, error 객체만으로 성공 판단, `console.error` 에러 로깅 추가 |
+
+#### 5. 온보딩 리셋 버그 수정 — 2차: 트리거 컬럼 참조 (`28de513`)
+
+| 항목 | 내용 |
+|------|------|
+| 커밋 | `28de513` fix(db): 트리거에서 존재하지 않는 컬럼 참조 제거 |
+| SQL | `20260306_fix_trigger_missing_columns.sql` (Supabase SQL Editor에서 실행 완료) |
+| 원인 | `protect_sensitive_profile_columns()` 트리거가 profiles 테이블에 존재하지 않는 `ban_reason`, `banned_at`, `last_ip` 컬럼을 `NEW.xxx := OLD.xxx` 방식으로 참조 → 모든 UPDATE 쿼리 실패 ("record 'new' has no field 'ban_reason'") |
+| 수정 | 트리거에서 해당 3개 컬럼 참조 제거. 보호 대상은 is_admin, is_premium, is_banned, points, total_points_earned, premium_expires_at, premium_started_at, premium_plan 유지 |
+
+#### 6. 에이전트 검증 (`de63211`)
+
+| 항목 | 내용 |
+|------|------|
+| 커밋 | `de63211` docs: _STATUS.md에 트리거 수정 마이그레이션 실행 기록 추가 |
+| 5번(QA) | Critical 0, Major 2 (다크모드 일관성 방식 혼재, 에러 삼킴), Minor 12 |
+| 7번(비판적) | "수정필요" → DB 마이그레이션 실행 확인 필요 → _STATUS.md 업데이트로 해결 |
+| 5번 전반적 이슈 보고 | (1) DB 마이그레이션 관리 체계 미비 (2) 다크모드 구현 방식 혼재 (인라인 vs Tailwind) (3) 에러 사일런트 실패 패턴 (4) body overflow 모달 체인 관리 |
 
 ---
 
