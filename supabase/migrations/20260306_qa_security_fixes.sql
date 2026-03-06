@@ -249,10 +249,10 @@ BEGIN
 END;
 $$;
 
--- 권한 유지
-GRANT EXECUTE ON FUNCTION purchase_minimi_item TO authenticated;
-GRANT EXECUTE ON FUNCTION sell_minimi_item TO authenticated;
-GRANT EXECUTE ON FUNCTION increment_user_points TO authenticated;
+-- 권한 유지 (오버로드 충돌 방지를 위해 전체 시그니처 명시)
+GRANT EXECUTE ON FUNCTION purchase_minimi_item(UUID, TEXT, TEXT, INTEGER) TO authenticated;
+GRANT EXECUTE ON FUNCTION sell_minimi_item(UUID, TEXT, INTEGER) TO authenticated;
+GRANT EXECUTE ON FUNCTION increment_user_points(UUID, VARCHAR, INTEGER, INTEGER, BOOLEAN, JSONB) TO authenticated;
 
 -- ============================================================
 -- C-3. protect_sensitive_profile_columns — JWT claim 스푸핑 방지
