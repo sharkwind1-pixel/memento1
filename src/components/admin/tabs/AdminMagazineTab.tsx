@@ -29,11 +29,6 @@ import {
     BookOpen,
     Eye,
     Heart,
-    Calendar,
-    Edit3,
-    Trash2,
-    ToggleLeft,
-    ToggleRight,
     X,
     Upload,
     Image as ImageIcon,
@@ -348,68 +343,75 @@ export default function AdminMagazineTab({
     // ========================================================================
     return (
         <div className="space-y-4">
-            {/* 상단: 검색 + 필터 + 새 기사 */}
-            <div className="flex flex-col sm:flex-row gap-3">
+            {/* 검색 + 새로고침 + 새기사 */}
+            <div className="flex gap-1.5">
                 <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                     <Input
-                        placeholder="제목, 작성자, 카테고리로 검색..."
+                        placeholder="제목/작성자 검색..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10"
+                        className="pl-8 h-8 text-xs"
                     />
                 </div>
-                <div className="flex gap-2">
-                    {STATUS_FILTERS.map((filter) => (
-                        <Button
-                            key={filter.value}
-                            size="sm"
-                            variant={statusFilter === filter.value ? "default" : "outline"}
-                            onClick={() => setStatusFilter(filter.value)}
-                            className={statusFilter === filter.value ? "bg-sky-500 hover:bg-sky-600" : ""}
-                        >
-                            {filter.label}
-                        </Button>
-                    ))}
-                </div>
-                <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={onRefresh}>
-                        <RefreshCw className="w-4 h-4 mr-1" />
-                        새로고침
-                    </Button>
-                    <Button
-                        size="sm"
-                        className="bg-sky-500 hover:bg-sky-600"
-                        onClick={openCreateModal}
-                    >
-                        <Plus className="w-4 h-4 mr-1" />
-                        새 기사
-                    </Button>
-                </div>
+                <button
+                    type="button"
+                    onClick={onRefresh}
+                    className="h-8 px-2 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                </button>
+                <button
+                    type="button"
+                    onClick={openCreateModal}
+                    className="h-8 px-2.5 rounded-md bg-sky-500 text-white text-xs font-medium transition-colors hover:bg-sky-600 flex items-center gap-1"
+                >
+                    <Plus className="w-3.5 h-3.5" />
+                    새 기사
+                </button>
             </div>
 
-            {/* 통계 */}
-            <div className="flex gap-4 text-sm text-gray-500 dark:text-gray-400">
-                <span>전체: {articles.length}개</span>
-                <span>발행: {articles.filter(a => a.status === "published").length}개</span>
-                <span>초안: {articles.filter(a => a.status === "draft").length}개</span>
+            {/* 상태 필터 - 한 줄 3개 */}
+            <div className="flex gap-1 select-none">
+                {STATUS_FILTERS.map((filter) => {
+                    const count = filter.value === "all"
+                        ? articles.length
+                        : articles.filter(a => a.status === filter.value).length;
+                    return (
+                        <button
+                            type="button"
+                            key={filter.value}
+                            className={`flex-1 inline-flex items-center justify-center rounded-md px-1.5 py-1 text-[10px] font-semibold transition-all ${
+                                statusFilter === filter.value
+                                    ? filter.value === "all"
+                                        ? "bg-gray-800 text-white dark:bg-gray-200 dark:text-gray-900"
+                                        : filter.value === "published"
+                                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                                            : "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
+                                    : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 opacity-60 hover:opacity-100"
+                            }`}
+                            onClick={() => setStatusFilter(filter.value)}
+                        >
+                            {filter.label} {count}
+                        </button>
+                    );
+                })}
             </div>
 
             {/* 기사 목록 */}
             <Card>
-                <CardContent className="pt-6">
+                <CardContent className="pt-4">
                     {filteredArticles.length === 0 ? (
-                        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                            <BookOpen className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-                            <p>매거진 기사가 없습니다</p>
-                            <Button
-                                variant="outline"
-                                className="mt-3"
+                        <div className="text-center py-6 text-gray-500 dark:text-gray-400">
+                            <BookOpen className="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
+                            <p className="text-sm">매거진 기사가 없습니다</p>
+                            <button
+                                type="button"
+                                className="mt-2 text-[11px] text-sky-500 hover:text-sky-600 font-medium"
                                 onClick={openCreateModal}
                             >
-                                <Plus className="w-4 h-4 mr-1" />
-                                첫 번째 기사 작성하기
-                            </Button>
+                                + 첫 번째 기사 작성
+                            </button>
                         </div>
                     ) : (
                         <div className="space-y-3">
@@ -477,11 +479,11 @@ function ArticleCard({
     const categoryLabel = CATEGORIES.find(c => c.value === article.category)?.label || article.category;
 
     return (
-        <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors bg-white dark:bg-gray-900">
-            <div className="flex gap-4">
+        <div className="p-3 rounded-xl border border-gray-200 dark:border-gray-700 transition-colors bg-white dark:bg-gray-900">
+            <div className="flex gap-2.5">
                 {/* 썸네일 */}
                 {article.image_url && (
-                    <div className="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+                    <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
                         <img
                             src={article.image_url}
                             alt={article.title}
@@ -492,87 +494,80 @@ function ArticleCard({
 
                 {/* 내용 */}
                 <div className="flex-1 min-w-0">
-                    {/* 상단: 카테고리, 상태, 배지 */}
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <Badge variant="secondary" className="text-xs">
+                    {/* 뱃지 한 줄 */}
+                    <div className="flex items-center gap-1 mb-0.5 flex-wrap">
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
                             {categoryLabel}
                         </Badge>
                         {article.status === "published" ? (
-                            <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 text-xs">
+                            <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 text-[10px] px-1.5 py-0">
                                 발행
                             </Badge>
                         ) : (
-                            <Badge variant="secondary" className="bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-xs">
+                            <Badge variant="secondary" className="bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-[10px] px-1.5 py-0">
                                 초안
                             </Badge>
                         )}
                         {article.badge && (
-                            <Badge className="bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300 text-xs">
+                            <Badge className="bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300 text-[10px] px-1.5 py-0">
                                 {getBadgeLabel(article.badge)}
                             </Badge>
                         )}
                     </div>
 
                     {/* 제목 */}
-                    <h4 className="font-medium text-gray-800 dark:text-gray-100 truncate">{article.title}</h4>
+                    <h4 className="font-medium text-xs text-gray-800 dark:text-gray-100 truncate">{article.title}</h4>
 
                     {/* 요약 */}
-                    <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1 mt-0.5">{article.summary}</p>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 line-clamp-1">{article.summary}</p>
 
                     {/* 메타 정보 */}
-                    <div className="flex items-center gap-3 mt-2 text-xs text-gray-400 dark:text-gray-500">
-                        <span>{article.author}</span>
-                        <span className="flex items-center gap-1">
-                            <Eye className="w-3 h-3" />
+                    <div className="flex items-center gap-2 mt-1 text-[10px] text-gray-400 dark:text-gray-500">
+                        <span className="truncate max-w-[80px]">{article.author}</span>
+                        <span className="flex items-center gap-0.5">
+                            <Eye className="w-2.5 h-2.5" />
                             {article.views}
                         </span>
-                        <span className="flex items-center gap-1">
-                            <Heart className="w-3 h-3" />
+                        <span className="flex items-center gap-0.5">
+                            <Heart className="w-2.5 h-2.5" />
                             {article.likes}
                         </span>
-                        <span className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
+                        <span className="ml-auto flex-shrink-0">
                             {new Date(article.created_at).toLocaleDateString("ko-KR")}
                         </span>
                     </div>
                 </div>
             </div>
 
-            {/* 액션 버튼 */}
-            <div className="flex flex-wrap gap-2 pt-3 mt-3 border-t border-gray-100 dark:border-gray-800">
-                <Button size="sm" variant="outline" onClick={onEdit}>
-                    <Edit3 className="w-3 h-3 mr-1" />
+            {/* 액션 버튼 - 네이티브 button */}
+            <div className="flex gap-1 pt-1.5 mt-2 border-t border-gray-200 dark:border-gray-700">
+                <button
+                    type="button"
+                    onClick={onEdit}
+                    className="h-7 px-2 rounded border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 text-[10px] font-medium transition-colors"
+                >
                     수정
-                </Button>
-                <Button
-                    size="sm"
-                    variant="outline"
+                </button>
+                <button
+                    type="button"
                     onClick={onToggleStatus}
                     disabled={isTogglingStatus}
+                    className={`h-7 px-2 rounded text-[10px] font-medium transition-colors ${
+                        article.status === "published"
+                            ? "border border-green-300 dark:border-green-700 text-green-600 dark:text-green-400 bg-white dark:bg-gray-800"
+                            : "bg-green-500 text-white hover:bg-green-600"
+                    } disabled:opacity-50`}
                 >
-                    {isTogglingStatus ? (
-                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                    ) : article.status === "published" ? (
-                        <ToggleRight className="w-3 h-3 mr-1 text-green-500" />
-                    ) : (
-                        <ToggleLeft className="w-3 h-3 mr-1 text-gray-400" />
-                    )}
-                    {article.status === "published" ? "비발행" : "발행"}
-                </Button>
-                <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-red-500 hover:text-red-600 hover:border-red-300"
+                    {isTogglingStatus ? "..." : article.status === "published" ? "비발행" : "발행"}
+                </button>
+                <button
+                    type="button"
                     onClick={onDelete}
                     disabled={isDeleting}
+                    className="h-7 px-2 rounded border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 bg-white dark:bg-gray-800 text-[10px] font-medium transition-colors disabled:opacity-50"
                 >
-                    {isDeleting ? (
-                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                    ) : (
-                        <Trash2 className="w-3 h-3 mr-1" />
-                    )}
-                    삭제
-                </Button>
+                    {isDeleting ? "..." : "삭제"}
+                </button>
             </div>
         </div>
     );
