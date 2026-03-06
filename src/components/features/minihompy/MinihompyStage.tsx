@@ -282,7 +282,7 @@ export default function MinihompyStage({
                     if (!imgUrl) return null;
                     const isSelected = editMode && selectedIndex === index;
                     const isDragging = draggingIndex === index;
-                    const baseSize = compact ? 72 : 96;
+                    const baseSize = compact ? 56 : 72;
 
                     const hasTouchEffect = touchEffectIndex === index;
 
@@ -403,7 +403,7 @@ export default function MinihompyStage({
                 )}>
                     {hasMinimi ? (
                         (() => {
-                            const singleBase = compact ? 80 : 112;
+                            const singleBase = compact ? 60 : 80;
                             return (
                                 <div className="relative">
                                     {minimiEquip.imageUrl ? (
