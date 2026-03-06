@@ -63,6 +63,7 @@ export interface UseAIChatReturn {
     inputValue: string;
     setInputValue: Dispatch<SetStateAction<string>>;
     isTyping: boolean;
+    isStreaming: boolean;
     currentPhotoIndex: number;
     setCurrentPhotoIndex: Dispatch<SetStateAction<number>>;
     lastEmotion: string;
@@ -114,6 +115,8 @@ export function useAIChat({
     const [dailyUsage, setDailyUsage] = useState(0);
     const [reminders, setReminders] = useState<ReminderItem[]>([]);
     const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
+    /** 스트리밍 중 여부 (타이핑 dots 대신 실시간 텍스트 표시) */
+    const [isStreaming, setIsStreaming] = useState(false);
     /** 리마인더 안내 메시지 표시 여부 (세션당 1회) */
     const reminderSuggestionShown = useRef(false);
 
@@ -476,66 +479,150 @@ export function useAIChat({
             });
 
             if (!response.ok) {
+                // 비-스트리밍 에러 응답 (JSON)
                 const errorData = await response.json();
                 throw new Error(errorData.error || "AI 응답 생성 실패");
             }
 
-            const data = await response.json();
+            // SSE 스트리밍 응답 처리
+            const petMessageId = `pet-${Date.now()}`;
+            setIsTyping(false);
+            setIsStreaming(true);
 
-            // 감정 정보 저장
-            if (data.emotion) {
-                setLastEmotion(data.emotion);
-            }
-
-            // AI가 제안한 후속 질문 저장
-            if (data.suggestedQuestions && data.suggestedQuestions.length > 0) {
-                setSuggestedQuestions(data.suggestedQuestions);
-            }
-
-            const petMessage: ChatMessage = {
-                id: `pet-${Date.now()}`,
+            // 빈 pet 메시지를 먼저 추가 (스트리밍으로 채워짐)
+            setMessages((prev) => [...prev, {
+                id: petMessageId,
                 role: "pet",
-                content: data.reply,
+                content: "",
                 timestamp: new Date(),
-                emotion: data.emotion,
-                emotionScore: data.emotionScore,
-                matchedPhoto: data.matchedPhoto,
-            };
-            setMessages((prev) => [...prev, petMessage]);
+                isStreaming: true,
+            }]);
 
-            // 과사용 세션 종료 제안 (추모 모드 30턴+ 시)
-            if (data.sessionEndingSuggestion) {
-                setTimeout(() => {
-                    const sessionEndingMessage: ChatMessage = {
-                        id: `session-ending-${Date.now()}`,
-                        role: "system",
-                        content: data.sessionEndingSuggestion,
-                        timestamp: new Date(),
-                    };
-                    setMessages((prev) => [...prev, sessionEndingMessage]);
-                }, 800);
-            }
+            const reader = response.body?.getReader();
+            const decoder = new TextDecoder();
+            let streamedContent = "";
 
-            // 위기 감지 시 상담 안내 카드 표시 (AI 응답 아래에 별도 UI)
-            if (data.crisisAlert) {
-                const crisisMessage: ChatMessage = {
-                    id: `crisis-alert-${Date.now()}`,
-                    role: "system",
-                    type: "crisis-alert",
-                    content: data.crisisAlert.message,
-                    timestamp: new Date(),
-                    crisisAlert: data.crisisAlert as CrisisAlertInfo,
-                };
-                // 약간의 딜레이를 두어 AI 응답 이후 자연스럽게 표시
-                setTimeout(() => {
-                    setMessages((prev) => [...prev, crisisMessage]);
-                }, 600);
+            if (reader) {
+                let buffer = "";
+                try {
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+
+                        buffer += decoder.decode(value, { stream: true });
+
+                        // SSE 이벤트 파싱 (data: ... \n\n 구분)
+                        const lines = buffer.split("\n\n");
+                        buffer = lines.pop() || ""; // 마지막 불완전한 이벤트는 버퍼에 유지
+
+                        for (const line of lines) {
+                            const dataLine = line.trim();
+                            if (!dataLine.startsWith("data: ")) continue;
+
+                            try {
+                                const event = JSON.parse(dataLine.slice(6));
+
+                                if (event.type === "delta") {
+                                    // 실시간 텍스트 청크 추가
+                                    streamedContent += event.content;
+                                    const currentContent = streamedContent;
+                                    setMessages((prev) =>
+                                        prev.map((msg) =>
+                                            msg.id === petMessageId
+                                                ? { ...msg, content: currentContent }
+                                                : msg
+                                        )
+                                    );
+                                } else if (event.type === "done") {
+                                    // 최종 메타데이터 수신 - 검증된 reply로 교체 + 메타 적용
+                                    setMessages((prev) =>
+                                        prev.map((msg) =>
+                                            msg.id === petMessageId
+                                                ? {
+                                                    ...msg,
+                                                    content: event.reply,
+                                                    emotion: event.emotion,
+                                                    emotionScore: event.emotionScore,
+                                                    matchedPhoto: event.matchedPhoto,
+                                                    matchedTimeline: event.matchedTimeline,
+                                                    isStreaming: false,
+                                                }
+                                                : msg
+                                        )
+                                    );
+
+                                    // 감정 정보 저장
+                                    if (event.emotion) {
+                                        setLastEmotion(event.emotion);
+                                    }
+
+                                    // AI가 제안한 후속 질문 저장
+                                    if (event.suggestedQuestions && event.suggestedQuestions.length > 0) {
+                                        setSuggestedQuestions(event.suggestedQuestions);
+                                    }
+
+                                    // 과사용 세션 종료 제안
+                                    if (event.sessionEndingSuggestion) {
+                                        setTimeout(() => {
+                                            const sessionEndingMessage: ChatMessage = {
+                                                id: `session-ending-${Date.now()}`,
+                                                role: "system",
+                                                content: event.sessionEndingSuggestion,
+                                                timestamp: new Date(),
+                                            };
+                                            setMessages((prev) => [...prev, sessionEndingMessage]);
+                                        }, 800);
+                                    }
+
+                                    // 위기 감지 시 상담 안내 카드
+                                    if (event.crisisAlert) {
+                                        const crisisMessage: ChatMessage = {
+                                            id: `crisis-alert-${Date.now()}`,
+                                            role: "system",
+                                            type: "crisis-alert",
+                                            content: event.crisisAlert.message,
+                                            timestamp: new Date(),
+                                            crisisAlert: event.crisisAlert as CrisisAlertInfo,
+                                        };
+                                        setTimeout(() => {
+                                            setMessages((prev) => [...prev, crisisMessage]);
+                                        }, 600);
+                                    }
+
+                                    // 자동 리마인더 제안
+                                    if (event.suggestedReminder) {
+                                        setTimeout(() => {
+                                            const reminderMsg: ChatMessage = {
+                                                id: `auto-reminder-${Date.now()}`,
+                                                role: "system",
+                                                type: "reminder-suggestion",
+                                                content: `"${event.suggestedReminder.title}" 리마인더를 등록할까요? (${event.suggestedReminder.schedule.time})`,
+                                                timestamp: new Date(),
+                                                suggestedReminder: event.suggestedReminder,
+                                            };
+                                            setMessages((prev) => [...prev, reminderMsg]);
+                                        }, 1000);
+                                    }
+                                } else if (event.type === "error") {
+                                    throw new Error(event.error);
+                                }
+                            } catch (parseErr) {
+                                // JSON 파싱 에러는 무시 (불완전한 청크)
+                                if (parseErr instanceof Error && parseErr.message !== "AI 응답 생성 중 오류가 발생했습니다.") {
+                                    continue;
+                                }
+                                throw parseErr;
+                            }
+                        }
+                    }
+                } finally {
+                    reader.releaseLock();
+                }
             }
 
             // 일상 모드 + 세션 첫 대화 후 리마인더 안내 (1회만)
             if (!isMemorialMode && !reminderSuggestionShown.current) {
                 reminderSuggestionShown.current = true;
-                // AI 응답 후 약간의 딜레이를 두고 자연스럽게 표시
                 setTimeout(() => {
                     const reminderSuggestion: ChatMessage = {
                         id: `reminder-suggestion-${Date.now()}`,
@@ -568,6 +655,7 @@ export function useAIChat({
             setMessages((prev) => [...prev, systemMessage]);
         } finally {
             setIsTyping(false);
+            setIsStreaming(false);
         }
     };
 
@@ -630,6 +718,7 @@ export function useAIChat({
         inputValue,
         setInputValue,
         isTyping,
+        isStreaming,
         currentPhotoIndex,
         setCurrentPhotoIndex,
         lastEmotion,

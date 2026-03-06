@@ -322,8 +322,10 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                     <ChatMessageList
                         messages={chat.messages}
                         isTyping={chat.isTyping}
+                        isStreaming={chat.isStreaming}
                         isMemorialMode={chat.isMemorialMode}
                         selectedPet={selectedPet}
+                        lastEmotion={chat.lastEmotion}
                         onRetry={chat.handleRetry}
                         onReminderAccept={handleReminderAccept}
                         onReminderDismiss={chat.handleReminderDismiss}

@@ -9,7 +9,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useRef, useEffect, useState } from "react";
-import { PawPrint, RotateCcw, Bell, Phone, Heart } from "lucide-react";
+import { PawPrint, RotateCcw, Bell, Phone, Heart, BookOpen } from "lucide-react";
 
 // 타이핑 인디케이터 감성 텍스트 (pet.type별 분기)
 const TYPING_TEXTS_DOG_DAILY = [
@@ -34,11 +34,26 @@ import {
     hasTimeGap,
 } from "./chatTypes";
 
+/** 감정별 아바타 글로우 색상 (CSS box-shadow) */
+const EMOTION_GLOW_COLORS: Record<string, string> = {
+    happy: "rgba(234, 179, 8, 0.5)",
+    sad: "rgba(139, 92, 246, 0.4)",
+    anxious: "rgba(107, 114, 128, 0.4)",
+    grateful: "rgba(236, 72, 153, 0.4)",
+    lonely: "rgba(99, 102, 241, 0.4)",
+    peaceful: "rgba(16, 185, 129, 0.4)",
+    excited: "rgba(245, 158, 11, 0.5)",
+    neutral: "",
+    angry: "rgba(239, 68, 68, 0.4)",
+};
+
 interface ChatMessageListProps {
     messages: ChatMessage[];
     isTyping: boolean;
+    isStreaming?: boolean;
     isMemorialMode: boolean;
     selectedPet: Pet | null | undefined;
+    lastEmotion?: string;
     onRetry: (errorMessageId: string, retryMessage: string) => void;
     onReminderAccept?: (messageId: string) => void;
     onReminderDismiss?: (messageId: string) => void;
@@ -47,8 +62,10 @@ interface ChatMessageListProps {
 export default function ChatMessageList({
     messages,
     isTyping,
+    isStreaming,
     isMemorialMode,
     selectedPet,
+    lastEmotion,
     onRetry,
     onReminderAccept,
     onReminderDismiss,
@@ -215,9 +232,16 @@ export default function ChatMessageList({
                                 style={{ animationDelay: index === messages.length - 1 ? "0ms" : "0ms" }}
                             >
                                 {message.role === "pet" && (
-                                    <div className={`w-9 h-9 rounded-full overflow-hidden mr-2 flex-shrink-0 ring-2 shadow-md transition-all duration-500 hover:scale-105 ${
-                                        isMemorialMode ? "ring-amber-200" : "ring-sky-200"
-                                    }`}>
+                                    <div
+                                        className={`w-9 h-9 rounded-full overflow-hidden mr-2 flex-shrink-0 ring-2 shadow-md transition-all duration-500 hover:scale-105 ${
+                                            isMemorialMode ? "ring-amber-200" : "ring-sky-200"
+                                        }`}
+                                        style={{
+                                            boxShadow: lastEmotion && EMOTION_GLOW_COLORS[lastEmotion]
+                                                ? `0 0 12px 3px ${EMOTION_GLOW_COLORS[lastEmotion]}`
+                                                : undefined,
+                                        }}
+                                    >
                                         {selectedPet?.profileImage ? (
                                             <img
                                                 src={selectedPet.profileImage}
@@ -255,6 +279,11 @@ export default function ChatMessageList({
                                     >
                                         <p className="text-[15px] leading-relaxed">
                                             {message.content}
+                                            {message.isStreaming && (
+                                                <span className="inline-block w-[2px] h-[1em] ml-0.5 align-text-bottom animate-pulse" style={{
+                                                    backgroundColor: isMemorialMode ? "#D97706" : "#0EA5E9",
+                                                }} />
+                                            )}
                                         </p>
                                     </div>
                                     {/* 매칭된 추억 사진 */}
@@ -277,6 +306,30 @@ export default function ChatMessageList({
                                             </div>
                                         </div>
                                     )}
+                                    {/* 매칭된 타임라인 카드 */}
+                                    {message.role === "pet" && message.matchedTimeline && !message.matchedPhoto && (
+                                        <div className={`mt-2 rounded-xl overflow-hidden shadow-sm border ${
+                                            isMemorialMode ? "border-amber-200 bg-amber-50/50 dark:bg-amber-900/20" : "border-sky-200 bg-sky-50/50 dark:bg-sky-900/20"
+                                        }`}>
+                                            <div className="px-3 py-2.5">
+                                                <div className={`flex items-center gap-1.5 mb-1 ${
+                                                    isMemorialMode ? "text-amber-600 dark:text-amber-400" : "text-sky-600 dark:text-sky-400"
+                                                }`}>
+                                                    <BookOpen className="w-3.5 h-3.5" />
+                                                    <span className="text-xs font-medium">우리의 기록</span>
+                                                    <span className="text-[10px] opacity-60 ml-auto">{message.matchedTimeline.date}</span>
+                                                </div>
+                                                <p className={`text-sm font-medium ${
+                                                    isMemorialMode ? "text-amber-800 dark:text-amber-200" : "text-sky-800 dark:text-sky-200"
+                                                }`}>{message.matchedTimeline.title}</p>
+                                                {message.matchedTimeline.content && (
+                                                    <p className={`text-xs mt-0.5 line-clamp-2 ${
+                                                        isMemorialMode ? "text-amber-600/80 dark:text-amber-300/80" : "text-sky-600/80 dark:text-sky-300/80"
+                                                    }`}>{message.matchedTimeline.content}</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -284,7 +337,7 @@ export default function ChatMessageList({
                 );
             })}
 
-            {isTyping && (
+            {isTyping && !isStreaming && (
                 <div className="flex justify-start chat-bubble-enter">
                     <div className={`w-9 h-9 rounded-full overflow-hidden mr-2 flex-shrink-0 ring-2 shadow-md transition-all duration-500 ${
                         isMemorialMode ? "ring-amber-200" : "ring-sky-200"

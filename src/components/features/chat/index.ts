@@ -8,4 +8,5 @@ export {
     getTimeBasedGreeting,
     generatePersonalizedGreeting,
     type TimelineEntry,
+    type GreetingReminderInfo,
 } from "./chatUtils";

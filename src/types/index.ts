@@ -199,6 +199,20 @@ export interface ChatMessage {
         url: string;
         caption: string;
     };
+    /** SSE 스트리밍 중 여부 (실시간 타이핑 효과) */
+    isStreaming?: boolean;
+    /** AI 응답에 매칭된 타임라인 (추억 카드) */
+    matchedTimeline?: {
+        date: string;
+        title: string;
+        content: string;
+    };
+    /** AI가 제안한 리마인더 (시간/일정 패턴 감지 시) */
+    suggestedReminder?: {
+        type: string;
+        title: string;
+        schedule: { type: string; time: string };
+    };
 }
 
 /** 감정 타입 */

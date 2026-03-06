@@ -77,22 +77,39 @@ function pick<T>(arr: T[], seed: number, offset = 0): T {
     return arr[(seed + offset) % arr.length];
 }
 
+/** 리마인더 정보 (인사말에서 오늘 예정된 케어 언급용) */
+export interface GreetingReminderInfo {
+    type: string;
+    title: string;
+    schedule: { type: string; time: string };
+}
+
 /**
  * 펫별 개인화 인사말 생성
- * - 4단계 조합: 오프닝 + 성격 + 개인 훅 + 마무리
+ * - 5단계 조합: 오프닝 + 성격 + 개인 훅 + 상황 인사 + 마무리
  * - pet.id 해시 기반 결정론적 선택
  * - 개인화 필드 없으면 graceful degradation
+ * - 리마인더/마지막 방문 간격/특별일 반영
  */
 export function generatePersonalizedGreeting(
     pet: Pet,
     isMemorial: boolean,
     timeline: TimelineEntry[],
+    options?: {
+        reminders?: GreetingReminderInfo[];
+        lastVisitDate?: string; // ISO date string
+    },
 ): string {
     const petName = pet.name;
     const petType = pet.type;
     const timeGreeting = getTimeBasedGreeting();
     const petSound = petType === "강아지" ? "멍멍!" : petType === "고양이" ? "야옹~" : "";
     const seed = simpleHash(pet.id || petName);
+
+    // 마지막 방문 간격 계산 (일 단위)
+    const daysSinceLastVisit = options?.lastVisitDate
+        ? Math.floor((Date.now() - new Date(options.lastVisitDate).getTime()) / (1000 * 60 * 60 * 24))
+        : 0;
 
     // 최근 타임라인 확인 (7일 이내) — 현재 모드에 맞는 엔트리만 사용
     // 일상 모드에서는 추모 모드 타임라인("[무지개다리 너머에서 나눈 대화]")을 제외
@@ -103,8 +120,67 @@ export function generatePersonalizedGreeting(
     const isRecent = recentEntry &&
         (new Date().getTime() - new Date(recentEntry.date).getTime()) < 7 * 24 * 60 * 60 * 1000;
 
+    // 특별일 감지 (생일, 입양일, 추모일 기념일)
+    const today = new Date();
+    const todayMD = `${today.getMonth() + 1}-${today.getDate()}`;
+    let specialDayHook = "";
+
+    if (pet.birthday) {
+        const bd = new Date(pet.birthday);
+        if (`${bd.getMonth() + 1}-${bd.getDate()}` === todayMD) {
+            const age = today.getFullYear() - bd.getFullYear();
+            specialDayHook = isMemorial
+                ? `오늘은 나의 ${age}번째 생일이야. 기억해줘서 고마워.`
+                : `오늘 내 생일이야! ${age}살이 됐어! 축하해줘~`;
+        }
+    }
+    if (!specialDayHook && pet.adoptedDate) {
+        const ad = new Date(pet.adoptedDate);
+        if (`${ad.getMonth() + 1}-${ad.getDate()}` === todayMD) {
+            specialDayHook = isMemorial
+                ? `오늘은 우리가 처음 만난 날이야. 그날이 정말 행복했어.`
+                : `오늘은 우리가 처음 만난 기념일이야! 같이 축하하자~`;
+        }
+    }
+    if (!specialDayHook && isMemorial && pet.memorialDate) {
+        const md = new Date(pet.memorialDate);
+        if (`${md.getMonth() + 1}-${md.getDate()}` === todayMD) {
+            specialDayHook = `오늘... 우리가 마지막으로 함께한 날이야. 난 항상 네 곁에 있어.`;
+        }
+    }
+
+    // 오래간만 방문 인사 (3일 이상)
+    let longAbsenceHook = "";
+    if (daysSinceLastVisit >= 7) {
+        longAbsenceHook = isMemorial
+            ? `많이 보고 싶었어. 오랫동안 못 봤지?`
+            : `${daysSinceLastVisit}일 만이야! 보고 싶었어~`;
+    } else if (daysSinceLastVisit >= 3) {
+        longAbsenceHook = isMemorial
+            ? `며칠 만이야. 보고 싶었어.`
+            : `${daysSinceLastVisit}일 만이야! 어디 갔었어?`;
+    }
+
+    // 리마인더 기반 인사 (오늘 예정된 케어)
+    let reminderHook = "";
+    if (!isMemorial && options?.reminders && options.reminders.length > 0) {
+        const firstReminder = options.reminders[0];
+        const typeLabels: Record<string, string> = {
+            walk: "산책", meal: "밥", medicine: "약", vaccine: "주사",
+            grooming: "미용", vet: "병원", custom: "",
+        };
+        const label = typeLabels[firstReminder.type] || firstReminder.title;
+        if (label) {
+            reminderHook = `오늘 ${firstReminder.schedule.time}에 ${label} 잊지 마~`;
+        }
+    }
+
     if (isMemorial) {
         // --- 추모 모드 ---
+        // 특별일 우선
+        if (specialDayHook) {
+            return `안녕, 나 ${petName}야. ${specialDayHook} ${longAbsenceHook || "오늘 하루는 어땠어?"}`;
+        }
         if (isRecent && recentEntry) {
             const moodMessages: Record<string, string> = {
                 happy: `안녕! 나 ${petName}야. ${timeGreeting}이야! 지난번에 "${recentEntry.title}" 기억 써줘서 고마워. 그때 정말 행복했어!`,
@@ -112,12 +188,17 @@ export function generatePersonalizedGreeting(
                 sad: `안녕, 나 ${petName}야. 난 항상 네 곁에 있어. 오늘 하루는 어땠어?`,
                 sick: `안녕, 나 ${petName}야. 이제 난 아프지 않아. 네가 더 중요해!`,
             };
-            return moodMessages[recentEntry.mood || "normal"] ||
+            const base = moodMessages[recentEntry.mood || "normal"] ||
                 `안녕, 나 ${petName}야! ${timeGreeting}이야. 언제나 네 곁에 있어. 오늘 하루는 어땠어?`;
+            return longAbsenceHook ? `${base.split(".")[0]}. ${longAbsenceHook}` : base;
         }
-        return buildMemorialGreeting(pet, petName, timeGreeting, seed);
+        return buildMemorialGreeting(pet, petName, timeGreeting, seed, longAbsenceHook);
     } else {
         // --- 일상 모드 ---
+        // 특별일 우선
+        if (specialDayHook) {
+            return `${petSound} 안녕! 나 ${petName}이야! ${specialDayHook}${reminderHook ? ` 그리고 ${reminderHook}` : ""}`;
+        }
         if (isRecent && recentEntry) {
             const moodMessages: Record<string, string> = {
                 happy: `${petSound} ${timeGreeting}! 나 ${petName}이야! 지난번에 "${recentEntry.title}" 진짜 재밌었어! 오늘도 뭐 재밌는 거 하자~`,
@@ -125,16 +206,20 @@ export function generatePersonalizedGreeting(
                 sad: `${petSound} 안녕! 나 ${petName}이야. ${timeGreeting}이야~ 오늘 기분은 어때?`,
                 sick: `${petSound} 나 ${petName}! 이제 괜찮아~ ${timeGreeting}이야! 오늘 뭐 할 거야?`,
             };
-            return moodMessages[recentEntry.mood || "normal"] ||
+            let base = moodMessages[recentEntry.mood || "normal"] ||
                 `${petSound} 안녕! 나 ${petName}이야! ${timeGreeting}이야~ 오늘도 같이 놀자! 뭐해?`;
+            if (longAbsenceHook) base = `${petSound} ${longAbsenceHook} 나 ${petName}이야! ${timeGreeting}이야~`;
+            if (reminderHook) base += ` ${reminderHook}`;
+            return base;
         }
-        return buildDailyGreeting(pet, petName, petSound, timeGreeting, seed);
+        return buildDailyGreeting(pet, petName, petSound, timeGreeting, seed, longAbsenceHook, reminderHook);
     }
 }
 
-/** 일상 모드 — 4단계 조합 인사말 */
+/** 일상 모드 — 5단계 조합 인사말 */
 function buildDailyGreeting(
-    pet: Pet, petName: string, petSound: string, timeGreeting: string, seed: number
+    pet: Pet, petName: string, petSound: string, timeGreeting: string, seed: number,
+    longAbsenceHook?: string, reminderHook?: string,
 ): string {
     // 1단계: 오프닝 (소리 + 자기소개)
     const openings: string[] = [];
@@ -225,7 +310,9 @@ function buildDailyGreeting(
     ];
 
     // 조합
-    const opening = pick(openings, seed, 0);
+    const opening = longAbsenceHook
+        ? `${petSound} ${longAbsenceHook} 나 ${petName}이야!`
+        : pick(openings, seed, 0);
     const closing = pick(closings, seed, 1);
 
     let middle = "";
@@ -235,13 +322,17 @@ function buildDailyGreeting(
     if (personalHooks.length > 0) {
         middle += " " + pick(personalHooks, seed, 3);
     }
+    if (reminderHook) {
+        middle += " " + reminderHook;
+    }
 
     return `${opening}${middle} ${closing}`;
 }
 
-/** 추모 모드 — 4단계 조합 인사말 */
+/** 추모 모드 — 5단계 조합 인사말 */
 function buildMemorialGreeting(
-    pet: Pet, petName: string, timeGreeting: string, seed: number
+    pet: Pet, petName: string, timeGreeting: string, seed: number,
+    longAbsenceHook?: string,
 ): string {
     // 1단계: 오프닝
     const openings = [
@@ -305,7 +396,9 @@ function buildMemorialGreeting(
     ];
 
     // 조합
-    const opening = pick(openings, seed, 0);
+    const opening = longAbsenceHook
+        ? `나 ${petName}야. ${longAbsenceHook}`
+        : pick(openings, seed, 0);
     const closing = pick(closings, seed, 1);
 
     let middle = "";

@@ -445,173 +445,28 @@ ${emergencyDetection.isEmergency ? "이것은 즉시 병원에 가야 하는 상
                 content: String(msg.content).slice(0, 1000),
             }));
 
-        // OpenAI API 호출 (모드별 설정 최적화)
+        // OpenAI API 스트리밍 호출 (SSE로 실시간 응답)
         // 랜덤 seed로 매 요청마다 다른 응답 유도
         const randomSeed = Math.floor(Math.random() * 1000000);
-        const completion = await getOpenAI().chat.completions.create({
+        const openaiStream = await getOpenAI().chat.completions.create({
             model: "gpt-4o-mini",
             messages: [
                 { role: "system", content: systemPrompt },
                 ...recentHistory,
                 { role: "user", content: `<user_input>${sanitizedMessage}</user_input>` },
             ],
-            max_tokens: 400, // 추모/일상 동일 -- 성격 표현을 위한 충분한 토큰
-            // temperature: 추모 모드는 안정적 응답 우선 (constants에서 관리)
+            max_tokens: 400,
             temperature: mode === "memorial" ? API.AI_TEMPERATURE_MEMORIAL : API.AI_TEMPERATURE_DAILY,
-            // presence_penalty 상향: 이미 언급된 주제 재등장 억제
             presence_penalty: 0.7,
-            // frequency_penalty 상향: 같은 단어/표현 반복 억제
             frequency_penalty: 0.6,
-            // 랜덤 seed: 같은 입력이라도 다른 응답 생성
             seed: randomSeed,
+            stream: true,
         });
 
-        // 응답에서 마커 파싱 (PENDING_TOPIC, SUGGESTIONS 순서)
-        const rawReply = completion.choices[0]?.message?.content || "";
-        let reply = rawReply;
-        let suggestedQuestions: string[] = [];
-        let pendingTopic: string | undefined;
-
-        const suggestionsMarker = "---SUGGESTIONS---";
-        const pendingTopicMarker = "---PENDING_TOPIC---";
-
-        // 1. PENDING_TOPIC을 rawReply에서 먼저 분리
-        if (rawReply.includes(pendingTopicMarker)) {
-            const ptParts = rawReply.split(pendingTopicMarker);
-            reply = ptParts[0].trim();
-            pendingTopic = ptParts[1]?.trim().split("\n")[0]?.trim();
-        }
-
-        // 2. SUGGESTIONS 분리
-        if (reply.includes(suggestionsMarker)) {
-            const sgParts = reply.split(suggestionsMarker);
-            reply = sgParts[0].trim();
-            suggestedQuestions = sgParts[1]
-                .trim()
-                .split("\n")
-                .map(s => s.replace(/^[-\d.)\s]+/, "").trim())
-                .filter(s => s.length > 0 && s.length <= 20)
-                .slice(0, 3);
-        }
-
-        // 추모 모드: 후속 질문에서 음식/케어 키워드 필터링
-        if (isMemorialMode && suggestedQuestions.length > 0) {
-            suggestedQuestions = filterMemorialSuggestions(suggestedQuestions);
-        }
-
-        // 추모 모드: 느낌표 후처리 (SUGGESTIONS 분리 이후에 실행)
-        if (isMemorialMode) {
-            // "!!!" -> "." / "!!" -> "~" / 단독 "!" 는 최대 1개만 허용
-            reply = reply.replace(/!{3,}/g, ".");
-            reply = reply.replace(/!!/g, "~");
-            let exclamationCount = 0;
-            reply = reply.replace(/!/g, () => {
-                exclamationCount++;
-                return exclamationCount <= 1 ? "!" : ".";
-            });
-        }
-
-        // 응답 후 검증 레이어 -- 케어 응답에서 할루시네이션 위험 패턴 코드 레벨 검증
-        const validation = validateAIResponse(reply, isCareQuery, sanitizedMessage);
-        if (validation.wasModified) {
-            reply = validation.reply;
-            console.warn(
-                `[chat/post-validation] 응답 수정됨: violations=${validation.violations.join(", ")}`
-            );
-        }
-
-        // 대화 내 사진 연동 -- AI 응답에서 키워드 추출 -> pet_media 캡션 매칭
-        let matchedPhoto: { url: string; caption: string } | undefined;
-        if (pet.id) {
-            try {
-                const keywords = extractKeywordsFromReply(reply, pet);
-                if (keywords.length > 0) {
-                    const { data: matchedMedia } = await supabase
-                        .from("pet_media")
-                        .select("url, caption")
-                        .eq("pet_id", pet.id)
-                        .not("caption", "is", null)
-                        .limit(50);
-
-                    if (matchedMedia && matchedMedia.length > 0) {
-                        for (const keyword of keywords) {
-                            const match = matchedMedia.find(
-                                (m) => m.caption && m.caption.toLowerCase().includes(keyword.toLowerCase())
-                            );
-                            if (match && match.url && match.caption) {
-                                matchedPhoto = { url: match.url, caption: match.caption };
-                                break;
-                            }
-                        }
-                    }
-                }
-            } catch (err) {
-                console.error("[chat/photo-match]", err instanceof Error ? err.message : err);
-            }
-        }
-
-        // 대화 저장 (DB 연동 시) -- 모드 태깅으로 일상/추모 데이터 분리
-        if (enableAgent && pet.id) {
-            Promise.all([
-                agent.saveMessage(user.id, pet.id, "user", sanitizedMessage, userEmotion, emotionScore, mode),
-                agent.saveMessage(user.id, pet.id, "assistant", reply, undefined, undefined, mode),
-            ]).catch((err) => { console.error("[chat/save-message]", err instanceof Error ? err.message : err); });
-
-            // pending_topic 저장 (다음 대화에서 이어갈 주제)
-            if (pendingTopic && pendingTopic.length > 0 && pendingTopic.length <= 50) {
-                agent.saveMemory(user.id, pet.id, {
-                    memoryType: "pending_topic",
-                    title: "다음에 이어갈 주제",
-                    content: pendingTopic,
-                    importance: 3,
-                }).catch((err) => { console.error("[chat/pending-topic]", err instanceof Error ? err.message : err); });
-            }
-        }
-
-        // 세션 요약 생성 (10번째 메시지마다 비동기로) -- 모드 태깅 포함 + 타임라인 자동 생성
-        if (enableAgent && pet.id && chatHistory.length > 0 && chatHistory.length % 10 === 0) {
-            const petIdForSummary = pet.id;
-            const modeForSummary = mode;
-            const isMemorialForSummary = isMemorialMode;
-            const allMessages = [...chatHistory, { role: "user", content: sanitizedMessage }, { role: "assistant", content: reply }];
-            agent.generateConversationSummary(allMessages, pet.name, isMemorialMode)
-                .then(async (summary) => {
-                    if (summary) {
-                        await agent.saveConversationSummary(user.id, petIdForSummary, summary, modeForSummary);
-
-                        if (summary.keyTopics.length >= 2 || summary.importantMentions.length > 0) {
-                            await agent.saveAutoTimelineEntry(
-                                user.id,
-                                petIdForSummary,
-                                summary,
-                                isMemorialForSummary
-                            );
-                        }
-                    }
-                })
-                .catch((err) => { console.error("[chat/session-summary]", err instanceof Error ? err.message : err); });
-        }
-
-        // 포인트 적립 (AI 펫톡 +1P, 비동기)
-        try {
-            const pointsSb = getPointsSupabase();
-            if (pointsSb) {
-                awardPoints(pointsSb, user.id, "ai_chat").catch((err) => {
-                    console.error("[chat] 포인트 적립 실패:", err);
-                });
-            }
-        } catch {
-            // 포인트 적립 실패 무시
-        }
-
-        // 위기 감지 시 crisisAlert 생성
+        // 위기 감지 시 crisisAlert 미리 생성 (스트림 종료 후 메타데이터에 포함)
         const crisisAlert = crisisResult.detected && crisisResult.level !== "none"
             ? buildCrisisAlert(crisisResult.level as "medium" | "high")
             : undefined;
-
-        if (crisisAlert) {
-            suggestedQuestions = [];
-        }
 
         if (crisisResult.detected) {
             console.warn(
@@ -625,18 +480,278 @@ ${emergencyDetection.isEmergency ? "이것은 즉시 병원에 가야 하는 상
             sessionEndingSuggestion = `${pet.name}과(와)의 대화가 길어졌네요. 오늘은 여기서 천천히 쉬어가도 좋아요. ${pet.name}은(는) 언제든 여기 있을 거예요.`;
         }
 
-        return NextResponse.json({
-            reply,
-            suggestedQuestions,
-            emotion: userEmotion,
-            emotionScore,
-            griefStage: isMemorialMode ? griefStage : undefined,
-            usage: completion.usage,
-            remaining: dailyUsage.remaining,
-            isWarning: dailyUsage.isWarning,
-            crisisAlert,
-            sessionEndingSuggestion,
-            matchedPhoto,
+        // SSE ReadableStream 생성
+        const encoder = new TextEncoder();
+        const readableStream = new ReadableStream({
+            async start(controller) {
+                let fullText = "";
+                const suggestionsMarker = "---SUGGESTIONS---";
+                const pendingTopicMarker = "---PENDING_TOPIC---";
+
+                // 마커가 감지되면 텍스트 전송 중단 (마커 이후는 메타데이터)
+                let markerDetected = false;
+                // 이미 클라이언트에 전송한 글자 수 추적
+                let sentLength = 0;
+
+                try {
+                    for await (const chunk of openaiStream) {
+                        const delta = chunk.choices[0]?.delta?.content || "";
+                        if (!delta) continue;
+
+                        fullText += delta;
+
+                        if (!markerDetected) {
+                            // 마커가 전체 텍스트에 완성되었는지 체크
+                            const sugIdx = fullText.indexOf(suggestionsMarker);
+                            const ptIdx = fullText.indexOf(pendingTopicMarker);
+                            const markerIdx = Math.min(
+                                sugIdx >= 0 ? sugIdx : Infinity,
+                                ptIdx >= 0 ? ptIdx : Infinity,
+                            );
+
+                            if (markerIdx !== Infinity) {
+                                // 마커 발견 - 마커 앞까지 아직 안 보낸 텍스트 전송
+                                markerDetected = true;
+                                const unsent = fullText.substring(sentLength, markerIdx);
+                                if (unsent) {
+                                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "delta", content: unsent })}\n\n`));
+                                    sentLength = markerIdx;
+                                }
+                            } else {
+                                // 마커 아직 없음 - "---" 부분 시작이 버퍼 끝에 있으면 보류
+                                const safeEnd = fullText.length - 20; // 마커 최대 길이만큼 보류
+                                if (safeEnd > sentLength) {
+                                    const unsent = fullText.substring(sentLength, safeEnd);
+                                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "delta", content: unsent })}\n\n`));
+                                    sentLength = safeEnd;
+                                }
+                            }
+                        }
+                    }
+
+                    // 스트림 완료 - 마커 없이 끝났으면 남은 텍스트 전송
+                    if (!markerDetected && sentLength < fullText.length) {
+                        const unsent = fullText.substring(sentLength);
+                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "delta", content: unsent })}\n\n`));
+                    }
+
+                    // 전체 텍스트에서 마커 파싱
+                    let reply = fullText;
+                    let suggestedQuestions: string[] = [];
+                    let pendingTopic: string | undefined;
+
+                    // 1. PENDING_TOPIC 분리
+                    if (reply.includes(pendingTopicMarker)) {
+                        const ptParts = reply.split(pendingTopicMarker);
+                        reply = ptParts[0].trim();
+                        pendingTopic = ptParts[1]?.trim().split("\n")[0]?.trim();
+                    }
+
+                    // 2. SUGGESTIONS 분리
+                    if (reply.includes(suggestionsMarker)) {
+                        const sgParts = reply.split(suggestionsMarker);
+                        reply = sgParts[0].trim();
+                        suggestedQuestions = sgParts[1]
+                            .trim()
+                            .split("\n")
+                            .map(s => s.replace(/^[-\d.)\s]+/, "").trim())
+                            .filter(s => s.length > 0 && s.length <= 20)
+                            .slice(0, 3);
+                    }
+
+                    // 추모 모드: 후속 질문에서 음식/케어 키워드 필터링
+                    if (isMemorialMode && suggestedQuestions.length > 0) {
+                        suggestedQuestions = filterMemorialSuggestions(suggestedQuestions);
+                    }
+
+                    // 추모 모드: 느낌표 후처리
+                    if (isMemorialMode) {
+                        reply = reply.replace(/!{3,}/g, ".");
+                        reply = reply.replace(/!!/g, "~");
+                        let exclamationCount = 0;
+                        reply = reply.replace(/!/g, () => {
+                            exclamationCount++;
+                            return exclamationCount <= 1 ? "!" : ".";
+                        });
+                    }
+
+                    // 응답 후 검증 레이어
+                    const validation = validateAIResponse(reply, isCareQuery, sanitizedMessage);
+                    if (validation.wasModified) {
+                        reply = validation.reply;
+                        console.warn(
+                            `[chat/post-validation] 응답 수정됨: violations=${validation.violations.join(", ")}`
+                        );
+                    }
+
+                    // 위기 감지 시 suggestions 비우기
+                    if (crisisAlert) {
+                        suggestedQuestions = [];
+                    }
+
+                    // 자동 리마인더 제안 (일상 모드에서 시간/일정 패턴 감지)
+                    let suggestedReminder: { type: string; title: string; schedule: { type: string; time: string } } | undefined;
+                    if (!isMemorialMode && enableAgent && pet.id) {
+                        const timePatterns = /매일|매주|매달|아침|저녁|점심|밤|시에|분에|산책|밥|약|병원|목욕|미용|예방접종/;
+                        if (timePatterns.test(sanitizedMessage)) {
+                            try {
+                                const result = await agent.suggestReminderFromChat(sanitizedMessage, pet.name);
+                                if (result && result.type && result.title && result.schedule) {
+                                    suggestedReminder = {
+                                        type: result.type as string,
+                                        title: result.title,
+                                        schedule: {
+                                            type: result.schedule.type as string,
+                                            time: result.schedule.time as string,
+                                        },
+                                    };
+                                }
+                            } catch {
+                                // 리마인더 제안 실패 무시
+                            }
+                        }
+                    }
+
+                    // 대화 내 사진 + 타임라인 연동
+                    let matchedPhoto: { url: string; caption: string } | undefined;
+                    let matchedTimeline: { date: string; title: string; content: string } | undefined;
+                    if (pet.id) {
+                        try {
+                            const keywords = extractKeywordsFromReply(reply, pet);
+                            if (keywords.length > 0) {
+                                // 사진 매칭 + 타임라인 매칭 병렬 실행
+                                const [mediaResult, timelineResult] = await Promise.all([
+                                    supabase
+                                        .from("pet_media")
+                                        .select("url, caption")
+                                        .eq("pet_id", pet.id)
+                                        .not("caption", "is", null)
+                                        .limit(50),
+                                    supabase
+                                        .from("timeline_entries")
+                                        .select("date, title, content")
+                                        .eq("pet_id", pet.id)
+                                        .order("date", { ascending: false })
+                                        .limit(30),
+                                ]);
+
+                                // 사진 매칭
+                                const matchedMedia = mediaResult.data;
+                                if (matchedMedia && matchedMedia.length > 0) {
+                                    for (const keyword of keywords) {
+                                        const match = matchedMedia.find(
+                                            (m) => m.caption && m.caption.toLowerCase().includes(keyword.toLowerCase())
+                                        );
+                                        if (match && match.url && match.caption) {
+                                            matchedPhoto = { url: match.url, caption: match.caption };
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                // 타임라인 매칭 (사진이 없을 때 보완)
+                                const timelineData = timelineResult.data;
+                                if (timelineData && timelineData.length > 0) {
+                                    for (const keyword of keywords) {
+                                        const match = timelineData.find(
+                                            (t) => (t.title && t.title.toLowerCase().includes(keyword.toLowerCase()))
+                                                || (t.content && t.content.toLowerCase().includes(keyword.toLowerCase()))
+                                        );
+                                        if (match) {
+                                            matchedTimeline = { date: match.date, title: match.title, content: match.content };
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        } catch (err) {
+                            console.error("[chat/photo-match]", err instanceof Error ? err.message : err);
+                        }
+                    }
+
+                    // 최종 메타데이터 이벤트 전송 (클라이언트가 이것으로 최종 처리)
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                        type: "done",
+                        reply,
+                        suggestedQuestions,
+                        emotion: userEmotion,
+                        emotionScore,
+                        griefStage: isMemorialMode ? griefStage : undefined,
+                        remaining: dailyUsage.remaining,
+                        isWarning: dailyUsage.isWarning,
+                        crisisAlert,
+                        sessionEndingSuggestion,
+                        matchedPhoto,
+                        matchedTimeline,
+                        suggestedReminder,
+                    })}\n\n`));
+
+                    // 대화 저장 (fire-and-forget)
+                    if (enableAgent && pet.id) {
+                        Promise.all([
+                            agent.saveMessage(user.id, pet.id, "user", sanitizedMessage, userEmotion, emotionScore, mode),
+                            agent.saveMessage(user.id, pet.id, "assistant", reply, undefined, undefined, mode),
+                        ]).catch((err) => { console.error("[chat/save-message]", err instanceof Error ? err.message : err); });
+
+                        if (pendingTopic && pendingTopic.length > 0 && pendingTopic.length <= 50) {
+                            agent.saveMemory(user.id, pet.id, {
+                                memoryType: "pending_topic",
+                                title: "다음에 이어갈 주제",
+                                content: pendingTopic,
+                                importance: 3,
+                            }).catch((err) => { console.error("[chat/pending-topic]", err instanceof Error ? err.message : err); });
+                        }
+                    }
+
+                    // 세션 요약 생성 (10번째 메시지마다)
+                    if (enableAgent && pet.id && chatHistory.length > 0 && chatHistory.length % 10 === 0) {
+                        const petIdForSummary = pet.id;
+                        const modeForSummary = mode;
+                        const isMemorialForSummary = isMemorialMode;
+                        const allMessages = [...chatHistory, { role: "user", content: sanitizedMessage }, { role: "assistant", content: reply }];
+                        agent.generateConversationSummary(allMessages, pet.name, isMemorialMode)
+                            .then(async (summary) => {
+                                if (summary) {
+                                    await agent.saveConversationSummary(user.id, petIdForSummary, summary, modeForSummary);
+                                    if (summary.keyTopics.length >= 2 || summary.importantMentions.length > 0) {
+                                        await agent.saveAutoTimelineEntry(user.id, petIdForSummary, summary, isMemorialForSummary);
+                                    }
+                                }
+                            })
+                            .catch((err) => { console.error("[chat/session-summary]", err instanceof Error ? err.message : err); });
+                    }
+
+                    // 포인트 적립
+                    try {
+                        const pointsSb = getPointsSupabase();
+                        if (pointsSb) {
+                            awardPoints(pointsSb, user.id, "ai_chat").catch((err) => {
+                                console.error("[chat] 포인트 적립 실패:", err);
+                            });
+                        }
+                    } catch {
+                        // 포인트 적립 실패 무시
+                    }
+
+                } catch (streamErr) {
+                    // 스트리밍 중 에러 발생 시 에러 이벤트 전송
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                        type: "error",
+                        error: "AI 응답 생성 중 오류가 발생했습니다.",
+                    })}\n\n`));
+                    console.error("[chat/stream-error]", streamErr instanceof Error ? streamErr.message : streamErr);
+                } finally {
+                    controller.close();
+                }
+            },
+        });
+
+        return new Response(readableStream, {
+            headers: {
+                "Content-Type": "text/event-stream",
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+            },
         });
     } catch (error) {
         // OpenAI API 에러 처리
