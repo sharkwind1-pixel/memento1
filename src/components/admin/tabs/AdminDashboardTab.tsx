@@ -145,27 +145,30 @@ export default function AdminDashboardTab({
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-3 gap-2 sm:gap-4">
                         {/* DAU */}
-                        <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">DAU (일간)</p>
-                            <p className="text-2xl font-bold text-green-600">
+                        <div className="text-center p-2 sm:p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
+                            <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mb-1">DAU</p>
+                            <p className="text-xl sm:text-2xl font-bold text-green-600">
                                 {stats.todayActiveUsers.toLocaleString()}
                             </p>
+                            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 hidden sm:block">일간</p>
                         </div>
                         {/* WAU */}
-                        <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">WAU (주간)</p>
-                            <p className="text-2xl font-bold text-blue-600">
+                        <div className="text-center p-2 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                            <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mb-1">WAU</p>
+                            <p className="text-xl sm:text-2xl font-bold text-blue-600">
                                 {stats.weeklyActiveUsers.toLocaleString()}
                             </p>
+                            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 hidden sm:block">주간</p>
                         </div>
                         {/* MAU */}
-                        <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">MAU (월간)</p>
-                            <p className="text-2xl font-bold text-purple-600">
+                        <div className="text-center p-2 sm:p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
+                            <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mb-1">MAU</p>
+                            <p className="text-xl sm:text-2xl font-bold text-purple-600">
                                 {stats.monthlyActiveUsers.toLocaleString()}
                             </p>
+                            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 hidden sm:block">월간</p>
                         </div>
                     </div>
                 </CardContent>

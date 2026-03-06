@@ -467,33 +467,36 @@ function UserCard({
                             : "bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700"
             }`}
         >
-            {/* 상단: 이메일, 뱃지 */}
-            <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium">{user.email}</span>
+            {/* 상단: 이메일, 날짜 */}
+            <div className="flex items-start justify-between gap-2 mb-1">
+                <span className="font-medium text-sm truncate min-w-0">{user.email}</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap flex-shrink-0">
+                    {new Date(user.created_at).toLocaleDateString("ko-KR")}
+                </span>
+            </div>
+            {/* 뱃지 */}
+            {(user.is_admin || user.is_premium || user.is_banned) && (
+                <div className="flex items-center gap-1.5 flex-wrap mb-2">
                     {user.is_admin && (
-                        <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
-                            <Shield className="w-3 h-3 mr-1" />
+                        <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 text-[10px] px-1.5 py-0.5">
+                            <Shield className="w-3 h-3 mr-0.5" />
                             관리자
                         </Badge>
                     )}
                     {user.is_premium && (
-                        <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300">
-                            <Crown className="w-3 h-3 mr-1" />
+                        <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300 text-[10px] px-1.5 py-0.5">
+                            <Crown className="w-3 h-3 mr-0.5" />
                             프리미엄
                         </Badge>
                     )}
                     {user.is_banned && (
-                        <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
-                            <Ban className="w-3 h-3 mr-1" />
-                            차단됨
+                        <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 text-[10px] px-1.5 py-0.5">
+                            <Ban className="w-3 h-3 mr-0.5" />
+                            차단
                         </Badge>
                     )}
                 </div>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {new Date(user.created_at).toLocaleDateString("ko-KR")}
-                </span>
-            </div>
+            )}
 
             {/* 닉네임 + 등급 */}
             <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -519,29 +522,32 @@ function UserCard({
             )}
 
             {/* 액션 버튼 */}
-            <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+            <div className="grid grid-cols-3 sm:flex sm:flex-wrap gap-1.5 sm:gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                 {/* 밴/해제 버튼 */}
                 <Button
                     size="sm"
                     variant={user.is_banned ? "outline" : "destructive"}
                     onClick={onToggleBan}
+                    className="text-xs h-8"
                 >
-                    <Ban className="w-3 h-3 mr-1" />
-                    {user.is_banned ? "차단 해제" : "차단"}
+                    <Ban className="w-3 h-3 sm:mr-1" />
+                    <span className="hidden sm:inline">{user.is_banned ? "차단 해제" : "차단"}</span>
+                    <span className="sm:hidden">{user.is_banned ? "해제" : "차단"}</span>
                 </Button>
 
                 {/* 관리자 권한 버튼 */}
                 <Button
                     size="sm"
-                    variant={user.is_admin ? "outline" : "outline"}
-                    className={user.is_admin
+                    variant="outline"
+                    className={`text-xs h-8 ${user.is_admin
                         ? "text-purple-600 dark:text-purple-400 border-purple-300 dark:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-900/20"
                         : "text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
-                    }
+                    }`}
                     onClick={onToggleAdmin}
                 >
-                    <Shield className="w-3 h-3 mr-1" />
-                    {user.is_admin ? "관리자 해제" : "관리자 부여"}
+                    <Shield className="w-3 h-3 sm:mr-1" />
+                    <span className="hidden sm:inline">{user.is_admin ? "관리자 해제" : "관리자 부여"}</span>
+                    <span className="sm:hidden">관리자</span>
                 </Button>
 
                 {/* 프리미엄 버튼 */}
@@ -550,19 +556,22 @@ function UserCard({
                         size="sm"
                         variant="outline"
                         onClick={onRevokePremium}
+                        className="text-xs h-8"
                     >
-                        <Crown className="w-3 h-3 mr-1" />
-                        프리미엄 해제
+                        <Crown className="w-3 h-3 sm:mr-1" />
+                        <span className="hidden sm:inline">프리미엄 해제</span>
+                        <span className="sm:hidden">해제</span>
                     </Button>
                 ) : (
                     <Button
                         size="sm"
                         variant="outline"
-                        className="text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-gray-700/20"
+                        className="text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-gray-700/20 text-xs h-8"
                         onClick={onOpenPremiumModal}
                     >
-                        <Crown className="w-3 h-3 mr-1" />
-                        프리미엄 부여
+                        <Crown className="w-3 h-3 sm:mr-1" />
+                        <span className="hidden sm:inline">프리미엄 부여</span>
+                        <span className="sm:hidden">프리미엄</span>
                     </Button>
                 )}
 
@@ -570,11 +579,12 @@ function UserCard({
                 <Button
                     size="sm"
                     variant="outline"
-                    className="text-sky-600 dark:text-sky-400 border-sky-300 dark:border-sky-700 hover:bg-sky-50 dark:hover:bg-sky-900/20"
+                    className="text-sky-600 dark:text-sky-400 border-sky-300 dark:border-sky-700 hover:bg-sky-50 dark:hover:bg-sky-900/20 text-xs h-8"
                     onClick={onOpenPointsModal}
                 >
-                    <Star className="w-3 h-3 mr-1" />
-                    포인트 지급
+                    <Star className="w-3 h-3 sm:mr-1" />
+                    <span className="hidden sm:inline">포인트 지급</span>
+                    <span className="sm:hidden">포인트</span>
                 </Button>
 
                 {/* 온보딩 리셋 */}
@@ -582,19 +592,21 @@ function UserCard({
                     size="sm"
                     variant="outline"
                     onClick={onResetOnboarding}
+                    className="text-xs h-8"
                 >
-                    <RotateCcw className="w-3 h-3 mr-1" />
-                    온보딩 리셋
+                    <RotateCcw className="w-3 h-3 sm:mr-1" />
+                    <span className="hidden sm:inline">온보딩 리셋</span>
+                    <span className="sm:hidden">리셋</span>
                 </Button>
 
                 {/* 탈퇴 처리 */}
                 <Button
                     size="sm"
                     variant="outline"
-                    className="text-red-600 dark:text-red-400 border-red-300 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    className="text-red-600 dark:text-red-400 border-red-300 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 text-xs h-8"
                     onClick={onOpenWithdrawalModal}
                 >
-                    탈퇴 처리
+                    <span>탈퇴</span>
                 </Button>
             </div>
         </div>
