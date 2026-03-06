@@ -153,7 +153,7 @@ export default function AdminUsersTab({
         if (!confirm(message)) return;
 
         try {
-            const { error, data } = await supabase
+            const { error } = await supabase
                 .from("profiles")
                 .update({
                     tutorial_completed_at: null,
@@ -161,13 +161,11 @@ export default function AdminUsersTab({
                     user_type: null,
                     onboarding_data: null,
                 })
-                .eq("id", userId)
-                .select();
+                .eq("id", userId);
 
-            if (error) throw error;
-
-            if (!data || data.length === 0) {
-                toast.error("업데이트 실패: 권한이 없거나 해당 유저가 없습니다.");
+            if (error) {
+                console.error("[AdminUsers] 온보딩 리셋 에러:", error);
+                toast.error(`온보딩 리셋 실패: ${error.message}`);
                 return;
             }
 
@@ -179,7 +177,8 @@ export default function AdminUsersTab({
             } else {
                 toast.success("온보딩이 리셋되었습니다.");
             }
-        } catch {
+        } catch (err) {
+            console.error("[AdminUsers] 온보딩 리셋 예외:", err);
             toast.error("온보딩 리셋에 실패했습니다.");
         }
     };
