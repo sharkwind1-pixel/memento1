@@ -224,8 +224,14 @@ export default function MinihompyStage({
     }, [editMode]);
 
     // 미니미 터치 이펙트 핸들러 (비편집 모드에서만)
+    const touchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const handleMinimiTouch = useCallback((index: number) => {
         if (editMode) return;
+
+        // 이전 타이머 정리
+        if (touchTimerRef.current) {
+            clearTimeout(touchTimerRef.current);
+        }
 
         // 랜덤 메시지 선택
         const randomMessage = TOUCH_MESSAGES[Math.floor(Math.random() * TOUCH_MESSAGES.length)];
@@ -233,9 +239,10 @@ export default function MinihompyStage({
         setTouchEffectIndex(index);
 
         // 1.5초 후 이펙트 제거
-        setTimeout(() => {
+        touchTimerRef.current = setTimeout(() => {
             setTouchEffectIndex(null);
             setTouchEffectMessage("");
+            touchTimerRef.current = null;
         }, 1500);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- TOUCH_MESSAGES is a static constant
     }, [editMode]);

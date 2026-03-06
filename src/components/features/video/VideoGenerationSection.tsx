@@ -321,11 +321,11 @@ export default function VideoGenerationSection({
                         <div>
                             <div className="flex items-center gap-2">
                                 <Film className="w-5 h-5 text-memento-500" />
-                                <h3 className="text-base font-semibold text-gray-800">
+                                <h3 className="text-base font-semibold text-gray-800 dark:text-gray-100">
                                     AI 영상 만들기
                                 </h3>
                             </div>
-                            <p className="text-xs text-gray-500 mt-1 ml-7">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-7">
                                 사진 한 장으로 특별한 영상을 만들어보세요
                             </p>
                         </div>
@@ -349,12 +349,12 @@ export default function VideoGenerationSection({
                                     <span className="relative inline-flex rounded-full h-3 w-3 bg-memento-500" />
                                 </span>
                                 <div className="flex-1">
-                                    <p className="text-sm font-medium text-gray-800">
+                                    <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
                                         영상을 만들고 있어요...
                                     </p>
                                     <div className="flex items-center gap-1 mt-0.5">
                                         <Clock className="w-3 h-3 text-gray-400" />
-                                        <p className="text-xs text-gray-500">
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">
                                             경과 시간: {getElapsedTime(activeGeneration.createdAt)}
                                         </p>
                                     </div>
@@ -380,10 +380,10 @@ export default function VideoGenerationSection({
                                     <div
                                         key={video.id}
                                         onClick={() => handleVideoClick(video)}
-                                        className="w-52 flex-shrink-0 rounded-xl overflow-hidden cursor-pointer bg-white border border-gray-200 transition-all duration-200 hover:ring-2 hover:ring-memento-300 hover:shadow-md active:scale-[0.98]"
+                                        className="w-52 flex-shrink-0 rounded-xl overflow-hidden cursor-pointer bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-all duration-200 hover:ring-2 hover:ring-memento-300 hover:shadow-md active:scale-[0.98]"
                                     >
                                         {/* 썸네일 */}
-                                        <div className="aspect-video relative bg-gray-100">
+                                        <div className="aspect-video relative bg-gray-100 dark:bg-gray-700">
                                             {video.thumbnailUrl ? (
                                                 <img
                                                     src={video.thumbnailUrl}
@@ -409,7 +409,7 @@ export default function VideoGenerationSection({
 
                                         {/* 텍스트 영역 */}
                                         <div className="p-3">
-                                            <p className="text-base font-medium text-gray-800 truncate">
+                                            <p className="text-base font-medium text-gray-800 dark:text-gray-100 truncate">
                                                 {video.petName || pet.name}
                                             </p>
                                             <p className="text-sm text-gray-400 mt-0.5">
@@ -424,13 +424,13 @@ export default function VideoGenerationSection({
                     {/* 빈 상태 (영상 없고 생성 중도 아닐 때) */}
                     {!hasVideos && !hasActiveGeneration && (
                         <div className="flex flex-col items-center py-8 text-center">
-                            <div className="w-14 h-14 rounded-full bg-memento-50 flex items-center justify-center mb-3">
+                            <div className="w-14 h-14 rounded-full bg-memento-50 dark:bg-memento-900/30 flex items-center justify-center mb-3">
                                 <Film className="w-7 h-7 text-memento-400" />
                             </div>
-                            <p className="text-sm font-medium text-gray-700 mb-1">
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                                 아직 만든 영상이 없어요
                             </p>
-                            <p className="text-xs text-gray-400 mb-4">
+                            <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
                                 사진을 골라 첫 번째 영상을 만들어보세요
                             </p>
                             <Button
@@ -446,7 +446,7 @@ export default function VideoGenerationSection({
 
                     {/* 쿼터 표시 */}
                     {quota && (
-                        <div className="mt-3 pt-3 border-t border-gray-100">
+                        <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
                             <p className="text-xs text-gray-400 text-center">
                                 {getQuotaText()}
                             </p>

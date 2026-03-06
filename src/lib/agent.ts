@@ -52,7 +52,8 @@ async function hasChatModeColumn(): Promise<boolean> {
             .limit(0);
 
         chatModeColumnExists = !error;
-    } catch {
+    } catch (err) {
+        console.error("[agent] hasChatModeColumn check failed:", err instanceof Error ? err.message : err);
         chatModeColumnExists = false;
     }
 
@@ -365,8 +366,9 @@ ${isMemorialMode ? `추모 모드 - 애도 단계 (Kübler-Ross):
             context: result.context || "",
             griefStage: result.griefStage || griefStage,
         };
-    } catch {
+    } catch (err) {
         // API 실패 시 키워드 분석 결과 사용
+        console.error("[agent] analyzeEmotion AI fallback:", err instanceof Error ? err.message : err);
         return {
             emotion: quickResult.emotion || "neutral",
             score: quickResult.confidence || 0.5,
@@ -441,7 +443,8 @@ export async function extractMemories(
 
         const result = JSON.parse(response.choices[0]?.message?.content || "[]");
         return Array.isArray(result) && result.length > 0 ? result : null;
-    } catch {
+    } catch (err) {
+        console.error("[agent] extractMemories failed:", err instanceof Error ? err.message : err);
         return null;
     }
 }
@@ -1083,7 +1086,8 @@ ${isMemorial ? "- griefProgress: 애도 과정에서 현재 단계 (Kübler-Ross
             griefProgress: result.griefProgress,
             importantMentions: result.importantMentions || [],
         };
-    } catch {
+    } catch (err) {
+        console.error("[agent] summarizeConversation failed:", err instanceof Error ? err.message : err);
         return null;
     }
 }
@@ -1399,7 +1403,8 @@ ${lastMessages.join("\n")}
         }
 
         return [summaryContext, recentContext].filter(Boolean).join("\n\n");
-    } catch {
+    } catch (err) {
+        console.error("[agent] buildConversationContext failed:", err instanceof Error ? err.message : err);
         return "";
     }
 }

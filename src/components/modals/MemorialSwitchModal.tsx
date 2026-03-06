@@ -428,28 +428,37 @@ export default function MemorialSwitchModal({
                                     <X className="w-5 h-5 text-white/60" />
                                 </button>
 
-                                {/* 별 파티클 */}
+                                {/* 별 파티클 (deterministic seed로 hydration 안전) */}
                                 <div className="relative h-64 flex items-center justify-center">
-                                    {Array.from({ length: 30 }).map((_, i) => (
+                                    {Array.from({ length: 30 }).map((_, i) => {
+                                        // 인덱스 기반 결정적 값 (SSR/CSR 일치)
+                                        const seed = (i * 7 + 13) % 100;
+                                        const size = (seed % 3) + 1;
+                                        const left = ((i * 37 + 11) % 100);
+                                        const top = ((i * 53 + 7) % 100);
+                                        const dur = 1.5 + (seed % 20) / 10;
+                                        const delay = (i * 17 % 20) / 10;
+                                        return (
                                         <div
                                             key={i}
                                             className="absolute rounded-full"
                                             style={{
-                                                width: Math.random() * 3 + 1,
-                                                height: Math.random() * 3 + 1,
-                                                left: `${Math.random() * 100}%`,
-                                                top: `${Math.random() * 100}%`,
+                                                width: size,
+                                                height: size,
+                                                left: `${left}%`,
+                                                top: `${top}%`,
                                                 backgroundColor:
                                                     i % 3 === 0
                                                         ? "#fde68a"
                                                         : i % 3 === 1
                                                           ? "#ffffff"
                                                           : "#fbbf24",
-                                                animation: `memorialTwinkle ${1.5 + Math.random() * 2}s ease-in-out infinite`,
-                                                animationDelay: `${Math.random() * 2}s`,
+                                                animation: `memorialTwinkle ${dur}s ease-in-out infinite`,
+                                                animationDelay: `${delay}s`,
                                             }}
                                         />
-                                    ))}
+                                        );
+                                    })}
 
                                     {/* 중앙: 큰 별 + 이름 */}
                                     <div

@@ -277,7 +277,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             setPointsLoaded(true);
             setProfileLoaded(true);
-        } catch {
+        } catch (err) {
+            console.error("[AuthContext] refreshProfile failed:", err instanceof Error ? err.message : err);
             setPointsLoaded(true);
             setProfileLoaded(true);
         }
@@ -299,7 +300,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // 값이 같으면 setState skip → context value 재생성 방지
             setPoints(prev => prev === newPoints ? prev : newPoints);
             setPointsLoaded(prev => prev ? prev : true);
-        } catch {
+        } catch (err) {
+            console.error("[AuthContext] refreshPoints failed:", err instanceof Error ? err.message : err);
             setPointsLoaded(prev => prev ? prev : true);
         }
     }, []);

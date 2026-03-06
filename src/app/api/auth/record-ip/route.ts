@@ -108,7 +108,7 @@ export async function POST() {
         return NextResponse.json({ allowed: true });
     } catch (error) {
         console.error("[auth/record-ip] Error:", error instanceof Error ? error.message : error);
-        // 에러 시 통과 + 경고 플래그 (프론트에서 모니터링 가능)
-        return NextResponse.json({ allowed: true, warning: "check_error" });
+        // fail-closed: 에러 시 차단 (보안 우선)
+        return NextResponse.json({ allowed: false, reason: "시스템 오류가 발생했습니다. 잠시 후 다시 시도해주세요." });
     }
 }

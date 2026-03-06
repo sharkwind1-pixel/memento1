@@ -250,8 +250,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                 setSelectedPetId(petsWithMedia[0].id);
             }
         } catch (error) {
-            // Supabase 로드 실패 (무시 - 빈 상태로 초기화됨)
-            // Supabase 로드 실패 시 빈 상태로 초기화
+            console.error("[PetContext] loadFromSupabase failed:", error instanceof Error ? error.message : error);
             setPets([]);
             setSelectedPetId(null);
         } finally {

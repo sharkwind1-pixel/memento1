@@ -7,7 +7,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { bestPosts, memorialCards } from "@/data/posts";
 import { usePetImages } from "@/hooks/usePetImages";
 import { getPublicMemorialPosts, MemorialPost } from "@/lib/memorialService";
@@ -58,15 +58,21 @@ export function useHomePage() {
         }));
     }, []);
 
+    const heartTimersRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
     const toggleLike = (postId: number) => {
         setLikedPosts((prev) => ({
             ...prev,
             [postId]: !prev[postId],
         }));
         setAnimatingHearts((prev) => ({ ...prev, [postId]: true }));
-        setTimeout(() => {
-            setAnimatingHearts((prev) => ({ ...prev, [postId]: false }));
+        // 이전 타이머 정리
+        const prev = heartTimersRef.current.get(postId);
+        if (prev) clearTimeout(prev);
+        const timer = setTimeout(() => {
+            setAnimatingHearts((p) => ({ ...p, [postId]: false }));
+            heartTimersRef.current.delete(postId);
         }, 400);
+        heartTimersRef.current.set(postId, timer);
     };
 
     const addComment = (postId: number, content: string) => {

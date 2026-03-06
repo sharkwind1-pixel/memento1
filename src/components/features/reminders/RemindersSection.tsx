@@ -226,7 +226,7 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
     return (
         <Card className="overflow-hidden">
             <CardHeader
-                className="cursor-pointer hover:bg-gray-50 transition-colors"
+                className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                 onClick={() => setIsExpanded(!isExpanded)}
             >
                 <div className="flex items-center justify-between">
@@ -234,7 +234,7 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
                         <Bell className="w-5 h-5 text-memento-600" />
                         케어 리마인더
                         {reminders.length > 0 && (
-                            <span className="text-sm font-normal text-gray-500">
+                            <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
                                 ({reminders.filter(r => r.enabled).length}개 활성)
                             </span>
                         )}
@@ -267,8 +267,8 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
                                                 key={reminder.id}
                                                 className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
                                                     reminder.enabled
-                                                        ? "border-gray-100 bg-white"
-                                                        : "border-gray-200 bg-gray-50 opacity-60"
+                                                        ? "border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800"
+                                                        : "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 opacity-60"
                                                 }`}
                                             >
                                                 <div className={`w-9 h-9 rounded-full flex items-center justify-center ${typeInfo.bg}`}>
@@ -276,10 +276,10 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
                                                 </div>
 
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="font-medium text-sm text-gray-800 truncate">
+                                                    <p className="font-medium text-sm text-gray-800 dark:text-gray-100 truncate">
                                                         {reminder.title}
                                                     </p>
-                                                    <p className="text-xs text-gray-500 flex items-center gap-1">
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
                                                         <CalendarDays className="w-3 h-3" />
                                                         {getScheduleText(reminder.schedule)}
                                                     </p>
@@ -290,8 +290,8 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
                                                         onClick={() => handleToggle(reminder.id, reminder.enabled)}
                                                         className={`p-1.5 rounded-lg transition-colors ${
                                                             reminder.enabled
-                                                                ? "text-memento-600 hover:bg-memento-100"
-                                                                : "text-gray-400 hover:bg-gray-100"
+                                                                ? "text-memento-600 hover:bg-memento-100 dark:hover:bg-memento-900/30"
+                                                                : "text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                                                         }`}
                                                     >
                                                         {reminder.enabled ? (
@@ -302,7 +302,7 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
                                                     </button>
                                                     <button
                                                         onClick={() => handleDelete(reminder.id)}
-                                                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                                                     >
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
@@ -322,12 +322,12 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
 
                             {/* 추가 폼 */}
                             {showAddForm ? (
-                                <div className="border rounded-xl p-4 bg-gray-50 space-y-3">
+                                <div className="border dark:border-gray-700 rounded-xl p-4 bg-gray-50 dark:bg-gray-800/50 space-y-3">
                                     <div className="flex items-center justify-between mb-2">
-                                        <span className="font-medium text-sm text-gray-700">새 리마인더</span>
+                                        <span className="font-medium text-sm text-gray-700 dark:text-gray-200">새 리마인더</span>
                                         <button
                                             onClick={() => setShowAddForm(false)}
-                                            className="p-1 hover:bg-gray-200 rounded-full"
+                                            className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full"
                                         >
                                             <X className="w-4 h-4 text-gray-500" />
                                         </button>
@@ -335,7 +335,7 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
 
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
-                                            <label className="text-xs text-gray-500 mb-1 block">타입</label>
+                                            <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">타입</label>
                                             <Select
                                                 value={newReminder.type}
                                                 onValueChange={(v) => setNewReminder(prev => ({ ...prev, type: v }))}
@@ -357,7 +357,7 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
                                         </div>
 
                                         <div>
-                                            <label className="text-xs text-gray-500 mb-1 block">반복</label>
+                                            <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">반복</label>
                                             <Select
                                                 value={newReminder.scheduleType}
                                                 onValueChange={(v) => setNewReminder(prev => ({ ...prev, scheduleType: v }))}
@@ -377,7 +377,7 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
                                     </div>
 
                                     <div>
-                                        <label className="text-xs text-gray-500 mb-1 block">제목</label>
+                                        <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">제목</label>
                                         <Input
                                             value={newReminder.title}
                                             onChange={(e) => setNewReminder(prev => ({ ...prev, title: e.target.value }))}
@@ -388,7 +388,7 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
 
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
-                                            <label className="text-xs text-gray-500 mb-1 block">시간</label>
+                                            <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">시간</label>
                                             <Input
                                                 type="time"
                                                 value={newReminder.time}
@@ -399,7 +399,7 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
 
                                         {newReminder.scheduleType === "weekly" && (
                                             <div>
-                                                <label className="text-xs text-gray-500 mb-1 block">요일</label>
+                                                <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">요일</label>
                                                 <Select
                                                     value={String(newReminder.dayOfWeek)}
                                                     onValueChange={(v) => setNewReminder(prev => ({ ...prev, dayOfWeek: parseInt(v) }))}
@@ -420,7 +420,7 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
 
                                         {newReminder.scheduleType === "once" && (
                                             <div>
-                                                <label className="text-xs text-gray-500 mb-1 block">날짜</label>
+                                                <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">날짜</label>
                                                 <Input
                                                     type="date"
                                                     value={newReminder.date}
@@ -443,7 +443,7 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
                                 <Button
                                     variant="outline"
                                     onClick={() => setShowAddForm(true)}
-                                    className="w-full border-dashed border-memento-500 text-memento-600 hover:bg-memento-100"
+                                    className="w-full border-dashed border-memento-500 text-memento-600 hover:bg-memento-100 dark:hover:bg-memento-900/30"
                                 >
                                     <Plus className="w-4 h-4 mr-1" />
                                     리마인더 추가

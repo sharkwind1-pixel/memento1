@@ -212,7 +212,7 @@ export default function PostDetailView({
             setIsLiked(data.liked);
             setLikeCount(data.likes);
         } catch {
-            alert("좋아요 처리에 실패했습니다");
+            toast.error("좋아요 처리에 실패했습니다");
         } finally {
             setIsLiking(false);
         }
@@ -252,7 +252,7 @@ export default function PostDetailView({
             }]);
             setCommentText("");
         } catch {
-            alert("댓글 작성에 실패했습니다. 다시 시도해주세요");
+            toast.error("댓글 작성에 실패했습니다. 다시 시도해주세요");
         } finally {
             setIsSubmittingComment(false);
         }
@@ -270,7 +270,7 @@ export default function PostDetailView({
             onPostDeleted?.();
             onBack();
         } catch {
-            alert("삭제에 실패했습니다");
+            toast.error("삭제에 실패했습니다");
         } finally {
             setIsDeleting(false);
         }
@@ -299,7 +299,7 @@ export default function PostDetailView({
                 onBack();
             }
         } catch {
-            alert("숨기기 변경에 실패했습니다");
+            toast.error("숨기기 변경에 실패했습니다");
         } finally {
             setIsTogglingHidden(false);
         }

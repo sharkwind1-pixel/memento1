@@ -191,10 +191,10 @@ const ExportChatCard = forwardRef<HTMLDivElement, ExportChatCardProps>(
                                 key={i}
                                 className="absolute text-amber-400/30 w-3 h-3"
                                 style={{
-                                    top: `${Math.random() * 100}%`,
-                                    left: `${Math.random() * 100}%`,
-                                    animation: `pulse ${2 + Math.random()}s infinite`,
-                                    animationDelay: `${Math.random() * 2}s`,
+                                    top: `${((i * 37 + 11) % 100)}%`,
+                                    left: `${((i * 53 + 7) % 100)}%`,
+                                    animation: `pulse ${2 + (i % 10) / 10}s infinite`,
+                                    animationDelay: `${(i * 3 % 20) / 10}s`,
                                 }}
                             />
                         ))}

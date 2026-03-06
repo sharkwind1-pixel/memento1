@@ -118,6 +118,8 @@ export default function RichTextEditor({ content, onChange, onImageUpload }: Ric
                             view.dispatch(tr.insert(insertPos, imageNode));
                         }
                         setIsImageUploading(false);
+                    }).catch(() => {
+                        setIsImageUploading(false);
                     });
                 }
 
@@ -141,6 +143,8 @@ export default function RichTextEditor({ content, onChange, onImageUpload }: Ric
                                 const imageNode = view.state.schema.nodes.image.create({ src: url });
                                 view.dispatch(tr.insert(view.state.selection.anchor, imageNode));
                             }
+                            setIsImageUploading(false);
+                        }).catch(() => {
                             setIsImageUploading(false);
                         });
                         return true;

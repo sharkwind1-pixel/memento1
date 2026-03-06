@@ -140,8 +140,8 @@ export function useAdminData(): UseAdminDataReturn {
                 weeklyActiveUsers: weeklyActiveUsers || 0,
                 monthlyActiveUsers: monthlyActiveUsers || 0,
             });
-        } catch {
-            // [useAdminData] 통계 로드 실패:", error);
+        } catch (error) {
+            console.error("[useAdminData] 통계 로드 실패:", error);
         } finally {
             setLoading(false);
         }
@@ -183,8 +183,8 @@ export function useAdminData(): UseAdminDataReturn {
             }));
 
             setChartData(days);
-        } catch {
-            // [useAdminData] 차트 데이터 로드 실패
+        } catch (error) {
+            console.error("[useAdminData] 차트 데이터 로드 실패:", error);
         }
     }, []);
 
