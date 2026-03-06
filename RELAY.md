@@ -43,6 +43,12 @@
 - [완료] CSP unsafe-eval 프로덕션 제거 (`8291b0e`)
 - [보류] 인메모리 rate limit → Vercel KV 전환 (유저 증가 시 진행, 현재 핵심은 DB 기반)
 
+### [완료] 코드 리팩토링 4단계
+- [완료] Phase 1: agent.ts (1410줄) → agent/ 디렉토리 6개 모듈 (`bd9b95e`)
+- [완료] Phase 2: chat/route.ts (1281줄) → 헬퍼/프롬프트 분리 570줄 (`690d24d`)
+- [완료] Phase 3: storage.ts 중복 업로드 함수 4개 → 공통 1개+별칭 (`1a4beb7`)
+- [완료] Phase 4: 상수 정리 (CHAT_USAGE 하드코딩 → constants) (`5d25faa`)
+
 ### [완료] 간편모드 — 코드+DB 모두 완료
 ### [완료] 관리자 대시보드 모바일 compact UX
 ### [완료] 온보딩/튜토리얼 디자인 개선 (다크모드+SVG 구름+워딩)

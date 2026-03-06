@@ -29,7 +29,10 @@ src/
 ├── app/
 │   ├── page.tsx              # 메인 라우터 (탭 기반 SPA)
 │   ├── api/
-│   │   ├── chat/route.ts     # AI 펫톡 API
+│   │   ├── chat/
+│   │   │   ├── route.ts      # AI 펫톡 API (핸들러+인증)
+│   │   │   ├── chat-helpers.ts # 컨텍스트 빌더/유틸
+│   │   │   └── chat-prompts.ts # 시스템 프롬프트 생성
 │   │   └── reminders/        # 리마인더 CRUD API
 │   └── auth/callback/        # Supabase Auth 콜백
 ├── components/
@@ -42,7 +45,14 @@ src/
 │   ├── AuthContext.tsx       # 인증 상태 관리
 │   └── PetContext.tsx        # 반려동물 데이터 관리
 ├── lib/
-│   ├── agent.ts              # AI 에이전트 로직
+│   ├── agent/                # AI 에이전트 모듈 디렉토리
+│   │   ├── index.ts          # 배럴 재수출 (import "@/lib/agent" 유지)
+│   │   ├── shared.ts         # Supabase/OpenAI 싱글턴
+│   │   ├── emotion.ts        # 감정 분석 + 애도 단계
+│   │   ├── memory.ts         # 장기 메모리/메시지 CRUD
+│   │   ├── reminders.ts      # 리마인더 CRUD
+│   │   ├── conversation.ts   # 대화 요약/맥락
+│   │   └── helpers.ts        # 순수 유틸 (getDaysAgo 등)
 │   ├── supabase.ts           # Supabase 클라이언트 (클라이언트용)
 │   ├── supabase-server.ts    # Supabase 서버 클라이언트 (API용, 세션 인증)
 │   └── storage.ts            # 스토리지 유틸
@@ -254,12 +264,15 @@ export const ADMIN_EMAILS = ["sharkwind1@gmail.com"];
 ## 자주 수정하는 파일
 
 ```
-src/types/index.ts          # 타입 추가/수정
-src/contexts/PetContext.tsx # 펫 데이터 로직
-src/app/api/chat/route.ts   # AI 프롬프트 수정
-src/components/pages/*.tsx  # 각 페이지 UI
-src/config/apiEndpoints.ts  # API URL 상수
-src/config/constants.ts     # 제한/가격/관리자 이메일
+src/types/index.ts              # 타입 추가/수정
+src/contexts/PetContext.tsx     # 펫 데이터 로직
+src/app/api/chat/route.ts       # AI 펫톡 핸들러+인증
+src/app/api/chat/chat-helpers.ts # AI 펫톡 컨텍스트/유틸
+src/app/api/chat/chat-prompts.ts # AI 시스템 프롬프트
+src/lib/agent/*.ts              # AI 에이전트 모듈
+src/components/pages/*.tsx      # 각 페이지 UI
+src/config/apiEndpoints.ts      # API URL 상수
+src/config/constants.ts         # 제한/가격/관리자 이메일
 ```
 
 ---
