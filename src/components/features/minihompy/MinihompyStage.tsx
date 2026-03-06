@@ -282,7 +282,9 @@ export default function MinihompyStage({
                     if (!imgUrl) return null;
                     const isSelected = editMode && selectedIndex === index;
                     const isDragging = draggingIndex === index;
-                    const baseSize = compact ? 56 : 72;
+                    // 모바일(< 640px)에서 더 작게 표시
+                    const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
+                    const baseSize = compact ? (isMobile ? 44 : 56) : (isMobile ? 56 : 72);
 
                     const hasTouchEffect = touchEffectIndex === index;
 
@@ -403,7 +405,8 @@ export default function MinihompyStage({
                 )}>
                     {hasMinimi ? (
                         (() => {
-                            const singleBase = compact ? 60 : 80;
+                            const singleIsMobile = typeof window !== "undefined" && window.innerWidth < 640;
+                            const singleBase = compact ? (singleIsMobile ? 48 : 60) : (singleIsMobile ? 64 : 80);
                             return (
                                 <div className="relative">
                                     {minimiEquip.imageUrl ? (
