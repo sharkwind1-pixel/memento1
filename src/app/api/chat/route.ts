@@ -358,16 +358,19 @@ export async function POST(request: NextRequest) {
         // 위치 기반 장소 검색 (클라이언트에서 좌표 + 키워드를 보낸 경우)
         let nearbyPlaces: NearbyPlace[] = [];
         let placeContext = "";
+        console.log("[chat/place] userLocation:", userLocation, "placeKeyword:", placeKeyword);
         if (userLocation && placeKeyword) {
             try {
                 // 서버 측 장소 질문 감지 재검증 (클라이언트 조작 방지)
                 const serverDetection = detectPlaceQuery(sanitizedMessage);
+                console.log("[chat/place] serverDetection:", serverDetection);
                 if (serverDetection.detected) {
                     nearbyPlaces = await findNearbyPlaces(
                         userLocation.lat,
                         userLocation.lng,
                         serverDetection.keyword || placeKeyword,
                     );
+                    console.log("[chat/place] nearbyPlaces:", nearbyPlaces.length, "개");
                     if (nearbyPlaces.length > 0) {
                         placeContext = `\n[주변 장소 검색 결과 (${placeKeyword})]:\n` +
                             nearbyPlaces.map((p, i) =>

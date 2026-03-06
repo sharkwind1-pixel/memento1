@@ -486,7 +486,9 @@ export function useAIChat({
             const placeDetection = detectPlaceQueryClient(currentInput);
             let userLocation: { lat: number; lng: number } | null = null;
             if (placeDetection.detected) {
+                console.log("[chat/location] 장소 질문 감지:", placeDetection.keyword);
                 userLocation = await getUserLocation();
+                console.log("[chat/location] GPS 좌표:", userLocation);
             }
 
             // OpenAI API 호출 (에이전트 기능 포함 + 타임라인 데이터)
