@@ -45,9 +45,10 @@ import VideoGenerationSection from "@/components/features/video/VideoGenerationS
 
 interface RecordPageProps {
     setSelectedTab?: (tab: TabType) => void;
+    isActive?: boolean;
 }
 
-function RecordPage({ setSelectedTab }: RecordPageProps) {
+function RecordPage({ setSelectedTab, isActive = true }: RecordPageProps) {
     const { user, signOut, updateProfile, isPremiumUser, isAdminUser, points, userPetType } = useAuth();
     const {
         pets,
@@ -347,7 +348,7 @@ function RecordPage({ setSelectedTab }: RecordPageProps) {
 
                 {/* 미니홈피 탭 */}
                 {activeTab === "minihompy" && (
-                    <MiniHomepyTab />
+                    <MiniHomepyTab isActive={isActive} />
                 )}
 
                 {/* 반려동물 탭 */}

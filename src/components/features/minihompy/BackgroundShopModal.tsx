@@ -32,7 +32,7 @@ export default function BackgroundShopModal({
     currentSlug,
     onApply,
 }: BackgroundShopModalProps) {
-    const { points, refreshPoints } = useAuth();
+    const { points, pointsLoaded, refreshPoints } = useAuth();
     const [catalog, setCatalog] = useState<CatalogItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [purchasingSlug, setPurchasingSlug] = useState<string | null>(null);
@@ -53,15 +53,13 @@ export default function BackgroundShopModal({
     }, []);
 
     useEffect(() => {
-        if (isOpen) loadCatalog();
-    }, [isOpen, loadCatalog]);
+        if (isOpen) {
+            loadCatalog();
+            refreshPoints(); // 모달 열 때 포인트 최신화 (stale points로 구매 차단 방지)
+        }
+    }, [isOpen, loadCatalog, refreshPoints]);
 
     const handlePurchase = async (bg: CatalogItem) => {
-        if (points < bg.price) {
-            toast.error("포인트가 부족합니다");
-            return;
-        }
-
         setPurchasingSlug(bg.slug);
         try {
             const res = await authFetch(API.MINIHOMPY_BG_PURCHASE, {
@@ -214,10 +212,10 @@ export default function BackgroundShopModal({
                                                 ) : (
                                                     <button
                                                         onClick={() => handlePurchase(bg)}
-                                                        disabled={!!purchasingSlug || points < bg.price}
+                                                        disabled={!!purchasingSlug || (pointsLoaded && points < bg.price)}
                                                         className={cn(
                                                             "w-full py-1 rounded-lg text-[10px] font-medium transition-colors",
-                                                            points >= bg.price
+                                                            !pointsLoaded || points >= bg.price
                                                                 ? "bg-amber-100 dark:bg-gray-700/20 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-gray-600/30"
                                                                 : "bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
                                                         )}

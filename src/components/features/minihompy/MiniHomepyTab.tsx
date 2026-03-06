@@ -30,7 +30,7 @@ interface OwnedChar {
     imageUrl: string;
 }
 
-export default function MiniHomepyTab() {
+export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean }) {
     const { user, minimiEquip } = useAuth();
     const nickname = user?.user_metadata?.nickname || user?.email?.split("@")[0] || "익명";
 
@@ -288,6 +288,7 @@ export default function MiniHomepyTab() {
             <MinihompySettingsSection
                 settings={currentSettings}
                 onUpdate={handleSettingsUpdate}
+                isActive={isActive}
             />
 
             {/* 미니미 도감 */}

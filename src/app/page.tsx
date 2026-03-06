@@ -411,7 +411,7 @@ function HomeContent() {
             )}
             {mountedTabs.has("record") && (
                 <div style={{ display: selectedTab === "record" ? "block" : "none" }}>
-                    <RecordPage setSelectedTab={handleTabChange} />
+                    <RecordPage setSelectedTab={handleTabChange} isActive={selectedTab === "record"} />
                 </div>
             )}
             {mountedTabs.has("community") && (

@@ -5,7 +5,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Settings, Globe, Lock, Pencil, Check, X, Palette } from "lucide-react";
 import { MINIHOMPY } from "@/config/constants";
@@ -15,16 +15,25 @@ import BackgroundShopModal from "./BackgroundShopModal";
 interface MinihompySettingsSectionProps {
     settings: MinihompySettings;
     onUpdate: (updates: Partial<MinihompySettings>) => Promise<void>;
+    isActive?: boolean;
 }
 
 export default function MinihompySettingsSection({
     settings,
     onUpdate,
+    isActive = true,
 }: MinihompySettingsSectionProps) {
     const [isEditingGreeting, setIsEditingGreeting] = useState(false);
     const [greetingDraft, setGreetingDraft] = useState(settings.greeting);
     const [showBgShop, setShowBgShop] = useState(false);
     const [updating, setUpdating] = useState(false);
+
+    // 탭 비활성화 시 배경 모달 자동 닫기 (display:none에서 fixed 모달 잔류 방지)
+    useEffect(() => {
+        if (!isActive && showBgShop) {
+            setShowBgShop(false);
+        }
+    }, [isActive, showBgShop]);
 
     const handleTogglePublic = async () => {
         setUpdating(true);
