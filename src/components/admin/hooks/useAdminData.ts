@@ -152,40 +152,39 @@ export function useAdminData(): UseAdminDataReturn {
     // ========================================================================
     const loadChartData = useCallback(async () => {
         try {
-            const days: ChartData[] = [];
-
-            for (let i = 6; i >= 0; i--) {
+            // 7일치 날짜 정보를 미리 계산
+            const dateInfos = Array.from({ length: 7 }, (_, idx) => {
+                const i = 6 - idx;
                 const date = new Date();
                 date.setDate(date.getDate() - i);
                 const dateStr = date.toISOString().split("T")[0];
                 const nextDateStr = new Date(date.getTime() + 86400000).toISOString().split("T")[0];
                 const displayDate = `${date.getMonth() + 1}/${date.getDate()}`;
+                return { dateStr, nextDateStr, displayDate };
+            });
 
-                // 해당 날짜의 통계를 병렬로 조회
-                const [
-                    { count: signups },
-                    { count: chats },
-                    { count: activeUsers },
-                ] = await Promise.all([
-                    supabase.from("profiles").select("*", { count: "exact", head: true })
-                        .gte("created_at", dateStr).lt("created_at", nextDateStr),
-                    supabase.from("chat_messages").select("*", { count: "exact", head: true })
-                        .gte("created_at", dateStr).lt("created_at", nextDateStr),
-                    supabase.from("profiles").select("*", { count: "exact", head: true })
-                        .gte("last_seen_at", dateStr).lt("last_seen_at", nextDateStr),
-                ]);
+            // 21개 쿼리를 한 번에 병렬 실행 (7일 x 3종류)
+            const queries = dateInfos.flatMap(({ dateStr, nextDateStr }) => [
+                supabase.from("profiles").select("*", { count: "exact", head: true })
+                    .gte("created_at", dateStr).lt("created_at", nextDateStr),
+                supabase.from("chat_messages").select("*", { count: "exact", head: true })
+                    .gte("created_at", dateStr).lt("created_at", nextDateStr),
+                supabase.from("profiles").select("*", { count: "exact", head: true })
+                    .gte("last_seen_at", dateStr).lt("last_seen_at", nextDateStr),
+            ]);
 
-                days.push({
-                    date: displayDate,
-                    가입자: signups || 0,
-                    채팅: chats || 0,
-                    접속자: activeUsers || 0,
-                });
-            }
+            const results = await Promise.all(queries);
+
+            const days: ChartData[] = dateInfos.map((info, idx) => ({
+                date: info.displayDate,
+                가입자: results[idx * 3].count || 0,
+                채팅: results[idx * 3 + 1].count || 0,
+                접속자: results[idx * 3 + 2].count || 0,
+            }));
 
             setChartData(days);
         } catch {
-            // [useAdminData] 차트 데이터 로드 실패:", error);
+            // [useAdminData] 차트 데이터 로드 실패
         }
     }, []);
 

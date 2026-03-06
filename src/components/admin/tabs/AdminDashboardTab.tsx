@@ -145,7 +145,7 @@ export default function AdminDashboardTab({
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         {/* DAU */}
                         <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
                             <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">DAU (일간)</p>

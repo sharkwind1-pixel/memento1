@@ -18,6 +18,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Ban, Clock, CheckCircle } from "lucide-react";
 import { UserRow, WithdrawalType } from "../types";
+import { useEscapeClose } from "@/hooks/useEscapeClose";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
 // ============================================================================
 // Props 타입 정의
@@ -82,6 +84,9 @@ export function WithdrawalModal({
     onProcess,
     isProcessing,
 }: WithdrawalModalProps) {
+    useEscapeClose(true, onClose);
+    useBodyScrollLock(true);
+
     const [withdrawalType, setWithdrawalType] = useState<WithdrawalType>("abuse_concern");
     const [reason, setReason] = useState("");
 
@@ -103,8 +108,8 @@ export function WithdrawalModal({
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <Card className="w-full max-w-md" role="dialog" aria-modal="true" aria-labelledby="withdrawal-title">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+            <Card className="w-full max-w-md" role="dialog" aria-modal="true" aria-labelledby="withdrawal-title" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                 {/* 헤더 */}
                 <CardHeader>
                     <CardTitle id="withdrawal-title" className="flex items-center gap-2">

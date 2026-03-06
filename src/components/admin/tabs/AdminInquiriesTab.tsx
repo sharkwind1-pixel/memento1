@@ -32,6 +32,8 @@ import {
     Send,
 } from "lucide-react";
 import { InquiryRow } from "../types";
+import { useEscapeClose } from "@/hooks/useEscapeClose";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
 // ============================================================================
 // Props 타입 정의
@@ -390,6 +392,9 @@ function ResponseModal({
     onSubmit,
     isSubmitting,
 }: ResponseModalProps) {
+    useEscapeClose(true, onClose);
+    useBodyScrollLock(true);
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/50" onClick={onClose} />

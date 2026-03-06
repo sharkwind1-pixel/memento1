@@ -16,6 +16,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Crown } from "lucide-react";
+import { useEscapeClose } from "@/hooks/useEscapeClose";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { UserRow } from "../types";
 
 // ============================================================================
@@ -49,6 +51,8 @@ const DURATION_OPTIONS = [
 // ============================================================================
 
 export function PremiumModal({ user, onClose, onGrant }: PremiumModalProps) {
+    useEscapeClose(true, onClose);
+    useBodyScrollLock(true);
     const [duration, setDuration] = useState("30");
     const [reason, setReason] = useState("");
     const [isSaving, setIsSaving] = useState(false);

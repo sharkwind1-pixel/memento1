@@ -45,6 +45,8 @@ import { uploadMagazineImage } from "@/lib/storage";
 import { getBadgeLabel } from "@/data/magazineArticles";
 import CardEditor from "@/components/admin/CardEditor";
 import type { MagazineArticleRow, MagazineStatus } from "../types";
+import { useEscapeClose } from "@/hooks/useEscapeClose";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
 // ============================================================================
 // Props 타입 정의
@@ -605,6 +607,9 @@ function ArticleFormModal({
     onSubmit,
     onClose,
 }: ArticleFormModalProps) {
+    useEscapeClose(true, onClose);
+    useBodyScrollLock(true);
+
     const updateField = <K extends keyof ArticleForm>(field: K, value: ArticleForm[K]) => {
         setForm(prev => ({ ...prev, [field]: value }));
     };
@@ -626,7 +631,7 @@ function ArticleFormModal({
                 {/* 폼 영역 (스크롤) */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
                     {/* 카테고리 + 배지 */}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                                 카테고리 *
@@ -697,7 +702,7 @@ function ArticleFormModal({
                     </div>
 
                     {/* 작성자 정보 */}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                                 작성자 *
@@ -723,7 +728,7 @@ function ArticleFormModal({
                     </div>
 
                     {/* 읽기 시간 + 태그 */}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                                 읽기 시간

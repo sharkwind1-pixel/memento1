@@ -19,6 +19,8 @@ import { Input } from "@/components/ui/input";
 import { Star } from "lucide-react";
 import { UserRow } from "../types";
 import { getPointLevel, POINT_LEVELS } from "@/config/constants";
+import { useEscapeClose } from "@/hooks/useEscapeClose";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
 // ============================================================================
 // Props
@@ -48,6 +50,9 @@ const PRESETS = [
 // ============================================================================
 
 export function PointsAwardModal({ user, onClose, onAward }: PointsAwardModalProps) {
+    useEscapeClose(true, onClose);
+    useBodyScrollLock(true);
+
     const [amount, setAmount] = useState(100);
     const [customAmount, setCustomAmount] = useState("");
     const [useCustom, setUseCustom] = useState(false);
