@@ -69,7 +69,7 @@ const LAUNCHER_ITEMS: {
         description: "나만의 공간",
         icon: Home,
         color: "text-memento-600 dark:text-memento-400",
-        bgColor: "bg-memento-50 dark:bg-memento-900/20",
+        bgColor: "bg-memento-50 dark:bg-sky-900/20",
     },
     {
         id: "adoption",

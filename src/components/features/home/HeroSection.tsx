@@ -31,7 +31,7 @@ export default function HeroSection({ setSelectedTab, user }: HeroSectionProps) 
 
     return (
         <section className="px-4 pt-8" data-tutorial-id="home-hero">
-            <div className="bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg border border-white/40 dark:border-gray-700/40 rounded-3xl p-8 md:p-12 shadow-2xl">
+            <div className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-lg border border-white/50 dark:border-gray-700/50 rounded-3xl p-8 md:p-12 shadow-2xl">
                 <div className="text-center space-y-4 md:space-y-6">
                     <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-display font-bold leading-tight">
                         <EmotionalTrueFocus
