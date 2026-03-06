@@ -24,10 +24,6 @@ import {
     Search,
     RefreshCw,
     Flag,
-    Eye,
-    Trash2,
-    CheckCircle,
-    Clock,
 } from "lucide-react";
 import {
     ReportRow,
@@ -146,91 +142,87 @@ export default function AdminReportsTab({
     return (
         <div className="space-y-4">
             {/* 검색 & 새로고침 */}
-            <div className="flex gap-2">
+            <div className="flex gap-1.5">
                 <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                     <Input
-                        placeholder="신고 사유로 검색..."
+                        placeholder="신고 사유 검색..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10"
+                        className="pl-8 h-8 text-xs"
                     />
                 </div>
-                <Button variant="outline" onClick={onRefresh}>
-                    <RefreshCw className="w-4 h-4 mr-1" />
-                    새로고침
+                <Button variant="outline" onClick={onRefresh} className="h-8 px-2 text-xs">
+                    <RefreshCw className="w-3.5 h-3.5" />
                 </Button>
             </div>
 
-            {/* 상태 필터 */}
-            <div className="flex flex-wrap gap-2 text-sm select-none">
+            {/* 상태 필터 - 한 줄 5개 */}
+            <div className="flex gap-1 select-none">
                 <button
                     type="button"
-                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
+                    className={`flex-1 inline-flex items-center justify-center rounded-md px-1 py-1 text-[10px] font-semibold transition-all ${
                         selectedStatus === null
                             ? "bg-gray-800 text-white dark:bg-gray-200 dark:text-gray-900"
                             : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 opacity-60 hover:opacity-100"
                     }`}
                     onClick={() => setSelectedStatus(null)}
                 >
-                    전체 ({reports.length})
+                    전체 {reports.length}
                 </button>
                 <button
                     type="button"
-                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
+                    className={`flex-1 inline-flex items-center justify-center rounded-md px-1 py-1 text-[10px] font-semibold transition-all ${
                         selectedStatus === "pending"
                             ? "bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300"
                             : "bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300 opacity-60 hover:opacity-100"
                     }`}
                     onClick={() => setSelectedStatus(selectedStatus === "pending" ? null : "pending")}
                 >
-                    <Clock className="w-3 h-3 mr-1" />
-                    대기중 ({reports.filter((r) => r.status === "pending").length})
+                    대기 {reports.filter((r) => r.status === "pending").length}
                 </button>
                 <button
                     type="button"
-                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
+                    className={`flex-1 inline-flex items-center justify-center rounded-md px-1 py-1 text-[10px] font-semibold transition-all ${
                         selectedStatus === "reviewing"
                             ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
                             : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 opacity-60 hover:opacity-100"
                     }`}
                     onClick={() => setSelectedStatus(selectedStatus === "reviewing" ? null : "reviewing")}
                 >
-                    <Eye className="w-3 h-3 mr-1" />
-                    검토중 ({reports.filter((r) => r.status === "reviewing").length})
+                    검토 {reports.filter((r) => r.status === "reviewing").length}
                 </button>
                 <button
                     type="button"
-                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
+                    className={`flex-1 inline-flex items-center justify-center rounded-md px-1 py-1 text-[10px] font-semibold transition-all ${
                         selectedStatus === "resolved"
                             ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
                             : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 opacity-60 hover:opacity-100"
                     }`}
                     onClick={() => setSelectedStatus(selectedStatus === "resolved" ? null : "resolved")}
                 >
-                    <CheckCircle className="w-3 h-3 mr-1" />
-                    처리완료 ({reports.filter((r) => r.status === "resolved").length})
+                    완료 {reports.filter((r) => r.status === "resolved").length}
                 </button>
                 <button
                     type="button"
-                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
+                    className={`flex-1 inline-flex items-center justify-center rounded-md px-1 py-1 text-[10px] font-semibold transition-all ${
                         selectedStatus === "rejected"
                             ? "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
                             : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 opacity-60 hover:opacity-100"
                     }`}
                     onClick={() => setSelectedStatus(selectedStatus === "rejected" ? null : "rejected")}
                 >
-                    반려 ({reports.filter((r) => r.status === "rejected").length})
+                    반려 {reports.filter((r) => r.status === "rejected").length}
                 </button>
             </div>
 
             {/* 신고 목록 */}
             <Card>
-                <CardContent className="pt-6">
+                <CardContent className="pt-4">
                     {filteredReports.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                            <Flag className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-                            <p>신고 내역이 없습니다</p>
+                        <div className="text-center py-6 text-gray-500 dark:text-gray-400">
+                            <Flag className="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
+                            <p className="text-sm">신고 내역이 없습니다</p>
                         </div>
                     ) : (
                         <div className="space-y-3">
@@ -263,7 +255,6 @@ interface ReportCardProps {
 }
 
 function ReportCard({ report, onUpdateStatus, onDeleteContent }: ReportCardProps) {
-    // 배경색 결정
     const getBgColor = () => {
         switch (report.status) {
             case "resolved":
@@ -278,109 +269,85 @@ function ReportCard({ report, onUpdateStatus, onDeleteContent }: ReportCardProps
     };
 
     return (
-        <div className={`p-4 rounded-xl border transition-colors ${getBgColor()}`}>
-            {/* 상단: 대상 유형, 사유, 상태, 날짜 */}
-            <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center gap-2 flex-wrap">
-                    {/* 대상 유형 */}
-                    <Badge variant="secondary" className="text-xs">
-                        {REPORT_TARGET_LABELS[report.target_type] || report.target_type}
-                    </Badge>
-
-                    {/* 사유 */}
-                    <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
-                        {REPORT_REASON_LABELS[report.reason] || report.reason}
-                    </Badge>
-
-                    {/* 상태 */}
-                    {report.status === "pending" && (
-                        <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300 text-xs">
-                            <Clock className="w-3 h-3 mr-1" />
-                            대기중
-                        </Badge>
-                    )}
-                    {report.status === "reviewing" && (
-                        <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 text-xs">
-                            <Eye className="w-3 h-3 mr-1" />
-                            검토중
-                        </Badge>
-                    )}
-                    {report.status === "resolved" && (
-                        <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 text-xs">
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                            처리완료
-                        </Badge>
-                    )}
-                    {report.status === "rejected" && (
-                        <Badge className="bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 text-xs">반려</Badge>
-                    )}
-                </div>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
+        <div className={`p-3 rounded-xl border transition-colors ${getBgColor()}`}>
+            {/* 뱃지 + 날짜 한 줄 */}
+            <div className="flex items-center gap-1 mb-1.5 flex-wrap">
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                    {REPORT_TARGET_LABELS[report.target_type] || report.target_type}
+                </Badge>
+                <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 text-[10px] px-1.5 py-0">
+                    {REPORT_REASON_LABELS[report.reason] || report.reason}
+                </Badge>
+                {report.status === "pending" && (
+                    <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300 text-[10px] px-1.5 py-0">대기</Badge>
+                )}
+                {report.status === "reviewing" && (
+                    <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 text-[10px] px-1.5 py-0">검토중</Badge>
+                )}
+                {report.status === "resolved" && (
+                    <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 text-[10px] px-1.5 py-0">완료</Badge>
+                )}
+                {report.status === "rejected" && (
+                    <Badge className="bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 text-[10px] px-1.5 py-0">반려</Badge>
+                )}
+                <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-auto flex-shrink-0">
                     {new Date(report.created_at).toLocaleDateString("ko-KR")}
                 </span>
             </div>
 
             {/* 설명 */}
             {report.description && (
-                <p className="text-sm text-gray-600 dark:text-gray-300 mb-2 line-clamp-2">
-                    {report.description}
-                </p>
+                <p className="text-[11px] text-gray-600 dark:text-gray-300 mb-1 line-clamp-2">{report.description}</p>
             )}
 
-            {/* 신고자 정보 */}
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                신고자: {report.reporter_email || "알 수 없음"} | 대상 ID:{" "}
-                <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">
-                    {report.target_id.slice(0, 8)}...
-                </code>
+            {/* 신고자 */}
+            <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-1.5 truncate">
+                {report.reporter_email || "알 수 없음"} | {report.target_id.slice(0, 8)}...
             </p>
 
             {/* 관리자 메모 */}
             {report.admin_notes && (
-                <div className="p-2 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 mb-3 text-sm">
-                    <span className="font-medium text-gray-700 dark:text-gray-200">관리자 메모: </span>
-                    <span className="text-gray-600 dark:text-gray-300">{report.admin_notes}</span>
+                <div className="p-1.5 bg-white dark:bg-gray-900 rounded border dark:border-gray-700 mb-1.5">
+                    <p className="text-[10px] text-gray-600 dark:text-gray-300 line-clamp-2">
+                        <span className="font-medium">메모:</span> {report.admin_notes}
+                    </p>
                 </div>
             )}
 
-            {/* 액션 버튼 */}
-            <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+            {/* 액션 버튼 - 네이티브 button */}
+            <div className="flex gap-1 pt-1.5 border-t border-gray-200 dark:border-gray-700">
                 {report.status === "pending" && (
-                    <Button
-                        size="sm"
-                        variant="outline"
+                    <button
+                        type="button"
                         onClick={() => onUpdateStatus("reviewing")}
+                        className="h-7 px-2 rounded border border-blue-300 dark:border-blue-700 text-blue-600 dark:text-blue-400 bg-white dark:bg-gray-800 text-[10px] font-medium transition-colors"
                     >
-                        <Eye className="w-3 h-3 mr-1" />
-                        검토 시작
-                    </Button>
+                        검토
+                    </button>
                 )}
-
                 {(report.status === "pending" || report.status === "reviewing") && (
                     <>
-                        <Button
-                            size="sm"
-                            className="bg-red-500 hover:bg-red-600"
+                        <button
+                            type="button"
                             onClick={onDeleteContent}
+                            className="h-7 px-2 rounded bg-red-500 text-white text-[10px] font-medium transition-colors hover:bg-red-600"
                         >
-                            <Trash2 className="w-3 h-3 mr-1" />
-                            콘텐츠 삭제
-                        </Button>
-                        <Button
-                            size="sm"
-                            className="bg-green-500 hover:bg-green-600"
+                            삭제
+                        </button>
+                        <button
+                            type="button"
                             onClick={() => onUpdateStatus("resolved", "검토 후 처리 완료")}
+                            className="h-7 px-2 rounded bg-green-500 text-white text-[10px] font-medium transition-colors hover:bg-green-600"
                         >
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                            처리 완료
-                        </Button>
-                        <Button
-                            size="sm"
-                            variant="outline"
+                            완료
+                        </button>
+                        <button
+                            type="button"
                             onClick={() => onUpdateStatus("rejected", "신고 사유 불충분")}
+                            className="h-7 px-2 rounded border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 text-[10px] font-medium transition-colors"
                         >
                             반려
-                        </Button>
+                        </button>
                     </>
                 )}
             </div>

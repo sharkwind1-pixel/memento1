@@ -24,9 +24,6 @@ import {
     Search,
     RefreshCw,
     Ban,
-    Trash2,
-    CheckCircle,
-    Clock,
 } from "lucide-react";
 import { WithdrawnUser } from "../types";
 
@@ -137,82 +134,78 @@ export default function AdminWithdrawalsTab({
     return (
         <div className="space-y-4">
             {/* 검색 & 새로고침 */}
-            <div className="flex gap-2">
+            <div className="flex gap-1.5">
                 <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                     <Input
-                        placeholder="이메일로 검색..."
+                        placeholder="이메일/닉네임 검색..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10"
+                        className="pl-8 h-8 text-xs"
                     />
                 </div>
-                <Button variant="outline" onClick={onRefresh}>
-                    <RefreshCw className="w-4 h-4 mr-1" />
-                    새로고침
+                <Button variant="outline" onClick={onRefresh} className="h-8 px-2 text-xs">
+                    <RefreshCw className="w-3.5 h-3.5" />
                 </Button>
             </div>
 
-            {/* 유형 필터 */}
-            <div className="flex flex-wrap gap-2 text-sm select-none">
+            {/* 유형 필터 - 한 줄 4개 */}
+            <div className="flex gap-1 select-none">
                 <button
                     type="button"
-                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
+                    className={`flex-1 inline-flex items-center justify-center rounded-md px-1.5 py-1 text-[10px] font-semibold transition-all ${
                         selectedType === null
                             ? "bg-gray-800 text-white dark:bg-gray-200 dark:text-gray-900"
                             : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 opacity-60 hover:opacity-100"
                     }`}
                     onClick={() => setSelectedType(null)}
                 >
-                    전체 ({withdrawals.length})
+                    전체 {withdrawals.length}
                 </button>
                 <button
                     type="button"
-                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
+                    className={`flex-1 inline-flex items-center justify-center rounded-md px-1.5 py-1 text-[10px] font-semibold transition-all ${
                         selectedType === "abuse_concern"
                             ? "bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300"
                             : "bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300 opacity-60 hover:opacity-100"
                     }`}
                     onClick={() => setSelectedType(selectedType === "abuse_concern" ? null : "abuse_concern")}
                 >
-                    <Clock className="w-3 h-3 mr-1" />
-                    악용 우려 ({withdrawals.filter((w) => w.withdrawal_type === "abuse_concern").length})
+                    악용 {withdrawals.filter((w) => w.withdrawal_type === "abuse_concern").length}
                 </button>
                 <button
                     type="button"
-                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
+                    className={`flex-1 inline-flex items-center justify-center rounded-md px-1.5 py-1 text-[10px] font-semibold transition-all ${
                         selectedType === "banned"
                             ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
                             : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 opacity-60 hover:opacity-100"
                     }`}
                     onClick={() => setSelectedType(selectedType === "banned" ? null : "banned")}
                 >
-                    <Ban className="w-3 h-3 mr-1" />
-                    영구 차단 ({withdrawals.filter((w) => w.withdrawal_type === "banned").length})
+                    차단 {withdrawals.filter((w) => w.withdrawal_type === "banned").length}
                 </button>
                 <button
                     type="button"
-                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
+                    className={`flex-1 inline-flex items-center justify-center rounded-md px-1.5 py-1 text-[10px] font-semibold transition-all ${
                         selectedType === "error_resolution"
                             ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
                             : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 opacity-60 hover:opacity-100"
                     }`}
                     onClick={() => setSelectedType(selectedType === "error_resolution" ? null : "error_resolution")}
                 >
-                    <CheckCircle className="w-3 h-3 mr-1" />
-                    오류 해결 ({withdrawals.filter((w) => w.withdrawal_type === "error_resolution").length})
+                    해결 {withdrawals.filter((w) => w.withdrawal_type === "error_resolution").length}
                 </button>
             </div>
 
             {/* 탈퇴자 목록 */}
             <Card>
-                <CardContent className="pt-6">
+                <CardContent className="pt-4">
                     {filteredWithdrawals.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                            <Ban className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-                            <p>탈퇴 처리된 유저가 없습니다</p>
-                            <p className="text-xs mt-2 text-gray-400 dark:text-gray-500">
-                                * 유저 관리 탭에서 탈퇴 처리할 수 있습니다
+                        <div className="text-center py-6 text-gray-500 dark:text-gray-400">
+                            <Ban className="w-8 h-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
+                            <p className="text-sm">탈퇴 처리된 유저가 없습니다</p>
+                            <p className="text-[10px] mt-1 text-gray-400 dark:text-gray-500">
+                                유저 관리 탭에서 탈퇴 처리 가능
                             </p>
                         </div>
                     ) : (
@@ -252,67 +245,65 @@ function WithdrawnUserCard({ user, onAllowRejoin, onDelete }: WithdrawnUserCardP
             new Date(user.rejoin_allowed_at) <= new Date());
 
     return (
-        <div className={`p-4 rounded-xl border ${config.color}`}>
-            {/* 상단: 이메일, 유형, 날짜 */}
-            <div className="flex items-start justify-between mb-2">
-                <div>
-                    <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium">{user.email}</span>
-                        <Badge className={config.badge}>{config.label}</Badge>
-                    </div>
-                    {user.nickname && (
-                        <p className="text-sm text-gray-500 dark:text-gray-400">닉네임: {user.nickname}</p>
-                    )}
-                </div>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
+        <div className={`p-3 rounded-xl border ${config.color}`}>
+            {/* 이메일 */}
+            <p className="font-medium text-xs truncate">{user.email}</p>
+
+            {/* 닉네임 + 유형 뱃지 + 날짜 */}
+            <div className="flex items-center gap-1 mt-1 flex-wrap">
+                {user.nickname && (
+                    <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                        {user.nickname}
+                    </span>
+                )}
+                <Badge className={`${config.badge} text-[9px] px-1 py-0 leading-tight`}>
+                    {config.label}
+                </Badge>
+                <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-auto flex-shrink-0">
                     {new Date(user.withdrawn_at).toLocaleDateString("ko-KR")}
                 </span>
             </div>
 
             {/* 사유 */}
             {user.reason && (
-                <p className="text-sm text-gray-600 dark:text-gray-300 mb-2 p-2 bg-white dark:bg-gray-900 rounded border dark:border-gray-700">
-                    사유: {user.reason}
+                <p className="text-[11px] text-gray-600 dark:text-gray-300 mt-1.5 p-1.5 bg-white dark:bg-gray-900 rounded border dark:border-gray-700 line-clamp-2">
+                    {user.reason}
                 </p>
             )}
 
-            {/* 재가입 가능일 (악용 우려인 경우) */}
+            {/* 재가입 가능일 */}
             {user.withdrawal_type === "abuse_concern" && user.rejoin_allowed_at && (
-                <p className="text-xs text-amber-600 mb-2">
-                    재가입 가능일: {new Date(user.rejoin_allowed_at).toLocaleDateString("ko-KR")}
-                    {canRejoin && " (재가입 가능)"}
+                <p className="text-[10px] text-amber-600 mt-1">
+                    재가입: {new Date(user.rejoin_allowed_at).toLocaleDateString("ko-KR")}
+                    {canRejoin && " (가능)"}
                 </p>
             )}
 
-            {/* IP 주소 */}
+            {/* IP */}
             {user.ip_address && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                    IP: <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">{user.ip_address}</code>
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
+                    IP: <code className="bg-gray-100 dark:bg-gray-800 px-0.5 rounded text-[10px]">{user.ip_address}</code>
                 </p>
             )}
 
-            {/* 액션 버튼 */}
-            <div className="flex gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+            {/* 액션 버튼 - 네이티브 button */}
+            <div className="flex gap-1 pt-1.5 mt-2 border-t border-gray-200 dark:border-gray-700">
                 {user.withdrawal_type !== "error_resolution" && (
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-green-600 dark:text-green-400 border-green-300 dark:border-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
+                    <button
+                        type="button"
                         onClick={onAllowRejoin}
+                        className="h-7 px-2 rounded border border-green-300 dark:border-green-700 text-green-600 dark:text-green-400 bg-white dark:bg-gray-800 text-[10px] font-medium transition-colors"
                     >
-                        <CheckCircle className="w-3 h-3 mr-1" />
                         재가입 허용
-                    </Button>
+                    </button>
                 )}
-                <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-red-600 dark:text-red-400 border-red-300 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                <button
+                    type="button"
                     onClick={onDelete}
+                    className="h-7 px-2 rounded border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 bg-white dark:bg-gray-800 text-[10px] font-medium transition-colors"
                 >
-                    <Trash2 className="w-3 h-3 mr-1" />
                     기록 삭제
-                </Button>
+                </button>
             </div>
         </div>
     );
