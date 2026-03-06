@@ -9,7 +9,7 @@
 
 import React, { useEffect } from "react";
 
-import { TabType, CommunitySubcategory } from "@/types";
+import { TabType, CommunitySubcategory, SmoothAutoScrollReturn } from "@/types";
 import { useSmoothAutoScroll } from "@/hooks/useSmoothAutoScroll";
 import {
     useHomePage,
@@ -29,15 +29,6 @@ interface HomePageProps {
     setSelectedTab: (tab: TabType, sub?: CommunitySubcategory) => void;
     isActive?: boolean;
 }
-
-type SmoothAutoScrollReturn = {
-    communityScrollRef: React.RefObject<HTMLDivElement>;
-    showcaseScrollRef: React.RefObject<HTMLDivElement>;
-    adoptionScrollRef: React.RefObject<HTMLDivElement>;
-    petcareScrollRef: React.RefObject<HTMLDivElement>;
-    memorialScrollRef: React.RefObject<HTMLDivElement>;
-    startAutoScroll?: (start?: boolean) => void | (() => void);
-};
 
 function HomePage({ setSelectedTab, isActive }: HomePageProps) {
     const { isSimpleMode, user } = useAuth();

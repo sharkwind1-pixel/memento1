@@ -232,11 +232,11 @@ function AdminPage() {
             <div className="flex items-center justify-center min-h-screen">
                 <Card className="max-w-md w-full mx-4">
                     <CardContent className="p-8 text-center">
-                        <Shield className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                        <h2 className="text-xl font-display font-bold text-gray-800 mb-2">
+                        <Shield className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
+                        <h2 className="text-xl font-display font-bold text-gray-800 dark:text-white mb-2">
                             접근 권한 없음
                         </h2>
-                        <p className="text-gray-500">
+                        <p className="text-gray-500 dark:text-gray-400">
                             관리자만 접근할 수 있는 페이지입니다.
                         </p>
                     </CardContent>
@@ -249,11 +249,11 @@ function AdminPage() {
     // 렌더링
     // ========================================================================
     return (
-        <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6">
             <div className="max-w-7xl mx-auto space-y-6">
                 {/* 헤더 */}
                 <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-display font-bold text-gray-800">관리자 대시보드</h1>
+                    <h1 className="text-2xl font-display font-bold text-gray-800 dark:text-white">관리자 대시보드</h1>
                 </div>
 
                 {/* 탭 네비게이션 */}
@@ -281,7 +281,7 @@ function AdminPage() {
                 </div>
 
                 {/* 탭 콘텐츠 */}
-                <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-4 md:p-6">
                     {/* 대시보드 탭 */}
                     {activeTab === "dashboard" && (
                         <AdminDashboardTab
@@ -374,7 +374,7 @@ function PostsSimpleView({ posts, onRefresh }: PostsSimpleViewProps) {
     return (
         <div className="space-y-4">
             <div className="flex justify-between items-center">
-                <h3 className="font-medium text-gray-700">
+                <h3 className="font-medium text-gray-700 dark:text-gray-200">
                     전체 게시물: {posts.length}개
                 </h3>
                 <Button variant="outline" onClick={onRefresh}>
@@ -384,8 +384,8 @@ function PostsSimpleView({ posts, onRefresh }: PostsSimpleViewProps) {
             </div>
 
             {posts.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                    <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
                     <p>게시물이 없습니다</p>
                 </div>
             ) : (
@@ -393,14 +393,14 @@ function PostsSimpleView({ posts, onRefresh }: PostsSimpleViewProps) {
                     {posts.slice(0, 20).map((post) => (
                         <div
                             key={post.id}
-                            className="p-3 bg-gray-50 rounded-lg border border-gray-200"
+                            className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600"
                         >
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <h4 className="font-medium text-gray-800">
+                                    <h4 className="font-medium text-gray-800 dark:text-gray-100">
                                         {post.title}
                                     </h4>
-                                    <p className="text-sm text-gray-500">
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
                                         {post.author_email} •{" "}
                                         {new Date(post.created_at).toLocaleDateString("ko-KR")}
                                     </p>
@@ -409,7 +409,7 @@ function PostsSimpleView({ posts, onRefresh }: PostsSimpleViewProps) {
                         </div>
                     ))}
                     {posts.length > 20 && (
-                        <p className="text-center text-sm text-gray-400 py-2">
+                        <p className="text-center text-sm text-gray-400 dark:text-gray-500 py-2">
                             ... 외 {posts.length - 20}개
                         </p>
                     )}

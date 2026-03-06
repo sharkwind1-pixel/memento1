@@ -4,28 +4,10 @@
  */
 
 import { supabase } from "./supabase";
+import type { MemorialPost } from "@/types";
 
-// 타입 정의
-export interface MemorialPost {
-    id: string;
-    userId: string;
-    petId: string;
-    title: string;
-    content: string;
-    petName: string;
-    petType: string;
-    petBreed?: string;
-    petYears?: string;
-    petImage?: string;
-    isPublic: boolean;
-    likesCount: number;
-    commentsCount: number;
-    createdAt: string;
-    updatedAt: string;
-    // 조회 시 추가 정보
-    isLiked?: boolean;
-    authorNickname?: string;
-}
+// MemorialPost는 types/index.ts에서 중앙 관리
+export type { MemorialPost };
 
 export interface MemorialComment {
     id: string;

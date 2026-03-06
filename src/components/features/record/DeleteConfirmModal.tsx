@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, X, Trash2 } from "lucide-react";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
 interface DeleteConfirmModalProps {
     isOpen: boolean;
@@ -18,6 +19,8 @@ export default function DeleteConfirmModal({
     title,
     message,
 }: DeleteConfirmModalProps) {
+    useBodyScrollLock(isOpen);
+
     if (!isOpen) return null;
 
     return (

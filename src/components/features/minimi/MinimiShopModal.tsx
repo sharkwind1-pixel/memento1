@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
 import { MINIMI } from "@/config/constants";
@@ -59,6 +60,7 @@ export default function MinimiShopModal({
 }: MinimiShopModalProps) {
     const { points, refreshPoints } = useAuth();
     useEscapeClose(isOpen, onClose);
+    useBodyScrollLock(isOpen);
     const categoryScrollRef = useHorizontalScroll();
     const [selectedFilter, setSelectedFilter] = useState<FilterCategory>("all");
     const [characters, setCharacters] = useState<CatalogCharacter[]>([]);

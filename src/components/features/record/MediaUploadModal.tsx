@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import ImageCropper, { CropPosition } from "./ImageCropper";
 import { toast } from "sonner";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
 function isVideoFile(file: File): boolean {
     return file.type.startsWith("video/");
@@ -50,6 +51,7 @@ export default function MediaUploadModal({
     onClose,
     onUpload,
 }: MediaUploadModalProps) {
+    useBodyScrollLock(isOpen);
     const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
     const [cropIndex, setCropIndex] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState(false);

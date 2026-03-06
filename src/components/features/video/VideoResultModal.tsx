@@ -10,6 +10,7 @@
 
 import { useCallback, useState } from "react";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { VIDEO_TEMPLATES } from "@/config/videoTemplates";
 import { API } from "@/config/apiEndpoints";
 import { authFetch } from "@/lib/auth-fetch";
@@ -55,6 +56,7 @@ export default function VideoResultModal({
     authorName,
 }: VideoResultModalProps) {
     useEscapeClose(isOpen, onClose);
+    useBodyScrollLock(isOpen);
 
     const [isPosting, setIsPosting] = useState(false);
 

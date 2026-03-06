@@ -37,9 +37,13 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive }: Community
     const currentSubcategory = subcategory || internalSubcategory;
 
     // 말머리 필터 (자유게시판용) — localStorage로 새로고침 시 복원
+    const VALID_TAGS: (PostTag | "all")[] = ["all", "정보", "강아지", "고양이", "일상", "질문", "새", "물고기", "토끼", "파충류"];
     const [selectedTag, setSelectedTag] = useState<PostTag | "all">(() => {
         if (typeof window !== "undefined") {
-            return (localStorage.getItem("memento-community-tag") as PostTag | "all") || "all";
+            const saved = localStorage.getItem("memento-community-tag");
+            if (saved && VALID_TAGS.includes(saved as PostTag | "all")) {
+                return saved as PostTag | "all";
+            }
         }
         return "all";
     });

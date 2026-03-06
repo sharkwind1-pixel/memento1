@@ -8,6 +8,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import useHorizontalScroll from "@/hooks/useHorizontalScroll";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { X, Download, Image as ImageIcon, FileText, Star, Heart, Loader2 } from "lucide-react";
 import html2canvas from "html2canvas";
 import { toast } from "sonner";
@@ -64,6 +65,8 @@ export default function ExportChatModal({
     const [format, setFormat] = useState<"png" | "jpg">("png");
     const cardRef = useRef<HTMLDivElement>(null);
     const previewScrollRef = useHorizontalScroll();
+
+    useBodyScrollLock(isOpen);
 
     const handleExport = useCallback(async () => {
         if (!cardRef.current) return;

@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getActionLabel, formatPoints } from "@/lib/points";
 import { POINT_LEVELS, getPointLevel } from "@/config/constants";
 import type { PointTransaction, PointAction } from "@/types";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
 interface PointsHistoryModalProps {
     open: boolean;
@@ -56,6 +57,7 @@ function getActionColor(actionType: PointAction) {
 }
 
 export default function PointsHistoryModal({ open, onClose }: PointsHistoryModalProps) {
+    useBodyScrollLock(open);
     const { points, userPetType } = useAuth();
     const [transactions, setTransactions] = useState<PointTransaction[]>([]);
     const [loading, setLoading] = useState(true);

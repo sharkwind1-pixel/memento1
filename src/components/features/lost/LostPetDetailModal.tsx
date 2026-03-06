@@ -27,6 +27,7 @@ import {
     PawPrint,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import type { LostPetPost } from "./lostTypes";
 import { timeAgo, formatLocation } from "./lostTypes";
 
@@ -59,6 +60,8 @@ export default function LostPetDetailModal({
     onDelete,
     onResolve,
 }: LostPetDetailModalProps) {
+    useBodyScrollLock(true);
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />

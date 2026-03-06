@@ -32,6 +32,7 @@ import { API } from "@/config/apiEndpoints";
 import { VIDEO_TEMPLATES } from "@/config/videoTemplates";
 import type { VideoTemplate, VideoQuota } from "@/types";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
 // ============================================
 // Icon mapping for dynamic template rendering
@@ -109,9 +110,10 @@ export default function VideoGenerateModal({
     const canSubmit = !isSubmitting && canProceedStep1 && canProceedStep2;
 
     // ============================================
-    // Escape key handler
+    // Escape key handler + body scroll lock
     // ============================================
     useEscapeClose(isOpen, onClose);
+    useBodyScrollLock(isOpen);
 
     // ============================================
     // Reset state when modal opens

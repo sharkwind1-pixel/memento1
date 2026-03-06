@@ -412,23 +412,25 @@ export interface MemorialCard {
 /** 기록 카드 (레거시 호환) */
 export type RecordCard = MemorialCard;
 
-/** 추모 게시글 */
+/** 추모 게시글 (DB 매핑, camelCase) */
 export interface MemorialPost {
     id: string;
     userId: string;
     petId: string;
     title: string;
     content: string;
-    imageUrl?: string;
+    petName: string;
+    petType: string;
+    petBreed?: string;
+    petYears?: string;
+    petImage?: string;
     isPublic: boolean;
     likesCount: number;
     commentsCount: number;
     createdAt: string;
     updatedAt: string;
-    pet?: Pet;
-    user?: {
-        nickname?: string;
-    };
+    isLiked?: boolean;
+    authorNickname?: string;
 }
 
 /** 타임라인 엔트리 (camelCase - 클라이언트 사용) */
@@ -527,6 +529,7 @@ export interface LightboxItem {
 /** 자동 스크롤 훅 반환 타입 */
 export interface SmoothAutoScrollReturn {
     communityScrollRef: React.RefObject<HTMLDivElement>;
+    showcaseScrollRef: React.RefObject<HTMLDivElement>;
     adoptionScrollRef: React.RefObject<HTMLDivElement>;
     petcareScrollRef: React.RefObject<HTMLDivElement>;
     memorialScrollRef: React.RefObject<HTMLDivElement>;

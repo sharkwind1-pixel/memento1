@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import { X, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import ImageCropper, { CropPosition } from "./ImageCropper";
 import { toast } from "sonner";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
 // 서브컴포넌트
 import { TOTAL_STEPS, INITIAL_FORM_DATA } from "./pet-form/petFormTypes";
@@ -63,6 +64,8 @@ export default function PetFormModal({
     pet,
     onSave,
 }: PetFormModalProps) {
+    useBodyScrollLock(isOpen);
+
     // ========================================================================
     // 상태 관리
     // ========================================================================

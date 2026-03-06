@@ -163,11 +163,11 @@ export default function MemoryAlbumViewer({
                 aria-modal="true"
                 aria-label="추억 앨범"
             >
-                <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full text-center animate-in fade-in zoom-in-95 duration-200">
-                    <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-amber-100 to-orange-100 rounded-full flex items-center justify-center">
+                <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 max-w-sm w-full text-center animate-in fade-in zoom-in-95 duration-200">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 rounded-full flex items-center justify-center">
                         <ImageIcon className="w-8 h-8 text-amber-500" />
                     </div>
-                    <p className="text-gray-600">앨범에 사진이 없습니다.</p>
+                    <p className="text-gray-600 dark:text-gray-300">앨범에 사진이 없습니다.</p>
                     <Button
                         onClick={handleClose}
                         className="mt-5 bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-white rounded-xl px-6"
@@ -191,7 +191,7 @@ export default function MemoryAlbumViewer({
         >
             {/* 메인 카드 */}
             <div
-                className={`relative w-full max-w-sm mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden transition-all duration-300 ${
+                className={`relative w-full max-w-sm mx-auto bg-white dark:bg-gray-800 rounded-3xl shadow-2xl overflow-hidden transition-all duration-300 ${
                     isEntering ? "scale-95 opacity-0" : "scale-100 opacity-100"
                 }`}
                 onClick={(e) => e.stopPropagation()}
@@ -207,7 +207,7 @@ export default function MemoryAlbumViewer({
 
                 {/* 사진 영역 */}
                 <div
-                    className="relative w-full aspect-[3/4] bg-gradient-to-br from-amber-50 to-orange-50 overflow-hidden"
+                    className="relative w-full aspect-[3/4] bg-gradient-to-br from-amber-50 to-orange-50 dark:from-gray-700 dark:to-gray-600 overflow-hidden"
                     onTouchStart={handleTouchStart}
                     onTouchMove={handleTouchMove}
                     onTouchEnd={handleTouchEnd}
@@ -265,22 +265,22 @@ export default function MemoryAlbumViewer({
                     {/* 앨범 타이틀 */}
                     <h2
                         id="memory-album-title"
-                        className="text-base font-bold text-gray-800"
+                        className="text-base font-bold text-gray-800 dark:text-white"
                     >
                         {album.title}
                     </h2>
 
                     {/* 앨범 설명 */}
                     {album.description && (
-                        <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
                             {album.description}
                         </p>
                     )}
 
                     {/* 캡션 */}
                     {currentPhoto?.caption && (
-                        <div className="mt-2.5 px-3 py-2 bg-amber-50 rounded-xl">
-                            <p className="text-sm text-amber-800">
+                        <div className="mt-2.5 px-3 py-2 bg-amber-50 dark:bg-amber-900/20 rounded-xl">
+                            <p className="text-sm text-amber-800 dark:text-amber-200">
                                 {currentPhoto.caption}
                             </p>
                         </div>
@@ -288,7 +288,7 @@ export default function MemoryAlbumViewer({
 
                     {/* 날짜 + Dot indicators */}
                     <div className="mt-3 flex items-center justify-between">
-                        <span className="text-xs text-gray-400">
+                        <span className="text-xs text-gray-400 dark:text-gray-500">
                             {formatDate(album.createdDate)}
                         </span>
 
@@ -301,7 +301,7 @@ export default function MemoryAlbumViewer({
                                         className={`rounded-full transition-all duration-200 ${
                                             index === currentIndex
                                                 ? "w-4 h-1.5 bg-amber-400"
-                                                : "w-1.5 h-1.5 bg-gray-200 hover:bg-gray-300"
+                                                : "w-1.5 h-1.5 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500"
                                         }`}
                                         aria-label={`${index + 1}번째 사진으로 이동`}
                                     />

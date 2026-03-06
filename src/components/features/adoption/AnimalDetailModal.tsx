@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { X, MapPin, Phone } from "lucide-react";
 import type { AdoptionAnimal } from "@/app/api/adoption/route";
 import { genderLabel, neuterLabel, formatDate } from "./adoptionTypes";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
 function InfoItem({ label, value }: { label: string; value: string }) {
     if (!value) return null;
@@ -31,6 +32,8 @@ export function AnimalDetailModal({
     animal: AdoptionAnimal | null;
     onClose: () => void;
 }) {
+    useBodyScrollLock(!!animal);
+
     useEffect(() => {
         if (!animal) return;
         const onKeyDown = (e: KeyboardEvent) => {

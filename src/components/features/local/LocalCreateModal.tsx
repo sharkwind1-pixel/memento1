@@ -25,6 +25,7 @@ import {
     Plus,
     ImagePlus,
 } from "lucide-react";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import type { PostFormData } from "./localTypes";
 import { REGIONS, CATEGORIES, BADGE_OPTIONS } from "./localTypes";
 
@@ -53,6 +54,8 @@ export default function LocalCreateModal({
     onSubmit,
     onClose,
 }: LocalCreateModalProps) {
+    useBodyScrollLock(true);
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />

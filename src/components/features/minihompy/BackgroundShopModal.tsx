@@ -14,6 +14,7 @@ import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
 import { formatPoints } from "@/lib/points";
 import type { BackgroundTheme } from "@/types";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
 interface BackgroundShopModalProps {
     isOpen: boolean;
@@ -33,6 +34,7 @@ export default function BackgroundShopModal({
     onApply,
 }: BackgroundShopModalProps) {
     const { points, pointsLoaded, refreshPoints } = useAuth();
+    useBodyScrollLock(isOpen);
     const [catalog, setCatalog] = useState<CatalogItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [purchasingSlug, setPurchasingSlug] = useState<string | null>(null);

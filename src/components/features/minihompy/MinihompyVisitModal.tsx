@@ -21,6 +21,7 @@ import { MINIHOMPY } from "@/config/constants";
 import type { MinihompyViewData, GuestbookEntry, MinimiEquipState } from "@/types";
 import MinihompyStage from "./MinihompyStage";
 import Image from "next/image";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
 interface MinihompyVisitModalProps {
     isOpen: boolean;
@@ -33,6 +34,7 @@ export default function MinihompyVisitModal({
     onClose,
     userId,
 }: MinihompyVisitModalProps) {
+    useBodyScrollLock(isOpen);
     const { user } = useAuth();
     const [data, setData] = useState<MinihompyViewData | null>(null);
     const [loading, setLoading] = useState(true);

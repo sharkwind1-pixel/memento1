@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Pet } from "@/contexts/PetContext";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { Star, Heart, Calendar, ArrowRight, ArrowLeft, X, PenLine } from "lucide-react";
 
 interface MemorialSwitchModalProps {
@@ -39,6 +40,8 @@ export default function MemorialSwitchModal({
     const [slideIndex, setSlideIndex] = useState(0);
     const [starReady, setStarReady] = useState(false);
     const slideTimer = useRef<ReturnType<typeof setInterval>>();
+
+    useBodyScrollLock(isOpen);
 
     // 사진 목록 (최대 5장)
     const photos = (pet.photos || [])

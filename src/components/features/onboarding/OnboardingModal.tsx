@@ -73,40 +73,19 @@ export function markOnboardingComplete(): void {
     localStorage.setItem(ONBOARDING_STORAGE_KEY, "true");
 }
 
+// 중앙 타입에서 import (types/index.ts)
+import type { OnboardingData, OnboardingUserType } from "@/types";
+
 // 회원 유형 (null 허용 - 아직 선택하지 않은 상태)
-type UserType = import("@/types").OnboardingUserType | null;
+type UserType = OnboardingUserType | null;
 
-// 반려동물 종류
+// 로컬 타입 별칭 (setState 편의)
 type PetType = "dog" | "cat" | "other" | null;
-
-// 입양 예정 시기
 type AdoptionTiming = "undecided" | "1month" | "3months" | "6months" | null;
-
-// 이전 경험
 type PreviousExperience = "first" | "experienced" | null;
-
-// 입양 경로
 type AdoptionRoute = "breeder" | "friend" | "shelter" | "undecided" | null;
-
-// 함께한 기간
 type TogetherPeriod = "under1" | "1to5" | "5to10" | "over10" | null;
-
-// 떠난 기간
 type PassedPeriod = "under1month" | "1to6months" | "6to12months" | "over1year" | null;
-
-// 수집할 데이터
-interface OnboardingData {
-    userType: UserType;
-    petType: PetType;
-    // 키우려는 회원용
-    adoptionTiming?: AdoptionTiming;
-    previousExperience?: PreviousExperience;
-    adoptionRoute?: AdoptionRoute;
-    // 떠나보낸 회원용
-    petName?: string;
-    togetherPeriod?: TogetherPeriod;
-    passedPeriod?: PassedPeriod;
-}
 
 export default function OnboardingModal({
     isOpen,
