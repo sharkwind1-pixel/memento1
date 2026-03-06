@@ -373,14 +373,22 @@ export default function MinihompyStage({
                                     </div>
                                 )}
                             </div>
-                            {/* 히트 영역: 전체 컨테이너 크기로 확장 (클릭 편의성) */}
+                            {/* 히트 영역: 미니미 누끼에 맞춘 타원형 + 패딩으로 터치 편의성 확보 */}
                             <div
                                 className={cn(
-                                    "absolute inset-0",
+                                    "absolute",
                                     editMode ? "cursor-grab" : "cursor-pointer",
                                     isDragging && "cursor-grabbing",
                                 )}
-                                style={{ pointerEvents: "auto" }}
+                                style={{
+                                    pointerEvents: "auto",
+                                    // 캐릭터 누끼 영역에 맞춤 (상하좌우 8% 패딩)
+                                    top: "5%",
+                                    left: "5%",
+                                    right: "5%",
+                                    bottom: "2%",
+                                    borderRadius: "30%",
+                                }}
                                 onPointerDown={(e) => handlePointerDown(e, index)}
                                 onClick={() => !editMode && handleMinimiTouch(index)}
                             />
