@@ -36,10 +36,12 @@
 - [완료] Phase 1 보안: RPC IDOR, JWT 트리거, fail-open (`9bc18b5`)
 - [완료] Phase 2 안정성: hydration, 메모리 누수, 에러 삼킴, bare catch (`9bc18b5`)
 - [완료] Phase 3 일부: alert→toast, RemindersSection/VideoGeneration 다크모드 (`9bc18b5`)
+- [완료] AdminPage, MemoryAlbumViewer 다크모드 (`0381fb9`)
+- [완료] 18개 모달 body scroll lock 일괄 적용 (`0381fb9`)
+- [완료] 타입 중복 통합 (MemorialPost, SmoothAutoScrollReturn, OnboardingData) (`0381fb9`)
+- [완료] localStorage 무검증 캐스팅 수정 (`0381fb9`)
 - [미완] CSP unsafe-eval 제거 (Next.js 설정 연동 필요)
 - [미완] 인메모리 rate limit → Redis/KV 전환 (인프라 의존)
-- [미완] AdminPage, MemoryAlbumViewer 다크모드
-- [미완] 12개 모달 body scroll lock, 타입 중복 통합
 
 ### [완료] 간편모드 — 코드+DB 모두 완료
 ### [완료] 관리자 대시보드 모바일 compact UX
