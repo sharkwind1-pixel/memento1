@@ -170,15 +170,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // 포인트도 같이 설정
             setPoints(!error ? (data?.points ?? 0) : 0);
 
-            // 간편모드 설정 (DB 값으로 동기화 + html 클래스)
+            // 간편모드 설정 (localStorage 우선 → DB 동기화)
+            // DB update가 실패할 수 있으므로 (마이그레이션 미실행, 네트워크 등)
+            // localStorage를 source of truth로 사용하고, DB는 백업용
             if (!error && data) {
-                const dbSimpleMode = data.is_simple_mode === true;
-                setIsSimpleModeState(dbSimpleMode);
-                localStorage.setItem("memento-simple-mode", String(dbSimpleMode));
-                if (dbSimpleMode) {
+                const localValue = localStorage.getItem("memento-simple-mode");
+                // localStorage에 명시적인 값이 있으면 그걸 우선 (유저가 직접 토글한 결과)
+                // localStorage에 값이 없으면 DB 값 사용 (다른 기기에서 설정한 경우)
+                const resolvedValue = localValue !== null
+                    ? localValue === "true"
+                    : data.is_simple_mode === true;
+                setIsSimpleModeState(resolvedValue);
+                localStorage.setItem("memento-simple-mode", String(resolvedValue));
+                if (resolvedValue) {
                     document.documentElement.classList.add("simple-mode");
                 } else {
                     document.documentElement.classList.remove("simple-mode");
+                }
+                // localStorage와 DB가 다르면 DB를 localStorage 값으로 맞춤
+                if (data.is_simple_mode !== resolvedValue) {
+                    supabase.from("profiles").update({ is_simple_mode: resolvedValue }).eq("id", currentUser.id).then();
                 }
             }
 
@@ -361,7 +372,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
             const { data: { user: currentUser } } = await supabase.auth.getUser();
             if (currentUser) {
-                await supabase.from("profiles").update({ is_simple_mode: newValue }).eq("id", currentUser.id);
+                const { error: updateError } = await supabase.from("profiles").update({ is_simple_mode: newValue }).eq("id", currentUser.id);
+                if (updateError) {
+                    console.error("[SimpleMode] DB 업데이트 실패:", updateError.message);
+                }
             }
         } catch {
             // DB 업데이트 실패해도 로컬 상태는 유지
