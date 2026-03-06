@@ -16,6 +16,7 @@ import {
     Check,
     Video,
     Trash2,
+    PawPrint,
 } from "lucide-react";
 import ImageCropper, { CropPosition } from "./ImageCropper";
 import { toast } from "sonner";
@@ -248,13 +249,13 @@ export default function MediaUploadModal({
                                 {[0, 1, 2].map((i) => (
                                     <span
                                         key={i}
-                                        className="text-memento-600 animate-bounce text-xl"
+                                        className="inline-flex text-memento-600 animate-bounce"
                                         style={{
                                             animationDelay: `${i * 0.15}s`,
                                             animationDuration: "0.5s",
                                         }}
                                     >
-                                        🐾
+                                        <PawPrint className="w-5 h-5" />
                                     </span>
                                 ))}
                             </div>

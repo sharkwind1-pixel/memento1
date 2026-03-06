@@ -267,7 +267,7 @@ export default function PetPhotoAlbum({
                                     if (isSelectMode) togglePhotoSelect(photo.id);
                                     else onPhotoClick(photo);
                                 }}
-                                className={`flex gap-4 p-3 rounded-xl cursor-pointer transition-colors group ${isSelectMode && selectedPhotos.includes(photo.id) ? "bg-memento-100 ring-2 ring-memento-500" : "bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100"}`}
+                                className={`flex gap-4 p-3 rounded-xl cursor-pointer transition-colors group ${isSelectMode && selectedPhotos.includes(photo.id) ? "bg-memento-100 ring-2 ring-memento-500" : "bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-600/50"}`}
                             >
                                 {isSelectMode && (
                                     <div

@@ -136,7 +136,7 @@ export default function MemoryAlbumsSection({
             <section className="mb-6">
                 <div className="flex items-center gap-2 mb-3 px-1">
                     <ImageIcon className="w-5 h-5 text-amber-500" />
-                    <h3 className="text-base font-semibold text-gray-800">
+                    <h3 className="text-base font-semibold text-gray-800 dark:text-amber-200">
                         추억 앨범
                     </h3>
                 </div>
@@ -172,7 +172,7 @@ export default function MemoryAlbumsSection({
                 {/* 섹션 헤더 */}
                 <div className="flex items-center gap-2 mb-3 px-1">
                     <ImageIcon className="w-5 h-5 text-amber-500" />
-                    <h3 className="text-base font-semibold text-gray-800">
+                    <h3 className="text-base font-semibold text-gray-800 dark:text-amber-200">
                         추억 앨범
                     </h3>
                     {unreadCount > 0 && (
@@ -234,10 +234,10 @@ export default function MemoryAlbumsSection({
 
                                 {/* 카드 텍스트 영역 */}
                                 <div className="p-2">
-                                    <p className="text-sm font-medium text-gray-800 truncate">
+                                    <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">
                                         {album.title}
                                     </p>
-                                    <p className="text-xs text-gray-500 mt-0.5">
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                                         {formatDate(album.createdDate)}
                                     </p>
                                 </div>

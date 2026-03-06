@@ -302,7 +302,7 @@ function RecordPage({ setSelectedTab, isActive = true }: RecordPageProps) {
                         data-tutorial-id="minihompy-tab"
                         className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl font-medium transition-all text-sm sm:text-base ${
                             activeTab === "minihompy"
-                                ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg"
+                                ? "bg-gradient-to-r from-memento-500 to-memento-400 text-white shadow-lg"
                                 : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                         }`}
                     >

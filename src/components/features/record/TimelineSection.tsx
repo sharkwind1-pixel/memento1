@@ -167,13 +167,13 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                 <CardContent>
                     {timeline.length === 0 ? (
                         <div className="text-center py-10">
-                            <div className="w-16 h-16 rounded-full bg-memento-100 flex items-center justify-center mx-auto mb-4">
-                                <BookOpen className="w-8 h-8 text-memento-600" />
+                            <div className="w-16 h-16 rounded-full bg-memento-100 dark:bg-memento-500/20 flex items-center justify-center mx-auto mb-4">
+                                <BookOpen className="w-8 h-8 text-memento-600 dark:text-memento-400" />
                             </div>
-                            <h3 className="font-medium text-gray-700 mb-2">
+                            <h3 className="font-medium text-gray-700 dark:text-gray-200 mb-2">
                                 아직 기록된 일기가 없어요
                             </h3>
-                            <p className="text-sm text-gray-400 mb-4">
+                            <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">
                                 오늘 하루를 기록해보세요
                             </p>
                             <Button

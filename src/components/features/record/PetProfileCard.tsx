@@ -142,10 +142,14 @@ export default function PetProfileCard({
                         {/* 추모 모드일 때 - 일상 모드 복구 옵션 */}
                         {pet.status === "memorial" && (
                             <div className="mt-4 space-y-2">
-                                <p className="text-xs text-amber-600 dark:text-amber-400">
-                                    {pet.memorialDate &&
-                                        `무지개다리를 건넌 날: ${pet.memorialDate}`}
-                                </p>
+                                {pet.memorialDate && (
+                                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200/60 dark:border-amber-700/40">
+                                        <Star className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
+                                        <span className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                                            무지개다리를 건넌 날: {pet.memorialDate}
+                                        </span>
+                                    </div>
+                                )}
                                 <Button
                                     onClick={() => {
                                         toast("일상 모드로 되돌리시겠습니까?", {

@@ -14,10 +14,10 @@ export default function PetFormStep4({ formData, setFormData }: StepFormProps) {
     return (
         <div className="space-y-4">
             <div className="grid grid-cols-1 gap-3">
-                <div className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-gray-700/20 rounded-xl">
+                <div className="flex items-start gap-3 p-3 bg-memento-50 dark:bg-gray-700/30 rounded-xl border border-memento-100 dark:border-gray-600/30">
                     <Cookie className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
-                        <Label className="text-amber-700 dark:text-amber-300">좋아하는 간식</Label>
+                        <Label className="text-gray-700 dark:text-gray-200">좋아하는 간식</Label>
                         <Input
                             value={formData.favoriteFood}
                             onChange={(e) =>
@@ -29,10 +29,10 @@ export default function PetFormStep4({ formData, setFormData }: StepFormProps) {
                     </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-xl">
-                    <Sparkles className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                <div className="flex items-start gap-3 p-3 bg-memento-50 dark:bg-gray-700/30 rounded-xl border border-memento-100 dark:border-gray-600/30">
+                    <Sparkles className="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
-                        <Label className="text-green-700 dark:text-green-300">좋아하는 놀이/활동</Label>
+                        <Label className="text-gray-700 dark:text-gray-200">좋아하는 놀이/활동</Label>
                         <Input
                             value={formData.favoriteActivity}
                             onChange={(e) =>
@@ -44,10 +44,10 @@ export default function PetFormStep4({ formData, setFormData }: StepFormProps) {
                     </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-                    <Home className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                <div className="flex items-start gap-3 p-3 bg-memento-50 dark:bg-gray-700/30 rounded-xl border border-memento-100 dark:border-gray-600/30">
+                    <Home className="w-5 h-5 text-sky-500 mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
-                        <Label className="text-blue-700 dark:text-blue-300">좋아하는 장소</Label>
+                        <Label className="text-gray-700 dark:text-gray-200">좋아하는 장소</Label>
                         <Input
                             value={formData.favoritePlace}
                             onChange={(e) =>
