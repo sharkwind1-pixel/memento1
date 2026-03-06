@@ -177,9 +177,12 @@ function ArticleCard({
                 </div>
             </div>
             <CardContent className="p-4">
-                <h3 className="font-bold text-gray-800 dark:text-gray-100 line-clamp-2 mb-2">
+                <h3 className="font-bold text-gray-800 dark:text-gray-100 line-clamp-2 mb-1">
                     {article.title}
                 </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1 mb-2">
+                    {article.summary}
+                </p>
                 <div className="flex items-center gap-3 text-xs text-gray-500">
                     <span className="flex items-center gap-1">
                         <Eye className="w-3 h-3" />

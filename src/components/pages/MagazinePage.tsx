@@ -19,8 +19,6 @@ import {
     Heart,
     Eye,
     Clock,
-    Bookmark,
-    Share2,
     Stethoscope,
     Utensils,
     Scissors,
@@ -49,10 +47,10 @@ interface MagazinePageProps {
 
 // 단계별 필터 (상단)
 const STAGES = [
-    { id: "all", label: "전체", icon: BookOpen, color: "from-emerald-500 to-teal-500", description: "모든 콘텐츠" },
-    { id: "beginner", label: "처음 키워요", icon: Sparkles, color: "from-sky-400 to-blue-500", description: "초보 보호자 가이드" },
-    { id: "companion", label: "함께 성장해요", icon: HeartHandshake, color: "from-emerald-400 to-green-500", description: "일상 케어 정보" },
-    { id: "senior", label: "오래오래 함께", icon: Shield, color: "from-amber-400 to-orange-500", description: "시니어 케어" },
+    { id: "all", label: "전체", icon: BookOpen, color: "from-emerald-500 to-teal-500", iconColor: "text-emerald-500", description: "모든 콘텐츠" },
+    { id: "beginner", label: "처음 키워요", icon: Sparkles, color: "from-sky-400 to-blue-500", iconColor: "text-sky-500", description: "초보 보호자 가이드" },
+    { id: "companion", label: "함께 성장해요", icon: HeartHandshake, color: "from-emerald-400 to-green-500", iconColor: "text-emerald-500", description: "일상 케어 정보" },
+    { id: "senior", label: "오래오래 함께", icon: Shield, color: "from-amber-400 to-orange-500", iconColor: "text-amber-500", description: "시니어 케어" },
 ];
 
 // 주제별 필터 (하단)
@@ -204,7 +202,7 @@ function MagazinePage({ setSelectedTab, isActive }: MagazinePageProps) {
                                                 : "bg-white/50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600 hover:shadow-md"
                                         }`}
                                     >
-                                        <Icon className={`w-5 h-5 mb-1 ${isActive ? "text-white" : "text-gray-500 dark:text-gray-400"}`} />
+                                        <Icon className={`w-5 h-5 mb-1 ${isActive ? "text-white" : stage.iconColor}`} />
                                         <span className={`block text-sm font-bold ${isActive ? "text-white" : "text-gray-800 dark:text-gray-100"}`}>
                                             {stage.label}
                                         </span>
@@ -294,7 +292,7 @@ function MagazinePage({ setSelectedTab, isActive }: MagazinePageProps) {
                                 className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 hover:shadow-lg transition-all duration-300 rounded-2xl cursor-pointer overflow-hidden"
                             >
                                 <div className="flex flex-col sm:flex-row">
-                                    <div className="sm:w-48 h-40 sm:h-auto flex-shrink-0 relative">
+                                    <div className="sm:w-48 h-40 sm:h-40 flex-shrink-0 relative">
                                         <Image
                                             src={article.image}
                                             alt={article.title}
@@ -309,26 +307,6 @@ function MagazinePage({ setSelectedTab, isActive }: MagazinePageProps) {
                                             >
                                                 {getBadgeLabel(article.badge)}
                                             </Badge>
-                                            <div className="flex gap-1">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    aria-label="북마크"
-                                                    className="h-8 w-8 p-0 rounded-lg"
-                                                    onClick={(e) => { e.stopPropagation(); toast.info("북마크 기능 준비 중이에요"); }}
-                                                >
-                                                    <Bookmark className="w-4 h-4" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    aria-label="공유"
-                                                    className="h-8 w-8 p-0 rounded-lg"
-                                                    onClick={(e) => { e.stopPropagation(); toast.info("공유 기능 준비 중이에요"); }}
-                                                >
-                                                    <Share2 className="w-4 h-4" />
-                                                </Button>
-                                            </div>
                                         </div>
 
                                         <h3 className="font-bold text-lg text-gray-800 dark:text-gray-100 mb-2 line-clamp-1">
@@ -338,11 +316,11 @@ function MagazinePage({ setSelectedTab, isActive }: MagazinePageProps) {
                                             {article.summary}
                                         </p>
 
-                                        <div className="flex flex-wrap gap-2 mb-3">
+                                        <div className="flex flex-wrap gap-1.5 mb-3">
                                             {article.tags.map((tag) => (
                                                 <span
                                                     key={tag}
-                                                    className="text-xs text-emerald-600 dark:text-emerald-400"
+                                                    className="text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded-full"
                                                 >
                                                     #{tag}
                                                 </span>
@@ -380,8 +358,8 @@ function MagazinePage({ setSelectedTab, isActive }: MagazinePageProps) {
 
                         {filteredArticles.length === 0 && (
                             <div className="text-center py-16">
-                                <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <BookOpen className="w-10 h-10 text-gray-400" />
+                                <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <BookOpen className="w-10 h-10 text-gray-400 dark:text-gray-500" />
                                 </div>
                                 <p className="text-gray-500 dark:text-gray-400">
                                     {searchQuery || selectedStage !== "all" || selectedTopic !== "all"

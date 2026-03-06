@@ -731,7 +731,7 @@ function QuoteCard({
     totalCards: number;
 }) {
     return (
-        <div className="h-full flex flex-col justify-center px-6 py-16 sm:px-10 bg-amber-50 dark:bg-gray-700/10">
+        <div className="h-full flex flex-col justify-center px-6 py-16 sm:px-10 bg-amber-50 dark:bg-amber-900/15">
             {/* 카드 번호 */}
             <div className="text-xs text-amber-500/60 mb-6 text-right">
                 {cardIndex} / {totalCards - 1}
