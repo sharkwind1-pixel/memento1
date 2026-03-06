@@ -26,13 +26,8 @@ import { toast } from "sonner";
 import {
     Search,
     RefreshCw,
-    Ban,
-    Shield,
-    Crown,
-    RotateCcw,
     Clock,
     Users,
-    Star,
 } from "lucide-react";
 import { UserRow } from "../types";
 import { PremiumModal } from "../modals/PremiumModal";
@@ -512,81 +507,67 @@ function UserCard({
                 </p>
             )}
 
-            {/* 액션 버튼 - 항상 3열 그리드, 아이콘+최소 텍스트 */}
+            {/* 액션 버튼 - 항상 3열 그리드, 네이티브 button으로 크기 완전 제어 */}
             <div className="grid grid-cols-3 gap-1 pt-2 mt-2 border-t border-gray-200 dark:border-gray-700">
-                <Button
-                    size="sm"
-                    variant={user.is_banned ? "outline" : "destructive"}
+                <button
+                    type="button"
                     onClick={onToggleBan}
-                    className="text-[10px] h-7 px-1"
-                >
-                    <Ban className="w-3 h-3 mr-0.5 flex-shrink-0" />
-                    {user.is_banned ? "해제" : "차단"}
-                </Button>
-
-                <Button
-                    size="sm"
-                    variant="outline"
-                    className={`text-[10px] h-7 px-1 ${user.is_admin
-                        ? "text-purple-600 dark:text-purple-400 border-purple-300 dark:border-purple-700"
-                        : ""
+                    className={`h-7 rounded text-[10px] font-medium transition-colors ${
+                        user.is_banned
+                            ? "border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800"
+                            : "bg-red-500 text-white hover:bg-red-600"
                     }`}
+                >
+                    {user.is_banned ? "차단해제" : "차단"}
+                </button>
+
+                <button
+                    type="button"
                     onClick={onToggleAdmin}
+                    className={`h-7 rounded border text-[10px] font-medium transition-colors ${
+                        user.is_admin
+                            ? "border-purple-300 dark:border-purple-700 text-purple-600 dark:text-purple-400 bg-white dark:bg-gray-800"
+                            : "border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800"
+                    }`}
                 >
-                    <Shield className="w-3 h-3 mr-0.5 flex-shrink-0" />
                     관리자
-                </Button>
+                </button>
 
-                {user.is_premium ? (
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={onRevokePremium}
-                        className="text-[10px] h-7 px-1"
-                    >
-                        <Crown className="w-3 h-3 mr-0.5 flex-shrink-0" />
-                        해제
-                    </Button>
-                ) : (
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700 text-[10px] h-7 px-1"
-                        onClick={onOpenPremiumModal}
-                    >
-                        <Crown className="w-3 h-3 mr-0.5 flex-shrink-0" />
-                        프리미엄
-                    </Button>
-                )}
+                <button
+                    type="button"
+                    onClick={user.is_premium ? onRevokePremium : onOpenPremiumModal}
+                    className={`h-7 rounded border text-[10px] font-medium transition-colors ${
+                        user.is_premium
+                            ? "border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800"
+                            : "border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-400 bg-white dark:bg-gray-800"
+                    }`}
+                >
+                    {user.is_premium ? "프리미엄해제" : "프리미엄"}
+                </button>
 
-                <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-sky-600 dark:text-sky-400 border-sky-300 dark:border-sky-700 text-[10px] h-7 px-1"
+                <button
+                    type="button"
                     onClick={onOpenPointsModal}
+                    className="h-7 rounded border border-sky-300 dark:border-sky-700 text-sky-600 dark:text-sky-400 bg-white dark:bg-gray-800 text-[10px] font-medium transition-colors"
                 >
-                    <Star className="w-3 h-3 mr-0.5 flex-shrink-0" />
                     포인트
-                </Button>
+                </button>
 
-                <Button
-                    size="sm"
-                    variant="outline"
+                <button
+                    type="button"
                     onClick={onResetOnboarding}
-                    className="text-[10px] h-7 px-1"
+                    className="h-7 rounded border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 text-[10px] font-medium transition-colors"
                 >
-                    <RotateCcw className="w-3 h-3 mr-0.5 flex-shrink-0" />
                     리셋
-                </Button>
+                </button>
 
-                <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-red-600 dark:text-red-400 border-red-300 dark:border-red-700 text-[10px] h-7 px-1"
+                <button
+                    type="button"
                     onClick={onOpenWithdrawalModal}
+                    className="h-7 rounded border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 bg-white dark:bg-gray-800 text-[10px] font-medium transition-colors"
                 >
                     탈퇴
-                </Button>
+                </button>
             </div>
         </div>
     );
