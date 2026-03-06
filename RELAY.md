@@ -40,8 +40,8 @@
 - [완료] 18개 모달 body scroll lock 일괄 적용 (`0381fb9`)
 - [완료] 타입 중복 통합 (MemorialPost, SmoothAutoScrollReturn, OnboardingData) (`0381fb9`)
 - [완료] localStorage 무검증 캐스팅 수정 (`0381fb9`)
-- [미완] CSP unsafe-eval 제거 (Next.js 설정 연동 필요)
-- [미완] 인메모리 rate limit → Redis/KV 전환 (인프라 의존)
+- [완료] CSP unsafe-eval 프로덕션 제거 (`8291b0e`)
+- [보류] 인메모리 rate limit → Vercel KV 전환 (유저 증가 시 진행, 현재 핵심은 DB 기반)
 
 ### [완료] 간편모드 — 코드+DB 모두 완료
 ### [완료] 관리자 대시보드 모바일 compact UX
