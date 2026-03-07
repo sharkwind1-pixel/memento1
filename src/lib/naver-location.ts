@@ -38,8 +38,9 @@ interface NaverSearchItem {
 // ---- 장소 질문 감지 ----
 
 /** 유저 메시지에서 장소 질문 감지 + 검색 키워드 반환 */
-const PLACE_PATTERNS: { pattern: RegExp; keyword: string }[] = [
-    { pattern: /산책|공원|놀이터|야외|걷기|뛰기/, keyword: "산책로 공원" },
+/** keyword를 배열로 바꿔 복수 검색어 지원 (네이버 검색은 단일 키워드가 결과 품질이 좋음) */
+const PLACE_PATTERNS: { pattern: RegExp; keyword: string; altKeyword?: string }[] = [
+    { pattern: /산책|공원|놀이터|야외|걷기|뛰기/, keyword: "공원", altKeyword: "산책로" },
     { pattern: /병원|수의사|진료|응급|건강검진|예방접종/, keyword: "동물병원" },
     { pattern: /펫카페|카페|놀 곳|놀이/, keyword: "펫카페" },
     { pattern: /미용|그루밍|목욕|트리밍/, keyword: "애견미용" },
@@ -47,16 +48,16 @@ const PLACE_PATTERNS: { pattern: RegExp; keyword: string }[] = [
     { pattern: /용품|사료|간식.*사/, keyword: "애견용품" },
 ];
 
-export function detectPlaceQuery(message: string): { detected: boolean; keyword?: string } {
+export function detectPlaceQuery(message: string): { detected: boolean; keyword?: string; altKeyword?: string } {
     // 장소 관련 의문형 패턴이 있는지 먼저 체크
     const questionPatterns = /어디|어느|가까운|근처|주변|추천|갈까|가볼|찾아/;
     if (!questionPatterns.test(message)) {
         return { detected: false };
     }
 
-    for (const { pattern, keyword } of PLACE_PATTERNS) {
+    for (const { pattern, keyword, altKeyword } of PLACE_PATTERNS) {
         if (pattern.test(message)) {
-            return { detected: true, keyword };
+            return { detected: true, keyword, altKeyword };
         }
     }
     return { detected: false };
@@ -355,13 +356,26 @@ export async function findNearbyPlaces(
     lat: number,
     lng: number,
     keyword: string,
+    altKeyword?: string,
 ): Promise<NearbyPlace[]> {
     // 가까운 동 3개로 병렬 검색 (경계 지역 커버)
     const nearbyDongs = getNearbyDongs(lat, lng, 3);
 
-    const searchQueries = nearbyDongs.length > 0
-        ? nearbyDongs.map(d => `${d} ${keyword}`)
-        : [keyword];
+    // 동 이름 + 키워드 조합으로 검색 쿼리 생성
+    // altKeyword가 있으면 가장 가까운 동에 대해 추가 검색
+    const searchQueries: string[] = [];
+    if (nearbyDongs.length > 0) {
+        for (const d of nearbyDongs) {
+            searchQueries.push(`${d} ${keyword}`);
+        }
+        // altKeyword는 가장 가까운 동 1개에만 적용 (API 호출 수 제한)
+        if (altKeyword) {
+            searchQueries.push(`${nearbyDongs[0]} ${altKeyword}`);
+        }
+    } else {
+        searchQueries.push(keyword);
+        if (altKeyword) searchQueries.push(altKeyword);
+    }
 
     const fetchCount = LOCATION.MAX_RESULTS + 3;
     const searchResults = await Promise.all(
@@ -385,7 +399,7 @@ export async function findNearbyPlaces(
     if (items.length === 0) return [];
 
     // 카테고리 기반 필터: 검색 키워드와 무관한 결과 제외
-    const EXCLUDED_CATEGORIES = /한식|중식|일식|양식|분식|육류|고기|치킨|피자|패스트푸드|카페|커피|디저트|제과|주점|술집|편의점|마트|세탁|부동산|학원|금융|보험/;
+    const EXCLUDED_CATEGORIES = /한식|중식|일식|양식|분식|육류|고기|치킨|피자|패스트푸드|카페|커피|디저트|제과|주점|술집|편의점|마트|세탁|부동산|학원|금융|보험|주차장|주차/;
     const isPlaceCategory = keyword.includes("카페") || keyword.includes("용품");
     const filteredItems = isPlaceCategory
         ? items

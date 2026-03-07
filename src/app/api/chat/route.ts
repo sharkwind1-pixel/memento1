@@ -367,6 +367,7 @@ export async function POST(request: NextRequest) {
                         userLocation.lat,
                         userLocation.lng,
                         serverDetection.keyword || placeKeyword,
+                        serverDetection.altKeyword,
                     );
                     if (nearbyPlaces.length > 0) {
                         placeContext = `\n[주변 장소 검색 결과 (${placeKeyword})]:\n` +
