@@ -245,16 +245,19 @@ export async function checkRateLimitDB(
         const kstOffset = 9 * 60 * 60 * 1000;
         const kstNow = new Date(now.getTime() + kstOffset);
         const minuteKey = kstNow.toISOString().slice(0, 16); // "YYYY-MM-DDTHH:MM"
+        const kstDate = kstNow.toISOString().split("T")[0]; // "YYYY-MM-DD" (DATE 타입 호환)
 
-        // usage_type을 "ai_chat_rpm" (requests per minute)으로 분리하여 일일 사용량과 충돌 방지
-        const usageType = `${type}_rpm`;
+        // usage_type에 분 키를 포함하여 DATE 컬럼 타입 제약 우회
+        // 예: "aiChat_rpm_14:05" → 분 단위로 고유 레코드 생성
+        const minuteSuffix = minuteKey.slice(11); // "HH:MM"
+        const usageType = `${type}_rpm_${minuteSuffix}`;
 
         const { data: existing } = await supabase
             .from("user_daily_usage")
             .select("id, request_count")
             .eq("identifier", identifier)
             .eq("usage_type", usageType)
-            .eq("usage_date", minuteKey)
+            .eq("usage_date", kstDate)
             .maybeSingle();
 
         if (existing) {
@@ -275,7 +278,7 @@ export async function checkRateLimitDB(
                 .insert({
                     identifier,
                     usage_type: usageType,
-                    usage_date: minuteKey,
+                    usage_date: kstDate,
                     request_count: 1,
                 });
             return { allowed: true, remaining: maxPerMinute - 1 };
