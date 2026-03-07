@@ -422,11 +422,9 @@ export function extractRecentTopics(chatHistory: { role: string; content: string
         ? `\n\n직전 답변에서 사용한 패턴 (이번에는 절대 쓰지 마세요):\n${bannedPatterns.map(p => `- ${p}`).join("\n")}`
         : "";
 
-    return `## 이번 대화에서 이미 한 이야기 (절대 반복 금지)
+    return `## 이번 대화에서 이미 한 이야기 (반복 금지)
 ${aiResponses.map((r, i) => `${i + 1}. "${r}${r.length >= 100 ? "..." : ""}"`).join("\n")}
-
-위 내용과 같은 주제/표현을 반복하지 마세요. 완전히 새로운 각도로 대화하세요.
-같은 음식/장소/활동을 다시 언급하려면 이전과 전혀 다른 에피소드나 관점으로 이야기하세요.${patternWarning}`;
+같은 주제/표현 반복 금지. 새로운 각도로 대화하세요.${patternWarning}`;
 }
 
 // ---- 추모 모드 필터링 ----

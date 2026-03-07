@@ -435,7 +435,9 @@ export async function POST(request: NextRequest) {
                 { content: timelineContext, priority: 2 },
                 { content: photoContext, priority: 1 },
             ];
-        const maxContextChars = isMemorialMode ? 2500 : 3000;
+        // 위기/응급 프롬프트가 예산 밖에서 추가되므로 여유 확보
+        // 위기(high) ~380자 + 응급 ~200자 = 최대 ~580자 추가 가능
+        const maxContextChars = isMemorialMode ? 2200 : 2500;
         const combinedContext = buildPrioritizedContext(contextItems, maxContextChars);
 
         // 케어 관련 질문 감지 (조건부 프롬프트 삽입용)
@@ -491,7 +493,7 @@ ${emergencyDetection.isEmergency ? "이것은 즉시 병원에 가야 하는 상
                 ...recentHistory,
                 { role: "user", content: `<user_input>${sanitizedMessage}</user_input>` },
             ],
-            max_tokens: 400,
+            max_tokens: 500, // 응답 본문(~200) + SUGGESTIONS(~150) + PENDING_TOPIC(~50) + 여유
             temperature: mode === "memorial" ? API.AI_TEMPERATURE_MEMORIAL : API.AI_TEMPERATURE_DAILY,
             presence_penalty: 0.7,
             frequency_penalty: 0.6,
