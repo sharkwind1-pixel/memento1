@@ -197,51 +197,108 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // 입력 크기 제한 (토큰 비용 폭증 + DoS 방지)
+        // ---- 입력 크기 제한 (토큰 소모 공격 + DoS 방지) ----
+
+        // 0. 요청 body 전체 크기 제한 (직렬화 비용도 방어)
+        const bodyStr = JSON.stringify(body);
+        if (bodyStr.length > 100_000) { // 100KB 이하
+            return NextResponse.json(
+                { error: "요청 데이터가 너무 큽니다." },
+                { status: 413 }
+            );
+        }
+
+        // 1. 메시지 길이 제한
         if (typeof message !== "string" || message.length > 1000) {
             return NextResponse.json(
                 { error: "메시지가 너무 길어요. 1000자 이내로 작성해주세요." },
                 { status: 400 }
             );
         }
+
+        // 2. pet 객체 텍스트 필드 길이 제한 (시스템 프롬프트 팽창 방지)
+        const PET_FIELD_MAX = 200;
+        const trunc = (v: string) => v.length > PET_FIELD_MAX ? v.slice(0, PET_FIELD_MAX) : v;
+        const truncOpt = (v?: string) => v && v.length > PET_FIELD_MAX ? v.slice(0, PET_FIELD_MAX) : v;
+        pet.name = trunc(pet.name);
+        pet.breed = trunc(pet.breed);
+        pet.personality = trunc(pet.personality);
+        pet.favoriteFood = truncOpt(pet.favoriteFood);
+        pet.favoriteActivity = truncOpt(pet.favoriteActivity);
+        pet.favoritePlace = truncOpt(pet.favoritePlace);
+        pet.specialHabits = truncOpt(pet.specialHabits);
+        pet.nicknames = truncOpt(pet.nicknames);
+        pet.howWeMet = truncOpt(pet.howWeMet);
+        pet.memorableMemory = truncOpt(pet.memorableMemory);
+
+        // 3. 배열 크기 + 항목별 길이 제한
         if (chatHistory.length > 30) {
-            chatHistory.splice(0, chatHistory.length - 30); // 최근 30개만 유지
+            chatHistory.splice(0, chatHistory.length - 30);
+        }
+        // chatHistory 각 항목 content 길이 제한 (GPT 컨텍스트에 직접 들어감)
+        for (const msg of chatHistory) {
+            if (msg.content && typeof msg.content === "string" && msg.content.length > 1000) {
+                msg.content = msg.content.slice(0, 1000);
+            }
         }
         if (timeline.length > 20) {
             timeline.splice(0, timeline.length - 20);
         }
+        for (const entry of timeline) {
+            if (entry.content && typeof entry.content === "string" && entry.content.length > 300) {
+                entry.content = entry.content.slice(0, 300);
+            }
+            if (entry.title && typeof entry.title === "string" && entry.title.length > 100) {
+                entry.title = entry.title.slice(0, 100);
+            }
+        }
         if (photoMemories.length > 20) {
             photoMemories.splice(0, photoMemories.length - 20);
         }
+        for (const photo of photoMemories) {
+            if (photo.caption && typeof photo.caption === "string" && photo.caption.length > 200) {
+                photo.caption = photo.caption.slice(0, 200);
+            }
+        }
         if (reminders.length > 30) {
             reminders.splice(0, reminders.length - 30);
+        }
+        for (const rem of reminders) {
+            if (rem.title && typeof rem.title === "string" && rem.title.length > 100) {
+                rem.title = rem.title.slice(0, 100);
+            }
+        }
+
+        // 4. placeKeyword 길이 제한
+        if (placeKeyword && typeof placeKeyword === "string" && placeKeyword.length > 50) {
+            return NextResponse.json(
+                { error: "검색어가 너무 깁니다." },
+                { status: 400 }
+            );
         }
 
         // 2. 모드 결정 (isMemorialMode 하나로 통합)
         const isMemorialMode = pet.status === "memorial";
 
-        // 3. 일일 사용량 체크 (프리미엄은 무제한, 무료는 10회)
-        // 프리미엄 회원은 제한 없이 통과
-        let dailyUsage = { allowed: true, remaining: Infinity, isWarning: false };
+        // 3. 일일 사용량 체크
+        // 프리미엄: 하루 500회 상한 (토큰 소모 공격 방지, UX상 무제한 표시)
+        // 무료: 하루 10회
+        const identifier = user.id;
+        const dailyUsage = await checkDailyUsageDB(identifier, isPremium ? true : false);
 
-        if (!isPremium) {
-            // 무료 회원: FREE_LIMITS.DAILY_CHATS (10회) 제한
-            const identifier = user.id;
-            dailyUsage = await checkDailyUsageDB(identifier, false); // false = 무료 회원 제한 적용
-
-            // 무료 회원 제한은 10회이므로 별도 체크
-            if (dailyUsage.remaining < 0 || !dailyUsage.allowed) {
-                return NextResponse.json(
-                    {
-                        error: isMemorialMode
+        if (dailyUsage.remaining < 0 || !dailyUsage.allowed) {
+            return NextResponse.json(
+                {
+                    error: isPremium
+                        ? "오늘 대화를 정말 많이 나눴네요! 내일 다시 이야기해요."
+                        : isMemorialMode
                             ? `오늘은 여기까지 이야기 나눌 수 있어요. ${pet?.name || "아이"}는 내일도 여기서 기다리고 있을게요. 프리미엄 구독 시 무제한 대화가 가능합니다.`
                             : `오늘의 무료 대화 횟수(${FREE_LIMITS.DAILY_CHATS}회)를 모두 사용했어요. 프리미엄 구독 시 무제한 대화가 가능합니다!`,
-                        remaining: 0,
-                        isLimitReached: true,
-                    },
-                    { status: 429 }
-                );
-            }
+                    remaining: 0,
+                    isLimitReached: !isPremium,
+                },
+                { status: 429 }
+            );
         }
 
         // 4. 입력값 검증 (XSS, 과도한 길이 방지)
