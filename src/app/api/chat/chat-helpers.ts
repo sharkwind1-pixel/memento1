@@ -397,11 +397,36 @@ export function extractRecentTopics(chatHistory: { role: string; content: string
 
     if (aiResponses.length === 0) return "";
 
+    // 직전 AI 응답에서 반복되는 구조 패턴 감지
+    const lastResponse = aiResponses[aiResponses.length - 1] || "";
+    const bannedPatterns: string[] = [];
+
+    // 마무리 패턴 감지
+    if (/어떤 걸 해보고 싶어|어디가 더|어때\?|마음에 들어\?/.test(lastResponse)) {
+        bannedPatterns.push("질문으로 끝내기 (리액션이나 제안으로 마무리하세요)");
+    }
+    if (/~도 있어서|~하기 좋거든|좋은 곳이야/.test(lastResponse)) {
+        bannedPatterns.push("'~도 있어서 ~하기 좋거든' 나열식");
+    }
+    if (/예를 들면|예를 들어|예컨대/.test(lastResponse)) {
+        bannedPatterns.push("'예를 들면 A, B가 있어' 식 나열");
+    }
+    if (/같이.*해보자|같이.*가보자|같이.*계획/.test(lastResponse)) {
+        bannedPatterns.push("'같이 ~해보자/가보자' 마무리");
+    }
+    if (/기분이.*좋을|기분이.*좋아질/.test(lastResponse)) {
+        bannedPatterns.push("'기분이 좋아질 것 같아' 표현");
+    }
+
+    const patternWarning = bannedPatterns.length > 0
+        ? `\n\n직전 답변에서 사용한 패턴 (이번에는 절대 쓰지 마세요):\n${bannedPatterns.map(p => `- ${p}`).join("\n")}`
+        : "";
+
     return `## 이번 대화에서 이미 한 이야기 (절대 반복 금지)
 ${aiResponses.map((r, i) => `${i + 1}. "${r}${r.length >= 100 ? "..." : ""}"`).join("\n")}
 
 위 내용과 같은 주제/표현을 반복하지 마세요. 완전히 새로운 각도로 대화하세요.
-같은 음식/장소/활동을 다시 언급하려면 이전과 전혀 다른 에피소드나 관점으로 이야기하세요.`;
+같은 음식/장소/활동을 다시 언급하려면 이전과 전혀 다른 에피소드나 관점으로 이야기하세요.${patternWarning}`;
 }
 
 // ---- 추모 모드 필터링 ----
