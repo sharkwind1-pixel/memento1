@@ -21,6 +21,7 @@ import {
     checkRateLimit,
     checkDailyUsageDB,
     checkRequestCooldown,
+    checkGlobalDailyLimit,
     getRateLimitHeaders,
     sanitizeInput,
     detectPromptInjection,
@@ -107,6 +108,16 @@ export async function POST(request: NextRequest) {
                     status: 429,
                     headers: getRateLimitHeaders(rateLimit.remaining, rateLimit.resetIn),
                 }
+            );
+        }
+
+        // 1.3. 서비스 전체 일일 API 비용 상한 (최종 방어선)
+        const globalLimit = await checkGlobalDailyLimit();
+        if (!globalLimit.allowed) {
+            console.error(`[Security] Global daily limit reached: ${globalLimit.totalToday} requests`);
+            return NextResponse.json(
+                { error: "서버가 일시적으로 바빠요. 잠시 후 다시 시도해주세요." },
+                { status: 503 }
             );
         }
 
@@ -281,34 +292,31 @@ export async function POST(request: NextRequest) {
         // 2. 모드 결정 (isMemorialMode 하나로 통합)
         const isMemorialMode = pet.status === "memorial";
 
-        // 3. 일일 사용량 체크
-        // 프리미엄: 무제한 (봇 방어는 IP Rate Limit + 쿨다운으로 처리)
-        // 무료: 하루 10회
-        let dailyUsage = { allowed: true, remaining: Infinity, isWarning: false };
+        // 3. 일일 사용량 체크 (DB 기반 - 모든 등급 적용)
+        // 무료: 10회, 프리미엄: 1000회 (봇만 걸림, 사람은 절대 도달 불가)
+        const identifier = user.id;
+        const dailyUsage = await checkDailyUsageDB(identifier, isPremium ? true : false);
 
-        if (!isPremium) {
-            const identifier = user.id;
-            dailyUsage = await checkDailyUsageDB(identifier, false);
-
-            if (dailyUsage.remaining < 0 || !dailyUsage.allowed) {
-                return NextResponse.json(
-                    {
-                        error: isMemorialMode
+        if (dailyUsage.remaining < 0 || !dailyUsage.allowed) {
+            return NextResponse.json(
+                {
+                    error: isPremium
+                        // 프리미엄 1000회 도달 = 100% 봇 → 부드러운 메시지
+                        ? `${pet?.name || "반려동물"}이(가) 오늘 많이 피곤한가봐요. 내일 다시 이야기해요~`
+                        : isMemorialMode
                             ? `오늘은 여기까지 이야기 나눌 수 있어요. ${pet?.name || "아이"}는 내일도 여기서 기다리고 있을게요. 프리미엄 구독 시 무제한 대화가 가능합니다.`
                             : `오늘의 무료 대화 횟수(${FREE_LIMITS.DAILY_CHATS}회)를 모두 사용했어요. 프리미엄 구독 시 무제한 대화가 가능합니다!`,
-                        remaining: 0,
-                        isLimitReached: true,
-                    },
-                    { status: 429 }
-                );
-            }
+                    remaining: 0,
+                    isLimitReached: !isPremium, // 프리미엄은 업셀 UI 안 보여줌
+                },
+                { status: 429 }
+            );
         }
 
         // 3.5 봇 방어: 요청 간 최소 간격 (사람은 최소 3초, 봇은 0.1초)
-        // 프리미엄/무료 모두 적용 — 정상 유저는 절대 안 걸림
+        // 메모리 기반이지만, DB 일일 제한 + IP Rate Limit과 함께 다층 방어
         const cooldownCheck = checkRequestCooldown(user.id);
         if (!cooldownCheck.allowed) {
-            // 봇처럼 빠르게 연속 요청 시 점점 느려지게 (429 응답)
             return NextResponse.json(
                 { error: `${pet?.name || "반려동물"}이(가) 아직 생각하고 있어요~ 잠시만 기다려주세요!` },
                 { status: 429 }

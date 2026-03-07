@@ -30,7 +30,7 @@ const RATE_LIMITS = {
         windowMs: 60 * 1000, // 1분
         maxRequests: 10, // 분당 10회
         dailyLimit: FREE_LIMITS.DAILY_CHATS, // 무료 회원 일일 제한 (10회)
-        dailyLimitAuth: 200, // 베이직 회원용 (프리미엄은 route.ts에서 무제한 처리)
+        dailyLimitAuth: 1000, // 프리미엄 일일 상한 (사람은 하루 100회도 힘듦, 1000 = 봇만 걸림)
     },
     // 인증 관련 (브루트포스 방지)
     auth: {
@@ -871,6 +871,40 @@ export function getRateLimitHeaders(
         "X-RateLimit-Reset": String(Math.ceil(resetIn / 1000)),
         "Retry-After": String(Math.ceil(resetIn / 1000)),
     };
+}
+
+/**
+ * 서비스 전체 일일 API 호출 상한 (비용 폭주 최종 방어선)
+ * 모든 유저의 일일 합산 호출이 GLOBAL_DAILY_LIMIT을 초과하면 신규 요청 차단
+ * DB 기반이라 서버리스에서도 확실히 동작
+ */
+const GLOBAL_DAILY_LIMIT = 10000; // 전체 서비스 일일 1만회 (GPT-4o-mini 기준 ~$30/일)
+
+export async function checkGlobalDailyLimit(): Promise<{ allowed: boolean; totalToday: number }> {
+    const supabase = getRateLimitSupabase();
+    if (!supabase) return { allowed: true, totalToday: 0 }; // DB 없으면 통과
+
+    try {
+        const now = new Date();
+        const kstOffset = 9 * 60 * 60 * 1000;
+        const kstDate = new Date(now.getTime() + kstOffset).toISOString().split("T")[0];
+
+        // 오늘 전체 ai_chat 사용량 합산
+        const { data } = await supabase
+            .from("user_daily_usage")
+            .select("request_count")
+            .eq("usage_type", "ai_chat")
+            .eq("usage_date", kstDate);
+
+        const totalToday = (data || []).reduce((sum, row) => sum + (row.request_count || 0), 0);
+
+        return {
+            allowed: totalToday < GLOBAL_DAILY_LIMIT,
+            totalToday,
+        };
+    } catch {
+        return { allowed: true, totalToday: 0 }; // DB 에러 시 통과 (서비스 중단 방지)
+    }
 }
 
 /**
