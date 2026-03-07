@@ -48,16 +48,25 @@ const PLACE_PATTERNS: { pattern: RegExp; keyword: string; altKeyword?: string }[
     { pattern: /용품|사료|간식.*사/, keyword: "애견용품" },
 ];
 
-export function detectPlaceQuery(message: string): { detected: boolean; keyword?: string; altKeyword?: string } {
+/**
+ * 메시지에 특정 지역명이 포함되어 있는지 검사
+ * GPS 좌표(현재 위치) 기반 검색이 아닌 지역을 언급하는 경우 → GPS 검색 스킵
+ */
+const SPECIFIC_LOCATION_PATTERN = /강릉|속초|양양|삼척|동해|제주|부산|대구|광주|대전|울산|세종|춘천|원주|천안|전주|목포|포항|경주|여수|통영|거제|김해|창원|안동|충주|제천|태백|정선|평창|서귀포|송정|해운대|송도|인천공항|김포공항/;
+
+export function detectPlaceQuery(message: string): { detected: boolean; keyword?: string; altKeyword?: string; hasSpecificLocation?: boolean } {
     // 장소 관련 의문형 패턴이 있는지 먼저 체크
     const questionPatterns = /어디|어느|가까운|근처|주변|추천|갈까|가볼|찾아/;
     if (!questionPatterns.test(message)) {
         return { detected: false };
     }
 
+    // 특정 지역명이 포함되면 GPS 검색 불필요 (AI가 지역명 기반으로 답변)
+    const hasSpecificLocation = SPECIFIC_LOCATION_PATTERN.test(message);
+
     for (const { pattern, keyword, altKeyword } of PLACE_PATTERNS) {
         if (pattern.test(message)) {
-            return { detected: true, keyword, altKeyword };
+            return { detected: true, keyword, altKeyword, hasSpecificLocation };
         }
     }
     return { detected: false };

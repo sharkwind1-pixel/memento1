@@ -361,8 +361,9 @@ export async function POST(request: NextRequest) {
         if (userLocation && placeKeyword) {
             try {
                 // 서버 측 장소 질문 감지 재검증 (클라이언트 조작 방지)
+                // 특정 지역명(강릉, 부산 등)이 포함되면 GPS 기반 검색 스킵
                 const serverDetection = detectPlaceQuery(sanitizedMessage);
-                if (serverDetection.detected) {
+                if (serverDetection.detected && !serverDetection.hasSpecificLocation) {
                     nearbyPlaces = await findNearbyPlaces(
                         userLocation.lat,
                         userLocation.lng,
@@ -647,13 +648,16 @@ ${emergencyDetection.isEmergency ? "이것은 즉시 병원에 가야 하는 상
                     }
 
                     // 대화 내 사진 + 타임라인 연동
+                    // (장소 카드가 있으면 타임라인 카드는 표시하지 않음 - UI 중복 방지)
                     let matchedPhoto: { url: string; caption: string } | undefined;
                     let matchedTimeline: { date: string; title: string; content: string } | undefined;
                     if (pet.id) {
                         try {
                             const keywords = extractKeywordsFromReply(reply, pet);
                             if (keywords.length > 0) {
-                                // 사진 매칭 + 타임라인 매칭 병렬 실행
+                                // 장소 카드가 있으면 사진만 매칭 (타임라인 스킵)
+                                const hasPlaceCards = nearbyPlaces.length > 0;
+
                                 const [mediaResult, timelineResult] = await Promise.all([
                                     supabase
                                         .from("pet_media")
@@ -661,12 +665,15 @@ ${emergencyDetection.isEmergency ? "이것은 즉시 병원에 가야 하는 상
                                         .eq("pet_id", pet.id)
                                         .not("caption", "is", null)
                                         .limit(50),
-                                    supabase
-                                        .from("timeline_entries")
-                                        .select("date, title, content")
-                                        .eq("pet_id", pet.id)
-                                        .order("date", { ascending: false })
-                                        .limit(30),
+                                    // 장소 카드가 있으면 타임라인 쿼리 불필요
+                                    hasPlaceCards
+                                        ? Promise.resolve({ data: null })
+                                        : supabase
+                                            .from("timeline_entries")
+                                            .select("date, title, content, source")
+                                            .eq("pet_id", pet.id)
+                                            .order("date", { ascending: false })
+                                            .limit(30),
                                 ]);
 
                                 // 사진 매칭
@@ -683,13 +690,23 @@ ${emergencyDetection.isEmergency ? "이것은 즉시 병원에 가야 하는 상
                                     }
                                 }
 
-                                // 타임라인 매칭 (사진이 없을 때 보완)
-                                const timelineData = timelineResult.data;
-                                if (timelineData && timelineData.length > 0) {
-                                    for (const keyword of keywords) {
+                                // 타임라인 매칭 (사진/장소 카드가 없을 때만)
+                                const timelineData = timelineResult.data as { date: string; title: string; content: string }[] | null;
+                                if (!hasPlaceCards && timelineData && timelineData.length > 0) {
+                                    // 너무 일반적인 키워드(산책, 공원 등)는 타임라인 매칭에서 제외
+                                    const GENERIC_KEYWORDS = new Set(["산책", "공원", "밥", "간식", "잠", "낮잠", "놀이", "놀았", "먹었", "갔던", "바다", "산", "강"]);
+                                    const specificKeywords = keywords.filter(k => !GENERIC_KEYWORDS.has(k));
+                                    const matchKeywords = specificKeywords.length > 0 ? specificKeywords : [];
+
+                                    // 구체적인 키워드가 없으면 타임라인 매칭 스킵
+                                    for (const keyword of matchKeywords) {
                                         const match = timelineData.find(
-                                            (t) => (t.title && t.title.toLowerCase().includes(keyword.toLowerCase()))
-                                                || (t.content && t.content.toLowerCase().includes(keyword.toLowerCase()))
+                                            (t) => {
+                                                // AI 자동 생성 타임라인은 매칭에서 제외
+                                                if (t.title && t.title.startsWith("[AI 펫톡]")) return false;
+                                                return (t.title && t.title.toLowerCase().includes(keyword.toLowerCase()))
+                                                    || (t.content && t.content.toLowerCase().includes(keyword.toLowerCase()));
+                                            }
                                         );
                                         if (match) {
                                             matchedTimeline = { date: match.date, title: match.title, content: match.content };
