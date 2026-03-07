@@ -375,7 +375,7 @@ export async function POST(request: NextRequest) {
                             nearbyPlaces.map((p, i) =>
                                 `${i + 1}. ${p.name} (${p.distance}) - ${p.address}`
                             ).join("\n") +
-                            "\n위 장소들을 자연스럽게 추천해주세요. 이름과 거리를 언급하면 좋습니다.";
+                            "\n위 장소 중 1~2개를 골라 자연스럽게 추천하세요. 전부 나열하지 말고, 가본 것처럼 구체적으로 말해주세요. 예: '석계역문화공원이 가깝더라! 나무 많아서 산책하기 좋을 것 같아~'";
                     }
                 }
             } catch (err) {
