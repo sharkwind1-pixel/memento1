@@ -20,6 +20,7 @@ import {
     getClientIP,
     checkRateLimit,
     checkDailyUsageDB,
+    checkRequestCooldown,
     getRateLimitHeaders,
     sanitizeInput,
     detectPromptInjection,
@@ -281,22 +282,35 @@ export async function POST(request: NextRequest) {
         const isMemorialMode = pet.status === "memorial";
 
         // 3. 일일 사용량 체크
-        // 프리미엄: 하루 500회 상한 (토큰 소모 공격 방지, UX상 무제한 표시)
+        // 프리미엄: 무제한 (봇 방어는 IP Rate Limit + 쿨다운으로 처리)
         // 무료: 하루 10회
-        const identifier = user.id;
-        const dailyUsage = await checkDailyUsageDB(identifier, isPremium ? true : false);
+        let dailyUsage = { allowed: true, remaining: Infinity, isWarning: false };
 
-        if (dailyUsage.remaining < 0 || !dailyUsage.allowed) {
-            return NextResponse.json(
-                {
-                    error: isPremium
-                        ? "오늘 대화를 정말 많이 나눴네요! 내일 다시 이야기해요."
-                        : isMemorialMode
+        if (!isPremium) {
+            const identifier = user.id;
+            dailyUsage = await checkDailyUsageDB(identifier, false);
+
+            if (dailyUsage.remaining < 0 || !dailyUsage.allowed) {
+                return NextResponse.json(
+                    {
+                        error: isMemorialMode
                             ? `오늘은 여기까지 이야기 나눌 수 있어요. ${pet?.name || "아이"}는 내일도 여기서 기다리고 있을게요. 프리미엄 구독 시 무제한 대화가 가능합니다.`
                             : `오늘의 무료 대화 횟수(${FREE_LIMITS.DAILY_CHATS}회)를 모두 사용했어요. 프리미엄 구독 시 무제한 대화가 가능합니다!`,
-                    remaining: 0,
-                    isLimitReached: !isPremium,
-                },
+                        remaining: 0,
+                        isLimitReached: true,
+                    },
+                    { status: 429 }
+                );
+            }
+        }
+
+        // 3.5 봇 방어: 요청 간 최소 간격 (사람은 최소 3초, 봇은 0.1초)
+        // 프리미엄/무료 모두 적용 — 정상 유저는 절대 안 걸림
+        const cooldownCheck = checkRequestCooldown(user.id);
+        if (!cooldownCheck.allowed) {
+            // 봇처럼 빠르게 연속 요청 시 점점 느려지게 (429 응답)
+            return NextResponse.json(
+                { error: `${pet?.name || "반려동물"}이(가) 아직 생각하고 있어요~ 잠시만 기다려주세요!` },
                 { status: 429 }
             );
         }

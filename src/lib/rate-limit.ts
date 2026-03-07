@@ -15,6 +15,8 @@ const ipRequestCounts = new Map<string, { count: number; resetTime: number }>();
 const ipBlockList = new Map<string, number>(); // IP -> 차단 해제 시간
 const userDailyUsage = new Map<string, { count: number; date: string }>();
 const vpnCheckCache = new Map<string, { isVPN: boolean; isProxy: boolean; isDatacenter: boolean; checkedAt: number }>(); // VPN 체크 캐시
+// 유저별 마지막 요청 시각 + 연속 빠른 요청 횟수 (봇 감지용)
+const userLastRequest = new Map<string, { lastTime: number; fastCount: number }>();
 
 // Rate Limit 설정
 const RATE_LIMITS = {
@@ -28,7 +30,7 @@ const RATE_LIMITS = {
         windowMs: 60 * 1000, // 1분
         maxRequests: 10, // 분당 10회
         dailyLimit: FREE_LIMITS.DAILY_CHATS, // 무료 회원 일일 제한 (10회)
-        dailyLimitAuth: 500, // 프리미엄 회원 일일 상한 (토큰 소모 공격 방지, UX상 무제한 표시)
+        dailyLimitAuth: 200, // 베이직 회원용 (프리미엄은 route.ts에서 무제한 처리)
     },
     // 인증 관련 (브루트포스 방지)
     auth: {
@@ -872,6 +874,52 @@ export function getRateLimitHeaders(
 }
 
 /**
+ * 유저별 요청 쿨다운 (봇/스크립트 방어)
+ * - 사람: 메시지 작성 + AI 응답 읽기 = 최소 3~5초 간격
+ * - 봇: 0.1초 간격으로 연속 호출 가능
+ * - 연속 빠른 요청(2초 미만) 감지 시 쿨다운 점점 증가 (3초 → 5초 → 10초)
+ * - 유저 ID 기반이라 VPN으로도 우회 불가
+ */
+export function checkRequestCooldown(userId: string): { allowed: boolean } {
+    const now = Date.now();
+    const record = userLastRequest.get(userId);
+
+    if (!record) {
+        // 첫 요청 — 무조건 허용
+        userLastRequest.set(userId, { lastTime: now, fastCount: 0 });
+        return { allowed: true };
+    }
+
+    const elapsed = now - record.lastTime;
+
+    // 2초 미만 간격 = 비정상적으로 빠름 (사람은 이렇게 못 침)
+    if (elapsed < 2000) {
+        record.fastCount++;
+        record.lastTime = now;
+
+        // 연속 빠른 요청 3회부터 차단 시작
+        // 1~2회: 네트워크 더블 클릭/재시도 등 허용
+        // 3회+: 봇 확정 → 쿨다운 점점 증가
+        if (record.fastCount >= 3) {
+            // 쿨다운: 3회=3초, 5회=5초, 10회+=10초
+            const cooldownMs = record.fastCount >= 10 ? 10000
+                : record.fastCount >= 5 ? 5000
+                : 3000;
+
+            if (elapsed < cooldownMs) {
+                return { allowed: false };
+            }
+        }
+    } else {
+        // 정상 간격 → fastCount 서서히 감소 (정상 사용으로 복귀 허용)
+        record.fastCount = Math.max(0, record.fastCount - 1);
+    }
+
+    record.lastTime = now;
+    return { allowed: true };
+}
+
+/**
  * AI 출력 검증 (시스템 정보 누출 방지)
  * 모든 AI 응답에서 실행 — 프롬프트 인젝션 성공 시에도 민감 정보 유출 차단
  * @returns { cleaned: string, leaked: boolean, leakTypes: string[] }
@@ -989,6 +1037,13 @@ export function cleanupExpiredRecords(): void {
     ipBlockList.forEach((blockUntil, ip) => {
         if (now > blockUntil) {
             ipBlockList.delete(ip);
+        }
+    });
+
+    // 쿨다운 기록 정리 (10분 이상 비활성 유저)
+    userLastRequest.forEach((record, userId) => {
+        if (now - record.lastTime > 10 * 60 * 1000) {
+            userLastRequest.delete(userId);
         }
     });
 }
