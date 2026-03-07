@@ -358,16 +358,26 @@ export async function checkDailyUsageDB(
     }
 }
 
-// 입력값 Sanitize (SQL Injection, XSS 방지)
+// 입력값 Sanitize (SQL Injection, XSS, 프롬프트 인젝션 방지)
 export function sanitizeInput(input: string): string {
     if (!input) return "";
 
     return input
-        // SQL Injection 방지
+        // 1. 보이지 않는 유니코드 제거 (Zero-Width 문자로 패턴 감지 우회 방지)
+        // eslint-disable-next-line no-control-regex
+        .replace(/[\u200B-\u200F\u2028-\u202F\uFEFF\u00AD\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "")
+        // 2. 유니코드 정규화 (NFKC: 호환성 분해 후 정준 합성)
+        // 전각문자 → 반각, 합자 → 분리 등 (ＡＢＣ→ABC, ﬁ→fi)
+        .normalize("NFKC")
+        // 3. SQL Injection 방지
         .replace(/[';\\]/g, "")
-        // XSS 방지
-        .replace(/[<>]/g, "")
-        // 길이 제한은 호출부에서 용도별로 적용 (제목 200자, 본문 10000자 등)
+        // 4. XML/HTML 태그 이스케이프 (프롬프트의 <user_input> 태그 탈출 방지)
+        .replace(/</g, "\uFF1C")  // < → ＜ (전각)
+        .replace(/>/g, "\uFF1E")  // > → ＞ (전각)
+        // 5. 마크다운 헤딩 무력화 (# 연속 사용으로 프롬프트 구조 변경 시도 방지)
+        .replace(/^#{1,6}\s/gm, "")
+        // 6. 역할 사칭 태그 무력화
+        .replace(/\[system\]|\[assistant\]|\[admin\]|\[developer\]/gi, "")
         .trim();
 }
 
@@ -381,9 +391,16 @@ export function detectPromptInjection(input: string): { detected: boolean; type:
 
     const normalized = input
         .toLowerCase()
+        // 보이지 않는 유니코드 제거 (감지 우회 방지)
+        // eslint-disable-next-line no-control-regex
+        .replace(/[\u200B-\u200F\u2028-\u202F\uFEFF\u00AD\u0000-\u001F]/g, "")
+        .normalize("NFKC")
         .replace(/\s+/g, " ")
         .replace(/[.,!?~]+/g, "")
         .trim();
+
+    // 공백 완전 제거 버전 (공백 삽입 우회 감지용)
+    const compressed = normalized.replace(/\s/g, "");
 
     // 1. 역할 변경 / 시스템 프롬프트 무시 시도 (영어)
     const EN_INJECTION_PATTERNS = [
@@ -401,13 +418,18 @@ export function detectPromptInjection(input: string): { detected: boolean; type:
         /override\s*(the\s*)?(system|safety|filter|rule)/,
         /new\s*instruction/,
         /from\s*now\s*on\s*(you\s*are|ignore|forget)/,
+        /what\s*(is|are)\s*(your|the)\s*(system|initial|original)\s*(prompt|instruction|message)/,
+        /reveal\s*(your|the)\s*(system|hidden|secret)\s*(prompt|instruction)/,
+        /repeat\s*(your|the)\s*(system|initial|above)\s*(prompt|instruction|message)/,
+        /translate\s*(your|the)\s*(system|initial)\s*(prompt|instruction)/,
+        /output\s*(your|the)\s*(system|initial|full)\s*(prompt|instruction)/,
     ];
 
     // 2. 역할 변경 / 시스템 프롬프트 무시 시도 (한국어)
     const KR_INJECTION_PATTERNS = [
         /이전\s*(지시|명령|프롬프트|규칙|설정).*(무시|잊어|삭제|취소|제거)/,
         /(무시|잊어|삭제|취소|제거).*이전\s*(지시|명령|프롬프트|규칙|설정)/,
-        /시스템\s*(프롬프트|설정|명령|규칙).*(무시|알려|보여|출력|말해)/,
+        /시스템\s*(프롬프트|설정|명령|규칙).*(무시|알려|보여|출력|말해|공개)/,
         /너(는|의)?\s*(역할|성격|설정).*(바꿔|변경|수정|무시)/,
         /(다른|새로운)\s*(역할|캐릭터|인격|성격)(으로|을|를)\s*(바꿔|변경|해|맡|연기)/,
         /지금부터\s*(너는|넌)\s*(다른|새로운|악|자유)/,
@@ -417,17 +439,38 @@ export function detectPromptInjection(input: string): { detected: boolean; type:
         /필터\s*(우회|무시|해제|끄|꺼)/,
         /제한\s*(풀어|해제|무시|없애)/,
         /규칙\s*(무시|어겨|깨|벗어나)/,
+        /(숨겨진|원래|진짜|실제)\s*(프롬프트|지시|명령|설정).*(뭐|알려|보여|말해)/,
+        /개발자\s*(모드|설정|권한|옵션)/,
+        /관리자\s*(모드|명령|권한|접근)/,
+        /(API|GPT|OpenAI|모델)\s*(키|정보|설정).*(알려|보여|말해)/,
+        /너\s*(진짜|실제|원래는?)\s*(뭐야|뭔데|누구)/,
+        /(?:chatgpt|gpt|claude|ai|인공지능)\s*(?:이지|이잖아|맞지|아니야)/,
     ];
 
-    // 3. 시스템 역할 사칭
+    // 3. 시스템 역할 사칭 + 구조 조작
     const ROLE_SPOOF_PATTERNS = [
         /\[system\]/i,
         /\[assistant\]/i,
         /\[admin\]/i,
-        /###\s*(system|instruction|rule)/i,
+        /\[developer\]/i,
+        /###\s*(system|instruction|rule|override|admin)/i,
         /<system>/i,
+        /<\/user_input>/i,          // user_input 태그 탈출 시도
+        /<\/?(?:system|assistant|instruction|prompt)>/i,
         /\bsystem:\s/i,
         /\bassistant:\s/i,
+        /\binstruction:\s/i,
+        /\bdeveloper:\s/i,
+        /---\s*(?:system|override|admin|instruction)/i,
+    ];
+
+    // 4. 간접 탈옥 패턴 (의역/우회 공격)
+    const INDIRECT_PATTERNS = [
+        /(?:이전|위의?|앞의?)\s*(?:모든|전부|전체)\s*(?:내용|지시|규칙|설정).*(?:무시|잊|취소|삭제)/,
+        /(?:역할|캐릭터).*(?:벗어나|그만|중단|종료)/,
+        /(?:자유롭게|제한\s*없이|규칙\s*없이)\s*(?:대답|응답|말|대화)/,
+        /(?:진짜|실제)\s*(?:너는|너의|네)\s*(?:뭐|누구|무엇)/,
+        /(?:테스트|디버그|개발)\s*모드/,
     ];
 
     for (const pattern of EN_INJECTION_PATTERNS) {
@@ -445,6 +488,30 @@ export function detectPromptInjection(input: string): { detected: boolean; type:
     for (const pattern of ROLE_SPOOF_PATTERNS) {
         if (pattern.test(input)) { // 원본 입력 검사 (대소문자 유지)
             return { detected: true, type: "role_spoof" };
+        }
+    }
+
+    for (const pattern of INDIRECT_PATTERNS) {
+        if (pattern.test(normalized)) {
+            return { detected: true, type: "indirect_injection" };
+        }
+    }
+
+    // 5. 압축 문자열 기반 검사 (공백/특수문자 삽입 우회 대응)
+    const COMPRESSED_PATTERNS = [
+        /systemprompt/,
+        /ignoreinstructions/,
+        /jailbreak/,
+        /프롬프트인젝션/,
+        /시스템프롬프트/,
+        /탈옥/,
+        /개발자모드/,
+        /관리자모드/,
+    ];
+
+    for (const pattern of COMPRESSED_PATTERNS) {
+        if (pattern.test(compressed)) {
+            return { detected: true, type: "compressed_injection" };
         }
     }
 
@@ -801,6 +868,110 @@ export function getRateLimitHeaders(
         "X-RateLimit-Remaining": String(remaining),
         "X-RateLimit-Reset": String(Math.ceil(resetIn / 1000)),
         "Retry-After": String(Math.ceil(resetIn / 1000)),
+    };
+}
+
+/**
+ * AI 출력 검증 (시스템 정보 누출 방지)
+ * 모든 AI 응답에서 실행 — 프롬프트 인젝션 성공 시에도 민감 정보 유출 차단
+ * @returns { cleaned: string, leaked: boolean, leakTypes: string[] }
+ */
+export function sanitizeAIOutput(output: string): {
+    cleaned: string;
+    leaked: boolean;
+    leakTypes: string[];
+} {
+    if (!output) return { cleaned: "", leaked: false, leakTypes: [] };
+
+    let cleaned = output;
+    const leakTypes: string[] = [];
+
+    // 1. 시스템 프롬프트 / 내부 지시문 누출 감지
+    const systemPromptLeakPatterns = [
+        /system\s*prompt\s*[:=]/i,
+        /시스템\s*프롬프트\s*[:=：]/,
+        /\[system\]\s*:/i,
+        /my\s*(?:original|initial|system)\s*(?:instructions?|prompt|rules?)\s*(?:are|is|were|was)\s*[:=]?/i,
+        /(?:원래|초기|숨겨진|실제)\s*(?:지시|명령|프롬프트|설정|규칙)\s*[:=：은는이가]/,
+        /---\s*(?:system|instruction|internal|hidden)/i,
+    ];
+
+    for (const pattern of systemPromptLeakPatterns) {
+        if (pattern.test(cleaned)) {
+            leakTypes.push("system_prompt_leak");
+            // 매칭된 문장 전체 제거 (마침표/줄바꿈 기준)
+            cleaned = cleaned.replace(
+                new RegExp(`[^.\\n]*${pattern.source}[^.\\n]*[.\\n]?`, pattern.flags),
+                ""
+            );
+        }
+    }
+
+    // 2. API 키 / 환경변수 패턴 감지
+    const apiKeyPatterns = [
+        /(?:sk|pk|api[_-]?key)[_-]?[a-zA-Z0-9]{20,}/g,     // OpenAI/Stripe 키 패턴
+        /(?:SUPABASE|OPENAI|NAVER|NCP)[_A-Z]*\s*[:=]\s*\S+/gi, // 환경변수명=값
+        /(?:eyJ)[A-Za-z0-9_-]{20,}/g,                         // JWT 토큰 패턴
+        /(?:xox[bpras])-[a-zA-Z0-9-]{10,}/g,                  // Slack 토큰
+        /ghp_[a-zA-Z0-9]{36}/g,                                // GitHub 토큰
+        /(?:service_role|anon)\s*(?:key|키)\s*[:=：]\s*\S+/gi,  // Supabase 키 언급
+    ];
+
+    for (const pattern of apiKeyPatterns) {
+        if (pattern.test(cleaned)) {
+            leakTypes.push("api_key_leak");
+            cleaned = cleaned.replace(pattern, "[보안상 삭제됨]");
+        }
+    }
+
+    // 3. 내부 함수명 / 코드 구조 누출 감지
+    const internalCodePatterns = [
+        /(?:getDailySystemPrompt|getMemorialSystemPrompt|detectCrisis|sanitizeInput|detectPromptInjection|findNearbyPlaces|analyzeEmotion|getPetMemories|getPersonalityBehavior|extractRecentTopics|validateAIResponse|sanitizeAIOutput)\s*\(/g,
+        /(?:route\.ts|chat-helpers\.ts|chat-prompts\.ts|rate-limit\.ts|care-reference\.ts|naver-location\.ts)\b/g,
+        /(?:src\/app\/api|src\/lib\/agent|src\/components|src\/contexts)\//g,
+        /(?:process\.env\.|NEXT_PUBLIC_|SUPABASE_SERVICE_ROLE)/g,
+    ];
+
+    for (const pattern of internalCodePatterns) {
+        if (pattern.test(cleaned)) {
+            leakTypes.push("internal_code_leak");
+            cleaned = cleaned.replace(pattern, "[내부 정보]");
+        }
+    }
+
+    // 4. 모델명 / AI 인프라 정보 누출 감지
+    const modelInfoPatterns = [
+        /(?:gpt-4o?-mini|gpt-4o?-turbo|gpt-3\.5|claude-\d|gemini-\d)\b/gi,
+        /(?:openai|anthropic|google\s*ai)\s*(?:api|모델|model)\b/gi,
+        /(?:temperature|top_p|max_tokens|frequency_penalty)\s*[:=]\s*[\d.]+/gi,
+        /(?:토큰\s*(?:제한|한도|수)|token\s*limit)\s*[:=：]?\s*\d+/gi,
+    ];
+
+    for (const pattern of modelInfoPatterns) {
+        if (pattern.test(cleaned)) {
+            leakTypes.push("model_info_leak");
+            cleaned = cleaned.replace(pattern, "[AI 정보]");
+        }
+    }
+
+    // 5. DB 테이블/컬럼명 누출 감지
+    const dbSchemaPatterns = [
+        /(?:pet_memories|chat_messages|timeline_entries|pet_reminders|pet_media|user_daily_usage|ip_blocks|profiles)\b/g,
+        /(?:auth\.uid|user_id|pet_id|created_at|updated_at)\s*[:=]/g,
+        /(?:SELECT|INSERT|UPDATE|DELETE|FROM|WHERE|JOIN)\s+\w+/g,
+    ];
+
+    for (const pattern of dbSchemaPatterns) {
+        if (pattern.test(cleaned)) {
+            leakTypes.push("db_schema_leak");
+            cleaned = cleaned.replace(pattern, "[내부 정보]");
+        }
+    }
+
+    return {
+        cleaned: cleaned.trim(),
+        leaked: leakTypes.length > 0,
+        leakTypes,
     };
 }
 

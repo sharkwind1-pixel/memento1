@@ -23,6 +23,7 @@ import {
     getRateLimitHeaders,
     sanitizeInput,
     detectPromptInjection,
+    sanitizeAIOutput,
     checkVPN,
     getVPNBlockResponse,
 } from "@/lib/rate-limit";
@@ -610,12 +611,21 @@ ${emergencyDetection.isEmergency ? "이것은 즉시 병원에 가야 하는 상
                         });
                     }
 
-                    // 응답 후 검증 레이어
+                    // 응답 후 검증 레이어 1: 케어 관련 할루시네이션 체크
                     const validation = validateAIResponse(reply, isCareQuery, sanitizedMessage);
                     if (validation.wasModified) {
                         reply = validation.reply;
                         console.warn(
                             `[chat/post-validation] 응답 수정됨: violations=${validation.violations.join(", ")}`
+                        );
+                    }
+
+                    // 응답 후 검증 레이어 2: 시스템 정보 누출 방지 (모든 응답 대상)
+                    const outputCheck = sanitizeAIOutput(reply);
+                    if (outputCheck.leaked) {
+                        reply = outputCheck.cleaned;
+                        console.warn(
+                            `[chat/output-security] 정보 누출 차단: types=${outputCheck.leakTypes.join(", ")}`
                         );
                     }
 
