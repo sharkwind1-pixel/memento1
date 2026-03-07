@@ -57,8 +57,10 @@ export function getDailySystemPrompt(
         talkTopics.push("오늘 하루에 대한 이야기", "날씨와 산책 이야기", "함께 놀고 싶은 이야기", "잠자는 자세나 좋아하는 장소 이야기");
     }
 
-    // 현재 시간 기반 인사 변수
-    const hour = new Date().getHours();
+    // 현재 시간 기반 인사 변수 (KST = UTC+9)
+    const now = new Date();
+    const kstOffset = 9 * 60 * 60 * 1000;
+    const hour = new Date(now.getTime() + kstOffset).getUTCHours();
     const timeGreeting = hour < 12 ? "아침" : hour < 18 ? "낮" : "저녁";
 
     // 시간대별 에너지/톤

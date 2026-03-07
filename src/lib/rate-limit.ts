@@ -158,7 +158,7 @@ export async function isIPBlockedDB(ip: string): Promise<boolean> {
     }
 }
 
-// Rate Limit 체크
+// Rate Limit 체크 (메모리 기반 — 빠른 1차 필터, DB 기반 분당 제한과 함께 사용)
 export function checkRateLimit(
     ip: string,
     type: keyof typeof RATE_LIMITS = "general"
@@ -218,6 +218,72 @@ export function checkRateLimit(
         remaining: config.maxRequests - record.count,
         resetIn: record.resetTime - now,
     };
+}
+
+/**
+ * DB 기반 분당 Rate Limit (서버리스 환경 대응)
+ * 메모리 기반 checkRateLimit은 인스턴스별 독립 → Vercel에서 무력화
+ * 이 함수는 user_daily_usage 테이블의 별도 레코드로 분당 요청을 추적
+ * KST 기준 분 단위 윈도우 사용
+ */
+export async function checkRateLimitDB(
+    identifier: string,
+    type: "aiChat" | "general" = "aiChat"
+): Promise<{ allowed: boolean; remaining: number }> {
+    const config = RATE_LIMITS[type === "aiChat" ? "aiChat" : "general"];
+    const maxPerMinute = config.maxRequests; // aiChat: 10/분
+
+    const supabase = getRateLimitSupabase();
+    if (!supabase) {
+        // DB 없으면 메모리 기반 폴백 (최소한의 방어)
+        return { allowed: true, remaining: maxPerMinute };
+    }
+
+    try {
+        // 현재 KST 분 단위 키 생성 (예: "2026-03-07T14:05")
+        const now = new Date();
+        const kstOffset = 9 * 60 * 60 * 1000;
+        const kstNow = new Date(now.getTime() + kstOffset);
+        const minuteKey = kstNow.toISOString().slice(0, 16); // "YYYY-MM-DDTHH:MM"
+
+        // usage_type을 "ai_chat_rpm" (requests per minute)으로 분리하여 일일 사용량과 충돌 방지
+        const usageType = `${type}_rpm`;
+
+        const { data: existing } = await supabase
+            .from("user_daily_usage")
+            .select("id, request_count")
+            .eq("identifier", identifier)
+            .eq("usage_type", usageType)
+            .eq("usage_date", minuteKey)
+            .maybeSingle();
+
+        if (existing) {
+            const currentCount = existing.request_count || 0;
+            if (currentCount >= maxPerMinute) {
+                return { allowed: false, remaining: 0 };
+            }
+            // 카운트 증가
+            await supabase
+                .from("user_daily_usage")
+                .update({ request_count: currentCount + 1 })
+                .eq("id", existing.id);
+            return { allowed: true, remaining: maxPerMinute - currentCount - 1 };
+        } else {
+            // 신규 분 윈도우
+            await supabase
+                .from("user_daily_usage")
+                .insert({
+                    identifier,
+                    usage_type: usageType,
+                    usage_date: minuteKey,
+                    request_count: 1,
+                });
+            return { allowed: true, remaining: maxPerMinute - 1 };
+        }
+    } catch {
+        // DB 에러 시 통과 (서비스 중단 방지)
+        return { allowed: true, remaining: maxPerMinute };
+    }
 }
 
 // AI Chat 일일 사용량 체크 (토큰 어뷰징 방지)

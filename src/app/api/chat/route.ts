@@ -19,6 +19,7 @@ import { API, FREE_LIMITS } from "@/config/constants";
 import {
     getClientIP,
     checkRateLimit,
+    checkRateLimitDB,
     checkDailyUsageDB,
     checkRequestCooldown,
     checkGlobalDailyLimit,
@@ -65,6 +66,7 @@ import {
     getSpecialDayContext,
 } from "./chat-helpers";
 import { getDailySystemPrompt, getMemorialSystemPrompt } from "./chat-prompts";
+import * as agent from "@/lib/agent";
 
 // ---- 싱글턴 ----
 
@@ -86,11 +88,6 @@ function getOpenAI(): OpenAI {
         });
     }
     return openaiInstance;
-}
-
-// agent 모듈 동적 import 함수
-async function getAgentModule() {
-    return await import("@/lib/agent");
 }
 
 // ---- POST 핸들러 ----
@@ -145,6 +142,16 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // 1.7. DB 기반 분당 Rate Limit (서버리스 인스턴스 간 공유)
+        // 메모리 기반 checkRateLimit은 1차 필터, 이것이 실질적 분당 제한
+        const dbRateLimit = await checkRateLimitDB(user.id, "aiChat");
+        if (!dbRateLimit.allowed) {
+            return NextResponse.json(
+                { error: "요청이 너무 빠릅니다. 잠시 후 다시 시도해주세요." },
+                { status: 429 }
+            );
+        }
+
         // 프리미엄 상태 확인 (서버 검증 - 보안 중요)
         const supabase = await createServerSupabase();
         const { data: profile } = await supabase
@@ -158,9 +165,6 @@ export async function POST(request: NextRequest) {
 
         // 온보딩 데이터 추출 (AI 개인화에 활용)
         const onboardingData = profile?.onboarding_data as OnboardingContext | null;
-
-        // agent 모듈 동적 import (런타임에만 로드)
-        const agent = await getAgentModule();
 
         const body = await request.json();
         const {
@@ -525,8 +529,20 @@ export async function POST(request: NextRequest) {
             || emergencyDetection.isEmergency
             || emergencyDetection.isUrgent;
 
-        // 첫 대화 감지: 대화 기록이 없으면 첫 대화
-        const isFirstChat = chatHistory.length === 0;
+        // 첫 대화 감지: 클라이언트 chatHistory가 아닌 DB 기반으로 판단
+        // "새 대화" 버튼을 눌러도 이미 대화한 펫이면 자기소개 반복 안 함
+        let isFirstChat = chatHistory.length === 0;
+        if (isFirstChat && pet.id) {
+            const { count } = await supabase
+                .from("chat_messages")
+                .select("id", { count: "exact", head: true })
+                .eq("pet_id", pet.id)
+                .eq("user_id", user.id)
+                .limit(1);
+            if (count && count > 0) {
+                isFirstChat = false; // DB에 이전 대화 있음 → 첫 대화 아님
+            }
+        }
 
         // 모드에 따른 시스템 프롬프트 선택
         let systemPrompt =
@@ -682,14 +698,18 @@ ${emergencyDetection.isEmergency ? "이것은 즉시 병원에 가야 하는 상
                     }
 
                     // 추모 모드: 느낌표 후처리
+                    // 문장별로 느낌표 1개까지만 허용 (전체가 아님)
                     if (isMemorialMode) {
                         reply = reply.replace(/!{3,}/g, ".");
                         reply = reply.replace(/!!/g, "~");
-                        let exclamationCount = 0;
-                        reply = reply.replace(/!/g, () => {
-                            exclamationCount++;
-                            return exclamationCount <= 1 ? "!" : ".";
-                        });
+                        // 문장 단위로 분리 → 각 문장에서 느낌표 1개만 허용
+                        reply = reply.split(/(?<=[.~?])\s+/).map(sentence => {
+                            let count = 0;
+                            return sentence.replace(/!/g, () => {
+                                count++;
+                                return count <= 1 ? "!" : ".";
+                            });
+                        }).join(" ");
                     }
 
                     // 응답 후 검증 레이어 1: 케어 관련 할루시네이션 체크
