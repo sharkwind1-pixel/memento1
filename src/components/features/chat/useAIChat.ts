@@ -18,6 +18,7 @@ import {
     DAILY_FREE_LIMIT,
     getDailyUsage,
     incrementDailyUsage,
+    decrementDailyUsage,
     generatePersonalizedGreeting,
 } from "@/components/features/chat";
 import { authFetch } from "@/lib/auth-fetch";
@@ -250,6 +251,27 @@ export function useAIChat({
                         data.messages.map((msg: ChatMessage) => ({
                             ...msg,
                             timestamp: new Date(msg.timestamp),
+                        }))
+                    );
+                    return;
+                }
+
+                // ai_chats에 없으면 chat_messages(서버 정본)에서 폴백 로딩
+                const { data: serverMessages } = await supabase
+                    .from("chat_messages")
+                    .select("role, content, created_at")
+                    .eq("pet_id", selectedPetId)
+                    .eq("user_id", user.id)
+                    .order("created_at", { ascending: true })
+                    .limit(30);
+
+                if (serverMessages && serverMessages.length > 0) {
+                    setMessages(
+                        serverMessages.map((msg, i) => ({
+                            id: `restored-${i}`,
+                            role: msg.role === "user" ? "user" as const : "pet" as const,
+                            content: msg.content,
+                            timestamp: new Date(msg.created_at),
                         }))
                     );
                     return;
@@ -693,6 +715,15 @@ export function useAIChat({
                 }, 1200);
             }
         } catch (err) {
+            // API 실패 시 사용량 복구 (차감한 1회를 되돌림)
+            const restoredUsage = decrementDailyUsage();
+            setDailyUsage(restoredUsage);
+
+            // 빈 스트리밍 메시지 버블 제거 (content가 비어있는 pet 메시지)
+            setMessages((prev) =>
+                prev.filter((msg) => !(msg.role === "pet" && (!msg.content || msg.content.trim() === "")))
+            );
+
             // 에러 유형별 시스템 메시지 표시 (채팅 내 인라인)
             const errorMessage =
                 err instanceof Error ? err.message : "";

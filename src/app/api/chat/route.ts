@@ -15,7 +15,7 @@ import OpenAI from "openai";
 import { createClient } from "@supabase/supabase-js";
 import { awardPoints } from "@/lib/points";
 import { getAuthUser, createServerSupabase } from "@/lib/supabase-server";
-import { API, FREE_LIMITS } from "@/config/constants";
+import { API, FREE_LIMITS, AI_INPUT_LIMITS } from "@/config/constants";
 import {
     getClientIP,
     checkRateLimit,
@@ -217,7 +217,7 @@ export async function POST(request: NextRequest) {
 
         // 0. 요청 body 전체 크기 제한 (직렬화 비용도 방어)
         const bodyStr = JSON.stringify(body);
-        if (bodyStr.length > 100_000) { // 100KB 이하
+        if (bodyStr.length > AI_INPUT_LIMITS.BODY_MAX_BYTES) {
             return NextResponse.json(
                 { error: "요청 데이터가 너무 큽니다." },
                 { status: 413 }
@@ -225,17 +225,16 @@ export async function POST(request: NextRequest) {
         }
 
         // 1. 메시지 길이 제한
-        if (typeof message !== "string" || message.length > 1000) {
+        if (typeof message !== "string" || message.length > AI_INPUT_LIMITS.MESSAGE_MAX_LENGTH) {
             return NextResponse.json(
-                { error: "메시지가 너무 길어요. 1000자 이내로 작성해주세요." },
+                { error: `메시지가 너무 길어요. ${AI_INPUT_LIMITS.MESSAGE_MAX_LENGTH}자 이내로 작성해주세요.` },
                 { status: 400 }
             );
         }
 
         // 2. pet 객체 텍스트 필드 길이 제한 (시스템 프롬프트 팽창 방지)
-        const PET_FIELD_MAX = 200;
-        const trunc = (v: string) => v.length > PET_FIELD_MAX ? v.slice(0, PET_FIELD_MAX) : v;
-        const truncOpt = (v?: string) => v && v.length > PET_FIELD_MAX ? v.slice(0, PET_FIELD_MAX) : v;
+        const trunc = (v: string) => v.length > AI_INPUT_LIMITS.PET_FIELD_MAX_LENGTH ? v.slice(0, AI_INPUT_LIMITS.PET_FIELD_MAX_LENGTH) : v;
+        const truncOpt = (v?: string) => v && v.length > AI_INPUT_LIMITS.PET_FIELD_MAX_LENGTH ? v.slice(0, AI_INPUT_LIMITS.PET_FIELD_MAX_LENGTH) : v;
         pet.name = trunc(pet.name);
         pet.breed = trunc(pet.breed);
         pet.personality = trunc(pet.personality);
@@ -248,45 +247,44 @@ export async function POST(request: NextRequest) {
         pet.memorableMemory = truncOpt(pet.memorableMemory);
 
         // 3. 배열 크기 + 항목별 길이 제한
-        if (chatHistory.length > 30) {
-            chatHistory.splice(0, chatHistory.length - 30);
+        if (chatHistory.length > AI_INPUT_LIMITS.CHAT_HISTORY_MAX_ITEMS) {
+            chatHistory.splice(0, chatHistory.length - AI_INPUT_LIMITS.CHAT_HISTORY_MAX_ITEMS);
         }
-        // chatHistory 각 항목 content 길이 제한 (GPT 컨텍스트에 직접 들어감)
         for (const msg of chatHistory) {
-            if (msg.content && typeof msg.content === "string" && msg.content.length > 1000) {
-                msg.content = msg.content.slice(0, 1000);
+            if (msg.content && typeof msg.content === "string" && msg.content.length > AI_INPUT_LIMITS.CHAT_HISTORY_CONTENT_MAX) {
+                msg.content = msg.content.slice(0, AI_INPUT_LIMITS.CHAT_HISTORY_CONTENT_MAX);
             }
         }
-        if (timeline.length > 20) {
-            timeline.splice(0, timeline.length - 20);
+        if (timeline.length > AI_INPUT_LIMITS.TIMELINE_MAX_ITEMS) {
+            timeline.splice(0, timeline.length - AI_INPUT_LIMITS.TIMELINE_MAX_ITEMS);
         }
         for (const entry of timeline) {
-            if (entry.content && typeof entry.content === "string" && entry.content.length > 300) {
-                entry.content = entry.content.slice(0, 300);
+            if (entry.content && typeof entry.content === "string" && entry.content.length > AI_INPUT_LIMITS.TIMELINE_CONTENT_MAX) {
+                entry.content = entry.content.slice(0, AI_INPUT_LIMITS.TIMELINE_CONTENT_MAX);
             }
-            if (entry.title && typeof entry.title === "string" && entry.title.length > 100) {
-                entry.title = entry.title.slice(0, 100);
+            if (entry.title && typeof entry.title === "string" && entry.title.length > AI_INPUT_LIMITS.TIMELINE_TITLE_MAX) {
+                entry.title = entry.title.slice(0, AI_INPUT_LIMITS.TIMELINE_TITLE_MAX);
             }
         }
-        if (photoMemories.length > 20) {
-            photoMemories.splice(0, photoMemories.length - 20);
+        if (photoMemories.length > AI_INPUT_LIMITS.PHOTO_MAX_ITEMS) {
+            photoMemories.splice(0, photoMemories.length - AI_INPUT_LIMITS.PHOTO_MAX_ITEMS);
         }
         for (const photo of photoMemories) {
-            if (photo.caption && typeof photo.caption === "string" && photo.caption.length > 200) {
-                photo.caption = photo.caption.slice(0, 200);
+            if (photo.caption && typeof photo.caption === "string" && photo.caption.length > AI_INPUT_LIMITS.PHOTO_CAPTION_MAX) {
+                photo.caption = photo.caption.slice(0, AI_INPUT_LIMITS.PHOTO_CAPTION_MAX);
             }
         }
-        if (reminders.length > 30) {
-            reminders.splice(0, reminders.length - 30);
+        if (reminders.length > AI_INPUT_LIMITS.REMINDER_MAX_ITEMS) {
+            reminders.splice(0, reminders.length - AI_INPUT_LIMITS.REMINDER_MAX_ITEMS);
         }
         for (const rem of reminders) {
-            if (rem.title && typeof rem.title === "string" && rem.title.length > 100) {
-                rem.title = rem.title.slice(0, 100);
+            if (rem.title && typeof rem.title === "string" && rem.title.length > AI_INPUT_LIMITS.REMINDER_TITLE_MAX) {
+                rem.title = rem.title.slice(0, AI_INPUT_LIMITS.REMINDER_TITLE_MAX);
             }
         }
 
         // 4. placeKeyword 길이 제한
-        if (placeKeyword && typeof placeKeyword === "string" && placeKeyword.length > 50) {
+        if (placeKeyword && typeof placeKeyword === "string" && placeKeyword.length > AI_INPUT_LIMITS.PLACE_KEYWORD_MAX) {
             return NextResponse.json(
                 { error: "검색어가 너무 깁니다." },
                 { status: 400 }
@@ -520,7 +518,7 @@ export async function POST(request: NextRequest) {
             ];
         // 위기/응급 프롬프트가 예산 밖에서 추가되므로 여유 확보
         // 위기(high) ~380자 + 응급 ~200자 = 최대 ~580자 추가 가능
-        const maxContextChars = isMemorialMode ? 2200 : 2500;
+        const maxContextChars = isMemorialMode ? AI_INPUT_LIMITS.CONTEXT_BUDGET_MEMORIAL : AI_INPUT_LIMITS.CONTEXT_BUDGET_DAILY;
         const combinedContext = buildPrioritizedContext(contextItems, maxContextChars);
 
         // 케어 관련 질문 감지 (조건부 프롬프트 삽입용)
@@ -571,11 +569,11 @@ ${emergencyDetection.isEmergency ? "이것은 즉시 병원에 가야 하는 상
 
         // 대화 히스토리 구성 (최근 10개 - 더 긴 맥락으로 반복 방지 강화)
         // role 필터링: "system" 주입 방지 (런타임에서 user/assistant만 허용)
-        const recentHistory = chatHistory.slice(-10)
+        const recentHistory = chatHistory.slice(-AI_INPUT_LIMITS.RECENT_HISTORY_COUNT)
             .filter((msg) => msg.role === "user" || msg.role === "assistant")
             .map((msg) => ({
                 role: msg.role as "user" | "assistant",
-                content: String(msg.content).slice(0, 1000),
+                content: String(msg.content).slice(0, AI_INPUT_LIMITS.CHAT_HISTORY_CONTENT_MAX),
             }));
 
         // OpenAI API 스트리밍 호출 (SSE로 실시간 응답)
@@ -590,8 +588,10 @@ ${emergencyDetection.isEmergency ? "이것은 즉시 병원에 가야 하는 상
             ],
             max_tokens: 500, // 응답 본문(~200) + SUGGESTIONS(~150) + PENDING_TOPIC(~50) + 여유
             temperature: mode === "memorial" ? API.AI_TEMPERATURE_MEMORIAL : API.AI_TEMPERATURE_DAILY,
-            presence_penalty: 0.7,
-            frequency_penalty: 0.6,
+            // 추모 모드: "무지개다리","기억","따뜻한" 등 핵심 단어를 과도하게 억제하지 않도록 낮춤
+            // → 밝고 따뜻한 톤 유지 (컨셉: 슬프지 않지만 위로가 되는)
+            presence_penalty: isMemorialMode ? 0.5 : 0.7,
+            frequency_penalty: isMemorialMode ? 0.3 : 0.6,
             seed: randomSeed,
             stream: true,
         });

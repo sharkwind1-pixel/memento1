@@ -5,6 +5,7 @@ export {
     getTodayKey,
     getDailyUsage,
     incrementDailyUsage,
+    decrementDailyUsage,
     getTimeBasedGreeting,
     generatePersonalizedGreeting,
     type TimelineEntry,

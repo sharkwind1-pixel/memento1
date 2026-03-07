@@ -59,6 +59,26 @@ export const API = {
     AI_TEMPERATURE_MEMORIAL: 0.65,  // 추모 모드 온도 (따뜻한 밝음 + 지시 준수 균형)
 } as const;
 
+// ===== AI 펫톡 입력 제한 (route.ts에서 사용) =====
+export const AI_INPUT_LIMITS = {
+    BODY_MAX_BYTES: 100_000,            // 요청 body 최대 크기 (100KB)
+    MESSAGE_MAX_LENGTH: 1000,           // 사용자 메시지 최대 글자 수
+    PET_FIELD_MAX_LENGTH: 200,          // pet 객체 텍스트 필드 최대 길이
+    CHAT_HISTORY_MAX_ITEMS: 30,         // chatHistory 최대 항목 수
+    CHAT_HISTORY_CONTENT_MAX: 1000,     // chatHistory 항목별 content 최대 길이
+    TIMELINE_MAX_ITEMS: 20,             // timeline 최대 항목 수
+    TIMELINE_CONTENT_MAX: 300,          // timeline content 최대 길이
+    TIMELINE_TITLE_MAX: 100,            // timeline title 최대 길이
+    PHOTO_MAX_ITEMS: 20,                // photo 최대 항목 수
+    PHOTO_CAPTION_MAX: 200,             // photo caption 최대 길이
+    REMINDER_MAX_ITEMS: 30,             // reminder 최대 항목 수
+    REMINDER_TITLE_MAX: 100,            // reminder title 최대 길이
+    PLACE_KEYWORD_MAX: 50,              // 장소 검색 키워드 최대 길이
+    RECENT_HISTORY_COUNT: 10,           // GPT에 보내는 최근 대화 수
+    CONTEXT_BUDGET_DAILY: 2500,         // 일상 모드 컨텍스트 예산 (chars)
+    CONTEXT_BUDGET_MEMORIAL: 2200,      // 추모 모드 컨텍스트 예산 (chars)
+} as const;
+
 // ===== 위치 기반 장소 검색 =====
 export const LOCATION = {
     SEARCH_RADIUS_KM: 3,        // 검색 반경 (km)

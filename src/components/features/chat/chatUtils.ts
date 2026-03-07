@@ -41,6 +41,18 @@ export function incrementDailyUsage(): number {
     return newCount;
 }
 
+/** 사용량 1회 복구 (API 실패 시 차감한 횟수를 되돌림) */
+export function decrementDailyUsage(): number {
+    const todayKey = getTodayKey();
+    const currentCount = getDailyUsage();
+    const newCount = Math.max(0, currentCount - 1);
+    localStorage.setItem(USAGE_STORAGE_KEY, JSON.stringify({
+        date: todayKey,
+        count: newCount,
+    }));
+    return newCount;
+}
+
 // 시간대별 인사말 생성
 export function getTimeBasedGreeting(): string {
     const hour = new Date().getHours();
