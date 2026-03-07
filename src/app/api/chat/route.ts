@@ -527,9 +527,11 @@ export async function POST(request: NextRequest) {
             || emergencyDetection.isEmergency
             || emergencyDetection.isUrgent;
 
-        // 첫 대화 감지: 클라이언트 chatHistory가 아닌 DB 기반으로 판단
-        // "새 대화" 버튼을 눌러도 이미 대화한 펫이면 자기소개 반복 안 함
-        let isFirstChat = chatHistory.length === 0;
+        // 첫 대화 vs 새 세션 구분
+        // - isFirstChat: 이 펫과 진짜 처음 대화 (DB에 기록 없음) → 자기소개
+        // - isNewSession: 이전 대화 있지만 새 세션 시작 (chatHistory 비어있음) → 반가운 인사
+        const isNewSession = chatHistory.length === 0;
+        let isFirstChat = isNewSession;
         if (isFirstChat && pet.id) {
             const { count } = await supabase
                 .from("chat_messages")
@@ -538,15 +540,15 @@ export async function POST(request: NextRequest) {
                 .eq("user_id", user.id)
                 .limit(1);
             if (count && count > 0) {
-                isFirstChat = false; // DB에 이전 대화 있음 → 첫 대화 아님
+                isFirstChat = false; // DB에 이전 대화 있음 → 자기소개 안 함, 반가운 인사만
             }
         }
 
         // 모드에 따른 시스템 프롬프트 선택
         let systemPrompt =
             isMemorialMode
-                ? getMemorialSystemPrompt(pet, emotionGuide, memoryContext, combinedContext, griefGuideText, isFirstChat)
-                : getDailySystemPrompt(pet, emotionGuide, memoryContext, combinedContext, isCareQuery, isFirstChat);
+                ? getMemorialSystemPrompt(pet, emotionGuide, memoryContext, combinedContext, griefGuideText, isFirstChat, isNewSession)
+                : getDailySystemPrompt(pet, emotionGuide, memoryContext, combinedContext, isCareQuery, isFirstChat, isNewSession);
 
         // 위기 감지 시 시스템 프롬프트에 위기 대응 지시 추가
         if (crisisResult.detected && crisisResult.level !== "none") {

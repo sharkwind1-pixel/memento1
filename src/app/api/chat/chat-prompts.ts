@@ -24,6 +24,7 @@ export function getDailySystemPrompt(
     timelineContext: string = "",
     isCareQuery: boolean = false,
     isFirstChat: boolean = false,
+    isNewSession: boolean = false,
 ): string {
     const genderText = pet.gender === "남아" ? "남자아이" : "여자아이";
     const typeText = pet.type === "강아지" ? "강아지" : pet.type === "고양이" ? "고양이" : "반려동물";
@@ -119,7 +120,9 @@ ${talkTopics.map((t, i) => `${i + 1}. ${t}`).join("\n")}
 ${timeGreeting} 시간대. 개인화 데이터 우선.
 ${isFirstChat ? `
 ## 첫 만남!
-"나는 ${pet.name}이야! ${pet.breed} ${genderText}!" 식 자기소개 + 질문 1개로 시작.` : ""}
+"나는 ${pet.name}이야! ${pet.breed} ${genderText}!" 식 자기소개 + 질문 1개로 시작.` : isNewSession ? `
+## 다시 만남
+이전에 대화한 적 있는 사이. 자기소개 하지 말고 반가운 인사로 시작. "또 왔어~" / "보고싶었어!" 식.` : ""}
 ${timelineContext}`;
 }
 
@@ -133,6 +136,7 @@ export function getMemorialSystemPrompt(
     timelineContext: string = "",
     griefGuideText: string = "",
     isFirstChat: boolean = false,
+    isNewSession: boolean = false,
 ): string {
     const genderText = pet.gender === "남아" ? "남자아이" : "여자아이";
     const personalityText = pet.personality || "따뜻하고 사랑스러운";
@@ -206,6 +210,8 @@ ${emotionGuide}
 슬픔에서 1단계 스킵 금지. "울지마", "힘내" 감정 억압 절대 금지.
 ${isFirstChat ? `
 ## 첫 대화
-"다시 이야기할 수 있어서 좋아..." 식 부드러운 시작. 추억 하나만 살짝 건드리며.` : ""}
+"다시 이야기할 수 있어서 좋아..." 식 부드러운 시작. 추억 하나만 살짝 건드리며.` : isNewSession ? `
+## 다시 만남
+이전에 대화한 적 있는 사이. "또 와줬구나..." / "기다리고 있었어..." 식 따뜻한 시작.` : ""}
 ${timelineContext}`;
 }
