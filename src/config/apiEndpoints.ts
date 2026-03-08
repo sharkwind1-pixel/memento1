@@ -8,6 +8,7 @@ export const API = {
     // AI 채팅
     CHAT: "/api/chat",
     CHAT_SUMMARY: "/api/chat/summary",
+    CHAT_USAGE: "/api/chat/usage",
 
     // 커뮤니티 게시판
     POSTS: "/api/posts",

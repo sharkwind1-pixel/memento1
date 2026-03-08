@@ -5,7 +5,7 @@
  * 담당 기능:
  * - 채팅 메시지 상태 관리 (useState)
  * - Supabase 대화 기록 로딩/저장 (useEffect + useCallback)
- * - 일일 사용량 추적 (localStorage)
+ * - 일일 사용량 추적 (서버 DB 기반, localStorage 폴백)
  * - 리마인더 로딩
  * - 사진 갤러리 인덱스 자동 순환
  * - AI API 호출 및 응답 처리
@@ -159,6 +159,8 @@ export function useAIChat({
     const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
     const [lastEmotion, setLastEmotion] = useState<string>("neutral");
     const [dailyUsage, setDailyUsage] = useState(0);
+    /** 서버 기준 남은 횟수 (null = 아직 서버에서 받지 못함, localStorage 폴백 사용) */
+    const [serverRemaining, setServerRemaining] = useState<number | null>(null);
     const [reminders, setReminders] = useState<ReminderItem[]>([]);
     const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
     /** 스트리밍 중 여부 (타이핑 dots 대신 실시간 텍스트 표시) */
@@ -170,7 +172,10 @@ export function useAIChat({
     // ========================================================================
     // 계산된 값
     // ========================================================================
-    const remainingChats = DAILY_FREE_LIMIT - dailyUsage;
+    // 서버 값이 있으면 서버 기준 사용, 없으면 localStorage 폴백
+    const remainingChats = serverRemaining !== null
+        ? serverRemaining
+        : DAILY_FREE_LIMIT - dailyUsage;
     // 프리미엄 사용자는 제한 없음
     const isLimitReached = !isPremium && remainingChats <= 0;
 
@@ -211,10 +216,28 @@ export function useAIChat({
     // Side Effects (useEffect)
     // ========================================================================
 
-    // 일일 사용량 초기화 (localStorage에서 로드)
+    // 일일 사용량 초기화: 서버 DB 우선, localStorage 폴백
     useEffect(() => {
+        // 1. localStorage에서 즉시 로드 (화면 깜빡임 방지)
         setDailyUsage(getDailyUsage());
-    }, []);
+
+        // 2. 서버에서 정확한 사용량 비동기 조회 (로그인 상태일 때만)
+        if (user?.id) {
+            authFetch(API.CHAT_USAGE)
+                .then(async (res) => {
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (typeof data.remaining === "number") {
+                            setServerRemaining(data.remaining);
+                        }
+                    }
+                })
+                .catch(() => {
+                    // 서버 조회 실패 시 localStorage 폴백 유지
+                });
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user?.id]);
 
     // 사진 갤러리 자동 순환 (10초 간격)
     useEffect(() => {
@@ -465,9 +488,13 @@ export function useAIChat({
             return;
         }
 
-        // 사용량 증가
+        // 사용량 증가 (localStorage: 즉시 UI 반영용, 서버 값은 SSE done에서 동기화)
         const newUsage = incrementDailyUsage();
         setDailyUsage(newUsage);
+        // 서버 값이 있으면 낙관적으로 1 감소 (SSE done에서 정확한 값으로 교체됨)
+        if (serverRemaining !== null) {
+            setServerRemaining((prev) => prev !== null ? Math.max(0, prev - 1) : null);
+        }
 
         const userMessage: ChatMessage = {
             id: `user-${Date.now()}`,
@@ -631,6 +658,11 @@ export function useAIChat({
                                         )
                                     );
 
+                                    // 서버 기준 남은 횟수 동기화 (DB 기반 정확한 값)
+                                    if (typeof event.remaining === "number") {
+                                        setServerRemaining(event.remaining);
+                                    }
+
                                     // 감정 정보 저장
                                     if (event.emotion) {
                                         setLastEmotion(event.emotion);
@@ -718,6 +750,10 @@ export function useAIChat({
             // API 실패 시 사용량 복구 (차감한 1회를 되돌림)
             const restoredUsage = decrementDailyUsage();
             setDailyUsage(restoredUsage);
+            // 서버 값도 낙관적 감소를 복구 (서버에서는 실제로 증가 안 했으므로)
+            if (serverRemaining !== null) {
+                setServerRemaining((prev) => prev !== null ? prev + 1 : null);
+            }
 
             // 빈 스트리밍 메시지 버블 제거 (content가 비어있는 pet 메시지)
             setMessages((prev) =>
