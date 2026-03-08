@@ -279,6 +279,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setProfileLoaded(true);
         } catch (err) {
             console.error("[AuthContext] refreshProfile failed:", err instanceof Error ? err.message : err);
+            // refreshProfile 실패 시에도 petType 최소 복구 시도 (고양이 유저에게 강아지 아이콘이 보이는 버그 방지)
+            try {
+                const { data: { user: fallbackUser } } = await supabase.auth.getUser();
+                if (fallbackUser) {
+                    const { data: fallbackPet } = await supabase
+                        .from("pets")
+                        .select("type")
+                        .eq("user_id", fallbackUser.id)
+                        .order("created_at", { ascending: true })
+                        .limit(1)
+                        .maybeSingle();
+                    if (fallbackPet?.type) {
+                        const t = fallbackPet.type;
+                        if (t === "고양이") setUserPetType("cat");
+                        else if (t === "강아지") setUserPetType("dog");
+                        else setUserPetType("other");
+                    }
+                }
+            } catch { /* petType 복구도 실패하면 기본값 유지 */ }
             setPointsLoaded(true);
             setProfileLoaded(true);
         }

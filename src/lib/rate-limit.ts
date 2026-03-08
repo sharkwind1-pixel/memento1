@@ -1070,6 +1070,7 @@ export function sanitizeAIOutput(output: string): {
 
     for (const pattern of apiKeyPatterns) {
         if (pattern.test(cleaned)) {
+            pattern.lastIndex = 0; // /g 플래그 stateful regex 리셋 (replace가 첫 매치를 건너뛰는 버그 방지)
             leakTypes.push("api_key_leak");
             cleaned = cleaned.replace(pattern, "[보안상 삭제됨]");
         }
@@ -1085,6 +1086,7 @@ export function sanitizeAIOutput(output: string): {
 
     for (const pattern of internalCodePatterns) {
         if (pattern.test(cleaned)) {
+            pattern.lastIndex = 0; // /g 플래그 stateful regex 리셋
             leakTypes.push("internal_code_leak");
             cleaned = cleaned.replace(pattern, "[내부 정보]");
         }
@@ -1100,6 +1102,7 @@ export function sanitizeAIOutput(output: string): {
 
     for (const pattern of modelInfoPatterns) {
         if (pattern.test(cleaned)) {
+            pattern.lastIndex = 0; // /g 플래그 stateful regex 리셋
             leakTypes.push("model_info_leak");
             cleaned = cleaned.replace(pattern, "[AI 정보]");
         }
@@ -1114,6 +1117,7 @@ export function sanitizeAIOutput(output: string): {
 
     for (const pattern of dbSchemaPatterns) {
         if (pattern.test(cleaned)) {
+            pattern.lastIndex = 0; // /g 플래그 stateful regex 리셋
             leakTypes.push("db_schema_leak");
             cleaned = cleaned.replace(pattern, "[내부 정보]");
         }
