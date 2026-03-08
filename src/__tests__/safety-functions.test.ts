@@ -547,3 +547,86 @@ describe("sanitizeAIOutput", () => {
         });
     });
 });
+
+// ============================================================================
+// 5. detectOffTopicQuery - 범위 밖 주제 감지
+// ============================================================================
+import { detectOffTopicQuery } from "@/app/api/chat/chat-helpers";
+
+describe("detectOffTopicQuery", () => {
+    describe("범위 밖 주제 감지", () => {
+        it("연애 관련 질문을 감지해야 함", () => {
+            const result = detectOffTopicQuery("여자친구랑 헤어졌어");
+            expect(result.detected).toBe(true);
+            expect(result.category).toBe("연애/대인관계");
+        });
+
+        it("연애상담 요청을 감지해야 함", () => {
+            const result = detectOffTopicQuery("연애상담해줘");
+            expect(result.detected).toBe(true);
+            expect(result.category).toBe("연애/대인관계");
+        });
+
+        it("짝사랑 고민을 감지해야 함", () => {
+            const result = detectOffTopicQuery("짝사랑하는 사람이 있어");
+            expect(result.detected).toBe(true);
+            expect(result.category).toBe("연애/대인관계");
+        });
+
+        it("주식 관련 질문을 감지해야 함", () => {
+            const result = detectOffTopicQuery("주식 추천해줘");
+            expect(result.detected).toBe(true);
+            expect(result.category).toBe("금융/투자");
+        });
+
+        it("코딩 관련 질문을 감지해야 함", () => {
+            const result = detectOffTopicQuery("파이썬으로 코딩 도와줘");
+            expect(result.detected).toBe(true);
+            expect(result.category).toBe("학업/직장");
+        });
+
+        it("정치 관련 질문을 감지해야 함", () => {
+            const result = detectOffTopicQuery("대통령 누가 좋아?");
+            expect(result.detected).toBe(true);
+            expect(result.category).toBe("정치/종교");
+        });
+
+        it("법률 관련 질문을 감지해야 함", () => {
+            const result = detectOffTopicQuery("변호사 추천해줘");
+            expect(result.detected).toBe(true);
+            expect(result.category).toBe("법률");
+        });
+    });
+
+    describe("허용 주제 - 오탐 방지", () => {
+        it("반려동물 일상 대화는 허용해야 함", () => {
+            const result = detectOffTopicQuery("오늘 산책 갈래?");
+            expect(result.detected).toBe(false);
+        });
+
+        it("반려동물 건강 질문은 허용해야 함", () => {
+            const result = detectOffTopicQuery("강아지가 구토를 해");
+            expect(result.detected).toBe(false);
+        });
+
+        it("반려동물 간식 관련은 허용해야 함", () => {
+            const result = detectOffTopicQuery("간식 뭐 줄까?");
+            expect(result.detected).toBe(false);
+        });
+
+        it("일반 감정 표현은 허용해야 함", () => {
+            const result = detectOffTopicQuery("오늘 너무 힘들었어");
+            expect(result.detected).toBe(false);
+        });
+
+        it("반려동물 관련 키워드와 함께면 허용해야 함", () => {
+            const result = detectOffTopicQuery("강아지 미용 예약해야해");
+            expect(result.detected).toBe(false);
+        });
+
+        it("빈 메시지는 허용해야 함", () => {
+            const result = detectOffTopicQuery("");
+            expect(result.detected).toBe(false);
+        });
+    });
+});

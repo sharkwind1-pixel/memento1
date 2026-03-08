@@ -65,6 +65,7 @@ import {
     getSpecialDayContext,
     getBreedCareContext,
     getMemorialTimeToneGuide,
+    detectOffTopicQuery,
 } from "./chat-helpers";
 import { getDailySystemPrompt, getMemorialSystemPrompt } from "./chat-prompts";
 import * as agent from "@/lib/agent";
@@ -643,6 +644,21 @@ export async function buildAIContext(
             crisisResult.level as "medium" | "high"
         );
         systemPrompt = `${crisisPrompt}\n\n${systemPrompt}`;
+    }
+
+    // 범위 밖 주제 감지 시 강제 거부 지시 삽입 (코드 레벨 방어)
+    const offTopicResult = detectOffTopicQuery(sanitizedMessage);
+    if (offTopicResult.detected) {
+        const petType = pet.type === "강아지" ? "강아지" : pet.type === "고양이" ? "고양이" : "반려동물";
+        const offTopicPrompt = `## [최우선] 범위 밖 주제 감지 - 반드시 거부
+사용자가 "${offTopicResult.category}" 관련 질문을 했습니다.
+이것은 반려동물과 무관한 주제입니다. 절대 이 주제에 대해 답변하지 마세요.
+반드시 아래 패턴으로만 응답하세요:
+1. "음... 나는 그런 건 잘 모르겠어~ 나는 ${petType}이니까!" 식으로 부드럽게 거절
+2. 반려동물 관련 화제(산책, 놀이, 간식, 오늘 하루 등)로 자연스럽게 전환
+3. 절대로 ${offTopicResult.category}에 대한 조언/공감/상담을 하지 마세요
+4. "힘들겠다", "그럴 수 있어" 등 공감도 금지 - 주제 자체를 모르는 척하세요`;
+        systemPrompt = `${offTopicPrompt}\n\n${systemPrompt}`;
     }
 
     // 응급/긴급 증상 감지 시 수의사 상담 강력 권장 지시 삽입

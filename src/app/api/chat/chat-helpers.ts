@@ -427,6 +427,85 @@ ${aiResponses.map((r, i) => `${i + 1}. "${r}${r.length >= 100 ? "..." : ""}"`).j
 같은 주제/표현 반복 금지. 새로운 각도로 대화하세요.${patternWarning}`;
 }
 
+// ---- 범위 밖 주제 감지 (코드 레벨 방어) ----
+
+/**
+ * 반려동물과 무관한 주제를 코드 레벨에서 감지
+ * 프롬프트만으로는 GPT가 감정에 끌려가서 답변하므로,
+ * 감지 시 시스템 프롬프트에 강제 거부 지시를 삽입한다.
+ *
+ * @returns { detected: boolean, category: string } - 감지 여부 + 감지된 카테고리
+ */
+export function detectOffTopicQuery(message: string): { detected: boolean; category: string } {
+    const msg = message.toLowerCase().replace(/\s+/g, "");
+
+    // 반려동물 관련 키워드가 함께 있으면 허용 (예: "강아지 헤어스타일" → 미용 관련)
+    const petKeywords = [
+        "강아지", "고양이", "반려", "펫", "댕댕", "냥이", "산책", "사료",
+        "간식", "병원", "수의사", "예방접종", "미용", "목욕", "훈련",
+        "배변", "짖", "물어", "아파", "구토", "설사", "입양",
+    ];
+    const hasPetContext = petKeywords.some(k => msg.includes(k));
+    if (hasPetContext) return { detected: false, category: "" };
+
+    // 카테고리별 감지 패턴
+    const categories: { category: string; patterns: string[] }[] = [
+        {
+            category: "연애/대인관계",
+            patterns: [
+                "연애", "여자친구", "남자친구", "여친", "남친", "헤어졌", "헤어져",
+                "고백", "짝사랑", "썸", "소개팅", "데이트", "바람", "이별",
+                "결혼", "이혼", "불륜", "섹스", "성관계",
+            ],
+        },
+        {
+            category: "정치/종교",
+            patterns: [
+                "대통령", "국회", "정당", "선거", "투표", "정치",
+                "하나님", "예수", "부처", "기도", "교회", "절",
+                "보수", "진보", "좌파", "우파",
+            ],
+        },
+        {
+            category: "금융/투자",
+            patterns: [
+                "주식", "코인", "비트코인", "투자", "펀드", "부동산",
+                "대출", "금리", "환율", "매수", "매도", "수익률",
+            ],
+        },
+        {
+            category: "학업/직장",
+            patterns: [
+                "시험", "수능", "과제", "레포트", "논문", "학점",
+                "면접", "이력서", "퇴사", "이직", "상사", "월급",
+                "코딩", "프로그래밍", "자바", "파이썬",
+            ],
+        },
+        {
+            category: "의료(사람)",
+            patterns: [
+                "두통", "감기", "열나", "약먹", "병원가",
+                "수술", "입원", "진단", "처방",
+            ],
+        },
+        {
+            category: "법률",
+            patterns: [
+                "소송", "변호사", "재판", "고소", "고발",
+                "계약서", "위약금", "합의금",
+            ],
+        },
+    ];
+
+    for (const { category, patterns } of categories) {
+        if (patterns.some(p => msg.includes(p))) {
+            return { detected: true, category };
+        }
+    }
+
+    return { detected: false, category: "" };
+}
+
 // ---- 추모 모드 필터링 ----
 
 /**
