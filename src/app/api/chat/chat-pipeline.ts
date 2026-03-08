@@ -63,6 +63,8 @@ import {
     extractRecentTopics,
     filterMemorialSuggestions,
     getSpecialDayContext,
+    getBreedCareContext,
+    getMemorialTimeToneGuide,
 } from "./chat-helpers";
 import { getDailySystemPrompt, getMemorialSystemPrompt } from "./chat-prompts";
 import * as agent from "@/lib/agent";
@@ -570,10 +572,17 @@ export async function buildAIContext(
     // 이번 세션 토픽 추적 (AI 응답 반복 방지)
     const recentTopicsContext = extractRecentTopics(chatHistory);
 
+    // 품종 기반 맞춤 케어 컨텍스트 (breed 읽어서 품종별 조언 지시)
+    const breedContext = getBreedCareContext(pet);
+
+    // 추모 모드 경과일 기반 톤 가이드 (memorialDate → 세밀한 톤 조절)
+    const memorialToneContext = getMemorialTimeToneGuide(pet);
+
     // 통합 컨텍스트 (우선순위 기반 예산 시스템)
     const contextItems = isMemorialMode
         ? [
             { content: placeContext, priority: 9 },
+            { content: memorialToneContext, priority: 8 },
             { content: onboardingContext, priority: 7 },
             { content: emotionTrendContext, priority: 6 },
             { content: recentTopicsContext, priority: 6 },
@@ -586,6 +595,7 @@ export async function buildAIContext(
         ]
         : [
             { content: placeContext, priority: 9 },
+            { content: breedContext, priority: 7 },
             { content: onboardingContext, priority: 7 },
             { content: emotionTrendContext, priority: 6 },
             { content: recentTopicsContext, priority: 6 },

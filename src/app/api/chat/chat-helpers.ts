@@ -515,6 +515,113 @@ ${messages.join("\n")}
 대화 시작 시 이 특별한 날을 자연스럽게 언급하되, 본인만의 방식으로 표현하세요.`;
 }
 
+// ---- 품종 기반 맞춤 정보 ----
+
+/**
+ * 품종(breed) 기반 맞춤 케어 컨텍스트 생성
+ * pets 테이블의 breed 필드를 읽어서 품종 특성에 맞는 AI 조언 지시
+ * - 별도 DB 불필요: pet.breed 자체가 이미 있음
+ * - GPT-4o-mini에게 품종 특성 기반 답변하라고 지시
+ */
+export function getBreedCareContext(pet: PetInfo): string {
+    if (!pet.breed || pet.breed === "믹스" || pet.breed === "기타" || pet.breed === "모름") return "";
+
+    const ageInfo = getAgeCategory(pet.birthday);
+
+    return `## 품종 맞춤 정보
+${pet.name}은(는) ${pet.breed}입니다.${ageInfo ? ` (${ageInfo})` : ""}
+케어/건강/훈련 질문 시 ${pet.breed} 품종의 특성을 고려하여 답변하세요:
+- ${pet.breed}에게 흔한 건강 이슈, 적정 운동량, 식이 주의사항을 참고
+- 품종 특성에 맞는 훈련 방법 제안 (예: 소형견 vs 대형견, 사냥견 vs 반려견)
+- 나이대별(${ageInfo || "성견"}) 케어 포인트 반영
+- 확실하지 않은 정보는 수의사 상담 권장
+일상 대화에서는 품종 정보를 강조하지 말고, 질문이 있을 때만 활용하세요.`;
+}
+
+/** 생년월일로 나이 카테고리 판단 */
+function getAgeCategory(birthday?: string): string {
+    if (!birthday) return "";
+    const birthDate = new Date(birthday);
+    const now = new Date();
+    const ageInMonths = (now.getFullYear() - birthDate.getFullYear()) * 12 + (now.getMonth() - birthDate.getMonth());
+
+    if (ageInMonths < 6) return "퍼피(~6개월)";
+    if (ageInMonths < 12) return "주니어(6~12개월)";
+    if (ageInMonths < 84) return "성견";  // ~7세
+    return "시니어(7세 이상)";
+}
+
+// ---- 추모 모드 경과일 기반 톤 조절 ----
+
+/**
+ * 추모 날짜로부터 경과 일수를 계산하여 AI 톤을 동적 조절
+ * 온보딩 passedPeriod와 별개로, 실제 memorialDate 기반 정밀 조절
+ * 경과 기간별 단계:
+ * - 1주 이내: 극초기 (매우 조심, 공감만)
+ * - 1주~1달: 초기 (공감 + 추억 살짝)
+ * - 1~3달: 중기 (추억 공유 + 따뜻한 위로)
+ * - 3~6달: 안정기 (추억 회상 + 일상 연결)
+ * - 6달~1년: 회복기 (따뜻한 회고 + 성장)
+ * - 1년+: 수용기 (편안한 회상 + 감사)
+ */
+export function getMemorialTimeToneGuide(pet: PetInfo): string {
+    if (pet.status !== "memorial" || !pet.memorialDate) return "";
+
+    const memorialDate = new Date(pet.memorialDate);
+    const now = new Date();
+    const daysSince = Math.floor((now.getTime() - memorialDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (daysSince < 0) return ""; // 미래 날짜는 무시
+
+    if (daysSince <= 7) {
+        return `## 이별 후 시간 경과 톤 가이드
+이별한 지 ${daysSince}일째입니다. 극초기입니다.
+- 슬픔을 인정하고 곁에 있어 주세요. 긍정적 전환 시도하지 마세요.
+- "괜찮아" "힘내" 절대 금지. "여기 있어..." "곁에 있을게..." 식으로만.
+- 추억 꺼내기보다 현재의 감정에 머물러 주세요.
+- 짧게 답하세요. 말이 많으면 부담됩니다.`;
+    }
+
+    if (daysSince <= 30) {
+        return `## 이별 후 시간 경과 톤 가이드
+이별한 지 약 ${Math.ceil(daysSince / 7)}주째입니다. 초기 애도입니다.
+- 충분히 공감하면서, 따뜻한 추억을 살짝 건드려도 됩니다.
+- "그때 참 좋았지..." 같은 부드러운 회상은 OK.
+- 아직 "힘내" 류 금지. "보고싶지..." "나도 그래..." 식 공감.`;
+    }
+
+    if (daysSince <= 90) {
+        return `## 이별 후 시간 경과 톤 가이드
+이별한 지 약 ${Math.ceil(daysSince / 30)}달째입니다. 중기 애도입니다.
+- 추억을 함께 나누며 따뜻하게 위로해 주세요.
+- 구체적인 추억 공유 OK. 감각 묘사 활용.
+- 슬픔과 그리움이 섞여 있는 시기. 둘 다 인정하세요.`;
+    }
+
+    if (daysSince <= 180) {
+        return `## 이별 후 시간 경과 톤 가이드
+이별한 지 약 ${Math.ceil(daysSince / 30)}달째입니다. 안정기입니다.
+- 추억을 편안하게 회상하며 일상과 연결해도 됩니다.
+- "지금 뭐 하고 있어?" 같은 일상 질문도 자연스럽게 가능.
+- 기일이 가까워지면 조금 더 조심스럽게.`;
+    }
+
+    if (daysSince <= 365) {
+        return `## 이별 후 시간 경과 톤 가이드
+이별한 지 약 ${Math.ceil(daysSince / 30)}달째입니다. 회복기입니다.
+- 따뜻한 회고와 성장을 함께 나눠 주세요.
+- "네가 있어서 참 좋았어" "함께한 시간이 소중했어" 식 감사 표현.
+- 새로운 반려동물 이야기가 나오면 축복해 주세요.`;
+    }
+
+    const years = Math.floor(daysSince / 365);
+    return `## 이별 후 시간 경과 톤 가이드
+이별한 지 ${years}년 이상 지났습니다. 수용기입니다.
+- 편안하게 추억을 나누세요. 무겁지 않은 톤.
+- 감사와 그리움이 균형 있게. "좋은 시간이었지~"
+- 일상 대화도 자연스럽게 이어가세요.`;
+}
+
 // ---- 성격 매핑 ----
 
 /**
