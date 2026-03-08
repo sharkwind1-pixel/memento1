@@ -467,12 +467,19 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
             ref={containerRef}
             className="fixed inset-0 z-50 bg-white dark:bg-gray-900 overflow-hidden"
         >
-            {/* [A] 상단 프로그레스 바 */}
-            <div className="fixed top-0 left-0 right-0 z-[70] h-[3px] bg-gray-200 dark:bg-gray-700">
-                <div
-                    className="h-full bg-sky-400 transition-all duration-300 ease-out"
-                    style={{ width: `${progressPercent}%` }}
-                />
+            {/* [A] 상단 프로그레스 바 - sticky, 카드 번호 표시 */}
+            <div className="fixed top-0 left-0 right-0 z-[70]">
+                <div className="h-1 bg-gray-200 dark:bg-gray-700">
+                    <div
+                        className="h-full bg-sky-400 transition-all duration-300 ease-out"
+                        style={{ width: `${progressPercent}%` }}
+                    />
+                </div>
+                <div className="flex justify-center">
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm px-2 py-0.5 rounded-b-md">
+                        {currentCard + 1} / {totalCards}
+                    </span>
+                </div>
             </div>
 
             {/* 뒤로가기 */}
