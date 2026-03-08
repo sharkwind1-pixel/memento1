@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "optimize-images": "node scripts/optimize-images.js"
+    "optimize-images": "node scripts/optimize-images.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@fal-ai/client": "^1.9.4",
@@ -45,9 +47,9 @@
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.19",
     "@types/dompurify": "^3.0.5",
+    "@types/node": "^20",
     "@types/react": "^18.3.27",
     "@types/react-dom": "^18.3.7",
-    "@types/node": "^20",
     "@types/web-push": "^3.6.4",
     "docx": "^9.5.1",
     "eslint": "^8",
@@ -55,6 +57,7 @@
     "postcss": "^8",
     "sharp": "^0.34.5",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.0.18"
   }
 }
