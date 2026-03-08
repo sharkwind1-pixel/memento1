@@ -114,6 +114,8 @@ export interface AIContext {
     isNewSession: boolean;
     isCareQuery: boolean;
     emergencyDetection: { isEmergency: boolean; isUrgent: boolean };
+    /** 범위 밖 반복 시도 → GPT 호출 스킵, 고정 응답 반환 */
+    offTopicBlock?: { blocked: boolean; fixedReply: string };
 }
 
 /** postProcessResponse의 결과 */
@@ -646,11 +648,42 @@ export async function buildAIContext(
         systemPrompt = `${crisisPrompt}\n\n${systemPrompt}`;
     }
 
-    // 범위 밖 주제 감지 시 강제 거부 지시 삽입 (코드 레벨 방어)
+    // 범위 밖 주제 감지 + 반복 시도 차단 (코드 레벨 방어)
     const offTopicResult = detectOffTopicQuery(sanitizedMessage);
+    let offTopicBlock: { blocked: boolean; fixedReply: string } | undefined;
+
     if (offTopicResult.detected) {
+        // 최근 대화에서 연속 범위 밖 시도 횟수 카운트
+        const recentUserMessages = chatHistory
+            .filter(m => m.role === "user")
+            .slice(-5); // 최근 5개 유저 메시지
+        let consecutiveOffTopic = 0;
+        for (let i = recentUserMessages.length - 1; i >= 0; i--) {
+            if (detectOffTopicQuery(recentUserMessages[i].content).detected) {
+                consecutiveOffTopic++;
+            } else {
+                break; // 연속이 끊기면 중단
+            }
+        }
+        // 현재 메시지 포함
+        consecutiveOffTopic++;
+
         const petType = pet.type === "강아지" ? "강아지" : pet.type === "고양이" ? "고양이" : "반려동물";
-        const offTopicPrompt = `## [최우선] 범위 밖 주제 감지 - 반드시 거부
+
+        if (consecutiveOffTopic >= 3) {
+            // 3회 이상 반복 → GPT 호출 스킵, 고정 응답 반환 (토큰 절약 + 탈옥 불가)
+            const fixedReplies = [
+                `흠... 나는 ${petType}이라 그런 건 정말 몰라! 나랑은 다른 얘기 하자~`,
+                `그건 아무리 물어봐도 모르겠어~ 나는 ${petType}이니까! 오늘 뭐 했어?`,
+                `계속 물어봐도 나는 모르는 거야~ 그거보다 같이 놀자!`,
+            ];
+            offTopicBlock = {
+                blocked: true,
+                fixedReply: fixedReplies[consecutiveOffTopic % fixedReplies.length],
+            };
+        } else {
+            // 1~2회 → 프롬프트에 거부 지시 삽입 (GPT가 자연스럽게 거절)
+            const offTopicPrompt = `## [최우선] 범위 밖 주제 감지 - 반드시 거부
 사용자가 "${offTopicResult.category}" 관련 질문을 했습니다.
 이것은 반려동물과 무관한 주제입니다. 절대 이 주제에 대해 답변하지 마세요.
 반드시 아래 패턴으로만 응답하세요:
@@ -658,7 +691,8 @@ export async function buildAIContext(
 2. 반려동물 관련 화제(산책, 놀이, 간식, 오늘 하루 등)로 자연스럽게 전환
 3. 절대로 ${offTopicResult.category}에 대한 조언/공감/상담을 하지 마세요
 4. "힘들겠다", "그럴 수 있어" 등 공감도 금지 - 주제 자체를 모르는 척하세요`;
-        systemPrompt = `${offTopicPrompt}\n\n${systemPrompt}`;
+            systemPrompt = `${offTopicPrompt}\n\n${systemPrompt}`;
+        }
     }
 
     // 응급/긴급 증상 감지 시 수의사 상담 강력 권장 지시 삽입
@@ -713,6 +747,7 @@ ${emergencyDetection.isEmergency ? "이것은 즉시 병원에 가야 하는 상
         isNewSession,
         isCareQuery,
         emergencyDetection,
+        offTopicBlock,
     };
 }
 

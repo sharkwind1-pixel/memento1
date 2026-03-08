@@ -52,6 +52,34 @@ export async function POST(request: NextRequest) {
         // 3단계: AI 컨텍스트 빌드 (감정, 메모리, 프롬프트 생성)
         const aiContext = await buildAIContext(parsedInput, security);
 
+        // 3.5단계: 범위 밖 반복 시도 → GPT 호출 스킵, 고정 응답 반환
+        if (aiContext.offTopicBlock?.blocked) {
+            const encoder = new TextEncoder();
+            const fixedReply = aiContext.offTopicBlock.fixedReply;
+            const readableStream = new ReadableStream({
+                start(controller) {
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "delta", content: fixedReply })}\n\n`));
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                        type: "done",
+                        reply: fixedReply,
+                        suggestedQuestions: ["오늘 산책 갔어?", "뭐 하고 놀까?", "간식 뭐 줄까?"],
+                        emotion: "neutral",
+                        emotionScore: 0.5,
+                        remaining: security.dailyUsage.remaining,
+                        isWarning: security.dailyUsage.isWarning,
+                    })}\n\n`));
+                    controller.close();
+                },
+            });
+            return new Response(readableStream, {
+                headers: {
+                    "Content-Type": "text/event-stream",
+                    "Cache-Control": "no-cache",
+                    Connection: "keep-alive",
+                },
+            });
+        }
+
         // 4단계: OpenAI API 스트리밍 호출
         const randomSeed = Math.floor(Math.random() * 1000000);
         const openaiStream = await getOpenAI().chat.completions.create({
