@@ -35,6 +35,7 @@ import { MOCK_SHOWCASE_POSTS, formatTime } from "./communityTypes";
 import PostDetailView from "./PostDetailView";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/auth-fetch";
+import { toast } from "sonner";
 import type { ShowcasePost } from "@/components/features/home/types";
 
 interface ShowcaseGalleryViewProps {
@@ -102,11 +103,12 @@ export default function ShowcaseGalleryView({ onBack, onWriteClick }: ShowcaseGa
             const res = await authFetch(API.POST_DETAIL(postId), { method: "DELETE" });
             if (res.ok) {
                 setPosts(prev => prev.filter(p => p.id !== postId));
+                toast.success("게시글이 삭제되었습니다");
             } else {
-                alert("삭제에 실패했습니다");
+                toast.error("삭제에 실패했습니다");
             }
         } catch {
-            alert("삭제에 실패했습니다");
+            toast.error("삭제에 실패했습니다");
         }
     };
 
@@ -120,11 +122,12 @@ export default function ShowcaseGalleryView({ onBack, onWriteClick }: ShowcaseGa
             });
             if (res.ok) {
                 setPosts(prev => prev.filter(p => p.id !== postId));
+                toast.success("게시글이 숨김 처리되었습니다");
             } else {
-                alert("숨기기에 실패했습니다");
+                toast.error("숨기기에 실패했습니다");
             }
         } catch {
-            alert("숨기기에 실패했습니다");
+            toast.error("숨기기에 실패했습니다");
         }
     };
 

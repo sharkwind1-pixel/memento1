@@ -40,7 +40,7 @@ export default function PawLoading({
                     />
                 ))}
             </div>
-            {text && <p className="text-gray-400 text-sm">{text}</p>}
+            {text && <p className="text-gray-400 dark:text-gray-500 text-sm">{text}</p>}
         </div>
     );
 }
@@ -60,7 +60,7 @@ export function FullPageLoading({ text = "로딩 중..." }: { text?: string }) {
             {showRetry && (
                 <button
                     onClick={() => window.location.reload()}
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-500 hover:text-sky-600 bg-white/80 rounded-xl border border-gray-200 hover:border-sky-300 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 bg-white/80 dark:bg-gray-800/80 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-sky-300 dark:hover:border-sky-600 transition-colors"
                     aria-label="페이지 새로고침"
                 >
                     <RefreshCw className="w-4 h-4" />
