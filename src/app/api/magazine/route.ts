@@ -2,6 +2,7 @@
  * 펫매거진 기사 API
  * GET: 발행된 기사 목록 조회 (공개)
  * POST: 기사 작성 (관리자 전용)
+ * PATCH: 좋아요 토글 / 조회수 증가 (공개)
  *
  * 보안: POST - 세션 인증 + 관리자 권한 확인
  */
@@ -137,6 +138,89 @@ export async function POST(request: NextRequest) {
         }
 
         return NextResponse.json({ article: data });
+    } catch {
+        return NextResponse.json({ error: "서버 오류" }, { status: 500 });
+    }
+}
+
+/**
+ * PATCH: 좋아요 토글 또는 조회수 증가
+ * body.action = "like" → likes +1 / -1 (토글)
+ * body.action = "view" → views +1
+ */
+export async function PATCH(request: NextRequest) {
+    try {
+        const clientIP = await getClientIP();
+        const rateLimit = checkRateLimit(clientIP, "general");
+        if (!rateLimit.allowed) {
+            return NextResponse.json(
+                { error: "요청이 너무 많습니다." },
+                { status: 429, headers: getRateLimitHeaders(rateLimit.remaining, rateLimit.resetIn) }
+            );
+        }
+
+        const body = await request.json();
+        const { articleId, action } = body;
+
+        if (!articleId || !action) {
+            return NextResponse.json({ error: "articleId, action 필수" }, { status: 400 });
+        }
+
+        const supabase = await createServerSupabase();
+
+        if (action === "view") {
+            // 조회수 +1 (RPC 또는 직접 increment)
+            const { data: article, error: fetchError } = await supabase
+                .from("magazine_articles")
+                .select("views")
+                .eq("id", articleId)
+                .single();
+
+            if (fetchError || !article) {
+                return NextResponse.json({ error: "기사를 찾을 수 없습니다" }, { status: 404 });
+            }
+
+            const { error: updateError } = await supabase
+                .from("magazine_articles")
+                .update({ views: (article.views || 0) + 1 })
+                .eq("id", articleId);
+
+            if (updateError) {
+                console.error("[Magazine PATCH] 조회수 업데이트 에러:", updateError);
+                return NextResponse.json({ error: "조회수 업데이트 실패" }, { status: 500 });
+            }
+
+            return NextResponse.json({ views: (article.views || 0) + 1 });
+        }
+
+        if (action === "like" || action === "unlike") {
+            const { data: article, error: fetchError } = await supabase
+                .from("magazine_articles")
+                .select("likes")
+                .eq("id", articleId)
+                .single();
+
+            if (fetchError || !article) {
+                return NextResponse.json({ error: "기사를 찾을 수 없습니다" }, { status: 404 });
+            }
+
+            const delta = action === "like" ? 1 : -1;
+            const newLikes = Math.max(0, (article.likes || 0) + delta);
+
+            const { error: updateError } = await supabase
+                .from("magazine_articles")
+                .update({ likes: newLikes })
+                .eq("id", articleId);
+
+            if (updateError) {
+                console.error("[Magazine PATCH] 좋아요 업데이트 에러:", updateError);
+                return NextResponse.json({ error: "좋아요 업데이트 실패" }, { status: 500 });
+            }
+
+            return NextResponse.json({ likes: newLikes });
+        }
+
+        return NextResponse.json({ error: "알 수 없는 action" }, { status: 400 });
     } catch {
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });
     }

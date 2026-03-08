@@ -7,6 +7,15 @@
  * 2. 요약 (메타정보 + 요약 박스)
  * 3~N. 본문 카드 (텍스트 / 이미지 / 인용문)
  * N+1. 엔딩 (태그 + 목록 복귀)
+ *
+ * 기능:
+ * - 좋아요 토글 (localStorage 기반 중복 방지)
+ * - 조회수 증가 (sessionStorage 기반 중복 방지)
+ * - 상단 프로그레스 바
+ * - 짝수/홀수 카드 배경색 교차
+ * - 세로 스크롤 충돌 해결 (긴 카드: "다음" 버튼)
+ * - strong 태그 형광펜 효과
+ * - 다음 카드 살짝 보이기 힌트
  */
 "use client";
 
@@ -21,6 +30,7 @@ import {
     Heart,
     ChevronLeft,
     ChevronRight,
+    ChevronDown,
     BookOpen,
     Quote,
     Share2,
@@ -32,6 +42,7 @@ import {
     getBadgeLabel,
     type MagazineArticle,
 } from "@/data/magazineArticles";
+import { API } from "@/config/apiEndpoints";
 
 interface MagazineReaderProps {
     article: MagazineArticle;
@@ -193,6 +204,81 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
     const [isTouchDevice, setIsTouchDevice] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
     const sliderRef = useRef<HTMLDivElement>(null);
+
+    // 좋아요 상태 (localStorage 기반 중복 방지)
+    const likeKey = `magazine_likes_${article.id}`;
+    const [isLiked, setIsLiked] = useState(() => {
+        if (typeof window !== "undefined") {
+            return localStorage.getItem(likeKey) === "1";
+        }
+        return false;
+    });
+    const [displayLikes, setDisplayLikes] = useState(article.likes);
+    const [likeAnimating, setLikeAnimating] = useState(false);
+
+    // 조회수 상태 (sessionStorage 기반 중복 방지)
+    const [displayViews, setDisplayViews] = useState(article.views);
+
+    // 조회수 증가 (마운트 시 1회)
+    useEffect(() => {
+        const viewKey = `magazine_viewed_${article.id}`;
+        if (typeof window !== "undefined" && !sessionStorage.getItem(viewKey)) {
+            sessionStorage.setItem(viewKey, "1");
+            fetch(API.MAGAZINE, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ articleId: article.id, action: "view" }),
+            })
+                .then((res) => res.json())
+                .then((data) => {
+                    if (data.views != null) {
+                        setDisplayViews(data.views);
+                    }
+                })
+                .catch(() => {
+                    // 조회수 증가 실패 시 무시
+                });
+        }
+    }, [article.id]);
+
+    // 좋아요 토글 핸들러
+    const handleLike = useCallback(async () => {
+        const willLike = !isLiked;
+        setIsLiked(willLike);
+        setDisplayLikes((prev) => prev + (willLike ? 1 : -1));
+        setLikeAnimating(true);
+        setTimeout(() => setLikeAnimating(false), 300);
+
+        if (willLike) {
+            localStorage.setItem(likeKey, "1");
+        } else {
+            localStorage.removeItem(likeKey);
+        }
+
+        try {
+            const res = await fetch(API.MAGAZINE, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    articleId: article.id,
+                    action: willLike ? "like" : "unlike",
+                }),
+            });
+            const data = await res.json();
+            if (data.likes != null) {
+                setDisplayLikes(data.likes);
+            }
+        } catch {
+            // 실패 시 롤백
+            setIsLiked(!willLike);
+            setDisplayLikes((prev) => prev + (willLike ? -1 : 1));
+            if (!willLike) {
+                localStorage.setItem(likeKey, "1");
+            } else {
+                localStorage.removeItem(likeKey);
+            }
+        }
+    }, [isLiked, article.id, likeKey]);
 
     const cards = useMemo(() => buildCards(article), [article]);
     const totalCards = cards.length;
@@ -367,17 +453,28 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
         };
     }, [isTouchDevice, applyOffset]);
 
-    // 가상화: 현재 +/- 1 카드만 렌더
+    // 가상화: 현재 +/- 2 카드만 렌더 (다음 카드 힌트를 위해 +2)
     const visibleRange = useMemo(() => ({
         start: Math.max(0, currentCard - 1),
-        end: Math.min(totalCards - 1, currentCard + 1),
+        end: Math.min(totalCards - 1, currentCard + 2),
     }), [currentCard, totalCards]);
+
+    // 프로그레스 바 비율
+    const progressPercent = totalCards > 1 ? ((currentCard) / (totalCards - 1)) * 100 : 0;
 
     return (
         <div
             ref={containerRef}
             className="fixed inset-0 z-50 bg-white dark:bg-gray-900 overflow-hidden"
         >
+            {/* [A] 상단 프로그레스 바 */}
+            <div className="fixed top-0 left-0 right-0 z-[70] h-[3px] bg-gray-200 dark:bg-gray-700">
+                <div
+                    className="h-full bg-sky-400 transition-all duration-300 ease-out"
+                    style={{ width: `${progressPercent}%` }}
+                />
+            </div>
+
             {/* 뒤로가기 */}
             <button
                 onClick={onBack}
@@ -387,7 +484,25 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
                 <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-gray-200" />
             </button>
 
-            {/* 카드 컨테이너 */}
+            {/* 좋아요 버튼 (우측 상단 고정) */}
+            <button
+                onClick={handleLike}
+                className="fixed top-4 right-4 z-[60] bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full p-2 shadow-lg hover:bg-white dark:hover:bg-gray-700 transition-colors flex items-center gap-1.5"
+                aria-label="좋아요"
+            >
+                <Heart
+                    className={`w-5 h-5 transition-all duration-200 ${
+                        isLiked
+                            ? "text-red-500 fill-red-500"
+                            : "text-gray-500 dark:text-gray-400"
+                    } ${likeAnimating ? "scale-125" : "scale-100"}`}
+                />
+                <span className={`text-sm font-medium ${isLiked ? "text-red-500" : "text-gray-500 dark:text-gray-400"}`}>
+                    {displayLikes}
+                </span>
+            </button>
+
+            {/* 카드 컨테이너 - [E] 카드 너비 97%로 다음 카드 힌트 */}
             <div
                 ref={sliderRef}
                 className="flex h-full magazine-page-container"
@@ -398,6 +513,7 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
             >
                 {cards.map((card, index) => {
                     const isVisible = index >= visibleRange.start && index <= visibleRange.end;
+                    const isLastCard = index === totalCards - 1;
                     return (
                         <div
                             key={index}
@@ -406,13 +522,23 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
                         >
                             {isVisible && (
                                 <div className="h-full flex items-center justify-center">
-                                    <div className="w-full max-w-2xl mx-auto h-full">
+                                    {/* [E] 다음 카드 힌트: 카드 너비 97%, 마지막 카드는 100% */}
+                                    <div
+                                        className="mx-auto h-full"
+                                        style={{ width: isLastCard ? "100%" : "97%", maxWidth: "42rem" }}
+                                    >
                                         <CardRenderer
                                             card={card}
                                             article={article}
                                             cardIndex={index}
                                             totalCards={totalCards}
                                             onBack={onBack}
+                                            isLiked={isLiked}
+                                            displayLikes={displayLikes}
+                                            displayViews={displayViews}
+                                            onLike={handleLike}
+                                            likeAnimating={likeAnimating}
+                                            goNext={goNext}
                                         />
                                     </div>
                                 </div>
@@ -462,24 +588,52 @@ function CardRenderer({
     cardIndex,
     totalCards,
     onBack,
+    isLiked,
+    displayLikes,
+    displayViews,
+    onLike,
+    likeAnimating,
+    goNext,
 }: {
     card: CardData;
     article: MagazineArticle;
     cardIndex: number;
     totalCards: number;
     onBack: () => void;
+    isLiked: boolean;
+    displayLikes: number;
+    displayViews: number;
+    onLike: () => void;
+    likeAnimating: boolean;
+    goNext: () => void;
 }) {
+    // [B] 짝수/홀수 카드 배경색 교차
+    const bgClass = cardIndex % 2 === 0
+        ? "bg-white dark:bg-gray-900"
+        : "bg-slate-50 dark:bg-gray-900/95";
+
     switch (card.type) {
         case "cover":
             return <CoverCard article={article} />;
         case "summary":
-            return <SummaryCard article={article} />;
+            return (
+                <SummaryCard
+                    article={article}
+                    displayViews={displayViews}
+                    displayLikes={displayLikes}
+                    isLiked={isLiked}
+                    onLike={onLike}
+                    likeAnimating={likeAnimating}
+                />
+            );
         case "text":
             return (
                 <TextCard
                     html={card.html || ""}
                     cardIndex={cardIndex}
                     totalCards={totalCards}
+                    bgClass={bgClass}
+                    goNext={goNext}
                 />
             );
         case "image":
@@ -489,6 +643,7 @@ function CardRenderer({
                     caption={card.caption}
                     cardIndex={cardIndex}
                     totalCards={totalCards}
+                    bgClass={bgClass}
                 />
             );
         case "quote":
@@ -500,7 +655,17 @@ function CardRenderer({
                 />
             );
         case "end":
-            return <EndCard article={article} onBack={onBack} />;
+            return (
+                <EndCard
+                    article={article}
+                    onBack={onBack}
+                    isLiked={isLiked}
+                    displayLikes={displayLikes}
+                    displayViews={displayViews}
+                    onLike={onLike}
+                    likeAnimating={likeAnimating}
+                />
+            );
         default:
             return null;
     }
@@ -569,9 +734,23 @@ function CoverCard({ article }: { article: MagazineArticle }) {
 //  요약 카드
 // ──────────────────────────────────────────────
 
-function SummaryCard({ article }: { article: MagazineArticle }) {
+function SummaryCard({
+    article,
+    displayViews,
+    displayLikes,
+    isLiked,
+    onLike,
+    likeAnimating,
+}: {
+    article: MagazineArticle;
+    displayViews: number;
+    displayLikes: number;
+    isLiked: boolean;
+    onLike: () => void;
+    likeAnimating: boolean;
+}) {
     return (
-        <div className="h-full flex flex-col justify-center px-6 py-16 sm:px-8">
+        <div className="h-full flex flex-col justify-center px-6 py-16 sm:px-8 bg-slate-50 dark:bg-gray-900/95">
             {article.badge && (
                 <Badge
                     className={`${getBadgeStyle(article.badge)} rounded-lg text-xs px-2.5 py-0.5 w-fit mb-4`}
@@ -608,12 +787,19 @@ function SummaryCard({ article }: { article: MagazineArticle }) {
                 </span>
                 <span className="flex items-center gap-1">
                     <Eye className="w-3.5 h-3.5" />
-                    {article.views.toLocaleString()}
+                    {displayViews.toLocaleString()}
                 </span>
-                <span className="flex items-center gap-1">
-                    <Heart className="w-3.5 h-3.5" />
-                    {article.likes}
-                </span>
+                <button
+                    onClick={onLike}
+                    className="flex items-center gap-1 hover:text-red-500 transition-colors"
+                >
+                    <Heart
+                        className={`w-3.5 h-3.5 transition-all duration-200 ${
+                            isLiked ? "text-red-500 fill-red-500" : ""
+                        } ${likeAnimating ? "scale-125" : "scale-100"}`}
+                    />
+                    {displayLikes}
+                </button>
             </div>
 
             <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-5 mb-6">
@@ -631,45 +817,120 @@ function SummaryCard({ article }: { article: MagazineArticle }) {
 }
 
 // ──────────────────────────────────────────────
-//  텍스트 카드
+//  텍스트 카드 (세로 스크롤 충돌 해결 포함)
 // ──────────────────────────────────────────────
 
 function TextCard({
     html,
     cardIndex,
     totalCards,
+    bgClass,
+    goNext,
 }: {
     html: string;
     cardIndex: number;
     totalCards: number;
+    bgClass: string;
+    goNext: () => void;
 }) {
-    return (
-        <div className="h-full flex flex-col justify-center px-6 py-16 sm:px-10">
-            {/* 카드 번호 */}
-            <div className="text-xs text-gray-400 dark:text-gray-500 mb-4 text-right">
-                {cardIndex} / {totalCards - 1}
-            </div>
+    const contentRef = useRef<HTMLDivElement>(null);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const [showNextButton, setShowNextButton] = useState(false);
+    const [isAtBottom, setIsAtBottom] = useState(false);
 
-            {/* HTML 본문 */}
-            <div
-                className="prose prose-lg prose-gray dark:prose-invert max-w-none
-                    prose-headings:text-gray-800 dark:prose-headings:text-gray-100
-                    prose-h2:text-2xl prose-h2:font-bold prose-h2:mt-0 prose-h2:mb-5
-                    prose-h3:text-xl prose-h3:font-semibold prose-h3:mt-4 prose-h3:mb-3
-                    prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-p:leading-relaxed prose-p:text-base sm:prose-p:text-lg
-                    prose-ul:text-gray-700 dark:prose-ul:text-gray-300
-                    prose-ol:text-gray-700 dark:prose-ol:text-gray-300
-                    prose-li:my-1
-                    prose-strong:text-gray-800 dark:prose-strong:text-gray-100
-                    prose-blockquote:border-emerald-300 prose-blockquote:text-gray-600 dark:prose-blockquote:text-gray-400
-                    prose-img:rounded-xl prose-img:my-4 prose-img:mx-auto prose-img:max-h-[400px] prose-img:object-contain"
-                dangerouslySetInnerHTML={{
-                    __html: DOMPurify.sanitize(html, {
-                        ADD_TAGS: ["img"],
-                        ADD_ATTR: ["src", "alt", "width", "height", "loading"],
-                    })
-                }}
-            />
+    // [C] 세로 스크롤 충돌 해결: 카드 내용이 화면 높이를 초과하는지 감지
+    useEffect(() => {
+        const checkOverflow = () => {
+            const container = scrollContainerRef.current;
+            const content = contentRef.current;
+            if (!container || !content) return;
+
+            const isOverflowing = content.scrollHeight > container.clientHeight;
+            setShowNextButton(isOverflowing);
+        };
+
+        checkOverflow();
+        window.addEventListener("resize", checkOverflow);
+        return () => window.removeEventListener("resize", checkOverflow);
+    }, [html]);
+
+    // 스크롤 하단 도달 감지
+    useEffect(() => {
+        const container = scrollContainerRef.current;
+        if (!container) return;
+
+        const handleScroll = () => {
+            const threshold = 40;
+            const atBottom =
+                container.scrollHeight - container.scrollTop - container.clientHeight < threshold;
+            setIsAtBottom(atBottom);
+        };
+
+        container.addEventListener("scroll", handleScroll, { passive: true });
+        return () => container.removeEventListener("scroll", handleScroll);
+    }, []);
+
+    const isLastContent = cardIndex >= totalCards - 1;
+
+    return (
+        <div
+            ref={scrollContainerRef}
+            className={`h-full overflow-y-auto ${bgClass}`}
+        >
+            <div ref={contentRef} className="px-6 py-16 sm:px-10">
+                {/* 카드 번호 */}
+                <div className="text-xs text-gray-400 dark:text-gray-500 mb-4 text-right">
+                    {cardIndex} / {totalCards - 1}
+                </div>
+
+                {/* [D] HTML 본문: strong 태그에 형광펜 효과 추가 */}
+                <div
+                    className="prose prose-lg prose-gray dark:prose-invert max-w-none
+                        prose-headings:text-gray-800 dark:prose-headings:text-gray-100
+                        prose-h2:text-2xl prose-h2:font-bold prose-h2:mt-0 prose-h2:mb-5
+                        prose-h3:text-xl prose-h3:font-semibold prose-h3:mt-4 prose-h3:mb-3
+                        prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-p:leading-relaxed prose-p:text-base sm:prose-p:text-lg
+                        prose-ul:text-gray-700 dark:prose-ul:text-gray-300
+                        prose-ol:text-gray-700 dark:prose-ol:text-gray-300
+                        prose-li:my-1
+                        prose-strong:text-gray-800 dark:prose-strong:text-gray-100
+                        prose-blockquote:border-emerald-300 prose-blockquote:text-gray-600 dark:prose-blockquote:text-gray-400
+                        prose-img:rounded-xl prose-img:my-4 prose-img:mx-auto prose-img:max-h-[400px] prose-img:object-contain
+                        magazine-highlight-strong"
+                    dangerouslySetInnerHTML={{
+                        __html: DOMPurify.sanitize(html, {
+                            ADD_TAGS: ["img"],
+                            ADD_ATTR: ["src", "alt", "width", "height", "loading"],
+                        })
+                    }}
+                />
+
+                {/* [C] 긴 카드에서만 하단 "다음" 버튼 표시 */}
+                {showNextButton && !isLastContent && (
+                    <div className="mt-8 pb-4">
+                        <button
+                            onClick={goNext}
+                            className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
+                                isAtBottom
+                                    ? "bg-sky-500 text-white shadow-md hover:bg-sky-600"
+                                    : "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500"
+                            }`}
+                        >
+                            {isAtBottom ? (
+                                <>
+                                    다음 카드
+                                    <ChevronRight className="w-4 h-4" />
+                                </>
+                            ) : (
+                                <>
+                                    <ChevronDown className="w-4 h-4" />
+                                    아래로 스크롤
+                                </>
+                            )}
+                        </button>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
@@ -683,14 +944,16 @@ function ImageCard({
     caption,
     cardIndex,
     totalCards,
+    bgClass,
 }: {
     src: string;
     caption?: string;
     cardIndex: number;
     totalCards: number;
+    bgClass: string;
 }) {
     return (
-        <div className="h-full flex flex-col">
+        <div className={`h-full flex flex-col ${bgClass}`}>
             {/* 카드 번호 */}
             <div className="text-xs text-gray-400 dark:text-gray-500 text-right px-6 pt-14">
                 {cardIndex} / {totalCards - 1}
@@ -758,9 +1021,19 @@ function QuoteCard({
 function EndCard({
     article,
     onBack,
+    isLiked,
+    displayLikes,
+    displayViews,
+    onLike,
+    likeAnimating,
 }: {
     article: MagazineArticle;
     onBack: () => void;
+    isLiked: boolean;
+    displayLikes: number;
+    displayViews: number;
+    onLike: () => void;
+    likeAnimating: boolean;
 }) {
     return (
         <div className="h-full flex flex-col items-center justify-center px-6 py-16 sm:px-8">
@@ -775,16 +1048,23 @@ function EndCard({
                 {article.title}
             </p>
 
-            {/* 조회수 / 좋아요 */}
+            {/* 조회수 / 좋아요 (클릭 가능) */}
             <div className="flex items-center gap-6 mb-6 text-gray-500 dark:text-gray-400">
                 <span className="flex items-center gap-1.5 text-sm">
                     <Eye className="w-4 h-4" />
-                    {article.views.toLocaleString()}
+                    {displayViews.toLocaleString()}
                 </span>
-                <span className="flex items-center gap-1.5 text-sm">
-                    <Heart className="w-4 h-4" />
-                    {article.likes}
-                </span>
+                <button
+                    onClick={onLike}
+                    className="flex items-center gap-1.5 text-sm hover:text-red-500 transition-colors"
+                >
+                    <Heart
+                        className={`w-4 h-4 transition-all duration-200 ${
+                            isLiked ? "text-red-500 fill-red-500" : ""
+                        } ${likeAnimating ? "scale-125" : "scale-100"}`}
+                    />
+                    {displayLikes}
+                </button>
             </div>
 
             {article.tags.length > 0 && (

@@ -5,10 +5,9 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
     Card,
-    CardContent,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +28,7 @@ import {
     Sparkles,
     HeartHandshake,
     Shield,
+    Loader2,
 } from "lucide-react";
 
 import Image from "next/image";
@@ -44,6 +44,9 @@ interface MagazinePageProps {
     setSelectedTab?: (tab: TabType) => void;
     isActive?: boolean;
 }
+
+/** 한 번에 불러올 기사 수 */
+const PAGE_SIZE = 20;
 
 // 단계별 필터 (상단)
 const STAGES = [
@@ -82,6 +85,12 @@ function MagazinePage({ setSelectedTab, isActive }: MagazinePageProps) {
     const [isLoading, setIsLoading] = useState(true);
     const [selectedArticle, setSelectedArticle] = useState<MagazineArticle | null>(null);
 
+    // 페이지네이션 상태
+    const [totalCount, setTotalCount] = useState(0);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const hasMore = articles.length < totalCount;
+    const loadMoreRef = useRef<HTMLDivElement>(null);
+
     // 다른 탭으로 이동하면 기사 상세 닫기 (목록으로 복원)
     useEffect(() => {
         if (!isActive && selectedArticle) {
@@ -98,13 +107,16 @@ function MagazinePage({ setSelectedTab, isActive }: MagazinePageProps) {
         async function fetchArticles() {
             setIsLoading(true);
             try {
-                const res = await fetch(`${API.MAGAZINE}?limit=50`);
+                const res = await fetch(`${API.MAGAZINE}?limit=${PAGE_SIZE}&offset=0`);
                 if (!res.ok) {
                     throw new Error("매거진 불러오기 실패");
                 }
                 const data = await res.json();
                 if (data.articles) {
                     setArticles(data.articles.map(dbArticleToMagazineArticle));
+                }
+                if (data.total != null) {
+                    setTotalCount(data.total);
                 }
             } catch {
                 toast.error("매거진 기사를 불러오지 못했습니다");
@@ -114,6 +126,47 @@ function MagazinePage({ setSelectedTab, isActive }: MagazinePageProps) {
         }
         fetchArticles();
     }, []);
+
+    // 더 불러오기
+    const loadMore = useCallback(async () => {
+        if (isLoadingMore || !hasMore) return;
+        setIsLoadingMore(true);
+        try {
+            const offset = articles.length;
+            const res = await fetch(`${API.MAGAZINE}?limit=${PAGE_SIZE}&offset=${offset}`);
+            if (!res.ok) throw new Error("매거진 불러오기 실패");
+            const data = await res.json();
+            if (data.articles && data.articles.length > 0) {
+                const newArticles = data.articles.map(dbArticleToMagazineArticle);
+                setArticles((prev) => [...prev, ...newArticles]);
+            }
+            if (data.total != null) {
+                setTotalCount(data.total);
+            }
+        } catch {
+            toast.error("추가 기사를 불러오지 못했습니다");
+        } finally {
+            setIsLoadingMore(false);
+        }
+    }, [articles.length, hasMore, isLoadingMore]);
+
+    // IntersectionObserver로 무한 스크롤
+    useEffect(() => {
+        const el = loadMoreRef.current;
+        if (!el || !hasMore) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) {
+                    loadMore();
+                }
+            },
+            { rootMargin: "200px" }
+        );
+
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, [hasMore, loadMore]);
 
     const filteredArticles = articles.filter((article) => {
         // 단계별 필터 (badge 필드 기반)
@@ -355,6 +408,26 @@ function MagazinePage({ setSelectedTab, isActive }: MagazinePageProps) {
                                 </div>
                             </Card>
                         ))}
+
+                        {/* 무한 스크롤 트리거 / 더 보기 버튼 */}
+                        {hasMore && (
+                            <div ref={loadMoreRef} className="flex justify-center py-4">
+                                {isLoadingMore ? (
+                                    <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                        <span className="text-sm">불러오는 중...</span>
+                                    </div>
+                                ) : (
+                                    <Button
+                                        variant="outline"
+                                        className="rounded-xl px-6"
+                                        onClick={loadMore}
+                                    >
+                                        더 보기 ({articles.length} / {totalCount})
+                                    </Button>
+                                )}
+                            </div>
+                        )}
 
                         {filteredArticles.length === 0 && (
                             <div className="text-center py-16">

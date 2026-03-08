@@ -605,6 +605,19 @@ body {
     overscroll-behavior-y: contain;
 }
 
+/* [D] 매거진 리더 - strong 태그 형광펜 효과 */
+.magazine-highlight-strong strong {
+    background-color: rgb(209 250 229 / 0.6); /* bg-emerald-100/60 */
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+    border-radius: 0.25rem;
+}
+@media (prefers-color-scheme: dark) {
+    .magazine-highlight-strong strong {
+        background-color: rgb(6 78 59 / 0.3); /* dark emerald */
+    }
+}
+
 @layer base {
     * {
         @apply border-border;
