@@ -150,9 +150,9 @@ export default function MemorialSwitchModal({
                 if (e.target === e.currentTarget) handleClose();
             }}
         >
-            <div className="min-h-full flex items-start justify-center pt-16 pb-20 px-4">
+            <div className="min-h-full flex items-start justify-center pt-4 sm:pt-16 pb-4 px-3 sm:px-4">
                 <div
-                    className="bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full shadow-2xl relative"
+                    className="bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full shadow-2xl relative max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-9rem)] overflow-y-auto"
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby="memorial-switch-title"
@@ -191,8 +191,6 @@ export default function MemorialSwitchModal({
                                 </div>
                                 <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 mb-6">
                                     <p className="text-center text-gray-600 dark:text-gray-400 text-sm">
-                                        이 결정은 나중에 되돌릴 수 있습니다.
-                                        <br />
                                         준비가 되셨을 때 진행해 주세요.
                                     </p>
                                 </div>
@@ -296,7 +294,7 @@ export default function MemorialSwitchModal({
                             </div>
 
                             {/* 슬라이드쇼 영역 */}
-                            <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                            <div className="relative aspect-square max-h-[50dvh] bg-gray-100 dark:bg-gray-800 overflow-hidden">
                                 {photos.map((photo, i) => (
                                     <div
                                         key={photo.id}
@@ -432,7 +430,7 @@ export default function MemorialSwitchModal({
                                 </button>
 
                                 {/* 별 파티클 (deterministic seed로 hydration 안전) */}
-                                <div className="relative h-64 flex items-center justify-center">
+                                <div className="relative h-48 sm:h-64 flex items-center justify-center">
                                     {Array.from({ length: 30 }).map((_, i) => {
                                         // 인덱스 기반 결정적 값 (SSR/CSR 일치)
                                         const seed = (i * 7 + 13) % 100;
