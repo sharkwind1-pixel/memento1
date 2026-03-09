@@ -80,12 +80,27 @@ export default function AdminUsersTab({
         const newBanStatus = !targetUser.is_banned;
         const action = newBanStatus ? "차단" : "차단 해제";
 
-        if (!confirm(`${targetUser.email}을(를) ${action}하시겠습니까?`)) return;
+        let banReason: string | null = null;
+
+        if (newBanStatus) {
+            // 차단 시 사유 입력 요청
+            const reason = prompt(`${targetUser.email}을(를) 차단합니다.\n\n차단 사유를 입력하세요:`);
+            if (reason === null) return; // 취소
+            banReason = reason || "관리자 차단";
+        } else {
+            if (!confirm(`${targetUser.email}의 차단을 해제하시겠습니까?`)) return;
+        }
 
         try {
+            const updateData: Record<string, unknown> = {
+                is_banned: newBanStatus,
+                ban_reason: newBanStatus ? banReason : null,
+                banned_at: newBanStatus ? new Date().toISOString() : null,
+            };
+
             const { error } = await supabase
                 .from("profiles")
-                .update({ is_banned: newBanStatus })
+                .update(updateData)
                 .eq("id", targetUser.id);
 
             if (error) throw error;

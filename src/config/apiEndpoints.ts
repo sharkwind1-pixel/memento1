@@ -79,6 +79,7 @@ export const API = {
 
     // 인증/보안
     AUTH_RECORD_IP: "/api/auth/record-ip",
+    AUTH_DELETE_ACCOUNT: "/api/auth/delete-account",
 
     // 유저 차단
     BLOCKS: "/api/blocks",

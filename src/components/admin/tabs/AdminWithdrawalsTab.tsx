@@ -78,6 +78,35 @@ export default function AdminWithdrawalsTab({
     // 재가입 허용
     // ========================================================================
     const allowRejoin = async (w: WithdrawnUser) => {
+        // 영구 차단 계정은 이중 확인
+        if (w.withdrawal_type === "banned") {
+            const reason = prompt(
+                `[영구 차단 해제]\n${w.email}은 영구 차단된 계정입니다.\n정말 차단을 해제하시겠습니까?\n\n해제 사유를 입력하세요:`
+            );
+            if (!reason) return; // 취소 또는 빈 사유
+
+            try {
+                const { error } = await supabase
+                    .from("withdrawn_users")
+                    .update({
+                        // banned → abuse_concern으로 변경 (error_resolution이 아님)
+                        // 30일 재가입 대기 기간 부여
+                        withdrawal_type: "abuse_concern",
+                        rejoin_allowed_at: new Date().toISOString(),
+                        reason: `[차단 해제] ${reason} (기존 사유: ${w.reason || "없음"})`,
+                    })
+                    .eq("id", w.id);
+
+                if (error) throw error;
+                toast.success("영구 차단이 해제되었습니다 (재가입 허용)");
+                onRefresh();
+            } catch {
+                toast.error("차단 해제 처리 중 오류가 발생했습니다");
+            }
+            return;
+        }
+
+        // 악용 우려: 일반 재가입 허용
         if (!confirm(`${w.email}의 재가입을 허용하시겠습니까?`)) return;
 
         try {
@@ -292,9 +321,13 @@ function WithdrawnUserCard({ user, onAllowRejoin, onDelete }: WithdrawnUserCardP
                     <button
                         type="button"
                         onClick={onAllowRejoin}
-                        className="h-7 px-2 rounded border border-green-300 dark:border-green-700 text-green-600 dark:text-green-400 bg-white dark:bg-gray-800 text-[10px] font-medium transition-colors"
+                        className={`h-7 px-2 rounded border text-[10px] font-medium transition-colors bg-white dark:bg-gray-800 ${
+                            user.withdrawal_type === "banned"
+                                ? "border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-400"
+                                : "border-green-300 dark:border-green-700 text-green-600 dark:text-green-400"
+                        }`}
                     >
-                        재가입 허용
+                        {user.withdrawal_type === "banned" ? "차단 해제" : "재가입 허용"}
                     </button>
                 )}
                 <button

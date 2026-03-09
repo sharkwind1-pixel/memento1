@@ -10,12 +10,72 @@
  * 서버 Route Handler에서 별도 Supabase 인스턴스를 생성하면
  * Web Locks API 충돌(AbortError)이 발생하므로,
  * 클라이언트 사이드에서 단일 인스턴스로 처리한다.
+ *
+ * 세션 교환 후 withdrawn_users/deleted_accounts 체크:
+ * 탈퇴/차단된 계정이면 강제 로그아웃 후 에러 메시지 표시.
  */
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+
+/**
+ * 탈퇴/차단 계정인지 체크하고, 해당 시 강제 로그아웃
+ * @returns 차단된 경우 에러 메시지, 아니면 null
+ */
+async function checkWithdrawnAndBlock(email: string | undefined): Promise<string | null> {
+    if (!email) return null;
+
+    try {
+        // 1. withdrawn_users 체크 (can_rejoin RPC)
+        const { data: rejoinData } = await supabase.rpc("can_rejoin", {
+            check_email: email,
+            check_ip: null,
+        });
+
+        if (rejoinData && rejoinData.length > 0) {
+            const record = rejoinData[0];
+            if (!record.can_join) {
+                // 차단/대기 중 — 강제 로그아웃
+                await supabase.auth.signOut();
+
+                if (record.block_reason === "영구 차단된 계정입니다.") {
+                    return "이용이 제한된 계정입니다.";
+                }
+                if (record.wait_until) {
+                    const waitDate = new Date(record.wait_until);
+                    const now = new Date();
+                    const diffDays = Math.ceil(
+                        (waitDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+                    );
+                    if (diffDays > 0) {
+                        return `탈퇴 후 ${diffDays}일 후에 재가입 가능합니다.`;
+                    }
+                }
+                return record.block_reason || "가입이 제한되었 계정입니다.";
+            }
+        }
+
+        // 2. deleted_accounts 체크 (기존 호환성)
+        const { data: deletedData } = await supabase.rpc("check_deleted_account", {
+            check_email: email,
+        });
+
+        if (deletedData && deletedData.length > 0) {
+            const record = deletedData[0];
+            if (!record.can_rejoin) {
+                await supabase.auth.signOut();
+                return `탈퇴 후 ${record.days_until_rejoin}일 후에 재가입 가능합니다.`;
+            }
+        }
+
+        return null; // 문제 없음
+    } catch {
+        // 체크 실패 시 로그인 허용 (가용성 우선)
+        return null;
+    }
+}
 
 export default function AuthCallbackPage() {
     const router = useRouter();
@@ -56,6 +116,17 @@ export default function AuthCallbackPage() {
                     console.error("[auth/callback] Magic link error:", err);
                 }
 
+                // 탈퇴/차단 계정 체크
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session?.user) {
+                    const blockMsg = await checkWithdrawnAndBlock(session.user.email);
+                    if (blockMsg) {
+                        setError(blockMsg);
+                        setTimeout(() => router.replace("/"), 3000);
+                        return;
+                    }
+                }
+
                 router.replace("/");
                 return;
             }
@@ -74,6 +145,17 @@ export default function AuthCallbackPage() {
                 } catch (err) {
                     console.error("[auth/callback] Unexpected error:", err);
                     // 에러가 나도 메인으로 이동 (onAuthStateChange가 처리할 수 있음)
+                }
+
+                // 탈퇴/차단 계정 체크
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session?.user) {
+                    const blockMsg = await checkWithdrawnAndBlock(session.user.email);
+                    if (blockMsg) {
+                        setError(blockMsg);
+                        setTimeout(() => router.replace("/"), 3000);
+                        return;
+                    }
                 }
             }
 

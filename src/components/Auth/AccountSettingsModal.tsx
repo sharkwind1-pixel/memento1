@@ -370,18 +370,32 @@ export default function AccountSettingsModal({
                 p_cooldown_days: 30,
             });
 
-            // 2. profiles 삭제 (cascade로 관련 데이터도 삭제됨)
-            const { error: profileError } = await supabase
-                .from("profiles")
-                .delete()
-                .eq("id", user?.id);
+            // 2. Auth 사용자 삭제 (service_role로 auth.users 완전 삭제)
+            // auth.users 삭제 시 CASCADE로 profiles도 삭제됨
+            const session = await supabase.auth.getSession();
+            const token = session.data.session?.access_token;
 
-            if (profileError) {
-                // 프로필 삭제 실패 (무시하고 계속 진행)
+            if (token) {
+                const res = await fetch(API.AUTH_DELETE_ACCOUNT, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    console.error("[회원탈퇴] auth 삭제 실패:", errData);
+                    // auth 삭제 실패 시 profiles만이라도 삭제 시도
+                    await supabase.from("profiles").delete().eq("id", user?.id);
+                }
+            } else {
+                // 토큰 없는 경우 profiles만 삭제
+                await supabase.from("profiles").delete().eq("id", user?.id);
             }
 
-            // 3. Auth 사용자 삭제 (Supabase에서는 직접 삭제 불가, 관리자 API 필요)
-            // 대신 로그아웃 처리하고 안내
+            // 3. 로그아웃 처리
             await signOut();
 
             // localStorage 정리

@@ -490,9 +490,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setTimeout(() => {
                     Promise.all([refreshProfile(), checkDailyLogin()]);
                 }, 0);
-                // IP 기록 + 동일 IP 다중 계정 제한 체크 (비동기, 로그인 차단)
+                // 탈퇴/차단 계정 체크 + IP 체크 (비동기, 로그인 차단)
                 setTimeout(async () => {
                     try {
+                        // 1. 탈퇴 계정 체크 (withdrawn_users)
+                        const email = session.user.email;
+                        if (email) {
+                            const { data: rejoinData } = await supabase.rpc("can_rejoin", {
+                                check_email: email,
+                                check_ip: null,
+                            });
+                            if (rejoinData && rejoinData.length > 0 && !rejoinData[0].can_join) {
+                                const reason = rejoinData[0].block_reason;
+                                toast.error(reason || "이용이 제한된 계정입니다.");
+                                await supabase.auth.signOut();
+                                return;
+                            }
+                        }
+
+                        // 2. is_banned 체크 (프로필에서)
+                        const { data: profileCheck } = await supabase
+                            .from("profiles")
+                            .select("is_banned, ban_reason")
+                            .eq("id", session.user.id)
+                            .single();
+                        if (profileCheck?.is_banned) {
+                            toast.error(profileCheck.ban_reason || "이용이 제한된 계정입니다.");
+                            await supabase.auth.signOut();
+                            return;
+                        }
+
+                        // 3. IP 기록 + 동일 IP 다중 계정 제한 체크
                         const token = session.access_token;
                         const res = await fetch("/api/auth/record-ip", {
                             method: "POST",
@@ -503,12 +531,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         });
                         const result = await res.json();
                         if (result.allowed === false) {
-                            // 같은 IP에 다른 계정이 존재 → 강제 로그아웃
                             toast.error(result.reason || "이 네트워크에서 이미 다른 계정이 사용 중입니다.");
                             await supabase.auth.signOut();
                         }
                     } catch {
-                        // IP 체크 실패 시 무시 (가용성 우선)
+                        // 체크 실패 시 무시 (가용성 우선)
                     }
                 }, 100);
                 // Service Worker 등록 (푸시 알림 준비)
