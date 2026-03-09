@@ -493,7 +493,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 // 탈퇴/차단 계정 체크 + IP 체크 (비동기, 로그인 차단)
                 setTimeout(async () => {
                     try {
-                        // 1. 탈퇴 계정 체크 (withdrawn_users)
+                        // 1. 탈퇴 계정 체크 (withdrawn_users — can_rejoin RPC)
                         const email = session.user.email;
                         if (email) {
                             const { data: rejoinData } = await supabase.rpc("can_rejoin", {
@@ -503,6 +503,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                             if (rejoinData && rejoinData.length > 0 && !rejoinData[0].can_join) {
                                 const reason = rejoinData[0].block_reason;
                                 toast.error(reason || "이용이 제한된 계정입니다.");
+                                await supabase.auth.signOut();
+                                return;
+                            }
+
+                            // 1-2. 기존 deleted_accounts도 체크 (호환성)
+                            const { data: deletedData } = await supabase.rpc("check_deleted_account", {
+                                check_email: email,
+                            });
+                            if (deletedData && deletedData.length > 0 && !deletedData[0].can_rejoin) {
+                                toast.error(`탈퇴 후 ${deletedData[0].days_until_rejoin}일 후에 재가입 가능합니다.`);
                                 await supabase.auth.signOut();
                                 return;
                             }
