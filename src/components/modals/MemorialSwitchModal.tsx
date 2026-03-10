@@ -1,12 +1,18 @@
 /**
  * MemorialSwitchModal.tsx
- * 추모 전환 세레모니 - 5단계 무지개다리 의식
+ * 추모 전환 세레모니 - 5단계 의식
  *
  * Step 1: 마음의 준비 (확인)
  * Step 2: 날짜 선택
  * Step 3: 추억 슬라이드쇼
  * Step 4: 작별 인사 (선택)
  * Step 5: 별이 되다 (완료 애니메이션)
+ *
+ * 모바일 스크롤 구조:
+ * - 외부 backdrop: fixed inset-0, overflow-y-auto (전체 스크롤 담당)
+ * - 내부 래퍼: min-h-full + items-center (수직 중앙 정렬)
+ * - 모달 본체: max-h 없음, 자연 높이. 넘치면 외부가 스크롤.
+ * - body scroll lock: overflow:hidden만 (position:fixed 사용 안 함 — iOS 터치 스크롤 충돌 방지)
  */
 
 "use client";
@@ -16,7 +22,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Pet } from "@/contexts/PetContext";
-import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { Star, Heart, Calendar, ArrowRight, ArrowLeft, X, PenLine } from "lucide-react";
 
 interface MemorialSwitchModalProps {
@@ -40,8 +45,27 @@ export default function MemorialSwitchModal({
     const [slideIndex, setSlideIndex] = useState(0);
     const [starReady, setStarReady] = useState(false);
     const slideTimer = useRef<ReturnType<typeof setInterval>>();
+    const modalRef = useRef<HTMLDivElement>(null);
 
-    useBodyScrollLock(isOpen);
+    // body scroll lock: overflow:hidden만 사용 (position:fixed는 iOS 터치 스크롤 충돌)
+    useEffect(() => {
+        if (!isOpen) return;
+        const scrollY = window.scrollY;
+        document.body.style.overflow = "hidden";
+
+        return () => {
+            document.body.style.overflow = "";
+            window.scrollTo(0, scrollY);
+        };
+    }, [isOpen]);
+
+    // 모달 열릴 때 스크롤 최상단으로
+    useEffect(() => {
+        if (isOpen && modalRef.current) {
+            const backdrop = modalRef.current.closest('[data-memorial-backdrop]');
+            if (backdrop) backdrop.scrollTop = 0;
+        }
+    }, [isOpen, step]);
 
     // 사진 목록 (최대 5장)
     const photos = (pet.photos || [])
@@ -101,20 +125,20 @@ export default function MemorialSwitchModal({
         title: string;
         subtitle: string;
     }) => (
-        <div className="bg-gradient-to-br from-amber-100 via-orange-100 to-yellow-100 dark:from-gray-800/80 dark:via-gray-800/60 dark:to-gray-800/40 p-8 text-center relative">
+        <div className="bg-gradient-to-br from-amber-100 via-orange-100 to-yellow-100 dark:from-gray-800/80 dark:via-gray-800/60 dark:to-gray-800/40 p-6 sm:p-8 text-center relative">
             <button
                 onClick={handleClose}
-                className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/50 transition-colors"
+                className="absolute top-3 right-3 p-2 rounded-full hover:bg-white/50 transition-colors"
                 aria-label="닫기"
             >
                 <X className="w-5 h-5 text-gray-600" />
             </button>
-            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-amber-200 to-orange-200 flex items-center justify-center">
-                <Icon className="w-10 h-10 text-amber-600" />
+            <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-3 sm:mb-4 rounded-full bg-gradient-to-br from-amber-200 to-orange-200 flex items-center justify-center">
+                <Icon className="w-8 h-8 sm:w-10 sm:h-10 text-amber-600" />
             </div>
             <h2
                 id="memorial-switch-title"
-                className="text-xl font-bold text-gray-800 dark:text-white mb-2"
+                className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white mb-1 sm:mb-2"
             >
                 {title}
             </h2>
@@ -144,15 +168,17 @@ export default function MemorialSwitchModal({
 
     return (
         <div
-            className="fixed inset-0 z-[9999] overflow-y-auto bg-black/60"
+            data-memorial-backdrop
+            className="fixed inset-0 z-[9999] overflow-y-auto overscroll-contain bg-black/60"
             style={{ WebkitOverflowScrolling: "touch" } as React.CSSProperties}
             onClick={(e) => {
                 if (e.target === e.currentTarget) handleClose();
             }}
         >
-            <div className="min-h-full flex items-start justify-center pt-4 sm:pt-16 pb-4 px-3 sm:px-4">
+            <div className="min-h-full flex items-center justify-center py-4 px-3 sm:px-4">
                 <div
-                    className="bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full shadow-2xl relative max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-9rem)] overflow-y-auto"
+                    ref={modalRef}
+                    className="bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full shadow-2xl relative my-auto"
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby="memorial-switch-title"
@@ -168,8 +194,8 @@ export default function MemorialSwitchModal({
                                 title="소중한 기억으로"
                                 subtitle={`${pet.name}와의 일상을 추억으로 전환합니다`}
                             />
-                            <div className="p-6">
-                                <div className="space-y-4 mb-6">
+                            <div className="p-4 sm:p-6">
+                                <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
                                     <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-xl">
                                         <Heart className="w-5 h-5 text-blue-500 flex-shrink-0" />
                                         <p className="text-sm text-gray-700 dark:text-gray-300">
@@ -189,7 +215,7 @@ export default function MemorialSwitchModal({
                                         </p>
                                     </div>
                                 </div>
-                                <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 mb-6">
+                                <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 mb-4 sm:mb-6">
                                     <p className="text-center text-gray-600 dark:text-gray-400 text-sm">
                                         준비가 되셨을 때 진행해 주세요.
                                     </p>
@@ -219,11 +245,11 @@ export default function MemorialSwitchModal({
                         <>
                             <Header
                                 icon={Calendar}
-                                title={`${pet.name}가 무지개다리를 건넌 날`}
+                                title={`${pet.name}가 떠난 날`}
                                 subtitle="소중한 날을 기억합니다"
                             />
-                            <div className="p-6">
-                                <div className="mb-6">
+                            <div className="p-4 sm:p-6">
+                                <div className="mb-4 sm:mb-6">
                                     <Label
                                         htmlFor="memorialDate"
                                         className="text-gray-700 dark:text-gray-300"
@@ -245,7 +271,7 @@ export default function MemorialSwitchModal({
                                         className="mt-2 text-center text-lg"
                                     />
                                 </div>
-                                <div className="bg-amber-50 dark:bg-amber-400/10 rounded-xl p-4 mb-6">
+                                <div className="bg-amber-50 dark:bg-amber-400/10 rounded-xl p-4 mb-4 sm:mb-6">
                                     <p className="text-center text-amber-700 dark:text-amber-300 text-sm">
                                         {pet.name}는 이제 따뜻한 햇살이 비치는
                                         <br />
@@ -283,7 +309,7 @@ export default function MemorialSwitchModal({
                             <div className="bg-gradient-to-br from-amber-100 via-orange-100 to-yellow-100 dark:from-gray-800/80 dark:via-gray-800/60 dark:to-gray-800/40 p-4 text-center relative">
                                 <button
                                     onClick={handleClose}
-                                    className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/50 transition-colors z-10"
+                                    className="absolute top-3 right-3 p-2 rounded-full hover:bg-white/50 transition-colors z-10"
                                     aria-label="닫기"
                                 >
                                     <X className="w-5 h-5 text-gray-600" />
@@ -293,8 +319,8 @@ export default function MemorialSwitchModal({
                                 </p>
                             </div>
 
-                            {/* 슬라이드쇼 영역 */}
-                            <div className="relative aspect-square max-h-[50dvh] bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                            {/* 슬라이드쇼 영역: 높이를 고정하여 모달 크기 예측 가능하게 */}
+                            <div className="relative h-[250px] sm:h-[320px] bg-gray-100 dark:bg-gray-800 overflow-hidden">
                                 {photos.map((photo, i) => (
                                     <div
                                         key={photo.id}
@@ -346,7 +372,7 @@ export default function MemorialSwitchModal({
                                 )}
                             </div>
 
-                            <div className="p-6">
+                            <div className="p-4 sm:p-6">
                                 <div className="flex gap-3">
                                     <Button
                                         variant="outline"
@@ -376,21 +402,21 @@ export default function MemorialSwitchModal({
                                 title={`${pet.name}에게`}
                                 subtitle="마지막으로 전하고 싶은 말이 있다면"
                             />
-                            <div className="p-6">
+                            <div className="p-4 sm:p-6">
                                 <textarea
                                     value={farewellMessage}
                                     onChange={(e) =>
                                         setFarewellMessage(e.target.value)
                                     }
                                     placeholder={`${pet.name}에게 하고 싶은 말을 적어주세요...`}
-                                    className="w-full h-32 p-4 rounded-xl border border-amber-200 dark:border-gray-700 bg-amber-50/50 dark:bg-gray-700/20 text-gray-700 dark:text-gray-300 placeholder:text-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm leading-relaxed"
+                                    className="w-full h-28 sm:h-32 p-4 rounded-xl border border-amber-200 dark:border-gray-700 bg-amber-50/50 dark:bg-gray-700/20 text-gray-700 dark:text-gray-300 placeholder:text-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm leading-relaxed"
                                     maxLength={500}
                                 />
                                 <p className="text-right text-xs text-gray-400 mt-1">
                                     {farewellMessage.length}/500
                                 </p>
 
-                                <div className="flex gap-3 mt-4">
+                                <div className="flex gap-3 mt-3 sm:mt-4">
                                     <Button
                                         variant="outline"
                                         onClick={() =>
@@ -423,16 +449,15 @@ export default function MemorialSwitchModal({
                             <div className="relative overflow-hidden bg-gradient-to-b from-[#1a1a2e] via-[#16213e] to-[#0f3460] rounded-t-3xl">
                                 <button
                                     onClick={handleClose}
-                                    className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/20 transition-colors z-10"
+                                    className="absolute top-3 right-3 p-2 rounded-full hover:bg-white/20 transition-colors z-10"
                                     aria-label="닫기"
                                 >
                                     <X className="w-5 h-5 text-white/60" />
                                 </button>
 
-                                {/* 별 파티클 (deterministic seed로 hydration 안전) */}
+                                {/* 별 파티클 */}
                                 <div className="relative h-48 sm:h-64 flex items-center justify-center">
                                     {Array.from({ length: 30 }).map((_, i) => {
-                                        // 인덱스 기반 결정적 값 (SSR/CSR 일치)
                                         const seed = (i * 7 + 13) % 100;
                                         const size = (seed % 3) + 1;
                                         const left = ((i * 37 + 11) % 100);
@@ -469,10 +494,10 @@ export default function MemorialSwitchModal({
                                                 "memorialFadeIn 1.5s ease-out",
                                         }}
                                     >
-                                        <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-gradient-to-br from-amber-300/80 to-yellow-200/80 flex items-center justify-center shadow-lg shadow-amber-500/30">
-                                            <Star className="w-8 h-8 text-amber-600" />
+                                        <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-3 rounded-full bg-gradient-to-br from-amber-300/80 to-yellow-200/80 flex items-center justify-center shadow-lg shadow-amber-500/30">
+                                            <Star className="w-7 h-7 sm:w-8 sm:h-8 text-amber-600" />
                                         </div>
-                                        <h2 className="text-xl font-bold text-white mb-1">
+                                        <h2 className="text-lg sm:text-xl font-bold text-white mb-1">
                                             {pet.name}
                                         </h2>
                                         <p className="text-amber-200/80 text-sm">
@@ -482,8 +507,8 @@ export default function MemorialSwitchModal({
                                 </div>
                             </div>
 
-                            <div className="p-6 text-center">
-                                <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed mb-6">
+                            <div className="p-4 sm:p-6 text-center">
+                                <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed mb-4 sm:mb-6">
                                     {pet.name}는 이제 따뜻한 빛이 되어
                                     <br />
                                     항상 곁에 있을 거예요.
