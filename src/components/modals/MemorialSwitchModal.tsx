@@ -8,10 +8,11 @@
  * Step 4: 작별 인사 (선택)
  * Step 5: 별이 되다 (완료 애니메이션)
  *
- * 스크롤 전략:
- * useBodyScrollLock 사용하지 않음 (position:fixed가 모든 스크롤을 죽임)
- * 대신 backdrop div 자체가 overflow-y-scroll로 스크롤 컨테이너 역할.
- * body에는 overflow:hidden만 적용하여 뒤쪽 페이지 스크롤만 차단.
+ * 스크롤: PetFormModal.tsx (224~301줄)의 검증된 패턴 그대로 사용.
+ * - 배경: fixed inset-0 overflow-y-auto (backdrop 자체가 스크롤 가능)
+ * - 래퍼: min-h-full flex items-start (모달이 상단 기준 정렬)
+ * - 모달 본체: max-h-[calc(100dvh-2rem)] overflow-y-auto (내부 독립 스크롤)
+ * - useBodyScrollLock: body 배경 스크롤 차단 (iOS bounce 포함)
  */
 
 "use client";
@@ -22,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Pet } from "@/contexts/PetContext";
 import { Star, Heart, Calendar, ArrowRight, ArrowLeft, X, PenLine } from "lucide-react";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
 interface MemorialSwitchModalProps {
     pet: Pet;
@@ -44,22 +46,9 @@ export default function MemorialSwitchModal({
     const [slideIndex, setSlideIndex] = useState(0);
     const [starReady, setStarReady] = useState(false);
     const slideTimer = useRef<ReturnType<typeof setInterval>>();
-    const backdropRef = useRef<HTMLDivElement>(null);
 
-    // body overflow:hidden만 적용 (position:fixed 쓰면 스크롤 전부 죽음)
-    useEffect(() => {
-        if (!isOpen) return;
-        const prev = document.body.style.overflow;
-        document.body.style.overflow = "hidden";
-        return () => { document.body.style.overflow = prev; };
-    }, [isOpen]);
-
-    // step 전환 시 backdrop 스크롤을 맨 위로
-    useEffect(() => {
-        if (backdropRef.current) {
-            backdropRef.current.scrollTop = 0;
-        }
-    }, [step]);
+    // PetFormModal과 동일: body 스크롤 잠금
+    useBodyScrollLock(isOpen);
 
     // 사진 목록 (최대 5장)
     const photos = (pet.photos || [])
@@ -109,48 +98,51 @@ export default function MemorialSwitchModal({
         onClose();
     };
 
+    const handleBackdropClose = (e: React.MouseEvent) => {
+        if (e.target === e.currentTarget) handleClose();
+    };
+
     return (
         <>
-            {/* backdrop: 스크롤 컨테이너. position:fixed + overflow-y:scroll */}
+            {/* 전체 화면 컨테이너 - 스크롤 가능 (PetFormModal 패턴) */}
             <div
-                ref={backdropRef}
-                className="fixed inset-0 z-[9999] overflow-y-scroll bg-black/60"
-                onClick={(e) => {
-                    if (e.target === e.currentTarget) handleClose();
-                }}
+                className="fixed inset-0 z-[9999] overflow-y-auto bg-black/60"
+                style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+                onClick={handleBackdropClose}
             >
-                {/* 모달 정렬 래퍼: 최소 높이 100% + 중앙 정렬 */}
-                <div className="min-h-full flex items-center justify-center py-6 px-4">
-                    {/* 모달 본체: max-h 없음, 자연 높이. backdrop이 스크롤 담당 */}
+                {/* 모달 정렬 래퍼 (PetFormModal 패턴) */}
+                <div
+                    className="min-h-full flex items-start justify-center pt-4 sm:pt-16 pb-4 px-3 sm:px-4"
+                    onClick={handleBackdropClose}
+                >
+                    {/* 모달 본체 - 자체 스크롤 (PetFormModal 패턴) */}
                     <div
-                        className="bg-white dark:bg-gray-900 w-full max-w-md rounded-3xl shadow-2xl relative"
+                        className="bg-white dark:bg-gray-900 w-full max-w-md rounded-3xl shadow-2xl max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-9rem)] overflow-y-auto"
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="memorial-switch-title"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* 진행 표시 (5단계) */}
-                        <div className="bg-white dark:bg-gray-900 rounded-t-3xl">
-                            <div className="flex items-center justify-center gap-2 py-3 px-6">
-                                {[1, 2, 3, 4, 5].map((s) => (
-                                    <div
-                                        key={s}
-                                        className={`h-1.5 rounded-full transition-all duration-300 ${
-                                            s === step
-                                                ? "w-6 bg-amber-500"
-                                                : s < step
-                                                  ? "w-3 bg-amber-300"
-                                                  : "w-3 bg-gray-200 dark:bg-gray-700"
-                                        }`}
-                                    />
-                                ))}
-                            </div>
+                        <div className="sticky top-0 z-10 flex items-center justify-center gap-2 py-3 px-6 bg-white dark:bg-gray-900 rounded-t-3xl">
+                            {[1, 2, 3, 4, 5].map((s) => (
+                                <div
+                                    key={s}
+                                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                                        s === step
+                                            ? "w-6 bg-amber-500"
+                                            : s < step
+                                              ? "w-3 bg-amber-300"
+                                              : "w-3 bg-gray-200 dark:bg-gray-700"
+                                    }`}
+                                />
+                            ))}
                         </div>
 
                         {/* Step 1: 마음의 준비 */}
                         {step === 1 && (
                             <>
-                                <div className="bg-gradient-to-br from-amber-100 via-orange-100 to-yellow-100 dark:from-gray-800/80 dark:via-gray-800/60 dark:to-gray-800/40 p-6 sm:p-8 text-center relative">
+                                <div className="bg-gradient-to-br from-amber-100 via-orange-100 to-yellow-100 dark:from-gray-800/80 dark:via-gray-800/60 dark:to-gray-800/40 p-6 text-center relative">
                                     <button
                                         onClick={handleClose}
                                         className="absolute top-3 right-3 p-2 rounded-full hover:bg-white/50 transition-colors"
@@ -158,12 +150,12 @@ export default function MemorialSwitchModal({
                                     >
                                         <X className="w-5 h-5 text-gray-600" />
                                     </button>
-                                    <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-3 rounded-full bg-gradient-to-br from-amber-200 to-orange-200 flex items-center justify-center">
-                                        <Star className="w-8 h-8 sm:w-10 sm:h-10 text-amber-600" />
+                                    <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-gradient-to-br from-amber-200 to-orange-200 flex items-center justify-center">
+                                        <Star className="w-8 h-8 text-amber-600" />
                                     </div>
                                     <h2
                                         id="memorial-switch-title"
-                                        className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white mb-1"
+                                        className="text-lg font-bold text-gray-800 dark:text-white mb-1"
                                     >
                                         소중한 기억으로
                                     </h2>
@@ -171,22 +163,21 @@ export default function MemorialSwitchModal({
                                         {pet.name}와의 일상을 추억으로 전환합니다
                                     </p>
                                 </div>
-                                <div className="p-4 sm:p-6">
+                                <div className="p-4">
                                     <div className="space-y-3 mb-4">
                                         <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-xl">
                                             <Heart className="w-5 h-5 text-blue-500 flex-shrink-0" />
                                             <p className="text-sm text-gray-700 dark:text-gray-300">
                                                 함께한 모든 사진과 기록이{" "}
-                                                <strong>추모 공간</strong>으로
-                                                이어집니다
+                                                <strong>추모 공간</strong>으로 이어집니다
                                             </p>
                                         </div>
                                         <div className="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-400/10 rounded-xl">
                                             <Star className="w-5 h-5 text-amber-500 flex-shrink-0" />
                                             <p className="text-sm text-gray-700 dark:text-gray-300">
                                                 AI 펫톡이{" "}
-                                                <strong>{pet.name}의 목소리</strong>
-                                                로 따뜻한 위로를 전합니다
+                                                <strong>{pet.name}의 목소리</strong>로
+                                                따뜻한 위로를 전합니다
                                             </p>
                                         </div>
                                     </div>
@@ -195,12 +186,12 @@ export default function MemorialSwitchModal({
                                             준비가 되셨을 때 진행해 주세요.
                                         </p>
                                     </div>
-                                    <div className="flex gap-3">
-                                        <Button
-                                            variant="outline"
-                                            onClick={handleClose}
-                                            className="flex-1"
-                                        >
+                                    {/* 하단 버튼 - sticky bottom (PetFormModal 패턴) */}
+                                    <div
+                                        className="flex gap-3"
+                                        style={{ paddingBottom: 'max(0rem, env(safe-area-inset-bottom, 0px))' }}
+                                    >
+                                        <Button variant="outline" onClick={handleClose} className="flex-1">
                                             아직 준비가 안 됐어요
                                         </Button>
                                         <Button
@@ -218,7 +209,7 @@ export default function MemorialSwitchModal({
                         {/* Step 2: 날짜 선택 */}
                         {step === 2 && (
                             <>
-                                <div className="bg-gradient-to-br from-amber-100 via-orange-100 to-yellow-100 dark:from-gray-800/80 dark:via-gray-800/60 dark:to-gray-800/40 p-6 sm:p-8 text-center relative">
+                                <div className="bg-gradient-to-br from-amber-100 via-orange-100 to-yellow-100 dark:from-gray-800/80 dark:via-gray-800/60 dark:to-gray-800/40 p-6 text-center relative">
                                     <button
                                         onClick={handleClose}
                                         className="absolute top-3 right-3 p-2 rounded-full hover:bg-white/50 transition-colors"
@@ -226,36 +217,27 @@ export default function MemorialSwitchModal({
                                     >
                                         <X className="w-5 h-5 text-gray-600" />
                                     </button>
-                                    <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-3 rounded-full bg-gradient-to-br from-amber-200 to-orange-200 flex items-center justify-center">
-                                        <Calendar className="w-8 h-8 sm:w-10 sm:h-10 text-amber-600" />
+                                    <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-gradient-to-br from-amber-200 to-orange-200 flex items-center justify-center">
+                                        <Calendar className="w-8 h-8 text-amber-600" />
                                     </div>
-                                    <h2 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white mb-1">
+                                    <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-1">
                                         {pet.name}가 떠난 날
                                     </h2>
                                     <p className="text-gray-600 dark:text-gray-300 text-sm">
                                         소중한 날을 기억합니다
                                     </p>
                                 </div>
-                                <div className="p-4 sm:p-6">
+                                <div className="p-4">
                                     <div className="mb-4">
-                                        <Label
-                                            htmlFor="memorialDate"
-                                            className="text-gray-700 dark:text-gray-300"
-                                        >
+                                        <Label htmlFor="memorialDate" className="text-gray-700 dark:text-gray-300">
                                             날짜 선택
                                         </Label>
                                         <Input
                                             id="memorialDate"
                                             type="date"
                                             value={memorialDate}
-                                            onChange={(e) =>
-                                                setMemorialDate(e.target.value)
-                                            }
-                                            max={
-                                                new Date()
-                                                    .toISOString()
-                                                    .split("T")[0]
-                                            }
+                                            onChange={(e) => setMemorialDate(e.target.value)}
+                                            max={new Date().toISOString().split("T")[0]}
                                             className="mt-2 text-center text-lg"
                                         />
                                     </div>
@@ -266,21 +248,16 @@ export default function MemorialSwitchModal({
                                             평화로운 곳에서 편안히 지내고 있어요.
                                         </p>
                                     </div>
-                                    <div className="flex gap-3">
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => setStep(1)}
-                                            className="flex-1"
-                                        >
+                                    <div
+                                        className="flex gap-3"
+                                        style={{ paddingBottom: 'max(0rem, env(safe-area-inset-bottom, 0px))' }}
+                                    >
+                                        <Button variant="outline" onClick={() => setStep(1)} className="flex-1">
                                             <ArrowLeft className="w-4 h-4 mr-2" />
                                             이전으로
                                         </Button>
                                         <Button
-                                            onClick={() =>
-                                                photos.length > 0
-                                                    ? setStep(3)
-                                                    : setStep(4)
-                                            }
+                                            onClick={() => photos.length > 0 ? setStep(3) : setStep(4)}
                                             className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
                                         >
                                             계속하기
@@ -306,16 +283,12 @@ export default function MemorialSwitchModal({
                                         {pet.name}와 함께한 순간들
                                     </p>
                                 </div>
-
-                                {/* 슬라이드쇼: 고정 높이 */}
-                                <div className="relative h-[250px] sm:h-[320px] bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                                <div className="relative h-[250px] bg-gray-100 dark:bg-gray-800 overflow-hidden">
                                     {photos.map((photo, i) => (
                                         <div
                                             key={photo.id}
                                             className="absolute inset-0 transition-opacity duration-1000"
-                                            style={{
-                                                opacity: i === slideIndex ? 1 : 0,
-                                            }}
+                                            style={{ opacity: i === slideIndex ? 1 : 0 }}
                                         >
                                             {/* eslint-disable-next-line @next/next/no-img-element */}
                                             <img
@@ -325,46 +298,34 @@ export default function MemorialSwitchModal({
                                             />
                                             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
                                                 {photo.caption && (
-                                                    <p className="text-white text-sm text-center">
-                                                        {photo.caption}
-                                                    </p>
+                                                    <p className="text-white text-sm text-center">{photo.caption}</p>
                                                 )}
                                                 {photo.date && (
-                                                    <p className="text-white/70 text-xs text-center mt-1">
-                                                        {photo.date}
-                                                    </p>
+                                                    <p className="text-white/70 text-xs text-center mt-1">{photo.date}</p>
                                                 )}
                                             </div>
                                         </div>
                                     ))}
-
                                     {photos.length > 1 && (
                                         <div className="absolute bottom-16 left-0 right-0 flex justify-center gap-1.5">
                                             {photos.map((_, i) => (
                                                 <button
                                                     key={i}
-                                                    onClick={() => {
-                                                        setSlideIndex(i);
-                                                        startSlideshow();
-                                                    }}
+                                                    onClick={() => { setSlideIndex(i); startSlideshow(); }}
                                                     className={`w-2 h-2 rounded-full transition-all ${
-                                                        i === slideIndex
-                                                            ? "bg-white w-4"
-                                                            : "bg-white/50"
+                                                        i === slideIndex ? "bg-white w-4" : "bg-white/50"
                                                     }`}
                                                 />
                                             ))}
                                         </div>
                                     )}
                                 </div>
-
-                                <div className="p-4 sm:p-6">
-                                    <div className="flex gap-3">
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => setStep(2)}
-                                            className="flex-1"
-                                        >
+                                <div className="p-4">
+                                    <div
+                                        className="flex gap-3"
+                                        style={{ paddingBottom: 'max(0rem, env(safe-area-inset-bottom, 0px))' }}
+                                    >
+                                        <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
                                             <ArrowLeft className="w-4 h-4 mr-2" />
                                             이전으로
                                         </Button>
@@ -383,7 +344,7 @@ export default function MemorialSwitchModal({
                         {/* Step 4: 작별 인사 */}
                         {step === 4 && (
                             <>
-                                <div className="bg-gradient-to-br from-amber-100 via-orange-100 to-yellow-100 dark:from-gray-800/80 dark:via-gray-800/60 dark:to-gray-800/40 p-6 sm:p-8 text-center relative">
+                                <div className="bg-gradient-to-br from-amber-100 via-orange-100 to-yellow-100 dark:from-gray-800/80 dark:via-gray-800/60 dark:to-gray-800/40 p-6 text-center relative">
                                     <button
                                         onClick={handleClose}
                                         className="absolute top-3 right-3 p-2 rounded-full hover:bg-white/50 transition-colors"
@@ -391,38 +352,34 @@ export default function MemorialSwitchModal({
                                     >
                                         <X className="w-5 h-5 text-gray-600" />
                                     </button>
-                                    <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-3 rounded-full bg-gradient-to-br from-amber-200 to-orange-200 flex items-center justify-center">
-                                        <PenLine className="w-8 h-8 sm:w-10 sm:h-10 text-amber-600" />
+                                    <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-gradient-to-br from-amber-200 to-orange-200 flex items-center justify-center">
+                                        <PenLine className="w-8 h-8 text-amber-600" />
                                     </div>
-                                    <h2 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white mb-1">
+                                    <h2 className="text-lg font-bold text-gray-800 dark:text-white mb-1">
                                         {pet.name}에게
                                     </h2>
                                     <p className="text-gray-600 dark:text-gray-300 text-sm">
                                         마지막으로 전하고 싶은 말이 있다면
                                     </p>
                                 </div>
-                                <div className="p-4 sm:p-6">
+                                <div className="p-4">
                                     <textarea
                                         value={farewellMessage}
-                                        onChange={(e) =>
-                                            setFarewellMessage(e.target.value)
-                                        }
+                                        onChange={(e) => setFarewellMessage(e.target.value)}
                                         placeholder={`${pet.name}에게 하고 싶은 말을 적어주세요...`}
-                                        className="w-full h-28 sm:h-32 p-4 rounded-xl border border-amber-200 dark:border-gray-700 bg-amber-50/50 dark:bg-gray-700/20 text-gray-700 dark:text-gray-300 placeholder:text-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm leading-relaxed"
+                                        className="w-full h-28 p-4 rounded-xl border border-amber-200 dark:border-gray-700 bg-amber-50/50 dark:bg-gray-700/20 text-gray-700 dark:text-gray-300 placeholder:text-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm leading-relaxed"
                                         maxLength={500}
                                     />
                                     <p className="text-right text-xs text-gray-400 mt-1">
                                         {farewellMessage.length}/500
                                     </p>
-
-                                    <div className="flex gap-3 mt-3">
+                                    <div
+                                        className="flex gap-3 mt-3"
+                                        style={{ paddingBottom: 'max(0rem, env(safe-area-inset-bottom, 0px))' }}
+                                    >
                                         <Button
                                             variant="outline"
-                                            onClick={() =>
-                                                photos.length > 0
-                                                    ? setStep(3)
-                                                    : setStep(2)
-                                            }
+                                            onClick={() => photos.length > 0 ? setStep(3) : setStep(2)}
                                             className="flex-1"
                                         >
                                             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -432,9 +389,7 @@ export default function MemorialSwitchModal({
                                             onClick={() => setStep(5)}
                                             className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
                                         >
-                                            {farewellMessage
-                                                ? "다음으로"
-                                                : "건너뛰기"}
+                                            {farewellMessage ? "다음으로" : "건너뛰기"}
                                             <ArrowRight className="w-4 h-4 ml-2" />
                                         </Button>
                                     </div>
@@ -445,7 +400,7 @@ export default function MemorialSwitchModal({
                         {/* Step 5: 별이 되다 */}
                         {step === 5 && (
                             <>
-                                <div className="relative overflow-hidden bg-gradient-to-b from-[#1a1a2e] via-[#16213e] to-[#0f3460]">
+                                <div className="relative overflow-hidden bg-gradient-to-b from-[#1a1a2e] via-[#16213e] to-[#0f3460] rounded-t-3xl">
                                     <button
                                         onClick={handleClose}
                                         className="absolute top-3 right-3 p-2 rounded-full hover:bg-white/20 transition-colors z-10"
@@ -453,8 +408,7 @@ export default function MemorialSwitchModal({
                                     >
                                         <X className="w-5 h-5 text-white/60" />
                                     </button>
-
-                                    <div className="relative h-48 sm:h-64 flex items-center justify-center">
+                                    <div className="relative h-48 flex items-center justify-center">
                                         {Array.from({ length: 30 }).map((_, i) => {
                                             const seed = (i * 7 + 13) % 100;
                                             const size = (seed % 3) + 1;
@@ -463,65 +417,44 @@ export default function MemorialSwitchModal({
                                             const dur = 1.5 + (seed % 20) / 10;
                                             const delay = (i * 17 % 20) / 10;
                                             return (
-                                            <div
-                                                key={i}
-                                                className="absolute rounded-full"
-                                                style={{
-                                                    width: size,
-                                                    height: size,
-                                                    left: `${left}%`,
-                                                    top: `${top}%`,
-                                                    backgroundColor:
-                                                        i % 3 === 0
-                                                            ? "#fde68a"
-                                                            : i % 3 === 1
-                                                              ? "#ffffff"
-                                                              : "#fbbf24",
-                                                    animation: `memorialTwinkle ${dur}s ease-in-out infinite`,
-                                                    animationDelay: `${delay}s`,
-                                                }}
-                                            />
+                                                <div
+                                                    key={i}
+                                                    className="absolute rounded-full"
+                                                    style={{
+                                                        width: size, height: size,
+                                                        left: `${left}%`, top: `${top}%`,
+                                                        backgroundColor: i % 3 === 0 ? "#fde68a" : i % 3 === 1 ? "#ffffff" : "#fbbf24",
+                                                        animation: `memorialTwinkle ${dur}s ease-in-out infinite`,
+                                                        animationDelay: `${delay}s`,
+                                                    }}
+                                                />
                                             );
                                         })}
-
-                                        <div
-                                            className="text-center z-10"
-                                            style={{
-                                                animation: "memorialFadeIn 1.5s ease-out",
-                                            }}
-                                        >
-                                            <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-3 rounded-full bg-gradient-to-br from-amber-300/80 to-yellow-200/80 flex items-center justify-center shadow-lg shadow-amber-500/30">
-                                                <Star className="w-7 h-7 sm:w-8 sm:h-8 text-amber-600" />
+                                        <div className="text-center z-10" style={{ animation: "memorialFadeIn 1.5s ease-out" }}>
+                                            <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-gradient-to-br from-amber-300/80 to-yellow-200/80 flex items-center justify-center shadow-lg shadow-amber-500/30">
+                                                <Star className="w-7 h-7 text-amber-600" />
                                             </div>
-                                            <h2 className="text-lg sm:text-xl font-bold text-white mb-1">
-                                                {pet.name}
-                                            </h2>
-                                            <p className="text-amber-200/80 text-sm">
-                                                밤하늘의 별이 되었어요
-                                            </p>
+                                            <h2 className="text-lg font-bold text-white mb-1">{pet.name}</h2>
+                                            <p className="text-amber-200/80 text-sm">밤하늘의 별이 되었어요</p>
                                         </div>
                                     </div>
                                 </div>
-
-                                <div className="p-4 sm:p-6 text-center">
+                                <div
+                                    className="p-4 text-center"
+                                    style={{ paddingBottom: 'max(1rem, calc(env(safe-area-inset-bottom, 0px) + 0.5rem))' }}
+                                >
                                     <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed mb-4">
-                                        {pet.name}는 이제 따뜻한 빛이 되어
-                                        <br />
-                                        항상 곁에 있을 거예요.
+                                        {pet.name}는 이제 따뜻한 빛이 되어<br />항상 곁에 있을 거예요.
                                     </p>
-
                                     <Button
                                         onClick={handleConfirm}
                                         disabled={!starReady}
                                         className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
                                     >
                                         <Star className="w-4 h-4 mr-2" />
-                                        {starReady
-                                            ? "추모 모드로 전환"
-                                            : "잠시만 기다려주세요..."}
+                                        {starReady ? "추모 모드로 전환" : "잠시만 기다려주세요..."}
                                     </Button>
                                 </div>
-
                                 <style>{`
                                     @keyframes memorialTwinkle {
                                         0%, 100% { opacity: 0.3; transform: scale(1); }
