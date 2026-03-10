@@ -88,6 +88,7 @@ export const API = {
     // 관리자
     ADMIN_POINTS: "/api/admin/points",
     ADMIN_DELETE_USER: "/api/admin/delete-user",
+    ADMIN_BLOCK_EMAIL: "/api/admin/block-email",
 
     // 치유의 여정 (추모 모드 감정 추이)
     HEALING_JOURNEY: (petId: string) => `/api/healing-journey?petId=${petId}`,

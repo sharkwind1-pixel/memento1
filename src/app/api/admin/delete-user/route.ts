@@ -1,9 +1,12 @@
 /**
  * 관리자 유저 삭제 API
- * POST: 관리자가 탈퇴 처리된 유저의 auth 계정을 삭제
+ * POST: 관리자가 유저를 탈퇴 처리
  *
  * 보안: 세션 기반 인증 + 관리자 권한 검증
  * DB: service_role로 auth.users 삭제 (CASCADE로 profiles도 삭제됨)
+ *
+ * 핵심: withdrawn_users에 기록을 남겨서 OAuth 재로그인 시
+ * can_rejoin RPC가 차단할 수 있도록 함
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -76,7 +79,7 @@ export async function POST(request: NextRequest) {
 
         // 3. 요청 파라미터
         const body = await request.json();
-        const { targetUserId } = body as { targetUserId: string };
+        const { targetUserId, reason } = body as { targetUserId: string; reason?: string };
 
         if (!targetUserId) {
             return NextResponse.json(
@@ -93,24 +96,85 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 4. service_role 키가 있으면 auth.users에서 완전 삭제
-        if (serviceKey) {
-            const adminClient = createClient(url, serviceKey, {
-                auth: { autoRefreshToken: false, persistSession: false },
-            });
-
-            const { error: deleteError } = await adminClient.auth.admin.deleteUser(
-                targetUserId
+        if (!serviceKey) {
+            return NextResponse.json(
+                { error: "서버 설정 오류 (service key)" },
+                { status: 500 }
             );
-
-            if (deleteError) {
-                console.error("[Admin Delete User] auth 삭제 에러:", deleteError);
-                // auth 삭제 실패해도 profiles는 삭제 시도
-            }
         }
 
-        // 5. profiles 테이블에서도 삭제 (CASCADE가 안 된 경우 대비)
-        const { error: profileError } = await anonClient
+        const adminClient = createClient(url, serviceKey, {
+            auth: { autoRefreshToken: false, persistSession: false },
+        });
+
+        // 4. 삭제 대상 유저 정보 조회 (이메일, 닉네임)
+        let targetEmail = "";
+        let targetNickname: string | null = null;
+
+        // auth.users에서 이메일 가져오기
+        const { data: targetAuthUser } = await adminClient.auth.admin.getUserById(targetUserId);
+        if (targetAuthUser?.user) {
+            targetEmail = targetAuthUser.user.email || "";
+        }
+
+        // profiles에서 닉네임 가져오기
+        const { data: targetProfile } = await adminClient
+            .from("profiles")
+            .select("nickname")
+            .eq("id", targetUserId)
+            .single();
+        if (targetProfile) {
+            targetNickname = targetProfile.nickname;
+        }
+
+        // 5. withdrawn_users에 기록 (재로그인 차단용 - 반드시 auth 삭제 전에)
+        // can_rejoin RPC가 이 테이블을 체크하여 OAuth 재로그인을 차단
+        // 프론트엔드에서 먼저 INSERT했을 수 있으므로 기존 레코드 확인 후 INSERT
+        if (targetEmail) {
+            // 이미 해당 이메일로 withdrawn_users 레코드가 있는지 확인
+            const { data: existingRecord } = await adminClient
+                .from("withdrawn_users")
+                .select("id")
+                .eq("email", targetEmail)
+                .order("created_at", { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            if (!existingRecord) {
+                const { error: withdrawError } = await adminClient
+                    .from("withdrawn_users")
+                    .insert({
+                        user_id: targetUserId,
+                        email: targetEmail,
+                        nickname: targetNickname,
+                        withdrawal_type: "banned",
+                        reason: reason || "관리자에 의한 계정 삭제",
+                        rejoin_allowed_at: null,  // 영구 차단 (관리자가 직접 해제해야)
+                        processed_by: adminUser.id,
+                    });
+
+                if (withdrawError) {
+                    console.error("[Admin Delete User] withdrawn_users INSERT 에러:", withdrawError);
+                    // INSERT 실패해도 auth 삭제는 진행
+                }
+            }
+        } else {
+            console.warn("[Admin Delete User] 대상 유저 이메일을 찾을 수 없음:", targetUserId);
+        }
+
+        // 6. auth.users에서 완전 삭제
+        const { error: deleteError } = await adminClient.auth.admin.deleteUser(
+            targetUserId
+        );
+
+        if (deleteError) {
+            console.error("[Admin Delete User] auth 삭제 에러:", deleteError);
+            // auth 삭제 실패해도 withdrawn_users에 기록은 남아있으므로
+            // 재로그인 시 can_rejoin 체크에서 차단됨
+        }
+
+        // 7. profiles 테이블에서도 삭제 (CASCADE가 안 된 경우 대비)
+        const { error: profileError } = await adminClient
             .from("profiles")
             .delete()
             .eq("id", targetUserId);
@@ -123,6 +187,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
             success: true,
             deletedUserId: targetUserId,
+            withdrawalRecorded: !!targetEmail,
         });
     } catch (err) {
         console.error("[Admin Delete User] 서버 오류:", err);

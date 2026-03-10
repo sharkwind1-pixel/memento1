@@ -24,8 +24,11 @@ import {
     Search,
     RefreshCw,
     Ban,
+    Plus,
+    ShieldBan,
 } from "lucide-react";
 import { WithdrawnUser } from "../types";
+import { API } from "@/config/apiEndpoints";
 
 // ============================================================================
 // Props 타입 정의
@@ -73,6 +76,54 @@ export default function AdminWithdrawalsTab({
 }: AdminWithdrawalsTabProps) {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedType, setSelectedType] = useState<string | null>(null);
+    const [showBlockForm, setShowBlockForm] = useState(false);
+    const [blockEmail, setBlockEmail] = useState("");
+    const [blockReason, setBlockReason] = useState("");
+    const [isBlocking, setIsBlocking] = useState(false);
+
+    // ========================================================================
+    // 이메일 수동 차단
+    // ========================================================================
+    const handleBlockEmail = async () => {
+        if (!blockEmail.trim()) {
+            toast.error("이메일을 입력해주세요");
+            return;
+        }
+
+        setIsBlocking(true);
+        try {
+            const session = await supabase.auth.getSession();
+            const token = session.data.session?.access_token;
+
+            const res = await fetch(API.ADMIN_BLOCK_EMAIL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({
+                    email: blockEmail.trim(),
+                    reason: blockReason.trim() || "관리자 수동 차단",
+                    withdrawalType: "banned",
+                }),
+            });
+
+            const result = await res.json();
+            if (result.success) {
+                toast.success(`${blockEmail} 차단 완료`);
+                setBlockEmail("");
+                setBlockReason("");
+                setShowBlockForm(false);
+                onRefresh();
+            } else {
+                toast.error(result.message || result.error || "차단 실패");
+            }
+        } catch {
+            toast.error("차단 처리 중 오류가 발생했습니다");
+        } finally {
+            setIsBlocking(false);
+        }
+    };
 
     // ========================================================================
     // 재가입 허용
@@ -162,7 +213,7 @@ export default function AdminWithdrawalsTab({
     // ========================================================================
     return (
         <div className="space-y-4">
-            {/* 검색 & 새로고침 */}
+            {/* 검색 & 새로고침 & 수동 차단 */}
             <div className="flex gap-1.5">
                 <div className="relative flex-1">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
@@ -173,10 +224,59 @@ export default function AdminWithdrawalsTab({
                         className="pl-8 h-8 text-xs"
                     />
                 </div>
+                <Button
+                    variant="outline"
+                    onClick={() => setShowBlockForm(!showBlockForm)}
+                    className="h-8 px-2 text-xs border-red-300 dark:border-red-700 text-red-600 dark:text-red-400"
+                >
+                    <ShieldBan className="w-3.5 h-3.5 mr-0.5" />
+                    차단
+                </Button>
                 <Button variant="outline" onClick={onRefresh} className="h-8 px-2 text-xs">
                     <RefreshCw className="w-3.5 h-3.5" />
                 </Button>
             </div>
+
+            {/* 이메일 수동 차단 폼 */}
+            {showBlockForm && (
+                <Card className="border-red-200 dark:border-red-800">
+                    <CardContent className="p-3 space-y-2">
+                        <p className="text-xs font-medium text-red-600 dark:text-red-400 flex items-center gap-1">
+                            <ShieldBan className="w-3.5 h-3.5" />
+                            이메일 수동 차단
+                        </p>
+                        <Input
+                            placeholder="차단할 이메일 주소"
+                            value={blockEmail}
+                            onChange={(e) => setBlockEmail(e.target.value)}
+                            className="h-8 text-xs"
+                            type="email"
+                        />
+                        <Input
+                            placeholder="차단 사유 (선택)"
+                            value={blockReason}
+                            onChange={(e) => setBlockReason(e.target.value)}
+                            className="h-8 text-xs"
+                        />
+                        <div className="flex gap-1.5 justify-end">
+                            <Button
+                                variant="outline"
+                                onClick={() => setShowBlockForm(false)}
+                                className="h-7 px-3 text-xs"
+                            >
+                                취소
+                            </Button>
+                            <Button
+                                onClick={handleBlockEmail}
+                                disabled={isBlocking || !blockEmail.trim()}
+                                className="h-7 px-3 text-xs bg-red-500 hover:bg-red-600 text-white"
+                            >
+                                {isBlocking ? "처리 중..." : "차단"}
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             {/* 유형 필터 - 한 줄 4개 */}
             <div className="flex gap-1 select-none">
