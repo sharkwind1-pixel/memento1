@@ -50,68 +50,178 @@
 
 ---
 
-### [2026-03-10] 모바일 모달 스크롤 / 계정 삭제 차단 / UI 버그 수정
+### [2026-03-10] 세션 전체 작업 기록 (커밋 순서)
 
-#### 추모 전환 모달 모바일 스크롤 문제 (13번 시도 끝에 해결)
+> 이 세션에서 수행한 모든 작업을 커밋 단위로 기록.
+> 대화방이 종료되어도 이 기록만 보면 이어서 작업 가능.
 
-**증상**: 추모 전환 모달(MemorialSwitchModal)이 모바일에서 스크롤 불가, 내용이 잘려서 버튼에 접근 불가
+---
 
-**근본 원인**: `useBodyScrollLock` 훅이 body를 `position: fixed`로 만들면서, fixed 자식의 `overflow-y: auto` 스크롤까지 죽임 (갤럭시 등 모바일 브라우저에서 발생)
+#### 커밋 1: `a4f2c87` — 로그인/탈퇴 시스템 전면 보안 수정 (이전 세션 이월)
 
-**실패한 시도들**:
-- useBodyScrollLock + max-h overflow-y-auto (PetFormModal 패턴) → 스크롤 안 됨
-- body overflow:hidden만 사용 → 모달 자체가 안 뜸
-- touchmove 이벤트 핸들러 → 모달 내부 스크롤까지 차단
-- LoginPromptModal 구조 복사 → 스크롤 안 됨
+이전 세션에서 시작한 작업. 탈퇴 계정 차단, auth/callback 보강 등.
 
-**최종 해결 패턴 (다음에 같은 문제 발생 시 이 패턴 사용)**:
+#### 커밋 2~8: 추모 전환 모달 모바일 스크롤 (13번 시도)
+
+| 커밋 | 시도 | 접근법 | 결과 |
+|------|------|--------|------|
+| `f9b943d` | 5 | createPortal + touchmove | 스크롤 안 됨 |
+| `d3b619f` | 6 | PetFormModal 패턴 (useBodyScrollLock + overflow-y-auto) | 모달은 내려왔지만 스크롤 안 됨 |
+| `628a8d3` | 6.5 | PetFormModal 구조 그대로 | 동일 |
+| `225984b` | 7 | useBodyScrollLock 제거, body overflow:hidden만 | 모달 자체가 안 뜸 |
+| `1c22c7b` | 8 | body 스타일 완전 미접촉 | 여전히 안 됨 |
+| `41c5bba` | 9 | LoginPromptModal 100% 동일 구조 | 모달은 뜨지만 스크롤 안 됨 |
+| `536de75` | 10 | max-h + overflow-y-auto 추가 | 여전히 안 됨 |
+| `e0c859c` | 11 | useBodyScrollLock 완전 제거 + touchmove 배경만 차단 + max-h-[85dvh] | **스크롤 됨**, 모달 위치가 너무 아래 |
+| `836f2ff` | 12 | 모든 간섭 제거 — backdrop overflow-y-auto가 스크롤 컨테이너 | **스크롤 됨**, 모달 위치 아래 |
+| `c4e826b` | 13 | wrapper를 `flex justify-center pt-8 pb-8 px-4`로 상단 고정 + scrollTop=0 | **최종 해결** |
+
+**최종 패턴 (CLAUDE.md #6에도 기록됨)**:
 ```tsx
-// 핵심: body 스타일 절대 건드리지 않음 + backdrop이 스크롤 컨테이너
-// useBodyScrollLock 사용 안 함
-// touchmove 핸들러 사용 안 함
-
-// backdrop: 스크롤 컨테이너
-<div className="fixed inset-0 z-[9999] overflow-y-auto bg-black/60">
-    {/* wrapper: 상단 배치 */}
-    <div className="flex justify-center pt-8 pb-8 px-4">
-        {/* modal: 자연 높이 (max-h 안 씀) */}
-        <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl">
-            {/* 내용 */}
-        </div>
-    </div>
-</div>
+// useBodyScrollLock 안 씀, body 스타일 안 건드림, touchmove 안 씀
+// backdrop(fixed inset-0 overflow-y-auto)이 스크롤 컨테이너
+// wrapper: flex justify-center pt-8 pb-8 px-4 (items-center 안 씀)
+// modal: 자연 높이 (max-h 안 씀)
+// 열릴 때 backdropRef.scrollTop = 0
 ```
-- `useEscapeClose`만 사용 (ESC 키로 닫기)
-- 모달 열릴 때 `backdropRef.scrollTop = 0`으로 최상단 표시
-- `items-center` 대신 `pt-8`으로 상단 고정 (스크롤 내려서 버튼 누른 뒤 모달이 중간에 뜨면 찾기 어려움)
 
 **파일**: `src/components/modals/MemorialSwitchModal.tsx`
 
 ---
 
-#### 탈퇴 계정 재로그인 차단 (근본 수정)
+#### 커밋 9: `d58eced` — 탈퇴 계정 재로그인 차단 1차 시도
 
-**증상**: 관리자가 삭제한 계정이 카카오 OAuth로 다시 로그인 가능
+- `/api/auth/cleanup-blocked` API 신규: 차단된 계정의 OAuth 생성 auth.users를 service_role로 삭제
+- `auth/callback/page.tsx`에 `cleanupBlockedAuthUser()` 함수 추가
+- `AuthContext.tsx` SIGNED_IN 핸들러에서도 cleanup-blocked 호출
+- `apiEndpoints.ts`에 `AUTH_CLEANUP_BLOCKED` 추가
 
-**근본 원인**: `/api/admin/delete-user` API가 `auth.users`만 삭제하고 `withdrawn_users` 테이블에 기록을 안 남김
-→ OAuth 재로그인 시 `can_rejoin` RPC가 체크할 레코드가 없어서 차단 불가
-
-**수정 내용**:
-1. `delete-user` API: 삭제 전 대상의 이메일/닉네임 조회 → `withdrawn_users`에 `banned` 타입으로 INSERT → 그 후 auth.users 삭제
-2. `/api/admin/block-email` API 신규: 이미 삭제된 계정의 이메일을 수동으로 차단 목록에 추가 + 잔여 auth.users/profiles 정리
-3. 관리자 탈퇴관리 탭에 이메일 수동 차단 UI 추가
-
-**파일**: `src/app/api/admin/delete-user/route.ts`, `src/app/api/admin/block-email/route.ts`, `src/components/admin/tabs/AdminWithdrawalsTab.tsx`
-
-**교훈**: 계정 삭제 시 반드시 `withdrawn_users`에 기록을 남겨야 OAuth 재로그인을 차단할 수 있음. auth.users만 삭제하면 카카오가 새 auth.users를 자동 생성해버림.
+**결과**: 유저 테스트에서 여전히 로그인됨 (스크린샷 확인) → 근본 원인이 다름
 
 ---
 
-#### 기타 수정
-- **로그아웃 시 홈화면 이동**: SIGNED_OUT 핸들러에서 `navigateToHome` 커스텀 이벤트 → page.tsx에서 수신
-- **닉네임 중복 체크 통일**: RecordPage(내 정보)에서도 `checkNickname()` 호출 추가 (기존: 가입 시만 체크)
-- **모바일 사이드바 z-index**: 사이드바 패널 z-50 → z-[70], 백드롭 z-40 → z-[65] (헤더 z-[60]보다 위)
-- **AI 펫톡 간식 추천**: 시스템 프롬프트에서 "간식/음식 관련 질문은 케어 영역"임을 명시, 캐릭터 역할보다 정보 전달 우선
+#### 커밋 10: `c2008f8` — 탈퇴 계정 재로그인 차단 근본 수정
+
+**근본 원인 발견**: 관리자 `delete-user` API가 `auth.users`만 삭제하고 `withdrawn_users` 테이블에 기록을 안 남김.
+카카오 OAuth가 새 auth.users를 자동 생성 → `can_rejoin` RPC가 체크할 레코드 없음 → 차단 안 됨.
+
+**수정**:
+1. `/api/admin/delete-user` — 삭제 전 대상 이메일/닉네임 조회(`getUserById` + profiles) → `withdrawn_users`에 `banned` INSERT → 중복 방지(기존 레코드 확인) → auth.users 삭제
+2. `/api/admin/block-email` API 신규 — 이미 삭제된 계정의 이메일을 수동 차단. profiles/auth.users 잔여 데이터도 정리. user_id NOT NULL 제약 → 더미 UUID 사용
+3. `AdminWithdrawalsTab.tsx` — 이메일 수동 차단 UI (차단 버튼 + 이메일/사유 입력 폼)
+4. `apiEndpoints.ts`에 `ADMIN_BLOCK_EMAIL` 추가
+
+**파일**: `src/app/api/admin/delete-user/route.ts`, `src/app/api/admin/block-email/route.ts`, `src/components/admin/tabs/AdminWithdrawalsTab.tsx`, `src/config/apiEndpoints.ts`
+
+---
+
+#### 커밋 11: `5d9ab07` — 로그아웃 홈 리다이렉트 + 닉네임 중복체크 + 데이터 정리
+
+**3가지 문제 동시 수정**:
+
+1. **로그아웃 시 홈화면 이동**
+   - `AuthContext.tsx` SIGNED_OUT 핸들러: `navigateToHome` 커스텀 이벤트 발생 + localStorage `memento-current-tab` 삭제 + URL에서 tab 파라미터 제거
+   - `page.tsx`: `navigateToHome` 이벤트 수신 → `setSelectedTab("home")`
+
+2. **닉네임 중복 체크 통일**
+   - 기존: 가입 시에만 `checkNickname()` 호출, RecordPage(내 정보)에서는 중복 체크 없이 바로 저장
+   - 수정: `RecordPage.tsx` `handleSaveNickname`에 `checkNickname()` 호출 추가 + 2글자 미만 검증 + 현재 닉네임과 같으면 그냥 닫기
+
+3. **block-email API 데이터 정리 강화**
+   - 차단 시 profiles.email로 조회 → auth.users CASCADE 삭제
+   - auth.users 없으면 profiles만 직접 삭제
+   - profiles.email 없으면 listUsers로 폴백 검색
+
+**파일**: `src/contexts/AuthContext.tsx`, `src/app/page.tsx`, `src/components/pages/RecordPage.tsx`, `src/app/api/admin/block-email/route.ts`
+
+---
+
+#### 커밋 12: `6b29074` — 사이드바 z-index + AI 간식 추천 + 이력 기록
+
+1. **모바일 사이드바 X 버튼 헤더에 가려짐**
+   - 원인: 헤더 z-[60] > 사이드바 패널 z-50
+   - 수정: 사이드바 패널 z-50 → z-[70], 백드롭 z-40 → z-[65]
+   - **파일**: `src/components/common/Sidebar.tsx`
+
+2. **AI 펫톡 간식 추천 — "나는 강아지니까 모르겠어~" 문제**
+   - 원인: 시스템 프롬프트의 "범위 밖 거절" 패턴("나는 강아지니까 모르겠어~")이 간식 질문에도 적용됨 + "묻지 않았는데 간식 금지" 규칙이 너무 넓음
+   - 수정:
+     - 대화 범위에 "간식/사료/음식 추천" 명시적 허용 추가
+     - "간식 관련 질문은 케어 핵심 영역, 캐릭터보다 정보 전달 우선" 지시 추가
+     - "묻지 않았는데 간식 금지" → "사용자가 묻지 않았는데 먼저 꺼내기 금지" 명확화
+     - 간식 추천 좋은/나쁜 예시 few-shot 추가
+     - 추모 모드도 동일 수정
+   - **파일**: `src/app/api/chat/chat-prompts.ts`
+
+3. **수정 이력 기록**: RELAY-ARCHIVE.md + CLAUDE.md #6 모달 스크롤 패턴
+
+---
+
+#### 커밋 13: `7a4ba41` — AI 펫톡 SUGGESTIONS 도발적 톤 필터링
+
+- **문제**: 후속 질문 버튼에 "눈치없이 나갈건가?" 같은 도발적 질문이 표시됨
+- **원인**: AI가 펫 캐릭터의 장난스러운 말투를 후속 질문에도 적용
+- **수정**:
+  - 시스템 프롬프트: "사용자가 실제로 눌러볼 만한 자연스러운 질문만, 도발적/공격적/비꼬는 톤 절대 금지" 추가
+  - 서버측 SUGGESTIONS 파싱(`chat-pipeline.ts`): `눈치/뭐야/왜그래/짜증/싫어/꺼져/시끄러/바보/멍청/한심` 키워드 필터 추가
+- **파일**: `src/app/api/chat/chat-prompts.ts`, `src/app/api/chat/chat-pipeline.ts`
+
+---
+
+#### 커밋 14: `5172e4d` — 홈 함께보기 섹션 AI 영상 전용
+
+- **문제**: 홈 "함께 보기" 섹션에 캣타워 등 일반 자랑 글이 표시됨 (AI 영상 전용이어야 함)
+- **원인**: `badge: "자랑"`으로만 필터링해서 일반 유저의 자랑 게시글도 포함
+- **수정**: `videoUrl`이 있는 AI 영상 게시글만 필터링 (`useHomePage.ts`). 영상 게시글 없으면 목업 폴백
+- 섹션 설명도 "우리 아이들의 사진과 영상" → "AI로 만든 우리 아이 영상" 변경
+- **파일**: `src/components/features/home/useHomePage.ts`, `src/components/features/home/ShowcaseSection.tsx`
+
+---
+
+#### 이 세션에서 변경된 전체 파일 목록
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `src/components/modals/MemorialSwitchModal.tsx` | 모바일 스크롤 근본 수정 (13번 재작성) |
+| `src/app/api/admin/delete-user/route.ts` | withdrawn_users INSERT + 이메일/닉네임 조회 추가 |
+| `src/app/api/admin/block-email/route.ts` | **신규** — 이메일 수동 차단 API |
+| `src/app/api/auth/cleanup-blocked/route.ts` | **신규** — OAuth 생성 auth.users 삭제 |
+| `src/app/auth/callback/page.tsx` | cleanupBlockedAuthUser 함수 + 차단 시 호출 |
+| `src/contexts/AuthContext.tsx` | SIGNED_IN 차단 체크 + SIGNED_OUT 홈 리다이렉트 |
+| `src/app/page.tsx` | navigateToHome 이벤트 리스너 |
+| `src/components/pages/RecordPage.tsx` | 닉네임 변경 시 중복 체크 추가 |
+| `src/components/admin/tabs/AdminWithdrawalsTab.tsx` | 이메일 수동 차단 UI |
+| `src/components/common/Sidebar.tsx` | z-index 조정 (z-50 → z-[70]) |
+| `src/app/api/chat/chat-prompts.ts` | 간식 추천 허용 + SUGGESTIONS 톤 규칙 |
+| `src/app/api/chat/chat-pipeline.ts` | SUGGESTIONS 도발적 키워드 필터 |
+| `src/components/features/home/useHomePage.ts` | 함께보기 AI 영상만 필터 |
+| `src/components/features/home/ShowcaseSection.tsx` | 섹션 설명 변경 |
+| `src/config/apiEndpoints.ts` | AUTH_CLEANUP_BLOCKED, ADMIN_BLOCK_EMAIL 추가 |
+| `CLAUDE.md` | 모달 스크롤 패턴 #6 추가 |
+| `RELAY-ARCHIVE.md` | 이 세션 전체 작업 기록 |
+
+---
+
+#### 현재 상태 및 남은 이슈
+
+**해결 완료**:
+- 추모 전환 모달 모바일 스크롤 ✅
+- 탈퇴 계정 카카오 재로그인 차단 ✅ (유저 확인: "계정은 정상적으로 재가입된 거 같다 오류도 안 나고")
+- 로그아웃 시 홈화면 이동 ✅
+- 닉네임 중복 체크 통일 ✅
+- 사이드바 X 버튼 헤더에 가려짐 ✅
+- AI 펫톡 간식 추천 개선 ✅
+- AI 펫톡 SUGGESTIONS 도발적 톤 필터링 ✅
+- 홈 함께보기 AI 영상 전용 ✅
+
+**미확인** (유저 테스트 대기):
+- 로그아웃 후 홈화면 이동이 실제 모바일에서 잘 되는지
+- 사이드바 z-index 수정이 다른 모달/드롭다운과 충돌하지 않는지
+- AI 펫톡 간식 추천이 실제로 유용한 답변을 하는지
+
+**다음 세션에서 확인할 것**:
+- "올릭" 계정 이메일을 관리자 페이지 → 탈퇴 관리 → 차단 버튼으로 수동 차단했는지 (유저가 직접 해야 함)
+- RELAY.md의 기존 TODO 항목들 (결제 연동, AI 영상 환경변수, RLS 정책 등)
 
 ---
 
