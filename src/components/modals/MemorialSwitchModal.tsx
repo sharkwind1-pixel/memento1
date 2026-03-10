@@ -8,11 +8,10 @@
  * Step 4: 작별 인사 (선택)
  * Step 5: 별이 되다 (완료 애니메이션)
  *
- * 모달 구조: PetFormModal과 동일한 패턴
- * - 외부: fixed inset-0, overflow-y-auto (backdrop)
- * - 래퍼: min-h-full, items-start, pt-4/sm:pt-16
- * - 모달 본체: max-h-[calc(100dvh-2rem)], overflow-y-auto (내부 스크롤)
- * - useBodyScrollLock으로 body 스크롤 잠금
+ * 스크롤 전략:
+ * useBodyScrollLock 사용하지 않음 (position:fixed가 모든 스크롤을 죽임)
+ * 대신 backdrop div 자체가 overflow-y-scroll로 스크롤 컨테이너 역할.
+ * body에는 overflow:hidden만 적용하여 뒤쪽 페이지 스크롤만 차단.
  */
 
 "use client";
@@ -22,7 +21,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Pet } from "@/contexts/PetContext";
-import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { Star, Heart, Calendar, ArrowRight, ArrowLeft, X, PenLine } from "lucide-react";
 
 interface MemorialSwitchModalProps {
@@ -46,14 +44,20 @@ export default function MemorialSwitchModal({
     const [slideIndex, setSlideIndex] = useState(0);
     const [starReady, setStarReady] = useState(false);
     const slideTimer = useRef<ReturnType<typeof setInterval>>();
-    const modalBodyRef = useRef<HTMLDivElement>(null);
+    const backdropRef = useRef<HTMLDivElement>(null);
 
-    useBodyScrollLock(isOpen);
-
-    // step 전환 시 모달 내부 스크롤을 맨 위로
+    // body overflow:hidden만 적용 (position:fixed 쓰면 스크롤 전부 죽음)
     useEffect(() => {
-        if (modalBodyRef.current) {
-            modalBodyRef.current.scrollTop = 0;
+        if (!isOpen) return;
+        const prev = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        return () => { document.body.style.overflow = prev; };
+    }, [isOpen]);
+
+    // step 전환 시 backdrop 스크롤을 맨 위로
+    useEffect(() => {
+        if (backdropRef.current) {
+            backdropRef.current.scrollTop = 0;
         }
     }, [step]);
 
@@ -107,27 +111,26 @@ export default function MemorialSwitchModal({
 
     return (
         <>
-            {/* 전체 화면 컨테이너 - PetFormModal과 동일 구조 */}
+            {/* backdrop: 스크롤 컨테이너. position:fixed + overflow-y:scroll */}
             <div
-                className="fixed inset-0 z-[9999] overflow-y-auto bg-black/60"
-                style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+                ref={backdropRef}
+                className="fixed inset-0 z-[9999] overflow-y-scroll bg-black/60"
                 onClick={(e) => {
                     if (e.target === e.currentTarget) handleClose();
                 }}
             >
-                {/* 모달 정렬 래퍼 */}
-                <div className="min-h-full flex items-start justify-center pt-4 sm:pt-16 pb-4 px-3 sm:px-4">
-                    {/* 모달 본체 - 내부 스크롤 */}
+                {/* 모달 정렬 래퍼: 최소 높이 100% + 중앙 정렬 */}
+                <div className="min-h-full flex items-center justify-center py-6 px-4">
+                    {/* 모달 본체: max-h 없음, 자연 높이. backdrop이 스크롤 담당 */}
                     <div
-                        ref={modalBodyRef}
-                        className="bg-white dark:bg-gray-900 w-full max-w-md rounded-3xl shadow-2xl relative max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-9rem)] overflow-y-auto"
+                        className="bg-white dark:bg-gray-900 w-full max-w-md rounded-3xl shadow-2xl relative"
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="memorial-switch-title"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* 진행 표시 (5단계) */}
-                        <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 rounded-t-3xl">
+                        <div className="bg-white dark:bg-gray-900 rounded-t-3xl">
                             <div className="flex items-center justify-center gap-2 py-3 px-6">
                                 {[1, 2, 3, 4, 5].map((s) => (
                                     <div
