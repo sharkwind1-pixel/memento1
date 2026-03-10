@@ -235,6 +235,18 @@ function HomeContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchParams]);
 
+    // 로그아웃 시 홈으로 이동 (AuthContext에서 navigateToHome 이벤트 발생)
+    useEffect(() => {
+        const handleNavigateHome = () => {
+            startTransition(() => {
+                setSelectedTab("home");
+                setSelectedSubcategory(undefined);
+            });
+        };
+        window.addEventListener("navigateToHome", handleNavigateHome);
+        return () => window.removeEventListener("navigateToHome", handleNavigateHome);
+    }, [startTransition]);
+
     // 신규 유저 플로우
     // 순서: 1. 닉네임 설정 → 2. 온보딩 질문 → 3. 튜토리얼 투어 → 4. 가이드
     // 크로스탭 재트리거 방지: 같은 user.id에 대해 한 번만 체크

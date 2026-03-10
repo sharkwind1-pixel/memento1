@@ -49,7 +49,7 @@ interface RecordPageProps {
 }
 
 function RecordPage({ setSelectedTab, isActive = true }: RecordPageProps) {
-    const { user, signOut, updateProfile, isPremiumUser, isAdminUser, points, userPetType } = useAuth();
+    const { user, signOut, updateProfile, isPremiumUser, isAdminUser, points, userPetType, checkNickname } = useAuth();
     const {
         pets,
         selectedPetId,
@@ -136,14 +136,36 @@ function RecordPage({ setSelectedTab, isActive = true }: RecordPageProps) {
         }
     }, [user]);
 
-    // 닉네임 저장
+    // 닉네임 저장 (중복 체크 포함)
     const handleSaveNickname = async () => {
-        if (!nickname.trim()) {
+        const trimmed = nickname.trim();
+        if (!trimmed) {
             toast.error("닉네임을 입력해주세요");
             return;
         }
+        if (trimmed.length < 2) {
+            toast.error("닉네임은 2글자 이상이어야 합니다");
+            return;
+        }
+
+        // 현재 닉네임과 같으면 그냥 닫기
+        const currentNickname = user?.user_metadata?.nickname;
+        if (trimmed === currentNickname) {
+            setIsEditingNickname(false);
+            return;
+        }
+
         setIsSavingProfile(true);
-        const { error } = await updateProfile({ nickname: nickname.trim() });
+
+        // 닉네임 중복 체크
+        const { available } = await checkNickname(trimmed);
+        if (!available) {
+            toast.error("이미 사용 중인 닉네임입니다");
+            setIsSavingProfile(false);
+            return;
+        }
+
+        const { error } = await updateProfile({ nickname: trimmed });
         setIsSavingProfile(false);
         if (error) {
             toast.error("닉네임을 바꾸지 못했어요");

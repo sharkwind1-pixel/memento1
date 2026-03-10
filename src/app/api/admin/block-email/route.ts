@@ -112,17 +112,42 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "차단 처리 실패" }, { status: 500 });
         }
 
-        // 6. 혹시 이 이메일로 현재 auth.users가 존재하면 삭제
-        const { data: { users } } = await adminClient.auth.admin.listUsers();
-        const matchedUser = users?.find(u => u.email === email);
-        if (matchedUser) {
-            await adminClient.auth.admin.deleteUser(matchedUser.id);
+        // 6. 이 이메일로 현재 profiles가 존재하면 해당 유저의 auth.users + profiles 삭제
+        //    (이전에 삭제했지만 잔여 데이터가 남아있는 경우 정리)
+        const { data: profileData } = await adminClient
+            .from("profiles")
+            .select("id")
+            .eq("email", email)
+            .maybeSingle();
+
+        let authUserDeleted = false;
+        if (profileData) {
+            // auth.users 삭제 → CASCADE로 profiles도 삭제됨
+            const { error: delErr } = await adminClient.auth.admin.deleteUser(profileData.id);
+            if (delErr) {
+                // auth.users가 이미 없을 수 있음 → profiles만 직접 삭제
+                await adminClient.from("profiles").delete().eq("id", profileData.id);
+            }
+            authUserDeleted = true;
+        }
+
+        // profiles.email이 없는 경우 auth.users에서도 검색
+        if (!authUserDeleted) {
+            const { data: { users } } = await adminClient.auth.admin.listUsers({
+                page: 1,
+                perPage: 50,
+            });
+            const matchedUser = users?.find(u => u.email === email);
+            if (matchedUser) {
+                await adminClient.auth.admin.deleteUser(matchedUser.id);
+            }
         }
 
         return NextResponse.json({
             success: true,
             blockedEmail: email,
             withdrawalType: type,
+            dataCleanedUp: authUserDeleted,
         });
     } catch (err) {
         console.error("[Block Email] 서버 오류:", err);

@@ -573,7 +573,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 }
             }
 
-            // 로그아웃 시 상태 초기화
+            // 로그아웃 시 상태 초기화 + 홈으로 이동
             if (event === "SIGNED_OUT") {
                 setPoints(0);
                 setPointsLoaded(false);
@@ -591,7 +591,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 });
                 setIsSimpleModeState(false);
                 localStorage.removeItem("memento-simple-mode");
+                localStorage.removeItem("memento-current-tab");
                 document.documentElement.classList.remove("simple-mode");
+
+                // 홈 화면으로 이동
+                if (typeof window !== "undefined") {
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete("tab");
+                    window.history.replaceState({}, "", url.pathname);
+                    window.dispatchEvent(new CustomEvent("navigateToHome"));
+                }
             }
         });
 
