@@ -2,17 +2,8 @@
  * MemorialSwitchModal.tsx
  * 추모 전환 세레모니 - 5단계 의식
  *
- * Step 1: 마음의 준비 (확인)
- * Step 2: 날짜 선택
- * Step 3: 추억 슬라이드쇼
- * Step 4: 작별 인사 (선택)
- * Step 5: 별이 되다 (완료 애니메이션)
- *
- * 스크롤 전략:
- * - body 스타일 아무것도 안 건드림 (overflow, position 모두)
- * - backdrop(fixed inset-0)이 overflowY:auto 스크롤 컨테이너
- * - 내부 래퍼가 flex center로 모달 중앙 배치
- * - 모달이 화면보다 크면 backdrop 스크롤로 접근
+ * LoginPromptModal / PetFormModal과 완전 동일한 모달 구조 사용.
+ * (useBodyScrollLock + fixed backdrop overflow-y-auto + Tailwind 클래스)
  */
 
 "use client";
@@ -23,6 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Pet } from "@/contexts/PetContext";
 import { Star, Heart, Calendar, ArrowRight, ArrowLeft, X, PenLine } from "lucide-react";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+import { useEscapeClose } from "@/hooks/useEscapeClose";
 
 interface MemorialSwitchModalProps {
     pet: Pet;
@@ -45,14 +38,10 @@ export default function MemorialSwitchModal({
     const [slideIndex, setSlideIndex] = useState(0);
     const [starReady, setStarReady] = useState(false);
     const slideTimer = useRef<ReturnType<typeof setInterval>>();
-    const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-    // step 변경 시 스크롤 컨테이너 맨 위로
-    useEffect(() => {
-        if (isOpen && scrollContainerRef.current) {
-            scrollContainerRef.current.scrollTop = 0;
-        }
-    }, [isOpen, step]);
+    // LoginPromptModal과 동일
+    useEscapeClose(isOpen, onClose);
+    useBodyScrollLock(isOpen);
 
     // 사진 목록 (최대 5장)
     const photos = (pet.photos || [])
@@ -102,39 +91,20 @@ export default function MemorialSwitchModal({
         onClose();
     };
 
+    // ========================================================================
+    // 렌더링 — LoginPromptModal과 완전 동일한 구조
+    // ========================================================================
+
     return (
-        /* 최외곽: fixed 전체 화면, 이 자체가 스크롤 컨테이너 */
         <div
-            ref={scrollContainerRef}
-            className="fixed inset-0 z-[9999] bg-black/60"
-            style={{
-                overflowY: 'auto',
-                overflowX: 'hidden',
-                WebkitOverflowScrolling: 'touch',
-                overscrollBehavior: 'contain',
-            } as React.CSSProperties}
-            onClick={(e) => {
-                if (e.target === e.currentTarget) handleClose();
-            }}
+            className="fixed inset-0 z-[9999] overflow-y-auto bg-black/60"
+            style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+            onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
         >
-            {/* 내부 래퍼: 최소 높이 100% + 패딩으로 모달을 중앙으로 밀어냄 */}
-            <div
-                style={{
-                    minHeight: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '40px 16px',
-                }}
-                onClick={(e) => {
-                    if (e.target === e.currentTarget) handleClose();
-                }}
-            >
+            <div className="min-h-full flex items-start justify-center pt-16 pb-20 px-4">
                 {/* 모달 본체 */}
                 <div
-                    className="bg-white dark:bg-gray-900 w-full rounded-3xl shadow-2xl"
-                    style={{ maxWidth: 448, flexShrink: 0 }}
+                    className="bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in-95 duration-200"
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby="memorial-switch-title"
