@@ -89,7 +89,7 @@ export function useHomePage() {
         }));
     };
 
-    // 자랑하기 게시글 가져오기 (DB 없으면 목업 폴백 → 항상 표시)
+    // AI 영상 게시글 가져오기 (함께보기 = AI 영상 전용)
     const fetchShowcasePosts = useCallback(async () => {
         setIsLoadingShowcase(true);
         try {
@@ -97,19 +97,17 @@ export function useHomePage() {
                 board: "free",
                 badge: "자랑",
                 sort: "popular",
-                limit: "8",
+                limit: "20",
             });
             const res = await fetch(`${API.POSTS}?${params}`);
             if (res.ok) {
                 const data = await res.json();
-                // 영상 있는 글 > 이미지 있는 글 우선 정렬
-                const sorted = (data.posts || []).sort((a: ShowcasePost, b: ShowcasePost) => {
-                    const aScore = (a.videoUrl ? 2 : 0) + ((a.imageUrls?.length ?? 0) > 0 ? 1 : 0);
-                    const bScore = (b.videoUrl ? 2 : 0) + ((b.imageUrls?.length ?? 0) > 0 ? 1 : 0);
-                    return bScore - aScore;
-                });
-                // DB 게시글 있으면 사용, 없으면 목업 폴백
-                setShowcasePosts(sorted.length > 0 ? sorted : MOCK_SHOWCASE_POSTS);
+                // AI 영상이 있는 글만 필터링 (함께보기 = AI 영상 전용 섹션)
+                const videoOnly = (data.posts || []).filter(
+                    (p: ShowcasePost) => !!p.videoUrl
+                );
+                // DB에 영상 게시글 있으면 사용, 없으면 목업 폴백
+                setShowcasePosts(videoOnly.length > 0 ? videoOnly.slice(0, 8) : MOCK_SHOWCASE_POSTS);
             } else {
                 setShowcasePosts(MOCK_SHOWCASE_POSTS);
             }

@@ -73,7 +73,7 @@ export default function ShowcaseSection({
                             함께 보기
                         </h2>
                         <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 hidden sm:block">
-                            우리 아이들의 사진과 영상
+                            AI로 만든 우리 아이 영상
                         </p>
                     </div>
                 </div>
