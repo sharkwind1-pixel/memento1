@@ -50,6 +50,71 @@
 
 ---
 
+### [2026-03-10] 모바일 모달 스크롤 / 계정 삭제 차단 / UI 버그 수정
+
+#### 추모 전환 모달 모바일 스크롤 문제 (13번 시도 끝에 해결)
+
+**증상**: 추모 전환 모달(MemorialSwitchModal)이 모바일에서 스크롤 불가, 내용이 잘려서 버튼에 접근 불가
+
+**근본 원인**: `useBodyScrollLock` 훅이 body를 `position: fixed`로 만들면서, fixed 자식의 `overflow-y: auto` 스크롤까지 죽임 (갤럭시 등 모바일 브라우저에서 발생)
+
+**실패한 시도들**:
+- useBodyScrollLock + max-h overflow-y-auto (PetFormModal 패턴) → 스크롤 안 됨
+- body overflow:hidden만 사용 → 모달 자체가 안 뜸
+- touchmove 이벤트 핸들러 → 모달 내부 스크롤까지 차단
+- LoginPromptModal 구조 복사 → 스크롤 안 됨
+
+**최종 해결 패턴 (다음에 같은 문제 발생 시 이 패턴 사용)**:
+```tsx
+// 핵심: body 스타일 절대 건드리지 않음 + backdrop이 스크롤 컨테이너
+// useBodyScrollLock 사용 안 함
+// touchmove 핸들러 사용 안 함
+
+// backdrop: 스크롤 컨테이너
+<div className="fixed inset-0 z-[9999] overflow-y-auto bg-black/60">
+    {/* wrapper: 상단 배치 */}
+    <div className="flex justify-center pt-8 pb-8 px-4">
+        {/* modal: 자연 높이 (max-h 안 씀) */}
+        <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl">
+            {/* 내용 */}
+        </div>
+    </div>
+</div>
+```
+- `useEscapeClose`만 사용 (ESC 키로 닫기)
+- 모달 열릴 때 `backdropRef.scrollTop = 0`으로 최상단 표시
+- `items-center` 대신 `pt-8`으로 상단 고정 (스크롤 내려서 버튼 누른 뒤 모달이 중간에 뜨면 찾기 어려움)
+
+**파일**: `src/components/modals/MemorialSwitchModal.tsx`
+
+---
+
+#### 탈퇴 계정 재로그인 차단 (근본 수정)
+
+**증상**: 관리자가 삭제한 계정이 카카오 OAuth로 다시 로그인 가능
+
+**근본 원인**: `/api/admin/delete-user` API가 `auth.users`만 삭제하고 `withdrawn_users` 테이블에 기록을 안 남김
+→ OAuth 재로그인 시 `can_rejoin` RPC가 체크할 레코드가 없어서 차단 불가
+
+**수정 내용**:
+1. `delete-user` API: 삭제 전 대상의 이메일/닉네임 조회 → `withdrawn_users`에 `banned` 타입으로 INSERT → 그 후 auth.users 삭제
+2. `/api/admin/block-email` API 신규: 이미 삭제된 계정의 이메일을 수동으로 차단 목록에 추가 + 잔여 auth.users/profiles 정리
+3. 관리자 탈퇴관리 탭에 이메일 수동 차단 UI 추가
+
+**파일**: `src/app/api/admin/delete-user/route.ts`, `src/app/api/admin/block-email/route.ts`, `src/components/admin/tabs/AdminWithdrawalsTab.tsx`
+
+**교훈**: 계정 삭제 시 반드시 `withdrawn_users`에 기록을 남겨야 OAuth 재로그인을 차단할 수 있음. auth.users만 삭제하면 카카오가 새 auth.users를 자동 생성해버림.
+
+---
+
+#### 기타 수정
+- **로그아웃 시 홈화면 이동**: SIGNED_OUT 핸들러에서 `navigateToHome` 커스텀 이벤트 → page.tsx에서 수신
+- **닉네임 중복 체크 통일**: RecordPage(내 정보)에서도 `checkNickname()` 호출 추가 (기존: 가입 시만 체크)
+- **모바일 사이드바 z-index**: 사이드바 패널 z-50 → z-[70], 백드롭 z-40 → z-[65] (헤더 z-[60]보다 위)
+- **AI 펫톡 간식 추천**: 시스템 프롬프트에서 "간식/음식 관련 질문은 케어 영역"임을 명시, 캐릭터 역할보다 정보 전달 우선
+
+---
+
 ### [2026-03-06] 전체 코드베이스 QA 스캔 (세션 2)
 
 > 6개 병렬 에이전트로 src/ 전체 전수 검사 수행

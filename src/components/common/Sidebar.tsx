@@ -460,16 +460,16 @@ export default function Sidebar({
 
         return (
             <>
-                {/* 백드롭 */}
+                {/* 백드롭 — z-[65]로 헤더(z-[60])보다 위에 표시 */}
                 <div
-                    className="fixed inset-0 bg-black/50 z-40"
+                    className="fixed inset-0 bg-black/50 z-[65]"
                     onClick={onClose}
                 />
 
-                {/* 사이드바 패널 */}
+                {/* 사이드바 패널 — z-[70]으로 헤더(z-[60])보다 위에 표시 */}
                 <div
                     className={cn(
-                        "fixed top-0 left-0 h-full w-64 bg-white dark:bg-gray-900 z-50 shadow-xl overscroll-contain",
+                        "fixed top-0 left-0 h-full w-64 bg-white dark:bg-gray-900 z-[70] shadow-xl overscroll-contain",
                         hasModalOpen ? "overflow-hidden" : "overflow-y-auto"
                     )}
                     style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}

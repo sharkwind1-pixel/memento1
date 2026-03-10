@@ -188,7 +188,20 @@ grep -n "setIsPetModalOpen\|handleAddNewPet" src/components/pages/RecordPage.tsx
 **문제**: 제한 체크 로직이 있는 함수를 안 쓰고 직접 setModal(true) 호출
 **해결**: 항상 래퍼 함수 (handleAddNewPet) 사용
 
-### 6. DB 스키마-코드 타입 불일치 (2026-02-22 사후분석)
+### 6. 모바일 모달 스크롤 불가 (2026-03-10 사후분석, 13번 시도 끝 해결)
+**문제**: 모달이 모바일에서 스크롤이 안 되고 내용이 잘려서 버튼 접근 불가
+**원인**: `useBodyScrollLock`의 `position: fixed`가 모바일 브라우저에서 fixed 자식의 overflow 스크롤까지 죽임
+**해결 패턴** (이 패턴 그대로 사용):
+```tsx
+// 1. useBodyScrollLock 사용 안 함, body 스타일 안 건드림, touchmove 핸들러 안 씀
+// 2. backdrop이 스크롤 컨테이너 (fixed inset-0 overflow-y-auto)
+// 3. wrapper: flex justify-center pt-8 pb-8 px-4 (items-center 안 씀)
+// 4. modal: 자연 높이 (max-h 안 씀)
+// 5. 모달 열릴 때 backdropRef.scrollTop = 0
+```
+**교훈**: PetFormModal처럼 modal body에 max-h + overflow-y-auto를 쓰는 방식은 useBodyScrollLock과 함께일 때만 작동. useBodyScrollLock 없이 가려면 backdrop 자체가 스크롤 컨테이너여야 함.
+
+### 7. DB 스키마-코드 타입 불일치 (2026-02-22 사후분석)
 **문제**: `equipped_minimi_id`가 DB에서 UUID 타입인데 코드는 TEXT slug를 저장 → `invalid input syntax for type uuid` 에러
 **원인**: `ADD COLUMN IF NOT EXISTS`가 이미 UUID로 존재하던 컬럼을 무시하고, 마이그레이션 SQL은 만들어만 놓고 실행하지 않음
 **해결**: (1) 마이그레이션 작성 시 기존 컬럼 타입 확인 (2) SQL 실행까지 완료해야 "작업 완료" (3) API 호출 테스트로 검증
