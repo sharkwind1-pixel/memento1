@@ -24,6 +24,25 @@ import { supabase } from "@/lib/supabase";
  * 탈퇴/차단 계정인지 체크하고, 해당 시 강제 로그아웃
  * @returns 차단된 경우 에러 메시지, 아니면 null
  */
+/**
+ * OAuth로 새로 생성된 auth.users를 서버에서 삭제
+ * (클라이언트에서는 auth.admin.deleteUser 호출 불가)
+ */
+async function cleanupBlockedAuthUser(): Promise<void> {
+    try {
+        const session = await supabase.auth.getSession();
+        const token = session.data.session?.access_token;
+        if (token) {
+            await fetch("/api/auth/cleanup-blocked", {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` },
+            });
+        }
+    } catch {
+        // 정리 실패해도 signOut은 진행
+    }
+}
+
 async function checkWithdrawnAndBlock(email: string | undefined): Promise<string | null> {
     if (!email) return null;
 
@@ -37,7 +56,8 @@ async function checkWithdrawnAndBlock(email: string | undefined): Promise<string
         if (rejoinData && rejoinData.length > 0) {
             const record = rejoinData[0];
             if (!record.can_join) {
-                // 차단/대기 중 — 강제 로그아웃
+                // 차단/대기 중 — 새로 생성된 auth.users 삭제 후 로그아웃
+                await cleanupBlockedAuthUser();
                 await supabase.auth.signOut();
 
                 if (record.block_reason === "영구 차단된 계정입니다.") {
@@ -53,7 +73,7 @@ async function checkWithdrawnAndBlock(email: string | undefined): Promise<string
                         return `탈퇴 후 ${diffDays}일 후에 재가입 가능합니다.`;
                     }
                 }
-                return record.block_reason || "가입이 제한되었 계정입니다.";
+                return record.block_reason || "가입이 제한된 계정입니다.";
             }
         }
 
@@ -65,6 +85,7 @@ async function checkWithdrawnAndBlock(email: string | undefined): Promise<string
         if (deletedData && deletedData.length > 0) {
             const record = deletedData[0];
             if (!record.can_rejoin) {
+                await cleanupBlockedAuthUser();
                 await supabase.auth.signOut();
                 return `탈퇴 후 ${record.days_until_rejoin}일 후에 재가입 가능합니다.`;
             }

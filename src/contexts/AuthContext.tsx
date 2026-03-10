@@ -503,6 +503,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                             if (rejoinData && rejoinData.length > 0 && !rejoinData[0].can_join) {
                                 const reason = rejoinData[0].block_reason;
                                 toast.error(reason || "이용이 제한된 계정입니다.");
+                                // OAuth가 새로 생성한 auth.users 삭제
+                                try {
+                                    const token = session.access_token;
+                                    if (token) {
+                                        await fetch("/api/auth/cleanup-blocked", {
+                                            method: "POST",
+                                            headers: { Authorization: `Bearer ${token}` },
+                                        });
+                                    }
+                                } catch { /* 정리 실패해도 signOut 진행 */ }
                                 await supabase.auth.signOut();
                                 return;
                             }
@@ -513,6 +523,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                             });
                             if (deletedData && deletedData.length > 0 && !deletedData[0].can_rejoin) {
                                 toast.error(`탈퇴 후 ${deletedData[0].days_until_rejoin}일 후에 재가입 가능합니다.`);
+                                try {
+                                    const token = session.access_token;
+                                    if (token) {
+                                        await fetch("/api/auth/cleanup-blocked", {
+                                            method: "POST",
+                                            headers: { Authorization: `Bearer ${token}` },
+                                        });
+                                    }
+                                } catch { /* 정리 실패해도 signOut 진행 */ }
                                 await supabase.auth.signOut();
                                 return;
                             }
