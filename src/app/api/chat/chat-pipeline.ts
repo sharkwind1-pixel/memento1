@@ -790,6 +790,8 @@ export async function postProcessResponse(
             .split("\n")
             .map(s => s.replace(/^[-\d.)\s]+/, "").trim())
             .filter(s => s.length > 0 && s.length <= 20)
+            // 도발적/공격적/비꼬는 톤 필터링
+            .filter(s => !/눈치|뭐야|왜 그래|짜증|싫어|꺼져|시끄러|바보|멍청|한심/.test(s))
             .slice(0, 3);
     }
 
