@@ -9,10 +9,10 @@
  * Step 5: 별이 되다 (완료 애니메이션)
  *
  * 스크롤 전략:
- * - useBodyScrollLock 사용하지 않음 (position:fixed가 모바일에서 스크롤 죽임)
- * - body에 overflow:hidden만 설정 (position은 안 건드림)
- * - backdrop은 fixed가 아닌 absolute + 전체 높이로 처리
- * - 모달은 margin: auto로 중앙 정렬
+ * - body 스타일 아무것도 안 건드림 (overflow, position 모두)
+ * - backdrop(fixed inset-0)이 overflowY:auto 스크롤 컨테이너
+ * - 내부 래퍼가 flex center로 모달 중앙 배치
+ * - 모달이 화면보다 크면 backdrop 스크롤로 접근
  */
 
 "use client";
@@ -47,22 +47,7 @@ export default function MemorialSwitchModal({
     const slideTimer = useRef<ReturnType<typeof setInterval>>();
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-    // body overflow:hidden만 설정 (position:fixed 안 씀 - 모바일 스크롤 안 죽음)
-    useEffect(() => {
-        if (!isOpen) return;
-
-        const scrollY = window.scrollY;
-        const originalOverflow = document.body.style.overflow;
-
-        document.body.style.overflow = "hidden";
-
-        return () => {
-            document.body.style.overflow = originalOverflow;
-            window.scrollTo(0, scrollY);
-        };
-    }, [isOpen]);
-
-    // 모달 열릴 때 스크롤 컨테이너를 맨 위로
+    // step 변경 시 스크롤 컨테이너 맨 위로
     useEffect(() => {
         if (isOpen && scrollContainerRef.current) {
             scrollContainerRef.current.scrollTop = 0;
