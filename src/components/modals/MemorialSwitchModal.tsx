@@ -104,7 +104,7 @@ export default function MemorialSwitchModal({
             <div className="min-h-full flex items-start justify-center pt-16 pb-20 px-4">
                 {/* 모달 본체 */}
                 <div
-                    className="bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in-95 duration-200"
+                    className="bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-9rem)] overflow-y-auto"
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby="memorial-switch-title"
