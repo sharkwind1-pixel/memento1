@@ -46,12 +46,12 @@ export default function MemorialSwitchModal({
 
     useEscapeClose(isOpen, onClose);
 
-    // step 변경 시 backdrop 스크롤을 맨 위로
+    // 모달 열릴 때 + step 변경 시 backdrop 스크롤을 맨 위로
     useEffect(() => {
-        if (backdropRef.current) {
+        if (isOpen && backdropRef.current) {
             backdropRef.current.scrollTop = 0;
         }
-    }, [step]);
+    }, [isOpen, step]);
 
     // 사진 목록 (최대 5장)
     const photos = (pet.photos || [])
@@ -112,9 +112,9 @@ export default function MemorialSwitchModal({
             className="fixed inset-0 z-[9999] overflow-y-auto bg-black/60"
             onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
         >
-            {/* 래퍼: 중앙 정렬 + 상하 패딩 */}
+            {/* 래퍼: 상단 배치 + 여백 */}
             <div
-                className="min-h-full flex items-center justify-center py-8 px-4"
+                className="flex justify-center pt-8 pb-8 px-4"
                 onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
             >
                 {/* 모달 본체 */}
