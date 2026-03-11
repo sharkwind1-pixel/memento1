@@ -292,10 +292,8 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
     }
 
     return (
-        <div
-            className="min-h-screen relative pb-24"
-            style={{ contain: 'style', transform: 'translateZ(0)' }}
-        >
+        /* overflow-hidden/contain 미사용: 사진 앨범 등 동적 콘텐츠의 페이지 스크롤 보장 */
+        <div className="min-h-screen relative pb-24">
             <div className="absolute inset-0 bg-gradient-to-b from-memento-50 via-memento-75 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900" />
             <div className="relative z-10 max-w-4xl mx-auto px-4 py-6">
                 {/* 페이지 헤더 */}
