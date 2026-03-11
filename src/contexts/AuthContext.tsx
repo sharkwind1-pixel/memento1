@@ -707,7 +707,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
         });
 
-        // 탭 포커스 복귀 시 차단/탈퇴 체크 (다른 기기에서 탈퇴 처리된 경우 감지)
+        // Realtime: withdrawn_users INSERT 감지 → 즉시 로그아웃
+        // 관리자가 탈퇴/차단 처리하면 모든 기기에서 실시간 반영
+        const withdrawnChannel = supabase
+            .channel("withdrawn_users_realtime")
+            .on(
+                "postgres_changes",
+                { event: "INSERT", schema: "public", table: "withdrawn_users" },
+                async (payload) => {
+                    const { data: { session: currentSession } } = await supabase.auth.getSession();
+                    if (!currentSession?.user?.email) return;
+
+                    const insertedEmail = payload.new?.email;
+                    const insertedType = payload.new?.withdrawal_type;
+                    if (insertedEmail === currentSession.user.email && insertedType !== "error_resolution") {
+                        toast.error("계정이 관리자에 의해 처리되었습니다.");
+                        await supabase.auth.signOut();
+                    }
+                }
+            )
+            .subscribe();
+
+        // 탭 포커스 복귀 시에도 체크 (Realtime 연결이 끊겼을 수 있으므로 이중 안전장치)
         const handleVisibilityChange = async () => {
             if (document.visibilityState !== "visible") return;
 
@@ -730,6 +751,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return () => {
             clearTimeout(safetyTimer);
             subscription.unsubscribe();
+            supabase.removeChannel(withdrawnChannel);
             document.removeEventListener("visibilitychange", handleVisibilityChange);
         };
     }, [refreshProfile, refreshPoints, checkDailyLogin]);
