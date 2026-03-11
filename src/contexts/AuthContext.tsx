@@ -479,31 +479,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const {
             data: { subscription },
         } = supabase.auth.onAuthStateChange((event, session) => {
-            setSession(session);
-            setUser(session?.user ?? null);
-            setLoading(false);
-
-            // 로그인 시 프로필+포인트 통합 로드 + 출석 체크
-            // (lock 바깥에서 비동기 실행하여 데드락 방지)
+            // 로그인 이벤트일 때는 차단/탈퇴 체크가 끝날 때까지 loading 유지
+            // 체크 통과 후에야 user/session을 설정하고 loading을 false로 전환
             if (event === "SIGNED_IN" && session?.user) {
-                setProfileLoaded(false); // 프로필 로드 전까지 스켈레톤 표시 (기본값 "dog" 노출 방지)
-                setTimeout(() => {
-                    Promise.all([refreshProfile(), checkDailyLogin()]);
-                }, 0);
-                // 탈퇴/차단 계정 체크 + IP 체크 (비동기, 로그인 차단)
+                // 아직 user/session을 설정하지 않음 (차단 체크 전)
+                setProfileLoaded(false);
+
                 setTimeout(async () => {
                     try {
                         // 1. 탈퇴 계정 체크 (withdrawn_users — can_rejoin RPC)
                         const email = session.user.email;
+                        let isBlocked = false;
+
                         if (email) {
                             const { data: rejoinData } = await supabase.rpc("can_rejoin", {
                                 check_email: email,
                                 check_ip: null,
                             });
                             if (rejoinData && rejoinData.length > 0 && !rejoinData[0].can_join) {
+                                isBlocked = true;
                                 const reason = rejoinData[0].block_reason;
                                 toast.error(reason || "이용이 제한된 계정입니다.");
-                                // OAuth가 새로 생성한 auth.users 삭제
                                 try {
                                     const token = session.access_token;
                                     if (token) {
@@ -514,6 +510,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                                     }
                                 } catch { /* 정리 실패해도 signOut 진행 */ }
                                 await supabase.auth.signOut();
+                                // signOut이 SIGNED_OUT 이벤트를 발생시켜 상태 초기화됨
                                 return;
                             }
 
@@ -522,6 +519,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                                 check_email: email,
                             });
                             if (deletedData && deletedData.length > 0 && !deletedData[0].can_rejoin) {
+                                isBlocked = true;
                                 toast.error(`탈퇴 후 ${deletedData[0].days_until_rejoin}일 후에 재가입 가능합니다.`);
                                 try {
                                     const token = session.access_token;
@@ -549,6 +547,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                             return;
                         }
 
+                        // === 차단 체크 통과 — 이제 로그인 상태를 설정 ===
+                        setSession(session);
+                        setUser(session.user);
+                        setLoading(false);
+
+                        // 프로필 로드 + 출석 체크
+                        Promise.all([refreshProfile(), checkDailyLogin()]);
+
                         // 3. IP 기록 + 동일 IP 다중 계정 제한 체크
                         const token = session.access_token;
                         const res = await fetch("/api/auth/record-ip", {
@@ -564,13 +570,77 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                             await supabase.auth.signOut();
                         }
                     } catch {
-                        // 체크 실패 시 무시 (가용성 우선)
+                        // 체크 실패 시 로그인 허용 (가용성 우선)
+                        setSession(session);
+                        setUser(session?.user ?? null);
+                        setLoading(false);
+                        Promise.all([refreshProfile(), checkDailyLogin()]);
                     }
-                }, 100);
+                }, 0);
+
                 // Service Worker 등록 (푸시 알림 준비)
                 if (typeof window !== "undefined" && "serviceWorker" in navigator) {
                     navigator.serviceWorker.register("/sw.js").catch(() => {});
                 }
+            } else if (event === "TOKEN_REFRESHED" && session?.user) {
+                // 토큰 갱신 시에는 차단 체크 없이 세션 업데이트
+                setSession(session);
+                setUser(session.user);
+                setLoading(false);
+            } else if (event === "INITIAL_SESSION" && session?.user) {
+                // 페이지 새로고침 시 기존 세션 복원 — 차단 체크 필요
+                setProfileLoaded(false);
+                setTimeout(async () => {
+                    try {
+                        const email = session.user.email;
+                        if (email) {
+                            const { data: rejoinData } = await supabase.rpc("can_rejoin", {
+                                check_email: email,
+                                check_ip: null,
+                            });
+                            if (rejoinData && rejoinData.length > 0 && !rejoinData[0].can_join) {
+                                toast.error(rejoinData[0].block_reason || "이용이 제한된 계정입니다.");
+                                try {
+                                    const token = session.access_token;
+                                    if (token) {
+                                        await fetch("/api/auth/cleanup-blocked", {
+                                            method: "POST",
+                                            headers: { Authorization: `Bearer ${token}` },
+                                        });
+                                    }
+                                } catch { /* */ }
+                                await supabase.auth.signOut();
+                                return;
+                            }
+                        }
+                        // is_banned 체크
+                        const { data: profileCheck } = await supabase
+                            .from("profiles")
+                            .select("is_banned, ban_reason")
+                            .eq("id", session.user.id)
+                            .single();
+                        if (profileCheck?.is_banned) {
+                            toast.error(profileCheck.ban_reason || "이용이 제한된 계정입니다.");
+                            await supabase.auth.signOut();
+                            return;
+                        }
+                        // 통과 — 로그인 상태 설정
+                        setSession(session);
+                        setUser(session.user);
+                        setLoading(false);
+                        Promise.all([refreshProfile(), checkDailyLogin()]);
+                    } catch {
+                        setSession(session);
+                        setUser(session.user);
+                        setLoading(false);
+                        Promise.all([refreshProfile(), checkDailyLogin()]);
+                    }
+                }, 0);
+            } else if (event !== "SIGNED_IN") {
+                // SIGNED_OUT, INITIAL_SESSION(세션 없음) 등
+                setSession(session);
+                setUser(session?.user ?? null);
+                setLoading(false);
             }
 
             // 로그아웃 시 상태 초기화 + 홈으로 이동
