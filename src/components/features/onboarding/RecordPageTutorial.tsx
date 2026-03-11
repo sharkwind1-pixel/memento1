@@ -91,7 +91,11 @@ export default function RecordPageTutorial({
     const hasInitialized = useRef(false);
     const savedOverflow = useRef("");
 
-    const steps = userType === "memorial" ? MEMORIAL_STEPS : CURRENT_STEPS;
+    const allSteps = userType === "memorial" ? MEMORIAL_STEPS : CURRENT_STEPS;
+
+    // DOM에 타겟이 존재하는 스텝만 필터 (펫 0마리면 photo-album-section/timeline-section 등 안 보임)
+    // ai-chat-guide는 특수 케이스로 항상 포함
+    const [steps, setSteps] = useState<TutorialStep[]>(allSteps);
 
     // 클라이언트 마운트 확인
     useEffect(() => {
@@ -152,17 +156,28 @@ export default function RecordPageTutorial({
         }
     }, [currentStep, steps, lockScroll, unlockScroll]);
 
-    // 열릴 때 초기화 + 스크롤 잠금
+    // 열릴 때 초기화: 스텝 필터링 + 사이드바 닫기 (isOpen/userType 변경 시만 실행)
     useEffect(() => {
         if (!isOpen) return;
 
         // 사이드바가 열려 있으면 강제 닫기
         window.dispatchEvent(new Event("closeSidebar"));
 
-        if (!hasInitialized.current) {
-            setCurrentStep(0);
-            hasInitialized.current = true;
-        }
+        // DOM에 실제로 존재하는 타겟만 포함하도록 스텝 필터링
+        // (펫 0마리 → photo-album-section, timeline-section 등 DOM에 없음)
+        const filtered = allSteps.filter((s) => {
+            if (s.targetId === "ai-chat-guide") return true; // 특수 케이스: 타겟 없이 중앙 모달
+            return !!document.querySelector(`[data-tutorial-id="${s.targetId}"]`);
+        });
+        setSteps(filtered.length > 0 ? filtered : allSteps);
+        setCurrentStep(0);
+        hasInitialized.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen, userType]);
+
+    // 스텝 전환 시 타겟 찾기 + 스크롤 잠금
+    useEffect(() => {
+        if (!isOpen) return;
 
         // 딜레이 후 타겟 찾기 (DOM 렌더링 대기)
         const timer = setTimeout(findAndScrollToTarget, 300);

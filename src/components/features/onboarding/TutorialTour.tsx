@@ -34,15 +34,18 @@ interface TutorialTourProps {
 // ═══════════════════════════════════════════════════════════════
 
 const DESKTOP_STEPS: TutorialStep[] = [
-    { targetId: "sidebar-level", title: "내 등급", description: "활동하면 경험치가 쌓여 등급이 올라가요" },
-    { targetId: "sidebar-minimi", title: "내 미니미", description: "나만의 캐릭터를 꾸미고 미니홈피에 배치해보세요" },
-    { targetId: "sidebar-points", title: "내 포인트", description: "활동으로 모은 포인트를 확인할 수 있어요" },
-    { targetId: "sidebar-shop", title: "포인트 상점", description: "포인트로 미니미 아이템을 구매할 수 있어요" },
+    // 메인 네비게이션 먼저 (익숙한 요소부터 안내)
     { targetId: "home", title: "홈", description: "인기 게시글, 입양 정보, 반려 꿀팁까지 한눈에 볼 수 있어요" },
     { targetId: "record", title: "내 기록", description: "반려동물 등록, 사진 앨범, 미니홈피까지! 추억을 기록해요" },
     { targetId: "community", title: "커뮤니티", description: "자유, 추모, 입양, 지역, 분실 등 5개 게시판에서 소통해요" },
     { targetId: "ai-chat", title: "AI 펫톡", description: "우리 아이와 대화하고, 건강 일정도 관리할 수 있어요" },
     { targetId: "magazine", title: "펫 매거진", description: "수의사 칼럼, 돌봄 팁 등 유용한 정보를 확인해요" },
+    // 사이드바 기능 (레벨/미니미/포인트/상점)
+    { targetId: "sidebar-level", title: "내 등급", description: "활동하면 경험치가 쌓여 등급이 올라가요" },
+    { targetId: "sidebar-minimi", title: "내 미니미", description: "나만의 캐릭터를 꾸미고 미니홈피에 배치해보세요" },
+    { targetId: "sidebar-points", title: "내 포인트", description: "활동으로 모은 포인트를 확인할 수 있어요" },
+    { targetId: "sidebar-shop", title: "포인트 상점", description: "포인트로 미니미 아이템을 구매할 수 있어요" },
+    // 고객 지원
     { targetId: "sidebar-inquiry", title: "질문/신고", description: "궁금한 점이나 문제가 있으면 언제든 문의해주세요" },
     { targetId: "sidebar-suggestion", title: "건의사항", description: "서비스 개선 아이디어를 자유롭게 남겨주세요" },
 ];
