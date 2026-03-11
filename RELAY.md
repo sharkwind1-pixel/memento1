@@ -12,13 +12,15 @@
 > 상세 기록: `docs/SESSION_20260312_MEMBER_SYSTEM.md`
 > 9개 커밋 완료, main 배포됨. SQL 실행 완료.
 
-### 마지막 수정 (`5769720`)
-- **PetFormModal이 온보딩/튜토리얼 모달을 가리는 문제 수정**
-- RecordPage의 PetFormModal 자동 열기에 온보딩 완료 체크 추가
-- `isActive` 조건 추가: 비활성 탭에서 불필요한 모달 열기 방지
+### 마지막 수정 (`c3a2642`)
+- **튜토리얼 중 PetFormModal/사이드바 가림 문제 수정**
+- `suppressPetModal` prop: 신규유저 플로우 중 PetFormModal 자동 열기 억제
+- `closeSidebar` 이벤트: TutorialTour/RecordPageTutorial 시작 시 사이드바 강제 닫기
+- `isNewUserFlowActive` 변수 추출로 모달 상태 관리 일원화
 
 ### 미확인 사항 (실계정 테스트 필요)
-- 도진 계정 재로그인 시 닉네임 모달 → 온보딩 → 튜토리얼 순서 정상 진행되는지
+- 도진 계정 재로그인 시 닉네임 → 온보딩 → 튜토리얼 → RecordPageTutorial → PetFormModal 순서 정상 진행
+- RecordPageTutorial 완료 후 PetFormModal 자동 열기 정상 동작
 - Realtime 구독 동작 여부 (다른 기기 즉시 로그아웃)
 
 ---
