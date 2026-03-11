@@ -707,9 +707,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
         });
 
+        // 탭 포커스 복귀 시 차단/탈퇴 체크 (다른 기기에서 탈퇴 처리된 경우 감지)
+        const handleVisibilityChange = async () => {
+            if (document.visibilityState !== "visible") return;
+
+            const { data: { session: currentSession } } = await supabase.auth.getSession();
+            if (!currentSession?.user?.email) return;
+
+            try {
+                const { data: rejoinData } = await supabase.rpc("can_rejoin", {
+                    check_email: currentSession.user.email,
+                    check_ip: null,
+                });
+                if (rejoinData && rejoinData.length > 0 && !rejoinData[0].can_join) {
+                    toast.error(rejoinData[0].block_reason || "이용이 제한된 계정입니다.");
+                    await supabase.auth.signOut();
+                }
+            } catch { /* 체크 실패 시 무시 (가용성 우선) */ }
+        };
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+
         return () => {
             clearTimeout(safetyTimer);
             subscription.unsubscribe();
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
         };
     }, [refreshProfile, refreshPoints, checkDailyLogin]);
 
