@@ -21,9 +21,15 @@ const ContentSecurityPolicy = `
     .replace(/\s{2,}/g, " ")
     .trim();
 
+const path = require("path");
+
 const nextConfig = {
     // Strict Mode - 개발 모드에서 하이드레이션 버그 감지
     reactStrictMode: true,
+    // Turbopack root 설정 (worktree 환경에서 root 인식 문제 해결)
+    turbopack: {
+        root: path.resolve(__dirname),
+    },
     // gzip 압축 활성화
     compress: true,
     // 보안 - X-Powered-By 헤더 제거

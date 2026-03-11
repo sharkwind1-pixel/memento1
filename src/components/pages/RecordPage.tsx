@@ -95,6 +95,8 @@ function RecordPage({ setSelectedTab, isActive = true }: RecordPageProps) {
     const [isMemorialModalOpen, setIsMemorialModalOpen] = useState(false);
 
     // 펫 0마리일 때 자동으로 등록 모달 열기 (세션 내 1회만)
+    // 단, 온보딩/닉네임 설정 등 신규유저 플로우가 진행 중이면 억제
+    // (PetFormModal이 온보딩/튜토리얼 모달을 가리는 문제 방지)
     const hasAutoOpenedPetModal = useRef(false);
     useEffect(() => {
         if (
@@ -103,8 +105,15 @@ function RecordPage({ setSelectedTab, isActive = true }: RecordPageProps) {
             user &&
             !isPetModalOpen &&
             !editingPet &&
-            !hasAutoOpenedPetModal.current
+            !hasAutoOpenedPetModal.current &&
+            isActive
         ) {
+            // 온보딩 미완료 유저는 자동 열기 억제
+            // (page.tsx의 신규유저 플로우: 닉네임→온보딩→튜토리얼이 먼저 진행되어야 함)
+            // 튜토리얼/RecordPageTutorial은 z-[10000]으로 PetFormModal(z-[9999]) 위에 표시되므로 OK
+            const onboardingDone = localStorage.getItem("memento-ani-onboarding-complete") === "true";
+            if (!onboardingDone) return;
+
             hasAutoOpenedPetModal.current = true;
             const timer = setTimeout(() => {
                 setEditingPet(null);
@@ -112,7 +121,7 @@ function RecordPage({ setSelectedTab, isActive = true }: RecordPageProps) {
             }, 800);
             return () => clearTimeout(timer);
         }
-    }, [petsLoading, pets.length, user, isPetModalOpen, editingPet]);
+    }, [petsLoading, pets.length, user, isPetModalOpen, editingPet, isActive]);
 
     // 추억 앨범 딥링크 (푸시 알림에서 album 파라미터)
     const [initialAlbumId, setInitialAlbumId] = useState<string | null>(null);
