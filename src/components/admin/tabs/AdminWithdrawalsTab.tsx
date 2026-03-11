@@ -137,19 +137,14 @@ export default function AdminWithdrawalsTab({
             if (!reason) return; // 취소 또는 빈 사유
 
             try {
+                // 해당 이메일의 모든 레코드를 삭제 (중복 포함)
                 const { error } = await supabase
                     .from("withdrawn_users")
-                    .update({
-                        // banned → abuse_concern으로 변경 (error_resolution이 아님)
-                        // 30일 재가입 대기 기간 부여
-                        withdrawal_type: "abuse_concern",
-                        rejoin_allowed_at: new Date().toISOString(),
-                        reason: `[차단 해제] ${reason} (기존 사유: ${w.reason || "없음"})`,
-                    })
-                    .eq("id", w.id);
+                    .delete()
+                    .eq("email", w.email);
 
                 if (error) throw error;
-                toast.success("영구 차단이 해제되었습니다 (재가입 허용)");
+                toast.success("영구 차단이 해제되었습니다 (재가입 가능)");
                 onRefresh();
             } catch {
                 toast.error("차단 해제 처리 중 오류가 발생했습니다");
@@ -157,20 +152,18 @@ export default function AdminWithdrawalsTab({
             return;
         }
 
-        // 악용 우려: 일반 재가입 허용
-        if (!confirm(`${w.email}의 재가입을 허용하시겠습니까?`)) return;
+        // 악용 우려: 재가입 허용 = 레코드 자체를 삭제
+        if (!confirm(`${w.email}의 재가입을 허용하시겠습니까?\n해당 이메일의 모든 탈퇴 기록이 삭제됩니다.`)) return;
 
         try {
+            // 해당 이메일의 모든 레코드를 삭제 (중복 포함)
             const { error } = await supabase
                 .from("withdrawn_users")
-                .update({
-                    withdrawal_type: "error_resolution",
-                    rejoin_allowed_at: new Date().toISOString(),
-                })
-                .eq("id", w.id);
+                .delete()
+                .eq("email", w.email);
 
             if (error) throw error;
-            toast.success("재가입이 허용되었습니다");
+            toast.success("재가입이 허용되었습니다 (탈퇴 기록 삭제)");
             onRefresh();
         } catch {
             toast.error("재가입 허용 처리 중 오류가 발생했습니다");

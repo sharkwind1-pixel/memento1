@@ -71,20 +71,11 @@ export async function POST(request: NextRequest) {
             auth: { autoRefreshToken: false, persistSession: false },
         });
 
-        // 4. 이미 차단된 이메일인지 확인
-        const { data: existing } = await adminClient
+        // 4. 기존 레코드 모두 삭제 후 새로 banned INSERT (중복 방지)
+        await adminClient
             .from("withdrawn_users")
-            .select("id, withdrawal_type")
-            .eq("email", email)
-            .maybeSingle();
-
-        if (existing) {
-            return NextResponse.json({
-                success: false,
-                message: "이미 차단된 이메일입니다",
-                existingType: existing.withdrawal_type,
-            });
-        }
+            .delete()
+            .eq("email", email);
 
         // 5. withdrawn_users에 추가
         const type = withdrawalType || "banned";

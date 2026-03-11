@@ -57,6 +57,14 @@ export async function POST(request: NextRequest) {
 
         // 2. withdrawn_users에 탈퇴 기록 추가 (service_role로 RLS 우회)
         // can_rejoin RPC가 이 테이블을 체크하므로 반드시 필요
+        // 중복 레코드 방지: 기존 레코드 모두 삭제 후 새로 INSERT
+        if (userEmail) {
+            await adminClient
+                .from("withdrawn_users")
+                .delete()
+                .eq("email", userEmail);
+        }
+
         const { error: withdrawError } = await adminClient
             .from("withdrawn_users")
             .insert({

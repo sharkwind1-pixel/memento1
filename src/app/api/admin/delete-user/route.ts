@@ -129,34 +129,29 @@ export async function POST(request: NextRequest) {
 
         // 5. withdrawn_users에 기록 (재로그인 차단용 - 반드시 auth 삭제 전에)
         // can_rejoin RPC가 이 테이블을 체크하여 OAuth 재로그인을 차단
-        // 프론트엔드에서 먼저 INSERT했을 수 있으므로 기존 레코드 확인 후 INSERT
+        // 중복 레코드 방지: 기존 레코드를 모두 삭제 후 banned로 새로 INSERT
         if (targetEmail) {
-            // 이미 해당 이메일로 withdrawn_users 레코드가 있는지 확인
-            const { data: existingRecord } = await adminClient
+            // 기존 레코드 모두 삭제 (중복 방지)
+            await adminClient
                 .from("withdrawn_users")
-                .select("id")
-                .eq("email", targetEmail)
-                .order("created_at", { ascending: false })
-                .limit(1)
-                .maybeSingle();
+                .delete()
+                .eq("email", targetEmail);
 
-            if (!existingRecord) {
-                const { error: withdrawError } = await adminClient
-                    .from("withdrawn_users")
-                    .insert({
-                        user_id: targetUserId,
-                        email: targetEmail,
-                        nickname: targetNickname,
-                        withdrawal_type: "banned",
-                        reason: reason || "관리자에 의한 계정 삭제",
-                        rejoin_allowed_at: null,  // 영구 차단 (관리자가 직접 해제해야)
-                        processed_by: adminUser.id,
-                    });
+            const { error: withdrawError } = await adminClient
+                .from("withdrawn_users")
+                .insert({
+                    user_id: targetUserId,
+                    email: targetEmail,
+                    nickname: targetNickname,
+                    withdrawal_type: "banned",
+                    reason: reason || "관리자에 의한 계정 삭제",
+                    rejoin_allowed_at: null,  // 영구 차단 (관리자가 직접 해제해야)
+                    processed_by: adminUser.id,
+                });
 
-                if (withdrawError) {
-                    console.error("[Admin Delete User] withdrawn_users INSERT 에러:", withdrawError);
-                    // INSERT 실패해도 auth 삭제는 진행
-                }
+            if (withdrawError) {
+                console.error("[Admin Delete User] withdrawn_users INSERT 에러:", withdrawError);
+                // INSERT 실패해도 auth 삭제는 진행
             }
         } else {
             console.warn("[Admin Delete User] 대상 유저 이메일을 찾을 수 없음:", targetUserId);
