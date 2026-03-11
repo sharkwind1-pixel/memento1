@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 import ImageCropper, { CropPosition } from "./ImageCropper";
 import { toast } from "sonner";
-import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
 function isVideoFile(file: File): boolean {
     return file.type.startsWith("video/");
@@ -51,12 +50,22 @@ export default function MediaUploadModal({
     onClose,
     onUpload,
 }: MediaUploadModalProps) {
-    useBodyScrollLock(isOpen);
     const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
     const [cropIndex, setCropIndex] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [showCloseConfirm, setShowCloseConfirm] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // 모달 열림/닫힘 시 body 스크롤 제어
+    // position: fixed 대신 overflow: hidden만 사용 — iOS 네이티브 사진 선택기 스크롤 충돌 방지
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isOpen]);
 
     useEffect(() => {
         if (!isOpen) {
@@ -195,18 +204,20 @@ export default function MediaUploadModal({
 
     return (
         <>
-            {/* 모바일: 하단 시트 / 데스크톱: 중앙 모달 */}
+            {/* useBodyScrollLock 미사용 — iOS 네이티브 사진 선택기 스크롤 충돌 방지 */}
+            {/* PetFormModal 패턴: backdrop 자체가 스크롤 컨테이너 */}
             <div
-                className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4"
+                className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50"
+                style={{ WebkitOverflowScrolling: 'touch' }}
                 onClick={handleBackdropClose}
             >
+                <div className="min-h-full flex items-start justify-center pt-8 pb-8 px-4">
                 <div
-                    className="bg-white dark:bg-gray-900 w-full max-w-2xl rounded-2xl p-6 max-h-[85vh] overflow-y-auto"
+                    className="bg-white dark:bg-gray-900 w-full max-w-2xl rounded-2xl p-6"
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby="media-upload-title"
                     onClick={(e) => e.stopPropagation()}
-                    style={{ touchAction: 'pan-y' }}
                 >
                     <div className="flex justify-between items-center mb-4">
                         <h3 id="media-upload-title" className="text-lg font-semibold">
@@ -403,6 +414,7 @@ export default function MediaUploadModal({
                             {" 업로드"}
                         </Button>
                     </div>
+                </div>
                 </div>
             </div>
 
