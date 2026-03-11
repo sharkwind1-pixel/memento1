@@ -79,7 +79,11 @@ export async function POST(request: NextRequest) {
 
         // 3. 요청 파라미터
         const body = await request.json();
-        const { targetUserId, reason } = body as { targetUserId: string; reason?: string };
+        const { targetUserId, reason, withdrawalType } = body as {
+            targetUserId: string;
+            reason?: string;
+            withdrawalType?: "abuse_concern" | "banned" | "error_resolution";
+        };
 
         if (!targetUserId) {
             return NextResponse.json(
@@ -129,7 +133,15 @@ export async function POST(request: NextRequest) {
 
         // 5. withdrawn_users에 기록 (재로그인 차단용 - 반드시 auth 삭제 전에)
         // can_rejoin RPC가 이 테이블을 체크하여 OAuth 재로그인을 차단
-        // 중복 레코드 방지: 기존 레코드를 모두 삭제 후 banned로 새로 INSERT
+        // 중복 레코드 방지: 기존 레코드를 모두 삭제 후 새로 INSERT
+        // withdrawalType: 프론트에서 전달받은 타입 사용 (기본값 banned)
+        const type = withdrawalType || "banned";
+        const rejoinDate = type === "abuse_concern"
+            ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+            : type === "error_resolution"
+                ? new Date().toISOString()
+                : null;
+
         if (targetEmail) {
             // 기존 레코드 모두 삭제 (중복 방지)
             await adminClient
@@ -143,9 +155,9 @@ export async function POST(request: NextRequest) {
                     user_id: targetUserId,
                     email: targetEmail,
                     nickname: targetNickname,
-                    withdrawal_type: "banned",
+                    withdrawal_type: type,
                     reason: reason || "관리자에 의한 계정 삭제",
-                    rejoin_allowed_at: null,  // 영구 차단 (관리자가 직접 해제해야)
+                    rejoin_allowed_at: rejoinDate,
                     processed_by: adminUser.id,
                 });
 

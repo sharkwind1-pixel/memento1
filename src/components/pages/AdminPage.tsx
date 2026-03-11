@@ -173,44 +173,31 @@ function AdminPage() {
 
         setIsProcessingWithdrawal(true);
         try {
-            // 1. withdrawn_users 테이블에 기록 추가
-            const rejoinDate = type === "abuse_concern"
-                ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-                : null;
-
-            const { error: insertError } = await supabase
-                .from("withdrawn_users")
-                .insert({
-                    user_id: withdrawalModalUser.id,
-                    email: withdrawalModalUser.email,
-                    nickname: withdrawalModalUser.user_metadata?.nickname,
-                    withdrawal_type: type,
-                    reason: reason || null,
-                    rejoin_allowed_at: rejoinDate,
-                    processed_by: user.id,
-                });
-
-            if (insertError) throw insertError;
-
-            // 2. 서버 API로 auth.users + profiles 삭제
+            // 서버 API로 withdrawn_users 기록 + auth.users/profiles 삭제를 한번에 처리
+            // (프론트에서 별도 INSERT하지 않음 - API가 단일 책임)
             const session = await supabase.auth.getSession();
             const token = session.data.session?.access_token;
 
-            if (token) {
-                const res = await fetch("/api/admin/delete-user", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                    },
-                    body: JSON.stringify({ targetUserId: withdrawalModalUser.id }),
-                });
+            if (!token) {
+                throw new Error("인증 토큰이 없습니다");
+            }
 
-                if (!res.ok) {
-                    const errData = await res.json().catch(() => ({}));
-                    console.error("유저 삭제 API 오류:", errData);
-                    // API 실패해도 withdrawn_users 기록은 남으므로 계속 진행
-                }
+            const res = await fetch("/api/admin/delete-user", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    targetUserId: withdrawalModalUser.id,
+                    withdrawalType: type,
+                    reason: reason || null,
+                }),
+            });
+
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || "유저 삭제 실패");
             }
 
             toast.success("탈퇴 처리가 완료되었습니다.");
