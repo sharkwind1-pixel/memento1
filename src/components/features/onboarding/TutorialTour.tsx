@@ -240,6 +240,8 @@ export default function TutorialTour({
         setCurrentStep(0);
         stepRef.current = 0;
         setTargetRect(null);
+        // 사이드바가 열려 있으면 강제 닫기 (튜토리얼 오버레이를 가리는 문제 방지)
+        window.dispatchEvent(new Event("closeSidebar"));
         onNavigateRef.current("home");
         // DOM 준비 대기 후 첫 측정 (500ms)
         const timer = setTimeout(() => {

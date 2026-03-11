@@ -252,10 +252,11 @@ function HomeContent() {
     // 크로스탭 재트리거 방지: 같은 user.id에 대해 한 번만 체크
     const newUserFlowCheckedRef = useRef<string | null>(null);
     // 모달 중복 방지: 어떤 모달이든 열려 있으면 재진입 차단
+    const isNewUserFlowActive = showNicknameSetup || showOnboarding || showTutorial || showPostGuide || showRecordTutorial;
     const modalOpenRef = useRef(false);
     useEffect(() => {
-        modalOpenRef.current = showNicknameSetup || showOnboarding || showTutorial || showPostGuide || showRecordTutorial;
-    }, [showNicknameSetup, showOnboarding, showTutorial, showPostGuide, showRecordTutorial]);
+        modalOpenRef.current = isNewUserFlowActive;
+    }, [isNewUserFlowActive]);
 
     useEffect(() => {
         const checkNewUserFlow = async () => {
@@ -423,7 +424,7 @@ function HomeContent() {
             )}
             {mountedTabs.has("record") && (
                 <div style={{ display: selectedTab === "record" ? "block" : "none" }}>
-                    <RecordPage setSelectedTab={handleTabChange} isActive={selectedTab === "record"} />
+                    <RecordPage setSelectedTab={handleTabChange} isActive={selectedTab === "record"} suppressPetModal={isNewUserFlowActive} />
                 </div>
             )}
             {mountedTabs.has("community") && (

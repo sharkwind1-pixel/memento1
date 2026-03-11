@@ -46,9 +46,11 @@ import VideoGenerationSection from "@/components/features/video/VideoGenerationS
 interface RecordPageProps {
     setSelectedTab?: (tab: TabType) => void;
     isActive?: boolean;
+    /** RecordPageTutorial 진행 중이면 PetFormModal 자동 열기 억제 */
+    suppressPetModal?: boolean;
 }
 
-function RecordPage({ setSelectedTab, isActive = true }: RecordPageProps) {
+function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false }: RecordPageProps) {
     const { user, signOut, updateProfile, isPremiumUser, isAdminUser, points, userPetType, checkNickname } = useAuth();
     const {
         pets,
@@ -106,7 +108,8 @@ function RecordPage({ setSelectedTab, isActive = true }: RecordPageProps) {
             !isPetModalOpen &&
             !editingPet &&
             !hasAutoOpenedPetModal.current &&
-            isActive
+            isActive &&
+            !suppressPetModal
         ) {
             // 온보딩/튜토리얼 미완료 유저는 자동 열기 억제
             // (page.tsx의 신규유저 플로우: 닉네임→온보딩→튜토리얼→RecordPageTutorial이 먼저 완료되어야 함)
@@ -121,7 +124,7 @@ function RecordPage({ setSelectedTab, isActive = true }: RecordPageProps) {
             }, 800);
             return () => clearTimeout(timer);
         }
-    }, [petsLoading, pets.length, user, isPetModalOpen, editingPet, isActive]);
+    }, [petsLoading, pets.length, user, isPetModalOpen, editingPet, isActive, suppressPetModal]);
 
     // 추억 앨범 딥링크 (푸시 알림에서 album 파라미터)
     const [initialAlbumId, setInitialAlbumId] = useState<string | null>(null);

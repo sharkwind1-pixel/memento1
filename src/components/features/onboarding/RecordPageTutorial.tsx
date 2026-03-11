@@ -156,6 +156,9 @@ export default function RecordPageTutorial({
     useEffect(() => {
         if (!isOpen) return;
 
+        // 사이드바가 열려 있으면 강제 닫기
+        window.dispatchEvent(new Event("closeSidebar"));
+
         if (!hasInitialized.current) {
             setCurrentStep(0);
             hasInitialized.current = true;
