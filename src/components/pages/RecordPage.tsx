@@ -108,11 +108,11 @@ function RecordPage({ setSelectedTab, isActive = true }: RecordPageProps) {
             !hasAutoOpenedPetModal.current &&
             isActive
         ) {
-            // 온보딩 미완료 유저는 자동 열기 억제
-            // (page.tsx의 신규유저 플로우: 닉네임→온보딩→튜토리얼이 먼저 진행되어야 함)
-            // 튜토리얼/RecordPageTutorial은 z-[10000]으로 PetFormModal(z-[9999]) 위에 표시되므로 OK
+            // 온보딩/튜토리얼 미완료 유저는 자동 열기 억제
+            // (page.tsx의 신규유저 플로우: 닉네임→온보딩→튜토리얼→RecordPageTutorial이 먼저 완료되어야 함)
             const onboardingDone = localStorage.getItem("memento-ani-onboarding-complete") === "true";
-            if (!onboardingDone) return;
+            const tutorialDone = localStorage.getItem("memento-ani-tutorial-complete") === "true";
+            if (!onboardingDone || !tutorialDone) return;
 
             hasAutoOpenedPetModal.current = true;
             const timer = setTimeout(() => {
