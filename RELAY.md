@@ -7,21 +7,26 @@
 
 ---
 
-## 회원 관리 시스템 수정 (완료 — 2026-03-12)
+## 튜토리얼 + 스크롤 수정 세션 (2026-03-12)
 
-> 상세 기록: `docs/SESSION_20260312_MEMBER_SYSTEM.md`
-> 9개 커밋 완료, main 배포됨. SQL 실행 완료.
+### 커밋 목록 (모두 main 배포됨)
+1. `c3a2642` — 튜토리얼 중 PetFormModal/사이드바 가림 문제 수정
+2. `6ffe3aa` — RELAY.md 업데이트
+3. `a545d37` — 튜토리얼 UX 개선 (섹션 하이라이트 + 스텝 순서)
+4. `9928de0` — RecordPage 사진 앨범 스크롤: overflow-hidden/contain 제거
+5. `64a6686` — RecordPage 잔여 contain:'style' + translateZ(0) 제거
+6. `256ff55` — **MediaUploadModal useBodyScrollLock 제거** (iOS 사진 선택기 스크롤 충돌 해결)
 
-### 마지막 수정 (`c3a2642`)
-- **튜토리얼 중 PetFormModal/사이드바 가림 문제 수정**
-- `suppressPetModal` prop: 신규유저 플로우 중 PetFormModal 자동 열기 억제
-- `closeSidebar` 이벤트: TutorialTour/RecordPageTutorial 시작 시 사이드바 강제 닫기
-- `isNewUserFlowActive` 변수 추출로 모달 상태 관리 일원화
+### 핵심 변경 (`256ff55`)
+- **문제**: iOS에서 "사진 추가" → 네이티브 사진 선택기의 앨범/컬렉션 탭 스크롤 불가
+- **원인**: `useBodyScrollLock`의 `position: fixed`가 iOS 네이티브 UI 스크롤까지 차단
+- **수정**: useBodyScrollLock 제거, `overflow: hidden`만 사용 (position: fixed 없이)
+- **패턴**: PetFormModal 방식 — backdrop(`overflow-y-auto`) 자체가 스크롤 컨테이너
 
-### 미확인 사항 (실계정 테스트 필요)
-- 도진 계정 재로그인 시 닉네임 → 온보딩 → 튜토리얼 → RecordPageTutorial → PetFormModal 순서 정상 진행
-- RecordPageTutorial 완료 후 PetFormModal 자동 열기 정상 동작
-- Realtime 구독 동작 여부 (다른 기기 즉시 로그아웃)
+### 미확인 사항 (실기기 테스트 필요)
+- iOS Safari에서 사진 선택기 컬렉션 탭 스크롤 정상 동작 여부
+- MediaUploadModal 뒤 페이지 스크롤 누수 없는지
+- 튜토리얼 전체 플로우 정상 진행 (닉네임 → 온보딩 → 튜토리얼 → RecordPageTutorial → PetFormModal)
 
 ---
 
