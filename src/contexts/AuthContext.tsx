@@ -490,12 +490,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         // 1. 탈퇴 계정 체크 (withdrawn_users — can_rejoin RPC)
                         const email = session.user.email;
                         let isBlocked = false;
+                        let rejoinData: { can_join: boolean; block_reason: string | null; wait_until: string | null; has_record?: boolean }[] | null = null;
 
                         if (email) {
-                            const { data: rejoinData } = await supabase.rpc("can_rejoin", {
+                            const { data: _rejoinData } = await supabase.rpc("can_rejoin", {
                                 check_email: email,
                                 check_ip: null,
                             });
+                            rejoinData = _rejoinData;
                             if (rejoinData && rejoinData.length > 0 && !rejoinData[0].can_join) {
                                 isBlocked = true;
                                 const reason = rejoinData[0].block_reason;
@@ -549,32 +551,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
                         // === 차단 체크 통과 — 이제 로그인 상태를 설정 ===
 
-                        // 재가입 유저 감지: withdrawn_users에 기록이 있고,
-                        // 현재 프로필에 온보딩이 완료되지 않은 상태 = 첫 재가입 로그인
-                        // → 자동생성 닉네임(handle_new_user 트리거)과 localStorage를 클리어하여
-                        //   신규가입 절차(닉네임, 온보딩, 튜토리얼)를 다시 보여줌
-                        if (email && !profileCheck?.is_banned) {
+                        // 재가입 유저 온보딩 리셋
+                        // 온보딩 미완료 + 닉네임이 이메일 앞부분(자동생성) = 신규/재가입
+                        // → 닉네임 리셋 + localStorage 클리어 → 신규가입 절차 재진행
+                        // has_record: can_rejoin RPC v2에서 반환 (SQL 미실행 시 undefined)
+                        const hasRecord = rejoinData?.[0]?.has_record === true;
+                        if (!profileCheck?.is_banned) {
                             const { data: currentProfile } = await supabase
                                 .from("profiles")
-                                .select("onboarding_completed_at")
+                                .select("onboarding_completed_at, nickname")
                                 .eq("id", session.user.id)
                                 .single();
 
-                            // 온보딩 미완료 상태에서만 리셋 (이미 온보딩 완료면 스킵)
                             if (!currentProfile?.onboarding_completed_at) {
-                                const { data: withdrawnRecords } = await supabase
-                                    .from("withdrawn_users")
-                                    .select("id")
-                                    .eq("email", email)
-                                    .limit(1);
+                                // 닉네임이 이메일 앞부분과 동일 = handle_new_user 트리거 자동생성
+                                const emailPrefix = email?.split("@")[0] || "";
+                                const isAutoNickname = currentProfile?.nickname === emailPrefix;
+                                // has_record가 true이거나, 닉네임이 자동생성된 경우
+                                const shouldReset = hasRecord || isAutoNickname;
 
-                                if (withdrawnRecords && withdrawnRecords.length > 0) {
-                                    // 이전에 탈퇴한 적 있는 유저 → 닉네임 리셋 (NicknameSetupModal 표시)
+                                if (shouldReset) {
                                     await supabase.from("profiles").update({
                                         nickname: null,
                                     }).eq("id", session.user.id);
 
-                                    // localStorage 온보딩 플래그도 클리어
                                     localStorage.removeItem("memento-ani-onboarding-complete");
                                     localStorage.removeItem("memento-ani-tutorial-complete");
                                 }
