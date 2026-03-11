@@ -293,8 +293,8 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
 
     return (
         <div
-            className="min-h-screen relative overflow-hidden pb-24"
-            style={{ contain: 'layout style', transform: 'translateZ(0)' }}
+            className="min-h-screen relative pb-24"
+            style={{ contain: 'style', transform: 'translateZ(0)' }}
         >
             <div className="absolute inset-0 bg-gradient-to-b from-memento-50 via-memento-75 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900" />
             <div className="relative z-10 max-w-4xl mx-auto px-4 py-6">
