@@ -548,6 +548,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         }
 
                         // === 차단 체크 통과 — 이제 로그인 상태를 설정 ===
+
+                        // 재가입 유저 감지: withdrawn_users에 기록이 있고,
+                        // 현재 프로필에 온보딩이 완료되지 않은 상태 = 첫 재가입 로그인
+                        // → 자동생성 닉네임(handle_new_user 트리거)과 localStorage를 클리어하여
+                        //   신규가입 절차(닉네임, 온보딩, 튜토리얼)를 다시 보여줌
+                        if (email && !profileCheck?.is_banned) {
+                            const { data: currentProfile } = await supabase
+                                .from("profiles")
+                                .select("onboarding_completed_at")
+                                .eq("id", session.user.id)
+                                .single();
+
+                            // 온보딩 미완료 상태에서만 리셋 (이미 온보딩 완료면 스킵)
+                            if (!currentProfile?.onboarding_completed_at) {
+                                const { data: withdrawnRecords } = await supabase
+                                    .from("withdrawn_users")
+                                    .select("id")
+                                    .eq("email", email)
+                                    .limit(1);
+
+                                if (withdrawnRecords && withdrawnRecords.length > 0) {
+                                    // 이전에 탈퇴한 적 있는 유저 → 닉네임 리셋 (NicknameSetupModal 표시)
+                                    await supabase.from("profiles").update({
+                                        nickname: null,
+                                    }).eq("id", session.user.id);
+
+                                    // localStorage 온보딩 플래그도 클리어
+                                    localStorage.removeItem("memento-ani-onboarding-complete");
+                                    localStorage.removeItem("memento-ani-tutorial-complete");
+                                }
+                            }
+                        }
+
                         setSession(session);
                         setUser(session.user);
                         setLoading(false);
