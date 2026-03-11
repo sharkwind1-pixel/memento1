@@ -130,55 +130,45 @@ export default function AdminWithdrawalsTab({
     // ========================================================================
     const allowRejoin = async (w: WithdrawnUser) => {
         // 영구 차단 계정은 이중 확인
+        let reason: string | undefined;
         if (w.withdrawal_type === "banned") {
-            const reason = prompt(
+            const inputReason = prompt(
                 `[영구 차단 해제]\n${w.email}은 영구 차단된 계정입니다.\n정말 차단을 해제하시겠습니까?\n\n해제 사유를 입력하세요:`
             );
-            if (!reason) return; // 취소 또는 빈 사유
-
-            try {
-                // error_resolution 레코드를 새로 INSERT하여 차단 해제
-                // can_rejoin RPC가 최신 레코드 기준으로 판정하므로
-                // 이 레코드가 banned보다 뒤에 오면 재가입 허용됨
-                const { error } = await supabase
-                    .from("withdrawn_users")
-                    .insert({
-                        user_id: w.user_id,
-                        email: w.email,
-                        nickname: w.nickname || null,
-                        withdrawal_type: "error_resolution",
-                        reason: `[차단 해제] ${reason} (기존 사유: ${w.reason || "없음"})`,
-                        rejoin_allowed_at: new Date().toISOString(),
-                        processed_by: userId,
-                    });
-
-                if (error) throw error;
-                toast.success("영구 차단이 해제되었습니다 (재가입 가능)");
-                onRefresh();
-            } catch {
-                toast.error("차단 해제 처리 중 오류가 발생했습니다");
-            }
-            return;
+            if (!inputReason) return; // 취소 또는 빈 사유
+            reason = inputReason;
+        } else {
+            if (!confirm(`${w.email}의 재가입을 허용하시겠습니까?`)) return;
         }
 
-        // 악용 우려: error_resolution INSERT로 재가입 허용
-        if (!confirm(`${w.email}의 재가입을 허용하시겠습니까?`)) return;
-
         try {
-            const { error } = await supabase
-                .from("withdrawn_users")
-                .insert({
-                    user_id: w.user_id,
-                    email: w.email,
-                    nickname: w.nickname || null,
-                    withdrawal_type: "error_resolution",
-                    reason: "[재가입 허용] 관리자 승인",
-                    rejoin_allowed_at: new Date().toISOString(),
-                    processed_by: userId,
-                });
+            // 서버 API로 처리 (RLS 우회 필요하므로 service_role 사용)
+            const session = await supabase.auth.getSession();
+            const token = session.data.session?.access_token;
 
-            if (error) throw error;
-            toast.success("재가입이 허용되었습니다");
+            const res = await fetch(API.ADMIN_ALLOW_REJOIN, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({
+                    email: w.email,
+                    userId: w.user_id,
+                    nickname: w.nickname || null,
+                    reason: reason || undefined,
+                    previousReason: w.reason || undefined,
+                }),
+            });
+
+            const result = await res.json();
+            if (!result.success) throw new Error(result.error);
+
+            toast.success(
+                w.withdrawal_type === "banned"
+                    ? "영구 차단이 해제되었습니다 (재가입 가능)"
+                    : "재가입이 허용되었습니다"
+            );
             onRefresh();
         } catch {
             toast.error("재가입 허용 처리 중 오류가 발생했습니다");
