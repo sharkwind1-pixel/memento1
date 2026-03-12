@@ -65,7 +65,7 @@ export default function GlobalError({
                             style={{
                                 fontSize: "0.875rem",
                                 color: "#6b7280",
-                                marginBottom: "1.5rem",
+                                marginBottom: "1rem",
                                 lineHeight: 1.6,
                             }}
                         >
@@ -73,6 +73,24 @@ export default function GlobalError({
                             <br />
                             아래 버튼을 눌러 다시 시도해주세요.
                         </p>
+                        <pre
+                            style={{
+                                fontSize: "0.65rem",
+                                color: "#ef4444",
+                                background: "#fef2f2",
+                                borderRadius: "0.5rem",
+                                padding: "0.75rem",
+                                marginBottom: "1rem",
+                                textAlign: "left",
+                                whiteSpace: "pre-wrap",
+                                wordBreak: "break-all",
+                                maxHeight: "8rem",
+                                overflow: "auto",
+                            }}
+                        >
+                            {error?.message || "Unknown error"}
+                            {error?.stack ? `\n\n${error.stack.slice(0, 500)}` : ""}
+                        </pre>
                         <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center" }}>
                             <button
                                 onClick={() => (window.location.href = "/")}
