@@ -556,7 +556,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         // sessionStorage는 탭 종료 시 자동 삭제 → 다음 방문 시 정상 작동
                         const hasRecord = rejoinData?.[0]?.has_record === true;
                         const resetKey = `memento-rejoin-reset-${session.user.id}`;
-                        const alreadyReset = typeof window !== 'undefined' && sessionStorage.getItem(resetKey);
+                        let alreadyReset = false;
+                        try {
+                            alreadyReset = typeof window !== 'undefined' && !!sessionStorage.getItem(resetKey);
+                        } catch { /* iOS Safari Private Mode: sessionStorage 접근 불가 */ }
 
                         if (hasRecord && !alreadyReset && !profileCheck?.onboarding_completed_at) {
                             const { error: resetError } = await supabase.from("profiles").update({
@@ -572,13 +575,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                             }
 
                             // 이 세션에서는 리셋 완료 — 새로고침/토큰 갱신 시 재실행 방지
-                            if (typeof window !== 'undefined') {
-                                sessionStorage.setItem(resetKey, 'true');
-                            }
+                            try {
+                                if (typeof window !== 'undefined') {
+                                    sessionStorage.setItem(resetKey, 'true');
+                                }
+                            } catch { /* iOS Safari Private Mode */ }
 
-                            localStorage.removeItem("memento-ani-onboarding-complete");
-                            localStorage.removeItem("memento-ani-tutorial-complete");
-                            localStorage.removeItem("memento-ani-record-tutorial-complete");
+                            try {
+                                localStorage.removeItem("memento-ani-onboarding-complete");
+                                localStorage.removeItem("memento-ani-tutorial-complete");
+                                localStorage.removeItem("memento-ani-record-tutorial-complete");
+                            } catch { /* storage 접근 불가 시 무시 */ }
                         }
 
                         setSession(session);
@@ -586,7 +593,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         setLoading(false);
 
                         // 프로필 로드 + 출석 체크
-                        Promise.all([refreshProfile(), checkDailyLogin()]);
+                        Promise.all([refreshProfile(), checkDailyLogin()]).catch(() => {});
 
                         // 3. IP 기록 + 동일 IP 다중 계정 제한 체크
                         const token = session.access_token;
@@ -607,7 +614,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         setSession(session);
                         setUser(session?.user ?? null);
                         setLoading(false);
-                        Promise.all([refreshProfile(), checkDailyLogin()]);
+                        Promise.all([refreshProfile(), checkDailyLogin()]).catch(() => {});
                     }
                 }, 0);
 
@@ -661,12 +668,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         setSession(session);
                         setUser(session.user);
                         setLoading(false);
-                        Promise.all([refreshProfile(), checkDailyLogin()]);
+                        Promise.all([refreshProfile(), checkDailyLogin()]).catch(() => {});
                     } catch {
                         setSession(session);
                         setUser(session.user);
                         setLoading(false);
-                        Promise.all([refreshProfile(), checkDailyLogin()]);
+                        Promise.all([refreshProfile(), checkDailyLogin()]).catch(() => {});
                     }
                 }, 0);
             } else if (event !== "SIGNED_IN") {
