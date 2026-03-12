@@ -212,23 +212,29 @@ export default function RecordPageTutorial({
         };
     }, [isOpen, unlockScroll]);
 
+    // 튜토리얼 완료 처리 — localStorage에 저장하여 새로고침 후 반복 방지
+    const completeRecordTutorial = useCallback(() => {
+        localStorage.setItem("memento-ani-record-tutorial-complete", "true");
+        onClose();
+    }, [onClose]);
+
     // 다음 스텝
     const handleNext = () => {
         if (currentStep < steps.length - 1) {
             setCurrentStep(currentStep + 1);
         } else {
-            onClose();
+            completeRecordTutorial();
         }
     };
 
-    // 건너뛰기
+    // 건너뛰기 — 스킵해도 완료 처리 (재진입 방지)
     const handleSkip = () => {
-        onClose();
+        completeRecordTutorial();
     };
 
     // AI 펫톡으로 이동
     const handleGoToAIChat = () => {
-        onClose();
+        completeRecordTutorial();
         onGoToAIChat();
     };
 

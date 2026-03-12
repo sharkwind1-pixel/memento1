@@ -100,6 +100,20 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
     // 단, 온보딩/닉네임 설정 등 신규유저 플로우가 진행 중이면 억제
     // (PetFormModal이 온보딩/튜토리얼 모달을 가리는 문제 방지)
     const hasAutoOpenedPetModal = useRef(false);
+    const prevSuppressPetModal = useRef(suppressPetModal);
+
+    // suppressPetModal이 true→false로 전환될 때만 ref 초기화 (1회)
+    // RecordPageTutorial 완료 후 PetFormModal 자동 열기 재시도
+    useEffect(() => {
+        const wasSupressed = prevSuppressPetModal.current;
+        prevSuppressPetModal.current = suppressPetModal;
+
+        // true→false 전환 시점에만 리셋 (무한 루프 방지)
+        if (wasSupressed && !suppressPetModal && pets.length === 0) {
+            hasAutoOpenedPetModal.current = false;
+        }
+    }, [suppressPetModal, pets.length]);
+
     useEffect(() => {
         if (
             !petsLoading &&

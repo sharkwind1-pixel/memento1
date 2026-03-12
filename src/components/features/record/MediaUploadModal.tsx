@@ -57,13 +57,24 @@ export default function MediaUploadModal({
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // 모달 열림/닫힘 시 body 스크롤 제어
-    // position: fixed 대신 overflow: hidden만 사용 — iOS 네이티브 사진 선택기 스크롤 충돌 방지
+    // position: fixed 대신 overflow: hidden + touchmove 차단 — iOS 네이티브 사진 선택기 스크롤 충돌 방지
     useEffect(() => {
-        if (isOpen) {
-            document.body.style.overflow = 'hidden';
-        }
+        if (!isOpen) return;
+
+        document.body.style.overflow = 'hidden';
+
+        // iOS Safari rubber band 오버스크롤 방지 — body 직접 터치만 차단
+        // 네이티브 사진 선택기는 별도 시스템 레이어라 영향 없음
+        const preventBodyScroll = (e: TouchEvent) => {
+            if (e.target === document.body || e.target === document.documentElement) {
+                e.preventDefault();
+            }
+        };
+        document.body.addEventListener('touchmove', preventBodyScroll, { passive: false });
+
         return () => {
             document.body.style.overflow = '';
+            document.body.removeEventListener('touchmove', preventBodyScroll);
         };
     }, [isOpen]);
 
