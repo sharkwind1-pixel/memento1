@@ -551,15 +551,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
                         // === 차단 체크 통과 — 이제 로그인 상태를 설정 ===
 
-                        // 재가입 유저 온보딩 리셋 — 최초 1회만
-                        // has_record=true면 withdrawn_users에 기록이 있는 재가입 유저
-                        // (withdrawn_users 기록은 영구 보존되므로 매 로그인 시 has_record=true)
-                        // 판단 기준: onboarding_completed_at만 사용
-                        //   - handle_new_user 트리거가 nickname을 자동 설정하므로 nickname으로는 판단 불가
-                        //   - onboarding_completed_at이 null = 아직 온보딩 미완료 = 리셋 필요
-                        //   - onboarding_completed_at이 있음 = 이미 재가입 후 온보딩 완료 = 건너뜀
+                        // 재가입 유저 온보딩 리셋 — sessionStorage 플래그로 세션당 1회만
+                        // SIGNED_IN은 OAuth 콜백, 토큰 갱신 등에서 여러 번 발동 가능
+                        // sessionStorage는 탭 종료 시 자동 삭제 → 다음 방문 시 정상 작동
                         const hasRecord = rejoinData?.[0]?.has_record === true;
-                        if (hasRecord && !profileCheck?.onboarding_completed_at) {
+                        const resetKey = `memento-rejoin-reset-${session.user.id}`;
+                        const alreadyReset = typeof window !== 'undefined' && sessionStorage.getItem(resetKey);
+
+                        if (hasRecord && !alreadyReset && !profileCheck?.onboarding_completed_at) {
                             const { error: resetError } = await supabase.from("profiles").update({
                                 nickname: null,
                                 onboarding_completed_at: null,
@@ -570,6 +569,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
                             if (resetError) {
                                 console.error("[AuthContext] 재가입 온보딩 리셋 실패:", resetError.message);
+                            }
+
+                            // 이 세션에서는 리셋 완료 — 새로고침/토큰 갱신 시 재실행 방지
+                            if (typeof window !== 'undefined') {
+                                sessionStorage.setItem(resetKey, 'true');
                             }
 
                             localStorage.removeItem("memento-ani-onboarding-complete");
