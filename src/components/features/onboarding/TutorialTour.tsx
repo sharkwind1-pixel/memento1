@@ -7,7 +7,7 @@
  *
  * 스포트라이트: box-shadow 방식 (SVG 마스크보다 단순·확실)
  *
- * 완료 시 onClose → page.tsx에서 RecordPageTutorial로 이어짐
+ * 완료 시 onClose → page.tsx에서 유저 타입별 분기 (Record 페이지 이동 등)
  *
  * v3: ready 게이트 제거. 즉시 렌더링 + requestAnimationFrame 측정.
  *     StrictMode 이중 실행에 완전 안전.

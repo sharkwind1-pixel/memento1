@@ -46,7 +46,7 @@ import VideoGenerationSection from "@/components/features/video/VideoGenerationS
 interface RecordPageProps {
     setSelectedTab?: (tab: TabType) => void;
     isActive?: boolean;
-    /** RecordPageTutorial 진행 중이면 PetFormModal 자동 열기 억제 */
+    /** 신규유저 플로우(닉네임/온보딩/튜토리얼) 진행 중이면 PetFormModal 자동 열기 억제 */
     suppressPetModal?: boolean;
 }
 
@@ -103,7 +103,7 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
     const prevSuppressPetModal = useRef(suppressPetModal);
 
     // suppressPetModal이 true→false로 전환될 때만 ref 초기화 (1회)
-    // RecordPageTutorial 완료 후 PetFormModal 자동 열기 재시도
+    // 신규유저 플로우 완료 후 PetFormModal 자동 열기 재시도
     useEffect(() => {
         const wasSupressed = prevSuppressPetModal.current;
         prevSuppressPetModal.current = suppressPetModal;
@@ -126,7 +126,7 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
             !suppressPetModal
         ) {
             // 온보딩/튜토리얼 미완료 유저는 자동 열기 억제
-            // (page.tsx의 신규유저 플로우: 닉네임→온보딩→튜토리얼→RecordPageTutorial이 먼저 완료되어야 함)
+            // (page.tsx의 신규유저 플로우: 닉네임→온보딩→튜토리얼이 먼저 완료되어야 함)
             const onboardingDone = localStorage.getItem("memento-ani-onboarding-complete") === "true";
             const tutorialDone = localStorage.getItem("memento-ani-tutorial-complete") === "true";
             if (!onboardingDone || !tutorialDone) return;

@@ -76,7 +76,8 @@ import NicknameSetupModal from "@/components/Auth/NicknameSetupModal";
 import OnboardingModal from "@/components/features/onboarding/OnboardingModal";
 import TutorialTour from "@/components/features/onboarding/TutorialTour";
 import PostOnboardingGuide from "@/components/features/onboarding/PostOnboardingGuide";
-import RecordPageTutorial from "@/components/features/onboarding/RecordPageTutorial";
+// RecordPageTutorial 제거 — 펫 0마리 신규유저에게 사진/타임라인 안내하는 모순 해소
+// TutorialTour에서 전체 메뉴 소개 → PetFormModal로 바로 이어짐
 
 // ============================================================================
 // 메인 컴포넌트
@@ -169,8 +170,7 @@ function HomeContent() {
     const [showTutorial, setShowTutorial] = useState(false);
     const [showPostGuide, setShowPostGuide] = useState(false);
     const [postGuideUserType, setPostGuideUserType] = useState<"planning" | "current" | "memorial" | null>(null);
-    const [showRecordTutorial, setShowRecordTutorial] = useState(false);
-    const [recordTutorialUserType, setRecordTutorialUserType] = useState<"current" | "memorial" | null>(null);
+    // RecordPageTutorial 제거됨 — 상태 변수 불필요
     // 온보딩 플로우 1회 트리거 여부 (세션 내 중복 방지)
     const onboardingTriggeredRef = useRef(false);
 
@@ -252,7 +252,7 @@ function HomeContent() {
     // 크로스탭 재트리거 방지: 같은 user.id에 대해 한 번만 체크
     const newUserFlowCheckedRef = useRef<string | null>(null);
     // 모달 중복 방지: 어떤 모달이든 열려 있으면 재진입 차단
-    const isNewUserFlowActive = showNicknameSetup || showOnboarding || showTutorial || showPostGuide || showRecordTutorial;
+    const isNewUserFlowActive = showNicknameSetup || showOnboarding || showTutorial || showPostGuide;
     const modalOpenRef = useRef(false);
     useEffect(() => {
         modalOpenRef.current = isNewUserFlowActive;
@@ -509,11 +509,9 @@ function HomeContent() {
                             } else if (userType === "planning") {
                                 setShowPostGuide(true);
                             } else {
+                                // current/memorial 유저: Record 페이지로 이동
+                                // RecordPage의 자동 PetFormModal 로직이 동물 등록 안내
                                 handleTabChange("record");
-                                setTimeout(() => {
-                                    setRecordTutorialUserType(userType as "current" | "memorial");
-                                    setShowRecordTutorial(true);
-                                }, 500);
                             }
                         }}
                     />
@@ -524,22 +522,7 @@ function HomeContent() {
                         onGoToHome={() => handleTabChange("home")}
                         onGoToRecord={() => handleTabChange("record")}
                         onGoToAIChat={() => handleTabChange("ai-chat")}
-                        onStartRecordTutorial={(type) => {
-                            setRecordTutorialUserType(type);
-                            setShowRecordTutorial(true);
-                        }}
                     />
-                    {recordTutorialUserType && (
-                        <RecordPageTutorial
-                            isOpen={showRecordTutorial}
-                            userType={recordTutorialUserType}
-                            onClose={() => {
-                                setShowRecordTutorial(false);
-                                setRecordTutorialUserType(null);
-                            }}
-                            onGoToAIChat={() => handleTabChange("ai-chat")}
-                        />
-                    )}
                 </>
             )}
             <TutorialTour
@@ -551,12 +534,9 @@ function HomeContent() {
                         // planning 유저: PostOnboardingGuide 표시
                         setTimeout(() => setShowPostGuide(true), 300);
                     } else if (postGuideUserType === "current" || postGuideUserType === "memorial") {
-                        // current/memorial 유저: 바로 Record 페이지 + RecordPageTutorial
+                        // current/memorial 유저: 바로 Record 페이지로 이동
+                        // (RecordPageTutorial 제거됨 — 펫 0마리 상태에서 논리적 모순)
                         handleTabChange("record");
-                        setTimeout(() => {
-                            setRecordTutorialUserType(postGuideUserType);
-                            setShowRecordTutorial(true);
-                        }, 500);
                     }
                 }}
                 onNavigate={(tab) => handleTabChange(tab as TabType)}

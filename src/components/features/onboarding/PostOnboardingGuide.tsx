@@ -1,7 +1,7 @@
 /**
  * PostOnboardingGuide.tsx
  * 온보딩 완료 후 planning 유저 환영 팝업
- * (current/memorial 유저는 page.tsx에서 직접 RecordPageTutorial로 이동)
+ * (current/memorial 유저는 page.tsx에서 직접 Record 페이지로 이동)
  */
 
 "use client";
@@ -15,10 +15,8 @@ interface PostOnboardingGuideProps {
     userType: OnboardingUserType | null;
     onClose: () => void;
     onGoToHome: () => void;
-    // 아래 props는 page.tsx와의 호환성을 위해 유지 (실제로는 사용 안 함)
     onGoToRecord?: () => void;
     onGoToAIChat?: () => void;
-    onStartRecordTutorial?: (type: "current" | "memorial") => void;
 }
 
 export default function PostOnboardingGuide({

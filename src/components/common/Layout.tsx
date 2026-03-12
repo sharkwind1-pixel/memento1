@@ -401,7 +401,7 @@ function Layout({
             window.removeEventListener("openAccountSettings", handleOpenAccountSettings);
     }, []);
 
-    // 튜토리얼 시작 시 사이드바 강제 닫기 (TutorialTour/RecordPageTutorial이 사이드바에 가려지는 문제 방지)
+    // 튜토리얼 시작 시 사이드바 강제 닫기 (TutorialTour가 사이드바에 가려지는 문제 방지)
     useEffect(() => {
         const handleCloseSidebar = () => {
             setIsSidebarOpen(false);
