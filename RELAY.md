@@ -6,20 +6,24 @@
 
 ---
 
-## 튜토리얼 + 스크롤 + 방어 로직 세션 (2026-03-12, 완료)
+## 튜토리얼 + 스크롤 + 방어 로직 + 재가입 버그 세션 (2026-03-12, 완료)
 
-### 커밋 목록 (모두 main 배포됨)
+### 커밋 목록 (모두 배포됨)
 1. `c3a2642` — 튜토리얼 중 PetFormModal/사이드바 가림 수정
 2. `a545d37` — 튜토리얼 UX 개선 (섹션 하이라이트 + 스텝 순서)
 3. `9928de0` — RecordPage overflow-hidden/contain 제거
 4. `64a6686` — RecordPage 잔여 contain/translateZ 제거
 5. `256ff55` — MediaUploadModal useBodyScrollLock 제거 (iOS 사진 선택기 충돌)
-6. `6684f20` — **미확인 3건 코드 방어 로직**: touchmove 차단, localStorage 저장, ref 초기화
+6. `6684f20` — 미확인 3건 코드 방어 로직 (touchmove 차단, localStorage 저장, ref 초기화)
+7. `6fbe55c` — 재가입 유저 새로고침 시 데이터 리셋 버그 수정 (onboarding_completed_at 체크)
+8. `802ebd9` — sessionStorage 세션당 1회 방어 추가 (재가입 리셋 이중 방어)
+9. `7397567` — **RecordPageTutorial 제거** (펫 0마리 신규유저 논리적 모순 해소)
 
 ### 미확인 (실기기 테스트 필요)
 - iOS Safari 사진 선택기 컬렉션 탭 스크롤
 - MediaUploadModal backdrop rubber band 스크롤 누수
-- 신규유저 전체 플로우 (닉네임→온보딩→튜토리얼→RecordTutorial→PetFormModal)
+- 신규유저 전체 플로우 (닉네임→온보딩→튜토리얼→Record 페이지→PetFormModal)
+- 재가입 유저 새로고침 시 데이터 유지 확인
 
 ---
 
