@@ -537,10 +537,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                             }
                         }
 
-                        // 2. is_banned 체크 (프로필에서)
+                        // 2. is_banned + 온보딩 상태 체크 (프로필에서 1회 조회)
                         const { data: profileCheck } = await supabase
                             .from("profiles")
-                            .select("is_banned, ban_reason")
+                            .select("is_banned, ban_reason, onboarding_completed_at")
                             .eq("id", session.user.id)
                             .single();
                         if (profileCheck?.is_banned) {
@@ -551,12 +551,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
                         // === 차단 체크 통과 — 이제 로그인 상태를 설정 ===
 
-                        // 재가입 유저 온보딩 리셋
+                        // 재가입 유저 온보딩 리셋 — 최초 1회만
                         // has_record=true면 withdrawn_users에 기록이 있는 재가입 유저
-                        // → 전체 온보딩 상태를 리셋하여 신규가입 절차 재진행
+                        // (withdrawn_users 기록은 영구 보존되므로 매 로그인 시 has_record=true)
+                        // 판단 기준: onboarding_completed_at만 사용
+                        //   - handle_new_user 트리거가 nickname을 자동 설정하므로 nickname으로는 판단 불가
+                        //   - onboarding_completed_at이 null = 아직 온보딩 미완료 = 리셋 필요
+                        //   - onboarding_completed_at이 있음 = 이미 재가입 후 온보딩 완료 = 건너뜀
                         const hasRecord = rejoinData?.[0]?.has_record === true;
-                        if (!profileCheck?.is_banned && hasRecord) {
-                            await supabase.from("profiles").update({
+                        if (hasRecord && !profileCheck?.onboarding_completed_at) {
+                            const { error: resetError } = await supabase.from("profiles").update({
                                 nickname: null,
                                 onboarding_completed_at: null,
                                 tutorial_completed_at: null,
@@ -564,8 +568,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                                 onboarding_data: null,
                             }).eq("id", session.user.id);
 
+                            if (resetError) {
+                                console.error("[AuthContext] 재가입 온보딩 리셋 실패:", resetError.message);
+                            }
+
                             localStorage.removeItem("memento-ani-onboarding-complete");
                             localStorage.removeItem("memento-ani-tutorial-complete");
+                            localStorage.removeItem("memento-ani-record-tutorial-complete");
                         }
 
                         setSession(session);
