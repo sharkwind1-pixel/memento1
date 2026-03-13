@@ -42,15 +42,11 @@ export default function Error({
                 <h2 className="text-xl font-bold text-gray-800 mb-2">
                     잠깐, 문제가 생겼어요
                 </h2>
-                <p className="text-gray-500 text-sm mb-4 leading-relaxed">
+                <p className="text-gray-500 text-sm mb-6 leading-relaxed">
                     일시적인 오류가 발생했습니다.
                     <br />
                     아래 버튼을 눌러 다시 시도해주세요.
                 </p>
-                <pre className="text-[0.65rem] text-red-500 bg-red-50 rounded-lg p-3 mb-4 text-left whitespace-pre-wrap break-all max-h-32 overflow-auto">
-                    {error?.message || "Unknown error"}
-                    {error?.stack ? `\n\n${error.stack.slice(0, 500)}` : ""}
-                </pre>
                 <div className="flex gap-3 justify-center">
                     <Button
                         variant="outline"
