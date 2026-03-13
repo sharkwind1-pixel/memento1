@@ -716,24 +716,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Realtime: withdrawn_users INSERT 감지 → 즉시 로그아웃
         // 관리자가 탈퇴/차단 처리하면 모든 기기에서 실시간 반영
-        const withdrawnChannel = supabase
-            .channel("withdrawn_users_realtime")
-            .on(
-                "postgres_changes",
-                { event: "INSERT", schema: "public", table: "withdrawn_users" },
-                async (payload) => {
-                    const { data: { session: currentSession } } = await supabase.auth.getSession();
-                    if (!currentSession?.user?.email) return;
+        // 주의: iOS Safari에서 WebSocket 연결 실패 시 "The operation is insecure" 에러 throw
+        // → try-catch로 감싸서 Realtime 실패가 앱 전체 크래시로 이어지지 않도록 방어
+        let withdrawnChannel: ReturnType<typeof supabase.channel> | null = null;
+        try {
+            withdrawnChannel = supabase
+                .channel("withdrawn_users_realtime")
+                .on(
+                    "postgres_changes",
+                    { event: "INSERT", schema: "public", table: "withdrawn_users" },
+                    async (payload) => {
+                        const { data: { session: currentSession } } = await supabase.auth.getSession();
+                        if (!currentSession?.user?.email) return;
 
-                    const insertedEmail = payload.new?.email;
-                    const insertedType = payload.new?.withdrawal_type;
-                    if (insertedEmail === currentSession.user.email && insertedType !== "error_resolution") {
-                        toast.error("계정이 관리자에 의해 처리되었습니다.");
-                        await supabase.auth.signOut();
+                        const insertedEmail = payload.new?.email;
+                        const insertedType = payload.new?.withdrawal_type;
+                        if (insertedEmail === currentSession.user.email && insertedType !== "error_resolution") {
+                            toast.error("계정이 관리자에 의해 처리되었습니다.");
+                            await supabase.auth.signOut();
+                        }
                     }
-                }
-            )
-            .subscribe();
+                )
+                .subscribe((status) => {
+                    if (status === "CHANNEL_ERROR") {
+                        console.warn("[AuthContext] Realtime 구독 실패 — 탭 포커스 복귀 시 폴백 체크 사용");
+                    }
+                });
+        } catch {
+            console.warn("[AuthContext] Realtime WebSocket 연결 불가 — 폴백으로 동작");
+        }
 
         // 탭 포커스 복귀 시에도 체크 (Realtime 연결이 끊겼을 수 있으므로 이중 안전장치)
         const handleVisibilityChange = async () => {
@@ -758,7 +769,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return () => {
             clearTimeout(safetyTimer);
             subscription.unsubscribe();
-            supabase.removeChannel(withdrawnChannel);
+            if (withdrawnChannel) supabase.removeChannel(withdrawnChannel);
             document.removeEventListener("visibilitychange", handleVisibilityChange);
         };
     }, [refreshProfile, refreshPoints, checkDailyLogin]);
