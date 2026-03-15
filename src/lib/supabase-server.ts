@@ -37,8 +37,8 @@ export async function createServerSupabase() {
 
 /**
  * RLS를 우회하는 Admin Supabase 클라이언트 (서버 전용)
- * 다른 유저의 public 데이터 조회 시 사용 (미니미, 프로필 등)
- * 주의: 데이터 수정에는 사용하지 말 것 - 읽기 전용 용도
+ * 다른 유저의 데이터 조회/수정 시 사용 (관리자 API, 미니미, 프로필 등)
+ * 주의: 반드시 관리자 권한 검증 후에만 사용할 것
  */
 export function createAdminSupabase() {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

@@ -3,12 +3,16 @@
  * POST: 관리자가 특정 유저에게 포인트 지급
  *
  * 보안: 세션 기반 인증 + 관리자 권한 검증
- * DB: increment_user_points RPC (SECURITY DEFINER)로 원자적 처리
- *     → RPC가 SECURITY DEFINER이므로 anon key로도 동작
+ * DB: service_role로 직접 profiles UPDATE (트리거 우회)
+ *     + point_transactions에 거래 내역 기록
+ *
+ * 참고: increment_user_points RPC는 auth.uid() != p_user_id 체크가 있어서
+ *       관리자가 다른 유저에게 포인트를 줄 때 unauthorized 반환됨.
+ *       따라서 service_role로 직접 처리.
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
+import { getAuthUser, createAdminSupabase } from "@/lib/supabase-server";
 import { ADMIN_EMAILS } from "@/config/constants";
 
 export const dynamic = "force-dynamic";
@@ -25,13 +29,13 @@ export async function POST(request: NextRequest) {
         }
 
         // 2. 관리자 권한 확인 (이메일 하드코딩 + DB is_admin)
-        const supabase = await createServerSupabase();
+        const adminSupabase = createAdminSupabase();
 
         const isEmailAdmin = ADMIN_EMAILS.includes(adminUser.email || "");
         let isDbAdmin = false;
 
         if (!isEmailAdmin) {
-            const { data: profile } = await supabase
+            const { data: profile } = await adminSupabase
                 .from("profiles")
                 .select("is_admin")
                 .eq("id", adminUser.id)
@@ -68,44 +72,59 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 4. RPC로 포인트 지급 (SECURITY DEFINER → RLS 무관)
-        const metadata = {
-            awarded_by: adminUser.id,
-            awarded_by_email: adminUser.email || "",
-            reason: reason || "관리자 지급",
-        };
+        // 4. service_role로 직접 포인트 업데이트 (트리거 우회)
+        // 현재 포인트 조회
+        const { data: currentProfile, error: fetchError } = await adminSupabase
+            .from("profiles")
+            .select("points, total_points_earned")
+            .eq("id", targetUserId)
+            .single();
 
-        const { data, error } = await supabase.rpc("increment_user_points", {
-            p_user_id: targetUserId,
-            p_action_type: "admin_award",
-            p_points: points,
-            p_daily_cap: null,
-            p_is_one_time: false,
-            p_metadata: metadata,  // JSONB → 객체 그대로 전달
-        });
+        if (fetchError || !currentProfile) {
+            return NextResponse.json(
+                { error: "대상 유저를 찾을 수 없습니다" },
+                { status: 404 }
+            );
+        }
 
-        if (error) {
-            console.error("[Admin Points] RPC 에러:", error);
+        const newPoints = (currentProfile.points ?? 0) + points;
+        const newTotalEarned = (currentProfile.total_points_earned ?? 0) + points;
+
+        // 포인트 업데이트 (service_role → 트리거 통과)
+        const { error: updateError } = await adminSupabase
+            .from("profiles")
+            .update({
+                points: newPoints,
+                total_points_earned: newTotalEarned,
+            })
+            .eq("id", targetUserId);
+
+        if (updateError) {
+            console.error("[Admin Points] UPDATE 에러:", updateError);
             return NextResponse.json(
                 { error: "포인트 지급에 실패했습니다" },
                 { status: 500 }
             );
         }
 
-        // RPC가 JSONB 반환: { success, points, total_earned, earned }
-        const result = typeof data === "string" ? JSON.parse(data) : data;
-
-        if (result?.success === false) {
-            return NextResponse.json(
-                { error: `포인트 지급 실패: ${result.reason || "알 수 없는 오류"}` },
-                { status: 400 }
-            );
-        }
+        // 거래 내역 기록
+        await adminSupabase
+            .from("point_transactions")
+            .insert({
+                user_id: targetUserId,
+                action_type: "admin_award",
+                points_earned: points,
+                metadata: {
+                    awarded_by: adminUser.id,
+                    awarded_by_email: adminUser.email || "",
+                    reason: reason || "관리자 지급",
+                },
+            });
 
         return NextResponse.json({
             success: true,
             awarded: points,
-            newTotal: result?.points ?? 0,
+            newTotal: newPoints,
             targetUserId,
         });
     } catch (err) {

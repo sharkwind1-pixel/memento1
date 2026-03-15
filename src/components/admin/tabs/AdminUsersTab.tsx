@@ -16,7 +16,6 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,13 +25,14 @@ import { toast } from "sonner";
 import {
     Search,
     RefreshCw,
-    Clock,
     Users,
 } from "lucide-react";
 import { UserRow } from "../types";
 import { PremiumModal } from "../modals/PremiumModal";
 import { PointsAwardModal } from "../modals/PointsAwardModal";
 import LevelBadge from "@/components/features/points/LevelBadge";
+import { authFetch } from "@/lib/auth-fetch";
+import { API } from "@/config/apiEndpoints";
 
 // ============================================================================
 // Props 타입 정의
@@ -83,29 +83,31 @@ export default function AdminUsersTab({
         let banReason: string | null = null;
 
         if (newBanStatus) {
-            // 차단 시 사유 입력 요청
             const reason = prompt(`${targetUser.email}을(를) 차단합니다.\n\n차단 사유를 입력하세요:`);
-            if (reason === null) return; // 취소
+            if (reason === null) return;
             banReason = reason || "관리자 차단";
         } else {
             if (!confirm(`${targetUser.email}의 차단을 해제하시겠습니까?`)) return;
         }
 
         try {
-            const updateData: Record<string, unknown> = {
-                is_banned: newBanStatus,
-                ban_reason: newBanStatus ? banReason : null,
-                banned_at: newBanStatus ? new Date().toISOString() : null,
-            };
+            const res = await authFetch(API.ADMIN_UPDATE_PROFILE, {
+                method: "PATCH",
+                body: JSON.stringify({
+                    targetUserId: targetUser.id,
+                    updates: {
+                        is_banned: newBanStatus,
+                        ban_reason: newBanStatus ? banReason : null,
+                        banned_at: newBanStatus ? new Date().toISOString() : null,
+                    },
+                }),
+            });
 
-            const { error } = await supabase
-                .from("profiles")
-                .update(updateData)
-                .eq("id", targetUser.id);
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || `${action} 실패`);
+            }
 
-            if (error) throw error;
-
-            // 로컬 상태 업데이트
             onUpdateUsers(prev =>
                 prev.map(u =>
                     u.id === targetUser.id ? { ...u, is_banned: newBanStatus } : u
@@ -113,8 +115,8 @@ export default function AdminUsersTab({
             );
 
             toast.success(`${targetUser.email}이(가) ${action}되었습니다.`);
-        } catch {
-            toast.error(`${action}에 실패했습니다.`);
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : `${action}에 실패했습니다.`);
         }
     };
 
@@ -128,20 +130,17 @@ export default function AdminUsersTab({
         if (!confirm(`${targetUser.email}의 ${action}를 진행하시겠습니까?`)) return;
 
         try {
-            // SECURITY DEFINER RPC 함수 사용
-            const { error: rpcError } = await supabase.rpc("toggle_admin", {
-                p_target_user_id: targetUser.id,
-                p_is_admin: newAdminStatus,
+            const res = await authFetch(API.ADMIN_UPDATE_PROFILE, {
+                method: "PATCH",
+                body: JSON.stringify({
+                    targetUserId: targetUser.id,
+                    updates: { is_admin: newAdminStatus },
+                }),
             });
 
-            // RPC 실패 시 직접 update 폴백
-            if (rpcError) {
-                const { error } = await supabase
-                    .from("profiles")
-                    .update({ is_admin: newAdminStatus })
-                    .eq("id", targetUser.id);
-
-                if (error) throw error;
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || "관리자 권한 변경 실패");
             }
 
             onUpdateUsers(prev =>
@@ -154,8 +153,8 @@ export default function AdminUsersTab({
 
             toast.success(`${targetUser.email}의 ${action}가 완료되었습니다.`);
             onRefreshStats();
-        } catch {
-            toast.error("관리자 권한 변경에 실패했습니다.");
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : "관리자 권한 변경에 실패했습니다.");
         }
     };
 
@@ -168,26 +167,31 @@ export default function AdminUsersTab({
         if (!confirm(message)) return;
 
         try {
-            const { error } = await supabase
-                .from("profiles")
-                .update({
-                    tutorial_completed_at: null,
-                    onboarding_completed_at: null,
-                    user_type: null,
-                    onboarding_data: null,
-                })
-                .eq("id", userId);
+            const res = await authFetch(API.ADMIN_UPDATE_PROFILE, {
+                method: "PATCH",
+                body: JSON.stringify({
+                    targetUserId: userId,
+                    updates: {
+                        tutorial_completed_at: null,
+                        onboarding_completed_at: null,
+                        user_type: null,
+                        onboarding_data: null,
+                    },
+                }),
+            });
 
-            if (error) {
-                console.error("[AdminUsers] 온보딩 리셋 에러:", error);
-                toast.error(`온보딩 리셋 실패: ${error.message}`);
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                toast.error(`온보딩 리셋 실패: ${errData.error || "알 수 없는 오류"}`);
                 return;
             }
 
             // 본인 계정이면 localStorage도 클리어
             if (userId === currentUserId) {
-                localStorage.removeItem("memento-ani-tutorial-complete");
-                localStorage.removeItem("memento-ani-onboarding-complete");
+                try {
+                    localStorage.removeItem("memento-ani-tutorial-complete");
+                    localStorage.removeItem("memento-ani-onboarding-complete");
+                } catch { /* iOS Safari Private Mode */ }
                 toast.success("온보딩이 리셋되었습니다! 새로고침하면 처음부터 시작됩니다.");
             } else {
                 toast.success("온보딩이 리셋되었습니다.");
@@ -205,23 +209,21 @@ export default function AdminUsersTab({
         if (!confirm(`${targetUser.email}의 프리미엄을 해제하시겠습니까?`)) return;
 
         try {
-            // SECURITY DEFINER RPC 함수 사용 (RLS 우회)
-            const { error: rpcError } = await supabase.rpc("revoke_premium", {
-                p_user_id: targetUser.id,
-            });
-
-            // RPC 실패 시 직접 update 폴백
-            if (rpcError) {
-                const { error } = await supabase
-                    .from("profiles")
-                    .update({
+            const res = await authFetch(API.ADMIN_UPDATE_PROFILE, {
+                method: "PATCH",
+                body: JSON.stringify({
+                    targetUserId: targetUser.id,
+                    updates: {
                         is_premium: false,
                         premium_expires_at: new Date().toISOString(),
                         premium_plan: null,
-                    })
-                    .eq("id", targetUser.id);
+                    },
+                }),
+            });
 
-                if (error) throw error;
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || "프리미엄 해제 실패");
             }
 
             onUpdateUsers(prev =>
@@ -234,8 +236,8 @@ export default function AdminUsersTab({
 
             toast.success("프리미엄이 해제되었습니다.");
             onRefreshStats();
-        } catch {
-            toast.error("프리미엄 해제에 실패했습니다.");
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : "프리미엄 해제에 실패했습니다.");
         }
     };
 
@@ -252,27 +254,22 @@ export default function AdminUsersTab({
                 ? null
                 : new Date(Date.now() + (durationDays || 30) * 24 * 60 * 60 * 1000).toISOString();
 
-            // SECURITY DEFINER RPC 함수 사용 (RLS 우회)
-            const { error: rpcError } = await supabase.rpc("grant_premium", {
-                p_user_id: premiumModalUser.id,
-                p_plan: "admin_grant",
-                p_duration_days: durationDays,
-                p_reason: reason || null,
-            });
-
-            // RPC 실패 시 직접 update 폴백 (RLS 관리자 정책 필요)
-            if (rpcError) {
-                const { error } = await supabase
-                    .from("profiles")
-                    .update({
+            const res = await authFetch(API.ADMIN_UPDATE_PROFILE, {
+                method: "PATCH",
+                body: JSON.stringify({
+                    targetUserId: premiumModalUser.id,
+                    updates: {
                         is_premium: true,
                         premium_started_at: new Date().toISOString(),
                         premium_expires_at: expiresAt,
                         premium_plan: "admin_grant",
-                    })
-                    .eq("id", premiumModalUser.id);
+                    },
+                }),
+            });
 
-                if (error) throw error;
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || "프리미엄 부여 실패");
             }
 
             onUpdateUsers(prev =>
@@ -294,13 +291,13 @@ export default function AdminUsersTab({
             );
             setPremiumModalUser(null);
             onRefreshStats();
-        } catch {
-            toast.error("프리미엄 부여에 실패했습니다.");
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : "프리미엄 부여에 실패했습니다.");
         }
     };
 
     // ========================================================================
-    // 포인트 지급 (profiles 테이블 직접 UPDATE — RPC 의존 제거)
+    // 포인트 지급 (service_role API 사용 — 트리거 우회)
     // ========================================================================
     const awardPoints = async (awardAmount: number, reason: string) => {
         if (!pointsModalUser) return;
@@ -308,43 +305,31 @@ export default function AdminUsersTab({
         const targetId = pointsModalUser.id;
 
         try {
-            // 1. DB에서 현재 포인트 실시간 조회
-            const { data: freshProfile, error: fetchError } = await supabase
-                .from("profiles")
-                .select("points, total_points_earned")
-                .eq("id", targetId)
-                .single();
+            const res = await authFetch(API.ADMIN_POINTS, {
+                method: "POST",
+                body: JSON.stringify({
+                    targetUserId: targetId,
+                    points: awardAmount,
+                    reason: reason || "관리자 지급",
+                }),
+            });
 
-            if (fetchError || !freshProfile) {
-                throw new Error("사용자 정보를 가져올 수 없습니다.");
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || "포인트 지급 실패");
             }
 
-            const dbPoints = freshProfile.points ?? 0;
-            const dbTotalEarned = freshProfile.total_points_earned ?? 0;
-            const newPoints = dbPoints + awardAmount;
-            const newTotalEarned = dbTotalEarned + awardAmount;
+            const result = await res.json();
+            const newPoints = result.newTotal ?? (pointsModalUser.points ?? 0) + awardAmount;
 
-            // 2. profiles 업데이트
-            const { error: updateError } = await supabase
-                .from("profiles")
-                .update({
-                    points: newPoints,
-                    total_points_earned: newTotalEarned,
-                })
-                .eq("id", targetId);
-
-            if (updateError) {
-                throw new Error("포인트 지급 실패: " + updateError.message);
-            }
-
-            // 3. 관리자 UI 로컬 상태 업데이트
+            // 로컬 상태 업데이트
             onUpdateUsers(prev =>
                 prev.map(u =>
                     u.id === targetId ? { ...u, points: newPoints } : u
                 )
             );
 
-            // 4. 본인에게 지급한 경우 AuthContext 포인트 갱신
+            // 본인에게 지급한 경우 AuthContext 포인트 갱신
             if (targetId === currentUserId) {
                 await refreshPoints();
             }
