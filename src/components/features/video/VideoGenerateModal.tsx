@@ -32,7 +32,7 @@ import { API } from "@/config/apiEndpoints";
 import { VIDEO_TEMPLATES } from "@/config/videoTemplates";
 import type { VideoTemplate, VideoQuota } from "@/types";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
-import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+
 
 // ============================================
 // Icon mapping for dynamic template rendering
@@ -113,7 +113,6 @@ export default function VideoGenerateModal({
     // Escape key handler + body scroll lock
     // ============================================
     useEscapeClose(isOpen, onClose);
-    useBodyScrollLock(isOpen);
 
     // ============================================
     // Reset state when modal opens
@@ -570,15 +569,16 @@ export default function VideoGenerateModal({
     // ============================================
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50"
+            style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
             onClick={handleOverlayClick}
         >
-            <div className="w-full max-w-2xl">
+            <div className="min-h-full flex items-start justify-center pt-8 pb-8 px-4">
                 <div
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby="video-generate-modal-title"
-                    className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl max-w-2xl w-full shadow-lg relative animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto"
+                    className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl max-w-2xl w-full shadow-lg relative animate-in fade-in zoom-in-95 duration-200"
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* Header */}

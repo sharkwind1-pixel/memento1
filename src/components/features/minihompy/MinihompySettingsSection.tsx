@@ -6,6 +6,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Settings, Globe, Lock, Pencil, Check, X, Palette } from "lucide-react";
 import { MINIHOMPY } from "@/config/constants";
@@ -37,15 +38,25 @@ export default function MinihompySettingsSection({
 
     const handleTogglePublic = async () => {
         setUpdating(true);
-        await onUpdate({ isPublic: !settings.isPublic });
-        setUpdating(false);
+        try {
+            await onUpdate({ isPublic: !settings.isPublic });
+        } catch {
+            toast.error("설정 변경에 실패했어요");
+        } finally {
+            setUpdating(false);
+        }
     };
 
     const handleSaveGreeting = async () => {
         setUpdating(true);
-        await onUpdate({ greeting: greetingDraft });
-        setIsEditingGreeting(false);
-        setUpdating(false);
+        try {
+            await onUpdate({ greeting: greetingDraft });
+            setIsEditingGreeting(false);
+        } catch {
+            toast.error("설정 변경에 실패했어요");
+        } finally {
+            setUpdating(false);
+        }
     };
 
     const handleBgChange = async (slug: string) => {

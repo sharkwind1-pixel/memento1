@@ -428,7 +428,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // 출석 체크 (API 엔드포인트 사용 - 서버 인증으로 RLS 우회)
     const checkDailyLogin = useCallback(async () => {
         try {
-            const today = new Date().toISOString().split("T")[0];
+            const kstOffset = 9 * 60 * 60 * 1000;
+            const today = new Date(Date.now() + kstOffset).toISOString().split("T")[0];
             const lastCheck = safeGetItem("lastDailyCheck");
             if (lastCheck === today) return;
 

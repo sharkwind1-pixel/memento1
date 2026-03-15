@@ -7,6 +7,7 @@
 
 import type { EmotionType, GriefStage } from "@/types";
 import { getOpenAI } from "./shared";
+import { AI_CONFIG } from "@/config/constants";
 
 // ---- 타입 재수출 ----
 
@@ -186,7 +187,7 @@ export async function analyzeEmotion(
     // 2차: AI 기반 정밀 분석
     try {
         const response = await getOpenAI().chat.completions.create({
-            model: "gpt-4o-mini",
+            model: AI_CONFIG.AI_MODEL,
             messages: [
                 {
                     role: "system",

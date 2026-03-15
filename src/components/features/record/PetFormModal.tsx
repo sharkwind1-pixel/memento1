@@ -247,7 +247,7 @@ export default function PetFormModal({
                             <h3 id="pet-form-title" className="text-lg font-semibold">
                                 {pet ? "반려동물 수정" : "새 반려동물 등록"}
                             </h3>
-                            <Button variant="ghost" size="icon" onClick={onClose} aria-label="닫기">
+                            <Button variant="ghost" size="icon" onClick={handleBackdropClose} aria-label="닫기">
                                 <X className="w-5 h-5" />
                             </Button>
                         </div>

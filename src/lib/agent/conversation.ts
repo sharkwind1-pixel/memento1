@@ -7,6 +7,7 @@
 
 import type { EmotionType, GriefStage } from "@/types";
 import { getSupabase, getOpenAI, hasChatModeColumn } from "./shared";
+import { AI_CONFIG } from "@/config/constants";
 import { getDaysAgo, getGriefStageLabel } from "./helpers";
 import { getRecentMessages } from "./memory";
 
@@ -49,7 +50,7 @@ export async function generateConversationSummary(
             .join("\n");
 
         const response = await getOpenAI().chat.completions.create({
-            model: "gpt-4o-mini",
+            model: AI_CONFIG.AI_MODEL,
             messages: [
                 {
                     role: "system",

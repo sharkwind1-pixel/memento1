@@ -6,6 +6,7 @@
  */
 
 import { getSupabase, getOpenAI } from "./shared";
+import { AI_CONFIG } from "@/config/constants";
 
 // ---- 타입 정의 ----
 
@@ -113,10 +114,12 @@ export async function getReminders(
  */
 export async function getDueReminders(userId: string): Promise<PetReminder[]> {
     const now = new Date();
-    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    const currentDayOfWeek = now.getDay();
-    const currentDayOfMonth = now.getDate();
-    const todayStr = now.toISOString().split('T')[0];
+    const kstOffset = 9 * 60;
+    const kst = new Date(now.getTime() + kstOffset * 60 * 1000);
+    const currentTime = `${String(kst.getUTCHours()).padStart(2, '0')}:${String(kst.getUTCMinutes()).padStart(2, '0')}`;
+    const currentDayOfWeek = kst.getUTCDay();
+    const currentDayOfMonth = kst.getUTCDate();
+    const todayStr = kst.toISOString().split('T')[0];
 
     const reminders = await getReminders(userId);
 
@@ -209,7 +212,7 @@ export async function suggestReminderFromChat(
 ): Promise<Partial<PetReminder> | null> {
     try {
         const response = await getOpenAI().chat.completions.create({
-            model: "gpt-4o-mini",
+            model: AI_CONFIG.AI_MODEL,
             messages: [
                 {
                     role: "system",

@@ -8,7 +8,7 @@
 "use client";
 
 import { useEscapeClose } from "@/hooks/useEscapeClose";
-import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+
 import { Button } from "@/components/ui/button";
 import {
     X,
@@ -90,7 +90,6 @@ export default function LoginPromptModal({
     onSignup,
 }: LoginPromptModalProps) {
     useEscapeClose(isOpen, onClose);
-    useBodyScrollLock(isOpen);
     if (!isOpen) return null;
 
     const info = featureInfo[feature];

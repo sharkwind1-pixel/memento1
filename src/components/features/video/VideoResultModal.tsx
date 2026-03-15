@@ -10,7 +10,7 @@
 
 import { useCallback, useState } from "react";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
-import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+
 import { VIDEO_TEMPLATES } from "@/config/videoTemplates";
 import { API } from "@/config/apiEndpoints";
 import { authFetch } from "@/lib/auth-fetch";
@@ -56,7 +56,6 @@ export default function VideoResultModal({
     authorName,
 }: VideoResultModalProps) {
     useEscapeClose(isOpen, onClose);
-    useBodyScrollLock(isOpen);
 
     const [isPosting, setIsPosting] = useState(false);
 
@@ -148,12 +147,13 @@ export default function VideoResultModal({
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50"
+            style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
             onClick={(e) => {
                 if (e.target === e.currentTarget) onClose();
             }}
         >
-            <div className="w-full max-w-2xl">
+            <div className="min-h-full flex items-start justify-center pt-8 pb-8 px-4">
                 <div
                     className="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full shadow-2xl relative animate-in fade-in zoom-in-95 duration-200"
                     role="dialog"

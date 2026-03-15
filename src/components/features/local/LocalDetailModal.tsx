@@ -21,7 +21,7 @@ import {
     CheckCircle2,
     Trash2,
 } from "lucide-react";
-import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+
 import type { LocalPost } from "./localTypes";
 import { getBadgeStyle, getCategoryLabel, timeAgo } from "./localTypes";
 
@@ -42,16 +42,19 @@ export default function LocalDetailModal({
     onDelete,
     onClosePost,
 }: LocalDetailModalProps) {
-    useBodyScrollLock(true);
-
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+        <div
+            className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50 backdrop-blur-sm"
+            style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+            onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+        >
+            <div className="min-h-full flex items-start justify-center pt-8 pb-8 px-4">
             <div
-                className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+                className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-lg w-full"
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="local-detail-title"
+                onClick={(e) => e.stopPropagation()}
             >
                 {/* 닫기 */}
                 <button
@@ -150,6 +153,7 @@ export default function LocalDetailModal({
                         </div>
                     )}
                 </div>
+            </div>
             </div>
         </div>
     );

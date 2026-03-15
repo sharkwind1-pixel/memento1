@@ -461,7 +461,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                 }
 
                 if (filtered.length > 0 && !filtered.some((p) => p.isPrimary)) {
-                    filtered[0].isPrimary = true;
+                    filtered[0] = { ...filtered[0], isPrimary: true };
                 }
 
                 return filtered;

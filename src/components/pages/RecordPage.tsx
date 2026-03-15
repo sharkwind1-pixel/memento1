@@ -247,10 +247,15 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
 
     // 일상 모드 복구
     const handleRecoverToActive = async (petId: string) => {
-        await updatePet(petId, {
-            status: "active",
-            memorialDate: undefined,
-        });
+        try {
+            await updatePet(petId, {
+                status: "active",
+                memorialDate: undefined,
+            });
+            toast.success("일상 모드로 전환되었어요");
+        } catch {
+            toast.error("상태 복구에 실패했어요");
+        }
     };
 
     // 새 반려동물 추가 (무료 회원 제한 체크)

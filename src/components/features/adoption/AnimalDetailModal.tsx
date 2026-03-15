@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { X, MapPin, Phone } from "lucide-react";
 import type { AdoptionAnimal } from "@/app/api/adoption/route";
 import { genderLabel, neuterLabel, formatDate } from "./adoptionTypes";
-import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+
 
 function InfoItem({ label, value }: { label: string; value: string }) {
     if (!value) return null;
@@ -32,8 +32,6 @@ export function AnimalDetailModal({
     animal: AdoptionAnimal | null;
     onClose: () => void;
 }) {
-    useBodyScrollLock(!!animal);
-
     useEffect(() => {
         if (!animal) return;
         const onKeyDown = (e: KeyboardEvent) => {
@@ -47,7 +45,8 @@ export function AnimalDetailModal({
 
     return (
         <div
-            className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-4"
+            className="fixed inset-0 z-[9999] overflow-y-auto bg-black/60"
+            style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
             onMouseDown={(e) => {
                 if (e.target === e.currentTarget) onClose();
             }}
@@ -55,7 +54,8 @@ export function AnimalDetailModal({
             aria-modal="true"
             aria-labelledby="adoption-detail-title"
         >
-            <div className="w-full max-w-2xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl border border-white/10 flex flex-col">
+            <div className="min-h-full flex items-start justify-center pt-8 pb-8 px-4">
+            <div className="w-full max-w-2xl bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-2xl border border-white/10 flex flex-col" onClick={(e) => e.stopPropagation()}>
                 {/* 헤더 */}
                 <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200/70 dark:border-gray-800 flex-shrink-0">
                     <div className="min-w-0">
@@ -205,6 +205,7 @@ export function AnimalDetailModal({
                         </Button>
                     </div>
                 </div>
+            </div>
             </div>
         </div>
     );

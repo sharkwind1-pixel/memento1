@@ -22,7 +22,7 @@ export const STORAGE_KEYS = {
     SELECTED_PET_ID: "memento-ani-selected-pet",
 
     /** 온보딩 완료 여부 */
-    ONBOARDING_COMPLETED: "memento-ani-onboarding",
+    ONBOARDING_COMPLETED: "memento-ani-onboarding-complete",
 
     /** AI 펫톡 일일 사용량 */
     CHAT_USAGE: "memento-ani-chat-usage",

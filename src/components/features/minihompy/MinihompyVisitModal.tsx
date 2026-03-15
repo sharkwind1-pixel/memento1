@@ -21,7 +21,7 @@ import { MINIHOMPY } from "@/config/constants";
 import type { MinihompyViewData, GuestbookEntry, MinimiEquipState } from "@/types";
 import MinihompyStage from "./MinihompyStage";
 import Image from "next/image";
-import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+
 
 interface MinihompyVisitModalProps {
     isOpen: boolean;
@@ -34,7 +34,6 @@ export default function MinihompyVisitModal({
     onClose,
     userId,
 }: MinihompyVisitModalProps) {
-    useBodyScrollLock(isOpen);
     const { user } = useAuth();
     const [data, setData] = useState<MinihompyViewData | null>(null);
     const [loading, setLoading] = useState(true);
@@ -192,13 +191,15 @@ export default function MinihompyVisitModal({
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm"
+            style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
             onClick={(e) => e.target === e.currentTarget && onClose()}
             role="dialog"
             aria-modal="true"
             aria-labelledby="visit-title"
         >
-            <div className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-h-[85vh] flex flex-col">
+            <div className="min-h-full flex items-start justify-center pt-8 pb-8 px-4">
+            <div className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col" onClick={(e) => e.stopPropagation()}>
                 {/* 헤더 */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
                     <h2 id="visit-title" className="text-lg font-bold text-gray-800 dark:text-white">
@@ -352,6 +353,7 @@ export default function MinihompyVisitModal({
                         </div>
                     ) : null}
                 </div>
+            </div>
             </div>
         </div>
     );

@@ -16,6 +16,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 // 공공 API 응답 타입
 interface PublicAPIAnimal {
     desertionNo: string;

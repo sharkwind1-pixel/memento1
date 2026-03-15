@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
     console.log("[magazine-check] 오늘 매거진이 없습니다. 보정 생성을 시도합니다.");
 
     try {
-        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mementoani.com";
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://mementoani.com";
         const generateUrl = `${siteUrl}/api/cron/magazine-generate?force=true`;
 
         const res = await fetch(generateUrl, {

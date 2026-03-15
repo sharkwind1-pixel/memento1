@@ -294,7 +294,8 @@ export function checkDailyUsage(
     identifier: string, // IP 또는 userId
     isAuthenticated: boolean
 ): { allowed: boolean; remaining: number; isWarning: boolean } {
-    const today = new Date().toISOString().split("T")[0];
+    const kstOffset = 9 * 60 * 60 * 1000;
+    const today = new Date(Date.now() + kstOffset).toISOString().split("T")[0];
     const key = `daily:${identifier}`;
     const limit = isAuthenticated
         ? RATE_LIMITS.aiChat.dailyLimitAuth

@@ -4,6 +4,8 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
     const clientId = process.env.NAVER_CLIENT_ID;
     if (!clientId) {
@@ -14,7 +16,7 @@ export async function GET() {
     }
 
     const siteUrl =
-        process.env.NEXT_PUBLIC_SITE_URL || "https://memento-ani.vercel.app";
+        process.env.NEXT_PUBLIC_SITE_URL || "https://mementoani.com";
     const redirectUri = encodeURIComponent(
         `${siteUrl}/api/auth/naver/callback`,
     );

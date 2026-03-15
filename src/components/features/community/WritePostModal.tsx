@@ -14,7 +14,7 @@ import { X, Send, Home, Eye, EyeOff, ImagePlus, Loader2 } from "lucide-react";
 import { InlineLoading } from "@/components/ui/PawLoading";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
-import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+
 import { uploadCommunityImage } from "@/lib/storage";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
@@ -71,7 +71,6 @@ export default function WritePostModal({
 }: WritePostModalProps) {
     const { user } = useAuth();
     useEscapeClose(isOpen, onClose);
-    useBodyScrollLock(isOpen);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const imageScrollRef = useHorizontalScroll();
     const [title, setTitle] = useState("");

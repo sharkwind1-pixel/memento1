@@ -7,6 +7,7 @@
 
 import type { EmotionType } from "@/types";
 import { getSupabase, getOpenAI, hasChatModeColumn } from "./shared";
+import { AI_CONFIG } from "@/config/constants";
 
 // ---- 타입 정의 ----
 
@@ -72,7 +73,7 @@ export async function extractMemories(
 ): Promise<ExtractedMemory[] | null> {
     try {
         const response = await getOpenAI().chat.completions.create({
-            model: "gpt-4o-mini",
+            model: AI_CONFIG.AI_MODEL,
             messages: [
                 {
                     role: "system",

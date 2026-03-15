@@ -13,7 +13,7 @@ export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
-import { API, AI_INPUT_LIMITS } from "@/config/constants";
+import { AI_CONFIG, AI_INPUT_LIMITS } from "@/config/constants";
 import {
     validateAndParseInput,
     checkSecurityLimits,
@@ -83,14 +83,14 @@ export async function POST(request: NextRequest) {
         // 4단계: OpenAI API 스트리밍 호출
         const randomSeed = Math.floor(Math.random() * 1000000);
         const openaiStream = await getOpenAI().chat.completions.create({
-            model: "gpt-4o-mini",
+            model: AI_CONFIG.AI_MODEL,
             messages: [
                 { role: "system", content: aiContext.systemPrompt },
                 ...aiContext.recentHistory,
                 { role: "user", content: `<user_input>${parsedInput.sanitizedMessage}</user_input>` },
             ],
-            max_tokens: 500,
-            temperature: aiContext.mode === "memorial" ? API.AI_TEMPERATURE_MEMORIAL : API.AI_TEMPERATURE_DAILY,
+            max_tokens: AI_CONFIG.AI_MAX_TOKENS,
+            temperature: aiContext.mode === "memorial" ? AI_CONFIG.AI_TEMPERATURE_MEMORIAL : AI_CONFIG.AI_TEMPERATURE_DAILY,
             presence_penalty: aiContext.isMemorialMode ? 0.5 : 0.7,
             frequency_penalty: aiContext.isMemorialMode ? 0.3 : 0.6,
             seed: randomSeed,

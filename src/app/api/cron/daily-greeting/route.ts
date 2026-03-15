@@ -21,6 +21,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import * as webpush from "web-push";
 import OpenAI from "openai";
+import { AI_CONFIG } from "@/config/constants";
 
 // VAPID 설정
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
@@ -199,7 +200,7 @@ async function generateGreeting(
 
     try {
         const response = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
+            model: AI_CONFIG.AI_MODEL,
             messages: [
                 { role: "system", content: systemPrompt },
                 { role: "user", content: `${timeSlot} 인사 한마디` },

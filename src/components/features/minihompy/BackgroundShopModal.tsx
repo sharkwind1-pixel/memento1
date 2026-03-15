@@ -14,7 +14,7 @@ import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
 import { formatPoints } from "@/lib/points";
 import type { BackgroundTheme } from "@/types";
-import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+
 
 interface BackgroundShopModalProps {
     isOpen: boolean;
@@ -34,7 +34,6 @@ export default function BackgroundShopModal({
     onApply,
 }: BackgroundShopModalProps) {
     const { points, pointsLoaded, refreshPoints } = useAuth();
-    useBodyScrollLock(isOpen);
     const [catalog, setCatalog] = useState<CatalogItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [purchasingSlug, setPurchasingSlug] = useState<string | null>(null);
@@ -103,13 +102,15 @@ export default function BackgroundShopModal({
 
     return (
         <div
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50 backdrop-blur-sm"
+            style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
             onClick={(e) => e.target === e.currentTarget && onClose()}
             role="dialog"
             aria-modal="true"
             aria-labelledby="bg-shop-title"
         >
-            <div className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-h-[80vh] flex flex-col">
+            <div className="min-h-full flex items-start justify-center pt-8 pb-8 px-4">
+            <div className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col" onClick={(e) => e.stopPropagation()}>
                 {/* 헤더 */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-800">
                     <div className="flex items-center gap-2">
@@ -237,6 +238,7 @@ export default function BackgroundShopModal({
                         </div>
                     )}
                 </div>
+            </div>
             </div>
         </div>
     );

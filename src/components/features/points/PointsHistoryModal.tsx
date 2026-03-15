@@ -15,7 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getActionLabel, formatPoints } from "@/lib/points";
 import { POINT_LEVELS, getPointLevel } from "@/config/constants";
 import type { PointTransaction, PointAction } from "@/types";
-import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+
 
 interface PointsHistoryModalProps {
     open: boolean;
@@ -57,7 +57,6 @@ function getActionColor(actionType: PointAction) {
 }
 
 export default function PointsHistoryModal({ open, onClose }: PointsHistoryModalProps) {
-    useBodyScrollLock(open);
     const { points, userPetType } = useAuth();
     const [transactions, setTransactions] = useState<PointTransaction[]>([]);
     const [loading, setLoading] = useState(true);
@@ -136,15 +135,15 @@ export default function PointsHistoryModal({ open, onClose }: PointsHistoryModal
     if (!open) return null;
 
     return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-            {/* 백드롭 */}
-            <div
-                className="absolute inset-0 bg-black/40"
-                onClick={onClose}
-            />
+        <div
+            className="fixed inset-0 z-[9999] overflow-y-auto bg-black/40"
+            style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+            onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+        >
+            <div className="min-h-full flex items-start justify-center pt-8 pb-8 px-4">
 
             {/* 모달 */}
-            <div className="relative bg-white dark:bg-gray-900 rounded-2xl max-w-md w-full shadow-2xl max-h-[80vh] flex flex-col animate-in fade-in zoom-in-95" role="dialog" aria-modal="true" aria-labelledby="points-history-title">
+            <div className="relative bg-white dark:bg-gray-900 rounded-2xl max-w-md w-full shadow-2xl flex flex-col animate-in fade-in zoom-in-95" role="dialog" aria-modal="true" aria-labelledby="points-history-title" onClick={(e) => e.stopPropagation()}>
                 {/* 헤더 */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
                     <div>
@@ -315,6 +314,7 @@ export default function PointsHistoryModal({ open, onClose }: PointsHistoryModal
                         </>
                     )}
                 </div>
+            </div>
             </div>
         </div>
     );

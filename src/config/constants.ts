@@ -24,7 +24,7 @@ export const BASIC_LIMITS = {
 export const PREMIUM_LIMITS = {
     PETS: 10,                   // 프리미엄 회원 반려동물 등록 수
     PHOTOS_PER_PET: 1000,       // 프리미엄 회원 펫당 사진 수
-    DAILY_CHATS: Infinity,      // 프리미엄 회원 무제한
+    DAILY_CHATS: 1000,           // 프리미엄 회원 사실상 무제한 (Infinity는 JSON 직렬화 불가)
     MESSAGE_LENGTH: 1000,       // 프리미엄 회원 메시지 글자 수
 } as const;
 
@@ -52,7 +52,7 @@ export const UPLOAD = {
 } as const;
 
 // ===== API 설정 =====
-export const API = {
+export const AI_CONFIG = {
     AI_MODEL: "gpt-4o-mini",    // AI 펫톡 모델
     AI_MAX_TOKENS: 500,         // AI 응답 최대 토큰 (본문+SUGGESTIONS+PENDING_TOPIC)
     AI_TEMPERATURE_DAILY: 0.80,     // 일상 모드 온도

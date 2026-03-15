@@ -8,7 +8,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import useHorizontalScroll from "@/hooks/useHorizontalScroll";
-import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+
 import { X, Download, Image as ImageIcon, FileText, Star, Heart, Loader2 } from "lucide-react";
 import html2canvas from "html2canvas";
 import { toast } from "sonner";
@@ -65,8 +65,6 @@ export default function ExportChatModal({
     const [format, setFormat] = useState<"png" | "jpg">("png");
     const cardRef = useRef<HTMLDivElement>(null);
     const previewScrollRef = useHorizontalScroll();
-
-    useBodyScrollLock(isOpen);
 
     const handleExport = useCallback(async () => {
         if (!cardRef.current) return;
@@ -190,14 +188,16 @@ export default function ExportChatModal({
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm"
+            style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
             onClick={onClose}
             role="dialog"
             aria-modal="true"
             aria-labelledby="export-modal-title"
         >
+            <div className="min-h-full flex items-start justify-center pt-8 pb-8 px-4">
             <div
-                className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+                className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full flex flex-col"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* 헤더 */}
@@ -338,6 +338,7 @@ export default function ExportChatModal({
                         )}
                     </button>
                 </div>
+            </div>
             </div>
         </div>
     );

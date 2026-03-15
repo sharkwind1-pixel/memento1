@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
         }
 
         // 7. Webhook URL 구성 (HMAC 서명 기반 - 시크릿 노출 방지)
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://memento-ani.vercel.app";
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://mementoani.com";
         const webhookSecret = process.env.VIDEO_WEBHOOK_SECRET || "";
         const timestamp = Date.now().toString();
         const hmacSignature = crypto

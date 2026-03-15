@@ -20,7 +20,7 @@ import { InlineLoading } from "@/components/ui/PawLoading";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
-import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+
 
 type SupportType = "question" | "report" | "suggestion";
 
@@ -42,7 +42,6 @@ export default function SupportModal({
 }: SupportModalProps) {
     const { user } = useAuth();
     useEscapeClose(isOpen, onClose);
-    useBodyScrollLock(isOpen);
     const [category, setCategory] = useState<SupportType>(
         type === "inquiry" ? "question" : "suggestion",
     );

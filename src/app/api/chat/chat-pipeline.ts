@@ -15,7 +15,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { awardPoints } from "@/lib/points";
 import { getAuthUser, createServerSupabase } from "@/lib/supabase-server";
-import { API, FREE_LIMITS, AI_INPUT_LIMITS } from "@/config/constants";
+import { AI_CONFIG, FREE_LIMITS, AI_INPUT_LIMITS } from "@/config/constants";
 import {
     getClientIP,
     checkRateLimit,

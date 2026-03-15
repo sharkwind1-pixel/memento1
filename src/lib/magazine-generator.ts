@@ -9,7 +9,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type OpenAI from "openai";
-import { MAGAZINE_AUTO } from "@/config/constants";
+import { MAGAZINE_AUTO, AI_CONFIG } from "@/config/constants";
 
 // ===== 상수 =====
 
@@ -198,7 +198,7 @@ export async function generateArticle(
     const prompt = buildArticlePrompt(category, badge, recentTitles);
 
     const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: AI_CONFIG.AI_MODEL,
         temperature: 0.85,
         max_tokens: 2500,
         response_format: { type: "json_object" },

@@ -11,6 +11,8 @@ import { createClient } from "@supabase/supabase-js";
 import { getClientIP } from "@/lib/rate-limit";
 import { ADMIN_EMAILS } from "@/config/constants";
 
+export const dynamic = "force-dynamic";
+
 function getSupabaseAdmin() {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -52,7 +54,7 @@ export async function GET(request: NextRequest) {
     const error = searchParams.get("error");
 
     const siteUrl =
-        process.env.NEXT_PUBLIC_SITE_URL || "https://memento-ani.vercel.app";
+        process.env.NEXT_PUBLIC_SITE_URL || "https://mementoani.com";
     const savedState = request.cookies.get("naver_oauth_state")?.value;
 
     // CSRF 검증
