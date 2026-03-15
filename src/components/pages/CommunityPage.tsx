@@ -24,7 +24,6 @@ import { API } from "@/config/apiEndpoints";
 import type { Post } from "@/components/features/community/communityTypes";
 import {
     SUBCATEGORIES,
-    MOCK_POSTS,
     getCategoryColor,
 } from "@/components/features/community/communityTypes";
 import { safeGetItem, safeSetItem, safeSessionGetItem, safeSessionRemoveItem } from "@/lib/safe-storage";
@@ -259,28 +258,8 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive }: Community
             }
         } catch {
             if (!loadMore) {
-                toast.error("게시글을 불러오지 못했습니다. 샘플 데이터를 표시합니다.");
-                const mockPosts = MOCK_POSTS[currentSubcategory] || [];
-                let filteredPosts = mockPosts;
-
-                if (currentSubcategory === "free" && selectedTag !== "all") {
-                    filteredPosts = mockPosts.filter(p => p.tag === selectedTag);
-                }
-
-                setPosts(filteredPosts.map((p) => ({
-                    id: String(p.id),
-                    userId: "",
-                    subcategory: currentSubcategory,
-                    tag: p.tag,
-                    badge: p.badge,
-                    title: p.title,
-                    content: p.content,
-                    authorName: p.author,
-                    likes: p.likes,
-                    views: p.views,
-                    comments: p.comments,
-                    createdAt: new Date().toISOString(),
-                })));
+                toast.error("게시글을 불러오지 못했습니다.");
+                setPosts([]);
                 setHasMore(false);
             }
         } finally {

@@ -18,7 +18,6 @@ import {
     Filter,
     Grid3X3,
     List,
-    Info,
     AlertCircle,
     RefreshCw,
     Dog,
@@ -44,7 +43,6 @@ function AdoptionPage({ setSelectedTab }: AdoptionPageProps) {
         totalCount,
         isLoading,
         error,
-        isMock,
         kindFilter,
         regionFilter,
         stateFilter,
@@ -100,8 +98,7 @@ function AdoptionPage({ setSelectedTab }: AdoptionPageProps) {
                                 입양 정보
                             </h1>
                             <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
-                                {isMock ? "샘플 데이터" : "공공데이터포털 연동"} ·{" "}
-                                {totalCount}건
+                                공공데이터포털 연동 · {totalCount}건
                             </p>
                         </div>
                     </div>
@@ -135,17 +132,6 @@ function AdoptionPage({ setSelectedTab }: AdoptionPageProps) {
                         </Button>
                     </div>
                 </div>
-
-                {/* 목업 안내 배너 */}
-                {isMock && !isLoading && (
-                    <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-50 dark:bg-gray-700/20 border border-amber-200 dark:border-gray-700/50 rounded-xl text-sm text-amber-700 dark:text-amber-300">
-                        <Info className="w-4 h-4 flex-shrink-0" />
-                        <span>
-                            공공데이터 API 키 미설정 - 샘플 데이터를 표시합니다.
-                            실제 데이터 연동은 .env.local에 OPENDATA_API_KEY를 추가하세요.
-                        </span>
-                    </div>
-                )}
 
                 {/* 검색 + 필터 */}
                 <AdoptionFilters

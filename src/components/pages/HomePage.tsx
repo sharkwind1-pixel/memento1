@@ -3,6 +3,7 @@
  * - 좋아요 버튼 실제 토글
  * - 카드 클릭 시 인스타그램 스타일 모달
  * - 간편모드: 큰 카드 런처로 대체
+ * - 모든 섹션 데이터는 DB에서 가져옴 (목업 없음)
  */
 
 "use client";
@@ -16,8 +17,6 @@ import {
     HeroSection,
     CommunitySection,
     ShowcaseSection,
-    AdoptionSection,
-    CareGuideSection,
     MemorialSection,
 } from "@/components/features/home";
 import PostModal from "@/components/features/home/PostModal";
@@ -35,7 +34,6 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
     const scroll = useSmoothAutoScroll() as unknown as SmoothAutoScrollReturn;
 
     const {
-        adoptionImages,
         lightboxItem,
         setLightboxItem,
         selectedPost,
@@ -46,6 +44,7 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
         toggleLike,
         addComment,
         communityPosts,
+        isLoadingCommunity,
         showcasePosts,
         isLoadingMemorial,
         displayMemorialData,
@@ -110,17 +109,21 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
             <div className="relative z-10 space-y-16 pb-24">
                 <HeroSection setSelectedTab={setSelectedTab} user={user} />
 
-                <CommunitySection
-                    communityPosts={communityPosts}
-                    likedPosts={likedPosts}
-                    animatingHearts={animatingHearts}
-                    postComments={postComments}
-                    onToggleLike={toggleLike}
-                    onSelectPost={setSelectedPost}
-                    scrollRef={scroll.communityScrollRef}
-                    setSelectedTab={setSelectedTab}
-                />
+                {/* 커뮤니티 인기글: DB에서 가져온 데이터가 있을 때만 표시 */}
+                {!isLoadingCommunity && communityPosts.length > 0 && (
+                    <CommunitySection
+                        communityPosts={communityPosts}
+                        likedPosts={likedPosts}
+                        animatingHearts={animatingHearts}
+                        postComments={postComments}
+                        onToggleLike={toggleLike}
+                        onSelectPost={setSelectedPost}
+                        scrollRef={scroll.communityScrollRef}
+                        setSelectedTab={setSelectedTab}
+                    />
+                )}
 
+                {/* 쇼케이스: DB에서 가져온 영상 게시글이 있을 때만 표시 */}
                 {showcasePosts.length > 0 && (
                     <ShowcaseSection
                         showcasePosts={showcasePosts}
@@ -129,25 +132,16 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
                     />
                 )}
 
-                <AdoptionSection
-                    adoptionImages={adoptionImages}
-                    onLightboxOpen={setLightboxItem}
-                    scrollRef={scroll.adoptionScrollRef}
-                    setSelectedTab={setSelectedTab}
-                />
-
-                <CareGuideSection
-                    scrollRef={scroll.petcareScrollRef}
-                    setSelectedTab={setSelectedTab}
-                />
-
-                <MemorialSection
-                    isLoadingMemorial={isLoadingMemorial}
-                    displayMemorialData={displayMemorialData}
-                    onLightboxOpen={setLightboxItem}
-                    scrollRef={scroll.memorialScrollRef}
-                    setSelectedTab={setSelectedTab}
-                />
+                {/* 추모 섹션: DB에서 가져온 공개 추모글이 있을 때만 표시 */}
+                {(isLoadingMemorial || displayMemorialData.length > 0) && (
+                    <MemorialSection
+                        isLoadingMemorial={isLoadingMemorial}
+                        displayMemorialData={displayMemorialData}
+                        onLightboxOpen={setLightboxItem}
+                        scrollRef={scroll.memorialScrollRef}
+                        setSelectedTab={setSelectedTab}
+                    />
+                )}
             </div>
         </div>
     );

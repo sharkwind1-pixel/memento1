@@ -2,7 +2,7 @@
  * ShowcaseGalleryView.tsx
  * "함께 보기" 전체화면 갤러리 뷰
  * 커뮤니티 페이지에서 PostDetailView와 동일한 패턴으로 동작
- * DB 게시글이 없으면 목업 데이터로 폴백
+ * DB 게시글이 없으면 빈 상태 표시
  * AI 생성 영상을 비디오 플레이어로 재생
  * 카드 클릭 시 PostDetailView로 이동하여 좋아요/댓글 상호작용 가능
  */
@@ -31,7 +31,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { API } from "@/config/apiEndpoints";
-import { MOCK_SHOWCASE_POSTS, formatTime } from "./communityTypes";
+import { formatTime } from "./communityTypes";
 import PostDetailView from "./PostDetailView";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/auth-fetch";
@@ -80,13 +80,13 @@ export default function ShowcaseGalleryView({ onBack, onWriteClick }: ShowcaseGa
                     });
                     setPosts(sorted);
                 } else {
-                    setPosts(MOCK_SHOWCASE_POSTS);
+                    setPosts([]);
                 }
             } else {
-                setPosts(MOCK_SHOWCASE_POSTS);
+                setPosts([]);
             }
         } catch {
-            setPosts(MOCK_SHOWCASE_POSTS);
+            setPosts([]);
         } finally {
             setIsLoading(false);
         }

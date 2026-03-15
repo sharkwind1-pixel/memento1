@@ -2,24 +2,22 @@
  * useHomePage.ts
  * 홈페이지 데이터 페칭, 좋아요/댓글 인터랙션 로직
  *
- * HomePage에서 추출한 커스텀 훅
+ * 모든 데이터는 DB에서 가져옴 (목업 폴백 없음)
  */
 
 "use client";
 
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { bestPosts, memorialCards } from "@/data/posts";
-import { usePetImages } from "@/hooks/usePetImages";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { getPublicMemorialPosts, MemorialPost } from "@/lib/memorialService";
 import { API } from "@/config/apiEndpoints";
-import { MOCK_SHOWCASE_POSTS } from "@/components/features/community/communityTypes";
-import { safeStringSrc } from "./homeUtils";
 import type { LightboxItem, CommunityPost, Comment, ShowcasePost } from "./types";
 
 export function useHomePage() {
-    const { petImages, adoptionImages } = usePetImages();
-
     const [lightboxItem, setLightboxItem] = useState<LightboxItem | null>(null);
+
+    // 커뮤니티 인기글 상태 (DB에서 가져옴)
+    const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>([]);
+    const [isLoadingCommunity, setIsLoadingCommunity] = useState(true);
 
     // 자랑하기 게시글 상태
     const [showcasePosts, setShowcasePosts] = useState<ShowcasePost[]>([]);
@@ -38,25 +36,6 @@ export function useHomePage() {
 
     // 선택된 포스트 (모달용)
     const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
-
-    // 커뮤니티 포스트 데이터
-    const communityPosts: CommunityPost[] = useMemo(() => {
-        return bestPosts.community.map((post, idx) => ({
-            id: idx + 1,
-            title: post.title,
-            content:
-                post.badge === "인기"
-                    ? "정말 많은 분들이 공감해주신 이야기예요. 반려동물과 함께하는 일상의 소소한 행복들을 나누고 싶었어요. 여러분도 비슷한 경험 있으시죠? 댓글로 여러분의 이야기도 들려주세요!"
-                    : post.badge === "꿀팁"
-                      ? "오랜 경험을 통해 알게 된 꿀팁을 공유합니다. 처음에는 저도 많이 헤맸는데, 이 방법을 알고 나서 정말 편해졌어요. 도움이 되셨으면 좋겠습니다!"
-                      : "직접 경험해보고 작성하는 솔직한 후기입니다. 장단점을 모두 적었으니 참고해주세요. 궁금한 점 있으시면 댓글 남겨주세요!",
-            author: post.author,
-            badge: post.badge,
-            likes: post.likes,
-            comments: post.comments,
-            time: "방금 전",
-        }));
-    }, []);
 
     const heartTimersRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
     const toggleLike = (postId: number) => {
@@ -89,6 +68,39 @@ export function useHomePage() {
         }));
     };
 
+    // 커뮤니티 인기글 가져오기 (DB)
+    const fetchCommunityPosts = useCallback(async () => {
+        setIsLoadingCommunity(true);
+        try {
+            const params = new URLSearchParams({
+                board: "free",
+                sort: "popular",
+                limit: "10",
+            });
+            const res = await fetch(`${API.POSTS}?${params}`);
+            if (res.ok) {
+                const data = await res.json();
+                const posts = (data.posts || []).map((p: Record<string, unknown>, idx: number) => ({
+                    id: idx + 1,
+                    title: p.title as string,
+                    content: (p.content as string) || "",
+                    author: (p.authorName as string) || "익명",
+                    badge: (p.badge as string) || "",
+                    likes: (p.likes as number) || 0,
+                    comments: (p.comments as number) || 0,
+                    time: formatRelativeTime(p.createdAt as string),
+                }));
+                setCommunityPosts(posts);
+            } else {
+                setCommunityPosts([]);
+            }
+        } catch {
+            setCommunityPosts([]);
+        } finally {
+            setIsLoadingCommunity(false);
+        }
+    }, []);
+
     // AI 영상 게시글 가져오기 (함께보기 = AI 영상 전용)
     const fetchShowcasePosts = useCallback(async () => {
         setIsLoadingShowcase(true);
@@ -106,14 +118,12 @@ export function useHomePage() {
                 const videoOnly = (data.posts || []).filter(
                     (p: ShowcasePost) => !!p.videoUrl
                 );
-                // DB에 영상 게시글 있으면 사용, 없으면 목업 폴백
-                setShowcasePosts(videoOnly.length > 0 ? videoOnly.slice(0, 8) : MOCK_SHOWCASE_POSTS);
+                setShowcasePosts(videoOnly.length > 0 ? videoOnly.slice(0, 8) : []);
             } else {
-                setShowcasePosts(MOCK_SHOWCASE_POSTS);
+                setShowcasePosts([]);
             }
         } catch {
-            // 실패 시 목업 데이터 사용 (발표/데모용)
-            setShowcasePosts(MOCK_SHOWCASE_POSTS);
+            setShowcasePosts([]);
         } finally {
             setIsLoadingShowcase(false);
         }
@@ -133,81 +143,26 @@ export function useHomePage() {
     }, []);
 
     useEffect(() => {
+        fetchCommunityPosts();
         fetchShowcasePosts();
         fetchPublicMemorialPosts();
-    }, [fetchShowcasePosts, fetchPublicMemorialPosts]);
+    }, [fetchCommunityPosts, fetchShowcasePosts, fetchPublicMemorialPosts]);
 
-    // 입양 타일 아이템
-    const adoptionTileItems = useMemo<LightboxItem[]>(() => {
-        return bestPosts.adoption
-            .map((pet, index) => {
-                const src = safeStringSrc(
-                    (adoptionImages as unknown[] | undefined)?.[index],
-                );
-                if (!src) return null;
-                return {
-                    title: pet.title,
-                    subtitle: `${pet.location} · ${pet.age}`,
-                    meta: pet.badge,
-                    src,
-                };
-            })
-            .filter(Boolean) as LightboxItem[];
-    }, [adoptionImages]);
-
-    // 추모 타일 아이템
-    const memorialTileItems = useMemo<LightboxItem[]>(() => {
-        return memorialCards
-            .map((m) => {
-                const src = safeStringSrc(
-                    (petImages as Record<string, unknown>)[m.name],
-                );
-                if (!src) return null;
-                return {
-                    title: m.name,
-                    subtitle: `${m.pet} · ${m.years}`,
-                    meta: m.message,
-                    src,
-                };
-            })
-            .filter(Boolean) as LightboxItem[];
-    }, [petImages]);
-
-    // 추모 섹션 표시 데이터
-    const displayMemorialData = useMemo(() => {
-        if (publicMemorialPosts.length > 0) {
-            return publicMemorialPosts.map((post) => ({
-                id: post.id,
-                name: post.petName,
-                pet: post.petType,
-                years: post.petYears || "",
-                message: post.title,
-                content: post.content,
-                image: post.petImage,
-                likesCount: post.likesCount,
-                commentsCount: post.commentsCount,
-                isFromDB: true,
-            }));
-        }
-        return memorialCards.map((m, idx) => ({
-            id: `mock-${idx}`,
-            name: m.name,
-            pet: m.pet,
-            years: m.years,
-            message: m.message,
-            content: "",
-            image: (petImages as Record<string, unknown>)[m.name] as string | undefined,
-            likesCount: (idx * 13 + 24) % 50 + 15,
-            commentsCount: (idx * 7 + 5) % 20 + 3,
-            isFromDB: false,
-        }));
-    }, [publicMemorialPosts, petImages]);
+    // 추모 섹션 표시 데이터 (DB만 사용, 없으면 빈 배열)
+    const displayMemorialData = publicMemorialPosts.map((post) => ({
+        id: post.id,
+        name: post.petName,
+        pet: post.petType,
+        years: post.petYears || "",
+        message: post.title,
+        content: post.content,
+        image: post.petImage,
+        likesCount: post.likesCount,
+        commentsCount: post.commentsCount,
+        isFromDB: true,
+    }));
 
     return {
-        // 이미지
-        petImages,
-        adoptionImages,
-
         // 라이트박스
         lightboxItem,
         setLightboxItem,
@@ -225,6 +180,7 @@ export function useHomePage() {
 
         // 커뮤니티
         communityPosts,
+        isLoadingCommunity,
 
         // 자랑하기
         showcasePosts,
@@ -233,9 +189,19 @@ export function useHomePage() {
         // 추모
         isLoadingMemorial,
         displayMemorialData,
-
-        // 타일
-        adoptionTileItems,
-        memorialTileItems,
     };
+}
+
+/** 상대 시간 포맷 */
+function formatRelativeTime(dateStr: string): string {
+    if (!dateStr) return "";
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "방금 전";
+    if (mins < 60) return `${mins}분 전`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}시간 전`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}일 전`;
+    return new Date(dateStr).toLocaleDateString("ko-KR", { month: "short", day: "numeric" });
 }
