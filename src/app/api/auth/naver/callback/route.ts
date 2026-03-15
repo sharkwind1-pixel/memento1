@@ -168,32 +168,45 @@ export async function GET(request: NextRequest) {
 
         if (!isNaverAdmin && clientIP !== "unknown") {
             // 같은 IP를 사용하는 다른 비관리자 계정이 있는지 확인
-            const { data: ipConflict } = await supabaseAdmin
-                .from("profiles")
-                .select("id, email, is_admin")
-                .eq("last_ip", clientIP)
-                .neq("id", userId);
+            // last_ip 컬럼이 DB에 없을 수 있으므로 에러 시 건너뜀
+            try {
 
-            const hasNonAdminConflict = ipConflict?.some(p => {
-                if (p.is_admin === true) return false;
-                if (p.email && ADMIN_EMAILS.includes(p.email)) return false;
-                return true;
-            });
+                const { data: ipConflict } = await (supabaseAdmin as any)
+                    .from("profiles")
+                    .select("id, email, is_admin")
+                    .eq("last_ip", clientIP)
+                    .neq("id", userId);
 
-            if (hasNonAdminConflict) {
-                console.warn(`[Naver Auth] IP conflict: ip=${clientIP}, userId=${userId}`);
-                return NextResponse.redirect(
-                    `${siteUrl}/?error=${encodeURIComponent("이 네트워크에서 이미 다른 계정이 사용 중입니다.")}`,
-                );
+                if (ipConflict) {
+                    const hasNonAdminConflict = (ipConflict as Array<{ id: string; email: string; is_admin: boolean }>).some(p => {
+                        if (p.is_admin === true) return false;
+                        if (p.email && ADMIN_EMAILS.includes(p.email)) return false;
+                        return true;
+                    });
+
+                    if (hasNonAdminConflict) {
+                        console.warn(`[Naver Auth] IP conflict: ip=${clientIP}, userId=${userId}`);
+                        return NextResponse.redirect(
+                            `${siteUrl}/?error=${encodeURIComponent("이 네트워크에서 이미 다른 계정이 사용 중입니다.")}`,
+                        );
+                    }
+                }
+            } catch {
+                // last_ip 컬럼이 없을 경우 무시
             }
         }
 
-        // IP 기록 갱신
+        // IP 기록 갱신 (last_ip 컬럼이 없으면 실패하지만 무시)
         if (clientIP !== "unknown") {
-            await supabaseAdmin
-                .from("profiles")
-                .update({ last_ip: clientIP })
-                .eq("id", userId);
+            try {
+
+                await (supabaseAdmin as any)
+                    .from("profiles")
+                    .update({ last_ip: clientIP })
+                    .eq("id", userId);
+            } catch {
+                // last_ip 컬럼 없을 경우 무시
+            }
         }
 
         // 4. 매직링크 생성하여 세션 발급

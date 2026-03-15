@@ -540,11 +540,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         // 2. is_banned + 온보딩 상태 체크 (프로필에서 1회 조회)
                         const { data: profileCheck } = await supabase
                             .from("profiles")
-                            .select("is_banned, ban_reason, onboarding_completed_at")
+                            .select("is_banned, onboarding_completed_at")
                             .eq("id", session.user.id)
                             .single();
                         if (profileCheck?.is_banned) {
-                            toast.error(profileCheck.ban_reason || "이용이 제한된 계정입니다.");
+                            toast.error("이용이 제한된 계정입니다.");
                             await supabase.auth.signOut();
                             return;
                         }
@@ -656,11 +656,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         // is_banned 체크
                         const { data: profileCheck } = await supabase
                             .from("profiles")
-                            .select("is_banned, ban_reason")
+                            .select("is_banned")
                             .eq("id", session.user.id)
                             .single();
                         if (profileCheck?.is_banned) {
-                            toast.error(profileCheck.ban_reason || "이용이 제한된 계정입니다.");
+                            toast.error("이용이 제한된 계정입니다.");
                             await supabase.auth.signOut();
                             return;
                         }
