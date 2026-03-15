@@ -343,7 +343,7 @@ export async function checkDailyUsageDB(
     identifier: string,
     isAuthenticated: boolean
 ): Promise<{ allowed: boolean; remaining: number; isWarning: boolean }> {
-    const limit = isAuthenticated
+    const baseLimit = isAuthenticated
         ? RATE_LIMITS.aiChat.dailyLimitAuth
         : RATE_LIMITS.aiChat.dailyLimit;
 
@@ -360,6 +360,28 @@ export async function checkDailyUsageDB(
         const kstDate = new Date(now.getTime() + kstOffset)
             .toISOString()
             .split("T")[0];
+
+        // 오늘 구매한 채팅 보너스 조회
+        let chatBonus = 0;
+        if (isAuthenticated) {
+            try {
+                const { data: bonusTxns } = await supabase
+                    .from("point_transactions")
+                    .select("metadata")
+                    .eq("user_id", identifier)
+                    .eq("action_type", "shop_purchase")
+                    .gte("created_at", kstDate + "T00:00:00+09:00")
+                    .lte("created_at", kstDate + "T23:59:59+09:00");
+
+                for (const tx of (bonusTxns || [])) {
+                    const meta = tx.metadata as Record<string, unknown> | null;
+                    if (meta?.itemId === "extra_chat_5") chatBonus += 5;
+                    if (meta?.itemId === "extra_chat_10") chatBonus += 10;
+                }
+            } catch { /* 보너스 조회 실패 시 기본 제한 적용 */ }
+        }
+
+        const limit = baseLimit + chatBonus;
 
         // DB에서 오늘 사용량 조회
         const { data: existing } = await supabase

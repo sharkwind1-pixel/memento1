@@ -23,7 +23,7 @@ import {
     X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { MAX_MESSAGE_LENGTH } from "@/components/features/chat";
+import { MAX_MESSAGE_LENGTH, MAX_MESSAGE_LENGTH_PREMIUM } from "@/components/features/chat";
 import type { Pet } from "@/types";
 import type { LucideIcon } from "lucide-react";
 
@@ -77,6 +77,7 @@ export default function ChatInputArea({
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [showPremiumBanner, setShowPremiumBanner] = useState(false);
     const hasShownZeroModal = useRef(false);
+    const msgLimit = isPremium ? MAX_MESSAGE_LENGTH_PREMIUM : MAX_MESSAGE_LENGTH;
 
     // remainingChats <= 3일 때 프리미엄 배너 표시
     useEffect(() => {
@@ -208,7 +209,7 @@ export default function ChatInputArea({
                                 ref={textareaRef}
                                 value={inputValue}
                                 onChange={(e) => {
-                                    setInputValue(e.target.value.slice(0, MAX_MESSAGE_LENGTH));
+                                    setInputValue(e.target.value.slice(0, msgLimit));
                                     handleTextareaInput();
                                 }}
                                 onKeyDown={handleKeyDown}
@@ -238,15 +239,15 @@ export default function ChatInputArea({
                         {inputValue.length > 0 && (
                             <div className="flex justify-end mt-1 mr-14">
                                 <span className={`text-xs transition-colors ${
-                                    inputValue.length >= MAX_MESSAGE_LENGTH
+                                    inputValue.length >= msgLimit
                                         ? "text-red-500 font-medium"
-                                        : inputValue.length >= MAX_MESSAGE_LENGTH - 30
+                                        : inputValue.length >= msgLimit - 30
                                         ? "text-amber-500"
                                         : isMemorialMode
                                             ? "text-amber-400"
                                             : "text-sky-400"
                                 }`}>
-                                    {inputValue.length}/{MAX_MESSAGE_LENGTH}
+                                    {inputValue.length}/{msgLimit}
                                 </span>
                             </div>
                         )}
