@@ -80,12 +80,9 @@ export default function AdminUsersTab({
         const newBanStatus = !targetUser.is_banned;
         const action = newBanStatus ? "차단" : "차단 해제";
 
-        let banReason: string | null = null;
-
         if (newBanStatus) {
             const reason = prompt(`${targetUser.email}을(를) 차단합니다.\n\n차단 사유를 입력하세요:`);
             if (reason === null) return;
-            banReason = reason || "관리자 차단";
         } else {
             if (!confirm(`${targetUser.email}의 차단을 해제하시겠습니까?`)) return;
         }
@@ -97,8 +94,6 @@ export default function AdminUsersTab({
                     targetUserId: targetUser.id,
                     updates: {
                         is_banned: newBanStatus,
-                        ban_reason: newBanStatus ? banReason : null,
-                        banned_at: newBanStatus ? new Date().toISOString() : null,
                     },
                 }),
             });

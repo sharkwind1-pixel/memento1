@@ -15,13 +15,11 @@ import { ADMIN_EMAILS } from "@/config/constants";
 
 export const dynamic = "force-dynamic";
 
-/** 허용되는 업데이트 필드 */
+/** 허용되는 업데이트 필드 (profiles 테이블에 실제 존재하는 컬럼만) */
 type AllowedField =
     | "is_admin"
     | "is_premium"
     | "is_banned"
-    | "ban_reason"
-    | "banned_at"
     | "points"
     | "total_points_earned"
     | "premium_started_at"
@@ -36,8 +34,6 @@ const ALLOWED_FIELDS: AllowedField[] = [
     "is_admin",
     "is_premium",
     "is_banned",
-    "ban_reason",
-    "banned_at",
     "points",
     "total_points_earned",
     "premium_started_at",
