@@ -142,9 +142,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     .maybeSingle(),
             ]);
 
-            const { data, error } = profileResult;
+            let { data, error } = profileResult;
             const minimiList = minimiListResult.data || [];
             const { data: firstPet, error: firstPetError } = firstPetResult;
+
+            // 프로필 없으면 자동 생성 (카카오 등 소셜 로그인 시 트리거 실패 대비)
+            if (error && error.code === "PGRST116") {
+                const { data: newProfile, error: insertErr } = await supabase
+                    .from("profiles")
+                    .upsert({
+                        id: currentUser.id,
+                        email: currentUser.email || null,
+                        points: 0,
+                        total_points_earned: 0,
+                        is_premium: false,
+                        is_admin: false,
+                        is_banned: false,
+                    }, { onConflict: "id" })
+                    .select("is_admin, is_premium, premium_expires_at, points, onboarding_data, equipped_minimi_id, equipped_accessories, minimi_pixel_data, minimi_accessories_data, is_simple_mode")
+                    .single();
+                if (!insertErr && newProfile) {
+                    data = newProfile;
+                    error = null;
+                }
+            }
 
             // 관리자 체크
             // 1) auth.users.email 기반
@@ -539,11 +560,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         }
 
                         // 2. is_banned + 온보딩 상태 체크 (프로필에서 1회 조회)
-                        const { data: profileCheck } = await supabase
+                        let { data: profileCheck } = await supabase
                             .from("profiles")
                             .select("is_banned, onboarding_completed_at")
                             .eq("id", session.user.id)
                             .single();
+
+                        // 프로필이 없으면 자동 생성 (트리거 실패 대비)
+                        if (!profileCheck) {
+                            const { data: created } = await supabase
+                                .from("profiles")
+                                .upsert({
+                                    id: session.user.id,
+                                    email: session.user.email || null,
+                                    points: 0,
+                                    total_points_earned: 0,
+                                    is_premium: false,
+                                    is_admin: false,
+                                    is_banned: false,
+                                }, { onConflict: "id" })
+                                .select("is_banned, onboarding_completed_at")
+                                .single();
+                            if (created) profileCheck = created;
+                        }
+
                         if (profileCheck?.is_banned) {
                             toast.error("이용이 제한된 계정입니다.");
                             await supabase.auth.signOut();
@@ -655,11 +695,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                             }
                         }
                         // is_banned 체크
-                        const { data: profileCheck } = await supabase
+                        let { data: profileCheck } = await supabase
                             .from("profiles")
                             .select("is_banned")
                             .eq("id", session.user.id)
                             .single();
+
+                        // 프로필이 없으면 자동 생성 (트리거 실패 대비)
+                        if (!profileCheck) {
+                            const { data: created } = await supabase
+                                .from("profiles")
+                                .upsert({
+                                    id: session.user.id,
+                                    email: session.user.email || null,
+                                    points: 0,
+                                    total_points_earned: 0,
+                                    is_premium: false,
+                                    is_admin: false,
+                                    is_banned: false,
+                                }, { onConflict: "id" })
+                                .select("is_banned")
+                                .single();
+                            if (created) profileCheck = created;
+                        }
+
                         if (profileCheck?.is_banned) {
                             toast.error("이용이 제한된 계정입니다.");
                             await supabase.auth.signOut();

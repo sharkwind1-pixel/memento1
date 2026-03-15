@@ -43,6 +43,31 @@ async function cleanupBlockedAuthUser(): Promise<void> {
     }
 }
 
+/**
+ * 프로필이 없으면 자동 생성 (트리거 실패 대비)
+ * 카카오 등 소셜 로그인 시 handle_new_user 트리거가 실패할 수 있음
+ */
+async function ensureProfileExists(userId: string, email?: string | null): Promise<void> {
+    try {
+        const { data } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("id", userId)
+            .single();
+        if (!data) {
+            await supabase.from("profiles").upsert({
+                id: userId,
+                email: email || null,
+                points: 0,
+                total_points_earned: 0,
+                is_premium: false,
+                is_admin: false,
+                is_banned: false,
+            }, { onConflict: "id" });
+        }
+    } catch { /* 프로필 확인 실패 시 AuthContext에서 재시도 */ }
+}
+
 async function checkWithdrawnAndBlock(email: string | undefined): Promise<string | null> {
     if (!email) return null;
 
@@ -140,6 +165,7 @@ export default function AuthCallbackPage() {
                 // 탈퇴/차단 계정 체크
                 const { data: { session } } = await supabase.auth.getSession();
                 if (session?.user) {
+                    await ensureProfileExists(session.user.id, session.user.email);
                     const blockMsg = await checkWithdrawnAndBlock(session.user.email);
                     if (blockMsg) {
                         setError(blockMsg);
@@ -168,10 +194,11 @@ export default function AuthCallbackPage() {
                     // 에러가 나도 메인으로 이동 (onAuthStateChange가 처리할 수 있음)
                 }
 
-                // 탈퇴/차단 계정 체크
-                const { data: { session } } = await supabase.auth.getSession();
-                if (session?.user) {
-                    const blockMsg = await checkWithdrawnAndBlock(session.user.email);
+                // 탈퇴/차단 계정 체크 + 프로필 보장
+                const { data: { session: codeSession } } = await supabase.auth.getSession();
+                if (codeSession?.user) {
+                    await ensureProfileExists(codeSession.user.id, codeSession.user.email);
+                    const blockMsg = await checkWithdrawnAndBlock(codeSession.user.email);
                     if (blockMsg) {
                         setError(blockMsg);
                         setTimeout(() => router.replace("/"), 3000);
