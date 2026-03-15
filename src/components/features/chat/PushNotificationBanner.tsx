@@ -20,6 +20,7 @@ import {
 } from "@/lib/push-notifications";
 import { API } from "@/config/apiEndpoints";
 import { supabase } from "@/lib/supabase";
+import { safeGetItem, safeSetItem, safeRemoveItem } from "@/lib/safe-storage";
 
 interface PushNotificationBannerProps {
     petName: string;
@@ -61,7 +62,7 @@ export default function PushNotificationBanner({
         const timer = setTimeout(async () => {
             // 푸시 미지원 브라우저 → 안내 배너만 표시
             if (!isPushSupported()) {
-                const dismissed = localStorage.getItem(DISMISS_KEY);
+                const dismissed = safeGetItem(DISMISS_KEY);
                 if (dismissed) {
                     const dismissedAt = new Date(dismissed).getTime();
                     if (Date.now() - dismissedAt < DISMISS_DAYS * 24 * 60 * 60 * 1000) {
@@ -79,7 +80,7 @@ export default function PushNotificationBanner({
             const permission = getNotificationPermission();
             if (permission === "denied") {
                 // 거부 상태에서도 설정 변경 안내 배너 표시
-                const dismissed = localStorage.getItem(DISMISS_KEY);
+                const dismissed = safeGetItem(DISMISS_KEY);
                 if (dismissed) {
                     const dismissedAt = new Date(dismissed).getTime();
                     if (Date.now() - dismissedAt < DISMISS_DAYS * 24 * 60 * 60 * 1000) {
@@ -119,7 +120,7 @@ export default function PushNotificationBanner({
                 setBannerState("subscribed");
             } else {
                 // 미구독 → dismiss 체크
-                const dismissed = localStorage.getItem(DISMISS_KEY);
+                const dismissed = safeGetItem(DISMISS_KEY);
                 if (dismissed) {
                     const dismissedAt = new Date(dismissed).getTime();
                     if (Date.now() - dismissedAt < DISMISS_DAYS * 24 * 60 * 60 * 1000) {
@@ -270,7 +271,7 @@ export default function PushNotificationBanner({
             }
 
             // dismiss 기록 클리어 (해제 후 다시 구독 유도 배너 보이도록)
-            localStorage.removeItem(DISMISS_KEY);
+            safeRemoveItem(DISMISS_KEY);
             setBannerState("unsubscribed");
             setEditingTime(false);
             toast.success("알림이 해제되었습니다");
@@ -282,7 +283,7 @@ export default function PushNotificationBanner({
     }, []);
 
     const handleDismiss = useCallback(() => {
-        localStorage.setItem(DISMISS_KEY, new Date().toISOString());
+        safeSetItem(DISMISS_KEY, new Date().toISOString());
         setAnimateIn(false);
         setTimeout(() => setVisible(false), 300);
     }, []);

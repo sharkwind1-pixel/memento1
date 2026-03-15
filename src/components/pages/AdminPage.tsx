@@ -90,7 +90,7 @@ function AdminPage() {
     // 현재 활성 탭 — localStorage로 새로고침 시 복원
     const [activeTab, setActiveTab] = useState<AdminTab>(() => {
         if (typeof window !== "undefined") {
-            const saved = localStorage.getItem("memento-admin-tab");
+            const saved = safeGetItem("memento-admin-tab");
             if (saved && ["dashboard", "users", "posts", "inquiries", "reports", "withdrawals", "magazine"].includes(saved)) {
                 return saved as AdminTab;
             }
@@ -99,7 +99,7 @@ function AdminPage() {
     });
 
     // 탭 변경 시 localStorage에 저장
-    useEffect(() => { localStorage.setItem("memento-admin-tab", activeTab); }, [activeTab]);
+    useEffect(() => { safeSetItem("memento-admin-tab", activeTab); }, [activeTab]);
 
     // 탈퇴 처리 모달 상태
     const [withdrawalModalUser, setWithdrawalModalUser] = useState<UserRow | null>(null);
@@ -351,6 +351,7 @@ function AdminPage() {
 
 import { PostRow } from "@/components/admin";
 import { RefreshCw } from "lucide-react";
+import { safeGetItem, safeSetItem } from "@/lib/safe-storage";
 
 interface PostsSimpleViewProps {
     posts: PostRow[];

@@ -22,6 +22,7 @@ import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
 import { toast } from "sonner";
 import { CHARACTER_CATALOG } from "@/data/minimiPixels";
+import { safeGetItem, safeSetItem, safeRemoveItem, safeSessionGetItem, safeSessionSetItem } from "@/lib/safe-storage";
 
 // 삭제 계정 체크 결과 타입 (기존 호환성)
 interface DeletedAccountCheck {
@@ -104,7 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     const [isSimpleMode, setIsSimpleModeState] = useState(() => {
         if (typeof window !== "undefined") {
-            return localStorage.getItem("memento-simple-mode") === "true";
+            return safeGetItem("memento-simple-mode") === "true";
         }
         return false;
     });
@@ -174,14 +175,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // DB update가 실패할 수 있으므로 (마이그레이션 미실행, 네트워크 등)
             // localStorage를 source of truth로 사용하고, DB는 백업용
             if (!error && data) {
-                const localValue = localStorage.getItem("memento-simple-mode");
+                const localValue = safeGetItem("memento-simple-mode");
                 // localStorage에 명시적인 값이 있으면 그걸 우선 (유저가 직접 토글한 결과)
                 // localStorage에 값이 없으면 DB 값 사용 (다른 기기에서 설정한 경우)
                 const resolvedValue = localValue !== null
                     ? localValue === "true"
                     : data.is_simple_mode === true;
                 setIsSimpleModeState(resolvedValue);
-                localStorage.setItem("memento-simple-mode", String(resolvedValue));
+                safeSetItem("memento-simple-mode", String(resolvedValue));
                 if (resolvedValue) {
                     document.documentElement.classList.add("simple-mode");
                 } else {
@@ -383,7 +384,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const toggleSimpleMode = useCallback(async () => {
         const newValue = !isSimpleMode;
         setIsSimpleModeState(newValue);
-        localStorage.setItem("memento-simple-mode", String(newValue));
+        safeSetItem("memento-simple-mode", String(newValue));
         // html 클래스 동기화 (전체 폰트 크기 제어)
         if (newValue) {
             document.documentElement.classList.add("simple-mode");
@@ -407,7 +408,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const checkDailyLogin = useCallback(async () => {
         try {
             const today = new Date().toISOString().split("T")[0];
-            const lastCheck = localStorage.getItem("lastDailyCheck");
+            const lastCheck = safeGetItem("lastDailyCheck");
             if (lastCheck === today) return;
 
             const response = await authFetch(API.POINTS_DAILY_CHECK, {
@@ -417,7 +418,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (!response.ok) return;
 
             const data = await response.json();
-            localStorage.setItem("lastDailyCheck", today);
+            safeSetItem("lastDailyCheck", today);
 
             if (data.success && data.earned > 0) {
                 await refreshPoints();
@@ -558,7 +559,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         const resetKey = `memento-rejoin-reset-${session.user.id}`;
                         let alreadyReset = false;
                         try {
-                            alreadyReset = typeof window !== 'undefined' && !!sessionStorage.getItem(resetKey);
+                            alreadyReset = typeof window !== 'undefined' && !!safeSessionGetItem(resetKey);
                         } catch { /* iOS Safari Private Mode: sessionStorage 접근 불가 */ }
 
                         if (hasRecord && !alreadyReset && !profileCheck?.onboarding_completed_at) {
@@ -577,14 +578,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                             // 이 세션에서는 리셋 완료 — 새로고침/토큰 갱신 시 재실행 방지
                             try {
                                 if (typeof window !== 'undefined') {
-                                    sessionStorage.setItem(resetKey, 'true');
+                                    safeSessionSetItem(resetKey, 'true');
                                 }
                             } catch { /* iOS Safari Private Mode */ }
 
                             try {
-                                localStorage.removeItem("memento-ani-onboarding-complete");
-                                localStorage.removeItem("memento-ani-tutorial-complete");
-                                localStorage.removeItem("memento-ani-record-tutorial-complete");
+                                safeRemoveItem("memento-ani-onboarding-complete");
+                                safeRemoveItem("memento-ani-tutorial-complete");
+                                safeRemoveItem("memento-ani-record-tutorial-complete");
                             } catch { /* storage 접근 불가 시 무시 */ }
                         }
 
@@ -700,8 +701,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     imageUrl: null,
                 });
                 setIsSimpleModeState(false);
-                localStorage.removeItem("memento-simple-mode");
-                localStorage.removeItem("memento-current-tab");
+                safeRemoveItem("memento-simple-mode");
+                safeRemoveItem("memento-current-tab");
                 document.documentElement.classList.remove("simple-mode");
 
                 // 홈 화면으로 이동

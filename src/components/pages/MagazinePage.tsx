@@ -39,6 +39,7 @@ import { toast } from "sonner";
 import { API } from "@/config/apiEndpoints";
 import MagazineReader from "@/components/features/magazine/MagazineReader";
 import PopularArticleCarousel from "@/components/features/magazine/PopularArticleCarousel";
+import { safeGetItem, safeSetItem } from "@/lib/safe-storage";
 
 interface MagazinePageProps {
     setSelectedTab?: (tab: TabType) => void;
@@ -70,13 +71,13 @@ const TOPICS = [
 function MagazinePage({ setSelectedTab, isActive }: MagazinePageProps) {
     const [selectedStage, setSelectedStage] = useState<string>(() => {
         if (typeof window !== "undefined") {
-            return localStorage.getItem("memento-magazine-stage") || "all";
+            return safeGetItem("memento-magazine-stage") || "all";
         }
         return "all";
     });
     const [selectedTopic, setSelectedTopic] = useState<string>(() => {
         if (typeof window !== "undefined") {
-            return localStorage.getItem("memento-magazine-topic") || "all";
+            return safeGetItem("memento-magazine-topic") || "all";
         }
         return "all";
     });
@@ -99,8 +100,8 @@ function MagazinePage({ setSelectedTab, isActive }: MagazinePageProps) {
     }, [isActive]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // 필터 변경 시 localStorage에 저장
-    useEffect(() => { localStorage.setItem("memento-magazine-stage", selectedStage); }, [selectedStage]);
-    useEffect(() => { localStorage.setItem("memento-magazine-topic", selectedTopic); }, [selectedTopic]);
+    useEffect(() => { safeSetItem("memento-magazine-stage", selectedStage); }, [selectedStage]);
+    useEffect(() => { safeSetItem("memento-magazine-topic", selectedTopic); }, [selectedTopic]);
 
     // DB에서 기사 불러오기 (발행된 기사만)
     useEffect(() => {

@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import type { ShowcasePost } from "./types";
 import { TabType } from "@/types";
+import { safeSessionSetItem } from "@/lib/safe-storage";
 
 interface ShowcaseSectionProps {
     showcasePosts: ShowcasePost[];
@@ -44,7 +45,7 @@ export default function ShowcaseSection({
     ];
 
     const handleMoreClick = () => {
-        sessionStorage.setItem("memento-community-view", "showcase");
+        safeSessionSetItem("memento-community-view", "showcase");
         setSelectedTab("community");
     };
 

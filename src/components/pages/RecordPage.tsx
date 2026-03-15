@@ -42,6 +42,7 @@ import ProfileTab from "@/components/features/record/ProfileTab";
 import PetCardGrid from "@/components/features/record/PetCardGrid";
 import RecordPageGuest from "@/components/features/record/RecordPageGuest";
 import VideoGenerationSection from "@/components/features/video/VideoGenerationSection";
+import { safeGetItem, safeSetItem } from "@/lib/safe-storage";
 
 interface RecordPageProps {
     setSelectedTab?: (tab: TabType) => void;
@@ -75,7 +76,7 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
     // 마이페이지 상태 — localStorage로 새로고침 시 복원
     const [activeTab, setActiveTab] = useState<"pets" | "profile" | "minihompy">(() => {
         if (typeof window !== "undefined") {
-            const saved = localStorage.getItem("memento-record-tab");
+            const saved = safeGetItem("memento-record-tab");
             if (saved === "profile" || saved === "minihompy") return saved;
         }
         return "pets";
@@ -90,7 +91,7 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
 
     // activeTab 변경 시 localStorage에 저장
     useEffect(() => {
-        localStorage.setItem("memento-record-tab", activeTab);
+        safeSetItem("memento-record-tab", activeTab);
     }, [activeTab]);
 
     // 추모 전환 모달
@@ -127,8 +128,8 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
         ) {
             // 온보딩/튜토리얼 미완료 유저는 자동 열기 억제
             // (page.tsx의 신규유저 플로우: 닉네임→온보딩→튜토리얼이 먼저 완료되어야 함)
-            const onboardingDone = localStorage.getItem("memento-ani-onboarding-complete") === "true";
-            const tutorialDone = localStorage.getItem("memento-ani-tutorial-complete") === "true";
+            const onboardingDone = safeGetItem("memento-ani-onboarding-complete") === "true";
+            const tutorialDone = safeGetItem("memento-ani-tutorial-complete") === "true";
             if (!onboardingDone || !tutorialDone) return;
 
             hasAutoOpenedPetModal.current = true;

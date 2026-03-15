@@ -53,6 +53,7 @@ import {
     User,
     ChevronDown,
 } from "lucide-react";
+import { safeSetItem } from "@/lib/safe-storage";
 
 // ============================================================================
 // 타입 정의
@@ -184,7 +185,7 @@ function HeaderAuthArea({
                                 </button>
                                 <button
                                     onClick={() => {
-                                        localStorage.setItem("memento-record-tab", "minihompy");
+                                        safeSetItem("memento-record-tab", "minihompy");
                                         setSelectedTab("record");
                                         setIsUserMenuOpen(false);
                                     }}
@@ -414,7 +415,7 @@ function Layout({
         const newDarkMode = !isDarkMode;
         setIsDarkMode(newDarkMode);
         document.documentElement.classList.toggle("dark");
-        localStorage.setItem("darkMode", String(newDarkMode));
+        safeSetItem("darkMode", String(newDarkMode));
     };
 
     const handleSignOut = async () => {

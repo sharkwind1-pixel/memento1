@@ -27,6 +27,7 @@ import {
     MOCK_POSTS,
     getCategoryColor,
 } from "@/components/features/community/communityTypes";
+import { safeGetItem, safeSetItem, safeSessionGetItem, safeSessionRemoveItem } from "@/lib/safe-storage";
 
 function CommunityPage({ subcategory, onSubcategoryChange, isActive }: CommunityPageProps) {
     const { selectedPet } = usePets();
@@ -40,7 +41,7 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive }: Community
     const VALID_TAGS: (PostTag | "all")[] = ["all", "정보", "강아지", "고양이", "일상", "질문", "새", "물고기", "토끼", "파충류"];
     const [selectedTag, setSelectedTag] = useState<PostTag | "all">(() => {
         if (typeof window !== "undefined") {
-            const saved = localStorage.getItem("memento-community-tag");
+            const saved = safeGetItem("memento-community-tag");
             if (saved && VALID_TAGS.includes(saved as PostTag | "all")) {
                 return saved as PostTag | "all";
             }
@@ -51,21 +52,21 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive }: Community
     // 뱃지(게시글 유형) 필터 — 홈에서 딥링크 시 sessionStorage, 그 외 localStorage
     const [selectedBadge, setSelectedBadge] = useState<string>(() => {
         if (typeof window !== "undefined") {
-            const fromHome = sessionStorage.getItem("memento-community-badge");
+            const fromHome = safeSessionGetItem("memento-community-badge");
             if (fromHome) {
-                sessionStorage.removeItem("memento-community-badge");
+                safeSessionRemoveItem("memento-community-badge");
                 return fromHome;
             }
-            return localStorage.getItem("memento-community-badge") || "all";
+            return safeGetItem("memento-community-badge") || "all";
         }
         return "all";
     });
     // "함께 보기" 독립 갤러리 뷰 상태
     const [showcaseView, setShowcaseView] = useState<boolean>(() => {
         if (typeof window !== "undefined") {
-            const fromHome = sessionStorage.getItem("memento-community-view");
+            const fromHome = safeSessionGetItem("memento-community-view");
             if (fromHome === "showcase") {
-                sessionStorage.removeItem("memento-community-view");
+                safeSessionRemoveItem("memento-community-view");
                 return true;
             }
         }
@@ -75,7 +76,7 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive }: Community
     // 지역 필터 (지역정보 게시판용) — localStorage로 새로고침 시 복원
     const [selectedRegion, setSelectedRegion] = useState<string>(() => {
         if (typeof window !== "undefined") {
-            return localStorage.getItem("memento-community-region") || "all";
+            return safeGetItem("memento-community-region") || "all";
         }
         return "all";
     });
@@ -85,7 +86,7 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive }: Community
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
     const [sortBy, setSortBy] = useState<string>(() => {
         if (typeof window !== "undefined") {
-            return localStorage.getItem("memento-community-sort") || "latest";
+            return safeGetItem("memento-community-sort") || "latest";
         }
         return "latest";
     });
@@ -168,10 +169,10 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive }: Community
     }, [selectedPostId]);
 
     // 필터 변경 시 localStorage에 저장
-    useEffect(() => { localStorage.setItem("memento-community-tag", selectedTag); }, [selectedTag]);
-    useEffect(() => { localStorage.setItem("memento-community-badge", selectedBadge); }, [selectedBadge]);
-    useEffect(() => { localStorage.setItem("memento-community-region", selectedRegion); }, [selectedRegion]);
-    useEffect(() => { localStorage.setItem("memento-community-sort", sortBy); }, [sortBy]);
+    useEffect(() => { safeSetItem("memento-community-tag", selectedTag); }, [selectedTag]);
+    useEffect(() => { safeSetItem("memento-community-badge", selectedBadge); }, [selectedBadge]);
+    useEffect(() => { safeSetItem("memento-community-region", selectedRegion); }, [selectedRegion]);
+    useEffect(() => { safeSetItem("memento-community-sort", sortBy); }, [sortBy]);
 
     // 추모 모드 여부 확인
     const isMemorialMode = selectedPet?.status === "memorial";

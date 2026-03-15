@@ -21,6 +21,7 @@ import { Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { TutorialStep } from "@/types";
 import { MEMENTO_COLORS } from "@/config/colors";
+import { safeGetItem, safeSetItem } from "@/lib/safe-storage";
 
 interface TutorialTourProps {
     isOpen: boolean;
@@ -66,7 +67,7 @@ const TUTORIAL_STORAGE_KEY = "memento-ani-tutorial-complete";
 
 export function hasCompletedTutorial(): boolean {
     if (typeof window === "undefined") return true;
-    return localStorage.getItem(TUTORIAL_STORAGE_KEY) === "true";
+    return safeGetItem(TUTORIAL_STORAGE_KEY) === "true";
 }
 
 export async function checkTutorialFromDB(userId: string): Promise<boolean> {
@@ -77,7 +78,7 @@ export async function checkTutorialFromDB(userId: string): Promise<boolean> {
             .eq("id", userId)
             .single();
         if (data?.tutorial_completed_at) {
-            localStorage.setItem(TUTORIAL_STORAGE_KEY, "true");
+            safeSetItem(TUTORIAL_STORAGE_KEY, "true");
             return true;
         }
         return false;
@@ -87,7 +88,7 @@ export async function checkTutorialFromDB(userId: string): Promise<boolean> {
 }
 
 export function markTutorialComplete(): void {
-    localStorage.setItem(TUTORIAL_STORAGE_KEY, "true");
+    safeSetItem(TUTORIAL_STORAGE_KEY, "true");
 }
 
 export async function saveTutorialCompleteToDb(userId: string): Promise<void> {

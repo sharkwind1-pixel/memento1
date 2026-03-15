@@ -76,6 +76,7 @@ import NicknameSetupModal from "@/components/Auth/NicknameSetupModal";
 import OnboardingModal from "@/components/features/onboarding/OnboardingModal";
 import TutorialTour from "@/components/features/onboarding/TutorialTour";
 import PostOnboardingGuide from "@/components/features/onboarding/PostOnboardingGuide";
+import { safeGetItem, safeSetItem, safeRemoveItem } from "@/lib/safe-storage";
 // RecordPageTutorial 제거 — 펫 0마리 신규유저에게 사진/타임라인 안내하는 모순 해소
 // TutorialTour에서 전체 메뉴 소개 → PetFormModal로 바로 이어짐
 
@@ -141,8 +142,8 @@ function HomeContent() {
 
         // 2. localStorage에서 확인
         if (typeof window !== "undefined") {
-            const savedTab = localStorage.getItem("memento-current-tab");
-            const savedSub = localStorage.getItem("memento-current-subcategory");
+            const savedTab = safeGetItem("memento-current-tab");
+            const savedSub = safeGetItem("memento-current-subcategory");
             if (isValidTab(savedTab)) {
                 const redirect = getLegacyTabRedirect(savedTab);
                 if (redirect) {
@@ -209,20 +210,20 @@ function HomeContent() {
             if (redirect) {
                 setSelectedTab(redirect.main as TabType);
                 setSelectedSubcategory(redirect.sub);
-                localStorage.setItem("memento-current-tab", redirect.main);
+                safeSetItem("memento-current-tab", redirect.main);
                 if (redirect.sub) {
-                    localStorage.setItem("memento-current-subcategory", redirect.sub);
+                    safeSetItem("memento-current-subcategory", redirect.sub);
                 }
                 // URL 정규화는 handleTabChange에서 처리하도록 위임
                 return;
             }
 
             setSelectedTab(tabFromUrl);
-            localStorage.setItem("memento-current-tab", tabFromUrl);
+            safeSetItem("memento-current-tab", tabFromUrl);
 
             if (tabFromUrl === "community" && isValidSubcategory(subFromUrl)) {
                 setSelectedSubcategory(subFromUrl);
-                localStorage.setItem("memento-current-subcategory", subFromUrl);
+                safeSetItem("memento-current-subcategory", subFromUrl);
             } else {
                 setSelectedSubcategory(undefined);
             }
@@ -230,7 +231,7 @@ function HomeContent() {
             // URL에 tab이 없고 현재 home이 아니면 home으로
             setSelectedTab("home");
             setSelectedSubcategory(undefined);
-            localStorage.setItem("memento-current-tab", "home");
+            safeSetItem("memento-current-tab", "home");
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchParams]);
@@ -296,16 +297,16 @@ function HomeContent() {
 
                 // 2. 온보딩 완료 여부: DB 또는 localStorage
                 const onboardingDone = !!profileData?.onboarding_completed_at ||
-                    localStorage.getItem("memento-ani-onboarding-complete") === "true";
+                    safeGetItem("memento-ani-onboarding-complete") === "true";
                 const tutorialDone = !!profileData?.tutorial_completed_at ||
-                    localStorage.getItem("memento-ani-tutorial-complete") === "true";
+                    safeGetItem("memento-ani-tutorial-complete") === "true";
 
                 // DB ↔ localStorage 동기화
                 if (profileData?.onboarding_completed_at) {
-                    localStorage.setItem("memento-ani-onboarding-complete", "true");
+                    safeSetItem("memento-ani-onboarding-complete", "true");
                 }
                 if (profileData?.tutorial_completed_at) {
-                    localStorage.setItem("memento-ani-tutorial-complete", "true");
+                    safeSetItem("memento-ani-tutorial-complete", "true");
                 }
 
                 // 3. 온보딩 완료된 유저 → 통과
@@ -332,7 +333,7 @@ function HomeContent() {
                             onboarding_completed_at: new Date().toISOString(),
                             last_seen_at: new Date().toISOString(),
                         }).eq("id", user.id);
-                        localStorage.setItem("memento-ani-onboarding-complete", "true");
+                        safeSetItem("memento-ani-onboarding-complete", "true");
                         return;
                     }
                 }
@@ -376,9 +377,9 @@ function HomeContent() {
                 setSelectedTab(redirect.main as TabType);
                 setSelectedSubcategory(redirect.sub);
             });
-            localStorage.setItem("memento-current-tab", redirect.main);
+            safeSetItem("memento-current-tab", redirect.main);
             if (redirect.sub) {
-                localStorage.setItem("memento-current-subcategory", redirect.sub);
+                safeSetItem("memento-current-subcategory", redirect.sub);
             }
             router.replace(`/?tab=${redirect.main}${redirect.sub ? `&sub=${redirect.sub}` : ""}`, { scroll: false });
             return;
@@ -390,12 +391,12 @@ function HomeContent() {
             setSelectedSubcategory(sub);
         });
 
-        localStorage.setItem("memento-current-tab", tab);
+        safeSetItem("memento-current-tab", tab);
 
         if (sub) {
-            localStorage.setItem("memento-current-subcategory", sub);
+            safeSetItem("memento-current-subcategory", sub);
         } else {
-            localStorage.removeItem("memento-current-subcategory");
+            safeRemoveItem("memento-current-subcategory");
         }
 
         // URL 업데이트 (push로 히스토리 기록 → 브라우저 뒤로가기 지원)
@@ -486,7 +487,7 @@ function HomeContent() {
                         onComplete={() => {
                             setShowNicknameSetup(false);
                             // 닉네임 설정 완료 → 온보딩 시작
-                            if (localStorage.getItem("memento-ani-onboarding-complete") !== "true") {
+                            if (safeGetItem("memento-ani-onboarding-complete") !== "true") {
                                 onboardingTriggeredRef.current = true;
                                 setShowOnboarding(true);
                             }
@@ -503,7 +504,7 @@ function HomeContent() {
                             setPostGuideUserType(userType);
                             newUserFlowCheckedRef.current = user?.id || null;
 
-                            const tutDone = localStorage.getItem("memento-ani-tutorial-complete") === "true";
+                            const tutDone = safeGetItem("memento-ani-tutorial-complete") === "true";
                             if (!tutDone) {
                                 setShowTutorial(true);
                             } else if (userType === "planning") {

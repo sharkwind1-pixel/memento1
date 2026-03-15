@@ -38,6 +38,7 @@ import { usePets } from "@/contexts/PetContext";
 import { supabase } from "@/lib/supabase";
 import PointsBadge from "@/components/features/points/PointsBadge";
 import type { MainCategory, CommunitySubcategory, TabType } from "@/types";
+import { safeSetItem } from "@/lib/safe-storage";
 
 // 메인 카테고리 정의
 const MAIN_CATEGORIES: {
@@ -398,7 +399,7 @@ export default function Sidebar({
                             </button>
                             <button
                                 onClick={() => {
-                                    localStorage.setItem("memento-record-tab", "minihompy");
+                                    safeSetItem("memento-record-tab", "minihompy");
                                     onTabChange("record");
                                     if (isMobile) onClose();
                                 }}

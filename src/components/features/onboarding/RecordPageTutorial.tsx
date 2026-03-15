@@ -14,6 +14,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Sparkles, Heart, Camera, MessageCircle, BookOpen, Home } from "lucide-react";
 import type { OnboardingUserType, TutorialStep } from "@/types";
+import { safeSetItem } from "@/lib/safe-storage";
 
 interface RecordPageTutorialProps {
     isOpen: boolean;
@@ -214,7 +215,7 @@ export default function RecordPageTutorial({
 
     // 튜토리얼 완료 처리 — localStorage에 저장하여 새로고침 후 반복 방지
     const completeRecordTutorial = useCallback(() => {
-        localStorage.setItem("memento-ani-record-tutorial-complete", "true");
+        safeSetItem("memento-ani-record-tutorial-complete", "true");
         onClose();
     }, [onClose]);
 

@@ -12,6 +12,7 @@ import { API } from "@/config/apiEndpoints";
 import { toast } from "sonner";
 import type { LostPetPost } from "@/components/features/lost/lostTypes";
 import { REGIONS } from "@/components/features/lost/lostTypes";
+import { safeGetItem, safeSetItem, safeRemoveItem } from "@/lib/safe-storage";
 
 export function useLostPosts() {
     // 목록 상태
@@ -21,7 +22,7 @@ export function useLostPosts() {
     const [totalCount, setTotalCount] = useState(0);
     const [page, setPage] = useState<number>(() => {
         if (typeof window !== "undefined") {
-            const saved = localStorage.getItem("memento-lost-page");
+            const saved = safeGetItem("memento-lost-page");
             return saved ? Math.max(1, parseInt(saved, 10) || 1) : 1;
         }
         return 1;
@@ -30,25 +31,25 @@ export function useLostPosts() {
     // 필터 상태 — localStorage로 새로고침 시 복원
     const [selectedType, setSelectedType] = useState<string>(() => {
         if (typeof window !== "undefined") {
-            return localStorage.getItem("memento-lost-type") || "all";
+            return safeGetItem("memento-lost-type") || "all";
         }
         return "all";
     });
     const [selectedRegion, setSelectedRegion] = useState<string>(() => {
         if (typeof window !== "undefined") {
-            return localStorage.getItem("memento-lost-region") || "전체";
+            return safeGetItem("memento-lost-region") || "전체";
         }
         return "전체";
     });
     const [selectedDistrict, setSelectedDistrict] = useState<string>(() => {
         if (typeof window !== "undefined") {
-            return localStorage.getItem("memento-lost-district") || "";
+            return safeGetItem("memento-lost-district") || "";
         }
         return "";
     });
     const [selectedPetType, setSelectedPetType] = useState<string>(() => {
         if (typeof window !== "undefined") {
-            return localStorage.getItem("memento-lost-pettype") || "all";
+            return safeGetItem("memento-lost-pettype") || "all";
         }
         return "all";
     });
@@ -66,11 +67,11 @@ export function useLostPosts() {
             : [];
 
     // 필터 변경 시 localStorage에 저장
-    useEffect(() => { localStorage.setItem("memento-lost-type", selectedType); }, [selectedType]);
-    useEffect(() => { localStorage.setItem("memento-lost-region", selectedRegion); }, [selectedRegion]);
-    useEffect(() => { localStorage.setItem("memento-lost-district", selectedDistrict); }, [selectedDistrict]);
-    useEffect(() => { localStorage.setItem("memento-lost-pettype", selectedPetType); }, [selectedPetType]);
-    useEffect(() => { localStorage.setItem("memento-lost-page", String(page)); }, [page]);
+    useEffect(() => { safeSetItem("memento-lost-type", selectedType); }, [selectedType]);
+    useEffect(() => { safeSetItem("memento-lost-region", selectedRegion); }, [selectedRegion]);
+    useEffect(() => { safeSetItem("memento-lost-district", selectedDistrict); }, [selectedDistrict]);
+    useEffect(() => { safeSetItem("memento-lost-pettype", selectedPetType); }, [selectedPetType]);
+    useEffect(() => { safeSetItem("memento-lost-page", String(page)); }, [page]);
 
     // 게시글 목록 조회
     const fetchPosts = useCallback(async () => {
@@ -171,11 +172,11 @@ export function useLostPosts() {
         setSearchInput("");
         setPage(1);
         // localStorage도 초기화 (useEffect에서 자동 저장되지만 명시적으로)
-        localStorage.removeItem("memento-lost-type");
-        localStorage.removeItem("memento-lost-region");
-        localStorage.removeItem("memento-lost-district");
-        localStorage.removeItem("memento-lost-pettype");
-        localStorage.removeItem("memento-lost-page");
+        safeRemoveItem("memento-lost-type");
+        safeRemoveItem("memento-lost-region");
+        safeRemoveItem("memento-lost-district");
+        safeRemoveItem("memento-lost-pettype");
+        safeRemoveItem("memento-lost-page");
     };
 
     return {

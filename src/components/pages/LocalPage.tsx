@@ -25,6 +25,7 @@ import LocalDetailModal from "@/components/features/local/LocalDetailModal";
 import LocalCreateModal from "@/components/features/local/LocalCreateModal";
 import LocalHeader from "@/components/features/local/LocalHeader";
 import LocalPostList from "@/components/features/local/LocalPostList";
+import { safeGetItem, safeSetItem } from "@/lib/safe-storage";
 
 interface LocalPageProps {
     setSelectedTab?: (tab: TabType) => void;
@@ -42,15 +43,15 @@ function LocalPage({ setSelectedTab }: LocalPageProps) {
 
     // 필터 상태 — localStorage로 새로고침 시 복원
     const [selectedRegion, setSelectedRegion] = useState<string>(() => {
-        if (typeof window !== "undefined") return localStorage.getItem("memento-local-region") || "";
+        if (typeof window !== "undefined") return safeGetItem("memento-local-region") || "";
         return "";
     });
     const [selectedDistrict, setSelectedDistrict] = useState<string>(() => {
-        if (typeof window !== "undefined") return localStorage.getItem("memento-local-district") || "";
+        if (typeof window !== "undefined") return safeGetItem("memento-local-district") || "";
         return "";
     });
     const [selectedCategory, setSelectedCategory] = useState<string>(() => {
-        if (typeof window !== "undefined") return localStorage.getItem("memento-local-category") || "all";
+        if (typeof window !== "undefined") return safeGetItem("memento-local-category") || "all";
         return "all";
     });
     const [searchQuery, setSearchQuery] = useState<string>("");
@@ -76,9 +77,9 @@ function LocalPage({ setSelectedTab }: LocalPageProps) {
     const formDistricts = form.region ? REGIONS[form.region] || [] : [];
 
     // 필터 변경 시 localStorage에 저장
-    useEffect(() => { localStorage.setItem("memento-local-region", selectedRegion); }, [selectedRegion]);
-    useEffect(() => { localStorage.setItem("memento-local-district", selectedDistrict); }, [selectedDistrict]);
-    useEffect(() => { localStorage.setItem("memento-local-category", selectedCategory); }, [selectedCategory]);
+    useEffect(() => { safeSetItem("memento-local-region", selectedRegion); }, [selectedRegion]);
+    useEffect(() => { safeSetItem("memento-local-district", selectedDistrict); }, [selectedDistrict]);
+    useEffect(() => { safeSetItem("memento-local-category", selectedCategory); }, [selectedCategory]);
 
     // ==========================================
     // API 호출

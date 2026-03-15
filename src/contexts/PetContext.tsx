@@ -60,6 +60,7 @@ import type {
     CropPosition,
     TimelineEntry,
 } from "@/types";
+import { safeGetItem, safeSetItem } from "@/lib/safe-storage";
 
 // Re-export for backward compatibility
 export type { Pet, PetPhoto, MediaType, TimelineEntry };
@@ -240,7 +241,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
             setPets(petsWithMedia);
 
             // 선택된 펫 설정
-            const savedSelectedId = localStorage.getItem(SELECTED_PET_KEY);
+            const savedSelectedId = safeGetItem(SELECTED_PET_KEY);
             if (
                 savedSelectedId &&
                 petsWithMedia.some((p) => p.id === savedSelectedId)
@@ -281,7 +282,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
     // 선택된 펫 ID localStorage에 저장
     useEffect(() => {
         if (!isLoading && selectedPetId) {
-            localStorage.setItem(SELECTED_PET_KEY, selectedPetId);
+            safeSetItem(SELECTED_PET_KEY, selectedPetId);
         }
     }, [selectedPetId, isLoading]);
 

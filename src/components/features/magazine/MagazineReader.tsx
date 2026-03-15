@@ -43,6 +43,7 @@ import {
     type MagazineArticle,
 } from "@/data/magazineArticles";
 import { API } from "@/config/apiEndpoints";
+import { safeGetItem, safeSetItem, safeRemoveItem, safeSessionGetItem, safeSessionSetItem } from "@/lib/safe-storage";
 
 interface MagazineReaderProps {
     article: MagazineArticle;
@@ -209,7 +210,7 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
     const likeKey = `magazine_likes_${article.id}`;
     const [isLiked, setIsLiked] = useState(() => {
         if (typeof window !== "undefined") {
-            return localStorage.getItem(likeKey) === "1";
+            return safeGetItem(likeKey) === "1";
         }
         return false;
     });
@@ -222,8 +223,8 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
     // 조회수 증가 (마운트 시 1회)
     useEffect(() => {
         const viewKey = `magazine_viewed_${article.id}`;
-        if (typeof window !== "undefined" && !sessionStorage.getItem(viewKey)) {
-            sessionStorage.setItem(viewKey, "1");
+        if (typeof window !== "undefined" && !safeSessionGetItem(viewKey)) {
+            safeSessionSetItem(viewKey, "1");
             fetch(API.MAGAZINE, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
@@ -250,9 +251,9 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
         setTimeout(() => setLikeAnimating(false), 300);
 
         if (willLike) {
-            localStorage.setItem(likeKey, "1");
+            safeSetItem(likeKey, "1");
         } else {
-            localStorage.removeItem(likeKey);
+            safeRemoveItem(likeKey);
         }
 
         try {
@@ -273,9 +274,9 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
             setIsLiked(!willLike);
             setDisplayLikes((prev) => prev + (willLike ? -1 : 1));
             if (!willLike) {
-                localStorage.setItem(likeKey, "1");
+                safeSetItem(likeKey, "1");
             } else {
-                localStorage.removeItem(likeKey);
+                safeRemoveItem(likeKey);
             }
         }
     }, [isLiked, article.id, likeKey]);

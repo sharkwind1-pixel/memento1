@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { TabType, CommunitySubcategory } from "@/types";
+import { safeSetItem } from "@/lib/safe-storage";
 
 interface SimpleHomeLauncherProps {
     setSelectedTab: (tab: TabType) => void;
@@ -87,7 +88,7 @@ export default function SimpleHomeLauncher({ setSelectedTab, onSubcategoryChange
 
     const handleCardClick = (id: string) => {
         if (id === "minihompy") {
-            localStorage.setItem("memento-record-tab", "minihompy");
+            safeSetItem("memento-record-tab", "minihompy");
             setSelectedTab("record");
         } else if (id === "adoption") {
             setSelectedTab("community");
