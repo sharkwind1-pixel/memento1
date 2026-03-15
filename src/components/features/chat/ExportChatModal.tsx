@@ -163,7 +163,7 @@ export default function ExportChatModal({
     if (chatMessages.length < 2) {
         return (
             <div
-                className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+                className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm"
                 onClick={onClose}
             >
                 <div
@@ -188,7 +188,7 @@ export default function ExportChatModal({
 
     return (
         <div
-            className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50 backdrop-blur-sm"
             style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
             onClick={onClose}
             role="dialog"

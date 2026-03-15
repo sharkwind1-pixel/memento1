@@ -2,6 +2,7 @@
 
 import { FREE_LIMITS, PREMIUM_LIMITS } from "@/config/constants";
 import { STORAGE_KEYS } from "@/constants/storage";
+import { safeGetItem, safeSetItem } from "@/lib/safe-storage";
 import type { Pet } from "@/types";
 
 // config에서 가져온 값을 re-export (하위 호환성)
@@ -18,7 +19,7 @@ export function getTodayKey(): string {
 
 export function getDailyUsage(): number {
     try {
-        const stored = localStorage.getItem(USAGE_STORAGE_KEY);
+        const stored = safeGetItem(USAGE_STORAGE_KEY);
         if (!stored) return 0;
         const data = JSON.parse(stored);
         if (data.date !== getTodayKey()) {
@@ -35,7 +36,7 @@ export function incrementDailyUsage(): number {
     const todayKey = getTodayKey();
     const currentCount = getDailyUsage();
     const newCount = currentCount + 1;
-    localStorage.setItem(USAGE_STORAGE_KEY, JSON.stringify({
+    safeSetItem(USAGE_STORAGE_KEY, JSON.stringify({
         date: todayKey,
         count: newCount,
     }));
@@ -47,7 +48,7 @@ export function decrementDailyUsage(): number {
     const todayKey = getTodayKey();
     const currentCount = getDailyUsage();
     const newCount = Math.max(0, currentCount - 1);
-    localStorage.setItem(USAGE_STORAGE_KEY, JSON.stringify({
+    safeSetItem(USAGE_STORAGE_KEY, JSON.stringify({
         date: todayKey,
         count: newCount,
     }));

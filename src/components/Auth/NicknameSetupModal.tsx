@@ -120,7 +120,7 @@ export default function NicknameSetupModal({
             className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50"
             style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
         >
-            <div className="min-h-full flex items-center justify-center pt-16 pb-20 px-4">
+            <div className="min-h-full flex items-start justify-center pt-8 pb-8 px-4">
             <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl relative" role="dialog" aria-modal="true" aria-labelledby="nickname-setup-title">
                 {/* 헤더 */}
                 <div className="bg-gradient-to-r from-memento-500 to-memento-400 p-6 text-white text-center">

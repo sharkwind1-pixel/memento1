@@ -33,6 +33,7 @@ import { PointsAwardModal } from "../modals/PointsAwardModal";
 import LevelBadge from "@/components/features/points/LevelBadge";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
+import { safeRemoveItem } from "@/lib/safe-storage";
 
 // ============================================================================
 // Props 타입 정의
@@ -183,10 +184,8 @@ export default function AdminUsersTab({
 
             // 본인 계정이면 localStorage도 클리어
             if (userId === currentUserId) {
-                try {
-                    localStorage.removeItem("memento-ani-tutorial-complete");
-                    localStorage.removeItem("memento-ani-onboarding-complete");
-                } catch { /* iOS Safari Private Mode */ }
+                safeRemoveItem("memento-ani-tutorial-complete");
+                safeRemoveItem("memento-ani-onboarding-complete");
                 toast.success("온보딩이 리셋되었습니다! 새로고침하면 처음부터 시작됩니다.");
             } else {
                 toast.success("온보딩이 리셋되었습니다.");

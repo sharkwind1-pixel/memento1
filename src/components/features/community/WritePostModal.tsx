@@ -223,7 +223,7 @@ export default function WritePostModal({
         >
             <div className="min-h-full flex items-start justify-center pt-16 pb-20 px-4">
             {/* 모달 */}
-            <div className="bg-white dark:bg-gray-800 w-full max-w-lg sm:max-w-xl rounded-2xl shadow-xl relative max-h-[90dvh] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="write-post-title" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white dark:bg-gray-800 w-full max-w-lg sm:max-w-xl rounded-2xl shadow-xl relative" role="dialog" aria-modal="true" aria-labelledby="write-post-title" onClick={(e) => e.stopPropagation()}>
                 {/* 헤더 - sticky */}
                 <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b dark:border-gray-700 bg-white dark:bg-gray-800 rounded-t-2xl">
                     <div>

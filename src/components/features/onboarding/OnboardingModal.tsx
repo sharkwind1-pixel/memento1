@@ -106,13 +106,9 @@ export default function OnboardingModal({
 
     useEffect(() => {
         if (isOpen) {
-            document.body.style.overflow = "hidden";
             setStep(0);
             setData({ userType: null, petType: null });
         }
-        return () => {
-            document.body.style.overflow = "";
-        };
     }, [isOpen]);
 
     if (!isOpen) return null;
@@ -264,8 +260,12 @@ export default function OnboardingModal({
 
     // 렌더링
     return (
-        <div className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4">
-            <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl overflow-y-auto overscroll-contain touch-pan-y max-h-[90vh] shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
+        <div
+            className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50"
+            style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+        >
+            <div className="min-h-full flex items-start justify-center pt-8 pb-8 px-4">
+            <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
                 {/* 헤더 */}
                 <div className="flex justify-between items-center p-4 border-b border-gray-100 dark:border-gray-800">
                     <div className="flex items-center gap-2">
@@ -749,6 +749,7 @@ export default function OnboardingModal({
                         </button>
                     )}
                 </div>
+            </div>
             </div>
         </div>
     );

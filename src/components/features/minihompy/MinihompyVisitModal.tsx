@@ -191,7 +191,7 @@ export default function MinihompyVisitModal({
 
     return (
         <div
-            className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50 backdrop-blur-sm"
             style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
             onClick={(e) => e.target === e.currentTarget && onClose()}
             role="dialog"

@@ -11,6 +11,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Cookie, X, ChevronDown, ChevronUp } from "lucide-react";
+import { safeGetItem, safeSetItem } from "@/lib/safe-storage";
 
 export default function CookieConsentBanner() {
     const [visible, setVisible] = useState(false);
@@ -18,49 +19,37 @@ export default function CookieConsentBanner() {
 
     useEffect(() => {
         // 이미 동의했으면 표시하지 않음
-        try {
-            const consent = localStorage.getItem("memento-cookie-consent");
-            if (!consent) {
-                // 약간의 딜레이 후 표시 (UX 개선)
-                const timer = setTimeout(() => setVisible(true), 1500);
-                return () => clearTimeout(timer);
-            }
-        } catch {
-            // localStorage 접근 불가 시 표시하지 않음
+        const consent = safeGetItem("memento-cookie-consent");
+        if (!consent) {
+            // 약간의 딜레이 후 표시 (UX 개선)
+            const timer = setTimeout(() => setVisible(true), 1500);
+            return () => clearTimeout(timer);
         }
     }, []);
 
     const handleAcceptAll = () => {
-        try {
-            localStorage.setItem(
-                "memento-cookie-consent",
-                JSON.stringify({
-                    essential: true,
-                    analytics: true,
-                    marketing: true,
-                    acceptedAt: new Date().toISOString(),
-                })
-            );
-        } catch {
-            // localStorage 접근 불가 무시
-        }
+        safeSetItem(
+            "memento-cookie-consent",
+            JSON.stringify({
+                essential: true,
+                analytics: true,
+                marketing: true,
+                acceptedAt: new Date().toISOString(),
+            })
+        );
         setVisible(false);
     };
 
     const handleAcceptEssential = () => {
-        try {
-            localStorage.setItem(
-                "memento-cookie-consent",
-                JSON.stringify({
-                    essential: true,
-                    analytics: false,
-                    marketing: false,
-                    acceptedAt: new Date().toISOString(),
-                })
-            );
-        } catch {
-            // localStorage 접근 불가 무시
-        }
+        safeSetItem(
+            "memento-cookie-consent",
+            JSON.stringify({
+                essential: true,
+                analytics: false,
+                marketing: false,
+                acceptedAt: new Date().toISOString(),
+            })
+        );
         setVisible(false);
     };
 

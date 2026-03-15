@@ -34,6 +34,7 @@ import { toast } from "sonner";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
+import { safeGetItem, safeSetItem, safeRemoveItem } from "@/lib/safe-storage";
 import type { UserBlock } from "@/types";
 
 interface AccountSettingsModalProps {
@@ -129,16 +130,16 @@ export default function AccountSettingsModal({
         };
 
         const loadNotifSettings = () => {
-            try {
-                const saved = localStorage.getItem("memento-notif-settings");
-                if (saved) {
+            const saved = safeGetItem("memento-notif-settings");
+            if (saved) {
+                try {
                     const parsed = JSON.parse(saved);
                     setNotifComment(parsed.comment ?? true);
                     setNotifLike(parsed.like ?? true);
                     setNotifReminder(parsed.reminder ?? true);
+                } catch {
+                    // 기본값 유지
                 }
-            } catch {
-                // 기본값 유지
             }
         };
 
@@ -164,11 +165,7 @@ export default function AccountSettingsModal({
         if (key === "like") setNotifLike(value);
         if (key === "reminder") setNotifReminder(value);
 
-        try {
-            localStorage.setItem("memento-notif-settings", JSON.stringify(newSettings));
-        } catch {
-            // localStorage 접근 불가 무시
-        }
+        safeSetItem("memento-notif-settings", JSON.stringify(newSettings));
     };
 
     // 위치정보 동의 토글
@@ -346,7 +343,7 @@ export default function AccountSettingsModal({
             );
 
             // AI 사용량은 localStorage에서 가져오기
-            const aiUsageData = localStorage.getItem(STORAGE_KEYS.CHAT_USAGE);
+            const aiUsageData = safeGetItem(STORAGE_KEYS.CHAT_USAGE);
             let totalAiUsage = 0;
             if (aiUsageData) {
                 try {
@@ -400,10 +397,10 @@ export default function AccountSettingsModal({
             await signOut();
 
             // localStorage 정리
-            localStorage.removeItem("memento-ani-tutorial-complete");
-            localStorage.removeItem("memento-ani-onboarding-complete");
-            localStorage.removeItem("memento-current-tab");
-            localStorage.removeItem(STORAGE_KEYS.CHAT_USAGE);
+            safeRemoveItem("memento-ani-tutorial-complete");
+            safeRemoveItem("memento-ani-onboarding-complete");
+            safeRemoveItem("memento-current-tab");
+            safeRemoveItem(STORAGE_KEYS.CHAT_USAGE);
 
             toast.success(
                 "회원탈퇴가 완료되었습니다. 이용해 주셔서 감사합니다.",

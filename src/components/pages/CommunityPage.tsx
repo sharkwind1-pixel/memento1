@@ -290,8 +290,7 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive }: Community
                 setIsLoading(false);
             }
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentSubcategory, sortBy, selectedTag, selectedBadge, selectedRegion, searchQuery]);
+    }, [currentSubcategory, sortBy, selectedTag, selectedBadge, selectedRegion, searchQuery, posts.length]);
 
     // 검색어 debounce (300ms)
     useEffect(() => {

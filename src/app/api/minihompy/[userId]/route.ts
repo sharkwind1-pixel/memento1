@@ -48,8 +48,9 @@ export async function GET(
                 return NextResponse.json({ error: "비공개 미니홈피입니다" }, { status: 403 });
             }
 
-            // today_date 리셋 체크
-            const today = new Date().toISOString().split("T")[0];
+            // today_date 리셋 체크 (KST 기준)
+            const kstOffset = 9 * 60 * 60 * 1000;
+            const today = new Date(Date.now() + kstOffset).toISOString().split("T")[0];
             const todayVisitors = settingsData.today_date === today
                 ? settingsData.today_visitors
                 : 0;

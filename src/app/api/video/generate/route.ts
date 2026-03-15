@@ -83,9 +83,10 @@ export async function POST(request: NextRequest) {
         const isPremium = profile?.is_premium &&
             (!profile.premium_expires_at || new Date(profile.premium_expires_at) > new Date());
 
-        // 5-2. 이번 달 생성 횟수 (월간 쿼터용, 실패 제외)
-        const now = new Date();
-        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+        // 5-2. 이번 달 생성 횟수 (월간 쿼터용, 실패 제외, KST 기준)
+        const kstOffset = 9 * 60 * 60 * 1000;
+        const kstNow = new Date(Date.now() + kstOffset);
+        const monthStart = new Date(Date.UTC(kstNow.getUTCFullYear(), kstNow.getUTCMonth(), 1) - kstOffset).toISOString();
 
         const { count: monthlyCount } = await supabase
             .from("video_generations")

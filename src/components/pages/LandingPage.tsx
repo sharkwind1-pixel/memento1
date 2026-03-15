@@ -485,8 +485,8 @@ export default function LandingPage() {
                                 <span className="font-bold text-gray-800 dark:text-white">메멘토애니</span>
                             </div>
                             <div className="flex gap-6 text-sm text-gray-500">
-                                <button onClick={handleOpenAuth} className="hover:text-violet-500 transition-colors">이용약관</button>
-                                <button onClick={handleOpenAuth} className="hover:text-violet-500 transition-colors">개인정보처리방침</button>
+                                <a href="/terms" className="hover:text-violet-500 transition-colors">이용약관</a>
+                                <a href="/privacy" className="hover:text-violet-500 transition-colors">개인정보처리방침</a>
                                 <a href="mailto:sharkwind1@gmail.com" className="hover:text-violet-500 transition-colors">문의하기</a>
                             </div>
                             <p className="text-sm text-gray-400">

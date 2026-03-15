@@ -53,8 +53,9 @@ export async function POST(
             visitor_ip: clientIP,
         });
 
-        // today/total 카운터 업데이트
-        const today = new Date().toISOString().split("T")[0];
+        // today/total 카운터 업데이트 (KST 기준)
+        const kstOffset = 9 * 60 * 60 * 1000;
+        const today = new Date(Date.now() + kstOffset).toISOString().split("T")[0];
 
         const { data: settings } = await supabase
             .from("minihompy_settings")

@@ -28,8 +28,9 @@ export async function GET() {
             .maybeSingle();
 
         if (settings) {
-            // today_date가 오늘이 아니면 today_visitors 리셋
-            const today = new Date().toISOString().split("T")[0];
+            // today_date가 오늘이 아니면 today_visitors 리셋 (KST 기준)
+            const kstOffset = 9 * 60 * 60 * 1000;
+            const today = new Date(Date.now() + kstOffset).toISOString().split("T")[0];
             if (settings.today_date !== today) {
                 const { data: updated } = await supabase
                     .from("minihompy_settings")
