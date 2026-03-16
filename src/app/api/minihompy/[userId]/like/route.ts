@@ -1,6 +1,6 @@
 /**
  * 미니홈피 좋아요 API
- * POST: 좋아요 토글
+ * POST: 좋아요 토글 (insert-first 패턴으로 race condition 방지)
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -9,6 +9,26 @@ import { getClientIP, checkRateLimit, getRateLimitHeaders } from "@/lib/rate-lim
 import { PG_ERROR_CODES } from "@/config/constants";
 
 export const dynamic = "force-dynamic";
+
+/** 좋아요 수 카운트 후 settings 업데이트, 카운트 반환 */
+async function refreshLikeCount(
+    supabase: Awaited<ReturnType<typeof createServerSupabase>>,
+    ownerId: string,
+): Promise<number> {
+    const { count } = await supabase
+        .from("minihompy_likes")
+        .select("id", { count: "exact", head: true })
+        .eq("owner_id", ownerId);
+
+    const total = count ?? 0;
+
+    await supabase
+        .from("minihompy_settings")
+        .update({ total_likes: total })
+        .eq("user_id", ownerId);
+
+    return total;
+}
 
 export async function POST(
     request: NextRequest,
@@ -38,62 +58,31 @@ export async function POST(
 
         const supabase = await createServerSupabase();
 
-        // 기존 좋아요 확인
-        const { data: existing } = await supabase
+        // Insert-first: UNIQUE 제약 조건이 중복을 막아줌
+        const { error: insertError } = await supabase
             .from("minihompy_likes")
-            .select("id")
-            .eq("owner_id", userId)
-            .eq("user_id", user.id)
-            .maybeSingle();
+            .insert({ owner_id: userId, user_id: user.id });
 
-        if (existing) {
-            // 좋아요 취소
+        if (!insertError) {
+            // 새 좋아요 성공
+            const totalLikes = await refreshLikeCount(supabase, userId);
+            return NextResponse.json({ liked: true, totalLikes });
+        }
+
+        if (insertError.code === PG_ERROR_CODES.UNIQUE_VIOLATION) {
+            // 이미 좋아요 상태 → 취소 (토글)
             await supabase
                 .from("minihompy_likes")
                 .delete()
-                .eq("id", existing.id);
+                .eq("owner_id", userId)
+                .eq("user_id", user.id);
 
-            // 직접 카운트 업데이트
-            const { count } = await supabase
-                .from("minihompy_likes")
-                .select("id", { count: "exact", head: true })
-                .eq("owner_id", userId);
-
-            await supabase
-                .from("minihompy_settings")
-                .update({ total_likes: count || 0 })
-                .eq("user_id", userId);
-
-            return NextResponse.json({ liked: false, totalLikes: count || 0 });
-        } else {
-            // 좋아요 추가
-            const { error: insertError } = await supabase
-                .from("minihompy_likes")
-                .insert({
-                    owner_id: userId,
-                    user_id: user.id,
-                });
-
-            if (insertError) {
-                if (insertError.code === PG_ERROR_CODES.UNIQUE_VIOLATION) {
-                    return NextResponse.json({ error: "이미 좋아요를 눌렀습니다" }, { status: 400 });
-                }
-                return NextResponse.json({ error: "좋아요 실패" }, { status: 500 });
-            }
-
-            // 직접 카운트 업데이트
-            const { count } = await supabase
-                .from("minihompy_likes")
-                .select("id", { count: "exact", head: true })
-                .eq("owner_id", userId);
-
-            await supabase
-                .from("minihompy_settings")
-                .update({ total_likes: count || 0 })
-                .eq("user_id", userId);
-
-            return NextResponse.json({ liked: true, totalLikes: count || 0 });
+            const totalLikes = await refreshLikeCount(supabase, userId);
+            return NextResponse.json({ liked: false, totalLikes });
         }
+
+        // 기타 DB 에러
+        return NextResponse.json({ error: "좋아요 실패" }, { status: 500 });
     } catch {
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });
     }

@@ -249,15 +249,15 @@ function RemindersPage() {
     if (!user) {
         return (
             <div className="min-h-screen relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-b from-memento-50 via-memento-75 to-white" />
+                <div className="absolute inset-0 bg-gradient-to-b from-memento-50 via-memento-75 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900" />
                 <div className="relative z-10 flex flex-col items-center justify-center min-h-[60vh] px-4">
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-memento-100 to-memento-200 flex items-center justify-center mb-6">
-                        <LogIn className="w-12 h-12 text-memento-600" />
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-memento-100 to-memento-200 dark:from-memento-800 dark:to-memento-700 flex items-center justify-center mb-6">
+                        <LogIn className="w-12 h-12 text-memento-600 dark:text-memento-300" />
                     </div>
-                    <h2 className="text-2xl font-display font-bold text-gray-800 mb-2">
+                    <h2 className="text-2xl font-display font-bold text-gray-800 dark:text-gray-100 mb-2">
                         로그인이 필요해요
                     </h2>
-                    <p className="text-gray-500 text-center mb-6">
+                    <p className="text-gray-500 dark:text-gray-400 text-center mb-6">
                         리마인더를 설정하려면<br />먼저 로그인해주세요
                     </p>
                     <Button
@@ -273,13 +273,13 @@ function RemindersPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-memento-50 via-memento-75 to-white">
+        <div className="min-h-screen bg-gradient-to-b from-memento-50 via-memento-75 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
             {/* 헤더 */}
-            <div className="bg-white/80 backdrop-blur-lg border-b border-gray-200/50 px-4 py-3 sticky top-0 z-10">
+            <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-700/50 px-4 py-3 sticky top-0 z-10">
                 <div className="max-w-2xl mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <Bell className="w-5 h-5 text-memento-600" />
-                        <h1 className="font-semibold text-gray-800">케어 리마인더</h1>
+                        <Bell className="w-5 h-5 text-memento-600 dark:text-memento-400" />
+                        <h1 className="font-semibold text-gray-800 dark:text-gray-100">케어 리마인더</h1>
                     </div>
 
                     <Button
@@ -300,25 +300,25 @@ function RemindersPage() {
                         className="absolute inset-0 bg-black/50"
                         onClick={() => setIsModalOpen(false)}
                     />
-                    <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="reminder-modal-title">
-                        <div className="sticky top-0 bg-white border-b px-4 py-3 flex items-center justify-between rounded-t-2xl">
-                            <h2 id="reminder-modal-title" className="font-semibold text-gray-800 flex items-center gap-2">
-                                <Bell className="w-5 h-5 text-memento-600" />
+                    <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="reminder-modal-title">
+                        <div className="sticky top-0 bg-white dark:bg-gray-800 border-b dark:border-gray-700 px-4 py-3 flex items-center justify-between rounded-t-2xl">
+                            <h2 id="reminder-modal-title" className="font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                                <Bell className="w-5 h-5 text-memento-600 dark:text-memento-400" />
                                 새 리마인더
                             </h2>
                             <button
                                 onClick={() => setIsModalOpen(false)}
-                                className="p-1 hover:bg-gray-100 rounded-full"
+                                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
                                 aria-label="닫기"
                             >
-                                <X className="w-5 h-5 text-gray-500" />
+                                <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                             </button>
                         </div>
 
                         <div className="p-4 space-y-4">
                             {/* 반려동물 선택 */}
                             <div>
-                                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
                                     반려동물
                                 </label>
                                 <Select
@@ -343,7 +343,7 @@ function RemindersPage() {
 
                             {/* 리마인더 타입 */}
                             <div>
-                                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
                                     타입
                                 </label>
                                 <Select
@@ -368,7 +368,7 @@ function RemindersPage() {
 
                             {/* 제목 */}
                             <div>
-                                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
                                     제목
                                 </label>
                                 <Input
@@ -380,7 +380,7 @@ function RemindersPage() {
 
                             {/* 스케줄 타입 */}
                             <div>
-                                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
                                     반복
                                 </label>
                                 <Select
@@ -402,7 +402,7 @@ function RemindersPage() {
 
                             {/* 시간 */}
                             <div>
-                                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
                                     시간
                                 </label>
                                 <Input
@@ -415,7 +415,7 @@ function RemindersPage() {
                             {/* 요일 선택 (weekly) */}
                             {newReminder.scheduleType === "weekly" && (
                                 <div>
-                                    <label className="text-sm font-medium text-gray-700 mb-1 block">
+                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
                                         요일
                                     </label>
                                     <Select
@@ -439,7 +439,7 @@ function RemindersPage() {
                             {/* 날짜 선택 (monthly) */}
                             {newReminder.scheduleType === "monthly" && (
                                 <div>
-                                    <label className="text-sm font-medium text-gray-700 mb-1 block">
+                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
                                         날짜
                                     </label>
                                     <Select
@@ -463,7 +463,7 @@ function RemindersPage() {
                             {/* 특정 날짜 (once) */}
                             {newReminder.scheduleType === "once" && (
                                 <div>
-                                    <label className="text-sm font-medium text-gray-700 mb-1 block">
+                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
                                         날짜
                                     </label>
                                     <Input
@@ -497,13 +497,13 @@ function RemindersPage() {
                     </div>
                 ) : reminders.length === 0 ? (
                     <div className="text-center py-12">
-                        <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
-                            <Bell className="w-10 h-10 text-gray-300" />
+                        <div className="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
+                            <Bell className="w-10 h-10 text-gray-300 dark:text-gray-600" />
                         </div>
-                        <h3 className="text-lg font-medium text-gray-600 mb-2">
+                        <h3 className="text-lg font-medium text-gray-600 dark:text-gray-300 mb-2">
                             리마인더가 없어요
                         </h3>
-                        <p className="text-gray-400 text-sm mb-4">
+                        <p className="text-gray-400 dark:text-gray-500 text-sm mb-4">
                             산책, 식사, 약 시간 등을 잊지 않도록<br />리마인더를 설정해보세요
                         </p>
                         <Button
@@ -524,16 +524,16 @@ function RemindersPage() {
                             return (
                                 <div
                                     key={reminder.id}
-                                    className={`bg-white rounded-xl p-4 shadow-sm border transition-all ${
+                                    className={`bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border transition-all ${
                                         reminder.enabled
-                                            ? "border-gray-100"
-                                            : "border-gray-200 opacity-60"
+                                            ? "border-gray-100 dark:border-gray-700"
+                                            : "border-gray-200 dark:border-gray-700 opacity-60"
                                     }`}
                                 >
                                     <div className="flex items-start gap-3">
                                         {/* 아이콘 */}
                                         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                                            reminder.enabled ? "bg-memento-100" : "bg-gray-100"
+                                            reminder.enabled ? "bg-memento-100 dark:bg-memento-900/30" : "bg-gray-100 dark:bg-gray-700"
                                         }`}>
                                             <TypeIcon className={`w-5 h-5 ${
                                                 reminder.enabled ? typeInfo.color : "text-gray-400"
@@ -543,16 +543,16 @@ function RemindersPage() {
                                         {/* 내용 */}
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 mb-1">
-                                                <span className="font-medium text-gray-800 truncate">
+                                                <span className="font-medium text-gray-800 dark:text-gray-100 truncate">
                                                     {reminder.title}
                                                 </span>
                                                 {reminder.pet && (
-                                                    <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
+                                                    <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">
                                                         {reminder.pet.name}
                                                     </span>
                                                 )}
                                             </div>
-                                            <div className="flex items-center gap-2 text-sm text-gray-500">
+                                            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                                                 <CalendarDays className="w-3.5 h-3.5" />
                                                 <span>{getScheduleText(reminder.schedule)}</span>
                                             </div>
@@ -564,8 +564,8 @@ function RemindersPage() {
                                                 onClick={() => handleToggle(reminder.id, reminder.enabled)}
                                                 className={`p-2 rounded-lg transition-colors ${
                                                     reminder.enabled
-                                                        ? "text-memento-600 hover:bg-memento-100"
-                                                        : "text-gray-400 hover:bg-gray-100"
+                                                        ? "text-memento-600 hover:bg-memento-100 dark:text-memento-400 dark:hover:bg-memento-900/30"
+                                                        : "text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                                                 }`}
                                                 title={reminder.enabled ? "비활성화" : "활성화"}
                                                 aria-label={reminder.enabled ? "알림 비활성화" : "알림 활성화"}
@@ -578,7 +578,7 @@ function RemindersPage() {
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(reminder.id)}
-                                                className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                                className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                                                 title="삭제"
                                                 aria-label="알림 삭제"
                                             >

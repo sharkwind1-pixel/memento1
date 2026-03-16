@@ -31,7 +31,7 @@
 
 ### 1. 모바일 깜빡임 — 특정 계정에서 발생
 ### 2. QA CRITICAL 보안 이슈 — `docs/QA_SCAN_REPORT_20260306.md` (IDOR, CSP, JWT 스푸핑 등 7건)
-### 3. 미실행 SQL 6개 — `RELAY-ARCHIVE.md` 하단 참조
+### 3. 미실행 SQL — 통합 파일: `supabase/migrations/20260317_consolidated_pending.sql`
 ### 4. 결제 연동 — 포트원 V2 + KG이니시스 연동 완료 (승인 대기 중)
 ### 5. RLS 정책 수정 — 보류
 
@@ -39,7 +39,14 @@
 
 ## 미실행 마이그레이션 (긴급도: 높음)
 
-### `supabase/migrations/20260317_payment_security_fixes.sql`
-- **내용**: grant_premium/revoke_premium/expire_premium_subscriptions RPC를 authenticated/anon에서 REVOKE, merchant_uid UNIQUE 제약, payments.status CHECK, payments.amount 양수 CHECK
-- **위험**: authenticated 유저가 클라이언트에서 직접 `grant_premium` RPC를 호출해서 무료로 프리미엄 획득 가능 (현재 막혀있지 않음)
-- **실행 방법**: Supabase Dashboard > SQL Editor에서 위 파일 내용 복사 붙여넣기 실행
+### `supabase/migrations/20260317_consolidated_pending.sql`
+- **통합 파일**: 6개 미실행 SQL을 하나로 합침 (멱등성 보장, 위에서 아래로 순차 실행)
+- **내용**:
+  1. push_subscriptions.preferred_hour 컬럼
+  2. chat_mode 컬럼 (chat_messages, conversation_summaries) + 레거시 백필
+  3. RPC 보안 (auth.uid() + search_path + 가격 검증) — purchase/sell_minimi_item, increment_user_points
+  4. protect_sensitive_profile_columns 트리거 (JWT 스푸핑 방지)
+  5. 펫/사진 등록 제한 트리거
+  6. 결제 보안 (grant_premium REVOKE, merchant_uid UNIQUE, payments CHECK)
+- **위험**: authenticated 유저가 클라이언트에서 직접 `grant_premium` RPC를 호출해서 무료로 프리미엄 획득 가능
+- **실행 방법**: Supabase Dashboard > SQL Editor에서 위 파일 전체 복사 붙여넣기 실행
