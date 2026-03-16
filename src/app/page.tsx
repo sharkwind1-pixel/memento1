@@ -77,6 +77,9 @@ import OnboardingModal from "@/components/features/onboarding/OnboardingModal";
 import TutorialTour from "@/components/features/onboarding/TutorialTour";
 import PostOnboardingGuide from "@/components/features/onboarding/PostOnboardingGuide";
 import { safeGetItem, safeSetItem, safeRemoveItem } from "@/lib/safe-storage";
+import { toast } from "sonner";
+import { authFetch } from "@/lib/auth-fetch";
+import { API } from "@/config/apiEndpoints";
 // RecordPageTutorial 제거 — 펫 0마리 신규유저에게 사진/타임라인 안내하는 모순 해소
 // TutorialTour에서 전체 메뉴 소개 → PetFormModal로 바로 이어짐
 
@@ -105,7 +108,7 @@ function HomeContent() {
     // ========================================================================
     // Context & Hooks
     // ========================================================================
-    const { user, loading, profileLoaded } = useAuth();
+    const { user, loading, profileLoaded, refreshProfile } = useAuth();
     // 주의: usePets()를 호출하면 PetContext consumer가 되어 timeline 등 변경 시 전체 리렌더
     // 온보딩 체크에만 필요하므로 별도 effect에서 직접 Supabase 조회로 대체
     const router = useRouter();
@@ -118,6 +121,53 @@ function HomeContent() {
         const timer = setTimeout(() => setForceShow(true), 5000);
         return () => clearTimeout(timer);
     }, [loading]);
+
+    // ========================================================================
+    // 결제 결과 처리 (URL 파라미터)
+    // ========================================================================
+    const paymentHandledRef = useRef(false);
+    useEffect(() => {
+        if (paymentHandledRef.current) return;
+        const paymentStatus = searchParams.get("payment");
+        if (!paymentStatus) return;
+
+        paymentHandledRef.current = true;
+
+        // URL에서 결제 파라미터 제거
+        const cleanUrl = new URL(window.location.href);
+        cleanUrl.searchParams.delete("payment");
+        cleanUrl.searchParams.delete("paymentId");
+        cleanUrl.searchParams.delete("reason");
+        window.history.replaceState({}, "", cleanUrl.pathname + cleanUrl.search);
+
+        if (paymentStatus === "mobile-complete") {
+            // 모바일 리다이렉트 결제 완료 → 서버에서 검증
+            const paymentId = searchParams.get("paymentId");
+            if (paymentId) {
+                (async () => {
+                    try {
+                        const res = await authFetch(API.PAYMENT_COMPLETE, {
+                            method: "POST",
+                            body: JSON.stringify({ paymentId }),
+                        });
+                        if (res.ok) {
+                            toast.success("프리미엄이 활성화되었습니다!");
+                            refreshProfile();
+                        } else {
+                            const err = await res.json();
+                            toast.error(err.error || "결제 확인에 실패했습니다.");
+                        }
+                    } catch {
+                        toast.error("결제 확인 중 오류가 발생했습니다.");
+                    }
+                })();
+            }
+        } else if (paymentStatus === "failed") {
+            const reason = searchParams.get("reason") || "결제에 실패했습니다.";
+            toast.error(reason);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams]);
 
     // ========================================================================
     // 초기 상태 결정 (URL > localStorage > 기본값)

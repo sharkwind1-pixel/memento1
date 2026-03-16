@@ -20,9 +20,14 @@ import {
     Check,
     Crown,
     Star,
+    Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { PRICING, BASIC_LIMITS, PREMIUM_LIMITS, VIDEO } from "@/config/constants";
+import { requestPortOnePayment } from "@/lib/portone";
+import { authFetch } from "@/lib/auth-fetch";
+import { API } from "@/config/apiEndpoints";
+import { useAuth } from "@/contexts/AuthContext";
 
 export type PremiumFeature =
     | "ai-chat-limit"      // AI 펫톡 무제한
@@ -91,11 +96,74 @@ export default function PremiumModal({
     isLoggedIn = true,
 }: PremiumModalProps) {
     const [selectedPlan, setSelectedPlan] = useState<PlanType>("basic");
+    const [isProcessing, setIsProcessing] = useState(false);
+    const { user, refreshProfile } = useAuth();
     useEscapeClose(isOpen, onClose);
     if (!isOpen) return null;
 
     const info = featureInfo[feature];
     const Icon = info.icon;
+
+    /** 실제 결제 흐름 실행 */
+    const handlePayment = async () => {
+        if (isProcessing) return;
+        setIsProcessing(true);
+
+        try {
+            // 1. 결제 준비 (서버에서 금액 결정)
+            const prepareRes = await authFetch(API.PAYMENT_PREPARE, {
+                method: "POST",
+                body: JSON.stringify({ plan: selectedPlan }),
+            });
+
+            if (!prepareRes.ok) {
+                const err = await prepareRes.json();
+                toast.error(err.error || "결제 준비에 실패했습니다.");
+                return;
+            }
+
+            const { paymentId, orderName, amount } = await prepareRes.json();
+
+            // 2. 포트원 결제창 오픈
+            const paymentResult = await requestPortOnePayment({
+                paymentId,
+                orderName,
+                totalAmount: amount,
+                customerEmail: user?.email || undefined,
+            });
+
+            if (!paymentResult.success) {
+                if (paymentResult.error === "결제가 취소되었습니다.") {
+                    toast.info("결제가 취소되었습니다.");
+                } else {
+                    toast.error(paymentResult.error || "결제에 실패했습니다.");
+                }
+                return;
+            }
+
+            // 3. 서버에서 결제 검증 + 프리미엄 활성화
+            const completeRes = await authFetch(API.PAYMENT_COMPLETE, {
+                method: "POST",
+                body: JSON.stringify({ paymentId: paymentResult.paymentId }),
+            });
+
+            if (!completeRes.ok) {
+                const err = await completeRes.json();
+                toast.error(err.error || "결제 확인에 실패했습니다. 고객센터에 문의해주세요.");
+                return;
+            }
+
+            // 4. 성공!
+            toast.success("프리미엄이 활성화되었습니다!");
+            await refreshProfile();
+            onClose();
+        } catch (err) {
+            console.error("[PremiumModal] 결제 오류:", err);
+            toast.error("결제 중 오류가 발생했습니다. 다시 시도해주세요.");
+        } finally {
+            setIsProcessing(false);
+        }
+    };
 
     return (
         <div
@@ -229,20 +297,22 @@ export default function PremiumModal({
                                     selectedPlan === "premium"
                                         ? "bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700"
                                         : "bg-gradient-to-r from-sky-500 to-blue-500 hover:from-sky-600 hover:to-blue-600"
-                                }`}
-                                onClick={() => {
-                                    toast.info("결제 시스템을 준비하고 있어요. 무료로 먼저 이용해 보세요!");
-                                    onClose();
-                                }}
+                                } ${isProcessing ? "opacity-80 cursor-not-allowed" : ""}`}
+                                onClick={handlePayment}
+                                disabled={isProcessing}
                             >
-                                {selectedPlan === "premium" ? (
+                                {isProcessing ? (
+                                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                ) : selectedPlan === "premium" ? (
                                     <Crown className="w-5 h-5 mr-2" />
                                 ) : (
                                     <Star className="w-5 h-5 mr-2" />
                                 )}
-                                {selectedPlan === "premium"
-                                    ? `프리미엄 ${premiumPrice}원/월 시작`
-                                    : `베이직 ${basicPrice}원/월 시작`
+                                {isProcessing
+                                    ? "결제 진행 중..."
+                                    : selectedPlan === "premium"
+                                        ? `프리미엄 ${premiumPrice}원/월 시작`
+                                        : `베이직 ${basicPrice}원/월 시작`
                                 }
                             </Button>
                             <button

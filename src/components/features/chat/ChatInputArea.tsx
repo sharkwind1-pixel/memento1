@@ -22,7 +22,6 @@ import {
     Crown,
     X,
 } from "lucide-react";
-import { toast } from "sonner";
 import { MAX_MESSAGE_LENGTH, MAX_MESSAGE_LENGTH_PREMIUM } from "@/components/features/chat";
 import type { Pet } from "@/types";
 import type { LucideIcon } from "lucide-react";
@@ -130,7 +129,9 @@ export default function ChatInputArea({
                                 <p className="text-xs text-amber-600/80">
                                     <button
                                         onClick={() => {
-                                            toast.info("결제 시스템을 준비하고 있어요. 내일 다시 이야기해 보세요.");
+                                            if (onOpenPremiumModal) {
+                                                onOpenPremiumModal();
+                                            }
                                         }}
                                         className="underline hover:text-amber-700 transition-colors"
                                     >
@@ -149,7 +150,9 @@ export default function ChatInputArea({
                                 <Button
                                     className="bg-gradient-to-r from-memento-500 to-sky-500 hover:from-memento-600 hover:to-sky-600 text-white rounded-full px-6"
                                     onClick={() => {
-                                        toast.info("결제 시스템을 준비하고 있어요. 내일 다시 이야기해 보세요.");
+                                        if (onOpenPremiumModal) {
+                                            onOpenPremiumModal();
+                                        }
                                     }}
                                 >
                                     <Sparkles className="w-4 h-4 mr-2" />
