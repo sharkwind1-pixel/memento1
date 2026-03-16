@@ -635,7 +635,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         setLoading(false);
 
                         // 프로필 로드 + 출석 체크
-                        Promise.all([refreshProfile(), checkDailyLogin()]).catch(() => {});
+                        Promise.all([refreshProfile(), checkDailyLogin()]).catch((err) => { console.error("[AuthContext] post-login tasks failed:", err instanceof Error ? err.message : err); });
 
                         // 3. IP 기록 + 동일 IP 다중 계정 제한 체크
                         const token = session.access_token;
@@ -656,7 +656,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         setSession(session);
                         setUser(session?.user ?? null);
                         setLoading(false);
-                        Promise.all([refreshProfile(), checkDailyLogin()]).catch(() => {});
+                        Promise.all([refreshProfile(), checkDailyLogin()]).catch((err) => { console.error("[AuthContext] post-login tasks failed:", err instanceof Error ? err.message : err); });
                     }
                 }, 0);
 
@@ -729,12 +729,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         setSession(session);
                         setUser(session.user);
                         setLoading(false);
-                        Promise.all([refreshProfile(), checkDailyLogin()]).catch(() => {});
+                        Promise.all([refreshProfile(), checkDailyLogin()]).catch((err) => { console.error("[AuthContext] post-login tasks failed:", err instanceof Error ? err.message : err); });
                     } catch {
                         setSession(session);
                         setUser(session.user);
                         setLoading(false);
-                        Promise.all([refreshProfile(), checkDailyLogin()]).catch(() => {});
+                        Promise.all([refreshProfile(), checkDailyLogin()]).catch((err) => { console.error("[AuthContext] post-login tasks failed:", err instanceof Error ? err.message : err); });
                     }
                 }, 0);
             } else if (event !== "SIGNED_IN") {

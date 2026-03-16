@@ -160,6 +160,9 @@ export default function AuthCallbackPage() {
                     }
                 } catch (err) {
                     console.error("[auth/callback] Magic link error:", err);
+                    setError("로그인 처리 중 오류가 발생했습니다");
+                    setTimeout(() => router.replace("/"), 2000);
+                    return;
                 }
 
                 // 탈퇴/차단 계정 체크

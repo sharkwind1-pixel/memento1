@@ -386,7 +386,11 @@ export default function AccountSettingsModal({
                     const errData = await res.json().catch(() => ({}));
                     console.error("[회원탈퇴] auth 삭제 실패:", errData);
                     // auth 삭제 실패 시 profiles만이라도 삭제 시도
-                    await supabase.from("profiles").delete().eq("id", user?.id);
+                    const { error: profileDeleteErr } = await supabase.from("profiles").delete().eq("id", user?.id);
+                    if (profileDeleteErr) {
+                        console.error("[회원탈퇴] profiles 삭제도 실패:", profileDeleteErr.message);
+                        setDeleteError("탈퇴 처리 중 일부 오류가 발생했습니다. 고객센터에 문의해주세요.");
+                    }
                 }
             } else {
                 // 토큰 없는 경우 profiles만 삭제

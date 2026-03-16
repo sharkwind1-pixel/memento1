@@ -34,11 +34,10 @@ export default function Footer() {
             <div className="space-y-4">
               <h4 className="font-semibold text-gray-800 dark:text-gray-200">서비스</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">AI 펫톡</a></li>
-                <li><a href="#" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">커뮤니티</a></li>
-                <li><a href="#" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">입양 정보</a></li>
-                <li><a href="#" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">펫케어 가이드</a></li>
-                <li><a href="#" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">추모공간</a></li>
+                <li><a href="/?tab=ai-chat" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">AI 펫톡</a></li>
+                <li><a href="/?tab=community" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">커뮤니티</a></li>
+                <li><a href="/?tab=adoption" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">입양 정보</a></li>
+                <li><a href="/?tab=community&sub=memorial" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">추모공간</a></li>
               </ul>
             </div>
 
@@ -46,10 +45,9 @@ export default function Footer() {
             <div className="space-y-4">
               <h4 className="font-semibold text-gray-800 dark:text-gray-200">고객지원</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">도움말</a></li>
-                <li><a href="#" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">FAQ</a></li>
-                <li><a href="#" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">문의하기</a></li>
-                <li><a href="#" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">신고하기</a></li>
+                <li><a href="mailto:sharkwind1@gmail.com?subject=도움말 문의" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">도움말</a></li>
+                <li><a href="mailto:sharkwind1@gmail.com?subject=문의" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">문의하기</a></li>
+                <li><a href="mailto:sharkwind1@gmail.com?subject=신고" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">신고하기</a></li>
               </ul>
             </div>
 

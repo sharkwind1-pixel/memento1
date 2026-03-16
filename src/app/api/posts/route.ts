@@ -110,7 +110,8 @@ export async function GET(request: NextRequest) {
         if (sortBy === "popular") {
             query = query.order("likes", { ascending: false });
         } else if (sortBy === "comments") {
-            query = query.order("created_at", { ascending: false }); // TODO: 댓글 수 정렬
+            // 댓글 수 정렬: DB에서 직접 관계 count 정렬 불가 → 최신순 조회 후 JS에서 재정렬
+            query = query.order("created_at", { ascending: false });
         } else {
             query = query.order("created_at", { ascending: false });
         }
@@ -179,6 +180,11 @@ export async function GET(request: NextRequest) {
             authorMinimiSlug: userIdToMinimiSlug[post.user_id] || null,
             createdAt: post.created_at,
         }));
+
+        // 댓글 수 정렬이 요청된 경우 JS에서 재정렬
+        if (sortBy === "comments") {
+            posts.sort((a, b) => b.comments - a.comments);
+        }
 
         return NextResponse.json({ posts, total: count });
     } catch {

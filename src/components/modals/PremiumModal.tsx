@@ -231,8 +231,7 @@ export default function PremiumModal({
                                         : "bg-gradient-to-r from-sky-500 to-blue-500 hover:from-sky-600 hover:to-blue-600"
                                 }`}
                                 onClick={() => {
-                                    // TODO: 결제 페이지로 이동
-                                    toast.info("결제 시스템이 곧 오픈됩니다. 조금만 기다려주세요!");
+                                    toast.info("결제 시스템을 준비하고 있어요. 무료로 먼저 이용해 보세요!");
                                     onClose();
                                 }}
                             >

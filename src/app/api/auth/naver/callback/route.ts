@@ -193,8 +193,9 @@ export async function GET(request: NextRequest) {
                         );
                     }
                 }
-            } catch {
-                // last_ip 컬럼이 없을 경우 무시
+            } catch (ipErr) {
+                // last_ip 컬럼이 없거나 쿼리 실패 시 로깅 후 진행
+                console.warn("[Naver Auth] IP conflict check failed:", ipErr instanceof Error ? ipErr.message : ipErr);
             }
         }
 
@@ -206,8 +207,8 @@ export async function GET(request: NextRequest) {
                     .from("profiles")
                     .update({ last_ip: clientIP })
                     .eq("id", userId);
-            } catch {
-                // last_ip 컬럼 없을 경우 무시
+            } catch (ipRecordErr) {
+                console.warn("[Naver Auth] IP record update failed:", ipRecordErr instanceof Error ? ipRecordErr.message : ipRecordErr);
             }
         }
 
