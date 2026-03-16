@@ -140,6 +140,7 @@ export default function RootLayout({
                                         "addressCountry": "KR",
                                     },
                                     "taxID": "687-08-03135",
+                                    "telephone": "010-5458-2506",
                                     "email": "sharkwind1@gmail.com",
                                     "founder": { "@type": "Person", "name": "안승빈" },
                                 },
@@ -212,7 +213,7 @@ export default function RootLayout({
                             <p><strong>메멘토애니</strong> | 대표 안승빈</p>
                             <p>사업자등록번호: 687-08-03135 | 업태: 정보통신업 | 종목: 포털 및 기타 인터넷 정보 매개 서비스업</p>
                             <p>소재지: 서울특별시 강북구 덕릉로41길 78-5, 1층 102호(번동)</p>
-                            <p>이메일: sharkwind1@gmail.com</p>
+                            <p>전화: 010-5458-2506 | 이메일: sharkwind1@gmail.com</p>
                             <p className="pt-1">2026 메멘토애니. 모든 권리 보유.</p>
                         </div>
                     </div>

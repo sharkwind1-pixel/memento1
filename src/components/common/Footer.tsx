@@ -70,7 +70,7 @@ export default function Footer() {
               <p><strong className="text-gray-700 dark:text-gray-300">메멘토애니</strong> | 대표 안승빈</p>
               <p>사업자등록번호: 687-08-03135 | 업태: 정보통신업</p>
               <p>소재지: 서울특별시 강북구 덕릉로41길 78-5, 1층 102호(번동)</p>
-              <p>문의: sharkwind1@gmail.com</p>
+              <p>전화: 010-5458-2506 | 문의: sharkwind1@gmail.com</p>
             </div>
 
             <div className="flex flex-wrap gap-4">
