@@ -284,11 +284,12 @@ export default function LocationTermsPage() {
                         </h2>
                         <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 text-sm text-gray-600 dark:text-gray-300 space-y-1">
                             <p><strong className="text-gray-700 dark:text-gray-200">상호</strong>: 메멘토애니</p>
+                            <p><strong className="text-gray-700 dark:text-gray-200">사업자등록번호</strong>: 687-08-03135</p>
                             <p><strong className="text-gray-700 dark:text-gray-200">대표자</strong>: 안승빈</p>
+                            <p><strong className="text-gray-700 dark:text-gray-200">주소</strong>: 서울특별시 강북구 덕릉로41길 78-5, 1층 102호(번동)</p>
+                            <p><strong className="text-gray-700 dark:text-gray-200">업태</strong>: 정보통신업</p>
+                            <p><strong className="text-gray-700 dark:text-gray-200">종목</strong>: 포털 및 기타 인터넷 정보 매개 서비스업</p>
                             <p><strong className="text-gray-700 dark:text-gray-200">이메일</strong>: sharkwind1@gmail.com</p>
-                            <p className="text-xs text-gray-400 mt-2">
-                                사업자 등록 준비 중이며, 등록 완료 시 사업자등록번호 및 주소가 추가됩니다.
-                            </p>
                         </div>
                     </section>
 
