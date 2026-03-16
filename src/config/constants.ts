@@ -34,6 +34,12 @@ export const PRICING = {
     PREMIUM_MONTHLY: 14900,     // 프리미엄 월 구독
 } as const;
 
+// ===== 결제 플랜 기간 (일) =====
+export const PLAN_DURATION_DAYS = {
+    basic: 30,
+    premium: 30,
+} as const;
+
 // ===== UI 설정 =====
 export const UI = {
     DEBOUNCE_MS: 300,           // 검색 디바운스 시간

@@ -9,6 +9,9 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
+// 쿼리 파라미터 기반이므로 캐시 방지 필수
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const paymentId = searchParams.get("paymentId") || "";

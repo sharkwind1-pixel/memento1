@@ -174,6 +174,68 @@ export default function RootLayout({
                 />
             </head>
             <body className={`${inter.variable} font-sans`}>
+                {/* SSR 랜딩 콘텐츠 - JS 없는 크롤러/봇에게 서비스 정보 노출. JS 로드 후 숨김 */}
+                <noscript>
+                    <div className="max-w-4xl mx-auto px-4 py-12 space-y-8">
+                        <div className="text-center space-y-4">
+                            <h1 className="text-3xl font-bold text-gray-900">메멘토애니 - 특별한 매일을 함께</h1>
+                            <p className="text-lg text-gray-600">반려동물과 함께하는 모든 순간을 기록하고, 이별 후에도 따뜻한 추억을 간직할 수 있는 메모리얼 커뮤니티 플랫폼</p>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="p-6 bg-blue-50 rounded-lg">
+                                <h2 className="text-xl font-semibold text-blue-800 mb-2">AI 펫톡</h2>
+                                <p className="text-gray-700">반려동물의 성격과 특성을 반영한 AI 대화 서비스. 일상 모드와 추모 모드를 지원합니다.</p>
+                            </div>
+                            <div className="p-6 bg-sky-50 rounded-lg">
+                                <h2 className="text-xl font-semibold text-sky-800 mb-2">타임라인</h2>
+                                <p className="text-gray-700">반려동물과의 소중한 순간들을 타임라인으로 기록하고 사진과 함께 보관합니다.</p>
+                            </div>
+                            <div className="p-6 bg-amber-50 rounded-lg">
+                                <h2 className="text-xl font-semibold text-amber-800 mb-2">커뮤니티</h2>
+                                <p className="text-gray-700">반려동물 가족들과 소통하고, 정보를 나누고, 서로를 위로하는 공간입니다.</p>
+                            </div>
+                            <div className="p-6 bg-green-50 rounded-lg">
+                                <h2 className="text-xl font-semibold text-green-800 mb-2">케어 리마인더</h2>
+                                <p className="text-gray-700">예방접종, 건강검진, 산책 시간 등을 알려주는 스마트 케어 알림 서비스.</p>
+                            </div>
+                        </div>
+                        <div className="bg-gray-50 p-6 rounded-lg">
+                            <h2 className="text-xl font-semibold text-gray-800 mb-4">요금제 안내</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="p-4 bg-white rounded-lg border">
+                                    <h3 className="font-bold text-gray-900">무료 플랜</h3>
+                                    <p className="text-2xl font-bold text-gray-900 my-2">0원</p>
+                                    <ul className="text-sm text-gray-600 space-y-1">
+                                        <li>AI 펫톡 하루 10회</li>
+                                        <li>반려동물 1마리 등록</li>
+                                        <li>사진 펫당 50장</li>
+                                    </ul>
+                                </div>
+                                <div className="p-4 bg-white rounded-lg border-2 border-blue-400">
+                                    <h3 className="font-bold text-blue-600">베이직 플랜</h3>
+                                    <p className="text-2xl font-bold text-blue-600 my-2">월 7,900원</p>
+                                    <ul className="text-sm text-gray-600 space-y-1">
+                                        <li>AI 펫톡 하루 50회</li>
+                                        <li>반려동물 3마리 등록</li>
+                                        <li>사진 펫당 200장</li>
+                                        <li>AI 영상 월 3회</li>
+                                    </ul>
+                                </div>
+                                <div className="p-4 bg-white rounded-lg border-2 border-sky-400">
+                                    <h3 className="font-bold text-sky-600">프리미엄 플랜</h3>
+                                    <p className="text-2xl font-bold text-sky-600 my-2">월 14,900원</p>
+                                    <ul className="text-sm text-gray-600 space-y-1">
+                                        <li>AI 펫톡 무제한</li>
+                                        <li>반려동물 10마리 등록</li>
+                                        <li>사진 펫당 1,000장</li>
+                                        <li>AI 영상 월 6회</li>
+                                        <li>우선 고객 지원</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </noscript>
                 <AuthProvider>
                     <PetProvider>{children}</PetProvider>
                 </AuthProvider>

@@ -32,5 +32,14 @@
 ### 1. 모바일 깜빡임 — 특정 계정에서 발생
 ### 2. QA CRITICAL 보안 이슈 — `docs/QA_SCAN_REPORT_20260306.md` (IDOR, CSP, JWT 스푸핑 등 7건)
 ### 3. 미실행 SQL 6개 — `RELAY-ARCHIVE.md` 하단 참조
-### 4. 결제 연동 — 3월 말~4월 초 예정
+### 4. 결제 연동 — 포트원 V2 + KG이니시스 연동 완료 (승인 대기 중)
 ### 5. RLS 정책 수정 — 보류
+
+---
+
+## 미실행 마이그레이션 (긴급도: 높음)
+
+### `supabase/migrations/20260317_payment_security_fixes.sql`
+- **내용**: grant_premium/revoke_premium/expire_premium_subscriptions RPC를 authenticated/anon에서 REVOKE, merchant_uid UNIQUE 제약, payments.status CHECK, payments.amount 양수 CHECK
+- **위험**: authenticated 유저가 클라이언트에서 직접 `grant_premium` RPC를 호출해서 무료로 프리미엄 획득 가능 (현재 막혀있지 않음)
+- **실행 방법**: Supabase Dashboard > SQL Editor에서 위 파일 내용 복사 붙여넣기 실행

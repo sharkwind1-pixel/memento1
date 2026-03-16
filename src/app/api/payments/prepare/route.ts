@@ -10,6 +10,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { getAuthUser, createAdminSupabase } from "@/lib/supabase-server";
 import { PRICING } from "@/config/constants";
 
@@ -64,12 +65,18 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // 4. paymentId 생성
-        const timestamp = Date.now();
-        const userSuffix = user.id.slice(0, 6);
-        const paymentId = `memento_${timestamp}_${userSuffix}`;
+        // 4. paymentId 생성 (예측 불가능한 UUID 사용)
+        const paymentId = `memento_${randomUUID()}`;
 
-        // 5. payments 테이블에 pending 레코드 생성
+        // 5. 기존 pending 레코드 정리 (반복 클릭으로 인한 orphaned 레코드 방지)
+        await adminSupabase
+            .from("payments")
+            .update({ status: "cancelled" })
+            .eq("user_id", user.id)
+            .eq("plan", plan)
+            .eq("status", "pending");
+
+        // 6. payments 테이블에 pending 레코드 생성
         const { error: insertError } = await adminSupabase
             .from("payments")
             .insert({
@@ -89,7 +96,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 6. 클라이언트에 필요한 정보 반환
+        // 7. 클라이언트에 필요한 정보 반환
         return NextResponse.json({
             paymentId,
             orderName,

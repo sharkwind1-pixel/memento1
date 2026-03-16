@@ -4,21 +4,21 @@
  *
  * 클라이언트에서 포트원 결제 완료 후 paymentId를 보내면:
  * 1. 포트원 API로 결제 내역 조회 (금액 위변조 방지)
- * 2. payments 테이블의 pending 레코드와 금액 비교
+ * 2. payments 테이블의 pending 레코드를 atomic UPDATE (race condition 방지)
  * 3. 일치하면 payments 상태를 paid로 변경
  * 4. grant_premium RPC 호출 → 프리미엄 활성화
+ *
+ * 보안:
+ * - Atomic UPDATE ... WHERE status='pending' 으로 중복 처리 방지
+ * - grant_premium 실패 시 에러 반환 (success: false)
+ * - payments update 실패 시 grant_premium 호출 안 함
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser, createAdminSupabase } from "@/lib/supabase-server";
+import { PLAN_DURATION_DAYS } from "@/config/constants";
 
 const PORTONE_API_SECRET = process.env.PORTONE_API_SECRET || "";
-
-// plan → 프리미엄 기간 (일)
-const PLAN_DURATION: Record<string, number> = {
-    basic: 30,
-    premium: 30,
-};
 
 export async function POST(request: NextRequest) {
     try {
@@ -41,25 +41,42 @@ export async function POST(request: NextRequest) {
 
         const adminSupabase = createAdminSupabase();
 
-        // 3. payments 테이블에서 pending 레코드 조회
-        const { data: payment, error: paymentError } = await adminSupabase
+        // 3. Atomic UPDATE: pending → verifying (race condition 방지)
+        // 두 요청이 동시에 오면 하나만 성공하고 나머지는 빈 배열 반환
+        const { data: claimedPayments, error: claimError } = await adminSupabase
             .from("payments")
-            .select("*")
+            .update({ status: "verifying" })
             .eq("merchant_uid", paymentId)
             .eq("user_id", user.id)
             .eq("status", "pending")
-            .single();
+            .select("*");
 
-        if (paymentError || !payment) {
+        if (claimError) {
+            console.error("[payments/complete] claim 오류:", claimError.message);
             return NextResponse.json(
-                { error: "결제 내역을 찾을 수 없습니다." },
-                { status: 404 }
+                { error: "결제 처리 중 오류가 발생했습니다." },
+                { status: 500 }
             );
         }
+
+        if (!claimedPayments || claimedPayments.length === 0) {
+            // 이미 다른 요청이 처리했거나 존재하지 않는 결제
+            return NextResponse.json(
+                { error: "결제 내역을 찾을 수 없거나 이미 처리된 결제입니다." },
+                { status: 409 }
+            );
+        }
+
+        const payment = claimedPayments[0];
 
         // 4. 포트원 API로 결제 검증
         if (!PORTONE_API_SECRET) {
             console.error("[payments/complete] PORTONE_API_SECRET 미설정");
+            // verifying → failed 롤백
+            await adminSupabase
+                .from("payments")
+                .update({ status: "failed", metadata: { ...payment.metadata, error: "PORTONE_API_SECRET 미설정" } })
+                .eq("id", payment.id);
             return NextResponse.json(
                 { error: "결제 검증 설정 오류" },
                 { status: 500 }
@@ -78,6 +95,11 @@ export async function POST(request: NextRequest) {
         if (!portoneResponse.ok) {
             const errText = await portoneResponse.text();
             console.error("[payments/complete] 포트원 API 오류:", errText);
+            // verifying → failed 롤백
+            await adminSupabase
+                .from("payments")
+                .update({ status: "failed", metadata: { ...payment.metadata, portone_api_error: errText } })
+                .eq("id", payment.id);
             return NextResponse.json(
                 { error: "결제 검증에 실패했습니다." },
                 { status: 500 }
@@ -88,7 +110,6 @@ export async function POST(request: NextRequest) {
 
         // 5. 결제 상태 확인
         if (portoneData.status !== "PAID") {
-            // 결제 실패/취소
             await adminSupabase
                 .from("payments")
                 .update({
@@ -127,7 +148,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 7. payments 상태 업데이트 → paid
+        // 7. payments 상태 업데이트 → paid (update 실패 시 grant_premium 호출 안 함)
         const { error: updateError } = await adminSupabase
             .from("payments")
             .update({
@@ -140,15 +161,20 @@ export async function POST(request: NextRequest) {
                     portone_card: portoneData.method?.card?.name,
                 },
             })
-            .eq("id", payment.id);
+            .eq("id", payment.id)
+            .eq("status", "verifying"); // 한번 더 보호
 
         if (updateError) {
             console.error("[payments/complete] payments 업데이트 오류:", updateError.message);
+            return NextResponse.json(
+                { error: "결제 상태 업데이트에 실패했습니다. 고객센터에 문의해주세요." },
+                { status: 500 }
+            );
         }
 
         // 8. 프리미엄 부여 (grant_premium RPC)
         const plan = payment.plan;
-        const durationDays = PLAN_DURATION[plan] || 30;
+        const durationDays = PLAN_DURATION_DAYS[plan as keyof typeof PLAN_DURATION_DAYS] || 30;
 
         const { error: grantError } = await adminSupabase.rpc("grant_premium", {
             p_user_id: user.id,
@@ -160,8 +186,7 @@ export async function POST(request: NextRequest) {
 
         if (grantError) {
             console.error("[payments/complete] grant_premium 오류:", grantError.message);
-            // 결제는 됐는데 프리미엄 부여 실패 → 관리자 알림 필요
-            // 일단 결제는 성공으로 처리하고, 수동 복구 대비 로그 남김
+            // 결제는 됐는데 프리미엄 부여 실패 → grant_failed 마킹 + 에러 반환
             await adminSupabase
                 .from("payments")
                 .update({
@@ -172,6 +197,15 @@ export async function POST(request: NextRequest) {
                     },
                 })
                 .eq("id", payment.id);
+
+            return NextResponse.json(
+                {
+                    error: "결제는 완료되었으나 프리미엄 활성화에 실패했습니다. 자동으로 처리되며, 지속될 경우 고객센터에 문의해주세요.",
+                    paymentCompleted: true,
+                    grantFailed: true,
+                },
+                { status: 500 }
+            );
         }
 
         return NextResponse.json({
