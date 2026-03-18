@@ -212,7 +212,7 @@ export function getNextLevelInfo(points: number): { nextLevel: PointLevel | null
 
 // ===== 매거진 자동 생성 =====
 export const MAGAZINE_AUTO = {
-    AUTO_PUBLISH: true,            // 자동 발행 (생성 즉시 published)
+    AUTO_PUBLISH: false,           // 초안(draft)으로 생성, 관리자가 편집 후 발행
     ARTICLES_PER_WEEK: 3,
     PUBLISH_DAYS: [1, 3, 5],       // 월(1), 수(3), 금(5)
     AUTHOR_NAME: "메멘토애니 편집팀",
