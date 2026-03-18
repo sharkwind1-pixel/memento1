@@ -14,11 +14,11 @@ export const BACKGROUND_CATALOG: BackgroundTheme[] = [
     {
         id: "bg_default_sky",
         slug: "default_sky",
-        name: "하늘 공원",
+        name: "기본 배경",
         category: "nature",
         price: 0,
-        description: "맑은 하늘과 잔디밭이 있는 기본 공원",
-        cssBackground: "linear-gradient(180deg, #87CEEB 0%, #E0F7FF 40%, #90EE90 75%, #228B22 100%)",
+        description: "",
+        cssBackground: "linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%)",
     },
     // ============================================
     // 픽셀아트 이미지 배경 (8종, 200포인트 통일)

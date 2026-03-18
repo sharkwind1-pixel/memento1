@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
+import { createAdminSupabase, getAuthUser } from "@/lib/supabase-server";
 import { getClientIP, checkRateLimit, getRateLimitHeaders, checkVPN, getVPNBlockResponse } from "@/lib/rate-limit";
 import { CHARACTER_CATALOG } from "@/data/minimiPixels";
 import { MINIMI } from "@/config/constants";
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
         const itemName = character.name;
         const itemPrice = character.price;
 
-        const supabase = await createServerSupabase();
+        const supabase = createAdminSupabase();
 
         // 4. RPC 시도 → 실패 시 다단계 폴백
         const { data: rpcData, error: rpcError } = await supabase.rpc("purchase_minimi_item", {

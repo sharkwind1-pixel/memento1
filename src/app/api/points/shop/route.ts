@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
+import { createAdminSupabase, getAuthUser } from "@/lib/supabase-server";
 import { getClientIP, checkRateLimit, getRateLimitHeaders, checkVPN, getVPNBlockResponse } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "유효하지 않은 아이템입니다" }, { status: 400 });
         }
 
-        const supabase = await createServerSupabase();
+        const supabase = createAdminSupabase();
 
         // 4. 보너스 일수 계산 (프리미엄 체험인 경우)
         let bonusDays: number | null = null;

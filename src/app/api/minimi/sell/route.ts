@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
+import { createAdminSupabase, getAuthUser } from "@/lib/supabase-server";
 import { getClientIP, checkRateLimit, getRateLimitHeaders, checkVPN, getVPNBlockResponse } from "@/lib/rate-limit";
 import { CHARACTER_CATALOG } from "@/data/minimiPixels";
 import { MINIMI } from "@/config/constants";
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "잘못된 아이템 유형입니다" }, { status: 400 });
         }
 
-        const supabase = await createServerSupabase();
+        const supabase = createAdminSupabase();
 
         // 캐릭터 검증
         const character = CHARACTER_CATALOG.find(c => c.slug === itemSlug);

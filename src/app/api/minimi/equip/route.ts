@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
+import { createAdminSupabase, getAuthUser } from "@/lib/supabase-server";
 import { CHARACTER_CATALOG } from "@/data/minimiPixels";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         const { minimiSlug } = body;
 
-        const supabase = await createServerSupabase();
+        const supabase = createAdminSupabase();
 
         // 캐릭터 보유 확인 (null이면 해제)
         let ownedUuid: string | null = null;
