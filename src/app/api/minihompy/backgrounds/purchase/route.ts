@@ -108,13 +108,15 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "구매에 실패했습니다" }, { status: 500 });
         }
 
-        // 거래 내역 기록
-        await supabase.from("point_transactions").insert({
-            user_id: user.id,
-            action_type: "bg_purchase",
-            points_earned: -bg.price,
-            metadata: { slug, name: bg.name },
-        });
+        // 거래 내역 기록 (실패해도 구매 자체는 성공)
+        try {
+            await supabase.from("point_transactions").insert({
+                user_id: user.id,
+                action_type: "bg_purchase",
+                points_earned: -bg.price,
+                metadata: { slug, name: bg.name },
+            });
+        } catch { /* 거래 내역 기록 실패는 무시 */ }
 
         return NextResponse.json({
             success: true,
