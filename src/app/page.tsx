@@ -318,13 +318,20 @@ function HomeContent() {
             if (!user) return;
 
             // 같은 유저에 대해 이미 체크 완료했으면 스킵
-            if (newUserFlowCheckedRef.current === user.id) return;
+            if (newUserFlowCheckedRef.current === user.id) {
+                console.log("[checkNewUserFlow] SKIP: already checked for", user.id);
+                return;
+            }
 
             // 이미 모달이 열려 있으면 중복 방지
-            if (modalOpenRef.current) return;
+            if (modalOpenRef.current) {
+                console.log("[checkNewUserFlow] SKIP: modal open");
+                return;
+            }
 
             // 이번 세션에서 이미 온보딩을 한 번 트리거했으면 다시 안 띄움
             if (onboardingTriggeredRef.current) {
+                console.log("[checkNewUserFlow] SKIP: onboarding already triggered this session");
                 newUserFlowCheckedRef.current = user.id;
                 return;
             }
@@ -335,6 +342,14 @@ function HomeContent() {
                     .select("nickname, tutorial_completed_at, onboarding_completed_at, user_type")
                     .eq("id", user.id)
                     .single();
+
+                console.log("[checkNewUserFlow] DB profile:", {
+                    nickname: profileData?.nickname,
+                    onboarding_completed_at: profileData?.onboarding_completed_at,
+                    tutorial_completed_at: profileData?.tutorial_completed_at,
+                    user_type: profileData?.user_type,
+                    error: profileError?.message,
+                });
 
                 // 프로필 조회 실패 시 (RLS/세션 문제 등) → 온보딩 강제 안 함
                 if (profileError || !profileData) {
@@ -358,6 +373,7 @@ function HomeContent() {
 
                 // 2. 닉네임이 없으면 설정 필요 (localStorage 동기화 이후에 체크)
                 if (!profileData.nickname) {
+                    console.log("[checkNewUserFlow] → NicknameSetup (no nickname)");
                     setShowNicknameSetup(true);
                     return;
                 }
@@ -366,6 +382,7 @@ function HomeContent() {
 
                 // 3. 온보딩 완료된 유저 → 통과
                 if (onboardingDone) {
+                    console.log("[checkNewUserFlow] → SKIP: onboarding already done in DB");
                     newUserFlowCheckedRef.current = user.id;
                     supabase.from("profiles").update({
                         last_seen_at: new Date().toISOString(),
@@ -381,7 +398,10 @@ function HomeContent() {
                         .select("id", { count: "exact", head: true })
                         .eq("user_id", user.id);
 
+                    console.log("[checkNewUserFlow] user_type:", profileData.user_type, "petCount:", petCount);
+
                     if ((petCount ?? 0) > 0) {
+                        console.log("[checkNewUserFlow] → SKIP: existing user with pets, auto-marking onboarding complete");
                         newUserFlowCheckedRef.current = user.id;
                         // 펫 있는 기존 유저 → DB에 완료 기록
                         supabase.from("profiles").update({
@@ -394,10 +414,12 @@ function HomeContent() {
                 }
 
                 // 5. 신규 유저: 온보딩 표시 (1회만)
+                console.log("[checkNewUserFlow] → SHOW ONBOARDING");
                 onboardingTriggeredRef.current = true;
                 setShowOnboarding(true);
-            } catch {
+            } catch (err) {
                 // 에러 시 → 온보딩 건너뛰기 (무한 루프 방지)
+                console.error("[checkNewUserFlow] ERROR:", err);
                 newUserFlowCheckedRef.current = user?.id || null;
             }
         };
