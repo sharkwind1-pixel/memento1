@@ -24,7 +24,7 @@ import {
 import MiniHomepyTab from "@/components/features/minihompy/MiniHomepyTab";
 
 import { TabType } from "@/types";
-import { FREE_LIMITS } from "@/config/constants";
+import { FREE_LIMITS, getLimitsForTier } from "@/config/constants";
 
 import MemorialSwitchModal from "@/components/modals/MemorialSwitchModal";
 import MediaUploadModal from "@/components/features/record/MediaUploadModal";
@@ -52,7 +52,7 @@ interface RecordPageProps {
 }
 
 function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false }: RecordPageProps) {
-    const { user, signOut, updateProfile, isPremiumUser, isAdminUser, points, userPetType, checkNickname } = useAuth();
+    const { user, signOut, updateProfile, isPremiumUser, isAdminUser, points, userPetType, checkNickname, subscriptionTier } = useAuth();
     const {
         pets,
         selectedPetId,
@@ -260,7 +260,8 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
 
     // 새 반려동물 추가 (무료 회원 제한 체크)
     const handleAddNewPet = () => {
-        if (!isPremium && pets.length >= FREE_LIMITS.PETS) {
+        const petLimit = getLimitsForTier(subscriptionTier).PETS;
+        if (pets.length >= petLimit) {
             setPremiumFeature("pet-limit");
             setIsPremiumModalOpen(true);
             return;

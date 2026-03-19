@@ -12,7 +12,7 @@
 
 import { NextResponse } from "next/server";
 import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
-import { VIDEO } from "@/config/constants";
+import { VIDEO, type SubscriptionTier, getVideoMonthlyQuota } from "@/config/constants";
 
 export const dynamic = "force-dynamic";
 
@@ -29,15 +29,21 @@ export async function GET() {
 
         const supabase = await createServerSupabase();
 
-        // 2. 프리미엄 여부 확인
+        // 2. 프리미엄/구독 등급 확인
         const { data: profile } = await supabase
             .from("profiles")
-            .select("is_premium, premium_expires_at")
+            .select("is_premium, premium_expires_at, subscription_tier")
             .eq("id", user.id)
             .single();
 
         const isPremium = profile?.is_premium &&
             (!profile.premium_expires_at || new Date(profile.premium_expires_at) > new Date());
+
+        // subscription_tier 결정
+        const subscriptionTier: SubscriptionTier = isPremium
+            ? ((profile?.subscription_tier as SubscriptionTier) || "premium")
+            : "free";
+        const monthlyQuota = getVideoMonthlyQuota(subscriptionTier);
 
         // 3. 이번 달 생성 횟수 (실패 제외, KST 기준)
         const kstOffset = 9 * 60 * 60 * 1000;
@@ -62,12 +68,12 @@ export async function GET() {
         const safeMonthlyCount = monthlyCount ?? 0;
         const safeLifetimeCount = lifetimeCount ?? 0;
 
-        if (isPremium) {
-            // 프리미엄 회원: 월간 쿼터 기준
+        if (subscriptionTier !== "free") {
+            // 베이직/프리미엄 회원: 월간 쿼터 기준
             return NextResponse.json({
                 used: safeMonthlyCount,
-                limit: VIDEO.BASIC_MONTHLY,
-                tier: "basic",
+                limit: monthlyQuota,
+                tier: subscriptionTier,
                 isLifetimeFree: false,
                 lifetimeFreeUsed: true,
             });

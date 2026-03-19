@@ -16,7 +16,7 @@ import {
 } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
-import { ADMIN_EMAILS, type PetIconType } from "@/config/constants";
+import { ADMIN_EMAILS, type PetIconType, type SubscriptionTier } from "@/config/constants";
 import type { OnboardingData, MinimiEquipState } from "@/types";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
@@ -46,6 +46,7 @@ interface AuthContextType {
     // 권한 상태 (DB + 이메일 기반 통합 체크)
     isAdminUser: boolean;
     isPremiumUser: boolean;
+    subscriptionTier: SubscriptionTier;
     refreshProfile: () => Promise<void>;
     // 프로필 로딩 완료 플래그
     profileLoaded: boolean;
@@ -91,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState(true);
     const [isAdminUser, setIsAdminUser] = useState(false);
     const [isPremiumUser, setIsPremiumUser] = useState(false);
+    const [subscriptionTier, setSubscriptionTier] = useState<SubscriptionTier>("free");
     const [points, setPoints] = useState(0);
     const [pointsLoaded, setPointsLoaded] = useState(false);
     const [profileLoaded, setProfileLoaded] = useState(false);
@@ -126,7 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const [profileResult, minimiListResult, firstPetResult] = await Promise.all([
                 supabase
                     .from("profiles")
-                    .select("is_admin, is_premium, premium_expires_at, points, onboarding_data, equipped_minimi_id, equipped_accessories, minimi_pixel_data, minimi_accessories_data, is_simple_mode")
+                    .select("is_admin, is_premium, premium_expires_at, points, onboarding_data, equipped_minimi_id, equipped_accessories, minimi_pixel_data, minimi_accessories_data, is_simple_mode, subscription_tier")
                     .eq("id", currentUser.id)
                     .single(),
                 supabase
@@ -159,7 +161,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         is_admin: false,
                         is_banned: false,
                     }, { onConflict: "id" })
-                    .select("is_admin, is_premium, premium_expires_at, points, onboarding_data, equipped_minimi_id, equipped_accessories, minimi_pixel_data, minimi_accessories_data, is_simple_mode")
+                    .select("is_admin, is_premium, premium_expires_at, points, onboarding_data, equipped_minimi_id, equipped_accessories, minimi_pixel_data, minimi_accessories_data, is_simple_mode, subscription_tier")
                     .single();
                 if (!insertErr && newProfile) {
                     data = newProfile;
@@ -181,12 +183,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const dbAdmin = !error && data?.is_admin === true;
             setIsAdminUser(emailAdmin || metaAdmin || dbAdmin);
 
-            // 프리미엄 체크
+            // 프리미엄 체크 + 구독 티어
             if (!error && data?.is_premium === true) {
                 const expiresAt = data.premium_expires_at;
-                setIsPremiumUser(!expiresAt || new Date(expiresAt) > new Date());
+                const isActive = !expiresAt || new Date(expiresAt) > new Date();
+                setIsPremiumUser(isActive);
+                if (isActive) {
+                    const tier = (data.subscription_tier as SubscriptionTier) || "premium";
+                    setSubscriptionTier(tier === "free" ? "premium" : tier);
+                } else {
+                    setSubscriptionTier("free");
+                }
             } else {
                 setIsPremiumUser(false);
+                setSubscriptionTier("free");
             }
 
             // 포인트도 같이 설정
@@ -1072,13 +1082,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         checkNickname,
         isSimpleMode,
         toggleSimpleMode,
+        subscriptionTier,
     }), [
         user, session, loading, isAdminUser, isPremiumUser, refreshProfile,
         profileLoaded, userPetType, onboardingData, points, pointsLoaded,
         refreshPoints, minimiEquip, refreshMinimi,
         checkDeletedAccount, checkCanRejoin, signUp, signIn,
         signOut, signInWithGoogle, signInWithKakao, signInWithNaver, updateProfile, checkNickname,
-        isSimpleMode, toggleSimpleMode,
+        isSimpleMode, toggleSimpleMode, subscriptionTier,
     ]);
 
     return (

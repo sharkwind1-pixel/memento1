@@ -103,12 +103,24 @@ function MagazinePage({ setSelectedTab, isActive }: MagazinePageProps) {
     useEffect(() => { safeSetItem("memento-magazine-stage", selectedStage); }, [selectedStage]);
     useEffect(() => { safeSetItem("memento-magazine-topic", selectedTopic); }, [selectedTopic]);
 
-    // DB에서 기사 불러오기 (발행된 기사만)
+    // 서버사이드 필터 파라미터 빌드
+    const buildFilterParams = useCallback(() => {
+        const params = new URLSearchParams();
+        params.set("limit", String(PAGE_SIZE));
+        if (selectedStage !== "all") params.set("badge", selectedStage);
+        if (selectedTopic !== "all") params.set("category", selectedTopic);
+        if (searchQuery) params.set("search", searchQuery);
+        return params;
+    }, [selectedStage, selectedTopic, searchQuery]);
+
+    // DB에서 기사 불러오기 (발행된 기사만, 서버사이드 필터링)
     useEffect(() => {
         async function fetchArticles() {
             setIsLoading(true);
             try {
-                const res = await fetch(`${API.MAGAZINE}?limit=${PAGE_SIZE}&offset=0`);
+                const params = buildFilterParams();
+                params.set("offset", "0");
+                const res = await fetch(`${API.MAGAZINE}?${params}`);
                 if (!res.ok) {
                     throw new Error("매거진 불러오기 실패");
                 }
@@ -126,15 +138,16 @@ function MagazinePage({ setSelectedTab, isActive }: MagazinePageProps) {
             }
         }
         fetchArticles();
-    }, []);
+    }, [selectedStage, selectedTopic, searchQuery, buildFilterParams]);
 
     // 더 불러오기
     const loadMore = useCallback(async () => {
         if (isLoadingMore || !hasMore) return;
         setIsLoadingMore(true);
         try {
-            const offset = articles.length;
-            const res = await fetch(`${API.MAGAZINE}?limit=${PAGE_SIZE}&offset=${offset}`);
+            const params = buildFilterParams();
+            params.set("offset", String(articles.length));
+            const res = await fetch(`${API.MAGAZINE}?${params}`);
             if (!res.ok) throw new Error("매거진 불러오기 실패");
             const data = await res.json();
             if (data.articles && data.articles.length > 0) {
@@ -149,7 +162,7 @@ function MagazinePage({ setSelectedTab, isActive }: MagazinePageProps) {
         } finally {
             setIsLoadingMore(false);
         }
-    }, [articles.length, hasMore, isLoadingMore]);
+    }, [articles.length, hasMore, isLoadingMore, buildFilterParams]);
 
     // IntersectionObserver로 무한 스크롤
     useEffect(() => {
@@ -397,11 +410,11 @@ function MagazinePage({ setSelectedTab, isActive }: MagazinePageProps) {
                                             <div className="flex items-center gap-3">
                                                 <span className="flex items-center gap-1">
                                                     <Eye className="w-3 h-3" />
-                                                    {article.views.toLocaleString()}
+                                                    {(article.views ?? 0).toLocaleString()}
                                                 </span>
                                                 <span className="flex items-center gap-1">
                                                     <Heart className="w-3 h-3" />
-                                                    {article.likes}
+                                                    {article.likes ?? 0}
                                                 </span>
                                             </div>
                                         </div>

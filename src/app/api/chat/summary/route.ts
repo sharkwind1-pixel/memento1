@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthUser } from "@/lib/supabase-server";
+import { getAuthUser, createServerSupabase } from "@/lib/supabase-server";
 
 export async function POST(request: NextRequest) {
     try {
@@ -27,6 +27,22 @@ export async function POST(request: NextRequest) {
             return NextResponse.json(
                 { error: "필수 파라미터가 누락되었습니다." },
                 { status: 400 }
+            );
+        }
+
+        // 펫 소유권 검증 (다른 유저의 petId 사용 방지)
+        const supabase = await createServerSupabase();
+        const { data: ownedPet } = await supabase
+            .from("pets")
+            .select("id")
+            .eq("id", petId)
+            .eq("user_id", user.id)
+            .single();
+
+        if (!ownedPet) {
+            return NextResponse.json(
+                { error: "잘못된 접근입니다." },
+                { status: 403 }
             );
         }
 

@@ -61,7 +61,7 @@ export async function GET(
                     if (p) supabase.from("community_posts").update({ views: (p.views || 0) + 1 }).eq("id", id);
                 });
             }
-        }).catch(() => {});
+        }).catch((err) => { console.error("[posts/GET] view increment failed:", err); });
 
         // 게시글 조회
         const { data: post, error } = await supabase
@@ -128,11 +128,24 @@ export async function GET(
             })(),
         ]);
 
+        // 현재 유저의 좋아요 여부 확인
+        let userLiked = false;
+        if (currentUser) {
+            const { data: likeRow } = await supabase
+                .from("post_likes")
+                .select("id")
+                .eq("post_id", id)
+                .eq("user_id", currentUser.id)
+                .maybeSingle();
+            userLiked = !!likeRow;
+        }
+
         return NextResponse.json({
             post: {
                 ...post,
                 authorMinimiSlug: minimiResult,
                 comments: comments || [],
+                userLiked,
             },
         });
     } catch {

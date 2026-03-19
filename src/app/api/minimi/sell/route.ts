@@ -131,7 +131,11 @@ export async function POST(request: NextRequest) {
             .eq("id", user.id)
             .single();
 
-        if (profile?.equipped_minimi_id && profile.equipped_minimi_id === owned.id) {
+        if (!profile) {
+            return NextResponse.json({ error: "사용자 정보를 찾을 수 없습니다" }, { status: 400 });
+        }
+
+        if (profile.equipped_minimi_id && profile.equipped_minimi_id === owned.id) {
             await supabase.from("profiles")
                 .update({ equipped_minimi_id: null, minimi_pixel_data: null })
                 .eq("id", user.id);

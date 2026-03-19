@@ -342,11 +342,12 @@ function getRateLimitSupabase(): SupabaseClient | null {
  */
 export async function checkDailyUsageDB(
     identifier: string,
-    isAuthenticated: boolean
+    isAuthenticated: boolean,
+    overrideLimit?: number
 ): Promise<{ allowed: boolean; remaining: number; isWarning: boolean }> {
-    const baseLimit = isAuthenticated
+    const baseLimit = overrideLimit ?? (isAuthenticated
         ? RATE_LIMITS.aiChat.dailyLimitAuth
-        : RATE_LIMITS.aiChat.dailyLimit;
+        : RATE_LIMITS.aiChat.dailyLimit);
 
     const supabase = getRateLimitSupabase();
     if (!supabase) {

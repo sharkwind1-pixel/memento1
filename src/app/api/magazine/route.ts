@@ -26,6 +26,8 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url);
 
         const category = searchParams.get("category");
+        const badge = searchParams.get("badge");
+        const search = searchParams.get("search");
         const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 100);
         const offset = parseInt(searchParams.get("offset") || "0");
 
@@ -37,6 +39,12 @@ export async function GET(request: NextRequest) {
 
         if (category && category !== "all") {
             query = query.eq("category", category);
+        }
+        if (badge && badge !== "all") {
+            query = query.eq("badge", badge);
+        }
+        if (search) {
+            query = query.or(`title.ilike.%${search}%,summary.ilike.%${search}%`);
         }
 
         query = query.range(offset, offset + limit - 1);
@@ -108,6 +116,9 @@ export async function POST(request: NextRequest) {
         if (!category || !title || !summary || !author) {
             return NextResponse.json({ error: "필수 필드 누락 (category, title, summary, author)" }, { status: 400 });
         }
+        if (status === "published" && !content) {
+            return NextResponse.json({ error: "발행할 기사에는 본문(content)이 필요합니다" }, { status: 400 });
+        }
 
         const articleData = {
             user_id: user.id,
@@ -157,6 +168,12 @@ export async function PATCH(request: NextRequest) {
                 { error: "요청이 너무 많습니다." },
                 { status: 429, headers: getRateLimitHeaders(rateLimit.remaining, rateLimit.resetIn) }
             );
+        }
+
+        // 인증 확인 (조회수/좋아요 조작 방지)
+        const user = await getAuthUser();
+        if (!user) {
+            return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
         }
 
         const body = await request.json();

@@ -186,11 +186,11 @@ function ArticleCard({
                 <div className="flex items-center gap-3 text-xs text-gray-500">
                     <span className="flex items-center gap-1">
                         <Eye className="w-3 h-3" />
-                        {article.views.toLocaleString()}
+                        {(article.views ?? 0).toLocaleString()}
                     </span>
                     <span className="flex items-center gap-1">
                         <Heart className="w-3 h-3" />
-                        {article.likes}
+                        {article.likes ?? 0}
                     </span>
                 </div>
             </CardContent>

@@ -153,6 +153,7 @@ export default function PostDetailView({
 
             setPost(postData);
             setLikeCount(postData.likes ?? postData.likes_count ?? 0);
+            setIsLiked(postData.userLiked ?? false);
             setIsHidden(postData.is_hidden ?? false);
 
             // 댓글 매핑

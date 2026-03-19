@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         const { petId, type, title, description, schedule } = body;
 
-        if (!petId || !type || !title || !schedule) {
+        if (!petId || !type || !title || !schedule || !schedule.type || !schedule.time) {
             return NextResponse.json(
                 { error: "Missing required fields" },
                 { status: 400 }

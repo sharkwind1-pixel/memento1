@@ -508,11 +508,13 @@ export function useAIChat({
         setIsTyping(true);
 
         try {
-            // API 호출을 위한 대화 히스토리 변환
-            const chatHistory = messages.map((msg) => ({
-                role: msg.role === "user" ? "user" : "assistant",
-                content: msg.content,
-            }));
+            // API 호출을 위한 대화 히스토리 변환 (system 메시지 제외 - AI 컨텍스트 오염 방지)
+            const chatHistory = messages
+                .filter((msg) => msg.role === "user" || msg.role === "pet")
+                .map((msg) => ({
+                    role: msg.role === "user" ? "user" : "assistant",
+                    content: msg.content,
+                }));
 
             // 타임라인 데이터 준비 (최근 10개만)
             const recentTimeline = timelineRef.current

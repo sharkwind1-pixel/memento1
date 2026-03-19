@@ -26,7 +26,7 @@ import {
     generateVideoThumbnail,
 } from "@/lib/storage";
 import { toast } from "sonner";
-import { POINTS, FREE_LIMITS, PREMIUM_LIMITS } from "@/config/constants";
+import { POINTS, FREE_LIMITS, PREMIUM_LIMITS, getLimitsForTier } from "@/config/constants";
 import type { PointAction } from "@/types";
 
 // 클라이언트에서 포인트 적립 (Supabase RPC 직접 호출, 실패해도 무시)
@@ -154,7 +154,7 @@ const STORAGE_KEY = "memento-ani-pets";
 const SELECTED_PET_KEY = "memento-ani-selected-pet";
 
 export function PetProvider({ children }: { children: React.ReactNode }) {
-    const { user, isPremiumUser } = useAuth();
+    const { user, isPremiumUser, subscriptionTier } = useAuth();
     const [pets, setPets] = useState<Pet[]>([]);
     const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
     const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
@@ -492,7 +492,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
             }
 
             // 사진 제한 체크
-            const photoLimit = isPremiumUser ? PREMIUM_LIMITS.PHOTOS_PER_PET : FREE_LIMITS.PHOTOS_PER_PET;
+            const photoLimit = getLimitsForTier(subscriptionTier).PHOTOS_PER_PET;
             const { count: currentCount } = await supabase
                 .from("pet_media")
                 .select("id", { count: "exact", head: true })
@@ -504,7 +504,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                 toast.error(
                     canUpload > 0
                         ? `사진 제한에 도달했습니다. ${canUpload}장만 업로드 가능합니다. (현재 ${existing}/${photoLimit}장)`
-                        : `사진 저장 제한(${photoLimit}장)에 도달했습니다. ${isPremiumUser ? "" : "프리미엄 구독 시 더 많은 사진을 저장할 수 있습니다."}`
+                        : `사진 저장 제한(${photoLimit}장)에 도달했습니다. ${subscriptionTier === "premium" ? "" : "상위 구독 시 더 많은 사진을 저장할 수 있습니다."}`
                 );
                 if (canUpload === 0) return [];
                 // 가능한 만큼만 업로드
@@ -597,7 +597,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
 
             return newPhotos;
         },
-        [user, isPremiumUser]
+        [user, isPremiumUser, subscriptionTier]
     );
 
     const updatePhoto = useCallback(

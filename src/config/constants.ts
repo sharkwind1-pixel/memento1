@@ -256,3 +256,24 @@ export const isAdmin = (email: string | undefined): boolean => {
     if (!email) return false;
     return ADMIN_EMAILS.includes(email);
 };
+
+// ===== 구독 티어 헬퍼 =====
+export type SubscriptionTier = "free" | "basic" | "premium";
+
+/** subscription_tier에 따른 제한 값 반환 */
+export function getLimitsForTier(tier: SubscriptionTier) {
+    switch (tier) {
+        case "premium": return PREMIUM_LIMITS;
+        case "basic": return BASIC_LIMITS;
+        default: return FREE_LIMITS;
+    }
+}
+
+/** subscription_tier에 따른 영상 월간 쿼터 반환 */
+export function getVideoMonthlyQuota(tier: SubscriptionTier): number {
+    switch (tier) {
+        case "premium": return VIDEO.PREMIUM_MONTHLY;
+        case "basic": return VIDEO.BASIC_MONTHLY;
+        default: return 0; // 무료는 평생 제한으로 별도 처리
+    }
+}

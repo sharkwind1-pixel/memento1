@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getAuthUser } from "@/lib/supabase-server";
-import { FREE_LIMITS } from "@/config/constants";
+import { FREE_LIMITS, type SubscriptionTier, getLimitsForTier } from "@/config/constants";
 
 function getSupabase() {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -44,15 +44,21 @@ export async function GET() {
         // 프리미엄 상태 확인
         const { data: profile } = await supabase
             .from("profiles")
-            .select("is_premium, premium_expires_at")
+            .select("is_premium, premium_expires_at, subscription_tier")
             .eq("id", user.id)
             .single();
 
         const isPremium = profile?.is_premium &&
             (!profile.premium_expires_at || new Date(profile.premium_expires_at) > new Date());
 
-        // 기본 일일 제한 (프리미엄: 1000, 무료: 10)
-        const baseLimit = isPremium ? 1000 : FREE_LIMITS.DAILY_CHATS;
+        // subscription_tier 결정 (DB 값 우선, 하위호환)
+        const subscriptionTier: SubscriptionTier = isPremium
+            ? ((profile?.subscription_tier as SubscriptionTier) || "premium")
+            : "free";
+        const tierLimits = getLimitsForTier(subscriptionTier);
+
+        // 기본 일일 제한 (tier별)
+        const baseLimit = tierLimits.DAILY_CHATS;
 
         // KST 기준 오늘 날짜 계산
         const now = new Date();

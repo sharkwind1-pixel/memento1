@@ -59,10 +59,14 @@ export async function POST(request: NextRequest) {
             const readableStream = new ReadableStream({
                 start(controller) {
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "delta", content: fixedReply })}\n\n`));
+                    const isMemorial = aiContext.isMemorialMode;
+                    const offTopicSuggestions = isMemorial
+                        ? ["좋았던 기억 얘기해줘", "너와 함께한 날들", "보고 싶은 마음"]
+                        : ["오늘 산책 갔어?", "뭐 하고 놀까?", "간식 뭐 줄까?"];
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify({
                         type: "done",
                         reply: fixedReply,
-                        suggestedQuestions: ["오늘 산책 갔어?", "뭐 하고 놀까?", "간식 뭐 줄까?"],
+                        suggestedQuestions: offTopicSuggestions,
                         emotion: "neutral",
                         emotionScore: 0.5,
                         remaining: security.dailyUsage.remaining,

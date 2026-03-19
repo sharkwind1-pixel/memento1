@@ -109,7 +109,8 @@ export async function GET(request: NextRequest) {
             .select("session_date, emotional_tone, grief_progress, key_topics")
             .eq("pet_id", petId)
             .eq("user_id", user.id)
-            .order("session_date", { ascending: true });
+            .order("session_date", { ascending: true })
+            .limit(500);
 
         if (summaryError) {
             console.error("[healing-journey] summaries query error:", summaryError.message);

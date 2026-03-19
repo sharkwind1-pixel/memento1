@@ -20,7 +20,7 @@ import {
     getVPNBlockResponse,
 } from "@/lib/rate-limit";
 import { submitVideoGeneration } from "@/lib/fal";
-import { VIDEO } from "@/config/constants";
+import { VIDEO, type SubscriptionTier, getVideoMonthlyQuota } from "@/config/constants";
 import { VIDEO_TEMPLATES } from "@/config/videoTemplates";
 import crypto from "crypto";
 
@@ -73,15 +73,21 @@ export async function POST(request: NextRequest) {
         }
 
         // 5. 서버 사이드 쿼터 검증
-        // 5-1. 프리미엄 여부 확인
+        // 5-1. 프리미엄/구독 등급 확인
         const { data: profile } = await supabase
             .from("profiles")
-            .select("is_premium, premium_expires_at")
+            .select("is_premium, premium_expires_at, subscription_tier")
             .eq("id", user.id)
             .single();
 
         const isPremium = profile?.is_premium &&
             (!profile.premium_expires_at || new Date(profile.premium_expires_at) > new Date());
+
+        // subscription_tier 결정 (DB 값 우선, 하위호환)
+        const subscriptionTier: SubscriptionTier = isPremium
+            ? ((profile?.subscription_tier as SubscriptionTier) || "premium")
+            : "free";
+        const monthlyQuota = getVideoMonthlyQuota(subscriptionTier);
 
         // 5-2. 이번 달 생성 횟수 (월간 쿼터용, 실패 제외, KST 기준)
         const kstOffset = 9 * 60 * 60 * 1000;
@@ -102,20 +108,20 @@ export async function POST(request: NextRequest) {
             .eq("user_id", user.id)
             .neq("status", "failed");
 
-        // 5-4. 쿼터 초과 검사
-        if (!isPremium) {
+        // 5-4. 쿼터 초과 검사 (tier별 분기)
+        if (subscriptionTier === "free") {
             // 무료 회원: 평생 FREE_LIFETIME회
             if ((lifetimeCount ?? 0) >= VIDEO.FREE_LIFETIME) {
                 return NextResponse.json(
-                    { error: "무료 체험 영상 생성 횟수를 모두 사용했습니다. 프리미엄으로 업그레이드하면 매달 더 많은 영상을 만들 수 있어요." },
+                    { error: "무료 체험 영상 생성 횟수를 모두 사용했습니다. 구독하면 매달 더 많은 영상을 만들 수 있어요." },
                     { status: 403 }
                 );
             }
         } else {
-            // 프리미엄 회원: 월 BASIC_MONTHLY회
-            if ((monthlyCount ?? 0) >= VIDEO.BASIC_MONTHLY) {
+            // 베이직/프리미엄: 월간 쿼터
+            if ((monthlyCount ?? 0) >= monthlyQuota) {
                 return NextResponse.json(
-                    { error: `이번 달 영상 생성 횟수(${VIDEO.BASIC_MONTHLY}회)를 모두 사용했습니다. 다음 달에 다시 이용해주세요.` },
+                    { error: `이번 달 영상 생성 횟수(${monthlyQuota}회)를 모두 사용했습니다. 다음 달에 다시 이용해주세요.` },
                     { status: 403 }
                 );
             }

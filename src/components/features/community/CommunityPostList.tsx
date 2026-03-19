@@ -230,15 +230,15 @@ export default function CommunityPostList({
                                 <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                                     <span className="flex items-center gap-1">
                                         <Eye className="w-4 h-4" />
-                                        {post.views.toLocaleString()}
+                                        {(post.views ?? 0).toLocaleString()}
                                     </span>
                                     <span className="flex items-center gap-1">
                                         <Heart className="w-4 h-4" />
-                                        {post.likes}
+                                        {post.likes ?? 0}
                                     </span>
                                     <span className="flex items-center gap-1">
                                         <MessageCircle className="w-4 h-4" />
-                                        {post.comments}
+                                        {post.comments ?? 0}
                                     </span>
                                 </div>
                             </CardFooter>

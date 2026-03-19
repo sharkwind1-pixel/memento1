@@ -15,7 +15,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { awardPoints } from "@/lib/points";
 import { getAuthUser, createServerSupabase } from "@/lib/supabase-server";
-import { FREE_LIMITS, AI_INPUT_LIMITS } from "@/config/constants";
+import { FREE_LIMITS, AI_INPUT_LIMITS, type SubscriptionTier, getLimitsForTier } from "@/config/constants";
 import {
     getClientIP,
     checkRateLimit,
@@ -345,12 +345,18 @@ export async function checkSecurityLimits(
     const supabase = await createServerSupabase();
     const { data: profile } = await supabase
         .from("profiles")
-        .select("is_premium, premium_expires_at, onboarding_data, user_type")
+        .select("is_premium, premium_expires_at, onboarding_data, user_type, subscription_tier")
         .eq("id", user.id)
         .single();
 
     const isPremium = profile?.is_premium &&
         (!profile.premium_expires_at || new Date(profile.premium_expires_at) > new Date());
+
+    // subscription_tier 결정 (DB 값 우선, 하위호환)
+    const subscriptionTier: SubscriptionTier = isPremium
+        ? ((profile?.subscription_tier as SubscriptionTier) || "premium")
+        : "free";
+    const tierLimits = getLimitsForTier(subscriptionTier);
 
     // 온보딩 데이터 추출 (AI 개인화에 활용)
     const onboardingData = profile?.onboarding_data as OnboardingContext | null;
@@ -375,18 +381,21 @@ export async function checkSecurityLimits(
 
     // 3. 일일 사용량 체크 (DB 기반 - 모든 등급 적용)
     const identifier = user.id;
-    const dailyUsage = await checkDailyUsageDB(identifier, isPremium ? true : false);
+    const dailyUsage = await checkDailyUsageDB(identifier, isPremium ? true : false, tierLimits.DAILY_CHATS);
 
     if (dailyUsage.remaining < 0 || !dailyUsage.allowed) {
+        const limitMsg = subscriptionTier === "premium"
+            ? `${parsedInput.pet?.name || "반려동물"}이(가) 오늘 많이 피곤한가봐요. 내일 다시 이야기해요~`
+            : subscriptionTier === "basic"
+                ? `오늘의 대화 횟수(${tierLimits.DAILY_CHATS}회)를 모두 사용했어요. 프리미엄 업그레이드 시 더 많은 대화가 가능합니다!`
+                : isMemorialMode
+                    ? `오늘은 여기까지 이야기 나눌 수 있어요. ${parsedInput.pet?.name || "아이"}는 내일도 여기서 기다리고 있을게요. 구독 시 더 많은 대화가 가능합니다.`
+                    : `오늘의 무료 대화 횟수(${FREE_LIMITS.DAILY_CHATS}회)를 모두 사용했어요. 구독 시 더 많은 대화가 가능합니다!`;
         return NextResponse.json(
             {
-                error: isPremium
-                    ? `${parsedInput.pet?.name || "반려동물"}이(가) 오늘 많이 피곤한가봐요. 내일 다시 이야기해요~`
-                    : isMemorialMode
-                        ? `오늘은 여기까지 이야기 나눌 수 있어요. ${parsedInput.pet?.name || "아이"}는 내일도 여기서 기다리고 있을게요. 프리미엄 구독 시 무제한 대화가 가능합니다.`
-                        : `오늘의 무료 대화 횟수(${FREE_LIMITS.DAILY_CHATS}회)를 모두 사용했어요. 프리미엄 구독 시 무제한 대화가 가능합니다!`,
+                error: limitMsg,
                 remaining: 0,
-                isLimitReached: !isPremium,
+                isLimitReached: subscriptionTier === "free",
             },
             { status: 429 }
         );

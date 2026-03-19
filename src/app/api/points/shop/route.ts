@@ -110,35 +110,77 @@ export async function POST(request: NextRequest) {
         // RPC 없음 → 다단계 폴백
         console.warn("[points/shop] RPC unavailable, using fallback:", rpcError?.message);
 
-        // 5a. 포인트 확인
-        const { data: profile } = await supabase
-            .from("profiles")
-            .select("points, is_premium, premium_expires_at")
-            .eq("id", user.id)
-            .single();
+        // 5a. 포인트 확인 + 원자적 차감 (rpc 사용)
+        // rpc가 실패했으므로 SQL로 원자적 차감 시도
+        const { data: deducted, error: deductErr } = await supabase
+            .rpc("deduct_points_atomic", {
+                p_user_id: user.id,
+                p_amount: item.price,
+            });
 
-        if (!profile) {
-            return NextResponse.json({ error: "사용자 정보를 찾을 수 없습니다" }, { status: 400 });
+        let newPoints: number;
+        let profile: { is_premium: boolean; premium_expires_at: string | null } | null = null;
+
+        if (deductErr || deducted === null || deducted === undefined) {
+            // rpc도 없으면 최종 폴백: 조건부 UPDATE로 원자적 차감
+            const { data: profileData } = await supabase
+                .from("profiles")
+                .select("points, is_premium, premium_expires_at")
+                .eq("id", user.id)
+                .single();
+
+            if (!profileData) {
+                return NextResponse.json({ error: "사용자 정보를 찾을 수 없습니다" }, { status: 400 });
+            }
+            profile = profileData;
+
+            if (profileData.points < item.price) {
+                return NextResponse.json({ error: "포인트가 부족합니다" }, { status: 400 });
+            }
+
+            // 조건부 UPDATE: gte 조건으로 동시 요청 방어
+            const { data: updated, error: updateErr } = await supabase
+                .from("profiles")
+                .update({ points: profileData.points - item.price })
+                .eq("id", user.id)
+                .eq("points", profileData.points)  // 정확한 값 매칭 (optimistic lock)
+                .select("points")
+                .maybeSingle();
+
+            if (updateErr || !updated) {
+                // 동시 요청으로 포인트가 변경된 경우 재시도 1회
+                const { data: fresh } = await supabase
+                    .from("profiles")
+                    .select("points")
+                    .eq("id", user.id)
+                    .single();
+                if (!fresh || fresh.points < item.price) {
+                    return NextResponse.json({ error: "포인트가 부족합니다" }, { status: 400 });
+                }
+                const { data: retryUpdated, error: retryErr } = await supabase
+                    .from("profiles")
+                    .update({ points: fresh.points - item.price })
+                    .eq("id", user.id)
+                    .eq("points", fresh.points)
+                    .select("points")
+                    .maybeSingle();
+                if (retryErr || !retryUpdated) {
+                    return NextResponse.json({ error: "포인트 차감 중 오류가 발생했습니다. 다시 시도해주세요." }, { status: 409 });
+                }
+                newPoints = retryUpdated.points;
+            } else {
+                newPoints = updated.points;
+            }
+        } else {
+            newPoints = typeof deducted === "number" ? deducted : 0;
+            // 프리미엄 정보 조회 (프리미엄 체험 적용용)
+            const { data: profileData } = await supabase
+                .from("profiles")
+                .select("is_premium, premium_expires_at")
+                .eq("id", user.id)
+                .single();
+            profile = profileData;
         }
-
-        if (profile.points < item.price) {
-            return NextResponse.json({ error: "포인트가 부족합니다" }, { status: 400 });
-        }
-
-        // 5b. 포인트 차감 (원자적 업데이트 - 레이스 컨디션 방지)
-        const { data: updated, error: updateErr } = await supabase
-            .from("profiles")
-            .update({ points: profile.points - item.price })
-            .eq("id", user.id)
-            .gte("points", item.price)  // 포인트가 충분한 경우에만 차감
-            .select("points")
-            .single();
-
-        if (updateErr || !updated) {
-            // 동시 요청으로 포인트 부족해진 경우
-            return NextResponse.json({ error: "포인트가 부족합니다" }, { status: 400 });
-        }
-        const newPoints = updated.points;
 
         // 5c. 거래 내역
         try {
@@ -152,7 +194,7 @@ export async function POST(request: NextRequest) {
 
         // 5d. 프리미엄 체험 적용
         let premiumExpiresAt: string | null = null;
-        if (bonusDays !== null) {
+        if (bonusDays !== null && profile) {
             const now = new Date();
             let expiresDate: Date;
             if (profile.is_premium && profile.premium_expires_at && new Date(profile.premium_expires_at) > now) {
