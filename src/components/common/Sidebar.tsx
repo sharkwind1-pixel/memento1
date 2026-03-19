@@ -113,38 +113,59 @@ export default function Sidebar({
     );
     const [hasModalOpen, setHasModalOpen] = useState(false);
     const [hasPendingAdmin, setHasPendingAdmin] = useState(false);
+    const [adminQueryFailed, setAdminQueryFailed] = useState(false);
 
     // 관리자일 때 미처리 신고/문의 건수 체크
     // selectedTab이 바뀔 때도 재조회 (관리자 탭에서 처리 후 다른 탭 갔다 오면 갱신)
     useEffect(() => {
         if (!isAdminUser) return;
 
+        let failCount = 0;
+
         const checkPending = async () => {
+            // 연속 3회 실패 시 자동 쿼리 중단 (RLS 미적용 등 서버 문제)
+            if (failCount >= 3) return;
+
             try {
                 const [reportsRes, inquiriesRes] = await Promise.all([
                     supabase
                         .from("reports")
-                        .select("id", { count: "exact", head: true })
-                        .eq("status", "pending"),
+                        .select("id", { count: "exact" })
+                        .eq("status", "pending")
+                        .limit(1),
                     supabase
                         .from("support_inquiries")
-                        .select("id", { count: "exact", head: true })
-                        .eq("status", "pending"),
+                        .select("id", { count: "exact" })
+                        .eq("status", "pending")
+                        .limit(1),
                 ]);
 
+                // Supabase 에러 응답 체크 (CORS/502는 error 객체로 돌아옴)
+                if (reportsRes.error || inquiriesRes.error) {
+                    failCount++;
+                    if (failCount >= 3) setAdminQueryFailed(true);
+                    return;
+                }
+
+                failCount = 0; // 성공 시 리셋
                 const total = (reportsRes.count || 0) + (inquiriesRes.count || 0);
                 setHasPendingAdmin(total > 0);
             } catch {
-                // 조회 실패 시 표시 안 함
+                failCount++;
+                if (failCount >= 3) setAdminQueryFailed(true);
             }
         };
 
         checkPending();
-        // 30초마다 갱신
-        const interval = setInterval(checkPending, 30000);
+        // 60초마다 갱신 (30초 → 60초로 완화)
+        const interval = setInterval(checkPending, 60000);
 
         // 관리자 탭에서 상태 변경 시 즉시 재조회 (커스텀 이벤트)
-        const handleAdminUpdate = () => checkPending();
+        const handleAdminUpdate = () => {
+            failCount = 0; // 수동 트리거 시 리셋
+            setAdminQueryFailed(false);
+            checkPending();
+        };
         window.addEventListener("adminDataUpdated", handleAdminUpdate);
 
         return () => {
