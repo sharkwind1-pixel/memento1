@@ -18,6 +18,7 @@ export type CommunityPost = {
     comments: number;
     time: string;
     avatar?: string;
+    authorPoints?: number;
 };
 
 // 댓글 타입

@@ -130,16 +130,16 @@ export async function GET(request: NextRequest) {
         // RLS 우회를 위해 admin 클라이언트 사용 + 병렬 쿼리로 속도 최적화
         const userIds = Array.from(new Set((data || []).map(p => p.user_id).filter(Boolean)));
         let userIdToMinimiSlug: Record<string, string> = {};
+        let userIdToPoints: Record<string, number> = {};
         if (userIds.length > 0) {
             try {
                 const adminSupabase = createAdminSupabase();
-                // profiles(equipped_minimi_id)와 user_minimi를 병렬 조회
+                // profiles(equipped_minimi_id, points)와 user_minimi를 병렬 조회
                 const [{ data: profileRows }, { data: minimiRows }] = await Promise.all([
                     adminSupabase
                         .from("profiles")
-                        .select("id, equipped_minimi_id")
-                        .in("id", userIds)
-                        .not("equipped_minimi_id", "is", null),
+                        .select("id, equipped_minimi_id, points")
+                        .in("id", userIds),
                     adminSupabase
                         .from("user_minimi")
                         .select("id, minimi_id, user_id")
@@ -150,12 +150,13 @@ export async function GET(request: NextRequest) {
                     (minimiRows || []).map(m => [m.id, m.minimi_id])
                 );
                 for (const p of (profileRows || [])) {
+                    userIdToPoints[p.id] = p.points ?? 0;
                     if (p.equipped_minimi_id && uuidToSlug[p.equipped_minimi_id]) {
                         userIdToMinimiSlug[p.id] = uuidToSlug[p.equipped_minimi_id];
                     }
                 }
             } catch {
-                // 미니미 조회 실패 시 무시 (게시글은 정상 반환)
+                // 조회 실패 시 무시 (게시글은 정상 반환)
             }
         }
 
@@ -178,6 +179,7 @@ export async function GET(request: NextRequest) {
             videoUrl: post.video_url || null,
             region: post.region || null,
             authorMinimiSlug: userIdToMinimiSlug[post.user_id] || null,
+            authorPoints: userIdToPoints[post.user_id] ?? 0,
             createdAt: post.created_at,
         }));
 

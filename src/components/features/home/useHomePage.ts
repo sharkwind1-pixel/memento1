@@ -89,6 +89,7 @@ export function useHomePage() {
                     likes: (p.likes as number) || 0,
                     comments: (p.comments as number) || 0,
                     time: formatRelativeTime(p.createdAt as string),
+                    authorPoints: (p.authorPoints as number) || 0,
                 }));
                 setCommunityPosts(posts);
             } else {
