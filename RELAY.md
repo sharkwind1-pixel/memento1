@@ -6,6 +6,28 @@
 
 ---
 
+## 에이전트 총동원 — 전수 분석 + 안정화 세션 (2026-03-20, 완료)
+
+### 커밋 목록 (모두 배포됨)
+1. `9def014` — CRITICAL 버그 5건 수정 + 모달 ESC 키 지원 15개 추가
+2. `2009854` — 에러 처리 개선 (PetContext loadError, AuthContext 에러 로깅)
+3. `6569260` — ConfirmDialog 컴포넌트 + PostDetailView/AIChatHeader 6곳 교체
+4. `bc276bf` — 전체 confirm() 제거 (17곳, 12파일)
+
+### 주요 성과
+- CRITICAL: 커뮤니티 이미지 파이프라인 3곳 수정 (이미지 저장/조회/렌더링)
+- CRITICAL: AI 펫톡 더블전송 방지 + AbortController 추가
+- CRITICAL: 타이머 누수 2건 (SupportModal, AccountSettingsModal)
+- 성능: getInitialState() 3회→1회 캐싱
+- UX: 15개 모달 ESC 키 지원 (useEscapeClose 훅)
+- UX: 전체 23곳 네이티브 confirm() → ConfirmDialog 교체 (0건 잔여)
+- 안정성: PetContext/AuthContext 에러 처리 강화
+
+### 상세 기록
+`RELAY-ARCHIVE.md` > `[2026-03-20]` 참조
+
+---
+
 ## 튜토리얼 + 스크롤 + 방어 로직 + 재가입 버그 세션 (2026-03-12, 완료)
 
 ### 커밋 목록 (모두 배포됨)

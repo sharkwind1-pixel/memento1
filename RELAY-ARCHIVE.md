@@ -43,10 +43,122 @@
 | 펫매거진 P1~P2 디자인 마무리 (커버 비율, 엔딩 CTA, 관리자 미리보기) | 완료 |
 | 온보딩 리셋 버그 수정 (select 체이닝 + 트리거 컬럼 참조) | 완료 |
 | TutorialTour 구름 말풍선 SVG 교체 | 완료 |
+| 에이전트 총동원 전수 분석 + CRITICAL 버그 5건 수정 | 완료 |
+| 모달 ESC 키 지원 (useEscapeClose 훅, 15개 모달) | 완료 |
+| ConfirmDialog 전면 적용 (23곳 네이티브 confirm() 제거) | 완료 |
+| 에러 처리 개선 (PetContext loadError, AuthContext 에러 로깅) | 완료 |
 
 ## 변경 로그 (최신순)
 
 > 형식: `[YYYY-MM-DD HH:MM]` 커밋해시 | 작업 요약 | 변경 파일 | 상세
+
+---
+
+### [2026-03-20] 에이전트 총동원 — 전수 분석 + CRITICAL 버그 수정 + UX 안정화
+
+> 8명 서브에이전트 총동원 분석 후, 발견된 CRITICAL/HIGH 이슈 전면 수정.
+> 전체 23곳 네이티브 confirm() 제거, 모달 ESC 키 지원, 이미지 파이프라인 수정 등.
+
+---
+
+#### 커밋 1: `9def014` — CRITICAL 버그 5건 수정 + 모달 ESC 키 지원 15개 추가
+
+**CRITICAL 버그 수정 (5건):**
+
+1. **커뮤니티 이미지 파이프라인 (CRITICAL x3)**
+   - POST API: `community_posts` insert에 `image_urls` 누락 → 이미지가 DB에 저장 안 됨
+   - GET API: `image_urls`가 null일 때 빈 배열 `[]` 반환 안 함 → 프론트에서 크래시
+   - PostDetailView: 이미지 렌더링 코드가 주석 처리(비활성화) 상태 → 이미지 표시 안 됨
+   - **파일**: `src/app/api/posts/route.ts`, `src/components/features/community/PostDetailView.tsx`
+
+2. **AI 펫톡 더블전송 방지 + AbortController**
+   - isTyping/isStreaming 중 전송 버튼 가드 추가
+   - AbortController로 펫 전환 시 이전 요청 취소 (메모리 누수 방지)
+   - UI 비활성화 (전송 버튼 disabled)
+   - **파일**: `src/components/features/chat/AIChatPage.tsx`
+
+3. **타이머 누수 2건**
+   - SupportModal: setTimeout 후 cleanup 없이 모달 닫으면 타이머 계속 실행
+   - AccountSettingsModal: 동일 패턴
+   - **해결**: `successTimerRef` + `useEffect cleanup`
+   - **파일**: `src/components/modals/SupportModal.tsx`, `src/components/Auth/AccountSettingsModal.tsx`
+
+4. **getInitialState() 3회 중복 호출**
+   - App 마운트 시 동일 함수가 3번 호출되어 불필요한 연산
+   - **해결**: 결과를 변수에 캐싱하여 1회로 축소
+   - **파일**: `src/app/page.tsx`
+
+**모달 ESC 키 지원 (15개):**
+- `useEscapeClose(isOpen, onClose)` 커스텀 훅 생성
+- 적용 대상: PetFormModal, LoginPromptModal, MemorialTransitionModal, PremiumModal, SupportModal, ShareModal, WritePostModal, PostDetailView, OnboardingModal, NicknameSetupModal, MiniHomepyModal, DeleteAccountModal, MediaUploadModal, ShowcaseGalleryView, AccountSettingsModal
+- **파일**: `src/hooks/useEscapeClose.ts` (신규), 위 15개 컴포넌트
+
+**변경 파일 (22개)**
+
+---
+
+#### 커밋 2: `2009854` — 에러 처리 개선
+
+- **PetContext**: `loadError` 상태 추가 → "데이터 없음"과 "로딩 실패" 구분 가능
+- **AuthContext**: `checkDeletedAccount`, `checkCanRejoin`, `getSession` 에러 시 `console.error` 로깅 추가 (보안 에러가 조용히 삼켜지던 문제 해결)
+- **파일**: `src/contexts/PetContext.tsx`, `src/contexts/AuthContext.tsx`
+
+---
+
+#### 커밋 3: `6569260` — ConfirmDialog 컴포넌트 생성 + 6곳 confirm() 교체
+
+- **ConfirmDialog** 범용 컴포넌트 신규 생성
+  - Props: `isOpen, onClose, onConfirm, title, message, confirmText?, cancelText?, destructive?`
+  - destructive 모드: 빨간 버튼
+  - ESC 키 닫기 지원 (useEscapeClose)
+  - **파일**: `src/components/ui/ConfirmDialog.tsx` (신규)
+
+- **PostDetailView** (5곳 confirm → ConfirmDialog)
+  - 게시글 삭제, 게시글 숨기기, 유저 차단, 공지 토글, 댓글 삭제
+  - **파일**: `src/components/features/community/PostDetailView.tsx`
+
+- **AIChatHeader** (1곳 confirm → ConfirmDialog)
+  - 새 대화 시작 확인
+  - **파일**: `src/components/features/chat/AIChatHeader.tsx`
+
+---
+
+#### 커밋 4: `bc276bf` — 전체 confirm() 제거 완료 (17곳, 12파일)
+
+**네이티브 window.confirm()을 앱 테마에 맞는 ConfirmDialog로 전면 교체.**
+모바일 브라우저에서 기본 경고창이 앱답지 않은 문제 해결 + 접근성 향상.
+
+| 파일 | 교체 수 | 대상 |
+|------|---------|------|
+| ShowcaseGalleryView.tsx | 2 | 게시글 삭제, 숨기기 |
+| RemindersSection.tsx | 1 | 리마인더 삭제 |
+| ReminderPanel.tsx | 1 | 알림 삭제 |
+| CommunityPage.tsx | 1 | 유저 차단 |
+| LocalPage.tsx | 2 | 게시글 삭제, 마감 |
+| useLostPostActions.ts + LostPage.tsx | 2 | 게시글 삭제, 해결 |
+| AccountSettingsModal.tsx | 1 | 차단 해제 |
+| AdminUsersTab.tsx | 4 | 차단해제, 관리자토글, 온보딩리셋, 프리미엄해제 |
+| AdminWithdrawalsTab.tsx | 2 | 재가입허용, 기록삭제 |
+| AdminReportsTab.tsx | 1 | 콘텐츠 삭제 |
+| AdminMagazineTab.tsx | 1 | 기사 삭제 |
+
+**패턴**: `.ts` 훅 파일(useLostPostActions)은 JSX 렌더 불가 → `confirmState`/`setConfirmState` 노출하여 부모 컴포넌트(LostPage)에서 ConfirmDialog 렌더링.
+
+**결과**: 전체 코드베이스에서 네이티브 `confirm()` 호출 **0건** (grep 검증 완료).
+
+---
+
+#### 세션 총 정리
+
+| 카테고리 | 수량 |
+|----------|------|
+| CRITICAL 버그 수정 | 5건 |
+| ESC 키 모달 지원 | 15개 모달 |
+| confirm() → ConfirmDialog 교체 | **23곳** (6+17) |
+| 에러 처리 개선 | 2개 Context |
+| 신규 컴포넌트/훅 | ConfirmDialog, useEscapeClose |
+| 커밋 수 | 4개 |
+| 변경 파일 수 | ~35개 |
 
 ---
 
