@@ -463,10 +463,21 @@ function HomeContent() {
 
     // 서브카테고리 변경 핸들러 (커뮤니티 내부 + 사이드바에서 사용)
     const handleSubcategoryChange = useCallback((sub: CommunitySubcategory) => {
-        // resetKey 증가로 CommunityPage에 상세/수정 모드 리셋 신호 전달
+        // 스크롤 리셋
+        window.scrollTo({ top: 0, behavior: 'instant' });
+        const mainContent = document.getElementById('main-content');
+        if (mainContent) mainContent.scrollTop = 0;
+
+        // 모든 상태를 동기적으로 한 번에 업데이트 (startTransition 사용 안 함)
+        // → CommunityPage가 resetKey + subcategory 변경을 같은 렌더에서 처리
+        setSelectedTab("community");
+        setSelectedSubcategory(sub);
         setCommunityResetKey(prev => prev + 1);
-        handleTabChange("community", sub);
-    }, [handleTabChange]);
+
+        safeSetItem("memento-current-tab", "community");
+        safeSetItem("memento-current-subcategory", sub);
+        router.push(`/?tab=community&sub=${sub}`, { scroll: false });
+    }, [router]);
 
     // 페이지 렌더링 - 방문한 탭은 display:none으로 유지 (unmount 방지)
     // 한 번 방문한 페이지는 다시 갈 때 즉시 표시됨 (API 재호출 없음)
