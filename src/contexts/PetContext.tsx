@@ -146,6 +146,7 @@ interface PetContextType {
     getPetById: (id: string) => Pet | undefined;
     isLoading: boolean;
     isSyncing: boolean;
+    loadError: string | null; // "로딩 실패"와 "데이터 없음" 구분
 }
 
 const PetContext = createContext<PetContextType | undefined>(undefined);
@@ -160,6 +161,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
     const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSyncing, setIsSyncing] = useState(false);
+    const [loadError, setLoadError] = useState<string | null>(null);
 
     // 최신 상태 참조용 ref (useCallback 의존성 최적화)
     const petsRef = useRef(pets);
@@ -239,6 +241,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
             }));
 
             setPets(petsWithMedia);
+            setLoadError(null);
 
             // 선택된 펫 설정
             const savedSelectedId = safeGetItem(SELECTED_PET_KEY);
@@ -252,6 +255,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
             }
         } catch (error) {
             console.error("[PetContext] loadFromSupabase failed:", error instanceof Error ? error.message : error);
+            setLoadError("반려동물 정보를 불러오지 못했습니다");
             setPets([]);
             setSelectedPetId(null);
         } finally {
@@ -948,6 +952,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
             getPetById,
             isLoading,
             isSyncing,
+            loadError,
         }),
         [
             pets,
@@ -969,6 +974,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
             getPetById,
             isLoading,
             isSyncing,
+            loadError,
         ]
     );
 

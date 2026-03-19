@@ -481,8 +481,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     // 비로그인 상태: 즉시 로딩 해제
                     setLoading(false);
                 }
-            } catch {
+            } catch (err) {
                 // 세션 로드 실패해도 앱은 비로그인 상태로 동작
+                console.error("[AuthContext] getSession failed:", err instanceof Error ? err.message : err);
                 setSession(null);
                 setUser(null);
                 setLoading(false);
@@ -834,7 +835,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 previousAiUsage: record.previous_ai_usage,
                 wasPremium: record.was_premium,
             };
-        } catch {
+        } catch (err) {
+            console.error("[AuthContext] checkDeletedAccount failed:", err instanceof Error ? err.message : err);
             return null;
         }
     }, []);
@@ -858,8 +860,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 blockReason: record.block_reason,
                 waitUntil: record.wait_until,
             };
-        } catch {
+        } catch (err) {
             // 오류 시 가입 허용 (관리자가 직접 관리)
+            console.error("[AuthContext] checkCanRejoin failed:", err instanceof Error ? err.message : err);
             return { canJoin: true, blockReason: null, waitUntil: null };
         }
     }, []);
