@@ -93,7 +93,17 @@ export default function ShowcaseSection({
                 ref={scrollRef}
                 className="flex gap-4 overflow-x-auto pb-4 px-4 -mx-4 scrollbar-hide carousel-touch"
             >
-                {showcasePosts.map((post, idx) => {
+                {showcasePosts.length === 0 ? (
+                    <div className="w-full flex flex-col items-center justify-center py-12 text-center">
+                        <Play className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-3" />
+                        <p className="text-gray-500 dark:text-gray-400 text-sm">
+                            아직 영상이 없어요
+                        </p>
+                        <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">
+                            AI 영상을 만들어 자랑해보세요
+                        </p>
+                    </div>
+                ) : showcasePosts.map((post, idx) => {
                     const hasImage = (post.imageUrls?.length ?? 0) > 0;
                     const firstImage = hasImage ? post.imageUrls![0] : null;
 

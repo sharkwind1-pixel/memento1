@@ -115,6 +115,16 @@ export default function MemorialSection({
                             </CardContent>
                         </Card>
                     ))
+                ) : displayMemorialData.length === 0 ? (
+                    <div className="w-full flex flex-col items-center justify-center py-12 text-center">
+                        <Cloud className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-3" />
+                        <p className="text-gray-500 dark:text-gray-400 text-sm">
+                            아직 추모글이 없어요
+                        </p>
+                        <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">
+                            소중한 아이의 이야기를 나눠보세요
+                        </p>
+                    </div>
                 ) : (
                     displayMemorialData.map((m) => {
                         const src = safeStringSrc(m.image);

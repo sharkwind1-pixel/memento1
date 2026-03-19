@@ -109,8 +109,8 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
             <div className="relative z-10 space-y-16 pb-24">
                 <HeroSection setSelectedTab={setSelectedTab} user={user} />
 
-                {/* 커뮤니티 인기글: DB에서 가져온 데이터가 있을 때만 표시 */}
-                {!isLoadingCommunity && communityPosts.length > 0 && (
+                {/* 커뮤니티 인기글 */}
+                {!isLoadingCommunity && (
                     <CommunitySection
                         communityPosts={communityPosts}
                         likedPosts={likedPosts}
@@ -123,25 +123,21 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
                     />
                 )}
 
-                {/* 쇼케이스: DB에서 가져온 영상 게시글이 있을 때만 표시 */}
-                {showcasePosts.length > 0 && (
-                    <ShowcaseSection
-                        showcasePosts={showcasePosts}
-                        scrollRef={scroll.showcaseScrollRef}
-                        setSelectedTab={setSelectedTab}
-                    />
-                )}
+                {/* 쇼케이스 (AI 영상) */}
+                <ShowcaseSection
+                    showcasePosts={showcasePosts}
+                    scrollRef={scroll.showcaseScrollRef}
+                    setSelectedTab={setSelectedTab}
+                />
 
-                {/* 추모 섹션: DB에서 가져온 공개 추모글이 있을 때만 표시 */}
-                {(isLoadingMemorial || displayMemorialData.length > 0) && (
-                    <MemorialSection
-                        isLoadingMemorial={isLoadingMemorial}
-                        displayMemorialData={displayMemorialData}
-                        onLightboxOpen={setLightboxItem}
-                        scrollRef={scroll.memorialScrollRef}
-                        setSelectedTab={setSelectedTab}
-                    />
-                )}
+                {/* 추모 섹션 */}
+                <MemorialSection
+                    isLoadingMemorial={isLoadingMemorial}
+                    displayMemorialData={displayMemorialData}
+                    onLightboxOpen={setLightboxItem}
+                    scrollRef={scroll.memorialScrollRef}
+                    setSelectedTab={setSelectedTab}
+                />
             </div>
         </div>
     );

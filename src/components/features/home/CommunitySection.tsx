@@ -85,7 +85,17 @@ export default function CommunitySection({
                 ref={scrollRef}
                 className="flex gap-4 overflow-x-auto pb-4 px-4 -mx-4 scrollbar-hide carousel-touch"
             >
-                {communityPosts.map((post, idx) => {
+                {communityPosts.length === 0 ? (
+                    <div className="w-full flex flex-col items-center justify-center py-12 text-center">
+                        <PawPrint className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-3" />
+                        <p className="text-gray-500 dark:text-gray-400 text-sm">
+                            아직 이야기가 없어요
+                        </p>
+                        <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">
+                            커뮤니티에서 첫 번째 이야기를 작성해보세요
+                        </p>
+                    </div>
+                ) : communityPosts.map((post, idx) => {
                     const isLiked = likedPosts[post.id] || false;
                     const displayLikes = isLiked ? post.likes + 1 : post.likes;
                     const addedComments = postComments[post.id]?.length || 0;
@@ -145,7 +155,7 @@ export default function CommunitySection({
                                 </h3>
                                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-1.5 min-w-0">
                                     <LevelBadge
-                                        points={[500, 10000, 3000, 100000, 30000][idx % 5]}
+                                        points={post.authorPoints ?? 0}
                                         size="lg"
                                         showTooltip={false}
                                     />
@@ -175,6 +185,7 @@ export default function CommunitySection({
                     );
                 })}
             </div>
+
         </section>
     );
 }
