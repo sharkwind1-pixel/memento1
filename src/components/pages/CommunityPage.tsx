@@ -196,6 +196,10 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive }: Community
         setSelectedRegion("all");
     };
 
+    // 현재 로드된 게시글 수를 ref로 추적 (의존성 배열에 넣지 않기 위함)
+    const postsLengthRef = useRef(0);
+    useEffect(() => { postsLengthRef.current = posts.length; }, [posts.length]);
+
     // 게시글 불러오기 (초기 로드 또는 추가 로드)
     const fetchPosts = useCallback(async (loadMore = false) => {
         if (loadMore) {
@@ -206,7 +210,7 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive }: Community
             setHasMore(true);
         }
 
-        const offset = loadMore ? posts.length : 0;
+        const offset = loadMore ? postsLengthRef.current : 0;
 
         try {
             const params = new URLSearchParams({
@@ -269,7 +273,7 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive }: Community
                 setIsLoading(false);
             }
         }
-    }, [currentSubcategory, sortBy, selectedTag, selectedBadge, selectedRegion, searchQuery, posts.length]);
+    }, [currentSubcategory, sortBy, selectedTag, selectedBadge, selectedRegion, searchQuery]);
 
     // 검색어 debounce (300ms)
     useEffect(() => {
