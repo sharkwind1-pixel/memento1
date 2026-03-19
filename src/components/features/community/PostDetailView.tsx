@@ -41,6 +41,7 @@ import { API } from "@/config/apiEndpoints";
 import ReportModal from "@/components/modals/ReportModal";
 import MinihompyVisitModal from "@/components/features/minihompy/MinihompyVisitModal";
 import LevelBadge from "@/components/features/points/LevelBadge";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import type { CommunitySubcategory } from "@/types";
 
 interface PostComment {
@@ -171,6 +172,16 @@ export default function PostDetailView({
     // 공지 상태 (관리자)
     const [isTogglingNotice, setIsTogglingNotice] = useState(false);
 
+    // 커스텀 확인 다이얼로그 상태
+    const [confirmState, setConfirmState] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        confirmText?: string;
+        destructive?: boolean;
+        onConfirm: () => void;
+    }>({ isOpen: false, title: "", message: "", onConfirm: () => {} });
+
     // 게시글 상세 로드
     const fetchPost = useCallback(async () => {
         setIsLoading(true);
@@ -290,8 +301,17 @@ export default function PostDetailView({
     };
 
     // 게시글 삭제
-    const handleDelete = async () => {
-        if (!confirm("정말 삭제하시겠습니까?")) return;
+    const handleDelete = () => {
+        setConfirmState({
+            isOpen: true,
+            title: "게시글 삭제",
+            message: "정말 삭제하시겠습니까?",
+            confirmText: "삭제",
+            destructive: true,
+            onConfirm: executeDelete,
+        });
+    };
+    const executeDelete = async () => {
         setIsDeleting(true);
         try {
             const response = await authFetch(API.POST_DETAIL(postId), {
@@ -308,13 +328,21 @@ export default function PostDetailView({
     };
 
     // 게시글 숨기기/공개 토글
-    const handleToggleHidden = async () => {
+    const handleToggleHidden = () => {
         const newHidden = !isHidden;
         const msg = newHidden
             ? "이 게시글을 숨기시겠어요? 다른 사람들에게 보이지 않게 됩니다."
             : "이 게시글을 다시 공개하시겠어요?";
-        if (!confirm(msg)) return;
-
+        setConfirmState({
+            isOpen: true,
+            title: newHidden ? "게시글 숨기기" : "게시글 공개",
+            message: msg,
+            confirmText: newHidden ? "숨기기" : "공개",
+            destructive: newHidden,
+            onConfirm: () => executeToggleHidden(newHidden),
+        });
+    };
+    const executeToggleHidden = async (newHidden: boolean) => {
         setIsTogglingHidden(true);
         try {
             const response = await authFetch(API.POST_DETAIL(postId), {
@@ -344,8 +372,16 @@ export default function PostDetailView({
         }
         if (targetUserId === user.id) return;
 
-        if (!confirm(`"${targetName}" 님을 차단하시겠습니까?\n\n차단하면 이 유저의 게시글과 댓글이 더 이상 보이지 않습니다.\n설정에서 차단을 해제할 수 있습니다.`)) return;
-
+        setConfirmState({
+            isOpen: true,
+            title: "유저 차단",
+            message: `"${targetName}" 님을 차단하시겠습니까?\n\n차단하면 이 유저의 게시글과 댓글이 더 이상 보이지 않습니다.\n설정에서 차단을 해제할 수 있습니다.`,
+            confirmText: "차단",
+            destructive: true,
+            onConfirm: () => executeBlockUser(targetUserId, targetName),
+        });
+    };
+    const executeBlockUser = async (targetUserId: string, targetName: string) => {
         try {
             const response = await authFetch(API.BLOCKS, {
                 method: "POST",
@@ -424,8 +460,17 @@ export default function PostDetailView({
         const msg = isPinning
             ? `이 게시글을 ${scope === "global" ? "전체 공지" : "게시판 공지"}로 등록하시겠습니까?`
             : "공지를 해제하시겠습니까?";
-        if (!confirm(msg)) return;
-
+        setConfirmState({
+            isOpen: true,
+            title: isPinning ? "공지 등록" : "공지 해제",
+            message: msg,
+            confirmText: isPinning ? "등록" : "해제",
+            destructive: !isPinning,
+            onConfirm: () => executeToggleNotice(scope),
+        });
+    };
+    const executeToggleNotice = async (scope: "board" | "global" | null) => {
+        const isPinning = scope !== null;
         setIsTogglingNotice(true);
         try {
             const response = await authFetch(API.POST_DETAIL(postId), {
@@ -453,10 +498,18 @@ export default function PostDetailView({
     };
 
     // 댓글 삭제
-    const handleDeleteComment = async (commentId: string) => {
+    const handleDeleteComment = (commentId: string) => {
         if (!user || !post) return;
-        if (!confirm("이 댓글을 삭제하시겠습니까?")) return;
-
+        setConfirmState({
+            isOpen: true,
+            title: "댓글 삭제",
+            message: "이 댓글을 삭제하시겠습니까?",
+            confirmText: "삭제",
+            destructive: true,
+            onConfirm: () => executeDeleteComment(commentId),
+        });
+    };
+    const executeDeleteComment = async (commentId: string) => {
         try {
             const response = await authFetch(
                 `${API.POST_COMMENTS(postId)}?commentId=${commentId}`,
@@ -983,6 +1036,17 @@ export default function PostDetailView({
                     userId={visitUserId}
                 />
             )}
+
+            {/* 커스텀 확인 다이얼로그 */}
+            <ConfirmDialog
+                isOpen={confirmState.isOpen}
+                onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={confirmState.onConfirm}
+                title={confirmState.title}
+                message={confirmState.message}
+                confirmText={confirmState.confirmText}
+                destructive={confirmState.destructive}
+            />
         </div>
     );
 }

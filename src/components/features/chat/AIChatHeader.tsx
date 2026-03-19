@@ -11,12 +11,14 @@
 
 "use client";
 
+import { useState } from "react";
 import {
     RotateCcw,
     Heart,
     Star,
     Share2,
 } from "lucide-react";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import {
     Select,
     SelectContent,
@@ -60,18 +62,19 @@ export default function AIChatHeader({
     const activePets = pets.filter((p) => p.status === "active");
     const memorialPets = pets.filter((p) => p.status === "memorial");
 
+    const [showNewChatConfirm, setShowNewChatConfirm] = useState(false);
+
     /** 새 대화 시작 - 대화 2개 이상이면 확인 후 시작 */
     const handleNewChatClick = () => {
         if (messageCount > 1) {
-            const confirmed = window.confirm(
-                "현재 대화가 초기화됩니다. 새 대화를 시작할까요?"
-            );
-            if (!confirmed) return;
+            setShowNewChatConfirm(true);
+            return;
         }
         onNewChat();
     };
 
     return (
+        <>
         <div
             className={`flex-shrink-0 px-4 py-3 border-b relative z-20 transition-all duration-700 ease-in-out ${
                 isMemorialMode
@@ -156,5 +159,16 @@ export default function AIChatHeader({
                 </Select>
             </div>
         </div>
+
+        {/* 새 대화 확인 다이얼로그 */}
+        <ConfirmDialog
+            isOpen={showNewChatConfirm}
+            onClose={() => setShowNewChatConfirm(false)}
+            onConfirm={onNewChat}
+            title="새 대화 시작"
+            message="현재 대화가 초기화됩니다. 새 대화를 시작할까요?"
+            confirmText="시작"
+        />
+        </>
     );
 }
