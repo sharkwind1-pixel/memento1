@@ -104,9 +104,12 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey }:
     // 외부 리셋 처리 (isActive / subcategory / resetKey 변경 감지)
     // ============================================================
 
+    console.log("[DEBUG CommunityPage RENDER]", { selectedPostId, subcategory, resetKey, isActive });
+
     // 다른 탭으로 이동 시 리셋
     useEffect(() => {
         if (!isActive) {
+            console.log("[DEBUG CommunityPage] isActive=false → clearing selectedPostId");
             setSelectedPostId(null);
             setShowcaseView(false);
         }
@@ -116,7 +119,9 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey }:
     // (사이드바/헤더에서 다른 게시판 클릭 시 → subcategory prop이 변경됨)
     const prevSubcategoryRef = useRef(subcategory);
     useEffect(() => {
+        console.log("[DEBUG CommunityPage subcategory effect]", { prev: prevSubcategoryRef.current, current: subcategory, selectedPostId });
         if (prevSubcategoryRef.current !== subcategory) {
+            console.log("[DEBUG CommunityPage] subcategory changed → clearing selectedPostId");
             prevSubcategoryRef.current = subcategory;
             setSelectedPostId(null);
             setShowcaseView(false);
@@ -128,7 +133,9 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey }:
 
     // resetKey 변경도 추가 안전장치 (같은 게시판 탭을 다시 클릭한 경우)
     useEffect(() => {
+        console.log("[DEBUG CommunityPage resetKey effect]", { resetKey, selectedPostId });
         if (resetKey === undefined || resetKey === 0) return;
+        console.log("[DEBUG CommunityPage] resetKey changed → clearing selectedPostId");
         setSelectedPostId(null);
         setShowcaseView(false);
         setSelectedTag("all");
