@@ -115,10 +115,10 @@ export async function GET(request: NextRequest) {
             query = query.not("user_id", "in", `(${blockedUserIds.join(",")})`);
         }
 
-        // 인기글 필터 (24시간 내 + 좋아요 2개 이상)
+        // 인기글 필터 (24시간 내 + 좋아요 10개 이상)
         if (hot) {
             const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-            query = query.gte("created_at", oneDayAgo).gte("likes", 2);
+            query = query.gte("created_at", oneDayAgo).gte("likes", 10);
         }
 
         // 정렬 (인기글은 항상 좋아요순)
