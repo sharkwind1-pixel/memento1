@@ -35,13 +35,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { InlineLoading } from "@/components/ui/PawLoading";
 import PawLoading from "@/components/ui/PawLoading";
-import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
 import ReportModal from "@/components/modals/ReportModal";
 import MinihompyVisitModal from "@/components/features/minihompy/MinihompyVisitModal";
-import { CHARACTER_CATALOG } from "@/data/minimiPixels";
+import LevelBadge from "@/components/features/points/LevelBadge";
 import type { CommunitySubcategory } from "@/types";
 
 interface PostComment {
@@ -77,6 +76,8 @@ interface PostData {
     is_pinned?: boolean;
     notice_scope?: "board" | "global" | null;
     authorMinimiSlug?: string | null;
+    authorPoints?: number;
+    authorIsAdmin?: boolean;
     created_at: string;
     updated_at?: string;
 }
@@ -115,6 +116,24 @@ const getBadgeStyle = (badge: string) => {
     return styles[badge] || "bg-gray-100 text-gray-700";
 };
 
+// 게시판별 뱃지 옵션 (수정 모드용)
+const getBadgeOptions = (subcategory: CommunitySubcategory): string[] => {
+    switch (subcategory) {
+        case "free":
+            return ["일상", "질문", "수다", "꿀팁"];
+        case "memorial":
+            return ["위로", "추억", "정보", "고민"];
+        case "adoption":
+            return ["입양", "분양", "긴급"];
+        case "local":
+            return ["추천", "정보", "모임"];
+        case "lost":
+            return ["분실", "발견", "완료"];
+        default:
+            return ["일상", "질문", "꿀팁"];
+    }
+};
+
 export default function PostDetailView({
     postId,
     subcategory,
@@ -145,6 +164,7 @@ export default function PostDetailView({
     const [isEditing, setIsEditing] = useState(false);
     const [editTitle, setEditTitle] = useState("");
     const [editContent, setEditContent] = useState("");
+    const [editBadge, setEditBadge] = useState("");
     const [isSavingEdit, setIsSavingEdit] = useState(false);
 
     // 공지 상태 (관리자)
@@ -352,6 +372,7 @@ export default function PostDetailView({
         if (!post) return;
         setEditTitle(post.title);
         setEditContent(post.content);
+        setEditBadge(post.badge || "");
         setIsEditing(true);
     };
 
@@ -364,12 +385,17 @@ export default function PostDetailView({
 
         setIsSavingEdit(true);
         try {
+            const patchBody: Record<string, string> = {
+                title: editTitle.trim(),
+                content: editContent.trim(),
+            };
+            // 뱃지가 변경되었으면 함께 전송
+            if (editBadge && editBadge !== post?.badge) {
+                patchBody.badge = editBadge;
+            }
             const response = await authFetch(API.POST_DETAIL(postId), {
                 method: "PATCH",
-                body: JSON.stringify({
-                    title: editTitle.trim(),
-                    content: editContent.trim(),
-                }),
+                body: JSON.stringify(patchBody),
             });
 
             if (!response.ok) throw new Error("수정 실패");
@@ -609,16 +635,37 @@ export default function PostDetailView({
             <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-white/50 dark:border-gray-700/50 rounded-2xl overflow-hidden">
                 {/* 헤더 */}
                 <div className="p-5 border-b border-gray-100 dark:border-gray-700">
-                    <div className="flex items-center gap-2 mb-3">
-                        {post.badge && (
-                            <Badge className={`${getBadgeStyle(post.badge)} rounded-lg`}>
-                                {post.badge}
-                            </Badge>
-                        )}
-                        {post.animal_type && (
-                            <Badge variant="outline" className="rounded-lg text-xs">
-                                {post.animal_type}
-                            </Badge>
+                    <div className="flex items-center gap-2 mb-3 flex-wrap">
+                        {isEditing ? (
+                            // 수정 모드: 뱃지 선택 버튼
+                            <>
+                                {getBadgeOptions(subcategory).map((opt) => (
+                                    <button
+                                        key={opt}
+                                        onClick={() => setEditBadge(opt)}
+                                        className={`px-2.5 py-1 text-xs font-medium rounded-lg border transition-all ${
+                                            editBadge === opt
+                                                ? `${getBadgeStyle(opt)} ring-2 ring-offset-1 ring-sky-400`
+                                                : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600"
+                                        }`}
+                                    >
+                                        {opt}
+                                    </button>
+                                ))}
+                            </>
+                        ) : (
+                            <>
+                                {post.badge && (
+                                    <Badge className={`${getBadgeStyle(post.badge)} rounded-lg`}>
+                                        {post.badge}
+                                    </Badge>
+                                )}
+                                {post.animal_type && (
+                                    <Badge variant="outline" className="rounded-lg text-xs">
+                                        {post.animal_type}
+                                    </Badge>
+                                )}
+                            </>
                         )}
                     </div>
                     {isEditing ? (
@@ -640,13 +687,12 @@ export default function PostDetailView({
                                 onClick={() => post.user_id && setVisitUserId(post.user_id)}
                                 className="flex items-center gap-1.5 font-medium text-gray-700 dark:text-gray-300 hover:text-memento-600 dark:hover:text-memento-400 hover:underline transition-colors"
                             >
-                                {(() => {
-                                    const slug = post.authorMinimiSlug;
-                                    const char = slug ? CHARACTER_CATALOG.find(c => c.slug === slug) : null;
-                                    return char ? (
-                                        <Image src={char.imageUrl} alt="" width={44} height={44} className="object-contain flex-shrink-0" style={{ imageRendering: "pixelated" }} />
-                                    ) : null;
-                                })()}
+                                <LevelBadge
+                                    points={post.authorPoints ?? 0}
+                                    isAdmin={post.authorIsAdmin ?? false}
+                                    size="md"
+                                    showTooltip={false}
+                                />
                                 <span>{post.author_name}</span>
                             </button>
                             <span className="flex items-center gap-1">

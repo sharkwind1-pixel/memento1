@@ -81,6 +81,7 @@ export default function HotPosts({ boardType, onSelectPost }: HotPostsProps) {
                             <div className="flex items-center gap-1.5 flex-shrink-0">
                                 <LevelBadge
                                     points={post.authorPoints ?? 0}
+                                    isAdmin={post.authorIsAdmin ?? false}
                                     size="sm"
                                     showTooltip={false}
                                 />

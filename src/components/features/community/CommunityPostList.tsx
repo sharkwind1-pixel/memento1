@@ -205,6 +205,7 @@ export default function CommunityPostList({
                                 >
                                     <LevelBadge
                                         points={post.authorPoints ?? 0}
+                                        isAdmin={post.authorIsAdmin ?? false}
                                         size="sm"
                                         showTooltip={false}
                                     />

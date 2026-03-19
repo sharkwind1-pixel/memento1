@@ -19,6 +19,7 @@ export type CommunityPost = {
     time: string;
     avatar?: string;
     authorPoints?: number;
+    authorIsAdmin?: boolean;
 };
 
 // 댓글 타입

@@ -156,6 +156,7 @@ export default function CommunitySection({
                                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-1.5 min-w-0">
                                     <LevelBadge
                                         points={post.authorPoints ?? 0}
+                                        isAdmin={post.authorIsAdmin ?? false}
                                         size="lg"
                                         showTooltip={false}
                                     />

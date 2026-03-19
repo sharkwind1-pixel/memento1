@@ -91,6 +91,7 @@ export function useHomePage() {
                     comments: (p.comments as number) || 0,
                     time: formatRelativeTime(p.createdAt as string),
                     authorPoints: (p.authorPoints as number) || 0,
+                    authorIsAdmin: (p.authorIsAdmin as boolean) || false,
                 }));
                 setCommunityPosts(posts);
             } else {

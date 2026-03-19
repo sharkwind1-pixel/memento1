@@ -169,14 +169,15 @@ export async function GET(request: NextRequest) {
         const userIds = Array.from(new Set((data || []).map(p => p.user_id).filter(Boolean)));
         let userIdToMinimiSlug: Record<string, string> = {};
         let userIdToPoints: Record<string, number> = {};
+        let userIdToIsAdmin: Record<string, boolean> = {};
         if (userIds.length > 0) {
             try {
                 const adminSupabase = createAdminSupabase();
-                // profiles(equipped_minimi_id, points)와 user_minimi를 병렬 조회
+                // profiles(equipped_minimi_id, points, is_admin)와 user_minimi를 병렬 조회
                 const [{ data: profileRows }, { data: minimiRows }] = await Promise.all([
                     adminSupabase
                         .from("profiles")
-                        .select("id, equipped_minimi_id, points")
+                        .select("id, equipped_minimi_id, points, is_admin")
                         .in("id", userIds),
                     adminSupabase
                         .from("user_minimi")
@@ -189,6 +190,7 @@ export async function GET(request: NextRequest) {
                 );
                 for (const p of (profileRows || [])) {
                     userIdToPoints[p.id] = p.points ?? 0;
+                    userIdToIsAdmin[p.id] = p.is_admin === true;
                     if (p.equipped_minimi_id && uuidToSlug[p.equipped_minimi_id]) {
                         userIdToMinimiSlug[p.id] = uuidToSlug[p.equipped_minimi_id];
                     }
@@ -220,6 +222,7 @@ export async function GET(request: NextRequest) {
             noticeScope: post.notice_scope || null,
             authorMinimiSlug: userIdToMinimiSlug[post.user_id] || null,
             authorPoints: userIdToPoints[post.user_id] ?? 0,
+            authorIsAdmin: userIdToIsAdmin[post.user_id] ?? false,
             createdAt: post.created_at,
         }));
 

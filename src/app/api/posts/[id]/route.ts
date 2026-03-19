@@ -109,22 +109,27 @@ export async function GET(
         }
 
         const adminSupabase = createAdminSupabase();
-        const [{ data: comments }, minimiResult] = await Promise.all([
+        const [{ data: comments }, authorInfo] = await Promise.all([
             commentQuery,
-            // 미니미 조회: profiles + user_minimi 병렬
+            // 작성자 프로필 + 미니미 조회 병렬
             (async () => {
-                if (!post.user_id) return null;
+                if (!post.user_id) return { minimiSlug: null, points: 0, isAdmin: false };
                 try {
                     const [{ data: profile }, { data: minimiRows }] = await Promise.all([
-                        adminSupabase.from("profiles").select("equipped_minimi_id").eq("id", post.user_id).maybeSingle(),
+                        adminSupabase.from("profiles").select("equipped_minimi_id, points, is_admin").eq("id", post.user_id).maybeSingle(),
                         adminSupabase.from("user_minimi").select("id, minimi_id").eq("user_id", post.user_id),
                     ]);
+                    let minimiSlug: string | null = null;
                     if (profile?.equipped_minimi_id && minimiRows) {
                         const match = minimiRows.find(m => m.id === profile.equipped_minimi_id);
-                        return match?.minimi_id || null;
+                        minimiSlug = match?.minimi_id || null;
                     }
-                    return null;
-                } catch { return null; }
+                    return {
+                        minimiSlug,
+                        points: profile?.points ?? 0,
+                        isAdmin: profile?.is_admin === true,
+                    };
+                } catch { return { minimiSlug: null, points: 0, isAdmin: false }; }
             })(),
         ]);
 
@@ -143,7 +148,9 @@ export async function GET(
         return NextResponse.json({
             post: {
                 ...post,
-                authorMinimiSlug: minimiResult,
+                authorMinimiSlug: authorInfo.minimiSlug,
+                authorPoints: authorInfo.points,
+                authorIsAdmin: authorInfo.isAdmin,
                 comments: comments || [],
                 userLiked,
             },
