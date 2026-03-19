@@ -223,13 +223,17 @@ export default function Sidebar({
     };
 
     const handleSubcategoryClick = (sub: CommunitySubcategory) => {
-        // 커뮤니티 탭이 아닌 경우 커뮤니티로 전환
-        if (selectedTab !== "community") {
-            onTabChange("community");
+        // onSubcategoryChange가 있으면 그것만 호출 (page.tsx handleSubcategoryChange)
+        // → 내부에서 setSelectedTab("community") + setSelectedSubcategory(sub) + resetKey++ 모두 처리
+        // → onTabChange("community")를 따로 호출하면 startTransition이 subcategory를 undefined로 덮어쓸 수 있음
+        if (onSubcategoryChange) {
+            onSubcategoryChange(sub);
+        } else {
+            // fallback: onSubcategoryChange가 없으면 기존 방식
+            if (selectedTab !== "community") {
+                onTabChange("community");
+            }
         }
-        // onSubcategoryChange → page.tsx handleSubcategoryChange → resetKey 증가
-        // → CommunityPage에서 상세/수정 모드 강제 리셋
-        onSubcategoryChange?.(sub);
         if (isMobile) {
             onClose();
         }

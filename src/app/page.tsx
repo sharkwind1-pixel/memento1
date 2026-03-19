@@ -468,15 +468,19 @@ function HomeContent() {
         const mainContent = document.getElementById('main-content');
         if (mainContent) mainContent.scrollTop = 0;
 
-        // 모든 상태를 동기적으로 한 번에 업데이트 (startTransition 사용 안 함)
-        // → CommunityPage가 resetKey + subcategory 변경을 같은 렌더에서 처리
+        // 모든 상태를 동기적으로 한 번에 업데이트
         setSelectedTab("community");
         setSelectedSubcategory(sub);
         setCommunityResetKey(prev => prev + 1);
 
         safeSetItem("memento-current-tab", "community");
         safeSetItem("memento-current-subcategory", sub);
-        router.push(`/?tab=community&sub=${sub}`, { scroll: false });
+
+        // URL 업데이트를 다음 tick으로 지연 — React가 먼저 상태 변경을 처리하도록
+        // (router.push가 searchParams useEffect를 즉시 재트리거하면 상태 충돌 가능)
+        setTimeout(() => {
+            router.push(`/?tab=community&sub=${sub}`, { scroll: false });
+        }, 0);
     }, [router]);
 
     // 페이지 렌더링 - 방문한 탭은 display:none으로 유지 (unmount 방지)

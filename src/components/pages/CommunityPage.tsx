@@ -101,30 +101,40 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey }:
     const isNavigatingBackRef = useRef(false);
 
     // ============================================================
-    // 렌더 중 동기 리셋 (useEffect 지연 없이 즉시 반영)
+    // 외부 리셋 처리 (isActive / subcategory / resetKey 변경 감지)
     // ============================================================
 
     // 다른 탭으로 이동 시 리셋
-    const prevIsActiveRef = useRef(isActive);
-    if (isActive !== prevIsActiveRef.current) {
-        prevIsActiveRef.current = isActive;
+    useEffect(() => {
         if (!isActive) {
-            if (selectedPostId) setSelectedPostId(null);
-            if (showcaseView) setShowcaseView(false);
+            setSelectedPostId(null);
+            setShowcaseView(false);
         }
-    }
+    }, [isActive]);
 
-    // 사이드바/헤더에서 게시판 탭 클릭 시 리셋 (resetKey 변경 감지)
-    const prevResetKeyRef = useRef(resetKey);
-    if (resetKey !== prevResetKeyRef.current) {
-        prevResetKeyRef.current = resetKey;
-        if (selectedPostId) setSelectedPostId(null);
-        if (showcaseView) setShowcaseView(false);
-        // 필터도 초기화 — setState는 렌더 중 호출 가능 (자기 자신에 대한 업데이트)
+    // subcategory prop이 바뀌면 무조건 상세보기/갤러리 해제 + 필터 초기화
+    // (사이드바/헤더에서 다른 게시판 클릭 시 → subcategory prop이 변경됨)
+    const prevSubcategoryRef = useRef(subcategory);
+    useEffect(() => {
+        if (prevSubcategoryRef.current !== subcategory) {
+            prevSubcategoryRef.current = subcategory;
+            setSelectedPostId(null);
+            setShowcaseView(false);
+            setSelectedTag("all");
+            setSelectedBadge("all");
+            setSelectedRegion("all");
+        }
+    }, [subcategory]);
+
+    // resetKey 변경도 추가 안전장치 (같은 게시판 탭을 다시 클릭한 경우)
+    useEffect(() => {
+        if (resetKey === undefined || resetKey === 0) return;
+        setSelectedPostId(null);
+        setShowcaseView(false);
         setSelectedTag("all");
         setSelectedBadge("all");
         setSelectedRegion("all");
-    }
+    }, [resetKey]);
     const [visitUserId, setVisitUserId] = useState<string | null>(null);
     const sentinelRef = useRef<HTMLDivElement>(null);
     const POSTS_PER_PAGE = 15;
