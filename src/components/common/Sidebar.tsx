@@ -223,6 +223,10 @@ export default function Sidebar({
     };
 
     const handleSubcategoryClick = (sub: CommunitySubcategory) => {
+        // 커뮤니티 탭이 아닌 경우 커뮤니티로 전환
+        if (selectedTab !== "community") {
+            onTabChange("community");
+        }
         onSubcategoryChange?.(sub);
         if (isMobile) {
             onClose();

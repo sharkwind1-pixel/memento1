@@ -33,6 +33,7 @@ export interface Post {
     noticeScope?: "board" | "global" | null; // 공지 범위
     region?: string; // 지역 (지역정보 게시판)
     authorMinimiSlug?: string | null; // 작성자 미니미 slug (미니홈피 아바타 표시용)
+    authorPoints?: number; // 작성자 포인트 (등급 아이콘 표시용)
 }
 
 // 서브카테고리 정의 (5개)

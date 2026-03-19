@@ -53,6 +53,7 @@ export async function GET(request: NextRequest) {
         const limit = parseInt(searchParams.get("limit") || "20");
         const offset = parseInt(searchParams.get("offset") || "0");
         const noticeScope = searchParams.get("notice_scope");
+        const hot = searchParams.get("hot") === "true"; // 인기글 (24시간 내, 좋아요순)
 
         // 차단된 유저 목록 조회 (로그인 시)
         let blockedUserIds: string[] = [];
@@ -114,8 +115,14 @@ export async function GET(request: NextRequest) {
             query = query.not("user_id", "in", `(${blockedUserIds.join(",")})`);
         }
 
-        // 정렬
-        if (sortBy === "popular") {
+        // 인기글 필터 (24시간 내 + 좋아요 2개 이상)
+        if (hot) {
+            const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+            query = query.gte("created_at", oneDayAgo).gte("likes", 2);
+        }
+
+        // 정렬 (인기글은 항상 좋아요순)
+        if (hot || sortBy === "popular") {
             query = query.order("likes", { ascending: false });
         } else if (sortBy === "comments") {
             // 댓글 수 정렬: DB에서 직접 관계 count 정렬 불가 → 최신순 조회 후 JS에서 재정렬

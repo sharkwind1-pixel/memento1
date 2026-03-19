@@ -7,11 +7,9 @@
 
 "use client";
 
-import React, { useMemo } from "react";
-import Image from "next/image";
+import React from "react";
 import {
     Card,
-    CardContent,
     CardFooter,
     CardHeader,
     CardTitle,
@@ -27,7 +25,6 @@ import {
     Eye,
     MoreHorizontal,
     Flag,
-    ImageIcon,
     Ban,
     Pin,
     Globe,
@@ -41,7 +38,7 @@ import {
 import type { CommunitySubcategory } from "@/types";
 import type { Post } from "./communityTypes";
 import { getBadgeStyle, formatTime } from "./communityTypes";
-import { CHARACTER_CATALOG } from "@/data/minimiPixels";
+import LevelBadge from "@/components/features/points/LevelBadge";
 
 interface CommunityPostListProps {
     posts: Post[];
@@ -78,15 +75,6 @@ export default function CommunityPostList({
     onWriteClick,
     onClearSearch,
 }: CommunityPostListProps) {
-    // slug → imageUrl 매핑 (미니미 아바타용)
-    const minimiMap = useMemo(() => {
-        const map: Record<string, string> = {};
-        for (const c of CHARACTER_CATALOG) {
-            map[c.slug] = c.imageUrl;
-        }
-        return map;
-    }, []);
-
     // 스켈레톤 카드
     const SkeletonCard = ({ keyId }: { keyId: string }) => (
         <Card className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 rounded-2xl animate-pulse">
@@ -99,10 +87,6 @@ export default function CommunityPostList({
                 </div>
                 <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mt-2" />
             </CardHeader>
-            <CardContent className="pb-2">
-                <div className="h-4 bg-gray-100 dark:bg-gray-700/70 rounded w-full mb-1.5" />
-                <div className="h-4 bg-gray-100 dark:bg-gray-700/70 rounded w-2/3" />
-            </CardContent>
             <CardFooter className="flex items-center justify-between pt-2">
                 <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
                 <div className="flex items-center gap-4">
@@ -211,18 +195,7 @@ export default function CommunityPostList({
                                     {post.title}
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="pb-2">
-                                <p className="text-gray-600 dark:text-gray-300 line-clamp-2">
-                                    {post.content}
-                                </p>
-                                {post.imageUrls && post.imageUrls.length > 0 && (
-                                    <div className="flex items-center gap-1 mt-2 text-xs text-sky-500">
-                                        <ImageIcon className="w-3.5 h-3.5" />
-                                        <span>이미지 {post.imageUrls.length}장</span>
-                                    </div>
-                                )}
-                            </CardContent>
-                            <CardFooter className="flex items-center justify-between pt-2">
+                            <CardFooter className="flex items-center justify-between pt-0">
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -230,16 +203,11 @@ export default function CommunityPostList({
                                     }}
                                     className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-memento-600 dark:hover:text-memento-400 hover:underline transition-colors"
                                 >
-                                    {post.authorMinimiSlug && minimiMap[post.authorMinimiSlug] && (
-                                        <Image
-                                            src={minimiMap[post.authorMinimiSlug]}
-                                            alt=""
-                                            width={40}
-                                            height={40}
-                                            className="object-contain flex-shrink-0"
-                                            style={{ imageRendering: "pixelated" }}
-                                        />
-                                    )}
+                                    <LevelBadge
+                                        points={post.authorPoints ?? 0}
+                                        size="sm"
+                                        showTooltip={false}
+                                    />
                                     <span className="truncate max-w-[120px]">{post.authorName}</span>
                                 </button>
                                 <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">

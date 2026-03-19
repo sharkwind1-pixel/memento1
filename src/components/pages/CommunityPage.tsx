@@ -17,6 +17,7 @@ import CommunityHeader from "@/components/features/community/CommunityHeader";
 import CommunityPostList from "@/components/features/community/CommunityPostList";
 import ShowcaseBanner from "@/components/features/community/ShowcaseBanner";
 import ShowcaseGalleryView from "@/components/features/community/ShowcaseGalleryView";
+import HotPosts from "@/components/features/community/HotPosts";
 import MinihompyVisitModal from "@/components/features/minihompy/MinihompyVisitModal";
 import ReportModal from "@/components/modals/ReportModal";
 import type { CommunitySubcategory, PostTag, CommunityPageProps } from "@/types";
@@ -187,6 +188,13 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive }: Community
 
     // 서브카테고리 변경 핸들러
     const handleSubcategoryChange = (subId: CommunitySubcategory) => {
+        // 게시글 상세보기 중이면 목록으로 복귀
+        if (selectedPostId) {
+            setSelectedPostId(null);
+        }
+        if (showcaseView) {
+            setShowcaseView(false);
+        }
         if (onSubcategoryChange) {
             onSubcategoryChange(subId);
         } else {
@@ -439,6 +447,12 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive }: Community
                         onOpen={() => setShowcaseView(true)}
                     />
                 )}
+
+                {/* 인기글 (24시간 내 좋아요 많은 게시글) */}
+                <HotPosts
+                    boardType={currentSubcategory}
+                    onSelectPost={handleSelectPost}
+                />
 
                 <CommunityPostList
                     posts={posts}
