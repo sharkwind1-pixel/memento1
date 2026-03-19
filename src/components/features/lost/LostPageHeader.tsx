@@ -21,8 +21,6 @@ import { REGIONS } from "@/components/features/lost/lostTypes";
 interface LostPageHeaderProps {
     lostCount: number;
     foundCount: number;
-    selectedType: string;
-    setSelectedType: (v: string) => void;
     selectedRegion: string;
     setSelectedRegion: (v: string) => void;
     selectedDistrict: string;
@@ -40,8 +38,6 @@ interface LostPageHeaderProps {
 export default function LostPageHeader({
     lostCount,
     foundCount,
-    selectedType,
-    setSelectedType,
     selectedRegion,
     setSelectedRegion,
     selectedDistrict,
@@ -113,36 +109,6 @@ export default function LostPageHeader({
 
             {/* 필터 */}
             <div className="space-y-4">
-                {/* 실종/발견 타입 */}
-                <div className="flex gap-2">
-                    <Button
-                        variant={selectedType === "all" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setSelectedType("all")}
-                        className={`rounded-xl ${selectedType === "all" ? "bg-gradient-to-r from-orange-500 to-red-500 border-0" : "dark:border-gray-600 dark:text-gray-300"}`}
-                    >
-                        전체
-                    </Button>
-                    <Button
-                        variant={selectedType === "lost" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setSelectedType("lost")}
-                        className={`rounded-xl ${selectedType === "lost" ? "bg-orange-500 border-0" : "border-orange-300 text-orange-600 dark:border-orange-600 dark:text-orange-400"}`}
-                    >
-                        <AlertTriangle className="w-4 h-4 mr-1" />
-                        실종
-                    </Button>
-                    <Button
-                        variant={selectedType === "found" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setSelectedType("found")}
-                        className={`rounded-xl ${selectedType === "found" ? "bg-green-500 border-0" : "border-green-300 text-green-600 dark:border-green-600 dark:text-green-400"}`}
-                    >
-                        <Eye className="w-4 h-4 mr-1" />
-                        발견
-                    </Button>
-                </div>
-
                 {/* 지역 & 동물 종류 */}
                 <div className="flex flex-wrap gap-3">
                     <Select

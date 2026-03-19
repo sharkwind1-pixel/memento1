@@ -24,6 +24,8 @@ import {
     ChevronRight,
     PawPrint,
     Loader2,
+    AlertTriangle,
+    Eye,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { TabType } from "@/types";
@@ -104,8 +106,6 @@ function LostPage({ setSelectedTab }: LostPageProps) {
                 <LostPageHeader
                     lostCount={lostCount}
                     foundCount={foundCount}
-                    selectedType={selectedType}
-                    setSelectedType={setSelectedType}
                     selectedRegion={selectedRegion}
                     setSelectedRegion={setSelectedRegion}
                     selectedDistrict={selectedDistrict}
@@ -119,6 +119,42 @@ function LostPage({ setSelectedTab }: LostPageProps) {
                     onCreateLost={() => openCreateModal("lost")}
                     onCreateFound={() => openCreateModal("found")}
                 />
+
+                {/* 분실/발견 필터 탭 */}
+                <div className="grid grid-cols-3 gap-2">
+                    <button
+                        onClick={() => setSelectedType("all")}
+                        className={`py-3 px-4 rounded-2xl font-semibold text-sm transition-all ${
+                            selectedType === "all"
+                                ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/25"
+                                : "bg-white/60 dark:bg-gray-800/60 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                        }`}
+                    >
+                        전체 ({lostCount + foundCount})
+                    </button>
+                    <button
+                        onClick={() => setSelectedType("lost")}
+                        className={`py-3 px-4 rounded-2xl font-semibold text-sm transition-all flex items-center justify-center gap-1.5 ${
+                            selectedType === "lost"
+                                ? "bg-orange-500 text-white shadow-lg shadow-orange-500/25"
+                                : "bg-white/60 dark:bg-gray-800/60 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-700/50 hover:bg-orange-50 dark:hover:bg-gray-700/50"
+                        }`}
+                    >
+                        <AlertTriangle className="w-4 h-4" />
+                        실종 ({lostCount})
+                    </button>
+                    <button
+                        onClick={() => setSelectedType("found")}
+                        className={`py-3 px-4 rounded-2xl font-semibold text-sm transition-all flex items-center justify-center gap-1.5 ${
+                            selectedType === "found"
+                                ? "bg-green-500 text-white shadow-lg shadow-green-500/25"
+                                : "bg-white/60 dark:bg-gray-800/60 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-700/50 hover:bg-green-50 dark:hover:bg-gray-700/50"
+                        }`}
+                    >
+                        <Eye className="w-4 h-4" />
+                        발견 ({foundCount})
+                    </button>
+                </div>
 
                 {/* 로딩 */}
                 {loading ? (
