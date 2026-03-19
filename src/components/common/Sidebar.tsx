@@ -223,6 +223,7 @@ export default function Sidebar({
     };
 
     const handleSubcategoryClick = (sub: CommunitySubcategory) => {
+        console.log("[DEBUG Sidebar handleSubcategoryClick]", { sub, hasOnSubcategoryChange: !!onSubcategoryChange, selectedTab });
         // onSubcategoryChange가 있으면 그것만 호출 (page.tsx handleSubcategoryChange)
         // → 내부에서 setSelectedTab("community") + setSelectedSubcategory(sub) + resetKey++ 모두 처리
         // → onTabChange("community")를 따로 호출하면 startTransition이 subcategory를 undefined로 덮어쓸 수 있음

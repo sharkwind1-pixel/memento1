@@ -221,6 +221,7 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey }:
 
     // 서브카테고리 변경 핸들러
     const handleSubcategoryChange = (subId: CommunitySubcategory) => {
+        console.log("[DEBUG CommunityPage handleSubcategoryChange]", { subId, selectedPostId, currentSubcategory });
         // 게시글 상세보기 중이면 목록으로 복귀
         if (selectedPostId) {
             setSelectedPostId(null);
