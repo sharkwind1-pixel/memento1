@@ -171,7 +171,7 @@ export default function MemorialSwitchModal({
                                         <Heart className="w-5 h-5 text-blue-500 flex-shrink-0" />
                                         <p className="text-sm text-gray-700 dark:text-gray-300">
                                             함께한 모든 사진과 기록이{" "}
-                                            <strong>추모 공간</strong>으로 이어집니다
+                                            <strong>기억의 공간</strong>으로 이어집니다
                                         </p>
                                     </div>
                                     <div className="flex items-center gap-3 p-3 bg-amber-50 dark:bg-amber-400/10 rounded-xl">
@@ -438,7 +438,7 @@ export default function MemorialSwitchModal({
                                     className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
                                 >
                                     <Star className="w-4 h-4 mr-2" />
-                                    {starReady ? "추모 모드로 전환" : "잠시만 기다려주세요..."}
+                                    {starReady ? "기억 모드로 전환" : "잠시만 기다려주세요..."}
                                 </Button>
                             </div>
                             <style>{`

@@ -75,7 +75,7 @@ export default function CommunityGuidelinesPage() {
                         <ul className="list-disc list-inside text-gray-600 dark:text-gray-300 space-y-1 ml-2">
                             <li>동물학대를 조장, 미화, 방조하는 일체의 콘텐츠</li>
                             <li>동물학대 영상, 이미지 또는 이를 묘사한 글</li>
-                            <li>추모 공간에 대한 고의적 모독, 조롱, 비하 행위</li>
+                            <li>기억 공간에 대한 고의적 모독, 조롱, 비하 행위</li>
                             <li>무지개다리를 건넌 반려동물이나 그 보호자를 조롱하는 행위</li>
                             <li>아동 착취, 성적 콘텐츠, 테러/폭력 조장 콘텐츠</li>
                             <li>타인의 개인정보(실명, 주소, 전화번호 등)를 동의 없이 게시하는 행위</li>
@@ -127,16 +127,16 @@ export default function CommunityGuidelinesPage() {
                     {/* 제4조 추모게시판 특별 규칙 */}
                     <section>
                         <h2 className="text-xl font-display font-bold text-gray-800 dark:text-white">
-                            제4조 (추모게시판 및 추모 공간 특별 규칙)
+                            제4조 (기억게시판 및 기억 공간 특별 규칙)
                         </h2>
                         <p className="text-gray-600 dark:text-gray-300 mb-3">
-                            추모게시판과 추모 모드는 무지개다리를 건넌 반려동물을 기억하고,
+                            기억게시판과 기억 모드는 무지개다리를 건넌 반려동물을 기억하고,
                             보호자분들이 서로 위로하는 특별한 공간입니다.
                             이 공간에서는 다음의 규칙이 추가로 적용됩니다.
                         </p>
                         <ol className="list-decimal list-inside text-gray-600 dark:text-gray-300 space-y-2">
                             <li>
-                                <strong>절대적 존중:</strong> 추모 글에 대해 조롱, 비하, 냉소적 반응을 하는 것은
+                                <strong>절대적 존중:</strong> 기억 글에 대해 조롱, 비하, 냉소적 반응을 하는 것은
                                 어떤 경우에도 허용되지 않습니다.
                             </li>
                             <li>
@@ -153,11 +153,11 @@ export default function CommunityGuidelinesPage() {
                                 애도 방식에 대해 옳고 그름을 판단하는 행위는 금지됩니다.
                             </li>
                             <li>
-                                <strong>광고/홍보 금지:</strong> 추모 공간에서의 상업적 홍보
+                                <strong>광고/홍보 금지:</strong> 기억 공간에서의 상업적 홍보
                                 (장례 서비스, 관련 상품 등)는 엄격히 금지됩니다.
                             </li>
                             <li>
-                                추모게시판 규칙 위반은 일반 게시판보다 엄격하게 제재됩니다.
+                                기억게시판 규칙 위반은 일반 게시판보다 엄격하게 제재됩니다.
                             </li>
                         </ol>
                     </section>
@@ -205,7 +205,7 @@ export default function CommunityGuidelinesPage() {
                                     <li>스팸/광고</li>
                                     <li>허위 정보</li>
                                     <li>동물학대 관련</li>
-                                    <li>추모 공간 모독</li>
+                                    <li>기억 공간 모독</li>
                                     <li>개인정보 노출</li>
                                     <li>기타</li>
                                 </ul>
@@ -272,7 +272,7 @@ export default function CommunityGuidelinesPage() {
                                 무관용 원칙 적용 대상(제2조 1항)은 경고 없이 즉시 영구 이용 제한 조치됩니다.
                             </li>
                             <li>
-                                추모 공간 관련 위반은 일반 위반보다 한 단계 높은 제재가 적용됩니다.
+                                기억 공간 관련 위반은 일반 위반보다 한 단계 높은 제재가 적용됩니다.
                             </li>
                             <li>
                                 제재 기간 중 추가 위반이 확인되면 상위 단계로 즉시 격상됩니다.

@@ -37,7 +37,7 @@ export default function Footer() {
                 <li><a href="/?tab=ai-chat" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">AI 펫톡</a></li>
                 <li><a href="/?tab=community" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">커뮤니티</a></li>
                 <li><a href="/?tab=adoption" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">입양 정보</a></li>
-                <li><a href="/?tab=community&sub=memorial" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">추모공간</a></li>
+                <li><a href="/?tab=community&sub=memorial" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">기억공간</a></li>
               </ul>
             </div>
 

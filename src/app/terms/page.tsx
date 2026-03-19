@@ -28,16 +28,16 @@ export default function TermsPage() {
 
                         <h3 className="text-lg font-semibold mt-4">제1조 (목적)</h3>
                         <p className="text-gray-600 dark:text-gray-300">
-                            이 약관은 메멘토애니(이하 &quot;회사&quot;)가 제공하는 반려동물 기록 및 추모 서비스(이하 &quot;서비스&quot;)의
+                            이 약관은 메멘토애니(이하 &quot;회사&quot;)가 제공하는 반려동물 기록 및 기억 서비스(이하 &quot;서비스&quot;)의
                             이용과 관련하여 회사와 회원 간의 권리, 의무 및 책임사항, 기타 필요한 사항을 규정함을 목적으로 합니다.
                         </p>
 
                         <h3 className="text-lg font-semibold mt-4">제2조 (정의)</h3>
                         <ol className="list-decimal list-inside text-gray-600 dark:text-gray-300 space-y-2">
-                            <li>&quot;서비스&quot;란 회사가 제공하는 반려동물 기록, AI 펫톡, 추모 공간, 커뮤니티, 분실동물 찾기 등 관련 제반 서비스를 의미합니다.</li>
+                            <li>&quot;서비스&quot;란 회사가 제공하는 반려동물 기록, AI 펫톡, 기억 공간, 커뮤니티, 분실동물 찾기 등 관련 제반 서비스를 의미합니다.</li>
                             <li>&quot;회원&quot;이란 회사와 서비스 이용계약을 체결하고 회원 아이디(ID)를 부여받은 자를 말합니다.</li>
                             <li>&quot;AI 펫톡&quot;이란 인공지능 기술을 활용하여 반려동물의 목소리로 대화하는 서비스를 말합니다.</li>
-                            <li>&quot;추모 모드&quot;란 무지개다리를 건넌 반려동물을 위한 특별한 서비스 모드를 말합니다.</li>
+                            <li>&quot;기억 모드&quot;란 무지개다리를 건넌 반려동물을 위한 특별한 서비스 모드를 말합니다.</li>
                             <li>&quot;프리미엄 서비스&quot;란 유료 결제를 통해 이용할 수 있는 추가 기능을 말합니다.</li>
                             <li>&quot;게시물&quot;이란 회원이 서비스를 이용하면서 게시한 글, 사진, 영상, 댓글 등 일체의 정보를 말합니다.</li>
                         </ol>
@@ -69,7 +69,7 @@ export default function TermsPage() {
                             <li>반려동물 정보 등록 및 기록 관리</li>
                             <li>사진/동영상 타임라인 저장</li>
                             <li>AI 펫톡 (인공지능 대화 서비스)</li>
-                            <li>추모 공간 및 추억 기록</li>
+                            <li>기억 공간 및 추억 기록</li>
                             <li>커뮤니티 서비스 (게시판, 댓글, 좋아요)</li>
                             <li>분실동물 찾기 서비스</li>
                             <li>지역 정보 공유 서비스</li>
@@ -112,7 +112,7 @@ export default function TermsPage() {
                             <li>타인의 반려동물 사진/정보를 무단으로 사용하는 행위</li>
                             <li>서비스를 이용하여 영리 목적의 광고를 게시하는 행위</li>
                             <li>다른 회원을 비방하거나 모욕하는 행위</li>
-                            <li>타인의 추모 공간에 부적절한 내용을 게시하는 행위</li>
+                            <li>타인의 기억 공간에 부적절한 내용을 게시하는 행위</li>
                             <li>서비스의 정상적인 운영을 방해하는 행위</li>
                             <li>법령 또는 이 약관이 금지하는 행위</li>
                         </ul>
@@ -150,7 +150,7 @@ export default function TermsPage() {
                         <ol className="list-decimal list-inside text-gray-600 dark:text-gray-300 space-y-2">
                             <li>회사는 서비스의 전부 또는 일부를 변경하거나 중단할 수 있으며, 중단 시 30일 전에 공지합니다.</li>
                             <li>서비스가 종료되는 경우, 회사는 회원에게 데이터(사진, 기록 등)를 다운로드할 수 있는 기간(최소 30일)을 제공합니다.</li>
-                            <li>추모 모드의 데이터는 감정적 가치가 높은 점을 고려하여, 서비스 종료 시 충분한 안내와 데이터 보존 방안을 제공하기 위해 노력합니다.</li>
+                            <li>기억 모드의 데이터는 감정적 가치가 높은 점을 고려하여, 서비스 종료 시 충분한 안내와 데이터 보존 방안을 제공하기 위해 노력합니다.</li>
                         </ol>
 
                         <h3 className="text-lg font-semibold mt-4">제14조 (분쟁 해결)</h3>

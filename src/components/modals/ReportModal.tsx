@@ -42,7 +42,7 @@ const TARGET_TYPE_LABELS: Record<ReportTargetType, string> = {
     post: "게시물",
     comment: "댓글",
     user: "회원",
-    pet_memorial: "추모 공간",
+    pet_memorial: "기억 공간",
 };
 
 export default function ReportModal({

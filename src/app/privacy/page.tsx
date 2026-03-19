@@ -33,7 +33,7 @@ export default function PrivacyPage() {
                         </p>
                         <ul className="list-disc list-inside text-gray-600 dark:text-gray-300 space-y-1">
                             <li>회원 가입 및 관리: 회원 가입의사 확인, 본인 식별 및 인증, 회원자격 유지 및 관리, 서비스 부정이용 방지</li>
-                            <li>서비스 제공: 반려동물 기록 저장, AI 펫톡 서비스, 추모 공간 제공, 커뮤니티 서비스</li>
+                            <li>서비스 제공: 반려동물 기록 저장, AI 펫톡 서비스, 기억 공간 제공, 커뮤니티 서비스</li>
                             <li>AI 서비스 제공: AI 펫톡 대화를 위한 외부 AI 서비스(OpenAI) 연동</li>
                             <li>마케팅: 이벤트 및 광고성 정보 제공 (별도 동의 시)</li>
                             <li>유료 서비스: 프리미엄 구독 결제 처리</li>

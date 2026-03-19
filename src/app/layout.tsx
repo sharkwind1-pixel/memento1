@@ -184,7 +184,7 @@ export default function RootLayout({
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="p-6 bg-blue-50 rounded-lg">
                                 <h2 className="text-xl font-semibold text-blue-800 mb-2">AI 펫톡</h2>
-                                <p className="text-gray-700">반려동물의 성격과 특성을 반영한 AI 대화 서비스. 일상 모드와 추모 모드를 지원합니다.</p>
+                                <p className="text-gray-700">반려동물의 성격과 특성을 반영한 AI 대화 서비스. 일상 모드와 기억 모드를 지원합니다.</p>
                             </div>
                             <div className="p-6 bg-sky-50 rounded-lg">
                                 <h2 className="text-xl font-semibold text-sky-800 mb-2">타임라인</h2>

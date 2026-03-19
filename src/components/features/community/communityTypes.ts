@@ -51,10 +51,10 @@ export const SUBCATEGORIES: {
     },
     {
         id: "memorial",
-        label: "추모게시판",
+        label: "기억게시판",
         icon: Cloud,
         color: "violet",
-        description: "슬픔을 나누고 위로받는 공간",
+        description: "함께했던 기억을 나누고 위로받는 공간",
         memorialOnly: true,
     },
     {

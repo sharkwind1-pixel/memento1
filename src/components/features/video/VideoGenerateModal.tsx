@@ -57,7 +57,7 @@ const CATEGORY_BADGE: Record<string, { label: string; className: string }> = {
         className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
     },
     memorial: {
-        label: "추모",
+        label: "기억",
         className: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
     },
     transform: {

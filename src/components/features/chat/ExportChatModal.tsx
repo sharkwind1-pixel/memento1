@@ -39,7 +39,7 @@ const TEMPLATES: { id: CardTemplate; name: string; icon: React.ReactNode; descri
     },
     {
         id: "memorial",
-        name: "추모",
+        name: "기억",
         icon: <Star className="w-5 h-5" />,
         description: "별이 빛나는 밤하늘",
     },

@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
 
         if (pet.status !== "memorial") {
             return NextResponse.json(
-                { error: "추모 모드 반려동물만 치유의 여정을 조회할 수 있습니다." },
+                { error: "기억 모드 반려동물만 치유의 여정을 조회할 수 있습니다." },
                 { status: 400 }
             );
         }

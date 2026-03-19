@@ -55,7 +55,7 @@ const POST_TAGS: { id: PostTag; label: string }[] = [
 // 서브카테고리별 라벨
 const SUBCATEGORY_LABELS: Record<string, string> = {
     free: "자유게시판",
-    memorial: "추모게시판",
+    memorial: "기억게시판",
     adoption: "입양정보",
     local: "지역정보",
     lost: "분실동물",
@@ -439,7 +439,7 @@ export default function WritePostModal({
                                         홈화면에 공개
                                     </div>
                                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                        체크하면 홈화면의 &apos;추모의
+                                        체크하면 홈화면의 &apos;기억의
                                         공간&apos;에 글이 노출됩니다. 다른
                                         사용자들과 함께 위로와 추억을 나눌 수
                                         있어요.
@@ -457,7 +457,7 @@ export default function WritePostModal({
                                                 <EyeOff className="w-3.5 h-3.5" />
                                                 <span>
                                                     비공개 (커뮤니티
-                                                    추모게시판에서만 볼 수 있음)
+                                                    기억게시판에서만 볼 수 있음)
                                                 </span>
                                             </>
                                         )}

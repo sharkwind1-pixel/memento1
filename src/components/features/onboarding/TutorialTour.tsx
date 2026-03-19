@@ -38,7 +38,7 @@ const DESKTOP_STEPS: TutorialStep[] = [
     // 메인 네비게이션 먼저 (익숙한 요소부터 안내)
     { targetId: "home", title: "홈", description: "인기 게시글, 입양 정보, 반려 꿀팁까지 한눈에 볼 수 있어요" },
     { targetId: "record", title: "내 기록", description: "반려동물 등록, 사진 앨범, 미니홈피까지! 추억을 기록해요" },
-    { targetId: "community", title: "커뮤니티", description: "자유, 추모, 입양, 지역, 분실 등 5개 게시판에서 소통해요" },
+    { targetId: "community", title: "커뮤니티", description: "자유, 기억, 입양, 지역, 분실 등 5개 게시판에서 소통해요" },
     { targetId: "ai-chat", title: "AI 펫톡", description: "우리 아이와 대화하고, 건강 일정도 관리할 수 있어요" },
     { targetId: "magazine", title: "펫 매거진", description: "수의사 칼럼, 돌봄 팁 등 유용한 정보를 확인해요" },
     // 사이드바 기능 (레벨/미니미/포인트/상점)
@@ -54,7 +54,7 @@ const DESKTOP_STEPS: TutorialStep[] = [
 const MOBILE_STEPS: TutorialStep[] = [
     { targetId: "home", title: "홈", description: "인기 게시글, 입양 정보, 반려 꿀팁까지 한눈에 볼 수 있어요" },
     { targetId: "record", title: "내 기록", description: "반려동물 등록, 사진 앨범, 미니홈피까지! 추억을 기록해요" },
-    { targetId: "community", title: "커뮤니티", description: "자유, 추모, 입양, 지역, 분실 등 5개 게시판에서 소통해요" },
+    { targetId: "community", title: "커뮤니티", description: "자유, 기억, 입양, 지역, 분실 등 5개 게시판에서 소통해요" },
     { targetId: "ai-chat", title: "AI 펫톡", description: "우리 아이와 대화하고, 건강 일정도 관리할 수 있어요" },
     { targetId: "magazine", title: "펫 매거진", description: "수의사 칼럼, 돌봄 팁 등 유용한 정보를 확인해요" },
 ];

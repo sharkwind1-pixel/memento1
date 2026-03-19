@@ -244,7 +244,7 @@ export const REPORT_TARGET_LABELS: Record<ReportTargetType, string> = {
     post: "게시물",
     comment: "댓글",
     user: "회원",
-    pet_memorial: "추모공간",
+    pet_memorial: "기억공간",
 };
 
 // ============================================================================

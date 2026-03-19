@@ -140,7 +140,7 @@ export default function AIChatHeader({
                             <SelectGroup>
                                 <SelectLabel className="flex items-center gap-2 text-amber-500">
                                     <Star className="w-3 h-3" />
-                                    추모 모드
+                                    기억 모드
                                 </SelectLabel>
                                 {memorialPets.map((pet) => (
                                     <SelectItem key={pet.id} value={pet.id}>

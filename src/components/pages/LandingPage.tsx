@@ -240,10 +240,10 @@ export default function LandingPage() {
                                     <div className="w-12 h-12 bg-white/60 dark:bg-gray-800/60 rounded-xl flex items-center justify-center">
                                         <Heart className="w-6 h-6 text-violet-500" />
                                     </div>
-                                    <h3 className="text-xl font-bold text-gray-800 dark:text-white">디지털 추모 공간</h3>
+                                    <h3 className="text-xl font-bold text-gray-800 dark:text-white">디지털 기억 공간</h3>
                                 </div>
                                 <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                                    사진과 기록이 아름다운 추모 공간이 되어요.
+                                    사진과 기록이 아름다운 기억의 공간이 되어요.
                                     가족들과 함께 방문하고 추억을 나눌 수 있어요.
                                 </p>
                             </div>

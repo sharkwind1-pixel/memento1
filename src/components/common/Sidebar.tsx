@@ -62,7 +62,7 @@ const COMMUNITY_SUBCATEGORIES: {
     color: string;
 }[] = [
     { id: "free", label: "자유게시판", icon: Coffee, color: "text-blue-500" },
-    { id: "memorial", label: "추모게시판", icon: Cloud, color: "text-violet-500" },
+    { id: "memorial", label: "기억게시판", icon: Cloud, color: "text-violet-500" },
     { id: "adoption", label: "입양정보", icon: Heart, color: "text-rose-500" },
     { id: "local", label: "지역정보", icon: MapPin, color: "text-emerald-500" },
     { id: "lost", label: "분실동물", icon: Search, color: "text-amber-500" },
