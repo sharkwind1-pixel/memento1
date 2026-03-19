@@ -71,8 +71,9 @@ export async function GET(request: NextRequest) {
             .select("*, post_comments(count)", { count: "exact" })
             .or("is_hidden.is.null,is_hidden.eq.false");
 
-        // 전체 공지 전용 조회 (홈 배너용)
+        // 게시판 필터 (전체 공지 전용 조회는 별도 처리)
         if (noticeScope === "global") {
+            // 전체 공지만 조회 (홈 배너용) - notice_scope 컬럼 없으면 빈 결과 반환
             query = query.eq("notice_scope", "global");
         } else {
             query = query.eq("board_type", boardType);
@@ -113,8 +114,7 @@ export async function GET(request: NextRequest) {
             query = query.not("user_id", "in", `(${blockedUserIds.join(",")})`);
         }
 
-        // 정렬 (공지 우선)
-        query = query.order("is_pinned", { ascending: false, nullsFirst: false });
+        // 정렬
         if (sortBy === "popular") {
             query = query.order("likes", { ascending: false });
         } else if (sortBy === "comments") {
@@ -137,19 +137,23 @@ export async function GET(request: NextRequest) {
         // 첫 페이지에서 전체 공지(global)를 해당 게시판 결과에 prepend
         // (전체 공지는 어떤 게시판에 작성했든 모든 게시판 상단에 노출)
         if (!noticeScope && offset === 0) {
-            const { data: globalNotices } = await supabase
-                .from("community_posts")
-                .select("*, post_comments(count)")
-                .eq("notice_scope", "global")
-                .neq("board_type", boardType) // 이미 해당 게시판 결과에 포함된 건 제외
-                .or("is_hidden.is.null,is_hidden.eq.false")
-                .order("created_at", { ascending: false })
-                .limit(3);
+            try {
+                const { data: globalNotices } = await supabase
+                    .from("community_posts")
+                    .select("*, post_comments(count)")
+                    .eq("notice_scope", "global")
+                    .neq("board_type", boardType)
+                    .or("is_hidden.is.null,is_hidden.eq.false")
+                    .order("created_at", { ascending: false })
+                    .limit(3);
 
-            if (globalNotices && globalNotices.length > 0) {
-                const existingIds = new Set((data || []).map(p => p.id));
-                const uniqueGlobals = globalNotices.filter(n => !existingIds.has(n.id));
-                data = [...uniqueGlobals, ...(data || [])];
+                if (globalNotices && globalNotices.length > 0) {
+                    const existingIds = new Set((data || []).map(p => p.id));
+                    const uniqueGlobals = globalNotices.filter(n => !existingIds.has(n.id));
+                    data = [...uniqueGlobals, ...(data || [])];
+                }
+            } catch {
+                // notice_scope 컬럼이 아직 없으면 무시 (게시글은 정상 반환)
             }
         }
 
@@ -218,7 +222,8 @@ export async function GET(request: NextRequest) {
         }
 
         return NextResponse.json({ posts, total: count });
-    } catch {
+    } catch (err) {
+        console.error("[Posts GET] 서버 오류:", err);
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });
     }
 }
