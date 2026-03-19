@@ -29,6 +29,8 @@ export interface Post {
     imageUrls?: string[];
     createdAt: string;
     isPublic?: boolean;
+    isPinned?: boolean; // 상단 고정 (공지)
+    noticeScope?: "board" | "global" | null; // 공지 범위
     region?: string; // 지역 (지역정보 게시판)
     authorMinimiSlug?: string | null; // 작성자 미니미 slug (미니홈피 아바타 표시용)
 }
@@ -131,6 +133,10 @@ export const LOCAL_REGIONS: { id: string; label: string }[] = [
 
 // 배지 색상 (서브카테고리별)
 export const getBadgeStyle = (badge: string, subcategory: CommunitySubcategory) => {
+    // 공지 뱃지 (모든 게시판 공통)
+    if (badge === "공지") {
+        return "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 border border-red-200 dark:border-red-700";
+    }
     if (subcategory === "memorial") {
         switch (badge) {
             case "위로":

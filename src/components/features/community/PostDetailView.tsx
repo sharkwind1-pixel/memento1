@@ -22,6 +22,9 @@ import {
     Edit3,
     EyeOff,
     Ban,
+    Pin,
+    Globe,
+    Megaphone,
 } from "lucide-react";
 import {
     DropdownMenu,
@@ -71,6 +74,8 @@ interface PostData {
     comments: PostComment[] | number;
     video_url?: string;
     is_hidden?: boolean;
+    is_pinned?: boolean;
+    notice_scope?: "board" | "global" | null;
     authorMinimiSlug?: string | null;
     created_at: string;
     updated_at?: string;
@@ -86,6 +91,7 @@ interface PostDetailViewProps {
 // 배지 색상
 const getBadgeStyle = (badge: string) => {
     const styles: Record<string, string> = {
+        "공지": "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 border border-red-200 dark:border-red-700",
         "자랑": "bg-memento-200 text-memento-700",
         "일상": "bg-memento-100 text-sky-700",
         "질문": "bg-amber-100 text-amber-700",
@@ -140,6 +146,9 @@ export default function PostDetailView({
     const [editTitle, setEditTitle] = useState("");
     const [editContent, setEditContent] = useState("");
     const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+    // 공지 상태 (관리자)
+    const [isTogglingNotice, setIsTogglingNotice] = useState(false);
 
     // 게시글 상세 로드
     const fetchPost = useCallback(async () => {
@@ -376,6 +385,38 @@ export default function PostDetailView({
         }
     };
 
+    // 공지 토글 (관리자 전용)
+    const handleToggleNotice = async (scope: "board" | "global" | null) => {
+        if (!isAdminUser || isTogglingNotice) return;
+
+        const isPinning = scope !== null;
+        const msg = isPinning
+            ? `이 게시글을 ${scope === "global" ? "전체 공지" : "게시판 공지"}로 등록하시겠습니까?`
+            : "공지를 해제하시겠습니까?";
+        if (!confirm(msg)) return;
+
+        setIsTogglingNotice(true);
+        try {
+            const response = await authFetch(API.POST_DETAIL(postId), {
+                method: "PATCH",
+                body: JSON.stringify({
+                    isPinned: isPinning,
+                    noticeScope: scope,
+                }),
+            });
+
+            if (!response.ok) throw new Error("공지 설정 실패");
+
+            const data = await response.json();
+            setPost(data.post);
+            toast.success(isPinning ? "공지로 등록되었습니다" : "공지가 해제되었습니다");
+        } catch {
+            toast.error("공지 설정에 실패했습니다");
+        } finally {
+            setIsTogglingNotice(false);
+        }
+    };
+
     // 댓글 삭제
     const handleDeleteComment = async (commentId: string) => {
         if (!user || !post) return;
@@ -507,6 +548,38 @@ export default function PostDetailView({
                                     이 유저 차단
                                 </DropdownMenuItem>
                             )}
+                            {/* 관리자: 공지 설정 */}
+                            {isAdminUser && !isTogglingNotice && (
+                                <>
+                                    {(!post.is_pinned || post.notice_scope !== "board") && (
+                                        <DropdownMenuItem
+                                            onClick={() => handleToggleNotice("board")}
+                                            className="text-red-500 focus:text-red-600"
+                                        >
+                                            <Pin className="w-4 h-4 mr-2" />
+                                            게시판 공지
+                                        </DropdownMenuItem>
+                                    )}
+                                    {(!post.is_pinned || post.notice_scope !== "global") && (
+                                        <DropdownMenuItem
+                                            onClick={() => handleToggleNotice("global")}
+                                            className="text-red-500 focus:text-red-600"
+                                        >
+                                            <Globe className="w-4 h-4 mr-2" />
+                                            전체 공지
+                                        </DropdownMenuItem>
+                                    )}
+                                    {post.is_pinned && (
+                                        <DropdownMenuItem
+                                            onClick={() => handleToggleNotice(null)}
+                                            className="text-gray-500 focus:text-gray-600"
+                                        >
+                                            <Megaphone className="w-4 h-4 mr-2" />
+                                            공지 해제
+                                        </DropdownMenuItem>
+                                    )}
+                                </>
+                            )}
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
@@ -518,6 +591,16 @@ export default function PostDetailView({
                     <EyeOff className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
                     <p className="text-sm text-amber-700 dark:text-amber-300">
                         이 게시글은 숨김 상태입니다. 다른 사람들에게 보이지 않습니다.
+                    </p>
+                </div>
+            )}
+
+            {/* 공지 상태 안내 */}
+            {post.is_pinned && (
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700/50 rounded-xl px-4 py-3 flex items-center gap-2">
+                    <Pin className="w-4 h-4 text-red-500 flex-shrink-0" />
+                    <p className="text-sm text-red-700 dark:text-red-300">
+                        {post.notice_scope === "global" ? "전체 공지 (모든 게시판 + 홈 상단)" : "게시판 공지 (해당 게시판 상단 고정)"}
                     </p>
                 </div>
             )}

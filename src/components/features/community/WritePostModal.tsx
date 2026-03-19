@@ -10,7 +10,7 @@ import useHorizontalScroll from "@/hooks/useHorizontalScroll";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { X, Send, Home, Eye, EyeOff, ImagePlus, Loader2 } from "lucide-react";
+import { X, Send, Home, Eye, EyeOff, ImagePlus, Loader2, Pin, Globe, Megaphone } from "lucide-react";
 import { InlineLoading } from "@/components/ui/PawLoading";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
@@ -69,7 +69,7 @@ export default function WritePostModal({
     boardType,
     onSuccess,
 }: WritePostModalProps) {
-    const { user } = useAuth();
+    const { user, isAdminUser } = useAuth();
     useEscapeClose(isOpen, onClose);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const imageScrollRef = useHorizontalScroll();
@@ -79,6 +79,8 @@ export default function WritePostModal({
     const [tag, setTag] = useState<PostTag | "">("");
     const [region, setRegion] = useState("");
     const [isPublic, setIsPublic] = useState(false); // 홈화면 공개 여부
+    const [isNotice, setIsNotice] = useState(false); // 공지로 등록 (관리자 전용)
+    const [noticeScope, setNoticeScope] = useState<"board" | "global">("board"); // 공지 범위
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
 
@@ -102,6 +104,8 @@ export default function WritePostModal({
         setTag("");
         setRegion("");
         setIsPublic(false);
+        setIsNotice(false);
+        setNoticeScope("board");
     }, [boardType]);
 
     // 이미지 업로드 핸들러
@@ -177,7 +181,7 @@ export default function WritePostModal({
                 method: "POST",
                 body: JSON.stringify({
                     boardType,
-                    badge,
+                    badge: isNotice ? "공지" : badge,
                     animalType: isFreeBoard ? tag : undefined,
                     region: isLocalBoard ? region : undefined,
                     title: title.trim(),
@@ -185,6 +189,8 @@ export default function WritePostModal({
                     authorName: userNickname,
                     isPublic: isMemorial ? isPublic : undefined,
                     imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
+                    isPinned: isNotice ? true : undefined,
+                    noticeScope: isNotice ? noticeScope : undefined,
                 }),
             });
 
@@ -200,6 +206,8 @@ export default function WritePostModal({
             setTag("");
             setRegion("");
             setIsPublic(false);
+            setIsNotice(false);
+            setNoticeScope("board");
             setImageUrls([]);
             toast.success("게시글이 등록되었습니다");
             onSuccess();
@@ -464,6 +472,59 @@ export default function WritePostModal({
                                     </div>
                                 </div>
                             </label>
+                        </div>
+                    )}
+
+                    {/* 공지로 등록 (관리자 전용) */}
+                    {isAdminUser && (
+                        <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-700/50">
+                            <label className="flex items-start gap-3 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={isNotice}
+                                    onChange={(e) => setIsNotice(e.target.checked)}
+                                    className="mt-1 w-5 h-5 rounded border-red-300 text-red-600 focus:ring-red-500"
+                                />
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2 font-medium text-gray-800 dark:text-gray-100">
+                                        <Megaphone className="w-4 h-4 text-red-500" />
+                                        공지로 등록
+                                    </div>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                        관리자 전용 기능입니다. 게시판 상단에 고정됩니다.
+                                    </p>
+                                </div>
+                            </label>
+
+                            {/* 공지 범위 선택 */}
+                            {isNotice && (
+                                <div className="mt-3 ml-8 flex gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setNoticeScope("board")}
+                                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                                            noticeScope === "board"
+                                                ? "bg-red-500 text-white"
+                                                : "bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600"
+                                        }`}
+                                    >
+                                        <Pin className="w-3.5 h-3.5" />
+                                        게시판 공지
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setNoticeScope("global")}
+                                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                                            noticeScope === "global"
+                                                ? "bg-red-500 text-white"
+                                                : "bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600"
+                                        }`}
+                                    >
+                                        <Globe className="w-3.5 h-3.5" />
+                                        전체 공지
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
 

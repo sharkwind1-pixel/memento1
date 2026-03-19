@@ -52,6 +52,7 @@ export async function GET(request: NextRequest) {
         const search = searchParams.get("search");
         const limit = parseInt(searchParams.get("limit") || "20");
         const offset = parseInt(searchParams.get("offset") || "0");
+        const noticeScope = searchParams.get("notice_scope");
 
         // 차단된 유저 목록 조회 (로그인 시)
         let blockedUserIds: string[] = [];
@@ -68,8 +69,14 @@ export async function GET(request: NextRequest) {
         let query = supabase
             .from("community_posts")
             .select("*, post_comments(count)", { count: "exact" })
-            .eq("board_type", boardType)
             .or("is_hidden.is.null,is_hidden.eq.false");
+
+        // 전체 공지 전용 조회 (홈 배너용)
+        if (noticeScope === "global") {
+            query = query.eq("notice_scope", "global");
+        } else {
+            query = query.eq("board_type", boardType);
+        }
 
         // 뱃지 필터
         if (badge) {
@@ -106,7 +113,8 @@ export async function GET(request: NextRequest) {
             query = query.not("user_id", "in", `(${blockedUserIds.join(",")})`);
         }
 
-        // 정렬
+        // 정렬 (공지 우선)
+        query = query.order("is_pinned", { ascending: false, nullsFirst: false });
         if (sortBy === "popular") {
             query = query.order("likes", { ascending: false });
         } else if (sortBy === "comments") {
@@ -119,11 +127,30 @@ export async function GET(request: NextRequest) {
         // 페이지네이션
         query = query.range(offset, offset + limit - 1);
 
-        const { data, error, count } = await query;
+        let { data, error, count } = await query;
 
         if (error) {
             console.error("[Posts GET] 조회 에러:", error);
             return NextResponse.json({ error: "게시글 처리 중 오류가 발생했습니다" }, { status: 500 });
+        }
+
+        // 첫 페이지에서 전체 공지(global)를 해당 게시판 결과에 prepend
+        // (전체 공지는 어떤 게시판에 작성했든 모든 게시판 상단에 노출)
+        if (!noticeScope && offset === 0) {
+            const { data: globalNotices } = await supabase
+                .from("community_posts")
+                .select("*, post_comments(count)")
+                .eq("notice_scope", "global")
+                .neq("board_type", boardType) // 이미 해당 게시판 결과에 포함된 건 제외
+                .or("is_hidden.is.null,is_hidden.eq.false")
+                .order("created_at", { ascending: false })
+                .limit(3);
+
+            if (globalNotices && globalNotices.length > 0) {
+                const existingIds = new Set((data || []).map(p => p.id));
+                const uniqueGlobals = globalNotices.filter(n => !existingIds.has(n.id));
+                data = [...uniqueGlobals, ...(data || [])];
+            }
         }
 
         // 작성자 미니미 slug 일괄 조회 (미니홈피 아바타 표시용)
@@ -178,6 +205,8 @@ export async function GET(request: NextRequest) {
             imageUrls: [],
             videoUrl: post.video_url || null,
             region: post.region || null,
+            isPinned: post.is_pinned ?? false,
+            noticeScope: post.notice_scope || null,
             authorMinimiSlug: userIdToMinimiSlug[post.user_id] || null,
             authorPoints: userIdToPoints[post.user_id] ?? 0,
             createdAt: post.created_at,
@@ -230,7 +259,7 @@ export async function POST(request: NextRequest) {
         const supabase = await createServerSupabase();
         const body = await request.json();
 
-        const { boardType: rawBoardType, subcategory, animalType, tag, badge, title, content, authorName, imageUrls, videoUrl, isPublic, region } = body;
+        const { boardType: rawBoardType, subcategory, animalType, tag, badge, title, content, authorName, imageUrls, videoUrl, isPublic, region, isPinned, noticeScope } = body;
         const boardType = rawBoardType || subcategory || "free";
 
         // 3. 필수 필드 검증
@@ -257,19 +286,44 @@ export async function POST(request: NextRequest) {
             ? videoUrl
             : null;
 
+        // 5.6 공지 필드 처리 (관리자 전용)
+        let finalBadge = badge;
+        let finalIsPinned = false;
+        let finalNoticeScope: string | null = null;
+
+        if (isPinned || noticeScope) {
+            // 관리자 검증
+            const { ADMIN_EMAILS } = await import("@/config/constants");
+            let isAdmin = ADMIN_EMAILS.includes(user.email || "");
+            if (!isAdmin) {
+                const { data: profile } = await supabase
+                    .from("profiles")
+                    .select("is_admin")
+                    .eq("id", user.id)
+                    .single();
+                isAdmin = profile?.is_admin === true;
+            }
+            if (!isAdmin) {
+                return NextResponse.json({ error: "공지 등록은 관리자만 가능합니다" }, { status: 403 });
+            }
+            finalIsPinned = true;
+            finalNoticeScope = noticeScope || "board";
+            finalBadge = "공지";
+        }
+
         // 6. 게시글 저장 (세션에서 가져온 userId 사용)
-        // DB 실제 컬럼: id, user_id, board_type, animal_type, badge, title, content,
-        //               author_name, likes, views, created_at, updated_at, video_url
         const { data, error } = await supabase
             .from("community_posts")
             .insert([{
                 user_id: user.id,
                 board_type: boardType,
                 animal_type: animalType || tag || null,
-                badge,
+                badge: finalBadge,
                 title: sanitizedTitle,
                 content: sanitizedContent,
                 author_name: sanitizedAuthorName,
+                is_pinned: finalIsPinned,
+                notice_scope: finalNoticeScope,
                 ...(validVideoUrl && { video_url: validVideoUrl }),
                 ...(boardType === "local" && region ? { region: sanitizeInput(region).slice(0, 20) } : {}),
             }])

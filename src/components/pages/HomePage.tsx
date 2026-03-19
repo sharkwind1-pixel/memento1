@@ -19,6 +19,7 @@ import {
     ShowcaseSection,
     MemorialSection,
 } from "@/components/features/home";
+import AnnouncementBanner from "@/components/features/home/AnnouncementBanner";
 import PostModal from "@/components/features/home/PostModal";
 import Lightbox from "@/components/features/home/Lightbox";
 import SimpleHomeLauncher from "@/components/features/home/SimpleHomeLauncher";
@@ -108,6 +109,9 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
 
             <div className="relative z-10 space-y-16 pb-24">
                 <HeroSection setSelectedTab={setSelectedTab} user={user} />
+
+                {/* 전체 공지 배너 */}
+                <AnnouncementBanner setSelectedTab={setSelectedTab} />
 
                 {/* 커뮤니티 인기글 */}
                 {!isLoadingCommunity && (

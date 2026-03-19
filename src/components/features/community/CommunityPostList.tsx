@@ -29,6 +29,8 @@ import {
     Flag,
     ImageIcon,
     Ban,
+    Pin,
+    Globe,
 } from "lucide-react";
 import {
     DropdownMenu,
@@ -124,16 +126,29 @@ export default function CommunityPostList({
                         <Card
                             key={post.id}
                             onClick={() => onSelectPost(post.id)}
-                            className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 hover:bg-white/80 dark:hover:bg-gray-700/60 transition-all duration-300 rounded-2xl cursor-pointer"
+                            className={`backdrop-blur-sm transition-all duration-300 rounded-2xl cursor-pointer ${
+                                post.isPinned
+                                    ? "bg-red-50/80 dark:bg-red-900/20 border-red-200/70 dark:border-red-700/50 hover:bg-red-50 dark:hover:bg-red-900/30"
+                                    : "bg-white/60 dark:bg-gray-800/60 border-white/50 dark:border-gray-700/50 hover:bg-white/80 dark:hover:bg-gray-700/60"
+                            }`}
                         >
                             <CardHeader className="pb-2">
                                 <div className="flex items-start justify-between">
                                     <div className="flex items-center gap-2">
+                                        {post.isPinned && (
+                                            <Pin className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
+                                        )}
                                         <Badge
                                             className={`${getBadgeStyle(post.badge, currentSubcategory)} rounded-lg`}
                                         >
                                             {post.badge}
                                         </Badge>
+                                        {post.noticeScope === "global" && (
+                                            <Badge className="bg-red-500 text-white rounded-lg text-xs flex items-center gap-1">
+                                                <Globe className="w-3 h-3" />
+                                                전체
+                                            </Badge>
+                                        )}
                                         {currentSubcategory === "free" && post.tag && (
                                             <Badge variant="outline" className="rounded-lg text-xs">
                                                 {post.tag}

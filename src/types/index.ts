@@ -22,6 +22,9 @@ export type CommunitySubcategory = "free" | "memorial" | "adoption" | "local" | 
 /** 자유게시판 말머리(태그) */
 export type PostTag = "정보" | "강아지" | "고양이" | "일상" | "질문" | "새" | "물고기" | "토끼" | "파충류";
 
+/** 공지 범위 */
+export type NoticeScope = "board" | "global";
+
 /** 메인 네비게이션 탭 타입 (레거시 호환 포함) */
 export type TabType =
     | "home"
@@ -294,6 +297,8 @@ export interface CommunityPost {
     subcategory?: CommunitySubcategory;  // 서브카테고리 (free, memorial, adoption, local, lost)
     tag?: PostTag;                        // 말머리 (자유게시판용)
     isPublic?: boolean;                   // 공개 여부 (추모 게시판용)
+    isPinned?: boolean;                   // 상단 고정 (공지)
+    noticeScope?: NoticeScope | null;     // 공지 범위 (board/global)
     preview?: string;
     time?: string;
     avatar?: string;

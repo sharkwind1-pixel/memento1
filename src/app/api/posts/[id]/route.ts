@@ -186,33 +186,66 @@ export async function PATCH(
         const { id } = await params;
         const body = await request.json();
 
-        const { title, content, badge, isHidden } = body;
+        const { title, content, badge, isHidden, isPinned, noticeScope } = body;
 
-        // 4. 본인 글인지 확인 (세션의 user.id 사용)
+        // 4. 관리자 여부 확인
+        let isAdmin = ADMIN_EMAILS.includes(user.email || "");
+        if (!isAdmin) {
+            const { data: profile } = await supabase
+                .from("profiles")
+                .select("is_admin")
+                .eq("id", user.id)
+                .single();
+            isAdmin = profile?.is_admin === true;
+        }
+
+        // 공지 설정은 관리자만 가능
+        if ((isPinned !== undefined || noticeScope !== undefined) && !isAdmin) {
+            return NextResponse.json({ error: "공지 설정은 관리자만 가능합니다" }, { status: 403 });
+        }
+
+        // 본인 글 또는 관리자인지 확인
         const { data: existing } = await supabase
             .from("community_posts")
-            .select("user_id")
+            .select("user_id, badge")
             .eq("id", id)
             .single();
 
-        if (!existing || existing.user_id !== user.id) {
+        if (!existing || (existing.user_id !== user.id && !isAdmin)) {
             return NextResponse.json({ error: "권한이 없습니다" }, { status: 403 });
         }
 
         // 5. 입력값 검증 및 sanitize
-        const updateData: Record<string, string | boolean> = { updated_at: new Date().toISOString() };
+        const updateData: Record<string, string | boolean | null> = { updated_at: new Date().toISOString() };
         if (title) updateData.title = sanitizeInput(title).slice(0, 200);
         if (content) updateData.content = sanitizeInput(content).slice(0, 10000);
         if (badge) updateData.badge = sanitizeInput(badge).slice(0, 50);
         if (typeof isHidden === "boolean") updateData.is_hidden = isHidden;
 
-        const { data, error } = await supabase
+        // 공지 토글 (관리자 전용)
+        if (typeof isPinned === "boolean") {
+            updateData.is_pinned = isPinned;
+            if (isPinned) {
+                updateData.notice_scope = noticeScope || "board";
+                updateData.badge = "공지";
+            } else {
+                updateData.notice_scope = null;
+                // 공지 해제 시 기본 뱃지로 복원
+                updateData.badge = "일상";
+            }
+        }
+
+        // 관리자는 user_id 이중 검증 제외
+        let updateQuery = supabase
             .from("community_posts")
             .update(updateData)
-            .eq("id", id)
-            .eq("user_id", user.id)  // 이중 검증
-            .select()
-            .single();
+            .eq("id", id);
+
+        if (!isAdmin) {
+            updateQuery = updateQuery.eq("user_id", user.id);
+        }
+
+        const { data, error } = await updateQuery.select().single();
 
         if (error) {
             return NextResponse.json({ error: "게시글 수정에 실패했습니다" }, { status: 500 });
