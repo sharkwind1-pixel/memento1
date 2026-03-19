@@ -349,19 +349,21 @@ function HomeContent() {
                     return;
                 }
 
-                // 2. 온보딩 완료 여부: DB 또는 localStorage
-                const onboardingDone = !!profileData?.onboarding_completed_at ||
-                    safeGetItem("memento-ani-onboarding-complete") === "true";
-                const tutorialDone = !!profileData?.tutorial_completed_at ||
-                    safeGetItem("memento-ani-tutorial-complete") === "true";
-
-                // DB ↔ localStorage 동기화
-                if (profileData?.onboarding_completed_at) {
+                // 2. 온보딩/튜토리얼 완료 여부 (DB 우선, localStorage는 캐시)
+                // DB가 null이면 관리자가 리셋한 것이므로 localStorage도 클리어
+                if (!profileData?.onboarding_completed_at) {
+                    safeRemoveItem("memento-ani-onboarding-complete");
+                } else {
                     safeSetItem("memento-ani-onboarding-complete", "true");
                 }
-                if (profileData?.tutorial_completed_at) {
+                if (!profileData?.tutorial_completed_at) {
+                    safeRemoveItem("memento-ani-tutorial-complete");
+                } else {
                     safeSetItem("memento-ani-tutorial-complete", "true");
                 }
+
+                const onboardingDone = !!profileData?.onboarding_completed_at;
+                const tutorialDone = !!profileData?.tutorial_completed_at;
 
                 // 3. 온보딩 완료된 유저 → 통과
                 if (onboardingDone) {
