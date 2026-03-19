@@ -43,6 +43,7 @@ import MagazineReader from "@/components/features/magazine/MagazineReader";
 import type { MagazineArticleRow, MagazineStatus } from "../types";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 // ============================================================================
 // Props 타입 정의
@@ -143,6 +144,7 @@ export default function AdminMagazineTab({
     const [isTogglingStatus, setIsTogglingStatus] = useState<string | null>(null);
     const [isUploading, setIsUploading] = useState(false);
     const [previewArticle, setPreviewArticle] = useState<MagazineArticle | null>(null);
+    const [deleteArticleConfirm, setDeleteArticleConfirm] = useState<{ isOpen: boolean; article: MagazineArticleRow | null }>({ isOpen: false, article: null });
     const fileInputRef = useRef<HTMLInputElement>(null!);
 
     // ========================================================================
@@ -304,9 +306,11 @@ export default function AdminMagazineTab({
     // ========================================================================
     // 기사 삭제
     // ========================================================================
-    const deleteArticle = async (article: MagazineArticleRow) => {
-        if (!window.confirm(`"${article.title}" 기사를 삭제하시겠습니까?`)) return;
+    const deleteArticle = (article: MagazineArticleRow) => {
+        setDeleteArticleConfirm({ isOpen: true, article });
+    };
 
+    const executeDeleteArticle = async (article: MagazineArticleRow) => {
         setIsDeleting(article.id);
         try {
             const res = await authFetch(API.MAGAZINE_DETAIL(article.id), {
@@ -483,6 +487,16 @@ export default function AdminMagazineTab({
                     />
                 </div>
             )}
+
+            <ConfirmDialog
+                isOpen={deleteArticleConfirm.isOpen}
+                onClose={() => setDeleteArticleConfirm({ isOpen: false, article: null })}
+                onConfirm={() => deleteArticleConfirm.article && executeDeleteArticle(deleteArticleConfirm.article)}
+                title="기사 삭제"
+                message={`"${deleteArticleConfirm.article?.title || ""}" 기사를 삭제하시겠습니까?`}
+                confirmText="삭제"
+                destructive
+            />
         </div>
     );
 }

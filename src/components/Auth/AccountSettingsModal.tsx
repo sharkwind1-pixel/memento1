@@ -36,6 +36,7 @@ import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
 import { safeGetItem, safeSetItem, safeRemoveItem } from "@/lib/safe-storage";
 import type { UserBlock } from "@/types";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 interface AccountSettingsModalProps {
     isOpen: boolean;
@@ -110,6 +111,7 @@ export default function AccountSettingsModal({
     const [blockedUsers, setBlockedUsers] = useState<UserBlock[]>([]);
     const [isLoadingBlocks, setIsLoadingBlocks] = useState(false);
     const [showBlockedUsers, setShowBlockedUsers] = useState(false);
+    const [unblockConfirm, setUnblockConfirm] = useState<{ isOpen: boolean; blockedUserId: string; nickname: string }>({ isOpen: false, blockedUserId: "", nickname: "" });
     const [unblockingId, setUnblockingId] = useState<string | null>(null);
 
     // 현재 닉네임 + 설정 로드 (모달이 열릴 때마다 최신 데이터 fetch)
@@ -210,9 +212,12 @@ export default function AccountSettingsModal({
     };
 
     // 차단 해제
-    const handleUnblock = async (blockedUserId: string, nickname: string) => {
-        if (!confirm(`"${nickname}" 님의 차단을 해제하시겠습니까?`)) return;
+    const handleUnblock = (blockedUserId: string, nickname: string) => {
+        setUnblockConfirm({ isOpen: true, blockedUserId, nickname });
+    };
 
+    const executeUnblock = async () => {
+        const { blockedUserId, nickname } = unblockConfirm;
         setUnblockingId(blockedUserId);
         try {
             const res = await authFetch(`${API.BLOCKS}?blockedUserId=${blockedUserId}`, {
@@ -898,6 +903,14 @@ export default function AccountSettingsModal({
                 </div>
             </div>
             </div>
+            <ConfirmDialog
+                isOpen={unblockConfirm.isOpen}
+                onClose={() => setUnblockConfirm(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={executeUnblock}
+                title="차단 해제"
+                message={`"${unblockConfirm.nickname}" 님의 차단을 해제하시겠습니까?`}
+                confirmText="해제"
+            />
         </div>
     );
 }

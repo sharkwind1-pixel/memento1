@@ -20,6 +20,7 @@ import ShowcaseGalleryView from "@/components/features/community/ShowcaseGallery
 import HotPosts from "@/components/features/community/HotPosts";
 import MinihompyVisitModal from "@/components/features/minihompy/MinihompyVisitModal";
 import ReportModal from "@/components/modals/ReportModal";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import type { CommunitySubcategory, PostTag, CommunityPageProps } from "@/types";
 import { API } from "@/config/apiEndpoints";
 import type { Post } from "@/components/features/community/communityTypes";
@@ -98,6 +99,7 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey }:
     const [hasMore, setHasMore] = useState(true);
     const [showWriteModal, setShowWriteModal] = useState(false);
     const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+    const [blockConfirm, setBlockConfirm] = useState<{ isOpen: boolean; targetUserId: string; targetName: string }>({ isOpen: false, targetUserId: "", targetName: "" });
     const isNavigatingBackRef = useRef(false);
 
     // ============================================================
@@ -345,15 +347,18 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey }:
     }, [hasMore, isLoading, isLoadingMore, fetchPosts]);
 
     // 유저 차단 핸들러
-    const handleBlockUser = async (targetUserId: string, targetName: string) => {
+    const handleBlockUser = (targetUserId: string, targetName: string) => {
         if (!user) {
             window.dispatchEvent(new CustomEvent("openAuthModal"));
             return;
         }
         if (targetUserId === user.id) return;
 
-        if (!confirm(`"${targetName}" 님을 차단하시겠습니까?\n\n차단하면 이 유저의 게시글과 댓글이 더 이상 보이지 않습니다.\n설정에서 차단을 해제할 수 있습니다.`)) return;
+        setBlockConfirm({ isOpen: true, targetUserId, targetName });
+    };
 
+    const executeBlockUser = async () => {
+        const { targetUserId, targetName } = blockConfirm;
         try {
             const response = await authFetch(API.BLOCKS, {
                 method: "POST",
@@ -526,6 +531,16 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey }:
                     userId={visitUserId}
                 />
             )}
+
+            <ConfirmDialog
+                isOpen={blockConfirm.isOpen}
+                onClose={() => setBlockConfirm(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={executeBlockUser}
+                title="유저 차단"
+                message={`"${blockConfirm.targetName}" 님을 차단하시겠습니까?\n\n차단하면 이 유저의 게시글과 댓글이 더 이상 보이지 않습니다.\n설정에서 차단을 해제할 수 있습니다.`}
+                confirmText="차단"
+                destructive
+            />
         </div>
     );
 }

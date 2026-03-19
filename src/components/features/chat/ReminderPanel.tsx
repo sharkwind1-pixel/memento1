@@ -35,6 +35,7 @@ import { authFetch } from "@/lib/auth-fetch";
 import { ensurePushSubscription } from "@/lib/push-notifications";
 import { toast } from "sonner";
 import type { Reminder } from "@/types";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 // ============================================================================
 // 타입 정의
@@ -108,6 +109,7 @@ export default function ReminderPanel({
     const [isLoading, setIsLoading] = useState(false);
     const [togglingIds, setTogglingIds] = useState<Set<string>>(new Set());
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
     const [showAddForm, setShowAddForm] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [form, setForm] = useState<AddReminderForm>({
@@ -187,9 +189,11 @@ export default function ReminderPanel({
     };
 
     /** 알림 삭제 */
-    const handleDelete = async (reminderId: string) => {
-        if (!confirm("이 알림을 삭제하시겠어요?")) return;
+    const handleDelete = (reminderId: string) => {
+        setDeleteConfirmId(reminderId);
+    };
 
+    const executeDelete = async (reminderId: string) => {
         setDeletingId(reminderId);
         try {
             const response = await authFetch(API.REMINDER_DETAIL(reminderId), {
@@ -617,6 +621,15 @@ export default function ReminderPanel({
             </div>
 
             {/* slideUp 애니메이션: globals.css */}
+            <ConfirmDialog
+                isOpen={!!deleteConfirmId}
+                onClose={() => setDeleteConfirmId(null)}
+                onConfirm={() => deleteConfirmId && executeDelete(deleteConfirmId)}
+                title="알림 삭제"
+                message="이 알림을 삭제하시겠어요?"
+                confirmText="삭제"
+                destructive
+            />
         </div>
     );
 }

@@ -35,6 +35,7 @@ import LostPetCreateModal from "@/components/features/lost/LostPetCreateModal";
 import LostPageHeader from "@/components/features/lost/LostPageHeader";
 import { useLostPosts } from "@/components/features/lost/useLostPosts";
 import { useLostPostActions } from "@/components/features/lost/useLostPostActions";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 interface LostPageProps {
     setSelectedTab?: (tab: TabType) => void;
@@ -92,6 +93,8 @@ function LostPage({ setSelectedTab }: LostPageProps) {
         handleDelete,
         handleResolve,
         removeImage,
+        confirmState,
+        setConfirmState,
     } = useLostPostActions({ user, fetchPosts, fetchStats, setPage });
 
     return (
@@ -283,6 +286,16 @@ function LostPage({ setSelectedTab }: LostPageProps) {
                     onClose={() => setShowCreateModal(false)}
                 />
             )}
+
+            <ConfirmDialog
+                isOpen={confirmState.isOpen}
+                onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={confirmState.onConfirm}
+                title={confirmState.title}
+                message={confirmState.message}
+                confirmText={confirmState.confirmText}
+                destructive={confirmState.destructive}
+            />
         </div>
     );
 }

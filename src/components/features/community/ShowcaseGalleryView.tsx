@@ -37,6 +37,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/auth-fetch";
 import { toast } from "sonner";
 import type { ShowcasePost } from "@/components/features/home/types";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 interface ShowcaseGalleryViewProps {
     onBack: () => void;
@@ -48,6 +49,14 @@ export default function ShowcaseGalleryView({ onBack, onWriteClick }: ShowcaseGa
     const [posts, setPosts] = useState<ShowcasePost[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+    const [confirmState, setConfirmState] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        confirmText: string;
+        destructive: boolean;
+        onConfirm: () => void;
+    }>({ isOpen: false, title: "", message: "", confirmText: "", destructive: false, onConfirm: () => {} });
 
     const gradients = [
         "from-sky-400 to-blue-300",
@@ -97,38 +106,54 @@ export default function ShowcaseGalleryView({ onBack, onWriteClick }: ShowcaseGa
     }, [fetchPosts]);
 
     // 카드에서 바로 삭제
-    const handleDeletePost = async (postId: string) => {
-        if (!confirm("정말 삭제하시겠습니까? 삭제하면 복구할 수 없습니다.")) return;
-        try {
-            const res = await authFetch(API.POST_DETAIL(postId), { method: "DELETE" });
-            if (res.ok) {
-                setPosts(prev => prev.filter(p => p.id !== postId));
-                toast.success("게시글이 삭제되었습니다");
-            } else {
-                toast.error("삭제에 실패했습니다");
-            }
-        } catch {
-            toast.error("삭제에 실패했습니다");
-        }
+    const handleDeletePost = (postId: string) => {
+        setConfirmState({
+            isOpen: true,
+            title: "게시글 삭제",
+            message: "정말 삭제하시겠습니까? 삭제하면 복구할 수 없습니다.",
+            confirmText: "삭제",
+            destructive: true,
+            onConfirm: async () => {
+                try {
+                    const res = await authFetch(API.POST_DETAIL(postId), { method: "DELETE" });
+                    if (res.ok) {
+                        setPosts(prev => prev.filter(p => p.id !== postId));
+                        toast.success("게시글이 삭제되었습니다");
+                    } else {
+                        toast.error("삭제에 실패했습니다");
+                    }
+                } catch {
+                    toast.error("삭제에 실패했습니다");
+                }
+            },
+        });
     };
 
     // 카드에서 바로 숨기기
-    const handleHidePost = async (postId: string) => {
-        if (!confirm("이 게시글을 숨기시겠어요? 다른 사람들에게 보이지 않게 됩니다.")) return;
-        try {
-            const res = await authFetch(API.POST_DETAIL(postId), {
-                method: "PATCH",
-                body: JSON.stringify({ isHidden: true }),
-            });
-            if (res.ok) {
-                setPosts(prev => prev.filter(p => p.id !== postId));
-                toast.success("게시글이 숨김 처리되었습니다");
-            } else {
-                toast.error("숨기기에 실패했습니다");
-            }
-        } catch {
-            toast.error("숨기기에 실패했습니다");
-        }
+    const handleHidePost = (postId: string) => {
+        setConfirmState({
+            isOpen: true,
+            title: "게시글 숨기기",
+            message: "이 게시글을 숨기시겠어요? 다른 사람들에게 보이지 않게 됩니다.",
+            confirmText: "숨기기",
+            destructive: false,
+            onConfirm: async () => {
+                try {
+                    const res = await authFetch(API.POST_DETAIL(postId), {
+                        method: "PATCH",
+                        body: JSON.stringify({ isHidden: true }),
+                    });
+                    if (res.ok) {
+                        setPosts(prev => prev.filter(p => p.id !== postId));
+                        toast.success("게시글이 숨김 처리되었습니다");
+                    } else {
+                        toast.error("숨기기에 실패했습니다");
+                    }
+                } catch {
+                    toast.error("숨기기에 실패했습니다");
+                }
+            },
+        });
     };
 
     // 게시글 상세보기 모드
@@ -243,6 +268,15 @@ export default function ShowcaseGalleryView({ onBack, onWriteClick }: ShowcaseGa
                     )}
                 </div>
             </div>
+            <ConfirmDialog
+                isOpen={confirmState.isOpen}
+                onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={confirmState.onConfirm}
+                title={confirmState.title}
+                message={confirmState.message}
+                confirmText={confirmState.confirmText}
+                destructive={confirmState.destructive}
+            />
         </div>
     );
 }

@@ -31,6 +31,7 @@ import {
     REPORT_TARGET_LABELS,
     ReportTargetType,
 } from "../types";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 // ============================================================================
 // Props 타입 정의
@@ -56,6 +57,7 @@ export default function AdminReportsTab({
 }: AdminReportsTabProps) {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+    const [deleteContentConfirm, setDeleteContentConfirm] = useState<{ isOpen: boolean; report: ReportRow | null }>({ isOpen: false, report: null });
 
     // ========================================================================
     // 신고 상태 변경
@@ -92,9 +94,11 @@ export default function AdminReportsTab({
     // ========================================================================
     // 신고된 콘텐츠 삭제
     // ========================================================================
-    const deleteContent = async (report: ReportRow) => {
-        if (!confirm("신고된 콘텐츠를 삭제하시겠습니까?")) return;
+    const deleteContent = (report: ReportRow) => {
+        setDeleteContentConfirm({ isOpen: true, report });
+    };
 
+    const executeDeleteContent = async (report: ReportRow) => {
         try {
             // 대상 유형에 따라 테이블 결정
             const tableMap: Record<ReportTargetType, string> = {
@@ -240,6 +244,16 @@ export default function AdminReportsTab({
                     )}
                 </CardContent>
             </Card>
+
+            <ConfirmDialog
+                isOpen={deleteContentConfirm.isOpen}
+                onClose={() => setDeleteContentConfirm({ isOpen: false, report: null })}
+                onConfirm={() => deleteContentConfirm.report && executeDeleteContent(deleteContentConfirm.report)}
+                title="콘텐츠 삭제"
+                message="신고된 콘텐츠를 삭제하시겠습니까?"
+                confirmText="삭제"
+                destructive
+            />
         </div>
     );
 }

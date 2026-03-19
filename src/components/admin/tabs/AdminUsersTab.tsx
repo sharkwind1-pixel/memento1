@@ -34,6 +34,7 @@ import LevelBadge from "@/components/features/points/LevelBadge";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
 import { safeRemoveItem } from "@/lib/safe-storage";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 // ============================================================================
 // Props 타입 정의
@@ -73,21 +74,43 @@ export default function AdminUsersTab({
     const [searchQuery, setSearchQuery] = useState("");
     const [premiumModalUser, setPremiumModalUser] = useState<UserRow | null>(null);
     const [pointsModalUser, setPointsModalUser] = useState<UserRow | null>(null);
+    const [confirmState, setConfirmState] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        confirmText: string;
+        destructive: boolean;
+        onConfirm: () => void;
+    }>({ isOpen: false, title: "", message: "", confirmText: "", destructive: false, onConfirm: () => {} });
 
     // ========================================================================
     // 유저 밴/해제
     // ========================================================================
-    const toggleBan = async (targetUser: UserRow) => {
+    const toggleBan = (targetUser: UserRow) => {
         const newBanStatus = !targetUser.is_banned;
         const action = newBanStatus ? "차단" : "차단 해제";
 
         if (newBanStatus) {
             const reason = prompt(`${targetUser.email}을(를) 차단합니다.\n\n차단 사유를 입력하세요:`);
             if (reason === null) return;
-        } else {
-            if (!confirm(`${targetUser.email}의 차단을 해제하시겠습니까?`)) return;
         }
 
+        if (!newBanStatus) {
+            // 차단 해제는 ConfirmDialog로
+            setConfirmState({
+                isOpen: true,
+                title: "차단 해제",
+                message: `${targetUser.email}의 차단을 해제하시겠습니까?`,
+                confirmText: "해제",
+                destructive: false,
+                onConfirm: () => executeBanToggle(targetUser, newBanStatus, action),
+            });
+        } else {
+            executeBanToggle(targetUser, newBanStatus, action);
+        }
+    };
+
+    const executeBanToggle = async (targetUser: UserRow, newBanStatus: boolean, action: string) => {
         try {
             const res = await authFetch(API.ADMIN_UPDATE_PROFILE, {
                 method: "PATCH",
@@ -119,49 +142,63 @@ export default function AdminUsersTab({
     // ========================================================================
     // 관리자 권한 부여/해제
     // ========================================================================
-    const toggleAdmin = async (targetUser: UserRow) => {
+    const toggleAdmin = (targetUser: UserRow) => {
         const newAdminStatus = !targetUser.is_admin;
         const action = newAdminStatus ? "관리자 권한 부여" : "관리자 권한 해제";
 
-        if (!confirm(`${targetUser.email}의 ${action}를 진행하시겠습니까?`)) return;
+        setConfirmState({
+            isOpen: true,
+            title: action,
+            message: `${targetUser.email}의 ${action}를 진행하시겠습니까?`,
+            confirmText: "확인",
+            destructive: false,
+            onConfirm: async () => {
+                try {
+                    const res = await authFetch(API.ADMIN_UPDATE_PROFILE, {
+                        method: "PATCH",
+                        body: JSON.stringify({
+                            targetUserId: targetUser.id,
+                            updates: { is_admin: newAdminStatus },
+                        }),
+                    });
 
-        try {
-            const res = await authFetch(API.ADMIN_UPDATE_PROFILE, {
-                method: "PATCH",
-                body: JSON.stringify({
-                    targetUserId: targetUser.id,
-                    updates: { is_admin: newAdminStatus },
-                }),
-            });
+                    if (!res.ok) {
+                        const errData = await res.json().catch(() => ({}));
+                        throw new Error(errData.error || "관리자 권한 변경 실패");
+                    }
 
-            if (!res.ok) {
-                const errData = await res.json().catch(() => ({}));
-                throw new Error(errData.error || "관리자 권한 변경 실패");
-            }
+                    onUpdateUsers(prev =>
+                        prev.map(u =>
+                            u.id === targetUser.id
+                                ? { ...u, is_admin: newAdminStatus }
+                                : u
+                        )
+                    );
 
-            onUpdateUsers(prev =>
-                prev.map(u =>
-                    u.id === targetUser.id
-                        ? { ...u, is_admin: newAdminStatus }
-                        : u
-                )
-            );
-
-            toast.success(`${targetUser.email}의 ${action}가 완료되었습니다.`);
-            onRefreshStats();
-        } catch (err) {
-            toast.error(err instanceof Error ? err.message : "관리자 권한 변경에 실패했습니다.");
-        }
+                    toast.success(`${targetUser.email}의 ${action}가 완료되었습니다.`);
+                    onRefreshStats();
+                } catch (err) {
+                    toast.error(err instanceof Error ? err.message : "관리자 권한 변경에 실패했습니다.");
+                }
+            },
+        });
     };
 
     // ========================================================================
     // 온보딩 리셋
     // ========================================================================
-    const resetOnboarding = async (userId: string, userEmail: string) => {
-        const message = `${userEmail}의 온보딩을 리셋하시겠습니까?\n\n초기화 항목:\n- 튜토리얼 완료 상태\n- 온보딩 완료 상태\n- 사용자 유형`;
+    const resetOnboarding = (userId: string, userEmail: string) => {
+        setConfirmState({
+            isOpen: true,
+            title: "온보딩 리셋",
+            message: `${userEmail}의 온보딩을 리셋하시겠습니까?\n\n초기화 항목:\n- 튜토리얼 완료 상태\n- 온보딩 완료 상태\n- 사용자 유형`,
+            confirmText: "리셋",
+            destructive: true,
+            onConfirm: () => executeResetOnboarding(userId, userEmail),
+        });
+    };
 
-        if (!confirm(message)) return;
-
+    const executeResetOnboarding = async (userId: string, userEmail: string) => {
         try {
             const res = await authFetch(API.ADMIN_UPDATE_PROFILE, {
                 method: "PATCH",
@@ -199,9 +236,18 @@ export default function AdminUsersTab({
     // ========================================================================
     // 프리미엄 해제
     // ========================================================================
-    const revokePremium = async (targetUser: UserRow) => {
-        if (!confirm(`${targetUser.email}의 프리미엄을 해제하시겠습니까?`)) return;
+    const revokePremium = (targetUser: UserRow) => {
+        setConfirmState({
+            isOpen: true,
+            title: "프리미엄 해제",
+            message: `${targetUser.email}의 프리미엄을 해제하시겠습니까?`,
+            confirmText: "해제",
+            destructive: true,
+            onConfirm: () => executeRevokePremium(targetUser),
+        });
+    };
 
+    const executeRevokePremium = async (targetUser: UserRow) => {
         try {
             const res = await authFetch(API.ADMIN_UPDATE_PROFILE, {
                 method: "PATCH",
@@ -414,6 +460,16 @@ export default function AdminUsersTab({
                     onAward={awardPoints}
                 />
             )}
+
+            <ConfirmDialog
+                isOpen={confirmState.isOpen}
+                onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={confirmState.onConfirm}
+                title={confirmState.title}
+                message={confirmState.message}
+                confirmText={confirmState.confirmText}
+                destructive={confirmState.destructive}
+            />
         </div>
     );
 }

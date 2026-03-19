@@ -41,6 +41,7 @@ import { authFetch } from "@/lib/auth-fetch";
 import { ensurePushSubscription } from "@/lib/push-notifications";
 import { toast } from "sonner";
 import type { Reminder } from "@/types";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 const REMINDER_TYPES = [
     { value: "walk", label: "산책", icon: Footprints, color: "text-green-500", bg: "bg-green-50" },
@@ -72,6 +73,7 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
     const [isLoading, setIsLoading] = useState(true);
     const [isExpanded, setIsExpanded] = useState(true);
     const [showAddForm, setShowAddForm] = useState(false);
+    const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
     // 새 리마인더 폼 상태
     const [newReminder, setNewReminder] = useState({
@@ -181,9 +183,11 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
     };
 
     // 리마인더 삭제
-    const handleDelete = async (id: string) => {
-        if (!confirm("이 리마인더를 삭제할까요?")) return;
+    const handleDelete = (id: string) => {
+        setDeleteConfirmId(id);
+    };
 
+    const executeDelete = async (id: string) => {
         try {
             const response = await authFetch(API.REMINDER_DETAIL(id), {
                 method: "DELETE",
@@ -453,6 +457,15 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
                     )}
                 </CardContent>
             )}
+            <ConfirmDialog
+                isOpen={!!deleteConfirmId}
+                onClose={() => setDeleteConfirmId(null)}
+                onConfirm={() => deleteConfirmId && executeDelete(deleteConfirmId)}
+                title="리마인더 삭제"
+                message="이 리마인더를 삭제할까요?"
+                confirmText="삭제"
+                destructive
+            />
         </Card>
     );
 }

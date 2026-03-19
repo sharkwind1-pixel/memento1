@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { WithdrawnUser } from "../types";
 import { API } from "@/config/apiEndpoints";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 // ============================================================================
 // Props 타입 정의
@@ -76,6 +77,14 @@ export default function AdminWithdrawalsTab({
 }: AdminWithdrawalsTabProps) {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedType, setSelectedType] = useState<string | null>(null);
+    const [confirmState, setConfirmState] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        confirmText: string;
+        destructive: boolean;
+        onConfirm: () => void;
+    }>({ isOpen: false, title: "", message: "", confirmText: "", destructive: false, onConfirm: () => {} });
     const [showBlockForm, setShowBlockForm] = useState(false);
     const [blockEmail, setBlockEmail] = useState("");
     const [blockReason, setBlockReason] = useState("");
@@ -128,19 +137,27 @@ export default function AdminWithdrawalsTab({
     // ========================================================================
     // 재가입 허용
     // ========================================================================
-    const allowRejoin = async (w: WithdrawnUser) => {
-        // 영구 차단 계정은 이중 확인
-        let reason: string | undefined;
+    const allowRejoin = (w: WithdrawnUser) => {
+        // 영구 차단 계정은 이중 확인 (prompt는 유지)
         if (w.withdrawal_type === "banned") {
             const inputReason = prompt(
                 `[영구 차단 해제]\n${w.email}은 영구 차단된 계정입니다.\n정말 차단을 해제하시겠습니까?\n\n해제 사유를 입력하세요:`
             );
-            if (!inputReason) return; // 취소 또는 빈 사유
-            reason = inputReason;
+            if (!inputReason) return;
+            executeAllowRejoin(w, inputReason);
         } else {
-            if (!confirm(`${w.email}의 재가입을 허용하시겠습니까?`)) return;
+            setConfirmState({
+                isOpen: true,
+                title: "재가입 허용",
+                message: `${w.email}의 재가입을 허용하시겠습니까?`,
+                confirmText: "허용",
+                destructive: false,
+                onConfirm: () => executeAllowRejoin(w),
+            });
         }
+    };
 
+    const executeAllowRejoin = async (w: WithdrawnUser, reason?: string) => {
         try {
             // 서버 API로 처리 (RLS 우회 필요하므로 service_role 사용)
             const session = await supabase.auth.getSession();
@@ -178,9 +195,18 @@ export default function AdminWithdrawalsTab({
     // ========================================================================
     // 탈퇴 기록 삭제
     // ========================================================================
-    const deleteRecord = async (w: WithdrawnUser) => {
-        if (!confirm(`${w.email}의 탈퇴 기록을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) return;
+    const deleteRecord = (w: WithdrawnUser) => {
+        setConfirmState({
+            isOpen: true,
+            title: "탈퇴 기록 삭제",
+            message: `${w.email}의 탈퇴 기록을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`,
+            confirmText: "삭제",
+            destructive: true,
+            onConfirm: () => executeDeleteRecord(w),
+        });
+    };
 
+    const executeDeleteRecord = async (w: WithdrawnUser) => {
         try {
             const { error } = await supabase
                 .from("withdrawn_users")
@@ -349,6 +375,16 @@ export default function AdminWithdrawalsTab({
                     )}
                 </CardContent>
             </Card>
+
+            <ConfirmDialog
+                isOpen={confirmState.isOpen}
+                onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={confirmState.onConfirm}
+                title={confirmState.title}
+                message={confirmState.message}
+                confirmText={confirmState.confirmText}
+                destructive={confirmState.destructive}
+            />
         </div>
     );
 }

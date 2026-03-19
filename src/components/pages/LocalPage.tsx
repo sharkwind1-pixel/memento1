@@ -26,6 +26,7 @@ import LocalCreateModal from "@/components/features/local/LocalCreateModal";
 import LocalHeader from "@/components/features/local/LocalHeader";
 import LocalPostList from "@/components/features/local/LocalPostList";
 import { safeGetItem, safeSetItem } from "@/lib/safe-storage";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 interface LocalPageProps {
     setSelectedTab?: (tab: TabType) => void;
@@ -71,6 +72,14 @@ function LocalPage({ setSelectedTab }: LocalPageProps) {
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
+    const [confirmState, setConfirmState] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        confirmText: string;
+        destructive: boolean;
+        onConfirm: () => void;
+    }>({ isOpen: false, title: "", message: "", confirmText: "", destructive: false, onConfirm: () => {} });
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -245,35 +254,51 @@ function LocalPage({ setSelectedTab }: LocalPageProps) {
     // 게시글 삭제 & 마감
     // ==========================================
 
-    const handleDelete = async (postId: string) => {
-        if (!confirm("정말 삭제하시겠습니까?")) return;
-        try {
-            const res = await authFetch(API.LOCAL_POST_DETAIL(postId), { method: "DELETE" });
-            if (!res.ok) throw new Error("삭제 실패");
-            toast.success("게시글이 삭제되었습니다.");
-            setShowDetailModal(false);
-            setSelectedPost(null);
-            fetchPosts();
-        } catch (err) {
-            toast.error(err instanceof Error ? err.message : "삭제에 실패했습니다.");
-        }
+    const handleDelete = (postId: string) => {
+        setConfirmState({
+            isOpen: true,
+            title: "게시글 삭제",
+            message: "정말 삭제하시겠습니까?",
+            confirmText: "삭제",
+            destructive: true,
+            onConfirm: async () => {
+                try {
+                    const res = await authFetch(API.LOCAL_POST_DETAIL(postId), { method: "DELETE" });
+                    if (!res.ok) throw new Error("삭제 실패");
+                    toast.success("게시글이 삭제되었습니다.");
+                    setShowDetailModal(false);
+                    setSelectedPost(null);
+                    fetchPosts();
+                } catch (err) {
+                    toast.error(err instanceof Error ? err.message : "삭제에 실패했습니다.");
+                }
+            },
+        });
     };
 
-    const handleClose = async (postId: string) => {
-        if (!confirm("마감 처리하시겠습니까?")) return;
-        try {
-            const res = await authFetch(API.LOCAL_POST_DETAIL(postId), {
-                method: "PATCH",
-                body: JSON.stringify({ status: "closed" }),
-            });
-            if (!res.ok) throw new Error("마감 처리 실패");
-            toast.success("마감 처리되었습니다.");
-            setShowDetailModal(false);
-            setSelectedPost(null);
-            fetchPosts();
-        } catch (err) {
-            toast.error(err instanceof Error ? err.message : "마감 처리에 실패했습니다.");
-        }
+    const handleClose = (postId: string) => {
+        setConfirmState({
+            isOpen: true,
+            title: "마감 처리",
+            message: "마감 처리하시겠습니까?",
+            confirmText: "마감",
+            destructive: false,
+            onConfirm: async () => {
+                try {
+                    const res = await authFetch(API.LOCAL_POST_DETAIL(postId), {
+                        method: "PATCH",
+                        body: JSON.stringify({ status: "closed" }),
+                    });
+                    if (!res.ok) throw new Error("마감 처리 실패");
+                    toast.success("마감 처리되었습니다.");
+                    setShowDetailModal(false);
+                    setSelectedPost(null);
+                    fetchPosts();
+                } catch (err) {
+                    toast.error(err instanceof Error ? err.message : "마감 처리에 실패했습니다.");
+                }
+            },
+        });
     };
 
     // ==========================================
@@ -350,6 +375,16 @@ function LocalPage({ setSelectedTab }: LocalPageProps) {
                     onClose={() => setShowCreateModal(false)}
                 />
             )}
+
+            <ConfirmDialog
+                isOpen={confirmState.isOpen}
+                onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={confirmState.onConfirm}
+                title={confirmState.title}
+                message={confirmState.message}
+                confirmText={confirmState.confirmText}
+                destructive={confirmState.destructive}
+            />
         </div>
     );
 }

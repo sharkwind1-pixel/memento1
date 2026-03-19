@@ -40,6 +40,14 @@ export function useLostPostActions({
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
+    const [confirmState, setConfirmState] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        confirmText: string;
+        destructive: boolean;
+        onConfirm: () => void;
+    }>({ isOpen: false, title: "", message: "", confirmText: "", destructive: false, onConfirm: () => {} });
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -177,50 +185,64 @@ export function useLostPostActions({
     };
 
     // 게시글 삭제
-    const handleDelete = async (postId: string) => {
-        if (!confirm("정말 삭제하시겠습니까?")) return;
-
-        try {
-            const res = await authFetch(API.LOST_PET_DETAIL(postId), { method: "DELETE" });
-            if (!res.ok) {
-                const err = await res.json();
-                throw new Error(err.error || "삭제 실패");
-            }
-            toast.success("게시글이 삭제되었습니다.");
-            setShowDetailModal(false);
-            setSelectedPost(null);
-            fetchPosts();
-            fetchStats();
-        } catch (err) {
-            toast.error(
-                err instanceof Error ? err.message : "삭제에 실패했습니다."
-            );
-        }
+    const handleDelete = (postId: string) => {
+        setConfirmState({
+            isOpen: true,
+            title: "게시글 삭제",
+            message: "정말 삭제하시겠습니까?",
+            confirmText: "삭제",
+            destructive: true,
+            onConfirm: async () => {
+                try {
+                    const res = await authFetch(API.LOST_PET_DETAIL(postId), { method: "DELETE" });
+                    if (!res.ok) {
+                        const err = await res.json();
+                        throw new Error(err.error || "삭제 실패");
+                    }
+                    toast.success("게시글이 삭제되었습니다.");
+                    setShowDetailModal(false);
+                    setSelectedPost(null);
+                    fetchPosts();
+                    fetchStats();
+                } catch (err) {
+                    toast.error(
+                        err instanceof Error ? err.message : "삭제에 실패했습니다."
+                    );
+                }
+            },
+        });
     };
 
     // 해결 표시
-    const handleResolve = async (postId: string) => {
-        if (!confirm("찾았어요! 해결 완료로 표시하시겠습니까?")) return;
-
-        try {
-            const res = await authFetch(API.LOST_PET_DETAIL(postId), {
-                method: "PATCH",
-                body: JSON.stringify({ status: "resolved" }),
-            });
-            if (!res.ok) {
-                const err = await res.json();
-                throw new Error(err.error || "상태 변경 실패");
-            }
-            toast.success("해결 완료로 표시되었습니다!");
-            setShowDetailModal(false);
-            setSelectedPost(null);
-            fetchPosts();
-            fetchStats();
-        } catch (err) {
-            toast.error(
-                err instanceof Error ? err.message : "상태 변경에 실패했습니다."
-            );
-        }
+    const handleResolve = (postId: string) => {
+        setConfirmState({
+            isOpen: true,
+            title: "해결 완료",
+            message: "찾았어요! 해결 완료로 표시하시겠습니까?",
+            confirmText: "해결 완료",
+            destructive: false,
+            onConfirm: async () => {
+                try {
+                    const res = await authFetch(API.LOST_PET_DETAIL(postId), {
+                        method: "PATCH",
+                        body: JSON.stringify({ status: "resolved" }),
+                    });
+                    if (!res.ok) {
+                        const err = await res.json();
+                        throw new Error(err.error || "상태 변경 실패");
+                    }
+                    toast.success("해결 완료로 표시되었습니다!");
+                    setShowDetailModal(false);
+                    setSelectedPost(null);
+                    fetchPosts();
+                    fetchStats();
+                } catch (err) {
+                    toast.error(
+                        err instanceof Error ? err.message : "상태 변경에 실패했습니다."
+                    );
+                }
+            },
+        });
     };
 
     return {
@@ -250,5 +272,9 @@ export function useLostPostActions({
         handleDelete,
         handleResolve,
         removeImage,
+
+        // confirm dialog state (컴포넌트에서 ConfirmDialog 렌더링 필요)
+        confirmState,
+        setConfirmState,
     };
 }
