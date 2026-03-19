@@ -413,6 +413,9 @@ function HomeContent() {
             onboardingTriggeredRef.current = false;
         }
 
+        // [DEBUG] useEffect 진입점 디버그 — 모바일에서 어떤 조건이 실패하는지 확인
+        toast.info(`[DBG-ENTRY] user=${!!user} loading=${loading} profileLoaded=${profileLoaded} ref=${newUserFlowCheckedRef.current?.slice(0,8) ?? "null"}`, { duration: 10000 });
+
         if (user && !loading && profileLoaded) {
             checkNewUserFlow();
         }
