@@ -343,13 +343,7 @@ function HomeContent() {
                     return;
                 }
 
-                // 1. 닉네임이 없으면 설정 필요
-                if (!profileData.nickname) {
-                    setShowNicknameSetup(true);
-                    return;
-                }
-
-                // 2. 온보딩/튜토리얼 완료 여부 (DB 우선, localStorage는 캐시)
+                // 1. DB ↔ localStorage 동기화 (닉네임 체크보다 먼저!)
                 // DB가 null이면 관리자가 리셋한 것이므로 localStorage도 클리어
                 if (!profileData?.onboarding_completed_at) {
                     safeRemoveItem("memento-ani-onboarding-complete");
@@ -362,8 +356,13 @@ function HomeContent() {
                     safeSetItem("memento-ani-tutorial-complete", "true");
                 }
 
+                // 2. 닉네임이 없으면 설정 필요 (localStorage 동기화 이후에 체크)
+                if (!profileData.nickname) {
+                    setShowNicknameSetup(true);
+                    return;
+                }
+
                 const onboardingDone = !!profileData?.onboarding_completed_at;
-                const tutorialDone = !!profileData?.tutorial_completed_at;
 
                 // 3. 온보딩 완료된 유저 → 통과
                 if (onboardingDone) {
