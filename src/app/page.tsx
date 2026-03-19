@@ -251,8 +251,6 @@ function HomeContent() {
         const targetTab = tabFromUrl || "home";
         const targetSub = tabFromUrl === "community" && isValidSubcategory(subFromUrl) ? subFromUrl : undefined;
 
-        console.log("[DEBUG page.tsx searchParams effect]", { targetTab, targetSub, currentTab, currentSub, match: targetTab === currentTab && targetSub === currentSub });
-
         // 이미 같은 상태면 아무것도 하지 않음
         if (targetTab === currentTab && targetSub === currentSub) {
             return;
@@ -465,7 +463,6 @@ function HomeContent() {
 
     // 서브카테고리 변경 핸들러 (커뮤니티 내부 + 사이드바에서 사용)
     const handleSubcategoryChange = useCallback((sub: CommunitySubcategory) => {
-        console.log("[DEBUG page.tsx handleSubcategoryChange] called with:", sub);
         // 스크롤 리셋
         window.scrollTo({ top: 0, behavior: 'instant' });
         const mainContent = document.getElementById('main-content');
@@ -474,10 +471,7 @@ function HomeContent() {
         // 모든 상태를 동기적으로 한 번에 업데이트
         setSelectedTab("community");
         setSelectedSubcategory(sub);
-        setCommunityResetKey(prev => {
-            console.log("[DEBUG page.tsx] resetKey:", prev, "→", prev + 1);
-            return prev + 1;
-        });
+        setCommunityResetKey(prev => prev + 1);
 
         safeSetItem("memento-current-tab", "community");
         safeSetItem("memento-current-subcategory", sub);
@@ -485,7 +479,6 @@ function HomeContent() {
         // URL 업데이트를 다음 tick으로 지연 — React가 먼저 상태 변경을 처리하도록
         // (router.push가 searchParams useEffect를 즉시 재트리거하면 상태 충돌 가능)
         setTimeout(() => {
-            console.log("[DEBUG page.tsx] setTimeout router.push firing, currentStateRef:", JSON.stringify(currentStateRef.current));
             router.push(`/?tab=community&sub=${sub}`, { scroll: false });
         }, 0);
     }, [router]);
