@@ -211,6 +211,8 @@ function HomeContent() {
 
     const [selectedTab, setSelectedTab] = useState<TabType>(() => getInitialState().tab);
     const [selectedSubcategory, setSelectedSubcategory] = useState<CommunitySubcategory | undefined>(() => getInitialState().sub);
+    // 커뮤니티 페이지 강제 리셋 키 (사이드바에서 게시판 탭 클릭 시 증가)
+    const [communityResetKey, setCommunityResetKey] = useState(0);
 
     // 방문한 탭 유지: 한 번 mount된 페이지는 display:none으로 숨기기만 (unmount 방지)
     const [mountedTabs, setMountedTabs] = useState<Set<TabType>>(() => new Set([getInitialState().tab]));
@@ -459,8 +461,10 @@ function HomeContent() {
         }
     }, [router, startTransition]);
 
-    // 서브카테고리 변경 핸들러 (커뮤니티 내부에서 사용)
+    // 서브카테고리 변경 핸들러 (커뮤니티 내부 + 사이드바에서 사용)
     const handleSubcategoryChange = useCallback((sub: CommunitySubcategory) => {
+        // resetKey 증가로 CommunityPage에 상세/수정 모드 리셋 신호 전달
+        setCommunityResetKey(prev => prev + 1);
         handleTabChange("community", sub);
     }, [handleTabChange]);
 
@@ -484,6 +488,7 @@ function HomeContent() {
                         subcategory={selectedSubcategory}
                         onSubcategoryChange={handleSubcategoryChange}
                         isActive={selectedTab === "community"}
+                        resetKey={communityResetKey}
                     />
                 </div>
             )}

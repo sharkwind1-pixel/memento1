@@ -227,8 +227,8 @@ export default function Sidebar({
         if (selectedTab !== "community") {
             onTabChange("community");
         }
-        // 같은 서브카테고리 클릭 시에도 게시글 상세를 닫고 목록으로 복귀하도록 이벤트 발송
-        window.dispatchEvent(new CustomEvent("communityResetToList"));
+        // onSubcategoryChange → page.tsx handleSubcategoryChange → resetKey 증가
+        // → CommunityPage에서 상세/수정 모드 강제 리셋
         onSubcategoryChange?.(sub);
         if (isMobile) {
             onClose();

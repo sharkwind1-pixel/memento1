@@ -591,6 +591,8 @@ export interface CommunityPageProps extends PageProps {
     subcategory?: CommunitySubcategory;
     onSubcategoryChange?: (sub: CommunitySubcategory) => void;
     isActive?: boolean;
+    /** 사이드바에서 게시판 탭 클릭 시 증가 → 상세/수정 모드 강제 리셋 */
+    resetKey?: number;
 }
 
 /** AdoptionPage Props */

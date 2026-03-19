@@ -29,7 +29,7 @@ import {
 } from "@/components/features/community/communityTypes";
 import { safeGetItem, safeSetItem, safeSessionGetItem, safeSessionRemoveItem } from "@/lib/safe-storage";
 
-function CommunityPage({ subcategory, onSubcategoryChange, isActive }: CommunityPageProps) {
+function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey }: CommunityPageProps) {
     const { selectedPet } = usePets();
     const { user } = useAuth();
 
@@ -110,34 +110,19 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive }: Community
         }
     }, [isActive]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // 사이드바에서 서브카테고리 변경 시 (props 경유) 상세보기/수정 모드 초기화
-    const prevSubcategoryRef = useRef(subcategory);
+    // 사이드바/외부에서 게시판 탭 클릭 시 상세보기/수정 모드 강제 리셋
+    // resetKey가 변경될 때마다 목록으로 복귀 (같은 서브카테고리 재클릭 포함)
+    const prevResetKeyRef = useRef(resetKey);
     useEffect(() => {
-        if (subcategory !== prevSubcategoryRef.current) {
-            prevSubcategoryRef.current = subcategory;
-            // 게시글 상세/수정 모드면 목록으로 복귀
-            if (selectedPostId) {
-                setSelectedPostId(null);
-            }
-            if (showcaseView) {
-                setShowcaseView(false);
-            }
-            // 필터 초기화
+        if (resetKey !== prevResetKeyRef.current) {
+            prevResetKeyRef.current = resetKey;
+            setSelectedPostId(null);
+            setShowcaseView(false);
             setSelectedTag("all");
             setSelectedBadge("all");
             setSelectedRegion("all");
         }
-    }, [subcategory]); // eslint-disable-line react-hooks/exhaustive-deps
-
-    // 사이드바에서 같은 서브카테고리 클릭 시에도 목록으로 복귀 (커스텀 이벤트)
-    useEffect(() => {
-        const handleResetToList = () => {
-            if (selectedPostId) setSelectedPostId(null);
-            if (showcaseView) setShowcaseView(false);
-        };
-        window.addEventListener("communityResetToList", handleResetToList);
-        return () => window.removeEventListener("communityResetToList", handleResetToList);
-    }, [selectedPostId, showcaseView]);
+    }, [resetKey]); // eslint-disable-line react-hooks/exhaustive-deps
     const [visitUserId, setVisitUserId] = useState<string | null>(null);
     const sentinelRef = useRef<HTMLDivElement>(null);
     const POSTS_PER_PAGE = 15;
