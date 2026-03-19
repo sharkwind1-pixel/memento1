@@ -47,7 +47,7 @@ const FALLBACK_IMAGES: Record<string, string> = {
     food: "https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=800&q=80",
     behavior: "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=80",
     grooming: "https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?w=800&q=80",
-    living: "https://images.unsplash.com/photo-1450778869180-cfe0f76f7834?w=800&q=80",
+    living: "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=800&q=80",
     travel: "https://images.unsplash.com/photo-1530281700549-e82e7bf110d6?w=800&q=80",
 };
 

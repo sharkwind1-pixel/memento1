@@ -8,9 +8,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
 import { ADMIN_EMAILS } from "@/config/constants";
 import {
-    getClientIP,
-    checkRateLimit,
-    getRateLimitHeaders,
     sanitizeInput,
     sanitizeHtmlContent,
 } from "@/lib/rate-limit";
@@ -43,15 +40,6 @@ export async function PATCH(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const clientIP = await getClientIP();
-        const rateLimit = checkRateLimit(clientIP, "write");
-        if (!rateLimit.allowed) {
-            return NextResponse.json(
-                { error: "요청이 너무 많습니다." },
-                { status: 429, headers: getRateLimitHeaders(rateLimit.remaining, rateLimit.resetIn) }
-            );
-        }
-
         const { user, supabase, error, status } = await verifyAdmin();
         if (!user || !supabase) {
             return NextResponse.json({ error }, { status });
@@ -108,15 +96,6 @@ export async function DELETE(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const clientIP = await getClientIP();
-        const rateLimit = checkRateLimit(clientIP, "write");
-        if (!rateLimit.allowed) {
-            return NextResponse.json(
-                { error: "요청이 너무 많습니다." },
-                { status: 429, headers: getRateLimitHeaders(rateLimit.remaining, rateLimit.resetIn) }
-            );
-        }
-
         const { user, supabase, error, status } = await verifyAdmin();
         if (!user || !supabase) {
             return NextResponse.json({ error }, { status });
