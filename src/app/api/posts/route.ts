@@ -215,7 +215,7 @@ export async function GET(request: NextRequest) {
             likes: post.likes ?? 0,
             views: post.views ?? 0,
             comments: post.post_comments?.[0]?.count ?? 0,
-            imageUrls: [],
+            imageUrls: post.image_urls || [],
             videoUrl: post.video_url || null,
             region: post.region || null,
             isPinned: post.is_pinned ?? false,
@@ -339,6 +339,7 @@ export async function POST(request: NextRequest) {
                 author_name: sanitizedAuthorName,
                 is_pinned: finalIsPinned,
                 notice_scope: finalNoticeScope,
+                ...(validImageUrls.length > 0 && { image_urls: validImageUrls }),
                 ...(validVideoUrl && { video_url: validVideoUrl }),
                 ...(boardType === "local" && region ? { region: sanitizeInput(region).slice(0, 20) } : {}),
             }])

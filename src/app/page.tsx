@@ -209,13 +209,15 @@ function HomeContent() {
         return { tab: "home" };
     };
 
-    const [selectedTab, setSelectedTab] = useState<TabType>(() => getInitialState().tab);
-    const [selectedSubcategory, setSelectedSubcategory] = useState<CommunitySubcategory | undefined>(() => getInitialState().sub);
+    // getInitialState()를 1번만 호출하여 캐싱 (기존 3번 → 1번)
+    const [initialState] = useState(() => getInitialState());
+    const [selectedTab, setSelectedTab] = useState<TabType>(initialState.tab);
+    const [selectedSubcategory, setSelectedSubcategory] = useState<CommunitySubcategory | undefined>(initialState.sub);
     // 커뮤니티 페이지 강제 리셋 키 (사이드바에서 게시판 탭 클릭 시 증가)
     const [communityResetKey, setCommunityResetKey] = useState(0);
 
     // 방문한 탭 유지: 한 번 mount된 페이지는 display:none으로 숨기기만 (unmount 방지)
-    const [mountedTabs, setMountedTabs] = useState<Set<TabType>>(() => new Set([getInitialState().tab]));
+    const [mountedTabs, setMountedTabs] = useState<Set<TabType>>(() => new Set([initialState.tab]));
     const [, startTransition] = useTransition();
 
     const [showNicknameSetup, setShowNicknameSetup] = useState(false);

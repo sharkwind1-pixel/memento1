@@ -27,6 +27,7 @@ import {
     Plus,
     ImagePlus,
 } from "lucide-react";
+import { useEscapeClose } from "@/hooks/useEscapeClose";
 
 import type { PostFormData } from "./lostTypes";
 import { REGIONS } from "./lostTypes";
@@ -56,6 +57,7 @@ export default function LostPetCreateModal({
     onSubmit,
     onClose,
 }: LostPetCreateModalProps) {
+    useEscapeClose(true, onClose);
     return (
         <div
             className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50 backdrop-blur-sm"

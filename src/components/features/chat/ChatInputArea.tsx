@@ -38,6 +38,8 @@ interface ChatInputAreaProps {
     selectedPet: Pet | null | undefined;
     onSend: (directMessage?: string) => void;
     onOpenPremiumModal?: () => void;
+    /** AI 응답 대기 중 (전송 버튼/추천칩 비활성화) */
+    isSending?: boolean;
 }
 
 /** 기본 추천 대화 버튼 정의 */
@@ -72,6 +74,7 @@ export default function ChatInputArea({
     selectedPet,
     onSend,
     onOpenPremiumModal,
+    isSending = false,
 }: ChatInputAreaProps) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [showPremiumBanner, setShowPremiumBanner] = useState(false);
@@ -175,8 +178,9 @@ export default function ChatInputArea({
                                 suggestedQuestions.map((question, idx) => (
                                     <button
                                         key={question}
-                                        onClick={() => { setSuggestedQuestions([]); onSend(question); }}
-                                        className={`flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 rounded-full text-sm sm:text-[15px] font-medium min-h-[44px] shadow-sm cursor-pointer active:scale-95 hover:scale-[1.03] hover:shadow-md transition-all chip-enter ${
+                                        onClick={() => { if (isSending) return; setSuggestedQuestions([]); onSend(question); }}
+                                        disabled={isSending}
+                                        className={`flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 rounded-full text-sm sm:text-[15px] font-medium min-h-[44px] shadow-sm cursor-pointer active:scale-95 hover:scale-[1.03] hover:shadow-md transition-all chip-enter disabled:opacity-50 disabled:cursor-not-allowed ${
                                             isMemorialMode
                                                 ? "bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-200"
                                                 : "bg-memento-100 hover:bg-memento-200 text-memento-600 border border-memento-200"
@@ -191,8 +195,9 @@ export default function ChatInputArea({
                                 defaultSuggestions.map((suggestion, idx) => (
                                     <button
                                         key={suggestion.text}
-                                        onClick={() => { onSend(suggestion.text); }}
-                                        className={`flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 rounded-full text-sm sm:text-[15px] font-medium min-h-[44px] shadow-sm cursor-pointer active:scale-95 hover:scale-[1.03] hover:shadow-md transition-all chip-enter ${
+                                        onClick={() => { if (isSending) return; onSend(suggestion.text); }}
+                                        disabled={isSending}
+                                        className={`flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 rounded-full text-sm sm:text-[15px] font-medium min-h-[44px] shadow-sm cursor-pointer active:scale-95 hover:scale-[1.03] hover:shadow-md transition-all chip-enter disabled:opacity-50 disabled:cursor-not-allowed ${
                                             isMemorialMode
                                                 ? "bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-200"
                                                 : "bg-memento-100 hover:bg-memento-200 text-memento-600 border border-memento-200"
@@ -223,7 +228,7 @@ export default function ChatInputArea({
                             />
                             <Button
                                 onClick={() => onSend()}
-                                disabled={!inputValue.trim()}
+                                disabled={!inputValue.trim() || isSending}
                                 aria-label="메시지 전송"
                                 className={`rounded-lg px-3 min-w-[44px] min-h-[44px] flex-shrink-0 transition-all ${
                                     inputValue.trim()

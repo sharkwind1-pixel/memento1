@@ -15,6 +15,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useEscapeClose } from "@/hooks/useEscapeClose";
 import { formatScheduleText, DAY_LABELS } from "@/lib/schedule-utils";
 import {
     X,
@@ -101,6 +102,7 @@ export default function ReminderPanel({
     petName,
     isMemorialMode,
 }: ReminderPanelProps) {
+    useEscapeClose(isOpen, onClose);
     // 상태 관리
     const [reminders, setReminders] = useState<Reminder[]>([]);
     const [isLoading, setIsLoading] = useState(false);

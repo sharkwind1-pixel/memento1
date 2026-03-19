@@ -21,6 +21,7 @@ import {
     CheckCircle2,
     Trash2,
 } from "lucide-react";
+import { useEscapeClose } from "@/hooks/useEscapeClose";
 
 import type { LocalPost } from "./localTypes";
 import { getBadgeStyle, getCategoryLabel, timeAgo } from "./localTypes";
@@ -42,6 +43,7 @@ export default function LocalDetailModal({
     onDelete,
     onClosePost,
 }: LocalDetailModalProps) {
+    useEscapeClose(true, onClose);
     return (
         <div
             className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50 backdrop-blur-sm"

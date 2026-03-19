@@ -9,6 +9,7 @@
 import { Button } from "@/components/ui/button";
 import { Heart, ArrowRight } from "lucide-react";
 import type { OnboardingUserType } from "@/types";
+import { useEscapeClose } from "@/hooks/useEscapeClose";
 
 interface PostOnboardingGuideProps {
     isOpen: boolean;
@@ -25,6 +26,7 @@ export default function PostOnboardingGuide({
     onClose,
     onGoToHome,
 }: PostOnboardingGuideProps) {
+    useEscapeClose(isOpen && userType === "planning", onClose);
     // planning 유저만 이 컴포넌트 사용 (current/memorial은 page.tsx에서 직접 처리)
     if (!isOpen || userType !== "planning") return null;
 

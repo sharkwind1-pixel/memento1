@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { X, Trash2, Video } from "lucide-react";
 import DeleteConfirmModal from "./DeleteConfirmModal";
+import { useEscapeClose } from "@/hooks/useEscapeClose";
 
 interface PhotoViewerProps {
     photo: PetPhoto;
@@ -24,6 +25,7 @@ export default function PhotoViewer({
 }: PhotoViewerProps) {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const isVideo = photo.type === "video";
+    useEscapeClose(!showDeleteConfirm, onClose); // DeleteConfirm이 열려있으면 PhotoViewer ESC 비활성화
 
     return (
         <>

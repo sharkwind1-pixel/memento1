@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, X, Trash2 } from "lucide-react";
+import { useEscapeClose } from "@/hooks/useEscapeClose";
 
 interface DeleteConfirmModalProps {
     isOpen: boolean;
@@ -18,6 +19,7 @@ export default function DeleteConfirmModal({
     title,
     message,
 }: DeleteConfirmModalProps) {
+    useEscapeClose(isOpen, onClose);
     if (!isOpen) return null;
 
     return (

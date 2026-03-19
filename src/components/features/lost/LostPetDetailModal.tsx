@@ -27,6 +27,7 @@ import {
     PawPrint,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useEscapeClose } from "@/hooks/useEscapeClose";
 
 import type { LostPetPost } from "./lostTypes";
 import { timeAgo, formatLocation } from "./lostTypes";
@@ -60,6 +61,7 @@ export default function LostPetDetailModal({
     onDelete,
     onResolve,
 }: LostPetDetailModalProps) {
+    useEscapeClose(true, onClose);
     return (
         <div
             className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50 backdrop-blur-sm"

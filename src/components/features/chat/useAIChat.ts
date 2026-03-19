@@ -167,6 +167,8 @@ export function useAIChat({
     const [isStreaming, setIsStreaming] = useState(false);
     /** 리마인더 안내 메시지 표시 여부 (세션당 1회) */
     const reminderSuggestionShown = useRef(false);
+    /** AbortController ref: 펫 전환/컴포넌트 언마운트 시 진행 중인 API 요청 취소 */
+    const abortControllerRef = useRef<AbortController | null>(null);
 
 
     // ========================================================================
@@ -251,6 +253,14 @@ export function useAIChat({
     // Supabase에서 대화 기록 불러오기
     useEffect(() => {
         if (!selectedPetId || !user?.id) return;
+
+        // 펫 전환 시 진행 중인 API 요청 취소
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            abortControllerRef.current = null;
+        }
+        setIsTyping(false);
+        setIsStreaming(false);
 
         // 펫 전환 시 이전 메시지 + 추천 질문 즉시 초기화 (펫 간 데이터 분리)
         setMessages([]);
@@ -483,10 +493,20 @@ export function useAIChat({
         const messageToSend = directMessage || inputValue;
         if (!messageToSend.trim() || !selectedPet) return;
 
+        // 더블전송 방지: 이미 전송 중이면 무시
+        if (isTyping || isStreaming) return;
+
         // 무료 사용량 제한 체크
         if (isLimitReached) {
             return;
         }
+
+        // 이전 요청 취소 후 새 AbortController 생성
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+        const abortController = new AbortController();
+        abortControllerRef.current = abortController;
 
         // 사용량 증가 (localStorage: 즉시 UI 반영용, 서버 값은 SSE done에서 동기화)
         const newUsage = incrementDailyUsage();
@@ -548,6 +568,7 @@ export function useAIChat({
             // OpenAI API 호출 (에이전트 기능 포함 + 타임라인 데이터)
             const response = await authFetch(API.CHAT, {
                 method: "POST",
+                signal: abortController.signal,
                 body: JSON.stringify({
                     message: currentInput,
                     pet: {

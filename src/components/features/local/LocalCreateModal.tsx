@@ -25,6 +25,7 @@ import {
     Plus,
     ImagePlus,
 } from "lucide-react";
+import { useEscapeClose } from "@/hooks/useEscapeClose";
 
 import type { PostFormData } from "./localTypes";
 import { REGIONS, CATEGORIES, BADGE_OPTIONS } from "./localTypes";
@@ -54,6 +55,7 @@ export default function LocalCreateModal({
     onSubmit,
     onClose,
 }: LocalCreateModalProps) {
+    useEscapeClose(true, onClose);
     return (
         <div
             className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50 backdrop-blur-sm"

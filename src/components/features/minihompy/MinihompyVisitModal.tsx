@@ -14,6 +14,7 @@ import {
     X, Heart, Loader2, MessageSquare,
     Trash2, ChevronDown, Send,
 } from "lucide-react";
+import { useEscapeClose } from "@/hooks/useEscapeClose";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
@@ -186,6 +187,8 @@ export default function MinihompyVisitModal({
             setLoadingMore(false);
         }
     };
+
+    useEscapeClose(isOpen, onClose);
 
     if (!isOpen) return null;
 

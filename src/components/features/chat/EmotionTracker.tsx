@@ -21,6 +21,7 @@ import { MEMENTO_COLORS } from "@/config/colors";
 import { useState, useEffect, useCallback } from "react";
 import { X, MessageCircle, Clock, TrendingUp } from "lucide-react";
 import useHorizontalScroll from "@/hooks/useHorizontalScroll";
+import { useEscapeClose } from "@/hooks/useEscapeClose";
 import { supabase } from "@/lib/supabase";
 
 // ============================================================================
@@ -347,6 +348,7 @@ export default function EmotionTracker({
     isMemorialMode,
     userId,
 }: EmotionTrackerProps) {
+    useEscapeClose(isOpen, onClose);
     // ========================================================================
     // 상태 관리
     // ========================================================================

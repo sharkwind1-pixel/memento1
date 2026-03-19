@@ -5,7 +5,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
@@ -92,6 +92,7 @@ export default function AccountSettingsModal({
     });
     const [isSavingNickname, setIsSavingNickname] = useState(false);
     const [nicknameSuccess, setNicknameSuccess] = useState(false);
+    const nicknameTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [deleteConfirmText, setDeleteConfirmText] = useState("");
@@ -307,7 +308,8 @@ export default function AccountSettingsModal({
             setCurrentNickname(nickname.trim());
             setIsEditingNickname(false);
             setNicknameSuccess(true);
-            setTimeout(() => setNicknameSuccess(false), 3000);
+            if (nicknameTimerRef.current) clearTimeout(nicknameTimerRef.current);
+            nicknameTimerRef.current = setTimeout(() => setNicknameSuccess(false), 3000);
         } catch {
             toast.error("닉네임 변경에 실패했어요. 다시 시도해주세요.");
         } finally {

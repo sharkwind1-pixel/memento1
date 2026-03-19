@@ -71,6 +71,7 @@ interface PostData {
     likes: number;
     views: number;
     comments: PostComment[] | number;
+    image_urls?: string[];
     video_url?: string;
     is_hidden?: boolean;
     is_pinned?: boolean;
@@ -765,7 +766,25 @@ export default function PostDetailView({
                         </div>
                     )}
 
-                    {/* 첨부 이미지 (향후 image_urls 컬럼 추가 시 활성화) */}
+                    {/* 첨부 이미지 */}
+                    {post.image_urls && Array.isArray(post.image_urls) && post.image_urls.length > 0 && (
+                        <div className="mt-4 grid grid-cols-2 gap-2">
+                            {post.image_urls.map((url: string, idx: number) => (
+                                <div
+                                    key={idx}
+                                    className="relative rounded-xl overflow-hidden border dark:border-gray-600 cursor-pointer"
+                                    onClick={() => window.open(url, "_blank")}
+                                >
+                                    <img
+                                        src={url}
+                                        alt={`첨부 이미지 ${idx + 1}`}
+                                        loading="lazy"
+                                        className="w-full h-auto object-cover max-h-[300px]"
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 {/* 좋아요 + 댓글 수 */}

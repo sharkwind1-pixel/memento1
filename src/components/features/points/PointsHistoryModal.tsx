@@ -11,6 +11,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { X, Star, MessageCircle, Heart, PenLine, Camera, Clock, PawPrint, ChevronDown, ChevronUp, BookOpen } from "lucide-react";
+import { useEscapeClose } from "@/hooks/useEscapeClose";
 import { useAuth } from "@/contexts/AuthContext";
 import { getActionLabel, formatPoints } from "@/lib/points";
 import { POINT_LEVELS, getPointLevel } from "@/config/constants";
@@ -57,6 +58,7 @@ function getActionColor(actionType: PointAction) {
 }
 
 export default function PointsHistoryModal({ open, onClose }: PointsHistoryModalProps) {
+    useEscapeClose(open, onClose);
     const { points, userPetType } = useAuth();
     const [transactions, setTransactions] = useState<PointTransaction[]>([]);
     const [loading, setLoading] = useState(true);

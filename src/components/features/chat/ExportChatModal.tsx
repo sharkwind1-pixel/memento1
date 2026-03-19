@@ -8,6 +8,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import useHorizontalScroll from "@/hooks/useHorizontalScroll";
+import { useEscapeClose } from "@/hooks/useEscapeClose";
 
 import { X, Download, Image as ImageIcon, FileText, Star, Heart, Loader2 } from "lucide-react";
 import html2canvas from "html2canvas";
@@ -58,6 +59,7 @@ export default function ExportChatModal({
     pet,
     isMemorialMode,
 }: ExportChatModalProps) {
+    useEscapeClose(isOpen, onClose);
     const [selectedTemplate, setSelectedTemplate] = useState<CardTemplate>(
         isMemorialMode ? "memorial" : "letter"
     );

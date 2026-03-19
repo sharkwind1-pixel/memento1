@@ -4,6 +4,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ZoomIn, ZoomOut, Move, X, Check, RotateCcw } from "lucide-react";
 import type { CropPosition } from "@/types";
+import { useEscapeClose } from "@/hooks/useEscapeClose";
 
 // Re-export for backward compatibility
 export type { CropPosition };
@@ -21,6 +22,7 @@ export default function ImageCropper({
     onSave,
     onCancel,
 }: ImageCropperProps) {
+    useEscapeClose(true, onCancel);
     // position.x, y는 이제 translate 퍼센트값 (0이 중앙)
     const [position, setPosition] = useState<CropPosition>(
         initialPosition || { x: 50, y: 50, scale: 1 }

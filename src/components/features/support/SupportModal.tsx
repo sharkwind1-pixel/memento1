@@ -4,7 +4,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -51,6 +51,16 @@ export default function SupportModal({
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
+    const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // 컴포넌트 언마운트 시 타이머 정리
+    useEffect(() => {
+        return () => {
+            if (successTimerRef.current) {
+                clearTimeout(successTimerRef.current);
+            }
+        };
+    }, []);
 
     const handleSubmit = async () => {
         if (!user) {
@@ -81,13 +91,15 @@ export default function SupportModal({
             if (dbError) throw dbError;
 
             setSuccess(true);
-            setTimeout(() => {
+            const timer = setTimeout(() => {
                 setTitle("");
                 setContent("");
                 setEmail("");
                 setSuccess(false);
                 onClose();
             }, 2000);
+            // cleanup용으로 ref에 저장 (컴포넌트 언마운트 시 clearTimeout)
+            successTimerRef.current = timer;
         } catch {
             setError("문의 등록에 실패했습니다. 다시 시도해주세요.");
         } finally {

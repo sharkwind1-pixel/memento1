@@ -342,6 +342,7 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                         selectedPet={selectedPet}
                         onSend={chat.handleSend}
                         onOpenPremiumModal={() => setIsPremiumModalOpen(true)}
+                        isSending={chat.isTyping || chat.isStreaming}
                     />
                 </div>
             </div>
