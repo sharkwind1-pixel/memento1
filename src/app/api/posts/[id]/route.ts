@@ -217,30 +217,42 @@ export async function DELETE(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        // 1. Rate Limit 체크
-        const clientIP = await getClientIP();
-        const rateLimit = checkRateLimit(clientIP, "write");
-        if (!rateLimit.allowed) {
-            return NextResponse.json(
-                { error: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요." },
-                { status: 429, headers: getRateLimitHeaders(rateLimit.remaining, rateLimit.resetIn) }
-            );
-        }
-
-        // 2. VPN 체크
-        const vpnCheck = await checkVPN(clientIP);
-        if (vpnCheck.blocked) {
-            console.warn(`[Security] VPN blocked on post delete: ${clientIP} - ${vpnCheck.reason}`);
-            return NextResponse.json(getVPNBlockResponse(), { status: 403 });
-        }
-
-        // 3. 세션 기반 인증 (URL 파라미터에서 userId 받지 않음!)
+        // 1. 세션 기반 인증
         const user = await getAuthUser();
         if (!user) {
             return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
         }
 
         const supabase = await createServerSupabase();
+
+        // 2. 관리자 체크 (이메일 + DB)
+        let isAdmin = ADMIN_EMAILS.includes(user.email || "");
+        if (!isAdmin) {
+            const { data: profile } = await supabase
+                .from("profiles")
+                .select("is_admin")
+                .eq("id", user.id)
+                .single();
+            isAdmin = profile?.is_admin === true;
+        }
+
+        // 3. 일반 유저만 Rate Limit + VPN 체크 (관리자는 우회)
+        if (!isAdmin) {
+            const clientIP = await getClientIP();
+            const rateLimit = checkRateLimit(clientIP, "write");
+            if (!rateLimit.allowed) {
+                return NextResponse.json(
+                    { error: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요." },
+                    { status: 429, headers: getRateLimitHeaders(rateLimit.remaining, rateLimit.resetIn) }
+                );
+            }
+            const vpnCheck = await checkVPN(clientIP);
+            if (vpnCheck.blocked) {
+                console.warn(`[Security] VPN blocked on post delete: ${clientIP} - ${vpnCheck.reason}`);
+                return NextResponse.json(getVPNBlockResponse(), { status: 403 });
+            }
+        }
+
         const { id } = await params;
 
         // 4. 본인 글 또는 관리자인지 확인
@@ -255,17 +267,6 @@ export async function DELETE(
         }
 
         const isOwner = existing.user_id === user.id;
-
-        // 관리자 체크 (이메일 + DB)
-        let isAdmin = ADMIN_EMAILS.includes(user.email || "");
-        if (!isAdmin) {
-            const { data: profile } = await supabase
-                .from("profiles")
-                .select("is_admin")
-                .eq("id", user.id)
-                .single();
-            isAdmin = profile?.is_admin === true;
-        }
 
         if (!isOwner && !isAdmin) {
             return NextResponse.json({ error: "권한이 없습니다" }, { status: 403 });

@@ -137,10 +137,11 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive }: Community
         fetchShowcaseCount();
     }, []);
 
-    // 게시글 선택 (히스토리 push)
+    // 게시글 선택 (히스토리 push + 스크롤 최상단)
     const handleSelectPost = useCallback((postId: string) => {
         setSelectedPostId(postId);
         window.history.pushState({ communityPost: postId }, "");
+        window.scrollTo({ top: 0, behavior: "instant" });
     }, []);
 
     // 게시글 목록으로 돌아가기
