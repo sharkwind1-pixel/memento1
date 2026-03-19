@@ -76,6 +76,7 @@ export function useHomePage() {
                 board: "free",
                 sort: "popular",
                 limit: "10",
+                exclude_badge: "자랑",
             });
             const res = await fetch(`${API.POSTS}?${params}`);
             if (res.ok) {
