@@ -102,6 +102,12 @@ export const FREE_BADGES: { id: string; label: string; color: string }[] = [
     { id: "꿀팁", label: "꿀팁", color: "emerald" },
 ];
 
+// 분실동물 게시판 뱃지(분실/발견) 필터 옵션
+export const LOST_BADGES: { id: string; label: string; color: string }[] = [
+    { id: "분실", label: "분실", color: "red" },
+    { id: "발견", label: "발견", color: "emerald" },
+];
+
 // 지역정보 게시판 지역 필터 옵션 (17개 시/도)
 export const LOCAL_REGIONS: { id: string; label: string }[] = [
     { id: "서울", label: "서울" },

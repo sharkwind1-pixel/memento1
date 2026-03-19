@@ -223,7 +223,7 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive }: Community
             if (selectedTag !== "all") {
                 params.append("tag", selectedTag);
             }
-            if (currentSubcategory === "free" && selectedBadge !== "all") {
+            if ((currentSubcategory === "free" || currentSubcategory === "lost") && selectedBadge !== "all") {
                 params.append("badge", selectedBadge);
             }
             if (currentSubcategory === "local" && selectedRegion !== "all") {

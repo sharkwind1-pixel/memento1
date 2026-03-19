@@ -23,6 +23,7 @@ import {
     SUBCATEGORIES,
     POST_TAGS,
     FREE_BADGES,
+    LOST_BADGES,
     LOCAL_REGIONS,
     getTagColor,
     getCategoryColor,
@@ -228,6 +229,43 @@ export default function CommunityHeader({
                         ))}
                     </div>
                     <div className="absolute right-0 top-0 bottom-1 w-6 bg-gradient-to-l from-white/80 dark:from-gray-800/80 to-transparent pointer-events-none sm:hidden" />
+                </div>
+            )}
+
+            {/* 분실/발견 필터 - 분실동물 게시판일 때만 */}
+            {currentSubcategory === "lost" && (
+                <div className="relative mb-3">
+                    <div className="flex items-center gap-2 pb-1">
+                        <span className="text-xs text-gray-400 dark:text-gray-500 font-medium flex-shrink-0">유형</span>
+                        <button
+                            onClick={() => onBadgeChange("all")}
+                            className={`px-3 py-2 rounded-full text-xs font-medium transition-all active:scale-95 flex-shrink-0 min-h-[36px] ${
+                                selectedBadge === "all"
+                                    ? "bg-amber-500 text-white shadow-sm"
+                                    : "bg-gray-100 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600/50"
+                            }`}
+                        >
+                            전체
+                        </button>
+                        {LOST_BADGES.map((b) => {
+                            const isActive = selectedBadge === b.id;
+                            return (
+                                <button
+                                    key={b.id}
+                                    onClick={() => onBadgeChange(b.id)}
+                                    className={`px-3 py-2 rounded-full text-xs font-medium transition-all active:scale-95 flex-shrink-0 min-h-[36px] ${
+                                        isActive
+                                            ? b.color === "red"
+                                                ? "bg-red-500 text-white shadow-sm"
+                                                : "bg-emerald-500 text-white shadow-sm"
+                                            : "bg-gray-100 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600/50"
+                                    }`}
+                                >
+                                    {b.label}
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
             )}
 
