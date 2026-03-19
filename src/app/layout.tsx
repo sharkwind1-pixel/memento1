@@ -242,7 +242,8 @@ export default function RootLayout({
                 <CookieConsentBanner />
 
                 {/* SSR Footer - 크롤러/봇이 JS 없이도 사업자정보, 법적 링크, 가격 정보를 볼 수 있도록 서버 렌더링 */}
-                <footer className="border-t border-gray-200 bg-gray-50 text-xs text-gray-600 py-8 px-4">
+                {/* JS 앱이 로드되면 숨김 (aria-hidden은 JS로 설정됨, 크롤러는 JS 미실행이므로 계속 보임) */}
+                <footer id="ssr-footer" className="border-t border-gray-200 bg-gray-50 text-xs text-gray-600 py-8 px-4">
                     <div className="max-w-4xl mx-auto space-y-6">
                         {/* 서비스 소개 및 가격 */}
                         <section>
@@ -280,6 +281,8 @@ export default function RootLayout({
                         </div>
                     </div>
                 </footer>
+                {/* JS 실행 시 SSR 푸터 숨김 — 크롤러는 JS 미실행이므로 계속 보임 */}
+                <script dangerouslySetInnerHTML={{ __html: `document.getElementById('ssr-footer').style.display='none'` }} />
                 <Toaster
                     position="top-center"
                     duration={5000}
