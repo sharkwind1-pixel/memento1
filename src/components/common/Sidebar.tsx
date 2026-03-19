@@ -227,6 +227,8 @@ export default function Sidebar({
         if (selectedTab !== "community") {
             onTabChange("community");
         }
+        // 같은 서브카테고리 클릭 시에도 게시글 상세를 닫고 목록으로 복귀하도록 이벤트 발송
+        window.dispatchEvent(new CustomEvent("communityResetToList"));
         onSubcategoryChange?.(sub);
         if (isMobile) {
             onClose();

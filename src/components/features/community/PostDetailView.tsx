@@ -401,7 +401,11 @@ export default function PostDetailView({
             if (!response.ok) throw new Error("수정 실패");
 
             const data = await response.json();
-            setPost(data.post);
+            // PATCH 응답에는 authorPoints/authorIsAdmin이 없으므로 기존 값 보존
+            setPost(prev => prev
+                ? { ...data.post, authorPoints: prev.authorPoints, authorIsAdmin: prev.authorIsAdmin }
+                : data.post
+            );
             setIsEditing(false);
             toast.success("게시글이 수정되었습니다");
         } catch {
@@ -434,7 +438,11 @@ export default function PostDetailView({
             if (!response.ok) throw new Error("공지 설정 실패");
 
             const data = await response.json();
-            setPost(data.post);
+            // PATCH 응답에는 authorPoints/authorIsAdmin이 없으므로 기존 값 보존
+            setPost(prev => prev
+                ? { ...data.post, authorPoints: prev.authorPoints, authorIsAdmin: prev.authorIsAdmin }
+                : data.post
+            );
             toast.success(isPinning ? "공지로 등록되었습니다" : "공지가 해제되었습니다");
         } catch {
             toast.error("공지 설정에 실패했습니다");

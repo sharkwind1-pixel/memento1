@@ -103,12 +103,41 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive }: Community
     // 다른 탭으로 이동하면 상세/오버레이 상태 초기화 (목록으로 복원)
     useEffect(() => {
         if (!isActive) {
-            if (selectedPostId) setSelectedPostId(null);
-            if (showcaseView) setShowcaseView(false);
-            if (visitUserId) setVisitUserId(null);
-            if (reportTarget) setReportTarget(null);
+            setSelectedPostId(null);
+            setShowcaseView(false);
+            setVisitUserId(null);
+            setReportTarget(null);
         }
     }, [isActive]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // 사이드바에서 서브카테고리 변경 시 (props 경유) 상세보기/수정 모드 초기화
+    const prevSubcategoryRef = useRef(subcategory);
+    useEffect(() => {
+        if (subcategory !== prevSubcategoryRef.current) {
+            prevSubcategoryRef.current = subcategory;
+            // 게시글 상세/수정 모드면 목록으로 복귀
+            if (selectedPostId) {
+                setSelectedPostId(null);
+            }
+            if (showcaseView) {
+                setShowcaseView(false);
+            }
+            // 필터 초기화
+            setSelectedTag("all");
+            setSelectedBadge("all");
+            setSelectedRegion("all");
+        }
+    }, [subcategory]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // 사이드바에서 같은 서브카테고리 클릭 시에도 목록으로 복귀 (커스텀 이벤트)
+    useEffect(() => {
+        const handleResetToList = () => {
+            if (selectedPostId) setSelectedPostId(null);
+            if (showcaseView) setShowcaseView(false);
+        };
+        window.addEventListener("communityResetToList", handleResetToList);
+        return () => window.removeEventListener("communityResetToList", handleResetToList);
+    }, [selectedPostId, showcaseView]);
     const [visitUserId, setVisitUserId] = useState<string | null>(null);
     const sentinelRef = useRef<HTMLDivElement>(null);
     const POSTS_PER_PAGE = 15;
