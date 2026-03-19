@@ -115,7 +115,7 @@ export default function PostDetailView({
     onBack,
     onPostDeleted,
 }: PostDetailViewProps) {
-    const { user } = useAuth();
+    const { user, isAdminUser } = useAuth();
     const [post, setPost] = useState<PostData | null>(null);
     const [comments, setComments] = useState<PostComment[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -398,8 +398,9 @@ export default function PostDetailView({
         }
     };
 
-    // 본인 글 여부
+    // 본인 글 여부 + 관리자 권한
     const isOwner = user && post && user.id === post.user_id;
+    const canDelete = isOwner || isAdminUser;
 
     if (isLoading) {
         return (
@@ -457,16 +458,19 @@ export default function PostDetailView({
                             >
                                 <Edit3 className="w-4 h-4" />
                             </Button>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="rounded-lg text-gray-500 hover:text-red-600"
-                                onClick={handleDelete}
-                                disabled={isDeleting}
-                            >
-                                <Trash2 className="w-4 h-4" />
-                            </Button>
                         </>
+                    )}
+                    {canDelete && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="rounded-lg text-gray-500 hover:text-red-600"
+                            onClick={handleDelete}
+                            disabled={isDeleting}
+                            title={isAdminUser && !isOwner ? "관리자 삭제" : "삭제"}
+                        >
+                            <Trash2 className="w-4 h-4" />
+                        </Button>
                     )}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>

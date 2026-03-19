@@ -9,6 +9,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase, createAdminSupabase, getAuthUser } from "@/lib/supabase-server";
+import { ADMIN_EMAILS } from "@/config/constants";
 import {
     getClientIP,
     checkRateLimit,
@@ -242,23 +243,52 @@ export async function DELETE(
         const supabase = await createServerSupabase();
         const { id } = await params;
 
-        // 4. 본인 글인지 확인 (세션의 user.id 사용)
+        // 4. 본인 글 또는 관리자인지 확인
         const { data: existing } = await supabase
             .from("community_posts")
             .select("user_id")
             .eq("id", id)
             .single();
 
-        if (!existing || existing.user_id !== user.id) {
+        if (!existing) {
+            return NextResponse.json({ error: "게시글을 찾을 수 없습니다" }, { status: 404 });
+        }
+
+        const isOwner = existing.user_id === user.id;
+
+        // 관리자 체크 (이메일 + DB)
+        let isAdmin = ADMIN_EMAILS.includes(user.email || "");
+        if (!isAdmin) {
+            const { data: profile } = await supabase
+                .from("profiles")
+                .select("is_admin")
+                .eq("id", user.id)
+                .single();
+            isAdmin = profile?.is_admin === true;
+        }
+
+        if (!isOwner && !isAdmin) {
             return NextResponse.json({ error: "권한이 없습니다" }, { status: 403 });
         }
 
-        // 5. 삭제 (이중 검증으로 user_id도 체크)
-        const { error } = await supabase
-            .from("community_posts")
-            .delete()
-            .eq("id", id)
-            .eq("user_id", user.id);
+        // 5. 삭제 (관리자는 user_id 체크 없이, 작성자는 이중 검증)
+        const adminSupabase = createAdminSupabase();
+        let deleteError;
+        if (isAdmin) {
+            const result = await adminSupabase
+                .from("community_posts")
+                .delete()
+                .eq("id", id);
+            deleteError = result.error;
+        } else {
+            const result = await supabase
+                .from("community_posts")
+                .delete()
+                .eq("id", id)
+                .eq("user_id", user.id);
+            deleteError = result.error;
+        }
+        const error = deleteError;
 
         if (error) {
             return NextResponse.json({ error: "게시글 삭제에 실패했습니다" }, { status: 500 });
