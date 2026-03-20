@@ -129,6 +129,7 @@ export interface UserRow {
     premium_started_at?: string;         // 프리미엄 시작일
     premium_expires_at?: string;         // 프리미엄 만료일
     premium_plan?: string;               // 프리미엄 플랜 종류
+    subscription_tier?: "free" | "basic" | "premium";  // 구독 티어
     points?: number;                     // 보유 포인트
     petType?: "dog" | "cat" | "other";   // 반려동물 타입 (온보딩 데이터 기반)
 }

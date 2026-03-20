@@ -257,6 +257,7 @@ export default function AdminUsersTab({
                         is_premium: false,
                         premium_expires_at: new Date().toISOString(),
                         premium_plan: null,
+                        subscription_tier: "free",
                     },
                 }),
             });
@@ -269,7 +270,7 @@ export default function AdminUsersTab({
             onUpdateUsers(prev =>
                 prev.map(u =>
                     u.id === targetUser.id
-                        ? { ...u, is_premium: false, premium_expires_at: new Date().toISOString(), premium_plan: undefined }
+                        ? { ...u, is_premium: false, premium_expires_at: new Date().toISOString(), premium_plan: undefined, subscription_tier: "free" }
                         : u
                 )
             );
@@ -284,7 +285,7 @@ export default function AdminUsersTab({
     // ========================================================================
     // 프리미엄 부여
     // ========================================================================
-    const grantPremium = async (duration: string, reason: string) => {
+    const grantPremium = async (duration: string, reason: string, plan: "basic" | "premium" = "premium") => {
         if (!premiumModalUser) return;
 
         try {
@@ -303,6 +304,7 @@ export default function AdminUsersTab({
                         premium_started_at: new Date().toISOString(),
                         premium_expires_at: expiresAt,
                         premium_plan: "admin_grant",
+                        subscription_tier: plan,
                     },
                 }),
             });
@@ -312,6 +314,7 @@ export default function AdminUsersTab({
                 throw new Error(errData.error || "프리미엄 부여 실패");
             }
 
+            const planLabel = plan === "basic" ? "베이직" : "프리미엄";
             onUpdateUsers(prev =>
                 prev.map(u =>
                     u.id === premiumModalUser.id
@@ -321,13 +324,14 @@ export default function AdminUsersTab({
                             premium_started_at: new Date().toISOString(),
                             premium_expires_at: expiresAt || undefined,
                             premium_plan: "admin_grant",
+                            subscription_tier: plan,
                         }
                         : u
                 )
             );
 
             toast.success(
-                `${premiumModalUser.email}에게 프리미엄이 부여되었습니다! ${isUnlimited ? "(무기한)" : `(${durationDays}일)`}`
+                `${premiumModalUser.email}에게 ${planLabel}이 부여되었습니다! ${isUnlimited ? "(무기한)" : `(${durationDays}일)`}`
             );
             setPremiumModalUser(null);
             onRefreshStats();
@@ -531,7 +535,7 @@ function UserCard({
                 )}
                 {user.is_premium && (
                     <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300 text-[9px] px-1 py-0 leading-tight">
-                        프리미엄
+                        {user.subscription_tier === "basic" ? "베이직" : "프리미엄"}
                     </Badge>
                 )}
                 {user.is_banned && (

@@ -4,7 +4,8 @@
  * ============================================================================
  * 프리미엄 부여 모달
  *
- * 📌 기능:
+ * 기능:
+ * - 플랜 선택 (베이직 / 프리미엄)
  * - 프리미엄 기간 선택 (7일 ~ 무기한)
  * - 부여 사유 입력
  * ============================================================================
@@ -19,6 +20,7 @@ import { Crown } from "lucide-react";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { UserRow } from "../types";
+import { PRICING } from "@/config/constants";
 
 // ============================================================================
 // Props 타입 정의
@@ -29,13 +31,18 @@ interface PremiumModalProps {
     user: UserRow;
     /** 모달 닫기 */
     onClose: () => void;
-    /** 프리미엄 부여 (기간, 사유) */
-    onGrant: (duration: string, reason: string) => Promise<void>;
+    /** 프리미엄 부여 (기간, 사유, 플랜) */
+    onGrant: (duration: string, reason: string, plan: "basic" | "premium") => Promise<void>;
 }
 
 // ============================================================================
-// 기간 옵션
+// 옵션
 // ============================================================================
+
+const PLAN_OPTIONS = [
+    { value: "basic" as const, label: "베이직", price: PRICING.BASIC_MONTHLY, desc: "AI 펫톡 50회/일, 펫 3마리, 사진 200장" },
+    { value: "premium" as const, label: "프리미엄", price: PRICING.PREMIUM_MONTHLY, desc: "AI 펫톡 무제한, 펫 10마리, 사진 1,000장" },
+];
 
 const DURATION_OPTIONS = [
     { value: "7", label: "7일" },
@@ -53,6 +60,7 @@ const DURATION_OPTIONS = [
 export function PremiumModal({ user, onClose, onGrant }: PremiumModalProps) {
     useEscapeClose(true, onClose);
     useBodyScrollLock(true);
+    const [plan, setPlan] = useState<"basic" | "premium">("premium");
     const [duration, setDuration] = useState("30");
     const [reason, setReason] = useState("");
     const [isSaving, setIsSaving] = useState(false);
@@ -61,7 +69,7 @@ export function PremiumModal({ user, onClose, onGrant }: PremiumModalProps) {
     const handleSave = async () => {
         setIsSaving(true);
         try {
-            await onGrant(duration, reason);
+            await onGrant(duration, reason, plan);
         } finally {
             setIsSaving(false);
         }
@@ -73,6 +81,8 @@ export function PremiumModal({ user, onClose, onGrant }: PremiumModalProps) {
         const days = parseInt(duration);
         return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toLocaleDateString("ko-KR");
     };
+
+    const selectedPlan = PLAN_OPTIONS.find(p => p.value === plan)!;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -95,10 +105,40 @@ export function PremiumModal({ user, onClose, onGrant }: PremiumModalProps) {
 
                 {/* 본문 */}
                 <div className="p-4 space-y-4">
+                    {/* 플랜 선택 */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            플랜 선택
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                            {PLAN_OPTIONS.map((option) => (
+                                <button
+                                    key={option.value}
+                                    onClick={() => setPlan(option.value)}
+                                    className={`p-3 rounded-lg text-left transition-all border-2 ${
+                                        plan === option.value
+                                            ? "border-amber-500 bg-amber-50"
+                                            : "border-gray-200 bg-white hover:border-gray-300"
+                                    }`}
+                                >
+                                    <p className={`text-sm font-medium ${plan === option.value ? "text-amber-700" : "text-gray-700"}`}>
+                                        {option.label}
+                                    </p>
+                                    <p className="text-[10px] text-gray-500 mt-0.5">
+                                        {option.price.toLocaleString()}원/월
+                                    </p>
+                                    <p className="text-[10px] text-gray-400 mt-0.5">
+                                        {option.desc}
+                                    </p>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
                     {/* 기간 선택 */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            프리미엄 기간
+                            부여 기간
                         </label>
                         <div className="grid grid-cols-3 gap-2">
                             {DURATION_OPTIONS.map((option) => (
@@ -133,7 +173,8 @@ export function PremiumModal({ user, onClose, onGrant }: PremiumModalProps) {
                     <div className="p-3 bg-amber-50 rounded-lg text-sm">
                         <p className="font-medium text-amber-800 mb-1">적용 내용</p>
                         <ul className="text-amber-700 space-y-1">
-                            <li>- AI 펫톡 무제한 사용</li>
+                            <li>- 플랜: {selectedPlan.label} ({selectedPlan.price.toLocaleString()}원/월)</li>
+                            <li>- {selectedPlan.desc}</li>
                             <li>- 만료: {getExpiryDate()}</li>
                         </ul>
                     </div>
