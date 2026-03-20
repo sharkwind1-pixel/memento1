@@ -10,6 +10,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { getPublicMemorialPosts, MemorialPost } from "@/lib/memorialService";
 import { authFetch } from "@/lib/auth-fetch";
+import { supabase } from "@/lib/supabase";
 import { API } from "@/config/apiEndpoints";
 import { toast } from "sonner";
 import type { LightboxItem, CommunityPost, Comment, ShowcasePost } from "./types";
@@ -46,9 +47,22 @@ export function useHomePage() {
         // 중복 클릭 방지
         if (likingRef.current.has(postId)) return;
 
+        // 로그인 체크
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+            window.dispatchEvent(new CustomEvent("openAuthModal"));
+            return;
+        }
+
         // 자기 글 좋아요 방지
         const post = communityPosts.find(p => p.id === postId);
         if (!post) return;
+
+        // 자기 글이면 차단
+        if (post.userId && post.userId === session.user.id) {
+            toast.info("자신의 글에는 좋아요를 누를 수 없습니다");
+            return;
+        }
 
         // DB에서 좋아요 토글
         const dbId = post.dbId;
@@ -99,6 +113,13 @@ export function useHomePage() {
     };
 
     const addComment = async (postId: number, content: string) => {
+        // 로그인 체크
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+            window.dispatchEvent(new CustomEvent("openAuthModal"));
+            return;
+        }
+
         const post = communityPosts.find(p => p.id === postId);
         const dbId = post?.dbId;
 
@@ -147,7 +168,8 @@ export function useHomePage() {
                 limit: "10",
                 exclude_badge: "자랑",
             });
-            const res = await fetch(`${API.POSTS}?${params}`);
+            // authFetch 사용: 로그인 유저면 userLiked 등 개인화 데이터 포함
+            const res = await authFetch(`${API.POSTS}?${params}`);
             if (res.ok) {
                 const data = await res.json();
                 const rawPosts = data.posts || [];
