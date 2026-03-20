@@ -150,7 +150,8 @@ export function useHomePage() {
             const res = await fetch(`${API.POSTS}?${params}`);
             if (res.ok) {
                 const data = await res.json();
-                const posts = (data.posts || []).map((p: Record<string, unknown>, idx: number) => ({
+                const rawPosts = data.posts || [];
+                const posts = rawPosts.map((p: Record<string, unknown>, idx: number) => ({
                     id: idx + 1,
                     dbId: (p.id as string) || undefined,
                     userId: (p.userId as string) || undefined,
@@ -165,6 +166,12 @@ export function useHomePage() {
                     authorIsAdmin: (p.authorIsAdmin as boolean) || false,
                 }));
                 setCommunityPosts(posts);
+                // DB에서 가져온 좋아요 상태 반영
+                const likedMap: Record<number, boolean> = {};
+                rawPosts.forEach((p: Record<string, unknown>, idx: number) => {
+                    if (p.userLiked) likedMap[idx + 1] = true;
+                });
+                setLikedPosts(likedMap);
             } else {
                 setCommunityPosts([]);
             }

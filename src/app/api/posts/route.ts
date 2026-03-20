@@ -200,6 +200,24 @@ export async function GET(request: NextRequest) {
             }
         }
 
+        // 로그인 유저의 좋아요 여부 일괄 조회
+        const postIds = (data || []).map(p => p.id);
+        let userLikedPostIds = new Set<string>();
+        if (currentUser && postIds.length > 0) {
+            try {
+                const { data: likeRows } = await supabase
+                    .from("post_likes")
+                    .select("post_id")
+                    .eq("user_id", currentUser.id)
+                    .in("post_id", postIds);
+                if (likeRows) {
+                    userLikedPostIds = new Set(likeRows.map(r => r.post_id));
+                }
+            } catch {
+                // 좋아요 조회 실패 시 무시
+            }
+        }
+
         // 댓글 수 계산
         // DB 실제 컬럼: id, user_id, board_type, animal_type, badge, title, content,
         //               author_name, likes, views, created_at, updated_at, video_url
@@ -223,6 +241,7 @@ export async function GET(request: NextRequest) {
             authorMinimiSlug: userIdToMinimiSlug[post.user_id] || null,
             authorPoints: userIdToPoints[post.user_id] ?? 0,
             authorIsAdmin: userIdToIsAdmin[post.user_id] ?? false,
+            userLiked: userLikedPostIds.has(post.id),
             createdAt: post.created_at,
         }));
 
