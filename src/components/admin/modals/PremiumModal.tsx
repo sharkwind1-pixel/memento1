@@ -20,7 +20,7 @@ import { Crown } from "lucide-react";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { UserRow } from "../types";
-import { PRICING } from "@/config/constants";
+import { PRICING, VIDEO } from "@/config/constants";
 
 // ============================================================================
 // Props 타입 정의
@@ -40,8 +40,8 @@ interface PremiumModalProps {
 // ============================================================================
 
 const PLAN_OPTIONS = [
-    { value: "basic" as const, label: "베이직", price: PRICING.BASIC_MONTHLY, desc: "AI 펫톡 50회/일, 펫 3마리, 사진 200장" },
-    { value: "premium" as const, label: "프리미엄", price: PRICING.PREMIUM_MONTHLY, desc: "AI 펫톡 무제한, 펫 10마리, 사진 1,000장" },
+    { value: "basic" as const, label: "베이직", price: PRICING.BASIC_MONTHLY, desc: `AI 펫톡 50회/일, 펫 3마리, 사진 200장, AI 영상 월 ${VIDEO.BASIC_MONTHLY}회` },
+    { value: "premium" as const, label: "프리미엄", price: PRICING.PREMIUM_MONTHLY, desc: `AI 펫톡 무제한, 펫 10마리, 사진 1,000장, AI 영상 월 ${VIDEO.PREMIUM_MONTHLY}회` },
 ];
 
 const DURATION_OPTIONS = [
