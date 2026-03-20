@@ -10,9 +10,6 @@
 import React from "react";
 import {
     Card,
-    CardFooter,
-    CardHeader,
-    CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -77,30 +74,28 @@ export default function CommunityPostList({
 }: CommunityPostListProps) {
     // 스켈레톤 카드
     const SkeletonCard = ({ keyId }: { keyId: string }) => (
-        <Card className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 rounded-2xl animate-pulse">
-            <CardHeader className="pb-2">
-                <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
-                        <div className="h-5 w-12 bg-gray-200 dark:bg-gray-700 rounded-lg" />
-                    </div>
-                    <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
+        <Card className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-white/50 dark:border-gray-700/50 rounded-xl animate-pulse">
+            <div className="px-3.5 pt-3 pb-1.5">
+                <div className="flex items-center gap-2">
+                    <div className="h-5 w-12 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+                    <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded ml-auto" />
                 </div>
-                <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mt-2" />
-            </CardHeader>
-            <CardFooter className="flex items-center justify-between pt-2">
+                <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mt-2" />
+            </div>
+            <div className="px-3.5 pb-3 pt-1 flex items-center justify-between">
                 <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
-                <div className="flex items-center gap-4">
-                    <div className="h-4 w-10 bg-gray-100 dark:bg-gray-700/70 rounded" />
-                    <div className="h-4 w-10 bg-gray-100 dark:bg-gray-700/70 rounded" />
-                    <div className="h-4 w-10 bg-gray-100 dark:bg-gray-700/70 rounded" />
+                <div className="flex items-center gap-3">
+                    <div className="h-4 w-8 bg-gray-100 dark:bg-gray-700/70 rounded" />
+                    <div className="h-4 w-8 bg-gray-100 dark:bg-gray-700/70 rounded" />
+                    <div className="h-4 w-8 bg-gray-100 dark:bg-gray-700/70 rounded" />
                 </div>
-            </CardFooter>
+            </div>
         </Card>
     );
 
     return (
         <>
-            <div className="space-y-4">
+            <div className="space-y-2.5">
                 {isLoading ? (
                     Array.from({ length: 4 }).map((_, i) => (
                         <SkeletonCard key={`skeleton-${i}`} keyId={`skeleton-${i}`} />
@@ -110,49 +105,50 @@ export default function CommunityPostList({
                         <Card
                             key={post.id}
                             onClick={() => onSelectPost(post.id)}
-                            className={`backdrop-blur-sm transition-all duration-300 rounded-2xl cursor-pointer ${
+                            className={`backdrop-blur-sm transition-all duration-300 rounded-xl cursor-pointer active:scale-[0.98] ${
                                 post.isPinned
                                     ? "bg-red-50/80 dark:bg-red-900/20 border-red-200/70 dark:border-red-700/50 hover:bg-red-50 dark:hover:bg-red-900/30"
                                     : "bg-white/60 dark:bg-gray-800/60 border-white/50 dark:border-gray-700/50 hover:bg-white/80 dark:hover:bg-gray-700/60"
                             }`}
                         >
-                            <CardHeader className="pb-2">
-                                <div className="flex items-start justify-between">
-                                    <div className="flex items-center gap-2">
+                            {/* 상단: 뱃지 + 시간 + 더보기 */}
+                            <div className="px-3.5 pt-3 pb-0">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
                                         {post.isPinned && (
-                                            <Pin className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
+                                            <Pin className="w-3 h-3 text-red-500 flex-shrink-0" />
                                         )}
                                         <Badge
-                                            className={`${getBadgeStyle(post.badge, currentSubcategory)} rounded-lg`}
+                                            className={`${getBadgeStyle(post.badge, currentSubcategory)} rounded-md text-[11px] px-1.5 py-0`}
                                         >
                                             {post.badge}
                                         </Badge>
                                         {post.noticeScope === "global" && (
-                                            <Badge className="bg-red-500 text-white rounded-lg text-xs flex items-center gap-1">
-                                                <Globe className="w-3 h-3" />
+                                            <Badge className="bg-red-500 text-white rounded-md text-[11px] px-1.5 py-0 flex items-center gap-0.5">
+                                                <Globe className="w-2.5 h-2.5" />
                                                 전체
                                             </Badge>
                                         )}
                                         {currentSubcategory === "free" && post.tag && (
-                                            <Badge variant="outline" className="rounded-lg text-xs">
+                                            <Badge variant="outline" className="rounded-md text-[11px] px-1.5 py-0">
                                                 {post.tag}
                                             </Badge>
                                         )}
                                         {currentSubcategory === "local" && post.region && (
-                                            <Badge variant="outline" className="rounded-lg text-xs border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300">
+                                            <Badge variant="outline" className="rounded-md text-[11px] px-1.5 py-0 border-emerald-200 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300">
                                                 {post.region}
                                             </Badge>
                                         )}
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-sm text-gray-400 flex items-center gap-1">
+                                    <div className="flex items-center gap-1 flex-shrink-0">
+                                        <span className="text-xs text-gray-400 flex items-center gap-0.5">
                                             <Clock className="w-3 h-3" />
                                             {formatTime(post.createdAt)}
                                         </span>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <button
-                                                    className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors active:scale-95 transition-transform"
+                                                    className="p-1.5 min-w-[36px] min-h-[36px] flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
                                                     onClick={(e) => e.stopPropagation()}
                                                     aria-label="더보기"
                                                 >
@@ -174,7 +170,6 @@ export default function CommunityPostList({
                                                     <Flag className="w-4 h-4 mr-2" />
                                                     신고하기
                                                 </DropdownMenuItem>
-                                                {/* 차단하기 (본인 글이 아닐 때만) */}
                                                 {userId && post.userId && post.userId !== userId && onBlockUser && (
                                                     <DropdownMenuItem
                                                         onClick={(e) => {
@@ -191,17 +186,19 @@ export default function CommunityPostList({
                                         </DropdownMenu>
                                     </div>
                                 </div>
-                                <CardTitle className="text-lg text-gray-800 dark:text-gray-100 mt-2 line-clamp-1">
+                                {/* 제목 */}
+                                <p className="text-[15px] font-semibold text-gray-800 dark:text-gray-100 mt-1.5 line-clamp-1 leading-snug">
                                     {post.title}
-                                </CardTitle>
-                            </CardHeader>
-                            <CardFooter className="flex items-center justify-between pt-0">
+                                </p>
+                            </div>
+                            {/* 하단: 작성자 + 통계 */}
+                            <div className="px-3.5 pb-3 pt-1.5 flex items-center justify-between">
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         if (post.userId) onVisitUser(post.userId);
                                     }}
-                                    className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-memento-600 dark:hover:text-memento-400 hover:underline transition-colors"
+                                    className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-memento-600 dark:hover:text-memento-400 transition-colors"
                                 >
                                     <LevelBadge
                                         points={post.authorPoints ?? 0}
@@ -209,23 +206,23 @@ export default function CommunityPostList({
                                         size="sm"
                                         showTooltip={false}
                                     />
-                                    <span className="truncate max-w-[120px]">{post.authorName}</span>
+                                    <span className="truncate max-w-[100px]">{post.authorName}</span>
                                 </button>
-                                <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                                    <span className="flex items-center gap-1">
-                                        <Eye className="w-4 h-4" />
+                                <div className="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500">
+                                    <span className="flex items-center gap-0.5">
+                                        <Eye className="w-3.5 h-3.5" />
                                         {(post.views ?? 0).toLocaleString()}
                                     </span>
-                                    <span className="flex items-center gap-1">
-                                        <Heart className="w-4 h-4" />
+                                    <span className="flex items-center gap-0.5">
+                                        <Heart className="w-3.5 h-3.5" />
                                         {post.likes ?? 0}
                                     </span>
-                                    <span className="flex items-center gap-1">
-                                        <MessageCircle className="w-4 h-4" />
+                                    <span className="flex items-center gap-0.5">
+                                        <MessageCircle className="w-3.5 h-3.5" />
                                         {post.comments ?? 0}
                                     </span>
                                 </div>
-                            </CardFooter>
+                            </div>
                         </Card>
                     ))
                 )}
