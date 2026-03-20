@@ -541,8 +541,18 @@ function HomeContent() {
     // 콘텐츠 영역만 스켈레톤으로 대체하여 FOUC 방지
     const isContentLoading = loading && !forceShow;
 
+    // [DEBUG] 화면 직접 표시 디버그 (토스트 안 뜰 때 대비)
+    const [debugInfo, setDebugInfo] = useState("init");
+    useEffect(() => {
+        setDebugInfo(`u=${!!user} l=${loading} pl=${profileLoaded} fs=${forceShow} t=${Date.now()%100000}`);
+    }, [user, loading, profileLoaded, forceShow]);
+
     return (
         <>
+            {/* [DEBUG] 모바일 디버그 오버레이 — 화면 최상단 고정 표시 */}
+            <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 99999, background: "red", color: "white", fontSize: "11px", padding: "2px 6px", pointerEvents: "none" }}>
+                DBG: {debugInfo} | ref={newUserFlowCheckedRef.current?.slice(0,6) ?? "null"} | ob={showOnboarding?"Y":"N"} nick={showNicknameSetup?"Y":"N"}
+            </div>
             <Layout
                 selectedTab={selectedTab}
                 setSelectedTab={handleTabChange}
