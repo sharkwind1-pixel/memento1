@@ -9,7 +9,9 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { getPublicMemorialPosts, MemorialPost } from "@/lib/memorialService";
+import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
+import { toast } from "sonner";
 import type { LightboxItem, CommunityPost, Comment, ShowcasePost } from "./types";
 
 export function useHomePage() {
@@ -38,24 +40,70 @@ export function useHomePage() {
     const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
 
     const heartTimersRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
-    const toggleLike = (postId: number) => {
-        setLikedPosts((prev) => ({
-            ...prev,
-            [postId]: !prev[postId],
-        }));
+    const likingRef = useRef<Set<number>>(new Set());
+
+    const toggleLike = async (postId: number) => {
+        // 중복 클릭 방지
+        if (likingRef.current.has(postId)) return;
+
+        // 자기 글 좋아요 방지
+        const post = communityPosts.find(p => p.id === postId);
+        if (!post) return;
+
+        // DB에서 좋아요 토글
+        const dbId = post.dbId;
+        if (!dbId) {
+            // dbId가 없으면 기존 방식(클라이언트만)으로 폴백
+            setLikedPosts((prev) => ({ ...prev, [postId]: !prev[postId] }));
+            return;
+        }
+
+        likingRef.current.add(postId);
+
+        // 낙관적 UI 업데이트
+        const wasLiked = likedPosts[postId] || false;
+        setLikedPosts((prev) => ({ ...prev, [postId]: !wasLiked }));
+        setCommunityPosts((prev) => prev.map(p =>
+            p.id === postId ? { ...p, likes: wasLiked ? p.likes - 1 : p.likes + 1 } : p
+        ));
+
+        // 하트 애니메이션
         setAnimatingHearts((prev) => ({ ...prev, [postId]: true }));
-        // 이전 타이머 정리
-        const prev = heartTimersRef.current.get(postId);
-        if (prev) clearTimeout(prev);
+        const prevTimer = heartTimersRef.current.get(postId);
+        if (prevTimer) clearTimeout(prevTimer);
         const timer = setTimeout(() => {
             setAnimatingHearts((p) => ({ ...p, [postId]: false }));
             heartTimersRef.current.delete(postId);
         }, 400);
         heartTimersRef.current.set(postId, timer);
+
+        try {
+            const response = await authFetch(API.POST_LIKE(dbId), { method: "POST" });
+            if (!response.ok) throw new Error("좋아요 실패");
+            const data = await response.json();
+            // 서버 응답으로 정확한 값 반영
+            setLikedPosts((prev) => ({ ...prev, [postId]: data.liked }));
+            setCommunityPosts((prev) => prev.map(p =>
+                p.id === postId ? { ...p, likes: data.likes } : p
+            ));
+        } catch {
+            // 롤백
+            setLikedPosts((prev) => ({ ...prev, [postId]: wasLiked }));
+            setCommunityPosts((prev) => prev.map(p =>
+                p.id === postId ? { ...p, likes: wasLiked ? p.likes : p.likes - 1 } : p
+            ));
+            toast.error("좋아요 처리에 실패했습니다");
+        } finally {
+            likingRef.current.delete(postId);
+        }
     };
 
-    const addComment = (postId: number, content: string) => {
-        const newComment: Comment = {
+    const addComment = async (postId: number, content: string) => {
+        const post = communityPosts.find(p => p.id === postId);
+        const dbId = post?.dbId;
+
+        // 낙관적 UI 업데이트
+        const tempComment: Comment = {
             id: Date.now(),
             author: "나",
             content,
@@ -64,8 +112,29 @@ export function useHomePage() {
         };
         setPostComments((prev) => ({
             ...prev,
-            [postId]: [...(prev[postId] || []), newComment],
+            [postId]: [...(prev[postId] || []), tempComment],
         }));
+
+        if (dbId) {
+            try {
+                const response = await authFetch(API.POST_COMMENTS(dbId), {
+                    method: "POST",
+                    body: JSON.stringify({ content: content.trim() }),
+                });
+                if (!response.ok) throw new Error("댓글 작성 실패");
+                // 성공 시 댓글 수 업데이트
+                setCommunityPosts((prev) => prev.map(p =>
+                    p.id === postId ? { ...p, comments: p.comments + 1 } : p
+                ));
+            } catch {
+                // 롤백
+                setPostComments((prev) => ({
+                    ...prev,
+                    [postId]: (prev[postId] || []).filter(c => c.id !== tempComment.id),
+                }));
+                toast.error("댓글 작성에 실패했습니다");
+            }
+        }
     };
 
     // 커뮤니티 인기글 가져오기 (DB)
@@ -83,6 +152,8 @@ export function useHomePage() {
                 const data = await res.json();
                 const posts = (data.posts || []).map((p: Record<string, unknown>, idx: number) => ({
                     id: idx + 1,
+                    dbId: (p.id as string) || undefined,
+                    userId: (p.userId as string) || undefined,
                     title: p.title as string,
                     content: (p.content as string) || "",
                     author: (p.authorName as string) || "익명",

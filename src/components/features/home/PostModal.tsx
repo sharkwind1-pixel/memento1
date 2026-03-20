@@ -60,7 +60,7 @@ export default function PostModal({
 
     if (!post) return null;
 
-    const displayLikes = isLiked ? post.likes + 1 : post.likes;
+    const displayLikes = post.likes;
     const totalComments = post.comments + comments.length;
     const displayComments = showAllComments ? comments : comments.slice(-3);
 

@@ -10,6 +10,8 @@ export type LightboxItem = {
 // 커뮤니티 포스트 타입
 export type CommunityPost = {
     id: number;
+    dbId?: string;       // DB 실제 UUID (API 호출용)
+    userId?: string;     // 작성자 user_id (자기글 좋아요 방지용)
     title: string;
     content: string;
     author: string;

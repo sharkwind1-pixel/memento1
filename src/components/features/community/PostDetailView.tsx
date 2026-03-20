@@ -243,6 +243,12 @@ export default function PostDetailView({
         }
         if (isLiking) return;
 
+        // 자기 글 좋아요 방지
+        if (post && user.id === post.user_id) {
+            toast.info("자신의 글에는 좋아요를 누를 수 없습니다");
+            return;
+        }
+
         setIsLiking(true);
         try {
             const response = await authFetch(API.POST_LIKE(postId), {

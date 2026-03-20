@@ -97,7 +97,7 @@ export default function CommunitySection({
                     </div>
                 ) : communityPosts.map((post, idx) => {
                     const isLiked = likedPosts[post.id] || false;
-                    const displayLikes = isLiked ? post.likes + 1 : post.likes;
+                    const displayLikes = post.likes;
                     const addedComments = postComments[post.id]?.length || 0;
                     const totalComments = post.comments + addedComments;
 
