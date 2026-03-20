@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNicknameCheck } from "@/hooks/useNicknameCheck";
 import { supabase } from "@/lib/supabase";
 import { STORAGE_KEYS } from "@/constants/storage";
+import { PRICING } from "@/config/constants";
 import {
     X,
     User,
@@ -28,6 +29,8 @@ import {
     Bell,
     MapPin,
     Eye,
+    CreditCard,
+    Crown,
 } from "lucide-react";
 import { InlineLoading } from "@/components/ui/PawLoading";
 import { toast } from "sonner";
@@ -47,7 +50,7 @@ export default function AccountSettingsModal({
     isOpen,
     onClose,
 }: AccountSettingsModalProps) {
-    const { user, updateProfile, signOut, isSimpleMode, toggleSimpleMode } = useAuth();
+    const { user, updateProfile, signOut, isSimpleMode, toggleSimpleMode, isPremiumUser, subscriptionTier } = useAuth();
 
     // X 버튼 / ESC / 배경 클릭으로 닫을 때: pushState된 히스토리도 되돌리기
     const closedByButtonRef = React.useRef(false);
@@ -100,6 +103,11 @@ export default function AccountSettingsModal({
     const [isDeleting, setIsDeleting] = useState(false);
     const [deleteError, setDeleteError] = useState<string | null>(null);
 
+    // 구독 관리
+    const [premiumExpiresAt, setPremiumExpiresAt] = useState<string | null>(null);
+    const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+    const [isCancelling, setIsCancelling] = useState(false);
+
     // 알림 설정
     const [notifComment, setNotifComment] = useState(true);
     const [notifLike, setNotifLike] = useState(true);
@@ -121,7 +129,7 @@ export default function AccountSettingsModal({
 
             const { data } = await supabase
                 .from("profiles")
-                .select("nickname, location_consent")
+                .select("nickname, location_consent, premium_expires_at")
                 .eq("id", user.id)
                 .single();
 
@@ -130,6 +138,7 @@ export default function AccountSettingsModal({
                 setNickname(data.nickname);
             }
             setLocationConsent(data?.location_consent || false);
+            setPremiumExpiresAt(data?.premium_expires_at || null);
         };
 
         const loadNotifSettings = () => {
@@ -154,6 +163,7 @@ export default function AccountSettingsModal({
             setDeleteConfirmText("");
             setDeleteError(null);
             setNicknameSuccess(false);
+            setShowCancelConfirm(false);
         }
     }, [isOpen, user]);
 
@@ -319,6 +329,39 @@ export default function AccountSettingsModal({
             toast.error("닉네임 변경에 실패했어요. 다시 시도해주세요.");
         } finally {
             setIsSavingNickname(false);
+        }
+    };
+
+    // 구독 해지
+    const handleCancelSubscription = async () => {
+        if (!user) return;
+        setIsCancelling(true);
+
+        try {
+            // profiles에서 프리미엄 비활성화
+            const { error } = await supabase
+                .from("profiles")
+                .update({
+                    is_premium: false,
+                    subscription_tier: "free",
+                })
+                .eq("id", user.id);
+
+            if (error) throw error;
+
+            setShowCancelConfirm(false);
+            toast.success(
+                premiumExpiresAt
+                    ? `구독이 해지되었습니다. ${new Date(premiumExpiresAt).toLocaleDateString("ko-KR")}까지 기존 혜택을 이용할 수 있습니다.`
+                    : "구독이 해지되었습니다."
+            );
+
+            // AuthContext 프로필 새로고침
+            window.location.reload();
+        } catch {
+            toast.error("구독 해지에 실패했습니다. 다시 시도해주세요.");
+        } finally {
+            setIsCancelling(false);
         }
     };
 
@@ -815,6 +858,115 @@ export default function AccountSettingsModal({
                     {/* 구분선 */}
                     <hr className="border-gray-200 dark:border-gray-700" />
 
+                    {/* 구독 관리 */}
+                    <div>
+                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5 mb-3">
+                            <CreditCard className="w-4 h-4" />
+                            구독 관리
+                        </h3>
+
+                        {isPremiumUser ? (
+                            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Crown className="w-4 h-4 text-amber-500" />
+                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            {subscriptionTier === "basic" ? "베이직" : "프리미엄"} 플랜
+                                        </span>
+                                    </div>
+                                    <span className="text-xs bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300 px-2 py-0.5 rounded-full">
+                                        이용 중
+                                    </span>
+                                </div>
+
+                                <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+                                    <p>
+                                        월{" "}
+                                        {subscriptionTier === "basic"
+                                            ? PRICING.BASIC_MONTHLY.toLocaleString()
+                                            : PRICING.PREMIUM_MONTHLY.toLocaleString()}
+                                        원
+                                    </p>
+                                    {premiumExpiresAt && (
+                                        <p>
+                                            다음 갱신일:{" "}
+                                            {new Date(premiumExpiresAt).toLocaleDateString("ko-KR", {
+                                                year: "numeric",
+                                                month: "long",
+                                                day: "numeric",
+                                            })}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {!showCancelConfirm ? (
+                                    <button
+                                        onClick={() => setShowCancelConfirm(true)}
+                                        className="text-xs text-gray-400 hover:text-red-500 transition-colors underline"
+                                    >
+                                        구독 해지
+                                    </button>
+                                ) : (
+                                    <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg space-y-2">
+                                        <div className="flex items-start gap-2">
+                                            <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                                            <div className="text-xs text-red-600 dark:text-red-400">
+                                                <p className="font-medium">정말 구독을 해지하시겠습니까?</p>
+                                                <p className="mt-1">
+                                                    해지 후에도{" "}
+                                                    {premiumExpiresAt
+                                                        ? `${new Date(premiumExpiresAt).toLocaleDateString("ko-KR")}까지`
+                                                        : "남은 기간 동안"}{" "}
+                                                    기존 혜택을 이용할 수 있습니다.
+                                                </p>
+                                                <p className="mt-1">
+                                                    이후 무료 플랜으로 전환되며, 초과 데이터는 제한됩니다.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => setShowCancelConfirm(false)}
+                                                className="flex-1 h-8 text-xs"
+                                            >
+                                                유지하기
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                onClick={handleCancelSubscription}
+                                                disabled={isCancelling}
+                                                className="flex-1 h-8 text-xs bg-red-500 hover:bg-red-600 text-white"
+                                            >
+                                                {isCancelling ? <InlineLoading /> : "해지하기"}
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <p className="text-[10px] text-gray-400">
+                                    <a href="/payment-terms" target="_blank" className="underline hover:text-memento-500">
+                                        결제 및 구독 약관
+                                    </a>
+                                    {" "}| 환불 문의: sharkwind1@gmail.com
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    현재 무료 플랜을 이용 중입니다.
+                                </p>
+                                <p className="text-[10px] text-gray-400 mt-2">
+                                    AI 펫톡, 반려동물 등록 등 사용 중 자연스럽게 업그레이드할 수 있습니다.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* 구분선 */}
+                    <hr className="border-gray-200 dark:border-gray-700" />
+
                     {/* 회원탈퇴 */}
                     <div>
                         <h3 className="text-sm font-medium text-red-600 mb-2">
@@ -840,9 +992,15 @@ export default function AccountSettingsModal({
                                         </p>
                                         <p className="text-red-500 mt-1">
                                             모든 데이터(반려동물 기록, 채팅
-                                            내역, 게시글 등)가 삭제되며 복구할
-                                            수 없습니다.
+                                            내역, AI 생성 영상, 게시글 등)가
+                                            영구 삭제되며 복구할 수 없습니다.
                                         </p>
+                                        {isPremiumUser && (
+                                            <p className="text-red-500 mt-1 text-xs">
+                                                현재 구독 중인 플랜도 즉시 해지됩니다.
+                                                남은 기간에 대한 환불은 고객센터로 문의해주세요.
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
 
