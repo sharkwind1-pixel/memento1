@@ -155,13 +155,7 @@ export default function PostModal({
                             </p>
                         </div>
 
-                        {/* 이미지 플레이스홀더 */}
-                        <div className="aspect-video bg-gradient-to-br from-memento-200 to-memento-100 dark:from-blue-900/30 dark:to-sky-900/30 rounded-xl flex items-center justify-center">
-                            <div className="text-center text-gray-500 dark:text-gray-400">
-                                <MessageCircle className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                                <p className="text-sm">커뮤니티 게시글</p>
-                            </div>
-                        </div>
+                        {/* 이미지가 있는 경우에만 표시 (향후 image_urls 필드 추가 시) */}
                     </div>
 
                     {/* 액션 버튼들 */}
