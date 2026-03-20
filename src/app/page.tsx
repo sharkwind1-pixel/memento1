@@ -336,9 +336,6 @@ function HomeContent() {
                     .eq("id", user.id)
                     .single();
 
-                // [DEBUG] 모바일 디버그용 toast (임시)
-                toast.info(`[DBG] ob=${profileData?.onboarding_completed_at ?? "null"} ut=${profileData?.user_type ?? "null"} nick=${profileData?.nickname ? "Y" : "N"} err=${profileError?.message ?? "none"}`, { duration: 8000 });
-
                 // 프로필 조회 실패 시 (RLS/세션 문제 등) → 온보딩 강제 안 함
                 if (profileError || !profileData) {
                     newUserFlowCheckedRef.current = user.id;
@@ -383,9 +380,6 @@ function HomeContent() {
                         .select("id", { count: "exact", head: true })
                         .eq("user_id", user.id);
 
-                    // [DEBUG] 모바일 디버그용 toast (임시)
-                    toast.info(`[DBG] user_type=${profileData.user_type} petCount=${petCount}`, { duration: 5000 });
-
                     if ((petCount ?? 0) > 0) {
                         newUserFlowCheckedRef.current = user.id;
                         // 펫 있는 기존 유저 → DB에 완료 기록
@@ -399,7 +393,6 @@ function HomeContent() {
                 }
 
                 // 5. 신규 유저: 온보딩 표시 (1회만)
-                toast.info("[DBG] SHOW ONBOARDING!", { duration: 5000 });
                 onboardingTriggeredRef.current = true;
                 setShowOnboarding(true);
             } catch {
@@ -412,9 +405,6 @@ function HomeContent() {
             newUserFlowCheckedRef.current = null;
             onboardingTriggeredRef.current = false;
         }
-
-        // [DEBUG] useEffect 진입점 디버그 — 모바일에서 어떤 조건이 실패하는지 확인
-        toast.info(`[DBG-ENTRY] user=${!!user} loading=${loading} profileLoaded=${profileLoaded} ref=${newUserFlowCheckedRef.current?.slice(0,8) ?? "null"}`, { duration: 10000 });
 
         if (user && !loading && profileLoaded) {
             checkNewUserFlow();
@@ -541,18 +531,8 @@ function HomeContent() {
     // 콘텐츠 영역만 스켈레톤으로 대체하여 FOUC 방지
     const isContentLoading = loading && !forceShow;
 
-    // [DEBUG] 화면 직접 표시 디버그 (토스트 안 뜰 때 대비)
-    const [debugInfo, setDebugInfo] = useState("init");
-    useEffect(() => {
-        setDebugInfo(`u=${!!user} l=${loading} pl=${profileLoaded} fs=${forceShow} t=${Date.now()%100000}`);
-    }, [user, loading, profileLoaded, forceShow]);
-
     return (
         <>
-            {/* [DEBUG] 모바일 디버그 오버레이 — 화면 최상단 고정 표시 */}
-            <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 99999, background: "red", color: "white", fontSize: "11px", padding: "2px 6px", pointerEvents: "none" }}>
-                DBG: {debugInfo} | ref={newUserFlowCheckedRef.current?.slice(0,6) ?? "null"} | ob={showOnboarding?"Y":"N"} nick={showNicknameSetup?"Y":"N"}
-            </div>
             <Layout
                 selectedTab={selectedTab}
                 setSelectedTab={handleTabChange}
