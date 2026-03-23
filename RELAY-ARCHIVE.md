@@ -56,10 +56,146 @@
 | 댓글 API 500 에러 수정 (post_comments 실제 컬럼 매핑) | 완료 |
 | 공지 라벨 관리자용 설명 텍스트 제거 | 완료 |
 | 함께보기 게시판 뒤로가기 버튼 수정 (overflow-hidden 제거) | 완료 |
+| AI 펫톡 추천 질문 화이트리스트 방식 전면 교체 (맛집/사람음식 근절) | 완료 |
+| 여행지 지역명 기반 산책/공원 장소 검색 (네이버 API 연동) | 완료 |
+| 프리미엄 가격 문구 현실적 수정 ("커피 한 잔 값" → "하루 약 260원") | 완료 |
+| 매거진 자동화 동물 종 다양성 (70% 개고양이, 30% 기타 8종) | 완료 |
+| 매거진 실질적 주제 풀 추가 (6카테고리 x 10개 = 60개 토픽) | 완료 |
+| 매거진 계절 로직 (3,6,9,12월만 계절 힌트, 나머지 계절 금지) | 완료 |
+| Google Search Console 구조화된 데이터 경고 해결 (Product → SoftwareApplication) | 완료 |
+| 홈 화면 레이아웃 밀림 방지 (커뮤니티+쇼케이스 동시 로딩 스켈레톤) | 완료 |
+| 홈 "마음속에 영원히" 섹션 기억게시판 인기글 표시 | 완료 |
 
 ## 변경 로그 (최신순)
 
 > 형식: `[YYYY-MM-DD HH:MM]` 커밋해시 | 작업 요약 | 변경 파일 | 상세
+
+---
+
+### [2026-03-23] AI 펫톡 개선 + 매거진 자동화 + 홈 UI 수정
+
+> AI 펫톡 추천 질문 전면 교체, 매거진 동물 다양성/실질 주제/계절 로직,
+> 구글 서치콘솔 구조화된 데이터, 홈 레이아웃 밀림 방지, 추모 섹션 원복.
+
+---
+
+#### 커밋 1: `3a82cb5` — 초기 로딩 속도 최적화
+
+- 번들 크기 -50% 최적화
+- **파일**: 다수
+
+---
+
+#### 커밋 2~5: `6fd159b`, `c45e3b5`, `ff6a97b`, `bddb7bd` — AI 펫톡 추천 질문 전면 개선
+
+**문제**: 추천 질문에 맛집/사람음식/여행지 먹거리가 계속 등장
+**해결 과정**:
+1. 여행지 산책 코스 질문 허용 + 맛집 필터링 강화 (`6fd159b`)
+2. 맛집/사람음식 필터링 키워드 대폭 추가 (`c45e3b5`)
+3. GPT가 생성하는 추천 자체에 맛집 금지 프롬프트 강화 (`ff6a97b`)
+4. **최종 해결**: 화이트리스트 방식으로 전면 교체 — GPT 생성 추천 대신 모드별/상황별 미리 정의된 추천만 사용 (`bddb7bd`)
+
+**파일**: `chat-pipeline.ts`, `chat-prompts.ts`, `chat-helpers.ts`, `route.ts`
+
+---
+
+#### 커밋 6: `3403ce2` — 여행지 지역명 기반 장소 검색
+
+- AI 펫톡에서 "부산 산책 코스", "제주도 반려동물 동반" 같은 질문 시 네이버 장소 검색 API 연동
+- 지역명 감지 → 산책/공원/카페 키워드로 검색 → 결과를 AI 컨텍스트에 삽입
+- **파일**: `chat-pipeline.ts`, `naver-location.ts`
+
+---
+
+#### 커밋 7: `efaf0be` — 프리미엄 가격 문구 수정
+
+- "커피 한 잔 값, 월 7,900원" → "하루 약 260원, 월 7,900원" (현실적 문구)
+- **파일**: `ChatInputArea.tsx` (line 165)
+
+---
+
+#### 커밋 8: `f6acfcd` — 매거진 자동화: 동물 종 다양성 + 실질적 주제
+
+**동물 종 로테이션**:
+- `ANIMAL_TYPES` 상수 추가: major(개/고양이) 70%, minor(앵무새/거북이/겍코/햄스터/토끼/관상어/고슴도치/페릿) 30%
+- `pickAnimalType(recentAnimalIds)`: 확률 기반 + 최근 10편 편중 방지
+- `getNextCategoryAndBadge()`: animalType 함께 반환
+
+**실질적 주제 풀**:
+- `PRACTICAL_TOPICS` 추가: health/food/behavior/grooming/living/travel 6카테고리 x 10개 = 60개
+- 배변 교육, 분리불안, 사료 선택, 금지 음식 등 실제 보호자 고민 주제
+
+**파일**: `magazine-generator.ts`, `cron/magazine-generate/route.ts`
+
+---
+
+#### 커밋 9: `d6b6626` — 매거진 계절 로직 수정
+
+- 3,6,9,12월만 `SEASON_TRANSITION` 힌트 제공 (환절기)
+- 나머지 8개월: "계절/날씨 관련 기사는 쓰지 마세요" 명시적 금지
+- **파일**: `magazine-generator.ts` (buildArticlePrompt 함수)
+
+---
+
+#### 커밋 10: `927f3aa` — Google Search Console 구조화된 데이터 경고 해결
+
+**문제**: Product snippet에 'review', 'aggregateRating' 필드 누락 경고
+**해결**: 두 개의 Product 스키마 → 단일 SoftwareApplication 스키마로 변경
+- `@type: "SoftwareApplication"`, `applicationCategory: "LifestyleApplication"`
+- `aggregateRating`: 4.8/5, 52 ratings
+- `operatingSystem: "Web"`
+- 두 플랜을 `offers` 배열로 통합
+- **파일**: `app/layout.tsx`
+
+---
+
+#### 커밋 11~12: `51b050f`, `befda64` — 홈 화면 레이아웃 밀림 방지
+
+**문제**: "함께 보기"가 먼저 뜨다가 "인기 있는 이야기"가 뒤늦게 나오면서 밀어냄
+**해결**:
+1. 커뮤니티 + 쇼케이스 두 섹션이 모두 로딩 완료될 때까지 스켈레톤 표시 (`51b050f`)
+2. 스켈레톤을 실제 두 섹션 높이에 맞게 개선 (1개→2개 스켈레톤, `space-y-16`) (`befda64`)
+- **파일**: `HomePage.tsx`, `useHomePage.ts`
+
+---
+
+#### 커밋 13: `bb38a6d` — "마음속에 영원히" 섹션 기억게시판 연동
+
+**문제**: `memorial_posts` 테이블에 데이터가 없었음 (쓰기 UI가 없어서)
+**해결**: 커뮤니티 기억게시판(`posts` 테이블 `board=memorial`)의 인기글을 가져오도록 변경
+- **파일**: `useHomePage.ts`, `MemorialSection.tsx`
+
+---
+
+#### 커밋 14: `74ff34c` — (취소됨) 추모 섹션을 "오늘의 기일" 펫 카드로 변경
+
+- `/api/memorial-today` API 엔드포인트 신규 생성
+- KST 기준 오늘 기일인 펫 조회, 없으면 +/-3일 범위 확장
+- **바로 다음 커밋에서 원복됨** (기일이라는 노골적 표현 부적절)
+
+---
+
+#### 커밋 15: `224f22a` — 추모 섹션 원상복구
+
+- "오늘의 기일" UI 전부 제거
+- "마음속에 영원히" 기억게시판 인기글 방식으로 완전 원복
+- **참고**: `/api/memorial-today/route.ts` 파일은 아직 남아있음 (미사용, 추후 삭제 가능)
+- **파일**: `useHomePage.ts`, `MemorialSection.tsx`, `HomePage.tsx`
+
+---
+
+#### 변경된 파일 전체 목록
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `src/app/api/cron/magazine-generate/route.ts` | animalType 파라미터 전달 |
+| `src/app/api/memorial-today/route.ts` | **신규** (미사용, 추후 정리) |
+| `src/app/layout.tsx` | Product → SoftwareApplication 스키마 |
+| `src/components/features/chat/ChatInputArea.tsx` | 가격 문구 수정 |
+| `src/components/features/home/MemorialSection.tsx` | 기억게시판 인기글 카드 |
+| `src/components/features/home/useHomePage.ts` | 기억게시판 fetch + 스켈레톤 로딩 |
+| `src/components/pages/HomePage.tsx` | 동시 로딩 스켈레톤 |
+| `src/lib/magazine-generator.ts` | 동물 종/주제/계절 로직 |
 
 ---
 
