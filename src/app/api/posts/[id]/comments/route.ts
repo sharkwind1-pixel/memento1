@@ -143,7 +143,6 @@ export async function POST(
             return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
         }
 
-        const supabase = await createServerSupabase();
         const { id: postId } = await params;
         const body = await request.json();
         const { content } = body;
@@ -155,8 +154,11 @@ export async function POST(
 
         const sanitizedContent = sanitizeInput(content).slice(0, 2000);
 
+        // admin 클라이언트로 RLS 우회 (인증은 getAuthUser로 이미 검증됨)
+        const adminSupabase = createAdminSupabase();
+
         // 5. 게시글 존재 확인
-        const { data: post, error: postError } = await supabase
+        const { data: post, error: postError } = await adminSupabase
             .from("community_posts")
             .select("id")
             .eq("id", postId)
@@ -167,14 +169,11 @@ export async function POST(
         }
 
         // 6. 프로필에서 닉네임 가져오기
-        const { data: profile } = await supabase
+        const { data: profile } = await adminSupabase
             .from("profiles")
             .select("nickname, avatar_url")
             .eq("id", user.id)
             .single();
-
-        // 7. 댓글 저장 (admin 클라이언트로 RLS 우회 - 인증은 이미 검증됨)
-        const adminSupabase = createAdminSupabase();
         const { data: comment, error: commentError } = await adminSupabase
             .from("post_comments")
             .insert([{
