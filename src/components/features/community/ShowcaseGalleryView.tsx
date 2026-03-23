@@ -160,8 +160,8 @@ export default function ShowcaseGalleryView({ onBack, onWriteClick }: ShowcaseGa
     if (selectedPostId) {
         return (
             <div
-                className="min-h-screen relative overflow-hidden"
-                style={{ contain: "layout style", transform: "translateZ(0)" }}
+                className="min-h-screen relative"
+                style={{ transform: "translateZ(0)" }}
             >
                 <PostDetailView
                     postId={selectedPostId}
@@ -177,7 +177,7 @@ export default function ShowcaseGalleryView({ onBack, onWriteClick }: ShowcaseGa
     }
 
     return (
-        <div className="min-h-screen relative overflow-hidden">
+        <div className="min-h-screen relative">
             {/* 배경 */}
             <div className="absolute inset-0 bg-gradient-to-br from-amber-50 via-orange-50 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
                 <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-r from-amber-300/20 to-orange-200/20 dark:from-amber-800/10 dark:to-orange-800/10 rounded-full blur-3xl" />

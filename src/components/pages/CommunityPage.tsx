@@ -415,8 +415,8 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey }:
     if (showcaseView) {
         return (
             <div
-                className="min-h-screen relative overflow-hidden"
-                style={{ contain: 'layout style', transform: 'translateZ(0)' }}
+                className="min-h-screen relative"
+                style={{ transform: 'translateZ(0)' }}
             >
                 <ShowcaseGalleryView
                     onBack={() => setShowcaseView(false)}
