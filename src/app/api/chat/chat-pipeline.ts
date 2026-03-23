@@ -41,7 +41,7 @@ import {
     buildCrisisAlert,
     type CrisisDetectionResult,
 } from "@/lib/crisis-detection";
-import { detectPlaceQuery, findNearbyPlaces, type NearbyPlace } from "@/lib/naver-location";
+import { detectPlaceQuery, findNearbyPlaces, findPlacesByLocation, type NearbyPlace } from "@/lib/naver-location";
 
 import type { EmotionType, GriefStage, CrisisAlertInfo } from "@/types";
 import {
@@ -535,13 +535,28 @@ export async function buildAIContext(
         }
     }
 
-    // 위치 기반 장소 검색 (클라이언트에서 좌표 + 키워드를 보낸 경우)
+    // 위치 기반 장소 검색
     let nearbyPlaces: NearbyPlace[] = [];
     let placeContext = "";
-    if (userLocation && placeKeyword) {
+    const serverDetection = detectPlaceQuery(sanitizedMessage);
+    if (serverDetection.detected) {
         try {
-            const serverDetection = detectPlaceQuery(sanitizedMessage);
-            if (serverDetection.detected && !serverDetection.hasSpecificLocation) {
+            if (serverDetection.hasSpecificLocation && serverDetection.locationName) {
+                // 특정 지역명(강릉, 제주 등) → 지역명 기반 검색
+                nearbyPlaces = await findPlacesByLocation(
+                    serverDetection.locationName,
+                    serverDetection.keyword || "공원",
+                    serverDetection.altKeyword,
+                );
+                if (nearbyPlaces.length > 0) {
+                    placeContext = `\n[${serverDetection.locationName} 산책/공원 검색 결과]:\n` +
+                        nearbyPlaces.map((p, i) =>
+                            `${i + 1}. ${p.name} - ${p.address}`
+                        ).join("\n") +
+                        `\n위 장소 중 2~3개를 골라 자연스럽게 추천하세요. "${serverDetection.locationName}이면 ○○가 좋겠다! 나도 거기서 산책하고 싶어~" 식으로 구체적으로.`;
+                }
+            } else if (userLocation && placeKeyword) {
+                // GPS 좌표 기반 → 현재 위치 주변 검색
                 nearbyPlaces = await findNearbyPlaces(
                     userLocation.lat,
                     userLocation.lng,

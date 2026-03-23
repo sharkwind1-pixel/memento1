@@ -54,21 +54,29 @@ const PLACE_PATTERNS: { pattern: RegExp; keyword: string; altKeyword?: string }[
  */
 const SPECIFIC_LOCATION_PATTERN = /강릉|속초|양양|삼척|동해|제주|부산|대구|광주|대전|울산|세종|춘천|원주|천안|전주|목포|포항|경주|여수|통영|거제|김해|창원|안동|충주|제천|태백|정선|평창|서귀포|송정|해운대|송도|인천공항|김포공항/;
 
-export function detectPlaceQuery(message: string): { detected: boolean; keyword?: string; altKeyword?: string; hasSpecificLocation?: boolean } {
+export function detectPlaceQuery(message: string): { detected: boolean; keyword?: string; altKeyword?: string; hasSpecificLocation?: boolean; locationName?: string } {
     // 장소 관련 의문형 패턴이 있는지 먼저 체크
-    const questionPatterns = /어디|어느|가까운|근처|주변|추천|갈까|가볼|찾아/;
+    const questionPatterns = /어디|어느|가까운|근처|주변|추천|갈까|가볼|찾아|코스|갈만|산책/;
     if (!questionPatterns.test(message)) {
         return { detected: false };
     }
 
-    // 특정 지역명이 포함되면 GPS 검색 불필요 (AI가 지역명 기반으로 답변)
-    const hasSpecificLocation = SPECIFIC_LOCATION_PATTERN.test(message);
+    // 특정 지역명 추출
+    const locationMatch = message.match(SPECIFIC_LOCATION_PATTERN);
+    const hasSpecificLocation = !!locationMatch;
+    const locationName = locationMatch ? locationMatch[0] : undefined;
 
     for (const { pattern, keyword, altKeyword } of PLACE_PATTERNS) {
         if (pattern.test(message)) {
-            return { detected: true, keyword, altKeyword, hasSpecificLocation };
+            return { detected: true, keyword, altKeyword, hasSpecificLocation, locationName };
         }
     }
+
+    // 여행/산책 코스 질문이면 "공원"/"산책로" 키워드로 감지
+    if (hasSpecificLocation && /여행|코스|갈만|산책|걷|나들이|외출/.test(message)) {
+        return { detected: true, keyword: "공원", altKeyword: "산책로", hasSpecificLocation, locationName };
+    }
+
     return { detected: false };
 }
 
@@ -444,5 +452,65 @@ export async function findNearbyPlaces(
         : allPlaces.slice(0, LOCATION.MAX_RESULTS);
 
     return result;
+}
+
+// ---- 여행지 지역명 기반 장소 검색 ----
+
+/**
+ * 특정 지역명(강릉, 제주 등)으로 산책/공원 장소를 검색
+ * GPS 좌표 없이 지역명 + 키워드로 네이버 검색 API 호출
+ * 거리 정보 대신 주소만 표시
+ */
+export async function findPlacesByLocation(
+    locationName: string,
+    keyword: string,
+    altKeyword?: string,
+): Promise<NearbyPlace[]> {
+    const searchQueries = [
+        `${locationName} ${keyword}`,
+        `${locationName} ${altKeyword || "산책로"}`,
+    ];
+
+    const fetchCount = LOCATION.MAX_RESULTS + 3;
+    const searchResults = await Promise.all(
+        searchQueries.map(q => searchLocal(q, fetchCount))
+    );
+
+    // 검색 결과 합치기 (중복 제거)
+    const seen = new Set<string>();
+    const items: NaverSearchItem[] = [];
+    for (const result of searchResults) {
+        for (const item of result) {
+            const cleanName = item.title.replace(/<[^>]+>/g, "");
+            const key = `${cleanName}|${(item.roadAddress || item.address).trim()}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                items.push(item);
+            }
+        }
+    }
+
+    if (items.length === 0) return [];
+
+    // 카테고리 필터: 음식점/카페/주점 등 제외
+    const EXCLUDED_CATEGORIES = /한식|중식|일식|양식|분식|육류|고기|치킨|피자|패스트푸드|카페|커피|디저트|제과|주점|술집|편의점|마트|세탁|부동산|학원|금융|보험|주차장|주차/;
+    const filteredItems = items.filter((item) => !EXCLUDED_CATEGORIES.test(item.category));
+    const searchItems = filteredItems.length > 0 ? filteredItems : items;
+
+    const places: NearbyPlace[] = searchItems.map((item) => {
+        const name = item.title.replace(/<[^>]+>/g, "");
+        const mapUrl = `https://map.naver.com/v5/search/${encodeURIComponent(name + " " + locationName)}`;
+
+        return {
+            name,
+            category: item.category || keyword,
+            distance: locationName,  // GPS 없으므로 지역명 표시
+            distanceMeters: 0,
+            address: item.roadAddress || item.address,
+            mapUrl,
+        };
+    });
+
+    return places.slice(0, LOCATION.MAX_RESULTS);
 }
 
