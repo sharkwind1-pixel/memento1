@@ -232,10 +232,44 @@ export function useHomePage() {
         }
     }, []);
 
-    // 공개 추모글 가져오기
+    // 공개 추모글 가져오기 (커뮤니티 기억게시판에서 인기글)
     const fetchPublicMemorialPosts = useCallback(async () => {
         setIsLoadingMemorial(true);
         try {
+            // 1차: 커뮤니티 기억게시판(posts 테이블, board=memorial)에서 인기글 조회
+            const params = new URLSearchParams({
+                board: "memorial",
+                sort: "popular",
+                limit: "10",
+            });
+            const res = await fetch(`${API.POSTS}?${params}`);
+            if (res.ok) {
+                const data = await res.json();
+                const rawPosts = data.posts || [];
+                if (rawPosts.length > 0) {
+                    // 커뮤니티 기억게시판 글을 MemorialPost 형태로 변환
+                    const mapped = rawPosts.map((p: Record<string, unknown>) => ({
+                        id: (p.id as string) || "",
+                        userId: (p.userId as string) || "",
+                        petId: "",
+                        title: (p.title as string) || "",
+                        content: (p.content as string) || "",
+                        petName: (p.authorName as string) || "익명",
+                        petType: (p.badge as string) || "",
+                        petBreed: undefined,
+                        petYears: "",
+                        petImage: ((p.imageUrls as string[]) || [])[0] || undefined,
+                        isPublic: true,
+                        likesCount: (p.likes as number) || 0,
+                        commentsCount: (p.comments as number) || 0,
+                        createdAt: (p.createdAt as string) || "",
+                        updatedAt: "",
+                    }));
+                    setPublicMemorialPosts(mapped);
+                    return;
+                }
+            }
+            // 2차 폴백: 기존 memorial_posts 테이블에서 조회
             const posts = await getPublicMemorialPosts(10);
             setPublicMemorialPosts(posts);
         } catch {
