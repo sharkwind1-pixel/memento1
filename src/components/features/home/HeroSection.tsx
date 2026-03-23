@@ -37,7 +37,7 @@ export default function HeroSection({ setSelectedTab, user }: HeroSectionProps) 
                     <div className="md:grid md:grid-cols-2 md:gap-8 lg:gap-12 items-center">
                         {/* 일러스트 */}
                         <div className="flex justify-center mb-6 md:mb-0 md:order-last">
-                            <div className="relative w-[160px] h-[160px] sm:w-[200px] sm:h-[200px] md:w-[260px] md:h-[260px] lg:w-[300px] lg:h-[300px]">
+                            <div className="relative w-[200px] h-[200px] sm:w-[260px] sm:h-[260px] md:w-[320px] md:h-[320px] lg:w-[380px] lg:h-[380px]">
                                 <Image
                                     src="/images/hero-illustration.png"
                                     alt="강아지와 고양이가 초원에서 함께하는 일러스트"

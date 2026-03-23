@@ -1,14 +1,13 @@
 /**
- * 메멘토애니 홈페이지 (B안 기반 리디자인)
+ * 메멘토애니 홈페이지 (B안 기반 리디자인 v2)
  * - 히어로: 그라데이션 배경 + 일러스트 + CTA
- * - Quick Actions: 4카드 바로가기
- * - Gallery + Stories 2컬럼 (데스크톱) / 세로 스택 (모바일)
- * - 추모 섹션
+ * - 인기 이야기(좌) + 함께 보기(우) 2컬럼
+ * - 펫매거진 + 추모 2컬럼 (균형)
  */
 
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 
 import { TabType, CommunitySubcategory, SmoothAutoScrollReturn } from "@/types";
 import { useSmoothAutoScroll } from "@/hooks/useSmoothAutoScroll";
@@ -19,16 +18,42 @@ import {
     ShowcaseSection,
     MemorialSection,
 } from "@/components/features/home";
-import QuickActions from "@/components/features/home/QuickActions";
 import AnnouncementBanner from "@/components/features/home/AnnouncementBanner";
 import PostModal from "@/components/features/home/PostModal";
 import Lightbox from "@/components/features/home/Lightbox";
 import SimpleHomeLauncher from "@/components/features/home/SimpleHomeLauncher";
 import { useAuth } from "@/contexts/AuthContext";
+import { Newspaper } from "lucide-react";
 
 interface HomePageProps {
     setSelectedTab: (tab: TabType, sub?: CommunitySubcategory) => void;
     isActive?: boolean;
+}
+
+/** 최신 매거진 3개를 가져오는 미니 훅 */
+function useMagazinePreview() {
+    const [articles, setArticles] = useState<Array<{ id: string; title: string; coverUrl: string | null; category: string }>>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        (async () => {
+            try {
+                const res = await fetch("/api/magazine?limit=3&offset=0");
+                if (res.ok) {
+                    const data = await res.json();
+                    setArticles((data.articles || []).slice(0, 3).map((a: { id: string; title: string; cover_image_url?: string; category?: string }) => ({
+                        id: a.id,
+                        title: a.title,
+                        coverUrl: a.cover_image_url || null,
+                        category: a.category || "",
+                    })));
+                }
+            } catch { /* */ }
+            setIsLoading(false);
+        })();
+    }, []);
+
+    return { articles, isLoading };
 }
 
 function HomePage({ setSelectedTab, isActive }: HomePageProps) {
@@ -51,9 +76,9 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
         isLoadingShowcase,
         isLoadingMemorial,
         displayMemorialData,
-        condoledPets,
-        toggleCondolence,
     } = useHomePage();
+
+    const { articles: magazineArticles, isLoading: isLoadingMagazine } = useMagazinePreview();
 
     useEffect(() => {
         if (isSimpleMode) return;
@@ -83,11 +108,11 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
             className="min-h-screen relative overflow-hidden"
             style={{ contain: 'layout style', transform: 'translateZ(0)' }}
         >
-            {/* 배경 */}
-            <div className="absolute inset-0 bg-gradient-to-b from-sky-50 via-white to-rose-50/20 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-                <div className="absolute -top-20 left-1/4 w-[500px] h-[500px] bg-gradient-to-br from-memento-200/25 to-sky-100/25 dark:from-blue-800/15 dark:to-sky-800/15 rounded-full blur-3xl" />
-                <div className="absolute top-1/3 -right-20 w-[400px] h-[400px] bg-gradient-to-br from-rose-100/20 to-pink-50/20 dark:from-rose-900/10 dark:to-pink-900/10 rounded-full blur-3xl" />
-                <div className="absolute bottom-1/4 left-1/3 w-[350px] h-[350px] bg-gradient-to-br from-sky-100/20 to-memento-100/20 dark:from-sky-800/10 dark:to-memento-700/10 rounded-full blur-3xl" />
+            {/* 배경 - 좀 더 진한 하늘색 */}
+            <div className="absolute inset-0 bg-gradient-to-b from-sky-100/80 via-sky-50/40 to-rose-50/20 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+                <div className="absolute -top-20 left-1/4 w-[500px] h-[500px] bg-gradient-to-br from-memento-300/30 to-sky-200/30 dark:from-blue-800/15 dark:to-sky-800/15 rounded-full blur-3xl" />
+                <div className="absolute top-1/3 -right-20 w-[400px] h-[400px] bg-gradient-to-br from-rose-100/25 to-pink-50/25 dark:from-rose-900/10 dark:to-pink-900/10 rounded-full blur-3xl" />
+                <div className="absolute bottom-1/4 left-1/3 w-[350px] h-[350px] bg-gradient-to-br from-sky-200/25 to-memento-100/25 dark:from-sky-800/10 dark:to-memento-700/10 rounded-full blur-3xl" />
             </div>
 
             {/* Lightbox + 모달 */}
@@ -105,51 +130,30 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
                 {/* 히어로 */}
                 <HeroSection setSelectedTab={setSelectedTab} user={user} />
 
-                {/* Quick Actions */}
-                <QuickActions setSelectedTab={setSelectedTab} />
-
                 {/* 공지 */}
                 <AnnouncementBanner setSelectedTab={setSelectedTab} />
 
-                {/* Gallery + Stories 2컬럼 (데스크톱) */}
+                {/* 인기 이야기(좌) + 함께 보기(우) 2컬럼 */}
                 {(isLoadingCommunity || isLoadingShowcase) ? (
                     <section className="px-4">
-                        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 lg:gap-8">
-                            <div className="md:col-span-3 space-y-4">
-                                <div className="w-32 h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                                <div className="grid grid-cols-2 gap-3">
-                                    {[1, 2, 3, 4].map(i => (
-                                        <div key={i} className="aspect-square rounded-2xl bg-gray-200 dark:bg-gray-700 animate-pulse" />
-                                    ))}
-                                </div>
-                            </div>
-                            <div className="md:col-span-2 space-y-4">
-                                <div className="w-28 h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                                {[1, 2, 3].map(i => (
-                                    <div key={i} className="flex items-center gap-3 p-3 rounded-2xl bg-gray-100 dark:bg-gray-800 animate-pulse">
-                                        <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 flex-shrink-0" />
-                                        <div className="flex-1 space-y-2">
-                                            <div className="w-3/4 h-4 bg-gray-200 dark:bg-gray-700 rounded" />
-                                            <div className="w-1/2 h-3 bg-gray-200 dark:bg-gray-700 rounded" />
-                                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+                            {[1, 2].map(i => (
+                                <div key={i} className="space-y-4">
+                                    <div className="w-32 h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                                    <div className="space-y-3">
+                                        {[1, 2].map(j => (
+                                            <div key={j} className="h-32 rounded-2xl bg-gray-200 dark:bg-gray-700 animate-pulse" />
+                                        ))}
                                     </div>
-                                ))}
-                            </div>
+                                </div>
+                            ))}
                         </div>
                     </section>
                 ) : (
                     <section className="px-4">
-                        <div className="grid grid-cols-1 md:grid-cols-5 gap-8 lg:gap-10">
-                            {/* 좌: 갤러리 (쇼케이스) */}
-                            <div className="md:col-span-3">
-                                <ShowcaseSection
-                                    showcasePosts={showcasePosts}
-                                    scrollRef={scroll.showcaseScrollRef}
-                                    setSelectedTab={setSelectedTab}
-                                />
-                            </div>
-                            {/* 우: 인기 이야기 (커뮤니티) */}
-                            <div className="md:col-span-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10">
+                            {/* 좌: 인기 이야기 (커뮤니티) */}
+                            <div>
                                 <CommunitySection
                                     communityPosts={communityPosts}
                                     likedPosts={likedPosts}
@@ -161,22 +165,96 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
                                     setSelectedTab={setSelectedTab}
                                 />
                             </div>
+                            {/* 우: 함께 보기 (쇼케이스) */}
+                            <div>
+                                <ShowcaseSection
+                                    showcasePosts={showcasePosts}
+                                    scrollRef={scroll.showcaseScrollRef}
+                                    setSelectedTab={setSelectedTab}
+                                />
+                            </div>
                         </div>
                     </section>
                 )}
 
                 {/* 구분선 */}
-                <div className="mx-auto w-20 h-px bg-gradient-to-r from-transparent via-amber-300/30 to-transparent" />
+                <div className="mx-auto w-20 h-px bg-gradient-to-r from-transparent via-memento-300/30 to-transparent" />
 
-                {/* 추모 섹션 */}
-                <MemorialSection
-                    isLoadingMemorial={isLoadingMemorial}
-                    displayMemorialData={displayMemorialData}
-                    onLightboxOpen={setLightboxItem}
-                    scrollRef={scroll.memorialScrollRef}
-                    condoledPets={condoledPets}
-                    onToggleCondolence={toggleCondolence}
-                />
+                {/* 펫매거진(좌) + 추모(우) 2컬럼 */}
+                <section className="px-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10">
+                        {/* 좌: 펫매거진 미리보기 */}
+                        <div className="space-y-6">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-3">
+                                    <div className="w-10 h-10 flex-shrink-0 bg-gradient-to-br from-emerald-500 to-teal-400 rounded-2xl flex items-center justify-center shadow-sm shadow-emerald-500/20">
+                                        <Newspaper className="w-5 h-5 text-white" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-base sm:text-xl font-display font-bold text-gray-800 dark:text-gray-100">펫매거진</h2>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">반려동물 케어 팁</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setSelectedTab("magazine")}
+                                    className="text-sm text-memento-500 hover:text-memento-600 font-medium flex items-center gap-1"
+                                >
+                                    더 많은 이야기 &rarr;
+                                </button>
+                            </div>
+                            {isLoadingMagazine ? (
+                                <div className="space-y-3">
+                                    {[1, 2, 3].map(i => (
+                                        <div key={i} className="h-20 rounded-2xl bg-gray-200 dark:bg-gray-700 animate-pulse" />
+                                    ))}
+                                </div>
+                            ) : magazineArticles.length === 0 ? (
+                                <p className="text-sm text-gray-400 dark:text-gray-500 py-8 text-center">아직 매거진이 없습니다</p>
+                            ) : (
+                                <div className="space-y-3">
+                                    {magazineArticles.map((article) => (
+                                        <button
+                                            key={article.id}
+                                            onClick={() => setSelectedTab("magazine")}
+                                            className="w-full flex items-center gap-4 p-3 rounded-2xl bg-white/60 dark:bg-gray-800/40 hover:bg-white dark:hover:bg-gray-800/60 transition-all group"
+                                        >
+                                            {article.coverUrl ? (
+                                                <img
+                                                    src={article.coverUrl}
+                                                    alt=""
+                                                    className="w-16 h-16 rounded-xl object-cover flex-shrink-0"
+                                                    loading="lazy"
+                                                />
+                                            ) : (
+                                                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center flex-shrink-0">
+                                                    <Newspaper className="w-6 h-6 text-emerald-400" />
+                                                </div>
+                                            )}
+                                            <div className="flex-1 text-left min-w-0">
+                                                <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 line-clamp-2 group-hover:text-memento-600 transition-colors">
+                                                    {article.title}
+                                                </p>
+                                                {article.category && (
+                                                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{article.category}</p>
+                                                )}
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* 우: 추모 섹션 */}
+                        <div>
+                            <MemorialSection
+                                isLoadingMemorial={isLoadingMemorial}
+                                displayMemorialData={displayMemorialData}
+                                onLightboxOpen={setLightboxItem}
+                                scrollRef={scroll.memorialScrollRef}
+                            />
+                        </div>
+                    </div>
+                </section>
             </div>
         </div>
     );
