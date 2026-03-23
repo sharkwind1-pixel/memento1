@@ -6,23 +6,25 @@
 
 ---
 
-## 최근 완료 세션 (2026-03-23) — AI 펫톡 + 매거진 + 홈 UI
+## 최근 완료 세션 (2026-03-23) — 마음속에 영원히 섹션 완성 + 위로 리액션
 
 ### 주요 성과
-- AI 펫톡 추천 질문 화이트리스트 방식으로 전면 교체 (맛집/먹거리 근절)
-- 여행지 지역명 기반 산책/공원 장소 검색 (네이버 API)
-- 매거진 자동화: 동물 종 다양성(70/30) + 실질적 주제 60개 + 계절 로직(환절기만)
-- Google Search Console 구조화된 데이터 수정 (Product → SoftwareApplication)
-- 홈 화면 레이아웃 밀림 방지 (스켈레톤 동시 로딩)
-- 프리미엄 가격 문구 수정 ("하루 약 260원")
-- "마음속에 영원히" 섹션: 오늘 추모 등록 펫 + 기억의 날 펫 카드 표시로 확정
+- "마음속에 영원히" 섹션 로직 확정: 오늘 추모 등록 펫 + 기억의 날 펫 + 폴백(전체 추모 펫)
+- 부제목/뱃지 등 노골적 표현 전부 완곡하게 수정 ("영원히 마음속에 함께해요")
+- 더보기 버튼 제거 (잘못된 게시판 연결)
+- **위로 리액션 기능**: 추모 펫 카드에 amber Heart "위로" 버튼
+  - `pet_condolences` 테이블 (SQL 실행 완료)
+  - `POST /api/pets/[id]/condolence` 토글 API (rate limit, VPN 차단)
+  - 낙관적 UI + 서버 동기화 + 롤백
+  - 로그인 시 내 위로 상태 자동 조회
 
 ### 참고
 - "기일/주기" 같은 노골적 표현 사용 금지 — "함께한 N년", "새로운 기억", "무지개다리" 등 완곡 표현만
-- `/api/memorial-today`: 오늘 추모 등록(created_at) + memorial_date 월일 매칭, 없으면 앞뒤 3일 확장
+- `/api/memorial-today`: 오늘 추모 등록(created_at) + memorial_date 월일 매칭, 없으면 앞뒤 3일 확장 → 전체 추모 펫 폴백
+- 위로 리액션: 포인트 적립 없음 (추모 맥락에 부적절)
 
 ### 상세 기록
-`RELAY-ARCHIVE.md` > `[2026-03-23] AI 펫톡 개선 + 매거진 자동화 + 홈 UI 수정` 참조
+`RELAY-ARCHIVE.md` > `[2026-03-23] 마음속에 영원히 + 위로 리액션` 참조
 
 ---
 
@@ -43,7 +45,4 @@
 - **위험**: authenticated 유저가 클라이언트에서 직접 `grant_premium` RPC를 호출해서 무료로 프리미엄 획득 가능 (현재 막혀있지 않음)
 - **실행 방법**: Supabase Dashboard > SQL Editor에서 위 파일 내용 복사 붙여넣기 실행
 
-### `supabase/migrations/20260323_pet_condolences.sql`
-- **내용**: 추모 펫 위로 리액션 테이블 (`pet_condolences`), UNIQUE(pet_id, user_id), RLS 정책
-- **의존**: 위로 버튼 기능이 이 테이블 없이도 프론트는 동작하나, 실제 저장/조회 안 됨
-- **실행 방법**: Supabase Dashboard > SQL Editor에서 위 파일 내용 복사 붙여넣기 실행
+### ~~`supabase/migrations/20260323_pet_condolences.sql`~~ (실행 완료 2026-03-23)

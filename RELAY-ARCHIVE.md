@@ -65,10 +65,64 @@
 | Google Search Console 구조화된 데이터 경고 해결 (Product → SoftwareApplication) | 완료 |
 | 홈 화면 레이아웃 밀림 방지 (커뮤니티+쇼케이스 동시 로딩 스켈레톤) | 완료 |
 | 홈 "마음속에 영원히" 섹션: 오늘 추모 등록 + 기억의 날 펫 카드 표시 | 완료 |
+| 마음속에 영원히: 추모 펫 없을 때 전체 표시 폴백 + 더보기 제거 | 완료 |
+| 마음속에 영원히: 부제목/뱃지 완곡 표현 수정 | 완료 |
+| 추모 펫 위로 리액션 (pet_condolences 테이블 + API + UI) | 완료 |
 
 ## 변경 로그 (최신순)
 
 > 형식: `[YYYY-MM-DD HH:MM]` 커밋해시 | 작업 요약 | 변경 파일 | 상세
+
+---
+
+### [2026-03-23] 마음속에 영원히 + 위로 리액션
+
+> 추모 섹션 로직 확정, 완곡 표현 적용, 위로 리액션 기능 전체 구현
+
+---
+
+#### 커밋: `359f448` — 홈 "마음속에 영원히" 섹션: 오늘 추모 등록 + 기억의 날 펫 표시
+
+- `/api/memorial-today` 신규: 오늘 추모 등록 펫(created_at KST) + memorial_date 월일 매칭
+- `useHomePage.ts`: `fetchMemorialPets` + `MemorialPetItem` 타입
+- `MemorialSection.tsx`: 펫 카드 UI (프로필 이미지, 뱃지, 완곡 라벨)
+- **파일**: `memorial-today/route.ts`, `useHomePage.ts`, `MemorialSection.tsx`, `HomePage.tsx`
+
+---
+
+#### 커밋: `6f52547` — 추모 펫 없을 때 전체 표시 + 더보기 버튼 제거
+
+- API: 오늘/이번주 해당 펫 없으면 전체 추모 펫(최근 등록순) 폴백
+- 더보기 버튼 제거 (자유게시판으로 잘못 연결되어 있었음)
+- **파일**: `memorial-today/route.ts`, `MemorialSection.tsx`
+
+---
+
+#### 커밋: `537bf4c` — 부제목을 부드러운 표현으로 변경
+
+- "무지개다리를 건넌 소중한 아이들" → "영원히 마음속에 함께해요"
+- **파일**: `MemorialSection.tsx`
+
+---
+
+#### 커밋: `f117ae2` — 추모 펫 위로 리액션 기능 추가
+
+**DB**: `pet_condolences` 테이블 (SQL 실행 완료)
+- `UNIQUE(pet_id, user_id)`, RLS (select_all, insert_own, delete_own)
+
+**API**: `POST /api/pets/[id]/condolence`
+- Rate limit + VPN 차단 + 세션 인증
+- 추모 상태 펫만 위로 가능, 토글 방식
+- 포인트 적립 없음 (추모 맥락에 부적절)
+
+**프론트엔드**:
+- `apiEndpoints.ts`: `PET_CONDOLENCE` 추가
+- `memorial-today/route.ts`: `condolenceCount` batch 조회 추가
+- `useHomePage.ts`: `condoledPets` 상태 + `toggleCondolence` 낙관적 UI + 내 위로 상태 자동 조회
+- `MemorialSection.tsx`: amber Heart "위로" 버튼 (토글 시 채워진 하트 + 카운트)
+- `HomePage.tsx`: 새 props 전달
+
+**파일**: `20260323_pet_condolences.sql`, `pets/[id]/condolence/route.ts`, `apiEndpoints.ts`, `memorial-today/route.ts`, `useHomePage.ts`, `MemorialSection.tsx`, `HomePage.tsx`
 
 ---
 
