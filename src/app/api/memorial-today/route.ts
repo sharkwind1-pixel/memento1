@@ -1,7 +1,8 @@
 /**
- * 오늘의 기일 API
- * 오늘 날짜(월/일)가 memorial_date와 같은 반려동물 목록 반환
- * 프라이버시: 이름, 종류, 프로필 이미지, 기일 연도만 노출 (사용자 정보 비공개)
+ * 마음속에 영원히 API
+ * 1) 오늘 추모 모드로 새로 등록된 반려동물
+ * 2) 오늘이 함께한 기억의 날(memorial_date 월/일 일치)인 반려동물
+ * 프라이버시: 이름, 종류, 프로필 이미지만 노출 (사용자 정보 비공개)
  */
 export const dynamic = "force-dynamic";
 
@@ -23,39 +24,91 @@ export async function GET() {
 
         // KST 기준 오늘 날짜
         const kstNow = new Date(Date.now() + 9 * 60 * 60 * 1000);
-        const month = kstNow.getUTCMonth() + 1; // 1~12
+        const year = kstNow.getUTCFullYear();
+        const month = kstNow.getUTCMonth() + 1;
         const day = kstNow.getUTCDate();
+        const todayStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
-        // memorial_date의 월/일이 오늘과 같은 memorial 상태 펫 조회
-        // PostgreSQL: EXTRACT(MONTH FROM memorial_date) = month AND EXTRACT(DAY FROM memorial_date) = day
-        const { data: todayPets, error } = await supabase
+        // 추모 상태 펫 전체 조회
+        const { data: memorialPets, error } = await supabase
             .from("pets")
-            .select("id, name, type, breed, profile_image, memorial_date, created_at")
+            .select("id, name, type, breed, profile_image, memorial_date, created_at, status")
             .eq("status", "memorial")
-            .not("memorial_date", "is", null)
-            .order("memorial_date", { ascending: true })
-            .limit(100);
+            .order("created_at", { ascending: false })
+            .limit(200);
 
         if (error) {
-            console.error("[memorial-today] DB 오류:", error.message);
-            return NextResponse.json({ pets: [] });
+            console.error("[memorial-today] DB:", error.message);
+            return NextResponse.json({ pets: [], newlyRegistered: [], remembered: [] });
         }
 
-        // 클라이언트에서 월/일 필터 (Supabase에서 EXTRACT 직접 사용 불가)
-        const filtered = (todayPets || []).filter((pet) => {
-            if (!pet.memorial_date) return false;
-            const d = new Date(pet.memorial_date + "T00:00:00");
-            return d.getMonth() + 1 === month && d.getDate() === day;
+        const allPets = memorialPets || [];
+
+        // 1) 오늘 추모 모드로 새로 등록된 펫 (created_at이 오늘 KST)
+        const newlyRegistered = allPets.filter((pet) => {
+            if (!pet.created_at) return false;
+            const created = new Date(pet.created_at);
+            const createdKST = new Date(created.getTime() + 9 * 60 * 60 * 1000);
+            const createdDateStr = `${createdKST.getUTCFullYear()}-${String(createdKST.getUTCMonth() + 1).padStart(2, "0")}-${String(createdKST.getUTCDate()).padStart(2, "0")}`;
+            return createdDateStr === todayStr;
         });
 
+        // 2) 오늘이 기억하는 날인 펫 (memorial_date의 월/일이 오늘)
+        const remembered = allPets.filter((pet) => {
+            if (!pet.memorial_date) return false;
+            const d = new Date(pet.memorial_date + "T00:00:00");
+            const memMonth = d.getMonth() + 1;
+            const memDay = d.getDate();
+            // 올해 등록한 건 제외 (이미 newlyRegistered에 포함될 수 있으므로)
+            const memYear = d.getFullYear();
+            if (memMonth === month && memDay === day && memYear === year) return false;
+            return memMonth === month && memDay === day;
+        });
+
+        // 중복 제거 (newlyRegistered와 remembered에 같은 펫이 있을 수 있음)
+        const seenIds = new Set<string>();
+        const combined: typeof allPets = [];
+
+        // 새로 등록된 펫 우선
+        for (const pet of newlyRegistered) {
+            if (!seenIds.has(pet.id)) {
+                seenIds.add(pet.id);
+                combined.push(pet);
+            }
+        }
+        // 기억의 날 펫
+        for (const pet of remembered) {
+            if (!seenIds.has(pet.id)) {
+                seenIds.add(pet.id);
+                combined.push(pet);
+            }
+        }
+
+        // 결과가 없으면 → 이번 주(앞뒤 3일) 기억의 날 펫으로 확장
+        let isExactToday = combined.length > 0;
+        let finalPets = combined;
+
+        if (combined.length === 0) {
+            const weekPets = allPets.filter((pet) => {
+                if (!pet.memorial_date) return false;
+                const d = new Date(pet.memorial_date + "T00:00:00");
+                const petMonth = d.getMonth() + 1;
+                const petDay = d.getDate();
+                const todayOfYear = month * 31 + day;
+                const petOfYear = petMonth * 31 + petDay;
+                return Math.abs(todayOfYear - petOfYear) <= 3;
+            });
+            finalPets = weekPets;
+            isExactToday = false;
+        }
+
         // 프라이버시: user_id 제외, 필요 정보만 반환
-        const result = filtered.map((pet) => {
+        const result = finalPets.slice(0, 20).map((pet) => {
+            const isNew = newlyRegistered.some((np) => np.id === pet.id);
             const memorialYear = pet.memorial_date
                 ? new Date(pet.memorial_date + "T00:00:00").getFullYear()
                 : null;
-            const yearsAgo = memorialYear
-                ? kstNow.getUTCFullYear() - memorialYear
-                : null;
+            const yearsAgo = memorialYear ? year - memorialYear : null;
 
             return {
                 id: pet.id,
@@ -63,72 +116,31 @@ export async function GET() {
                 type: pet.type || "",
                 breed: pet.breed || "",
                 profileImage: pet.profile_image || null,
-                memorialDate: pet.memorial_date,
+                isNewlyRegistered: isNew,
+                // 완곡한 표현: "함께한 N년" (기일/주기 대신)
                 yearsAgo,
-                yearsLabel: yearsAgo === 0
-                    ? "올해"
-                    : yearsAgo === 1
-                        ? "1주기"
-                        : yearsAgo
-                            ? `${yearsAgo}주기`
-                            : "",
+                yearsLabel: isNew
+                    ? "새로운 기억"
+                    : yearsAgo === null
+                        ? ""
+                        : yearsAgo <= 0
+                            ? "올해의 기억"
+                            : yearsAgo === 1
+                                ? "함께한 1년"
+                                : `함께한 ${yearsAgo}년`,
             };
         });
 
-        // 오늘 기일인 펫이 없으면 → 이번 주 기일인 펫 조회 (범위 확장)
-        if (result.length === 0) {
-            const weekPets = (todayPets || []).filter((pet) => {
-                if (!pet.memorial_date) return false;
-                const d = new Date(pet.memorial_date + "T00:00:00");
-                const petMonth = d.getMonth() + 1;
-                const petDay = d.getDate();
-                // 오늘 기준 앞뒤 3일 이내
-                const todayOfYear = month * 31 + day;
-                const petOfYear = petMonth * 31 + petDay;
-                return Math.abs(todayOfYear - petOfYear) <= 3;
-            });
-
-            const weekResult = weekPets.map((pet) => {
-                const memorialYear = pet.memorial_date
-                    ? new Date(pet.memorial_date + "T00:00:00").getFullYear()
-                    : null;
-                const yearsAgo = memorialYear
-                    ? kstNow.getUTCFullYear() - memorialYear
-                    : null;
-
-                return {
-                    id: pet.id,
-                    name: pet.name,
-                    type: pet.type || "",
-                    breed: pet.breed || "",
-                    profileImage: pet.profile_image || null,
-                    memorialDate: pet.memorial_date,
-                    yearsAgo,
-                    yearsLabel: yearsAgo === 0
-                        ? "올해"
-                        : yearsAgo === 1
-                            ? "1주기"
-                            : yearsAgo
-                                ? `${yearsAgo}주기`
-                                : "",
-                };
-            });
-
-            return NextResponse.json({
-                pets: weekResult.slice(0, 20),
-                isExactToday: false,
-                date: `${month}/${day}`,
-            });
-        }
-
         return NextResponse.json({
-            pets: result.slice(0, 20),
-            isExactToday: true,
+            pets: result,
+            isExactToday,
+            hasNewlyRegistered: newlyRegistered.length > 0,
+            hasRemembered: remembered.length > 0,
             date: `${month}/${day}`,
         });
     } catch (err) {
         const message = err instanceof Error ? err.message : "알 수 없는 오류";
-        console.error("[memorial-today] 오류:", message);
+        console.error("[memorial-today]:", message);
         return NextResponse.json({ pets: [], error: message }, { status: 500 });
     }
 }

@@ -14,18 +14,16 @@ import { API } from "@/config/apiEndpoints";
 import { toast } from "sonner";
 import type { LightboxItem, CommunityPost, Comment, ShowcasePost } from "./types";
 
-/** 추모 섹션용 데이터 타입 */
-export interface MemorialDisplayItem {
+/** 추모 섹션용 펫 데이터 타입 */
+export interface MemorialPetItem {
     id: string;
     name: string;
-    pet: string;
-    years: string;
-    message: string;
-    content: string;
-    image?: string;
-    likesCount: number;
-    commentsCount: number;
-    isFromDB: boolean;
+    type: string;
+    breed: string;
+    profileImage: string | null;
+    isNewlyRegistered: boolean;
+    yearsAgo: number | null;
+    yearsLabel: string;
 }
 
 export function useHomePage() {
@@ -39,8 +37,8 @@ export function useHomePage() {
     const [showcasePosts, setShowcasePosts] = useState<ShowcasePost[]>([]);
     const [isLoadingShowcase, setIsLoadingShowcase] = useState(true);
 
-    // 추모(기억게시판) 인기글 상태
-    const [memorialPosts, setMemorialPosts] = useState<MemorialDisplayItem[]>([]);
+    // 마음속에 영원히 (오늘 추모 등록 + 기억의 날 펫)
+    const [memorialPets, setMemorialPets] = useState<MemorialPetItem[]>([]);
     const [isLoadingMemorial, setIsLoadingMemorial] = useState(true);
 
     // 좋아요 상태 관리
@@ -245,37 +243,19 @@ export function useHomePage() {
         }
     }, []);
 
-    // 기억게시판 인기글 가져오기 (추모 섹션용)
-    const fetchMemorialPosts = useCallback(async () => {
+    // 마음속에 영원히: 오늘 추모 등록 + 기억의 날 펫 가져오기
+    const fetchMemorialPets = useCallback(async () => {
         setIsLoadingMemorial(true);
         try {
-            const params = new URLSearchParams({
-                board: "memorial",
-                sort: "popular",
-                limit: "10",
-            });
-            const res = await fetch(`${API.POSTS}?${params}`);
+            const res = await fetch("/api/memorial-today");
             if (res.ok) {
                 const data = await res.json();
-                const rawPosts = data.posts || [];
-                const posts: MemorialDisplayItem[] = rawPosts.map((p: Record<string, unknown>) => ({
-                    id: (p.id as string) || "",
-                    name: (p.authorName as string) || "익명",
-                    pet: (p.badge as string) || "",
-                    years: "",
-                    message: (p.title as string) || "",
-                    content: (p.content as string) || "",
-                    image: ((p.imageUrls as string[]) || [])[0] || undefined,
-                    likesCount: (p.likes as number) || 0,
-                    commentsCount: (p.comments as number) || 0,
-                    isFromDB: true,
-                }));
-                setMemorialPosts(posts);
+                setMemorialPets(data.pets || []);
             } else {
-                setMemorialPosts([]);
+                setMemorialPets([]);
             }
         } catch {
-            setMemorialPosts([]);
+            setMemorialPets([]);
         } finally {
             setIsLoadingMemorial(false);
         }
@@ -284,8 +264,8 @@ export function useHomePage() {
     useEffect(() => {
         fetchCommunityPosts();
         fetchShowcasePosts();
-        fetchMemorialPosts();
-    }, [fetchCommunityPosts, fetchShowcasePosts, fetchMemorialPosts]);
+        fetchMemorialPets();
+    }, [fetchCommunityPosts, fetchShowcasePosts, fetchMemorialPets]);
 
     return {
         // 라이트박스
@@ -311,9 +291,9 @@ export function useHomePage() {
         showcasePosts,
         isLoadingShowcase,
 
-        // 추모
+        // 마음속에 영원히
         isLoadingMemorial,
-        displayMemorialData: memorialPosts,
+        displayMemorialData: memorialPets,
     };
 }
 
