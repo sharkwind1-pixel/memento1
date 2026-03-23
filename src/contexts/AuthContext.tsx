@@ -12,6 +12,7 @@ import {
     useState,
     useCallback,
     useMemo,
+    useRef,
     ReactNode,
 } from "react";
 import { User, Session } from "@supabase/supabase-js";
@@ -98,6 +99,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [profileLoaded, setProfileLoaded] = useState(false);
     const [userPetType, setUserPetType] = useState<PetIconType>("dog");
     const [onboardingData, setOnboardingData] = useState<OnboardingData | null>(null);
+    // 초기 세션 복원 완료 플래그 — onAuthStateChange가 getSession 결과를 덮어쓰는 것을 방지
+    const initialSessionHandledRef = useRef(false);
     const [minimiEquip, setMinimiEquip] = useState<MinimiEquipState>({
         minimiId: null,
         accessoryIds: [],
@@ -475,10 +478,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     // 로그인 상태: 프로필 로드 완료 후 로딩 해제
                     // (프로필 로드 전에 UI 표시하면 닉네임 설정창, Lv1 아이콘 등 깜빡임 발생)
                     await refreshProfile();
+                    initialSessionHandledRef.current = true;
                     setLoading(false);
                     checkDailyLogin();
                 } else {
                     // 비로그인 상태: 즉시 로딩 해제
+                    initialSessionHandledRef.current = true;
                     setLoading(false);
                 }
             } catch (err) {
@@ -516,10 +521,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // 로그인 이벤트일 때는 차단/탈퇴 체크가 끝날 때까지 loading 유지
             // 체크 통과 후에야 user/session을 설정하고 loading을 false로 전환
             if (event === "SIGNED_IN" && session?.user) {
-                // 아직 user/session을 설정하지 않음 (차단 체크 전)
-                setProfileLoaded(false);
+                // 초기 getSession에서 이미 동일 유저를 처리했으면 중복 프로필 리셋 건너뜀
+                // (모바일에서 profileLoaded false→true→false→true 깜빡임 방지)
+                const alreadyHandledSameUser = initialSessionHandledRef.current;
+                if (!alreadyHandledSameUser) {
+                    setProfileLoaded(false);
+                }
 
                 setTimeout(async () => {
+                    // getSession에서 이미 처리된 세션이면 세션/유저만 갱신하고 차단 체크 생략
+                    if (alreadyHandledSameUser) {
+                        setSession(session);
+                        setUser(session.user);
+                        setLoading(false);
+                        return;
+                    }
+
                     try {
                         // 1. 탈퇴 계정 체크 (withdrawn_users — can_rejoin RPC)
                         const email = session.user.email;
@@ -682,6 +699,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setLoading(false);
             } else if (event === "INITIAL_SESSION" && session?.user) {
                 // 페이지 새로고침 시 기존 세션 복원 — 차단 체크 필요
+                // getSession에서 이미 처리했으면 중복 작업 방지
+                if (initialSessionHandledRef.current) {
+                    setSession(session);
+                    setUser(session.user);
+                    setLoading(false);
+                    return;
+                }
                 setProfileLoaded(false);
                 setTimeout(async () => {
                     try {

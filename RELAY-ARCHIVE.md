@@ -68,10 +68,94 @@
 | 마음속에 영원히: 추모 펫 없을 때 전체 표시 폴백 + 더보기 제거 | 완료 |
 | 마음속에 영원히: 부제목/뱃지 완곡 표현 수정 | 완료 |
 | 추모 펫 위로 리액션 (pet_condolences 테이블 + API + UI) | 완료 |
+| 모바일 깜빡임 수정 (AuthContext getSession/onAuthStateChange race condition) | 완료 |
+| QA 보안 이슈 7건 전부 해결 (IDOR, JWT Spoofing, CSP, 메모리 누수, 에러 로깅) | 완료 |
+| CSP nonce 전환 (middleware.ts, script-src unsafe-inline 완전 제거) | 완료 |
+| RLS 정리 (minimi/inventory 불필요 adminSupabase 제거) | 완료 |
+| 미실행 SQL 전부 실행 완료 (RPC IDOR + 결제 보안 + 기존 4건 확인) | 완료 |
 
 ## 변경 로그 (최신순)
 
 > 형식: `[YYYY-MM-DD HH:MM]` 커밋해시 | 작업 요약 | 변경 파일 | 상세
+
+---
+
+### [2026-03-24] 보안 전면 수정 + 안정성 개선
+
+> 모바일 깜빡임 해결, QA 보안 7건 수정, CSP nonce 전환, RLS 정리, SQL 실행 완료.
+
+---
+
+#### 커밋 1: `9d2cd9b` — 보안 취약점 7건 수정 + 모바일 깜빡임 해결
+
+**모바일 깜빡임 수정 (AuthContext.tsx)**:
+- `initialSessionHandledRef` 추가: `getSession()`이 프로필 로드를 완료한 뒤, `onAuthStateChange`의 SIGNED_IN/INITIAL_SESSION이 같은 유저에 대해 `profileLoaded=false`를 다시 리셋하는 것을 방지
+- 원인: getSession과 onAuthStateChange가 동시에 발동하며 profileLoaded가 true→false→true로 깜빡임
+
+**C-1 RPC IDOR (SQL)**:
+- `purchase_minimi_item`, `sell_minimi_item`에 `auth.uid() = p_user_id` 검증 추가
+- 미실행 시 클라이언트에서 다른 유저 ID로 미니미 구매/판매 가능했음
+
+**C-3 JWT Spoofing (SQL)**:
+- `protect_sensitive_profile_columns` 트리거에서 `current_setting('request.jwt.claims')` 대신 `profiles.is_admin` 직접 조회
+- JWT claim은 클라이언트가 조작 가능하므로 DB 값만 신뢰
+
+**C-2 CSP**: `upgrade-insecure-requests` 추가 (HTTP→HTTPS 강제)
+**C-4 Hydration**: 이전 세션에서 Math.random → seededRandom 전환 확인
+**C-5 메모리 누수**: MinihompyStage touchTimerRef + useHomePage heartTimersRef cleanup 추가
+**C-6, C-7 에러 로깅**: 이전 세션에서 console.error 추가 확인
+
+**파일**: `AuthContext.tsx`, `MinihompyStage.tsx`, `useHomePage.ts`, `next.config.js`, `20260323_security_rpc_idor_fix.sql`
+
+---
+
+#### 커밋 2: `d3bd4b2` — 미실행 SQL 4건 실행 확인
+
+- `20260226_chat_mode_column.sql` — 이미 실행됨 (hasChatModeColumn 코드에서 확인)
+- `20260226_security_fixes.sql` — 이미 실행됨 (sell_minimi_item RPC 활성 상태)
+- `20260225_push_preferred_hour.sql` — 이미 실행됨 (push_subscriptions 컬럼 존재)
+- `placed_minimi` JSONB — 이미 실행됨 (placed-minimi API 정상 동작)
+
+---
+
+#### 커밋 3: `27e441a` — CSP nonce 전환 + RLS 정리
+
+**CSP nonce (신규 middleware.ts)**:
+- 매 요청마다 `crypto.randomUUID()` 기반 nonce 생성
+- `script-src 'self' 'nonce-{nonce}' 'strict-dynamic'` — unsafe-inline 완전 제거
+- `style-src 'self' 'unsafe-inline'` — Tailwind/Radix 인라인 스타일 때문에 유지
+- `next.config.js`에서 CSP 헤더 제거 (middleware가 담당)
+
+**layout.tsx**: async 전환, `headers().get("x-nonce")` → 인라인 스크립트 `nonce` prop 적용
+
+**RLS 정리**:
+- `/api/minimi/inventory`: `createAdminSupabase` → `createServerSupabase` (자기 데이터만 조회하므로 RLS 우회 불필요)
+- `/api/posts`: adminSupabase 유지 (user_minimi RLS가 auth.uid()=user_id이므로 다른 유저 미니미 조회 시 필요), 주석 명확화
+
+**파일**: `src/middleware.ts` (신규), `layout.tsx`, `next.config.js`, `minimi/inventory/route.ts`, `posts/route.ts`
+
+---
+
+#### 커밋 4~5: `906e8c2`, `34fd9b3` — RELAY 정리 + SQL 실행 완료 확인
+
+- 미실행 SQL 2건 (`20260323_security_rpc_idor_fix.sql`, `20260317_payment_security_fixes.sql`) 승빈님이 Supabase Dashboard에서 실행 완료
+- RELAY.md TODO 0건, 미실행 SQL 0건으로 정리
+
+---
+
+#### 변경된 파일 전체 목록
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `src/contexts/AuthContext.tsx` | initialSessionHandledRef 추가, SIGNED_IN/INITIAL_SESSION 이중 프로필 리셋 방지 |
+| `src/components/features/minihompy/MinihompyStage.tsx` | touchTimerRef useEffect cleanup 추가 |
+| `src/components/features/home/useHomePage.ts` | heartTimersRef cleanup 추가 |
+| `src/middleware.ts` (신규) | CSP nonce 생성 미들웨어 |
+| `src/app/layout.tsx` | async 전환, nonce prop 적용 |
+| `next.config.js` | CSP 헤더 제거 (middleware 이관) |
+| `src/app/api/minimi/inventory/route.ts` | adminSupabase → createServerSupabase |
+| `src/app/api/posts/route.ts` | adminSupabase 사용 이유 주석 명확화 |
+| `supabase/migrations/20260323_security_rpc_idor_fix.sql` (신규) | RPC IDOR + JWT Spoofing 수정 |
 
 ---
 
@@ -108,20 +192,8 @@
 #### 커밋: `f117ae2` — 추모 펫 위로 리액션 기능 추가
 
 **DB**: `pet_condolences` 테이블 (SQL 실행 완료)
-- `UNIQUE(pet_id, user_id)`, RLS (select_all, insert_own, delete_own)
-
-**API**: `POST /api/pets/[id]/condolence`
-- Rate limit + VPN 차단 + 세션 인증
-- 추모 상태 펫만 위로 가능, 토글 방식
-- 포인트 적립 없음 (추모 맥락에 부적절)
-
-**프론트엔드**:
-- `apiEndpoints.ts`: `PET_CONDOLENCE` 추가
-- `memorial-today/route.ts`: `condolenceCount` batch 조회 추가
-- `useHomePage.ts`: `condoledPets` 상태 + `toggleCondolence` 낙관적 UI + 내 위로 상태 자동 조회
-- `MemorialSection.tsx`: amber Heart "위로" 버튼 (토글 시 채워진 하트 + 카운트)
-- `HomePage.tsx`: 새 props 전달
-
+**API**: `POST /api/pets/[id]/condolence` (Rate limit + VPN 차단 + 토글)
+**프론트엔드**: amber Heart "위로" 버튼 (낙관적 UI + 서버 동기화)
 **파일**: `20260323_pet_condolences.sql`, `pets/[id]/condolence/route.ts`, `apiEndpoints.ts`, `memorial-today/route.ts`, `useHomePage.ts`, `MemorialSection.tsx`, `HomePage.tsx`
 
 ---

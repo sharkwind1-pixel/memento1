@@ -85,7 +85,16 @@ export default function MinihompyStage({
 
     // isMounted: 배경 효과 파티클을 CSR에서만 렌더링 (hydration mismatch 방지)
     const [isMounted, setIsMounted] = useState(false);
-    useEffect(() => { setIsMounted(true); }, []);
+    useEffect(() => {
+        setIsMounted(true);
+        // 컴포넌트 언마운트 시 터치 이펙트 타이머 정리 (메모리 누수 방지)
+        return () => {
+            if (touchTimerRef.current) {
+                clearTimeout(touchTimerRef.current);
+                touchTimerRef.current = null;
+            }
+        };
+    }, []);
 
     // 터치 이펙트 상태 (미니미 클릭 시 애니메이션)
     const [touchEffectIndex, setTouchEffectIndex] = useState<number | null>(null);
