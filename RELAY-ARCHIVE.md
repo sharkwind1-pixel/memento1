@@ -64,7 +64,7 @@
 | 매거진 계절 로직 (3,6,9,12월만 계절 힌트, 나머지 계절 금지) | 완료 |
 | Google Search Console 구조화된 데이터 경고 해결 (Product → SoftwareApplication) | 완료 |
 | 홈 화면 레이아웃 밀림 방지 (커뮤니티+쇼케이스 동시 로딩 스켈레톤) | 완료 |
-| 홈 "마음속에 영원히" 섹션 기억게시판 인기글 표시 | 완료 |
+| 홈 "마음속에 영원히" 섹션: 오늘 추모 등록 + 기억의 날 펫 카드 표시 | 완료 |
 
 ## 변경 로그 (최신순)
 
@@ -175,12 +175,28 @@
 
 ---
 
-#### 커밋 15: `224f22a` — 추모 섹션 원상복구
+#### 커밋 15: `224f22a` — 추모 섹션 임시 원상복구 (기억게시판 인기글)
 
-- "오늘의 기일" UI 전부 제거
-- "마음속에 영원히" 기억게시판 인기글 방식으로 완전 원복
-- **참고**: `/api/memorial-today/route.ts` 파일은 아직 남아있음 (미사용, 추후 삭제 가능)
+- "오늘의 기일" UI 전부 제거, 기억게시판 인기글 방식으로 임시 원복
 - **파일**: `useHomePage.ts`, `MemorialSection.tsx`, `HomePage.tsx`
+
+---
+
+#### 커밋 16: `359f448` — "마음속에 영원히" 최종 확정: 오늘 추모 등록 + 기억의 날 펫
+
+**요구사항**: 기억게시판 인기글이 아닌, 오늘 추모로 등록된 펫 + 오늘이 기억의 날인 펫 표시
+**노골적 표현 금지**: "기일/주기" 대신 "함께한 N년", "새로운 기억", "올해의 기억" 사용
+
+**/api/memorial-today 수정 내용**:
+1. 오늘 추모 모드로 새로 등록된 펫 (created_at KST 오늘)
+2. 오늘이 기억의 날인 펫 (memorial_date 월/일 매칭, 올해 등록 건 제외)
+3. 중복 제거, 새로 등록 우선
+4. 없으면 앞뒤 3일 범위 확장
+
+**MemorialSection UI**: 정방형 프로필 카드, "새로운 기억"/"함께한 N년" 뱃지, "영원히 기억할게" 메시지
+**useHomePage**: `MemorialPetItem` 타입, `/api/memorial-today` fetch
+
+**파일**: `memorial-today/route.ts`, `useHomePage.ts`, `MemorialSection.tsx`
 
 ---
 
@@ -189,11 +205,11 @@
 | 파일 | 변경 내용 |
 |------|----------|
 | `src/app/api/cron/magazine-generate/route.ts` | animalType 파라미터 전달 |
-| `src/app/api/memorial-today/route.ts` | **신규** (미사용, 추후 정리) |
+| `src/app/api/memorial-today/route.ts` | 오늘 추모 등록 + 기억의 날 펫 API |
 | `src/app/layout.tsx` | Product → SoftwareApplication 스키마 |
 | `src/components/features/chat/ChatInputArea.tsx` | 가격 문구 수정 |
-| `src/components/features/home/MemorialSection.tsx` | 기억게시판 인기글 카드 |
-| `src/components/features/home/useHomePage.ts` | 기억게시판 fetch + 스켈레톤 로딩 |
+| `src/components/features/home/MemorialSection.tsx` | 추모 펫 카드 UI |
+| `src/components/features/home/useHomePage.ts` | memorial-today API 연동 |
 | `src/components/pages/HomePage.tsx` | 동시 로딩 스켈레톤 |
 | `src/lib/magazine-generator.ts` | 동물 종/주제/계절 로직 |
 
