@@ -14,16 +14,13 @@ import {
     CardContent,
     CardHeader,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
     Cloud,
-    ArrowRight,
     Sparkles,
 } from "lucide-react";
 import { safeStringSrc, getPetIcon } from "./homeUtils";
 import type { LightboxItem } from "./types";
-import { TabType } from "@/types";
 
 interface MemorialPetItem {
     id: string;
@@ -41,7 +38,6 @@ interface MemorialSectionProps {
     displayMemorialData: MemorialPetItem[];
     onLightboxOpen: (item: LightboxItem) => void;
     scrollRef: React.RefObject<HTMLDivElement>;
-    setSelectedTab: (tab: TabType) => void;
 }
 
 export default function MemorialSection({
@@ -49,33 +45,21 @@ export default function MemorialSection({
     displayMemorialData,
     onLightboxOpen,
     scrollRef,
-    setSelectedTab,
 }: MemorialSectionProps) {
     return (
         <section className="space-y-6 px-4">
-            <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center space-x-3 min-w-0">
-                    <div className="w-10 h-10 flex-shrink-0 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl flex items-center justify-center">
-                        <Cloud className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="min-w-0">
-                        <h2 className="text-base sm:text-xl md:text-2xl font-display font-bold bg-gradient-to-r from-amber-500 to-orange-500 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent leading-tight">
-                            마음속에 영원히
-                        </h2>
-                        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 hidden sm:block">
-                            오늘 기억하는 소중한 아이들
-                        </p>
-                    </div>
+            <div className="flex items-center space-x-3 min-w-0">
+                <div className="w-10 h-10 flex-shrink-0 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl flex items-center justify-center">
+                    <Cloud className="w-5 h-5 text-white" />
                 </div>
-                <Button
-                    variant="ghost"
-                    onClick={() => setSelectedTab("community")}
-                    className="text-amber-500 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-gray-700/20 rounded-xl flex-shrink-0 px-2 sm:px-4 min-h-[44px] active:scale-95 transition-transform"
-                >
-                    <span className="hidden sm:inline">추모 게시판</span>
-                    <span className="sm:hidden">더보기</span>
-                    <ArrowRight className="w-4 h-4 ml-1 sm:ml-2" />
-                </Button>
+                <div className="min-w-0">
+                    <h2 className="text-base sm:text-xl md:text-2xl font-display font-bold bg-gradient-to-r from-amber-500 to-orange-500 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent leading-tight">
+                        마음속에 영원히
+                    </h2>
+                    <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 hidden sm:block">
+                        무지개다리를 건넌 소중한 아이들
+                    </p>
+                </div>
             </div>
 
             <div

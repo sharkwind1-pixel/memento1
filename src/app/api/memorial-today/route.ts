@@ -84,11 +84,12 @@ export async function GET() {
             }
         }
 
-        // 결과가 없으면 → 이번 주(앞뒤 3일) 기억의 날 펫으로 확장
+        // 우선순위: 오늘 해당 펫 → 이번 주 → 전체 추모 펫 (최근 등록순)
         let isExactToday = combined.length > 0;
         let finalPets = combined;
 
         if (combined.length === 0) {
+            // 이번 주(앞뒤 3일) 기억의 날 펫
             const weekPets = allPets.filter((pet) => {
                 if (!pet.memorial_date) return false;
                 const d = new Date(pet.memorial_date + "T00:00:00");
@@ -98,7 +99,13 @@ export async function GET() {
                 const petOfYear = petMonth * 31 + petDay;
                 return Math.abs(todayOfYear - petOfYear) <= 3;
             });
-            finalPets = weekPets;
+
+            if (weekPets.length > 0) {
+                finalPets = weekPets;
+            } else {
+                // 이번 주에도 없으면 → 전체 추모 펫 최근 등록순
+                finalPets = allPets;
+            }
             isExactToday = false;
         }
 

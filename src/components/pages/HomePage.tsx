@@ -191,7 +191,6 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
                     displayMemorialData={displayMemorialData}
                     onLightboxOpen={setLightboxItem}
                     scrollRef={scroll.memorialScrollRef}
-                    setSelectedTab={setSelectedTab}
                 />
             </div>
         </div>
