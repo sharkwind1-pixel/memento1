@@ -4,14 +4,11 @@
  */
 
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PetProvider } from "@/contexts/PetContext";
 import { Toaster } from "sonner";
 import CookieConsentBanner from "@/components/features/cookie/CookieConsentBanner";
-
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const viewport: Viewport = {
     width: "device-width",
@@ -173,7 +170,7 @@ export default function RootLayout({
                     }}
                 />
             </head>
-            <body className={`${inter.variable} font-sans`}>
+            <body className="font-sans">
                 {/* SSR 랜딩 콘텐츠 - JS 없는 크롤러/봇에게 서비스 정보 노출. JS 로드 후 숨김 */}
                 <noscript>
                     <div className="max-w-4xl mx-auto px-4 py-12 space-y-8">

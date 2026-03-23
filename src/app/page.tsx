@@ -69,7 +69,12 @@ import CommunityPage from "@/components/pages/CommunityPage";
 import AIChatPage from "@/components/pages/AIChatPage";
 import MagazinePage from "@/components/pages/MagazinePage";
 import RecordPage from "@/components/pages/RecordPage";
-import AdminPage from "@/components/pages/AdminPage";
+// AdminPage만 dynamic import — 일반 유저는 접근 안 하므로 초기 번들에서 제외
+// (Tiptap, RichTextEditor 등 무거운 의존성이 함께 분리됨)
+import dynamic from "next/dynamic";
+const AdminPage = dynamic(() => import("@/components/pages/AdminPage"), {
+    loading: () => <div className="flex items-center justify-center min-h-[60vh]"><div className="animate-spin w-8 h-8 border-2 border-sky-400 border-t-transparent rounded-full" /></div>,
+});
 
 // 모달 컴포넌트 - 정적 import
 import NicknameSetupModal from "@/components/Auth/NicknameSetupModal";
