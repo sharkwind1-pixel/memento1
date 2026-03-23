@@ -23,6 +23,7 @@ import PostModal from "@/components/features/home/PostModal";
 import Lightbox from "@/components/features/home/Lightbox";
 import SimpleHomeLauncher from "@/components/features/home/SimpleHomeLauncher";
 import { useAuth } from "@/contexts/AuthContext";
+import { useMemorialMode } from "@/contexts/PetContext";
 import { Newspaper } from "lucide-react";
 
 interface HomePageProps {
@@ -41,10 +42,10 @@ function useMagazinePreview() {
                 const res = await fetch("/api/magazine?limit=3&offset=0");
                 if (res.ok) {
                     const data = await res.json();
-                    setArticles((data.articles || []).slice(0, 3).map((a: { id: string; title: string; cover_image_url?: string; category?: string }) => ({
+                    setArticles((data.articles || []).slice(0, 3).map((a: { id: string; title: string; imageUrl?: string; category?: string }) => ({
                         id: a.id,
                         title: a.title,
-                        coverUrl: a.cover_image_url || null,
+                        coverUrl: a.imageUrl || null,
                         category: a.category || "",
                     })));
                 }
@@ -58,6 +59,7 @@ function useMagazinePreview() {
 
 function HomePage({ setSelectedTab, isActive }: HomePageProps) {
     const { isSimpleMode, user } = useAuth();
+    const { isMemorialMode } = useMemorialMode();
     const scroll = useSmoothAutoScroll() as unknown as SmoothAutoScrollReturn;
 
     const {
@@ -108,11 +110,27 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
             className="min-h-screen relative overflow-hidden"
             style={{ contain: 'layout style', transform: 'translateZ(0)' }}
         >
-            {/* 배경 - 좀 더 진한 하늘색 */}
-            <div className="absolute inset-0 bg-gradient-to-b from-sky-100/80 via-sky-50/40 to-rose-50/20 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-                <div className="absolute -top-20 left-1/4 w-[500px] h-[500px] bg-gradient-to-br from-memento-300/30 to-sky-200/30 dark:from-blue-800/15 dark:to-sky-800/15 rounded-full blur-3xl" />
-                <div className="absolute top-1/3 -right-20 w-[400px] h-[400px] bg-gradient-to-br from-rose-100/25 to-pink-50/25 dark:from-rose-900/10 dark:to-pink-900/10 rounded-full blur-3xl" />
-                <div className="absolute bottom-1/4 left-1/3 w-[350px] h-[350px] bg-gradient-to-br from-sky-200/25 to-memento-100/25 dark:from-sky-800/10 dark:to-memento-700/10 rounded-full blur-3xl" />
+            {/* 배경 - 일상: 하늘색 / 추모: amber */}
+            <div className={`absolute inset-0 bg-gradient-to-b ${
+                isMemorialMode
+                    ? "from-amber-50/80 via-amber-50/30 to-orange-50/20 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
+                    : "from-sky-100/80 via-sky-50/40 to-rose-50/20 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
+            }`}>
+                <div className={`absolute -top-20 left-1/4 w-[500px] h-[500px] bg-gradient-to-br ${
+                    isMemorialMode
+                        ? "from-amber-200/30 to-orange-100/30 dark:from-amber-800/15 dark:to-orange-800/15"
+                        : "from-memento-300/30 to-sky-200/30 dark:from-blue-800/15 dark:to-sky-800/15"
+                } rounded-full blur-3xl`} />
+                <div className={`absolute top-1/3 -right-20 w-[400px] h-[400px] bg-gradient-to-br ${
+                    isMemorialMode
+                        ? "from-yellow-100/25 to-amber-50/25 dark:from-yellow-900/10 dark:to-amber-900/10"
+                        : "from-rose-100/25 to-pink-50/25 dark:from-rose-900/10 dark:to-pink-900/10"
+                } rounded-full blur-3xl`} />
+                <div className={`absolute bottom-1/4 left-1/3 w-[350px] h-[350px] bg-gradient-to-br ${
+                    isMemorialMode
+                        ? "from-amber-100/25 to-yellow-100/25 dark:from-amber-800/10 dark:to-yellow-800/10"
+                        : "from-sky-200/25 to-memento-100/25 dark:from-sky-800/10 dark:to-memento-700/10"
+                } rounded-full blur-3xl`} />
             </div>
 
             {/* Lightbox + 모달 */}
@@ -163,6 +181,7 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
                                     onSelectPost={setSelectedPost}
                                     scrollRef={scroll.communityScrollRef}
                                     setSelectedTab={setSelectedTab}
+                                    isMemorial={isMemorialMode}
                                 />
                             </div>
                             {/* 우: 함께 보기 (쇼케이스) */}
@@ -178,7 +197,7 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
                 )}
 
                 {/* 구분선 */}
-                <div className="mx-auto w-20 h-px bg-gradient-to-r from-transparent via-memento-300/30 to-transparent" />
+                <div className={`mx-auto w-20 h-px bg-gradient-to-r from-transparent ${isMemorialMode ? "via-amber-300/30" : "via-memento-300/30"} to-transparent`} />
 
                 {/* 펫매거진(좌) + 추모(우) 2컬럼 */}
                 <section className="px-4">
@@ -187,7 +206,7 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
                         <div className="space-y-6">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center space-x-3">
-                                    <div className="w-10 h-10 flex-shrink-0 bg-gradient-to-br from-emerald-500 to-teal-400 rounded-2xl flex items-center justify-center shadow-sm shadow-emerald-500/20">
+                                    <div className={`w-10 h-10 flex-shrink-0 bg-gradient-to-br ${isMemorialMode ? "from-amber-500 to-orange-400 shadow-amber-500/20" : "from-emerald-500 to-teal-400 shadow-emerald-500/20"} rounded-2xl flex items-center justify-center shadow-sm`}>
                                         <Newspaper className="w-5 h-5 text-white" />
                                     </div>
                                     <div>
@@ -197,7 +216,7 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
                                 </div>
                                 <button
                                     onClick={() => setSelectedTab("magazine")}
-                                    className="text-sm text-memento-500 hover:text-memento-600 font-medium flex items-center gap-1"
+                                    className={`text-sm font-medium flex items-center gap-1 ${isMemorialMode ? "text-amber-500 hover:text-amber-600" : "text-memento-500 hover:text-memento-600"}`}
                                 >
                                     더 많은 이야기 &rarr;
                                 </button>
@@ -226,12 +245,12 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
                                                     loading="lazy"
                                                 />
                                             ) : (
-                                                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center flex-shrink-0">
-                                                    <Newspaper className="w-6 h-6 text-emerald-400" />
+                                                <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${isMemorialMode ? "from-amber-100 to-orange-100 dark:from-gray-700 dark:to-gray-600" : "from-emerald-100 to-teal-100 dark:from-gray-700 dark:to-gray-600"} flex items-center justify-center flex-shrink-0`}>
+                                                    <Newspaper className={`w-6 h-6 ${isMemorialMode ? "text-amber-400" : "text-emerald-400"}`} />
                                                 </div>
                                             )}
                                             <div className="flex-1 text-left min-w-0">
-                                                <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 line-clamp-2 group-hover:text-memento-600 transition-colors">
+                                                <p className={`text-sm font-semibold text-gray-800 dark:text-gray-100 line-clamp-2 transition-colors ${isMemorialMode ? "group-hover:text-amber-600" : "group-hover:text-memento-600"}`}>
                                                     {article.title}
                                                 </p>
                                                 {article.category && (

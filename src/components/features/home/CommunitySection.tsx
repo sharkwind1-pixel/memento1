@@ -34,6 +34,7 @@ interface CommunitySectionProps {
     onSelectPost: (post: CommunityPost) => void;
     scrollRef: React.RefObject<HTMLDivElement>;
     setSelectedTab: (tab: TabType) => void;
+    isMemorial?: boolean;
 }
 
 export default function CommunitySection({
@@ -45,8 +46,15 @@ export default function CommunitySection({
     onSelectPost,
     scrollRef,
     setSelectedTab,
+    isMemorial = false,
 }: CommunitySectionProps) {
-    const gradients = [
+    const gradients = isMemorial ? [
+        "from-amber-500 to-orange-300",
+        "from-amber-400 to-yellow-300",
+        "from-orange-400 to-amber-300",
+        "from-yellow-500 to-amber-300",
+        "from-amber-600 to-orange-400",
+    ] : [
         "from-memento-500 to-sky-300",
         "from-rose-500 to-pink-300",
         "from-violet-500 to-purple-300",
@@ -58,7 +66,7 @@ export default function CommunitySection({
         <section className="space-y-6 px-4" data-tutorial-id="home-trending">
             <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center space-x-3 min-w-0">
-                    <div className="w-10 h-10 flex-shrink-0 bg-gradient-to-br from-memento-500 to-memento-400 rounded-2xl flex items-center justify-center shadow-sm shadow-memento-500/20">
+                    <div className={`w-10 h-10 flex-shrink-0 bg-gradient-to-br ${isMemorial ? "from-amber-500 to-orange-400 shadow-amber-500/20" : "from-memento-500 to-memento-400 shadow-memento-500/20"} rounded-2xl flex items-center justify-center shadow-sm`}>
                         <TrendingUp className="w-5 h-5 text-white" />
                     </div>
                     <div className="min-w-0">
@@ -73,7 +81,7 @@ export default function CommunitySection({
                 <Button
                     variant="ghost"
                     onClick={() => setSelectedTab("community")}
-                    className="text-memento-600 dark:text-memento-400 hover:bg-memento-100 dark:hover:bg-gray-700 rounded-xl flex-shrink-0 px-2 sm:px-4 min-h-[44px] active:scale-95 transition-transform"
+                    className={`${isMemorial ? "text-amber-600 dark:text-amber-400 hover:bg-amber-100" : "text-memento-600 dark:text-memento-400 hover:bg-memento-100"} dark:hover:bg-gray-700 rounded-xl flex-shrink-0 px-2 sm:px-4 min-h-[44px] active:scale-95 transition-transform`}
                 >
                     <span className="hidden sm:inline">더 많은 이야기</span>
                     <span className="sm:hidden">더보기</span>
@@ -150,7 +158,7 @@ export default function CommunitySection({
                             </div>
 
                             <CardContent className="p-4 bg-white dark:bg-gray-800">
-                                <h3 className="font-bold text-gray-800 dark:text-white text-base mb-1 line-clamp-2 group-hover:text-memento-600 transition-colors">
+                                <h3 className={`font-bold text-gray-800 dark:text-white text-base mb-1 line-clamp-2 transition-colors ${isMemorial ? "group-hover:text-amber-600" : "group-hover:text-memento-600"}`}>
                                     {post.title}
                                 </h3>
                                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-1.5 min-w-0">
@@ -179,7 +187,7 @@ export default function CommunitySection({
                                             {totalComments}
                                         </span>
                                     </div>
-                                    <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-memento-600 group-hover:translate-x-1 transition-all" />
+                                    <ArrowRight className={`w-4 h-4 text-gray-400 group-hover:translate-x-1 transition-all ${isMemorial ? "group-hover:text-amber-600" : "group-hover:text-memento-600"}`} />
                                 </div>
                             </CardContent>
                         </Card>
