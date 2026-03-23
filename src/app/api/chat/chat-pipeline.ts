@@ -790,27 +790,20 @@ export async function postProcessResponse(
         pendingTopic = ptParts[1]?.trim().split("\n")[0]?.trim();
     }
 
-    // 2. SUGGESTIONS 분리
+    // 2. SUGGESTIONS 분리 + 화이트리스트 필터링
     if (reply.includes(suggestionsMarker)) {
         const sgParts = reply.split(suggestionsMarker);
         reply = sgParts[0].trim();
+
+        // 반려동물 관련 화이트리스트 — 이 키워드가 하나라도 있어야 통과
+        const PET_WHITELIST = /산책|걷|걸|뛰|놀|공원|간식|사료|밥|케어|건강|병원|예방|목욕|미용|훈련|짖|발바닥|컨디션|기분|하루|뭐 해|뭐 했|어때|좋아|싫어해|무서|잠|낮잠|꿈|배변|털|체중|몸무게|주사|약|귀|눈|이빨|양치|장난감|터그|공놀이|물놀이|수영|옷|안아|쓰다듬|꼬리|혀|코|냄새|소리|짤|사진|영상|추억|기억|보고싶|그리|함께|같이/;
+
         suggestedQuestions = sgParts[1]
             .trim()
             .split("\n")
             .map(s => s.replace(/^[-\d.)\s]+/, "").trim())
             .filter(s => s.length > 0 && s.length <= 20)
-            // 도발적/공격적/비꼬는 톤 필터링
-            .filter(s => !/눈치|뭐야|왜 그래|짜증|싫어|꺼져|시끄러|바보|멍청|한심/.test(s))
-            // 반려동물과 무관한 사람 전용 주제 필터링
-            .filter(s => {
-                // 반려동물 관련 키워드가 있으면 허용 (예: "간식 추천해줘", "사료 뭐가 좋아")
-                if (/간식|사료|펫|강아지|고양이|산책|놀이|케어|건강|병원|예방|목욕|미용|훈련|발바닥|컨디션|기분/.test(s)) return true;
-                // 사람 음식/맛집/관광/먹거리 관련 → 차단
-                if (/음식|맛집|맛있|먹을|먹어|먹자|먹방|뭐 먹|뭘 먹|관광|볼거리|먹거리|특산|명소|카페|식당|맛나|요리|메뉴|디저트|커피|추천은|뭐가 유명|유명한/.test(s)) return false;
-                // "OO 추천" 패턴에서 반려동물 키워드 없으면 차단 (사람 전용 추천 차단)
-                if (/추천/.test(s)) return false;
-                return true;
-            })
+            .filter(s => PET_WHITELIST.test(s))
             .slice(0, 3);
     }
 
