@@ -273,13 +273,16 @@ export function buildArticlePrompt(
             ? `\n\n## 중복 방지\n다음 기존 기사와 겹치지 않는 완전히 새로운 주제를 선택하세요:\n${recentTitles.map((t) => `- ${t}`).join("\n")}`
             : "";
 
-    // 현재 월로 계절 힌트 (참고용, 강제 아님)
+    // 계절 전환기(3월, 6월, 9월, 12월)에만 계절 힌트 제공
+    // 그 외 달에는 계절 언급 없음 → 실질적 주제에 집중
     const month = new Date().getMonth() + 1;
-    let seasonHint = "";
-    if (month >= 3 && month <= 5) seasonHint = "봄철";
-    else if (month >= 6 && month <= 8) seasonHint = "여름철";
-    else if (month >= 9 && month <= 11) seasonHint = "가을철";
-    else seasonHint = "겨울철";
+    const SEASON_TRANSITION: Record<number, string> = {
+        3: "봄이 다가오는 시기",
+        6: "여름이 다가오는 시기",
+        9: "가을이 다가오는 시기",
+        12: "겨울이 다가오는 시기",
+    };
+    const seasonHint = SEASON_TRANSITION[month] || "";
 
     // 동물 종 컨텍스트
     const animalName = animalType?.name || "강아지/고양이";
@@ -307,9 +310,8 @@ export function buildArticlePrompt(
 ## 조건
 - 주제 분야: ${CATEGORY_NAMES[category] || category}
 - 대상 독자: ${BADGE_CONTEXTS[badge] || badge}
-${animalSpecificGuide}
-- 현재 계절: ${seasonHint} (참고만 하세요. 계절과 무관한 주제도 OK. "봄철 ○○", "겨울철 ○○" 같은 계절 중심 제목은 피하세요)
-- 주제 선택 원칙: **보호자가 실제로 고민하는 실용적 주제**를 다루세요. "○○철 주의사항" 같은 계절 반복 기사가 아니라, 배변 훈련, 사료 선택, 건강 이상 징후, 행동 교정 등 구체적이고 실질적인 정보를 담으세요.
+${animalSpecificGuide}${seasonHint ? `\n- 계절 참고: ${seasonHint}이므로, 계절 전환과 관련된 주제를 다뤄도 좋습니다 (예: 환절기 건강 관리, 온도 변화 대비). 단, 계절 이야기만으로 채우지 말고 실용 정보 중심으로 작성하세요.` : `\n- 계절/날씨 관련 기사는 쓰지 마세요. "○○철 주의사항", "○○철 건강관리" 같은 계절 반복 주제 금지.`}
+- 주제 선택 원칙: **보호자가 실제로 고민하는 실용적 주제**를 다루세요. 배변 훈련, 사료 선택, 건강 이상 징후, 행동 교정, 사육 환경 등 구체적이고 실질적인 정보를 담으세요.
 - 톤: 밝고 따뜻하며 전문적. 친근하지만 신뢰감 있는 문체.
 - 언어: 한국어만 사용
 - 이모지/이모티콘 사용 금지
