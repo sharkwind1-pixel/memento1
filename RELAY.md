@@ -6,46 +6,18 @@
 
 ---
 
-## 에이전트 총동원 — 전수 분석 + 안정화 세션 (2026-03-20, 완료)
-
-### 커밋 목록 (모두 배포됨)
-1. `9def014` — CRITICAL 버그 5건 수정 + 모달 ESC 키 지원 15개 추가
-2. `2009854` — 에러 처리 개선 (PetContext loadError, AuthContext 에러 로깅)
-3. `6569260` — ConfirmDialog 컴포넌트 + PostDetailView/AIChatHeader 6곳 교체
-4. `bc276bf` — 전체 confirm() 제거 (17곳, 12파일)
+## 최근 완료 세션 (2026-03-23) — 커뮤니티 안정화 + 발표 준비
 
 ### 주요 성과
-- CRITICAL: 커뮤니티 이미지 파이프라인 3곳 수정 (이미지 저장/조회/렌더링)
-- CRITICAL: AI 펫톡 더블전송 방지 + AbortController 추가
-- CRITICAL: 타이머 누수 2건 (SupportModal, AccountSettingsModal)
-- 성능: getInitialState() 3회→1회 캐싱
-- UX: 15개 모달 ESC 키 지원 (useEscapeClose 훅)
-- UX: 전체 23곳 네이티브 confirm() → ConfirmDialog 교체 (0건 잔여)
-- 안정성: PetContext/AuthContext 에러 처리 강화
+- 자기 글 좋아요 방지 (PostDetailView + 홈 페이지)
+- 좋아요/댓글 새로고침 시 유지 (DB 연동, userLiked API)
+- 댓글 500 에러 3차에 걸쳐 수정 (post_comments 실제 컬럼: author_name)
+- 공지 라벨 관리자용 설명 제거
+- 함께보기 뒤로가기 버튼 수정 (overflow-hidden 제거)
+- 부트캠프 최종 발표 자료 작성
 
 ### 상세 기록
-`RELAY-ARCHIVE.md` > `[2026-03-20]` 참조
-
----
-
-## 튜토리얼 + 스크롤 + 방어 로직 + 재가입 버그 세션 (2026-03-12, 완료)
-
-### 커밋 목록 (모두 배포됨)
-1. `c3a2642` — 튜토리얼 중 PetFormModal/사이드바 가림 수정
-2. `a545d37` — 튜토리얼 UX 개선 (섹션 하이라이트 + 스텝 순서)
-3. `9928de0` — RecordPage overflow-hidden/contain 제거
-4. `64a6686` — RecordPage 잔여 contain/translateZ 제거
-5. `256ff55` — MediaUploadModal useBodyScrollLock 제거 (iOS 사진 선택기 충돌)
-6. `6684f20` — 미확인 3건 코드 방어 로직 (touchmove 차단, localStorage 저장, ref 초기화)
-7. `6fbe55c` — 재가입 유저 새로고침 시 데이터 리셋 버그 수정 (onboarding_completed_at 체크)
-8. `802ebd9` — sessionStorage 세션당 1회 방어 추가 (재가입 리셋 이중 방어)
-9. `7397567` — **RecordPageTutorial 제거** (펫 0마리 신규유저 논리적 모순 해소)
-
-### 미확인 (실기기 테스트 필요)
-- iOS Safari 사진 선택기 컬렉션 탭 스크롤
-- MediaUploadModal backdrop rubber band 스크롤 누수
-- 신규유저 전체 플로우 (닉네임→온보딩→튜토리얼→Record 페이지→PetFormModal)
-- 재가입 유저 새로고침 시 데이터 유지 확인
+`RELAY-ARCHIVE.md` > `[2026-03-23]` 참조
 
 ---
 

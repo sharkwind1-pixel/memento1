@@ -47,10 +47,149 @@
 | 모달 ESC 키 지원 (useEscapeClose 훅, 15개 모달) | 완료 |
 | ConfirmDialog 전면 적용 (23곳 네이티브 confirm() 제거) | 완료 |
 | 에러 처리 개선 (PetContext loadError, AuthContext 에러 로깅) | 완료 |
+| 관리자 프리미엄 부여 플랜 선택 (베이직/프리미엄) + AI영상 쿼터 표시 | 완료 |
+| 구독 관리 UI + 결제 약관 페이지 + KCP 테스트 로그인 | 완료 |
+| 온보딩 리셋 버그 디버깅 + 수정 | 완료 |
+| 커뮤니티 게시글 카드 UI 개선 (높이 축소, 모달 플레이스홀더 제거) | 완료 |
+| 자기 글 좋아요 방지 + 알림 토스트 | 완료 |
+| 좋아요/댓글 새로고침 시 유지 (DB 연동, userLiked API) | 완료 |
+| 댓글 API 500 에러 수정 (post_comments 실제 컬럼 매핑) | 완료 |
+| 공지 라벨 관리자용 설명 텍스트 제거 | 완료 |
+| 함께보기 게시판 뒤로가기 버튼 수정 (overflow-hidden 제거) | 완료 |
 
 ## 변경 로그 (최신순)
 
 > 형식: `[YYYY-MM-DD HH:MM]` 커밋해시 | 작업 요약 | 변경 파일 | 상세
+
+---
+
+### [2026-03-23] 커뮤니티 안정화 + 발표 준비
+
+> 자기 글 좋아요 방지, 좋아요/댓글 DB 연동, 댓글 500 에러 3차 수정, UI 개선 다수.
+> 부트캠프 최종 발표 자료 (구현 현황 PDF + 캔바용 텍스트) 작성.
+
+---
+
+#### 커밋 1: `304ba29` — 자기 글 좋아요 방지 + 홈 좋아요/댓글 DB 연동
+
+**자기 글 좋아요 방지:**
+- PostDetailView: `user.id === post.user_id` 체크 + toast 알림
+- useHomePage: toggleLike에 동일 체크 추가
+
+**좋아요/댓글 DB 연동 (홈 페이지):**
+- useHomePage `toggleLike`: 클라이언트 전용 → `authFetch(API.POST_LIKE(dbId))` API 호출 + 낙관적 UI + 롤백
+- useHomePage `addComment`: 클라이언트 전용 → `authFetch(API.POST_COMMENTS(dbId))` API 호출 + 낙관적 UI
+- CommunityPost 타입에 `dbId`, `userId` 필드 추가
+- CommunitySection/PostModal: `displayLikes` 서버 권위 값으로 변경
+
+**파일**: `PostDetailView.tsx`, `useHomePage.ts`, `types.ts`, `CommunitySection.tsx`, `PostModal.tsx`
+
+---
+
+#### 커밋 2: `30385cf` — 좋아요 상태 새로고침 시 유지
+
+- `/api/posts` GET에 `userLikedPostIds` 쿼리 추가 (post_likes 테이블 조회)
+- 응답에 `userLiked: boolean` 필드 추가
+- useHomePage `fetchCommunityPosts`: `fetch()` → `authFetch()` 변경 (인증 헤더 전송)
+- 응답의 `userLiked`로 `likedPosts` 초기 상태 설정
+
+**파일**: `/api/posts/route.ts`, `useHomePage.ts`
+
+---
+
+#### 커밋 3: `bea1583` — 홈 댓글/좋아요 실패 수정
+
+- toggleLike, addComment에 `supabase.auth.getSession()` 로그인 체크 추가
+- 미로그인 시 toast 안내 + early return
+
+**파일**: `useHomePage.ts`
+
+---
+
+#### 커밋 4~6: `9e7e0d5`, `6a38063`, `8321b8c` — 댓글 API 500 에러 디버깅
+
+- 댓글 POST 핸들러 전체를 `adminSupabase` (service role)로 전환하여 RLS 우회
+- 에러 응답에 `detail` 필드 추가 (스키마 캐시 에러 디버깅용)
+- PostDetailView에 debug error display 추가
+
+**파일**: `/api/posts/[id]/comments/route.ts`, `PostDetailView.tsx`
+
+---
+
+#### 커밋 7: `aff90cf` — 댓글 500 해결 1차: author_avatar 제거
+
+- `post_comments` 테이블에 `author_avatar` 컬럼이 없음 (스키마 캐시 에러)
+- INSERT에서 `author_avatar` 제거, 응답에서 `profile?.avatar_url` 직접 사용
+
+**파일**: `/api/posts/[id]/comments/route.ts`
+
+---
+
+#### 커밋 8: `0c8501d` — 댓글 500 해결 2차: author_nickname 제거
+
+- `author_nickname` 컬럼도 실제 DB에 없음 (마이그레이션 SQL과 실제 DB 불일치)
+- INSERT에서 `author_nickname` 제거, 응답에서 `profile?.nickname` 직접 사용
+
+**파일**: `/api/posts/[id]/comments/route.ts`
+
+---
+
+#### 커밋 9: `bc9c746` — 댓글 500 해결 3차 (최종): author_name 추가
+
+- 실제 DB 컬럼명은 `author_name` (NOT NULL)
+- INSERT에 `author_name: profile?.nickname || "익명"` 추가하여 최종 해결
+
+**교훈**: 마이그레이션 SQL(`author_nickname`)과 실제 DB 스키마(`author_name`)가 불일치.
+Supabase 스키마 캐시 에러 메시지로 실제 컬럼명을 하나씩 파악함.
+
+**파일**: `/api/posts/[id]/comments/route.ts`
+
+---
+
+#### 커밋 10: `ab17ee5` — 공지 라벨 관리자용 설명 제거
+
+- "게시판 공지 (해당 게시판 상단 고정)" → "게시판 공지"
+- "전체 공지 (모든 게시판 + 홈 상단)" → "전체 공지"
+- 유저에게 불필요한 내부 설명 텍스트 삭제
+
+**파일**: `PostDetailView.tsx`
+
+---
+
+#### 커밋 11: `94b1c6e` — 함께보기 뒤로가기 수정
+
+- ShowcaseGalleryView: 게시글 상세 wrapper에서 `overflow-hidden` + `contain: layout style` 제거
+- ShowcaseGalleryView: 갤러리 메인 wrapper에서 `overflow-hidden` 제거
+- CommunityPage: 함께보기 wrapper에서 동일 속성 제거
+- 이 CSS 속성들이 sticky 헤더와 클릭 이벤트를 방해하고 있었음
+
+**파일**: `ShowcaseGalleryView.tsx`, `CommunityPage.tsx`
+
+---
+
+### 이전 세션 작업 (2026-03-21~22)
+
+#### `8a7a0bc` — 관리자 프리미엄 부여에 플랜 선택 추가
+- 베이직/프리미엄 선택 가능 (기존: 프리미엄만)
+- 플랜별 제한 표시 (펫 수, 사진, AI 횟수)
+
+#### `ff045fc` — 관리자 프리미엄 모달에 AI 영상 생성 쿼터 표시
+- 베이직 월 3회 / 프리미엄 월 6회 정보 추가
+
+#### `6353370` — 홈 게시글 모달 불필요한 플레이스홀더 제거
+#### `2fbc38c` — 커뮤니티 게시글 카드 높이 축소 (가독성 개선)
+
+#### `13b6b8e` — 구독 관리 UI + 탈퇴 경고 개선
+- 계정 설정에 구독 현황/관리 섹션 추가
+- 프리미엄 유저 탈퇴 시 구독 손실 경고
+
+#### `7a8ac98` — 결제 약관 페이지 (/payment-terms)
+#### `5a3c762` — KCP 심사용 테스트 로그인 페이지 (/test-login)
+
+#### 온보딩 리셋 버그 수정 (4커밋 디버깅)
+- `ed20bcf` — 온보딩 리셋 후 닉네임 설정 시 온보딩 스킵되는 버그 수정
+- `6cb9767` — 온보딩 리셋 후 튜토리얼 미발생 버그 수정
+- `a2feef1` — 디버그 코드 전체 제거 (해결 확인)
 
 ---
 
