@@ -79,18 +79,18 @@ async function hasArticleToday(supabase: SupabaseClient): Promise<boolean> {
 async function createMagazineArticle(
     supabase: SupabaseClient,
     openai: OpenAI
-): Promise<{ id: string; title: string; category: string; badge: string; status: string }> {
-    // 카테고리/배지 로테이션
-    const { category, badge } = await getNextCategoryAndBadge(supabase);
+): Promise<{ id: string; title: string; category: string; badge: string; status: string; animalType?: string }> {
+    // 카테고리/배지/동물 종 로테이션
+    const { category, badge, animalType } = await getNextCategoryAndBadge(supabase);
 
     // 중복 방지용 최근 제목
     const recentTitles = await getRecentTitles(supabase);
 
-    // AI로 기사 생성
-    const article = await generateArticle(openai, category, badge, recentTitles);
+    // AI로 기사 생성 (동물 종 정보 전달)
+    const article = await generateArticle(openai, category, badge, recentTitles, animalType);
 
-    // Unsplash 이미지
-    const imageUrl = await fetchUnsplashImage(category);
+    // Unsplash 이미지 (동물 종에 맞는 이미지)
+    const imageUrl = await fetchUnsplashImage(category, animalType);
 
     // DB INSERT (draft 상태)
     const articleStatus = MAGAZINE_AUTO.AUTO_PUBLISH ? "published" : "draft";
@@ -123,6 +123,7 @@ async function createMagazineArticle(
         category,
         badge,
         status: articleStatus,
+        animalType: animalType.name,
     };
 }
 
@@ -204,6 +205,7 @@ export async function GET(request: NextRequest) {
             ...response,
             id: result.id,
             status: result.status,
+            animalType: result.animalType,
             retried: false,
             generatedAt: new Date().toISOString(),
         });
