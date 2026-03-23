@@ -4,6 +4,10 @@ const isDev = process.env.NODE_ENV === "development";
 
 // Content-Security-Policy 헤더 값
 // unsafe-eval: 개발 모드에서만 허용 (Next.js HMR 필요), 프로덕션에서는 제거
+// unsafe-inline (script-src): Next.js 14 App Router가 내부적으로 인라인 스크립트를 사용하므로 필요.
+//   향후 Next.js middleware + nonce 패턴으로 전환 시 제거 가능.
+//   참고: https://nextjs.org/docs/app/building-your-application/configuring/content-security-policy
+// unsafe-inline (style-src): Tailwind CSS + Radix UI가 인라인 스타일을 사용하므로 필요.
 const ContentSecurityPolicy = `
     default-src 'self';
     script-src 'self' ${isDev ? "'unsafe-eval'" : ""} 'unsafe-inline';
@@ -17,6 +21,7 @@ const ContentSecurityPolicy = `
     object-src 'none';
     base-uri 'self';
     form-action 'self';
+    upgrade-insecure-requests;
 `
     .replace(/\s{2,}/g, " ")
     .trim();

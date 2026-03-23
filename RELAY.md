@@ -6,39 +6,45 @@
 
 ---
 
-## 최근 완료 세션 (2026-03-23) — AI 펫톡 + 매거진 + 홈 UI
+## 최근 완료 세션 (2026-03-23) — 보안 + 안정성
 
 ### 주요 성과
-- AI 펫톡 추천 질문 화이트리스트 방식으로 전면 교체 (맛집/먹거리 근절)
-- 여행지 지역명 기반 산책/공원 장소 검색 (네이버 API)
-- 매거진 자동화: 동물 종 다양성(70/30) + 실질적 주제 60개 + 계절 로직(환절기만)
-- Google Search Console 구조화된 데이터 수정 (Product → SoftwareApplication)
-- 홈 화면 레이아웃 밀림 방지 (스켈레톤 동시 로딩)
-- 프리미엄 가격 문구 수정 ("하루 약 260원")
-- "마음속에 영원히" 섹션: 오늘 추모 등록 펫 + 기억의 날 펫 카드 표시로 확정
-
-### 참고
-- "기일/주기" 같은 노골적 표현 사용 금지 — "함께한 N년", "새로운 기억", "무지개다리" 등 완곡 표현만
-- `/api/memorial-today`: 오늘 추모 등록(created_at) + memorial_date 월일 매칭, 없으면 앞뒤 3일 확장
+- 모바일 깜빡임 수정: AuthContext getSession/onAuthStateChange 이중 프로필 리셋 방지
+- QA 보안 이슈 7건 중 코드 수정 가능 건 전부 해결:
+  - C-1 (RPC IDOR): purchase/sell_minimi_item에 auth.uid() 검증 추가 (SQL)
+  - C-3 (JWT Spoofing): protect_sensitive_profile_columns 트리거에서 JWT claim 대신 DB is_admin 조회 (SQL)
+  - C-2 (CSP): upgrade-insecure-requests 추가, unsafe-inline은 Next.js 특성상 nonce 전환 필요 (향후)
+  - C-4 (Hydration): 이전 세션에서 이미 수정 확인
+  - C-5 (메모리 누수): MinihompyStage touchTimer + useHomePage heartTimers cleanup 추가
+  - C-6, C-7 (에러 로깅): 이전 세션에서 이미 수정 확인
 
 ### 상세 기록
-`RELAY-ARCHIVE.md` > `[2026-03-23] AI 펫톡 개선 + 매거진 자동화 + 홈 UI 수정` 참조
+`RELAY-ARCHIVE.md` > `[2026-03-23] 보안 + 안정성 수정` 참조
 
 ---
 
 ## TODO
 
-### 1. 모바일 깜빡임 — 특정 계정에서 발생
-### 2. QA CRITICAL 보안 이슈 — `docs/QA_SCAN_REPORT_20260306.md` (IDOR, CSP, JWT 스푸핑 등 7건)
-### 3. 미실행 SQL 6개 — `RELAY-ARCHIVE.md` 하단 참조
-### 4. 결제 연동 — 포트원 V2 + KG이니시스 연동 완료 (승인 대기 중)
-### 5. RLS 정책 수정 — 보류
+### 1. 결제 연동 — 포트원 V2 + KG이니시스 연동 완료 (승인 대기 중)
+### 2. RLS 정책 수정 — 보류
+### 3. CSP nonce 전환 — Next.js middleware + nonce 패턴으로 unsafe-inline 제거 (향후)
 
 ---
 
 ## 미실행 마이그레이션 (긴급도: 높음)
 
-### `supabase/migrations/20260317_payment_security_fixes.sql`
-- **내용**: grant_premium/revoke_premium/expire_premium_subscriptions RPC를 authenticated/anon에서 REVOKE, merchant_uid UNIQUE 제약, payments.status CHECK, payments.amount 양수 CHECK
-- **위험**: authenticated 유저가 클라이언트에서 직접 `grant_premium` RPC를 호출해서 무료로 프리미엄 획득 가능 (현재 막혀있지 않음)
+### `supabase/migrations/20260323_security_rpc_idor_fix.sql` (**신규**)
+- **내용**: purchase/sell_minimi_item에 auth.uid() 검증, protect_sensitive_profile_columns JWT→DB 전환
+- **위험**: 미실행 시 클라이언트에서 다른 유저 ID로 미니미 구매/판매 가능
 - **실행 방법**: Supabase Dashboard > SQL Editor에서 위 파일 내용 복사 붙여넣기 실행
+
+### `supabase/migrations/20260317_payment_security_fixes.sql`
+- **내용**: grant_premium/revoke_premium RPC를 authenticated에서 REVOKE, merchant_uid UNIQUE, payments CHECK
+- **위험**: authenticated 유저가 직접 `grant_premium` RPC를 호출해서 무료 프리미엄 획득 가능
+- **실행 방법**: Supabase Dashboard > SQL Editor에서 위 파일 내용 복사 붙여넣기 실행
+
+### 기존 미실행 SQL 4건
+- `20260226_chat_mode_column.sql` — AI 펫톡 모드 분리
+- `20260226_security_fixes.sql` — 미니미 구매/판매 원자성 + 제한 트리거
+- `20260225_push_preferred_hour.sql` — 푸시 알림 시간대별 발송
+- `placed_minimi` JSONB 컬럼 추가 (직접 SQL)

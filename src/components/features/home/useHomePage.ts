@@ -265,6 +265,12 @@ export function useHomePage() {
         fetchCommunityPosts();
         fetchShowcasePosts();
         fetchMemorialPets();
+        // 언마운트 시 하트 애니메이션 타이머 정리 (메모리 누수 방지)
+        const timers = heartTimersRef.current;
+        return () => {
+            timers.forEach(timer => clearTimeout(timer));
+            timers.clear();
+        };
     }, [fetchCommunityPosts, fetchShowcasePosts, fetchMemorialPets]);
 
     return {
