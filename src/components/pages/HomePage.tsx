@@ -82,10 +82,11 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
             className="min-h-screen relative overflow-hidden"
             style={{ contain: 'layout style', transform: 'translateZ(0)' }}
         >
-            {/* 배경 - transition/animate-pulse 제거 (모바일 깜빡임 방지) */}
-            <div className="absolute inset-0 bg-gradient-to-br from-memento-50 via-memento-75 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-                <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-r from-memento-300/30 to-sky-200/30 dark:from-blue-800/20 dark:to-sky-800/20 rounded-full blur-2xl opacity-70" />
-                <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-gradient-to-r from-sky-200/30 to-memento-200/30 dark:from-sky-800/20 dark:to-memento-700/20 rounded-full blur-2xl opacity-50" />
+            {/* 배경 - sky→white→rose 따뜻한 그라데이션 + 3개 blob */}
+            <div className="absolute inset-0 bg-gradient-to-b from-sky-50 via-white to-rose-50/20 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+                <div className="absolute -top-20 left-1/4 w-[500px] h-[500px] bg-gradient-to-br from-memento-200/25 to-sky-100/25 dark:from-blue-800/15 dark:to-sky-800/15 rounded-full blur-3xl" />
+                <div className="absolute top-1/3 -right-20 w-[400px] h-[400px] bg-gradient-to-br from-rose-100/20 to-pink-50/20 dark:from-rose-900/10 dark:to-pink-900/10 rounded-full blur-3xl" />
+                <div className="absolute bottom-1/4 left-1/3 w-[350px] h-[350px] bg-gradient-to-br from-sky-100/20 to-memento-100/20 dark:from-sky-800/10 dark:to-memento-700/10 rounded-full blur-3xl" />
             </div>
 
             {/* 이미지 Lightbox */}
@@ -108,7 +109,7 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
                 onAddComment={addComment}
             />
 
-            <div className="relative z-10 space-y-16 pb-24">
+            <div className="relative z-10 space-y-20 sm:space-y-24 pb-28">
                 <HeroSection setSelectedTab={setSelectedTab} user={user} />
 
                 {/* 전체 공지 배너 */}

@@ -31,7 +31,7 @@ export default function HeroSection({ setSelectedTab, user }: HeroSectionProps) 
 
     return (
         <section className="px-4 pt-8" data-tutorial-id="home-hero">
-            <div className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-lg border border-white/50 dark:border-gray-700/50 rounded-3xl p-8 md:p-12 shadow-2xl">
+            <div className="bg-white/60 dark:bg-gray-800/50 backdrop-blur-xl border border-white/60 dark:border-gray-700/50 rounded-3xl p-8 md:p-12 shadow-[0_8px_40px_-12px_rgba(5,178,220,0.15)]">
                 <div className="text-center space-y-4 md:space-y-6">
                     <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-display font-bold leading-tight">
                         <EmotionalTrueFocus
@@ -53,7 +53,7 @@ export default function HeroSection({ setSelectedTab, user }: HeroSectionProps) 
                         <Button
                             size="lg"
                             onClick={handleCtaClick}
-                            className="w-full sm:w-auto bg-gradient-to-r from-memento-500 to-memento-400 hover:from-memento-600 hover:to-sky-600 text-white border-0 rounded-xl px-6 sm:px-8 py-3 min-h-[48px] shadow-lg hover:scale-105 active:scale-95 transition-all whitespace-nowrap"
+                            className="w-full sm:w-auto bg-gradient-to-r from-memento-500 to-memento-400 hover:from-memento-600 hover:to-sky-600 text-white border-0 rounded-2xl px-8 sm:px-10 py-3.5 min-h-[48px] shadow-[0_4px_20px_-4px_rgba(5,178,220,0.4)] hover:shadow-[0_6px_24px_-4px_rgba(5,178,220,0.5)] hover:scale-105 active:scale-95 transition-all whitespace-nowrap"
                         >
                             {user ? HERO_CONTENT.ctaLabel : "시작하기"}
                         </Button>
@@ -61,7 +61,7 @@ export default function HeroSection({ setSelectedTab, user }: HeroSectionProps) 
                             size="lg"
                             variant="outline"
                             onClick={() => setSelectedTab("community")}
-                            className="w-full sm:w-auto bg-white/50 dark:bg-gray-700/50 border-memento-300 dark:border-memento-600 text-memento-700 dark:text-blue-300 hover:bg-memento-100 dark:hover:bg-gray-600 rounded-xl px-6 sm:px-8 py-3 min-h-[48px] active:scale-95 transition-all whitespace-nowrap"
+                            className="w-full sm:w-auto bg-white/50 dark:bg-gray-700/50 border-memento-300 dark:border-memento-600 text-memento-700 dark:text-blue-300 hover:bg-memento-100 dark:hover:bg-gray-600 rounded-2xl px-8 sm:px-10 py-3.5 min-h-[48px] active:scale-95 transition-all whitespace-nowrap"
                         >
                             둘러보기
                             <ArrowRight className="w-5 h-5 ml-1" />
