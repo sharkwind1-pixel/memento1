@@ -47,18 +47,18 @@ export default function CommunitySection({
     setSelectedTab,
 }: CommunitySectionProps) {
     const gradients = [
-        "from-memento-500 to-memento-400",
-        "from-rose-400 to-pink-300",
-        "from-violet-400 to-purple-300",
-        "from-emerald-400 to-teal-300",
-        "from-amber-400 to-orange-300",
+        "from-memento-500 to-sky-300",
+        "from-rose-500 to-pink-300",
+        "from-violet-500 to-purple-300",
+        "from-emerald-500 to-teal-300",
+        "from-amber-500 to-orange-300",
     ];
 
     return (
         <section className="space-y-6 px-4" data-tutorial-id="home-trending">
             <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center space-x-3 min-w-0">
-                    <div className="w-10 h-10 flex-shrink-0 bg-gradient-to-r from-memento-500 to-memento-400 rounded-xl flex items-center justify-center">
+                    <div className="w-10 h-10 flex-shrink-0 bg-gradient-to-br from-memento-500 to-memento-400 rounded-2xl flex items-center justify-center shadow-sm shadow-memento-500/20">
                         <TrendingUp className="w-5 h-5 text-white" />
                     </div>
                     <div className="min-w-0">
@@ -105,7 +105,7 @@ export default function CommunitySection({
                         <Card
                             key={post.id}
                             onClick={() => onSelectPost(post)}
-                            className="w-[260px] max-w-[260px] sm:w-72 sm:max-w-72 flex-shrink-0 overflow-hidden rounded-2xl cursor-pointer group border-0 shadow-lg will-change-transform"
+                            className="w-[260px] max-w-[260px] sm:w-72 sm:max-w-72 flex-shrink-0 overflow-hidden rounded-2xl cursor-pointer group border-0 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 will-change-transform"
                         >
                             <div className={`h-24 bg-gradient-to-br ${gradients[idx % gradients.length]} relative overflow-hidden`}>
                                 <div className="absolute inset-0 bg-black/10" />

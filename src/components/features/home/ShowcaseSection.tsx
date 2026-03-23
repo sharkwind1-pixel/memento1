@@ -66,7 +66,7 @@ export default function ShowcaseSection({
         <section className="space-y-6 px-4">
             <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center space-x-3 min-w-0">
-                    <div className="w-10 h-10 flex-shrink-0 bg-gradient-to-r from-amber-400 to-yellow-300 rounded-xl flex items-center justify-center">
+                    <div className="w-10 h-10 flex-shrink-0 bg-gradient-to-br from-amber-400 to-yellow-300 rounded-2xl flex items-center justify-center shadow-sm shadow-amber-400/20">
                         <Star className="w-5 h-5 text-white" />
                     </div>
                     <div className="min-w-0">
@@ -111,7 +111,7 @@ export default function ShowcaseSection({
                         <Card
                             key={post.id}
                             onClick={handleMoreClick}
-                            className="w-[260px] max-w-[260px] sm:w-72 sm:max-w-72 flex-shrink-0 overflow-hidden rounded-2xl cursor-pointer group border-0 shadow-lg will-change-transform"
+                            className="w-[260px] max-w-[260px] sm:w-72 sm:max-w-72 flex-shrink-0 overflow-hidden rounded-2xl cursor-pointer group border-0 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 will-change-transform"
                         >
                             {/* 영상 / 이미지 / 그라데이션 헤더 */}
                             <div className="h-40 relative overflow-hidden">

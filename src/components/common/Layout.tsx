@@ -249,7 +249,7 @@ function BottomNav({
                     : "bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800"
             }`}
             style={{
-                boxShadow: '0 -1px 12px rgba(0, 0, 0, 0.04)',
+                boxShadow: '0 -2px 20px rgba(0, 0, 0, 0.06)',
                 transform: 'translateZ(0)',
             }}
         >

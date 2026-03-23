@@ -2,7 +2,6 @@
  * MemorialSection.tsx
  * 홈페이지 "마음속에 영원히" 섹션
  * 오늘 추모로 등록된 펫 + 오늘이 기억의 날인 펫을 카드로 표시
- * 위로 리액션: 다른 유저가 추모 펫에 따뜻한 마음을 보낼 수 있음
  */
 
 "use client";
@@ -18,7 +17,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import {
     Cloud,
-    Heart,
     Sparkles,
 } from "lucide-react";
 import { safeStringSrc, getPetIcon } from "./homeUtils";
@@ -33,7 +31,6 @@ interface MemorialPetItem {
     isNewlyRegistered: boolean;
     yearsAgo: number | null;
     yearsLabel: string;
-    condolenceCount: number;
 }
 
 interface MemorialSectionProps {
@@ -41,8 +38,6 @@ interface MemorialSectionProps {
     displayMemorialData: MemorialPetItem[];
     onLightboxOpen: (item: LightboxItem) => void;
     scrollRef: React.RefObject<HTMLDivElement>;
-    condoledPets: Record<string, boolean>;
-    onToggleCondolence: (petId: string) => void;
 }
 
 export default function MemorialSection({
@@ -50,13 +45,11 @@ export default function MemorialSection({
     displayMemorialData,
     onLightboxOpen,
     scrollRef,
-    condoledPets,
-    onToggleCondolence,
 }: MemorialSectionProps) {
     return (
-        <section className="space-y-6 px-4">
+        <section className="space-y-6 px-4 py-8 -mx-4 bg-gradient-to-b from-amber-50/30 via-amber-50/10 to-transparent dark:from-amber-900/10 dark:via-transparent dark:to-transparent rounded-3xl">
             <div className="flex items-center space-x-3 min-w-0">
-                <div className="w-10 h-10 flex-shrink-0 bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 flex-shrink-0 bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-sm shadow-amber-500/20">
                     <Cloud className="w-5 h-5 text-white" />
                 </div>
                 <div className="min-w-0">
@@ -102,11 +95,10 @@ export default function MemorialSection({
                 ) : (
                     displayMemorialData.map((pet) => {
                         const src = safeStringSrc(pet.profileImage);
-                        const isCondoled = condoledPets[pet.id] || false;
                         return (
                             <Card
                                 key={pet.id}
-                                className="w-[200px] max-w-[200px] sm:w-56 sm:max-w-56 flex-shrink-0 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-gray-800/50 dark:to-gray-800/30 border-amber-100 dark:border-gray-700/50 rounded-2xl overflow-hidden shadow-sm will-change-transform"
+                                className="w-[220px] max-w-[220px] sm:w-64 sm:max-w-64 flex-shrink-0 bg-gradient-to-br from-amber-50 to-orange-50/80 dark:from-gray-800/50 dark:to-gray-800/30 border-amber-100/50 dark:border-gray-700/50 rounded-2xl overflow-hidden shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 will-change-transform"
                             >
                                 <CardHeader className="p-0 relative overflow-hidden">
                                     {src ? (
@@ -154,35 +146,17 @@ export default function MemorialSection({
                                         </div>
                                     ) : null}
                                 </CardHeader>
-                                <CardContent className="p-4 text-center">
+                                <CardContent className="p-5 text-center space-y-1.5">
                                     <h4 className="font-bold text-gray-800 dark:text-white text-base">
                                         {pet.name}
                                     </h4>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">
                                         {pet.type}{pet.breed ? ` / ${pet.breed}` : ""}
                                     </p>
-                                    {/* 위로 버튼 */}
-                                    <button
-                                        type="button"
-                                        onClick={() => onToggleCondolence(pet.id)}
-                                        className={`mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
-                                            isCondoled
-                                                ? "bg-amber-500 text-white shadow-sm"
-                                                : "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/50"
-                                        }`}
-                                    >
-                                        <Heart
-                                            className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                                                isCondoled ? "fill-current scale-110" : ""
-                                            }`}
-                                        />
-                                        <span>위로</span>
-                                        {pet.condolenceCount > 0 && (
-                                            <span className={`${isCondoled ? "text-amber-100" : "text-amber-500/70 dark:text-amber-400/70"}`}>
-                                                {pet.condolenceCount}
-                                            </span>
-                                        )}
-                                    </button>
+                                    <div className="w-8 h-px bg-amber-300/60 mx-auto" />
+                                    <p className="text-xs text-amber-500 dark:text-amber-400 font-medium">
+                                        영원히 기억할게
+                                    </p>
                                 </CardContent>
                             </Card>
                         );

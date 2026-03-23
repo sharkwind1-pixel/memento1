@@ -1,9 +1,9 @@
 /**
- * 메멘토애니 홈페이지
- * - 좋아요 버튼 실제 토글
- * - 카드 클릭 시 인스타그램 스타일 모달
- * - 간편모드: 큰 카드 런처로 대체
- * - 모든 섹션 데이터는 DB에서 가져옴 (목업 없음)
+ * 메멘토애니 홈페이지 (B안 기반 리디자인)
+ * - 히어로: 그라데이션 배경 + 일러스트 + CTA
+ * - Quick Actions: 4카드 바로가기
+ * - Gallery + Stories 2컬럼 (데스크톱) / 세로 스택 (모바일)
+ * - 추모 섹션
  */
 
 "use client";
@@ -19,6 +19,7 @@ import {
     ShowcaseSection,
     MemorialSection,
 } from "@/components/features/home";
+import QuickActions from "@/components/features/home/QuickActions";
 import AnnouncementBanner from "@/components/features/home/AnnouncementBanner";
 import PostModal from "@/components/features/home/PostModal";
 import Lightbox from "@/components/features/home/Lightbox";
@@ -55,13 +56,12 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
     } = useHomePage();
 
     useEffect(() => {
-        if (isSimpleMode) return; // 간편모드에서는 자동스크롤 불필요
+        if (isSimpleMode) return;
         const cleanup = scroll.startAutoScroll?.(true);
         return typeof cleanup === "function" ? cleanup : undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isSimpleMode]);
 
-    // 다른 탭으로 이동하면 모달/오버레이 닫기
     useEffect(() => {
         if (!isActive) {
             if (selectedPost) setSelectedPost(null);
@@ -69,7 +69,6 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
         }
     }, [isActive]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // 간편모드: 큰 카드 런처 화면
     if (isSimpleMode) {
         return (
             <SimpleHomeLauncher
@@ -84,108 +83,90 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
             className="min-h-screen relative overflow-hidden"
             style={{ contain: 'layout style', transform: 'translateZ(0)' }}
         >
-            {/* 배경 - transition/animate-pulse 제거 (모바일 깜빡임 방지) */}
-            <div className="absolute inset-0 bg-gradient-to-br from-memento-50 via-memento-75 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-                <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-r from-memento-300/30 to-sky-200/30 dark:from-blue-800/20 dark:to-sky-800/20 rounded-full blur-2xl opacity-70" />
-                <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-gradient-to-r from-sky-200/30 to-memento-200/30 dark:from-sky-800/20 dark:to-memento-700/20 rounded-full blur-2xl opacity-50" />
+            {/* 배경 */}
+            <div className="absolute inset-0 bg-gradient-to-b from-sky-50 via-white to-rose-50/20 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+                <div className="absolute -top-20 left-1/4 w-[500px] h-[500px] bg-gradient-to-br from-memento-200/25 to-sky-100/25 dark:from-blue-800/15 dark:to-sky-800/15 rounded-full blur-3xl" />
+                <div className="absolute top-1/3 -right-20 w-[400px] h-[400px] bg-gradient-to-br from-rose-100/20 to-pink-50/20 dark:from-rose-900/10 dark:to-pink-900/10 rounded-full blur-3xl" />
+                <div className="absolute bottom-1/4 left-1/3 w-[350px] h-[350px] bg-gradient-to-br from-sky-100/20 to-memento-100/20 dark:from-sky-800/10 dark:to-memento-700/10 rounded-full blur-3xl" />
             </div>
 
-            {/* 이미지 Lightbox */}
-            <Lightbox
-                item={lightboxItem}
-                onClose={() => setLightboxItem(null)}
-            />
-
-            {/* 포스트 모달 */}
+            {/* Lightbox + 모달 */}
+            <Lightbox item={lightboxItem} onClose={() => setLightboxItem(null)} />
             <PostModal
                 post={selectedPost}
-                isLiked={
-                    selectedPost ? likedPosts[selectedPost.id] || false : false
-                }
+                isLiked={selectedPost ? likedPosts[selectedPost.id] || false : false}
                 onToggleLike={() => selectedPost && toggleLike(selectedPost.id)}
                 onClose={() => setSelectedPost(null)}
-                comments={
-                    selectedPost ? postComments[selectedPost.id] || [] : []
-                }
+                comments={selectedPost ? postComments[selectedPost.id] || [] : []}
                 onAddComment={addComment}
             />
 
-            <div className="relative z-10 space-y-16 pb-24">
+            <div className="relative z-10 space-y-10 sm:space-y-14 pb-28">
+                {/* 히어로 */}
                 <HeroSection setSelectedTab={setSelectedTab} user={user} />
 
-                {/* 전체 공지 배너 */}
+                {/* Quick Actions */}
+                <QuickActions setSelectedTab={setSelectedTab} />
+
+                {/* 공지 */}
                 <AnnouncementBanner setSelectedTab={setSelectedTab} />
 
-                {/* 커뮤니티 인기글 + 쇼케이스 (AI 영상) */}
-                {/* 두 섹션의 로딩이 모두 끝나면 한번에 표시하여 레이아웃 밀림 방지 */}
+                {/* Gallery + Stories 2컬럼 (데스크톱) */}
                 {(isLoadingCommunity || isLoadingShowcase) ? (
-                    <div className="space-y-16">
-                        {/* 인기 있는 이야기 스켈레톤 */}
-                        <section className="space-y-6 px-4">
-                            <div className="flex items-center space-x-3">
-                                <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />
-                                <div className="space-y-2">
-                                    <div className="w-32 h-5 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                                    <div className="w-48 h-3.5 bg-gray-100 dark:bg-gray-800 rounded animate-pulse hidden sm:block" />
+                    <section className="px-4">
+                        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 lg:gap-8">
+                            <div className="md:col-span-3 space-y-4">
+                                <div className="w-32 h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                                <div className="grid grid-cols-2 gap-3">
+                                    {[1, 2, 3, 4].map(i => (
+                                        <div key={i} className="aspect-square rounded-2xl bg-gray-200 dark:bg-gray-700 animate-pulse" />
+                                    ))}
                                 </div>
                             </div>
-                            <div className="flex gap-4 overflow-hidden pb-4">
-                                {[1, 2, 3].map((i) => (
-                                    <div key={i} className="w-[260px] sm:w-72 flex-shrink-0 rounded-2xl overflow-hidden shadow-lg">
-                                        <div className="h-24 bg-gray-200 dark:bg-gray-700 animate-pulse" />
-                                        <div className="p-4 bg-white dark:bg-gray-800 space-y-3">
-                                            <div className="w-3/4 h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                                            <div className="w-1/2 h-3 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
-                                            <div className="flex gap-3">
-                                                <div className="w-10 h-3 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
-                                                <div className="w-10 h-3 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
-                                            </div>
+                            <div className="md:col-span-2 space-y-4">
+                                <div className="w-28 h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                                {[1, 2, 3].map(i => (
+                                    <div key={i} className="flex items-center gap-3 p-3 rounded-2xl bg-gray-100 dark:bg-gray-800 animate-pulse">
+                                        <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 flex-shrink-0" />
+                                        <div className="flex-1 space-y-2">
+                                            <div className="w-3/4 h-4 bg-gray-200 dark:bg-gray-700 rounded" />
+                                            <div className="w-1/2 h-3 bg-gray-200 dark:bg-gray-700 rounded" />
                                         </div>
                                     </div>
                                 ))}
                             </div>
-                        </section>
-                        {/* 함께 보기 스켈레톤 */}
-                        <section className="space-y-6 px-4">
-                            <div className="flex items-center space-x-3">
-                                <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />
-                                <div className="space-y-2">
-                                    <div className="w-24 h-5 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                                </div>
-                            </div>
-                            <div className="flex gap-4 overflow-hidden pb-4">
-                                {[1, 2].map((i) => (
-                                    <div key={i} className="w-[260px] sm:w-72 flex-shrink-0 rounded-2xl overflow-hidden shadow-lg">
-                                        <div className="h-40 bg-gray-200 dark:bg-gray-700 animate-pulse" />
-                                        <div className="p-4 bg-white dark:bg-gray-800 space-y-3">
-                                            <div className="w-3/4 h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                                            <div className="w-1/2 h-3 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
-                    </div>
+                        </div>
+                    </section>
                 ) : (
-                    <>
-                        <CommunitySection
-                            communityPosts={communityPosts}
-                            likedPosts={likedPosts}
-                            animatingHearts={animatingHearts}
-                            postComments={postComments}
-                            onToggleLike={toggleLike}
-                            onSelectPost={setSelectedPost}
-                            scrollRef={scroll.communityScrollRef}
-                            setSelectedTab={setSelectedTab}
-                        />
-
-                        <ShowcaseSection
-                            showcasePosts={showcasePosts}
-                            scrollRef={scroll.showcaseScrollRef}
-                            setSelectedTab={setSelectedTab}
-                        />
-                    </>
+                    <section className="px-4">
+                        <div className="grid grid-cols-1 md:grid-cols-5 gap-8 lg:gap-10">
+                            {/* 좌: 갤러리 (쇼케이스) */}
+                            <div className="md:col-span-3">
+                                <ShowcaseSection
+                                    showcasePosts={showcasePosts}
+                                    scrollRef={scroll.showcaseScrollRef}
+                                    setSelectedTab={setSelectedTab}
+                                />
+                            </div>
+                            {/* 우: 인기 이야기 (커뮤니티) */}
+                            <div className="md:col-span-2">
+                                <CommunitySection
+                                    communityPosts={communityPosts}
+                                    likedPosts={likedPosts}
+                                    animatingHearts={animatingHearts}
+                                    postComments={postComments}
+                                    onToggleLike={toggleLike}
+                                    onSelectPost={setSelectedPost}
+                                    scrollRef={scroll.communityScrollRef}
+                                    setSelectedTab={setSelectedTab}
+                                />
+                            </div>
+                        </div>
+                    </section>
                 )}
+
+                {/* 구분선 */}
+                <div className="mx-auto w-20 h-px bg-gradient-to-r from-transparent via-amber-300/30 to-transparent" />
 
                 {/* 추모 섹션 */}
                 <MemorialSection
