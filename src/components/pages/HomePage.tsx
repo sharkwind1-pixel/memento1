@@ -49,7 +49,6 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
         showcasePosts,
         isLoadingShowcase,
         isLoadingMemorial,
-        isMemorialExactToday,
         displayMemorialData,
     } = useHomePage();
 
@@ -189,7 +188,6 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
                 {/* 추모 섹션 */}
                 <MemorialSection
                     isLoadingMemorial={isLoadingMemorial}
-                    isMemorialExactToday={isMemorialExactToday}
                     displayMemorialData={displayMemorialData}
                     onLightboxOpen={setLightboxItem}
                     scrollRef={scroll.memorialScrollRef}

@@ -14,6 +14,20 @@ import { API } from "@/config/apiEndpoints";
 import { toast } from "sonner";
 import type { LightboxItem, CommunityPost, Comment, ShowcasePost } from "./types";
 
+/** 추모 섹션용 데이터 타입 */
+export interface MemorialDisplayItem {
+    id: string;
+    name: string;
+    pet: string;
+    years: string;
+    message: string;
+    content: string;
+    image?: string;
+    likesCount: number;
+    commentsCount: number;
+    isFromDB: boolean;
+}
+
 export function useHomePage() {
     const [lightboxItem, setLightboxItem] = useState<LightboxItem | null>(null);
 
@@ -25,19 +39,8 @@ export function useHomePage() {
     const [showcasePosts, setShowcasePosts] = useState<ShowcasePost[]>([]);
     const [isLoadingShowcase, setIsLoadingShowcase] = useState(true);
 
-    // 오늘의 기일 펫 상태
-    interface MemorialTodayPet {
-        id: string;
-        name: string;
-        type: string;
-        breed: string;
-        profileImage: string | null;
-        memorialDate: string;
-        yearsAgo: number | null;
-        yearsLabel: string;
-    }
-    const [memorialTodayPets, setMemorialTodayPets] = useState<MemorialTodayPet[]>([]);
-    const [isMemorialExactToday, setIsMemorialExactToday] = useState(true);
+    // 추모(기억게시판) 인기글 상태
+    const [memorialPosts, setMemorialPosts] = useState<MemorialDisplayItem[]>([]);
     const [isLoadingMemorial, setIsLoadingMemorial] = useState(true);
 
     // 좋아요 상태 관리
@@ -242,18 +245,37 @@ export function useHomePage() {
         }
     }, []);
 
-    // 오늘의 기일 펫 가져오기
-    const fetchMemorialToday = useCallback(async () => {
+    // 기억게시판 인기글 가져오기 (추모 섹션용)
+    const fetchMemorialPosts = useCallback(async () => {
         setIsLoadingMemorial(true);
         try {
-            const res = await fetch("/api/memorial-today");
+            const params = new URLSearchParams({
+                board: "memorial",
+                sort: "popular",
+                limit: "10",
+            });
+            const res = await fetch(`${API.POSTS}?${params}`);
             if (res.ok) {
                 const data = await res.json();
-                setMemorialTodayPets(data.pets || []);
-                setIsMemorialExactToday(data.isExactToday !== false);
+                const rawPosts = data.posts || [];
+                const posts: MemorialDisplayItem[] = rawPosts.map((p: Record<string, unknown>) => ({
+                    id: (p.id as string) || "",
+                    name: (p.authorName as string) || "익명",
+                    pet: (p.badge as string) || "",
+                    years: "",
+                    message: (p.title as string) || "",
+                    content: (p.content as string) || "",
+                    image: ((p.imageUrls as string[]) || [])[0] || undefined,
+                    likesCount: (p.likes as number) || 0,
+                    commentsCount: (p.comments as number) || 0,
+                    isFromDB: true,
+                }));
+                setMemorialPosts(posts);
+            } else {
+                setMemorialPosts([]);
             }
         } catch {
-            // 실패 시 빈 배열 유지
+            setMemorialPosts([]);
         } finally {
             setIsLoadingMemorial(false);
         }
@@ -262,20 +284,8 @@ export function useHomePage() {
     useEffect(() => {
         fetchCommunityPosts();
         fetchShowcasePosts();
-        fetchMemorialToday();
-    }, [fetchCommunityPosts, fetchShowcasePosts, fetchMemorialToday]);
-
-    // 오늘의 기일 펫 데이터 → MemorialSection 표시용 변환
-    const displayMemorialData = memorialTodayPets.map((pet) => ({
-        id: pet.id,
-        name: pet.name,
-        type: pet.type,
-        breed: pet.breed,
-        profileImage: pet.profileImage,
-        yearsAgo: pet.yearsAgo,
-        yearsLabel: pet.yearsLabel,
-        memorialDate: pet.memorialDate,
-    }));
+        fetchMemorialPosts();
+    }, [fetchCommunityPosts, fetchShowcasePosts, fetchMemorialPosts]);
 
     return {
         // 라이트박스
@@ -301,10 +311,9 @@ export function useHomePage() {
         showcasePosts,
         isLoadingShowcase,
 
-        // 오늘의 기일
+        // 추모
         isLoadingMemorial,
-        isMemorialExactToday,
-        displayMemorialData,
+        displayMemorialData: memorialPosts,
     };
 }
 
