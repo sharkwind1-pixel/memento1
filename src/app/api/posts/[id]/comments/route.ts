@@ -181,7 +181,6 @@ export async function POST(
                 user_id: user.id,
                 content: sanitizedContent,
                 author_nickname: profile?.nickname || "익명",
-                author_avatar: profile?.avatar_url || null,
             }])
             .select()
             .single();
@@ -230,7 +229,7 @@ export async function POST(
                 userId: comment.user_id,
                 content: comment.content,
                 authorNickname: comment.author_nickname,
-                authorAvatar: comment.author_avatar,
+                authorAvatar: profile?.avatar_url || null,
                 createdAt: comment.created_at,
             },
         });
