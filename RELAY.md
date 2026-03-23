@@ -6,6 +6,19 @@
 
 ## TODO 우선순위 (새 세션 필독)
 
+### 0. 즉시 — 홈 화면 디자인 마무리 (2026-03-24 세션에서 이어서)
+- [ ] **펫매거진 카드 썸네일** — HomePage.tsx의 매거진 섹션에서 cover_image_url이 카드에 표시되게 수정. API 응답 필드명 확인 필요 (`/api/magazine` GET)
+- [ ] **추모모드 amber 톤 통일** — 현재 배경(Layout.tsx)만 amber로 바뀌고, 홈 화면의 CommunitySection/ShowcaseSection/매거진 섹션 헤더 아이콘/그라데이션은 일상 하늘색 그대로임. `useMemorialMode()` 훅으로 isMemorialMode 체크해서 섹션 헤더 색상을 amber로 분기해야 함
+- [ ] **인기 이야기 / 함께 보기 카드 높이 통일** — 2컬럼 레이아웃에서 좌우 카드 높이가 안 맞음
+
+**현재 홈 화면 상태 (main 브랜치, 커밋 cf3ce17)**:
+- 히어로: 파스텔 그라데이션 배경 + Stitch 크레용 일러스트 + 2컬럼 (텍스트 좌 + 일러스트 우)
+- 상단 2컬럼: 인기 이야기(좌) + 함께 보기(우) — md:grid-cols-2
+- 하단 2컬럼: 펫매거진(좌) + 추모(우) — md:grid-cols-2
+- 배경: sky-100/80 → sky-50/40 → rose-50/20 그라데이션 + blob 3개
+- QuickActions 제거됨 (사이드바와 중복)
+- 원복: `cd /Users/admin/memento1 && git revert cf3ce17 --no-edit`
+
 ### 1. 긴급: 승빈님 직접 — DB 마이그레이션 6개
 | SQL | 영향 기능 | 상태 |
 |-----|----------|------|
