@@ -57,7 +57,7 @@ export default function MemorialSection({
                         마음속에 영원히
                     </h2>
                     <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 hidden sm:block">
-                        무지개다리를 건넌 소중한 아이들
+                        영원히 마음속에 함께해요
                     </p>
                 </div>
             </div>
