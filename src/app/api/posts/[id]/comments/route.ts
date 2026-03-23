@@ -174,13 +174,14 @@ export async function POST(
             .select("nickname, avatar_url")
             .eq("id", user.id)
             .single();
-        // 7. 댓글 저장 (post_id, user_id, content만 — DB 실제 컬럼에 맞춤)
+        // 7. 댓글 저장 (DB 실제 컬럼: author_name은 NOT NULL)
         const { data: comment, error: commentError } = await adminSupabase
             .from("post_comments")
             .insert([{
                 post_id: postId,
                 user_id: user.id,
                 content: sanitizedContent,
+                author_name: profile?.nickname || "익명",
             }])
             .select()
             .single();
