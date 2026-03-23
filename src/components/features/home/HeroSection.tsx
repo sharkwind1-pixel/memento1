@@ -15,9 +15,10 @@ import type { User } from "@supabase/supabase-js";
 interface HeroSectionProps {
     setSelectedTab: (tab: TabType) => void;
     user: User | null;
+    isMemorial?: boolean;
 }
 
-export default function HeroSection({ setSelectedTab, user }: HeroSectionProps) {
+export default function HeroSection({ setSelectedTab, user, isMemorial = false }: HeroSectionProps) {
     const handleCtaClick = () => {
         if (!user) {
             window.dispatchEvent(new CustomEvent("openAuthModal"));
@@ -28,10 +29,14 @@ export default function HeroSection({ setSelectedTab, user }: HeroSectionProps) 
 
     return (
         <section className="px-4 pt-4 sm:pt-6" data-tutorial-id="home-hero">
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-memento-100 via-sky-50 to-rose-50 dark:from-gray-800 dark:via-gray-800 dark:to-gray-700">
+            <div className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${
+                isMemorial
+                    ? "from-amber-100 via-amber-50 to-orange-50 dark:from-gray-800 dark:via-gray-800 dark:to-gray-700"
+                    : "from-memento-100 via-sky-50 to-rose-50 dark:from-gray-800 dark:via-gray-800 dark:to-gray-700"
+            }`}>
                 {/* 배경 장식 */}
-                <div className="absolute -top-10 -right-10 w-40 h-40 bg-memento-200/30 rounded-full blur-2xl" />
-                <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-rose-200/20 rounded-full blur-2xl" />
+                <div className={`absolute -top-10 -right-10 w-40 h-40 ${isMemorial ? "bg-amber-200/30" : "bg-memento-200/30"} rounded-full blur-2xl`} />
+                <div className={`absolute -bottom-10 -left-10 w-32 h-32 ${isMemorial ? "bg-orange-200/20" : "bg-rose-200/20"} rounded-full blur-2xl`} />
 
                 <div className="relative z-10 p-6 sm:p-8 md:p-10 lg:p-12">
                     <div className="md:grid md:grid-cols-2 md:gap-8 lg:gap-12 items-center">
@@ -65,7 +70,11 @@ export default function HeroSection({ setSelectedTab, user }: HeroSectionProps) 
                                 <Button
                                     size="lg"
                                     onClick={handleCtaClick}
-                                    className="bg-gradient-to-r from-memento-500 to-memento-400 hover:from-memento-600 hover:to-sky-600 text-white border-0 rounded-2xl px-8 py-3.5 min-h-[48px] shadow-[0_4px_20px_-4px_rgba(5,178,220,0.4)] hover:shadow-[0_6px_24px_-4px_rgba(5,178,220,0.5)] hover:scale-105 active:scale-95 transition-all font-semibold"
+                                    className={`text-white border-0 rounded-2xl px-8 py-3.5 min-h-[48px] hover:scale-105 active:scale-95 transition-all font-semibold ${
+                                        isMemorial
+                                            ? "bg-gradient-to-r from-amber-500 to-orange-400 hover:from-amber-600 hover:to-orange-500 shadow-[0_4px_20px_-4px_rgba(245,158,11,0.4)] hover:shadow-[0_6px_24px_-4px_rgba(245,158,11,0.5)]"
+                                            : "bg-gradient-to-r from-memento-500 to-memento-400 hover:from-memento-600 hover:to-sky-600 shadow-[0_4px_20px_-4px_rgba(5,178,220,0.4)] hover:shadow-[0_6px_24px_-4px_rgba(5,178,220,0.5)]"
+                                    }`}
                                 >
                                     {user ? "지금 만나러 가기" : "시작하기"}
                                 </Button>
@@ -73,7 +82,7 @@ export default function HeroSection({ setSelectedTab, user }: HeroSectionProps) 
                                     size="lg"
                                     variant="ghost"
                                     onClick={() => setSelectedTab("community")}
-                                    className="text-gray-600 dark:text-gray-300 hover:text-memento-600 hover:bg-white/50 dark:hover:bg-gray-700/50 rounded-2xl px-6 py-3.5 min-h-[48px] active:scale-95 transition-all"
+                                    className={`text-gray-600 dark:text-gray-300 ${isMemorial ? "hover:text-amber-600" : "hover:text-memento-600"} hover:bg-white/50 dark:hover:bg-gray-700/50 rounded-2xl px-6 py-3.5 min-h-[48px] active:scale-95 transition-all`}
                                 >
                                     둘러보기
                                     <ArrowRight className="w-4 h-4 ml-1" />

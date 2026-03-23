@@ -122,7 +122,7 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
 
             <div className="relative z-10 space-y-10 sm:space-y-14 pb-28">
                 {/* 히어로 */}
-                <HeroSection setSelectedTab={setSelectedTab} user={user} />
+                <HeroSection setSelectedTab={setSelectedTab} user={user} isMemorial={isMemorialMode} />
 
                 {/* 공지 */}
                 <AnnouncementBanner setSelectedTab={setSelectedTab} />
