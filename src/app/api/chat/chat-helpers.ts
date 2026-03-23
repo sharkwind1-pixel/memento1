@@ -444,9 +444,15 @@ export function detectOffTopicQuery(message: string): { detected: boolean; categ
         "강아지", "고양이", "반려", "펫", "댕댕", "냥이", "산책", "사료",
         "간식", "병원", "수의사", "예방접종", "미용", "목욕", "훈련",
         "배변", "짖", "물어", "아파", "구토", "설사", "입양",
+        "산책코스", "산책로", "걷기좋", "나들이", "외출", "동반",
     ];
     const hasPetContext = petKeywords.some(k => msg.includes(k));
     if (hasPetContext) return { detected: false, category: "" };
+
+    // 여행/지역 + 산책/코스/갈만한곳 조합이면 반려동물 외출 관련 → 허용
+    const travelWords = ["여행", "코스", "갈만한", "놀러", "나들이", "외출", "데리고"];
+    const hasTravelContext = travelWords.some(k => msg.includes(k));
+    if (hasTravelContext) return { detected: false, category: "" };
 
     // 카테고리별 감지 패턴
     const categories: { category: string; patterns: string[] }[] = [

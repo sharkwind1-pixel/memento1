@@ -801,6 +801,8 @@ export async function postProcessResponse(
             .filter(s => s.length > 0 && s.length <= 20)
             // 도발적/공격적/비꼬는 톤 필터링
             .filter(s => !/눈치|뭐야|왜 그래|짜증|싫어|꺼져|시끄러|바보|멍청|한심/.test(s))
+            // 반려동물과 무관한 사람 전용 주제 필터링 (유명한 음식, 맛집, 관광지 등)
+            .filter(s => !/유명한 음식|맛집|관광지|관광 명소|볼거리|먹거리|특산물|특산품|유명 음식|인기 음식|맛있는 곳|뭐 먹|뭘 먹/.test(s))
             .slice(0, 3);
     }
 
