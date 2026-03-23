@@ -66,7 +66,7 @@ export default function ShowcaseSection({
         <section className="space-y-6 px-4">
             <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center space-x-3 min-w-0">
-                    <div className="w-10 h-10 flex-shrink-0 bg-gradient-to-r from-amber-400 to-yellow-300 rounded-xl flex items-center justify-center">
+                    <div className="w-10 h-10 flex-shrink-0 bg-gradient-to-br from-amber-400 to-yellow-300 rounded-2xl flex items-center justify-center shadow-sm shadow-amber-400/20">
                         <Star className="w-5 h-5 text-white" />
                     </div>
                     <div className="min-w-0">

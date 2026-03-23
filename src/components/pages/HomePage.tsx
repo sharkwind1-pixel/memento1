@@ -178,6 +178,9 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
                             setSelectedTab={setSelectedTab}
                         />
 
+                        {/* 섹션 구분선 */}
+                        <div className="mx-auto w-16 h-px bg-gradient-to-r from-transparent via-memento-300/40 to-transparent" />
+
                         <ShowcaseSection
                             showcasePosts={showcasePosts}
                             scrollRef={scroll.showcaseScrollRef}
@@ -185,6 +188,9 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
                         />
                     </>
                 )}
+
+                {/* 섹션 구분선 */}
+                <div className="mx-auto w-16 h-px bg-gradient-to-r from-transparent via-amber-300/40 to-transparent" />
 
                 {/* 추모 섹션 */}
                 <MemorialSection
