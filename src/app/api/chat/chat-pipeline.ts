@@ -812,6 +812,8 @@ export async function postProcessResponse(
 
         // 반려동물 관련 화이트리스트 — 이 키워드가 하나라도 있어야 통과
         const PET_WHITELIST = /산책|걷|걸|뛰|놀|공원|간식|사료|밥|케어|건강|병원|예방|목욕|미용|훈련|짖|발바닥|컨디션|기분|하루|뭐 해|뭐 했|어때|좋아|싫어해|무서|잠|낮잠|꿈|배변|털|체중|몸무게|주사|약|귀|눈|이빨|양치|장난감|터그|공놀이|물놀이|수영|옷|안아|쓰다듬|꼬리|혀|코|냄새|소리|짤|사진|영상|추억|기억|보고싶|그리|함께|같이/;
+        // 사람 음식/맛집 블랙리스트 — 화이트리스트를 통과해도 이 키워드가 있으면 차단
+        const FOOD_BLACKLIST = /맛집|먹거리|음식점|식당|카페|레스토랑|맛있는 곳|특산물|먹을만한|뭐 먹|뭘 먹|먹으러|먹방|치킨|피자|커피|디저트|빵집|술집|호프|바베큐|고깃집|횟집|라멘|초밥|떡볶이|볼거리|관광|여행지|숙소|호텔|펜션/;
 
         suggestedQuestions = sgParts[1]
             .trim()
@@ -819,6 +821,7 @@ export async function postProcessResponse(
             .map(s => s.replace(/^[-\d.)\s]+/, "").trim())
             .filter(s => s.length > 0 && s.length <= 20)
             .filter(s => PET_WHITELIST.test(s))
+            .filter(s => !FOOD_BLACKLIST.test(s))
             .slice(0, 3);
     }
 

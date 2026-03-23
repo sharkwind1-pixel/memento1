@@ -529,8 +529,9 @@ export function filterMemorialSuggestions(suggestions: string[]): string[] {
         const lower = s.toLowerCase();
         return !MEMORIAL_SUGGESTION_BLOCKLIST.some(k => lower.includes(k));
     });
-    // fallback: 필터링 후 0개면 원본 반환 (추천 질문이 아예 없는 것보다 낫다)
-    return filtered.length > 0 ? filtered : suggestions;
+    // 필터링 후 0개면 빈 배열 반환 (원본 복원하면 부적절한 질문이 노출됨)
+    // 호출부(chat-pipeline.ts)에서 빈 경우 기본 질문으로 대체함
+    return filtered;
 }
 
 // ---- 특별일 체크 ----
