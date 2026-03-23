@@ -695,7 +695,7 @@ export default function PostDetailView({
                 <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700/50 rounded-xl px-4 py-3 flex items-center gap-2">
                     <Pin className="w-4 h-4 text-red-500 flex-shrink-0" />
                     <p className="text-sm text-red-700 dark:text-red-300">
-                        {post.notice_scope === "global" ? "전체 공지 (모든 게시판 + 홈 상단)" : "게시판 공지 (해당 게시판 상단 고정)"}
+                        {post.notice_scope === "global" ? "전체 공지" : "게시판 공지"}
                     </p>
                 </div>
             )}
