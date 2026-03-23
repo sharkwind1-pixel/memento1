@@ -283,7 +283,8 @@ export default function PostDetailView({
 
             if (!response.ok) {
                 const data = await response.json();
-                throw new Error(data.error || "댓글 작성 실패");
+                const errMsg = data.detail ? `${data.error}: ${data.detail}` : (data.error || "댓글 작성 실패");
+                throw new Error(errMsg);
             }
 
             const data = await response.json();
@@ -299,8 +300,8 @@ export default function PostDetailView({
                 createdAt: newComment.createdAt || newComment.created_at || new Date().toISOString(),
             }]);
             setCommentText("");
-        } catch {
-            toast.error("댓글 작성에 실패했습니다. 다시 시도해주세요");
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : "댓글 작성에 실패했습니다. 다시 시도해주세요");
         } finally {
             setIsSubmittingComment(false);
         }
