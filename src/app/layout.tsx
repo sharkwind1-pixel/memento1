@@ -4,6 +4,7 @@
  */
 
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PetProvider } from "@/contexts/PetContext";
@@ -85,15 +86,18 @@ export const metadata: Metadata = {
     },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
 }>) {
+    const nonce = (await headers()).get("x-nonce") || "";
+
     return (
         <html lang="ko" suppressHydrationWarning>
             <head>
                 <script
+                    nonce={nonce}
                     dangerouslySetInnerHTML={{
                         __html: `
                             (function() {

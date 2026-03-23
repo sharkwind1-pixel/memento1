@@ -4,7 +4,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { createAdminSupabase, getAuthUser } from "@/lib/supabase-server";
+import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +15,7 @@ export async function GET() {
             return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
         }
 
-        const supabase = createAdminSupabase();
+        const supabase = await createServerSupabase();
 
         // 보유 캐릭터
         const { data: ownedCharacters } = await supabase

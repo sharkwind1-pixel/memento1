@@ -165,7 +165,7 @@ export async function GET(request: NextRequest) {
         }
 
         // 작성자 미니미 slug 일괄 조회 (미니홈피 아바타 표시용)
-        // RLS 우회를 위해 admin 클라이언트 사용 + 병렬 쿼리로 속도 최적화
+        // user_minimi RLS 정책이 auth.uid() = user_id이므로 다른 유저 조회 시 admin 필요
         const userIds = Array.from(new Set((data || []).map(p => p.user_id).filter(Boolean)));
         let userIdToMinimiSlug: Record<string, string> = {};
         let userIdToPoints: Record<string, number> = {};
