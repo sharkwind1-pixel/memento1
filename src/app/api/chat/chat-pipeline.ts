@@ -801,14 +801,31 @@ export async function postProcessResponse(
             .filter(s => s.length > 0 && s.length <= 20)
             // 도발적/공격적/비꼬는 톤 필터링
             .filter(s => !/눈치|뭐야|왜 그래|짜증|싫어|꺼져|시끄러|바보|멍청|한심/.test(s))
-            // 반려동물과 무관한 사람 전용 주제 필터링 (유명한 음식, 맛집, 관광지 등)
-            .filter(s => !/유명한 음식|맛집|관광지|관광 명소|볼거리|먹거리|특산물|특산품|유명 음식|인기 음식|맛있는 곳|뭐 먹|뭘 먹/.test(s))
+            // 반려동물과 무관한 사람 전용 주제 필터링
+            .filter(s => {
+                // 반려동물 관련 키워드가 있으면 허용 (예: "간식 추천해줘", "사료 뭐가 좋아")
+                if (/간식|사료|펫|강아지|고양이|산책|놀이|케어|건강|병원|예방|목욕|미용|훈련/.test(s)) return true;
+                // 사람 음식/맛집/관광 관련이면 차단
+                if (/음식|맛집|맛있|먹을|먹어|먹자|먹방|뭐 먹|뭘 먹|관광|볼거리|먹거리|특산|명소|카페|식당|맛나|요리|메뉴|디저트|커피/.test(s)) return false;
+                return true;
+            })
             .slice(0, 3);
     }
 
     // 추모 모드: 후속 질문에서 음식/케어 키워드 필터링
     if (isMemorialMode && suggestedQuestions.length > 0) {
         suggestedQuestions = filterMemorialSuggestions(suggestedQuestions);
+    }
+
+    // 필터링 후 질문이 부족하면 반려동물 기본 질문으로 채움
+    if (suggestedQuestions.length < 3) {
+        const petFallbacks = isMemorialMode
+            ? ["좋았던 기억 얘기해줘", "너와 함께한 날들", "보고 싶은 마음"]
+            : ["오늘 산책 갔어?", "뭐 하고 놀까?", "요즘 기분 어때?"];
+        for (const fb of petFallbacks) {
+            if (suggestedQuestions.length >= 3) break;
+            if (!suggestedQuestions.includes(fb)) suggestedQuestions.push(fb);
+        }
     }
 
     // 추모 모드: 느낌표 후처리
