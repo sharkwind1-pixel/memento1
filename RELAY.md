@@ -6,47 +6,30 @@
 
 ## TODO 우선순위 (새 세션 필독)
 
-### 1. 긴급: 승빈님 직접 — DB 마이그레이션 6개
-| SQL | 영향 기능 | 상태 |
-|-----|----------|------|
-| `20260226_chat_mode_column.sql` | AI 펫톡 추모/일상 모드 분리 | 미실행 |
-| `20260226_security_fixes.sql` | 미니미 RPC + 펫/사진 제한 트리거 | 미실행 |
-| `20260225_push_preferred_hour.sql` | 푸시 알림 시간 선택 | 미실행 |
-| `placed_minimi JSONB` 컬럼 (직접 실행) | 멀티 미니미 배치 | 미실행 |
-| `20260226_memory_albums.sql` | 추억 앨범 자동 생성 | 미실행 |
-| `20260222_minimi_system.sql` | 미니미 구매/되팔기 | 확인 필요 |
+### 1. 즉시 — 홈 화면 디자인 마무리 (이전 세션에서 이어서)
 
-```sql
--- placed_minimi 직접 실행용
-ALTER TABLE minihompy_settings ADD COLUMN IF NOT EXISTS placed_minimi JSONB DEFAULT '[]'::jsonb;
-```
+> **배경**: B안 기반으로 홈 전면 리디자인 완료 (`cf3ce17`). 아래 2건 미완료.
+> **원복**: `cd /Users/admin/memento1 && git revert cf3ce17 --no-edit`
 
-### 2. MVP 런칭 필수 — 결제 연동 + 프리미엄 전환 UX
-- [ ] 포트원(PortOne) 결제 연동 — 프리미엄 구독 실결제
-- [ ] 스마트 프리미엄 전환 UX — isWarning(3회 남음) + 직전 대화 주제 반영 동적 문구
+- [ ] **펫매거진 카드 썸네일** — 홈 MagazineSection에서 매거진 카드에 이미지가 안 보임. API에서 `cover_image_url`을 가져오고 있는데 카드에 표시가 안 됨. API 응답 필드명 확인 필요.
+  - 관련 파일: `src/components/features/home/MagazineSection.tsx`, 매거진 API
+- [ ] **추모모드 amber 톤 통일** — 현재 배경(Layout)만 amber로 바뀌고, 홈의 CommunitySection/ShowcaseSection/MagazineSection 등 섹션 헤더 아이콘/그라데이션은 일상 하늘색(#05B2DC) 그대로라서 따로 놀고 있음. `useMemorialMode()` 훅으로 `isMemorialMode` 체크해서 섹션별 색상을 amber로 분기해야 함.
+  - 관련 파일: 홈 섹션 컴포넌트들 (`CommunitySection.tsx`, `MagazineSection.tsx` 등)
 
-### 3. AI 펫톡 킬러 기능 — 대화 내보내기 + 사진 연동
-- [ ] 대화 내보내기 (편지/카드) — AI 대화를 예쁜 카드 이미지로 변환+저장+공유
-- [ ] 대화 내 사진 연동 — AI 추억 언급 시 pet_media 캡션 매칭 사진 썸네일 표시
+### 2. MVP 런칭 필수 — 포트원 결제 연동
+- [ ] 포트원(PortOne) 결제 연동 — 프리미엄 구독 실결제 (현재 UI/약관/테스트로그인은 완료, 실결제만 남음)
 
-### 4. AI 프롬프트 개선 — Phase 3
-- [ ] 감각 기반 기억 — 추모 프롬프트에 오감 묘사 지시
-- [ ] 감정 거울링 3단계 — 인정→공유→연결 순서 명시
-- [ ] 시간대별 에너지 — 밤엔 졸린 톤, 아침엔 어벙한 톤
-- [ ] pending_topic — "다음에 물어볼 것" 메모리 타입
+### 3. 향후 코드 품질 개선 (급하지 않음)
+- [ ] Prompt Injection 필터 강화 (`sanitizeInput()` 패턴 감지 추가)
+- [ ] Rate Limit Redis 전환 (현재 메모리 기반)
+- [ ] 입력값 Zod 스키마 검증 (`as` 타입 캐스팅 → Zod)
+- [ ] 관리자 `requireAdmin()` 함수 일관 적용
 
-### 5. UI/UX 비주얼 — 애니메이션 + 깜빡임 확인
-- [ ] 추모 별 float-up 애니메이션
-- [ ] 타이핑 인디케이터 감성 텍스트 — "꼬리 흔들며 생각 중..."
-- [ ] 발자국 버블 데코
-- [ ] 모바일 깜빡임 테스트 — `e3aa66f` React.memo 적용 후 검증 필요
-
-### 6. 기존 미완료 — 리팩토링 + 기타
-- [ ] 대형 컴포넌트 분리: AIChatPage(1408줄), LostPage(1356줄)
-- [ ] API URL 마이그레이션: 하드코딩 → apiEndpoints.ts 상수
-- [ ] 치유의 여정 대시보드 (유저 비노출, DB만)
-- [ ] 대화→타임라인 자동 생성
-- [ ] 미니미 도감 + 터치 이펙트
+### 이전 TODO에서 완료 확인된 항목들 (RELAY-ARCHIVE 기준)
+> DB 마이그레이션 6개 전부 실행 완료, 스마트 프리미엄 전환 UX 완료, 대화 내보내기 완료,
+> 대화 내 사진 연동 완료, AI 프롬프트 Phase 3 전체 완료, UI/UX 비주얼(별/타이핑/발자국) 완료,
+> 모바일 깜빡임 완료, 대형 컴포넌트 분리(AIChatPage 371줄/LostPage 303줄) 완료,
+> 치유의 여정 대시보드 완료, 대화→타임라인 자동 생성 완료, 미니미 도감+터치 이펙트 완료
 
 ---
 
