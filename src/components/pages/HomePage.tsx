@@ -50,6 +50,8 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
         isLoadingShowcase,
         isLoadingMemorial,
         displayMemorialData,
+        condoledPets,
+        toggleCondolence,
     } = useHomePage();
 
     useEffect(() => {
@@ -191,6 +193,8 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
                     displayMemorialData={displayMemorialData}
                     onLightboxOpen={setLightboxItem}
                     scrollRef={scroll.memorialScrollRef}
+                    condoledPets={condoledPets}
+                    onToggleCondolence={toggleCondolence}
                 />
             </div>
         </div>

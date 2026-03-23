@@ -109,8 +109,32 @@ export async function GET() {
             isExactToday = false;
         }
 
+        // 최종 펫 리스트 (최대 20마리)
+        const slicedPets = finalPets.slice(0, 20);
+
+        // 위로(condolence) 카운트 batch 조회
+        const petIds = slicedPets.map((p) => p.id);
+        let condolenceCounts: Record<string, number> = {};
+        if (petIds.length > 0) {
+            try {
+                const { data: condolenceData } = await supabase
+                    .from("pet_condolences")
+                    .select("pet_id")
+                    .in("pet_id", petIds);
+
+                if (condolenceData) {
+                    for (const row of condolenceData) {
+                        condolenceCounts[row.pet_id] = (condolenceCounts[row.pet_id] || 0) + 1;
+                    }
+                }
+            } catch {
+                // pet_condolences 테이블이 아직 없을 수 있음 — 무시
+                condolenceCounts = {};
+            }
+        }
+
         // 프라이버시: user_id 제외, 필요 정보만 반환
-        const result = finalPets.slice(0, 20).map((pet) => {
+        const result = slicedPets.map((pet) => {
             const isNew = newlyRegistered.some((np) => np.id === pet.id);
             const memorialYear = pet.memorial_date
                 ? new Date(pet.memorial_date + "T00:00:00").getFullYear()
@@ -135,6 +159,7 @@ export async function GET() {
                             : yearsAgo === 1
                                 ? "함께한 1년"
                                 : `함께한 ${yearsAgo}년`,
+                condolenceCount: condolenceCounts[pet.id] || 0,
             };
         });
 

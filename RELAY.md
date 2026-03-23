@@ -42,3 +42,8 @@
 - **내용**: grant_premium/revoke_premium/expire_premium_subscriptions RPC를 authenticated/anon에서 REVOKE, merchant_uid UNIQUE 제약, payments.status CHECK, payments.amount 양수 CHECK
 - **위험**: authenticated 유저가 클라이언트에서 직접 `grant_premium` RPC를 호출해서 무료로 프리미엄 획득 가능 (현재 막혀있지 않음)
 - **실행 방법**: Supabase Dashboard > SQL Editor에서 위 파일 내용 복사 붙여넣기 실행
+
+### `supabase/migrations/20260323_pet_condolences.sql`
+- **내용**: 추모 펫 위로 리액션 테이블 (`pet_condolences`), UNIQUE(pet_id, user_id), RLS 정책
+- **의존**: 위로 버튼 기능이 이 테이블 없이도 프론트는 동작하나, 실제 저장/조회 안 됨
+- **실행 방법**: Supabase Dashboard > SQL Editor에서 위 파일 내용 복사 붙여넣기 실행

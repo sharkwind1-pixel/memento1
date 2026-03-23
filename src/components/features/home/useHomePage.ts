@@ -24,6 +24,7 @@ export interface MemorialPetItem {
     isNewlyRegistered: boolean;
     yearsAgo: number | null;
     yearsLabel: string;
+    condolenceCount: number;
 }
 
 export function useHomePage() {
@@ -41,6 +42,10 @@ export function useHomePage() {
     const [memorialPets, setMemorialPets] = useState<MemorialPetItem[]>([]);
     const [isLoadingMemorial, setIsLoadingMemorial] = useState(true);
 
+    // 위로 리액션 상태
+    const [condoledPets, setCondoledPets] = useState<Record<string, boolean>>({});
+    const condolingRef = useRef<Set<string>>(new Set());
+
     // 좋아요 상태 관리
     const [likedPosts, setLikedPosts] = useState<Record<number, boolean>>({});
     const [animatingHearts, setAnimatingHearts] = useState<Record<number, boolean>>({});
@@ -53,6 +58,58 @@ export function useHomePage() {
 
     const heartTimersRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
     const likingRef = useRef<Set<number>>(new Set());
+
+    /** 추모 펫 위로 토글 */
+    const toggleCondolence = async (petId: string) => {
+        // 중복 클릭 방지
+        if (condolingRef.current.has(petId)) return;
+
+        // 로그인 체크
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+            window.dispatchEvent(new CustomEvent("openAuthModal"));
+            return;
+        }
+
+        condolingRef.current.add(petId);
+
+        // 낙관적 UI 업데이트
+        const wasCondoled = condoledPets[petId] || false;
+        setCondoledPets((prev) => ({ ...prev, [petId]: !wasCondoled }));
+        setMemorialPets((prev) =>
+            prev.map((p) =>
+                p.id === petId
+                    ? { ...p, condolenceCount: wasCondoled ? p.condolenceCount - 1 : p.condolenceCount + 1 }
+                    : p
+            )
+        );
+
+        try {
+            const response = await authFetch(API.PET_CONDOLENCE(petId), { method: "POST" });
+            if (!response.ok) throw new Error("위로 실패");
+            const data = await response.json();
+            // 서버 응답으로 정확한 값 반영
+            setCondoledPets((prev) => ({ ...prev, [petId]: data.condoled }));
+            setMemorialPets((prev) =>
+                prev.map((p) =>
+                    p.id === petId ? { ...p, condolenceCount: data.count } : p
+                )
+            );
+        } catch {
+            // 롤백
+            setCondoledPets((prev) => ({ ...prev, [petId]: wasCondoled }));
+            setMemorialPets((prev) =>
+                prev.map((p) =>
+                    p.id === petId
+                        ? { ...p, condolenceCount: wasCondoled ? p.condolenceCount : p.condolenceCount - 1 }
+                        : p
+                )
+            );
+            toast.error("위로 처리에 실패했습니다");
+        } finally {
+            condolingRef.current.delete(petId);
+        }
+    };
 
     const toggleLike = async (postId: number) => {
         // 중복 클릭 방지
@@ -250,7 +307,36 @@ export function useHomePage() {
             const res = await fetch("/api/memorial-today");
             if (res.ok) {
                 const data = await res.json();
-                setMemorialPets(data.pets || []);
+                const pets: MemorialPetItem[] = (data.pets || []).map(
+                    (p: MemorialPetItem & { condolenceCount?: number }) => ({
+                        ...p,
+                        condolenceCount: p.condolenceCount || 0,
+                    })
+                );
+                setMemorialPets(pets);
+
+                // 로그인 상태라면 내 위로 상태 조회
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session && pets.length > 0) {
+                    try {
+                        const petIds = pets.map((p) => p.id);
+                        const { data: myCondolences } = await supabase
+                            .from("pet_condolences")
+                            .select("pet_id")
+                            .eq("user_id", session.user.id)
+                            .in("pet_id", petIds);
+
+                        if (myCondolences) {
+                            const condoledMap: Record<string, boolean> = {};
+                            myCondolences.forEach((c: { pet_id: string }) => {
+                                condoledMap[c.pet_id] = true;
+                            });
+                            setCondoledPets(condoledMap);
+                        }
+                    } catch {
+                        // pet_condolences 테이블 미생성 시 무시
+                    }
+                }
             } else {
                 setMemorialPets([]);
             }
@@ -294,6 +380,10 @@ export function useHomePage() {
         // 마음속에 영원히
         isLoadingMemorial,
         displayMemorialData: memorialPets,
+
+        // 위로 리액션
+        condoledPets,
+        toggleCondolence,
     };
 }
 

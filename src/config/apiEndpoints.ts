@@ -96,6 +96,9 @@ export const API = {
     ADMIN_ALLOW_REJOIN: "/api/admin/allow-rejoin",
     ADMIN_UPDATE_PROFILE: "/api/admin/update-profile",
 
+    // 추모 펫 위로 리액션
+    PET_CONDOLENCE: (petId: string) => `/api/pets/${petId}/condolence`,
+
     // 치유의 여정 (추모 모드 감정 추이)
     HEALING_JOURNEY: (petId: string) => `/api/healing-journey?petId=${petId}`,
 } as const;
