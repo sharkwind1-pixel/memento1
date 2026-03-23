@@ -42,6 +42,10 @@ export function useHomePage() {
     const [memorialPets, setMemorialPets] = useState<MemorialPetItem[]>([]);
     const [isLoadingMemorial, setIsLoadingMemorial] = useState(true);
 
+    // 매거진 미리보기
+    const [magazineArticles, setMagazineArticles] = useState<Array<{ id: string; title: string; coverUrl: string | null; category: string }>>([]);
+    const [isLoadingMagazine, setIsLoadingMagazine] = useState(true);
+
     // 위로 리액션 상태
     const [condoledPets, setCondoledPets] = useState<Record<string, boolean>>({});
     const condolingRef = useRef<Set<string>>(new Set());
@@ -347,17 +351,36 @@ export function useHomePage() {
         }
     }, []);
 
+    // 매거진 최신 3개 가져오기
+    const fetchMagazinePreview = useCallback(async () => {
+        setIsLoadingMagazine(true);
+        try {
+            const res = await fetch("/api/magazine?limit=3&offset=0");
+            if (res.ok) {
+                const data = await res.json();
+                setMagazineArticles((data.articles || []).slice(0, 3).map((a: { id: string; title: string; imageUrl?: string; category?: string }) => ({
+                    id: a.id,
+                    title: a.title,
+                    coverUrl: a.imageUrl || null,
+                    category: a.category || "",
+                })));
+            }
+        } catch { /* */ }
+        setIsLoadingMagazine(false);
+    }, []);
+
     useEffect(() => {
         fetchCommunityPosts();
         fetchShowcasePosts();
         fetchMemorialPets();
+        fetchMagazinePreview();
         // 언마운트 시 하트 애니메이션 타이머 정리 (메모리 누수 방지)
         const timers = heartTimersRef.current;
         return () => {
             timers.forEach(timer => clearTimeout(timer));
             timers.clear();
         };
-    }, [fetchCommunityPosts, fetchShowcasePosts, fetchMemorialPets]);
+    }, [fetchCommunityPosts, fetchShowcasePosts, fetchMemorialPets, fetchMagazinePreview]);
 
     return {
         // 라이트박스
@@ -390,6 +413,10 @@ export function useHomePage() {
         // 위로 리액션
         condoledPets,
         toggleCondolence,
+
+        // 매거진 미리보기
+        magazineArticles,
+        isLoadingMagazine,
     };
 }
 

@@ -17,6 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import {
     Cloud,
+    Heart,
     Sparkles,
 } from "lucide-react";
 import { safeStringSrc, getPetIcon } from "./homeUtils";
@@ -31,6 +32,7 @@ interface MemorialPetItem {
     isNewlyRegistered: boolean;
     yearsAgo: number | null;
     yearsLabel: string;
+    condolenceCount: number;
 }
 
 interface MemorialSectionProps {
@@ -38,6 +40,8 @@ interface MemorialSectionProps {
     displayMemorialData: MemorialPetItem[];
     onLightboxOpen: (item: LightboxItem) => void;
     scrollRef: React.RefObject<HTMLDivElement>;
+    condoledPets?: Record<string, boolean>;
+    onToggleCondolence?: (petId: string) => void;
 }
 
 export default function MemorialSection({
@@ -45,6 +49,8 @@ export default function MemorialSection({
     displayMemorialData,
     onLightboxOpen,
     scrollRef,
+    condoledPets = {},
+    onToggleCondolence,
 }: MemorialSectionProps) {
     return (
         <section className="space-y-6 px-4 py-8 -mx-4 bg-gradient-to-b from-amber-50/30 via-amber-50/10 to-transparent dark:from-amber-900/10 dark:via-transparent dark:to-transparent rounded-3xl">
@@ -154,9 +160,31 @@ export default function MemorialSection({
                                         {pet.type}{pet.breed ? ` / ${pet.breed}` : ""}
                                     </p>
                                     <div className="w-8 h-px bg-amber-300/60 mx-auto" />
-                                    <p className="text-xs text-amber-500 dark:text-amber-400 font-medium">
-                                        영원히 기억할게
-                                    </p>
+                                    {onToggleCondolence ? (
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onToggleCondolence(pet.id);
+                                            }}
+                                            className="inline-flex items-center gap-1.5 text-xs font-medium transition-colors mx-auto pt-1"
+                                        >
+                                            <Heart
+                                                className={`w-4 h-4 transition-all duration-300 ${
+                                                    condoledPets[pet.id]
+                                                        ? "fill-amber-500 text-amber-500 scale-110"
+                                                        : "text-amber-400 hover:text-amber-500"
+                                                }`}
+                                            />
+                                            <span className={condoledPets[pet.id] ? "text-amber-500" : "text-amber-400"}>
+                                                {pet.condolenceCount > 0 ? `위로 ${pet.condolenceCount}` : "위로하기"}
+                                            </span>
+                                        </button>
+                                    ) : (
+                                        <p className="text-xs text-amber-500 dark:text-amber-400 font-medium">
+                                            영원히 기억할게
+                                        </p>
+                                    )}
                                 </CardContent>
                             </Card>
                         );

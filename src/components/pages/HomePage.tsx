@@ -7,7 +7,7 @@
 
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect } from "react";
 
 import { TabType, CommunitySubcategory, SmoothAutoScrollReturn } from "@/types";
 import { useSmoothAutoScroll } from "@/hooks/useSmoothAutoScroll";
@@ -31,32 +31,6 @@ interface HomePageProps {
     isActive?: boolean;
 }
 
-/** 최신 매거진 3개를 가져오는 미니 훅 */
-function useMagazinePreview() {
-    const [articles, setArticles] = useState<Array<{ id: string; title: string; coverUrl: string | null; category: string }>>([]);
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        (async () => {
-            try {
-                const res = await fetch("/api/magazine?limit=3&offset=0");
-                if (res.ok) {
-                    const data = await res.json();
-                    setArticles((data.articles || []).slice(0, 3).map((a: { id: string; title: string; imageUrl?: string; category?: string }) => ({
-                        id: a.id,
-                        title: a.title,
-                        coverUrl: a.imageUrl || null,
-                        category: a.category || "",
-                    })));
-                }
-            } catch { /* */ }
-            setIsLoading(false);
-        })();
-    }, []);
-
-    return { articles, isLoading };
-}
-
 function HomePage({ setSelectedTab, isActive }: HomePageProps) {
     const { isSimpleMode, user } = useAuth();
     const { isMemorialMode } = useMemorialMode();
@@ -78,9 +52,11 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
         isLoadingShowcase,
         isLoadingMemorial,
         displayMemorialData,
+        condoledPets,
+        toggleCondolence,
+        magazineArticles,
+        isLoadingMagazine,
     } = useHomePage();
-
-    const { articles: magazineArticles, isLoading: isLoadingMagazine } = useMagazinePreview();
 
     useEffect(() => {
         if (isSimpleMode) return;
@@ -270,6 +246,8 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
                                 displayMemorialData={displayMemorialData}
                                 onLightboxOpen={setLightboxItem}
                                 scrollRef={scroll.memorialScrollRef}
+                                condoledPets={condoledPets}
+                                onToggleCondolence={toggleCondolence}
                             />
                         </div>
                     </div>
