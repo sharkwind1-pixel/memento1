@@ -47,6 +47,7 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
         communityPosts,
         isLoadingCommunity,
         showcasePosts,
+        isLoadingShowcase,
         isLoadingMemorial,
         displayMemorialData,
     } = useHomePage();
@@ -113,26 +114,53 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
                 {/* 전체 공지 배너 */}
                 <AnnouncementBanner setSelectedTab={setSelectedTab} />
 
-                {/* 커뮤니티 인기글 */}
-                {!isLoadingCommunity && (
-                    <CommunitySection
-                        communityPosts={communityPosts}
-                        likedPosts={likedPosts}
-                        animatingHearts={animatingHearts}
-                        postComments={postComments}
-                        onToggleLike={toggleLike}
-                        onSelectPost={setSelectedPost}
-                        scrollRef={scroll.communityScrollRef}
-                        setSelectedTab={setSelectedTab}
-                    />
-                )}
+                {/* 커뮤니티 인기글 + 쇼케이스 (AI 영상) */}
+                {/* 두 섹션의 로딩이 모두 끝나면 한번에 표시하여 레이아웃 밀림 방지 */}
+                {(isLoadingCommunity || isLoadingShowcase) ? (
+                    <section className="space-y-6 px-4">
+                        <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />
+                            <div className="space-y-2">
+                                <div className="w-32 h-5 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                                <div className="w-48 h-3.5 bg-gray-100 dark:bg-gray-800 rounded animate-pulse hidden sm:block" />
+                            </div>
+                        </div>
+                        <div className="flex gap-4 overflow-hidden pb-4">
+                            {[1, 2, 3].map((i) => (
+                                <div key={i} className="w-[260px] sm:w-72 flex-shrink-0 rounded-2xl overflow-hidden shadow-lg">
+                                    <div className="h-24 bg-gray-200 dark:bg-gray-700 animate-pulse" />
+                                    <div className="p-4 bg-white dark:bg-gray-800 space-y-3">
+                                        <div className="w-3/4 h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                                        <div className="w-1/2 h-3 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
+                                        <div className="flex gap-3">
+                                            <div className="w-10 h-3 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
+                                            <div className="w-10 h-3 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                ) : (
+                    <>
+                        <CommunitySection
+                            communityPosts={communityPosts}
+                            likedPosts={likedPosts}
+                            animatingHearts={animatingHearts}
+                            postComments={postComments}
+                            onToggleLike={toggleLike}
+                            onSelectPost={setSelectedPost}
+                            scrollRef={scroll.communityScrollRef}
+                            setSelectedTab={setSelectedTab}
+                        />
 
-                {/* 쇼케이스 (AI 영상) */}
-                <ShowcaseSection
-                    showcasePosts={showcasePosts}
-                    scrollRef={scroll.showcaseScrollRef}
-                    setSelectedTab={setSelectedTab}
-                />
+                        <ShowcaseSection
+                            showcasePosts={showcasePosts}
+                            scrollRef={scroll.showcaseScrollRef}
+                            setSelectedTab={setSelectedTab}
+                        />
+                    </>
+                )}
 
                 {/* 추모 섹션 */}
                 <MemorialSection
