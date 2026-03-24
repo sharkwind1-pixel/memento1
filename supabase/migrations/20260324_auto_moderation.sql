@@ -124,3 +124,33 @@ CREATE TRIGGER trigger_auto_hide_on_reports
     AFTER INSERT ON reports
     FOR EACH ROW
     EXECUTE FUNCTION auto_hide_on_reports();
+
+-- 5. 댓글 좋아요/비추천 시스템
+ALTER TABLE post_comments ADD COLUMN IF NOT EXISTS likes INTEGER DEFAULT 0;
+ALTER TABLE post_comments ADD COLUMN IF NOT EXISTS dislikes INTEGER DEFAULT 0;
+
+CREATE TABLE IF NOT EXISTS comment_likes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    comment_id UUID REFERENCES post_comments(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(comment_id, user_id)
+);
+CREATE INDEX IF NOT EXISTS idx_comment_likes_comment ON comment_likes(comment_id);
+ALTER TABLE comment_likes ENABLE ROW LEVEL SECURITY;
+DO $$ BEGIN CREATE POLICY "comment_likes_select_all" ON comment_likes FOR SELECT USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "comment_likes_insert_own" ON comment_likes FOR INSERT WITH CHECK (auth.uid() = user_id); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "comment_likes_delete_own" ON comment_likes FOR DELETE USING (auth.uid() = user_id); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+CREATE TABLE IF NOT EXISTS comment_dislikes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    comment_id UUID REFERENCES post_comments(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(comment_id, user_id)
+);
+CREATE INDEX IF NOT EXISTS idx_comment_dislikes_comment ON comment_dislikes(comment_id);
+ALTER TABLE comment_dislikes ENABLE ROW LEVEL SECURITY;
+DO $$ BEGIN CREATE POLICY "comment_dislikes_select_all" ON comment_dislikes FOR SELECT USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "comment_dislikes_insert_own" ON comment_dislikes FOR INSERT WITH CHECK (auth.uid() = user_id); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "comment_dislikes_delete_own" ON comment_dislikes FOR DELETE USING (auth.uid() = user_id); EXCEPTION WHEN duplicate_object THEN NULL; END $$;

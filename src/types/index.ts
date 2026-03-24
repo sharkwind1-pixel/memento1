@@ -688,6 +688,7 @@ export type PointAction =
     | "write_post"
     | "write_comment"
     | "receive_like"
+    | "receive_dislike"
     | "ai_chat"
     | "pet_registration"
     | "timeline_entry"

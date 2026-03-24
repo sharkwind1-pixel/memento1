@@ -1020,6 +1020,47 @@ export default function PostDetailView({
                                 <p className="text-sm text-gray-700 dark:text-gray-300 ml-9 leading-relaxed">
                                     {comment.content}
                                 </p>
+                                {/* 댓글 좋아요/비추천 */}
+                                <div className="ml-9 mt-1.5 flex items-center gap-3">
+                                    <button
+                                        onClick={async () => {
+                                            if (!user) { window.dispatchEvent(new CustomEvent("openAuthModal")); return; }
+                                            try {
+                                                const res = await authFetch(API.COMMENT_LIKE(comment.id), { method: "POST" });
+                                                if (!res.ok) return;
+                                                const d = await res.json();
+                                                setComments(prev => prev.map(c => c.id === comment.id ? { ...c, likes: d.likes, userLiked: d.liked } : c));
+                                            } catch { /* 무시 */ }
+                                        }}
+                                        className={`flex items-center gap-1 text-xs transition-colors ${
+                                            (comment as Record<string, unknown>).userLiked
+                                                ? "text-rose-500"
+                                                : "text-gray-400 hover:text-rose-500"
+                                        }`}
+                                    >
+                                        <Heart className={`w-3.5 h-3.5 ${(comment as Record<string, unknown>).userLiked ? "fill-current" : ""}`} />
+                                        {((comment as Record<string, unknown>).likes as number || 0) > 0 && <span>{(comment as Record<string, unknown>).likes as number}</span>}
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            if (!user) { window.dispatchEvent(new CustomEvent("openAuthModal")); return; }
+                                            try {
+                                                const res = await authFetch(API.COMMENT_DISLIKE(comment.id), { method: "POST" });
+                                                if (!res.ok) return;
+                                                const d = await res.json();
+                                                setComments(prev => prev.map(c => c.id === comment.id ? { ...c, dislikes: d.dislikes, userDisliked: d.disliked } : c));
+                                            } catch { /* 무시 */ }
+                                        }}
+                                        className={`flex items-center gap-1 text-xs transition-colors ${
+                                            (comment as Record<string, unknown>).userDisliked
+                                                ? "text-gray-600 dark:text-gray-300"
+                                                : "text-gray-400 hover:text-gray-600"
+                                        }`}
+                                    >
+                                        <ThumbsDown className={`w-3.5 h-3.5 ${(comment as Record<string, unknown>).userDisliked ? "fill-current" : ""}`} />
+                                        {((comment as Record<string, unknown>).dislikes as number || 0) > 0 && <span>{(comment as Record<string, unknown>).dislikes as number}</span>}
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>

@@ -100,6 +100,7 @@ export const POINTS = {
         write_post: 10,
         write_comment: 3,
         receive_like: 2,
+        receive_dislike: -2,  // 비추천 받으면 차감
         ai_chat: 1,
         pet_registration: 50,
         timeline_entry: 5,
@@ -115,6 +116,7 @@ export const POINTS = {
         write_post: 5,
         write_comment: 50,
         receive_like: null,
+        receive_dislike: null,
         ai_chat: 10,
         pet_registration: null,
         timeline_entry: 10,
@@ -133,6 +135,7 @@ export const POINTS = {
         write_post: "게시글 작성",
         write_comment: "댓글 작성",
         receive_like: "좋아요 받기",
+        receive_dislike: "비추천 받기",
         ai_chat: "AI 펫톡",
         pet_registration: "반려동물 등록",
         timeline_entry: "타임라인 기록",

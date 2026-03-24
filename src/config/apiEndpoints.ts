@@ -16,6 +16,8 @@ export const API = {
     POST_LIKE: (id: string) => `/api/posts/${id}/like`,
     POST_DISLIKE: (id: string) => `/api/posts/${id}/dislike`,
     POST_COMMENTS: (id: string) => `/api/posts/${id}/comments`,
+    COMMENT_LIKE: (id: string) => `/api/comments/${id}/like`,
+    COMMENT_DISLIKE: (id: string) => `/api/comments/${id}/dislike`,
 
     // 분실동물
     LOST_PETS: "/api/lost-pets",
