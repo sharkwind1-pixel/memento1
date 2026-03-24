@@ -206,7 +206,7 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
                             ) : magazineArticles.length === 0 ? (
                                 <p className="text-sm text-gray-400 dark:text-gray-500 py-8 text-center flex-1 flex items-center justify-center">아직 매거진이 없습니다</p>
                             ) : (
-                                <div className="space-y-3 flex-1 flex flex-col justify-between">
+                                <div className="space-y-3 flex-1 flex flex-col">
                                     {magazineArticles.map((article) => (
                                         <button
                                             key={article.id}
