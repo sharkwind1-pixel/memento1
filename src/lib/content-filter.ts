@@ -66,11 +66,24 @@ const PET_DISRESPECT_PHRASES = [
     "안락사해",
 ];
 
-/** 텍스트 정규화: 공백/특수문자 제거, 소문자 변환 */
-function normalizeText(text: string): string {
+/**
+ * 숫자/특수문자 끼워넣기 우회 제거
+ * "시1발" → "시발", "보.지" → "보지", "씨 발" → "씨발"
+ */
+function stripEvasion(text: string): string {
     return text
         .replace(/[\s\u200B-\u200D\uFEFF]/g, "") // 공백 + 제로폭 문자 제거
+        .replace(/[0-9]/g, "")                     // 숫자 제거 (시1발 → 시발)
         .replace(/[.*_~\-!@#$%^&()=+[\]{}|;:'",.<>/?\\]/g, "") // 특수문자 제거
+        .toLowerCase()
+        .normalize("NFKC");
+}
+
+/** 텍스트 정규화 (일반용 - 숫자 유지) */
+function normalizeText(text: string): string {
+    return text
+        .replace(/[\s\u200B-\u200D\uFEFF]/g, "")
+        .replace(/[.*_~\-!@#$%^&()=+[\]{}|;:'",.<>/?\\]/g, "")
         .toLowerCase()
         .normalize("NFKC");
 }
@@ -82,13 +95,15 @@ export function checkProfanity(text: string): {
     reason: string;
     matchedWords: string[];
 } {
+    // 숫자/특수문자 끼워넣기 우회 제거 버전 + 일반 정규화 둘 다 체크
     const normalized = normalizeText(text);
+    const evasionStripped = stripEvasion(text);
     const matchedWords: string[] = [];
 
-    // 1. 확실한 욕설 매칭 (정규화 후 포함 여부)
+    // 1. 확실한 욕설 매칭 (정규화 + 우회 제거 둘 다 체크)
     for (const word of PROFANITY_EXACT) {
         const normalizedWord = normalizeText(word);
-        if (normalized.includes(normalizedWord)) {
+        if (normalized.includes(normalizedWord) || evasionStripped.includes(normalizedWord)) {
             matchedWords.push(word);
         }
     }
@@ -96,7 +111,7 @@ export function checkProfanity(text: string): {
     // 2. 반려동물 비하 구(phrase) 매칭
     for (const phrase of PET_DISRESPECT_PHRASES) {
         const normalizedPhrase = normalizeText(phrase);
-        if (normalized.includes(normalizedPhrase)) {
+        if (normalized.includes(normalizedPhrase) || evasionStripped.includes(normalizedPhrase)) {
             matchedWords.push(phrase);
         }
     }

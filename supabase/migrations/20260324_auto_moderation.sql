@@ -42,7 +42,27 @@ CREATE POLICY "관리자만 모더레이션 로그 조회" ON moderation_logs
 CREATE POLICY "서비스 역할 모더레이션 로그 관리" ON moderation_logs
     FOR ALL USING (true) WITH CHECK (true);
 
--- 3. 신고 누적 자동 숨김 트리거
+-- 3. 비추천(dislike) 시스템
+ALTER TABLE community_posts ADD COLUMN IF NOT EXISTS dislikes INTEGER DEFAULT 0;
+
+CREATE TABLE IF NOT EXISTS post_dislikes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    post_id UUID REFERENCES community_posts(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(post_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_post_dislikes_post_id ON post_dislikes(post_id);
+CREATE INDEX IF NOT EXISTS idx_post_dislikes_user_id ON post_dislikes(user_id);
+
+ALTER TABLE post_dislikes ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "post_dislikes_select_all" ON post_dislikes FOR SELECT USING (true);
+CREATE POLICY "post_dislikes_insert_own" ON post_dislikes FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "post_dislikes_delete_own" ON post_dislikes FOR DELETE USING (auth.uid() = user_id);
+
+-- 4. 신고 누적 자동 숨김 트리거
 CREATE OR REPLACE FUNCTION auto_hide_on_reports()
 RETURNS TRIGGER AS $$
 DECLARE

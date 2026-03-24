@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import {
     ArrowLeft,
     Heart,
+    ThumbsDown,
     MessageCircle,
     Eye,
     Clock,
@@ -148,9 +149,12 @@ export default function PostDetailView({
     const [isLoading, setIsLoading] = useState(true);
     const [isLiked, setIsLiked] = useState(false);
     const [likeCount, setLikeCount] = useState(0);
+    const [isDisliked, setIsDisliked] = useState(false);
+    const [dislikeCount, setDislikeCount] = useState(0);
     const [commentText, setCommentText] = useState("");
     const [isSubmittingComment, setIsSubmittingComment] = useState(false);
     const [isLiking, setIsLiking] = useState(false);
+    const [isDisliking, setIsDisliking] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isHidden, setIsHidden] = useState(false);
     const [isTogglingHidden, setIsTogglingHidden] = useState(false);
@@ -195,6 +199,8 @@ export default function PostDetailView({
             setPost(postData);
             setLikeCount(postData.likes ?? postData.likes_count ?? 0);
             setIsLiked(postData.userLiked ?? false);
+            setDislikeCount(postData.dislikes ?? 0);
+            setIsDisliked(postData.userDisliked ?? false);
             setIsHidden(postData.is_hidden ?? false);
 
             // 댓글 매핑
@@ -263,6 +269,36 @@ export default function PostDetailView({
             toast.error("좋아요 처리에 실패했습니다");
         } finally {
             setIsLiking(false);
+        }
+    };
+
+    // 비추천 토글
+    const handleDislike = async () => {
+        if (!user) {
+            window.dispatchEvent(new CustomEvent("openAuthModal"));
+            return;
+        }
+        if (isDisliking) return;
+
+        if (post && user.id === post.user_id) {
+            toast.info("자신의 글에는 비추천할 수 없습니다");
+            return;
+        }
+
+        setIsDisliking(true);
+        try {
+            const response = await authFetch(API.POST_DISLIKE(postId), {
+                method: "POST",
+            });
+            if (!response.ok) throw new Error("비추천 실패");
+
+            const data = await response.json();
+            setIsDisliked(data.disliked);
+            setDislikeCount(data.dislikes);
+        } catch {
+            toast.error("비추천 처리에 실패했습니다");
+        } finally {
+            setIsDisliking(false);
         }
     };
 
@@ -860,6 +896,18 @@ export default function PostDetailView({
                     >
                         <Heart className={`w-4 h-4 ${isLiked ? "fill-current" : ""}`} />
                         <span className="font-medium text-sm">{likeCount}</span>
+                    </button>
+                    <button
+                        onClick={handleDislike}
+                        disabled={isDisliking}
+                        className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition-all ${
+                            isDisliked
+                                ? "bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-500"
+                                : "bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:bg-gray-200 hover:text-gray-700 hover:border-gray-300"
+                        }`}
+                    >
+                        <ThumbsDown className={`w-4 h-4 ${isDisliked ? "fill-current" : ""}`} />
+                        <span className="font-medium text-sm">{dislikeCount}</span>
                     </button>
                     <button
                         onClick={() => commentInputRef.current?.focus()}

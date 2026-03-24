@@ -133,16 +133,26 @@ export async function GET(
             })(),
         ]);
 
-        // 현재 유저의 좋아요 여부 확인
+        // 현재 유저의 좋아요/비추천 여부 확인
         let userLiked = false;
+        let userDisliked = false;
         if (currentUser) {
-            const { data: likeRow } = await supabase
-                .from("post_likes")
-                .select("id")
-                .eq("post_id", id)
-                .eq("user_id", currentUser.id)
-                .maybeSingle();
-            userLiked = !!likeRow;
+            const [likeRes, dislikeRes] = await Promise.all([
+                supabase
+                    .from("post_likes")
+                    .select("id")
+                    .eq("post_id", id)
+                    .eq("user_id", currentUser.id)
+                    .maybeSingle(),
+                supabase
+                    .from("post_dislikes")
+                    .select("id")
+                    .eq("post_id", id)
+                    .eq("user_id", currentUser.id)
+                    .maybeSingle(),
+            ]);
+            userLiked = !!likeRes.data;
+            userDisliked = !!dislikeRes.data;
         }
 
         return NextResponse.json({
@@ -153,6 +163,7 @@ export async function GET(
                 authorIsAdmin: authorInfo.isAdmin,
                 comments: comments || [],
                 userLiked,
+                userDisliked,
             },
         });
     } catch {

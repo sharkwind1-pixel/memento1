@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
     Heart,
+    ThumbsDown,
     MessageCircle,
     Clock,
     PenSquare,
@@ -217,6 +218,12 @@ export default function CommunityPostList({
                                         <Heart className="w-3.5 h-3.5" />
                                         {post.likes ?? 0}
                                     </span>
+                                    {(post.dislikes ?? 0) > 0 && (
+                                        <span className="flex items-center gap-0.5 text-gray-400">
+                                            <ThumbsDown className="w-3.5 h-3.5" />
+                                            {post.dislikes}
+                                        </span>
+                                    )}
                                     <span className="flex items-center gap-0.5">
                                         <MessageCircle className="w-3.5 h-3.5" />
                                         {post.comments ?? 0}
