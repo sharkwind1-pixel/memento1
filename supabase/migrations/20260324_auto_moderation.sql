@@ -1,0 +1,106 @@
+-- =============================================
+-- 게시판 자동 모더레이션 시스템
+-- 1. community_posts에 모더레이션 컬럼 추가
+-- 2. moderation_logs 테이블 생성
+-- 3. 신고 누적 자동 숨김 트리거
+-- =============================================
+
+-- 1. community_posts 모더레이션 컬럼 추가
+ALTER TABLE community_posts ADD COLUMN IF NOT EXISTS moderation_status TEXT DEFAULT 'pending';
+-- pending: 검토 전, approved: AI 통과, rejected: AI 차단
+
+ALTER TABLE community_posts ADD COLUMN IF NOT EXISTS moderation_reason TEXT;
+-- AI가 차단한 사유 (rejected일 때만 값 있음)
+
+CREATE INDEX IF NOT EXISTS idx_community_posts_moderation
+    ON community_posts (moderation_status) WHERE moderation_status = 'rejected';
+
+-- 2. 모더레이션 로그 테이블
+CREATE TABLE IF NOT EXISTS moderation_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    post_id UUID REFERENCES community_posts(id) ON DELETE CASCADE,
+    filter_type TEXT NOT NULL,  -- 'profanity' | 'spam' | 'duplicate' | 'ai' | 'report'
+    result TEXT NOT NULL,       -- 'blocked' | 'approved' | 'flagged'
+    reason TEXT,
+    details JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_moderation_logs_post ON moderation_logs (post_id);
+CREATE INDEX IF NOT EXISTS idx_moderation_logs_type ON moderation_logs (filter_type);
+CREATE INDEX IF NOT EXISTS idx_moderation_logs_created ON moderation_logs (created_at DESC);
+
+-- RLS: 관리자만 조회 가능
+ALTER TABLE moderation_logs ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "관리자만 모더레이션 로그 조회" ON moderation_logs
+    FOR SELECT USING (
+        EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
+    );
+
+-- 서비스 역할은 모든 작업 가능 (AI 모더레이션 기록용)
+CREATE POLICY "서비스 역할 모더레이션 로그 관리" ON moderation_logs
+    FOR ALL USING (true) WITH CHECK (true);
+
+-- 3. 신고 누적 자동 숨김 트리거
+CREATE OR REPLACE FUNCTION auto_hide_on_reports()
+RETURNS TRIGGER AS $$
+DECLARE
+    report_count INTEGER;
+    threshold INTEGER := 3;
+BEGIN
+    -- post 타입 신고만 처리
+    IF NEW.target_type = 'post' AND NEW.status = 'pending' THEN
+        -- 해당 게시글의 pending/reviewing 신고 수 카운트
+        SELECT COUNT(*) INTO report_count
+        FROM reports
+        WHERE target_type = 'post'
+          AND target_id = NEW.target_id
+          AND status IN ('pending', 'reviewing');
+
+        -- 임계값 이상이면 자동 숨김
+        IF report_count >= threshold THEN
+            -- 게시글 숨김
+            UPDATE community_posts
+            SET is_hidden = true,
+                moderation_status = 'rejected',
+                moderation_reason = '신고 ' || report_count || '건 누적 자동 숨김'
+            WHERE id = NEW.target_id;
+
+            -- 관련 신고들 자동 해결 처리
+            UPDATE reports
+            SET status = 'resolved',
+                action_taken = 'content_removed',
+                resolution_note = '신고 누적 자동 숨김 (' || report_count || '건)',
+                resolved_at = NOW()
+            WHERE target_type = 'post'
+              AND target_id = NEW.target_id
+              AND status IN ('pending', 'reviewing');
+
+            -- 모더레이션 로그 기록
+            INSERT INTO moderation_logs (post_id, filter_type, result, reason, details)
+            VALUES (
+                NEW.target_id,
+                'report',
+                'blocked',
+                '신고 ' || report_count || '건 누적',
+                jsonb_build_object(
+                    'threshold', threshold,
+                    'report_count', report_count,
+                    'trigger_report_id', NEW.id
+                )
+            );
+        END IF;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 기존 트리거 삭제 후 재생성
+DROP TRIGGER IF EXISTS trigger_auto_hide_on_reports ON reports;
+
+CREATE TRIGGER trigger_auto_hide_on_reports
+    AFTER INSERT ON reports
+    FOR EACH ROW
+    EXECUTE FUNCTION auto_hide_on_reports();

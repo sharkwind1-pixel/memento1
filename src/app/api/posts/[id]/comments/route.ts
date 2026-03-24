@@ -154,6 +154,17 @@ export async function POST(
 
         const sanitizedContent = sanitizeInput(content).slice(0, 2000);
 
+        // 4.5. 콘텐츠 필터링 (비속어/스팸/도배)
+        const { moderateContent } = await import("@/lib/content-filter");
+        const filterResult = moderateContent("", sanitizedContent, user.id, { isComment: true });
+        if (!filterResult.allowed) {
+            console.warn(`[Content Filter] Comment ${filterResult.filterType}: ${user.id} - ${filterResult.reason}`);
+            return NextResponse.json(
+                { error: filterResult.reason, filterType: filterResult.filterType },
+                { status: 400 }
+            );
+        }
+
         // admin 클라이언트로 RLS 우회 (인증은 getAuthUser로 이미 검증됨)
         const adminSupabase = createAdminSupabase();
 

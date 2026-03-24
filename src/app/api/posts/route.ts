@@ -310,6 +310,20 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "유효하지 않은 입력입니다" }, { status: 400 });
         }
 
+        // 4.5. 콘텐츠 필터링 (비속어/스팸/도배)
+        const { moderateContent } = await import("@/lib/content-filter");
+        const filterResult = moderateContent(sanitizedTitle, sanitizedContent, user.id, {
+            imageUrls: Array.isArray(imageUrls) ? imageUrls : [],
+            boardType,
+        });
+        if (!filterResult.allowed) {
+            console.warn(`[Content Filter] ${filterResult.filterType}: ${user.id} - ${filterResult.reason}`);
+            return NextResponse.json(
+                { error: filterResult.reason, filterType: filterResult.filterType },
+                { status: 400 }
+            );
+        }
+
         // 5. 이미지 URL 검증 (최대 5개, URL 형식)
         const validImageUrls = Array.isArray(imageUrls)
             ? imageUrls.filter((url: string) => typeof url === "string" && url.startsWith("http")).slice(0, 5)
@@ -375,6 +389,19 @@ export async function POST(request: NextRequest) {
             await awardPoints(supabase, user.id, "write_post", { postId: data.id });
         } catch {
             // 포인트 적립 실패 무시
+        }
+
+        // 6.5. AI 모더레이션 (비동기 - 응답 대기 안 함)
+        try {
+            const { MODERATION } = await import("@/config/constants");
+            if (MODERATION.AI_MODERATION_ENABLED) {
+                const { moderateWithAI } = await import("@/lib/ai-moderation");
+                moderateWithAI(data.id, sanitizedTitle, sanitizedContent).catch(
+                    (err: Error) => console.error("[AI Moderation] Error:", err.message)
+                );
+            }
+        } catch {
+            // AI 모더레이션 초기화 실패 무시
         }
 
         return NextResponse.json({ post: data, pointsEarned: 10 });

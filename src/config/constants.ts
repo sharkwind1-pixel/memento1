@@ -246,6 +246,14 @@ export const VIDEO = {
     MAX_POLL_COUNT: 60,         // 최대 폴링 횟수 (15분)
 } as const;
 
+// ===== 콘텐츠 모더레이션 =====
+export const MODERATION = {
+    AUTO_HIDE_REPORT_THRESHOLD: 3,      // 신고 N건 이상 자동 숨김
+    DUPLICATE_WINDOW_MS: 5 * 60 * 1000, // 도배 감지 시간 (5분)
+    MAX_URLS_IN_POST: 3,                // 게시글 내 최대 URL 수
+    AI_MODERATION_ENABLED: true,        // AI 모더레이션 on/off
+} as const;
+
 // ===== PostgreSQL 에러 코드 =====
 export const PG_ERROR_CODES = {
     UNIQUE_VIOLATION: "23505",
