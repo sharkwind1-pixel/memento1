@@ -124,7 +124,7 @@ export function checkProfanity(text: string): {
     }
 
     // 중복 제거
-    const uniqueMatched = [...new Set(matchedWords)];
+    const uniqueMatched = Array.from(new Set(matchedWords));
 
     return {
         blocked: uniqueMatched.length > 0,
