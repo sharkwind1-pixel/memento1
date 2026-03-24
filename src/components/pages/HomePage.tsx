@@ -177,9 +177,9 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
 
                 {/* 펫매거진(좌) + 추모(우) 2컬럼 */}
                 <section className="px-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10 items-start md:items-stretch">
                         {/* 좌: 펫매거진 미리보기 */}
-                        <div className="space-y-6">
+                        <div className="space-y-6 flex flex-col">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center space-x-3">
                                     <div className={`w-10 h-10 flex-shrink-0 bg-gradient-to-br ${isMemorialMode ? "from-amber-500 to-orange-400 shadow-amber-500/20" : "from-emerald-500 to-teal-400 shadow-emerald-500/20"} rounded-2xl flex items-center justify-center shadow-sm`}>
@@ -198,15 +198,15 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
                                 </button>
                             </div>
                             {isLoadingMagazine ? (
-                                <div className="space-y-3">
+                                <div className="space-y-3 flex-1">
                                     {[1, 2, 3].map(i => (
                                         <div key={i} className="h-20 rounded-2xl bg-gray-200 dark:bg-gray-700 animate-pulse" />
                                     ))}
                                 </div>
                             ) : magazineArticles.length === 0 ? (
-                                <p className="text-sm text-gray-400 dark:text-gray-500 py-8 text-center">아직 매거진이 없습니다</p>
+                                <p className="text-sm text-gray-400 dark:text-gray-500 py-8 text-center flex-1 flex items-center justify-center">아직 매거진이 없습니다</p>
                             ) : (
-                                <div className="space-y-3">
+                                <div className="space-y-3 flex-1 flex flex-col justify-between">
                                     {magazineArticles.map((article) => (
                                         <button
                                             key={article.id}
@@ -240,7 +240,7 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
                         </div>
 
                         {/* 우: 추모 섹션 */}
-                        <div>
+                        <div className="flex flex-col">
                             <MemorialSection
                                 isLoadingMemorial={isLoadingMemorial}
                                 displayMemorialData={displayMemorialData}
