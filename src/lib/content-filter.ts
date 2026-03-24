@@ -197,7 +197,11 @@ const recentPostCache = new Map<string, { hash: string; timestamp: number }[]>()
 /** 캐시 정리 (오래된 항목 제거) */
 function cleanupCache() {
     const now = Date.now();
-    for (const [userId, entries] of recentPostCache.entries()) {
+    const keys = Array.from(recentPostCache.keys());
+    for (let i = 0; i < keys.length; i++) {
+        const userId = keys[i];
+        const entries = recentPostCache.get(userId);
+        if (!entries) continue;
         const valid = entries.filter(e => now - e.timestamp < MODERATION.DUPLICATE_WINDOW_MS);
         if (valid.length === 0) {
             recentPostCache.delete(userId);
