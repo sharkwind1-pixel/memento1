@@ -667,7 +667,7 @@ export async function buildAIContext(
     // 케어 질문이면 관련 매거진 기사 검색해서 프롬프트에 추가
     if (isCareQuery && !isMemorialMode) {
         try {
-            const magazineCtx = await findRelatedMagazineArticles(sanitizedMessage, supabase);
+            const magazineCtx = await findRelatedMagazineArticles(sanitizedMessage);
             if (magazineCtx) {
                 systemPrompt += magazineCtx;
             }

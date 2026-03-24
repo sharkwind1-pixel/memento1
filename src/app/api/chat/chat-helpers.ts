@@ -768,10 +768,13 @@ export function getPersonalityBehavior(personality: string, isMemorial: boolean)
  * 케어 질문일 때만 호출, 최대 2개 기사 반환
  */
 export async function findRelatedMagazineArticles(
-    userMessage: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    supabase: any
+    userMessage: string
 ): Promise<string> {
+    const { createClient } = await import("@supabase/supabase-js");
+    const sb = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+        process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
+    );
     const msgLower = userMessage.toLowerCase();
 
     // 케어 키워드 → 매거진 검색어 매핑
@@ -792,7 +795,7 @@ export async function findRelatedMagazineArticles(
     try {
         // title과 summary에서 키워드 검색 (ilike)
         const searchQuery = searchTerms[0];
-        const { data, error } = await supabase
+        const { data, error } = await sb
             .from("magazine_articles")
             .select("id, title, summary, category")
             .or(`title.ilike.%${searchQuery}%,summary.ilike.%${searchQuery}%`)
