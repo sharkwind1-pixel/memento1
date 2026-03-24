@@ -7,7 +7,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import { usePets } from "@/contexts/PetContext";
+import { usePets, useMemorialMode } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,6 +61,7 @@ const SCHEDULE_TYPES = [
 const DAYS_OF_WEEK = ["일", "월", "화", "수", "목", "금", "토"];
 
 function RemindersPage() {
+    const { isMemorialMode } = useMemorialMode();
     const { user, loading: authLoading } = useAuth();
     const { pets, selectedPetId, isLoading: petsLoading } = usePets();
 
@@ -249,10 +250,10 @@ function RemindersPage() {
     if (!user) {
         return (
             <div className="min-h-screen relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-b from-memento-50 via-memento-75 to-white" />
+                <div className={`absolute inset-0 bg-gradient-to-b ${isMemorialMode ? "from-amber-50 via-amber-50/50 to-white" : "from-memento-50 via-memento-75 to-white"}`} />
                 <div className="relative z-10 flex flex-col items-center justify-center min-h-[60vh] px-4">
                     <div className="w-24 h-24 rounded-full bg-gradient-to-br from-memento-100 to-memento-200 flex items-center justify-center mb-6">
-                        <LogIn className="w-12 h-12 text-memento-600" />
+                        <LogIn className={`w-12 h-12 ${isMemorialMode ? "text-amber-600" : "text-memento-600"}`} />
                     </div>
                     <h2 className="text-2xl font-display font-bold text-gray-800 mb-2">
                         로그인이 필요해요
@@ -262,7 +263,7 @@ function RemindersPage() {
                     </p>
                     <Button
                         onClick={() => window.dispatchEvent(new CustomEvent("openAuthModal"))}
-                        className="bg-gradient-to-r from-memento-500 to-memento-400 hover:from-memento-600 hover:to-memento-500 text-white px-8"
+                        className={`bg-gradient-to-r ${isMemorialMode ? "from-amber-500 to-orange-400 hover:from-amber-600 hover:to-orange-500" : "from-memento-500 to-memento-400 hover:from-memento-600 hover:to-memento-500"} text-white px-8`}
                     >
                         <LogIn className="w-4 h-4 mr-2" />
                         로그인하기
@@ -273,19 +274,19 @@ function RemindersPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-memento-50 via-memento-75 to-white">
+        <div className={`min-h-screen bg-gradient-to-b ${isMemorialMode ? "from-amber-50 via-amber-50/50 to-white" : "from-memento-50 via-memento-75 to-white"}`}>
             {/* 헤더 */}
             <div className="bg-white/80 backdrop-blur-lg border-b border-gray-200/50 px-4 py-3 sticky top-0 z-10">
                 <div className="max-w-2xl mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <Bell className="w-5 h-5 text-memento-600" />
+                        <Bell className={`w-5 h-5 ${isMemorialMode ? "text-amber-600" : "text-memento-600"}`} />
                         <h1 className="font-semibold text-gray-800">케어 리마인더</h1>
                     </div>
 
                     <Button
                         size="sm"
                         onClick={() => setIsModalOpen(true)}
-                        className="bg-gradient-to-r from-memento-500 to-memento-400 hover:from-memento-600 hover:to-memento-500 text-white"
+                        className={`bg-gradient-to-r ${isMemorialMode ? "from-amber-500 to-orange-400 hover:from-amber-600 hover:to-orange-500" : "from-memento-500 to-memento-400 hover:from-memento-600 hover:to-memento-500"} text-white`}
                     >
                         <Plus className="w-4 h-4 mr-1" />
                         리마인더 추가
@@ -303,7 +304,7 @@ function RemindersPage() {
                     <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="reminder-modal-title">
                         <div className="sticky top-0 bg-white border-b px-4 py-3 flex items-center justify-between rounded-t-2xl">
                             <h2 id="reminder-modal-title" className="font-semibold text-gray-800 flex items-center gap-2">
-                                <Bell className="w-5 h-5 text-memento-600" />
+                                <Bell className={`w-5 h-5 ${isMemorialMode ? "text-amber-600" : "text-memento-600"}`} />
                                 새 리마인더
                             </h2>
                             <button
@@ -478,7 +479,7 @@ function RemindersPage() {
                             <Button
                                 onClick={handleCreateReminder}
                                 disabled={!newReminder.petId || !newReminder.title}
-                                className="w-full bg-gradient-to-r from-memento-500 to-memento-400 hover:from-memento-600 hover:to-memento-500 text-white"
+                                className={`w-full bg-gradient-to-r ${isMemorialMode ? "from-amber-500 to-orange-400 hover:from-amber-600 hover:to-orange-500" : "from-memento-500 to-memento-400 hover:from-memento-600 hover:to-memento-500"} text-white`}
                             >
                                 리마인더 추가
                             </Button>
@@ -509,7 +510,7 @@ function RemindersPage() {
                         <Button
                             onClick={() => setIsModalOpen(true)}
                             variant="outline"
-                            className="border-memento-500 text-memento-600 hover:bg-memento-100"
+                            className={`border-memento-500 ${isMemorialMode ? "text-amber-600" : "text-memento-600"} hover:bg-memento-100`}
                         >
                             <Plus className="w-4 h-4 mr-1" />
                             첫 리마인더 만들기
@@ -564,7 +565,7 @@ function RemindersPage() {
                                                 onClick={() => handleToggle(reminder.id, reminder.enabled)}
                                                 className={`p-2 rounded-lg transition-colors ${
                                                     reminder.enabled
-                                                        ? "text-memento-600 hover:bg-memento-100"
+                                                        ? `${isMemorialMode ? "text-amber-600" : "text-memento-600"} hover:bg-memento-100`
                                                         : "text-gray-400 hover:bg-gray-100"
                                                 }`}
                                                 title={reminder.enabled ? "비활성화" : "활성화"}

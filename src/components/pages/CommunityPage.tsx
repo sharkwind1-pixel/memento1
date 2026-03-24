@@ -8,7 +8,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
-import { usePets } from "@/contexts/PetContext";
+import { usePets, useMemorialMode } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/auth-fetch";
 import WritePostModal from "@/components/features/community/WritePostModal";
@@ -31,6 +31,7 @@ import {
 import { safeGetItem, safeSetItem, safeSessionGetItem, safeSessionRemoveItem } from "@/lib/safe-storage";
 
 function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey }: CommunityPageProps) {
+    const { isMemorialMode } = useMemorialMode();
     const { selectedPet } = usePets();
     const { user } = useAuth();
 
@@ -202,9 +203,6 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey }:
     useEffect(() => { safeSetItem("memento-community-badge", selectedBadge); }, [selectedBadge]);
     useEffect(() => { safeSetItem("memento-community-region", selectedRegion); }, [selectedRegion]);
     useEffect(() => { safeSetItem("memento-community-sort", sortBy); }, [sortBy]);
-
-    // 추모 모드 여부 확인
-    const isMemorialMode = selectedPet?.status === "memorial";
 
     // 모드에 따라 서브카테고리 필터링 (일상 모드에서는 추모게시판 숨김)
     const visibleSubcategories = SUBCATEGORIES.filter(
@@ -396,8 +394,8 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey }:
                 className="min-h-screen relative overflow-hidden"
                 style={{ contain: 'layout style', transform: 'translateZ(0)' }}
             >
-                <div className="absolute inset-0 bg-gradient-to-br from-memento-50 via-memento-75 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
-                    <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-r from-memento-300/30 to-sky-200/30 dark:from-blue-800/20 dark:to-sky-800/20 rounded-full blur-3xl animate-pulse" />
+                <div className={`absolute inset-0 bg-gradient-to-br ${isMemorialMode ? "from-amber-50 via-amber-50/50 to-white" : "from-memento-50 via-memento-75 to-white"} dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300`}>
+                    <div className={`absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-r ${isMemorialMode ? "from-amber-300/30 to-orange-200/30" : "from-memento-300/30 to-sky-200/30"} dark:from-blue-800/20 dark:to-sky-800/20 rounded-full blur-3xl animate-pulse`} />
                 </div>
                 <div className="relative z-10 pb-8">
                     <PostDetailView
@@ -443,8 +441,8 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey }:
             style={{ contain: 'layout style', transform: 'translateZ(0)' }}
         >
             {/* 배경 */}
-            <div className="absolute inset-0 bg-gradient-to-br from-memento-50 via-memento-75 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
-                <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-r from-memento-300/30 to-sky-200/30 dark:from-blue-800/20 dark:to-sky-800/20 rounded-full blur-3xl animate-pulse" />
+            <div className={`absolute inset-0 bg-gradient-to-br ${isMemorialMode ? "from-amber-50 via-amber-50/50 to-white" : "from-memento-50 via-memento-75 to-white"} dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300`}>
+                <div className={`absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-r ${isMemorialMode ? "from-amber-300/30 to-orange-200/30" : "from-memento-300/30 to-sky-200/30"} dark:from-blue-800/20 dark:to-sky-800/20 rounded-full blur-3xl animate-pulse`} />
             </div>
 
             <div className="relative z-10 space-y-6 pb-8">

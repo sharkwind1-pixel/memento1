@@ -10,7 +10,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { usePets, Pet, PetPhoto } from "@/contexts/PetContext";
+import { usePets, Pet, PetPhoto, useMemorialMode } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent } from "@/components/ui/card";
@@ -52,6 +52,7 @@ interface RecordPageProps {
 }
 
 function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false }: RecordPageProps) {
+    const { isMemorialMode } = useMemorialMode();
     const { user, signOut, updateProfile, isPremiumUser, isAdminUser, points, userPetType, checkNickname, subscriptionTier } = useAuth();
     const {
         pets,
@@ -315,7 +316,7 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
     return (
         /* overflow-hidden/contain 미사용: 사진 앨범 등 동적 콘텐츠의 페이지 스크롤 보장 */
         <div className="min-h-screen relative pb-24">
-            <div className="absolute inset-0 bg-gradient-to-b from-memento-50 via-memento-75 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900" />
+            <div className={`absolute inset-0 bg-gradient-to-b ${isMemorialMode ? "from-amber-50 via-amber-50/50 to-white" : "from-memento-50 via-memento-75 to-white"} dark:from-gray-900 dark:via-gray-800 dark:to-gray-900`} />
             <div className="relative z-10 max-w-4xl mx-auto px-4 py-6">
                 {/* 페이지 헤더 */}
                 <div className="flex items-center justify-between mb-4">
@@ -330,7 +331,7 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
                         onClick={() => setActiveTab("pets")}
                         className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl font-medium transition-all text-sm sm:text-base ${
                             activeTab === "pets"
-                                ? "bg-memento-500 text-white shadow-lg"
+                                ? `${isMemorialMode ? "bg-amber-500" : "bg-memento-500"} text-white shadow-lg`
                                 : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                         }`}
                     >
@@ -342,7 +343,7 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
                         onClick={() => setActiveTab("profile")}
                         className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl font-medium transition-all text-sm sm:text-base ${
                             activeTab === "profile"
-                                ? "bg-memento-500 text-white shadow-lg"
+                                ? `${isMemorialMode ? "bg-amber-500" : "bg-memento-500"} text-white shadow-lg`
                                 : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                         }`}
                     >
@@ -355,7 +356,7 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
                         data-tutorial-id="minihompy-tab"
                         className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl font-medium transition-all text-sm sm:text-base ${
                             activeTab === "minihompy"
-                                ? "bg-gradient-to-r from-memento-500 to-memento-400 text-white shadow-lg"
+                                ? `bg-gradient-to-r ${isMemorialMode ? "from-amber-500 to-orange-400" : "from-memento-500 to-memento-400"} text-white shadow-lg`
                                 : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                         }`}
                     >
@@ -368,7 +369,7 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
                         <Button
                             onClick={handleAddNewPet}
                             size="sm"
-                            className="bg-memento-500 hover:bg-memento-600 text-sm"
+                            className={`${isMemorialMode ? "bg-amber-500 hover:bg-amber-600" : "bg-memento-500 hover:bg-memento-600"} text-sm`}
                             data-tutorial-id="add-pet-button"
                         >
                             <Plus className="w-4 h-4 sm:mr-1" />
@@ -440,8 +441,8 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
                         ) : pets.length === 0 ? (
                             <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
                                 <CardContent className="flex flex-col items-center justify-center py-16">
-                                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-memento-100 to-memento-200 flex items-center justify-center mb-4">
-                                        <PawPrint className="w-10 h-10 text-memento-600" />
+                                    <div className={`w-20 h-20 rounded-full bg-gradient-to-br ${isMemorialMode ? "from-amber-100 to-amber-200" : "from-memento-100 to-memento-200"} flex items-center justify-center mb-4`}>
+                                        <PawPrint className={`w-10 h-10 ${isMemorialMode ? "text-amber-600" : "text-memento-600"}`} />
                                     </div>
                                     <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">
                                         아직 등록된 반려동물이 없어요
@@ -453,7 +454,7 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
                                     </p>
                                     <Button
                                         onClick={handleAddNewPet}
-                                        className="bg-gradient-to-r from-memento-500 to-memento-400"
+                                        className={`bg-gradient-to-r ${isMemorialMode ? "from-amber-500 to-orange-400" : "from-memento-500 to-memento-400"}`}
                                     >
                                         <Plus className="w-4 h-4 mr-2" />
                                         반려동물 등록하기
