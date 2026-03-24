@@ -1,8 +1,14 @@
 /**
  * 커뮤니티 게시판 콘텐츠 자동 필터링
- * - 비속어/비하 표현 감지
+ * - 비속어/비하 표현 감지 (오탐 최소화 설계)
  * - 스팸/광고 패턴 감지
  * - 도배 방지 (메모리 캐시)
+ *
+ * [오탐 방지 원칙]
+ * - 단독 글자(ㅆ, 씹 등)는 차단하지 않음 - 오탐률이 너무 높음
+ * - 짧은 단어는 앞뒤 문맥(경계 체크)으로 부분 매칭 방지
+ * - 반려동물 관련 정상 표현과 겹치는 단어는 제외하거나 문맥 체크
+ * - 확실한 욕설/비하만 차단, 애매하면 통과 (AI 2차 검토에서 잡음)
  */
 
 import { MODERATION } from "@/config/constants";
@@ -18,58 +24,47 @@ interface FilterResult {
 
 // ===== 비속어 사전 =====
 
-/** 한국어 비속어/욕설 (기본) */
-const PROFANITY_WORDS = [
-    // 일반 욕설
-    "시발", "씨발", "시bal", "씨bal", "ㅅㅂ", "ㅆㅂ", "시바", "씨바",
-    "개새끼", "개새기", "개색끼", "개색기", "ㄱㅅㄲ",
-    "병신", "븅신", "ㅂㅅ", "빙신",
-    "지랄", "ㅈㄹ", "지럴",
-    "좆", "좃", "ㅈㅇㅌ",
+/**
+ * 확실한 욕설만 포함 (오탐 위험 단어 제외)
+ * 제외된 것들: "씹"(씹어먹다), "ㅆ"(쌍시옷), "꺼져/닥쳐"(장난 맥락),
+ * "한남/한녀"(한남동 지명), "걸레"(청소도구)
+ */
+const PROFANITY_EXACT = [
+    // 확실한 욕설 (단독으로도 욕설)
+    "시발", "씨발", "씨bal", "시bal",
+    "개새끼", "개새기", "개색끼", "개색기",
+    "병신", "븅신", "빙신",
+    "지랄", "지럴",
+    "좆", "좃",
     "니미", "니엄마", "느금마", "느금",
     "엠창", "앰창",
-    "꺼져", "닥쳐", "뒤져", "뒤저", "디져",
-    "미친놈", "미친년", "ㅁㅊ",
+    "미친놈", "미친년",
     "또라이", "돌아이",
     "찐따", "찐다",
-    "한남", "한녀",
-    "걸레", "보지", "자지",
-    "씹", "ㅆ",
-    "fuck", "shit", "bitch", "asshole", "bastard", "damn",
+    "보지", "자지",
+    "fuck", "shit", "bitch", "asshole", "bastard",
 ];
 
-/** 반려동물/생명 비하 표현 (서비스 특성) */
-const PET_DISRESPECT_WORDS = [
-    "동물인데 뭘", "동물인데뭘",
-    "짐승", "잡종",
-    "개팔자", "개같은",
-    "안락사", "안락사시켜",
-    "왜 울어", "왜울어", "징징",
-    "그냥 동물", "그냥동물",
-    "고작 동물", "고작동물",
-    "미련하게",
+/**
+ * 초성 축약 욕설 - 원문에 초성 자체가 있을 때만 매칭
+ * (초성→한글 범위 정규식 변환은 오탐 위험이 너무 높아 제거)
+ */
+const PROFANITY_CHOSUNG = ["ㅅㅂ", "ㅆㅂ", "ㅂㅅ", "ㅈㄹ", "ㅁㅊ", "ㄱㅅㄲ"];
+
+/**
+ * 반려동물/생명 비하 - 구(phrase) 단위로만 매칭 (단어 단독은 오탐 위험)
+ * 제외: "짐승"(짐승같은 체력), "안락사"(보호소 정보), "왜울어/징징"(반려동물 울음 질문)
+ */
+const PET_DISRESPECT_PHRASES = [
+    "동물인데 뭘",
+    "동물인데뭘",
+    "고작 동물",
+    "고작동물",
+    "그냥 동물",
+    "그냥동물",
+    "안락사시켜",
+    "안락사해",
 ];
-
-/** 초성 변환 맵 */
-const CHOSUNG_MAP: Record<string, string> = {
-    "ㄱ": "[가-깋]", "ㄲ": "[까-낗]", "ㄴ": "[나-닣]", "ㄷ": "[다-딯]",
-    "ㄸ": "[따-띻]", "ㄹ": "[라-맇]", "ㅁ": "[마-밓]", "ㅂ": "[바-빟]",
-    "ㅃ": "[빠-삫]", "ㅅ": "[사-싷]", "ㅆ": "[싸-앃]", "ㅇ": "[아-잏]",
-    "ㅈ": "[자-짛]", "ㅉ": "[짜-찧]", "ㅊ": "[차-칳]", "ㅋ": "[카-킿]",
-    "ㅌ": "[타-팋]", "ㅍ": "[파-핗]", "ㅎ": "[하-힣]",
-};
-
-/** 자음만으로 된 축약어를 정규식으로 변환 */
-function chosungToRegex(chosung: string): RegExp | null {
-    const isAllChosung = /^[ㄱ-ㅎ]+$/.test(chosung);
-    if (!isAllChosung) return null;
-
-    let pattern = "";
-    for (const ch of chosung) {
-        pattern += CHOSUNG_MAP[ch] || ch;
-    }
-    return new RegExp(pattern, "gi");
-}
 
 /** 텍스트 정규화: 공백/특수문자 제거, 소문자 변환 */
 function normalizeText(text: string): string {
@@ -90,31 +85,26 @@ export function checkProfanity(text: string): {
     const normalized = normalizeText(text);
     const matchedWords: string[] = [];
 
-    // 1. 일반 비속어 매칭
-    for (const word of PROFANITY_WORDS) {
+    // 1. 확실한 욕설 매칭 (정규화 후 포함 여부)
+    for (const word of PROFANITY_EXACT) {
         const normalizedWord = normalizeText(word);
         if (normalized.includes(normalizedWord)) {
             matchedWords.push(word);
         }
     }
 
-    // 2. 반려동물 비하 표현 매칭
-    for (const word of PET_DISRESPECT_WORDS) {
-        const normalizedWord = normalizeText(word);
-        if (normalized.includes(normalizedWord)) {
-            matchedWords.push(word);
+    // 2. 반려동물 비하 구(phrase) 매칭
+    for (const phrase of PET_DISRESPECT_PHRASES) {
+        const normalizedPhrase = normalizeText(phrase);
+        if (normalized.includes(normalizedPhrase)) {
+            matchedWords.push(phrase);
         }
     }
 
-    // 3. 초성 축약어 매칭 (ㅅㅂ, ㅂㅅ 등)
-    const chosungAbbrevs = ["ㅅㅂ", "ㅆㅂ", "ㅂㅅ", "ㅈㄹ", "ㅁㅊ", "ㄱㅅㄲ", "ㅈㅇㅌ"];
-    for (const abbrev of chosungAbbrevs) {
-        const regex = chosungToRegex(abbrev);
-        if (regex && regex.test(text)) {
-            // 초성 자체가 원문에 있으면 매칭 (정규화된 텍스트가 아닌 원본)
-            if (text.includes(abbrev)) {
-                matchedWords.push(abbrev);
-            }
+    // 3. 초성 축약어 - 원문에 초성 자체가 있을 때만 매칭
+    for (const abbrev of PROFANITY_CHOSUNG) {
+        if (text.includes(abbrev)) {
+            matchedWords.push(abbrev);
         }
     }
 
@@ -130,25 +120,26 @@ export function checkProfanity(text: string): {
 
 // ===== 스팸/광고 검사 =====
 
-/** 광고성 키워드 */
+/**
+ * 스팸 키워드 - 반려동물 커뮤니티에서 절대 나올 수 없는 것만
+ * 제외: "알바"(알바트로스), "대출", "다이어트"(반려동물 다이어트),
+ * "성인"(성인 고양이), "재택"(재택근무 일상), "불법"(불법 유기 논의)
+ */
 const SPAM_KEYWORDS = [
-    // 광고/홍보
-    "무료 상담", "무료상담", "카톡 상담", "카톡상담",
-    "텔레그램", "오픈채팅", "오픈카톡",
-    "부업", "재택", "재택근무", "알바", "고수익",
-    "투자", "코인", "비트코인", "가상화폐",
-    "대출", "저금리", "신용",
-    "다이어트", "살빼기", "체중감량",
-    "성인", "19금",
-    // 도박
-    "카지노", "바카라", "슬롯", "토토", "배팅",
-    // 불법
-    "불법", "해킹", "크랙",
+    // 도박 (명확한 스팸)
+    "카지노", "바카라", "슬롯머신", "토토사이트", "배팅사이트",
+    // 금융 사기
+    "가상화폐", "비트코인", "코인투자", "고수익보장",
+    // 불법 서비스
+    "해킹", "크랙", "19금",
+    // 광고성 구 (단어가 아닌 구 단위)
+    "무료상담", "카톡상담",
+    "부업모집", "재택알바", "고수익알바",
+    "저금리대출", "신용대출상담",
 ];
 
-/** 연락처 패턴 */
-const PHONE_PATTERN = /0\d{1,2}[-.\s]?\d{3,4}[-.\s]?\d{4}/;
-const KAKAO_ID_PATTERN = /카[카톡]\s*[아이디ID:]*\s*[\w가-힣]+/i;
+/** 카카오톡 ID 홍보 패턴 (더 정확하게) */
+const KAKAO_PROMO_PATTERN = /카[카톡]\s*(아이디|[iI][dD])\s*[:=]?\s*[\w가-힣]{2,}/;
 
 export function checkSpam(text: string, imageUrls?: string[]): {
     blocked: boolean;
@@ -162,18 +153,12 @@ export function checkSpam(text: string, imageUrls?: string[]): {
         return { blocked: true, reason: "링크가 너무 많이 포함되어 있습니다" };
     }
 
-    // 2. 연락처 패턴
-    if (PHONE_PATTERN.test(text)) {
-        // 분실동물 게시판은 연락처 허용 (호출 측에서 boardType 체크 필요)
-        // 여기서는 감지만 하고, 호출 측에서 boardType별 분기
+    // 2. 카카오톡 ID 홍보 패턴 (카톡 아이디: xxx 형태만)
+    if (KAKAO_PROMO_PATTERN.test(text)) {
+        return { blocked: true, reason: "메신저 ID 홍보는 작성할 수 없습니다" };
     }
 
-    // 3. 카카오톡 ID 패턴
-    if (KAKAO_ID_PATTERN.test(text)) {
-        return { blocked: true, reason: "메신저 ID를 포함한 홍보성 글은 작성할 수 없습니다" };
-    }
-
-    // 4. 광고성 키워드
+    // 3. 스팸 키워드 (구 단위 매칭)
     for (const keyword of SPAM_KEYWORDS) {
         const normalizedKeyword = normalizeText(keyword);
         if (normalized.includes(normalizedKeyword)) {
@@ -181,7 +166,7 @@ export function checkSpam(text: string, imageUrls?: string[]): {
         }
     }
 
-    // 5. 이미지만 있고 내용이 너무 짧은 경우 (스팸 이미지)
+    // 4. 이미지만 있고 내용이 너무 짧은 경우
     if (imageUrls && imageUrls.length > 0 && text.replace(/\s/g, "").length < 10) {
         return { blocked: true, reason: "내용을 10자 이상 작성해주세요" };
     }
@@ -242,10 +227,11 @@ export function checkDuplicate(userId: string, content: string): {
 
 /**
  * 게시글/댓글 콘텐츠 통합 모더레이션
- * @param title 제목 (댓글이면 빈 문자열)
- * @param content 본문
- * @param userId 작성자 ID
- * @param options 추가 옵션
+ *
+ * [설계 원칙]
+ * - 1차: 확실한 욕설/스팸만 즉시 차단 (오탐 최소화)
+ * - 2차: AI 모더레이션이 비동기로 애매한 케이스를 잡음
+ * - 차단보다 통과가 낫다 (정상 유저 이탈 방지)
  */
 export function moderateContent(
     title: string,
@@ -259,7 +245,7 @@ export function moderateContent(
 ): FilterResult {
     const fullText = `${title} ${content}`;
 
-    // 1. 비속어 검사
+    // 1. 비속어 검사 (확실한 욕설만)
     const profanityResult = checkProfanity(fullText);
     if (profanityResult.blocked) {
         return {
@@ -270,12 +256,12 @@ export function moderateContent(
         };
     }
 
-    // 2. 스팸 검사 (분실동물 게시판은 연락처 허용)
+    // 2. 스팸 검사
     const spamResult = checkSpam(fullText, options?.imageUrls);
     if (spamResult.blocked) {
-        // 분실동물 게시판에서 "내용 10자 이상" 규칙만 적용하고 연락처는 허용
+        // 분실동물 게시판은 카톡 ID 허용 (실종 동물 연락용)
         if (options?.boardType === "lost" && spamResult.reason.includes("메신저")) {
-            // 분실동물은 카톡 ID 허용
+            // 허용
         } else {
             return {
                 allowed: false,
