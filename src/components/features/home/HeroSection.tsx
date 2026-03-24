@@ -40,8 +40,8 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
 
                 <div className="relative z-10 p-6 sm:p-8 md:p-10 lg:p-12">
                     <div className="md:grid md:grid-cols-2 md:gap-8 lg:gap-12 items-center">
-                        {/* 일러스트 */}
-                        <div className="flex justify-center mb-6 md:mb-0 md:order-last">
+                        {/* 일러스트 — 다크모드에서는 숨김 (밝은 배경 이미지가 다크와 충돌) */}
+                        <div className="flex justify-center mb-6 md:mb-0 md:order-last dark:hidden">
                             <div
                                 className="relative w-[240px] h-[240px] sm:w-[300px] sm:h-[300px] md:w-[380px] md:h-[380px] lg:w-[440px] lg:h-[440px]"
                                 style={{ mask: "radial-gradient(ellipse 80% 80% at center, black 60%, transparent 100%)", WebkitMask: "radial-gradient(ellipse 80% 80% at center, black 60%, transparent 100%)" }}
