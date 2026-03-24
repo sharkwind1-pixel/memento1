@@ -43,8 +43,8 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
                         {/* 일러스트 */}
                         <div className="flex justify-center mb-6 md:mb-0 md:order-last">
                             <div
-                                className="relative w-[200px] h-[200px] sm:w-[260px] sm:h-[260px] md:w-[320px] md:h-[320px] lg:w-[380px] lg:h-[380px]"
-                                style={{ mask: "radial-gradient(ellipse 70% 70% at center, black 50%, transparent 100%)", WebkitMask: "radial-gradient(ellipse 70% 70% at center, black 50%, transparent 100%)" }}
+                                className="relative w-[240px] h-[240px] sm:w-[300px] sm:h-[300px] md:w-[380px] md:h-[380px] lg:w-[440px] lg:h-[440px]"
+                                style={{ mask: "radial-gradient(ellipse 80% 80% at center, black 60%, transparent 100%)", WebkitMask: "radial-gradient(ellipse 80% 80% at center, black 60%, transparent 100%)" }}
                             >
                                 <Image
                                     src="/images/hero-illustration.png"
@@ -52,7 +52,7 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
                                     fill
                                     className="object-contain drop-shadow-lg"
                                     priority
-                                    sizes="(max-width: 768px) 200px, 300px"
+                                    sizes="(max-width: 768px) 240px, 440px"
                                 />
                             </div>
                         </div>
