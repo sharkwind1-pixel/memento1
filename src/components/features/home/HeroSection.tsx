@@ -29,11 +29,11 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
 
     return (
         <section className="px-4 pt-4 sm:pt-6" data-tutorial-id="home-hero">
-            <div className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${
+            <div className={`relative overflow-hidden rounded-3xl ${
                 isMemorial
-                    ? "from-amber-100 via-amber-50 to-orange-50 dark:from-gray-800 dark:via-gray-800 dark:to-gray-700"
-                    : "from-memento-100 via-sky-50 to-rose-50 dark:from-gray-800 dark:via-gray-800 dark:to-gray-700"
-            }`}>
+                    ? "bg-gradient-to-br from-amber-100 via-amber-50 to-orange-50 dark:from-gray-800 dark:via-gray-800 dark:to-gray-700"
+                    : "dark:bg-gradient-to-br dark:from-gray-800 dark:via-gray-800 dark:to-gray-700"
+            }`} style={!isMemorial ? { background: "linear-gradient(to bottom right, #DAEFFE, #EBF5FF, #FFF5F5)" } : undefined}>
                 {/* 배경 장식 */}
                 <div className={`absolute -top-10 -right-10 w-40 h-40 ${isMemorial ? "bg-amber-200/30" : "bg-memento-200/30"} rounded-full blur-2xl`} />
                 <div className={`absolute -bottom-10 -left-10 w-32 h-32 ${isMemorial ? "bg-orange-200/20" : "bg-rose-200/20"} rounded-full blur-2xl`} />
