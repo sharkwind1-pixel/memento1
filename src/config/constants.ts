@@ -99,8 +99,8 @@ export const POINTS = {
         daily_login: 10,
         write_post: 10,
         write_comment: 3,
-        receive_like: 2,
-        receive_dislike: -2,  // 비추천 받으면 차감
+        receive_like: 5,
+        receive_dislike: -5,  // 비추천 받으면 차감
         ai_chat: 1,
         pet_registration: 50,
         timeline_entry: 5,

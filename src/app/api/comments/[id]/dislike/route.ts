@@ -77,7 +77,7 @@ export async function POST(
                     await supabase.rpc("increment_user_points", {
                         p_user_id: comment.user_id,
                         p_action_type: "receive_dislike",
-                        p_points: -2,
+                        p_points: -5,
                         p_daily_cap: null,
                         p_one_time: false,
                         p_metadata: { commentId },

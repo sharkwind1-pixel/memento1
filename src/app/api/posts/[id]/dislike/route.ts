@@ -86,13 +86,13 @@ export async function POST(
                 .insert([{ post_id: postId, user_id: userId }]);
             disliked = true;
 
-            // 글쓴이 포인트 차감 (-2P, 자기 글 제외는 위에서 이미 검증)
+            // 글쓴이 포인트 차감 (-5P, 자기 글 제외는 위에서 이미 검증)
             if (postData && postData.user_id !== userId) {
                 try {
                     await supabase.rpc("increment_user_points", {
                         p_user_id: postData.user_id,
                         p_action_type: "receive_dislike",
-                        p_points: -2,
+                        p_points: -5,
                         p_daily_cap: null,
                         p_one_time: false,
                         p_metadata: { postId },
