@@ -33,7 +33,7 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
                 isMemorial
                     ? "bg-gradient-to-br from-amber-100 via-amber-50 to-orange-50 dark:from-gray-800 dark:via-gray-800 dark:to-gray-700"
                     : "dark:bg-gradient-to-br dark:from-gray-800 dark:via-gray-800 dark:to-gray-700"
-            }`} style={!isMemorial ? { background: "linear-gradient(to bottom right, #E8F4FD, #F0F8FF, #FFF8F6)" } : undefined}>
+            }`} style={!isMemorial ? { background: "linear-gradient(to bottom right, #CBEBF0, #E0F3F6, #FFF8F6)" } : undefined}>
                 {/* 배경 장식 */}
                 <div className={`absolute -top-10 -right-10 w-40 h-40 ${isMemorial ? "bg-amber-200/30" : "bg-memento-200/30"} rounded-full blur-2xl`} />
                 <div className={`absolute -bottom-10 -left-10 w-32 h-32 ${isMemorial ? "bg-orange-200/20" : "bg-rose-200/20"} rounded-full blur-2xl`} />
