@@ -66,6 +66,7 @@ import {
     getBreedCareContext,
     getMemorialTimeToneGuide,
     detectOffTopicQuery,
+    findRelatedMagazineArticles,
 } from "./chat-helpers";
 import { getDailySystemPrompt, getMemorialSystemPrompt } from "./chat-prompts";
 import * as agent from "@/lib/agent";
@@ -471,9 +472,9 @@ export async function buildAIContext(
         const [emotionResult, memories, pendingTopicMem, convCtx, recentEmotions] = await Promise.all([
             // A. 감정 분석
             agent.analyzeEmotion(sanitizedMessage, isMemorialMode),
-            // B. 메모리 조회
+            // B. 메모리 조회 (관련성 기반)
             pet.id
-                ? agent.getPetMemories(pet.id, 5).catch(() => [])
+                ? agent.getRelevantMemories(pet.id, sanitizedMessage, 6).catch(() => [])
                 : Promise.resolve([]),
             // C. pending_topic 조회
             pet.id
@@ -662,6 +663,16 @@ export async function buildAIContext(
         isMemorialMode
             ? getMemorialSystemPrompt(pet, emotionGuide, memoryContext, combinedContext, griefGuideText, isFirstChat, isNewSession)
             : getDailySystemPrompt(pet, emotionGuide, memoryContext, combinedContext, isCareQuery, isFirstChat, isNewSession);
+
+    // 케어 질문이면 관련 매거진 기사 검색해서 프롬프트에 추가
+    if (isCareQuery && !isMemorialMode) {
+        try {
+            const magazineCtx = await findRelatedMagazineArticles(sanitizedMessage, supabase);
+            if (magazineCtx) {
+                systemPrompt += magazineCtx;
+            }
+        } catch { /* 매거진 검색 실패 시 무시 */ }
+    }
 
     // 위기 감지 시 시스템 프롬프트에 위기 대응 지시 추가
     if (crisisResult.detected && crisisResult.level !== "none") {

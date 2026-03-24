@@ -762,3 +762,53 @@ export function getPersonalityBehavior(personality: string, isMemorial: boolean)
 
     return traits.join("\n");
 }
+
+/**
+ * 사용자 메시지와 관련된 매거진 기사를 검색하여 AI 컨텍스트로 제공
+ * 케어 질문일 때만 호출, 최대 2개 기사 반환
+ */
+export async function findRelatedMagazineArticles(
+    userMessage: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    supabase: any
+): Promise<string> {
+    const msgLower = userMessage.toLowerCase();
+
+    // 케어 키워드 → 매거진 검색어 매핑
+    const searchTerms: string[] = [];
+    if (msgLower.includes("간식") || msgLower.includes("사료") || msgLower.includes("먹")) searchTerms.push("간식", "사료");
+    if (msgLower.includes("예방접종") || msgLower.includes("백신")) searchTerms.push("예방접종");
+    if (msgLower.includes("산책")) searchTerms.push("산책");
+    if (msgLower.includes("구토") || msgLower.includes("설사") || msgLower.includes("아프")) searchTerms.push("건강", "증상");
+    if (msgLower.includes("목욕") || msgLower.includes("미용")) searchTerms.push("목욕", "미용");
+    if (msgLower.includes("분리불안") || msgLower.includes("짖")) searchTerms.push("행동", "훈련");
+    if (msgLower.includes("입양")) searchTerms.push("입양");
+    if (msgLower.includes("치아") || msgLower.includes("양치")) searchTerms.push("치아", "구강");
+    if (msgLower.includes("피부") || msgLower.includes("가려")) searchTerms.push("피부");
+    if (msgLower.includes("중성화")) searchTerms.push("중성화");
+
+    if (searchTerms.length === 0) return "";
+
+    try {
+        // title과 summary에서 키워드 검색 (ilike)
+        const searchQuery = searchTerms[0];
+        const { data, error } = await supabase
+            .from("magazine_articles")
+            .select("id, title, summary, category")
+            .or(`title.ilike.%${searchQuery}%,summary.ilike.%${searchQuery}%`)
+            .order("views", { ascending: false })
+            .limit(2);
+
+        if (error || !data || data.length === 0) {
+            return "";
+        }
+
+        const articles = (data as Array<{ title: string; summary: string }>).map((a) =>
+            `- "${a.title}": ${a.summary}`
+        ).join("\n");
+
+        return `\n\n## 참고할 수 있는 매거진 기사:\n${articles}\n(유저에게 "매거진에서 자세히 확인할 수 있어요"라고 자연스럽게 안내 가능)`;
+    } catch {
+        return "";
+    }
+}

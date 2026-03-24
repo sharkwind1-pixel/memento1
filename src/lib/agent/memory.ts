@@ -318,6 +318,77 @@ export async function saveMemory(
 }
 
 /**
+ * 사용자 메시지와 관련성 높은 메모리를 우선 반환
+ * importance + 키워드 매칭 점수 조합으로 정렬
+ */
+export async function getRelevantMemories(
+    petId: string,
+    userMessage: string,
+    limit: number = 8
+): Promise<PetMemory[]> {
+    // 전체 메모리를 가져온 뒤 관련성 스코어링
+    const { data, error } = await getSupabase()
+        .from("pet_memories")
+        .select("*")
+        .eq("pet_id", petId)
+        .order("importance", { ascending: false })
+        .limit(30); // 후보 풀을 넉넉히
+
+    if (error || !data || data.length === 0) {
+        return getPetMemories(petId, limit);
+    }
+
+    const memories = (data as PetMemoryRecord[]).map(recordToMemory);
+
+    // 유저 메시지에서 키워드 추출 (2글자 이상 명사/키워드)
+    const msgLower = userMessage.toLowerCase();
+    const keywords = msgLower
+        .replace(/[?!.,~\s]+/g, " ")
+        .split(" ")
+        .filter((w) => w.length >= 2);
+
+    // 각 메모리에 관련성 점수 부여
+    const scored = memories.map((m) => {
+        let relevanceScore = 0;
+        const memText = `${m.title} ${m.content}`.toLowerCase();
+
+        // 키워드 매칭 (각 키워드 매치당 +3점)
+        for (const kw of keywords) {
+            if (memText.includes(kw)) relevanceScore += 3;
+        }
+
+        // 메모리 타입별 보너스
+        if (msgLower.includes("간식") || msgLower.includes("사료") || msgLower.includes("먹")) {
+            if (m.memoryType === "preference") relevanceScore += 2;
+        }
+        if (msgLower.includes("병원") || msgLower.includes("아프") || msgLower.includes("건강")) {
+            if (m.memoryType === "health") relevanceScore += 2;
+        }
+        if (msgLower.includes("산책") || msgLower.includes("놀") || msgLower.includes("공원")) {
+            if (m.memoryType === "place" || m.memoryType === "routine") relevanceScore += 2;
+        }
+        if (msgLower.includes("언제") || msgLower.includes("시간") || msgLower.includes("몇시")) {
+            if (m.memoryType === "schedule" || m.memoryType === "routine") relevanceScore += 2;
+        }
+
+        // 최종 점수 = importance(1~10) + relevance(0~20+)
+        const totalScore = m.importance + relevanceScore;
+
+        return { memory: m, totalScore, relevanceScore };
+    });
+
+    // 점수 내림차순 정렬, 관련성 있는 것 우선
+    scored.sort((a, b) => {
+        // 관련성 점수가 있는 것 우선
+        if (a.relevanceScore > 0 && b.relevanceScore === 0) return -1;
+        if (a.relevanceScore === 0 && b.relevanceScore > 0) return 1;
+        return b.totalScore - a.totalScore;
+    });
+
+    return scored.slice(0, limit).map((s) => s.memory);
+}
+
+/**
  * 메모리를 컨텍스트 문자열로 변환
  */
 export function memoriesToContext(memories: PetMemory[]): string {

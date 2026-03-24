@@ -21,6 +21,7 @@ export {
     extractMemories,
     getRecentMessages,
     getPetMemories,
+    getRelevantMemories,
     getLatestPendingTopic,
     saveMessage,
     saveMemory,
