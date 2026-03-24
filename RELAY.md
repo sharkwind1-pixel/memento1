@@ -6,30 +6,63 @@
 
 ## TODO 우선순위 (새 세션 필독)
 
-### 1. 즉시 — 홈 화면 디자인 마무리 (이전 세션에서 이어서)
-
-> **배경**: B안 기반으로 홈 전면 리디자인 완료 (`cf3ce17`). 아래 2건 미완료.
-> **원복**: `cd /Users/admin/memento1 && git revert cf3ce17 --no-edit`
-
-- [ ] **펫매거진 카드 썸네일** — 홈 MagazineSection에서 매거진 카드에 이미지가 안 보임. API에서 `cover_image_url`을 가져오고 있는데 카드에 표시가 안 됨. API 응답 필드명 확인 필요.
-  - 관련 파일: `src/components/features/home/MagazineSection.tsx`, 매거진 API
-- [ ] **추모모드 amber 톤 통일** — 현재 배경(Layout)만 amber로 바뀌고, 홈의 CommunitySection/ShowcaseSection/MagazineSection 등 섹션 헤더 아이콘/그라데이션은 일상 하늘색(#05B2DC) 그대로라서 따로 놀고 있음. `useMemorialMode()` 훅으로 `isMemorialMode` 체크해서 섹션별 색상을 amber로 분기해야 함.
-  - 관련 파일: 홈 섹션 컴포넌트들 (`CommunitySection.tsx`, `MagazineSection.tsx` 등)
-
-### 2. MVP 런칭 필수 — 포트원 결제 연동
+### 1. MVP 런칭 필수 — 포트원 결제 연동
 - [ ] 포트원(PortOne) 결제 연동 — 프리미엄 구독 실결제 (현재 UI/약관/테스트로그인은 완료, 실결제만 남음)
 
-### 3. 향후 코드 품질 개선 (급하지 않음)
+### 2. 향후 코드 품질 개선 (급하지 않음)
 - [ ] Prompt Injection 필터 강화 (`sanitizeInput()` 패턴 감지 추가)
 - [ ] Rate Limit Redis 전환 (현재 메모리 기반)
 - [ ] 입력값 Zod 스키마 검증 (`as` 타입 캐스팅 → Zod)
 - [ ] 관리자 `requireAdmin()` 함수 일관 적용
 
-### 이전 TODO에서 완료 확인된 항목들 (RELAY-ARCHIVE 기준)
+### 이전 세션에서 완료 확인된 항목들
 > DB 마이그레이션 6개 전부 실행 완료, 스마트 프리미엄 전환 UX 완료, 대화 내보내기 완료,
 > 대화 내 사진 연동 완료, AI 프롬프트 Phase 3 전체 완료, UI/UX 비주얼(별/타이핑/발자국) 완료,
 > 모바일 깜빡임 완료, 대형 컴포넌트 분리(AIChatPage 371줄/LostPage 303줄) 완료,
 > 치유의 여정 대시보드 완료, 대화→타임라인 자동 생성 완료, 미니미 도감+터치 이펙트 완료
+
+---
+
+## 2026-03-24 (월) — 홈 디자인 + 추모모드 amber 통일 [배포 완료]
+
+> **상태**: 전부 main 푸시 + Vercel 배포 완료
+
+### 이 세션에서 한 것
+
+| # | 커밋 | 내용 |
+|---|------|------|
+| 1 | `61944fa` | 매거진 썸네일 수정 (imageUrl 필드명) + 홈 추모모드 amber 통일 (배경/CommunitySection/매거진) |
+| 2 | `017a911` | 푸터 사이드바 가림 수정 (xl:ml-[420px]) |
+| 3 | `2a233b0` | 추모 위로 CTA 연결 (condolence 하트) + useMagazinePreview 통합 |
+| 4 | `43152bd` | 히어로 추모모드 amber 분기 |
+| 5 | `0b3c60f` | 히어로 일러스트 교체 — 수채화 스타일 골든리트리버+아이 |
+| 6 | `e416eb7` | 히어로 radial-gradient 마스크 |
+| 7 | `562a630` | 히어로 사이즈 업 (240/300/380/440px) |
+| 8 | `255a160` | 히어로 배경색 이미지 픽셀값(#CBEBF0) 정확 매칭 |
+| 9 | `c89ec2d` | 추모모드 전용 히어로 이미지 (밤하늘 별빛 강아지) + 배경 분기 |
+| 10 | `9d33fcd` | 펫매거진-추모 섹션 높이 통일 (items-stretch) |
+| 11 | `b962ad5` | 5개 페이지 추모모드 amber 통일 (Record/Reminders/Magazine/Community/Local) |
+| 12 | `2d69c4a` | 다크모드 히어로 배경 수정 (inline style -> Tailwind 임의값) |
+| 13 | `84aeb62` | 히어로 마스크/그림자 제거 — 다크모드 깔끔하게 |
+
+### 주요 변경 요약
+
+**히어로 섹션 전면 개편:**
+- 수채화 일러스트 교체 (크레용 -> 이와사키 치히로 스타일)
+- 추모모드 전용 밤하늘 별빛 강아지 이미지
+- 배경색 이미지 픽셀값 매칭 (#CBEBF0)
+- 다크모드: 이미지 그대로 사용, 마스크/그림자 제거
+
+**추모모드 amber 톤 전체 통일 (8개 페이지):**
+- HomePage, AIChatPage, Layout (이전 완료)
+- RecordPage, RemindersPage, MagazinePage, CommunityPage, LocalPage (이번 완료)
+- LostPage(경고색), AdoptionPage(중립색)는 의도적 유지
+
+**기타:**
+- 매거진 썸네일 API 필드명 수정 (cover_image_url -> imageUrl)
+- 추모 위로 하트 CTA 연결 (toggleCondolence)
+- useMagazinePreview를 useHomePage 훅으로 통합
+- 푸터 사이드바 가림 수정
 
 ---
 
