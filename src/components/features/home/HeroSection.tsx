@@ -42,7 +42,10 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
                     <div className="md:grid md:grid-cols-2 md:gap-8 lg:gap-12 items-center">
                         {/* 일러스트 */}
                         <div className="flex justify-center mb-6 md:mb-0 md:order-last">
-                            <div className="relative w-[200px] h-[200px] sm:w-[260px] sm:h-[260px] md:w-[320px] md:h-[320px] lg:w-[380px] lg:h-[380px]">
+                            <div
+                                className="relative w-[200px] h-[200px] sm:w-[260px] sm:h-[260px] md:w-[320px] md:h-[320px] lg:w-[380px] lg:h-[380px]"
+                                style={{ mask: "radial-gradient(ellipse 70% 70% at center, black 50%, transparent 100%)", WebkitMask: "radial-gradient(ellipse 70% 70% at center, black 50%, transparent 100%)" }}
+                            >
                                 <Image
                                     src="/images/hero-illustration.png"
                                     alt="강아지와 고양이가 초원에서 함께하는 일러스트"
