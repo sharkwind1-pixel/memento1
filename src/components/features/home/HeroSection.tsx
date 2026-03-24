@@ -50,10 +50,12 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
                                     src={isMemorial ? "/images/hero-illustration-memorial.png" : "/images/hero-illustration.png"}
                                     alt={isMemorial ? "별빛 강아지와 함께 밤하늘을 바라보는 아이" : "강아지와 함께 걸어가는 아이"}
                                     fill
-                                    className="object-contain drop-shadow-lg"
+                                    className="object-contain drop-shadow-lg dark:brightness-[0.85] dark:contrast-[1.1]"
                                     priority
                                     sizes="(max-width: 768px) 240px, 440px"
                                 />
+                                {/* 다크모드: 이미지 밝은 배경을 어둡게 블렌딩 */}
+                                <div className="absolute inset-0 hidden dark:block bg-gray-800/40 mix-blend-multiply rounded-full" />
                             </div>
                         </div>
 
