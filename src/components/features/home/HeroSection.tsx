@@ -40,20 +40,41 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
 
                 <div className="relative z-10 p-6 sm:p-8 md:p-10 lg:p-12">
                     <div className="md:grid md:grid-cols-2 md:gap-8 lg:gap-12 items-center">
-                        {/* 일러스트 — 다크모드에서는 숨김 (밝은 배경 이미지가 다크와 충돌) */}
-                        <div className="flex justify-center mb-6 md:mb-0 md:order-last dark:hidden">
+                        {/* 일러스트 */}
+                        <div className="flex justify-center mb-6 md:mb-0 md:order-last">
                             <div
                                 className="relative w-[240px] h-[240px] sm:w-[300px] sm:h-[300px] md:w-[380px] md:h-[380px] lg:w-[440px] lg:h-[440px]"
                                 style={{ mask: "radial-gradient(ellipse 80% 80% at center, black 60%, transparent 100%)", WebkitMask: "radial-gradient(ellipse 80% 80% at center, black 60%, transparent 100%)" }}
                             >
-                                <Image
-                                    src={isMemorial ? "/images/hero-illustration-memorial.png" : "/images/hero-illustration.png"}
-                                    alt={isMemorial ? "별빛 강아지와 함께 밤하늘을 바라보는 아이" : "강아지와 함께 걸어가는 아이"}
-                                    fill
-                                    className="object-contain drop-shadow-lg"
-                                    priority
-                                    sizes="(max-width: 768px) 240px, 440px"
-                                />
+                                {isMemorial ? (
+                                    <Image
+                                        src="/images/hero-illustration-memorial.png"
+                                        alt="별빛 강아지와 함께 밤하늘을 바라보는 아이"
+                                        fill
+                                        className="object-contain drop-shadow-lg"
+                                        priority
+                                        sizes="(max-width: 768px) 240px, 440px"
+                                    />
+                                ) : (
+                                    <>
+                                        {/* 라이트: 수채화 / 다크: 밤하늘 */}
+                                        <Image
+                                            src="/images/hero-illustration.png"
+                                            alt="강아지와 함께 걸어가는 아이"
+                                            fill
+                                            className="object-contain drop-shadow-lg dark:hidden"
+                                            priority
+                                            sizes="(max-width: 768px) 240px, 440px"
+                                        />
+                                        <Image
+                                            src="/images/hero-illustration-memorial.png"
+                                            alt="별빛 강아지와 함께 밤하늘을 바라보는 아이"
+                                            fill
+                                            className="object-contain drop-shadow-lg hidden dark:block"
+                                            sizes="(max-width: 768px) 240px, 440px"
+                                        />
+                                    </>
+                                )}
                             </div>
                         </div>
 
