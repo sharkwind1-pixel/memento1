@@ -134,10 +134,23 @@
 절대 억지로 잡으면 안 돼 — 공포가 강화되거든."
 ```
 
-#### 4-1-F. 추모 모드 실용 질문 대응 (긴급)
+#### ~~4-1-F. 추모 모드 실용 질문 대응~~ ✅ 완료 (2026-03-28)
+- [x] chat-pipeline.ts: !isMemorialMode 조건 제거 → 추모에서도 Tavily 검색
+- [x] chat-prompts.ts: 실용 질문 대응 규칙 추가
+- [x] care-reference.ts: 장례/화장/장묘 키워드 추가
+- [x] care-search.ts: 장례 관련 검색 쿼리 매핑
 
-> **문제**: "장례 어디에서 치루지" 같은 실용 질문에 감정 위로만 하고 정보를 안 줌.
-> **원인**: 추모 모드에서 Tavily 검색이 `!isMemorialMode` 조건으로 차단됨. 프롬프트에도 실용 질문 대응 규칙 없음.
+#### 4-1-G. 즉시 — 추모 장례 GPS 위치 안내 + 이름 조사 후처리
+
+> **문제 1**: "장례식장 어디로 해야해"에 GPS 기반 가까운 장례식장 안내가 안 됨
+> **원인**: 일상 모드에 `naver-location.ts`로 위치 기반 검색이 있지만 추모 모드에서는 연결 안 됨
+> **해결**: 추모 모드에서 장례/장묘/화장 키워드 감지 시 nearbyPlaces 검색 연동
+> **참고 파일**: `src/lib/naver-location.ts`, `chat-pipeline.ts`의 nearbyPlaces 로직
+
+> **문제 2**: "꼼지이라고" 같은 이름+조사 어색한 표현
+> **원인**: GPT-4o-mini 한국어 조사 처리 한계 (받침 유무에 따른 이/가, 을/를 등)
+> **해결**: AI 응답 후처리에서 `pet.name` + 조사 패턴 검사 후 수정 (예: "꼼지이" → "꼼지라고")
+> **참고**: `validateAIResponse()` 함수에 조사 후처리 추가, 또는 별도 `fixKoreanParticles()` 함수
 
 수정 사항:
 1. **chat-pipeline.ts**: `isCareQuery && !isMemorialMode` → `isCareQuery` (추모 모드에서도 실용 질문이면 검색)
