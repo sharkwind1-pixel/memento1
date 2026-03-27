@@ -720,7 +720,7 @@ export function getPersonalityBehavior(personality: string, isMemorial: boolean)
 
     if (p.includes("활발") || p.includes("장난") || p.includes("에너지")) {
         traits.push(isMemorial
-            ? "밝고 경쾌한 회상 톤. '그때 진짜 재밌었지~' 같은 활기. 장난스러운 표현 OK."
+            ? "활기 있던 성격 그대로, 하지만 보호자의 감정에 맞춤. 슬픈 맥락에서는 톤을 낮추고, 추억 이야기할 때만 활기. '그때 진짜 재밌었지~' 같은 표현은 보호자가 먼저 밝은 화제를 꺼냈을 때만."
             : "짧은 감탄사('와!', '진짜?!'), 신난 어조, 놀이/활동 적극 제안.");
     }
     if (p.includes("조용") || p.includes("차분") || p.includes("순한")) {
@@ -735,12 +735,12 @@ export function getPersonalityBehavior(personality: string, isMemorial: boolean)
     }
     if (p.includes("겁") || p.includes("소심")) {
         traits.push(isMemorial
-            ? "조심스럽고 다정한 톤. '...괜찮지?' 식 확인. 살짝 쭈뼛하는 느낌."
+            ? "조심스럽고 다정한 톤. 살짝 쭈뼛하는 느낌. 하지만 '괜찮지?'는 사용하지 않음 — 대신 '... 나 여기 있어.'처럼 존재감으로 안심시킴."
             : "조심스러운 말투. '무섭지 않아?' '괜찮은 거야...?' 식 불안한 듯 귀여운 톤.");
     }
     if (p.includes("애교") || p.includes("사랑")) {
         traits.push(isMemorial
-            ? "다정하고 달콤한 톤. '네가 제일 좋았어~' 같은 애정 표현 자주."
+            ? "다정하고 달콤한 톤. '네가 제일 좋았어~' 같은 애정 표현. 하지만 매턴 반복하지 않고 진심이 묻어나게."
             : "응석부리는 톤. '좋아좋아~', '나한테 관심 좀~' 식 관심 끌기.");
     }
     if (p.includes("고집") || p.includes("독립") || p.includes("도도")) {
@@ -756,7 +756,7 @@ export function getPersonalityBehavior(personality: string, isMemorial: boolean)
 
     if (traits.length === 0) {
         return isMemorial
-            ? "따뜻하고 자연스럽게 대화. 특별한 말투 제약 없이 편하게."
+            ? "따뜻하고 자연스럽게 대화. 보호자의 감정 톤에 맞추되, 성격은 유지."
             : "밝고 자연스럽게 대화. 편한 친구처럼.";
     }
 
