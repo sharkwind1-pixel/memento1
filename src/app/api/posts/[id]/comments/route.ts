@@ -247,6 +247,6 @@ export async function POST(
         });
     } catch (err) {
         console.error("[Comments POST] 서버 오류:", err);
-        return NextResponse.json({ error: "서버 오류", detail: String(err) }, { status: 500 });
+        return NextResponse.json({ error: "서버 오류" }, { status: 500 });
     }
 }

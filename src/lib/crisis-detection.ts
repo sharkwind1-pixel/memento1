@@ -191,14 +191,7 @@ export function detectCrisis(
     const normalizedMessage = message.toLowerCase().trim();
     const compactMessage = normalizedMessage.replace(/\s+/g, "");
 
-    // 1단계: False positive 패턴 체크
-    for (const pattern of FALSE_POSITIVE_PATTERNS) {
-        if (pattern.test(normalizedMessage)) {
-            return safeResult;
-        }
-    }
-
-    // 2단계: 높은 위험도 키워드 매칭
+    // 1단계: 높은 위험도 키워드 매칭 (false positive보다 우선)
     const highMatches: string[] = [];
     for (const keyword of CRISIS_KEYWORDS_HIGH) {
         const compactKeyword = keyword.replace(/\s+/g, "");
@@ -213,6 +206,13 @@ export function detectCrisis(
             level: "high",
             matchedKeywords: highMatches,
         };
+    }
+
+    // 2단계: False positive 패턴 체크 (중간 위험도 키워드에만 적용)
+    for (const pattern of FALSE_POSITIVE_PATTERNS) {
+        if (pattern.test(normalizedMessage)) {
+            return safeResult;
+        }
     }
 
     // 3단계: 중간 위험도 키워드 매칭

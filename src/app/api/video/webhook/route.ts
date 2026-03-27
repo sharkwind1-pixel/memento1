@@ -32,12 +32,11 @@ export async function POST(request: NextRequest) {
         const timestamp = searchParams.get("ts");
         const signature = searchParams.get("sig");
         const uid = searchParams.get("uid");
-        const legacySecret = searchParams.get("secret");
         const webhookSecret = process.env.VIDEO_WEBHOOK_SECRET || "";
 
         let isAuthorized = false;
 
-        // 새 방식: HMAC 서명 검증 (시크릿 자체는 URL에 노출되지 않음)
+        // HMAC 서명 검증 (시크릿 자체는 URL에 노출되지 않음)
         if (timestamp && signature && uid) {
             const expectedSig = crypto
                 .createHmac("sha256", webhookSecret)
@@ -53,14 +52,6 @@ export async function POST(request: NextRequest) {
                     console.warn("[Video Webhook] 만료된 서명:", { age, uid });
                     isAuthorized = false;
                 }
-            }
-        }
-
-        // 레거시 호환: 기존 secret 쿼리 파라미터 방식 (이행기)
-        if (!isAuthorized && legacySecret) {
-            isAuthorized = legacySecret === webhookSecret;
-            if (isAuthorized) {
-                console.warn("[Video Webhook] 레거시 secret 방식 사용됨 - HMAC으로 전환 필요");
             }
         }
 

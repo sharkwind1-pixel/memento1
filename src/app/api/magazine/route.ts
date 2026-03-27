@@ -16,6 +16,7 @@ import {
     getRateLimitHeaders,
     sanitizeInput,
     sanitizeHtmlContent,
+    sanitizeSearchQuery,
 } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
@@ -44,7 +45,8 @@ export async function GET(request: NextRequest) {
             query = query.eq("badge", badge);
         }
         if (search) {
-            query = query.or(`title.ilike.%${search}%,summary.ilike.%${search}%`);
+            const sanitizedSearch = sanitizeSearchQuery(search);
+            query = query.or(`title.ilike.%${sanitizedSearch}%,summary.ilike.%${sanitizedSearch}%`);
         }
 
         query = query.range(offset, offset + limit - 1);

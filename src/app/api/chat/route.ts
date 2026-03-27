@@ -95,8 +95,8 @@ export async function POST(request: NextRequest) {
             ],
             max_tokens: AI_CONFIG.AI_MAX_TOKENS,
             temperature: aiContext.mode === "memorial" ? AI_CONFIG.AI_TEMPERATURE_MEMORIAL : AI_CONFIG.AI_TEMPERATURE_DAILY,
-            presence_penalty: aiContext.isMemorialMode ? 0.7 : 0.7,
-            frequency_penalty: aiContext.isMemorialMode ? 0.6 : 0.6,
+            presence_penalty: aiContext.isMemorialMode ? 0.4 : 0.7,
+            frequency_penalty: aiContext.isMemorialMode ? 0.3 : 0.6,
             seed: randomSeed,
             stream: true,
         });

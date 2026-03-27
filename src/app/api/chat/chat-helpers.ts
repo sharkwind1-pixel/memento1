@@ -794,7 +794,7 @@ export async function findRelatedMagazineArticles(
 
     try {
         // title과 summary에서 키워드 검색 (ilike)
-        const searchQuery = searchTerms[0];
+        const searchQuery = searchTerms[0].replace(/[%_]/g, "");
         const { data, error } = await sb
             .from("magazine_articles")
             .select("id, title, summary, category")
