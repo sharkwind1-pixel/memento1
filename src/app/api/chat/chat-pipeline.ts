@@ -743,13 +743,24 @@ export async function buildAIContext(
         }
     }
 
-    // 응급/긴급 증상 감지 시 수의사 상담 강력 권장 지시 삽입
+    // 응급/긴급 증상 감지 시 수의사 상담 강력 권장 + 구체적 정보 제공 지시 삽입
     if (emergencyDetection.isEmergency || emergencyDetection.isUrgent) {
         const urgencyLevel = emergencyDetection.isEmergency ? "응급" : "긴급";
-        const vetUrgencyPrompt = `## ${urgencyLevel} 상황 감지 - 수의사 상담 권장 필수 삽입
-사용자가 반려동물의 ${urgencyLevel} 증상을 언급했습니다.
-반드시 응답에 "수의사 선생님한테 ${emergencyDetection.isEmergency ? "지금 바로" : "빨리"} 가보는 게 좋겠어!"를 자연스럽게 포함하세요.
-${emergencyDetection.isEmergency ? "이것은 즉시 병원에 가야 하는 상황입니다. 가정 치료를 권하지 마세요." : "24시간 내에 병원 방문을 권하세요."}`;
+        const symptoms = emergencyDetection.matchedSymptoms.join(", ");
+        const vetUrgencyPrompt = `## [최우선] ${urgencyLevel} 상황 감지 -- 이 지시를 반드시 따르세요
+감지된 증상 키워드: ${symptoms}
+
+### 응답에 반드시 포함할 4가지 (순서대로):
+1. **증상 인지**: 사용자가 말한 증상들을 정확히 짚어주기 ("밥을 안 먹고, 토를 하고, 눈꼽이..." 등)
+2. **가능한 원인**: 해당 증상 조합이 의미할 수 있는 것 2~3가지 (감염, 이물 섭취, 신장 문제 등)
+3. **지금 당장 할 일**: 구체적 행동 지침 (물 소량 제공, 토사물 사진 찍기, 체온 확인 등)
+4. **수의사 방문 권장**: "${emergencyDetection.isEmergency ? "지금 바로 응급 동물병원에 가야 합니다. 시간이 중요합니다." : "오늘 안에 동물병원에 가보세요."}"
+
+### 금지 사항:
+- "걱정되겠다", "불안하겠다" 같은 공감만으로 끝내기 금지
+- "빨리 병원 가보세요" 한 줄 대답 금지
+- 가정 치료법 권유 금지 (${emergencyDetection.isEmergency ? "응급이므로 병원만 안내" : "병원 전 임시 조치만 안내"})
+- 검색 결과가 있으면 반드시 그 정보를 바탕으로 구체적으로 답하세요`;
         systemPrompt = `${vetUrgencyPrompt}\n\n${systemPrompt}`;
     }
 
