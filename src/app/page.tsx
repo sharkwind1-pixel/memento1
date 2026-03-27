@@ -177,47 +177,51 @@ function HomeContent() {
     // ========================================================================
     // 초기 상태 결정 (URL > localStorage > 기본값)
     // ========================================================================
+    // SSR-safe 초기 상태: URL 파라미터만 사용 (localStorage는 useEffect에서 복원)
     const getInitialState = (): { tab: TabType; sub?: CommunitySubcategory } => {
-        // 1. URL에서 확인
         const tabFromUrl = searchParams.get("tab");
         const subFromUrl = searchParams.get("sub");
 
         if (isValidTab(tabFromUrl)) {
-            // 레거시 탭 처리 (adoption, local, lost → community/sub)
             const redirect = getLegacyTabRedirect(tabFromUrl);
             if (redirect) {
                 return { tab: redirect.main as TabType, sub: redirect.sub };
             }
-            // 일반 탭
             if (tabFromUrl === "community" && isValidSubcategory(subFromUrl)) {
                 return { tab: tabFromUrl, sub: subFromUrl };
             }
             return { tab: tabFromUrl };
         }
 
-        // 2. localStorage에서 확인
-        if (typeof window !== "undefined") {
-            const savedTab = safeGetItem("memento-current-tab");
-            const savedSub = safeGetItem("memento-current-subcategory");
-            if (isValidTab(savedTab)) {
-                const redirect = getLegacyTabRedirect(savedTab);
-                if (redirect) {
-                    return { tab: redirect.main as TabType, sub: redirect.sub };
-                }
-                if (savedTab === "community" && isValidSubcategory(savedSub)) {
-                    return { tab: savedTab, sub: savedSub };
-                }
-                return { tab: savedTab };
-            }
-        }
-
         return { tab: "home" };
     };
 
-    // getInitialState()를 1번만 호출하여 캐싱 (기존 3번 → 1번)
     const [initialState] = useState(() => getInitialState());
     const [selectedTab, setSelectedTab] = useState<TabType>(initialState.tab);
     const [selectedSubcategory, setSelectedSubcategory] = useState<CommunitySubcategory | undefined>(initialState.sub);
+
+    // localStorage에서 저장된 탭 복원 (hydration 이후, URL 파라미터 없을 때만)
+    const hasRestoredTab = useRef(false);
+    useEffect(() => {
+        if (hasRestoredTab.current) return;
+        hasRestoredTab.current = true;
+        // URL에서 이미 탭이 지정된 경우 복원 스킵
+        if (searchParams.get("tab")) return;
+        const savedTab = safeGetItem("memento-current-tab");
+        if (isValidTab(savedTab)) {
+            const redirect = getLegacyTabRedirect(savedTab);
+            if (redirect) {
+                setSelectedTab(redirect.main as TabType);
+                setSelectedSubcategory(redirect.sub);
+                return;
+            }
+            setSelectedTab(savedTab);
+            if (savedTab === "community") {
+                const savedSub = safeGetItem("memento-current-subcategory");
+                if (isValidSubcategory(savedSub)) setSelectedSubcategory(savedSub);
+            }
+        }
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
     // 커뮤니티 페이지 강제 리셋 키 (사이드바에서 게시판 탭 클릭 시 증가)
     const [communityResetKey, setCommunityResetKey] = useState(0);
     const [communityInitialPostId, setCommunityInitialPostId] = useState<string | null>(null);
