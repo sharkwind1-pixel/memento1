@@ -1,24 +1,17 @@
 /**
  * CommunitySection.tsx
- * 홈페이지 인기 커뮤니티 카드 캐러셀 섹션
+ * 홈페이지 인기 커뮤니티 리스트 섹션 (펫매거진과 동일한 세로 리스트 레이아웃)
  */
 
 "use client";
 
 import React from "react";
-import {
-    Card,
-    CardContent,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
     Heart,
     MessageCircle,
     TrendingUp,
     ArrowRight,
-    Zap,
-    Crown,
     PawPrint,
 } from "lucide-react";
 import LevelBadge from "@/components/features/points/LevelBadge";
@@ -41,10 +34,8 @@ export default function CommunitySection({
     communityPosts,
     likedPosts,
     animatingHearts,
-    postComments,
     onToggleLike,
     onSelectPost,
-    scrollRef,
     setSelectedTab,
     isMemorial = false,
 }: CommunitySectionProps) {
@@ -63,138 +54,95 @@ export default function CommunitySection({
     ];
 
     return (
-        <section className="space-y-6 px-4" data-tutorial-id="home-trending">
+        <section className="space-y-6" data-tutorial-id="home-trending">
             <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center space-x-3 min-w-0">
                     <div className={`w-10 h-10 flex-shrink-0 bg-gradient-to-br ${isMemorial ? "from-amber-500 to-orange-400 shadow-amber-500/20" : "from-memento-500 to-memento-400 shadow-memento-500/20"} rounded-2xl flex items-center justify-center shadow-sm`}>
                         <TrendingUp className="w-5 h-5 text-white" />
                     </div>
                     <div className="min-w-0">
-                        <h2 className="text-base sm:text-xl md:text-2xl font-display font-bold text-gray-800 dark:text-gray-100 leading-tight">
+                        <h2 className="text-base sm:text-xl font-display font-bold text-gray-800 dark:text-gray-100">
                             인기 있는 이야기
                         </h2>
-                        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 hidden sm:block">
+                        <p className="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
                             커뮤니티에서 가장 사랑받는 글들
                         </p>
                     </div>
                 </div>
-                <Button
-                    variant="ghost"
+                <button
                     onClick={() => setSelectedTab("community")}
-                    className={`${isMemorial ? "text-amber-600 dark:text-amber-400 hover:bg-amber-100" : "text-memento-600 dark:text-memento-400 hover:bg-memento-100"} dark:hover:bg-gray-700 rounded-xl flex-shrink-0 px-2 sm:px-4 min-h-[44px] active:scale-95 transition-transform`}
+                    className={`text-sm font-medium flex items-center gap-1 ${isMemorial ? "text-amber-500 hover:text-amber-600" : "text-memento-500 hover:text-memento-600"}`}
                 >
-                    <span className="hidden sm:inline">더 많은 이야기</span>
-                    <span className="sm:hidden">더보기</span>
-                    <ArrowRight className="w-4 h-4 ml-1 sm:ml-2" />
-                </Button>
+                    더 많은 이야기 &rarr;
+                </button>
             </div>
 
-            <div
-                ref={scrollRef}
-                className="flex gap-4 overflow-x-auto pb-4 px-4 -mx-4 scrollbar-hide carousel-touch"
-            >
-                {communityPosts.length === 0 ? (
-                    <div className="w-full flex flex-col items-center justify-center py-12 text-center">
-                        <PawPrint className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-3" />
-                        <p className="text-gray-500 dark:text-gray-400 text-sm">
-                            아직 이야기가 없어요
-                        </p>
-                        <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">
-                            커뮤니티에서 첫 번째 이야기를 작성해보세요
-                        </p>
-                    </div>
-                ) : communityPosts.map((post, idx) => {
-                    const isLiked = likedPosts[post.id] || false;
-                    const displayLikes = post.likes;
-                    const addedComments = postComments[post.id]?.length || 0;
-                    const totalComments = post.comments + addedComments;
+            {communityPosts.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <PawPrint className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-3" />
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">
+                        아직 이야기가 없어요
+                    </p>
+                    <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">
+                        커뮤니티에서 첫 번째 이야기를 작성해보세요
+                    </p>
+                </div>
+            ) : (
+                <div className="space-y-3 flex-1 flex flex-col">
+                    {communityPosts.map((post, idx) => {
+                        const isLiked = likedPosts[post.id] || false;
+                        const displayLikes = post.likes;
+                        const addedComments = ([] as unknown[]).length || 0;
+                        const totalComments = post.comments + addedComments;
 
-                    return (
-                        <Card
-                            key={`${post.id}-${idx}`}
-                            onClick={() => onSelectPost(post)}
-                            className="w-[260px] max-w-[260px] sm:w-72 sm:max-w-72 flex-shrink-0 overflow-hidden rounded-2xl cursor-pointer group border-0 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 will-change-transform"
-                        >
-                            <div className={`h-24 bg-gradient-to-br ${gradients[idx % gradients.length]} relative overflow-hidden`}>
-                                <div className="absolute inset-0 bg-black/10" />
-                                <div className="absolute top-3 left-3">
-                                    <Badge
-                                        className={`
-                                            bg-white/90 text-gray-800 font-semibold shadow-sm
-                                            ${post.badge === "인기" ? "text-rose-600" : ""}
-                                            ${post.badge === "꿀팁" ? "text-amber-600" : ""}
-                                            ${post.badge === "후기" ? "text-violet-600" : ""}
-                                        `}
-                                    >
-                                        {post.badge === "인기" && (
-                                            <Crown className="w-3 h-3 mr-1 inline" />
-                                        )}
-                                        {post.badge === "꿀팁" && (
-                                            <Zap className="w-3 h-3 mr-1 inline" />
-                                        )}
-                                        {post.badge}
-                                    </Badge>
+                        return (
+                            <button
+                                key={`${post.id}-${idx}`}
+                                onClick={() => onSelectPost(post)}
+                                className="w-full flex items-center gap-4 p-3 rounded-2xl bg-white/60 dark:bg-gray-800/40 hover:bg-white dark:hover:bg-gray-800/60 transition-all group"
+                            >
+                                {/* 좌측: 그라데이션 썸네일 */}
+                                <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${gradients[idx % gradients.length]} flex items-center justify-center flex-shrink-0 relative overflow-hidden`}>
+                                    <PawPrint className="w-6 h-6 text-white/70" />
+                                    {post.badge && (
+                                        <span className="absolute bottom-0.5 right-0.5 text-[9px] font-bold text-white bg-black/30 rounded px-1">
+                                            {post.badge}
+                                        </span>
+                                    )}
                                 </div>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="absolute top-2 right-2 text-white hover:text-red-300 hover:bg-white/20 min-w-[44px] min-h-[44px] p-2 active:scale-95 transition-transform"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onToggleLike(post.id);
-                                    }}
-                                >
-                                    <Heart
-                                        className={`w-6 h-6 transition-all duration-300 ${
-                                            isLiked
-                                                ? "fill-red-400 text-red-400 scale-110"
-                                                : ""
-                                        } ${animatingHearts[post.id] ? "animate-heart-pop" : ""}`}
-                                    />
-                                </Button>
-                                <div className="absolute bottom-2 right-3 opacity-30">
-                                    <PawPrint className="w-12 h-12 text-white" />
-                                </div>
-                            </div>
 
-                            <CardContent className="p-4 bg-white dark:bg-gray-800">
-                                <h3 className={`font-bold text-gray-800 dark:text-white text-base mb-1 line-clamp-2 transition-colors ${isMemorial ? "group-hover:text-amber-600" : "group-hover:text-memento-600"}`}>
-                                    {post.title}
-                                </h3>
-                                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-1.5 min-w-0">
-                                    <LevelBadge
-                                        points={post.authorPoints ?? 0}
-                                        isAdmin={post.authorIsAdmin ?? false}
-                                        size="lg"
-                                        showTooltip={false}
-                                    />
-                                    <span className="truncate">{post.author}님의 이야기</span>
-                                </p>
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3 text-sm text-gray-500">
-                                        <span className="flex items-center gap-1">
+                                {/* 우측: 제목 + 작성자 + 좋아요/댓글 */}
+                                <div className="flex-1 text-left min-w-0">
+                                    <p className={`text-sm font-semibold text-gray-800 dark:text-gray-100 line-clamp-2 transition-colors ${isMemorial ? "group-hover:text-amber-600" : "group-hover:text-memento-600"}`}>
+                                        {post.title}
+                                    </p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
+                                            <LevelBadge
+                                                points={post.authorPoints ?? 0}
+                                                isAdmin={post.authorIsAdmin ?? false}
+                                                size="sm"
+                                                showTooltip={false}
+                                            />
+                                            <span className="truncate max-w-[80px]">{post.author}</span>
+                                        </span>
+                                        <span className="flex items-center gap-0.5 text-xs text-gray-400">
                                             <Heart
-                                                className={`w-4 h-4 transition-colors duration-300 ${
-                                                    isLiked
-                                                        ? "fill-red-500 text-red-500"
-                                                        : ""
-                                                } ${animatingHearts[post.id] ? "animate-heart-pop" : ""}`}
+                                                className={`w-3 h-3 ${isLiked ? "fill-red-500 text-red-500" : ""} ${animatingHearts[post.id] ? "animate-heart-pop" : ""}`}
                                             />
                                             {displayLikes}
                                         </span>
-                                        <span className="flex items-center gap-1">
-                                            <MessageCircle className="w-4 h-4" />
+                                        <span className="flex items-center gap-0.5 text-xs text-gray-400">
+                                            <MessageCircle className="w-3 h-3" />
                                             {totalComments}
                                         </span>
                                     </div>
-                                    <ArrowRight className={`w-4 h-4 text-gray-400 group-hover:translate-x-1 transition-all ${isMemorial ? "group-hover:text-amber-600" : "group-hover:text-memento-600"}`} />
                                 </div>
-                            </CardContent>
-                        </Card>
-                    );
-                })}
-            </div>
-
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
         </section>
     );
 }
