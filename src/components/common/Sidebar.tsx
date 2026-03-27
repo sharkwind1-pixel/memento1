@@ -6,7 +6,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import {
     Home,
@@ -81,7 +81,6 @@ interface SidebarProps {
     isDarkMode?: boolean;
     onToggleDarkMode?: () => void;
     onOpenLogin?: () => void;
-    onOpenSignup?: () => void;
     onSignOut?: () => void;
     onOpenAccountSettings?: () => void;
     authLoading?: boolean;
@@ -100,7 +99,6 @@ export default function Sidebar({
     isDarkMode,
     onToggleDarkMode,
     onOpenLogin,
-    onOpenSignup,
     onSignOut,
     onOpenAccountSettings,
     authLoading,
@@ -113,7 +111,7 @@ export default function Sidebar({
     );
     const [hasModalOpen, setHasModalOpen] = useState(false);
     const [hasPendingAdmin, setHasPendingAdmin] = useState(false);
-    const [adminQueryFailed, setAdminQueryFailed] = useState(false);
+    const adminQueryFailedRef = useRef(false);
 
     // 관리자일 때 미처리 신고/문의 건수 체크
     // selectedTab이 바뀔 때도 재조회 (관리자 탭에서 처리 후 다른 탭 갔다 오면 갱신)
@@ -143,7 +141,7 @@ export default function Sidebar({
                 // Supabase 에러 응답 체크 (CORS/502는 error 객체로 돌아옴)
                 if (reportsRes.error || inquiriesRes.error) {
                     failCount++;
-                    if (failCount >= 3) setAdminQueryFailed(true);
+                    if (failCount >= 3) adminQueryFailedRef.current = true;
                     return;
                 }
 
@@ -152,7 +150,7 @@ export default function Sidebar({
                 setHasPendingAdmin(total > 0);
             } catch {
                 failCount++;
-                if (failCount >= 3) setAdminQueryFailed(true);
+                if (failCount >= 3) adminQueryFailedRef.current = true;
             }
         };
 
@@ -163,7 +161,7 @@ export default function Sidebar({
         // 관리자 탭에서 상태 변경 시 즉시 재조회 (커스텀 이벤트)
         const handleAdminUpdate = () => {
             failCount = 0; // 수동 트리거 시 리셋
-            setAdminQueryFailed(false);
+            adminQueryFailedRef.current = false;
             checkPending();
         };
         window.addEventListener("adminDataUpdated", handleAdminUpdate);

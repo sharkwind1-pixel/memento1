@@ -255,30 +255,6 @@ export function isValidGriefStage(value: unknown): value is GriefStage {
     return typeof value === "string" && VALID_GRIEF_STAGES.includes(value);
 }
 
-/** AI API 요청용 펫 정보 (Pet에서 필요한 필드만 추출) */
-export interface PetInfoForAPI {
-    id?: string;
-    name: string;
-    type: PetType;
-    breed: string;
-    gender: PetGender;
-    personality?: string;
-    birthday?: string;
-    status: PetStatus;
-    memorialDate?: string;
-
-    // AI 펫톡 개인화
-    nicknames?: string;
-    specialHabits?: string;
-    favoriteFood?: string;
-    favoriteActivity?: string;
-    favoritePlace?: string;
-
-    // 추모 정보
-    togetherPeriod?: string;
-    memorableMemory?: string;
-}
-
 // ============================================
 // 4. 커뮤니티 관련 타입
 // ============================================
@@ -302,25 +278,6 @@ export interface CommunityPost {
     preview?: string;
     time?: string;
     avatar?: string;
-}
-
-/** 댓글 */
-export interface Comment {
-    id: number;
-    author: string;
-    content: string;
-    time: string;
-    likes: number;
-}
-
-/** 게시판 카테고리 */
-export interface BoardCategory {
-    id: string;
-    label: string;
-    icon: React.ComponentType<{ className?: string }>;
-    color: string;
-    description: string;
-    memorialOnly?: boolean;
 }
 
 // ============================================
@@ -387,43 +344,9 @@ export interface LostPet {
     author_email?: string;
 }
 
-/** 분실동물 게시글 (레거시 프론트엔드 호환) */
-export interface LostPetLegacy {
-    id: number;
-    type: "lost" | "found";
-    title: string;
-    petType: string;
-    breed: string;
-    color: string;
-    gender: string;
-    age: string;
-    location: string;
-    date: string;
-    description: string;
-    contact: string;
-    author: string;
-    time: string;
-    image?: string;
-    reward?: string;
-}
-
 // ============================================
 // 6. 매거진/정보 관련 타입
 // ============================================
-
-/** 펫매거진 게시글 */
-export interface MagazinePost {
-    id?: number;
-    title: string;
-    category: string;
-    difficulty: string;
-    badge: string;
-    content?: string;
-    image?: string;
-}
-
-/** 펫케어 가이드 (레거시 호환) */
-export type PetcareGuide = MagazinePost;
 
 // ============================================
 // 7. 추모/기록 관련 타입
@@ -438,9 +361,6 @@ export interface MemorialCard {
     emoji?: string;
     image?: string;
 }
-
-/** 기록 카드 (레거시 호환) */
-export type RecordCard = MemorialCard;
 
 /** 추모 게시글 (DB 매핑, camelCase) */
 export interface MemorialPost {
@@ -548,14 +468,6 @@ export interface TutorialStep {
 // 8. UI 공통 타입
 // ============================================
 
-/** 라이트박스 아이템 */
-export interface LightboxItem {
-    title: string;
-    subtitle?: string;
-    meta?: string;
-    src: string;
-}
-
 /** 자동 스크롤 훅 반환 타입 */
 export interface SmoothAutoScrollReturn {
     communityScrollRef: React.RefObject<HTMLDivElement>;
@@ -598,15 +510,6 @@ export interface CommunityPageProps extends PageProps {
     onInitialPostConsumed?: () => void;
 }
 
-/** AdoptionPage Props */
-export interface AdoptionPageProps extends PageProps {}
-
-/** LocalPage Props */
-export interface LocalPageProps extends PageProps {}
-
-/** LostPage Props */
-export interface LostPageProps extends PageProps {}
-
 /** MagazinePage Props */
 export interface MagazinePageProps extends PageProps {}
 
@@ -616,13 +519,6 @@ export interface RecordPageProps extends PageProps {}
 // ============================================
 // 10. API 응답 타입
 // ============================================
-
-/** API 에러 응답 */
-export interface APIError {
-    code: number;
-    error_code: string;
-    msg: string;
-}
 
 /** 위기 상담 기관 정보 */
 export interface CrisisResource {
@@ -664,22 +560,8 @@ export interface AIChatResponse {
 // 11. 컬렉션/유틸 타입
 // ============================================
 
-/** 게시글 컬렉션 */
-export interface PostCollections {
-    community: CommunityPost[];
-    adoption: AdoptionPost[];
-    petcare: MagazinePost[];
-}
-
 /** 정렬 옵션 */
 export type SortOption = "latest" | "popular" | "comments";
-
-/** 필터 옵션 */
-export interface FilterOption {
-    id: string;
-    label: string;
-    value: string;
-}
 
 // ============================================
 // 12. 포인트 시스템 타입
@@ -865,7 +747,7 @@ export interface MinihompyViewData {
 }
 
 // ============================================
-// 9. 추억 앨범 관련 타입
+// 15. 추억 앨범 관련 타입
 // ============================================
 
 /** 추억 앨범 컨셉 */
@@ -887,7 +769,7 @@ export interface MemoryAlbum {
 }
 
 // ============================================
-// 10. AI 영상 생성 관련 타입
+// 16. AI 영상 생성 관련 타입
 // ============================================
 
 /** 영상 생성 상태 */

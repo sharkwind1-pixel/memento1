@@ -530,4 +530,4 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey, i
     );
 }
 
-export default CommunityPage;
+export default React.memo(CommunityPage);

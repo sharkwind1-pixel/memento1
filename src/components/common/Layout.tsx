@@ -367,15 +367,6 @@ function Layout({
     >(null);
     const [isAccountSettingsOpen, setIsAccountSettingsOpen] = useState(false);
 
-    // 다크모드 동기화: blocking script가 이미 클래스를 적용했으므로
-    // React state만 동기화 (DOM 조작 불필요)
-    useEffect(() => {
-        const hasDark = document.documentElement.classList.contains("dark");
-        if (hasDark !== isDarkMode) {
-            setIsDarkMode(hasDark);
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
 
     useEffect(() => {
         const handleOpenAuthModal = () => {
@@ -544,7 +535,6 @@ function Layout({
                 isDarkMode={isDarkMode}
                 onToggleDarkMode={toggleDarkMode}
                 onOpenLogin={openLoginModal}
-                onOpenSignup={openLoginModal}
                 onSignOut={handleSignOut}
                 onOpenAccountSettings={() => setIsAccountSettingsOpen(true)}
                 authLoading={loading}
@@ -567,7 +557,6 @@ function Layout({
                     isDarkMode={isDarkMode}
                     onToggleDarkMode={toggleDarkMode}
                     onOpenLogin={openLoginModal}
-                    onOpenSignup={openLoginModal}
                     onSignOut={handleSignOut}
                     onOpenAccountSettings={() => setIsAccountSettingsOpen(true)}
                     authLoading={loading}
