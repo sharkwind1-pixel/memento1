@@ -53,6 +53,11 @@ interface PostComment {
     authorNickname: string;
     authorAvatar?: string;
     createdAt: string;
+    // 좋아요/비추천
+    likes?: number;
+    dislikes?: number;
+    userLiked?: boolean;
+    userDisliked?: boolean;
     // 레거시 필드 호환
     author_nickname?: string;
     author_avatar?: string;
@@ -1033,13 +1038,13 @@ export default function PostDetailView({
                                             } catch { /* 무시 */ }
                                         }}
                                         className={`flex items-center gap-1 text-xs transition-colors ${
-                                            (comment as Record<string, unknown>).userLiked
+                                            comment.userLiked
                                                 ? "text-rose-500"
                                                 : "text-gray-400 hover:text-rose-500"
                                         }`}
                                     >
-                                        <Heart className={`w-3.5 h-3.5 ${(comment as Record<string, unknown>).userLiked ? "fill-current" : ""}`} />
-                                        {((comment as Record<string, unknown>).likes as number || 0) > 0 && <span>{(comment as Record<string, unknown>).likes as number}</span>}
+                                        <Heart className={`w-3.5 h-3.5 ${comment.userLiked ? "fill-current" : ""}`} />
+                                        {(comment.likes || 0) > 0 && <span>{comment.likes}</span>}
                                     </button>
                                     <button
                                         onClick={async () => {
@@ -1052,13 +1057,13 @@ export default function PostDetailView({
                                             } catch { /* 무시 */ }
                                         }}
                                         className={`flex items-center gap-1 text-xs transition-colors ${
-                                            (comment as Record<string, unknown>).userDisliked
+                                            comment.userDisliked
                                                 ? "text-gray-600 dark:text-gray-300"
                                                 : "text-gray-400 hover:text-gray-600"
                                         }`}
                                     >
-                                        <ThumbsDown className={`w-3.5 h-3.5 ${(comment as Record<string, unknown>).userDisliked ? "fill-current" : ""}`} />
-                                        {((comment as Record<string, unknown>).dislikes as number || 0) > 0 && <span>{(comment as Record<string, unknown>).dislikes as number}</span>}
+                                        <ThumbsDown className={`w-3.5 h-3.5 ${comment.userDisliked ? "fill-current" : ""}`} />
+                                        {(comment.dislikes || 0) > 0 && <span>{comment.dislikes}</span>}
                                     </button>
                                 </div>
                             </div>
