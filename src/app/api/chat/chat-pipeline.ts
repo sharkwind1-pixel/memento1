@@ -665,7 +665,8 @@ export async function buildAIContext(
             : getDailySystemPrompt(pet, emotionGuide, memoryContext, combinedContext, isCareQuery, isFirstChat, isNewSession);
 
     // 케어 질문이면 웹 검색 + 매거진 기사로 프롬프트 보강
-    if (isCareQuery && !isMemorialMode) {
+    // 케어/실용 질문이면 웹 검색 + 매거진으로 프롬프트 보강 (추모 모드에서도 실용 질문은 검색)
+    if (isCareQuery) {
         // Tavily 웹 검색 (전문 정보 주입)
         try {
             const { searchCareInfo } = await import("@/lib/care-search");
@@ -675,13 +676,15 @@ export async function buildAIContext(
             }
         } catch { /* 웹 검색 실패 시 무시 — 기존 레퍼런스로 폴백 */ }
 
-        // 매거진 기사 검색 (추가 보강)
-        try {
-            const magazineCtx = await findRelatedMagazineArticles(sanitizedMessage);
-            if (magazineCtx) {
-                systemPrompt += magazineCtx;
-            }
-        } catch { /* 매거진 검색 실패 시 무시 */ }
+        // 매거진 기사 검색 (추가 보강, 일상 모드만)
+        if (!isMemorialMode) {
+            try {
+                const magazineCtx = await findRelatedMagazineArticles(sanitizedMessage);
+                if (magazineCtx) {
+                    systemPrompt += magazineCtx;
+                }
+            } catch { /* 매거진 검색 실패 시 무시 */ }
+        }
     }
 
     // 위기 감지 시 시스템 프롬프트에 위기 대응 지시 추가
