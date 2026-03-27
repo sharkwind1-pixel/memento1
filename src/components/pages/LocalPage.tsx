@@ -44,19 +44,18 @@ function LocalPage({ setSelectedTab }: LocalPageProps) {
     const [totalCount, setTotalCount] = useState(0);
     const [page, setPage] = useState(1);
 
-    // 필터 상태 — localStorage로 새로고침 시 복원
-    const [selectedRegion, setSelectedRegion] = useState<string>(() => {
-        if (typeof window !== "undefined") return safeGetItem("memento-local-region") || "";
-        return "";
-    });
-    const [selectedDistrict, setSelectedDistrict] = useState<string>(() => {
-        if (typeof window !== "undefined") return safeGetItem("memento-local-district") || "";
-        return "";
-    });
-    const [selectedCategory, setSelectedCategory] = useState<string>(() => {
-        if (typeof window !== "undefined") return safeGetItem("memento-local-category") || "all";
-        return "all";
-    });
+    // 필터 상태 — hydration 후 localStorage에서 복원
+    const [selectedRegion, setSelectedRegion] = useState<string>("");
+    const [selectedDistrict, setSelectedDistrict] = useState<string>("");
+    const [selectedCategory, setSelectedCategory] = useState<string>("all");
+    const hasRestoredLocalFilters = useRef(false);
+    useEffect(() => {
+        if (hasRestoredLocalFilters.current) return;
+        hasRestoredLocalFilters.current = true;
+        const r = safeGetItem("memento-local-region"); if (r) setSelectedRegion(r);
+        const d = safeGetItem("memento-local-district"); if (d) setSelectedDistrict(d);
+        const c = safeGetItem("memento-local-category"); if (c) setSelectedCategory(c);
+    }, []);
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [searchInput, setSearchInput] = useState<string>("");
 

@@ -74,14 +74,15 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
     const [viewingPhoto, setViewingPhoto] = useState<PetPhoto | null>(null);
     const [petToDelete, setPetToDelete] = useState<Pet | null>(null);
 
-    // 마이페이지 상태 — localStorage로 새로고침 시 복원
-    const [activeTab, setActiveTab] = useState<"pets" | "profile" | "minihompy">(() => {
-        if (typeof window !== "undefined") {
-            const saved = safeGetItem("memento-record-tab");
-            if (saved === "profile" || saved === "minihompy") return saved;
-        }
-        return "pets";
-    });
+    // 마이페이지 상태 — hydration 후 localStorage에서 복원
+    const [activeTab, setActiveTab] = useState<"pets" | "profile" | "minihompy">("pets");
+    const hasRestoredRecordTab = useRef(false);
+    useEffect(() => {
+        if (hasRestoredRecordTab.current) return;
+        hasRestoredRecordTab.current = true;
+        const saved = safeGetItem("memento-record-tab");
+        if (saved === "profile" || saved === "minihompy") setActiveTab(saved);
+    }, []);
     const [isEditingNickname, setIsEditingNickname] = useState(false);
     const [nickname, setNickname] = useState("");
     const [isSavingProfile, setIsSavingProfile] = useState(false);

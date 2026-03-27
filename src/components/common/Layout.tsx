@@ -356,13 +356,11 @@ function Layout({
     }, [loading, user, profileLoaded, isPetsLoading]);
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    // blocking script가 이미 'dark' 클래스를 적용했으므로, DOM에서 초기값 읽기
-    const [isDarkMode, setIsDarkMode] = useState(() => {
-        if (typeof document !== "undefined") {
-            return document.documentElement.classList.contains("dark");
-        }
-        return false;
-    });
+    // hydration 후 DOM에서 다크모드 상태 읽기
+    const [isDarkMode, setIsDarkMode] = useState(false);
+    useEffect(() => {
+        setIsDarkMode(document.documentElement.classList.contains("dark"));
+    }, []);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [supportModalType, setSupportModalType] = useState<
         "inquiry" | "suggestion" | null

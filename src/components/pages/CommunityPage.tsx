@@ -47,59 +47,38 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey, i
     const [internalSubcategory, setInternalSubcategory] = useState<CommunitySubcategory>(subcategory || "free");
     const currentSubcategory = subcategory || internalSubcategory;
 
-    // 말머리 필터 (자유게시판용) — localStorage로 새로고침 시 복원
+    // 말머리/뱃지/지역/정렬 필터 — hydration 후 localStorage에서 복원
     const VALID_TAGS: (PostTag | "all")[] = ["all", "정보", "강아지", "고양이", "일상", "질문", "새", "물고기", "토끼", "파충류"];
-    const [selectedTag, setSelectedTag] = useState<PostTag | "all">(() => {
-        if (typeof window !== "undefined") {
-            const saved = safeGetItem("memento-community-tag");
-            if (saved && VALID_TAGS.includes(saved as PostTag | "all")) {
-                return saved as PostTag | "all";
-            }
-        }
-        return "all";
-    });
-
-    // 뱃지(게시글 유형) 필터 — 홈에서 딥링크 시 sessionStorage, 그 외 localStorage
-    const [selectedBadge, setSelectedBadge] = useState<string>(() => {
-        if (typeof window !== "undefined") {
-            const fromHome = safeSessionGetItem("memento-community-badge");
-            if (fromHome) {
-                safeSessionRemoveItem("memento-community-badge");
-                return fromHome;
-            }
-            return safeGetItem("memento-community-badge") || "all";
-        }
-        return "all";
-    });
-    // "함께 보기" 독립 갤러리 뷰 상태
-    const [showcaseView, setShowcaseView] = useState<boolean>(() => {
-        if (typeof window !== "undefined") {
-            const fromHome = safeSessionGetItem("memento-community-view");
-            if (fromHome === "showcase") {
-                safeSessionRemoveItem("memento-community-view");
-                return true;
-            }
-        }
-        return false;
-    });
-
-    // 지역 필터 (지역정보 게시판용) — localStorage로 새로고침 시 복원
-    const [selectedRegion, setSelectedRegion] = useState<string>(() => {
-        if (typeof window !== "undefined") {
-            return safeGetItem("memento-community-region") || "all";
-        }
-        return "all";
-    });
-
+    const [selectedTag, setSelectedTag] = useState<PostTag | "all">("all");
+    const [selectedBadge, setSelectedBadge] = useState<string>("all");
+    const [showcaseView, setShowcaseView] = useState<boolean>(false);
+    const [selectedRegion, setSelectedRegion] = useState<string>("all");
     const [searchInput, setSearchInput] = useState<string>("");
     const [searchQuery, setSearchQuery] = useState<string>("");
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-    const [sortBy, setSortBy] = useState<string>(() => {
-        if (typeof window !== "undefined") {
-            return safeGetItem("memento-community-sort") || "latest";
-        }
-        return "latest";
-    });
+    const [sortBy, setSortBy] = useState<string>("latest");
+
+    const hasRestoredFilters = useRef(false);
+    useEffect(() => {
+        if (hasRestoredFilters.current) return;
+        hasRestoredFilters.current = true;
+        // 말머리
+        const savedTag = safeGetItem("memento-community-tag");
+        if (savedTag && VALID_TAGS.includes(savedTag as PostTag | "all")) setSelectedTag(savedTag as PostTag | "all");
+        // 뱃지 (홈 딥링크 우선)
+        const fromHomeBadge = safeSessionGetItem("memento-community-badge");
+        if (fromHomeBadge) { safeSessionRemoveItem("memento-community-badge"); setSelectedBadge(fromHomeBadge); }
+        else { const saved = safeGetItem("memento-community-badge"); if (saved) setSelectedBadge(saved); }
+        // 쇼케이스 뷰
+        const fromHomeView = safeSessionGetItem("memento-community-view");
+        if (fromHomeView === "showcase") { safeSessionRemoveItem("memento-community-view"); setShowcaseView(true); }
+        // 지역
+        const savedRegion = safeGetItem("memento-community-region");
+        if (savedRegion) setSelectedRegion(savedRegion);
+        // 정렬
+        const savedSort = safeGetItem("memento-community-sort");
+        if (savedSort) setSortBy(savedSort);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     // 실제 데이터 상태
     const [posts, setPosts] = useState<Post[]>([]);

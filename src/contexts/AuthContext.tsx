@@ -108,12 +108,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         accessoriesData: [],
         imageUrl: null,
     });
-    const [isSimpleMode, setIsSimpleModeState] = useState(() => {
-        if (typeof window !== "undefined") {
-            return safeGetItem("memento-simple-mode") === "true";
-        }
-        return false;
-    });
+    const [isSimpleMode, setIsSimpleModeState] = useState(false);
+    // hydration 후 localStorage에서 간편모드 복원
+    useEffect(() => {
+        const saved = safeGetItem("memento-simple-mode");
+        if (saved === "true") setIsSimpleModeState(true);
+    }, []);
 
     // 프로필에서 관리자/프리미엄 상태 조회
     // 프로필+포인트 통합 조회 (단일 쿼리)
