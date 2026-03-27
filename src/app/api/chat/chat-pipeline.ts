@@ -664,8 +664,18 @@ export async function buildAIContext(
             ? getMemorialSystemPrompt(pet, emotionGuide, memoryContext, combinedContext, griefGuideText, isFirstChat, isNewSession)
             : getDailySystemPrompt(pet, emotionGuide, memoryContext, combinedContext, isCareQuery, isFirstChat, isNewSession);
 
-    // 케어 질문이면 관련 매거진 기사 검색해서 프롬프트에 추가
+    // 케어 질문이면 웹 검색 + 매거진 기사로 프롬프트 보강
     if (isCareQuery && !isMemorialMode) {
+        // Tavily 웹 검색 (전문 정보 주입)
+        try {
+            const { searchCareInfo } = await import("@/lib/care-search");
+            const searchCtx = await searchCareInfo(sanitizedMessage, pet.type, pet.breed);
+            if (searchCtx) {
+                systemPrompt += searchCtx;
+            }
+        } catch { /* 웹 검색 실패 시 무시 — 기존 레퍼런스로 폴백 */ }
+
+        // 매거진 기사 검색 (추가 보강)
         try {
             const magazineCtx = await findRelatedMagazineArticles(sanitizedMessage);
             if (magazineCtx) {
