@@ -103,7 +103,16 @@ export default function CommunitySection({
                             커뮤니티에서 첫 번째 이야기를 작성해보세요
                         </p>
                     </div>
-                ) : communityPosts.map((post, idx) => {
+                ) : (() => {
+                    // 카드가 적으면 복제하여 자동 스크롤 가능하게 함 (최소 6개)
+                    const MIN_CARDS = 6;
+                    let displayPosts = communityPosts;
+                    if (communityPosts.length > 0 && communityPosts.length < MIN_CARDS) {
+                        const repeats = Math.ceil(MIN_CARDS / communityPosts.length);
+                        displayPosts = Array.from({ length: repeats }, () => communityPosts).flat();
+                    }
+                    return displayPosts;
+                })().map((post, idx) => {
                     const isLiked = likedPosts[post.id] || false;
                     const displayLikes = post.likes;
                     const addedComments = postComments[post.id]?.length || 0;
@@ -111,7 +120,7 @@ export default function CommunitySection({
 
                     return (
                         <Card
-                            key={post.id}
+                            key={`${post.id}-${idx}`}
                             onClick={() => onSelectPost(post)}
                             className="w-[260px] max-w-[260px] sm:w-72 sm:max-w-72 flex-shrink-0 overflow-hidden rounded-2xl cursor-pointer group border-0 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 will-change-transform"
                         >

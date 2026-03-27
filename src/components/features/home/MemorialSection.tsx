@@ -99,11 +99,19 @@ export default function MemorialSection({
                         </p>
                     </div>
                 ) : (
-                    displayMemorialData.map((pet) => {
+                    (() => {
+                        const MIN_CARDS = 5;
+                        let displayPets = displayMemorialData;
+                        if (displayMemorialData.length > 0 && displayMemorialData.length < MIN_CARDS) {
+                            const repeats = Math.ceil(MIN_CARDS / displayMemorialData.length);
+                            displayPets = Array.from({ length: repeats }, () => displayMemorialData).flat();
+                        }
+                        return displayPets;
+                    })().map((pet, idx) => {
                         const src = safeStringSrc(pet.profileImage);
                         return (
                             <Card
-                                key={pet.id}
+                                key={`${pet.id}-${idx}`}
                                 className="w-[220px] max-w-[220px] sm:w-64 sm:max-w-64 flex-shrink-0 bg-gradient-to-br from-amber-50 to-orange-50/80 dark:from-gray-800/50 dark:to-gray-800/30 border-amber-100/50 dark:border-gray-700/50 rounded-2xl overflow-hidden shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 will-change-transform"
                             >
                                 <CardHeader className="p-0 relative overflow-hidden">

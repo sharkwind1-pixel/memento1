@@ -103,13 +103,21 @@ export default function ShowcaseSection({
                             AI 영상을 만들어 자랑해보세요
                         </p>
                     </div>
-                ) : showcasePosts.map((post, idx) => {
+                ) : (() => {
+                    const MIN_CARDS = 6;
+                    let displayPosts = showcasePosts;
+                    if (showcasePosts.length > 0 && showcasePosts.length < MIN_CARDS) {
+                        const repeats = Math.ceil(MIN_CARDS / showcasePosts.length);
+                        displayPosts = Array.from({ length: repeats }, () => showcasePosts).flat();
+                    }
+                    return displayPosts;
+                })().map((post, idx) => {
                     const hasImage = (post.imageUrls?.length ?? 0) > 0;
                     const firstImage = hasImage ? post.imageUrls![0] : null;
 
                     return (
                         <Card
-                            key={post.id}
+                            key={`${post.id}-${idx}`}
                             onClick={handleMoreClick}
                             className="w-[260px] max-w-[260px] sm:w-72 sm:max-w-72 flex-shrink-0 overflow-hidden rounded-2xl cursor-pointer group border-0 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 will-change-transform"
                         >
