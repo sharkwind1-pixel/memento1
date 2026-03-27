@@ -30,10 +30,18 @@ import {
 } from "@/components/features/community/communityTypes";
 import { safeGetItem, safeSetItem, safeSessionGetItem, safeSessionRemoveItem } from "@/lib/safe-storage";
 
-function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey }: CommunityPageProps) {
+function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey, initialPostId, onInitialPostConsumed }: CommunityPageProps) {
     const { isMemorialMode } = useMemorialMode();
     const { selectedPet } = usePets();
     const { user } = useAuth();
+
+    // 홈에서 게시글 클릭으로 들어온 경우 바로 상세 열기
+    useEffect(() => {
+        if (initialPostId && isActive) {
+            setSelectedPostId(initialPostId);
+            onInitialPostConsumed?.();
+        }
+    }, [initialPostId, isActive]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // 서브카테고리 상태 (props 또는 내부 상태)
     const [internalSubcategory, setInternalSubcategory] = useState<CommunitySubcategory>(subcategory || "free");

@@ -29,9 +29,10 @@ import { Newspaper } from "lucide-react";
 interface HomePageProps {
     setSelectedTab: (tab: TabType, sub?: CommunitySubcategory) => void;
     isActive?: boolean;
+    onOpenCommunityPost?: (postId: string) => void;
 }
 
-function HomePage({ setSelectedTab, isActive }: HomePageProps) {
+function HomePage({ setSelectedTab, isActive, onOpenCommunityPost }: HomePageProps) {
     const { isSimpleMode, user } = useAuth();
     const { isMemorialMode } = useMemorialMode();
     const scroll = useSmoothAutoScroll() as unknown as SmoothAutoScrollReturn;
@@ -154,7 +155,13 @@ function HomePage({ setSelectedTab, isActive }: HomePageProps) {
                                     animatingHearts={animatingHearts}
                                     postComments={postComments}
                                     onToggleLike={toggleLike}
-                                    onSelectPost={setSelectedPost}
+                                    onSelectPost={(post) => {
+                                        if (onOpenCommunityPost && post.dbId) {
+                                            onOpenCommunityPost(post.dbId);
+                                        } else {
+                                            setSelectedPost(post);
+                                        }
+                                    }}
                                     scrollRef={scroll.communityScrollRef}
                                     setSelectedTab={setSelectedTab}
                                     isMemorial={isMemorialMode}

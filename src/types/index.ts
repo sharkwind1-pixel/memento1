@@ -593,6 +593,9 @@ export interface CommunityPageProps extends PageProps {
     isActive?: boolean;
     /** 사이드바에서 게시판 탭 클릭 시 증가 → 상세/수정 모드 강제 리셋 */
     resetKey?: number;
+    /** 홈에서 게시글 클릭 시 바로 상세 열기 */
+    initialPostId?: string | null;
+    onInitialPostConsumed?: () => void;
 }
 
 /** AdoptionPage Props */

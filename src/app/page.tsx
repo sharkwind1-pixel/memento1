@@ -220,6 +220,7 @@ function HomeContent() {
     const [selectedSubcategory, setSelectedSubcategory] = useState<CommunitySubcategory | undefined>(initialState.sub);
     // 커뮤니티 페이지 강제 리셋 키 (사이드바에서 게시판 탭 클릭 시 증가)
     const [communityResetKey, setCommunityResetKey] = useState(0);
+    const [communityInitialPostId, setCommunityInitialPostId] = useState<string | null>(null);
 
     // 방문한 탭 유지: 한 번 mount된 페이지는 display:none으로 숨기기만 (unmount 방지)
     const [mountedTabs, setMountedTabs] = useState<Set<TabType>>(() => new Set([initialState.tab]));
@@ -496,7 +497,14 @@ function HomeContent() {
         <>
             {mountedTabs.has("home") && (
                 <div style={{ display: selectedTab === "home" ? "block" : "none" }}>
-                    <HomePage setSelectedTab={handleTabChange} isActive={selectedTab === "home"} />
+                    <HomePage
+                        setSelectedTab={handleTabChange}
+                        isActive={selectedTab === "home"}
+                        onOpenCommunityPost={(postId: string) => {
+                            setCommunityInitialPostId(postId);
+                            handleTabChange("community");
+                        }}
+                    />
                 </div>
             )}
             {mountedTabs.has("record") && (
@@ -511,6 +519,8 @@ function HomeContent() {
                         onSubcategoryChange={handleSubcategoryChange}
                         isActive={selectedTab === "community"}
                         resetKey={communityResetKey}
+                        initialPostId={communityInitialPostId}
+                        onInitialPostConsumed={() => setCommunityInitialPostId(null)}
                     />
                 </div>
             )}
