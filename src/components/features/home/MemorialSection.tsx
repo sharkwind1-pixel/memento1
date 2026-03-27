@@ -99,15 +99,7 @@ export default function MemorialSection({
                         </p>
                     </div>
                 ) : (
-                    (() => {
-                        const MIN_CARDS = 5;
-                        let displayPets = displayMemorialData;
-                        if (displayMemorialData.length > 0 && displayMemorialData.length < MIN_CARDS) {
-                            const repeats = Math.ceil(MIN_CARDS / displayMemorialData.length);
-                            displayPets = Array.from({ length: repeats }, () => displayMemorialData).flat();
-                        }
-                        return displayPets;
-                    })().map((pet, idx) => {
+                    displayMemorialData.map((pet, idx) => {
                         const src = safeStringSrc(pet.profileImage);
                         return (
                             <Card

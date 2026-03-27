@@ -103,15 +103,7 @@ export default function ShowcaseSection({
                             AI 영상을 만들어 자랑해보세요
                         </p>
                     </div>
-                ) : (() => {
-                    const MIN_CARDS = 6;
-                    let displayPosts = showcasePosts;
-                    if (showcasePosts.length > 0 && showcasePosts.length < MIN_CARDS) {
-                        const repeats = Math.ceil(MIN_CARDS / showcasePosts.length);
-                        displayPosts = Array.from({ length: repeats }, () => showcasePosts).flat();
-                    }
-                    return displayPosts;
-                })().map((post, idx) => {
+                ) : showcasePosts.map((post, idx) => {
                     const hasImage = (post.imageUrls?.length ?? 0) > 0;
                     const firstImage = hasImage ? post.imageUrls![0] : null;
 
