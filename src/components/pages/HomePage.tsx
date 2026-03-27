@@ -19,7 +19,6 @@ import {
     MemorialSection,
 } from "@/components/features/home";
 import AnnouncementBanner from "@/components/features/home/AnnouncementBanner";
-import PostModal from "@/components/features/home/PostModal";
 import Lightbox from "@/components/features/home/Lightbox";
 import SimpleHomeLauncher from "@/components/features/home/SimpleHomeLauncher";
 import { useAuth } from "@/contexts/AuthContext";
@@ -40,13 +39,10 @@ function HomePage({ setSelectedTab, isActive, onOpenCommunityPost }: HomePagePro
     const {
         lightboxItem,
         setLightboxItem,
-        selectedPost,
-        setSelectedPost,
         likedPosts,
         animatingHearts,
         postComments,
         toggleLike,
-        addComment,
         communityPosts,
         isLoadingCommunity,
         showcasePosts,
@@ -68,7 +64,6 @@ function HomePage({ setSelectedTab, isActive, onOpenCommunityPost }: HomePagePro
 
     useEffect(() => {
         if (!isActive) {
-            if (selectedPost) setSelectedPost(null);
             if (lightboxItem) setLightboxItem(null);
         }
     }, [isActive]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -110,16 +105,8 @@ function HomePage({ setSelectedTab, isActive, onOpenCommunityPost }: HomePagePro
                 } rounded-full blur-3xl`} />
             </div>
 
-            {/* Lightbox + 모달 */}
+            {/* Lightbox */}
             <Lightbox item={lightboxItem} onClose={() => setLightboxItem(null)} />
-            <PostModal
-                post={selectedPost}
-                isLiked={selectedPost ? likedPosts[selectedPost.id] || false : false}
-                onToggleLike={() => selectedPost && toggleLike(selectedPost.id)}
-                onClose={() => setSelectedPost(null)}
-                comments={selectedPost ? postComments[selectedPost.id] || [] : []}
-                onAddComment={addComment}
-            />
 
             <div className="relative z-10 space-y-10 sm:space-y-14 pb-28">
                 {/* 히어로 */}
@@ -156,10 +143,8 @@ function HomePage({ setSelectedTab, isActive, onOpenCommunityPost }: HomePagePro
                                     postComments={postComments}
                                     onToggleLike={toggleLike}
                                     onSelectPost={(post) => {
-                                        if (onOpenCommunityPost && post.dbId) {
+                                        if (post.dbId && onOpenCommunityPost) {
                                             onOpenCommunityPost(post.dbId);
-                                        } else {
-                                            setSelectedPost(post);
                                         }
                                     }}
                                     scrollRef={scroll.communityScrollRef}
