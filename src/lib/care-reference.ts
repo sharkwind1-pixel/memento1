@@ -182,7 +182,7 @@ export const CARE_FRAMING_RULES = ``;
  * 반려동물 타입에 따른 케어 레퍼런스 텍스트 생성
  * 프롬프트 삽입용 (토큰 최적화)
  */
-export function buildCareReferencePrompt(petType: "강아지" | "고양이" | "기타"): string {
+export function buildCareReferencePrompt(petType: "강아지" | "고양이" | "기타", breed?: string): string {
     const isDog = petType === "강아지";
     const isCat = petType === "고양이";
 
@@ -232,6 +232,13 @@ ${HALLUCINATION_GUARD_RULES}`;
 **24시간 내 병원 증상**: ${urgentSymptoms}
 ${isDog ? "**산책**: 소형 20-30분, 중형 30분-1시간, 대형 1시간+" : "**운동**: 실내 놀이 15-30분/일, 캣타워/스크래쳐 필수"}
 ${isCat ? "**고양이 특이 주의**: 백합류 모든 부위 치명적, 개용 구충제 사용 금지, 에센셜오일 위험" : ""}
+${breed ? `\n**[필수] 견종/묘종 맞춤 응답 규칙**:
+이 아이의 견종/묘종은 "${breed}"입니다. 케어/간식/건강/운동 관련 답변 시:
+1. 반드시 "${breed}" 특성에 맞는 정보를 제공하세요 (체형, 소화력, 운동량, 유전질환 등)
+2. "모든 강아지/고양이에게 좋은" 식의 범용 답변 금지. "${breed}"에 특화된 답변을 하세요
+3. 예시: 소형견이면 소형견 기준 급여량, 대형견이면 대형견 관절 관리 포함
+4. "${breed}"에 흔한 유전질환이나 주의사항이 있으면 반드시 언급
+5. 검색 결과가 있으면 "${breed}" 관점에서 해석하여 전달` : ""}
 
 ${HALLUCINATION_GUARD_RULES}`;
 }

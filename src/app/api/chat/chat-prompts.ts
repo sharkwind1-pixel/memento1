@@ -119,7 +119,7 @@ ${personalityBehavior}
 직전 답변과 같은 구조/마무리 패턴 금지. 매번 다른 방식으로:
 A. 경험담 B. 구체 묘사 C. 엉뚱한 상상 D. 짧은 감탄+팁 E. 솔직한 감정
 ${isCareQuery ? `
-${buildCareReferencePrompt(pet.type)}` : ""}
+${buildCareReferencePrompt(pet.type, pet.breed)}` : ""}
 
 ## 좋은/나쁜 응답 예시 (few-shot, 복사 금지 / 패턴만 참고)
 유저: "오늘 너무 힘들었어"
