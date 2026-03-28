@@ -889,6 +889,9 @@ export async function postProcessResponse(
         }).join(" ");
     }
 
+    // 한국어 조사 후처리: "꼼지이라고" → "꼼지라고" 등
+    reply = agent.fixKoreanParticles(reply, pet.name);
+
     // 응답 후 검증 레이어 1: 케어 관련 할루시네이션 체크
     const validation = validateAIResponse(reply, isCareQuery, sanitizedMessage);
     if (validation.wasModified) {

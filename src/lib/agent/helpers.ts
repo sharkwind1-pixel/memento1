@@ -31,6 +31,67 @@ export function getEmotionLabel(emotion: EmotionType): string {
     return labels[emotion] || "평온";
 }
 
+/**
+ * 한국어 조사 후처리 — 펫 이름 뒤 조사를 받침 유무에 맞게 교정
+ * GPT-4o-mini가 한국어 받침 규칙을 자주 틀리므로 코드 레벨에서 후처리
+ *
+ * 예: "꼼지이가" → "꼼지가", "꼼지이를" → "꼼지를", "꼼지이라고" → "꼼지라고"
+ */
+export function fixKoreanParticles(text: string, petName: string): string {
+    if (!petName || petName.length === 0) return text;
+
+    const lastChar = petName.charCodeAt(petName.length - 1);
+    // 한글 유니코드 범위 체크 (가~힣)
+    const isHangul = lastChar >= 0xAC00 && lastChar <= 0xD7A3;
+    if (!isHangul) return text;
+
+    // 받침 유무 판별: (코드 - 0xAC00) % 28 === 0이면 받침 없음
+    const hasBatchim = (lastChar - 0xAC00) % 28 !== 0;
+
+    if (hasBatchim) {
+        // 받침 있음: "꼼지이가" → "꼼지가" (불필요한 "이" 제거)
+        // 이가→이, 이를→을, 이는→은, 이와→과, 이라고→이라고(이건 맞음), 이에게→에게
+        text = text.replaceAll(`${petName}이가`, `${petName}이`);
+        text = text.replaceAll(`${petName}이를`, `${petName}을`);
+        text = text.replaceAll(`${petName}이는`, `${petName}은`);
+        text = text.replaceAll(`${petName}이와`, `${petName}과`);
+        text = text.replaceAll(`${petName}이에게`, `${petName}에게`);
+        // 받침 있으면: 이/을/은/과/아 사용 확인
+        text = text.replaceAll(`${petName}가 `, `${petName}이 `);
+        text = text.replaceAll(`${petName}를 `, `${petName}을 `);
+        text = text.replaceAll(`${petName}는 `, `${petName}은 `);
+        text = text.replaceAll(`${petName}와 `, `${petName}과 `);
+        text = text.replaceAll(`${petName}야!`, `${petName}아!`);
+        text = text.replaceAll(`${petName}야## `, `${petName}아~ `);
+        text = text.replaceAll(`${petName}야~`, `${petName}아~`);
+        text = text.replaceAll(`${petName}야.`, `${petName}아.`);
+        text = text.replaceAll(`${petName}야,`, `${petName}아,`);
+    } else {
+        // 받침 없음: "꼼지이라고" → "꼼지라고" (불필요한 "이" 제거)
+        text = text.replaceAll(`${petName}이가`, `${petName}가`);
+        text = text.replaceAll(`${petName}이를`, `${petName}를`);
+        text = text.replaceAll(`${petName}이는`, `${petName}는`);
+        text = text.replaceAll(`${petName}이와`, `${petName}와`);
+        text = text.replaceAll(`${petName}이에게`, `${petName}에게`);
+        text = text.replaceAll(`${petName}이라고`, `${petName}라고`);
+        text = text.replaceAll(`${petName}이라는`, `${petName}라는`);
+        text = text.replaceAll(`${petName}이라서`, `${petName}라서`);
+        text = text.replaceAll(`${petName}이랑`, `${petName}랑`);
+        text = text.replaceAll(`${petName}이한테`, `${petName}한테`);
+        // 받침 없으면: 가/를/는/와/야 사용 확인
+        text = text.replaceAll(`${petName}이 `, `${petName}가 `);
+        text = text.replaceAll(`${petName}을 `, `${petName}를 `);
+        text = text.replaceAll(`${petName}은 `, `${petName}는 `);
+        text = text.replaceAll(`${petName}과 `, `${petName}와 `);
+        text = text.replaceAll(`${petName}아!`, `${petName}야!`);
+        text = text.replaceAll(`${petName}아~`, `${petName}야~`);
+        text = text.replaceAll(`${petName}아.`, `${petName}야.`);
+        text = text.replaceAll(`${petName}아,`, `${petName}야,`);
+    }
+
+    return text;
+}
+
 /** 애도 단계 → 한국어 라벨 */
 export function getGriefStageLabel(stage: GriefStage): string {
     const labels: Record<GriefStage, string> = {

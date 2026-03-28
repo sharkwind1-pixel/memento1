@@ -46,6 +46,7 @@ const PLACE_PATTERNS: { pattern: RegExp; keyword: string; altKeyword?: string }[
     { pattern: /미용|그루밍|목욕|트리밍/, keyword: "애견미용" },
     { pattern: /호텔|펫호텔|맡길|돌봄/, keyword: "펫호텔" },
     { pattern: /용품|사료|간식.*사/, keyword: "애견용품" },
+    { pattern: /장례|장묘|화장|납골|추모공원|장의사|수습|유골/, keyword: "반려동물장례", altKeyword: "펫장례식장" },
 ];
 
 /**
@@ -57,7 +58,9 @@ const SPECIFIC_LOCATION_PATTERN = /강릉|속초|양양|삼척|동해|제주|부
 export function detectPlaceQuery(message: string): { detected: boolean; keyword?: string; altKeyword?: string; hasSpecificLocation?: boolean; locationName?: string } {
     // 장소 관련 의문형 패턴이 있는지 먼저 체크
     const questionPatterns = /어디|어느|가까운|근처|주변|추천|갈까|가볼|찾아|코스|갈만|산책/;
-    if (!questionPatterns.test(message)) {
+    // 장례/장묘 키워드는 의문형 없어도 장소 검색 트리거 (추모 모드 핵심 기능)
+    const memorialPlacePatterns = /장례.*어디|장례.*해야|장묘|화장.*해야|장례식장|납골|추모공원/;
+    if (!questionPatterns.test(message) && !memorialPlacePatterns.test(message)) {
         return { detected: false };
     }
 
