@@ -68,6 +68,19 @@ export function fixKoreanParticles(text: string, petName: string): string {
         text = text.replaceAll(`${petName}야,`, `${petName}아,`);
     } else {
         // 받침 없음: "꼼지이라고" → "꼼지라고" (불필요한 "이" 제거)
+        // "꼼지이야" → "꼼지야", "꼼지이이야" → "꼼지야"
+        // 먼저 "이이" 중복부터 제거 (GPT가 "이"를 여러 번 넣는 경우)
+        text = text.replaceAll(`${petName}이이`, `${petName}이`);
+        // 자기소개/호칭: "이야", "이다", "이잖아", "이거든", "이니까"
+        text = text.replaceAll(`${petName}이야`, `${petName}야`);
+        text = text.replaceAll(`${petName}이다`, `${petName}다`);
+        text = text.replaceAll(`${petName}이잖아`, `${petName}잖아`);
+        text = text.replaceAll(`${petName}이거든`, `${petName}거든`);
+        text = text.replaceAll(`${petName}이니까`, `${petName}니까`);
+        text = text.replaceAll(`${petName}이니`, `${petName}니`);
+        text = text.replaceAll(`${petName}이지`, `${petName}지`);
+        text = text.replaceAll(`${petName}이도`, `${petName}도`);
+        // 조사
         text = text.replaceAll(`${petName}이가`, `${petName}가`);
         text = text.replaceAll(`${petName}이를`, `${petName}를`);
         text = text.replaceAll(`${petName}이는`, `${petName}는`);
