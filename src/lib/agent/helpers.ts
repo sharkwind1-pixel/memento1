@@ -67,32 +67,38 @@ export function fixKoreanParticles(text: string, petName: string): string {
         text = text.replaceAll(`${petName}야.`, `${petName}아.`);
         text = text.replaceAll(`${petName}야,`, `${petName}아,`);
     } else {
-        // 받침 없음: "꼼지이라고" → "꼼지라고" (불필요한 "이" 제거)
-        // "꼼지이야" → "꼼지야", "꼼지이이야" → "꼼지야"
-        // 먼저 "이이" 중복부터 제거 (GPT가 "이"를 여러 번 넣는 경우)
-        text = text.replaceAll(`${petName}이이`, `${petName}이`);
-        // 자기소개/호칭: "이야", "이다", "이잖아", "이거든", "이니까"
-        text = text.replaceAll(`${petName}이야`, `${petName}야`);
-        text = text.replaceAll(`${petName}이다`, `${petName}다`);
-        text = text.replaceAll(`${petName}이잖아`, `${petName}잖아`);
-        text = text.replaceAll(`${petName}이거든`, `${petName}거든`);
-        text = text.replaceAll(`${petName}이니까`, `${petName}니까`);
-        text = text.replaceAll(`${petName}이니`, `${petName}니`);
-        text = text.replaceAll(`${petName}이지`, `${petName}지`);
-        text = text.replaceAll(`${petName}이도`, `${petName}도`);
-        // 조사
-        text = text.replaceAll(`${petName}이가`, `${petName}가`);
-        text = text.replaceAll(`${petName}이를`, `${petName}를`);
-        text = text.replaceAll(`${petName}이는`, `${petName}는`);
-        text = text.replaceAll(`${petName}이와`, `${petName}와`);
-        text = text.replaceAll(`${petName}이에게`, `${petName}에게`);
-        text = text.replaceAll(`${petName}이라고`, `${petName}라고`);
-        text = text.replaceAll(`${petName}이라는`, `${petName}라는`);
-        text = text.replaceAll(`${petName}이라서`, `${petName}라서`);
-        text = text.replaceAll(`${petName}이랑`, `${petName}랑`);
-        text = text.replaceAll(`${petName}이한테`, `${petName}한테`);
-        // 받침 없으면: 가/를/는/와/야 사용 확인
-        text = text.replaceAll(`${petName}이 `, `${petName}가 `);
+        // 받침 없음: 이름 뒤 불필요한 "이" 제거
+        // 정규식으로 "이" 1개 이상 + 조사/어미를 한 번에 처리
+        // "꼼지이야", "꼼지이이야", "꼼지이이이야" 모두 → "꼼지야"
+        const escaped = petName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const suffixMap: [RegExp, string][] = [
+            // 어미 (이+야, 이+다, 이+잖아 등)
+            [new RegExp(`${escaped}이+야`, "g"), `${petName}야`],
+            [new RegExp(`${escaped}이+다`, "g"), `${petName}다`],
+            [new RegExp(`${escaped}이+잖아`, "g"), `${petName}잖아`],
+            [new RegExp(`${escaped}이+거든`, "g"), `${petName}거든`],
+            [new RegExp(`${escaped}이+니까`, "g"), `${petName}니까`],
+            [new RegExp(`${escaped}이+니`, "g"), `${petName}니`],
+            [new RegExp(`${escaped}이+지`, "g"), `${petName}지`],
+            [new RegExp(`${escaped}이+도`, "g"), `${petName}도`],
+            // 조사
+            [new RegExp(`${escaped}이+가`, "g"), `${petName}가`],
+            [new RegExp(`${escaped}이+를`, "g"), `${petName}를`],
+            [new RegExp(`${escaped}이+는`, "g"), `${petName}는`],
+            [new RegExp(`${escaped}이+와`, "g"), `${petName}와`],
+            [new RegExp(`${escaped}이+에게`, "g"), `${petName}에게`],
+            [new RegExp(`${escaped}이+라고`, "g"), `${petName}라고`],
+            [new RegExp(`${escaped}이+라는`, "g"), `${petName}라는`],
+            [new RegExp(`${escaped}이+라서`, "g"), `${petName}라서`],
+            [new RegExp(`${escaped}이+랑`, "g"), `${petName}랑`],
+            [new RegExp(`${escaped}이+한테`, "g"), `${petName}한테`],
+        ];
+        for (const [regex, replacement] of suffixMap) {
+            text = text.replace(regex, replacement);
+        }
+        // 단독 "이" + 공백 (꼼지이 → 꼼지가)
+        text = text.replace(new RegExp(`${escaped}이+ `, "g"), `${petName}가 `);
+        // 잘못된 조사 교정
         text = text.replaceAll(`${petName}을 `, `${petName}를 `);
         text = text.replaceAll(`${petName}은 `, `${petName}는 `);
         text = text.replaceAll(`${petName}과 `, `${petName}와 `);
