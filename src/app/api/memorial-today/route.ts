@@ -169,6 +169,15 @@ export async function GET() {
             hasNewlyRegistered: newlyRegistered.length > 0,
             hasRemembered: remembered.length > 0,
             date: `${month}/${day}`,
+            _debug: {
+                totalMemorialPets: allPets.length,
+                newlyRegisteredCount: newlyRegistered.length,
+                rememberedCount: remembered.length,
+                combinedCount: combined.length,
+                finalCount: finalPets.length,
+                hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+                dbError: error ? error.message : null,
+            },
         });
     } catch (err) {
         const message = err instanceof Error ? err.message : "알 수 없는 오류";
