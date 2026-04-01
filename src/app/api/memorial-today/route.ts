@@ -7,11 +7,16 @@
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import { createAdminSupabase } from "@/lib/supabase-server";
+import { createClient } from "@supabase/supabase-js";
 
 export async function GET() {
     try {
-        const supabase = createAdminSupabase();
+        const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+        const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+        const supabase = createClient(url, serviceKey, {
+            auth: { autoRefreshToken: false, persistSession: false },
+            global: { headers: { Authorization: `Bearer ${serviceKey}` } },
+        });
 
         // KST 기준 오늘 날짜
         const kstNow = new Date(Date.now() + 9 * 60 * 60 * 1000);
