@@ -59,6 +59,7 @@ interface PostComment {
     userLiked?: boolean;
     userDisliked?: boolean;
     // 레거시 필드 호환
+    author_name?: string;
     author_nickname?: string;
     author_avatar?: string;
     user_id?: string;
@@ -215,7 +216,7 @@ export default function PostDetailView({
                 postId: c.postId || c.post_id || postId,
                 userId: c.userId || c.user_id || "",
                 content: c.content,
-                authorNickname: c.authorNickname || c.author_nickname || "익명",
+                authorNickname: c.authorNickname || c.author_nickname || c.author_name || "익명",
                 authorAvatar: c.authorAvatar || c.author_avatar,
                 createdAt: c.createdAt || c.created_at || new Date().toISOString(),
             })));

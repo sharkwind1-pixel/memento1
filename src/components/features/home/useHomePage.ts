@@ -417,6 +417,14 @@ export function useHomePage() {
         // 매거진 미리보기
         magazineArticles,
         isLoadingMagazine,
+
+        // 탭 재진입 시 데이터 갱신용
+        refetchAll: () => {
+            fetchCommunityPosts();
+            fetchShowcasePosts();
+            fetchMemorialPets();
+            fetchMagazinePreview();
+        },
     };
 }
 

@@ -7,7 +7,7 @@
 
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 
 import { TabType, CommunitySubcategory, SmoothAutoScrollReturn } from "@/types";
 import { useSmoothAutoScroll } from "@/hooks/useSmoothAutoScroll";
@@ -53,6 +53,7 @@ function HomePage({ setSelectedTab, isActive, onOpenCommunityPost }: HomePagePro
         toggleCondolence,
         magazineArticles,
         isLoadingMagazine,
+        refetchAll,
     } = useHomePage();
 
     useEffect(() => {
@@ -61,6 +62,15 @@ function HomePage({ setSelectedTab, isActive, onOpenCommunityPost }: HomePagePro
         return typeof cleanup === "function" ? cleanup : undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isSimpleMode]);
+
+    // 홈 탭 재진입 시 데이터 갱신 (커뮤니티에서 좋아요/댓글 후 홈으로 돌아올 때)
+    const wasActiveRef = useRef(isActive);
+    useEffect(() => {
+        if (isActive && !wasActiveRef.current) {
+            refetchAll();
+        }
+        wasActiveRef.current = isActive;
+    }, [isActive, refetchAll]);
 
     useEffect(() => {
         if (!isActive) {
