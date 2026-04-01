@@ -29,18 +29,6 @@ const SHOP_ITEMS: Record<string, {
         effect: "chat_bonus_10",
         available: true,
     },
-    premium_trial_1d: {
-        name: "프리미엄 1일 체험",
-        price: 500,
-        effect: "premium_trial_1d",
-        available: true,
-    },
-    premium_trial_3d: {
-        name: "프리미엄 3일 체험",
-        price: 1200,
-        effect: "premium_trial_3d",
-        available: true,
-    },
 };
 
 export async function POST(request: NextRequest) {

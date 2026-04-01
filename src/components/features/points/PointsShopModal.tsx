@@ -11,7 +11,6 @@ import {
     X,
     ShoppingBag,
     MessageCircle,
-    Crown,
     Check,
     AlertCircle,
 } from "lucide-react";
@@ -59,26 +58,6 @@ const SHOP_ITEMS: ShopItem[] = [
         color: "text-sky-600",
         bgColor: "bg-sky-50 dark:bg-sky-900/20",
     },
-    {
-        id: "premium_trial_1d",
-        name: "프리미엄 1일 체험",
-        description: "24시간 동안 모든 프리미엄 기능을 이용할 수 있습니다",
-        price: 500,
-        icon: Crown,
-        category: "feature",
-        color: "text-violet-500",
-        bgColor: "bg-violet-50 dark:bg-violet-900/20",
-    },
-    {
-        id: "premium_trial_3d",
-        name: "프리미엄 3일 체험",
-        description: "3일간 모든 프리미엄 기능을 이용할 수 있습니다",
-        price: 1200,
-        icon: Crown,
-        category: "feature",
-        color: "text-violet-600",
-        bgColor: "bg-violet-50 dark:bg-violet-900/20",
-    },
 ];
 
 const CATEGORY_LABELS = {
@@ -92,7 +71,7 @@ export default function PointsShopModal({
 }: PointsShopModalProps) {
     const { user, points, refreshPoints } = useAuth();
     useEscapeClose(isOpen, onClose);
-    const [selectedCategory, setSelectedCategory] = useState<"all" | "boost" | "feature">("all");
+    const [selectedCategory, setSelectedCategory] = useState<"all" | "boost">("all");
     const [purchasingId, setPurchasingId] = useState<string | null>(null);
 
     if (!isOpen) return null;
@@ -172,7 +151,7 @@ export default function PointsShopModal({
 
                     {/* 카테고리 필터 */}
                     <div className="flex items-center gap-1.5 px-3 py-2 border-b dark:border-gray-700">
-                        {(["all", "boost", "feature"] as const).map((cat) => (
+                        {(["all", "boost"] as const).map((cat) => (
                             <button
                                 key={cat}
                                 onClick={() => setSelectedCategory(cat)}

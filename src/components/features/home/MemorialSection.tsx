@@ -89,13 +89,18 @@ export default function MemorialSection({
                         </Card>
                     ))
                 ) : displayMemorialData.length === 0 ? (
-                    <div className="w-full flex flex-col items-center justify-center py-12 text-center">
-                        <Cloud className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-3" />
-                        <p className="text-gray-500 dark:text-gray-400 text-sm">
-                            오늘 기억하는 아이가 없어요
+                    <div className="w-full flex flex-col items-center justify-center py-10 text-center bg-gradient-to-b from-amber-50/50 to-transparent dark:from-amber-900/10 rounded-2xl">
+                        <div className="w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-4">
+                            <Cloud className="w-8 h-8 text-amber-400 dark:text-amber-500" />
+                        </div>
+                        <p className="text-amber-700 dark:text-amber-300 text-sm font-medium">
+                            무지개다리 건너편에서
                         </p>
-                        <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">
-                            무지개다리 건너편에서 모두 편히 쉬고 있을 거예요
+                        <p className="text-amber-700 dark:text-amber-300 text-sm font-medium">
+                            모두 편히 쉬고 있을 거예요
+                        </p>
+                        <p className="text-amber-500/70 dark:text-amber-400/50 text-xs mt-3">
+                            추모 모드로 등록하면 이곳에서 함께 기억해요
                         </p>
                     </div>
                 ) : (
