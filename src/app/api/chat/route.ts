@@ -21,6 +21,7 @@ import {
     postProcessResponse,
     saveAndRespond,
 } from "./chat-pipeline";
+import { fixKoreanParticles } from "@/lib/agent";
 
 // ---- 싱글턴 ----
 
@@ -103,6 +104,7 @@ export async function POST(request: NextRequest) {
 
         // 5단계: SSE 스트리밍 응답 생성
         const encoder = new TextEncoder();
+        const petName = parsedInput.pet.name;
         const readableStream = new ReadableStream({
             async start(controller) {
                 let fullText = "";
@@ -120,9 +122,12 @@ export async function POST(request: NextRequest) {
 
                         fullText += delta;
 
+                        // 실시간 한국어 조사 교정 적용 후 delta 추출
+                        const corrected = fixKoreanParticles(fullText, petName);
+
                         if (!markerDetected) {
-                            const sugIdx = fullText.indexOf(suggestionsMarker);
-                            const ptIdx = fullText.indexOf(pendingTopicMarker);
+                            const sugIdx = corrected.indexOf(suggestionsMarker);
+                            const ptIdx = corrected.indexOf(pendingTopicMarker);
                             const markerIdx = Math.min(
                                 sugIdx >= 0 ? sugIdx : Infinity,
                                 ptIdx >= 0 ? ptIdx : Infinity,
@@ -130,15 +135,15 @@ export async function POST(request: NextRequest) {
 
                             if (markerIdx !== Infinity) {
                                 markerDetected = true;
-                                const unsent = fullText.substring(sentLength, markerIdx);
+                                const unsent = corrected.substring(sentLength, markerIdx);
                                 if (unsent) {
                                     controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "delta", content: unsent })}\n\n`));
                                     sentLength = markerIdx;
                                 }
                             } else {
-                                const safeEnd = fullText.length - 20;
+                                const safeEnd = corrected.length - 20;
                                 if (safeEnd > sentLength) {
-                                    const unsent = fullText.substring(sentLength, safeEnd);
+                                    const unsent = corrected.substring(sentLength, safeEnd);
                                     controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "delta", content: unsent })}\n\n`));
                                     sentLength = safeEnd;
                                 }
@@ -147,8 +152,9 @@ export async function POST(request: NextRequest) {
                     }
 
                     // 스트림 완료 - 남은 텍스트 전송
-                    if (!markerDetected && sentLength < fullText.length) {
-                        const unsent = fullText.substring(sentLength);
+                    const finalCorrected = fixKoreanParticles(fullText, petName);
+                    if (!markerDetected && sentLength < finalCorrected.length) {
+                        const unsent = finalCorrected.substring(sentLength);
                         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "delta", content: unsent })}\n\n`));
                     }
 
