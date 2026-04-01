@@ -176,7 +176,6 @@ export async function GET() {
                 combinedCount: combined.length,
                 finalCount: finalPets.length,
                 hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-                dbError: error ? error.message : null,
             },
         });
     } catch (err) {
