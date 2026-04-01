@@ -30,8 +30,8 @@ export const PREMIUM_LIMITS = {
 
 // ===== 가격 (원) =====
 export const PRICING = {
-    BASIC_MONTHLY: 7900,        // 베이직 월 구독
-    PREMIUM_MONTHLY: 14900,     // 프리미엄 월 구독
+    BASIC_MONTHLY: 9900,        // 베이직 월 구독
+    PREMIUM_MONTHLY: 18900,     // 프리미엄 월 구독
 } as const;
 
 // ===== 결제 플랜 기간 (일) =====

@@ -211,7 +211,7 @@ grep -n "setIsPetModalOpen\|handleAddNewPet" src/components/pages/RecordPage.tsx
 
 ## 무료/베이직/프리미엄 회원 제한
 
-| 기능 | 무료 | 베이직 (월 7,900원) | 프리미엄 (월 14,900원) |
+| 기능 | 무료 | 베이직 (월 9,900원) | 프리미엄 (월 18,900원) |
 |-----|-----|-------------------|---------------------|
 | AI 펫톡 | 하루 10회 | 하루 50회 | 무제한 |
 | 반려동물 등록 | 1마리 | 3마리 | 10마리 |
@@ -225,7 +225,7 @@ grep -n "setIsPetModalOpen\|handleAddNewPet" src/components/pages/RecordPage.tsx
 export const FREE_LIMITS = { PETS: 1, PHOTOS_PER_PET: 50, DAILY_CHATS: 10 };
 export const BASIC_LIMITS = { PETS: 3, PHOTOS_PER_PET: 200, DAILY_CHATS: 50 };
 export const PREMIUM_LIMITS = { PETS: 10, PHOTOS_PER_PET: 1000, DAILY_CHATS: Infinity };
-export const PRICING = { BASIC_MONTHLY: 7900, PREMIUM_MONTHLY: 14900 };
+export const PRICING = { BASIC_MONTHLY: 9900, PREMIUM_MONTHLY: 18900 };
 
 // AuthContext.tsx - DB 기반 프리미엄 체크 (완료)
 const isPremium = data?.is_premium && (!expiresAt || new Date(expiresAt) > new Date());

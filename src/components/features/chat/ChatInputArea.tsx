@@ -162,7 +162,7 @@ export default function ChatInputArea({
                                     프리미엄 시작하기
                                 </Button>
                                 <p className="text-xs text-memento-500 dark:text-sky-400 mt-2">
-                                    하루 약 260원, 월 7,900원
+                                    하루 약 330원, 월 9,900원
                                 </p>
                             </div>
                         )}

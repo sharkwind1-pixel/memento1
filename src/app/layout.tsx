@@ -155,7 +155,7 @@ export default async function RootLayout({
                                         {
                                             "@type": "Offer",
                                             "name": "베이직 플랜",
-                                            "price": "7900",
+                                            "price": "9900",
                                             "priceCurrency": "KRW",
                                             "priceValidUntil": "2027-12-31",
                                             "availability": "https://schema.org/InStock",
@@ -164,7 +164,7 @@ export default async function RootLayout({
                                         {
                                             "@type": "Offer",
                                             "name": "프리미엄 플랜",
-                                            "price": "14900",
+                                            "price": "18900",
                                             "priceCurrency": "KRW",
                                             "priceValidUntil": "2027-12-31",
                                             "availability": "https://schema.org/InStock",
@@ -224,7 +224,7 @@ export default async function RootLayout({
                                 </div>
                                 <div className="p-4 bg-white rounded-lg border-2 border-blue-400">
                                     <h3 className="font-bold text-blue-600">베이직 플랜</h3>
-                                    <p className="text-2xl font-bold text-blue-600 my-2">월 7,900원</p>
+                                    <p className="text-2xl font-bold text-blue-600 my-2">월 9,900원</p>
                                     <ul className="text-sm text-gray-600 space-y-1">
                                         <li>AI 펫톡 하루 50회</li>
                                         <li>반려동물 3마리 등록</li>
@@ -234,7 +234,7 @@ export default async function RootLayout({
                                 </div>
                                 <div className="p-4 bg-white rounded-lg border-2 border-sky-400">
                                     <h3 className="font-bold text-sky-600">프리미엄 플랜</h3>
-                                    <p className="text-2xl font-bold text-sky-600 my-2">월 14,900원</p>
+                                    <p className="text-2xl font-bold text-sky-600 my-2">월 18,900원</p>
                                     <ul className="text-sm text-gray-600 space-y-1">
                                         <li>AI 펫톡 무제한</li>
                                         <li>반려동물 10마리 등록</li>
@@ -262,8 +262,8 @@ export default async function RootLayout({
                             <h3>요금제 안내</h3>
                             <ul>
                                 <li>무료 플랜: AI 펫톡 하루 10회, 반려동물 1마리, 사진 펫당 50장</li>
-                                <li>베이직 플랜: 월 7,900원 - AI 펫톡 하루 50회, 반려동물 3마리, 사진 펫당 200장, AI 영상 월 3회</li>
-                                <li>프리미엄 플랜: 월 14,900원 - AI 펫톡 무제한, 반려동물 10마리, 사진 펫당 1,000장, AI 영상 월 6회, 우선 고객 지원</li>
+                                <li>베이직 플랜: 월 9,900원 - AI 펫톡 하루 50회, 반려동물 3마리, 사진 펫당 200장, AI 영상 월 3회</li>
+                                <li>프리미엄 플랜: 월 18,900원 - AI 펫톡 무제한, 반려동물 10마리, 사진 펫당 1,000장, AI 영상 월 6회, 우선 고객 지원</li>
                             </ul>
                             <h3>환불 정책</h3>
                             <p>결제일로부터 7일 이내 청약철회 가능. 서비스 이용 이력이 있는 경우 이용일수에 해당하는 금액을 차감 후 환불. 환불 처리 기간은 3~7 영업일 소요.</p>

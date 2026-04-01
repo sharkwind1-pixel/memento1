@@ -51,8 +51,8 @@ export default function PaymentTermsPage() {
                                     <tr>
                                         <td className="border border-gray-200 dark:border-gray-600 px-4 py-2 font-medium">월 요금</td>
                                         <td className="border border-gray-200 dark:border-gray-600 px-4 py-2">0원</td>
-                                        <td className="border border-gray-200 dark:border-gray-600 px-4 py-2">7,900원</td>
-                                        <td className="border border-gray-200 dark:border-gray-600 px-4 py-2">14,900원</td>
+                                        <td className="border border-gray-200 dark:border-gray-600 px-4 py-2">9,900원</td>
+                                        <td className="border border-gray-200 dark:border-gray-600 px-4 py-2">18,900원</td>
                                     </tr>
                                     <tr className="bg-gray-50 dark:bg-gray-700/30">
                                         <td className="border border-gray-200 dark:border-gray-600 px-4 py-2 font-medium">AI 펫톡</td>
@@ -190,8 +190,8 @@ export default function PaymentTermsPage() {
                             <li>
                                 환불 예시:
                                 <ul className="list-disc list-inside ml-4 mt-1 space-y-1 text-sm text-gray-500 dark:text-gray-400">
-                                    <li>프리미엄(14,900원) 결제 후 10일 사용, 20일 남음: 14,900 x (20/30) = 9,933원 환불</li>
-                                    <li>베이직(7,900원) 결제 후 15일 사용, 15일 남음: 7,900 x (15/30) = 3,950원 환불</li>
+                                    <li>프리미엄(18,900원) 결제 후 10일 사용, 20일 남음: 18,900 x (20/30) = 12,600원 환불</li>
+                                    <li>베이직(9,900원) 결제 후 15일 사용, 15일 남음: 9,900 x (15/30) = 4,950원 환불</li>
                                     <li>결제 후 25일 사용, 5일 남음: 결제 금액 x (5/30) 환불</li>
                                 </ul>
                             </li>
