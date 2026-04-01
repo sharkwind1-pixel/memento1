@@ -413,53 +413,7 @@ export default function MinihompyStage({
                         </div>
                     );
                 })
-            ) : (
-                /* 기존 단일 미니미 하단 중앙 표시 (하위호환) */
-                <div className={cn(
-                    "absolute left-1/2 -translate-x-1/2",
-                    compact ? "bottom-[52px]" : "bottom-[64px]"
-                )}>
-                    {hasMinimi ? (
-                        (() => {
-                            const singleIsMobile = typeof window !== "undefined" && window.innerWidth < 640;
-                            const singleBase = compact ? (singleIsMobile ? 48 : 60) : (singleIsMobile ? 64 : 80);
-                            return (
-                                <div className="relative">
-                                    {minimiEquip.imageUrl ? (
-                                        <Image
-                                            src={minimiEquip.imageUrl}
-                                            alt="미니미"
-                                            width={singleBase}
-                                            height={singleBase}
-                                            className="object-contain"
-                                            style={{ imageRendering: "pixelated" }}
-                                        />
-                                    ) : (
-                                        <div className={cn(
-                                            compact ? "w-20 h-20" : "w-28 h-28",
-                                            "bg-gray-200/50 rounded-lg"
-                                        )} />
-                                    )}
-                                </div>
-                            );
-                        })()
-                    ) : (
-                        <div className={cn(
-                            "flex items-center justify-center",
-                            compact ? "w-20 h-20" : "w-28 h-28",
-                            "rounded-full border-2 border-dashed",
-                            isDarkBg
-                                ? "border-white/30 text-white/40"
-                                : "border-gray-400/40 text-gray-400/60",
-                            "bg-white/10 backdrop-blur-sm"
-                        )}>
-                            <span className="text-xs text-center">
-                                미니미를{"\n"}꾸며보세요
-                            </span>
-                        </div>
-                    )}
-                </div>
-            )}
+            ) : null}
 
             {/* 편집모드: 상단 컨트롤 바 */}
             {editMode && (
