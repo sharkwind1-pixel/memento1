@@ -184,6 +184,13 @@ export function useSmoothAutoScroll() {
                         return;
                     }
 
+                    // 성능: 컨테이너가 화면에 보이지 않으면 스킵 (display:none 또는 다른 탭)
+                    if (cont.offsetParent === null) {
+                        lastTime = 0;
+                        animationIdsRef.current[index] = requestAnimationFrame(animate);
+                        return;
+                    }
+
                     const rawDelta = lastTime ? currentTime - lastTime : 16.67;
                     lastTime = currentTime;
                     const deltaTime = Math.min(rawDelta, 33.34); // cap at 2 frames to prevent jumps

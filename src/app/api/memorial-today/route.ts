@@ -152,7 +152,8 @@ export async function GET() {
                 name: pet.name,
                 type: pet.type || "",
                 breed: pet.breed || "",
-                profileImage: pet.profile_image || null,
+                // base64 이미지는 응답 크기 폭발 방지를 위해 제외 (URL만 전달)
+                profileImage: pet.profile_image && !pet.profile_image.startsWith("data:") ? pet.profile_image : null,
                 isNewlyRegistered: isNew,
                 // 완곡한 표현: "함께한 N년" (기일/주기 대신)
                 yearsAgo,
