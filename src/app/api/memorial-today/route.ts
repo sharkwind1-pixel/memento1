@@ -152,8 +152,7 @@ export async function GET() {
                 name: pet.name,
                 type: pet.type || "",
                 breed: pet.breed || "",
-                // base64 이미지는 응답 크기 폭발 방지를 위해 제외 (URL만 전달)
-                profileImage: pet.profile_image && !pet.profile_image.startsWith("data:") ? pet.profile_image : null,
+                profileImage: pet.profile_image || null,
                 isNewlyRegistered: isNew,
                 // 완곡한 표현: "함께한 N년" (기일/주기 대신)
                 yearsAgo,
@@ -170,8 +169,27 @@ export async function GET() {
             };
         });
 
+        // base64 프로필 이미지를 썸네일(200px)로 축소하여 응답 크기 대폭 감소
+        const optimizedResult = await Promise.all(
+            result.map(async (pet) => {
+                if (!pet.profileImage || !pet.profileImage.startsWith("data:")) return pet;
+                try {
+                    const sharp = (await import("sharp")).default;
+                    const base64Data = pet.profileImage.split(",")[1];
+                    const buffer = Buffer.from(base64Data, "base64");
+                    const thumbnail = await sharp(buffer)
+                        .resize(200, 200, { fit: "cover" })
+                        .jpeg({ quality: 60 })
+                        .toBuffer();
+                    return { ...pet, profileImage: `data:image/jpeg;base64,${thumbnail.toString("base64")}` };
+                } catch {
+                    return { ...pet, profileImage: null };
+                }
+            })
+        );
+
         return NextResponse.json({
-            pets: result,
+            pets: optimizedResult,
             isExactToday,
             hasNewlyRegistered: newlyRegistered.length > 0,
             hasRemembered: remembered.length > 0,
