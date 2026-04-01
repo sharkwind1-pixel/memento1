@@ -428,8 +428,11 @@ export default function Sidebar({
                             </button>
                             <button
                                 onClick={() => {
-                                    safeSetItem("memento-record-tab", "minihompy");
                                     onTabChange("record");
+                                    // RecordPage에 미니홈피 서브탭으로 이동 이벤트 전달
+                                    setTimeout(() => {
+                                        window.dispatchEvent(new CustomEvent("navigateRecordSubTab", { detail: "minihompy" }));
+                                    }, 50);
                                     if (isMobile) onClose();
                                 }}
                                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-memento-600 dark:text-memento-400 hover:bg-memento-50 dark:hover:bg-memento-900/20 transition-all"

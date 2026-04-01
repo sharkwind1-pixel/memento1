@@ -89,6 +89,18 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
         wasActiveRef.current = isActive;
     }, [isActive]);
 
+    // 사이드바 등 외부에서 서브탭 직접 이동 이벤트 수신
+    useEffect(() => {
+        const handler = (e: Event) => {
+            const sub = (e as CustomEvent).detail;
+            if (sub === "pets" || sub === "profile" || sub === "minihompy") {
+                setActiveTab(sub);
+            }
+        };
+        window.addEventListener("navigateRecordSubTab", handler);
+        return () => window.removeEventListener("navigateRecordSubTab", handler);
+    }, []);
+
     // 프리미엄 모달 상태
     const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
     const [premiumFeature, setPremiumFeature] = useState<"pet-limit" | "photo-limit">("pet-limit");
