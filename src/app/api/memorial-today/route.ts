@@ -178,6 +178,7 @@ export async function GET() {
                     const base64Data = pet.profileImage.split(",")[1];
                     const buffer = Buffer.from(base64Data, "base64");
                     const thumbnail = await sharp(buffer)
+                        .rotate() // EXIF orientation 자동 적용
                         .resize(200, 200, { fit: "cover" })
                         .jpeg({ quality: 60 })
                         .toBuffer();
