@@ -42,7 +42,7 @@ import ProfileTab from "@/components/features/record/ProfileTab";
 import PetCardGrid from "@/components/features/record/PetCardGrid";
 import RecordPageGuest from "@/components/features/record/RecordPageGuest";
 import VideoGenerationSection from "@/components/features/video/VideoGenerationSection";
-import { safeGetItem, safeSetItem } from "@/lib/safe-storage";
+import { safeGetItem } from "@/lib/safe-storage";
 
 interface RecordPageProps {
     setSelectedTab?: (tab: TabType) => void;
@@ -76,25 +76,22 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
 
     // 마이페이지 상태 — hydration 후 localStorage에서 복원
     const [activeTab, setActiveTab] = useState<"pets" | "profile" | "minihompy">("pets");
-    const hasRestoredRecordTab = useRef(false);
-    useEffect(() => {
-        if (hasRestoredRecordTab.current) return;
-        hasRestoredRecordTab.current = true;
-        const saved = safeGetItem("memento-record-tab");
-        if (saved === "profile" || saved === "minihompy") setActiveTab(saved);
-    }, []);
     const [isEditingNickname, setIsEditingNickname] = useState(false);
     const [nickname, setNickname] = useState("");
     const [isSavingProfile, setIsSavingProfile] = useState(false);
 
+    // 메인 탭 진입 시(isActive false→true) 서브탭을 "pets"로 리셋
+    const wasActiveRef = useRef(isActive);
+    useEffect(() => {
+        if (isActive && !wasActiveRef.current) {
+            setActiveTab("pets");
+        }
+        wasActiveRef.current = isActive;
+    }, [isActive]);
+
     // 프리미엄 모달 상태
     const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
     const [premiumFeature, setPremiumFeature] = useState<"pet-limit" | "photo-limit">("pet-limit");
-
-    // activeTab 변경 시 localStorage에 저장
-    useEffect(() => {
-        safeSetItem("memento-record-tab", activeTab);
-    }, [activeTab]);
 
     // 추모 전환 모달
     const [isMemorialModalOpen, setIsMemorialModalOpen] = useState(false);
