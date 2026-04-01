@@ -902,10 +902,24 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
     // selectedPet의 status가 "memorial"인지만 추적
     // Layout/BottomNav는 이것만 구독하면 됨 (usePets() 구독 불필요)
     // ========================================================================
-    const isMemorialMode = selectedPet?.status === "memorial";
+    // 새로고침 시 깜빡임 방지: 펫 로딩 전에는 localStorage에서 이전 모드를 복원
+    const resolvedMemorialMode = selectedPet
+        ? selectedPet.status === "memorial"
+        : (() => {
+            if (typeof window === "undefined") return false;
+            try { return localStorage.getItem("memento-memorial-mode") === "true"; } catch { return false; }
+        })();
+
+    // 펫 로딩 완료 후 localStorage에 현재 모드 저장
+    useEffect(() => {
+        if (selectedPet) {
+            try { localStorage.setItem("memento-memorial-mode", selectedPet.status === "memorial" ? "true" : "false"); } catch { /* */ }
+        }
+    }, [selectedPet]);
+
     const memorialModeContextValue = useMemo(
-        () => ({ isMemorialMode: !!isMemorialMode }),
-        [isMemorialMode]
+        () => ({ isMemorialMode: resolvedMemorialMode }),
+        [resolvedMemorialMode]
     );
 
     // ========================================================================
