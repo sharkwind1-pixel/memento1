@@ -167,6 +167,7 @@ export async function GET() {
                 combinedCount: combined.length,
                 finalCount: finalPets.length,
                 hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+                supabaseUrlPrefix: (process.env.NEXT_PUBLIC_SUPABASE_URL || "").slice(0, 30),
             },
         });
     } catch (err) {
