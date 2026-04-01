@@ -7,17 +7,33 @@
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+
+/** REST API로 pets 테이블 직접 조회 (Supabase JS의 RLS 우회 문제 회피) */
+async function fetchMemorialPets(): Promise<Array<{
+    id: string; name: string; type: string; breed: string;
+    profile_image: string | null; memorial_date: string | null;
+    created_at: string; status: string;
+}>> {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!url || !key) return [];
+
+    const res = await fetch(
+        `${url}/rest/v1/pets?status=eq.memorial&select=id,name,type,breed,profile_image,memorial_date,created_at,status&order=created_at.desc&limit=200`,
+        {
+            headers: {
+                apikey: key,
+                Authorization: `Bearer ${key}`,
+            },
+            cache: "no-store",
+        }
+    );
+    if (!res.ok) return [];
+    return res.json();
+}
 
 export async function GET() {
     try {
-        const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-        const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-        const supabase = createClient(url, serviceKey, {
-            auth: { autoRefreshToken: false, persistSession: false },
-            global: { headers: { Authorization: `Bearer ${serviceKey}` } },
-        });
-
         // KST 기준 오늘 날짜
         const kstNow = new Date(Date.now() + 9 * 60 * 60 * 1000);
         const year = kstNow.getUTCFullYear();
@@ -25,18 +41,8 @@ export async function GET() {
         const day = kstNow.getUTCDate();
         const todayStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
-        // 추모 상태 펫 전체 조회
-        const { data: memorialPets, error } = await supabase
-            .from("pets")
-            .select("id, name, type, breed, profile_image, memorial_date, created_at, status")
-            .eq("status", "memorial")
-            .order("created_at", { ascending: false })
-            .limit(200);
-
-        if (error) {
-            console.error("[memorial-today] DB:", error.message);
-            return NextResponse.json({ pets: [], newlyRegistered: [], remembered: [] });
-        }
+        // 추모 상태 펫 전체 조회 (REST API 직접 호출)
+        const memorialPets = await fetchMemorialPets();
 
         const allPets = memorialPets || [];
 
@@ -108,23 +114,27 @@ export async function GET() {
         // 최종 펫 리스트 (최대 20마리)
         const slicedPets = finalPets.slice(0, 20);
 
-        // 위로(condolence) 카운트 batch 조회
+        // 위로(condolence) 카운트 batch 조회 (REST API)
         const petIds = slicedPets.map((p) => p.id);
         let condolenceCounts: Record<string, number> = {};
         if (petIds.length > 0) {
             try {
-                const { data: condolenceData } = await supabase
-                    .from("pet_condolences")
-                    .select("pet_id")
-                    .in("pet_id", petIds);
-
-                if (condolenceData) {
-                    for (const row of condolenceData) {
-                        condolenceCounts[row.pet_id] = (condolenceCounts[row.pet_id] || 0) + 1;
+                const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+                const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+                if (url && key) {
+                    const inFilter = `(${petIds.join(",")})`;
+                    const res = await fetch(
+                        `${url}/rest/v1/pet_condolences?pet_id=in.${inFilter}&select=pet_id`,
+                        { headers: { apikey: key, Authorization: `Bearer ${key}` }, cache: "no-store" }
+                    );
+                    if (res.ok) {
+                        const condolenceData: { pet_id: string }[] = await res.json();
+                        for (const row of condolenceData) {
+                            condolenceCounts[row.pet_id] = (condolenceCounts[row.pet_id] || 0) + 1;
+                        }
                     }
                 }
             } catch {
-                // pet_condolences 테이블이 아직 없을 수 있음 — 무시
                 condolenceCounts = {};
             }
         }
@@ -165,15 +175,6 @@ export async function GET() {
             hasNewlyRegistered: newlyRegistered.length > 0,
             hasRemembered: remembered.length > 0,
             date: `${month}/${day}`,
-            _debug: {
-                totalMemorialPets: allPets.length,
-                newlyRegisteredCount: newlyRegistered.length,
-                rememberedCount: remembered.length,
-                combinedCount: combined.length,
-                finalCount: finalPets.length,
-                hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-                supabaseUrlPrefix: (process.env.NEXT_PUBLIC_SUPABASE_URL || "").slice(0, 30),
-            },
         });
     } catch (err) {
         const message = err instanceof Error ? err.message : "알 수 없는 오류";
