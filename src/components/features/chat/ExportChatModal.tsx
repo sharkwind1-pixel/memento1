@@ -74,6 +74,8 @@ export default function ExportChatModal({
         setIsExporting(true);
 
         try {
+            // 폰트 로드 완료 대기 (html2canvas가 커스텀 폰트를 캡처하지 못하는 문제 방지)
+            await document.fonts.ready;
             const canvas = await html2canvas(cardRef.current, {
                 scale: 2, // 고해상도
                 useCORS: true,
