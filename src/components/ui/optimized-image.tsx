@@ -6,7 +6,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
 interface OptimizedImageProps {
@@ -50,6 +50,13 @@ export function OptimizedImage({
     const [imgSrc, setImgSrc] = useState(src);
     const [isLoading, setIsLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
+
+    // src prop 변경 시 state 동기화 (펫 전환 등)
+    useEffect(() => {
+        setImgSrc(src);
+        setHasError(false);
+        setIsLoading(true);
+    }, [src]);
 
     const handleLoad = () => {
         setIsLoading(false);
