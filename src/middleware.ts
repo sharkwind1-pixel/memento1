@@ -17,14 +17,14 @@ export function middleware(request: NextRequest) {
     // style-src: unsafe-inline 유지 (Tailwind CSS + Radix UI 인라인 스타일 필요)
     const csp = [
         "default-src 'self'",
-        `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' ${isDev ? "'unsafe-eval'" : ""}`,
+        `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' ${isDev ? "'unsafe-eval'" : ""} *.iamport.co *.portone.io`,
         "style-src 'self' 'unsafe-inline'",
         "img-src 'self' data: blob: *.supabase.co *.supabase.in images.dog.ceo cdn2.thecatapi.com 25.media.tumblr.com images.unsplash.com via.placeholder.com *.fal.ai *.fal.media",
         "media-src 'self' blob: *.supabase.co *.supabase.in *.fal.ai *.fal.media",
         "font-src 'self'",
         "worker-src 'self'",
-        "connect-src 'self' *.supabase.co *.supabase.in api.openai.com apis.data.go.kr dog.ceo api.thecatapi.com *.push.services.mozilla.com fcm.googleapis.com *.fal.ai *.fal.media",
-        "frame-src 'self'",
+        "connect-src 'self' *.supabase.co *.supabase.in api.openai.com apis.data.go.kr dog.ceo api.thecatapi.com *.push.services.mozilla.com fcm.googleapis.com *.fal.ai *.fal.media *.iamport.co *.portone.io",
+        "frame-src 'self' *.iamport.co *.portone.io",
         "object-src 'none'",
         "base-uri 'self'",
         "form-action 'self'",
