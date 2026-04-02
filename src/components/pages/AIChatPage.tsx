@@ -343,6 +343,7 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                         onSend={chat.handleSend}
                         onOpenPremiumModal={() => setIsPremiumModalOpen(true)}
                         isSending={chat.isTyping || chat.isStreaming}
+                        lastUserMessage={chat.messages.filter(m => m.role === "user").at(-1)?.content}
                     />
                 </div>
             </div>

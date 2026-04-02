@@ -40,6 +40,8 @@ interface ChatInputAreaProps {
     onOpenPremiumModal?: () => void;
     /** AI 응답 대기 중 (전송 버튼/추천칩 비활성화) */
     isSending?: boolean;
+    /** 마지막 사용자 메시지 (프리미엄 전환 동적 문구용) */
+    lastUserMessage?: string;
 }
 
 /** 기본 추천 대화 버튼 정의 */
@@ -75,6 +77,7 @@ export default function ChatInputArea({
     onSend,
     onOpenPremiumModal,
     isSending = false,
+    lastUserMessage,
 }: ChatInputAreaProps) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [showPremiumBanner, setShowPremiumBanner] = useState(false);
@@ -127,19 +130,20 @@ export default function ChatInputArea({
                                     오늘은 여기까지 이야기 나눌 수 있어요
                                 </p>
                                 <p className="text-sm text-amber-700 mb-4">
-                                    {selectedPet?.name}는 내일도 여기서 기다리고 있을게요.
+                                    {lastUserMessage
+                                        ? `"${lastUserMessage.slice(0, 30)}${lastUserMessage.length > 30 ? "..." : ""}" 이야기, 내일 이어서 나눠요.`
+                                        : `${selectedPet?.name}는 내일도 여기서 기다리고 있을게요.`
+                                    }
                                 </p>
-                                <p className="text-xs text-amber-600/80">
-                                    <button
-                                        onClick={() => {
-                                            if (onOpenPremiumModal) {
-                                                onOpenPremiumModal();
-                                            }
-                                        }}
-                                        className="underline hover:text-amber-700 transition-colors"
-                                    >
-                                        프리미엄으로 더 많은 대화하기
-                                    </button>
+                                <Button
+                                    className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-full px-6"
+                                    onClick={() => { if (onOpenPremiumModal) onOpenPremiumModal(); }}
+                                >
+                                    <Crown className="w-4 h-4 mr-2" />
+                                    {selectedPet?.name}와(과) 더 이야기하기
+                                </Button>
+                                <p className="text-xs text-amber-600/80 mt-2">
+                                    하루 약 330원, 월 9,900원
                                 </p>
                             </div>
                         ) : (
@@ -148,15 +152,14 @@ export default function ChatInputArea({
                                     오늘의 무료 대화를 모두 사용했어요
                                 </p>
                                 <p className="text-sm text-sky-700 dark:text-sky-300 mb-4">
-                                    프리미엄으로 {selectedPet?.name}와(과) 무제한 대화하세요
+                                    {lastUserMessage
+                                        ? `"${lastUserMessage.slice(0, 30)}${lastUserMessage.length > 30 ? "..." : ""}" 이야기를 계속하려면 프리미엄으로 업그레이드하세요`
+                                        : `프리미엄으로 ${selectedPet?.name}와(과) 무제한 대화하세요`
+                                    }
                                 </p>
                                 <Button
                                     className="bg-gradient-to-r from-memento-500 to-sky-500 hover:from-memento-600 hover:to-sky-600 text-white rounded-full px-6"
-                                    onClick={() => {
-                                        if (onOpenPremiumModal) {
-                                            onOpenPremiumModal();
-                                        }
-                                    }}
+                                    onClick={() => { if (onOpenPremiumModal) onOpenPremiumModal(); }}
                                 >
                                     <Sparkles className="w-4 h-4 mr-2" />
                                     프리미엄 시작하기
@@ -281,11 +284,15 @@ export default function ChatInputArea({
                                     {showPremiumBanner && remainingChats > 0 && onOpenPremiumModal && (
                                         <button
                                             onClick={onOpenPremiumModal}
-                                            className="ml-1 text-xs px-2 py-0.5 rounded-full flex items-center gap-1 bg-gradient-to-r from-violet-100 to-purple-100 text-violet-700 hover:from-violet-200 hover:to-purple-200 transition-all"
+                                            className="ml-1 text-xs px-2 py-0.5 rounded-full flex items-center gap-1 bg-gradient-to-r from-violet-100 to-purple-100 text-violet-700 hover:from-violet-200 hover:to-purple-200 transition-all animate-in fade-in duration-300"
                                         >
                                             <Crown className="w-3 h-3" />
-                                            <span className="hidden sm:inline">프리미엄으로 무제한</span>
-                                            <span className="sm:hidden">무제한</span>
+                                            <span className="hidden sm:inline">
+                                                {remainingChats === 1 ? "마지막 1회, 프리미엄으로 계속" : `${remainingChats}회 남음, 프리미엄으로 무제한`}
+                                            </span>
+                                            <span className="sm:hidden">
+                                                {remainingChats === 1 ? "마지막 1회" : "무제한"}
+                                            </span>
                                         </button>
                                     )}
                                 </>
