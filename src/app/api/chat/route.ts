@@ -21,7 +21,7 @@ import {
     postProcessResponse,
     saveAndRespond,
 } from "./chat-pipeline";
-import { fixKoreanParticles } from "@/lib/agent";
+import { fixKoreanParticles } from "@/lib/agent/helpers";
 
 // ---- 싱글턴 ----
 
@@ -153,6 +153,9 @@ export async function POST(request: NextRequest) {
 
                     // 스트림 완료 - 남은 텍스트 전송
                     const finalCorrected = fixKoreanParticles(fullText, petName);
+                    if (fullText !== finalCorrected) {
+                        console.log(`[chat/particles] CORRECTED: petName="${petName}" before="${fullText.slice(0,50)}" after="${finalCorrected.slice(0,50)}"`);
+                    }
                     if (!markerDetected && sentLength < finalCorrected.length) {
                         const unsent = finalCorrected.substring(sentLength);
                         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "delta", content: unsent })}\n\n`));
