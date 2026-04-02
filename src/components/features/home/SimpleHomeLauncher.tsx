@@ -127,11 +127,13 @@ export default function SimpleHomeLauncher({ setSelectedTab, onSubcategoryChange
                                 sizes="120px"
                             />
                         </div>
-                        <div>
-                            <h1 className={`text-xl sm:text-2xl font-display font-bold leading-tight ${isMemorialMode ? "text-amber-50" : "text-gray-800"}`}>
-                                안녕하세요, {nickname}님
+                        <div className="min-w-0">
+                            <h1 className={`text-lg sm:text-xl font-bold leading-snug ${isMemorialMode ? "text-amber-50" : "text-gray-800"}`}>
+                                안녕하세요,
+                                <br />
+                                {nickname}님
                             </h1>
-                            <p className={`text-sm sm:text-base mt-1 ${isMemorialMode ? "text-amber-200/80" : "text-gray-500"}`}>
+                            <p className={`text-xs sm:text-sm mt-1.5 ${isMemorialMode ? "text-amber-200/70" : "text-gray-500"}`}>
                                 어떤 것을 하시겠어요?
                             </p>
                         </div>
