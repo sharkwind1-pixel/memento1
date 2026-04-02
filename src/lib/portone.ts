@@ -10,8 +10,9 @@
 
 import * as PortOne from "@portone/browser-sdk/v2";
 
-const STORE_ID = process.env.NEXT_PUBLIC_PORTONE_STORE_ID || "";
-const CHANNEL_KEY = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY || "";
+/** 환경변수를 함수 호출 시점에 읽도록 getter 사용 (빌드 시점 캐싱 방지) */
+const getStoreId = () => process.env.NEXT_PUBLIC_PORTONE_STORE_ID || "";
+const getChannelKey = () => process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY || "";
 
 export interface PaymentRequest {
     paymentId: string;     // 서버에서 발급받은 결제 ID
@@ -34,17 +35,20 @@ export interface PaymentResult {
 export async function requestPortOnePayment(
     params: PaymentRequest
 ): Promise<PaymentResult> {
-    if (!STORE_ID) {
+    const storeId = getStoreId();
+    const channelKey = getChannelKey();
+
+    if (!storeId) {
         return { success: false, error: "포트원 Store ID가 설정되지 않았습니다." };
     }
-    if (!CHANNEL_KEY) {
+    if (!channelKey) {
         return { success: false, error: "포트원 채널 키가 설정되지 않았습니다." };
     }
 
     try {
         const response = await PortOne.requestPayment({
-            storeId: STORE_ID,
-            channelKey: CHANNEL_KEY,
+            storeId,
+            channelKey,
             paymentId: params.paymentId,
             orderName: params.orderName,
             totalAmount: params.totalAmount,
