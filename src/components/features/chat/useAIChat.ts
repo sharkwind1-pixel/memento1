@@ -13,6 +13,7 @@
 
 import { useState, useEffect, useCallback, useRef, type Dispatch, type SetStateAction } from "react";
 import { supabase } from "@/lib/supabase";
+import { fixKoreanParticles } from "@/lib/agent/helpers";
 import { toast } from "sonner";
 import {
     DAILY_FREE_LIMIT,
@@ -280,9 +281,11 @@ export function useAIChat({
                 }
 
                 if (data?.messages && data.messages.length > 0) {
+                    const petName = selectedPet?.name || "";
                     setMessages(
                         data.messages.map((msg: ChatMessage) => ({
                             ...msg,
+                            content: msg.role === "pet" && petName ? fixKoreanParticles(msg.content, petName) : msg.content,
                             timestamp: new Date(msg.timestamp),
                         }))
                     );
@@ -299,11 +302,12 @@ export function useAIChat({
                     .limit(30);
 
                 if (serverMessages && serverMessages.length > 0) {
+                    const petName = selectedPet?.name || "";
                     setMessages(
                         serverMessages.map((msg, i) => ({
                             id: `restored-${i}`,
                             role: msg.role === "user" ? "user" as const : "pet" as const,
-                            content: msg.content,
+                            content: msg.role !== "user" && petName ? fixKoreanParticles(msg.content, petName) : msg.content,
                             timestamp: new Date(msg.created_at),
                         }))
                     );
