@@ -10,9 +10,8 @@
 
 "use client";
 
-/* eslint-disable @next/next/no-img-element */
-
 import { useState, useEffect, useCallback } from "react";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 import { Image as ImageIcon } from "lucide-react";
 import useHorizontalScroll from "@/hooks/useHorizontalScroll";
 import { MemoryAlbum } from "@/types";
@@ -201,15 +200,16 @@ export default function MemoryAlbumsSection({
                                 {/* 커버 이미지 */}
                                 <div className="aspect-[3/4] relative bg-amber-100/40">
                                     {coverUrl ? (
-                                        <img
+                                        <OptimizedImage
                                             src={coverUrl}
                                             alt={album.title}
-                                            className="w-full h-full object-cover"
-                                            style={{
-                                                objectPosition: coverPhoto?.cropPosition
+                                            fill
+                                            className="w-full h-full"
+                                            objectPosition={
+                                                coverPhoto?.cropPosition
                                                     ? `${coverPhoto.cropPosition.x}% ${coverPhoto.cropPosition.y}%`
-                                                    : "center",
-                                            }}
+                                                    : "center"
+                                            }
                                         />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center">

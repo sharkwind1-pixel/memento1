@@ -24,6 +24,7 @@ import SimpleHomeLauncher from "@/components/features/home/SimpleHomeLauncher";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMemorialMode } from "@/contexts/PetContext";
 import { Newspaper } from "lucide-react";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 interface HomePageProps {
     setSelectedTab: (tab: TabType, sub?: CommunitySubcategory) => void;
@@ -216,11 +217,12 @@ function HomePage({ setSelectedTab, isActive, onOpenCommunityPost }: HomePagePro
                                             className="w-full flex items-center gap-4 p-3 rounded-2xl bg-white/60 dark:bg-gray-800/40 hover:bg-white dark:hover:bg-gray-800/60 transition-all group"
                                         >
                                             {article.coverUrl ? (
-                                                <img
+                                                <OptimizedImage
                                                     src={article.coverUrl}
                                                     alt=""
-                                                    className="w-16 h-16 rounded-xl object-cover flex-shrink-0"
-                                                    loading="lazy"
+                                                    width={64}
+                                                    height={64}
+                                                    className="w-16 h-16 rounded-xl flex-shrink-0"
                                                 />
                                             ) : (
                                                 <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${isMemorialMode ? "from-amber-100 to-orange-100 dark:from-gray-700 dark:to-gray-600" : "from-emerald-100 to-teal-100 dark:from-gray-700 dark:to-gray-600"} flex items-center justify-center flex-shrink-0`}>

@@ -24,6 +24,7 @@ import {
 import type { ShowcasePost } from "./types";
 import { TabType } from "@/types";
 import { safeSessionSetItem } from "@/lib/safe-storage";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 interface ShowcaseSectionProps {
     showcasePosts: ShowcasePost[];
@@ -139,12 +140,11 @@ export default function ShowcaseSection({
                                     </>
                                 ) : firstImage ? (
                                     <>
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img
+                                        <OptimizedImage
                                             src={firstImage}
                                             alt={post.title}
-                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                            loading="lazy"
+                                            fill
+                                            className="w-full h-full group-hover:scale-105 transition-transform duration-300"
                                         />
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                                         {(post.imageUrls?.length ?? 0) > 1 && (

@@ -180,7 +180,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
             // 반려동물 조회
             const { data: petsData, error: petsError } = await supabase
                 .from("pets")
-                .select("*")
+                .select("id, name, type, breed, birthday, gender, weight, personality, profile_image, profile_crop_position, status, memorial_date, is_primary, created_at, adopted_date, how_we_met, nicknames, special_habits, favorite_food, favorite_activity, favorite_place, together_period, memorable_memory")
                 .eq("user_id", userId)
                 .order("created_at", { ascending: true });
 
@@ -191,7 +191,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
             const { data: allMediaData } = petIds.length > 0
                 ? await supabase
                     .from("pet_media")
-                    .select("*")
+                    .select("id, pet_id, url, storage_path, type, caption, date, crop_position, thumbnail_url")
                     .in("pet_id", petIds)
                     .order("date", { ascending: false })
                 : { data: [] };
@@ -519,15 +519,12 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
 
             const newPhotos: PetPhoto[] = [];
 
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                const caption = captions[i] || "";
-                const date = dates[i] || new Date().toISOString().split("T")[0];
+            // 단일 파일 업로드 함수
+            const uploadSingleFile = async (index: number): Promise<PetPhoto | null> => {
+                const file = files[index];
+                const caption = captions[index] || "";
+                const date = dates[index] || new Date().toISOString().split("T")[0];
                 const mediaType = getMediaType(file.name);
-
-                if (onProgress) {
-                    onProgress(i + 1, files.length);
-                }
 
                 // 영상이면 썸네일 생성
                 let thumbnailUrl: string | undefined;
@@ -536,7 +533,6 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                         (await generateVideoThumbnail(file)) || undefined;
                 }
 
-                // Supabase에 업로드
                 try {
                     const uploadResult = await uploadMedia(file, user.id, petId);
 
@@ -559,7 +555,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                             .single();
 
                         if (!error && data) {
-                            newPhotos.push({
+                            return {
                                 id: data.id,
                                 url: uploadResult.url,
                                 storagePath: uploadResult.path,
@@ -567,11 +563,36 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                                 caption,
                                 date,
                                 thumbnailUrl,
-                            });
+                            };
                         }
                     }
                 } catch {
-                    // 업로드 실패 - 다음 파일 계속 시도
+                    // 업로드 실패 - null 반환
+                }
+                return null;
+            };
+
+            // 배치 병렬 업로드 (동시 3개씩)
+            const BATCH_SIZE = 3;
+            let completedCount = 0;
+            for (let batch = 0; batch < files.length; batch += BATCH_SIZE) {
+                const batchIndices = Array.from(
+                    { length: Math.min(BATCH_SIZE, files.length - batch) },
+                    (_, i) => batch + i
+                );
+
+                const results = await Promise.allSettled(
+                    batchIndices.map((idx) => uploadSingleFile(idx))
+                );
+
+                for (const result of results) {
+                    completedCount++;
+                    if (onProgress) {
+                        onProgress(completedCount, files.length);
+                    }
+                    if (result.status === "fulfilled" && result.value) {
+                        newPhotos.push(result.value);
+                    }
                 }
             }
 
@@ -748,7 +769,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
 
             const { data, error } = await supabase
                 .from("timeline_entries")
-                .select("*")
+                .select("id, pet_id, date, title, content, mood, media_ids, created_at")
                 .eq("pet_id", petId)
                 .order("date", { ascending: false });
 

@@ -6,10 +6,9 @@
 
 "use client";
 
-/* eslint-disable @next/next/no-img-element */
-
 import { useRef, useEffect, useState } from "react";
 import { PawPrint, RotateCcw, Bell, Phone, Heart, BookOpen, MapPin, ExternalLink } from "lucide-react";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 // 타이핑 인디케이터 감성 텍스트 (pet.type별 분기)
 const TYPING_TEXTS_DOG_DAILY = [
@@ -243,16 +242,16 @@ export default function ChatMessageList({
                                         }}
                                     >
                                         {selectedPet?.profileImage ? (
-                                            <img
+                                            <OptimizedImage
                                                 src={selectedPet.profileImage}
                                                 alt={selectedPet.name}
-                                                className="w-full h-full object-cover"
-                                                style={{
-                                                    objectPosition:
-                                                        selectedPet.profileCropPosition
-                                                            ? `${selectedPet.profileCropPosition.x}% ${selectedPet.profileCropPosition.y}%`
-                                                            : "center",
-                                                }}
+                                                fill
+                                                className="w-full h-full"
+                                                objectPosition={
+                                                    selectedPet.profileCropPosition
+                                                        ? `${selectedPet.profileCropPosition.x}% ${selectedPet.profileCropPosition.y}%`
+                                                        : "center"
+                                                }
                                             />
                                         ) : (
                                             <div
@@ -291,10 +290,12 @@ export default function ChatMessageList({
                                         <div className={`mt-2 rounded-xl overflow-hidden shadow-md border ${
                                             isMemorialMode ? "border-amber-200" : "border-sky-200"
                                         }`}>
-                                            <img
+                                            <OptimizedImage
                                                 src={message.matchedPhoto.url}
                                                 alt={message.matchedPhoto.caption}
-                                                className="w-full max-w-[200px] h-auto object-cover"
+                                                width={200}
+                                                height={200}
+                                                className="max-w-[200px]"
                                             />
                                             <div className={`px-2 py-1.5 text-xs flex items-center gap-1 ${
                                                 isMemorialMode
@@ -394,10 +395,11 @@ export default function ChatMessageList({
                         isMemorialMode ? "ring-amber-200" : "ring-sky-200"
                     }`}>
                         {selectedPet?.profileImage ? (
-                            <img
+                            <OptimizedImage
                                 src={selectedPet.profileImage}
                                 alt={selectedPet.name}
-                                className="w-full h-full object-cover"
+                                fill
+                                className="w-full h-full"
                             />
                         ) : (
                             <div

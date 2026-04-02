@@ -6,9 +6,8 @@
 
 "use client";
 
-/* eslint-disable @next/next/no-img-element */
-
 import { toast } from "sonner";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -55,15 +54,16 @@ export default function PetProfileCard({
                     <div className="relative">
                         <div className="w-24 h-24 rounded-2xl overflow-hidden shadow-lg">
                             {pet.profileImage ? (
-                                <img
+                                <OptimizedImage
                                     src={pet.profileImage}
                                     alt={pet.name}
-                                    className="w-full h-full object-cover"
-                                    style={{
-                                        objectPosition: pet.profileCropPosition
+                                    fill
+                                    className="w-full h-full"
+                                    objectPosition={
+                                        pet.profileCropPosition
                                             ? `${pet.profileCropPosition.x}% ${pet.profileCropPosition.y}%`
-                                            : "center",
-                                    }}
+                                            : "center"
+                                    }
                                 />
                             ) : (
                                 <div className="w-full h-full bg-gradient-to-br from-memento-100 to-memento-200 flex items-center justify-center">

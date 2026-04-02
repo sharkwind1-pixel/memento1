@@ -7,9 +7,8 @@
 
 "use client";
 
-/* eslint-disable @next/next/no-img-element */
-
 import React, { useState } from "react";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 import {
     Plus,
     Pencil,
@@ -60,16 +59,16 @@ export default function PetCardGrid({
                             >
                                 {/* 프로필 이미지 */}
                                 {pet.profileImage ? (
-                                    <img
+                                    <OptimizedImage
                                         src={pet.profileImage}
                                         alt={pet.name}
-                                        className="w-full h-full object-cover"
-                                        style={{
-                                            objectPosition:
-                                                pet.profileCropPosition
-                                                    ? `${pet.profileCropPosition.x}% ${pet.profileCropPosition.y}%`
-                                                    : "center",
-                                        }}
+                                        fill
+                                        className="w-full h-full"
+                                        objectPosition={
+                                            pet.profileCropPosition
+                                                ? `${pet.profileCropPosition.x}% ${pet.profileCropPosition.y}%`
+                                                : "center"
+                                        }
                                     />
                                 ) : (
                                     <div className="w-full h-full bg-gradient-to-br from-memento-100 to-memento-200 flex items-center justify-center">

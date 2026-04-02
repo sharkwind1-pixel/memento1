@@ -49,6 +49,24 @@ const nextConfig = {
                     },
                 ],
             },
+            {
+                source: "/fonts/:path*",
+                headers: [
+                    {
+                        key: "Cache-Control",
+                        value: "public, max-age=31536000, immutable",
+                    },
+                ],
+            },
+            {
+                source: "/(logo\\.png|logo2\\.png|og-image\\.png|icon-192\\.png|icon-512\\.png)",
+                headers: [
+                    {
+                        key: "Cache-Control",
+                        value: "public, max-age=86400, must-revalidate",
+                    },
+                ],
+            },
         ];
     },
     images: {

@@ -38,6 +38,7 @@ import { InlineLoading } from "@/components/ui/PawLoading";
 import PawLoading from "@/components/ui/PawLoading";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/auth-fetch";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 import { API } from "@/config/apiEndpoints";
 import ReportModal from "@/components/modals/ReportModal";
 import MinihompyVisitModal from "@/components/features/minihompy/MinihompyVisitModal";
@@ -903,11 +904,11 @@ export default function PostDetailView({
                                     className="relative rounded-xl overflow-hidden border dark:border-gray-600 cursor-pointer"
                                     onClick={() => window.open(url, "_blank")}
                                 >
-                                    <img
+                                    <OptimizedImage
                                         src={url}
                                         alt={`첨부 이미지 ${idx + 1}`}
-                                        loading="lazy"
-                                        className="w-full h-auto object-cover max-h-[300px]"
+                                        fill
+                                        className="w-full h-[300px]"
                                     />
                                 </div>
                             ))}
@@ -984,11 +985,12 @@ export default function PostDetailView({
                                 <div className="flex items-start justify-between mb-1">
                                     <div className="flex items-center gap-2">
                                         {comment.authorAvatar ? (
-                                            <img
+                                            <OptimizedImage
                                                 src={comment.authorAvatar}
                                                 alt=""
-                                                loading="lazy"
-                                                className="w-7 h-7 rounded-full object-cover"
+                                                width={28}
+                                                height={28}
+                                                className="w-7 h-7 rounded-full"
                                             />
                                         ) : (
                                             <div className="w-7 h-7 rounded-full bg-gradient-to-r from-sky-400 to-blue-400 flex items-center justify-center text-white text-xs font-bold">

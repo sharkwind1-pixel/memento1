@@ -32,6 +32,7 @@ import { API } from "@/config/apiEndpoints";
 import { VIDEO_TEMPLATES } from "@/config/videoTemplates";
 import type { VideoTemplate, VideoQuota } from "@/types";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 
 // ============================================
@@ -282,11 +283,11 @@ export default function VideoGenerateModal({
                                         : "border-transparent hover:border-gray-300 dark:hover:border-gray-600"
                                 }`}
                             >
-                                <img
+                                <OptimizedImage
                                     src={photo.url}
                                     alt={`${pet.name} 사진`}
-                                    className="w-full h-full object-cover"
-                                    loading="lazy"
+                                    fill
+                                    className="w-full h-full"
                                 />
                                 {isSelected && (
                                     <div className="absolute inset-0 bg-memento-500/20 flex items-center justify-center">
@@ -490,10 +491,11 @@ export default function VideoGenerateModal({
             <div className="flex items-start gap-4 mb-5">
                 {selectedPhotoUrl && (
                     <div className="w-28 h-28 flex-shrink-0 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
-                        <img
+                        <OptimizedImage
                             src={selectedPhotoUrl}
                             alt="선택된 사진"
-                            className="w-full h-full object-cover"
+                            fill
+                            className="w-full h-full"
                         />
                     </div>
                 )}

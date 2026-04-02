@@ -6,9 +6,8 @@
 
 "use client";
 
-/* eslint-disable @next/next/no-img-element */
-
 import { useState, useEffect } from "react";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -199,10 +198,11 @@ export default function PetPhotoAlbum({
                             >
                                 {photo.type === "video" ? (
                                     <>
-                                        <img
+                                        <OptimizedImage
                                             src={photo.thumbnailUrl || photo.url}
                                             alt={photo.caption}
-                                            className="w-full h-full object-cover"
+                                            fill
+                                            className="w-full h-full"
                                         />
                                         <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                                             <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center">
@@ -211,15 +211,16 @@ export default function PetPhotoAlbum({
                                         </div>
                                     </>
                                 ) : (
-                                    <img
+                                    <OptimizedImage
                                         src={photo.url}
                                         alt={photo.caption}
-                                        className="w-full h-full object-cover"
-                                        style={{
-                                            objectPosition: photo.cropPosition
+                                        fill
+                                        className="w-full h-full"
+                                        objectPosition={
+                                            photo.cropPosition
                                                 ? `${photo.cropPosition.x}% ${photo.cropPosition.y}%`
-                                                : "center",
-                                        }}
+                                                : "center"
+                                        }
                                     />
                                 )}
                                 {isSelectMode && (
@@ -281,25 +282,27 @@ export default function PetPhotoAlbum({
                                 <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 relative">
                                     {photo.type === "video" ? (
                                         <>
-                                            <img
+                                            <OptimizedImage
                                                 src={photo.thumbnailUrl || photo.url}
                                                 alt={photo.caption}
-                                                className="w-full h-full object-cover"
+                                                fill
+                                                className="w-full h-full"
                                             />
                                             <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                                                 <Play className="w-5 h-5 text-white fill-white" />
                                             </div>
                                         </>
                                     ) : (
-                                        <img
+                                        <OptimizedImage
                                             src={photo.url}
                                             alt={photo.caption}
-                                            className="w-full h-full object-cover"
-                                            style={{
-                                                objectPosition: photo.cropPosition
+                                            fill
+                                            className="w-full h-full"
+                                            objectPosition={
+                                                photo.cropPosition
                                                     ? `${photo.cropPosition.x}% ${photo.cropPosition.y}%`
-                                                    : "center",
-                                            }}
+                                                    : "center"
+                                            }
                                         />
                                     )}
                                 </div>

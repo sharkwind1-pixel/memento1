@@ -135,7 +135,7 @@ export async function uploadMedia(
         const { data, error } = await supabase.storage
             .from("pet-media")
             .upload(path, file, {
-                cacheControl: "3600",
+                cacheControl: "31536000",
                 upsert: false,
             });
 
@@ -255,7 +255,7 @@ async function uploadImage(
         const { data, error } = await supabase.storage
             .from("pet-media")
             .upload(path, file, {
-                cacheControl: "3600",
+                cacheControl: "31536000",
                 upsert: false,
             });
 

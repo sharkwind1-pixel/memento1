@@ -6,8 +6,6 @@
 
 "use client";
 
-/* eslint-disable @next/next/no-img-element */
-
 import React from "react";
 import {
     Card,
@@ -22,6 +20,7 @@ import {
 } from "lucide-react";
 import { safeStringSrc, getPetIcon } from "./homeUtils";
 import type { LightboxItem } from "./types";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 interface MemorialPetItem {
     id: string;
@@ -125,12 +124,11 @@ export default function MemorialSection({
                                             }
                                             className="w-full overflow-hidden"
                                         >
-                                            <img
+                                            <OptimizedImage
                                                 src={src}
                                                 alt={pet.name}
-                                                className="block w-full max-w-full aspect-square object-cover"
-                                                loading="lazy"
-                                                referrerPolicy="no-referrer"
+                                                fill
+                                                className="w-full aspect-square"
                                             />
                                         </button>
                                     ) : (
