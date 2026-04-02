@@ -262,6 +262,13 @@ export default function PostDetailView({
         }
 
         setIsLiking(true);
+
+        // 낙관적 UI: 즉시 반영
+        const prevLiked = isLiked;
+        const prevCount = likeCount;
+        setIsLiked(!prevLiked);
+        setLikeCount(prevLiked ? prevCount - 1 : prevCount + 1);
+
         try {
             const response = await authFetch(API.POST_LIKE(postId), {
                 method: "POST",
@@ -272,6 +279,9 @@ export default function PostDetailView({
             setIsLiked(data.liked);
             setLikeCount(data.likes);
         } catch {
+            // 롤백
+            setIsLiked(prevLiked);
+            setLikeCount(prevCount);
             toast.error("좋아요 처리에 실패했습니다");
         } finally {
             setIsLiking(false);
@@ -292,6 +302,13 @@ export default function PostDetailView({
         }
 
         setIsDisliking(true);
+
+        // 낙관적 UI: 즉시 반영
+        const prevDisliked = isDisliked;
+        const prevDCount = dislikeCount;
+        setIsDisliked(!prevDisliked);
+        setDislikeCount(prevDisliked ? prevDCount - 1 : prevDCount + 1);
+
         try {
             const response = await authFetch(API.POST_DISLIKE(postId), {
                 method: "POST",
@@ -302,6 +319,9 @@ export default function PostDetailView({
             setIsDisliked(data.disliked);
             setDislikeCount(data.dislikes);
         } catch {
+            // 롤백
+            setIsDisliked(prevDisliked);
+            setDislikeCount(prevDCount);
             toast.error("비추천 처리에 실패했습니다");
         } finally {
             setIsDisliking(false);
