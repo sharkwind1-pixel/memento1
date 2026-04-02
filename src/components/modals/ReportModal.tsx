@@ -6,12 +6,11 @@
 "use client";
 
 import { useState } from "react";
-import { PG_ERROR_CODES } from "@/config/constants";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { X, AlertTriangle, Flag } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
+import { authFetch } from "@/lib/auth-fetch";
 import { toast } from "sonner";
 import { InlineLoading } from "@/components/ui/PawLoading";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
@@ -74,20 +73,22 @@ export default function ReportModal({
         setLoading(true);
 
         try {
-            const { error } = await supabase.from("reports").insert({
-                reporter_id: user.id,
-                target_type: targetType,
-                target_id: targetId,
-                reason,
-                description: description.trim() || null,
+            const response = await authFetch("/api/reports", {
+                method: "POST",
+                body: JSON.stringify({
+                    targetType,
+                    targetId,
+                    reason,
+                    description: description.trim() || null,
+                }),
             });
 
-            if (error) {
-                // 중복 신고 체크
-                if (error.code === PG_ERROR_CODES.UNIQUE_VIOLATION) {
+            if (!response.ok) {
+                const data = await response.json();
+                if (response.status === 409) {
                     toast.error("이미 신고한 콘텐츠입니다");
                 } else {
-                    throw error;
+                    toast.error(data.error || "신고 접수에 실패했습니다");
                 }
             } else {
                 toast.success("신고가 접수되었습니다. 검토 후 조치하겠습니다.");
