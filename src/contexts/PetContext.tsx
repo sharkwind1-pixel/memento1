@@ -903,12 +903,15 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
     // Layout/BottomNav는 이것만 구독하면 됨 (usePets() 구독 불필요)
     // ========================================================================
     // 새로고침 시 깜빡임 방지: 펫 로딩 전에는 localStorage에서 이전 모드를 복원
+    // 단, 로딩 완료 후 펫이 없으면(다른 계정/비로그인) false
     const resolvedMemorialMode = selectedPet
         ? selectedPet.status === "memorial"
-        : (() => {
-            if (typeof window === "undefined") return false;
-            try { return localStorage.getItem("memento-memorial-mode") === "true"; } catch { return false; }
-        })();
+        : isLoading
+            ? (() => {
+                if (typeof window === "undefined") return false;
+                try { return localStorage.getItem("memento-memorial-mode") === "true"; } catch { return false; }
+            })()
+            : false;
 
     // 펫 로딩 완료 후 localStorage에 현재 모드 저장
     useEffect(() => {
