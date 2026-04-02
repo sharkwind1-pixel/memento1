@@ -300,11 +300,11 @@ export default function Sidebar({
                 </div>
             )}
 
-            {/* 간편모드(크게 보기) 토글 - 데스크톱 사이드바 전용 */}
-            {!isMobile && (
+            {/* 간편모드(크게 보기) 토글 */}
+            {user && (
                 <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
                     <button
-                        onClick={toggleSimpleMode}
+                        onClick={() => { toggleSimpleMode(); if (isMobile) onClose(); }}
                         className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all text-gray-700 dark:text-gray-300"
                     >
                         <div className="flex items-center gap-3">
