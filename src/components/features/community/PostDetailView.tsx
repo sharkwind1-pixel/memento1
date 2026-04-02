@@ -161,6 +161,8 @@ export default function PostDetailView({
     const [isSubmittingComment, setIsSubmittingComment] = useState(false);
     const [isLiking, setIsLiking] = useState(false);
     const [isDisliking, setIsDisliking] = useState(false);
+    const likingRef = useRef(false);
+    const dislikingRef = useRef(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isHidden, setIsHidden] = useState(false);
     const [isTogglingHidden, setIsTogglingHidden] = useState(false);
@@ -253,7 +255,7 @@ export default function PostDetailView({
             window.dispatchEvent(new CustomEvent("openAuthModal"));
             return;
         }
-        if (isLiking) return;
+        if (likingRef.current) return;
 
         // 자기 글 좋아요 방지
         if (post && user.id === post.user_id) {
@@ -261,6 +263,7 @@ export default function PostDetailView({
             return;
         }
 
+        likingRef.current = true;
         setIsLiking(true);
 
         // 낙관적 UI: 즉시 반영
@@ -284,6 +287,7 @@ export default function PostDetailView({
             setLikeCount(prevCount);
             toast.error("좋아요 처리에 실패했습니다");
         } finally {
+            likingRef.current = false;
             setIsLiking(false);
         }
     };
@@ -294,13 +298,14 @@ export default function PostDetailView({
             window.dispatchEvent(new CustomEvent("openAuthModal"));
             return;
         }
-        if (isDisliking) return;
+        if (dislikingRef.current) return;
 
         if (post && user.id === post.user_id) {
             toast.info("자신의 글에는 비추천할 수 없습니다");
             return;
         }
 
+        dislikingRef.current = true;
         setIsDisliking(true);
 
         // 낙관적 UI: 즉시 반영
@@ -324,6 +329,7 @@ export default function PostDetailView({
             setDislikeCount(prevDCount);
             toast.error("비추천 처리에 실패했습니다");
         } finally {
+            dislikingRef.current = false;
             setIsDisliking(false);
         }
     };
