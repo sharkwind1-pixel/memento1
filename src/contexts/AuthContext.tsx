@@ -797,6 +797,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 });
                 setIsSimpleModeState(false);
                 safeRemoveItem("memento-simple-mode");
+                try { localStorage.removeItem("memento-memorial-mode"); } catch { /* */ }
                 safeRemoveItem("memento-current-tab");
                 document.documentElement.classList.remove("simple-mode");
 
