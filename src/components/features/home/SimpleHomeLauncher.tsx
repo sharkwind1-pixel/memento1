@@ -7,6 +7,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import {
     Camera,
     MessageCircle,
@@ -16,6 +17,7 @@ import {
     Heart,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useMemorialMode } from "@/contexts/PetContext";
 import { TabType, CommunitySubcategory } from "@/types";
 import { safeSetItem } from "@/lib/safe-storage";
 
@@ -84,6 +86,7 @@ const LAUNCHER_ITEMS: {
 
 export default function SimpleHomeLauncher({ setSelectedTab, onSubcategoryChange }: SimpleHomeLauncherProps) {
     const { user, toggleSimpleMode } = useAuth();
+    const { isMemorialMode } = useMemorialMode();
     const nickname = user?.user_metadata?.nickname || user?.email?.split("@")[0] || "사용자";
 
     const handleCardClick = (id: string) => {
@@ -101,17 +104,38 @@ export default function SimpleHomeLauncher({ setSelectedTab, onSubcategoryChange
     return (
         <div className="min-h-screen relative overflow-hidden">
             {/* 배경 */}
-            <div className="absolute inset-0 bg-gradient-to-br from-memento-50 via-memento-75 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900" />
+            <div className={`absolute inset-0 bg-gradient-to-b ${
+                isMemorialMode
+                    ? "from-amber-50/80 via-amber-50/30 to-orange-50/20 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
+                    : "from-sky-100/80 via-sky-50/40 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
+            }`} />
 
-            <div className="relative z-10 px-4 pt-8 pb-10">
-                {/* 인사말 */}
-                <div className="text-center mb-8">
-                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
-                        안녕하세요, {nickname}님
-                    </h1>
-                    <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400">
-                        어떤 것을 하시겠어요?
-                    </p>
+            <div className="relative z-10 px-4 pt-4 pb-10">
+                {/* 히어로 배너 */}
+                <div className={`relative overflow-hidden rounded-3xl mb-6 ${
+                    isMemorialMode
+                        ? "bg-gradient-to-b from-[#091A2E] via-[#1A2A3E] to-[#3D2A1A]"
+                        : "bg-gradient-to-br from-[#CBEBF0] via-[#E0F3F6] to-[#FFF8F6]"
+                }`}>
+                    <div className="relative z-10 flex items-center gap-4 p-5 sm:p-6">
+                        <div className="relative w-[100px] h-[100px] sm:w-[120px] sm:h-[120px] flex-shrink-0">
+                            <Image
+                                src={isMemorialMode ? "/images/hero-illustration-memorial.png" : "/images/hero-illustration.png"}
+                                alt=""
+                                fill
+                                className="object-contain"
+                                sizes="120px"
+                            />
+                        </div>
+                        <div>
+                            <h1 className={`text-xl sm:text-2xl font-display font-bold leading-tight ${isMemorialMode ? "text-amber-50" : "text-gray-800"}`}>
+                                안녕하세요, {nickname}님
+                            </h1>
+                            <p className={`text-sm sm:text-base mt-1 ${isMemorialMode ? "text-amber-200/80" : "text-gray-500"}`}>
+                                어떤 것을 하시겠어요?
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
                 {/* 카드 그리드 */}
