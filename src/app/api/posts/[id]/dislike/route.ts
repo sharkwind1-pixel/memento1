@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
+import { createAdminSupabase, getAuthUser } from "@/lib/supabase-server";
 import {
     getClientIP,
     checkRateLimit,
@@ -46,7 +46,7 @@ export async function POST(
             return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
         }
 
-        const supabase = await createServerSupabase();
+        const supabase = createAdminSupabase();
         const { id: postId } = await params;
         const userId = user.id;
 
