@@ -7,20 +7,22 @@
 
 ## 즉시 — UX/버그
 
-- [ ] route.ts 디버그 로그 제거 (chat/particles)
+- [x] route.ts 디버그 로그 제거 (chat/particles)
 - [ ] 오프라인 감지 + Supabase auto-refresh 재시도 제한 (인터넷 끊김 시 에러 폭주 방지)
-- [ ] 포인트 상점 서버 데드코드 제거 (premium_trial 핸들링)
+- [x] 포인트 상점 서버 데드코드 제거 (premium_trial 핸들링)
 
 ---
 
 ## MVP 런칭 — 결제 + 프리미엄
 
-- [ ] PortOne 환경변수 설정 (STORE_ID, CHANNEL_KEY, API_SECRET → Vercel에 추가)
-- [ ] KCP 카드사 심사 요청 (partner.kcp.co.kr → 일반결제+자동결제)
+- [x] PortOne 환경변수 설정 (STORE_ID, CHANNEL_KEY, API_SECRET → .env.local 추가 완료)
+- [ ] PortOne 환경변수 Vercel에 추가 (배포 환경)
+- [ ] KCP 외부 전산 세팅 완료 문자 대기 중 → 문자 오면 카드사 심사 요청
 - [ ] KCP 계약서류 온라인 제출
 - [ ] 보증보험 200만원 가입 (서울보증보험 1599-5209)
+- [ ] KCP V2 실연동 채널 생성 (인증서 필요, KCP 문자 후 진행)
 - [ ] 결제 테스트 후 실결제 전환
-- [ ] 포트원(PortOne) 결제 연동 — 코드 이미 완성, 환경변수만 설정하면 동작
+- [x] 포트원(PortOne) 결제 연동 코드 — CSP 도메인 허용, 환경변수 사전 체크 추가
 - [ ] 스마트 프리미엄 전환 UX — isWarning(3회 남음) + 직전 대화 주제 반영 동적 문구
 
 ---
@@ -57,7 +59,25 @@
 
 ---
 
-## 완료 항목 (이번 스프린트)
+## 완료 항목 (2026-04-03 세션)
+
+- [x] 포트원 결제: CSP 도메인 허용 (*.iamport.co, *.portone.io)
+- [x] 포트원 결제: 환경변수 getter 변경 + 미설정 시 사전 체크
+- [x] 포트원 결제: Store ID, Channel Key, API Secret 발급 및 .env.local 설정
+- [x] 성능: img -> OptimizedImage 교체 (11개 파일 21곳, WebP/AVIF 자동 변환)
+- [x] 성능: Storage cacheControl 1시간 -> 1년
+- [x] 성능: 정적 에셋 캐시 헤더 강화 (폰트 1년, 로고 1일)
+- [x] 성능: PetContext select("*") -> 명시적 컬럼 (3곳)
+- [x] 성능: 미디어 업로드 병렬화 (순차 -> 배치 3개씩)
+- [x] 성능: 서비스 워커 정적 에셋/이미지 캐싱 추가
+- [x] 성능: loading.tsx 추가 (초기 빈 화면 방지)
+- [x] 성능: OptimizedImage src prop 변경 시 state 동기화 수정
+- [x] 정리: chat/route.ts particles 디버그 로그 제거
+- [x] 정리: 포인트 상점 premium_trial 데드코드 제거 (60줄 삭제)
+
+---
+
+## 완료 항목 (이전 스프린트)
 
 - [x] 신고 API 서버 전환 (/api/reports 생성, RLS 우회) + 신고 버튼 액션바 배치
 - [x] 사업자 정보 전화번호 추가 (010-5458-2506, KCP 카드사 심사 필수)
