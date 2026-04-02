@@ -500,7 +500,7 @@ function HomeContent() {
     const renderPages = () => (
         <>
             {mountedTabs.has("home") && (
-                <div style={{ display: selectedTab === "home" ? "block" : "none" }}>
+                <div data-tab-content={selectedTab === "home" ? "active" : undefined} style={{ display: selectedTab === "home" ? "block" : "none" }}>
                     <HomePage
                         setSelectedTab={handleTabChange}
                         isActive={selectedTab === "home"}
@@ -512,12 +512,12 @@ function HomeContent() {
                 </div>
             )}
             {mountedTabs.has("record") && (
-                <div style={{ display: selectedTab === "record" ? "block" : "none" }}>
+                <div data-tab-content={selectedTab === "record" ? "active" : undefined} style={{ display: selectedTab === "record" ? "block" : "none" }}>
                     <RecordPage setSelectedTab={handleTabChange} isActive={selectedTab === "record"} suppressPetModal={isNewUserFlowActive} />
                 </div>
             )}
             {mountedTabs.has("community") && (
-                <div style={{ display: selectedTab === "community" ? "block" : "none" }}>
+                <div data-tab-content={selectedTab === "community" ? "active" : undefined} style={{ display: selectedTab === "community" ? "block" : "none" }}>
                     <CommunityPage
                         subcategory={selectedSubcategory}
                         onSubcategoryChange={handleSubcategoryChange}
@@ -529,17 +529,17 @@ function HomeContent() {
                 </div>
             )}
             {mountedTabs.has("ai-chat") && (
-                <div style={{ display: selectedTab === "ai-chat" ? "block" : "none" }}>
+                <div data-tab-content={selectedTab === "ai-chat" ? "active" : undefined} style={{ display: selectedTab === "ai-chat" ? "block" : "none" }}>
                     <AIChatPage setSelectedTab={handleTabChange} />
                 </div>
             )}
             {mountedTabs.has("magazine") && (
-                <div style={{ display: selectedTab === "magazine" ? "block" : "none" }}>
+                <div data-tab-content={selectedTab === "magazine" ? "active" : undefined} style={{ display: selectedTab === "magazine" ? "block" : "none" }}>
                     <MagazinePage setSelectedTab={handleTabChange} isActive={selectedTab === "magazine"} />
                 </div>
             )}
             {mountedTabs.has("admin") && (
-                <div style={{ display: selectedTab === "admin" ? "block" : "none" }}>
+                <div data-tab-content={selectedTab === "admin" ? "active" : undefined} style={{ display: selectedTab === "admin" ? "block" : "none" }}>
                     <AdminPage />
                 </div>
             )}

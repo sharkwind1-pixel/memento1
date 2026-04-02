@@ -431,6 +431,15 @@ body {
     min-height: calc(100vh - 64px);
 }
 
+/* 탭 전환 시 부드러운 페이드인 (활성 탭만) */
+[data-tab-content="active"] {
+    animation: tabFadeIn 0.15s ease-out;
+}
+@keyframes tabFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
 /* 모바일 전용 최적화 */
 @media (max-width: 1279px) {
     #main-content {
