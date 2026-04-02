@@ -5,17 +5,22 @@
 
 ---
 
-## 즉시 — UX 개선
+## 즉시 — UX/버그
 
-- [ ] 게시글 하단 액션바 정리: 좋아요/싫어요/신고 버튼 나란히 배치 + 신고 사유 선택 모달
-- [ ] 커뮤니티 댓글 반응 속도 개선
 - [ ] route.ts 디버그 로그 제거 (chat/particles)
+- [ ] 오프라인 감지 + Supabase auto-refresh 재시도 제한 (인터넷 끊김 시 에러 폭주 방지)
+- [ ] 포인트 상점 서버 데드코드 제거 (premium_trial 핸들링)
 
 ---
 
 ## MVP 런칭 — 결제 + 프리미엄
 
-- [ ] 포트원(PortOne) 결제 연동 — 프리미엄 구독 실결제
+- [ ] PortOne 환경변수 설정 (STORE_ID, CHANNEL_KEY, API_SECRET → Vercel에 추가)
+- [ ] KCP 카드사 심사 요청 (partner.kcp.co.kr → 일반결제+자동결제)
+- [ ] KCP 계약서류 온라인 제출
+- [ ] 보증보험 200만원 가입 (서울보증보험 1599-5209)
+- [ ] 결제 테스트 후 실결제 전환
+- [ ] 포트원(PortOne) 결제 연동 — 코드 이미 완성, 환경변수만 설정하면 동작
 - [ ] 스마트 프리미엄 전환 UX — isWarning(3회 남음) + 직전 대화 주제 반영 동적 문구
 
 ---
@@ -54,6 +59,14 @@
 
 ## 완료 항목 (이번 스프린트)
 
+- [x] 신고 API 서버 전환 (/api/reports 생성, RLS 우회) + 신고 버튼 액션바 배치
+- [x] 사업자 정보 전화번호 추가 (010-5458-2506, KCP 카드사 심사 필수)
+- [x] KCP 결제 pg_cron SQL 작성 + 매시간 리마인더 크론 실행 설정 완료
+- [x] 간편모드 히어로 폰트 개선 (Jalnan2→Pretendard, 줄바꿈)
+- [x] 한국어 조사 후처리: 클라이언트 인사말 generatePersonalizedGreeting 래핑
+- [x] 한국어 조사 후처리: 서버 스트리밍 실시간 교정 (route.ts fixKoreanParticles)
+- [x] 한국어 조사 후처리: DB 로드 시 교정 (useAIChat)
+- [x] 프롬프트 내 잘못된 조사 전면 수정 ("꼼지이다"→"꼼지다") + GPT에 조사 규칙 명시
 - [x] 좋아요 낙관적 UI + useRef 이중 클릭 방지 + adminSupabase 전환
 - [x] 댓글 작성자 닉네임 익명 표시 수정 (author_name 폴백)
 - [x] 홈↔커뮤니티 데이터 연동 (refetchAll)
