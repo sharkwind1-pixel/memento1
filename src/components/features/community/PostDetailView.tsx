@@ -915,39 +915,55 @@ export default function PostDetailView({
                     )}
                 </div>
 
-                {/* 좋아요 + 댓글 수 */}
-                <div className="px-5 py-4 border-t border-gray-100 dark:border-gray-700 flex items-center gap-4">
+                {/* 좋아요 + 싫어요 + 댓글 + 신고 */}
+                <div className="px-5 py-4 border-t border-gray-100 dark:border-gray-700 flex items-center gap-2">
                     <button
                         onClick={handleLike}
                         disabled={isLiking}
-                        className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition-all ${
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all text-sm ${
                             isLiked
                                 ? "bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-700"
                                 : "bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:bg-rose-50 hover:text-rose-500 hover:border-rose-200"
                         }`}
                     >
                         <Heart className={`w-4 h-4 ${isLiked ? "fill-current" : ""}`} />
-                        <span className="font-medium text-sm">{likeCount}</span>
+                        <span className="font-medium">{likeCount}</span>
                     </button>
                     <button
                         onClick={handleDislike}
                         disabled={isDisliking}
-                        className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition-all ${
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all text-sm ${
                             isDisliked
                                 ? "bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-500"
                                 : "bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:bg-gray-200 hover:text-gray-700 hover:border-gray-300"
                         }`}
                     >
                         <ThumbsDown className={`w-4 h-4 ${isDisliked ? "fill-current" : ""}`} />
-                        <span className="font-medium text-sm">{dislikeCount}</span>
+                        <span className="font-medium">{dislikeCount}</span>
                     </button>
                     <button
                         onClick={() => commentInputRef.current?.focus()}
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:bg-blue-50 hover:text-blue-500 hover:border-blue-200 transition-all"
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:bg-blue-50 hover:text-blue-500 hover:border-blue-200 transition-all text-sm"
                     >
                         <MessageCircle className="w-4 h-4" />
-                        <span className="font-medium text-sm">{comments.length}</span>
+                        <span className="font-medium">{comments.length}</span>
                     </button>
+                    {/* 신고 버튼 — 오른쪽 끝 */}
+                    {!isOwner && (
+                        <button
+                            onClick={() => {
+                                if (!user) {
+                                    window.dispatchEvent(new CustomEvent("openAuthModal"));
+                                    return;
+                                }
+                                setReportTarget({ id: postId, type: "post", title: post?.title || "" });
+                            }}
+                            className="ml-auto flex items-center gap-1 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-600 hover:bg-red-50 hover:text-red-500 hover:border-red-200 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-all text-xs"
+                        >
+                            <Flag className="w-3.5 h-3.5" />
+                            <span>신고</span>
+                        </button>
+                    )}
                 </div>
             </div>
 
