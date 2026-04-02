@@ -3,6 +3,7 @@
 import { FREE_LIMITS, PREMIUM_LIMITS } from "@/config/constants";
 import { STORAGE_KEYS } from "@/constants/storage";
 import { safeGetItem, safeSetItem } from "@/lib/safe-storage";
+import { fixKoreanParticles } from "@/lib/agent/helpers";
 import type { Pet } from "@/types";
 
 // config에서 가져온 값을 re-export (하위 호환성)
@@ -112,6 +113,18 @@ export function generatePersonalizedGreeting(
     options?: {
         reminders?: GreetingReminderInfo[];
         lastVisitDate?: string; // ISO date string
+    },
+): string {
+    return fixKoreanParticles(_generateGreetingInner(pet, isMemorial, timeline, options), pet.name);
+}
+
+function _generateGreetingInner(
+    pet: Pet,
+    isMemorial: boolean,
+    timeline: TimelineEntry[],
+    options?: {
+        reminders?: GreetingReminderInfo[];
+        lastVisitDate?: string;
     },
 ): string {
     const petName = pet.name;
