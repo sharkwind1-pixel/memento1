@@ -78,12 +78,13 @@ export async function GET(request: NextRequest) {
     const timeout = setTimeout(() => controller.abort(), 270_000);
 
     try {
-        // 4개 Phase 병렬 실행
-        const [reminders, greetings, timeline, albums] = await Promise.allSettled([
+        // 5개 Phase 병렬 실행 (헬스체크 추가)
+        const [reminders, greetings, timeline, albums, healthcheck] = await Promise.allSettled([
             callPhase("reminders", cronSecret, controller.signal),
             callPhase("greetings", cronSecret, controller.signal),
             callPhase("timeline", cronSecret, controller.signal),
             callPhase("albums", cronSecret, controller.signal),
+            callPhase("healthcheck", cronSecret, controller.signal),
         ]);
 
         const results: Record<string, unknown> = {};
@@ -93,6 +94,7 @@ export async function GET(request: NextRequest) {
             ["greetings", greetings],
             ["timeline", timeline],
             ["albums", albums],
+            ["healthcheck", healthcheck],
         ] as const) {
             if (result.status === "fulfilled") {
                 results[name] = result.value;
