@@ -2,7 +2,7 @@
  * Phase 4: 추모 반려동물 추억 앨범 자동 생성
  *
  * 매일 09시(KST)에 실행.
- * - 매월 1일: 정기 월간 앨범 (anniversary/mood/random 컨셉)
+ * - 매주 월요일: 정기 주간 앨범 (anniversary/mood/random 컨셉)
  * - 기념일: 생일, 입양 100일/연도, 추모 100일/연도 특별 앨범
  * 커서 기반 페이지네이션으로 대량 처리.
  */
@@ -126,7 +126,8 @@ export async function GET(request: NextRequest) {
     }
 
     const supabase = getServiceSupabase();
-    const isFirstDayOfMonth = kst.day === 1;
+    // 주 1회 정기 앨범: 매주 월요일 (0=일, 1=월)
+    const isWeeklyAlbumDay = kst.dayOfWeek === 1;
 
     let albumCreated = 0;
     let pushSent = 0;
@@ -169,8 +170,8 @@ export async function GET(request: NextRequest) {
                 const special = checkSpecialDay(pet, kst);
                 const isSpecialDay = special.type !== null;
 
-                // 매월 1일도 아니고 기념일도 아니면 스킵
-                if (!isFirstDayOfMonth && !isSpecialDay) continue;
+                // 주간 앨범일도 아니고 기념일도 아니면 스킵
+                if (!isWeeklyAlbumDay && !isSpecialDay) continue;
 
                 // 사진 3장 이상인지 확인
                 const { count: mediaCount } = await supabase
@@ -180,15 +181,15 @@ export async function GET(request: NextRequest) {
 
                 if (!mediaCount || mediaCount < 3) continue;
 
-                // 최근 30일간 사용된 media_ids 수집 (중복 방지)
-                const thirtyDaysAgo = new Date(kst.now);
-                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                // 최근 14일간 사용된 media_ids 수집 (중복 방지, 주간 생성 주기 고려)
+                const recentCutoff = new Date(kst.now);
+                recentCutoff.setDate(recentCutoff.getDate() - 14);
 
                 const { data: recentAlbums } = await supabase
                     .from("memory_albums")
                     .select("media_ids")
                     .eq("pet_id", pet.id)
-                    .gte("created_date", thirtyDaysAgo.toISOString().slice(0, 10));
+                    .gte("created_date", recentCutoff.toISOString().slice(0, 10));
 
                 const recentlyUsedIds = new Set<string>();
                 if (recentAlbums) {
@@ -230,8 +231,8 @@ export async function GET(request: NextRequest) {
                     }
                 }
 
-                // --- 매월 1일 정기 앨범 (기념일 앨범이 없을 때) ---
-                if (isFirstDayOfMonth && !chosenConcept) {
+                // --- 주간 정기 앨범 (기념일 앨범이 없을 때) ---
+                if (isWeeklyAlbumDay && !chosenConcept) {
                     // Concept 1: anniversary (같은 MM-DD, 과거 연도)
                     const { data: anniversaryMedia } = await supabase
                         .from("pet_media")
