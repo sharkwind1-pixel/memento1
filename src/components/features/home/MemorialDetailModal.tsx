@@ -155,13 +155,14 @@ export default function MemorialDetailModal({
     const modalContent = (
         <div
             className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50"
-            onClick={(e) => {
-                if (e.target === e.currentTarget) onClose();
-            }}
+            onClick={onClose}
         >
-            <div className="min-h-full flex items-start justify-center pt-16 pb-20 px-4">
+            <div
+                className="min-h-full flex items-start justify-center pt-16 pb-20 px-4"
+                onClick={onClose}
+            >
                 <div
-                    className="bg-white dark:bg-gray-800 w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden"
+                    className="relative bg-white dark:bg-gray-800 w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden"
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* 닫기 버튼 */}
