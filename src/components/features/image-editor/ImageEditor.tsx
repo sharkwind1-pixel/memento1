@@ -100,13 +100,13 @@ export default function ImageEditor({
     // ========================================================================
     useEffect(() => {
         let cancelled = false;
+        let blobUrl: string | null = null;
 
         if (typeof image === "string") {
             setPreviewUrl(image);
         } else {
-            const url = URL.createObjectURL(image);
-            setPreviewUrl(url);
-            return () => URL.revokeObjectURL(url);
+            blobUrl = URL.createObjectURL(image);
+            setPreviewUrl(blobUrl);
         }
 
         loadImage(image)
@@ -119,6 +119,7 @@ export default function ImageEditor({
 
         return () => {
             cancelled = true;
+            if (blobUrl) URL.revokeObjectURL(blobUrl);
         };
     }, [image]);
 
