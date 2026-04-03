@@ -8,22 +8,21 @@
 ## 즉시 — UX/버그
 
 - [x] route.ts 디버그 로그 제거 (chat/particles)
-- [ ] 오프라인 감지 + Supabase auto-refresh 재시도 제한 (인터넷 끊김 시 에러 폭주 방지)
+- [x] 오프라인 감지 + Supabase auto-refresh 재시도 제한 (useOnlineStatus + OfflineBanner)
 - [x] 포인트 상점 서버 데드코드 제거 (premium_trial 핸들링)
 
 ---
 
 ## MVP 런칭 — 결제 + 프리미엄
 
-- [x] PortOne 환경변수 설정 (STORE_ID, CHANNEL_KEY, API_SECRET → .env.local 추가 완료)
-- [ ] PortOne 환경변수 Vercel에 추가 (배포 환경)
+- [x] PortOne 환경변수 설정 (STORE_ID, CHANNEL_KEY, API_SECRET → .env.local + Vercel)
 - [ ] KCP 외부 전산 세팅 완료 문자 대기 중 → 문자 오면 카드사 심사 요청
 - [ ] KCP 계약서류 온라인 제출
 - [ ] 보증보험 200만원 가입 (서울보증보험 1599-5209)
 - [ ] KCP V2 실연동 채널 생성 (인증서 필요, KCP 문자 후 진행)
 - [ ] 결제 테스트 후 실결제 전환
 - [x] 포트원(PortOne) 결제 연동 코드 — CSP 도메인 허용, 환경변수 사전 체크 추가
-- [ ] 스마트 프리미엄 전환 UX — isWarning(3회 남음) + 직전 대화 주제 반영 동적 문구
+- [x] 스마트 프리미엄 전환 UX — 직전 대화 주제 반영 동적 문구 + 잔여 횟수별 안내
 
 ---
 
@@ -59,21 +58,70 @@
 
 ---
 
-## 완료 항목 (2026-04-03 세션)
+## 완료 항목 (2026-04-03 세션) — 총 30+건
 
-- [x] 포트원 결제: CSP 도메인 허용 (*.iamport.co, *.portone.io)
-- [x] 포트원 결제: 환경변수 getter 변경 + 미설정 시 사전 체크
-- [x] 포트원 결제: Store ID, Channel Key, API Secret 발급 및 .env.local 설정
-- [x] 성능: img -> OptimizedImage 교체 (11개 파일 21곳, WebP/AVIF 자동 변환)
-- [x] 성능: Storage cacheControl 1시간 -> 1년
-- [x] 성능: 정적 에셋 캐시 헤더 강화 (폰트 1년, 로고 1일)
-- [x] 성능: PetContext select("*") -> 명시적 컬럼 (3곳)
-- [x] 성능: 미디어 업로드 병렬화 (순차 -> 배치 3개씩)
-- [x] 성능: 서비스 워커 정적 에셋/이미지 캐싱 추가
-- [x] 성능: loading.tsx 추가 (초기 빈 화면 방지)
-- [x] 성능: OptimizedImage src prop 변경 시 state 동기화 수정
-- [x] 정리: chat/route.ts particles 디버그 로그 제거
-- [x] 정리: 포인트 상점 premium_trial 데드코드 제거 (60줄 삭제)
+### 결제 연동
+- [x] 포트원 Store ID, Channel Key, API Secret 발급 + .env.local 설정
+- [x] CSP에 포트원 도메인 허용 (*.iamport.co, *.portone.io)
+- [x] 환경변수 getter 변경 (빌드 시점 캐싱 방지)
+- [x] PremiumModal 환경변수 미설정 시 사전 체크 추가
+- [x] Vercel 환경변수 추가 (PORTONE, VAPID, TELEGRAM 전부)
+
+### 성능 최적화 (Spotify 전략 참고)
+- [x] img -> OptimizedImage 교체 (11개 파일 21곳, WebP/AVIF 자동 변환)
+- [x] Storage cacheControl 1시간 -> 1년
+- [x] 정적 에셋 캐시 헤더 강화 (폰트 1년 immutable, 로고 1일)
+- [x] PetContext select("*") -> 명시적 컬럼 선택 (3곳, 페이로드 15-25% 감소)
+- [x] 미디어 업로드 병렬화 (순차 -> Promise.allSettled 배치 3개씩)
+- [x] 서비스 워커 캐싱 전략 추가 (정적 에셋 Cache First, 이미지 SWR)
+- [x] loading.tsx 추가 (초기 빈 화면 방지)
+- [x] OptimizedImage src prop 변경 시 state 동기화 수정
+
+### 버그 수정
+- [x] PetFormModal 모바일 깜빡임 해결 (useBodyScrollLock 제거 -> overflow:hidden)
+- [x] PetFormStep1 OptimizedImage 롤백 (모달 내 shimmer 깜빡임)
+- [x] PetFormModal step 변수 선언 순서 빌드 에러 수정
+
+### UX 개선
+- [x] 스마트 프리미엄 전환 UX: 직전 대화 주제 반영 동적 문구
+- [x] 프리미엄 배너: 잔여 1회 "마지막 1회" 강조
+- [x] 오프라인 감지 배너 (useOnlineStatus + OfflineBanner)
+- [x] Supabase auto-refresh: 오프라인 시 stopAutoRefresh, 복귀 시 restart
+
+### 정리/데드코드
+- [x] chat/route.ts particles 디버그 로그 제거
+- [x] 포인트 상점 premium_trial 데드코드 60줄 삭제
+- [x] Supabase pg_cron 중복 POST job 삭제 (hourly-reminder-cron)
+
+### 텔레그램 관리 시스템
+- [x] 텔레그램 봇 생성 (@mementoani_admin_bot)
+- [x] 알림 유틸리티 (src/lib/telegram.ts): 신고/결제/크론/에러/일일요약
+- [x] 채널별 그룹 분리 (신고/결제/시스템 3개 그룹)
+- [x] 신고 접수 시 텔레그램 알림
+- [x] 결제 완료 시 텔레그램 알림
+- [x] 크론 에러/실패 시 텔레그램 알림
+- [x] AI 모더레이션 자동 숨김 시 텔레그램 알림
+- [x] 반복 위반 유저 (30일 3회+) 경고 알림
+- [x] 텔레그램 Webhook: 양방향 관리 명령어 (/stats, /ban, /hide, /premium 등)
+- [x] HTML 이스케이프 (사용자 입력 안전 처리)
+
+### 24시간 자동 모니터링
+- [x] 매시간 헬스체크 (DB 6개 테이블 + OpenAI API)
+- [x] 이상 발견 시 텔레그램 시스템 알림 자동 발송
+- [x] 매일 09시 일일 요약 (전체회원/신규가입/대화/게시글/신고)
+
+### 게시판 자동 관리 강화
+- [x] 신고 3건 누적 자동 숨김 시 텔레그램 알림
+- [x] 반복 위반 유저 차단 검토 경고 알림
+
+### 보안 검수
+- [x] payments API rate limit 추가 (prepare, complete)
+- [x] reports API 입력값 검증 강화 (targetType/reason 화이트리스트, 500자 제한)
+- [x] 텔레그램 알림 HTML 이스케이프 적용
+
+### 크론/알림 인프라
+- [x] Vercel Deployment Protection 비활성화 (크론 401 해결)
+- [x] healthcheck 테이블명 수정 (posts -> community_posts)
 
 ---
 
