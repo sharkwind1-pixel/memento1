@@ -5,15 +5,27 @@
 
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { X, Heart, Send, Trash2 } from "lucide-react";
+import { X, Heart, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/auth-fetch";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import type { CondolenceMessage } from "@/types";
 import { safeStringSrc, getPetIcon } from "./homeUtils";
+
+/** 위로 메시지 프리셋 문구 */
+const CONDOLENCE_PRESETS = [
+    "영원히 기억할게요",
+    "마음속에 언제나 함께할 거예요",
+    "무지개다리 너머에서 행복하길",
+    "따뜻한 기억으로 남아주어 고마워요",
+    "언제까지나 사랑해",
+    "함께했던 시간이 소중했어요",
+    "편히 쉬고 있을 거라 믿어요",
+    "당신의 이야기가 따뜻합니다",
+];
 
 interface MemorialPetItem {
     id: string;
@@ -43,10 +55,9 @@ export default function MemorialDetailModal({
     const { user, isAdminUser } = useAuth();
     const [messages, setMessages] = useState<CondolenceMessage[]>([]);
     const [isLoadingMessages, setIsLoadingMessages] = useState(true);
-    const [newMessage, setNewMessage] = useState("");
     const [isSending, setIsSending] = useState(false);
     const [myMessageExists, setMyMessageExists] = useState(false);
-    const inputRef = useRef<HTMLInputElement>(null);
+    const [showPresets, setShowPresets] = useState(false);
 
     const src = safeStringSrc(pet.profileImage);
 
@@ -76,25 +87,21 @@ export default function MemorialDetailModal({
         loadMessages();
     }, [loadMessages]);
 
-    // 메시지 전송
-    const handleSend = async () => {
-        if (!newMessage.trim() || isSending || !user) return;
-        if (newMessage.length > 200) {
-            toast.error("200자 이내로 작성해주세요");
-            return;
-        }
+    // 프리셋 문구 선택 → 전송
+    const handleSelectPreset = async (preset: string) => {
+        if (isSending || !user) return;
 
         setIsSending(true);
         try {
             const res = await authFetch("/api/memorial-messages", {
                 method: "POST",
-                body: JSON.stringify({ petId: pet.id, message: newMessage.trim() }),
+                body: JSON.stringify({ petId: pet.id, message: preset }),
             });
             const data = await res.json();
             if (res.ok && data.message) {
                 setMessages((prev) => [data.message, ...prev.filter((m) => m.userId !== user.id)]);
-                setNewMessage("");
                 setMyMessageExists(true);
+                setShowPresets(false);
                 toast.success("위로의 말이 전달되었습니다");
             } else {
                 toast.error(data.error || "전송 실패");
@@ -285,35 +292,30 @@ export default function MemorialDetailModal({
                             )}
                         </div>
 
-                        {/* 메시지 입력 */}
-                        {user && (
-                            <div className="mt-3 flex gap-2">
-                                <input
-                                    ref={inputRef}
-                                    type="text"
-                                    value={newMessage}
-                                    onChange={(e) => setNewMessage(e.target.value)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === "Enter" && !e.nativeEvent.isComposing) {
-                                            handleSend();
-                                        }
-                                    }}
-                                    placeholder={
-                                        myMessageExists
-                                            ? "위로의 말 수정하기..."
-                                            : "위로의 말 남기기..."
-                                    }
-                                    maxLength={200}
-                                    className="flex-1 px-3 py-2 text-sm rounded-xl border border-amber-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-amber-400"
-                                />
-                                <button
-                                    onClick={handleSend}
-                                    disabled={!newMessage.trim() || isSending}
-                                    className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed text-white transition-colors"
-                                    aria-label="전송"
-                                >
-                                    <Send className="w-4 h-4" />
-                                </button>
+                        {/* 프리셋 문구 선택 */}
+                        {user && !myMessageExists && (
+                            <div className="mt-3">
+                                {!showPresets ? (
+                                    <button
+                                        onClick={() => setShowPresets(true)}
+                                        className="w-full py-2.5 text-sm font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded-xl transition-colors"
+                                    >
+                                        위로의 말 남기기
+                                    </button>
+                                ) : (
+                                    <div className="space-y-1.5 max-h-[180px] overflow-y-auto">
+                                        {CONDOLENCE_PRESETS.map((preset) => (
+                                            <button
+                                                key={preset}
+                                                onClick={() => handleSelectPreset(preset)}
+                                                disabled={isSending}
+                                                className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-200 bg-amber-50/50 dark:bg-amber-900/10 hover:bg-amber-100 dark:hover:bg-amber-900/20 rounded-xl transition-colors disabled:opacity-50"
+                                            >
+                                                {preset}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
