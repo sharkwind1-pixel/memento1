@@ -155,11 +155,11 @@ export default function MemorialDetailModal({
     const modalContent = (
         <div
             className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50"
-            onClick={onClose}
+            onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
             <div
                 className="min-h-full flex items-start justify-center pt-16 pb-20 px-4"
-                onClick={onClose}
+                onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
             >
                 <div
                     className="relative bg-white dark:bg-gray-800 w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden"
