@@ -13,6 +13,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { getAuthUser, createAdminSupabase } from "@/lib/supabase-server";
 import { PRICING } from "@/config/constants";
+import { getClientIP, checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 
 // plan → 금액 매핑 (서버에서만 관리)
 const PLAN_AMOUNT: Record<string, number> = {
@@ -27,6 +28,16 @@ const PLAN_NAME: Record<string, string> = {
 
 export async function POST(request: NextRequest) {
     try {
+        // 0. Rate Limit (결제 남용 방지)
+        const clientIP = await getClientIP();
+        const rateLimit = checkRateLimit(clientIP, "write");
+        if (!rateLimit.allowed) {
+            return NextResponse.json(
+                { error: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요." },
+                { status: 429, headers: getRateLimitHeaders(rateLimit.remaining, rateLimit.resetIn) }
+            );
+        }
+
         // 1. 인증 확인
         const user = await getAuthUser();
         if (!user) {

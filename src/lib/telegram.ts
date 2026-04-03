@@ -15,6 +15,11 @@ const CHAT = {
 
 type Channel = keyof typeof CHAT;
 
+/** HTML 특수문자 이스케이프 (사용자 입력 안전 처리) */
+function escapeHtml(text: string): string {
+    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
 /** 텔레그램 메시지 전송 (실패해도 throw하지 않음) */
 async function sendTelegram(text: string, channel: Channel = "default"): Promise<boolean> {
     const chatId = CHAT[channel];
@@ -53,10 +58,10 @@ export async function notifyReport(params: {
 }) {
     const lines = [
         "<b>[신고 접수]</b>",
-        `유형: ${params.targetType}`,
-        `사유: ${params.reason}`,
-        `신고자: ${params.reporterEmail || "익명"}`,
-        `ID: ${params.targetId}`,
+        `유형: ${escapeHtml(params.targetType)}`,
+        `사유: ${escapeHtml(params.reason)}`,
+        `신고자: ${escapeHtml(params.reporterEmail || "익명")}`,
+        `ID: ${escapeHtml(params.targetId)}`,
         `시각: ${new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}`,
     ];
     return sendTelegram(lines.join("\n"), "report");
@@ -121,7 +126,7 @@ export async function notifyError(params: {
 }) {
     const lines = [
         "<b>[서버 에러]</b>",
-        `API: ${params.endpoint}`,
+        `API: ${escapeHtml(params.endpoint)}`,
         `에러: ${params.error.slice(0, 300)}`,
     ];
     if (params.userId) lines.push(`유저: ${params.userId}`);

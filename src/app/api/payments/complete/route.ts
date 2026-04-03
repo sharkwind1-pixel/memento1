@@ -17,11 +17,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser, createAdminSupabase } from "@/lib/supabase-server";
 import { PLAN_DURATION_DAYS } from "@/config/constants";
+import { getClientIP, checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 
 const PORTONE_API_SECRET = process.env.PORTONE_API_SECRET || "";
 
 export async function POST(request: NextRequest) {
     try {
+        // 0. Rate Limit (결제 검증 남용 방지)
+        const clientIP = await getClientIP();
+        const rateLimit = checkRateLimit(clientIP, "write");
+        if (!rateLimit.allowed) {
+            return NextResponse.json(
+                { error: "요청이 너무 많습니다." },
+                { status: 429, headers: getRateLimitHeaders(rateLimit.remaining, rateLimit.resetIn) }
+            );
+        }
+
         // 1. 인증 확인
         const user = await getAuthUser();
         if (!user) {

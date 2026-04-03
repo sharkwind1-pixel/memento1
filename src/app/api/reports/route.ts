@@ -30,9 +30,26 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         const { targetType, targetId, reason, description } = body;
 
+        // 입력값 검증 (화이트리스트 + 길이 제한)
+        const VALID_TARGET_TYPES = ["post", "comment", "user", "pet_memorial"];
+        const VALID_REASONS = ["spam", "abuse", "inappropriate", "harassment", "misinformation", "other"];
+
         if (!targetType || !targetId || !reason) {
             return NextResponse.json({ error: "필수 항목이 누락되었습니다" }, { status: 400 });
         }
+        if (!VALID_TARGET_TYPES.includes(targetType)) {
+            return NextResponse.json({ error: "잘못된 신고 유형입니다" }, { status: 400 });
+        }
+        if (!VALID_REASONS.includes(reason)) {
+            return NextResponse.json({ error: "잘못된 신고 사유입니다" }, { status: 400 });
+        }
+        if (typeof targetId !== "string" || targetId.length > 100) {
+            return NextResponse.json({ error: "잘못된 대상 ID입니다" }, { status: 400 });
+        }
+
+        const sanitizedDescription = typeof description === "string"
+            ? description.trim().slice(0, 500)
+            : null;
 
         const supabase = createAdminSupabase();
 
@@ -41,7 +58,7 @@ export async function POST(request: NextRequest) {
             target_type: targetType,
             target_id: targetId,
             reason,
-            description: description?.trim() || null,
+            description: sanitizedDescription || null,
         });
 
         if (error) {
