@@ -98,6 +98,7 @@ export const API = {
     ADMIN_BLOCK_EMAIL: "/api/admin/block-email",
     ADMIN_ALLOW_REJOIN: "/api/admin/allow-rejoin",
     ADMIN_UPDATE_PROFILE: "/api/admin/update-profile",
+    ADMIN_REPORTS: "/api/admin/reports",
 
     // 추모 펫 위로 리액션
     PET_CONDOLENCE: (petId: string) => `/api/pets/${petId}/condolence`,

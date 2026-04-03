@@ -29,9 +29,9 @@ import {
     ReportRow,
     REPORT_REASON_LABELS,
     REPORT_TARGET_LABELS,
-    ReportTargetType,
 } from "../types";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import { API } from "@/config/apiEndpoints";
 
 // ============================================================================
 // Props 타입 정의
@@ -60,7 +60,7 @@ export default function AdminReportsTab({
     const [deleteContentConfirm, setDeleteContentConfirm] = useState<{ isOpen: boolean; report: ReportRow | null }>({ isOpen: false, report: null });
 
     // ========================================================================
-    // 신고 상태 변경
+    // 신고 상태 변경 (서버 API 경유, RLS 우회)
     // ========================================================================
     const updateStatus = async (
         reportId: string,
@@ -68,26 +68,26 @@ export default function AdminReportsTab({
         adminNotes?: string
     ) => {
         try {
-            const updateData: Record<string, unknown> = {
-                status,
-                resolved_by: userId,
-                resolved_at: new Date().toISOString(),
-            };
-            if (adminNotes) {
-                updateData.admin_notes = adminNotes;
-            }
+            const session = await supabase.auth.getSession();
+            const token = session.data.session?.access_token;
 
-            const { error } = await supabase
-                .from("reports")
-                .update(updateData)
-                .eq("id", reportId);
+            const res = await fetch(API.ADMIN_REPORTS, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({ reportId, status, adminNotes }),
+            });
 
-            if (error) throw error;
+            const result = await res.json();
+            if (!res.ok) throw new Error(result.error || "상태 업데이트 실패");
+
             toast.success("신고 상태가 업데이트되었습니다");
             onRefresh();
             window.dispatchEvent(new CustomEvent("adminDataUpdated"));
-        } catch {
-            toast.error("상태 업데이트 중 오류가 발생했습니다");
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : "상태 업데이트 중 오류가 발생했습니다");
         }
     };
 
@@ -100,32 +100,35 @@ export default function AdminReportsTab({
 
     const executeDeleteContent = async (report: ReportRow) => {
         try {
-            // 대상 유형에 따라 테이블 결정
-            const tableMap: Record<ReportTargetType, string> = {
-                post: "community_posts",
-                comment: "comments",
-                user: "", // 유저는 삭제하지 않음
-                pet_memorial: "pet_memorials",
-            };
-
-            const tableName = tableMap[report.target_type];
-            if (!tableName) {
+            if (report.target_type === "user") {
                 toast.error("삭제할 수 없는 대상입니다");
                 return;
             }
 
-            const { error } = await supabase
-                .from(tableName)
-                .delete()
-                .eq("id", report.target_id);
+            const session = await supabase.auth.getSession();
+            const token = session.data.session?.access_token;
 
-            if (error) throw error;
+            const res = await fetch(API.ADMIN_REPORTS, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({
+                    reportId: report.id,
+                    targetType: report.target_type,
+                    targetId: report.target_id,
+                }),
+            });
 
-            // 신고 상태 업데이트
-            await updateStatus(report.id, "resolved", "콘텐츠 삭제 처리");
+            const result = await res.json();
+            if (!res.ok) throw new Error(result.error || "콘텐츠 삭제 실패");
+
             toast.success("콘텐츠가 삭제되었습니다");
-        } catch {
-            toast.error("콘텐츠 삭제 중 오류가 발생했습니다");
+            onRefresh();
+            window.dispatchEvent(new CustomEvent("adminDataUpdated"));
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : "콘텐츠 삭제 중 오류가 발생했습니다");
         }
     };
 
