@@ -1,14 +1,24 @@
 /**
  * 텔레그램 관리자 알림 유틸리티
- * 신고, 크론 결과, 신규 가입, 결제, 에러 등을 텔레그램으로 실시간 알림
+ * 채널별로 분리: 신고, 결제, 시스템(크론/에러)
  */
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
-const CHAT_ID = process.env.TELEGRAM_CHAT_ID || "";
+
+// 채널별 chat ID (그룹 분리)
+const CHAT = {
+    report: process.env.TELEGRAM_CHAT_REPORT || process.env.TELEGRAM_CHAT_ID || "",
+    payment: process.env.TELEGRAM_CHAT_PAYMENT || process.env.TELEGRAM_CHAT_ID || "",
+    system: process.env.TELEGRAM_CHAT_SYSTEM || process.env.TELEGRAM_CHAT_ID || "",
+    default: process.env.TELEGRAM_CHAT_ID || "",
+};
+
+type Channel = keyof typeof CHAT;
 
 /** 텔레그램 메시지 전송 (실패해도 throw하지 않음) */
-async function sendTelegram(text: string): Promise<boolean> {
-    if (!BOT_TOKEN || !CHAT_ID) return false;
+async function sendTelegram(text: string, channel: Channel = "default"): Promise<boolean> {
+    const chatId = CHAT[channel];
+    if (!BOT_TOKEN || !chatId) return false;
 
     try {
         const res = await fetch(
@@ -17,7 +27,7 @@ async function sendTelegram(text: string): Promise<boolean> {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    chat_id: CHAT_ID,
+                    chat_id: chatId,
                     text,
                     parse_mode: "HTML",
                     disable_web_page_preview: true,
@@ -31,10 +41,10 @@ async function sendTelegram(text: string): Promise<boolean> {
 }
 
 // ============================================================
-// 알림 유형별 함수
+// 알림 유형별 함수 (채널 분리)
 // ============================================================
 
-/** 신고 접수 알림 */
+/** 신고 접수 알림 -> 신고 알림 그룹 */
 export async function notifyReport(params: {
     reporterEmail?: string;
     targetType: string;
@@ -47,11 +57,12 @@ export async function notifyReport(params: {
         `사유: ${params.reason}`,
         `신고자: ${params.reporterEmail || "익명"}`,
         `ID: ${params.targetId}`,
+        `시각: ${new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}`,
     ];
-    return sendTelegram(lines.join("\n"));
+    return sendTelegram(lines.join("\n"), "report");
 }
 
-/** 신규 회원 가입 알림 */
+/** 신규 회원 가입 알림 -> 시스템 알림 그룹 */
 export async function notifyNewUser(params: {
     email: string;
     provider?: string;
@@ -62,10 +73,10 @@ export async function notifyNewUser(params: {
         `방법: ${params.provider || "이메일"}`,
         `시각: ${new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}`,
     ];
-    return sendTelegram(lines.join("\n"));
+    return sendTelegram(lines.join("\n"), "system");
 }
 
-/** 결제 완료 알림 */
+/** 결제 완료 알림 -> 결제 알림 그룹 */
 export async function notifyPayment(params: {
     email: string;
     plan: string;
@@ -78,10 +89,10 @@ export async function notifyPayment(params: {
         `금액: ${params.amount.toLocaleString()}원`,
         `시각: ${new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}`,
     ];
-    return sendTelegram(lines.join("\n"));
+    return sendTelegram(lines.join("\n"), "payment");
 }
 
-/** 크론 실행 결과 알림 (에러 있을 때만) */
+/** 크론 실행 결과 알림 (에러 있을 때만) -> 시스템 알림 그룹 */
 export async function notifyCronResult(params: {
     phase: string;
     kstHour: number;
@@ -99,10 +110,10 @@ export async function notifyCronResult(params: {
     if (params.error) lines.push(`에러: ${params.error.slice(0, 200)}`);
     if (params.sent) lines.push(`발송: ${params.sent}건`);
     if (params.failed) lines.push(`실패: ${params.failed}건`);
-    return sendTelegram(lines.join("\n"));
+    return sendTelegram(lines.join("\n"), "system");
 }
 
-/** 서버 에러 알림 (심각한 에러만) */
+/** 서버 에러 알림 -> 시스템 알림 그룹 */
 export async function notifyError(params: {
     endpoint: string;
     error: string;
@@ -115,10 +126,10 @@ export async function notifyError(params: {
     ];
     if (params.userId) lines.push(`유저: ${params.userId}`);
     lines.push(`시각: ${new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}`);
-    return sendTelegram(lines.join("\n"));
+    return sendTelegram(lines.join("\n"), "system");
 }
 
-/** 일일 요약 알림 */
+/** 일일 요약 알림 -> 시스템 알림 그룹 */
 export async function notifyDailySummary(params: {
     totalUsers: number;
     newUsers: number;
@@ -135,12 +146,13 @@ export async function notifyDailySummary(params: {
         `신고: ${params.reports}건`,
         `날짜: ${new Date().toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul" })}`,
     ];
-    return sendTelegram(lines.join("\n"));
+    return sendTelegram(lines.join("\n"), "system");
 }
 
-/** 테스트 메시지 */
+/** 테스트 메시지 -> 기본 채팅 */
 export async function notifyTest() {
     return sendTelegram(
-        "<b>[테스트]</b>\n메멘토애니 관리 알림 연결 성공!"
+        "<b>[테스트]</b>\n메멘토애니 관리 알림 연결 성공!",
+        "default"
     );
 }
