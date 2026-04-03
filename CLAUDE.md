@@ -292,12 +292,49 @@ src/config/constants.ts         # 제한/가격/관리자 이메일
 
 ## 작업 규칙 (RELAY에서 이동)
 
-- **Claude Code 실행 시 반드시 `claude --dangerously-skip-permissions` 로 시작**
+- **Claude Code 실행**: `claude --enable-auto-mode` 권장 (Auto Mode: 분류기가 안전 판단 후 자동 진행)
+  - 기존: `claude --dangerously-skip-permissions` (모든 권한 건너뜀, 격리 환경에서만)
+  - Auto Mode: 위험 행위만 차단, 안전한 작업은 자동 승인 (2026-03-24 공개)
+  - 세션 내 `Shift+Tab`으로 퍼미션 모드 전환 가능
 - 커밋/푸시는 물어보지 말고 바로 진행
 - 빌드 확인 필수 (`next build`)
 - AGENTS.md의 서브에이전트 오케스트레이션 방식 준수
 - **DB 변경이 포함된 작업은 SQL 실행까지 완료해야 "완료"**
-- 모달 스크롤 안 되면 `PetFormModal.tsx` 224~264줄 패턴 적용
+- 모달 스크롤 안 되면 `PetFormModal.tsx` overflow:hidden 패턴 적용 (useBodyScrollLock 사용 금지)
+
+---
+
+## 텔레그램 관리 시스템
+
+```
+봇: @mementoani_admin_bot
+Webhook: /api/telegram-webhook
+
+알림 그룹 (채널별 분리):
+- 신고 알림: TELEGRAM_CHAT_REPORT
+- 결제 알림: TELEGRAM_CHAT_PAYMENT
+- 시스템 알림: TELEGRAM_CHAT_SYSTEM (크론/에러/가입/일일요약)
+
+관리 명령어 (봇 DM으로):
+/stats    - 실시간 통계
+/ban      - 유저 차단
+/unban    - 차단 해제
+/hide     - 게시글 숨김
+/show     - 게시글 복원
+/premium  - 프리미엄 부여
+/user     - 유저 정보 조회
+/reports  - 미처리 신고 목록
+/help     - 명령어 목록
+
+자동 알림:
+- 신고 접수 -> 신고 그룹
+- 결제 완료 -> 결제 그룹
+- 크론 에러 -> 시스템 그룹
+- AI 자동 숨김 -> 신고 그룹
+- 반복 위반 유저 -> 시스템 그룹
+- 매시간 헬스체크 (DB + OpenAI) -> 이상 시 시스템 그룹
+- 매일 09시 일일 요약 -> 시스템 그룹
+```
 
 ---
 
