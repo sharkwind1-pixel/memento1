@@ -9,6 +9,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import {
     X,
     Check,
@@ -270,10 +271,10 @@ export default function ImageEditor({
     // ========================================================================
     // 렌더링
     // ========================================================================
-    return (
+    const editorContent = (
         <div className="fixed inset-0 z-[9999] bg-black flex flex-col select-none">
             {/* 헤더 */}
-            <div className="flex items-center justify-between px-4 h-12 flex-shrink-0">
+            <div className="flex items-center justify-between px-4 h-14 flex-shrink-0">
                 <button
                     type="button"
                     onClick={onCancel}
@@ -439,4 +440,8 @@ export default function ImageEditor({
             </div>
         </div>
     );
+
+    // Portal로 document.body에 직접 렌더링 (상위 모달의 overflow 제한 회피)
+    if (typeof window === "undefined") return editorContent;
+    return createPortal(editorContent, document.body);
 }
