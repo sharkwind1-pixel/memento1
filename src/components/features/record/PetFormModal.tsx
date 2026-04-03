@@ -31,7 +31,6 @@ import { Button } from "@/components/ui/button";
 import { X, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import ImageCropper, { CropPosition } from "./ImageCropper";
 import { toast } from "sonner";
-import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
 // 서브컴포넌트
 import { TOTAL_STEPS, INITIAL_FORM_DATA } from "./pet-form/petFormTypes";
@@ -64,7 +63,15 @@ export default function PetFormModal({
     pet,
     onSave,
 }: PetFormModalProps) {
-    useBodyScrollLock(isOpen);
+    // useBodyScrollLock 제거 - 모바일에서 파일 피커 열 때 position:fixed가 레이아웃 깨뜨림
+    // 대신 backdrop 자체가 스크롤 컨테이너 역할 (CLAUDE.md 사후분석 6번 패턴)
+    const backdropRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (isOpen && backdropRef.current) {
+            backdropRef.current.scrollTop = 0;
+        }
+    }, [isOpen, step]);
 
     // ========================================================================
     // 상태 관리
@@ -226,24 +233,25 @@ export default function PetFormModal({
 
     return (
         <>
-            {/* 전체 화면 컨테이너 - 스크롤 가능 */}
+            {/* backdrop이 스크롤 컨테이너 (useBodyScrollLock 미사용 패턴) */}
             <div
+                ref={backdropRef}
                 className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50"
-                style={{ WebkitOverflowScrolling: 'touch' }}
+                style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
                 onClick={handleBackdropClose}
             >
-                {/* 모달 정렬 래퍼 */}
-                <div className="min-h-full flex items-start justify-center pt-4 sm:pt-16 pb-4 px-3 sm:px-4">
-                    {/* 모달 본체 */}
+                {/* 모달 정렬 래퍼 - items-center 안 씀 */}
+                <div className="flex justify-center pt-4 sm:pt-16 pb-4 px-3 sm:px-4">
+                    {/* 모달 본체 - max-h 없음, 자연 높이 */}
                     <div
-                        className="bg-white dark:bg-gray-900 w-full max-w-md rounded-2xl shadow-xl relative max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-9rem)] overflow-y-auto"
+                        className="bg-white dark:bg-gray-900 w-full max-w-md rounded-2xl shadow-xl relative"
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="pet-form-title"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        {/* 헤더 - sticky */}
-                        <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 rounded-t-2xl">
+                        {/* 헤더 */}
+                        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 rounded-t-2xl">
                             <h3 id="pet-form-title" className="text-lg font-semibold">
                                 {pet ? "반려동물 수정" : "새 반려동물 등록"}
                             </h3>
@@ -260,9 +268,9 @@ export default function PetFormModal({
                             {renderCurrentStep()}
                         </div>
 
-                        {/* 네비게이션 버튼 - sticky bottom */}
+                        {/* 네비게이션 버튼 */}
                         <div
-                            className="sticky bottom-0 z-10 flex gap-3 p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 rounded-b-2xl"
+                            className="flex gap-3 p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 rounded-b-2xl"
                             style={{ paddingBottom: 'max(1rem, calc(env(safe-area-inset-bottom, 0px) + 0.5rem))' }}
                         >
                             {step === 1 ? (
