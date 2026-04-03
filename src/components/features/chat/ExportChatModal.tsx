@@ -194,12 +194,12 @@ export default function ExportChatModal({
         <div
             className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50 backdrop-blur-sm"
             style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
-            onClick={onClose}
+            onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
             role="dialog"
             aria-modal="true"
             aria-labelledby="export-modal-title"
         >
-            <div className="min-h-full flex items-start justify-center pt-8 pb-8 px-4">
+            <div className="min-h-full flex items-start justify-center pt-8 pb-8 px-4" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
             <div
                 className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full flex flex-col"
                 onClick={(e) => e.stopPropagation()}

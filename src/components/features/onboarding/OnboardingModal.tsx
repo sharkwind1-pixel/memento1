@@ -263,9 +263,10 @@ export default function OnboardingModal({
         <div
             className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50"
             style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+            onClick={(e) => { if (e.target === e.currentTarget) handleSkip(); }}
         >
-            <div className="min-h-full flex items-start justify-center pt-8 pb-8 px-4">
-            <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
+            <div className="min-h-full flex items-start justify-center pt-8 pb-8 px-4" onClick={(e) => { if (e.target === e.currentTarget) handleSkip(); }}>
+            <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="onboarding-title" onClick={(e) => e.stopPropagation()}>
                 {/* 헤더 */}
                 <div className="flex justify-between items-center p-4 border-b border-gray-100 dark:border-gray-800">
                     <div className="flex items-center gap-2">
