@@ -7,7 +7,6 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { Button } from "@/components/ui/button";
-import { OptimizedImage } from "@/components/ui/optimized-image";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Camera, Move, Trash2, AlertTriangle } from "lucide-react";
@@ -39,28 +38,15 @@ export default function PetFormStep1({
                     } shadow-lg bg-gradient-to-br from-memento-100 to-memento-200`}
                 >
                     {profilePreview ? (
-                        profilePreview.startsWith("blob:") || profilePreview.startsWith("data:") ? (
-                            <img
-                                src={profilePreview}
-                                alt="Profile"
-                                className="w-full h-full object-cover"
-                                style={{
-                                    objectPosition: `${profileCropPosition.x}% ${profileCropPosition.y}%`,
-                                    transform: `scale(${profileCropPosition.scale})`,
-                                }}
-                            />
-                        ) : (
-                            <OptimizedImage
-                                src={profilePreview}
-                                alt="Profile"
-                                fill
-                                className="w-full h-full"
-                                objectPosition={`${profileCropPosition.x}% ${profileCropPosition.y}%`}
-                                style={{
-                                    transform: `scale(${profileCropPosition.scale})`,
-                                }}
-                            />
-                        )
+                        <img
+                            src={profilePreview}
+                            alt="Profile"
+                            className="w-full h-full object-cover"
+                            style={{
+                                objectPosition: `${profileCropPosition.x}% ${profileCropPosition.y}%`,
+                                transform: `scale(${profileCropPosition.scale})`,
+                            }}
+                        />
                     ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center text-memento-600">
                             <Camera className="w-10 h-10 mb-2" />
