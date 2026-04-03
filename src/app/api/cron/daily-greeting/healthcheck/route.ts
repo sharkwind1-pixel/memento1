@@ -11,7 +11,7 @@
  * 이상 발견 시 텔레그램 시스템 알림 전송
  */
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { verifyCronSecret, getServiceSupabase } from "@/lib/cron-utils";
 import { notifyError, notifyDailySummary } from "@/lib/telegram";
 
@@ -25,7 +25,7 @@ interface HealthResult {
     errors: string[];
 }
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
     const authError = verifyCronSecret(request);
     if (authError) return authError;
 
