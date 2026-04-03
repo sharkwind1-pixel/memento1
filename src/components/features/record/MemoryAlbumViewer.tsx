@@ -40,7 +40,7 @@ export default function MemoryAlbumViewer({
 
     const photos = album.photos ?? [];
     const totalPhotos = photos.length;
-    const AUTO_PLAY_INTERVAL = 4000; // 4초
+    const AUTO_PLAY_INTERVAL = 2000; // 2초
 
     // ---- 입장 애니메이션 ----
     useEffect(() => {
