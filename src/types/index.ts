@@ -817,3 +817,48 @@ export interface VideoQuota {
     lifetimeFreeUsed: boolean;
     tier: "free" | "basic" | "premium";
 }
+
+// ============================================
+// 17. Image Editor Types
+// ============================================
+
+/** 크롭 비율 프리셋 */
+export type CropAspectRatio = "free" | "1:1" | "4:3" | "16:9";
+
+/** 회전 각도 (시계 방향, 90도 단위) */
+export type RotationAngle = 0 | 90 | 180 | 270;
+
+/** 이미지 조절값 (0-200, 기본 100) */
+export interface ImageAdjustments {
+    brightness: number;
+    contrast: number;
+    saturation: number;
+}
+
+/** 필터 프리셋 식별자 */
+export type FilterPreset =
+    | "original"
+    | "warm"
+    | "cool"
+    | "vivid"
+    | "soft"
+    | "vintage"
+    | "bright"
+    | "bw";
+
+/** 크롭 영역 좌표 (0-1 상대값) */
+export interface CropRegion {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
+/** 이미지 편집 상태 전체 */
+export interface ImageEditState {
+    cropAspectRatio: CropAspectRatio;
+    cropRegion: CropRegion | null;
+    rotation: RotationAngle;
+    adjustments: ImageAdjustments;
+    filter: FilterPreset;
+}

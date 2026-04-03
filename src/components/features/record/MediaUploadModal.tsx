@@ -18,7 +18,8 @@ import {
     Trash2,
     PawPrint,
 } from "lucide-react";
-import ImageCropper, { CropPosition } from "./ImageCropper";
+import { CropPosition } from "./ImageCropper";
+import { ImageEditor } from "@/components/features/image-editor";
 import { toast } from "sonner";
 
 function isVideoFile(file: File): boolean {
@@ -27,7 +28,9 @@ function isVideoFile(file: File): boolean {
 
 interface SelectedFile {
     file: File;
+    editedFile?: File;
     preview: string;
+    editedPreview?: string;
     thumbnail?: string;
     caption: string;
     cropPosition: CropPosition;
@@ -80,7 +83,10 @@ export default function MediaUploadModal({
 
     useEffect(() => {
         if (!isOpen) {
-            selectedFiles.forEach((f) => URL.revokeObjectURL(f.preview));
+            selectedFiles.forEach((f) => {
+                URL.revokeObjectURL(f.preview);
+                if (f.editedPreview) URL.revokeObjectURL(f.editedPreview);
+            });
             setSelectedFiles([]);
             setCropIndex(null);
             setIsLoading(false);
@@ -200,7 +206,7 @@ export default function MediaUploadModal({
             return;
         }
         onUpload(
-            selectedFiles.map((f) => f.file),
+            selectedFiles.map((f) => f.editedFile || f.file),
             selectedFiles.map((f) => f.caption),
             selectedFiles.map((f) => f.cropPosition),
         );
@@ -321,12 +327,9 @@ export default function MediaUploadModal({
                                         ) : (
                                             <>
                                                 <img
-                                                    src={file.preview}
+                                                    src={file.editedPreview || file.preview}
                                                     alt="사진 미리보기"
                                                     className="w-full h-full object-cover"
-                                                    style={{
-                                                        objectPosition: `${file.cropPosition.x}% ${file.cropPosition.y}%`,
-                                                    }}
                                                 />
                                                 <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                                                     <Move className="w-5 h-5 text-white" />
@@ -473,10 +476,34 @@ export default function MediaUploadModal({
             {cropIndex !== null &&
                 selectedFiles[cropIndex] &&
                 !selectedFiles[cropIndex].isVideo && (
-                    <ImageCropper
-                        imageUrl={selectedFiles[cropIndex].preview}
-                        initialPosition={selectedFiles[cropIndex].cropPosition}
-                        onSave={(pos) => handleCropSave(cropIndex, pos)}
+                    <ImageEditor
+                        image={selectedFiles[cropIndex].preview}
+                        initialAspectRatio="1:1"
+                        onSave={(blob) => {
+                            const editedFile = new File(
+                                [blob],
+                                selectedFiles[cropIndex].file.name,
+                                { type: "image/jpeg" }
+                            );
+                            const editedPreview = URL.createObjectURL(blob);
+                            setSelectedFiles((prev) =>
+                                prev.map((f, i) =>
+                                    i === cropIndex
+                                        ? {
+                                              ...f,
+                                              editedFile,
+                                              editedPreview,
+                                              cropped: true,
+                                              cropPosition: { x: 50, y: 50, scale: 1 },
+                                          }
+                                        : f
+                                )
+                            );
+                            const nextUncropped = selectedFiles.findIndex(
+                                (f, i) => i > cropIndex && !f.cropped && !f.isVideo
+                            );
+                            setCropIndex(nextUncropped !== -1 ? nextUncropped : null);
+                        }}
                         onCancel={() => setCropIndex(null)}
                     />
                 )}

@@ -10,7 +10,7 @@ import useHorizontalScroll from "@/hooks/useHorizontalScroll";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { X, Send, Home, Eye, EyeOff, ImagePlus, Loader2, Pin, Globe, Megaphone } from "lucide-react";
+import { X, Send, Home, Eye, EyeOff, ImagePlus, Loader2, Pin, Globe, Megaphone, Pencil } from "lucide-react";
 import { InlineLoading } from "@/components/ui/PawLoading";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
@@ -21,6 +21,7 @@ import { API } from "@/config/apiEndpoints";
 import { toast } from "sonner";
 import Image from "next/image";
 import type { CommunitySubcategory, PostTag } from "@/types";
+import { ImageEditor } from "@/components/features/image-editor";
 import { LOCAL_REGIONS } from "./communityTypes";
 
 interface WritePostModalProps {
@@ -87,6 +88,7 @@ export default function WritePostModal({
     // 이미지 관련
     const [imageUrls, setImageUrls] = useState<string[]>([]);
     const [isUploading, setIsUploading] = useState(false);
+    const [editingImageIndex, setEditingImageIndex] = useState<number | null>(null);
 
     // 가입된 닉네임 사용
     const userNickname =
@@ -386,8 +388,15 @@ export default function WritePostModal({
                                             sizes="80px"
                                         />
                                         <button
+                                            onClick={() => setEditingImageIndex(index)}
+                                            className="absolute bottom-1 left-1 w-6 h-6 bg-black/60 rounded-full flex items-center justify-center"
+                                            aria-label="이미지 편집"
+                                        >
+                                            <Pencil className="w-3 h-3 text-white" />
+                                        </button>
+                                        <button
                                             onClick={() => handleRemoveImage(index)}
-                                            className="absolute top-1 right-1 w-7 h-7 bg-black/60 rounded-full flex items-center justify-center"
+                                            className="absolute top-1 right-1 w-6 h-6 bg-black/60 rounded-full flex items-center justify-center"
                                             aria-label="이미지 삭제"
                                         >
                                             <X className="w-3 h-3 text-white" />
@@ -558,6 +567,32 @@ export default function WritePostModal({
                 </div>
             </div>
             </div>
+
+            {/* 이미지 편집 모달 */}
+            {editingImageIndex !== null && imageUrls[editingImageIndex] && (
+                <ImageEditor
+                    image={imageUrls[editingImageIndex]}
+                    onSave={async (blob) => {
+                        if (!user) return;
+                        const file = new File([blob], `edited-${Date.now()}.jpg`, { type: "image/jpeg" });
+                        setIsUploading(true);
+                        try {
+                            const result = await uploadCommunityImage(file, user.id);
+                            if (result.success && result.url) {
+                                setImageUrls((prev) =>
+                                    prev.map((url, i) => (i === editingImageIndex ? result.url! : url))
+                                );
+                            } else {
+                                toast.error(result.error || "이미지 저장 실패");
+                            }
+                        } finally {
+                            setIsUploading(false);
+                            setEditingImageIndex(null);
+                        }
+                    }}
+                    onCancel={() => setEditingImageIndex(null)}
+                />
+            )}
         </div>
     );
 }

@@ -44,6 +44,7 @@ import type { MagazineArticleRow, MagazineStatus } from "../types";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import { ImageEditor } from "@/components/features/image-editor";
 
 // ============================================================================
 // Props 타입 정의
@@ -658,6 +659,7 @@ function ArticleFormModal({
     onClose,
 }: ArticleFormModalProps) {
     const [showUrlInput, setShowUrlInput] = useState(false);
+    const [isEditingImage, setIsEditingImage] = useState(false);
     useEscapeClose(true, onClose);
     useBodyScrollLock(true);
 
@@ -818,6 +820,13 @@ function ArticleFormModal({
                                     />
                                     <button
                                         type="button"
+                                        onClick={() => setIsEditingImage(true)}
+                                        className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/60 rounded text-white text-[10px] font-medium"
+                                    >
+                                        편집
+                                    </button>
+                                    <button
+                                        type="button"
                                         onClick={() => setForm(prev => ({
                                             ...prev,
                                             imageUrl: "",
@@ -918,6 +927,22 @@ function ArticleFormModal({
                     </Button>
                 </div>
             </div>
+
+            {/* 이미지 편집 모달 */}
+            {isEditingImage && form.imageUrl && (
+                <ImageEditor
+                    image={form.imageUrl}
+                    onSave={async (blob) => {
+                        const file = new File([blob], `edited-${Date.now()}.jpg`, { type: "image/jpeg" });
+                        const url = await onContentImageUpload(file);
+                        if (url) {
+                            setForm((prev) => ({ ...prev, imageUrl: url }));
+                        }
+                        setIsEditingImage(false);
+                    }}
+                    onCancel={() => setIsEditingImage(false)}
+                />
+            )}
         </div>
     );
 }
