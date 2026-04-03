@@ -67,12 +67,6 @@ export default function PetFormModal({
     // 대신 backdrop 자체가 스크롤 컨테이너 역할 (CLAUDE.md 사후분석 6번 패턴)
     const backdropRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        if (isOpen && backdropRef.current) {
-            backdropRef.current.scrollTop = 0;
-        }
-    }, [isOpen, step]);
-
     // ========================================================================
     // 상태 관리
     // ========================================================================
@@ -129,6 +123,13 @@ export default function PetFormModal({
             }
         }
     }, [pet, isOpen]);
+
+    // 스텝 전환 시 backdrop 스크롤을 맨 위로 리셋
+    useEffect(() => {
+        if (isOpen && backdropRef.current) {
+            backdropRef.current.scrollTop = 0;
+        }
+    }, [isOpen, step]);
 
     if (!isOpen) return null;
 
