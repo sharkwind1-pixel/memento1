@@ -7,7 +7,7 @@
 
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import { TabType, CommunitySubcategory, SmoothAutoScrollReturn } from "@/types";
 import { useSmoothAutoScroll } from "@/hooks/useSmoothAutoScroll";
@@ -20,6 +20,7 @@ import {
 } from "@/components/features/home";
 import AnnouncementBanner from "@/components/features/home/AnnouncementBanner";
 import Lightbox from "@/components/features/home/Lightbox";
+import MemorialDetailModal from "@/components/features/home/MemorialDetailModal";
 import SimpleHomeLauncher from "@/components/features/home/SimpleHomeLauncher";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMemorialMode } from "@/contexts/PetContext";
@@ -56,6 +57,9 @@ function HomePage({ setSelectedTab, isActive, onOpenCommunityPost }: HomePagePro
         isLoadingMagazine,
         refetchAll,
     } = useHomePage();
+
+    // 추모 디테일 모달
+    const [selectedMemorialPet, setSelectedMemorialPet] = useState<typeof displayMemorialData[0] | null>(null);
 
     useEffect(() => {
         if (isSimpleMode) return;
@@ -118,6 +122,16 @@ function HomePage({ setSelectedTab, isActive, onOpenCommunityPost }: HomePagePro
 
             {/* Lightbox */}
             <Lightbox item={lightboxItem} onClose={() => setLightboxItem(null)} />
+
+            {/* 추모 펫 디테일 모달 */}
+            {selectedMemorialPet && (
+                <MemorialDetailModal
+                    pet={selectedMemorialPet}
+                    isCondoled={condoledPets[selectedMemorialPet.id] || false}
+                    onToggleCondolence={toggleCondolence}
+                    onClose={() => setSelectedMemorialPet(null)}
+                />
+            )}
 
             <div className="relative z-10 space-y-10 sm:space-y-14 pb-28">
                 {/* 히어로 */}
@@ -252,6 +266,7 @@ function HomePage({ setSelectedTab, isActive, onOpenCommunityPost }: HomePagePro
                                 scrollRef={scroll.memorialScrollRef}
                                 condoledPets={condoledPets}
                                 onToggleCondolence={toggleCondolence}
+                                onCardClick={setSelectedMemorialPet}
                             />
                         </div>
                     </div>

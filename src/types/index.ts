@@ -862,3 +862,17 @@ export interface ImageEditState {
     adjustments: ImageAdjustments;
     filter: FilterPreset;
 }
+
+// ============================================
+// 18. 추모 위로 메시지
+// ============================================
+
+/** 추모 펫에 남긴 위로 메시지 */
+export interface CondolenceMessage {
+    id: string;
+    petId: string;
+    userId: string;
+    message: string;
+    nickname: string | null;
+    createdAt: string;
+}
