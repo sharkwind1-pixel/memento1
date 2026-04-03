@@ -181,26 +181,7 @@ export async function GET(request: NextRequest) {
 
                 if (!mediaCount || mediaCount < 3) continue;
 
-                // 최근 14일간 사용된 media_ids 수집 (중복 방지, 주간 생성 주기 고려)
-                const recentCutoff = new Date(kst.now);
-                recentCutoff.setDate(recentCutoff.getDate() - 14);
-
-                const { data: recentAlbums } = await supabase
-                    .from("memory_albums")
-                    .select("media_ids")
-                    .eq("pet_id", pet.id)
-                    .gte("created_date", recentCutoff.toISOString().slice(0, 10));
-
-                const recentlyUsedIds = new Set<string>();
-                if (recentAlbums) {
-                    for (const album of recentAlbums) {
-                        if (album.media_ids && Array.isArray(album.media_ids)) {
-                            for (const mid of album.media_ids) {
-                                recentlyUsedIds.add(mid);
-                            }
-                        }
-                    }
-                }
+                // 사진 중복 허용 (사진이 적은 유저도 매주 앨범 받을 수 있도록)
 
                 let chosenConcept: string | null = null;
                 let chosenTitle = "";
@@ -216,7 +197,7 @@ export async function GET(request: NextRequest) {
                             .eq("pet_id", pet.id);
 
                         if (allMedia && allMedia.length >= 3) {
-                            const filtered = allMedia.filter((m) => !recentlyUsedIds.has(m.id));
+                            const filtered = allMedia;
                             if (filtered.length >= 3) {
                                 const shuffled = filtered.sort(() => Math.random() - 0.5);
                                 const pickCount = Math.min(
@@ -245,7 +226,6 @@ export async function GET(request: NextRequest) {
                             if (!m.date) return false;
                             const year = parseInt(m.date.slice(0, 4), 10);
                             if (year === kst.year) return false;
-                            if (recentlyUsedIds.has(m.id)) return false;
                             return true;
                         });
 
@@ -281,7 +261,7 @@ export async function GET(request: NextRequest) {
                                 if (hm) allHappyMedia.push(...hm);
                             }
 
-                            const filtered = allHappyMedia.filter((m) => !recentlyUsedIds.has(m.id));
+                            const filtered = allHappyMedia;
                             if (filtered.length >= 3) {
                                 chosenConcept = "mood";
                                 chosenTitle = `${pet.name}의 행복했던 순간들`;
@@ -298,7 +278,7 @@ export async function GET(request: NextRequest) {
                             .eq("pet_id", pet.id);
 
                         if (allMedia && allMedia.length >= 3) {
-                            const filtered = allMedia.filter((m) => !recentlyUsedIds.has(m.id));
+                            const filtered = allMedia;
                             if (filtered.length >= 3) {
                                 const shuffled = filtered.sort(() => Math.random() - 0.5);
                                 const pickCount = Math.min(
