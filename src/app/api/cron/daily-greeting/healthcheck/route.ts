@@ -12,7 +12,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { verifyCronSecret, createCronSupabase } from "@/lib/cron-utils";
+import { verifyCronSecret, getServiceSupabase } from "@/lib/cron-utils";
 import { notifyError, notifyDailySummary } from "@/lib/telegram";
 
 export const dynamic = "force-dynamic";
@@ -37,7 +37,7 @@ export async function GET(request: Request) {
     };
 
     try {
-        const supabase = createCronSupabase();
+        const supabase = getServiceSupabase();
 
         // 1. DB 연결 + 주요 테이블 체크
         const tables = ["profiles", "pets", "pet_media", "posts", "chat_messages", "pet_reminders"];

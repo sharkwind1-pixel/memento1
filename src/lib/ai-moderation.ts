@@ -114,7 +114,14 @@ export async function moderateWithAI(
         });
 
         if (verdict !== "safe") {
-            console.warn(`[AI Moderation] Post ${postId} hidden: ${verdict} - ${reason}`);
+            // 텔레그램 신고 그룹에 자동 숨김 알림
+            import("@/lib/telegram").then(({ notifyReport }) =>
+                notifyReport({
+                    targetType: "ai-moderation",
+                    targetId: postId,
+                    reason: `AI 자동 숨김: ${verdict} - ${reason || "부적절한 콘텐츠"}`,
+                })
+            ).catch(() => {});
         }
     } catch (err) {
         console.error("[AI Moderation] Failed:", err instanceof Error ? err.message : err);
