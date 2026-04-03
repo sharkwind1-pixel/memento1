@@ -63,9 +63,15 @@ export default function PetFormModal({
     pet,
     onSave,
 }: PetFormModalProps) {
-    // useBodyScrollLock 제거 - 모바일에서 파일 피커 열 때 position:fixed가 레이아웃 깨뜨림
-    // 대신 backdrop 자체가 스크롤 컨테이너 역할 (CLAUDE.md 사후분석 6번 패턴)
+    // position:fixed 대신 overflow:hidden만 적용 (파일 피커 깨짐 방지)
     const backdropRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!isOpen) return;
+        const original = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        return () => { document.body.style.overflow = original; };
+    }, [isOpen]);
 
     // ========================================================================
     // 상태 관리
