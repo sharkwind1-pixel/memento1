@@ -10,6 +10,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { PetProvider } from "@/contexts/PetContext";
 import { Toaster } from "sonner";
 import CookieConsentBanner from "@/components/features/cookie/CookieConsentBanner";
+import OfflineBanner from "@/components/common/OfflineBanner";
 
 export const viewport: Viewport = {
     width: "device-width",
@@ -248,7 +249,10 @@ export default async function RootLayout({
                     </div>
                 </noscript>
                 <AuthProvider>
-                    <PetProvider>{children}</PetProvider>
+                    <PetProvider>
+                        <OfflineBanner />
+                        {children}
+                    </PetProvider>
                 </AuthProvider>
                 <CookieConsentBanner />
 
