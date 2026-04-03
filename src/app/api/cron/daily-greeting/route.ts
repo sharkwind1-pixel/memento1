@@ -101,12 +101,33 @@ export async function GET(request: NextRequest) {
             }
         }
 
+        // 에러가 있는 phase만 텔레그램 알림 (비동기)
+        import("@/lib/telegram").then(({ notifyCronResult }) => {
+            for (const [name, data] of Object.entries(results)) {
+                const d = data as Record<string, unknown>;
+                if (d.error || (typeof d.failed === "number" && d.failed > 0)) {
+                    notifyCronResult({
+                        phase: name,
+                        kstHour: kst.hour,
+                        error: d.error as string | undefined,
+                        sent: d.sent as number | undefined,
+                        failed: d.failed as number | undefined,
+                    });
+                }
+            }
+        }).catch(() => {});
+
         return NextResponse.json({
             message: "크론 실행 완료",
             kstHour: kst.hour,
             results,
         });
     } catch (err) {
+        // 크론 전체 실패 시 텔레그램 알림
+        import("@/lib/telegram").then(({ notifyError }) =>
+            notifyError({ endpoint: "/api/cron/daily-greeting", error: err instanceof Error ? err.message : "unknown" })
+        ).catch(() => {});
+
         console.error("[Cron] 오케스트레이터 오류:", err instanceof Error ? err.message : "unknown");
         return NextResponse.json(
             { error: "크론 실행 중 오류 발생" },

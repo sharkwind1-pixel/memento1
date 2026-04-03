@@ -50,6 +50,11 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "신고 처리에 실패했습니다" }, { status: 500 });
         }
 
+        // 텔레그램 관리자 알림 (비동기, 실패 무시)
+        import("@/lib/telegram").then(({ notifyReport }) =>
+            notifyReport({ reporterEmail: user.email, targetType, targetId, reason })
+        ).catch(() => {});
+
         return NextResponse.json({ success: true });
     } catch {
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });

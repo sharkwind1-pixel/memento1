@@ -208,6 +208,11 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // 텔레그램 관리자 알림 (비동기, 실패 무시)
+        import("@/lib/telegram").then(({ notifyPayment }) =>
+            notifyPayment({ email: user.email || "", plan, amount: payment.amount })
+        ).catch(() => {});
+
         return NextResponse.json({
             success: true,
             plan,
