@@ -323,10 +323,10 @@ function ReportCard({ report, onUpdateStatus, onDeleteContent }: ReportCardProps
             </p>
 
             {/* 관리자 메모 */}
-            {report.admin_notes && (
+            {report.resolution_note && (
                 <div className="p-1.5 bg-white dark:bg-gray-900 rounded border dark:border-gray-700 mb-1.5">
                     <p className="text-[10px] text-gray-600 dark:text-gray-300 line-clamp-2">
-                        <span className="font-medium">메모:</span> {report.admin_notes}
+                        <span className="font-medium">메모:</span> {report.resolution_note}
                     </p>
                 </div>
             )}

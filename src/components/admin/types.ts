@@ -219,7 +219,7 @@ export interface ReportRow {
     reason: string;                      // 신고 사유 코드
     description: string | null;          // 상세 설명
     status: ReportStatus;                // 상태
-    admin_notes: string | null;          // 관리자 메모
+    resolution_note: string | null;      // 관리자 메모
     resolved_at: string | null;          // 처리 일시
     resolved_by: string | null;          // 처리 관리자 ID
     created_at: string;                  // 신고일

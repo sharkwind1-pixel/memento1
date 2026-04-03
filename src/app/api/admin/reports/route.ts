@@ -72,7 +72,7 @@ export async function PATCH(request: NextRequest) {
             resolved_at: new Date().toISOString(),
         };
         if (adminNotes) {
-            updateData.admin_notes = adminNotes;
+            updateData.resolution_note = adminNotes;
         }
 
         const adminSupabase = createAdminSupabase();
@@ -159,7 +159,7 @@ export async function DELETE(request: NextRequest) {
             .from("reports")
             .update({
                 status: "resolved",
-                admin_notes: "콘텐츠 삭제 처리",
+                resolution_note: "콘텐츠 삭제 처리",
                 resolved_by: adminUser.id,
                 resolved_at: new Date().toISOString(),
             })
