@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
         const supabase = getServiceSupabase();
 
         // 1. DB 연결 + 주요 테이블 체크
-        const tables = ["profiles", "pets", "pet_media", "posts", "chat_messages", "pet_reminders"];
+        const tables = ["profiles", "pets", "pet_media", "community_posts", "chat_messages", "pet_reminders"];
         for (const table of tables) {
             try {
                 const { error } = await supabase.from(table).select("id").limit(1);
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
                     supabase.from("profiles").select("id", { count: "estimated", head: true }),
                     supabase.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", today),
                     supabase.from("chat_messages").select("id", { count: "exact", head: true }).gte("created_at", today),
-                    supabase.from("posts").select("id", { count: "exact", head: true }).gte("created_at", today),
+                    supabase.from("community_posts").select("id", { count: "exact", head: true }).gte("created_at", today),
                     supabase.from("reports").select("id", { count: "exact", head: true }).gte("created_at", today),
                 ]);
 
