@@ -13,7 +13,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { X, ChevronLeft, ChevronRight, Image as ImageIcon } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Image as ImageIcon, Play, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MemoryAlbum } from "@/types";
 import { API } from "@/config/apiEndpoints";
@@ -31,16 +31,63 @@ export default function MemoryAlbumViewer({
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isEntering, setIsEntering] = useState(true);
     const [isFading, setIsFading] = useState(false);
+    const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+    const [progress, setProgress] = useState(0);
     const touchStartX = useRef<number | null>(null);
     const touchEndX = useRef<number | null>(null);
+    const autoPlayTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const progressTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const photos = album.photos ?? [];
     const totalPhotos = photos.length;
+    const AUTO_PLAY_INTERVAL = 4000; // 4초
 
     // ---- 입장 애니메이션 ----
     useEffect(() => {
         const timer = setTimeout(() => setIsEntering(false), 50);
         return () => clearTimeout(timer);
+    }, []);
+
+    // ---- 자동 재생 ----
+    useEffect(() => {
+        if (!isAutoPlaying || totalPhotos <= 1) return;
+
+        setProgress(0);
+
+        // 프로그레스 바 업데이트 (50ms 간격)
+        const progressStep = 50;
+        progressTimerRef.current = setInterval(() => {
+            setProgress((prev) => {
+                const next = prev + (progressStep / AUTO_PLAY_INTERVAL) * 100;
+                return next >= 100 ? 100 : next;
+            });
+        }, progressStep);
+
+        // 사진 전환 타이머
+        autoPlayTimerRef.current = setInterval(() => {
+            setProgress(0);
+            setIsFading(true);
+            setTimeout(() => {
+                setCurrentIndex((prev) => {
+                    if (prev >= totalPhotos - 1) {
+                        // 마지막이면 처음으로
+                        return 0;
+                    }
+                    return prev + 1;
+                });
+                setIsFading(false);
+            }, 200);
+        }, AUTO_PLAY_INTERVAL);
+
+        return () => {
+            if (autoPlayTimerRef.current) clearInterval(autoPlayTimerRef.current);
+            if (progressTimerRef.current) clearInterval(progressTimerRef.current);
+        };
+    }, [isAutoPlaying, totalPhotos, currentIndex]);
+
+    const toggleAutoPlay = useCallback(() => {
+        setIsAutoPlaying((prev) => !prev);
+        setProgress(0);
     }, []);
 
     // ---- Body scroll lock ----
@@ -75,10 +122,12 @@ export default function MemoryAlbumViewer({
     }, [totalPhotos, currentIndex]);
 
     const goToPrev = useCallback(() => {
+        setIsAutoPlaying(false);
         navigateTo(currentIndex - 1);
     }, [navigateTo, currentIndex]);
 
     const goToNext = useCallback(() => {
+        setIsAutoPlaying(false);
         navigateTo(currentIndex + 1);
     }, [navigateTo, currentIndex]);
 
@@ -96,6 +145,9 @@ export default function MemoryAlbumViewer({
                     handleClose();
                     break;
                 case " ":
+                    e.preventDefault();
+                    toggleAutoPlay();
+                    break;
                 case "Enter":
                     e.preventDefault();
                     if (currentIndex < totalPhotos - 1) {
@@ -124,10 +176,11 @@ export default function MemoryAlbumViewer({
         if (touchStartX.current === null || touchEndX.current === null) return;
         const deltaX = touchStartX.current - touchEndX.current;
         if (Math.abs(deltaX) > 50) {
+            setIsAutoPlaying(false);
             if (deltaX > 0) {
-                goToNext();
+                navigateTo(currentIndex + 1);
             } else {
-                goToPrev();
+                navigateTo(currentIndex - 1);
             }
         }
         touchStartX.current = null;
@@ -196,14 +249,54 @@ export default function MemoryAlbumViewer({
                 }`}
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* 닫기 버튼 */}
-                <button
-                    onClick={handleClose}
-                    className="absolute top-3 right-3 z-20 w-8 h-8 flex items-center justify-center rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm transition-colors"
-                    aria-label="닫기"
-                >
-                    <X className="w-4 h-4 text-white" />
-                </button>
+                {/* 상단 프로그레스 바 */}
+                {totalPhotos > 1 && (
+                    <div className="absolute top-0 left-0 right-0 z-20 flex gap-1 px-3 pt-3">
+                        {photos.map((_, index) => (
+                            <div
+                                key={index}
+                                className="flex-1 h-0.5 rounded-full bg-white/30 overflow-hidden"
+                            >
+                                <div
+                                    className="h-full bg-white rounded-full"
+                                    style={{
+                                        width:
+                                            index < currentIndex
+                                                ? "100%"
+                                                : index === currentIndex
+                                                    ? `${progress}%`
+                                                    : "0%",
+                                        transition: index === currentIndex ? "none" : "width 0.2s",
+                                    }}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* 닫기 + 재생 버튼 */}
+                <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5">
+                    {totalPhotos > 1 && (
+                        <button
+                            onClick={toggleAutoPlay}
+                            className="w-8 h-8 flex items-center justify-center rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm transition-colors"
+                            aria-label={isAutoPlaying ? "일시정지" : "자동 재생"}
+                        >
+                            {isAutoPlaying ? (
+                                <Pause className="w-3.5 h-3.5 text-white" />
+                            ) : (
+                                <Play className="w-3.5 h-3.5 text-white ml-0.5" />
+                            )}
+                        </button>
+                    )}
+                    <button
+                        onClick={handleClose}
+                        className="w-8 h-8 flex items-center justify-center rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm transition-colors"
+                        aria-label="닫기"
+                    >
+                        <X className="w-4 h-4 text-white" />
+                    </button>
+                </div>
 
                 {/* 사진 영역 */}
                 <div
