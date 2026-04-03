@@ -41,6 +41,7 @@ interface MemorialSectionProps {
     scrollRef: React.RefObject<HTMLDivElement>;
     condoledPets?: Record<string, boolean>;
     onToggleCondolence?: (petId: string) => void;
+    onCardClick?: (pet: MemorialPetItem) => void;
 }
 
 export default function MemorialSection({
@@ -50,6 +51,7 @@ export default function MemorialSection({
     scrollRef,
     condoledPets = {},
     onToggleCondolence,
+    onCardClick,
 }: MemorialSectionProps) {
     return (
         <section className="space-y-6 px-4 py-8 -mx-4 bg-gradient-to-b from-amber-50/30 via-amber-50/10 to-transparent dark:from-amber-900/10 dark:via-transparent dark:to-transparent rounded-3xl flex-1">
@@ -108,20 +110,22 @@ export default function MemorialSection({
                         return (
                             <Card
                                 key={`${pet.id}-${idx}`}
-                                className="w-[220px] max-w-[220px] sm:w-64 sm:max-w-64 flex-shrink-0 bg-gradient-to-br from-amber-50 to-orange-50/80 dark:from-gray-800/50 dark:to-gray-800/30 border-amber-100/50 dark:border-gray-700/50 rounded-2xl overflow-hidden shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 will-change-transform"
+                                className="w-[220px] max-w-[220px] sm:w-64 sm:max-w-64 flex-shrink-0 bg-gradient-to-br from-amber-50 to-orange-50/80 dark:from-gray-800/50 dark:to-gray-800/30 border-amber-100/50 dark:border-gray-700/50 rounded-2xl overflow-hidden shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 will-change-transform cursor-pointer"
+                                onClick={() => onCardClick?.(pet)}
                             >
                                 <CardHeader className="p-0 relative overflow-hidden">
                                     {src ? (
                                         <button
                                             type="button"
-                                            onClick={() =>
+                                            onClick={(e) => {
+                                                e.stopPropagation();
                                                 onLightboxOpen({
                                                     title: pet.name,
                                                     subtitle: `${pet.type}${pet.breed ? ` / ${pet.breed}` : ""}`,
                                                     meta: pet.yearsLabel,
                                                     src,
-                                                })
-                                            }
+                                                });
+                                            }}
                                             className="w-full overflow-hidden"
                                         >
                                             <OptimizedImage
