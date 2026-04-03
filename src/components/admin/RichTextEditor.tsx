@@ -30,6 +30,7 @@ import {
     ImagePlus,
     Loader2,
 } from "lucide-react";
+import { ImageEditor } from "@/components/features/image-editor";
 
 interface RichTextEditorProps {
     content: string;
@@ -41,6 +42,7 @@ interface RichTextEditorProps {
 export default function RichTextEditor({ content, onChange, onImageUpload }: RichTextEditorProps) {
     const [isImageUploading, setIsImageUploading] = useState(false);
     const [isDragOver, setIsDragOver] = useState(false);
+    const [editingImageFile, setEditingImageFile] = useState<File | null>(null);
     const imageInputRef = useRef<HTMLInputElement>(null);
     const onImageUploadRef = useRef(onImageUpload);
     onImageUploadRef.current = onImageUpload;
@@ -153,15 +155,27 @@ export default function RichTextEditor({ content, onChange, onImageUpload }: Ric
         },
     });
 
-    /** 툴바 이미지 버튼 핸들러 */
+    /** 툴바 이미지 버튼 핸들러 - 편집기 먼저 열기 */
     const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file || !editor) return;
-        await uploadAndInsertImage(file, editor);
         if (imageInputRef.current) {
             imageInputRef.current.value = "";
         }
+        // 이미지 에디터 열기
+        setEditingImageFile(file);
     };
+
+    /** 이미지 편집 완료 후 업로드 + 삽입 */
+    const handleEditedImageSave = useCallback(
+        async (blob: Blob) => {
+            if (!editor || !onImageUploadRef.current) return;
+            const file = new File([blob], `edited-${Date.now()}.jpg`, { type: "image/jpeg" });
+            setEditingImageFile(null);
+            await uploadAndInsertImage(file, editor);
+        },
+        [editor, uploadAndInsertImage]
+    );
 
     // content prop 변경 시 에디터 동기화 (모달 열기/닫기 대응)
     useEffect(() => {
@@ -355,6 +369,15 @@ export default function RichTextEditor({ content, onChange, onImageUpload }: Ric
                     <ImagePlus className="w-4 h-4" />
                     여기에 놓으면 이미지가 삽입됩니다
                 </div>
+            )}
+
+            {/* 이미지 편집 모달 */}
+            {editingImageFile && (
+                <ImageEditor
+                    image={editingImageFile}
+                    onSave={handleEditedImageSave}
+                    onCancel={() => setEditingImageFile(null)}
+                />
             )}
         </div>
     );
