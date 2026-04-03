@@ -29,7 +29,8 @@ import { useState, useRef, useEffect } from "react";
 import type { Pet } from "@/types";
 import { Button } from "@/components/ui/button";
 import { X, Check, ChevronLeft, ChevronRight } from "lucide-react";
-import ImageCropper, { CropPosition } from "./ImageCropper";
+import { CropPosition } from "./ImageCropper";
+import { ImageEditor } from "@/components/features/image-editor";
 import { toast } from "sonner";
 
 // 서브컴포넌트
@@ -172,8 +173,10 @@ export default function PetFormModal({
         }
     };
 
-    const handleCropSave = (position: CropPosition) => {
-        setProfileCropPosition(position);
+    const handleEditorSave = (blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        setProfilePreview(url);
+        setProfileCropPosition({ x: 50, y: 50, scale: 1 });
         setProfileCropped(true);
         setShowCropper(false);
     };
@@ -357,10 +360,10 @@ export default function PetFormModal({
             )}
 
             {showCropper && profilePreview && (
-                <ImageCropper
-                    imageUrl={profilePreview}
-                    initialPosition={profileCropPosition}
-                    onSave={handleCropSave}
+                <ImageEditor
+                    image={profilePreview}
+                    initialAspectRatio="1:1"
+                    onSave={handleEditorSave}
                     onCancel={() => setShowCropper(false)}
                 />
             )}
