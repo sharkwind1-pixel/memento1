@@ -14,6 +14,7 @@ import { authFetch } from "@/lib/auth-fetch";
 import { toast } from "sonner";
 import { InlineLoading } from "@/components/ui/PawLoading";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
+import { API } from "@/config/apiEndpoints";
 
 
 type ReportTargetType = "post" | "comment" | "user" | "pet_memorial";
@@ -73,7 +74,7 @@ export default function ReportModal({
         setLoading(true);
 
         try {
-            const response = await authFetch("/api/reports", {
+            const response = await authFetch(API.REPORTS, {
                 method: "POST",
                 body: JSON.stringify({
                     targetType,

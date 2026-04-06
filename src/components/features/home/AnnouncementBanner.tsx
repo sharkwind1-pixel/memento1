@@ -8,6 +8,7 @@
 import { useState, useEffect } from "react";
 import { Megaphone, X, ChevronRight } from "lucide-react";
 import type { TabType, CommunitySubcategory } from "@/types";
+import { API } from "@/config/apiEndpoints";
 
 interface Notice {
     id: string;
@@ -29,7 +30,7 @@ export default function AnnouncementBanner({ setSelectedTab, onSelectPost }: Ann
     useEffect(() => {
         const fetchNotices = async () => {
             try {
-                const response = await fetch("/api/posts?notice_scope=global&limit=3");
+                const response = await fetch(`${API.POSTS}?notice_scope=global&limit=3`);
                 if (!response.ok) return;
 
                 const data = await response.json();

@@ -81,6 +81,7 @@ export const API = {
     CRON_MAGAZINE_GENERATE: "/api/cron/magazine-generate",
 
     // 인증/보안
+    ME_PET_TYPE: "/api/me/pet-type",
     AUTH_RECORD_IP: "/api/auth/record-ip",
     AUTH_DELETE_ACCOUNT: "/api/auth/delete-account",
     AUTH_CLEANUP_BLOCKED: "/api/auth/cleanup-blocked",
@@ -103,6 +104,17 @@ export const API = {
     // 추모 펫 위로 리액션
     PET_CONDOLENCE: (petId: string) => `/api/pets/${petId}/condolence`,
 
+    // 추모 섹션
+    MEMORIAL_TODAY: "/api/memorial-today",
+    MEMORIAL_MESSAGES: "/api/memorial-messages",
+    MEMORIAL_MESSAGE_DELETE: (id: string) => `/api/memorial-messages?id=${id}`,
+
+    // 신고
+    REPORTS: "/api/reports",
+
     // 치유의 여정 (추모 모드 감정 추이)
     HEALING_JOURNEY: (petId: string) => `/api/healing-journey?petId=${petId}`,
+
+    // 텔레그램 관리자
+    ADMIN_TELEGRAM_TEST: "/api/admin/telegram-test",
 } as const;

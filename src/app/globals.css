@@ -397,6 +397,27 @@ body {
     pointer-events: none;
 }
 
+/* 추모 모드 발자국 데코 */
+@keyframes paw-drift {
+    0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+    15% { opacity: 0.12; }
+    85% { opacity: 0.10; }
+    100% { transform: translateY(-60px) rotate(15deg); opacity: 0; }
+}
+
+.paw-decoration {
+    position: absolute;
+    pointer-events: none;
+    opacity: 0;
+    animation: paw-drift ease-in-out infinite;
+}
+
+.paw-decoration::before {
+    content: "\1F43E";
+    font-size: var(--paw-size, 16px);
+    filter: grayscale(1) opacity(0.6);
+}
+
 /* 모드 전환용 부드러운 색상 전환 유틸리티 */
 .mode-transition {
     transition-property: background-color, background-image, border-color, color, box-shadow, ring-color;

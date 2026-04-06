@@ -16,10 +16,11 @@
 ## MVP 런칭 — 결제 + 프리미엄
 
 - [x] PortOne 환경변수 설정 (STORE_ID, CHANNEL_KEY, API_SECRET → .env.local + Vercel)
-- [ ] KCP 외부 전산 세팅 완료 문자 대기 중 → 문자 오면 카드사 심사 요청
+- [x] KCP 외부 전산 세팅 완료 (2026-04-06 문자 수신)
+- [ ] KCP 결제창 확인 + 카드사 심사 요청 (일반 + 정기결제)
 - [ ] KCP 계약서류 온라인 제출
 - [ ] 보증보험 200만원 가입 (서울보증보험 1599-5209)
-- [ ] KCP V2 실연동 채널 생성 (인증서 필요, KCP 문자 후 진행)
+- [ ] KCP V2 실연동 채널 생성 (카드사 심사 완료 후 진행)
 - [ ] 결제 테스트 후 실결제 전환
 - [x] 포트원(PortOne) 결제 연동 코드 — CSP 도메인 허용, 환경변수 사전 체크 추가
 - [x] 스마트 프리미엄 전환 UX — 직전 대화 주제 반영 동적 문구 + 잔여 횟수별 안내
@@ -28,30 +29,30 @@
 
 ## AI 펫톡 킬러 기능
 
-- [ ] 대화 내보내기 (편지/카드) — AI 대화를 예쁜 카드 이미지로 변환+저장+공유
-- [ ] 대화 내 사진 연동 — AI 추억 언급 시 pet_media 캡션 매칭 사진 썸네일 표시
+- [x] 대화 내보내기 (편지/카드) — ExportChatCard + ExportChatModal (4개 템플릿, PNG/JPG, Web Share)
+- [x] 대화 내 사진 연동 — extractKeywordsFromReply + pet_media 캡션 매칭
 
 ---
 
 ## AI 프롬프트 개선 — Phase 3
 
-- [ ] pending_topic — "다음에 물어볼 것" 메모리 타입
-- [ ] 시간대별 에너지 — 밤엔 졸린 톤, 아침엔 어벙한 톤 (일상 모드는 구현됨, 추모 모드 미적용)
+- [x] pending_topic — getLatestPendingTopic + ---PENDING_TOPIC--- 파싱 + DB 저장
+- [x] 시간대별 에너지 — 일상+추모 모드 모두 적용 (4시간대: 아침/낮/저녁/밤)
 
 ---
 
 ## UI/UX 비주얼
 
-- [ ] 추모 별 float-up 애니메이션
+- [x] 추모 별 float-up 애니메이션 — MemorialSection에 CSS-only 파티클 6개
 - [x] 타이핑 인디케이터 감성 텍스트 — 이미 구현 확인 (강아지/고양이/추모 4세트)
-- [ ] 발자국 버블 데코
+- [x] 발자국 버블 데코 — paw-drift 애니메이션 + MemorialSection 데코 4개
 
 ---
 
 ## 리팩토링 + 기타
 
-- [ ] 대형 컴포넌트 분리: AIChatPage(1408줄)
-- [ ] API URL 마이그레이션: 하드코딩 → apiEndpoints.ts 상수
+- [x] 대형 컴포넌트 분리: AIChatPage (1408줄 → 372줄, 이미 분리 완료)
+- [x] API URL 마이그레이션: 클라이언트 전체 apiEndpoints.ts 상수로 전환
 - [ ] 치유의 여정 대시보드 (유저 비노출, DB만)
 - [ ] 대화→타임라인 자동 생성
 - [ ] 미니미 도감 + 터치 이펙트

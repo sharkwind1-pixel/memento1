@@ -308,7 +308,7 @@ export function useHomePage() {
     const fetchMemorialPets = useCallback(async () => {
         setIsLoadingMemorial(true);
         try {
-            const res = await fetch("/api/memorial-today");
+            const res = await fetch(API.MEMORIAL_TODAY);
             if (res.ok) {
                 const data = await res.json();
                 const pets: MemorialPetItem[] = (data.pets || []).map(
@@ -355,7 +355,7 @@ export function useHomePage() {
     const fetchMagazinePreview = useCallback(async () => {
         setIsLoadingMagazine(true);
         try {
-            const res = await fetch("/api/magazine?limit=3&offset=0");
+            const res = await fetch(`${API.MAGAZINE}?limit=3&offset=0`);
             if (res.ok) {
                 const data = await res.json();
                 setMagazineArticles((data.articles || []).slice(0, 3).map((a: { id: string; title: string; imageUrl?: string; category?: string }) => ({

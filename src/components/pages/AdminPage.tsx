@@ -182,7 +182,7 @@ function AdminPage() {
                 throw new Error("인증 토큰이 없습니다");
             }
 
-            const res = await fetch("/api/admin/delete-user", {
+            const res = await fetch(API.ADMIN_DELETE_USER, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -352,6 +352,7 @@ function AdminPage() {
 import { PostRow } from "@/components/admin";
 import { RefreshCw } from "lucide-react";
 import { safeGetItem, safeSetItem } from "@/lib/safe-storage";
+import { API } from "@/config/apiEndpoints";
 
 interface PostsSimpleViewProps {
     posts: PostRow[];

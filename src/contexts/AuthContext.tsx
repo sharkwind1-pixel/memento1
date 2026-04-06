@@ -296,7 +296,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     try {
                         const { data: { session: currentSession } } = await supabase.auth.getSession();
                         if (currentSession?.access_token) {
-                            const res = await fetch("/api/me/pet-type", {
+                            const res = await fetch(API.ME_PET_TYPE, {
                                 headers: { Authorization: `Bearer ${currentSession.access_token}` },
                             });
                             if (res.ok) {
@@ -556,7 +556,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                                 try {
                                     const token = session.access_token;
                                     if (token) {
-                                        await fetch("/api/auth/cleanup-blocked", {
+                                        await fetch(API.AUTH_CLEANUP_BLOCKED, {
                                             method: "POST",
                                             headers: { Authorization: `Bearer ${token}` },
                                         });
@@ -577,7 +577,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                                 try {
                                     const token = session.access_token;
                                     if (token) {
-                                        await fetch("/api/auth/cleanup-blocked", {
+                                        await fetch(API.AUTH_CLEANUP_BLOCKED, {
                                             method: "POST",
                                             headers: { Authorization: `Bearer ${token}` },
                                         });
@@ -667,7 +667,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
                         // 3. IP 기록 + 동일 IP 다중 계정 제한 체크
                         const token = session.access_token;
-                        const res = await fetch("/api/auth/record-ip", {
+                        const res = await fetch(API.AUTH_RECORD_IP, {
                             method: "POST",
                             headers: {
                                 "Content-Type": "application/json",
@@ -720,7 +720,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                                 try {
                                     const token = session.access_token;
                                     if (token) {
-                                        await fetch("/api/auth/cleanup-blocked", {
+                                        await fetch(API.AUTH_CLEANUP_BLOCKED, {
                                             method: "POST",
                                             headers: { Authorization: `Bearer ${token}` },
                                         });

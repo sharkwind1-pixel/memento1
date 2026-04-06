@@ -14,6 +14,7 @@ import { authFetch } from "@/lib/auth-fetch";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import type { CondolenceMessage } from "@/types";
 import { safeStringSrc, getPetIcon } from "./homeUtils";
+import { API } from "@/config/apiEndpoints";
 
 /** 위로 메시지 프리셋 문구 */
 const CONDOLENCE_PRESETS = [
@@ -64,7 +65,7 @@ export default function MemorialDetailModal({
     // 메시지 목록 로드
     const loadMessages = useCallback(async () => {
         try {
-            const res = await fetch(`/api/memorial-messages?petId=${pet.id}`);
+            const res = await fetch(`${API.MEMORIAL_MESSAGES}?petId=${pet.id}`);
             if (res.ok) {
                 const data = await res.json();
                 setMessages(data.messages || []);
@@ -93,7 +94,7 @@ export default function MemorialDetailModal({
 
         setIsSending(true);
         try {
-            const res = await authFetch("/api/memorial-messages", {
+            const res = await authFetch(API.MEMORIAL_MESSAGES, {
                 method: "POST",
                 body: JSON.stringify({ petId: pet.id, message: preset }),
             });
@@ -116,7 +117,7 @@ export default function MemorialDetailModal({
     // 메시지 삭제
     const handleDelete = async (messageId: string) => {
         try {
-            const res = await authFetch(`/api/memorial-messages?id=${messageId}`, {
+            const res = await authFetch(API.MEMORIAL_MESSAGE_DELETE(messageId), {
                 method: "DELETE",
             });
             if (res.ok) {

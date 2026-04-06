@@ -44,6 +44,24 @@ interface MemorialSectionProps {
     onCardClick?: (pet: MemorialPetItem) => void;
 }
 
+/** 발자국 데코 (CSS-only) */
+const PAW_DECORATIONS = [
+    { left: "5%", bottom: "10%", size: 14, duration: 16, delay: 2 },
+    { left: "30%", bottom: "20%", size: 12, duration: 20, delay: 8 },
+    { left: "65%", bottom: "5%", size: 16, duration: 18, delay: 5 },
+    { left: "85%", bottom: "15%", size: 10, duration: 22, delay: 12 },
+] as const;
+
+/** 별 float-up 파티클 (CSS-only, 고정 위치/크기/속도) */
+const MEMORIAL_STARS = [
+    { left: "8%", bottom: "-4px", size: 3, duration: 12, delay: 0 },
+    { left: "22%", bottom: "-4px", size: 2, duration: 18, delay: 3 },
+    { left: "40%", bottom: "-4px", size: 4, duration: 14, delay: 7 },
+    { left: "58%", bottom: "-4px", size: 2, duration: 20, delay: 1 },
+    { left: "75%", bottom: "-4px", size: 3, duration: 16, delay: 5 },
+    { left: "90%", bottom: "-4px", size: 2, duration: 22, delay: 10 },
+] as const;
+
 export default function MemorialSection({
     isLoadingMemorial,
     displayMemorialData,
@@ -54,7 +72,36 @@ export default function MemorialSection({
     onCardClick,
 }: MemorialSectionProps) {
     return (
-        <section className="space-y-6 px-4 py-8 -mx-4 bg-gradient-to-b from-amber-50/30 via-amber-50/10 to-transparent dark:from-amber-900/10 dark:via-transparent dark:to-transparent rounded-3xl flex-1">
+        <section className="relative overflow-hidden space-y-6 px-4 py-8 -mx-4 bg-gradient-to-b from-amber-50/30 via-amber-50/10 to-transparent dark:from-amber-900/10 dark:via-transparent dark:to-transparent rounded-3xl flex-1">
+            {/* 떠오르는 별 파티클 */}
+            {MEMORIAL_STARS.map((star, i) => (
+                <span
+                    key={`star-${i}`}
+                    className="memorial-star"
+                    style={{
+                        left: star.left,
+                        bottom: star.bottom,
+                        width: star.size,
+                        height: star.size,
+                        animationDuration: `${star.duration}s`,
+                        animationDelay: `${star.delay}s`,
+                    }}
+                />
+            ))}
+            {/* 발자국 데코 */}
+            {PAW_DECORATIONS.map((paw, i) => (
+                <span
+                    key={`paw-${i}`}
+                    className="paw-decoration"
+                    style={{
+                        left: paw.left,
+                        bottom: paw.bottom,
+                        ["--paw-size" as string]: `${paw.size}px`,
+                        animationDuration: `${paw.duration}s`,
+                        animationDelay: `${paw.delay}s`,
+                    }}
+                />
+            ))}
             <div className="flex items-center space-x-3 min-w-0">
                 <div className="w-10 h-10 flex-shrink-0 bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-sm shadow-amber-500/20">
                     <Cloud className="w-5 h-5 text-white" />

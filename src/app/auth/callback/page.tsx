@@ -19,6 +19,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { API } from "@/config/apiEndpoints";
 
 /**
  * 탈퇴/차단 계정인지 체크하고, 해당 시 강제 로그아웃
@@ -33,7 +34,7 @@ async function cleanupBlockedAuthUser(): Promise<void> {
         const session = await supabase.auth.getSession();
         const token = session.data.session?.access_token;
         if (token) {
-            await fetch("/api/auth/cleanup-blocked", {
+            await fetch(API.AUTH_CLEANUP_BLOCKED, {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}` },
             });
