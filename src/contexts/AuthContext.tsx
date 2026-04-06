@@ -127,6 +127,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 return;
             }
 
+            // 탈퇴/차단 계정 체크 (관리자 포함 — 반드시 프로필 로드 전에 수행)
+            if (currentUser.email) {
+                try {
+                    const { data: rejoinCheck } = await supabase.rpc("can_rejoin", {
+                        check_email: currentUser.email,
+                        check_ip: null,
+                    });
+                    if (rejoinCheck && rejoinCheck.length > 0 && !rejoinCheck[0].can_join) {
+                        setIsAdminUser(false);
+                        setIsPremiumUser(false);
+                        setProfileLoaded(true);
+                        await supabase.auth.signOut();
+                        return;
+                    }
+                } catch {
+                    // RPC 실패 시에도 로그인은 허용 (네트워크 오류 등)
+                }
+            }
+
             // profiles, user_minimi, 첫 번째 펫을 병렬 조회
             const [profileResult, minimiListResult, firstPetResult] = await Promise.all([
                 supabase
