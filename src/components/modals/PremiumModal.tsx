@@ -151,7 +151,10 @@ export default function PremiumModal({
             // 3. 서버에서 결제 검증 + 프리미엄 활성화
             const completeRes = await authFetch(API.PAYMENT_COMPLETE, {
                 method: "POST",
-                body: JSON.stringify({ paymentId: paymentResult.paymentId }),
+                body: JSON.stringify({
+                    paymentId: paymentResult.paymentId,
+                    impUid: paymentResult.impUid,
+                }),
             });
 
             if (!completeRes.ok) {

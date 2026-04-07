@@ -142,18 +142,20 @@ function HomeContent() {
         const cleanUrl = new URL(window.location.href);
         cleanUrl.searchParams.delete("payment");
         cleanUrl.searchParams.delete("paymentId");
+        cleanUrl.searchParams.delete("impUid");
         cleanUrl.searchParams.delete("reason");
         window.history.replaceState({}, "", cleanUrl.pathname + cleanUrl.search);
 
         if (paymentStatus === "mobile-complete") {
             // 모바일 리다이렉트 결제 완료 → 서버에서 검증
             const paymentId = searchParams.get("paymentId");
-            if (paymentId) {
+            const impUid = searchParams.get("impUid");
+            if (paymentId && impUid) {
                 (async () => {
                     try {
                         const res = await authFetch(API.PAYMENT_COMPLETE, {
                             method: "POST",
-                            body: JSON.stringify({ paymentId }),
+                            body: JSON.stringify({ paymentId, impUid }),
                         });
                         if (res.ok) {
                             toast.success("프리미엄이 활성화되었습니다!");

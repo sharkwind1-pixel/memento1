@@ -2,8 +2,8 @@
  * 결제 완료 검증 API
  * POST /api/payments/complete
  *
- * 클라이언트에서 포트원 결제 완료 후 paymentId를 보내면:
- * 1. 포트원 API로 결제 내역 조회 (금액 위변조 방지)
+ * 클라이언트에서 포트원 결제 완료 후 paymentId + impUid를 보내면:
+ * 1. 포트원 V1 API로 결제 내역 조회 (금액 위변조 방지)
  * 2. payments 테이블의 pending 레코드를 atomic UPDATE (race condition 방지)
  * 3. 일치하면 payments 상태를 paid로 변경
  * 4. grant_premium RPC 호출 → 프리미엄 활성화
@@ -20,6 +20,41 @@ import { PLAN_DURATION_DAYS } from "@/config/constants";
 import { getClientIP, checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 
 const PORTONE_API_SECRET = process.env.PORTONE_API_SECRET || "";
+
+/** 포트원 V1 액세스 토큰 발급 */
+async function getPortoneAccessToken(): Promise<string | null> {
+    try {
+        const res = await fetch("https://api.iamport.kr/users/getToken", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                imp_key: process.env.PORTONE_REST_API_KEY || "",
+                imp_secret: PORTONE_API_SECRET,
+            }),
+        });
+        const data = await res.json();
+        if (data.code === 0 && data.response?.access_token) {
+            return data.response.access_token;
+        }
+        console.error("[payments/complete] 토큰 발급 실패:", data.message);
+        return null;
+    } catch (err) {
+        console.error("[payments/complete] 토큰 발급 에러:", err);
+        return null;
+    }
+}
+
+/** 포트원 V1 결제 단건 조회 */
+async function getPortonePayment(impUid: string, accessToken: string) {
+    const res = await fetch(`https://api.iamport.kr/payments/${encodeURIComponent(impUid)}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const data = await res.json();
+    if (data.code === 0 && data.response) {
+        return data.response;
+    }
+    throw new Error(data.message || "포트원 결제 조회 실패");
+}
 
 export async function POST(request: NextRequest) {
     try {
@@ -39,9 +74,9 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
         }
 
-        // 2. paymentId 받기
+        // 2. paymentId + impUid 받기
         const body = await request.json();
-        const { paymentId } = body;
+        const { paymentId, impUid } = body;
 
         if (!paymentId || typeof paymentId !== "string") {
             return NextResponse.json(
@@ -50,10 +85,16 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        if (!impUid || typeof impUid !== "string") {
+            return NextResponse.json(
+                { error: "포트원 결제 ID(imp_uid)가 필요합니다." },
+                { status: 400 }
+            );
+        }
+
         const adminSupabase = createAdminSupabase();
 
         // 3. Atomic UPDATE: pending → verifying (race condition 방지)
-        // 두 요청이 동시에 오면 하나만 성공하고 나머지는 빈 배열 반환
         const { data: claimedPayments, error: claimError } = await adminSupabase
             .from("payments")
             .update({ status: "verifying" })
@@ -71,7 +112,6 @@ export async function POST(request: NextRequest) {
         }
 
         if (!claimedPayments || claimedPayments.length === 0) {
-            // 이미 다른 요청이 처리했거나 존재하지 않는 결제
             return NextResponse.json(
                 { error: "결제 내역을 찾을 수 없거나 이미 처리된 결제입니다." },
                 { status: 409 }
@@ -80,10 +120,9 @@ export async function POST(request: NextRequest) {
 
         const payment = claimedPayments[0];
 
-        // 4. 포트원 API로 결제 검증
+        // 4. 포트원 V1 API로 결제 검증
         if (!PORTONE_API_SECRET) {
             console.error("[payments/complete] PORTONE_API_SECRET 미설정");
-            // verifying → failed 롤백
             await adminSupabase
                 .from("payments")
                 .update({ status: "failed", metadata: { ...payment.metadata, error: "PORTONE_API_SECRET 미설정" } })
@@ -94,22 +133,27 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const portoneResponse = await fetch(
-            `https://api.portone.io/payments/${encodeURIComponent(paymentId)}`,
-            {
-                headers: {
-                    Authorization: `PortOne ${PORTONE_API_SECRET}`,
-                },
-            }
-        );
-
-        if (!portoneResponse.ok) {
-            const errText = await portoneResponse.text();
-            console.error("[payments/complete] 포트원 API 오류:", errText);
-            // verifying → failed 롤백
+        const accessToken = await getPortoneAccessToken();
+        if (!accessToken) {
             await adminSupabase
                 .from("payments")
-                .update({ status: "failed", metadata: { ...payment.metadata, portone_api_error: errText } })
+                .update({ status: "failed", metadata: { ...payment.metadata, error: "포트원 토큰 발급 실패" } })
+                .eq("id", payment.id);
+            return NextResponse.json(
+                { error: "결제 검증 서버 오류" },
+                { status: 500 }
+            );
+        }
+
+        let portoneData;
+        try {
+            portoneData = await getPortonePayment(impUid, accessToken);
+        } catch (err) {
+            const errMsg = err instanceof Error ? err.message : "알 수 없는 오류";
+            console.error("[payments/complete] 포트원 조회 오류:", errMsg);
+            await adminSupabase
+                .from("payments")
+                .update({ status: "failed", metadata: { ...payment.metadata, portone_api_error: errMsg } })
                 .eq("id", payment.id);
             return NextResponse.json(
                 { error: "결제 검증에 실패했습니다." },
@@ -117,10 +161,8 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const portoneData = await portoneResponse.json();
-
-        // 5. 결제 상태 확인
-        if (portoneData.status !== "PAID") {
+        // 5. 결제 상태 확인 (V1: "paid" / "ready" / "failed" / "cancelled")
+        if (portoneData.status !== "paid") {
             await adminSupabase
                 .from("payments")
                 .update({
@@ -136,7 +178,7 @@ export async function POST(request: NextRequest) {
         }
 
         // 6. 금액 검증 (위변조 방지)
-        const paidAmount = portoneData.amount?.total;
+        const paidAmount = portoneData.amount;
         if (paidAmount !== payment.amount) {
             console.error(
                 `[payments/complete] 금액 불일치! DB: ${payment.amount}, 포트원: ${paidAmount}`
@@ -159,21 +201,22 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 7. payments 상태 업데이트 → paid (update 실패 시 grant_premium 호출 안 함)
+        // 7. payments 상태 업데이트 → paid
         const { error: updateError } = await adminSupabase
             .from("payments")
             .update({
                 status: "paid",
-                payment_id: portoneData.id || paymentId,
+                payment_id: impUid,
                 paid_at: new Date().toISOString(),
                 metadata: {
                     ...payment.metadata,
-                    portone_method: portoneData.method?.type,
-                    portone_card: portoneData.method?.card?.name,
+                    imp_uid: impUid,
+                    portone_method: portoneData.pay_method,
+                    portone_card: portoneData.card_name,
                 },
             })
             .eq("id", payment.id)
-            .eq("status", "verifying"); // 한번 더 보호
+            .eq("status", "verifying");
 
         if (updateError) {
             console.error("[payments/complete] payments 업데이트 오류:", updateError.message);
@@ -192,12 +235,11 @@ export async function POST(request: NextRequest) {
             p_plan: plan,
             p_duration_days: durationDays,
             p_granted_by: null,
-            p_reason: `포트원 결제 (${paymentId})`,
+            p_reason: `포트원 결제 (${impUid})`,
         });
 
         if (grantError) {
             console.error("[payments/complete] grant_premium 오류:", grantError.message);
-            // 결제는 됐는데 프리미엄 부여 실패 → grant_failed 마킹 + 에러 반환
             await adminSupabase
                 .from("payments")
                 .update({
