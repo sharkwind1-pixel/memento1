@@ -100,17 +100,16 @@ export default function MinihompyStage({
     const [touchEffectIndex, setTouchEffectIndex] = useState<number | null>(null);
     const [touchEffectMessage, setTouchEffectMessage] = useState<string>("");
 
-    // 미니미 터치 이펙트 메시지 목록
-    const TOUCH_MESSAGES = [
-        "안녕!",
-        "놀아줘~",
-        "기분 좋아!",
-        "반가워!",
-        "뭐해?",
-        "좋아!",
-        "오늘도 힘내!",
-        "나 여기있어!",
-    ];
+    // 미니미 종류별 터치 이펙트 메시지
+    const TOUCH_MESSAGES_BY_TYPE: Record<string, string[]> = {
+        maltipoo: ["깡총!", "꼬리 살랑~", "안아줘!", "헤헤~", "같이 놀자!", "기분 좋다~", "간식..?", "사랑해!"],
+        yorkshire: ["멍!", "나 용감해!", "놀자놀자!", "쓰담해줘~", "힘세다!", "같이 뛰자!", "배고파~", "최고야!"],
+        golden_retriever: ["반가워~!", "산책 갈까?", "꼬리 흔들~", "좋아좋아!", "공 던져줘!", "헤벌쭉~", "행복해!", "뒹굴뒹굴~"],
+        russian_blue: ["..냥", "쓰담 허락", "...뭐야", "그르릉~", "관심 없어", "..한번만 더", "졸려..", "..고마워"],
+        ragdoll: ["안겨도 돼?", "폭신~", "눈 마주쳤다!", "같이 있자~", "따뜻해..", "좋아~", "놀아줘!", "뭐 봐~"],
+        cheese_cat: ["야옹!", "배 만져봐!", "츄르..!", "낮잠 중..", "기지개~", "놀아줄 거야?", "꾹꾹이~", "뒹굴!"],
+    };
+    const TOUCH_MESSAGES_DEFAULT = ["안녕!", "놀아줘~", "기분 좋아!", "반가워!", "뭐해?", "좋아!", "오늘도 힘내!", "나 여기있어!"];
 
     // 시드 기반 사전 계산된 랜덤 값 (SSR/CSR 동일)
     const starPositions = useMemo(() => {
@@ -242,19 +241,21 @@ export default function MinihompyStage({
             clearTimeout(touchTimerRef.current);
         }
 
-        // 랜덤 메시지 선택
-        const randomMessage = TOUCH_MESSAGES[Math.floor(Math.random() * TOUCH_MESSAGES.length)];
+        // 미니미 종류에 맞는 메시지 선택
+        const slug = placedMinimi[index]?.slug || "";
+        const messages = TOUCH_MESSAGES_BY_TYPE[slug] || TOUCH_MESSAGES_DEFAULT;
+        const randomMessage = messages[Math.floor(Math.random() * messages.length)];
         setTouchEffectMessage(randomMessage);
         setTouchEffectIndex(index);
 
-        // 1.5초 후 이펙트 제거
+        // 1.8초 후 이펙트 제거
         touchTimerRef.current = setTimeout(() => {
             setTouchEffectIndex(null);
             setTouchEffectMessage("");
             touchTimerRef.current = null;
-        }, 1500);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- TOUCH_MESSAGES is a static constant
-    }, [editMode]);
+        }, 1800);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [editMode, placedMinimi]);
 
     return (
         <div
