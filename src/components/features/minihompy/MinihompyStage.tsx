@@ -233,6 +233,7 @@ export default function MinihompyStage({
 
     // 미니미 터치 이펙트 핸들러 (비편집 모드에서만)
     const touchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [touchKey, setTouchKey] = useState(0); // 동일 미니미 연속 터치 시 리렌더 강제
     const handleMinimiTouch = useCallback((index: number) => {
         if (editMode) return;
 
@@ -245,8 +246,14 @@ export default function MinihompyStage({
         const slug = placedMinimi[index]?.slug || "";
         const messages = TOUCH_MESSAGES_BY_TYPE[slug] || TOUCH_MESSAGES_DEFAULT;
         const randomMessage = messages[Math.floor(Math.random() * messages.length)];
-        setTouchEffectMessage(randomMessage);
-        setTouchEffectIndex(index);
+
+        // 동일 미니미 연속 터치 시에도 애니메이션 재실행
+        setTouchEffectIndex(null);
+        requestAnimationFrame(() => {
+            setTouchEffectMessage(randomMessage);
+            setTouchEffectIndex(index);
+            setTouchKey(k => k + 1);
+        });
 
         // 1.8초 후 이펙트 제거
         touchTimerRef.current = setTimeout(() => {
@@ -323,7 +330,8 @@ export default function MinihompyStage({
                             {/* 터치 이펙트: 말풍선 */}
                             {hasTouchEffect && touchEffectMessage && (
                                 <div
-                                    className="absolute -top-8 left-1/2 -translate-x-1/2 z-50 animate-bounce"
+                                    key={`bubble-${touchKey}`}
+                                    className="absolute -top-8 left-1/2 -translate-x-1/2 z-50"
                                     style={{
                                         animation: "minimiPop 0.3s ease-out, minimiFadeOut 0.3s ease-in 1.2s forwards",
                                     }}
@@ -374,7 +382,7 @@ export default function MinihompyStage({
                                 )}
                                 {/* 터치 이펙트: 하트/별 파티클 */}
                                 {hasTouchEffect && (
-                                    <div className="absolute inset-0 pointer-events-none overflow-visible">
+                                    <div key={`particle-${touchKey}`} className="absolute inset-0 pointer-events-none overflow-visible">
                                         {[...Array(4)].map((_, i) => (
                                             <div
                                                 key={i}
