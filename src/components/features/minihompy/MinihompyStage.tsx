@@ -300,7 +300,7 @@ export default function MinihompyStage({
                     const isDragging = draggingIndex === index;
                     // 모바일(< 640px)에서 더 작게 표시
                     const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
-                    const baseSize = compact ? (isMobile ? 44 : 56) : (isMobile ? 56 : 72);
+                    const baseSize = compact ? (isMobile ? 32 : 40) : (isMobile ? 40 : 50);
 
                     const hasTouchEffect = touchEffectIndex === index;
 
