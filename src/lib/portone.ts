@@ -42,7 +42,7 @@ declare global {
 }
 
 /** 환경변수를 함수 호출 시점에 읽도록 getter 사용 (빌드 시점 캐싱 방지) */
-const getStoreId = () => process.env.NEXT_PUBLIC_PORTONE_STORE_ID || "";
+const getMerchantCode = () => process.env.NEXT_PUBLIC_PORTONE_MERCHANT_CODE || "";
 const getChannelKey = () => process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY || "";
 
 export interface PaymentRequest {
@@ -89,11 +89,11 @@ function loadIamportScript(): Promise<void> {
 export async function requestPortOnePayment(
     params: PaymentRequest
 ): Promise<PaymentResult> {
-    const storeId = getStoreId();
+    const merchantCode = getMerchantCode();
     const channelKey = getChannelKey();
 
-    if (!storeId) {
-        return { success: false, error: "포트원 Store ID가 설정되지 않았습니다." };
+    if (!merchantCode) {
+        return { success: false, error: "포트원 가맹점 식별코드가 설정되지 않았습니다." };
     }
     if (!channelKey) {
         return { success: false, error: "포트원 채널 키가 설정되지 않았습니다." };
@@ -107,7 +107,7 @@ export async function requestPortOnePayment(
             return { success: false, error: "포트원 SDK 초기화에 실패했습니다." };
         }
 
-        IMP.init(storeId);
+        IMP.init(merchantCode);
 
         return new Promise((resolve) => {
             IMP.request_pay(

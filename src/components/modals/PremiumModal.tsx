@@ -109,7 +109,7 @@ export default function PremiumModal({
         if (isProcessing) return;
 
         // 포트원 환경변수 미설정 체크 (결제 준비 API 호출 전에 차단)
-        if (!process.env.NEXT_PUBLIC_PORTONE_STORE_ID || !process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY) {
+        if (!process.env.NEXT_PUBLIC_PORTONE_MERCHANT_CODE || !process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY) {
             toast.error("결제 시스템 준비 중입니다. 잠시 후 다시 시도해주세요.");
             return;
         }
