@@ -123,15 +123,20 @@ export async function requestPortOnePayment(
                 },
                 (response: IMPResponse) => {
                     if (!response.success) {
-                        // 유저가 결제창을 닫은 경우
-                        if (response.error_code === "F400") {
+                        const msg = response.error_msg || "";
+                        // 유저가 결제창을 닫거나 취소한 경우
+                        const isCancelled = response.error_code === "F400"
+                            || msg.includes("결제포기")
+                            || msg.includes("취소")
+                            || msg.includes("cancel");
+                        if (isCancelled) {
                             resolve({ success: false, error: "결제가 취소되었습니다." });
                             return;
                         }
-                        console.error("[PortOne V1] 결제 실패:", response.error_code, response.error_msg);
+                        console.error("[PortOne V1] 결제 실패:", response.error_code, msg);
                         resolve({
                             success: false,
-                            error: response.error_msg || "결제에 실패했습니다.",
+                            error: "결제에 실패했습니다.",
                         });
                         return;
                     }
