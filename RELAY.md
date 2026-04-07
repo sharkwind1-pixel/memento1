@@ -53,9 +53,9 @@
 
 - [x] 대형 컴포넌트 분리: AIChatPage (1408줄 → 372줄, 이미 분리 완료)
 - [x] API URL 마이그레이션: 클라이언트 전체 apiEndpoints.ts 상수로 전환
-- [ ] 치유의 여정 대시보드 (유저 비노출, DB만)
-- [ ] 대화→타임라인 자동 생성
-- [ ] 미니미 도감 + 터치 이펙트
+- [x] 치유의 여정 대시보드 — API + HealingJourneySection 구현 완료 (감정추이/애도단계/마일스톤)
+- [x] 대화→타임라인 자동 생성 — saveAutoTimelineEntry 10턴마다 자동 실행
+- [x] 미니미 도감 + 터치 이펙트 — MinimiCollection 도감 + MinihompyStage 터치 이펙트
 
 ---
 
