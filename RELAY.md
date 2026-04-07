@@ -59,6 +59,34 @@
 
 ---
 
+## 완료 항목 (2026-04-07 세션)
+
+### PortOne V1 결제 연동 (PC + 모바일)
+- [x] V2 SDK → V1 SDK 전환 (iamport.js CDN + IMP.request_pay)
+- [x] IMP.init()에 가맹점 식별코드(imp47365370) 사용 (V2 Store ID 아님)
+- [x] complete API: V2 REST API → V1 REST API (imp_uid 기반 조회)
+- [x] mobile-redirect: V1 쿼리 파라미터 대응 (imp_uid, merchant_uid, imp_success)
+- [x] CSP: strict-dynamic 제거 (호스트 allowlist 무시 문제), *.iamport.kr + *.kcp.co.kr 추가
+- [x] CSP: form-action에 결제 도메인 추가 (모바일 폼 서밋 허용)
+- [x] KCP 결제 취소 메시지 정제 ("결제포기" → "결제가 취소되었습니다")
+- [x] Vercel 환경변수: PORTONE_MERCHANT_CODE, PORTONE_REST_API_KEY 추가
+
+### 보안
+- [x] 탈퇴 계정 관리자 접근 차단 — refreshProfile()에 can_rejoin 체크 추가
+
+### AI/UI/리팩토링
+- [x] 추모 모드 시간대별 에너지 추가 (아침/낮/저녁/밤 4단계)
+- [x] MemorialSection 별 float-up 파티클 6개
+- [x] 발자국 버블 데코 (paw-drift 애니메이션)
+- [x] API URL 하드코딩 → apiEndpoints.ts 전면 마이그레이션 (12개 파일)
+- [x] 기존 완료 항목 RELAY 체크 (내보내기/사진연동/pending_topic/AIChatPage 분리)
+
+### 인프라
+- [x] KCP 외부 전산 세팅 완료 확인 (2026-04-06 문자 수신)
+- [x] 새 컴퓨터 git config 설정
+
+---
+
 ## 완료 항목 (2026-04-03 세션) — 총 30+건
 
 ### 결제 연동
