@@ -25,6 +25,7 @@ import {
     BookOpen,
     Clock,
 } from "lucide-react";
+import KakaoShareButton from "@/components/common/KakaoShareButton";
 
 interface TimelineSectionProps {
     petId: string;
@@ -219,6 +220,14 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                                                     )}
                                                 </div>
                                                 <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                                    <KakaoShareButton
+                                                        shareParams={{
+                                                            title: `${petName}의 일기 - ${entry.title}`,
+                                                            description: entry.content?.slice(0, 100) || "",
+                                                            pageUrl: "/",
+                                                        }}
+                                                        size="md"
+                                                    />
                                                     <button
                                                         onClick={() => openEditModal(entry)}
                                                         className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-memento-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"

@@ -42,6 +42,7 @@ import { OptimizedImage } from "@/components/ui/optimized-image";
 import { API } from "@/config/apiEndpoints";
 import ReportModal from "@/components/modals/ReportModal";
 import MinihompyVisitModal from "@/components/features/minihompy/MinihompyVisitModal";
+import KakaoShareButton from "@/components/common/KakaoShareButton";
 import LevelBadge from "@/components/features/points/LevelBadge";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import type { CommunitySubcategory } from "@/types";
@@ -949,6 +950,15 @@ export default function PostDetailView({
                         <MessageCircle className="w-4 h-4" />
                         <span className="font-medium">{comments.length}</span>
                     </button>
+                    {/* 공유 버튼 */}
+                    <KakaoShareButton
+                        shareParams={{
+                            title: post?.title || "메멘토애니",
+                            description: post?.content?.slice(0, 100) || "",
+                            imageUrl: post?.image_urls?.[0],
+                            pageUrl: `/`,
+                        }}
+                    />
                     {/* 신고 버튼 — 오른쪽 끝 */}
                     {!isOwner && (
                         <button

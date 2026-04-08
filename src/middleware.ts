@@ -17,13 +17,13 @@ export function middleware(request: NextRequest) {
     // style-src: unsafe-inline 유지 (Tailwind CSS + Radix UI 인라인 스타일 필요)
     const csp = [
         "default-src 'self'",
-        `script-src 'self' 'nonce-${nonce}' ${isDev ? "'unsafe-eval'" : ""} https://*.iamport.kr https://*.iamport.co https://*.portone.io https://*.kcp.co.kr 'unsafe-inline'`,
+        `script-src 'self' 'nonce-${nonce}' ${isDev ? "'unsafe-eval'" : ""} https://*.iamport.kr https://*.iamport.co https://*.portone.io https://*.kcp.co.kr https://t1.kakaocdn.net 'unsafe-inline'`,
         "style-src 'self' 'unsafe-inline'",
-        "img-src 'self' data: blob: *.supabase.co *.supabase.in images.dog.ceo cdn2.thecatapi.com 25.media.tumblr.com images.unsplash.com via.placeholder.com *.fal.ai *.fal.media",
+        "img-src 'self' data: blob: *.supabase.co *.supabase.in images.dog.ceo cdn2.thecatapi.com 25.media.tumblr.com images.unsplash.com via.placeholder.com *.fal.ai *.fal.media *.kakaocdn.net",
         "media-src 'self' blob: *.supabase.co *.supabase.in *.fal.ai *.fal.media",
         "font-src 'self'",
         "worker-src 'self'",
-        "connect-src 'self' *.supabase.co *.supabase.in api.openai.com apis.data.go.kr dog.ceo api.thecatapi.com *.push.services.mozilla.com fcm.googleapis.com *.fal.ai *.fal.media https://*.iamport.co https://*.iamport.kr https://*.portone.io https://*.kcp.co.kr https://pay.kcp.co.kr",
+        "connect-src 'self' *.supabase.co *.supabase.in api.openai.com apis.data.go.kr dog.ceo api.thecatapi.com *.push.services.mozilla.com fcm.googleapis.com *.fal.ai *.fal.media https://*.iamport.co https://*.iamport.kr https://*.portone.io https://*.kcp.co.kr https://pay.kcp.co.kr https://*.kakao.com",
         "frame-src 'self' https://*.iamport.co https://*.iamport.kr https://*.portone.io https://*.kcp.co.kr https://pay.kcp.co.kr",
         "object-src 'none'",
         "base-uri 'self'",
