@@ -80,6 +80,7 @@ interface VideoGenerateModalProps {
         id: string;
         name: string;
         photos: Array<{ id: string; url: string; type: string }>;
+        status?: string;
     };
 }
 
@@ -336,9 +337,13 @@ export default function VideoGenerateModal({
                 어떤 영상을 만들까요?
             </h3>
 
-            {/* Template grid */}
+            {/* Template grid — 일상/추모 모드별 필터링 */}
             <div className="grid grid-cols-2 gap-3 mb-4">
-                {VIDEO_TEMPLATES.map((template) => {
+                {VIDEO_TEMPLATES.filter((t) =>
+                    pet.status === "memorial"
+                        ? t.category === "memorial" || t.category === "transform"
+                        : t.category === "fun" || t.category === "transform"
+                ).map((template) => {
                     const IconComponent = ICON_MAP[template.icon];
                     const badge = CATEGORY_BADGE[template.category];
                     const isSelected = selectedTemplate?.id === template.id;
