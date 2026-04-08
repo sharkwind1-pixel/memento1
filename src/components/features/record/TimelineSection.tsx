@@ -193,15 +193,30 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                                         key={entry.id}
                                         className="relative pl-6 pb-4 border-l-2 border-memento-500/30 last:pb-0"
                                     >
-                                        {/* 타임라인 dot */}
-                                        <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-memento-500 border-2 border-white" />
+                                        {/* 타임라인 dot (카테고리별 색상) */}
+                                        <div className={`absolute -left-[9px] top-0 w-4 h-4 rounded-full border-2 border-white ${
+                                            entry.category === "건강" ? "bg-emerald-500"
+                                            : entry.category === "기념일" || entry.category === "특별한날" ? "bg-rose-400"
+                                            : entry.category === "여행" ? "bg-violet-500"
+                                            : "bg-memento-500"
+                                        }`} />
 
-                                        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 group">
+                                        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-2xl p-4 group">
                                             <div className="flex items-start justify-between mb-2">
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-sm text-gray-500">
                                                         {entry.date}
                                                     </span>
+                                                    {entry.category && (
+                                                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                                            entry.category === "건강" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                                            : entry.category === "기념일" || entry.category === "특별한날" ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
+                                                            : entry.category === "여행" ? "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400"
+                                                            : "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400"
+                                                        }`}>
+                                                            {entry.category}
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                                     <button

@@ -418,8 +418,8 @@ function Layout({
     return (
         <div className={`min-h-screen pb-safe flex flex-col xl:block ${
             isMemorialMode
-                ? "bg-gradient-to-b from-amber-50/80 via-orange-50/40 to-white dark:from-gray-900 dark:via-gray-900 dark:to-gray-950"
-                : "bg-gradient-to-b from-memento-50 via-memento-75 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
+                ? "bg-gradient-to-b from-amber-50/80 via-orange-50/30 to-memento-75 dark:from-gray-900 dark:via-gray-900 dark:to-gray-950"
+                : "bg-gradient-to-b from-memento-50 via-memento-75 to-white/80 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
         }`}>
 
             {/* 인증 모달 */}

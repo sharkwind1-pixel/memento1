@@ -37,9 +37,9 @@ const config: Config = {
   		colors: {
   			// 메멘토 브랜드 색상
   			memento: {
-  				50:  '#F0F9FF',  // 페이지 배경 시작
-  				75:  '#FAFCFF',  // 페이지 배경 중간
-  				100: '#E0F7FF',  // Surface (카드, 호버, 배지)
+  				50:  '#FDF8F3',  // 페이지 배경 시작 (따뜻한 크림)
+  				75:  '#FEFAF6',  // 페이지 배경 중간 (따뜻한 크림)
+  				100: '#FFF3E8',  // Surface (카드, 호버, 배지)
   				200: '#BAE6FD',  // Light Surface
   				300: '#7DD3FC',  // Border Accent
   				400: '#38BDF8',  // Primary Light (그라데이션, dark 텍스트)
