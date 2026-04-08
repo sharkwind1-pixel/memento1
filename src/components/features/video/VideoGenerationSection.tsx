@@ -185,8 +185,17 @@ export default function VideoGenerationSection({
     // ---- 핸들러 ----
 
     const handleOpenGenerateModal = useCallback(() => {
+        // 횟수 초과 시 프리미엄 모달로 유도
+        if (quota) {
+            const remaining = quota.limit - quota.used;
+            const exhausted = quota.isLifetimeFree ? quota.lifetimeFreeUsed : remaining <= 0;
+            if (exhausted) {
+                window.dispatchEvent(new CustomEvent("openPremiumModal", { detail: { feature: "ai-chat-limit" } }));
+                return;
+            }
+        }
         setIsGenerateModalOpen(true);
-    }, []);
+    }, [quota]);
 
     const handleCloseGenerateModal = useCallback(() => {
         setIsGenerateModalOpen(false);
