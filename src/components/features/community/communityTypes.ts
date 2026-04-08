@@ -5,11 +5,11 @@
  */
 
 import {
-    Coffee,
-    Cloud,
-    Heart,
+    MessageSquare,
+    Sparkles,
+    HandHeart,
     MapPin,
-    AlertTriangle,
+    AlertCircle,
 } from "lucide-react";
 import type { CommunitySubcategory, PostTag } from "@/types";
 
@@ -50,14 +50,14 @@ export const SUBCATEGORIES: {
     {
         id: "free",
         label: "자유게시판",
-        icon: Coffee,
+        icon: MessageSquare,
         color: "blue",
         description: "일상, 정보, 질문 등 자유로운 이야기",
     },
     {
         id: "memorial",
         label: "기억게시판",
-        icon: Cloud,
+        icon: Sparkles,
         color: "violet",
         description: "함께했던 기억을 나누고 위로받는 공간",
         memorialOnly: true,
@@ -65,7 +65,7 @@ export const SUBCATEGORIES: {
     {
         id: "adoption",
         label: "입양정보",
-        icon: Heart,
+        icon: HandHeart,
         color: "rose",
         description: "새 가족을 기다리는 친구들",
     },
@@ -79,7 +79,7 @@ export const SUBCATEGORIES: {
     {
         id: "lost",
         label: "분실동물",
-        icon: AlertTriangle,
+        icon: AlertCircle,
         color: "amber",
         description: "분실/발견 동물 찾기",
     },

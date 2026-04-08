@@ -71,7 +71,7 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
     const [isPetModalOpen, setIsPetModalOpen] = useState(false);
     const [editingPet, setEditingPet] = useState<Pet | null>(null);
     const [isPhotoUploadOpen, setIsPhotoUploadOpen] = useState(false);
-    const [viewingPhoto, setViewingPhoto] = useState<PetPhoto | null>(null);
+    const [viewingPhotoIndex, setViewingPhotoIndex] = useState<number | null>(null);
     const [petToDelete, setPetToDelete] = useState<Pet | null>(null);
 
     // 마이페이지 상태 — hydration 후 localStorage에서 복원
@@ -513,7 +513,10 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
 
                                         <PetPhotoAlbum
                                             selectedPet={selectedPet}
-                                            onPhotoClick={(photo) => setViewingPhoto(photo)}
+                                            onPhotoClick={(photo) => {
+                                                const idx = selectedPet.photos.findIndex(p => p.id === photo.id);
+                                                setViewingPhotoIndex(idx >= 0 ? idx : 0);
+                                            }}
                                             onUploadClick={() => setIsPhotoUploadOpen(true)}
                                             onDeletePhoto={deletePhoto}
                                             onDeletePhotos={deletePhotos}
@@ -565,14 +568,21 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
                 onClose={() => setIsPhotoUploadOpen(false)}
                 onUpload={handleMediaUpload}
             />
-            {viewingPhoto && selectedPet && (
+            {viewingPhotoIndex !== null && selectedPet && selectedPet.photos[viewingPhotoIndex] && (
                 <PhotoViewer
-                    photo={viewingPhoto}
+                    photos={selectedPet.photos}
+                    currentIndex={viewingPhotoIndex}
                     petName={selectedPet.name}
-                    onClose={() => setViewingPhoto(null)}
+                    onClose={() => setViewingPhotoIndex(null)}
+                    onNavigate={(idx) => setViewingPhotoIndex(idx)}
                     onDelete={async () => {
-                        await deletePhoto(selectedPet.id, viewingPhoto.id);
-                        setViewingPhoto(null);
+                        const photo = selectedPet.photos[viewingPhotoIndex];
+                        await deletePhoto(selectedPet.id, photo.id);
+                        if (selectedPet.photos.length <= 1) {
+                            setViewingPhotoIndex(null);
+                        } else if (viewingPhotoIndex >= selectedPet.photos.length - 1) {
+                            setViewingPhotoIndex(viewingPhotoIndex - 1);
+                        }
                     }}
                 />
             )}

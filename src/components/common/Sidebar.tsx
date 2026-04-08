@@ -17,11 +17,11 @@ import {
     ChevronDown,
     ChevronRight,
     X,
-    Heart,
+    HandHeart,
     MapPin,
-    Search,
-    Cloud,
-    Coffee,
+    AlertCircle,
+    Sparkles,
+    MessageSquare,
     HelpCircle,
     Lightbulb,
     Shield,
@@ -61,11 +61,11 @@ const COMMUNITY_SUBCATEGORIES: {
     icon: React.ElementType;
     color: string;
 }[] = [
-    { id: "free", label: "자유게시판", icon: Coffee, color: "text-blue-500" },
-    { id: "memorial", label: "기억게시판", icon: Cloud, color: "text-violet-500" },
-    { id: "adoption", label: "입양정보", icon: Heart, color: "text-rose-500" },
+    { id: "free", label: "자유게시판", icon: MessageSquare, color: "text-blue-500" },
+    { id: "memorial", label: "기억게시판", icon: Sparkles, color: "text-violet-500" },
+    { id: "adoption", label: "입양정보", icon: HandHeart, color: "text-rose-500" },
     { id: "local", label: "지역정보", icon: MapPin, color: "text-emerald-500" },
-    { id: "lost", label: "분실동물", icon: Search, color: "text-amber-500" },
+    { id: "lost", label: "분실동물", icon: AlertCircle, color: "text-amber-500" },
 ];
 
 interface SidebarProps {
