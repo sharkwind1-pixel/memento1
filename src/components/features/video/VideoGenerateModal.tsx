@@ -212,6 +212,15 @@ export default function VideoGenerateModal({
 
             if (!res.ok) {
                 const errorData = await res.json().catch(() => null);
+                // 횟수 초과 시 프리미엄 모달로 유도
+                if (res.status === 403 && errorData?.error) {
+                    toast.error(errorData.error);
+                    onClose();
+                    setTimeout(() => {
+                        window.dispatchEvent(new CustomEvent("openPremiumModal", { detail: { feature: "ai-chat-limit" } }));
+                    }, 300);
+                    return;
+                }
                 const errorMsg = errorData?.error || errorData?.msg || "영상 생성 요청에 실패했습니다.";
                 const detail = errorData?.detail ? ` (${errorData.detail})` : "";
                 throw new Error(errorMsg + detail);

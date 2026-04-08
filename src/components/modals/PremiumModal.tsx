@@ -331,11 +331,12 @@ export default function PremiumModal({
                             <span className="block text-[10px] opacity-70 mt-0.5">1개월만</span>
                         </button>
                     </div>
-                    {isSubscription && (
-                        <p className="text-[10px] text-gray-400 text-center mb-3">
-                            매월 자동으로 결제되며, 언제든 해지할 수 있습니다.
-                        </p>
-                    )}
+                    <p className="text-[10px] text-gray-400 text-center mb-3">
+                        {isSubscription
+                            ? "결제일로부터 30일간 이용 가능, 매월 동일 날짜에 자동 갱신. 언제든 해지 가능."
+                            : "결제일로부터 30일간 이용 가능. 기간 만료 후 자동 해제."
+                        }
+                    </p>
 
                     {/* CTA 버튼 */}
                     {isLoggedIn ? (
