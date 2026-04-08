@@ -233,7 +233,16 @@ export default function VideoGenerateModal({
             onClose();
         } catch (err) {
             const message = err instanceof Error ? err.message : "영상 생성 요청에 실패했습니다.";
-            toast.error(message);
+            // 서버 에러/네트워크 에러 → 프리미엄 모달로 유도
+            if (message.includes("Forbidden") || message.includes("502") || message.includes("503") || message.includes("Failed to fetch") || message.includes("서비스")) {
+                toast.error("영상 생성 서비스를 이용하려면 프리미엄 구독이 필요합니다.");
+                onClose();
+                setTimeout(() => {
+                    window.dispatchEvent(new CustomEvent("openPremiumModal", { detail: { feature: "ai-chat-limit" } }));
+                }, 300);
+            } else {
+                toast.error(message);
+            }
         } finally {
             setIsSubmitting(false);
         }
