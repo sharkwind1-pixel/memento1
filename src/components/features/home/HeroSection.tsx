@@ -42,12 +42,12 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
                     <div className="md:grid md:grid-cols-2 md:gap-8 lg:gap-12 items-center">
                         {/* 일러스트 */}
                         <div className="flex justify-center mb-6 md:mb-0 md:order-last">
-                            <div className="relative w-[240px] h-[240px] sm:w-[300px] sm:h-[300px] md:w-[380px] md:h-[380px] lg:w-[440px] lg:h-[440px]">
+                            <div className="relative w-[240px] h-[240px] sm:w-[300px] sm:h-[300px] md:w-[380px] md:h-[380px] lg:w-[440px] lg:h-[440px] rounded-3xl overflow-hidden shadow-lg">
                                 <Image
                                     src={isMemorial ? "/images/hero-illustration-memorial.png" : "/images/hero-illustration.png"}
                                     alt={isMemorial ? "별빛 강아지와 함께 밤하늘을 바라보는 아이" : "강아지와 함께 걸어가는 아이"}
                                     fill
-                                    className="object-contain"
+                                    className="object-cover"
                                     priority
                                     sizes="(max-width: 768px) 240px, 440px"
                                 />
