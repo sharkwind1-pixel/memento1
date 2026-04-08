@@ -185,7 +185,7 @@ export default function VideoGenerationSection({
     // ---- 핸들러 ----
 
     const handleOpenGenerateModal = useCallback(() => {
-        // 횟수 초과 시 프리미엄 모달로 유도
+        // quota 로드됨 → 횟수 초과 체크
         if (quota) {
             const remaining = quota.limit - quota.used;
             const exhausted = quota.isLifetimeFree ? quota.lifetimeFreeUsed : remaining <= 0;
@@ -194,8 +194,13 @@ export default function VideoGenerationSection({
                 return;
             }
         }
+        // quota null (로드 실패) + 비프리미엄 → 결제 유도
+        if (!quota && !isPremium) {
+            window.dispatchEvent(new CustomEvent("openPremiumModal", { detail: { feature: "ai-chat-limit" } }));
+            return;
+        }
         setIsGenerateModalOpen(true);
-    }, [quota]);
+    }, [quota, isPremium]);
 
     const handleCloseGenerateModal = useCallback(() => {
         setIsGenerateModalOpen(false);

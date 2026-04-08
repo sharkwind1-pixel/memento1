@@ -213,9 +213,9 @@ export default function VideoGenerateModal({
 
             if (!res.ok) {
                 const errorData = await res.json().catch(() => null);
-                // 횟수 초과 시 프리미엄 모달로 유도
-                if (res.status === 403 && errorData?.error) {
-                    toast.error(errorData.error);
+                // 횟수 초과(403) 또는 서비스 미설정(502/503) → 프리미엄 모달로 유도
+                if (res.status === 403 || res.status === 502 || res.status === 503) {
+                    toast.error(errorData?.error || "영상 생성 서비스를 이용하려면 프리미엄 구독이 필요합니다.");
                     onClose();
                     setTimeout(() => {
                         window.dispatchEvent(new CustomEvent("openPremiumModal", { detail: { feature: "ai-chat-limit" } }));
