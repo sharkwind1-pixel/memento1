@@ -2,10 +2,16 @@
  * 포트원 V1 결제 클라이언트 유틸
  * iamport.js CDN 스크립트 + IMP.request_pay 사용
  *
- * 흐름:
- * 1. POST /api/payments/prepare → paymentId(merchant_uid), orderName, amount
- * 2. requestPortOnePayment() → 포트원 결제창 오픈
- * 3. 결제 완료 후 POST /api/payments/complete → 서버에서 승인 검증
+ * 흐름 (단건 결제):
+ * 1. POST /api/payments/prepare → paymentId, orderName, amount
+ * 2. requestPortOnePayment() → 결제창 오픈
+ * 3. POST /api/payments/complete → 서버 검증
+ *
+ * 흐름 (정기 결제/구독):
+ * 1. POST /api/payments/subscribe/prepare → paymentId, orderName, amount, customerUid
+ * 2. requestPortOnePayment(isSubscription: true) → 배치결제창 오픈 (빌링키 발급)
+ * 3. POST /api/payments/subscribe/complete → 서버 검증 + 구독 생성
+ * 4. 매월 자동: POST /subscribe/payments/again (서버→서버)
  */
 
 /** IMP 전역 객체 타입 (iamport.js CDN 로드 시 window.IMP로 접근) */
@@ -20,6 +26,7 @@ interface IMPRequestPayParams {
     buyer_name?: string;
     buyer_tel?: string;
     m_redirect_url?: string;
+    customer_uid?: string; // 빌링키 발급용 (정기결제)
 }
 
 interface IMPResponse {
@@ -44,6 +51,7 @@ declare global {
 /** 환경변수를 함수 호출 시점에 읽도록 getter 사용 (빌드 시점 캐싱 방지) */
 const getMerchantCode = () => process.env.NEXT_PUBLIC_PORTONE_MERCHANT_CODE || "";
 const getChannelKey = () => process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY || "";
+const getBatchChannelKey = () => process.env.NEXT_PUBLIC_PORTONE_BATCH_CHANNEL_KEY || "";
 
 export interface PaymentRequest {
     paymentId: string;     // 서버에서 발급받은 결제 ID (merchant_uid)
@@ -51,6 +59,8 @@ export interface PaymentRequest {
     totalAmount: number;   // 결제 금액 (원)
     customerEmail?: string;
     customerName?: string;
+    isSubscription?: boolean;  // 정기결제 여부
+    customerUid?: string;      // 빌링키 발급용 고유 ID
 }
 
 export interface PaymentResult {
@@ -84,19 +94,24 @@ function loadIamportScript(): Promise<void> {
 
 /**
  * 포트원 V1 결제창을 열고 결제 완료 시 결과를 반환
- * PC: 콜백 방식, 모바일: m_redirect_url 리다이렉트
+ * 단건 결제: channelKey(인증결제) 사용
+ * 정기 결제: batchChannelKey(배치결제) + customer_uid 사용
  */
 export async function requestPortOnePayment(
     params: PaymentRequest
 ): Promise<PaymentResult> {
     const merchantCode = getMerchantCode();
-    const channelKey = getChannelKey();
+    const isSubscription = params.isSubscription || false;
+    const channelKey = isSubscription ? getBatchChannelKey() : getChannelKey();
 
     if (!merchantCode) {
         return { success: false, error: "포트원 가맹점 식별코드가 설정되지 않았습니다." };
     }
     if (!channelKey) {
-        return { success: false, error: "포트원 채널 키가 설정되지 않았습니다." };
+        return { success: false, error: isSubscription ? "배치결제 채널 키가 설정되지 않았습니다." : "포트원 채널 키가 설정되지 않았습니다." };
+    }
+    if (isSubscription && !params.customerUid) {
+        return { success: false, error: "정기결제에 필요한 고객 식별자가 없습니다." };
     }
 
     try {
@@ -110,44 +125,47 @@ export async function requestPortOnePayment(
         IMP.init(merchantCode);
 
         return new Promise((resolve) => {
-            IMP.request_pay(
-                {
-                    channelKey,
-                    pay_method: "card",
-                    merchant_uid: params.paymentId,
-                    name: params.orderName,
-                    amount: params.totalAmount,
-                    buyer_email: params.customerEmail || undefined,
-                    buyer_name: params.customerName || undefined,
-                    m_redirect_url: `${window.location.origin}/api/payments/mobile-redirect`,
-                },
-                (response: IMPResponse) => {
-                    if (!response.success) {
-                        const msg = response.error_msg || "";
-                        // 유저가 결제창을 닫거나 취소한 경우
-                        const isCancelled = response.error_code === "F400"
-                            || msg.includes("결제포기")
-                            || msg.includes("취소")
-                            || msg.includes("cancel");
-                        if (isCancelled) {
-                            resolve({ success: false, error: "결제가 취소되었습니다." });
-                            return;
-                        }
-                        console.error("[PortOne V1] 결제 실패:", response.error_code, msg);
-                        resolve({
-                            success: false,
-                            error: "결제에 실패했습니다.",
-                        });
+            const payParams: IMPRequestPayParams = {
+                channelKey,
+                pay_method: "card",
+                merchant_uid: params.paymentId,
+                name: params.orderName,
+                amount: params.totalAmount,
+                buyer_email: params.customerEmail || undefined,
+                buyer_name: params.customerName || undefined,
+                m_redirect_url: `${window.location.origin}/api/payments/mobile-redirect`,
+            };
+
+            // 정기결제: customer_uid 추가 → 빌링키 발급
+            if (isSubscription && params.customerUid) {
+                payParams.customer_uid = params.customerUid;
+            }
+
+            IMP.request_pay(payParams, (response: IMPResponse) => {
+                if (!response.success) {
+                    const msg = response.error_msg || "";
+                    const isCancelled = response.error_code === "F400"
+                        || msg.includes("결제포기")
+                        || msg.includes("취소")
+                        || msg.includes("cancel");
+                    if (isCancelled) {
+                        resolve({ success: false, error: "결제가 취소되었습니다." });
                         return;
                     }
-
+                    console.error("[PortOne V1] 결제 실패:", response.error_code, msg);
                     resolve({
-                        success: true,
-                        paymentId: response.merchant_uid,
-                        impUid: response.imp_uid || undefined,
+                        success: false,
+                        error: "결제에 실패했습니다.",
                     });
-                },
-            );
+                    return;
+                }
+
+                resolve({
+                    success: true,
+                    paymentId: response.merchant_uid,
+                    impUid: response.imp_uid || undefined,
+                });
+            });
         });
     } catch (err) {
         const message = err instanceof Error ? err.message : "알 수 없는 결제 오류";

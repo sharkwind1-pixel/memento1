@@ -89,9 +89,13 @@ export const API = {
     // 유저 차단
     BLOCKS: "/api/blocks",
 
-    // 결제
+    // 결제 (단건)
     PAYMENT_PREPARE: "/api/payments/prepare",
     PAYMENT_COMPLETE: "/api/payments/complete",
+
+    // 결제 (정기구독)
+    SUBSCRIBE_PREPARE: "/api/payments/subscribe/prepare",
+    SUBSCRIBE_COMPLETE: "/api/payments/subscribe/complete",
 
     // 관리자
     ADMIN_POINTS: "/api/admin/points",

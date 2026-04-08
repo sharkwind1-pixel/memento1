@@ -96,6 +96,7 @@ export default function PremiumModal({
     isLoggedIn = true,
 }: PremiumModalProps) {
     const [selectedPlan, setSelectedPlan] = useState<PlanType>("basic");
+    const [isSubscription, setIsSubscription] = useState(true); // 기본: 정기결제
     const [isProcessing, setIsProcessing] = useState(false);
     const { user, refreshProfile } = useAuth();
     useEscapeClose(isOpen, onClose);
@@ -108,7 +109,6 @@ export default function PremiumModal({
     const handlePayment = async () => {
         if (isProcessing) return;
 
-        // 포트원 환경변수 미설정 체크 (결제 준비 API 호출 전에 차단)
         if (!process.env.NEXT_PUBLIC_PORTONE_MERCHANT_CODE || !process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY) {
             toast.error("결제 시스템 준비 중입니다. 잠시 후 다시 시도해주세요.");
             return;
@@ -117,8 +117,12 @@ export default function PremiumModal({
         setIsProcessing(true);
 
         try {
-            // 1. 결제 준비 (서버에서 금액 결정)
-            const prepareRes = await authFetch(API.PAYMENT_PREPARE, {
+            // 정기결제 vs 단건결제 분기
+            const prepareUrl = isSubscription ? API.SUBSCRIBE_PREPARE : API.PAYMENT_PREPARE;
+            const completeUrl = isSubscription ? API.SUBSCRIBE_COMPLETE : API.PAYMENT_COMPLETE;
+
+            // 1. 결제 준비
+            const prepareRes = await authFetch(prepareUrl, {
                 method: "POST",
                 body: JSON.stringify({ plan: selectedPlan }),
             });
@@ -129,7 +133,8 @@ export default function PremiumModal({
                 return;
             }
 
-            const { paymentId, orderName, amount } = await prepareRes.json();
+            const prepareData = await prepareRes.json();
+            const { paymentId, orderName, amount } = prepareData;
 
             // 2. 포트원 결제창 오픈
             const paymentResult = await requestPortOnePayment({
@@ -137,6 +142,8 @@ export default function PremiumModal({
                 orderName,
                 totalAmount: amount,
                 customerEmail: user?.email || undefined,
+                isSubscription,
+                customerUid: prepareData.customerUid, // 정기결제 시에만 존재
             });
 
             if (!paymentResult.success) {
@@ -148,8 +155,8 @@ export default function PremiumModal({
                 return;
             }
 
-            // 3. 서버에서 결제 검증 + 프리미엄 활성화
-            const completeRes = await authFetch(API.PAYMENT_COMPLETE, {
+            // 3. 서버 검증 + 프리미엄 활성화
+            const completeRes = await authFetch(completeUrl, {
                 method: "POST",
                 body: JSON.stringify({
                     paymentId: paymentResult.paymentId,
@@ -164,7 +171,7 @@ export default function PremiumModal({
             }
 
             // 4. 성공!
-            toast.success("프리미엄이 활성화되었습니다!");
+            toast.success(isSubscription ? "정기구독이 시작되었습니다!" : "프리미엄이 활성화되었습니다!");
             await refreshProfile();
             onClose();
         } catch (err) {
@@ -299,6 +306,37 @@ export default function PremiumModal({
                         </button>
                     </div>
 
+                    {/* 결제 유형 선택 */}
+                    <div className="flex gap-2 mb-3">
+                        <button
+                            onClick={() => setIsSubscription(true)}
+                            className={`flex-1 py-2.5 rounded-xl text-xs font-medium transition-all border ${
+                                isSubscription
+                                    ? "bg-memento-500/10 border-memento-500 text-memento-700 dark:text-memento-400"
+                                    : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500"
+                            }`}
+                        >
+                            정기 결제
+                            <span className="block text-[10px] opacity-70 mt-0.5">매월 자동 결제</span>
+                        </button>
+                        <button
+                            onClick={() => setIsSubscription(false)}
+                            className={`flex-1 py-2.5 rounded-xl text-xs font-medium transition-all border ${
+                                !isSubscription
+                                    ? "bg-memento-500/10 border-memento-500 text-memento-700 dark:text-memento-400"
+                                    : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500"
+                            }`}
+                        >
+                            단건 결제
+                            <span className="block text-[10px] opacity-70 mt-0.5">1개월만</span>
+                        </button>
+                    </div>
+                    {isSubscription && (
+                        <p className="text-[10px] text-gray-400 text-center mb-3">
+                            매월 자동으로 결제되며, 언제든 해지할 수 있습니다.
+                        </p>
+                    )}
+
                     {/* CTA 버튼 */}
                     {isLoggedIn ? (
                         <div className="space-y-3">
@@ -321,8 +359,8 @@ export default function PremiumModal({
                                 {isProcessing
                                     ? "결제 진행 중..."
                                     : selectedPlan === "premium"
-                                        ? `프리미엄 ${premiumPrice}원/월 시작`
-                                        : `베이직 ${basicPrice}원/월 시작`
+                                        ? `프리미엄 ${premiumPrice}원/월 ${isSubscription ? "구독" : "결제"}`
+                                        : `베이직 ${basicPrice}원/월 ${isSubscription ? "구독" : "결제"}`
                                 }
                             </Button>
                             <button
