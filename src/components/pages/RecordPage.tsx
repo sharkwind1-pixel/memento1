@@ -105,6 +105,16 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
     const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
     const [premiumFeature, setPremiumFeature] = useState<"pet-limit" | "photo-limit">("pet-limit");
 
+    // openPremiumModal 커스텀 이벤트 수신 (VideoGenerateModal 등에서 발행)
+    useEffect(() => {
+        const handleOpenPremium = () => {
+            setPremiumFeature("pet-limit");
+            setIsPremiumModalOpen(true);
+        };
+        window.addEventListener("openPremiumModal", handleOpenPremium);
+        return () => window.removeEventListener("openPremiumModal", handleOpenPremium);
+    }, []);
+
     // 추모 전환 모달
     const [isMemorialModalOpen, setIsMemorialModalOpen] = useState(false);
 
