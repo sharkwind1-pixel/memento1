@@ -1,14 +1,16 @@
 /**
  * fal.ai 클라이언트 유틸리티
- * Kling 2.6 Pro image-to-video 생성 (10초, 오디오 없음)
+ * Veo 3.1 Fast image-to-video 생성 (8초, 1080p, 오디오 없음)
  *
  * 서버 사이드에서만 사용 (API Route)
  * FAL_KEY 환경변수 필요
+ *
+ * 비용: $0.10/초 × 8초 = $0.80/건 (약 1,100원)
  */
 
 import { fal } from "@fal-ai/client";
 
-const MODEL_ID = "fal-ai/kling-video/v2.6/pro/image-to-video";
+const MODEL_ID = "fal-ai/veo3.1/fast/image-to-video";
 
 /**
  * fal.ai 클라이언트 초기화 (호출 시점에 환경변수 보장)
@@ -38,9 +40,10 @@ export async function submitVideoGeneration(
         {
             input: {
                 prompt,
-                start_image_url: imageUrl,
-                duration: "10",
-                negative_prompt: "blur, distort, low quality, deformed, ugly",
+                image_url: imageUrl,
+                duration: "8s",
+                resolution: "1080p",
+                aspect_ratio: "9:16",
                 generate_audio: false,
             },
             webhookUrl,
