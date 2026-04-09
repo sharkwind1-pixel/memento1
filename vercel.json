@@ -15,6 +15,10 @@
         {
             "path": "/api/cron/blog-generate",
             "schedule": "0 0 * * *"
+        },
+        {
+            "path": "/api/cron/subscription-renewal",
+            "schedule": "30 22 * * *"
         }
     ]
 }
