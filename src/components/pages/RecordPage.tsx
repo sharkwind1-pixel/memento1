@@ -532,14 +532,12 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
                                             onDeletePhotos={deletePhotos}
                                         />
 
-                                        {selectedPet.photos.length > 0 && (
-                                            <div className="mt-6">
-                                                <VideoGenerationSection
-                                                    pet={selectedPet}
-                                                    isPremium={isPremiumUser}
-                                                />
-                                            </div>
-                                        )}
+                                        <div className="mt-6">
+                                            <VideoGenerationSection
+                                                pet={selectedPet}
+                                                isPremium={isPremiumUser}
+                                            />
+                                        </div>
 
                                         {selectedPet.status !== "memorial" && (
                                             <div className="mt-6">

@@ -25,6 +25,7 @@ import {
     Shield,
     Star,
     Leaf,
+    ImagePlus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { authFetch } from "@/lib/auth-fetch";
@@ -101,6 +102,8 @@ export default function VideoGenerateModal({
     const [quota, setQuota] = useState<VideoQuota | null>(null);
     const [isLoadingQuota, setIsLoadingQuota] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [directUploadUrl, setDirectUploadUrl] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
 
     // ============================================
     // Derived
@@ -282,12 +285,72 @@ export default function VideoGenerateModal({
                 영상으로 만들 사진을 선택해주세요
             </h3>
 
-            {imagePhotos.length === 0 ? (
-                <div className="text-center py-12 text-gray-400">
-                    <p>등록된 사진이 없습니다.</p>
-                    <p className="text-sm mt-1">먼저 사진을 업로드해주세요.</p>
+            {/* 직접 업로드 버튼 */}
+            <label className={`flex items-center justify-center gap-2 w-full py-3 mb-4 rounded-xl border-2 border-dashed cursor-pointer transition-all ${
+                directUploadUrl
+                    ? "border-memento-500 bg-memento-500/5 text-memento-600"
+                    : "border-gray-300 dark:border-gray-600 text-gray-500 hover:border-memento-400 hover:text-memento-500"
+            }`}>
+                <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        if (file.size > 10 * 1024 * 1024) {
+                            toast.error("10MB 이하의 이미지만 업로드 가능합니다.");
+                            return;
+                        }
+                        setIsUploading(true);
+                        try {
+                            const objectUrl = URL.createObjectURL(file);
+                            setDirectUploadUrl(objectUrl);
+                            setSelectedPhotoUrl(objectUrl);
+                        } finally {
+                            setIsUploading(false);
+                        }
+                    }}
+                />
+                {isUploading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                    <ImagePlus className="w-5 h-5" />
+                )}
+                <span className="text-sm font-medium">
+                    {directUploadUrl ? "다른 사진으로 변경" : "사진 직접 업로드"}
+                </span>
+            </label>
+
+            {/* 직접 업로드한 이미지 미리보기 */}
+            {directUploadUrl && (
+                <div className="mb-4">
+                    <button
+                        type="button"
+                        onClick={() => setSelectedPhotoUrl(directUploadUrl)}
+                        className={`relative w-24 h-24 rounded-xl overflow-hidden border-2 transition-all ${
+                            selectedPhotoUrl === directUploadUrl
+                                ? "border-memento-500 ring-2 ring-memento-500/30"
+                                : "border-transparent"
+                        }`}
+                    >
+                        <img src={directUploadUrl} alt="업로드한 사진" className="w-full h-full object-cover" />
+                        {selectedPhotoUrl === directUploadUrl && (
+                            <div className="absolute inset-0 bg-memento-500/20 flex items-center justify-center">
+                                <div className="w-7 h-7 bg-memento-500 rounded-full flex items-center justify-center">
+                                    <Check className="w-4 h-4 text-white" />
+                                </div>
+                            </div>
+                        )}
+                    </button>
                 </div>
-            ) : (
+            )}
+
+            {imagePhotos.length === 0 && !directUploadUrl ? (
+                <div className="text-center py-8 text-gray-400">
+                    <p className="text-sm">위 버튼으로 사진을 업로드하면 영상을 만들 수 있어요</p>
+                </div>
+            ) : imagePhotos.length > 0 ? (
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                     {imagePhotos.map((photo) => {
                         const isSelected = selectedPhotoUrl === photo.url;
@@ -319,7 +382,7 @@ export default function VideoGenerateModal({
                         );
                     })}
                 </div>
-            )}
+            ) : null}
 
             {/* Footer */}
             <div className="mt-6">
