@@ -582,6 +582,19 @@ function UserDetailPanel({ detail, user }: { detail?: UserDetailData; user: User
                 </div>
             </div>
 
+            {/* 인증 이메일 (profiles.email과 다를 수 있음) */}
+            {detail.authEmail && (
+                <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 rounded-lg px-2 py-1.5">
+                    <span className="font-medium">가입 이메일:</span>
+                    <span className="text-gray-700 dark:text-gray-200">{detail.authEmail}</span>
+                    {detail.authProvider && detail.authProvider !== "email" && (
+                        <Badge variant="secondary" className="text-[9px] px-1 py-0">
+                            {detail.authProvider === "google" ? "Google" : detail.authProvider === "kakao" ? "Kakao" : detail.authProvider}
+                        </Badge>
+                    )}
+                </div>
+            )}
+
             {/* 가입일 + 포인트 */}
             <div className="flex items-center gap-3 text-[11px] text-gray-500 dark:text-gray-400">
                 <span>가입: {new Date(user.created_at).toLocaleDateString("ko-KR")}</span>
@@ -668,7 +681,9 @@ function UserCard({
                 onClick={onToggleExpand}
                 className="w-full flex items-center justify-between"
             >
-                <p className="font-medium text-xs truncate text-left">{user.email}</p>
+                <p className="font-medium text-xs truncate text-left">
+                    {user.email || <span className="text-gray-400 italic">이메일 없음</span>}
+                </p>
                 {isExpanded ? (
                     <ChevronUp className="w-4 h-4 text-gray-400 flex-shrink-0" />
                 ) : (

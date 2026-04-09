@@ -277,6 +277,8 @@ export interface UserDetailData {
     subscriptionTier: string | null;
     premiumExpiresAt: string | null;
     points: number;
+    authEmail: string | null;
+    authProvider: string | null;
     pets: UserDetailPet[];
     chatMessagesCount: number;
 }

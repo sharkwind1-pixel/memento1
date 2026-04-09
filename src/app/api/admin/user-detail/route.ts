@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
 
         const adminSupabase = createAdminSupabase();
 
-        const [profileResult, petsResult, chatCountResult] = await Promise.all([
+        const [profileResult, petsResult, chatCountResult, authUserResult] = await Promise.all([
             adminSupabase
                 .from("profiles")
                 .select("avatar_url, last_seen_at, subscription_tier, premium_expires_at, points")
@@ -56,11 +56,13 @@ export async function GET(request: NextRequest) {
                 .from("chat_messages")
                 .select("*", { count: "exact", head: true })
                 .eq("user_id", userId),
+            adminSupabase.auth.admin.getUserById(userId),
         ]);
 
         const profile = profileResult.data;
         const pets = petsResult.data || [];
         const chatCount = chatCountResult.count || 0;
+        const authUser = authUserResult.data?.user;
 
         return NextResponse.json({
             avatarUrl: profile?.avatar_url || null,
@@ -68,6 +70,8 @@ export async function GET(request: NextRequest) {
             subscriptionTier: profile?.subscription_tier || null,
             premiumExpiresAt: profile?.premium_expires_at || null,
             points: profile?.points || 0,
+            authEmail: authUser?.email || null,
+            authProvider: authUser?.app_metadata?.provider || null,
             pets: pets.map(p => ({
                 id: p.id,
                 name: p.name,
