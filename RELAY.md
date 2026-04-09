@@ -7,9 +7,9 @@
 
 ## 즉시 — 대기 중
 
-- [ ] 카카오페이 심사 보완사항 회신 (결제경로 pptx + 서비스제공기간 + 사업자등록증 제출용)
-- [ ] 정기결제 자동 갱신 크론잡 (subscription-renewal)
-- [ ] DB 마이그레이션: `ALTER TABLE profiles ADD COLUMN device_fingerprint TEXT;`
+- [x] 카카오페이 심사 보완사항 회신 (결제경로 pptx + 서비스제공기간 + 사업자등록증 제출용) — 2026-04-10 메일 발송 완료
+- [x] 정기결제 자동 갱신 크론잡 (subscription-renewal) — 매일 KST 07:30 실행, 포트원 V1 빌링키 재결제, 3회 실패 시 만료
+- [x] DB 마이그레이션: `ALTER TABLE profiles ADD COLUMN device_fingerprint TEXT;` — 2026-04-10 실행 완료
 - [x] 관리자 유저 상세 조회 — 유저 클릭 시 확장 패널 (가입일, 펫 수, 대화 수, 구독 상태, auth 이메일)
 - [x] 관리자 게시물 탭 상호작용 — 검색/상세보기/숨기기/삭제 (AdminPostsTab)
 - [x] 관리자 대시보드 크레딧 표시 — AI 펫톡(OpenAI) + AI 영상(fal.ai) 사용량/비용
@@ -36,7 +36,7 @@
 - [x] 배치결제(정기결제) 연동 — subscribe/prepare + complete API + PremiumModal 구독 UI
 - [ ] 카드사 심사 완료 대기 (인증+배치 동시 재신청 2026-04-08)
 - [ ] KCP 실연동 채널 생성 + 결제 테스트 후 실결제 전환
-- [ ] 정기결제 자동 갱신 크론잡 (subscription-renewal)
+- [x] 정기결제 자동 갱신 크론잡 (subscription-renewal) — 2026-04-10 구현 완료
 - [x] 포트원(PortOne) 결제 연동 코드 — CSP 도메인 허용, 환경변수 사전 체크 추가
 - [x] 스마트 프리미엄 전환 UX — 직전 대화 주제 반영 동적 문구 + 잔여 횟수별 안내
 
