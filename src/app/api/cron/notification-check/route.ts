@@ -1,0 +1,130 @@
+/**
+ * 구독 만료 예정 알림 크론잡
+ * GET /api/cron/notification-check
+ *
+ * 매일 KST 08:00 (UTC 23:00) 실행
+ * subscription-renewal (KST 07:30) 이후 실행
+ *
+ * - active 구독 중 next_billing_date 3일 이내인 유저 조회
+ * - 반려동물/사진 수 조회 → 무료 한도 초과 시 구체적 경고
+ * - dedup_key로 하루 1회만 알림
+ */
+
+import { NextRequest, NextResponse } from "next/server";
+import { verifyCronSecret, getServiceSupabase, getKstTime } from "@/lib/cron-utils";
+import { FREE_LIMITS } from "@/config/constants";
+
+export async function GET(request: NextRequest) {
+    const authError = verifyCronSecret(request);
+    if (authError) return authError;
+
+    const supabase = getServiceSupabase();
+    const { dateStr } = getKstTime();
+    const now = new Date();
+    const threeDaysLater = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+    let created = 0;
+    let skipped = 0;
+
+    try {
+        // active 구독 조회
+        const { data: subscriptions, error } = await supabase
+            .from("subscriptions")
+            .select("id, user_id, plan, metadata")
+            .eq("status", "active")
+            .not("metadata->auto_renew", "eq", "false");
+
+        if (error || !subscriptions) {
+            return NextResponse.json({ error: "구독 조회 실패" }, { status: 500 });
+        }
+
+        // next_billing_date가 3일 이내인 구독 필터
+        const expiringSubs = subscriptions.filter((sub) => {
+            const nextBilling = sub.metadata?.next_billing_date;
+            if (!nextBilling) return false;
+            const billingDate = new Date(nextBilling);
+            return billingDate <= threeDaysLater && billingDate > now;
+        });
+
+        for (const sub of expiringSubs) {
+            const nextBilling = new Date(sub.metadata.next_billing_date);
+            const daysLeft = Math.ceil((nextBilling.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
+            const planLabel = sub.plan === "premium" ? "프리미엄" : "베이직";
+            const dedupKey = `sub_expiring_${dateStr}_${sub.user_id}`;
+
+            // 반려동물/사진 수 조회
+            const { count: petCount } = await supabase
+                .from("pets")
+                .select("id", { count: "exact", head: true })
+                .eq("user_id", sub.user_id);
+
+            const { data: petIds } = await supabase
+                .from("pets")
+                .select("id")
+                .eq("user_id", sub.user_id);
+
+            let photoCount = 0;
+            if (petIds && petIds.length > 0) {
+                const { count } = await supabase
+                    .from("pet_media")
+                    .select("id", { count: "exact", head: true })
+                    .in("pet_id", petIds.map((p: { id: string }) => p.id));
+                photoCount = count || 0;
+            }
+
+            // 무료 한도 초과 여부에 따라 메시지 분기
+            const overPetLimit = (petCount || 0) > FREE_LIMITS.PETS;
+            const overPhotoLimit = photoCount > FREE_LIMITS.PHOTOS_PER_PET;
+
+            let body: string;
+            if (overPetLimit || overPhotoLimit) {
+                body = `${planLabel} 구독이 ${daysLeft}일 후 만료됩니다. 현재 반려동물 ${petCount || 0}마리, 사진 ${photoCount}장이 등록되어 있습니다. 무료 전환 시 새 등록/업로드가 제한될 수 있습니다. 구독을 유지하면 모든 기능을 계속 이용할 수 있습니다.`;
+            } else {
+                body = `${planLabel} 구독이 ${daysLeft}일 후 만료됩니다. 결제 수단을 확인해 주세요.`;
+            }
+
+            // dedup_key로 중복 방지 INSERT
+            const { error: insertError } = await supabase
+                .from("notifications")
+                .insert({
+                    user_id: sub.user_id,
+                    type: "subscription_expiring",
+                    title: "구독 만료 예정 안내",
+                    body,
+                    metadata: {
+                        plan: sub.plan,
+                        daysLeft,
+                        petCount: petCount || 0,
+                        photoCount,
+                        overPetLimit,
+                        overPhotoLimit,
+                    },
+                    dedup_key: dedupKey,
+                });
+
+            if (insertError) {
+                // 23505 = unique_violation (이미 오늘 알림 생성됨)
+                if (insertError.code === "23505") {
+                    skipped++;
+                }
+            } else {
+                created++;
+            }
+        }
+
+        // 30일 지난 알림 정리
+        await supabase
+            .from("notifications")
+            .delete()
+            .lt("created_at", new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString());
+
+        return NextResponse.json({
+            message: "알림 체크 완료",
+            expiring: expiringSubs.length,
+            created,
+            skipped,
+        });
+    } catch (err) {
+        const msg = err instanceof Error ? err.message : "알 수 없는 오류";
+        return NextResponse.json({ error: msg }, { status: 500 });
+    }
+}

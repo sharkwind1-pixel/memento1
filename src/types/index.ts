@@ -877,3 +877,26 @@ export interface CondolenceMessage {
     nickname: string | null;
     createdAt: string;
 }
+
+// ============================================
+// 19. 알림
+// ============================================
+
+/** 알림 타입 */
+export type NotificationType =
+    | "subscription_expiring"
+    | "subscription_expired"
+    | "payment_failed"
+    | "payment_success"
+    | "welcome";
+
+/** 알림 데이터 */
+export interface AppNotification {
+    id: string;
+    type: NotificationType;
+    title: string;
+    body: string;
+    metadata: Record<string, unknown>;
+    read_at: string | null;
+    created_at: string;
+}

@@ -220,7 +220,18 @@ export async function GET(request: NextRequest) {
 
                 results.renewed++;
 
-                // 결제 알림
+                // 인앱 알림: 구독 갱신 완료
+                const dateStr = nextBillingDate.toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul" });
+                await supabase.from("notifications").insert({
+                    user_id: sub.user_id,
+                    type: "payment_success",
+                    title: "구독 갱신 완료",
+                    body: `${getPlanLabel(plan)} 구독이 정상 갱신되었습니다. 다음 결제일: ${dateStr}`,
+                    metadata: { plan, nextBillingDate: nextBillingDate.toISOString() },
+                    dedup_key: `payment_success_${now.toISOString().slice(0, 10)}_${sub.user_id}`,
+                });
+
+                // 텔레그램 알림
                 try {
                     const { notifyPayment } = await import("@/lib/telegram");
                     await notifyPayment({ email: userEmail, plan, amount });
@@ -259,6 +270,24 @@ export async function GET(request: NextRequest) {
                         .eq("id", sub.user_id);
 
                     results.expired++;
+
+                    // 인앱 알림: 구독 만료 (데이터 영향 안내)
+                    const { count: petCount } = await supabase
+                        .from("pets").select("id", { count: "exact", head: true })
+                        .eq("user_id", sub.user_id);
+                    const { count: photoCount } = await supabase
+                        .from("pet_media").select("id", { count: "exact", head: true })
+                        .in("pet_id", (await supabase.from("pets").select("id").eq("user_id", sub.user_id)).data?.map((p: { id: string }) => p.id) || []);
+
+                    await supabase.from("notifications").insert({
+                        user_id: sub.user_id,
+                        type: "subscription_expired",
+                        title: "구독이 만료되었습니다",
+                        body: `결제 실패로 ${getPlanLabel(plan)} 구독이 만료되었습니다. 기존 데이터(반려동물 ${petCount || 0}마리, 사진 ${photoCount || 0}장)는 모두 보존되지만, 무료 한도(반려동물 1마리, 사진 50장) 초과 시 새 등록이 제한됩니다.`,
+                        metadata: { plan, petCount: petCount || 0, photoCount: photoCount || 0 },
+                        dedup_key: `sub_expired_${now.toISOString().slice(0, 10)}_${sub.user_id}`,
+                    });
+
                     await notifySystem(
                         `구독 만료: ${userEmail} (${getPlanLabel(plan)}) - ${MAX_RETRY}회 결제 실패`
                     );
@@ -281,6 +310,16 @@ export async function GET(request: NextRequest) {
                     results.errors.push(
                         `${userEmail}: ${charge.error} (${newRetryCount}/${MAX_RETRY})`
                     );
+
+                    // 인앱 알림: 결제 실패
+                    await supabase.from("notifications").insert({
+                        user_id: sub.user_id,
+                        type: "payment_failed",
+                        title: "결제 실패 안내",
+                        body: `${getPlanLabel(plan)} 구독 갱신 결제에 실패했습니다 (${newRetryCount}/${MAX_RETRY}회). 결제 수단을 확인해 주세요.`,
+                        metadata: { plan, retryCount: newRetryCount, maxRetry: MAX_RETRY },
+                        dedup_key: `payment_failed_${now.toISOString().slice(0, 10)}_${sub.user_id}`,
+                    });
                 }
             }
         }

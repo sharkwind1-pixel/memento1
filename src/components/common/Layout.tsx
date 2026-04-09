@@ -54,6 +54,7 @@ import {
     ChevronDown,
 } from "lucide-react";
 import { safeSetItem } from "@/lib/safe-storage";
+import NotificationBell from "@/components/features/notifications/NotificationBell";
 
 // ============================================================================
 // 타입 정의
@@ -501,6 +502,9 @@ function Layout({
                                     <Moon className="w-5 h-5" />
                                 )}
                             </Button>
+
+                            {/* 알림 벨 - 로그인 유저만 */}
+                            <NotificationBell />
 
                             {/* 모바일 auth 영역 - 별도 컴포넌트로 분리하여 points/minimiEquip 변경이 Layout을 리렌더하지 않음 */}
                             <HeaderAuthArea setSelectedTab={setSelectedTab} />
