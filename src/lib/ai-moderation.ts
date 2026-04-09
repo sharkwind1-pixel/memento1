@@ -55,6 +55,11 @@ export async function moderateWithAI(
     content: string
 ): Promise<void> {
     try {
+        // AI 영상 자동 게시글은 모더레이션 건너뛰기 (시스템 생성 콘텐츠)
+        if (content.includes("AI 영상을 만들었어요") || content.includes("AI로 만든 우리 아이의")) {
+            return;
+        }
+
         const openai = getOpenAI();
         const supabase = getAdminSupabase();
 
