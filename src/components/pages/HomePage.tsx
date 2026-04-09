@@ -183,6 +183,7 @@ function HomePage({ setSelectedTab, isActive, onOpenCommunityPost }: HomePagePro
                                     showcasePosts={showcasePosts}
                                     scrollRef={scroll.showcaseScrollRef}
                                     setSelectedTab={setSelectedTab}
+                                    onOpenPost={(postId) => onOpenCommunityPost?.(postId)}
                                 />
                             </div>
                         </div>

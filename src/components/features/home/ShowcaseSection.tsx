@@ -30,12 +30,14 @@ interface ShowcaseSectionProps {
     showcasePosts: ShowcasePost[];
     scrollRef: React.RefObject<HTMLDivElement>;
     setSelectedTab: (tab: TabType) => void;
+    onOpenPost?: (postId: string) => void;
 }
 
 export default function ShowcaseSection({
     showcasePosts,
     scrollRef,
     setSelectedTab,
+    onOpenPost,
 }: ShowcaseSectionProps) {
     const gradients = [
         "from-memento-400 to-memento-300",
@@ -157,7 +159,7 @@ export default function ShowcaseSection({
                     return (
                         <Card
                             key={`${post.id}-${idx}`}
-                            onClick={handleMoreClick}
+                            onClick={() => onOpenPost ? onOpenPost(post.id) : handleMoreClick()}
                             className="w-[260px] max-w-[260px] sm:w-72 sm:max-w-72 flex-shrink-0 overflow-hidden rounded-2xl cursor-pointer group border-0 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 will-change-transform"
                         >
                             {/* 영상 / 이미지 / 그라데이션 헤더 */}
