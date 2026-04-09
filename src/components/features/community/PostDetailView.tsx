@@ -890,6 +890,9 @@ export default function PostDetailView({
                             <video
                                 src={post.video_url}
                                 controls
+                                autoPlay
+                                muted
+                                loop
                                 playsInline
                                 className="w-full"
                             />

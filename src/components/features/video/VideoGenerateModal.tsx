@@ -689,12 +689,12 @@ export default function VideoGenerateModal({
             style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
             onClick={handleOverlayClick}
         >
-            <div className="min-h-full flex items-start justify-center pt-8 pb-8 px-4">
+            <div className="flex justify-center pt-4 sm:pt-8 pb-8 px-3 sm:px-4">
                 <div
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby="video-generate-modal-title"
-                    className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl max-w-2xl w-full shadow-lg relative animate-in fade-in zoom-in-95 duration-200"
+                    className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full shadow-lg relative animate-in fade-in zoom-in-95 duration-200"
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* Header */}
