@@ -26,6 +26,10 @@ import {
     Star,
     Leaf,
     ImagePlus,
+    Sun,
+    CloudRain,
+    Cloud,
+    Sunset,
 } from "lucide-react";
 import { toast } from "sonner";
 import { authFetch } from "@/lib/auth-fetch";
@@ -50,6 +54,10 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
     Shield,
     Star,
     Leaf,
+    Sun,
+    CloudRain,
+    Cloud,
+    Sunset,
 };
 
 // ============================================
