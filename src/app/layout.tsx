@@ -83,7 +83,7 @@ export const metadata: Metadata = {
         images: ["/og-image.png"],
     },
     other: {
-        "naver-site-verification": "079ddcf23ad1ee15036c259a96423de3684e9d01",
+        "naver-site-verification": "f839a892a87f387d72f4a7fb585c40c51e13917a",
     },
 };
 
