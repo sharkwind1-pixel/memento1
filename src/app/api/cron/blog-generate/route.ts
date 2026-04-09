@@ -304,6 +304,55 @@ ${searchContext ? `## 참고 자료 (아래 검색 결과를 바탕으로 정확
 
         await sendToTelegram(header, body);
 
+        // 4. 오늘의 릴스/쇼츠 대본 생성 + 전송
+        const reelsCompletion = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            max_tokens: 800,
+            temperature: 0.85,
+            messages: [
+                {
+                    role: "system",
+                    content: `당신은 메멘토애니(반려동물 메모리얼 플랫폼)의 숏폼 콘텐츠 기획자입니다.
+인스타그램 릴스/유튜브 쇼츠용 15~30초 대본을 작성합니다.
+
+## 규칙
+- 첫 1초에 강한 훅 (질문, 숫자, 감성 문장)
+- 자막 기반 (음소거로 보는 유저 대응)
+- 마지막에 메멘토애니 자연스럽게 언급 (매번 다른 방식으로)
+- 존댓말, 이모지 없음
+- 매일 다른 컨셉: 감성/공감, 정보/꿀팁, 트렌딩/밈, 서비스 소개 중 하나
+
+## 컨셉 분배 (4일 주기)
+- 1일차: 감성/공감 (반려동물과의 일상, 이별, 그리움)
+- 2일차: 정보/꿀팁 (수의학 기반 건강/케어/사료 정보)
+- 3일차: 트렌딩/밈 (유머, 공감, 바이럴 포맷)
+- 4일차: 서비스 소개 (AI 펫톡, AI 영상, 미니홈피, 타임라인 등)
+
+## 출력 형식
+[컨셉] (한 줄 설명)
+[대본] (자막 텍스트, 줄바꿈으로 구분)
+[영상 연출] (촬영/편집 가이드 3줄)
+[해시태그] (12~15개)`,
+                },
+                {
+                    role: "user",
+                    content: `오늘 날짜: ${dateStr}\n오늘은 ${dayIndex % 4 + 1}일차 컨셉으로 작성하세요.\n\n오늘의 블로그 주제가 "${selectedTopic.topic}" (${selectedTopic.category})이니, 가능하면 비슷한 주제로 릴스도 만들되 형식은 완전히 다르게 (짧고 임팩트 있게).`,
+                },
+            ],
+        });
+
+        const reelsContent = reelsCompletion.choices[0]?.message?.content || "";
+
+        const reelsHeader = [
+            ``,
+            `<b>[오늘의 릴스/쇼츠 대본 - ${dateStr}]</b>`,
+            `컨셉 타입: ${["감성/공감", "정보/꿀팁", "트렌딩/밈", "서비스 소개"][dayIndex % 4]}`,
+            ``,
+            `--- 아래 복사해서 촬영/편집 ---`,
+        ].join("\n");
+
+        await sendToTelegram(reelsHeader, reelsContent);
+
         return NextResponse.json({
             success: true,
             date: dateStr,
@@ -312,6 +361,7 @@ ${searchContext ? `## 참고 자료 (아래 검색 결과를 바탕으로 정확
             bodyLength: body.length,
             hasSearchContext: !!searchContext,
             tags,
+            reels: true,
         });
     } catch (err) {
         const msg = err instanceof Error ? err.message : "알 수 없는 오류";
