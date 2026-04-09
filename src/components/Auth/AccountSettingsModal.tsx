@@ -11,8 +11,6 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNicknameCheck } from "@/hooks/useNicknameCheck";
 import { supabase } from "@/lib/supabase";
-import { STORAGE_KEYS } from "@/constants/storage";
-import { PRICING } from "@/config/constants";
 import {
     X,
     User,
@@ -20,26 +18,16 @@ import {
     AlertCircle,
     Loader2,
     Settings,
-    Trash2,
-    AlertTriangle,
-    Edit3,
-    Ban,
-    UserX,
     Download,
-    Bell,
-    MapPin,
-    Eye,
-    CreditCard,
-    Crown,
+    Edit3,
 } from "lucide-react";
 import { InlineLoading } from "@/components/ui/PawLoading";
 import { toast } from "sonner";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
-import { authFetch } from "@/lib/auth-fetch";
-import { API } from "@/config/apiEndpoints";
-import { safeGetItem, safeSetItem, safeRemoveItem } from "@/lib/safe-storage";
-import type { UserBlock } from "@/types";
-import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import BlockedUsersSection from "@/components/Auth/BlockedUsersSection";
+import NotificationSettingsSection from "@/components/Auth/NotificationSettingsSection";
+import SubscriptionSection from "@/components/Auth/SubscriptionSection";
+import DeleteAccountSection from "@/components/Auth/DeleteAccountSection";
 
 interface AccountSettingsModalProps {
     isOpen: boolean;
@@ -50,7 +38,7 @@ export default function AccountSettingsModal({
     isOpen,
     onClose,
 }: AccountSettingsModalProps) {
-    const { user, updateProfile, signOut, isSimpleMode, toggleSimpleMode, isPremiumUser, subscriptionTier } = useAuth();
+    const { user, updateProfile, isSimpleMode, toggleSimpleMode, isPremiumUser, subscriptionTier } = useAuth();
 
     // X 버튼 / ESC / 배경 클릭으로 닫을 때: pushState된 히스토리도 되돌리기
     const closedByButtonRef = React.useRef(false);
@@ -89,7 +77,6 @@ export default function AccountSettingsModal({
     const {
         status: nicknameStatus,
         message: nicknameMessage,
-        reset: resetNickname,
     } = useNicknameCheck(nickname, {
         enabled: isEditingNickname,
         currentNickname,
@@ -98,38 +85,17 @@ export default function AccountSettingsModal({
     const [nicknameSuccess, setNicknameSuccess] = useState(false);
     const nicknameTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [deleteConfirmText, setDeleteConfirmText] = useState("");
-    const [isDeleting, setIsDeleting] = useState(false);
-    const [deleteError, setDeleteError] = useState<string | null>(null);
-
-    // 구독 관리
+    // 구독 만료일 (parent가 로드)
     const [premiumExpiresAt, setPremiumExpiresAt] = useState<string | null>(null);
-    const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-    const [isCancelling, setIsCancelling] = useState(false);
 
-    // 알림 설정
-    const [notifComment, setNotifComment] = useState(true);
-    const [notifLike, setNotifLike] = useState(true);
-    const [notifReminder, setNotifReminder] = useState(true);
-    const [locationConsent, setLocationConsent] = useState(false);
-    const [isSavingSettings, setIsSavingSettings] = useState(false);
-
-    // 차단 유저 관리
-    const [blockedUsers, setBlockedUsers] = useState<UserBlock[]>([]);
-    const [isLoadingBlocks, setIsLoadingBlocks] = useState(false);
-    const [showBlockedUsers, setShowBlockedUsers] = useState(false);
-    const [unblockConfirm, setUnblockConfirm] = useState<{ isOpen: boolean; blockedUserId: string; nickname: string }>({ isOpen: false, blockedUserId: "", nickname: "" });
-    const [unblockingId, setUnblockingId] = useState<string | null>(null);
-
-    // 현재 닉네임 + 설정 로드 (모달이 열릴 때마다 최신 데이터 fetch)
+    // 현재 닉네임 + 프리미엄 만료일 로드 (모달이 열릴 때마다 최신 데이터 fetch)
     useEffect(() => {
         const loadProfile = async () => {
             if (!user) return;
 
             const { data } = await supabase
                 .from("profiles")
-                .select("nickname, location_consent, premium_expires_at")
+                .select("nickname, premium_expires_at")
                 .eq("id", user.id)
                 .single();
 
@@ -137,114 +103,15 @@ export default function AccountSettingsModal({
                 setCurrentNickname(data.nickname);
                 setNickname(data.nickname);
             }
-            setLocationConsent(data?.location_consent || false);
             setPremiumExpiresAt(data?.premium_expires_at || null);
-        };
-
-        const loadNotifSettings = () => {
-            const saved = safeGetItem("memento-notif-settings");
-            if (saved) {
-                try {
-                    const parsed = JSON.parse(saved);
-                    setNotifComment(parsed.comment ?? true);
-                    setNotifLike(parsed.like ?? true);
-                    setNotifReminder(parsed.reminder ?? true);
-                } catch {
-                    // 기본값 유지
-                }
-            }
         };
 
         if (isOpen) {
             loadProfile();
-            loadNotifSettings();
             setIsEditingNickname(false);
-            setShowDeleteConfirm(false);
-            setDeleteConfirmText("");
-            setDeleteError(null);
             setNicknameSuccess(false);
-            setShowCancelConfirm(false);
         }
     }, [isOpen, user]);
-
-    // 알림 설정 저장 (localStorage)
-    const handleNotifToggle = (key: "comment" | "like" | "reminder", value: boolean) => {
-        const newSettings = {
-            comment: key === "comment" ? value : notifComment,
-            like: key === "like" ? value : notifLike,
-            reminder: key === "reminder" ? value : notifReminder,
-        };
-        if (key === "comment") setNotifComment(value);
-        if (key === "like") setNotifLike(value);
-        if (key === "reminder") setNotifReminder(value);
-
-        safeSetItem("memento-notif-settings", JSON.stringify(newSettings));
-    };
-
-    // 위치정보 동의 토글
-    const handleLocationToggle = async (value: boolean) => {
-        if (!user) return;
-        setIsSavingSettings(true);
-
-        try {
-            const { error } = await supabase
-                .from("profiles")
-                .update({
-                    location_consent: value,
-                    location_consent_at: value ? new Date().toISOString() : null,
-                })
-                .eq("id", user.id);
-
-            if (error) throw error;
-            setLocationConsent(value);
-            toast.success(value ? "위치기반 서비스 이용에 동의했습니다" : "위치기반 서비스 동의를 철회했습니다");
-        } catch {
-            toast.error("설정 변경에 실패했습니다");
-        } finally {
-            setIsSavingSettings(false);
-        }
-    };
-
-    // 차단 목록 로드
-    const loadBlockedUsers = async () => {
-        setIsLoadingBlocks(true);
-        try {
-            const res = await authFetch(API.BLOCKS);
-            if (res.ok) {
-                const data = await res.json();
-                setBlockedUsers(data.blocks || []);
-            }
-        } catch {
-            // 로드 실패 시 빈 목록
-        } finally {
-            setIsLoadingBlocks(false);
-        }
-    };
-
-    // 차단 해제
-    const handleUnblock = (blockedUserId: string, nickname: string) => {
-        setUnblockConfirm({ isOpen: true, blockedUserId, nickname });
-    };
-
-    const executeUnblock = async () => {
-        const { blockedUserId, nickname } = unblockConfirm;
-        setUnblockingId(blockedUserId);
-        try {
-            const res = await authFetch(`${API.BLOCKS}?blockedUserId=${blockedUserId}`, {
-                method: "DELETE",
-            });
-            if (res.ok) {
-                setBlockedUsers(prev => prev.filter(b => b.blockedUserId !== blockedUserId));
-                toast.success(`"${nickname}" 님의 차단이 해제되었습니다`);
-            } else {
-                toast.error("차단 해제에 실패했습니다");
-            }
-        } catch {
-            toast.error("차단 해제에 실패했습니다");
-        } finally {
-            setUnblockingId(null);
-        }
-    };
 
     // 개인정보 다운로드
     const [isDownloading, setIsDownloading] = useState(false);
@@ -329,144 +196,6 @@ export default function AccountSettingsModal({
             toast.error("닉네임 변경에 실패했어요. 다시 시도해주세요.");
         } finally {
             setIsSavingNickname(false);
-        }
-    };
-
-    // 구독 해지
-    const handleCancelSubscription = async () => {
-        if (!user) return;
-        setIsCancelling(true);
-
-        try {
-            // profiles에서 프리미엄 비활성화
-            const { error } = await supabase
-                .from("profiles")
-                .update({
-                    is_premium: false,
-                    subscription_tier: "free",
-                })
-                .eq("id", user.id);
-
-            if (error) throw error;
-
-            setShowCancelConfirm(false);
-            toast.success(
-                premiumExpiresAt
-                    ? `구독이 해지되었습니다. ${new Date(premiumExpiresAt).toLocaleDateString("ko-KR")}까지 기존 혜택을 이용할 수 있습니다.`
-                    : "구독이 해지되었습니다."
-            );
-
-            // AuthContext 프로필 새로고침
-            window.location.reload();
-        } catch {
-            toast.error("구독 해지에 실패했습니다. 다시 시도해주세요.");
-        } finally {
-            setIsCancelling(false);
-        }
-    };
-
-    // 회원탈퇴
-    const handleDeleteAccount = async () => {
-        if (deleteConfirmText !== "회원탈퇴") return;
-
-        setIsDeleting(true);
-        setDeleteError(null);
-
-        try {
-            // 0. 사용량 통계 수집 (재가입 악용 방지용)
-            const [petsResult, photosResult, profileResult] = await Promise.all(
-                [
-                    supabase
-                        .from("pets")
-                        .select("id", { count: "exact" })
-                        .eq("user_id", user?.id),
-                    supabase
-                        .from("pet_photos")
-                        .select("id", { count: "exact" })
-                        .eq("user_id", user?.id),
-                    supabase
-                        .from("profiles")
-                        .select("is_premium")
-                        .eq("id", user?.id)
-                        .single(),
-                ],
-            );
-
-            // AI 사용량은 localStorage에서 가져오기
-            const aiUsageData = safeGetItem(STORAGE_KEYS.CHAT_USAGE);
-            let totalAiUsage = 0;
-            if (aiUsageData) {
-                try {
-                    const parsed = JSON.parse(aiUsageData);
-                    totalAiUsage = parsed.count || 0;
-                } catch {
-                    // ignore
-                }
-            }
-
-            // 1. 삭제 계정 정보 보관 (30일 재가입 제한)
-            await supabase.rpc("save_deleted_account", {
-                p_user_id: user?.id,
-                p_email: user?.email || "",
-                p_nickname: currentNickname,
-                p_ai_usage: totalAiUsage,
-                p_pets_count: petsResult.count || 0,
-                p_photos_count: photosResult.count || 0,
-                p_was_premium: profileResult.data?.is_premium || false,
-                p_reason: null,
-                p_cooldown_days: 30,
-            });
-
-            // 2. Auth 사용자 삭제 (service_role로 auth.users 완전 삭제)
-            // auth.users 삭제 시 CASCADE로 profiles도 삭제됨
-            const session = await supabase.auth.getSession();
-            const token = session.data.session?.access_token;
-
-            if (token) {
-                const res = await fetch(API.AUTH_DELETE_ACCOUNT, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                    },
-                    body: JSON.stringify({ nickname: currentNickname }),
-                });
-
-                if (!res.ok) {
-                    const errData = await res.json().catch(() => ({}));
-                    console.error("[회원탈퇴] auth 삭제 실패:", errData);
-                    // auth 삭제 실패 시 profiles만이라도 삭제 시도
-                    const { error: profileDeleteErr } = await supabase.from("profiles").delete().eq("id", user?.id);
-                    if (profileDeleteErr) {
-                        console.error("[회원탈퇴] profiles 삭제도 실패:", profileDeleteErr.message);
-                        setDeleteError("탈퇴 처리 중 일부 오류가 발생했습니다. 고객센터에 문의해주세요.");
-                    }
-                }
-            } else {
-                // 토큰 없는 경우 profiles만 삭제
-                await supabase.from("profiles").delete().eq("id", user?.id);
-            }
-
-            // 3. 로그아웃 처리
-            await signOut();
-
-            // localStorage 정리
-            safeRemoveItem("memento-ani-tutorial-complete");
-            safeRemoveItem("memento-ani-onboarding-complete");
-            safeRemoveItem("memento-current-tab");
-            safeRemoveItem(STORAGE_KEYS.CHAT_USAGE);
-
-            toast.success(
-                "회원탈퇴가 완료되었습니다. 이용해 주셔서 감사합니다.",
-            );
-            onClose();
-            window.location.reload();
-        } catch {
-            setDeleteError(
-                "회원탈퇴 처리 중 오류가 발생했습니다. 다시 시도해주세요.",
-            );
-        } finally {
-            setIsDeleting(false);
         }
     };
 
@@ -620,211 +349,20 @@ export default function AccountSettingsModal({
                     {/* 구분선 */}
                     <hr className="border-gray-200 dark:border-gray-700" />
 
-                    {/* 알림 설정 */}
-                    <div>
-                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5 mb-3">
-                            <Bell className="w-4 h-4" />
-                            알림 설정
-                        </h3>
-                        <div className="space-y-3 bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
-                            <label className="flex items-center justify-between cursor-pointer">
-                                <span className="text-sm text-gray-600 dark:text-gray-400">댓글 알림</span>
-                                <button
-                                    role="switch"
-                                    aria-checked={notifComment}
-                                    onClick={() => handleNotifToggle("comment", !notifComment)}
-                                    className={`relative w-10 h-6 rounded-full transition-colors ${
-                                        notifComment ? "bg-memento-500" : "bg-gray-300 dark:bg-gray-600"
-                                    }`}
-                                >
-                                    <span
-                                        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                                            notifComment ? "translate-x-4" : ""
-                                        }`}
-                                    />
-                                </button>
-                            </label>
-                            <label className="flex items-center justify-between cursor-pointer">
-                                <span className="text-sm text-gray-600 dark:text-gray-400">좋아요 알림</span>
-                                <button
-                                    role="switch"
-                                    aria-checked={notifLike}
-                                    onClick={() => handleNotifToggle("like", !notifLike)}
-                                    className={`relative w-10 h-6 rounded-full transition-colors ${
-                                        notifLike ? "bg-memento-500" : "bg-gray-300 dark:bg-gray-600"
-                                    }`}
-                                >
-                                    <span
-                                        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                                            notifLike ? "translate-x-4" : ""
-                                        }`}
-                                    />
-                                </button>
-                            </label>
-                            <label className="flex items-center justify-between cursor-pointer">
-                                <span className="text-sm text-gray-600 dark:text-gray-400">케어 리마인더 알림</span>
-                                <button
-                                    role="switch"
-                                    aria-checked={notifReminder}
-                                    onClick={() => handleNotifToggle("reminder", !notifReminder)}
-                                    className={`relative w-10 h-6 rounded-full transition-colors ${
-                                        notifReminder ? "bg-memento-500" : "bg-gray-300 dark:bg-gray-600"
-                                    }`}
-                                >
-                                    <span
-                                        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                                            notifReminder ? "translate-x-4" : ""
-                                        }`}
-                                    />
-                                </button>
-                            </label>
-                        </div>
-                        <p className="text-[10px] text-gray-400 mt-1.5">
-                            푸시 알림은 추후 업데이트에서 지원됩니다
-                        </p>
-                    </div>
+                    {/* 알림 설정 + 화면 설정 + 위치정보 */}
+                    {user && (
+                        <NotificationSettingsSection
+                            isOpen={isOpen}
+                            userId={user.id}
+                            isSimpleMode={isSimpleMode}
+                            toggleSimpleMode={toggleSimpleMode}
+                        />
+                    )}
 
                     {/* 구분선 */}
                     <hr className="border-gray-200 dark:border-gray-700" />
 
-                    {/* 화면 설정 (간편모드) */}
-                    <div>
-                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5 mb-3">
-                            <Eye className="w-4 h-4" />
-                            화면 설정
-                        </h3>
-                        <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
-                            <label className="flex items-center justify-between cursor-pointer">
-                                <div>
-                                    <span className="text-sm text-gray-600 dark:text-gray-400">크게 보기</span>
-                                    <p className="text-[10px] text-gray-400 mt-0.5">
-                                        홈 화면을 큰 버튼으로 간편하게 표시합니다
-                                    </p>
-                                </div>
-                                <button
-                                    role="switch"
-                                    aria-checked={isSimpleMode}
-                                    onClick={toggleSimpleMode}
-                                    className={`relative w-10 h-6 rounded-full transition-colors flex-shrink-0 ml-3 ${
-                                        isSimpleMode ? "bg-memento-500" : "bg-gray-300 dark:bg-gray-600"
-                                    }`}
-                                >
-                                    <span
-                                        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                                            isSimpleMode ? "translate-x-4" : ""
-                                        }`}
-                                    />
-                                </button>
-                            </label>
-                        </div>
-                    </div>
-
-                    {/* 구분선 */}
-                    <hr className="border-gray-200 dark:border-gray-700" />
-
-                    {/* 위치정보 동의 관리 */}
-                    <div>
-                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5 mb-3">
-                            <MapPin className="w-4 h-4" />
-                            위치정보 서비스
-                        </h3>
-                        <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
-                            <label className="flex items-center justify-between cursor-pointer">
-                                <div>
-                                    <span className="text-sm text-gray-600 dark:text-gray-400">위치기반 서비스 이용 동의</span>
-                                    <p className="text-[10px] text-gray-400 mt-0.5">
-                                        주변 동물병원, 지역 정보 등 맞춤 서비스 제공
-                                    </p>
-                                </div>
-                                <button
-                                    role="switch"
-                                    aria-checked={locationConsent}
-                                    onClick={() => handleLocationToggle(!locationConsent)}
-                                    disabled={isSavingSettings}
-                                    className={`relative w-10 h-6 rounded-full transition-colors flex-shrink-0 ml-3 ${
-                                        locationConsent ? "bg-memento-500" : "bg-gray-300 dark:bg-gray-600"
-                                    } ${isSavingSettings ? "opacity-50" : ""}`}
-                                >
-                                    <span
-                                        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                                            locationConsent ? "translate-x-4" : ""
-                                        }`}
-                                    />
-                                </button>
-                            </label>
-                        </div>
-                        <p className="text-[10px] text-gray-400 mt-1.5">
-                            <a href="/location-terms" target="_blank" className="underline hover:text-memento-500">
-                                위치기반 서비스 이용약관
-                            </a>
-                            {" "}| 언제든지 동의를 철회할 수 있습니다
-                        </p>
-                    </div>
-
-                    {/* 구분선 */}
-                    <hr className="border-gray-200 dark:border-gray-700" />
-
-                    {/* 차단 유저 관리 */}
-                    <div>
-                        <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
-                                <Ban className="w-4 h-4" />
-                                차단 유저 관리
-                            </h3>
-                            <button
-                                onClick={() => {
-                                    setShowBlockedUsers(!showBlockedUsers);
-                                    if (!showBlockedUsers) loadBlockedUsers();
-                                }}
-                                className="text-xs text-sky-500 hover:text-sky-600"
-                            >
-                                {showBlockedUsers ? "접기" : "보기"}
-                            </button>
-                        </div>
-
-                        {showBlockedUsers && (
-                            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
-                                {isLoadingBlocks ? (
-                                    <div className="flex justify-center py-4">
-                                        <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
-                                    </div>
-                                ) : blockedUsers.length === 0 ? (
-                                    <p className="text-xs text-gray-400 text-center py-3">
-                                        차단한 유저가 없습니다
-                                    </p>
-                                ) : (
-                                    <div className="space-y-2 max-h-48 overflow-y-auto">
-                                        {blockedUsers.map((block) => (
-                                            <div
-                                                key={block.id}
-                                                className="flex items-center justify-between bg-white dark:bg-gray-700 rounded-lg px-3 py-2"
-                                            >
-                                                <div className="flex items-center gap-2">
-                                                    <UserX className="w-4 h-4 text-gray-400" />
-                                                    <span className="text-sm text-gray-700 dark:text-gray-300">
-                                                        {block.blockedNickname || "알 수 없음"}
-                                                    </span>
-                                                </div>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => handleUnblock(block.blockedUserId, block.blockedNickname || "알 수 없음")}
-                                                    disabled={unblockingId === block.blockedUserId}
-                                                    className="text-xs text-sky-500 hover:text-sky-600 h-7 px-2"
-                                                >
-                                                    {unblockingId === block.blockedUserId ? (
-                                                        <Loader2 className="w-3 h-3 animate-spin" />
-                                                    ) : (
-                                                        "해제"
-                                                    )}
-                                                </Button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
+                    <BlockedUsersSection />
 
                     {/* 구분선 */}
                     <hr className="border-gray-200 dark:border-gray-700" />
@@ -859,216 +397,31 @@ export default function AccountSettingsModal({
                     <hr className="border-gray-200 dark:border-gray-700" />
 
                     {/* 구독 관리 */}
-                    <div>
-                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5 mb-3">
-                            <CreditCard className="w-4 h-4" />
-                            구독 관리
-                        </h3>
-
-                        {isPremiumUser ? (
-                            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <Crown className="w-4 h-4 text-amber-500" />
-                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                            {subscriptionTier === "basic" ? "베이직" : "프리미엄"} 플랜
-                                        </span>
-                                    </div>
-                                    <span className="text-xs bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300 px-2 py-0.5 rounded-full">
-                                        이용 중
-                                    </span>
-                                </div>
-
-                                <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
-                                    <p>
-                                        월{" "}
-                                        {subscriptionTier === "basic"
-                                            ? PRICING.BASIC_MONTHLY.toLocaleString()
-                                            : PRICING.PREMIUM_MONTHLY.toLocaleString()}
-                                        원
-                                    </p>
-                                    {premiumExpiresAt && (
-                                        <p>
-                                            다음 갱신일:{" "}
-                                            {new Date(premiumExpiresAt).toLocaleDateString("ko-KR", {
-                                                year: "numeric",
-                                                month: "long",
-                                                day: "numeric",
-                                            })}
-                                        </p>
-                                    )}
-                                </div>
-
-                                {!showCancelConfirm ? (
-                                    <button
-                                        onClick={() => setShowCancelConfirm(true)}
-                                        className="text-xs text-gray-400 hover:text-red-500 transition-colors underline"
-                                    >
-                                        구독 해지
-                                    </button>
-                                ) : (
-                                    <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg space-y-2">
-                                        <div className="flex items-start gap-2">
-                                            <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-                                            <div className="text-xs text-red-600 dark:text-red-400">
-                                                <p className="font-medium">정말 구독을 해지하시겠습니까?</p>
-                                                <p className="mt-1">
-                                                    해지 후에도{" "}
-                                                    {premiumExpiresAt
-                                                        ? `${new Date(premiumExpiresAt).toLocaleDateString("ko-KR")}까지`
-                                                        : "남은 기간 동안"}{" "}
-                                                    기존 혜택을 이용할 수 있습니다.
-                                                </p>
-                                                <p className="mt-1">
-                                                    이후 무료 플랜으로 전환되며, 초과 데이터는 제한됩니다.
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => setShowCancelConfirm(false)}
-                                                className="flex-1 h-8 text-xs"
-                                            >
-                                                유지하기
-                                            </Button>
-                                            <Button
-                                                size="sm"
-                                                onClick={handleCancelSubscription}
-                                                disabled={isCancelling}
-                                                className="flex-1 h-8 text-xs bg-red-500 hover:bg-red-600 text-white"
-                                            >
-                                                {isCancelling ? <InlineLoading /> : "해지하기"}
-                                            </Button>
-                                        </div>
-                                    </div>
-                                )}
-
-                                <p className="text-[10px] text-gray-400">
-                                    <a href="/payment-terms" target="_blank" className="underline hover:text-memento-500">
-                                        결제 및 구독 약관
-                                    </a>
-                                    {" "}| 환불 문의: sharkwind1@gmail.com
-                                </p>
-                            </div>
-                        ) : (
-                            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                    현재 무료 플랜을 이용 중입니다.
-                                </p>
-                                <p className="text-[10px] text-gray-400 mt-2">
-                                    AI 펫톡, 반려동물 등록 등 사용 중 자연스럽게 업그레이드할 수 있습니다.
-                                </p>
-                            </div>
-                        )}
-                    </div>
+                    {user && (
+                        <SubscriptionSection
+                            userId={user.id}
+                            isPremiumUser={isPremiumUser}
+                            subscriptionTier={subscriptionTier}
+                            premiumExpiresAt={premiumExpiresAt}
+                        />
+                    )}
 
                     {/* 구분선 */}
                     <hr className="border-gray-200 dark:border-gray-700" />
 
                     {/* 회원탈퇴 */}
-                    <div>
-                        <h3 className="text-sm font-medium text-red-600 mb-2">
-                            위험 구역
-                        </h3>
-
-                        {!showDeleteConfirm ? (
-                            <Button
-                                variant="outline"
-                                onClick={() => setShowDeleteConfirm(true)}
-                                className="w-full text-red-500 border-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
-                            >
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                회원탈퇴
-                            </Button>
-                        ) : (
-                            <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-xl space-y-3">
-                                <div className="flex items-start gap-2 text-red-600">
-                                    <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                                    <div className="text-sm">
-                                        <p className="font-medium">
-                                            정말 탈퇴하시겠습니까?
-                                        </p>
-                                        <p className="text-red-500 mt-1">
-                                            모든 데이터(반려동물 기록, 채팅
-                                            내역, AI 생성 영상, 게시글 등)가
-                                            영구 삭제되며 복구할 수 없습니다.
-                                        </p>
-                                        {isPremiumUser && (
-                                            <p className="text-red-500 mt-1 text-xs">
-                                                현재 구독 중인 플랜도 즉시 해지됩니다.
-                                                남은 기간에 대한 환불은 고객센터로 문의해주세요.
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs text-red-600 mb-1">
-                                        확인을 위해 &quot;회원탈퇴&quot;를
-                                        입력해주세요
-                                    </label>
-                                    <Input
-                                        type="text"
-                                        value={deleteConfirmText}
-                                        onChange={(e) =>
-                                            setDeleteConfirmText(e.target.value)
-                                        }
-                                        placeholder="회원탈퇴"
-                                        className="border-red-300 focus:border-red-500"
-                                    />
-                                </div>
-
-                                {deleteError && (
-                                    <p className="text-xs text-red-600">
-                                        {deleteError}
-                                    </p>
-                                )}
-
-                                <div className="flex gap-2">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => {
-                                            setShowDeleteConfirm(false);
-                                            setDeleteConfirmText("");
-                                            setDeleteError(null);
-                                        }}
-                                        className="flex-1"
-                                    >
-                                        취소
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        onClick={handleDeleteAccount}
-                                        disabled={
-                                            isDeleting ||
-                                            deleteConfirmText !== "회원탈퇴"
-                                        }
-                                        className="flex-1 bg-red-500 hover:bg-red-600 text-white"
-                                    >
-                                        {isDeleting ? (
-                                            <InlineLoading />
-                                        ) : (
-                                            "탈퇴하기"
-                                        )}
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                    {user && (
+                        <DeleteAccountSection
+                            userId={user.id}
+                            userEmail={user.email || ""}
+                            currentNickname={currentNickname}
+                            isPremiumUser={isPremiumUser}
+                            onDeleteComplete={onClose}
+                        />
+                    )}
                 </div>
             </div>
             </div>
-            <ConfirmDialog
-                isOpen={unblockConfirm.isOpen}
-                onClose={() => setUnblockConfirm(prev => ({ ...prev, isOpen: false }))}
-                onConfirm={executeUnblock}
-                title="차단 해제"
-                message={`"${unblockConfirm.nickname}" 님의 차단을 해제하시겠습니까?`}
-                confirmText="해제"
-            />
         </div>
     );
 }
