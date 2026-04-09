@@ -17,6 +17,7 @@ import CommunityHeader from "@/components/features/community/CommunityHeader";
 import CommunityPostList from "@/components/features/community/CommunityPostList";
 import ShowcaseBanner from "@/components/features/community/ShowcaseBanner";
 import ShowcaseGalleryView from "@/components/features/community/ShowcaseGalleryView";
+import VideoGenerateModal from "@/components/features/video/VideoGenerateModal";
 import HotPosts from "@/components/features/community/HotPosts";
 import MinihompyVisitModal from "@/components/features/minihompy/MinihompyVisitModal";
 import ReportModal from "@/components/modals/ReportModal";
@@ -52,6 +53,7 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey, i
     const [selectedTag, setSelectedTag] = useState<PostTag | "all">("all");
     const [selectedBadge, setSelectedBadge] = useState<string>("all");
     const [showcaseView, setShowcaseView] = useState<boolean>(false);
+    const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
     const [selectedRegion, setSelectedRegion] = useState<string>("all");
     const [searchInput, setSearchInput] = useState<string>("");
     const [searchQuery, setSearchQuery] = useState<string>("");
@@ -407,9 +409,11 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey, i
                     onBack={() => setShowcaseView(false)}
                     onWriteClick={handleWriteClick}
                     onCreateVideo={() => {
-                        const url = new URL(window.location.href);
-                        url.searchParams.set("tab", "record");
-                        window.location.href = url.toString();
+                        if (!selectedPet) {
+                            toast.error("먼저 반려동물을 등록해주세요.");
+                            return;
+                        }
+                        setIsVideoModalOpen(true);
                     }}
                 />
 
@@ -423,6 +427,19 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey, i
                         setShowcaseView(false);
                     }}
                 />
+
+                {/* 영상 생성 모달 */}
+                {isVideoModalOpen && selectedPet && (
+                    <VideoGenerateModal
+                        isOpen={isVideoModalOpen}
+                        onClose={() => setIsVideoModalOpen(false)}
+                        pet={selectedPet}
+                        onSuccess={() => {
+                            setIsVideoModalOpen(false);
+                            toast.success("영상을 만들고 있어요! 우리의 기록에서 확인할 수 있어요.");
+                        }}
+                    />
+                )}
             </div>
         );
     }
