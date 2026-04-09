@@ -153,7 +153,7 @@ export default function VideoPurchaseModal({
                         <div className="bg-sky-50 dark:bg-sky-900/20 rounded-2xl p-4 mb-4">
                             <div className="flex items-center justify-between mb-2">
                                 <span className="text-sm font-bold text-gray-800 dark:text-white">영상 1건 구매</span>
-                                <span className="text-lg font-display font-bold text-sky-600 dark:text-sky-400">{price}원</span>
+                                <span className="text-sky-600 dark:text-sky-400"><span className="text-lg font-display font-bold">{price}</span><span className="text-sm font-normal ml-0.5">원</span></span>
                             </div>
                             <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
                                 지금 선택한 템플릿으로 바로 영상을 만들 수 있어요.
@@ -174,7 +174,7 @@ export default function VideoPurchaseModal({
                             ) : (
                                 <Video className="w-5 h-5 mr-2" />
                             )}
-                            {isProcessing ? "결제 진행 중..." : `영상 만들기 ${price}원`}
+                            {isProcessing ? "결제 진행 중..." : <>영상 만들기 {price}<span className="font-normal text-sm">원</span></>}
                         </Button>
 
                         {/* 구독 안내 */}

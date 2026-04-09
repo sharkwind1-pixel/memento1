@@ -16,8 +16,8 @@ import {
     Heart,
     MessageCircle,
     PawPrint,
-    Pen,
     Play,
+    Video,
     ArrowRight,
     MoreVertical,
     Trash2,
@@ -42,9 +42,10 @@ import ConfirmDialog from "@/components/ui/ConfirmDialog";
 interface ShowcaseGalleryViewProps {
     onBack: () => void;
     onWriteClick: () => void;
+    onCreateVideo?: () => void;
 }
 
-export default function ShowcaseGalleryView({ onBack, onWriteClick }: ShowcaseGalleryViewProps) {
+export default function ShowcaseGalleryView({ onBack, onWriteClick, onCreateVideo }: ShowcaseGalleryViewProps) {
     const { user } = useAuth();
     const [posts, setPosts] = useState<ShowcasePost[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -209,11 +210,11 @@ export default function ShowcaseGalleryView({ onBack, onWriteClick }: ShowcaseGa
                             </div>
                         </div>
                         <Button
-                            onClick={onWriteClick}
-                            className="bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl px-4 min-h-[44px] hover:from-amber-600 hover:to-orange-600 active:scale-95 transition-all"
+                            onClick={onCreateVideo || onWriteClick}
+                            className="bg-gradient-to-r from-sky-500 to-blue-500 text-white rounded-xl px-4 min-h-[44px] hover:from-sky-600 hover:to-blue-600 active:scale-95 transition-all"
                         >
-                            <Pen className="w-4 h-4 mr-1.5" />
-                            <span className="text-sm">글쓰기</span>
+                            <Video className="w-4 h-4 mr-1.5" />
+                            <span className="text-sm">영상 만들기</span>
                         </Button>
                     </div>
                 </div>
@@ -241,10 +242,11 @@ export default function ShowcaseGalleryView({ onBack, onWriteClick }: ShowcaseGa
                                 우리 아이의 AI 영상을 만들고 자랑해보세요
                             </p>
                             <Button
-                                onClick={onWriteClick}
-                                className="bg-amber-500 hover:bg-amber-600 text-white rounded-xl"
+                                onClick={onCreateVideo || onWriteClick}
+                                className="bg-sky-500 hover:bg-sky-600 text-white rounded-xl"
                             >
-                                첫 번째 글 작성하기
+                                <Video className="w-4 h-4 mr-1.5" />
+                                첫 번째 영상 만들기
                             </Button>
                         </div>
                     ) : (

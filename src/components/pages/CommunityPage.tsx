@@ -406,6 +406,11 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey, i
                 <ShowcaseGalleryView
                     onBack={() => setShowcaseView(false)}
                     onWriteClick={handleWriteClick}
+                    onCreateVideo={() => {
+                        const url = new URL(window.location.href);
+                        url.searchParams.set("tab", "record");
+                        window.location.href = url.toString();
+                    }}
                 />
 
                 {/* 글쓰기 모달 (갤러리 뷰에서도 접근 가능) */}
