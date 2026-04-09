@@ -15,6 +15,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { getClientIP, checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -143,6 +144,15 @@ function normalizeAnimal(raw: PublicAPIAnimal): AdoptionAnimal {
 }
 
 export async function GET(request: NextRequest) {
+    const clientIP = await getClientIP();
+    const rateLimit = checkRateLimit(clientIP, "general");
+    if (!rateLimit.allowed) {
+        return NextResponse.json(
+            { error: "요청이 너무 많습니다." },
+            { status: 429, headers: getRateLimitHeaders(rateLimit.remaining, rateLimit.resetIn) }
+        );
+    }
+
     const { searchParams } = new URL(request.url);
 
     const page = parseInt(searchParams.get("page") || "1");

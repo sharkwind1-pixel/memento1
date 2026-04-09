@@ -833,6 +833,7 @@ function ArticleFormModal({
                                             imageStoragePath: "",
                                         }))}
                                         className="absolute top-1 right-1 w-5 h-5 bg-black/50 rounded-full flex items-center justify-center"
+                                        aria-label="이미지 제거"
                                     >
                                         <X className="w-3 h-3 text-white" />
                                     </button>

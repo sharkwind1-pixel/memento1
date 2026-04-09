@@ -7,6 +7,7 @@
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
+import { getClientIP, checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 
 /** REST API로 pets 테이블 직접 조회 (Supabase JS의 RLS 우회 문제 회피) */
 async function fetchMemorialPets(): Promise<Array<{
@@ -34,6 +35,14 @@ async function fetchMemorialPets(): Promise<Array<{
 
 export async function GET() {
     try {
+        const clientIP = await getClientIP();
+        const rateLimit = checkRateLimit(clientIP, "general");
+        if (!rateLimit.allowed) {
+            return NextResponse.json(
+                { error: "요청이 너무 많습니다." },
+                { status: 429, headers: getRateLimitHeaders(rateLimit.remaining, rateLimit.resetIn) }
+            );
+        }
         // KST 기준 오늘 날짜
         const kstNow = new Date(Date.now() + 9 * 60 * 60 * 1000);
         const year = kstNow.getUTCFullYear();
