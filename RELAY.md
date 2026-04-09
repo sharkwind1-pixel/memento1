@@ -5,7 +5,15 @@
 
 ---
 
-## 즉시 — UX/버그
+## 즉시 — 대기 중
+
+- [ ] AI 영상 단건 결제 (3,500원/건) — 횟수 초과 시 단건 결제 or 프리미엄 구독 선택 모달
+- [ ] AI 영상 생성 퀄리티 논의 (hailuo image-to-video 한계, 모델 교체 검토)
+- [ ] FAL_KEY 환경변수 Vercel 설정 (fal.ai 키 발급 필요)
+- [ ] 카카오페이 심사 보완사항 회신 (결제경로 pptx + 서비스제공기간 + 사업자등록증 제출용)
+- [ ] 정기결제 자동 갱신 크론잡 (subscription-renewal)
+
+## 완료 — UX/버그 (이전)
 
 - [x] route.ts 디버그 로그 제거 (chat/particles)
 - [x] 오프라인 감지 + Supabase auto-refresh 재시도 제한 (useOnlineStatus + OfflineBanner)
