@@ -34,6 +34,8 @@ import { VIDEO_TEMPLATES } from "@/config/videoTemplates";
 import type { VideoTemplate, VideoQuota } from "@/types";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
 import { OptimizedImage } from "@/components/ui/optimized-image";
+import { uploadMedia } from "@/lib/storage";
+import { useAuth } from "@/contexts/AuthContext";
 
 
 // ============================================
@@ -103,7 +105,9 @@ export default function VideoGenerateModal({
     const [isLoadingQuota, setIsLoadingQuota] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [directUploadUrl, setDirectUploadUrl] = useState<string | null>(null);
+    const [directUploadPreview, setDirectUploadPreview] = useState<string | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+    const { user } = useAuth();
 
     // ============================================
     // Derived
@@ -297,16 +301,26 @@ export default function VideoGenerateModal({
                     className="hidden"
                     onChange={async (e) => {
                         const file = e.target.files?.[0];
-                        if (!file) return;
+                        if (!file || !user) return;
                         if (file.size > 10 * 1024 * 1024) {
                             toast.error("10MB 이하의 이미지만 업로드 가능합니다.");
                             return;
                         }
                         setIsUploading(true);
                         try {
-                            const objectUrl = URL.createObjectURL(file);
-                            setDirectUploadUrl(objectUrl);
-                            setSelectedPhotoUrl(objectUrl);
+                            const preview = URL.createObjectURL(file);
+                            setDirectUploadPreview(preview);
+                            const result = await uploadMedia(file, user.id, pet.id);
+                            if (result.success && result.url) {
+                                setDirectUploadUrl(result.url);
+                                setSelectedPhotoUrl(result.url);
+                            } else {
+                                toast.error(result.error || "업로드에 실패했습니다.");
+                                setDirectUploadPreview(null);
+                            }
+                        } catch {
+                            toast.error("업로드 중 오류가 발생했습니다.");
+                            setDirectUploadPreview(null);
                         } finally {
                             setIsUploading(false);
                         }
@@ -323,19 +337,25 @@ export default function VideoGenerateModal({
             </label>
 
             {/* 직접 업로드한 이미지 미리보기 */}
-            {directUploadUrl && (
+            {(directUploadPreview || directUploadUrl) && (
                 <div className="mb-4">
                     <button
                         type="button"
-                        onClick={() => setSelectedPhotoUrl(directUploadUrl)}
+                        onClick={() => directUploadUrl && setSelectedPhotoUrl(directUploadUrl)}
                         className={`relative w-24 h-24 rounded-xl overflow-hidden border-2 transition-all ${
                             selectedPhotoUrl === directUploadUrl
                                 ? "border-memento-500 ring-2 ring-memento-500/30"
                                 : "border-transparent"
                         }`}
                     >
-                        <img src={directUploadUrl} alt="업로드한 사진" className="w-full h-full object-cover" />
-                        {selectedPhotoUrl === directUploadUrl && (
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={directUploadPreview || directUploadUrl || ""} alt="업로드한 사진" className="w-full h-full object-cover" />
+                        {isUploading && (
+                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                <Loader2 className="w-6 h-6 text-white animate-spin" />
+                            </div>
+                        )}
+                        {!isUploading && selectedPhotoUrl === directUploadUrl && (
                             <div className="absolute inset-0 bg-memento-500/20 flex items-center justify-center">
                                 <div className="w-7 h-7 bg-memento-500 rounded-full flex items-center justify-center">
                                     <Check className="w-4 h-4 text-white" />
