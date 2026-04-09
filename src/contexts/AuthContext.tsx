@@ -684,18 +684,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         // 프로필 로드 + 출석 체크
                         Promise.all([refreshProfile(), checkDailyLogin()]).catch((err) => { console.error("[AuthContext] post-login tasks failed:", err instanceof Error ? err.message : err); });
 
-                        // 3. IP 기록 + 동일 IP 다중 계정 제한 체크
+                        // 3. 디바이스 핑거프린트 + IP 기록
                         const token = session.access_token;
+                        let fingerprint: string | null = null;
+                        try {
+                            const { generateDeviceFingerprint } = await import("@/lib/device-fingerprint");
+                            fingerprint = await generateDeviceFingerprint();
+                        } catch { /* 핑거프린트 실패해도 로그인은 허용 */ }
+
                         const res = await fetch(API.AUTH_RECORD_IP, {
                             method: "POST",
                             headers: {
                                 "Content-Type": "application/json",
                                 ...(token ? { Authorization: `Bearer ${token}` } : {}),
                             },
+                            body: JSON.stringify({ fingerprint }),
                         });
                         const result = await res.json();
                         if (result.allowed === false) {
-                            toast.error(result.reason || "이 네트워크에서 이미 다른 계정이 사용 중입니다.");
+                            toast.error(result.reason || "접근이 제한되었습니다.");
                             await supabase.auth.signOut();
                         }
                     } catch {

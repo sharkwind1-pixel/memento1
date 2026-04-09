@@ -13,7 +13,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getAuthUser } from "@/lib/supabase-server";
 import { getClientIP } from "@/lib/rate-limit";
@@ -58,7 +58,7 @@ async function tryQueryByLastIp(supabase: any, ip: string, excludeUserId: string
     }
 }
 
-export async function POST() {
+export async function POST(request: NextRequest) {
     try {
         const user = await getAuthUser();
         if (!user) {
@@ -66,14 +66,18 @@ export async function POST() {
         }
 
         const clientIP = await getClientIP();
-        if (clientIP === "unknown") {
-            return NextResponse.json({ allowed: true, warning: "ip_unknown" });
-        }
-
         const supabase = getServiceSupabase();
         if (!supabase) {
-            console.error("[auth/record-ip] Service Supabase unavailable");
             return NextResponse.json({ allowed: true, warning: "db_unavailable" });
+        }
+
+        // 디바이스 핑거프린트 (클라이언트에서 전송)
+        let deviceFingerprint: string | null = null;
+        try {
+            const body = await request.json();
+            deviceFingerprint = body.fingerprint || null;
+        } catch {
+            // body 없으면 무시
         }
 
         // 현재 유저의 이메일 추출 (소셜 로그인도 포함)
@@ -86,40 +90,57 @@ export async function POST() {
         // 관리자 여부 확인
         const isCurrentUserAdmin = allEmails.some(e => ADMIN_EMAILS.includes(e));
 
-        // 관리자 계정은 무조건 통과 + IP 기록만
-        if (isCurrentUserAdmin) {
+        // IP 기록 + 핑거프린트 저장
+        if (clientIP !== "unknown") {
             await tryUpdateLastIp(supabase, user.id, clientIP);
-            return NextResponse.json({ allowed: true });
         }
-
-        // 같은 IP를 쓰고 있는 다른 계정 조회
-        const existingProfiles = await tryQueryByLastIp(supabase, clientIP, user.id);
-
-        if (existingProfiles && existingProfiles.length > 0) {
-            const otherIsAdmin = existingProfiles.some(p => {
-                if (p.is_admin === true) return true;
-                if (p.email && ADMIN_EMAILS.includes(p.email)) return true;
-                return false;
-            });
-
-            if (!otherIsAdmin) {
-                console.warn(
-                    `[Security] IP conflict: ip=${clientIP}, user=${user.id}, existing=${existingProfiles.map(p => p.id).join(",")}`
-                );
-                return NextResponse.json({
-                    allowed: false,
-                    reason: "이 네트워크에서 이미 다른 계정이 사용 중입니다. 하나의 네트워크에서는 하나의 계정만 이용할 수 있습니다.",
-                });
+        if (deviceFingerprint) {
+            try {
+                await supabase
+                    .from("profiles")
+                    .update({ device_fingerprint: deviceFingerprint })
+                    .eq("id", user.id);
+            } catch {
+                // 컬럼 없으면 무시 (마이그레이션 전)
             }
         }
 
-        // IP 기록 갱신
-        await tryUpdateLastIp(supabase, user.id, clientIP);
+        // 관리자는 항상 통과
+        if (isCurrentUserAdmin) {
+            return NextResponse.json({ allowed: true });
+        }
+
+        // 디바이스 핑거프린트 기반 다중 계정 탐지 (IP 차단 대체)
+        // 같은 디바이스에서 3개 이상 계정이면 경고 (차단은 아직 안 함, 텔레그램 알림만)
+        if (deviceFingerprint) {
+            try {
+                const { data: sameDevice } = await supabase
+                    .from("profiles")
+                    .select("id, email")
+                    .eq("device_fingerprint", deviceFingerprint)
+                    .neq("id", user.id);
+
+                if (sameDevice && sameDevice.length >= 2) {
+                    // 같은 디바이스에서 3개 이상 계정 → 텔레그램 경고
+                    import("@/lib/telegram").then(({ notifyError }) =>
+                        notifyError({
+                            endpoint: "multi-account-alert",
+                            error: `같은 디바이스에서 ${sameDevice.length + 1}개 계정 감지. user=${user.id}, email=${userEmail}, 기존계정=${sameDevice.map(p => p.email).join(",")}`,
+                        })
+                    ).catch(() => {});
+                }
+            } catch {
+                // 컬럼 없으면 무시
+            }
+        }
+
+        // IP 기반 차단은 더 이상 하지 않음 (가족/회사 유저 피해 방지)
+        // 대신 위의 디바이스 핑거프린트로 모니터링
 
         return NextResponse.json({ allowed: true });
     } catch (error) {
         console.error("[auth/record-ip] Error:", error instanceof Error ? error.message : error);
-        // fail-closed: 에러 시 차단 (보안 우선)
-        return NextResponse.json({ allowed: false, reason: "시스템 오류가 발생했습니다. 잠시 후 다시 시도해주세요." });
+        // fail-open: 유저 확보 단계에서는 에러 시 통과 (차단보다 유입이 중요)
+        return NextResponse.json({ allowed: true, warning: "system_error" });
     }
 }
