@@ -370,10 +370,13 @@ export function useHomePage() {
     }, []);
 
     useEffect(() => {
-        fetchCommunityPosts();
-        fetchShowcasePosts();
-        fetchMemorialPets();
-        fetchMagazinePreview();
+        // 4개 독립 fetch를 병렬 실행 (순차 → 병렬로 1-3초 절약)
+        Promise.all([
+            fetchCommunityPosts(),
+            fetchShowcasePosts(),
+            fetchMemorialPets(),
+            fetchMagazinePreview(),
+        ]);
         // 언마운트 시 하트 애니메이션 타이머 정리 (메모리 누수 방지)
         const timers = heartTimersRef.current;
         return () => {

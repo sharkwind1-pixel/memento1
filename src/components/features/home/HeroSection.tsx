@@ -44,7 +44,7 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
                         <div className="flex justify-center mb-6 md:mb-0 md:order-last">
                             <div className="relative w-[240px] h-[240px] sm:w-[300px] sm:h-[300px] md:w-[380px] md:h-[380px] lg:w-[440px] lg:h-[440px] rounded-3xl overflow-hidden shadow-lg">
                                 <Image
-                                    src={isMemorial ? "/images/hero-illustration-memorial.png" : "/images/hero-illustration.png"}
+                                    src={isMemorial ? "/images/hero-illustration-memorial.webp" : "/images/hero-illustration.webp"}
                                     alt={isMemorial ? "별빛 강아지와 함께 밤하늘을 바라보는 아이" : "강아지와 함께 걸어가는 아이"}
                                     fill
                                     className="object-cover"

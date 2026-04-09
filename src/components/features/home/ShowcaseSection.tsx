@@ -6,7 +6,7 @@
 
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef as useLocalRef, useCallback } from "react";
 import {
     Card,
     CardContent,
@@ -49,6 +49,52 @@ export default function ShowcaseSection({
         safeSessionSetItem("memento-community-view", "showcase");
         setSelectedTab("community");
     };
+
+    // 자동 슬라이드 (4초 간격)
+    const isUserScrolling = useLocalRef(false);
+    const autoSlideTimer = useLocalRef<ReturnType<typeof setInterval> | null>(null);
+
+    const startAutoSlide = useCallback(() => {
+        if (autoSlideTimer.current) clearInterval(autoSlideTimer.current);
+        autoSlideTimer.current = setInterval(() => {
+            if (isUserScrolling.current || !scrollRef.current) return;
+            const el = scrollRef.current;
+            const cardWidth = 276; // 260px card + 16px gap
+            const maxScroll = el.scrollWidth - el.clientWidth;
+            if (maxScroll <= 0) return;
+            const nextScroll = el.scrollLeft + cardWidth;
+            if (nextScroll >= maxScroll) {
+                el.scrollTo({ left: 0, behavior: "smooth" });
+            } else {
+                el.scrollTo({ left: nextScroll, behavior: "smooth" });
+            }
+        }, 4000);
+    }, [scrollRef]);
+
+    useEffect(() => {
+        if (showcasePosts.length <= 1) return;
+        startAutoSlide();
+
+        const el = scrollRef.current;
+        if (!el) return;
+
+        let touchTimeout: ReturnType<typeof setTimeout>;
+        const pauseAutoSlide = () => {
+            isUserScrolling.current = true;
+            clearTimeout(touchTimeout);
+            touchTimeout = setTimeout(() => { isUserScrolling.current = false; }, 5000);
+        };
+
+        el.addEventListener("touchstart", pauseAutoSlide, { passive: true });
+        el.addEventListener("mousedown", pauseAutoSlide);
+
+        return () => {
+            if (autoSlideTimer.current) clearInterval(autoSlideTimer.current);
+            clearTimeout(touchTimeout);
+            el.removeEventListener("touchstart", pauseAutoSlide);
+            el.removeEventListener("mousedown", pauseAutoSlide);
+        };
+    }, [showcasePosts.length, startAutoSlide, scrollRef]);
 
     /** 상대 시간 포맷 */
     const formatTime = (dateStr: string) => {
