@@ -886,7 +886,7 @@ export default function PostDetailView({
 
                     {/* 첨부 영상 */}
                     {post.video_url && (
-                        <div className="mt-4 rounded-xl overflow-hidden border dark:border-gray-600">
+                        <div className="mt-4 rounded-xl overflow-hidden border dark:border-gray-600 max-w-sm mx-auto">
                             <video
                                 src={post.video_url}
                                 controls

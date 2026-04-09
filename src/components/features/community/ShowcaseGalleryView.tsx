@@ -72,7 +72,7 @@ export default function ShowcaseGalleryView({ onBack, onWriteClick }: ShowcaseGa
             const params = new URLSearchParams({
                 board: "free",
                 badge: "자랑",
-                sort: "popular",
+                sort: "latest",
                 limit: "20",
             });
             const res = await fetch(`${API.POSTS}?${params}`);
@@ -221,7 +221,7 @@ export default function ShowcaseGalleryView({ onBack, onWriteClick }: ShowcaseGa
                 {/* 갤러리 그리드 */}
                 <div className="px-4 pt-4">
                     {isLoading ? (
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                             {[...Array(6)].map((_, i) => (
                                 <div
                                     key={i}
@@ -248,7 +248,7 @@ export default function ShowcaseGalleryView({ onBack, onWriteClick }: ShowcaseGa
                             </Button>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                             {posts.map((post, idx) => (
                                 <ShowcaseCard
                                     key={post.id}
