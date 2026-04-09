@@ -27,7 +27,7 @@
 // ============================================================================
 // 임포트
 // ============================================================================
-import { useState, useEffect, Suspense, useCallback, useRef, useTransition } from "react";
+import { useState, useEffect, Suspense, useCallback, useRef, useTransition, lazy } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { TabType, CommunitySubcategory, getLegacyTabRedirect } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
@@ -58,19 +58,20 @@ const isValidSubcategory = (sub: string | null): sub is CommunitySubcategory => 
 };
 
 // ============================================================================
-// 페이지 컴포넌트 - 모두 정적 import (dynamic import 금지)
+// 페이지 컴포넌트 - 코드 분할 전략
 // ============================================================================
-// dynamic import는 탭 전환마다 unmount → skeleton → remount 사이클을 유발하여
-// 모바일에서 이미지/버튼/아이콘이 껐다 켜졌다하는 깜빡임의 주범이었음
-// CLAUDE.md: "즉각적인 반응이 UX에 더 중요 - dynamic import 사용하지 않음"
+// HomePage: 정적 import (90%+ 유저가 첫 화면으로 봄)
+// 나머지 4개 탭: React.lazy (mountedTabs 패턴으로 한 번 로드 후 캐시)
+// AdminPage: next/dynamic (Tiptap 등 무거운 의존성 분리)
+//
+// mountedTabs 패턴: lazy download만 지연, 마운트 후 display:none으로 유지 → 재방문 시 즉시
 
 import HomePage from "@/components/pages/HomePage";
-import CommunityPage from "@/components/pages/CommunityPage";
-import AIChatPage from "@/components/pages/AIChatPage";
-import MagazinePage from "@/components/pages/MagazinePage";
-import RecordPage from "@/components/pages/RecordPage";
-// AdminPage만 dynamic import — 일반 유저는 접근 안 하므로 초기 번들에서 제외
-// (Tiptap, RichTextEditor 등 무거운 의존성이 함께 분리됨)
+const RecordPage = lazy(() => import("@/components/pages/RecordPage"));
+const CommunityPage = lazy(() => import("@/components/pages/CommunityPage"));
+const AIChatPage = lazy(() => import("@/components/pages/AIChatPage"));
+const MagazinePage = lazy(() => import("@/components/pages/MagazinePage"));
+
 import dynamic from "next/dynamic";
 const AdminPage = dynamic(() => import("@/components/pages/AdminPage"), {
     loading: () => <div className="flex items-center justify-center min-h-[60vh]"><div className="animate-spin w-8 h-8 border-2 border-sky-400 border-t-transparent rounded-full" /></div>,
@@ -111,6 +112,19 @@ export default function Home() {
  * - URL 파라미터 기반 탭 상태 관리
  * - 온보딩/튜토리얼 플로우 제어
  */
+function TabSkeleton() {
+    return (
+        <div className="space-y-4 py-4 animate-pulse">
+            <div className="rounded-2xl bg-gray-100/60 dark:bg-gray-800/40 h-48 w-full" />
+            <div className="grid grid-cols-2 gap-3">
+                {[...Array(4)].map((_, i) => (
+                    <div key={i} className="rounded-xl bg-gray-100/60 dark:bg-gray-800/40 h-28" />
+                ))}
+            </div>
+        </div>
+    );
+}
+
 function HomeContent() {
     // ========================================================================
     // Context & Hooks
@@ -533,29 +547,37 @@ function HomeContent() {
             )}
             {mountedTabs.has("record") && (
                 <div data-tab-content={selectedTab === "record" ? "active" : undefined} style={{ display: selectedTab === "record" ? "block" : "none" }}>
-                    <RecordPage setSelectedTab={handleTabChange} isActive={selectedTab === "record"} suppressPetModal={isNewUserFlowActive} />
+                    <Suspense fallback={<TabSkeleton />}>
+                        <RecordPage setSelectedTab={handleTabChange} isActive={selectedTab === "record"} suppressPetModal={isNewUserFlowActive} />
+                    </Suspense>
                 </div>
             )}
             {mountedTabs.has("community") && (
                 <div data-tab-content={selectedTab === "community" ? "active" : undefined} style={{ display: selectedTab === "community" ? "block" : "none" }}>
-                    <CommunityPage
-                        subcategory={selectedSubcategory}
-                        onSubcategoryChange={handleSubcategoryChange}
-                        isActive={selectedTab === "community"}
-                        resetKey={communityResetKey}
-                        initialPostId={communityInitialPostId}
-                        onInitialPostConsumed={() => setCommunityInitialPostId(null)}
-                    />
+                    <Suspense fallback={<TabSkeleton />}>
+                        <CommunityPage
+                            subcategory={selectedSubcategory}
+                            onSubcategoryChange={handleSubcategoryChange}
+                            isActive={selectedTab === "community"}
+                            resetKey={communityResetKey}
+                            initialPostId={communityInitialPostId}
+                            onInitialPostConsumed={() => setCommunityInitialPostId(null)}
+                        />
+                    </Suspense>
                 </div>
             )}
             {mountedTabs.has("ai-chat") && (
                 <div data-tab-content={selectedTab === "ai-chat" ? "active" : undefined} style={{ display: selectedTab === "ai-chat" ? "block" : "none" }}>
-                    <AIChatPage setSelectedTab={handleTabChange} />
+                    <Suspense fallback={<TabSkeleton />}>
+                        <AIChatPage setSelectedTab={handleTabChange} />
+                    </Suspense>
                 </div>
             )}
             {mountedTabs.has("magazine") && (
                 <div data-tab-content={selectedTab === "magazine" ? "active" : undefined} style={{ display: selectedTab === "magazine" ? "block" : "none" }}>
-                    <MagazinePage setSelectedTab={handleTabChange} isActive={selectedTab === "magazine"} />
+                    <Suspense fallback={<TabSkeleton />}>
+                        <MagazinePage setSelectedTab={handleTabChange} isActive={selectedTab === "magazine"} />
+                    </Suspense>
                 </div>
             )}
             {mountedTabs.has("admin") && (

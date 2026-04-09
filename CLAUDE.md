@@ -172,9 +172,9 @@ if (selectedPet?.status === "memorial") {
 grep -n "setIsPetModalOpen\|handleAddNewPet" src/components/pages/RecordPage.tsx
 ```
 
-### 2. Dynamic Import 사용 금지
-**원칙**: 즉각적인 반응이 UX에 더 중요 (스포티파이 사례)
-**해결**: 모달, 컴포넌트는 일반 import 사용. dynamic import 사용하지 않음
+### 2. Dynamic Import 원칙
+**원칙**: 탭 전환 시 unmount/remount로 인한 깜빡임 방지
+**해결**: mountedTabs 패턴 내에서 React.lazy 허용 (다운로드만 지연, 마운트는 유지). 모달은 정적 import. HomePage는 정적 import (첫 화면).
 
 ### 3. 반응형 텍스트 줄바꿈
 **문제**: "특별해지는 곳"이 "특" / "별해지는 곳"으로 끊김

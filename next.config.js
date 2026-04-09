@@ -7,6 +7,10 @@ const path = require("path");
 const nextConfig = {
     // Strict Mode - 개발 모드에서 하이드레이션 버그 감지
     reactStrictMode: true,
+    // 패키지 트리쉐이킹 (lucide-react: 80개 아이콘만 번들에 포함)
+    experimental: {
+        optimizePackageImports: ["lucide-react"],
+    },
     // Turbopack root 설정 (worktree 환경에서 root 인식 문제 해결)
     turbopack: {
         root: path.resolve(__dirname),
