@@ -25,6 +25,8 @@ import {
     Ban,
     Activity,
     Calendar,
+    Zap,
+    Video,
 } from "lucide-react";
 import {
     AreaChart,
@@ -35,7 +37,7 @@ import {
     Tooltip,
     ResponsiveContainer,
 } from "recharts";
-import { DashboardStats, ChartData } from "../types";
+import { DashboardStats, ChartData, ApiUsageData } from "../types";
 
 // ============================================================================
 // Props 타입 정의
@@ -48,6 +50,8 @@ interface AdminDashboardTabProps {
     chartData: ChartData[];
     /** 로딩 상태 */
     loading: boolean;
+    /** API 사용량 데이터 */
+    apiUsage?: ApiUsageData | null;
 }
 
 // ============================================================================
@@ -91,6 +95,7 @@ export default function AdminDashboardTab({
     stats,
     chartData,
     loading,
+    apiUsage,
 }: AdminDashboardTabProps) {
     if (loading) {
         return (
@@ -254,6 +259,108 @@ export default function AdminDashboardTab({
                     )}
                 </CardContent>
             </Card>
+
+            {/* ================================================================
+                섹션 5: API 사용량 (크레딧)
+            ================================================================ */}
+            {apiUsage && (
+                <Card>
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-base flex items-center gap-2">
+                            <Zap className="w-4 h-4 text-amber-500" />
+                            API 사용량
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="px-3 pb-3">
+                        <div className="grid grid-cols-2 gap-3">
+                            {/* OpenAI (AI 펫톡) */}
+                            <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
+                                <div className="flex items-center gap-1.5 mb-2">
+                                    <MessageCircle className="w-4 h-4 text-purple-500" />
+                                    <span className="text-xs font-medium text-purple-700 dark:text-purple-300">AI 펫톡</span>
+                                </div>
+                                <div className="space-y-1">
+                                    <div className="flex justify-between text-[11px]">
+                                        <span className="text-gray-500 dark:text-gray-400">오늘</span>
+                                        <span className="font-medium">{apiUsage.openai.todayCount.toLocaleString()}건</span>
+                                    </div>
+                                    <div className="flex justify-between text-[11px]">
+                                        <span className="text-gray-500 dark:text-gray-400">이번 달</span>
+                                        <span className="font-medium">{apiUsage.openai.monthCount.toLocaleString()}건</span>
+                                    </div>
+                                    <div className="flex justify-between text-[11px]">
+                                        <span className="text-gray-500 dark:text-gray-400">예상 비용</span>
+                                        <span className="font-bold text-purple-600 dark:text-purple-400">
+                                            ${apiUsage.openai.estimatedMonthlyCostUsd.toFixed(2)}
+                                        </span>
+                                    </div>
+                                    {apiUsage.openai.budgetUsd && (
+                                        <ApiUsageProgressBar
+                                            used={apiUsage.openai.estimatedMonthlyCostUsd}
+                                            budget={apiUsage.openai.budgetUsd}
+                                        />
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* fal.ai (AI 영상) */}
+                            <div className="p-3 bg-sky-50 dark:bg-sky-900/20 rounded-xl">
+                                <div className="flex items-center gap-1.5 mb-2">
+                                    <Video className="w-4 h-4 text-sky-500" />
+                                    <span className="text-xs font-medium text-sky-700 dark:text-sky-300">AI 영상</span>
+                                </div>
+                                <div className="space-y-1">
+                                    <div className="flex justify-between text-[11px]">
+                                        <span className="text-gray-500 dark:text-gray-400">오늘</span>
+                                        <span className="font-medium">{apiUsage.fal.todayCount.toLocaleString()}건</span>
+                                    </div>
+                                    <div className="flex justify-between text-[11px]">
+                                        <span className="text-gray-500 dark:text-gray-400">이번 달</span>
+                                        <span className="font-medium">{apiUsage.fal.monthCount.toLocaleString()}건</span>
+                                    </div>
+                                    <div className="flex justify-between text-[11px]">
+                                        <span className="text-gray-500 dark:text-gray-400">예상 비용</span>
+                                        <span className="font-bold text-sky-600 dark:text-sky-400">
+                                            ${apiUsage.fal.estimatedMonthlyCostUsd.toFixed(2)}
+                                        </span>
+                                    </div>
+                                    {apiUsage.fal.budgetUsd && (
+                                        <ApiUsageProgressBar
+                                            used={apiUsage.fal.estimatedMonthlyCostUsd}
+                                            budget={apiUsage.fal.budgetUsd}
+                                        />
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+        </div>
+    );
+}
+
+// ============================================================================
+// API 사용량 프로그레스바
+// ============================================================================
+
+function ApiUsageProgressBar({ used, budget }: { used: number; budget: number }) {
+    const ratio = Math.min(used / budget, 1);
+    const percent = Math.round(ratio * 100);
+    const color = ratio < 0.6 ? "bg-green-500" : ratio < 0.8 ? "bg-amber-500" : "bg-red-500";
+
+    return (
+        <div className="mt-1">
+            <div className="flex justify-between text-[10px] text-gray-400 mb-0.5">
+                <span>예산 ${budget}</span>
+                <span>{percent}%</span>
+            </div>
+            <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div
+                    className={`h-full ${color} rounded-full transition-all`}
+                    style={{ width: `${percent}%` }}
+                />
+            </div>
         </div>
     );
 }

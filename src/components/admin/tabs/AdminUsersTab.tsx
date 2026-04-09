@@ -26,8 +26,14 @@ import {
     Search,
     RefreshCw,
     Users,
+    ChevronDown,
+    ChevronUp,
+    PawPrint,
+    MessageCircle,
+    Clock,
+    Crown,
 } from "lucide-react";
-import { UserRow } from "../types";
+import { UserRow, UserDetailData } from "../types";
 import { PremiumModal } from "../modals/PremiumModal";
 import { PointsAwardModal } from "../modals/PointsAwardModal";
 import LevelBadge from "@/components/features/points/LevelBadge";
@@ -53,6 +59,10 @@ interface AdminUsersTabProps {
     onRefreshStats: () => void;
     /** 현재 로그인한 관리자 ID */
     currentUserId: string;
+    /** 유저 상세 데이터 캐시 */
+    userDetails: Record<string, UserDetailData>;
+    /** 유저 상세 로드 함수 */
+    onLoadUserDetail: (userId: string) => void;
 }
 
 // ============================================================================
@@ -66,12 +76,15 @@ export default function AdminUsersTab({
     onOpenWithdrawalModal,
     onRefreshStats,
     currentUserId,
+    userDetails,
+    onLoadUserDetail,
 }: AdminUsersTabProps) {
     // Auth context (포인트 갱신용)
     const { refreshPoints } = useAuth();
 
     // 로컬 상태
     const [searchQuery, setSearchQuery] = useState("");
+    const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
     const [premiumModalUser, setPremiumModalUser] = useState<UserRow | null>(null);
     const [pointsModalUser, setPointsModalUser] = useState<UserRow | null>(null);
     const [confirmState, setConfirmState] = useState<{
@@ -429,19 +442,35 @@ export default function AdminUsersTab({
                         </div>
                     ) : (
                         <div className="space-y-3">
-                            {filteredUsers.map((u) => (
-                                <UserCard
-                                    key={u.id}
-                                    user={u}
-                                    onToggleBan={() => toggleBan(u)}
-                                    onToggleAdmin={() => toggleAdmin(u)}
-                                    onResetOnboarding={() => resetOnboarding(u.id, u.email)}
-                                    onOpenPremiumModal={() => setPremiumModalUser(u)}
-                                    onRevokePremium={() => revokePremium(u)}
-                                    onOpenWithdrawalModal={() => onOpenWithdrawalModal(u)}
-                                    onOpenPointsModal={() => setPointsModalUser(u)}
-                                />
-                            ))}
+                            {filteredUsers.map((u) => {
+                                const isExpanded = expandedUserId === u.id;
+                                const detail = userDetails[u.id];
+                                return (
+                                    <div key={u.id}>
+                                        <UserCard
+                                            user={u}
+                                            isExpanded={isExpanded}
+                                            onToggleExpand={() => {
+                                                const newExpanded = isExpanded ? null : u.id;
+                                                setExpandedUserId(newExpanded);
+                                                if (newExpanded && !userDetails[u.id]) {
+                                                    onLoadUserDetail(u.id);
+                                                }
+                                            }}
+                                            onToggleBan={() => toggleBan(u)}
+                                            onToggleAdmin={() => toggleAdmin(u)}
+                                            onResetOnboarding={() => resetOnboarding(u.id, u.email)}
+                                            onOpenPremiumModal={() => setPremiumModalUser(u)}
+                                            onRevokePremium={() => revokePremium(u)}
+                                            onOpenWithdrawalModal={() => onOpenWithdrawalModal(u)}
+                                            onOpenPointsModal={() => setPointsModalUser(u)}
+                                        />
+                                        {isExpanded && (
+                                            <UserDetailPanel detail={detail} user={u} />
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                 </CardContent>
@@ -482,8 +511,122 @@ export default function AdminUsersTab({
 // 유저 카드 컴포넌트
 // ============================================================================
 
+// ============================================================================
+// 유저 상세 패널 컴포넌트
+// ============================================================================
+
+function UserDetailPanel({ detail, user }: { detail?: UserDetailData; user: UserRow }) {
+    if (!detail) {
+        return (
+            <div className="mx-2 mb-2 p-3 bg-white dark:bg-gray-800 border border-t-0 border-gray-200 dark:border-gray-600 rounded-b-xl">
+                <div className="flex items-center justify-center py-4">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-sky-500" />
+                    <span className="ml-2 text-sm text-gray-400">로딩 중...</span>
+                </div>
+            </div>
+        );
+    }
+
+    const formatDate = (dateStr: string | null) => {
+        if (!dateStr) return "-";
+        const d = new Date(dateStr);
+        const now = new Date();
+        const diffMs = now.getTime() - d.getTime();
+        const diffMin = Math.floor(diffMs / 60000);
+        if (diffMin < 1) return "방금 전";
+        if (diffMin < 60) return `${diffMin}분 전`;
+        const diffHour = Math.floor(diffMin / 60);
+        if (diffHour < 24) return `${diffHour}시간 전`;
+        const diffDay = Math.floor(diffHour / 24);
+        if (diffDay < 7) return `${diffDay}일 전`;
+        return d.toLocaleDateString("ko-KR");
+    };
+
+    const tierLabel = (tier: string | null) => {
+        if (tier === "premium") return "프리미엄";
+        if (tier === "basic") return "베이직";
+        return "무료";
+    };
+
+    return (
+        <div className="mx-2 mb-2 p-3 bg-white dark:bg-gray-800 border border-t-0 border-gray-200 dark:border-gray-600 rounded-b-xl space-y-3">
+            {/* 요약 지표 */}
+            <div className="grid grid-cols-2 gap-2">
+                <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <PawPrint className="w-4 h-4 text-pink-500 flex-shrink-0" />
+                    <div>
+                        <p className="text-[10px] text-gray-500 dark:text-gray-400">반려동물</p>
+                        <p className="text-sm font-bold">{detail.pets.length}마리</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <MessageCircle className="w-4 h-4 text-purple-500 flex-shrink-0" />
+                    <div>
+                        <p className="text-[10px] text-gray-500 dark:text-gray-400">AI 대화</p>
+                        <p className="text-sm font-bold">{detail.chatMessagesCount.toLocaleString()}회</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <Crown className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                    <div>
+                        <p className="text-[10px] text-gray-500 dark:text-gray-400">구독</p>
+                        <p className="text-sm font-bold">{tierLabel(detail.subscriptionTier)}</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <Clock className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <div>
+                        <p className="text-[10px] text-gray-500 dark:text-gray-400">마지막 접속</p>
+                        <p className="text-sm font-bold">{formatDate(detail.lastSeenAt)}</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* 가입일 + 포인트 */}
+            <div className="flex items-center gap-3 text-[11px] text-gray-500 dark:text-gray-400">
+                <span>가입: {new Date(user.created_at).toLocaleDateString("ko-KR")}</span>
+                <span>포인트: {detail.points.toLocaleString()}P</span>
+                {detail.premiumExpiresAt && (
+                    <span>만료: {new Date(detail.premiumExpiresAt).toLocaleDateString("ko-KR")}</span>
+                )}
+            </div>
+
+            {/* 펫 목록 */}
+            {detail.pets.length > 0 && (
+                <div>
+                    <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-1">반려동물 목록</p>
+                    <div className="flex flex-wrap gap-2">
+                        {detail.pets.map(pet => (
+                            <div key={pet.id} className="flex items-center gap-1.5 px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                                {pet.profile_image ? (
+                                    <img src={pet.profile_image} alt={pet.name} className="w-5 h-5 rounded-full object-cover" />
+                                ) : (
+                                    <PawPrint className="w-4 h-4 text-gray-400" />
+                                )}
+                                <span className="text-xs font-medium">{pet.name}</span>
+                                <span className="text-[9px] text-gray-400">{pet.type}</span>
+                                {pet.status === "memorial" && (
+                                    <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300 text-[8px] px-1 py-0">
+                                        추모
+                                    </Badge>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ============================================================================
+// 유저 카드 컴포넌트
+// ============================================================================
+
 interface UserCardProps {
     user: UserRow;
+    isExpanded: boolean;
+    onToggleExpand: () => void;
     onToggleBan: () => void;
     onToggleAdmin: () => void;
     onResetOnboarding: () => void;
@@ -495,6 +638,8 @@ interface UserCardProps {
 
 function UserCard({
     user,
+    isExpanded,
+    onToggleExpand,
     onToggleBan,
     onToggleAdmin,
     onResetOnboarding,
@@ -506,6 +651,8 @@ function UserCard({
     return (
         <div
             className={`p-3 rounded-xl border transition-colors ${
+                isExpanded ? "ring-2 ring-sky-300 dark:ring-sky-600" : ""
+            } ${
                 user.is_banned
                     ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/50"
                     : user.is_admin
@@ -513,10 +660,21 @@ function UserCard({
                         : user.is_premium
                             ? "bg-amber-50 dark:bg-gray-700/20 border-amber-200 dark:border-gray-700/50"
                             : "bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700"
-            }`}
+            } ${isExpanded ? "rounded-b-none" : ""}`}
         >
-            {/* 이메일 */}
-            <p className="font-medium text-xs truncate">{user.email}</p>
+            {/* 이메일 + 확장 토글 */}
+            <button
+                type="button"
+                onClick={onToggleExpand}
+                className="w-full flex items-center justify-between"
+            >
+                <p className="font-medium text-xs truncate text-left">{user.email}</p>
+                {isExpanded ? (
+                    <ChevronUp className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                ) : (
+                    <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                )}
+            </button>
 
             {/* 닉네임 + 날짜 + 뱃지 한 줄 */}
             <div className="flex items-center gap-1 mt-1 flex-wrap">

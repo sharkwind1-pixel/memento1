@@ -22,7 +22,11 @@ import {
     ReportRow,
     WithdrawnUser,
     MagazineArticleRow,
+    UserDetailData,
+    ApiUsageData,
 } from "../types";
+import { authFetch } from "@/lib/auth-fetch";
+import { API } from "@/config/apiEndpoints";
 
 // ============================================================================
 // 훅 반환 타입
@@ -39,6 +43,8 @@ interface UseAdminDataReturn {
     reports: ReportRow[];
     withdrawals: WithdrawnUser[];
     magazineArticles: MagazineArticleRow[];
+    userDetails: Record<string, UserDetailData>;
+    apiUsage: ApiUsageData | null;
 
     // 데이터 로드 함수
     loadDashboardStats: () => Promise<void>;
@@ -49,9 +55,12 @@ interface UseAdminDataReturn {
     loadReports: () => Promise<void>;
     loadWithdrawals: () => Promise<void>;
     loadMagazineArticles: () => Promise<void>;
+    loadUserDetail: (userId: string) => Promise<void>;
+    loadApiUsage: () => Promise<void>;
 
     // 상태 업데이트 함수 (외부에서 직접 수정 필요시)
     setUsers: React.Dispatch<React.SetStateAction<UserRow[]>>;
+    setPosts: React.Dispatch<React.SetStateAction<PostRow[]>>;
     setInquiries: React.Dispatch<React.SetStateAction<InquiryRow[]>>;
     setReports: React.Dispatch<React.SetStateAction<ReportRow[]>>;
 }
@@ -89,6 +98,8 @@ export function useAdminData(): UseAdminDataReturn {
     const [reports, setReports] = useState<ReportRow[]>([]);
     const [withdrawals, setWithdrawals] = useState<WithdrawnUser[]>([]);
     const [magazineArticles, setMagazineArticles] = useState<MagazineArticleRow[]>([]);
+    const [userDetails, setUserDetails] = useState<Record<string, UserDetailData>>({});
+    const [apiUsage, setApiUsage] = useState<ApiUsageData | null>(null);
 
     // ========================================================================
     // 대시보드 통계 로드
@@ -284,7 +295,7 @@ export function useAdminData(): UseAdminDataReturn {
         try {
             const { data, error } = await supabase
                 .from("community_posts")
-                .select("id, title, content, user_id, author_name, created_at, views")
+                .select("id, title, content, user_id, author_name, created_at, views, likes_count, comments_count, image_urls, is_hidden, category, report_count")
                 .order("created_at", { ascending: false })
                 .limit(100);
 
@@ -298,12 +309,17 @@ export function useAdminData(): UseAdminDataReturn {
                     author_id: post.user_id,
                     author_email: post.author_name,
                     created_at: post.created_at,
-                    is_hidden: false,
-                    report_count: 0,
+                    is_hidden: post.is_hidden ?? false,
+                    report_count: post.report_count ?? 0,
+                    views: post.views ?? 0,
+                    likes_count: post.likes_count ?? 0,
+                    comments_count: post.comments_count ?? 0,
+                    image_urls: post.image_urls ?? [],
+                    category: post.category ?? undefined,
                 })));
             }
         } catch {
-            // [useAdminData] 게시물 목록 로드 실패:", error);
+            // [useAdminData] 게시물 목록 로드 실패
         }
     }, []);
 
@@ -412,6 +428,35 @@ export function useAdminData(): UseAdminDataReturn {
     }, []);
 
     // ========================================================================
+    // 유저 상세 조회 (온디맨드)
+    // ========================================================================
+    const loadUserDetail = useCallback(async (userId: string) => {
+        if (userDetails[userId]) return;
+        try {
+            const res = await authFetch(`${API.ADMIN_USER_DETAIL}?userId=${userId}`);
+            if (!res.ok) throw new Error("상세 조회 실패");
+            const data: UserDetailData = await res.json();
+            setUserDetails(prev => ({ ...prev, [userId]: data }));
+        } catch {
+            // 유저 상세 조회 실패
+        }
+    }, [userDetails]);
+
+    // ========================================================================
+    // API 사용량 조회
+    // ========================================================================
+    const loadApiUsage = useCallback(async () => {
+        try {
+            const res = await authFetch(API.ADMIN_API_USAGE);
+            if (!res.ok) throw new Error("API 사용량 조회 실패");
+            const data: ApiUsageData = await res.json();
+            setApiUsage(data);
+        } catch {
+            // API 사용량 조회 실패
+        }
+    }, []);
+
+    // ========================================================================
     // 반환
     // ========================================================================
     return {
@@ -424,6 +469,8 @@ export function useAdminData(): UseAdminDataReturn {
         reports,
         withdrawals,
         magazineArticles,
+        userDetails,
+        apiUsage,
         loadDashboardStats,
         loadChartData,
         loadUsers,
@@ -432,7 +479,10 @@ export function useAdminData(): UseAdminDataReturn {
         loadReports,
         loadWithdrawals,
         loadMagazineArticles,
+        loadUserDetail,
+        loadApiUsage,
         setUsers,
+        setPosts,
         setInquiries,
         setReports,
     };

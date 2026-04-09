@@ -150,6 +150,11 @@ export interface PostRow {
     created_at: string;          // 작성일
     is_hidden?: boolean;         // 숨김 여부
     report_count?: number;       // 신고 횟수
+    views?: number;              // 조회수
+    likes_count?: number;        // 좋아요 수
+    comments_count?: number;     // 댓글 수
+    image_urls?: string[];       // 이미지 URL 목록
+    category?: string;           // 게시판 카테고리
 }
 
 // ============================================================================
@@ -253,6 +258,48 @@ export const REPORT_TARGET_LABELS: Record<ReportTargetType, string> = {
 // ============================================================================
 
 export type MagazineStatus = "draft" | "published";
+
+// ============================================================================
+// 유저 상세 조회 관련 타입
+// ============================================================================
+
+export interface UserDetailPet {
+    id: string;
+    name: string;
+    type: string;
+    status: string;
+    profile_image: string | null;
+}
+
+export interface UserDetailData {
+    avatarUrl: string | null;
+    lastSeenAt: string | null;
+    subscriptionTier: string | null;
+    premiumExpiresAt: string | null;
+    points: number;
+    pets: UserDetailPet[];
+    chatMessagesCount: number;
+}
+
+// ============================================================================
+// API 사용량 관련 타입
+// ============================================================================
+
+export interface ApiUsageProvider {
+    todayCount: number;
+    monthCount: number;
+    estimatedMonthlyCostUsd: number;
+    budgetUsd: number | null;
+}
+
+export interface ApiUsageData {
+    openai: ApiUsageProvider;
+    fal: ApiUsageProvider;
+}
+
+// ============================================================================
+// 매거진 관련 타입
+// ============================================================================
 
 export interface MagazineArticleRow {
     id: string;

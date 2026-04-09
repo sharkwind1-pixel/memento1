@@ -27,6 +27,7 @@ export { useAdminData } from "./hooks/useAdminData";
 // ============================================================================
 export { default as AdminDashboardTab } from "./tabs/AdminDashboardTab";
 export { default as AdminUsersTab } from "./tabs/AdminUsersTab";
+export { default as AdminPostsTab } from "./tabs/AdminPostsTab";
 export { default as AdminInquiriesTab } from "./tabs/AdminInquiriesTab";
 export { default as AdminReportsTab } from "./tabs/AdminReportsTab";
 export { default as AdminWithdrawalsTab } from "./tabs/AdminWithdrawalsTab";

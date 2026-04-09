@@ -104,6 +104,9 @@ export const API = {
     ADMIN_ALLOW_REJOIN: "/api/admin/allow-rejoin",
     ADMIN_UPDATE_PROFILE: "/api/admin/update-profile",
     ADMIN_REPORTS: "/api/admin/reports",
+    ADMIN_USER_DETAIL: "/api/admin/user-detail",
+    ADMIN_POSTS: "/api/admin/posts",
+    ADMIN_API_USAGE: "/api/admin/api-usage",
 
     // 추모 펫 위로 리액션
     PET_CONDOLENCE: (petId: string) => `/api/pets/${petId}/condolence`,
