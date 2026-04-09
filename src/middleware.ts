@@ -50,7 +50,7 @@ export function middleware(request: NextRequest) {
 export const config = {
     matcher: [
         {
-            source: "/((?!api|_next/static|_next/image|favicon\\.ico|icons|sw\\.js|manifest\\.webmanifest|robots\\.txt|sitemap\\.xml|og-image\\.png|logo\\.png).*)",
+            source: "/((?!api|_next/static|_next/image|favicon\\.ico|icons|sw\\.js|manifest\\.webmanifest|robots\\.txt|sitemap\\.xml|og-image\\.png|logo\\.png|naver.*\\.html).*)",
             // missing: 이 조건은 prefetch 요청을 포함하지 않음
         },
     ],
