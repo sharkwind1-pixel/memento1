@@ -114,6 +114,7 @@ async function searchTopicInfo(query: string): Promise<string> {
 
     try {
         const client = tavily({ apiKey });
+        // 1차: 전문 자료 검색
         const response = await client.search(query, {
             searchDepth: "advanced",
             maxResults: 5,
@@ -122,8 +123,16 @@ async function searchTopicInfo(query: string): Promise<string> {
                 "royalcanin.com", "fitpetmall.com", "mypetlife.co.kr",
                 "petzlp.com", "wayopet.com", "naver.com",
                 "tistory.com", "brunch.co.kr", "pubmed.ncbi.nlm.nih.gov",
+                "youtube.com",
             ],
         });
+
+        // 2차: YouTube 전문가 영상 검색 (강형욱, 수의사 채널 등)
+        const ytResponse = await client.search(`${query} 강형욱 OR 수의사 OR 동물행동전문가 site:youtube.com`, {
+            searchDepth: "basic",
+            maxResults: 3,
+            includeAnswer: true,
+        }).catch(() => null);
 
         const parts: string[] = [];
 
@@ -138,6 +147,19 @@ async function searchTopicInfo(query: string): Promise<string> {
                     parts.push(`[출처${i + 1}: ${r.url}]\n${r.content.slice(0, 500)}`);
                 }
             }
+        }
+
+        // YouTube 전문가 영상 결과 추가
+        if (ytResponse?.results) {
+            for (let i = 0; i < Math.min(3, ytResponse.results.length); i++) {
+                const r = ytResponse.results[i];
+                if (r.content) {
+                    parts.push(`[YouTube 전문가: ${r.title || ""}]\n${r.content.slice(0, 400)}`);
+                }
+            }
+        }
+        if (ytResponse?.answer) {
+            parts.push(`[YouTube 요약] ${ytResponse.answer}`);
         }
 
         return parts.join("\n\n");
@@ -221,6 +243,7 @@ export async function GET(request: NextRequest) {
 - 1800~2500자 분량
 - 소제목 4~5개로 구조화
 - 수의사/전문가 의견을 인용하는 느낌으로 (예: "수의사들은 ~을 권장합니다")
+- YouTube 전문가(강형욱, 수의사 채널 등) 정보가 있으면 "강형욱 훈련사에 따르면~", "반려동물 전문 수의사 채널에서는~" 식으로 자연스럽게 인용
 - 구체적 수치, 방법, 단계를 포함 (예: "하루 2~3회, 한 번에 15~20분")
 - 의학적 확정 진단은 피하고 반드시 "수의사 상담을 권장합니다" 포함
 - 이모지 사용 금지
