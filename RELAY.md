@@ -74,6 +74,30 @@
 
 ---
 
+## 완료 항목 (2026-04-10 세션)
+
+### 정기결제 자동 갱신
+- [x] /api/cron/subscription-renewal — 포트원 V1 빌링키 재결제 크론 (KST 07:30)
+- [x] 3회 실패 시 구독 만료 + 프리미엄 해제 + 텔레그램/인앱 알림
+
+### 알림 벨 시스템
+- [x] notifications 테이블 + RLS + dedup 인덱스 (Supabase 마이그레이션)
+- [x] GET/PATCH /api/notifications — 알림 조회 + 읽음 처리
+- [x] NotificationBell + NotificationItem 컴포넌트 (헤더 통합)
+- [x] 알림 5종: 갱신완료/결제실패/구독만료/만료예정/환영
+- [x] 구독 만료 시 반려동물/사진 수 구체적 데이터 영향 안내
+- [x] /api/cron/notification-check — 만료 D-3 경고 크론 (KST 08:00)
+- [x] 30일 지난 알림 자동 정리
+
+### DB 마이그레이션
+- [x] profiles.device_fingerprint TEXT 컬럼 추가
+
+### 인프라
+- [x] Claude Code CLI + VS Code 확장 설치
+- [x] auto mode 설정 (~/.claude/settings.json)
+
+---
+
 ## 완료 항목 (2026-04-07 세션)
 
 ### PortOne V1 결제 연동 (PC + 모바일)

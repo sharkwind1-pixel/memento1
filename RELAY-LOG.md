@@ -4,6 +4,49 @@
 
 ---
 
+## [2026-04-10] 정기결제 크론 + 알림 벨 시스템
+
+### DB 마이그레이션 2건
+- [x] `profiles.device_fingerprint TEXT` 컬럼 추가 (Supabase 실행 완료)
+- [x] `notifications` 테이블 생성 (RLS, dedup 인덱스, 5개 타입)
+
+### 정기결제 자동 갱신 크론잡
+- [x] `/api/cron/subscription-renewal` 엔드포인트 생성
+- [x] 매일 KST 07:30 (UTC 22:30) 실행
+- [x] 포트원 V1 `/subscribe/payments/again` 빌링키 재결제
+- [x] 성공 시: 프리미엄 30일 연장 + 다음 결제일 갱신 + 텔레그램/인앱 알림
+- [x] 실패 시: 3일간 매일 재시도, 3회 실패 시 구독 만료 + 프리미엄 해제
+- [x] profiles 직접 업데이트 (grant_premium RPC 중복 INSERT 방지)
+
+### 알림 벨 시스템 (신규 기능)
+- [x] `GET/PATCH /api/notifications` — 알림 조회 (최근 50건) + 읽음 처리 API
+- [x] `NotificationBell` 컴포넌트 — 헤더 벨 아이콘 + 빨간 뱃지 (9+) + 드롭다운 패널
+- [x] `NotificationItem` 컴포넌트 — 타입별 아이콘, 상대시간, 읽음 표시
+- [x] Layout.tsx 헤더 통합 (다크모드 토글 ↔ 유저 아바타 사이)
+- [x] 알림 타입 5종: payment_success, payment_failed, subscription_expired, subscription_expiring, welcome
+- [x] subscription-renewal 크론에 인앱 알림 INSERT 3건 추가 (성공/실패/만료)
+- [x] 구독 만료 알림에 **반려동물 N마리, 사진 N장** 구체적 데이터 영향 안내
+
+### 만료 예정 알림 크론
+- [x] `/api/cron/notification-check` 엔드포인트 생성
+- [x] 매일 KST 08:00 (UTC 23:00) 실행 — subscription-renewal 이후
+- [x] 만료 D-3 경고: 무료 한도 초과 시 구체적 경고, 아닌 경우 결제수단 확인 요청
+- [x] `dedup_key`로 하루 1회만 알림 (중복 방지)
+- [x] 30일 지난 알림 자동 정리
+
+### 타입/설정
+- [x] `AppNotification`, `NotificationType` 타입 추가 (types/index.ts)
+- [x] `apiEndpoints.ts`에 NOTIFICATIONS 엔드포인트 추가
+- [x] `vercel.json` 크론 2개 추가 (subscription-renewal, notification-check)
+
+### 인프라
+- [x] Claude Code CLI 설치 (v2.1.97)
+- [x] Claude Code VS Code 확장 설치
+- [x] `~/.claude/settings.json` auto mode 설정
+- [x] PowerShell 실행 정책 변경 (RemoteSigned)
+
+---
+
 ## [2026-04-09] 대규모 세션 — 관리자 기능 + 영상 결제 + 성능 최적화 + 전수조사 + 콘텐츠 자동화
 
 ### 관리자 기능 3건
