@@ -7,15 +7,16 @@
 
 ## 즉시 — 대기 중
 
-- [ ] 관리자 유저 상세 조회 — 유저 클릭 시 상세 정보 (가입일, 펫 수, 대화 수, 구독 상태 등)
-- [ ] 관리자 게시물 탭 상호작용 — 게시물 클릭 시 상세보기/숨김/삭제 가능
-- [ ] 관리자 대시보드 크레딧 표시 — AI 펫톡 잔여 크레딧 + fal.ai 잔여 크레딧
-- [ ] AI 영상 단건 결제 (3,500원/건) — 횟수 초과 시 단건 결제 or 프리미엄 구독 선택 모달
+- [ ] 카카오페이 심사 보완사항 회신 (결제경로 pptx + 서비스제공기간 + 사업자등록증 제출용)
+- [ ] 정기결제 자동 갱신 크론잡 (subscription-renewal)
+- [ ] DB 마이그레이션: `ALTER TABLE profiles ADD COLUMN device_fingerprint TEXT;`
+- [x] 관리자 유저 상세 조회 — 유저 클릭 시 확장 패널 (가입일, 펫 수, 대화 수, 구독 상태, auth 이메일)
+- [x] 관리자 게시물 탭 상호작용 — 검색/상세보기/숨기기/삭제 (AdminPostsTab)
+- [x] 관리자 대시보드 크레딧 표시 — AI 펫톡(OpenAI) + AI 영상(fal.ai) 사용량/비용
+- [x] AI 영상 단건 결제 (3,500원/건) — VideoPurchaseModal + 전용 결제 API
 - [x] AI 영상 모델 Veo 3.1 Fast로 교체 (Minimax → Kling → Veo 3.1)
 - [x] AI 영상 프롬프트 템플릿 전면 고도화 (Fun 6개 + Memorial 6개 + Transform 1개)
 - [x] FAL_KEY Vercel 설정 완료
-- [ ] 카카오페이 심사 보완사항 회신 (결제경로 pptx + 서비스제공기간 + 사업자등록증 제출용)
-- [ ] 정기결제 자동 갱신 크론잡 (subscription-renewal)
 
 ## 완료 — UX/버그 (이전)
 

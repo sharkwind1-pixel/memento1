@@ -4,6 +4,82 @@
 
 ---
 
+## [2026-04-09] 대규모 세션 — 관리자 기능 + 영상 결제 + 성능 최적화 + 전수조사 + 콘텐츠 자동화
+
+### 관리자 기능 3건
+- [x] 유저 상세 조회: 카드 클릭 → 확장 패널 (펫 목록, 채팅수, 마지막 접속, 구독, auth 이메일/Google/Kakao 뱃지)
+- [x] 게시물 탭: PostsSimpleView → AdminPostsTab (검색/상세보기/숨기기/삭제)
+- [x] 대시보드 크레딧: AI 펫톡(OpenAI) + AI 영상(fal.ai) 사용량/예상비용 카드
+- [x] 신규 API 3개: /api/admin/user-detail, /api/admin/posts, /api/admin/api-usage
+- [x] Vercel 환경변수: OPENAI_MONTHLY_BUDGET=10, FAL_MONTHLY_BUDGET=10
+
+### AI 영상 단건 결제
+- [x] VideoPurchaseModal: "영상 1건 구매 3,500원" + 구독 안내 링크
+- [x] /api/payments/video/prepare + complete API
+- [x] quota API에 단건 구매 보너스 크레딧 반영
+- [x] 함께보기 갤러리: 글쓰기 → 영상 만들기 버튼 (VideoGenerateModal 직접 오픈)
+- [x] 모바일 결제 모달 안 보이는 문제: page.tsx 전역으로 이동 (display:none 이슈)
+
+### 성능 최적화 (First Load JS 427KB → 234KB, 45% 감소)
+- [x] React.lazy 탭별 코드 분할 (HomePage만 정적, 나머지 4탭 lazy)
+- [x] lucide-react 트리쉐이킹 (next.config.js optimizePackageImports)
+- [x] 히어로 이미지 PNG→WebP (608KB → 24KB, 96% 감소)
+- [x] 홈 데이터 4개 fetch 순차→병렬 (Promise.all)
+- [x] 함께보기 캐러셀 자동 슬라이드 (4초 간격)
+
+### 전수조사 보안/안정성 수정 (CRITICAL 3건 + HIGH 5건 + MEDIUM 2건)
+- [x] rate-limit.ts: 메모리 누수 방지 (5분 간격 만료 엔트리 정리)
+- [x] minimi/purchase: 레이스컨디션 → DB RPC(FOR UPDATE 락) 전환
+- [x] agent/shared.ts: 네트워크 에러 시 영구 false 캐싱 → 재시도 가능
+- [x] telegram-webhook: secret_token 검증 추가
+- [x] CSP unsafe-inline 필요 사유 문서화
+- [x] colors.ts ↔ tailwind.config.ts 컬러 동기화
+- [x] console.log 3건 제거 + 미사용 docx 패키지 제거
+- [x] HomePage as unknown as 타입캐스팅 제거
+- [x] PostDetailView fetchPost 에러 상태 + 재시도 버튼
+
+### 대형 컴포넌트 분리 (기능 변경 없음)
+- [x] AccountSettingsModal: 1,074줄 → 427줄 (+4파일: Blocked/Notification/Subscription/Delete)
+- [x] PostDetailView: 1,211줄 → 639줄 (+4파일: Types/Header/Body/Comments)
+- [x] MagazineReader: 1,155줄 → 429줄 (+3파일: CardUtils/CardRenderer/CardIndicator)
+- [x] aria-label 누락 1건 수정 (AdminMagazineTab)
+- [x] GET 엔드포인트 rate limit 추가 (memorial-today, adoption)
+
+### 헤더/UI
+- [x] 헤더 LevelBadge 아이콘 복원 (미니미만 제거, 등급 아이콘 유지)
+- [x] 홈 함께보기 카드 클릭 → 해당 게시글 바로 열기 (갤러리 이동 아님)
+
+### 네이버/구글 검색 등록
+- [x] 네이버 서치어드바이저 소유 확인 완료 (HTML 파일 + 메타태그)
+- [x] 네이버 사이트맵 제출 + 웹 페이지 수집 요청
+- [x] naver-site-verification 메타태그 갱신
+- [x] 네이버 확인 파일 Next.js 라우트로 생성 (public 404 우회)
+- [ ] 구글 Search Console 색인 생성 요청 (승빈님 직접)
+
+### 콘텐츠 자동화 (블로그 + 릴스)
+- [x] 블로그 초안 자동 생성 크론 (/api/cron/blog-generate, 매일 KST 09시)
+- [x] 42개 디테일 토픽 풀 (견종별/묘종별/건강/사료/펫로스/계절)
+- [x] Tavily Search로 수의학/전문 자료 + YouTube 강형욱/수의사 채널 검색
+- [x] 검색 결과를 GPT 컨텍스트에 주입 → 검증된 정보 기반 글 생성
+- [x] 매일 릴스/쇼츠 대본도 텔레그램으로 같이 전송
+- [x] 30일치 릴스 대본 docs/reels-shorts-30days.md 작성
+
+### 보안 정책 전환
+- [x] IP 기반 다중 계정 차단 제거 (가족/회사 유저 피해 방지)
+- [x] 디바이스 핑거프린팅 도입 (브라우저 특성 해시)
+- [x] 같은 디바이스 3개+ 계정 감지 시 텔레그램 경고 (모니터링 방식)
+- [ ] DB: profiles.device_fingerprint TEXT 컬럼 추가 필요
+
+### 카카오 OAuth
+- [x] 카카오 개발자 콘솔에서 account_email "필수 동의"로 변경 (승빈님 직접)
+
+### 메모리 기록
+- [x] 메멘토애니 핵심 철학 기록 (유저와 희노애락을 함께하는 곳)
+- [x] 카카오 이메일 필수 동의 변경 기록
+- [x] 승빈님 프로필 업데이트 (이미 런칭된 서비스, MVP 아님)
+
+---
+
 |------|------|
 | `supabase/migrations/20260226_memory_albums.sql` | **신규** - memory_albums 테이블, RLS, 인덱스 |
 | `src/types/index.ts` | MemoryAlbum, MemoryAlbumConcept 타입 추가 |
