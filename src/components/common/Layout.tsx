@@ -121,9 +121,13 @@ function HeaderAuthArea({
                         onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                         className="flex items-center gap-1.5 p-1.5 min-w-[44px] min-h-[44px] sm:px-3 sm:py-2 rounded-full sm:rounded-xl hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 active:scale-95 transition-all duration-200"
                     >
-                        <div className="w-8 h-8 rounded-full bg-memento-100 dark:bg-gray-700 flex items-center justify-center">
-                            <User className="w-4 h-4 text-memento-600 dark:text-gray-300" />
-                        </div>
+                        <LevelBadge
+                            points={points}
+                            petType={userPetType}
+                            isAdmin={isAdminUser}
+                            size="md"
+                            showTooltip={false}
+                        />
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-200 hidden sm:block max-w-[80px] truncate">
                             {displayName}
                         </span>
