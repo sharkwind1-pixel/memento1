@@ -476,6 +476,7 @@ export interface SmoothAutoScrollReturn {
     petcareScrollRef: React.RefObject<HTMLDivElement>;
     memorialScrollRef: React.RefObject<HTMLDivElement>;
     startAutoScroll?: (start?: boolean) => void | (() => void);
+    startSmoothAutoScroll?: (start?: boolean) => void | (() => void);
 }
 
 /** 이미지 상태 맵 */

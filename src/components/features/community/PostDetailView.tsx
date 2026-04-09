@@ -155,6 +155,7 @@ export default function PostDetailView({
     const [post, setPost] = useState<PostData | null>(null);
     const [comments, setComments] = useState<PostComment[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [isLiked, setIsLiked] = useState(false);
     const [likeCount, setLikeCount] = useState(0);
     const [isDisliked, setIsDisliked] = useState(false);
@@ -225,7 +226,7 @@ export default function PostDetailView({
                 createdAt: c.createdAt || c.created_at || new Date().toISOString(),
             })));
         } catch {
-            // 로드 실패 시 빈 상태 유지
+            setLoadError("게시글을 불러올 수 없습니다.");
         } finally {
             setIsLoading(false);
         }
@@ -613,6 +614,24 @@ export default function PostDetailView({
         return (
             <div className="flex items-center justify-center py-20">
                 <PawLoading size="lg" />
+            </div>
+        );
+    }
+
+    if (loadError) {
+        return (
+            <div className="text-center py-20">
+                <p className="text-gray-500 mb-2">{loadError}</p>
+                <p className="text-gray-400 text-sm mb-4">네트워크 상태를 확인하고 다시 시도해주세요.</p>
+                <div className="flex gap-2 justify-center">
+                    <Button variant="outline" onClick={() => { setLoadError(null); fetchPost(); }}>
+                        다시 시도
+                    </Button>
+                    <Button variant="outline" onClick={onBack}>
+                        <ArrowLeft className="w-4 h-4 mr-2" />
+                        목록으로
+                    </Button>
+                </div>
             </div>
         );
     }

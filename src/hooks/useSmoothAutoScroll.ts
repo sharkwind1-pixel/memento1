@@ -9,7 +9,9 @@
 
 import { useRef, useEffect, useCallback } from "react";
 
-export function useSmoothAutoScroll() {
+import type { SmoothAutoScrollReturn } from "@/types";
+
+export function useSmoothAutoScroll(): SmoothAutoScrollReturn {
     const communityScrollRef = useRef<HTMLDivElement>(null);
     const showcaseScrollRef = useRef<HTMLDivElement>(null);
     const adoptionScrollRef = useRef<HTMLDivElement>(null);

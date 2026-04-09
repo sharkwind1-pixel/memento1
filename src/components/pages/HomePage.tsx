@@ -9,7 +9,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 
-import { TabType, CommunitySubcategory, SmoothAutoScrollReturn } from "@/types";
+import { TabType, CommunitySubcategory } from "@/types";
 import { useSmoothAutoScroll } from "@/hooks/useSmoothAutoScroll";
 import {
     useHomePage,
@@ -36,7 +36,7 @@ interface HomePageProps {
 function HomePage({ setSelectedTab, isActive, onOpenCommunityPost }: HomePageProps) {
     const { isSimpleMode, user } = useAuth();
     const { isMemorialMode } = useMemorialMode();
-    const scroll = useSmoothAutoScroll() as unknown as SmoothAutoScrollReturn;
+    const scroll = useSmoothAutoScroll();
 
     const {
         lightboxItem,
