@@ -233,7 +233,7 @@ export default function VideoGenerateModal({
                     toast.error(errorData?.error || "영상 생성 서비스를 이용하려면 프리미엄 구독이 필요합니다.");
                     onClose();
                     setTimeout(() => {
-                        window.dispatchEvent(new CustomEvent("openPremiumModal", { detail: { feature: "ai-chat-limit" } }));
+                        window.dispatchEvent(new CustomEvent("openVideoPurchaseModal"));
                     }, 300);
                     return;
                 }
@@ -253,7 +253,7 @@ export default function VideoGenerateModal({
                 toast.error("영상 생성 서비스를 이용하려면 프리미엄 구독이 필요합니다.");
                 onClose();
                 setTimeout(() => {
-                    window.dispatchEvent(new CustomEvent("openPremiumModal", { detail: { feature: "ai-chat-limit" } }));
+                    window.dispatchEvent(new CustomEvent("openVideoPurchaseModal"));
                 }, 300);
             } else {
                 toast.error(message);

@@ -31,6 +31,7 @@ import MediaUploadModal from "@/components/features/record/MediaUploadModal";
 import PetFormModal from "@/components/features/record/PetFormModal";
 import DeleteConfirmModal from "@/components/features/record/DeleteConfirmModal";
 import PremiumModal from "@/components/modals/PremiumModal";
+import VideoPurchaseModal from "@/components/modals/VideoPurchaseModal";
 import PhotoViewer from "@/components/features/record/PhotoViewer";
 import PetProfileCard from "@/components/features/record/PetProfileCard";
 import PetPhotoAlbum from "@/components/features/record/PetPhotoAlbum";
@@ -104,8 +105,9 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
     // 프리미엄 모달 상태
     const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
     const [premiumFeature, setPremiumFeature] = useState<"pet-limit" | "photo-limit">("pet-limit");
+    const [isVideoPurchaseModalOpen, setIsVideoPurchaseModalOpen] = useState(false);
 
-    // openPremiumModal 커스텀 이벤트 수신 (VideoGenerateModal 등에서 발행)
+    // openPremiumModal 커스텀 이벤트 수신
     useEffect(() => {
         const handleOpenPremium = () => {
             setPremiumFeature("pet-limit");
@@ -113,6 +115,15 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
         };
         window.addEventListener("openPremiumModal", handleOpenPremium);
         return () => window.removeEventListener("openPremiumModal", handleOpenPremium);
+    }, []);
+
+    // openVideoPurchaseModal 커스텀 이벤트 수신 (영상 횟수 소진 시)
+    useEffect(() => {
+        const handleOpenVideoPurchase = () => {
+            setIsVideoPurchaseModalOpen(true);
+        };
+        window.addEventListener("openVideoPurchaseModal", handleOpenVideoPurchase);
+        return () => window.removeEventListener("openVideoPurchaseModal", handleOpenVideoPurchase);
     }, []);
 
     // 추모 전환 모달
@@ -620,6 +631,19 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
                 isOpen={isPremiumModalOpen}
                 onClose={() => setIsPremiumModalOpen(false)}
                 feature={premiumFeature}
+            />
+
+            <VideoPurchaseModal
+                isOpen={isVideoPurchaseModalOpen}
+                onClose={() => setIsVideoPurchaseModalOpen(false)}
+                onOpenSubscription={() => {
+                    setPremiumFeature("pet-limit");
+                    setIsPremiumModalOpen(true);
+                }}
+                onPurchaseSuccess={() => {
+                    // quota 새로고침을 위해 페이지에서 VideoGenerationSection이 리마운트하도록 트리거
+                    // VideoGenerationSection은 마운트 시 quota를 fetch하므로 충분
+                }}
             />
         </div>
     );

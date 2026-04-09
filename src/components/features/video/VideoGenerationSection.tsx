@@ -190,13 +190,13 @@ export default function VideoGenerationSection({
             const remaining = quota.limit - quota.used;
             const exhausted = quota.isLifetimeFree ? quota.lifetimeFreeUsed : remaining <= 0;
             if (exhausted) {
-                window.dispatchEvent(new CustomEvent("openPremiumModal", { detail: { feature: "ai-chat-limit" } }));
+                window.dispatchEvent(new CustomEvent("openVideoPurchaseModal"));
                 return;
             }
         }
         // quota null (로드 실패) + 비프리미엄 → 결제 유도
         if (!quota && !isPremium) {
-            window.dispatchEvent(new CustomEvent("openPremiumModal", { detail: { feature: "ai-chat-limit" } }));
+            window.dispatchEvent(new CustomEvent("openVideoPurchaseModal"));
             return;
         }
         setIsGenerateModalOpen(true);

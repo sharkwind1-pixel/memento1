@@ -97,6 +97,10 @@ export const API = {
     SUBSCRIBE_PREPARE: "/api/payments/subscribe/prepare",
     SUBSCRIBE_COMPLETE: "/api/payments/subscribe/complete",
 
+    // 결제 (영상 단건)
+    PAYMENT_VIDEO_PREPARE: "/api/payments/video/prepare",
+    PAYMENT_VIDEO_COMPLETE: "/api/payments/video/complete",
+
     // 관리자
     ADMIN_POINTS: "/api/admin/points",
     ADMIN_DELETE_USER: "/api/admin/delete-user",
