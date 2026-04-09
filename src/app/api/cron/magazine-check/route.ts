@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 4. 매거진이 없으면 강제 생성 호출
-    console.log("[magazine-check] 오늘 매거진이 없습니다. 보정 생성을 시도합니다.");
+    // console.log("[magazine-check] 오늘 매거진이 없습니다. 보정 생성을 시도합니다.");
 
     try {
         const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://mementoani.com";
@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
         const result = await res.json();
 
         if (result.success) {
-            console.log("[magazine-check] 보정 생성 성공:", result.title);
+            // console.log("[magazine-check] 보정 생성 성공:", result.title);
             return NextResponse.json({
                 message: "보정 생성 성공",
                 compensated: true,

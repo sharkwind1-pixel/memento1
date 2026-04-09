@@ -48,19 +48,23 @@ export async function hasChatModeColumn(): Promise<boolean> {
     if (chatModeColumnExists !== null) return chatModeColumnExists;
 
     try {
-        // chat_messages 테이블에서 chat_mode 컬럼 조회 시도
         const { error } = await getSupabase()
             .from("chat_messages")
             .select("chat_mode")
             .limit(0);
 
-        chatModeColumnExists = !error;
-    } catch (err) {
-        console.error("[agent] hasChatModeColumn check failed:", err instanceof Error ? err.message : err);
-        chatModeColumnExists = false;
+        if (!error) {
+            chatModeColumnExists = true;
+        } else if (error.code === "42703" || error.message?.includes("column")) {
+            // 컬럼이 실제로 없는 경우만 false로 캐싱
+            chatModeColumnExists = false;
+        }
+        // 그 외 에러(네트워크 등)는 캐싱하지 않음 → 다음 호출 시 재시도
+    } catch {
+        // 네트워크 에러: 캐싱하지 않음
     }
 
-    return chatModeColumnExists;
+    return chatModeColumnExists ?? false;
 }
 
 // ---- OpenAI 클라이언트 (지연 초기화) ----

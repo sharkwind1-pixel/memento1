@@ -186,7 +186,7 @@ export async function GET(request: NextRequest) {
 
             try {
                 result = await createMagazineArticle(supabase, openai);
-                console.log("[magazine-generate] 재시도 성공:", result.title);
+                // 재시도 성공 (로그 불필요)
             } catch (retryError) {
                 const retryMsg = retryError instanceof Error ? retryError.message : "알 수 없는 오류";
                 console.error("[magazine-generate] 재시도도 실패:", retryMsg);

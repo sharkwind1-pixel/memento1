@@ -18,6 +18,32 @@ const vpnCheckCache = new Map<string, { isVPN: boolean; isProxy: boolean; isData
 // 유저별 마지막 요청 시각 + 연속 빠른 요청 횟수 (봇 감지용)
 const userLastRequest = new Map<string, { lastTime: number; fastCount: number }>();
 
+// 메모리 누수 방지: 만료된 엔트리 주기적 정리 (5분마다)
+const CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
+const VPN_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // VPN 캐시 24시간
+
+if (typeof setInterval !== "undefined") {
+    setInterval(() => {
+        const now = Date.now();
+        ipBlockList.forEach((blockUntil, ip) => {
+            if (now > blockUntil) ipBlockList.delete(ip);
+        });
+        ipRequestCounts.forEach((data, key) => {
+            if (now > data.resetTime) ipRequestCounts.delete(key);
+        });
+        const todayStr = new Date().toISOString().split("T")[0];
+        userDailyUsage.forEach((data, key) => {
+            if (data.date !== todayStr) userDailyUsage.delete(key);
+        });
+        vpnCheckCache.forEach((data, key) => {
+            if (now - data.checkedAt > VPN_CACHE_TTL_MS) vpnCheckCache.delete(key);
+        });
+        userLastRequest.forEach((data, key) => {
+            if (now - data.lastTime > 60 * 60 * 1000) userLastRequest.delete(key);
+        });
+    }, CLEANUP_INTERVAL_MS);
+}
+
 // Rate Limit 설정
 const RATE_LIMITS = {
     // 일반 API (게시글 등)

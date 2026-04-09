@@ -13,7 +13,8 @@ export function middleware(request: NextRequest) {
     const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
 
     // CSP 헤더 구성
-    // script-src: nonce 기반 + strict-dynamic (nonce가 있는 스크립트가 로드한 스크립트도 허용)
+    // script-src: nonce 기반. unsafe-inline은 iamport.js SDK가 동적 인라인 스크립트를
+    // 생성하기 때문에 필요 (제거 시 모바일 결제 FAILED TO FETCH 발생 — 2026-04-07 CSP 메모리 참조).
     // style-src: unsafe-inline 유지 (Tailwind CSS + Radix UI 인라인 스타일 필요)
     const csp = [
         "default-src 'self'",

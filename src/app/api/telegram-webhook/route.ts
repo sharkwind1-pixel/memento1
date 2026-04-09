@@ -35,6 +35,15 @@ function isAdmin(chatId: number): boolean {
 
 export async function POST(request: NextRequest) {
     try {
+        // 텔레그램 secret_token 검증 (webhook 설정 시 지정한 토큰)
+        const secretToken = process.env.TELEGRAM_WEBHOOK_SECRET;
+        if (secretToken) {
+            const headerToken = request.headers.get("x-telegram-bot-api-secret-token");
+            if (headerToken !== secretToken) {
+                return NextResponse.json({ ok: false }, { status: 403 });
+            }
+        }
+
         const body = await request.json();
         const message = body.message;
         if (!message?.text) return NextResponse.json({ ok: true });

@@ -87,42 +87,37 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "포인트가 부족합니다" }, { status: 400 });
         }
 
-        // 4c. 포인트 차감 (원자적 업데이트 - 레이스 컨디션 방지)
-        const { data: updated, error: updateError } = await supabase
-            .from("profiles")
-            .update({ points: profile.points - itemPrice })
-            .eq("id", user.id)
-            .gte("points", itemPrice)  // 포인트가 충분한 경우에만 차감
-            .select("points")
-            .single();
-
-        if (updateError || !updated) {
-            // 동시 요청으로 포인트 부족해진 경우
-            return NextResponse.json({ error: "포인트가 부족합니다" }, { status: 400 });
-        }
-        const newPoints = updated.points;
-
-        // 4d. 아이템 추가
-        const { error: insertError } = await supabase
-            .from("user_minimi")
-            .insert({ user_id: user.id, minimi_id: itemSlug, purchase_price: itemPrice });
-
-        if (insertError) {
-            console.error("[minimi/purchase] Insert user_minimi failed:", insertError.message, insertError.code);
-            // 롤백: 포인트 복구
-            await supabase.from("profiles").update({ points: profile.points }).eq("id", user.id);
-            return NextResponse.json({ error: "아이템 추가에 실패했습니다" }, { status: 500 });
-        }
-
-        // 4e. 거래 내역 기록 (실패해도 구매 자체는 성공)
-        try {
-            await supabase.from("point_transactions").insert({
-                user_id: user.id,
-                action_type: "minimi_purchase",
-                points_earned: -itemPrice,
-                metadata: { itemSlug, itemName },
+        // 4c. 포인트 차감 (DB RPC로 원자적 처리 — FOR UPDATE 락)
+        const { data: rpcResult, error: rpcError } = await supabase
+            .rpc("purchase_minimi_item", {
+                p_user_id: user.id,
+                p_minimi_id: itemSlug,
+                p_item_name: itemName,
+                p_item_price: itemPrice,
             });
-        } catch { /* 무시 */ }
+
+        if (rpcError) {
+            console.error("[minimi/purchase] RPC failed:", rpcError.message);
+            return NextResponse.json({ error: "구매 처리에 실패했습니다" }, { status: 500 });
+        }
+
+        // RPC 반환: { success, error?, newPoints? }
+        const rpcData = rpcResult as { success: boolean; error?: string; newPoints?: number } | null;
+        if (!rpcData?.success) {
+            const errorMap: Record<string, string> = {
+                already_owned: "이미 보유한 아이템입니다",
+                user_not_found: "사용자 정보를 찾을 수 없습니다",
+                insufficient_points: "포인트가 부족합니다",
+            };
+            return NextResponse.json(
+                { error: errorMap[rpcData?.error || ""] || "구매 처리에 실패했습니다" },
+                { status: 400 }
+            );
+        }
+
+        const newPoints = rpcData.newPoints ?? (profile.points - itemPrice);
+
+        // RPC에서 insert + point_transactions까지 모두 원자적으로 처리 완료
 
         return NextResponse.json({
             success: true,
