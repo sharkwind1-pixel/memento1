@@ -1,12 +1,14 @@
 /**
  * fal.ai 클라이언트 유틸리티
- * Minimax Hailuo 02 image-to-video 생성
+ * Kling 2.6 Pro image-to-video 생성 (10초, 오디오 없음)
  *
  * 서버 사이드에서만 사용 (API Route)
  * FAL_KEY 환경변수 필요
  */
 
 import { fal } from "@fal-ai/client";
+
+const MODEL_ID = "fal-ai/kling-video/v2.6/pro/image-to-video";
 
 /**
  * fal.ai 클라이언트 초기화 (호출 시점에 환경변수 보장)
@@ -32,12 +34,14 @@ export async function submitVideoGeneration(
     ensureFalConfig();
 
     const result = await fal.queue.submit(
-        "fal-ai/minimax/video-01-live/image-to-video",
+        MODEL_ID,
         {
             input: {
                 prompt,
-                image_url: imageUrl,
-                prompt_optimizer: false,
+                start_image_url: imageUrl,
+                duration: "10",
+                negative_prompt: "blur, distort, low quality, deformed, ugly",
+                generate_audio: false,
             },
             webhookUrl,
         }
@@ -53,7 +57,7 @@ export async function submitVideoGeneration(
 export async function checkVideoStatus(requestId: string) {
     ensureFalConfig();
     const status = await fal.queue.status(
-        "fal-ai/minimax/video-01-live/image-to-video",
+        MODEL_ID,
         {
             requestId,
             logs: false,
