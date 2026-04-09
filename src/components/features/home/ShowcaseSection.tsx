@@ -121,6 +121,7 @@ export default function ShowcaseSection({
                                         <video
                                             src={post.videoUrl}
                                             poster={firstImage || undefined}
+                                            autoPlay
                                             muted
                                             playsInline
                                             loop

@@ -283,7 +283,7 @@ export function useHomePage() {
             const params = new URLSearchParams({
                 board: "free",
                 badge: "자랑",
-                sort: "popular",
+                sort: "latest",
                 limit: "20",
             });
             const res = await fetch(`${API.POSTS}?${params}`);
