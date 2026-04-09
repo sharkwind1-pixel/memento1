@@ -81,6 +81,8 @@ import NicknameSetupModal from "@/components/Auth/NicknameSetupModal";
 import OnboardingModal from "@/components/features/onboarding/OnboardingModal";
 import TutorialTour from "@/components/features/onboarding/TutorialTour";
 import PostOnboardingGuide from "@/components/features/onboarding/PostOnboardingGuide";
+import VideoPurchaseModal from "@/components/modals/VideoPurchaseModal";
+import PremiumModal from "@/components/modals/PremiumModal";
 import { safeGetItem, safeSetItem, safeRemoveItem } from "@/lib/safe-storage";
 import { toast } from "sonner";
 import { authFetch } from "@/lib/auth-fetch";
@@ -118,6 +120,22 @@ function HomeContent() {
     // 온보딩 체크에만 필요하므로 별도 effect에서 직접 Supabase 조회로 대체
     const router = useRouter();
     const searchParams = useSearchParams();
+
+    // 전역 결제 모달 상태 (어떤 탭에서든 접근 가능)
+    const [isVideoPurchaseOpen, setIsVideoPurchaseOpen] = useState(false);
+    const [isGlobalPremiumOpen, setIsGlobalPremiumOpen] = useState(false);
+
+    // openVideoPurchaseModal / openPremiumModal 이벤트 전역 수신
+    useEffect(() => {
+        const handleVideoPurchase = () => setIsVideoPurchaseOpen(true);
+        const handlePremium = () => setIsGlobalPremiumOpen(true);
+        window.addEventListener("openVideoPurchaseModal", handleVideoPurchase);
+        window.addEventListener("openPremiumModal", handlePremium);
+        return () => {
+            window.removeEventListener("openVideoPurchaseModal", handleVideoPurchase);
+            window.removeEventListener("openPremiumModal", handlePremium);
+        };
+    }, []);
 
     // 로딩 안전장치: AuthContext가 실패하더라도 5초 후 강제 표시
     const [forceShow, setForceShow] = useState(false);
@@ -635,6 +653,24 @@ function HomeContent() {
                 }}
                 onNavigate={(tab) => handleTabChange(tab as TabType)}
                 userId={user?.id}
+            />
+
+            {/* 전역 영상 단건 결제 모달 */}
+            <VideoPurchaseModal
+                isOpen={isVideoPurchaseOpen}
+                onClose={() => setIsVideoPurchaseOpen(false)}
+                onOpenSubscription={() => {
+                    setIsVideoPurchaseOpen(false);
+                    setIsGlobalPremiumOpen(true);
+                }}
+                onPurchaseSuccess={() => {}}
+            />
+
+            {/* 전역 프리미엄 구독 모달 */}
+            <PremiumModal
+                isOpen={isGlobalPremiumOpen}
+                onClose={() => setIsGlobalPremiumOpen(false)}
+                feature="ai-chat-limit"
             />
         </>
     );
