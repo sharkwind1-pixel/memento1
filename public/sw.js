@@ -4,7 +4,7 @@
  * 정적 에셋 캐싱으로 반복 방문 시 로드 시간 단축
  */
 
-const CACHE_NAME = "memento-v2";
+const CACHE_NAME = "memento-v3";
 const STATIC_ASSETS = ["/logo.png", "/logo2.png", "/icon-192.png", "/icon-512.png"];
 
 // 서비스 워커 설치 시 정적 에셋 프리캐시
@@ -32,6 +32,12 @@ self.addEventListener("activate", function (event) {
 
 // 네트워크 요청 가로채기 - 정적 에셋/이미지 캐싱
 self.addEventListener("fetch", function (event) {
+    // GET 요청만 캐싱 가능 (Cache API는 POST/PUT/DELETE 지원 안 함)
+    // POST 업로드는 서비스 워커가 건드리지 않고 브라우저 기본 동작에 맡김
+    if (event.request.method !== "GET") {
+        return;
+    }
+
     var url = new URL(event.request.url);
 
     // API 요청은 캐싱하지 않음
@@ -67,7 +73,7 @@ self.addEventListener("fetch", function (event) {
         return;
     }
 
-    // Supabase Storage 이미지: Stale-While-Revalidate
+    // Supabase Storage 이미지: Stale-While-Revalidate (GET만)
     if (url.hostname.includes("supabase.co") && url.pathname.includes("/storage/")) {
         event.respondWith(
             caches.match(event.request).then(function (cached) {
