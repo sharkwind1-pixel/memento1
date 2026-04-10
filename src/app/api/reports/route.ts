@@ -27,6 +27,17 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
         }
 
+        // 차단 유저 신고 차단 (어뷰징 방지)
+        const adminCheckSupabase = createAdminSupabase();
+        const { data: reporterProfile } = await adminCheckSupabase
+            .from("profiles")
+            .select("is_banned")
+            .eq("id", user.id)
+            .single();
+        if (reporterProfile?.is_banned) {
+            return NextResponse.json({ error: "이용이 제한된 계정입니다" }, { status: 403 });
+        }
+
         const body = await request.json();
         const { targetType, targetId, reason, description } = body;
 
@@ -101,16 +112,42 @@ async function checkAutoHideAndNotify(
 
     const reportCount = count || 0;
 
-    // 자동 숨김 임계값에 도달했으면 텔레그램에 추가 알림
+    // 자동 숨김 임계값에 도달했으면 게시글 숨김 + 텔레그램 알림
     if (reportCount >= MODERATION.AUTO_HIDE_REPORT_THRESHOLD) {
-        // 게시글 작성자 확인
+        // 게시글 작성자 확인 (이미 숨겨진 글은 재처리 방지)
         const { data: post } = await supabase
             .from("community_posts")
-            .select("user_id, title")
+            .select("user_id, title, is_hidden")
             .eq("id", targetId)
             .single();
 
-        if (post) {
+        if (post && !post.is_hidden) {
+            // 게시글 자동 숨김 처리 (실제 DB 업데이트)
+            // 기존 패턴 일치: is_hidden + moderation_status + moderation_reason
+            const { error: hideError } = await supabase
+                .from("community_posts")
+                .update({
+                    is_hidden: true,
+                    moderation_status: "rejected",
+                    moderation_reason: `신고 ${reportCount}건 누적 자동 숨김`,
+                })
+                .eq("id", targetId);
+
+            if (hideError) {
+                console.error("[reports] Auto-hide failed:", hideError.message);
+            }
+
+            // moderation_logs에도 기록 (반복 위반 카운트용)
+            await supabase.from("moderation_logs").insert({
+                post_id: targetId,
+                filter_type: "report",
+                result: "blocked",
+                reason: `신고 ${reportCount}건 누적 자동 숨김`,
+                details: { reportCount, threshold: MODERATION.AUTO_HIDE_REPORT_THRESHOLD },
+            }).then(({ error }) => {
+                if (error) console.error("[reports] moderation_logs insert failed:", error.message);
+            });
+
             // 텔레그램: 자동 숨김 알림
             import("@/lib/telegram").then(({ notifyReport }) =>
                 notifyReport({

@@ -7,12 +7,13 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabase";
 import { PRICING } from "@/config/constants";
-import { CreditCard, Crown, AlertTriangle } from "lucide-react";
+import { CreditCard, Crown, AlertTriangle, Heart } from "lucide-react";
 import { InlineLoading } from "@/components/ui/PawLoading";
 import { toast } from "sonner";
 import type { SubscriptionTier } from "@/config/constants";
+import { useSubscriptionPhase } from "@/hooks/useSubscriptionPhase";
+import { usePets } from "@/contexts/PetContext";
 
 interface SubscriptionSectionProps {
     userId: string;
@@ -22,41 +23,66 @@ interface SubscriptionSectionProps {
 }
 
 export default function SubscriptionSection({
-    userId,
     isPremiumUser,
     subscriptionTier,
     premiumExpiresAt,
 }: SubscriptionSectionProps) {
     const [showCancelConfirm, setShowCancelConfirm] = useState(false);
     const [isCancelling, setIsCancelling] = useState(false);
+    const phaseInfo = useSubscriptionPhase();
+    const { pets } = usePets();
+    const [savingProtectedPet, setSavingProtectedPet] = useState(false);
+    const [protectedPetId, setProtectedPetId] = useState<string | null>(null);
 
-    // 구독 해지
+    // 본인 펫 중 archive 안 된 것만 (대표 지정 가능 후보)
+    const eligiblePets = React.useMemo(
+        () => pets.filter((p) => !("archived_at" in p) || !p.archived_at),
+        [pets]
+    );
+
+    const handleProtectedPetChange = async (petId: string) => {
+        if (!petId) return;
+        setSavingProtectedPet(true);
+        try {
+            const res = await fetch("/api/subscription/protected-pet", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ petId }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "지정 실패");
+            setProtectedPetId(petId);
+            toast.success("대표 반려동물이 지정되었습니다");
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : "지정 실패";
+            toast.error(msg);
+        } finally {
+            setSavingProtectedPet(false);
+        }
+    };
+
+    // 구독 해지 — 라이프사이클 시작 (즉시 해제 X, 단계적 회귀)
     const handleCancelSubscription = async () => {
         setIsCancelling(true);
 
         try {
-            // profiles에서 프리미엄 비활성화
-            const { error } = await supabase
-                .from("profiles")
-                .update({
-                    is_premium: false,
-                    subscription_tier: "free",
-                })
-                .eq("id", userId);
+            const res = await fetch("/api/subscription/cancel", { method: "POST" });
+            const result = await res.json();
 
-            if (error) throw error;
+            if (!res.ok) {
+                throw new Error(result.error || "구독 해지에 실패했습니다");
+            }
 
             setShowCancelConfirm(false);
             toast.success(
-                premiumExpiresAt
-                    ? `구독이 해지되었습니다. ${new Date(premiumExpiresAt).toLocaleDateString("ko-KR")}까지 기존 혜택을 이용할 수 있습니다.`
-                    : "구독이 해지되었습니다."
+                "구독이 해지되었습니다. 소중한 추억은 30일간 그대로 보관됩니다."
             );
 
             // AuthContext 프로필 새로고침
             window.location.reload();
-        } catch {
-            toast.error("구독 해지에 실패했습니다. 다시 시도해주세요.");
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : "구독 해지에 실패했습니다";
+            toast.error(msg);
         } finally {
             setIsCancelling(false);
         }
@@ -122,14 +148,15 @@ export default function SubscriptionSection({
                                 <div className="text-xs text-red-600 dark:text-red-400">
                                     <p className="font-medium">정말 구독을 해지하시겠습니까?</p>
                                     <p className="mt-1">
-                                        해지 후에도{" "}
-                                        {premiumExpiresAt
-                                            ? `${new Date(premiumExpiresAt).toLocaleDateString("ko-KR")}까지`
-                                            : "남은 기간 동안"}{" "}
-                                        기존 혜택을 이용할 수 있습니다.
+                                        소중한 추억은 90일간 단계적으로 보관돼요.
                                     </p>
+                                    <ul className="mt-1 ml-3 list-disc space-y-0.5">
+                                        <li>30일간 보기 모드 (편집/추가만 제한)</li>
+                                        <li>이후 50일간 보관함 (커뮤니티는 계속 이용)</li>
+                                        <li>90일 후 무료 한도로 회귀 (대표 펫 1마리 + 사진 50장 유지)</li>
+                                    </ul>
                                     <p className="mt-1">
-                                        이후 무료 플랜으로 전환되며, 초과 데이터는 제한됩니다.
+                                        그 동안 언제든 재구독하면 모든 데이터가 즉시 복구됩니다.
                                     </p>
                                 </div>
                             </div>
@@ -168,6 +195,39 @@ export default function SubscriptionSection({
                     </p>
                     <p className="text-[10px] text-gray-400 mt-2">
                         AI 펫톡, 반려동물 등록 등 사용 중 자연스럽게 업그레이드할 수 있습니다.
+                    </p>
+                </div>
+            )}
+
+            {/* 라이프사이클 진행 중일 때만 대표 펫 지정 UI */}
+            {phaseInfo.isLifecycleActive && eligiblePets.length > 0 && (
+                <div className="mt-4 bg-memorial-50 dark:bg-memorial-900/20 border border-memorial-200 dark:border-memorial-800 rounded-xl p-4">
+                    <div className="flex items-start gap-2 mb-3">
+                        <Heart className="w-4 h-4 text-memorial-500 flex-shrink-0 mt-0.5" />
+                        <div>
+                            <p className="text-xs font-semibold text-memorial-700 dark:text-memorial-300">
+                                대표 반려동물 지정
+                            </p>
+                            <p className="text-[11px] text-memorial-600/80 dark:text-memorial-400/80 mt-0.5">
+                                무료 한도로 회귀 시 보존될 1마리를 선택하세요. 나머지는 보관함으로 이동되며 재구독 시 즉시 복구됩니다.
+                            </p>
+                        </div>
+                    </div>
+                    <select
+                        value={protectedPetId || ""}
+                        onChange={(e) => handleProtectedPetChange(e.target.value)}
+                        disabled={savingProtectedPet}
+                        className="w-full text-xs px-3 py-2 rounded-lg border border-memorial-300 dark:border-memorial-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-memorial-500"
+                    >
+                        <option value="">— 선택 안 함 (가장 오래된 펫이 자동 지정) —</option>
+                        {eligiblePets.map((p) => (
+                            <option key={p.id} value={p.id}>
+                                {p.name}{p.status === "memorial" ? " (추모)" : ""}
+                            </option>
+                        ))}
+                    </select>
+                    <p className="text-[10px] text-memorial-600/70 dark:text-memorial-400/70 mt-2">
+                        추모 펫도 대표로 지정할 수 있습니다 — 데이터 연속성을 위해.
                     </p>
                 </div>
             )}

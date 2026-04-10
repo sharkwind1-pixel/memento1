@@ -48,6 +48,11 @@ interface AuthContextType {
     isAdminUser: boolean;
     isPremiumUser: boolean;
     subscriptionTier: SubscriptionTier;
+    // 구독 라이프사이클 상태 (해지 후 단계적 회귀)
+    subscriptionPhase: import("@/types").SubscriptionPhase;
+    dataReadonlyUntil: string | null;
+    dataHiddenUntil: string | null;
+    dataResetAt: string | null;
     refreshProfile: () => Promise<void>;
     // 프로필 로딩 완료 플래그
     profileLoaded: boolean;
@@ -94,6 +99,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [isAdminUser, setIsAdminUser] = useState(false);
     const [isPremiumUser, setIsPremiumUser] = useState(false);
     const [subscriptionTier, setSubscriptionTier] = useState<SubscriptionTier>("free");
+    const [subscriptionPhase, setSubscriptionPhase] = useState<import("@/types").SubscriptionPhase>("active");
+    const [dataReadonlyUntil, setDataReadonlyUntil] = useState<string | null>(null);
+    const [dataHiddenUntil, setDataHiddenUntil] = useState<string | null>(null);
+    const [dataResetAt, setDataResetAt] = useState<string | null>(null);
     const [points, setPoints] = useState(0);
     const [pointsLoaded, setPointsLoaded] = useState(false);
     const [profileLoaded, setProfileLoaded] = useState(false);
@@ -150,7 +159,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const [profileResult, minimiListResult, firstPetResult] = await Promise.all([
                 supabase
                     .from("profiles")
-                    .select("is_admin, is_premium, premium_expires_at, points, onboarding_data, equipped_minimi_id, equipped_accessories, minimi_pixel_data, minimi_accessories_data, is_simple_mode, subscription_tier")
+                    .select("is_admin, is_premium, premium_expires_at, points, onboarding_data, equipped_minimi_id, equipped_accessories, minimi_pixel_data, minimi_accessories_data, is_simple_mode, subscription_tier, subscription_phase, data_readonly_until, data_hidden_until, data_reset_at")
                     .eq("id", currentUser.id)
                     .single(),
                 supabase
@@ -183,7 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         is_admin: false,
                         is_banned: false,
                     }, { onConflict: "id" })
-                    .select("is_admin, is_premium, premium_expires_at, points, onboarding_data, equipped_minimi_id, equipped_accessories, minimi_pixel_data, minimi_accessories_data, is_simple_mode, subscription_tier")
+                    .select("is_admin, is_premium, premium_expires_at, points, onboarding_data, equipped_minimi_id, equipped_accessories, minimi_pixel_data, minimi_accessories_data, is_simple_mode, subscription_tier, subscription_phase, data_readonly_until, data_hidden_until, data_reset_at")
                     .single();
                 if (!insertErr && newProfile) {
                     data = newProfile;
@@ -219,6 +228,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             } else {
                 setIsPremiumUser(false);
                 setSubscriptionTier("free");
+            }
+
+            // 구독 라이프사이클 단계 (해지 후 단계적 회귀)
+            if (!error && data) {
+                const phase = (data.subscription_phase as import("@/types").SubscriptionPhase) || "active";
+                setSubscriptionPhase(phase);
+                setDataReadonlyUntil(data.data_readonly_until || null);
+                setDataHiddenUntil(data.data_hidden_until || null);
+                setDataResetAt(data.data_reset_at || null);
+            } else {
+                setSubscriptionPhase("active");
+                setDataReadonlyUntil(null);
+                setDataHiddenUntil(null);
+                setDataResetAt(null);
             }
 
             // 포인트도 같이 설정
@@ -1137,6 +1160,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isSimpleMode,
         toggleSimpleMode,
         subscriptionTier,
+        subscriptionPhase,
+        dataReadonlyUntil,
+        dataHiddenUntil,
+        dataResetAt,
     }), [
         user, session, loading, isAdminUser, isPremiumUser, refreshProfile,
         profileLoaded, userPetType, onboardingData, points, pointsLoaded,
@@ -1144,6 +1171,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         checkDeletedAccount, checkCanRejoin, signUp, signIn,
         signOut, signInWithGoogle, signInWithKakao, signInWithNaver, updateProfile, checkNickname,
         isSimpleMode, toggleSimpleMode, subscriptionTier,
+        subscriptionPhase, dataReadonlyUntil, dataHiddenUntil, dataResetAt,
     ]);
 
     return (

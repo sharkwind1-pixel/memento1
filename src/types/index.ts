@@ -80,6 +80,18 @@ export interface OnboardingData {
 /** 반려동물 상태 */
 export type PetStatus = "active" | "memorial";
 
+/**
+ * 구독 라이프사이클 단계
+ * - active: 정상 구독 또는 무료 (이전 무료 가입자)
+ * - readonly: 해지 후 D+0 ~ D+30, 데이터 보기만 가능
+ * - hidden: 해지 후 D+31 ~ D+80, 내 기록 차단 + 커뮤니티만
+ * - countdown: 해지 후 D+81 ~ D+89, 매일 알림 + Sticky 배너
+ * - free: 해지 후 D+90, 무료 한도로 회귀 (대표 펫 1마리, 사진 50장)
+ *
+ * 참고: docs/subscription-lifecycle.md
+ */
+export type SubscriptionPhase = "active" | "readonly" | "hidden" | "countdown" | "free";
+
 /** 반려동물 종류 */
 export type PetType = "강아지" | "고양이" | "기타";
 

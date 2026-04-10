@@ -4,6 +4,91 @@
 
 ---
 
+## [2026-04-11] 구독 해지 라이프사이클 전체 구현 + 논리 충돌 3건 수정
+
+### 논리 충돌 3건 수정
+- [x] **차단 유저 AI 펫톡 차단** — `chat-pipeline.ts` profile select에 `is_banned, ban_reason` 추가, true면 403 + 텔레그램 로그
+- [x] **신고 3건 자동 숨김 실제 동작** — `reports/route.ts` 임계값 도달 시 `community_posts.is_hidden=true, moderation_status='rejected', moderation_reason=...` 업데이트 + `moderation_logs` 기록 (filter_type=report)
+- [x] **Service Role 권한 검증 강화** — `reports/route.ts` POST와 `memorial-messages/route.ts` POST에 차단 유저 검증 추가 (어뷰징 방지)
+
+### 구독 해지 라이프사이클 (Phase 1~8 전부)
+설계: `docs/subscription-lifecycle.md`
+4단계: active → readonly(30d) → hidden(50d) → countdown(10d) → free(D+90)
+
+#### Phase 1: DB + 크론잡
+- [x] `supabase/migrations/20260411_subscription_lifecycle.sql`
+  - profiles: subscription_phase, subscription_cancelled_at, data_readonly_until, data_hidden_until, data_reset_at, protected_pet_id
+  - pets.archived_at, pet_media.archived_at + is_favorite
+  - 인덱스 4개
+  - **미실행** — RELAY.md 최상단 기재
+- [x] `/api/cron/subscription-lifecycle` 신규 (매일 KST 00:30)
+  - readonly→hidden, hidden→countdown, countdown→free 단계 전환
+  - countdown 단계 매일 알림 (D-10 ~ D-1, 톤 차등)
+  - D+90 회귀 로직 (Phase 6 포함)
+- [x] vercel.json 크론 등록 (`30 15 * * *` UTC)
+
+#### Phase 2: 해지 로직 재설계
+- [x] `/api/subscription/cancel` 신규 — 즉시 해제 X, phase=readonly로 전환
+- [x] SubscriptionSection.tsx 수정 — 클라이언트 직접 update → API 호출
+- [x] 해지 확인 모달 안내 문구 라이프사이클 설명으로 교체 (30+50+10일 단계 명시)
+- [x] AuthContext에 subscriptionPhase, dataReadonlyUntil, dataHiddenUntil, dataResetAt 추가
+- [x] types/index.ts에 SubscriptionPhase 타입 추가
+
+#### Phase 3: 읽기 전용 UI
+- [x] `useSubscriptionPhase` hook 신규 (phase 정보 + 차단 여부 + 남은 일수 + blockMessage)
+- [x] `SubscriptionStatusBanner` 컴포넌트 신규 (단계별 톤, D-3부터 Sticky)
+- [x] Layout.tsx 헤더 아래 배너 통합
+- [x] RecordPage `handleAddNewPet` / `handleSavePet` / `handleMediaUpload`에 phase 가드 추가
+- [x] **추모 전환 예외 처리**: readonly에서 active→memorial 변경만 허용 (죽음은 기다려주지 않음)
+- [x] `lib/subscription-guard.ts` 서버 측 가드 헬퍼 (향후 다른 API에서 재사용)
+
+#### Phase 4: 숨김 + AI 펫톡 일 3회
+- [x] chat-pipeline에서 hidden/countdown 단계 진입 시 DAILY_CHATS=3으로 강제 오버라이드
+- [x] 한도 도달 메시지에 라이프사이클 안내 추가
+- [x] **결정**: hidden 단계에서도 보기는 허용 (USP 보호) — 별도 풀스크린 차단 안 함
+
+#### Phase 5: 카운트다운
+- [x] 크론에서 매일 카운트다운 알림 INSERT (톤 차등)
+- [x] D-3부터 텔레그램 시스템 알림 (관리자 모니터링)
+- [x] SubscriptionStatusBanner D-3~D-1 Sticky 모드
+- [ ] 이메일 채널: Supabase Auth는 인증 전용이라 부적합 → Resend/SendGrid 후속 작업
+
+#### Phase 6: 회귀 로직 (크론 통합)
+- [x] protected_pet_id 결정 (가장 오래된 active 펫 → 없으면 가장 오래된 memorial 펫)
+- [x] 보호 펫 외 archive (`archived_at = now()`)
+- [x] 보호 펫의 사진 FREE_LIMITS.PHOTOS_PER_PET장 초과분 archive
+  - 즐겨찾기(`is_favorite=true`) 우선 + 최근순으로 keepIds 선정
+  - PostgREST .in() 한도(200) 고려한 배치 처리
+- [x] profile: subscription_phase=free, is_premium=false, subscription_tier=free
+- [x] 회귀 완료 알림 (반려동물 1마리 + 사진 N장 보존 안내)
+
+#### Phase 7: 대표 펫 지정 UI
+- [x] `/api/subscription/protected-pet` 신규 (본인 소유 + active 펫만)
+- [x] SubscriptionSection에 라이프사이클 진입 시 대표 펫 select UI
+- [x] 추모 펫도 대표 지정 가능 (USP — 데이터 앵커 원칙)
+
+#### Phase 8: 재구독 복구
+- [x] `lib/subscription-restore.ts` 신규
+  - phase active로 초기화 + data_* 컬럼 NULL
+  - 90일 이내 archived 펫 복구
+  - 같은 조건으로 pet_media 복구 (배치 200)
+  - 복구 완료 알림
+- [x] `payments/complete/route.ts` grant_premium 직후 restoreFromLifecycle 호출
+- [x] `payments/subscribe/complete/route.ts` 동일 통합
+- [x] 복구 실패해도 결제는 성공 유지 (정합성)
+
+### 검증
+- next build 통과 (에러 0건)
+- 모든 phase 빌드 검증 후 진행
+- 최종 빌드 후 커밋 + 푸시
+
+### 미해결 / 후속 작업
+- DB 마이그레이션 실행 필요 (Supabase 대시보드)
+- 마이그레이션 후 수동 E2E 테스트
+- 이메일 알림 채널 (Resend 또는 SendGrid)
+
+---
+
 ## [2026-04-10] 일일 요약 크론 분리 + 논리 충돌 전수조사
 
 ### 일일 요약 문제 해결

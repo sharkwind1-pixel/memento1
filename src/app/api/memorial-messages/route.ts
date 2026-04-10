@@ -54,6 +54,17 @@ export async function POST(request: NextRequest) {
     }
 
     try {
+        // 차단 유저 작성 차단 (어뷰징 방지)
+        const banCheckSupabase = createAdminSupabase();
+        const { data: profileBan } = await banCheckSupabase
+            .from("profiles")
+            .select("is_banned")
+            .eq("id", user.id)
+            .single();
+        if (profileBan?.is_banned) {
+            return NextResponse.json({ error: "이용이 제한된 계정입니다" }, { status: 403 });
+        }
+
         const { petId, message } = await request.json();
         if (!petId || !message) {
             return NextResponse.json({ error: "petId와 message가 필요합니다" }, { status: 400 });

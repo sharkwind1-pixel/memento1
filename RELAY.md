@@ -7,43 +7,46 @@
 
 ## 즉시 — 대기 중
 
-### 🔴 논리 충돌 수정 (2026-04-10 전수조사 결과)
-VS Code 세션에서 진행 예정.
+### 🔴 미실행 마이그레이션 (Supabase 대시보드에서 실행 필요)
 
-- [ ] **차단 유저 AI 펫톡 우회 차단** (15분, 보안+비용)
-  - 파일: `src/app/api/chat/chat-pipeline.ts` (checkSecurityLimits)
-  - 구현: `profiles.is_banned` 조회 추가, true면 403 반환
-  - 배경: `getAuthUser()`는 JWT만 검증, 차단 체크 없음 → 차단 유저가 AI 펫톡 계속 사용 가능, OpenAI 비용 누출
+- [ ] **`supabase/migrations/20260411_subscription_lifecycle.sql`** — 구독 라이프사이클 컬럼 추가
+  - profiles: subscription_phase, subscription_cancelled_at, data_readonly_until, data_hidden_until, data_reset_at, protected_pet_id
+  - pets.archived_at, pet_media.archived_at + is_favorite
+  - 인덱스 4개
+  - **이거 실행 안 하면 라이프사이클 크론 + 해지 API + 재구독 복구 전부 작동 안 함**
+  - 실행 방법: Supabase Dashboard → SQL Editor → 파일 내용 붙여넣고 Run
 
-- [ ] **신고 3건 자동 숨김 실제 동작** (10분, 모더레이션)
-  - 파일: `src/app/api/reports/route.ts` (line 94-157)
-  - 구현: `reportCount >= AUTO_HIDE_REPORT_THRESHOLD`일 때 `community_posts.is_hidden = true` 업데이트 추가
-  - 배경: 현재 상수는 선언돼 있으나 실제 DB 업데이트 로직 없음 (텔레그램 알림만)
+### ✅ 완료 (2026-04-11 세션)
 
-- [ ] **Service Role 엔드포인트 권한 검증 재확인** (30분, 보안)
-  - 파일: `src/app/api/memorial-messages/route.ts`, `src/app/api/reports/route.ts`
-  - 점검: createAdminSupabase() 사용 시 관리자/본인 검증 로직 존재 여부
-  - 누락 시 403 체크 추가
+#### 논리 충돌 수정 3건
+- [x] 차단 유저 AI 펫톡 우회 차단 (`chat-pipeline.ts` is_banned 검증 추가)
+- [x] 신고 3건 자동 숨김 실제 동작 (`reports/route.ts` is_hidden update + moderation_logs 기록)
+- [x] Service Role 권한 검증 재확인 — memorial-messages/reports에 차단 유저 검증 추가
 
-### 🟡 구독 해지 라이프사이클 (대규모 재설계)
-상세 설계: `docs/subscription-lifecycle.md`
-VS Code 세션에서 Phase 1~8 순차 구현.
+#### 구독 해지 라이프사이클 8 Phase 전체 구현
+설계: `docs/subscription-lifecycle.md`
 
-- [ ] **Phase 1**: DB 마이그레이션 + `/api/cron/subscription-lifecycle` 크론잡 (1.5h)
-- [ ] **Phase 2**: SubscriptionSection.tsx 해지 로직 수정 — 즉시 해제가 아니라 phase 전환 (30m)
-- [ ] **Phase 3**: 읽기 전용 UI (편집 차단, 펫 카드 뱃지, 상단 배너, 추모 전환 예외) (2h)
-- [ ] **Phase 4**: 숨김 상태 UI (내 기록 차단 오버레이, AI 펫톡 제한 정책 결정 후 구현) (1.5h)
-- [ ] **Phase 5**: 카운트다운 알림 시스템 (토스트 + 벨 + 이메일 + Sticky 배너 D-3부터) (1h)
-- [ ] **Phase 6**: 회귀 로직 (protected_pet_id 외 펫 archive, 사진 50장 초과분 처리) (1.5h)
-- [ ] **Phase 7**: 대표 펫 지정 UI (읽기 전용 진입 시 프롬프트, 설정 탭에서 변경) (1h)
-- [ ] **Phase 8**: 재구독 복구 로직 (archived 데이터 복원) (1h)
+- [x] **Phase 1**: DB 마이그레이션 SQL + `/api/cron/subscription-lifecycle` 크론잡 (KST 00:30)
+- [x] **Phase 2**: `/api/subscription/cancel` API + SubscriptionSection 해지 UI 수정 (즉시 해제 X)
+- [x] **Phase 3**: `useSubscriptionPhase` hook + `SubscriptionStatusBanner` + RecordPage 가드 (편집/추가 차단, 추모 전환 예외)
+- [x] **Phase 4**: 숨김 단계 AI 펫톡 일 3회 강제 제한 (chat-pipeline에 phase 검사 추가)
+- [x] **Phase 5**: 카운트다운 알림 (크론에서 매일 INSERT, D-3부터 Sticky 배너 + D-3 텔레그램 모니터링)
+- [x] **Phase 6**: 회귀 로직 (protected_pet_id 외 archive, 사진 50장 초과분 archive — 즐겨찾기 우선 + 최근순)
+- [x] **Phase 7**: `/api/subscription/protected-pet` API + SubscriptionSection 대표 펫 선택 UI
+- [x] **Phase 8**: `subscription-restore.ts` + payments/complete + payments/subscribe/complete 통합 (재구독 시 archived 자동 복구)
 
-**미결정 사항 (구현 전 확정 필요)**:
-- 회귀 시 Hard delete vs Soft delete (추천: Soft delete + archived_at 컬럼)
-- 대표 펫 기본값 (추천: 가장 오래된 펫, 유저 명시 변경 가능)
-- 숨김 상태 AI 펫톡 완전차단 vs 일3회 허용 (추천: 일3회)
-- 이메일 채널 (추천: Supabase Auth 재사용)
-- 사진 50장 선별 기준 (추천: 즐겨찾기 우선 + 최근순)
+#### 라이프사이클 정책 (확정)
+- 회귀 시: **Soft delete** (archived_at 컬럼)
+- 대표 펫 기본값: **가장 오래된 활성 펫**, 없으면 추모 펫. 유저 변경 가능.
+- 숨김 단계 AI 펫톡: **일 3회** 제한 (감정 의존 보호 + 비용 통제)
+- 사진 50장 선별: **즐겨찾기 우선 + 최근순**
+- 이메일 채널: 후속 작업 (현재는 인앱 알림 + 텔레그램만)
+- 추모 펫 데이터 앵커 원칙 준수: 추모 펫도 대표 지정 가능, 카운트 분리 X
+
+#### 잔여 작업 (다음 세션)
+- [ ] 마이그레이션 SQL 실행 (위 🔴 섹션 참고)
+- [ ] 마이그레이션 실행 후 수동 테스트 (해지 → readonly 진입 확인)
+- [ ] 이메일 채널 연동 (Resend 또는 SendGrid) — Supabase Auth는 인증 메일 전용이라 부적합 (재검토 필요)
 
 ### 🟢 기타 대기
 - [x] 카카오페이 심사 보완사항 회신 (결제경로 pptx + 서비스제공기간 + 사업자등록증 제출용) — 2026-04-10 메일 발송 완료

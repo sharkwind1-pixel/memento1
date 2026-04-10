@@ -209,6 +209,19 @@ export async function POST(request: NextRequest) {
             .select()
             .single();
 
+        // 라이프사이클 복구 (해지 후 재구독 시 archived 데이터 복원)
+        try {
+            const { restoreFromLifecycle } = await import("@/lib/subscription-restore");
+            const restoreResult = await restoreFromLifecycle(adminSupabase, user.id);
+            if (restoreResult.wasLifecycleActive) {
+                console.log(
+                    `[subscribe/complete] 라이프사이클 복구: pets=${restoreResult.restoredPets} media=${restoreResult.restoredMedia}`
+                );
+            }
+        } catch (restoreErr) {
+            console.error("[subscribe/complete] 라이프사이클 복구 실패 (결제는 정상):", restoreErr);
+        }
+
         // 텔레그램 알림
         import("@/lib/telegram").then(({ notifyPayment }) =>
             notifyPayment({ email: user.email || "", plan, amount: payment.amount })

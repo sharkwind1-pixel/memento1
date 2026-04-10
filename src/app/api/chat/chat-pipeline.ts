@@ -346,9 +346,18 @@ export async function checkSecurityLimits(
     const supabase = await createServerSupabase();
     const { data: profile } = await supabase
         .from("profiles")
-        .select("is_premium, premium_expires_at, onboarding_data, user_type, subscription_tier")
+        .select("is_premium, premium_expires_at, onboarding_data, user_type, subscription_tier, is_banned, ban_reason, subscription_phase")
         .eq("id", user.id)
         .single();
+
+    // 차단 유저 AI 펫톡 차단 (보안+비용 누출 방지)
+    if (profile?.is_banned) {
+        console.warn(`[Security] Banned user attempted AI chat: ${user.id} reason=${profile?.ban_reason ?? "unknown"}`);
+        return NextResponse.json(
+            { error: "이용이 제한된 계정입니다. 문의하기를 통해 연락 주세요." },
+            { status: 403 }
+        );
+    }
 
     const isPremium = profile?.is_premium &&
         (!profile.premium_expires_at || new Date(profile.premium_expires_at) > new Date());
@@ -357,7 +366,25 @@ export async function checkSecurityLimits(
     const subscriptionTier: SubscriptionTier = isPremium
         ? ((profile?.subscription_tier as SubscriptionTier) || "premium")
         : "free";
-    const tierLimits = getLimitsForTier(subscriptionTier);
+    const baseLimits = getLimitsForTier(subscriptionTier);
+    // tierLimits는 `as const`로 좁혀진 readonly 객체이므로,
+    // phase 기반 동적 오버라이드를 위해 일반 객체로 캐스팅
+    let tierLimits: { PETS: number; PHOTOS_PER_PET: number; DAILY_CHATS: number; MESSAGE_LENGTH: number } = {
+        PETS: baseLimits.PETS,
+        PHOTOS_PER_PET: baseLimits.PHOTOS_PER_PET,
+        DAILY_CHATS: baseLimits.DAILY_CHATS,
+        MESSAGE_LENGTH: baseLimits.MESSAGE_LENGTH,
+    };
+
+    // 라이프사이클 단계별 추가 제한
+    // - hidden / countdown: 일 3회로 강제 제한 (감정 의존 유저 보호 + 비용 통제)
+    //   추모 펫 데이터로 대화하는 핵심 기능은 유지하되 빈도만 줄임
+    // - readonly: 기존 제한 유지 (보기 단계)
+    // - free: 회귀 후 무료 한도 (기존 free 동일)
+    const subscriptionPhase = profile?.subscription_phase || "active";
+    if (subscriptionPhase === "hidden" || subscriptionPhase === "countdown") {
+        tierLimits = { ...tierLimits, DAILY_CHATS: 3 };
+    }
 
     // 온보딩 데이터 추출 (AI 개인화에 활용)
     const onboardingData = profile?.onboarding_data as OnboardingContext | null;
@@ -385,18 +412,21 @@ export async function checkSecurityLimits(
     const dailyUsage = await checkDailyUsageDB(identifier, isPremium ? true : false, tierLimits.DAILY_CHATS);
 
     if (dailyUsage.remaining < 0 || !dailyUsage.allowed) {
-        const limitMsg = subscriptionTier === "premium"
-            ? `${parsedInput.pet?.name || "반려동물"}이(가) 오늘 많이 피곤한가봐요. 내일 다시 이야기해요~`
-            : subscriptionTier === "basic"
-                ? `오늘의 대화 횟수(${tierLimits.DAILY_CHATS}회)를 모두 사용했어요. 프리미엄 업그레이드 시 더 많은 대화가 가능합니다!`
-                : isMemorialMode
-                    ? `오늘은 여기까지 이야기 나눌 수 있어요. ${parsedInput.pet?.name || "아이"}는 내일도 여기서 기다리고 있을게요. 구독 시 더 많은 대화가 가능합니다.`
-                    : `오늘의 무료 대화 횟수(${FREE_LIMITS.DAILY_CHATS}회)를 모두 사용했어요. 구독 시 더 많은 대화가 가능합니다!`;
+        const isLifecycleLimit = subscriptionPhase === "hidden" || subscriptionPhase === "countdown";
+        const limitMsg = isLifecycleLimit
+            ? `구독 보관 단계에서는 하루 3회까지 대화할 수 있어요. 재구독하시면 무제한으로 이야기할 수 있습니다.`
+            : subscriptionTier === "premium"
+                ? `${parsedInput.pet?.name || "반려동물"}이(가) 오늘 많이 피곤한가봐요. 내일 다시 이야기해요~`
+                : subscriptionTier === "basic"
+                    ? `오늘의 대화 횟수(${tierLimits.DAILY_CHATS}회)를 모두 사용했어요. 프리미엄 업그레이드 시 더 많은 대화가 가능합니다!`
+                    : isMemorialMode
+                        ? `오늘은 여기까지 이야기 나눌 수 있어요. ${parsedInput.pet?.name || "아이"}는 내일도 여기서 기다리고 있을게요. 구독 시 더 많은 대화가 가능합니다.`
+                        : `오늘의 무료 대화 횟수(${FREE_LIMITS.DAILY_CHATS}회)를 모두 사용했어요. 구독 시 더 많은 대화가 가능합니다!`;
         return NextResponse.json(
             {
                 error: limitMsg,
                 remaining: 0,
-                isLimitReached: subscriptionTier === "free",
+                isLimitReached: subscriptionTier === "free" || isLifecycleLimit,
             },
             { status: 429 }
         );

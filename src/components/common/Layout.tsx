@@ -55,6 +55,7 @@ import {
 } from "lucide-react";
 import { safeSetItem } from "@/lib/safe-storage";
 import NotificationBell from "@/components/features/notifications/NotificationBell";
+import SubscriptionStatusBanner from "@/components/features/subscription/SubscriptionStatusBanner";
 
 // ============================================================================
 // 타입 정의
@@ -559,6 +560,8 @@ function Layout({
 
             {/* 메인 컨텐츠 영역 - pt로 fixed 헤더 높이(h-14/sm:h-16) 보정 */}
             <div id="main-content" className="xl:ml-[420px] flex-1 pt-14 sm:pt-16">
+                {/* 구독 라이프사이클 배너 (해지 후 단계별 안내) */}
+                <SubscriptionStatusBanner />
                 <main className="max-w-6xl mx-auto px-4 py-6">{children}</main>
             </div>
 

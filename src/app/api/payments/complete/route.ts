@@ -261,6 +261,20 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // 9. 라이프사이클 복구 (해지 후 재구독 시 archived 데이터 복원)
+        try {
+            const { restoreFromLifecycle } = await import("@/lib/subscription-restore");
+            const restoreResult = await restoreFromLifecycle(adminSupabase, user.id);
+            if (restoreResult.wasLifecycleActive) {
+                console.log(
+                    `[payments/complete] 라이프사이클 복구: pets=${restoreResult.restoredPets} media=${restoreResult.restoredMedia}`
+                );
+            }
+        } catch (restoreErr) {
+            console.error("[payments/complete] 라이프사이클 복구 실패 (결제는 정상):", restoreErr);
+            // 결제 자체는 성공이므로 에러로 응답하지 않음
+        }
+
         // 텔레그램 관리자 알림 (비동기, 실패 무시)
         import("@/lib/telegram").then(({ notifyPayment }) =>
             notifyPayment({ email: user.email || "", plan, amount: payment.amount })
