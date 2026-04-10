@@ -310,8 +310,8 @@ export default function VideoGenerateModal({
                     onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (!file || !user) return;
-                        if (file.size > 10 * 1024 * 1024) {
-                            toast.error("10MB 이하의 이미지만 업로드 가능합니다.");
+                        if (file.size > 20 * 1024 * 1024) {
+                            toast.error("20MB 이하의 이미지만 업로드 가능합니다.");
                             return;
                         }
                         setIsUploading(true);

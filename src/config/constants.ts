@@ -51,7 +51,7 @@ export const UI = {
 
 // ===== 파일 업로드 =====
 export const UPLOAD = {
-    MAX_IMAGE_SIZE: 10 * 1024 * 1024,  // 10MB
+    MAX_IMAGE_SIZE: 20 * 1024 * 1024,  // 20MB (클라이언트 자동 압축 적용)
     MAX_VIDEO_SIZE: 50 * 1024 * 1024,  // 50MB
     ALLOWED_IMAGE_TYPES: ["image/jpeg", "image/png", "image/gif", "image/webp"],
     ALLOWED_VIDEO_TYPES: ["video/mp4", "video/webm", "video/quicktime"],

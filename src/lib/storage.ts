@@ -4,6 +4,7 @@
  */
 
 import { supabase } from "./supabase";
+import { compressImage } from "./image-compress";
 
 // 지원하는 미디어 타입
 export type MediaType = "image" | "video";
@@ -81,13 +82,13 @@ function validateMimeType(file: File, expectedType: MediaType): { valid: boolean
     return { valid: true };
 }
 
-// 파일 크기 검증 (이미지 10MB, 영상 100MB)
+// 파일 크기 검증 (이미지 20MB, 영상 100MB)
 export function validateFileSize(
     file: File,
     type: MediaType
 ): { valid: boolean; error?: string } {
-    const maxSize = type === "image" ? 10 * 1024 * 1024 : 100 * 1024 * 1024;
-    const maxSizeText = type === "image" ? "10MB" : "100MB";
+    const maxSize = type === "image" ? 20 * 1024 * 1024 : 100 * 1024 * 1024;
+    const maxSizeText = type === "image" ? "20MB" : "100MB";
 
     if (file.size > maxSize) {
         return {
@@ -125,18 +126,31 @@ export async function uploadMedia(
             return { success: false, error: sizeValidation.error };
         }
 
-        // 고유한 파일 경로 생성 (검증된 확장자 사용)
+        // 4. 이미지인 경우 자동 압축 (영상은 그대로)
+        const finalFile = mediaType === "image"
+            ? await compressImage(file, {
+                maxDimension: 1920,
+                quality: 0.85,
+                maxSizeBytes: 2 * 1024 * 1024,
+                skipIfUnder: 500 * 1024,
+            })
+            : file;
+
+        // 고유한 파일 경로 생성 (압축 후 확장자 반영)
         const timestamp = Date.now();
         const randomId = Math.random().toString(36).substring(2, 9);
-        const ext = extValidation.ext;
+        const ext = mediaType === "image" && finalFile.type === "image/jpeg"
+            ? "jpg"
+            : extValidation.ext;
         const path = `${userId}/${petId}/${timestamp}-${randomId}.${ext}`;
 
         // Supabase Storage에 업로드
         const { data, error } = await supabase.storage
             .from("pet-media")
-            .upload(path, file, {
+            .upload(path, finalFile, {
                 cacheControl: "31536000",
                 upsert: false,
+                contentType: finalFile.type,
             });
 
         if (error) {
@@ -247,16 +261,27 @@ async function uploadImage(
             return { success: false, error: validation.error };
         }
 
+        // 자동 압축: 원본이 500KB 초과 시 리사이즈 + JPEG 85% 품질
+        // HEIC/GIF 등은 내부적으로 원본 유지
+        const compressed = await compressImage(file, {
+            maxDimension: 1920,
+            quality: 0.85,
+            maxSizeBytes: 2 * 1024 * 1024,
+            skipIfUnder: 500 * 1024,
+        });
+
+        // 압축 후 확장자가 바뀔 수 있으므로 재결정
         const timestamp = Date.now();
         const randomId = Math.random().toString(36).substring(2, 9);
-        const ext = validation.ext;
-        const path = `${pathPrefix}/${userId}/${timestamp}-${randomId}.${ext}`;
+        const finalExt = compressed.type === "image/jpeg" ? "jpg" : validation.ext;
+        const path = `${pathPrefix}/${userId}/${timestamp}-${randomId}.${finalExt}`;
 
         const { data, error } = await supabase.storage
             .from("pet-media")
-            .upload(path, file, {
+            .upload(path, compressed, {
                 cacheControl: "31536000",
                 upsert: false,
+                contentType: compressed.type,
             });
 
         if (error) {

@@ -89,8 +89,8 @@ export function useLostPostActions({
         const file = e.target.files?.[0];
         if (!file) return;
 
-        if (file.size > 10 * 1024 * 1024) {
-            toast.error("이미지는 10MB 이하만 가능합니다.");
+        if (file.size > 20 * 1024 * 1024) {
+            toast.error("이미지는 20MB 이하만 가능합니다.");
             return;
         }
 
