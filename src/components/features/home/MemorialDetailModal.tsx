@@ -176,7 +176,7 @@ export default function MemorialDetailModal({
                     </button>
 
                     {/* 프로필 사진 */}
-                    <div className="relative w-full aspect-square bg-gradient-to-br from-amber-100 to-orange-100 dark:from-gray-700 dark:to-gray-600">
+                    <div className="relative w-full aspect-square bg-gradient-to-br from-memorial-100 to-orange-100 dark:from-gray-700 dark:to-gray-600">
                         {src ? (
                             <OptimizedImage
                                 src={src}
@@ -188,7 +188,7 @@ export default function MemorialDetailModal({
                             <div className="w-full h-full flex items-center justify-center">
                                 {(() => {
                                     const PetIcon = getPetIcon(pet.type);
-                                    return <PetIcon className="w-24 h-24 text-amber-400/50" />;
+                                    return <PetIcon className="w-24 h-24 text-memorial-400/50" />;
                                 })()}
                             </div>
                         )}
@@ -205,7 +205,7 @@ export default function MemorialDetailModal({
                             {pet.breed ? ` / ${pet.breed}` : ""}
                         </p>
                         {pet.yearsLabel && (
-                            <p className="text-xs text-amber-600 dark:text-amber-400 font-medium mt-1">
+                            <p className="text-xs text-memorial-600 dark:text-memorial-400 font-medium mt-1">
                                 {pet.yearsLabel}
                             </p>
                         )}
@@ -214,18 +214,18 @@ export default function MemorialDetailModal({
                         <button
                             type="button"
                             onClick={() => onToggleCondolence(pet.id)}
-                            className="inline-flex items-center gap-2 mt-3 px-4 py-2 rounded-full transition-all duration-200 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30"
+                            className="inline-flex items-center gap-2 mt-3 px-4 py-2 rounded-full transition-all duration-200 bg-memorial-50 dark:bg-memorial-900/20 hover:bg-memorial-100 dark:hover:bg-memorial-900/30"
                         >
                             <Heart
                                 className={`w-5 h-5 transition-all duration-300 ${
                                     isCondoled
-                                        ? "fill-amber-500 text-amber-500 scale-110"
-                                        : "text-amber-400"
+                                        ? "fill-memorial-500 text-memorial-500 scale-110"
+                                        : "text-memorial-400"
                                 }`}
                             />
                             <span
                                 className={`text-sm font-medium ${
-                                    isCondoled ? "text-amber-600" : "text-amber-500"
+                                    isCondoled ? "text-memorial-600" : "text-memorial-500"
                                 }`}
                             >
                                 {pet.condolenceCount > 0
@@ -236,14 +236,14 @@ export default function MemorialDetailModal({
                     </div>
 
                     {/* 구분선 */}
-                    <div className="mx-5 border-t border-amber-200/50 dark:border-gray-700" />
+                    <div className="mx-5 border-t border-memorial-200/50 dark:border-gray-700" />
 
                     {/* 위로의 말 섹션 */}
                     <div className="px-5 pt-3 pb-4">
                         <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">
                             위로의 말
                             {messages.length > 0 && (
-                                <span className="text-amber-500 ml-1">
+                                <span className="text-memorial-500 ml-1">
                                     {messages.length}
                                 </span>
                             )}
@@ -267,7 +267,7 @@ export default function MemorialDetailModal({
                                 messages.map((msg) => (
                                     <div
                                         key={msg.id}
-                                        className="group flex items-start gap-2 p-2.5 rounded-xl bg-amber-50/50 dark:bg-amber-900/10"
+                                        className="group flex items-start gap-2 p-2.5 rounded-xl bg-memorial-50/50 dark:bg-memorial-900/10"
                                     >
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm text-gray-700 dark:text-gray-200 break-words">
@@ -300,7 +300,7 @@ export default function MemorialDetailModal({
                                 {!showPresets ? (
                                     <button
                                         onClick={() => setShowPresets(true)}
-                                        className="w-full py-2.5 text-sm font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30 rounded-xl transition-colors"
+                                        className="w-full py-2.5 text-sm font-medium text-memorial-600 dark:text-memorial-400 bg-memorial-50 dark:bg-memorial-900/20 hover:bg-memorial-100 dark:hover:bg-memorial-900/30 rounded-xl transition-colors"
                                     >
                                         위로의 말 남기기
                                     </button>
@@ -311,7 +311,7 @@ export default function MemorialDetailModal({
                                                 key={preset}
                                                 onClick={() => handleSelectPreset(preset)}
                                                 disabled={isSending}
-                                                className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-200 bg-amber-50/50 dark:bg-amber-900/10 hover:bg-amber-100 dark:hover:bg-amber-900/20 rounded-xl transition-colors disabled:opacity-50"
+                                                className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-200 bg-memorial-50/50 dark:bg-memorial-900/10 hover:bg-memorial-100 dark:hover:bg-memorial-900/20 rounded-xl transition-colors disabled:opacity-50"
                                             >
                                                 {preset}
                                             </button>

@@ -241,7 +241,7 @@ export default function CommunityHeader({
                             onClick={() => onBadgeChange("all")}
                             className={`px-3 py-2 rounded-full text-xs font-medium transition-all active:scale-95 flex-shrink-0 min-h-[36px] ${
                                 selectedBadge === "all"
-                                    ? "bg-amber-500 text-white shadow-sm"
+                                    ? "bg-memorial-500 text-white shadow-sm"
                                     : "bg-gray-100 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600/50"
                             }`}
                         >

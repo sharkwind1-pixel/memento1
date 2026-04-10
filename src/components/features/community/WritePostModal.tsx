@@ -278,7 +278,7 @@ export default function WritePostModal({
                                         onClick={() => setTag(t.id)}
                                         className={`px-3 py-2.5 rounded-full text-sm font-medium transition-all min-h-[40px] ${
                                             tag === t.id
-                                                ? "bg-sky-500 text-white"
+                                                ? "bg-memento-500 text-white"
                                                 : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200"
                                         }`}
                                     >
@@ -326,7 +326,7 @@ export default function WritePostModal({
                                     onClick={() => setBadge(b)}
                                     className={`px-3 py-2.5 rounded-full text-sm font-medium transition-all min-h-[40px] ${
                                         badge === b
-                                            ? "bg-sky-500 text-white"
+                                            ? "bg-memento-500 text-white"
                                             : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200"
                                     }`}
                                 >
@@ -412,7 +412,7 @@ export default function WritePostModal({
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
                                 disabled={isUploading}
-                                className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-gray-500 dark:text-gray-400 hover:border-sky-400 hover:text-sky-500 transition-colors w-full justify-center"
+                                className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-gray-500 dark:text-gray-400 hover:border-memento-400 hover:text-memento-500 transition-colors w-full justify-center"
                             >
                                 {isUploading ? (
                                     <>
@@ -553,7 +553,7 @@ export default function WritePostModal({
                     <Button
                         onClick={handleSubmit}
                         disabled={isSubmitting || isUploading}
-                        className="bg-gradient-to-r from-sky-500 to-blue-500"
+                        className="bg-gradient-to-r from-memento-500 to-memento-500"
                     >
                         {isSubmitting ? (
                             <InlineLoading />

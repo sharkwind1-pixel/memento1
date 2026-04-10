@@ -84,7 +84,7 @@ export default function LocalPostList({
             {/* 로딩 */}
             {loading ? (
                 <div className="flex items-center justify-center py-20">
-                    <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                    <Loader2 className="w-8 h-8 animate-spin text-memento-500" />
                     <span className="ml-3 text-gray-500 dark:text-gray-400">게시글을 불러오는 중...</span>
                 </div>
             ) : (
@@ -176,7 +176,7 @@ export default function LocalPostList({
                                 </Button>
                                 <Button
                                     onClick={onWriteClick}
-                                    className="rounded-xl bg-gradient-to-r from-blue-500 to-sky-500"
+                                    className="rounded-xl bg-gradient-to-r from-memento-500 to-memento-500"
                                 >
                                     <PenSquare className="w-4 h-4 mr-1" />
                                     글쓰기
@@ -212,7 +212,7 @@ export default function LocalPostList({
                                         onClick={() => onPageChange(pageNum)}
                                         className={`rounded-xl min-w-[36px] ${
                                             pageNum === page
-                                                ? "bg-gradient-to-r from-blue-500 to-sky-500 border-0"
+                                                ? "bg-gradient-to-r from-memento-500 to-memento-500 border-0"
                                                 : "dark:border-gray-600"
                                         }`}
                                     >

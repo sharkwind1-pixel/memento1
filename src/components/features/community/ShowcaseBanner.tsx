@@ -20,7 +20,7 @@ export default function ShowcaseBanner({ previewImages, postCount, onOpen }: Sho
         <div className="px-4">
             <button
                 onClick={onOpen}
-                className="w-full group relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400 dark:from-amber-500 dark:via-orange-500 dark:to-rose-500 p-4 sm:p-5 shadow-lg hover:shadow-xl transition-all duration-300 active:scale-[0.98] text-left"
+                className="w-full group relative overflow-hidden rounded-2xl bg-gradient-to-r from-memorial-400 via-orange-400 to-rose-400 dark:from-memorial-500 dark:via-orange-500 dark:to-rose-500 p-4 sm:p-5 shadow-lg hover:shadow-xl transition-all duration-300 active:scale-[0.98] text-left"
             >
                 {/* 배경 장식 */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />

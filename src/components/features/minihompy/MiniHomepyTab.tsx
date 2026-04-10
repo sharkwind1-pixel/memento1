@@ -438,7 +438,7 @@ function StorageTray({
     return (
         <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border-0 shadow-lg p-3">
             <div className="flex items-center gap-2 mb-2">
-                <Archive className="w-4 h-4 text-amber-500" />
+                <Archive className="w-4 h-4 text-memorial-500" />
                 <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-200">
                     보관함
                 </h4>
@@ -449,7 +449,7 @@ function StorageTray({
 
             {loading ? (
                 <div className="flex items-center justify-center py-4">
-                    <Loader2 className="w-4 h-4 text-amber-500 animate-spin" />
+                    <Loader2 className="w-4 h-4 text-memorial-500 animate-spin" />
                 </div>
             ) : available.length === 0 ? (
                 <div className="text-center py-3 text-gray-400 dark:text-gray-500">
@@ -471,8 +471,8 @@ function StorageTray({
                                 "bg-gray-50 dark:bg-gray-700/50",
                                 isFull
                                     ? "opacity-40 cursor-not-allowed"
-                                    : "hover:bg-blue-50 dark:hover:bg-blue-900/20 active:scale-95",
-                                "border border-transparent hover:border-blue-300 dark:hover:border-blue-600",
+                                    : "hover:bg-memento-200 dark:hover:bg-memento-900/20 active:scale-95",
+                                "border border-transparent hover:border-memento-300 dark:hover:border-memento-600",
                                 "transition-all"
                             )}
                         >
@@ -486,7 +486,7 @@ function StorageTray({
                                     style={{ imageRendering: "pixelated" }}
                                 />
                                 {!isFull && (
-                                    <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                                    <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-memento-500 rounded-full flex items-center justify-center">
                                         <Plus className="w-2.5 h-2.5 text-white" />
                                     </div>
                                 )}

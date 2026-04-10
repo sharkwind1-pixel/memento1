@@ -50,10 +50,10 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
             }
 
             return (
-                <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sky-50 to-white dark:from-gray-900 dark:to-gray-800 px-4">
+                <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-memento-200 to-white dark:from-gray-900 dark:to-gray-800 px-4">
                     <div className="text-center max-w-sm">
-                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-sky-100 dark:bg-sky-900/40 flex items-center justify-center">
-                            <PawPrint className="w-8 h-8 text-sky-400 dark:text-sky-300" />
+                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-memento-200 dark:bg-memento-900/40 flex items-center justify-center">
+                            <PawPrint className="w-8 h-8 text-memento-400 dark:text-memento-300" />
                         </div>
                         <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">
                             앗, 잠시 문제가 생겼어요
@@ -66,7 +66,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                         <div className="flex gap-3 justify-center">
                             <button
                                 onClick={this.handleRetry}
-                                className="flex items-center gap-2 px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors text-sm font-medium"
+                                className="flex items-center gap-2 px-4 py-2 bg-memento-500 text-white rounded-lg hover:bg-memento-600 transition-colors text-sm font-medium"
                             >
                                 <RefreshCw className="w-4 h-4" />
                                 다시 시도

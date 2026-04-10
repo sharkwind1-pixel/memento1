@@ -285,9 +285,9 @@ export default function CardEditor({ content, onChange, onImageUpload }: CardEdi
                             onDragEnd={handleDragEnd}
                             className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-grab active:cursor-grabbing ${
                                 isDragTarget
-                                    ? "bg-sky-50 border-sky-400 border-dashed ring-2 ring-sky-200 scale-105"
+                                    ? "bg-memento-200 border-memento-400 border-dashed ring-2 ring-memento-200 scale-105"
                                     : isActive
-                                        ? "bg-sky-100 border-sky-400 text-sky-700 shadow-sm"
+                                        ? "bg-memento-200 border-memento-400 text-memento-700 shadow-sm"
                                         : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100 hover:border-gray-300"
                             }`}
                         >
@@ -306,7 +306,7 @@ export default function CardEditor({ content, onChange, onImageUpload }: CardEdi
                 <button
                     type="button"
                     onClick={addCard}
-                    className="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-dashed border-gray-300 text-gray-400 hover:border-sky-400 hover:text-sky-500 hover:bg-sky-50 transition-all"
+                    className="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-dashed border-gray-300 text-gray-400 hover:border-memento-400 hover:text-memento-500 hover:bg-memento-200 transition-all"
                 >
                     <Plus className="w-3.5 h-3.5" />
                     추가

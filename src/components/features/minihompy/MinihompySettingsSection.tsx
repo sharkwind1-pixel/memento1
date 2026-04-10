@@ -80,7 +80,7 @@ export default function MinihompySettingsSection({
                             {settings.isPublic ? (
                                 <Globe className="w-4 h-4 text-emerald-500" />
                             ) : (
-                                <Lock className="w-4 h-4 text-amber-500" />
+                                <Lock className="w-4 h-4 text-memorial-500" />
                             )}
                             <span className="text-sm text-gray-700 dark:text-gray-200">
                                 {settings.isPublic ? "공개" : "비공개"}

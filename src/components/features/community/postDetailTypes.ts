@@ -54,8 +54,8 @@ export const getBadgeStyle = (badge: string) => {
     const styles: Record<string, string> = {
         "공지": "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 border border-red-200 dark:border-red-700",
         "자랑": "bg-memento-200 text-memento-700",
-        "일상": "bg-memento-100 text-sky-700",
-        "질문": "bg-amber-100 text-amber-700",
+        "일상": "bg-memento-100 text-memento-700",
+        "질문": "bg-memorial-100 text-memorial-700",
         "꿀팁": "bg-emerald-100 text-emerald-700",
         "위로": "bg-violet-100 text-violet-700",
         "추억": "bg-pink-100 text-pink-700",
@@ -69,7 +69,7 @@ export const getBadgeStyle = (badge: string) => {
         "발견": "bg-emerald-100 text-emerald-700",
         "완료": "bg-gray-100 text-gray-700",
         "수다": "bg-purple-100 text-purple-700",
-        "고민": "bg-amber-100 text-amber-700",
+        "고민": "bg-memorial-100 text-memorial-700",
         "감사": "bg-pink-100 text-pink-700",
         "후기": "bg-teal-100 text-teal-700",
     };

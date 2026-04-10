@@ -288,7 +288,7 @@ export default function ImageEditor({
                     type="button"
                     onClick={handleSave}
                     disabled={isExporting}
-                    className="flex items-center gap-1 text-sky-400 hover:text-sky-300 transition-colors min-h-[44px] disabled:opacity-50"
+                    className="flex items-center gap-1 text-memento-400 hover:text-memento-300 transition-colors min-h-[44px] disabled:opacity-50"
                 >
                     {isExporting ? (
                         <span className="text-sm">처리중...</span>

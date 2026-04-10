@@ -140,7 +140,7 @@ export default function CookieConsentBanner() {
                             <Button
                                 size="sm"
                                 onClick={handleAcceptAll}
-                                className="rounded-xl text-xs h-9 px-4 bg-gradient-to-r from-memento-500 to-memento-400 hover:from-blue-600 hover:to-sky-600"
+                                className="rounded-xl text-xs h-9 px-4 bg-gradient-to-r from-memento-500 to-memento-400 hover:from-memento-600 hover:to-memento-600"
                             >
                                 모두 동의
                             </Button>

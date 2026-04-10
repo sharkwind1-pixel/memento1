@@ -363,7 +363,7 @@ export default function RecordPageTutorial({
                 )}
 
                 {/* 아이콘 */}
-                <div className="w-14 h-14 bg-gradient-to-br from-sky-400 to-violet-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <div className="w-14 h-14 bg-gradient-to-br from-memento-400 to-violet-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                     <Icon className="w-7 h-7 text-white" />
                 </div>
 
@@ -384,9 +384,9 @@ export default function RecordPageTutorial({
                             key={idx}
                             className={`w-2 h-2 rounded-full transition-all ${
                                 idx === currentStep
-                                    ? "w-6 bg-sky-500"
+                                    ? "w-6 bg-memento-500"
                                     : idx < currentStep
-                                        ? "bg-sky-300"
+                                        ? "bg-memento-300"
                                         : "bg-gray-200 dark:bg-gray-600"
                             }`}
                         />
@@ -405,14 +405,14 @@ export default function RecordPageTutorial({
                     {isLastStep && userType === "memorial" ? (
                         <button
                             onClick={handleGoToAIChat}
-                            className="flex-1 py-3 bg-gradient-to-r from-sky-500 to-violet-500 text-white rounded-xl font-medium text-sm hover:shadow-lg transition-all"
+                            className="flex-1 py-3 bg-gradient-to-r from-memento-500 to-violet-500 text-white rounded-xl font-medium text-sm hover:shadow-lg transition-all"
                         >
                             AI 펫톡 가기
                         </button>
                     ) : (
                         <button
                             onClick={handleNext}
-                            className="flex-1 py-3 bg-gradient-to-r from-sky-500 to-violet-500 text-white rounded-xl font-medium text-sm hover:shadow-lg transition-all"
+                            className="flex-1 py-3 bg-gradient-to-r from-memento-500 to-violet-500 text-white rounded-xl font-medium text-sm hover:shadow-lg transition-all"
                         >
                             {isLastStep ? "시작하기" : "다음"}
                         </button>

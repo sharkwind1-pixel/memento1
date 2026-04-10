@@ -24,9 +24,9 @@ export default function Error({
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-memento-50 via-memento-75 to-white p-4">
             <div className="max-w-md w-full bg-white/80 backdrop-blur-sm rounded-3xl border border-white/50 shadow-xl p-8 text-center">
-                <div className="w-16 h-16 bg-sky-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-memento-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
                     <svg
-                        className="w-8 h-8 text-sky-500"
+                        className="w-8 h-8 text-memento-500"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -56,7 +56,7 @@ export default function Error({
                         홈으로
                     </Button>
                     <Button
-                        className="rounded-xl bg-gradient-to-r from-sky-500 to-blue-500"
+                        className="rounded-xl bg-gradient-to-r from-memento-500 to-memento-500"
                         onClick={() => reset()}
                     >
                         다시 시도

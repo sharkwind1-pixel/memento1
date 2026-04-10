@@ -175,7 +175,7 @@ export default function BackgroundShopModal({
                                             )}
                                             {bg.category === "special" && (
                                                 <div className="absolute top-1.5 left-1.5">
-                                                    <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                                                    <Star className="w-3.5 h-3.5 text-memorial-400 fill-memorial-400" />
                                                 </div>
                                             )}
                                         </div>
@@ -222,7 +222,7 @@ export default function BackgroundShopModal({
                                                         className={cn(
                                                             "w-full py-1 rounded-lg text-[10px] font-medium transition-colors",
                                                             !pointsLoaded || points >= bg.price
-                                                                ? "bg-amber-100 dark:bg-gray-700/20 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-gray-600/30"
+                                                                ? "bg-memorial-100 dark:bg-gray-700/20 text-memorial-700 dark:text-memorial-300 hover:bg-memorial-200 dark:hover:bg-gray-600/30"
                                                                 : "bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
                                                         )}
                                                     >

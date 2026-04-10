@@ -20,8 +20,8 @@ import type { StepFormProps } from "./petFormTypes";
 export default function PetFormStep3({ formData, setFormData }: StepFormProps) {
     return (
         <div className="space-y-4">
-            <div className="p-4 bg-sky-50 dark:bg-sky-900/20 rounded-xl">
-                <p className="text-sm text-sky-700 dark:text-sky-300 mb-3">
+            <div className="p-4 bg-memento-200 dark:bg-memento-900/20 rounded-xl">
+                <p className="text-sm text-memento-700 dark:text-memento-300 mb-3">
                     {formData.name || "우리 아이"}와 처음 만난 이야기를 들려주세요
                 </p>
                 <div className="space-y-3">

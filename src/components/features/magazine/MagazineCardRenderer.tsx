@@ -363,7 +363,7 @@ function TextCard({
                             onClick={goNext}
                             className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
                                 isAtBottom
-                                    ? "bg-sky-500 text-white shadow-md hover:bg-sky-600"
+                                    ? "bg-memento-500 text-white shadow-md hover:bg-memento-600"
                                     : "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500"
                             }`}
                         >
@@ -446,15 +446,15 @@ function QuoteCard({
     totalCards: number;
 }) {
     return (
-        <div className="h-full flex flex-col justify-center px-6 py-16 sm:px-10 bg-amber-50 dark:bg-amber-900/15">
+        <div className="h-full flex flex-col justify-center px-6 py-16 sm:px-10 bg-memorial-50 dark:bg-memorial-900/15">
             {/* 카드 번호 */}
-            <div className="text-xs text-amber-500/60 mb-6 text-right">
+            <div className="text-xs text-memorial-500/60 mb-6 text-right">
                 {cardIndex} / {totalCards - 1}
             </div>
 
             {/* 인용 아이콘 */}
             <div className="mb-6">
-                <Quote className="w-10 h-10 text-amber-400 dark:text-amber-500" />
+                <Quote className="w-10 h-10 text-memorial-400 dark:text-memorial-500" />
             </div>
 
             {/* 인용문 */}

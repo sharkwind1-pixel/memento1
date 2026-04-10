@@ -181,8 +181,8 @@ export default function AdminReportsTab({
                     type="button"
                     className={`flex-1 inline-flex items-center justify-center rounded-md px-1 py-1 text-[10px] font-semibold transition-all ${
                         selectedStatus === "pending"
-                            ? "bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300"
-                            : "bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300 opacity-60 hover:opacity-100"
+                            ? "bg-memorial-100 text-memorial-700 dark:bg-memorial-400/10 dark:text-memorial-300"
+                            : "bg-memorial-100 text-memorial-700 dark:bg-memorial-400/10 dark:text-memorial-300 opacity-60 hover:opacity-100"
                     }`}
                     onClick={() => setSelectedStatus(selectedStatus === "pending" ? null : "pending")}
                 >
@@ -192,8 +192,8 @@ export default function AdminReportsTab({
                     type="button"
                     className={`flex-1 inline-flex items-center justify-center rounded-md px-1 py-1 text-[10px] font-semibold transition-all ${
                         selectedStatus === "reviewing"
-                            ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-                            : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 opacity-60 hover:opacity-100"
+                            ? "bg-memento-200 text-memento-700 dark:bg-memento-900/30 dark:text-memento-300"
+                            : "bg-memento-200 text-memento-700 dark:bg-memento-900/30 dark:text-memento-300 opacity-60 hover:opacity-100"
                     }`}
                     onClick={() => setSelectedStatus(selectedStatus === "reviewing" ? null : "reviewing")}
                 >
@@ -277,7 +277,7 @@ function ReportCard({ report, onUpdateStatus, onDeleteContent }: ReportCardProps
             case "resolved":
                 return "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800/50";
             case "reviewing":
-                return "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/50";
+                return "bg-memento-200 dark:bg-memento-900/20 border-memento-200 dark:border-memento-800/50";
             case "rejected":
                 return "bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700";
             default:
@@ -296,10 +296,10 @@ function ReportCard({ report, onUpdateStatus, onDeleteContent }: ReportCardProps
                     {REPORT_REASON_LABELS[report.reason] || report.reason}
                 </Badge>
                 {report.status === "pending" && (
-                    <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300 text-[10px] px-1.5 py-0">대기</Badge>
+                    <Badge className="bg-memorial-100 text-memorial-700 dark:bg-memorial-400/10 dark:text-memorial-300 text-[10px] px-1.5 py-0">대기</Badge>
                 )}
                 {report.status === "reviewing" && (
-                    <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 text-[10px] px-1.5 py-0">검토중</Badge>
+                    <Badge className="bg-memento-200 text-memento-700 dark:bg-memento-900/30 dark:text-memento-300 text-[10px] px-1.5 py-0">검토중</Badge>
                 )}
                 {report.status === "resolved" && (
                     <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 text-[10px] px-1.5 py-0">완료</Badge>
@@ -337,7 +337,7 @@ function ReportCard({ report, onUpdateStatus, onDeleteContent }: ReportCardProps
                     <button
                         type="button"
                         onClick={() => onUpdateStatus("reviewing")}
-                        className="h-7 px-2 rounded border border-blue-300 dark:border-blue-700 text-blue-600 dark:text-blue-400 bg-white dark:bg-gray-800 text-[10px] font-medium transition-colors"
+                        className="h-7 px-2 rounded border border-memento-300 dark:border-memento-700 text-memento-600 dark:text-memento-400 bg-white dark:bg-gray-800 text-[10px] font-medium transition-colors"
                     >
                         검토
                     </button>

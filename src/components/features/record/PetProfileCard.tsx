@@ -80,7 +80,7 @@ export default function PetProfileCard({
                                 {pet.name}
                             </h2>
                             {pet.isPrimary && (
-                                <Badge className="bg-amber-100 text-amber-700 text-xs">
+                                <Badge className="bg-memorial-100 text-memorial-700 text-xs">
                                     <Crown className="w-3 h-3 mr-1" />
                                     대표
                                 </Badge>
@@ -131,7 +131,7 @@ export default function PetProfileCard({
                                     onClick={onMemorialClick}
                                     variant="outline"
                                     size="sm"
-                                    className="border-amber-300 text-amber-600 hover:bg-amber-50 hover:text-amber-700 dark:border-amber-600 dark:text-amber-400 dark:hover:bg-gray-600/30"
+                                    className="border-memorial-300 text-memorial-600 hover:bg-memorial-50 hover:text-memorial-700 dark:border-memorial-600 dark:text-memorial-400 dark:hover:bg-gray-600/30"
                                 >
                                     <Star className="w-4 h-4 mr-2" />
                                     추억 전환
@@ -143,9 +143,9 @@ export default function PetProfileCard({
                         {pet.status === "memorial" && (
                             <div className="mt-4 space-y-2">
                                 {pet.memorialDate && (
-                                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200/60 dark:border-amber-700/40">
-                                        <Star className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
-                                        <span className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-memorial-50 dark:bg-memorial-900/20 rounded-lg border border-memorial-200/60 dark:border-memorial-700/40">
+                                        <Star className="w-3.5 h-3.5 text-memorial-500 dark:text-memorial-400" />
+                                        <span className="text-sm font-medium text-memorial-700 dark:text-memorial-300">
                                             무지개다리를 건넌 날: {pet.memorialDate}
                                         </span>
                                     </div>

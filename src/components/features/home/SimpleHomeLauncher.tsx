@@ -39,8 +39,8 @@ const LAUNCHER_ITEMS: {
         label: "내 반려동물",
         description: "사진, 일기, 기록",
         icon: Camera,
-        color: "text-sky-600 dark:text-sky-400",
-        bgColor: "bg-sky-50 dark:bg-sky-900/20",
+        color: "text-memento-600 dark:text-memento-400",
+        bgColor: "bg-memento-200 dark:bg-memento-900/20",
     },
     {
         id: "ai-chat",
@@ -55,8 +55,8 @@ const LAUNCHER_ITEMS: {
         label: "커뮤니티",
         description: "자유게시판, 소통",
         icon: Users,
-        color: "text-blue-600 dark:text-blue-400",
-        bgColor: "bg-blue-50 dark:bg-blue-900/20",
+        color: "text-memento-600 dark:text-memento-400",
+        bgColor: "bg-memento-200 dark:bg-memento-900/20",
     },
     {
         id: "magazine",
@@ -72,7 +72,7 @@ const LAUNCHER_ITEMS: {
         description: "나만의 공간",
         icon: Home,
         color: "text-memento-600 dark:text-memento-400",
-        bgColor: "bg-memento-50 dark:bg-sky-900/20",
+        bgColor: "bg-memento-50 dark:bg-memento-900/20",
     },
     {
         id: "adoption",
@@ -106,8 +106,8 @@ export default function SimpleHomeLauncher({ setSelectedTab, onSubcategoryChange
             {/* 배경 */}
             <div className={`absolute inset-0 bg-gradient-to-b ${
                 isMemorialMode
-                    ? "from-amber-50/80 via-amber-50/30 to-orange-50/20 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
-                    : "from-sky-100/80 via-sky-50/40 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
+                    ? "from-memorial-50/80 via-memorial-50/30 to-orange-50/20 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
+                    : "from-memento-200/80 via-memento-200/40 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
             }`} />
 
             <div className="relative z-10 px-4 pt-4 pb-10">
@@ -128,12 +128,12 @@ export default function SimpleHomeLauncher({ setSelectedTab, onSubcategoryChange
                             />
                         </div>
                         <div className="min-w-0">
-                            <h1 className={`text-lg sm:text-xl font-bold leading-snug ${isMemorialMode ? "text-amber-50" : "text-gray-800"}`}>
+                            <h1 className={`text-lg sm:text-xl font-bold leading-snug ${isMemorialMode ? "text-memorial-50" : "text-gray-800"}`}>
                                 안녕하세요,
                                 <br />
                                 {nickname}님
                             </h1>
-                            <p className={`text-xs sm:text-sm mt-1.5 ${isMemorialMode ? "text-amber-200/70" : "text-gray-500"}`}>
+                            <p className={`text-xs sm:text-sm mt-1.5 ${isMemorialMode ? "text-memorial-200/70" : "text-gray-500"}`}>
                                 어떤 것을 하시겠어요?
                             </p>
                         </div>

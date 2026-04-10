@@ -81,7 +81,7 @@ export default function PostDetailHeader({
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="rounded-lg text-gray-500 hover:text-amber-600"
+                                className="rounded-lg text-gray-500 hover:text-memorial-600"
                                 onClick={onToggleHidden}
                                 disabled={isTogglingHidden}
                                 title={isHidden ? "다시 공개" : "숨기기"}
@@ -92,7 +92,7 @@ export default function PostDetailHeader({
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="rounded-lg text-gray-500 hover:text-sky-600"
+                                className="rounded-lg text-gray-500 hover:text-memento-600"
                                 onClick={onStartEdit}
                                 title="수정"
                             >
@@ -181,9 +181,9 @@ export default function PostDetailHeader({
 
             {/* 숨김 상태 안내 */}
             {isHidden && isOwner && (
-                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-xl px-4 py-3 flex items-center gap-2">
-                    <EyeOff className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
-                    <p className="text-sm text-amber-700 dark:text-amber-300">
+                <div className="bg-memorial-50 dark:bg-memorial-900/20 border border-memorial-200 dark:border-memorial-700/50 rounded-xl px-4 py-3 flex items-center gap-2">
+                    <EyeOff className="w-4 h-4 text-memorial-600 dark:text-memorial-400 flex-shrink-0" />
+                    <p className="text-sm text-memorial-700 dark:text-memorial-300">
                         이 게시글은 숨김 상태입니다. 다른 사람들에게 보이지 않습니다.
                     </p>
                 </div>

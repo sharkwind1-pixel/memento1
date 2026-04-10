@@ -74,7 +74,7 @@ const MagazinePage = lazy(() => import("@/components/pages/MagazinePage"));
 
 import dynamic from "next/dynamic";
 const AdminPage = dynamic(() => import("@/components/pages/AdminPage"), {
-    loading: () => <div className="flex items-center justify-center min-h-[60vh]"><div className="animate-spin w-8 h-8 border-2 border-sky-400 border-t-transparent rounded-full" /></div>,
+    loading: () => <div className="flex items-center justify-center min-h-[60vh]"><div className="animate-spin w-8 h-8 border-2 border-memento-400 border-t-transparent rounded-full" /></div>,
 });
 
 // 모달 컴포넌트 - 정적 import

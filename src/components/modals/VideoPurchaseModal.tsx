@@ -127,7 +127,7 @@ export default function VideoPurchaseModal({
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* 상단 */}
-                    <div className="bg-gradient-to-br from-sky-500 via-blue-500 to-violet-500 p-6 text-white rounded-t-3xl">
+                    <div className="bg-gradient-to-br from-memento-500 via-memento-500 to-violet-500 p-6 text-white rounded-t-3xl">
                         <button
                             onClick={onClose}
                             className="absolute top-4 right-4 p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
@@ -150,10 +150,10 @@ export default function VideoPurchaseModal({
                     {/* 본문 */}
                     <div className="p-5">
                         {/* 단건 구매 카드 */}
-                        <div className="bg-sky-50 dark:bg-sky-900/20 rounded-2xl p-4 mb-4">
+                        <div className="bg-memento-200 dark:bg-memento-900/20 rounded-2xl p-4 mb-4">
                             <div className="flex items-center justify-between mb-2">
                                 <span className="text-sm font-bold text-gray-800 dark:text-white">영상 1건 구매</span>
-                                <span className="text-sky-600 dark:text-sky-400"><span className="text-lg font-display font-bold">{price}</span><span className="text-sm font-normal ml-0.5">원</span></span>
+                                <span className="text-memento-600 dark:text-memento-400"><span className="text-lg font-display font-bold">{price}</span><span className="text-sm font-normal ml-0.5">원</span></span>
                             </div>
                             <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
                                 지금 선택한 템플릿으로 바로 영상을 만들 수 있어요.
@@ -163,7 +163,7 @@ export default function VideoPurchaseModal({
 
                         {/* 구매 버튼 */}
                         <Button
-                            className={`w-full text-white rounded-xl py-6 font-bold bg-gradient-to-r from-sky-500 to-blue-500 hover:from-sky-600 hover:to-blue-600 transition-all ${
+                            className={`w-full text-white rounded-xl py-6 font-bold bg-gradient-to-r from-memento-500 to-memento-500 hover:from-memento-600 hover:to-memento-600 transition-all ${
                                 isProcessing ? "opacity-80 cursor-not-allowed" : ""
                             }`}
                             onClick={handlePurchase}

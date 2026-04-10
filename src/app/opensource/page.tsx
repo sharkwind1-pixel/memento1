@@ -259,10 +259,10 @@ export default function OpenSourcePage() {
                     {/* 폰트 라이선스 */}
                     <section>
                         <h2 className="text-xl font-display font-bold text-gray-800 dark:text-white">폰트</h2>
-                        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 space-y-2">
+                        <div className="bg-memento-200 dark:bg-memento-900/20 rounded-xl p-4 space-y-2">
                             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                                 <span className="font-semibold text-gray-800 dark:text-gray-200">여기어때 잘난체 (Jalnan2)</span>
-                                <span className="text-xs bg-blue-100 dark:bg-blue-800/40 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full w-fit">
+                                <span className="text-xs bg-memento-200 dark:bg-memento-800/40 text-memento-700 dark:text-memento-300 px-2 py-0.5 rounded-full w-fit">
                                     SIL Open Font License 1.1 (임베딩 조건부 허용)
                                 </span>
                             </div>
@@ -272,7 +272,7 @@ export default function OpenSourcePage() {
                                     href="/fonts/Jalnan2-LICENSE.txt"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-blue-600 dark:text-blue-400 underline hover:no-underline"
+                                    className="text-memento-600 dark:text-memento-400 underline hover:no-underline"
                                 >
                                     라이선스 전문 보기
                                 </a>
@@ -327,7 +327,7 @@ export default function OpenSourcePage() {
                                     href="https://github.com/rsms/inter"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-blue-600 dark:text-blue-400 underline hover:no-underline"
+                                    className="text-memento-600 dark:text-memento-400 underline hover:no-underline"
                                 >
                                     GitHub
                                 </a>
@@ -349,7 +349,7 @@ export default function OpenSourcePage() {
                                             href={dep.url}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+                                            className="font-semibold text-memento-600 dark:text-memento-400 hover:underline"
                                         >
                                             {dep.name}
                                         </a>
@@ -521,7 +521,7 @@ PERFORMANCE OF THIS SOFTWARE.`}
                     </section>
 
                     {/* 안내 */}
-                    <section className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 text-sm text-gray-600 dark:text-gray-400 space-y-2">
+                    <section className="bg-memorial-50 dark:bg-memorial-900/20 rounded-xl p-4 text-sm text-gray-600 dark:text-gray-400 space-y-2">
                         <p className="font-semibold text-gray-800 dark:text-gray-200">안내사항</p>
                         <ul className="list-disc list-inside space-y-1">
                             <li>이 페이지는 서비스에서 직접 사용하는 주요 오픈소스 소프트웨어를 고지합니다.</li>
@@ -535,7 +535,7 @@ PERFORMANCE OF THIS SOFTWARE.`}
                     <div className="text-center pt-4">
                         <a
                             href="/"
-                            className="inline-block px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-colors text-sm"
+                            className="inline-block px-6 py-2 bg-memento-500 hover:bg-memento-600 text-white rounded-full transition-colors text-sm"
                         >
                             홈으로 돌아가기
                         </a>

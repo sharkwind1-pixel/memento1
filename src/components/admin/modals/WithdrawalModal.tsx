@@ -53,8 +53,8 @@ const WITHDRAWAL_OPTIONS: {
         label: "악용 우려",
         description: "30일 후 재가입 가능",
         icon: Clock,
-        color: "text-amber-500",
-        selectedColor: "border-amber-500 bg-amber-50",
+        color: "text-memorial-500",
+        selectedColor: "border-memorial-500 bg-memorial-50",
     },
     {
         type: "banned",
@@ -101,7 +101,7 @@ export function WithdrawalModal({
             case "banned":
                 return "bg-red-500 hover:bg-red-600";
             case "abuse_concern":
-                return "bg-amber-500 hover:bg-amber-600";
+                return "bg-memorial-500 hover:bg-memorial-600";
             case "error_resolution":
                 return "bg-green-500 hover:bg-green-600";
         }

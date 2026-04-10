@@ -21,7 +21,7 @@ export default function RecordPageGuest() {
             <div className="absolute inset-0 bg-gradient-to-b from-memento-50 via-memento-75 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900" />
             <div className="relative z-10 flex flex-col items-center justify-center min-h-[60vh] px-4 max-w-md mx-auto">
                 {/* 아이콘 */}
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-violet-100 to-amber-100 flex items-center justify-center mb-6 shadow-lg">
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-violet-100 to-memorial-100 flex items-center justify-center mb-6 shadow-lg">
                     <Camera className="w-12 h-12 text-violet-500" />
                 </div>
 
@@ -44,14 +44,14 @@ export default function RecordPageGuest() {
                         <span>사진 갤러리로 추억 모아보기</span>
                     </div>
                     <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
-                        <div className="w-8 h-8 bg-sky-100 dark:bg-sky-400/15 rounded-lg flex items-center justify-center">
-                            <BookOpen className="w-4 h-4 text-sky-500" />
+                        <div className="w-8 h-8 bg-memento-200 dark:bg-memento-400/15 rounded-lg flex items-center justify-center">
+                            <BookOpen className="w-4 h-4 text-memento-500" />
                         </div>
                         <span>타임라인으로 일상 기록하기</span>
                     </div>
                     <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
-                        <div className="w-8 h-8 bg-amber-100 dark:bg-amber-400/15 rounded-lg flex items-center justify-center">
-                            <Bell className="w-4 h-4 text-amber-500" />
+                        <div className="w-8 h-8 bg-memorial-100 dark:bg-memorial-400/15 rounded-lg flex items-center justify-center">
+                            <Bell className="w-4 h-4 text-memorial-500" />
                         </div>
                         <span>예방접종, 미용 리마인더</span>
                     </div>
@@ -66,7 +66,7 @@ export default function RecordPageGuest() {
                 <div className="flex flex-col gap-3 w-full">
                     <Button
                         onClick={openAuth}
-                        className="w-full bg-gradient-to-r from-violet-500 to-sky-500 hover:from-violet-600 hover:to-sky-600 text-white py-6 rounded-xl font-bold"
+                        className="w-full bg-gradient-to-r from-violet-500 to-memento-500 hover:from-violet-600 hover:to-memento-600 text-white py-6 rounded-xl font-bold"
                     >
                         무료로 시작하기
                     </Button>

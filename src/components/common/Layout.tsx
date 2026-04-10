@@ -236,7 +236,7 @@ function BottomNav({
             aria-label="메인 네비게이션"
             className={`xl:hidden fixed bottom-0 left-0 right-0 border-t z-50 pb-safe ${
                 isMemorialMode
-                    ? "bg-amber-50 dark:bg-gray-900 border-amber-200 dark:border-gray-700"
+                    ? "bg-memorial-50 dark:bg-gray-900 border-memorial-200 dark:border-gray-700"
                     : "bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800"
             }`}
             style={{
@@ -264,7 +264,7 @@ function BottomNav({
                                 min-h-[60px] min-w-[56px] active:scale-95 transition-all duration-200
                                 ${isActive
                                     ? isMemorialMode
-                                        ? "text-amber-500 dark:text-amber-400"
+                                        ? "text-memorial-500 dark:text-memorial-400"
                                         : "text-memento-600 dark:text-memento-400"
                                     : "text-gray-400 dark:text-gray-500"}
                             `}
@@ -275,12 +275,12 @@ function BottomNav({
                                     ${isHome
                                         ? isActive
                                             ? isMemorialMode
-                                                ? "w-12 h-8 bg-gradient-to-r from-amber-500 to-orange-500 shadow-md shadow-amber-500/25"
+                                                ? "w-12 h-8 bg-gradient-to-r from-memorial-500 to-orange-500 shadow-md shadow-memorial-500/25"
                                                 : "w-12 h-8 bg-gradient-to-r from-memento-500 to-memento-400 shadow-md shadow-memento-500/25"
                                             : "w-12 h-8"
                                         : isActive
                                             ? isMemorialMode
-                                                ? "w-10 h-8 bg-amber-100 dark:bg-amber-500/15"
+                                                ? "w-10 h-8 bg-memorial-100 dark:bg-memorial-500/15"
                                                 : "w-10 h-8 bg-memento-100 dark:bg-memento-500/15"
                                             : "w-10 h-8"
                                     }
@@ -304,7 +304,7 @@ function BottomNav({
                             </span>
                             {isActive && !isHome && (
                                 <div className={`absolute bottom-1 w-1 h-1 rounded-full ${
-                                    isMemorialMode ? "bg-amber-500 dark:bg-amber-400" : "bg-memento-500 dark:bg-memento-400"
+                                    isMemorialMode ? "bg-memorial-500 dark:bg-memorial-400" : "bg-memento-500 dark:bg-memento-400"
                                 }`} />
                             )}
                         </button>
@@ -409,7 +409,7 @@ function Layout({
     return (
         <div className={`min-h-screen pb-safe flex flex-col xl:block ${
             isMemorialMode
-                ? "bg-gradient-to-b from-amber-50/80 via-orange-50/30 to-memento-75 dark:from-gray-900 dark:via-gray-900 dark:to-gray-950"
+                ? "bg-gradient-to-b from-memorial-50/80 via-orange-50/30 to-memento-75 dark:from-gray-900 dark:via-gray-900 dark:to-gray-950"
                 : "bg-gradient-to-b from-memento-50 via-memento-75 to-white/80 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
         }`}>
 
@@ -447,7 +447,7 @@ function Layout({
             <header
                 className={`fixed top-0 left-0 right-0 z-[60] xl:backdrop-blur-sm border-b ${
                     isMemorialMode
-                        ? "bg-amber-50 dark:bg-gray-900 xl:bg-amber-50/90 xl:dark:bg-gray-900/90 border-amber-200 dark:border-gray-700"
+                        ? "bg-memorial-50 dark:bg-gray-900 xl:bg-memorial-50/90 xl:dark:bg-gray-900/90 border-memorial-200 dark:border-gray-700"
                         : "bg-white dark:bg-gray-900 xl:bg-white/90 xl:dark:bg-gray-900/90 border-gray-200 dark:border-gray-700"
                 }`}
                 style={{

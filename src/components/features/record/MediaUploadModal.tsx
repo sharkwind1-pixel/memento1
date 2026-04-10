@@ -301,7 +301,7 @@ export default function MediaUploadModal({
                                     className={`flex gap-4 p-3 rounded-xl ${
                                         file.cropped
                                             ? "bg-green-50 dark:bg-green-900/20 border border-green-200"
-                                            : "bg-amber-50 dark:bg-gray-700/20 border border-amber-200"
+                                            : "bg-memorial-50 dark:bg-gray-700/20 border border-memorial-200"
                                     }`}
                                 >
                                     <div
@@ -350,7 +350,7 @@ export default function MediaUploadModal({
                                                     완료
                                                 </Badge>
                                             ) : (
-                                                <Badge className="bg-amber-100 text-amber-700 text-xs">
+                                                <Badge className="bg-memorial-100 text-memorial-700 text-xs">
                                                     영역 선택 필요
                                                 </Badge>
                                             )}

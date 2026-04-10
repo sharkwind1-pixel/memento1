@@ -35,7 +35,7 @@ export const EMOTION_LABELS: Record<EmotionType, string> = {
 /** 감정별 색상 */
 export const EMOTION_COLORS: Record<EmotionType, string> = {
     happy: "text-yellow-500",
-    sad: "text-blue-500",
+    sad: "text-memento-500",
     anxious: "text-purple-500",
     angry: "text-red-500",
     grateful: "text-green-500",

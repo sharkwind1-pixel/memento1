@@ -197,7 +197,7 @@ export default function AdminPostsTab({
                                                 post.is_hidden
                                                     ? "bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800/50"
                                                     : "bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600"
-                                            } ${isExpanded ? "ring-2 ring-sky-300 dark:ring-sky-600" : "hover:bg-gray-100 dark:hover:bg-gray-600"}`}
+                                            } ${isExpanded ? "ring-2 ring-memento-300 dark:ring-memento-600" : "hover:bg-gray-100 dark:hover:bg-gray-600"}`}
                                         >
                                             <div className="flex items-start justify-between gap-2">
                                                 <div className="min-w-0 flex-1">

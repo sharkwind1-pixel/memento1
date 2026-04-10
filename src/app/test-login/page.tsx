@@ -98,7 +98,7 @@ export default function TestLoginPage() {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="test@example.com"
-                                className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-memento-400 focus:border-transparent"
                                 autoComplete="email"
                             />
                         </div>
@@ -116,7 +116,7 @@ export default function TestLoginPage() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="비밀번호 입력"
-                                className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-transparent"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-memento-400 focus:border-transparent"
                                 autoComplete="current-password"
                             />
                         </div>
@@ -130,7 +130,7 @@ export default function TestLoginPage() {
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="w-full py-3 bg-sky-500 text-white font-medium rounded-xl hover:bg-sky-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full py-3 bg-memento-500 text-white font-medium rounded-xl hover:bg-memento-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isSubmitting ? "로그인 중..." : "로그인"}
                         </button>

@@ -120,8 +120,8 @@ export function EmotionalTrueFocus({
       staggerDelay: 0.025
     },
     memorial: {
-      focusColor: 'text-amber-600 dark:text-amber-400',
-      blurColor: 'text-amber-200 dark:text-amber-700',
+      focusColor: 'text-memorial-600 dark:text-memorial-400',
+      blurColor: 'text-memorial-200 dark:text-memorial-700',
       duration: 1.0,
       staggerDelay: 0.05
     },

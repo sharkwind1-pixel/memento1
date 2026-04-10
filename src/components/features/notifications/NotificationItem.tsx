@@ -42,7 +42,7 @@ function TypeIcon({ type }: { type: string }) {
     const cls = "w-5 h-5 flex-shrink-0";
     switch (type) {
         case "subscription_expiring":
-            return <AlertTriangle className={`${cls} text-amber-500`} />;
+            return <AlertTriangle className={`${cls} text-memorial-500`} />;
         case "subscription_expired":
             return <AlertTriangle className={`${cls} text-red-500`} />;
         case "payment_failed":

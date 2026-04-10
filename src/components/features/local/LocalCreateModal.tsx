@@ -71,7 +71,7 @@ export default function LocalCreateModal({
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* 헤더 */}
-                <div className="sticky top-0 z-10 px-6 py-4 rounded-t-3xl flex items-center justify-between bg-gradient-to-r from-blue-500 to-sky-500">
+                <div className="sticky top-0 z-10 px-6 py-4 rounded-t-3xl flex items-center justify-between bg-gradient-to-r from-memento-500 to-memento-500">
                     <h2 id="local-create-title" className="text-lg font-bold text-white">글쓰기</h2>
                     <button onClick={onClose} aria-label="닫기" className="text-white/80 hover:text-white">
                         <X className="w-5 h-5" />
@@ -201,7 +201,7 @@ export default function LocalCreateModal({
                         ) : (
                             <button
                                 onClick={() => fileInputRef.current?.click()}
-                                className="mt-2 w-full h-28 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 hover:border-blue-400 hover:text-blue-400 dark:hover:border-blue-500 dark:hover:text-blue-500 transition-colors"
+                                className="mt-2 w-full h-28 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 hover:border-memento-400 hover:text-memento-400 dark:hover:border-memento-500 dark:hover:text-memento-500 transition-colors"
                             >
                                 <ImagePlus className="w-8 h-8" />
                                 <span className="text-sm">사진 추가</span>
@@ -213,7 +213,7 @@ export default function LocalCreateModal({
                     <Button
                         onClick={onSubmit}
                         disabled={submitting || !form.title.trim()}
-                        className="w-full rounded-xl text-white py-3 bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600"
+                        className="w-full rounded-xl text-white py-3 bg-gradient-to-r from-memento-500 to-memento-500 hover:from-memento-600 hover:to-memento-600"
                     >
                         {submitting ? (
                             <>

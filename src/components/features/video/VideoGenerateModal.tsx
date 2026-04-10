@@ -66,11 +66,11 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
 const CATEGORY_BADGE: Record<string, { label: string; className: string }> = {
     fun: {
         label: "재미",
-        className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+        className: "bg-memento-200 text-memento-700 dark:bg-memento-900/30 dark:text-memento-300",
     },
     memorial: {
         label: "기억",
-        className: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+        className: "bg-memorial-100 text-memorial-700 dark:bg-memorial-900/30 dark:text-memorial-300",
     },
     transform: {
         label: "변신",

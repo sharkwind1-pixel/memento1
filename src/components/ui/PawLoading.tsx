@@ -55,12 +55,12 @@ export function FullPageLoading({ text = "로딩 중..." }: { text?: string }) {
     }, []);
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-sky-50 to-violet-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 gap-4">
+        <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-memento-200 to-violet-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 gap-4">
             <PawLoading size="lg" text={text} />
             {showRetry && (
                 <button
                     onClick={() => window.location.reload()}
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-sky-600 dark:hover:text-sky-400 bg-white/80 dark:bg-gray-800/80 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-sky-300 dark:hover:border-sky-600 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-memento-600 dark:hover:text-memento-400 bg-white/80 dark:bg-gray-800/80 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-memento-300 dark:hover:border-memento-600 transition-colors"
                     aria-label="페이지 새로고침"
                 >
                     <RefreshCw className="w-4 h-4" />

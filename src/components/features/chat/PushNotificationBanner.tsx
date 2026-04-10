@@ -291,28 +291,28 @@ export default function PushNotificationBanner({
     if (!visible || bannerState === "loading") return null;
 
     const themeClasses = isMemorialMode
-        ? "bg-gradient-to-r from-amber-50 to-amber-100/80 border-amber-300 text-amber-900 dark:from-gray-800/60 dark:to-gray-800/40 dark:border-amber-700/50 dark:text-amber-100"
-        : "bg-gradient-to-r from-sky-50 to-sky-100/80 border-sky-300 text-sky-900 dark:from-sky-950/60 dark:to-sky-900/40 dark:border-sky-700 dark:text-sky-100";
+        ? "bg-gradient-to-r from-memorial-50 to-memorial-100/80 border-memorial-300 text-memorial-900 dark:from-gray-800/60 dark:to-gray-800/40 dark:border-memorial-700/50 dark:text-memorial-100"
+        : "bg-gradient-to-r from-memento-200 to-memento-200/80 border-memento-300 text-memento-900 dark:from-memento-950/60 dark:to-memento-900/40 dark:border-memento-700 dark:text-memento-200";
 
     const accentBg = isMemorialMode
-        ? "bg-amber-200/60 dark:bg-gray-600/60"
-        : "bg-sky-200/60 dark:bg-sky-800/60";
+        ? "bg-memorial-200/60 dark:bg-gray-600/60"
+        : "bg-memento-200/60 dark:bg-memento-800/60";
 
     const iconBg = isMemorialMode
-        ? "bg-amber-200 dark:bg-gray-600"
-        : "bg-sky-200 dark:bg-sky-800";
+        ? "bg-memorial-200 dark:bg-gray-600"
+        : "bg-memento-200 dark:bg-memento-800";
 
     const successIconBg = isMemorialMode
-        ? "bg-amber-500 text-white"
-        : "bg-sky-500 text-white";
+        ? "bg-memorial-500 text-white"
+        : "bg-memento-500 text-white";
 
     const btnClasses = isMemorialMode
-        ? "bg-amber-600 text-white hover:bg-amber-700 active:scale-[0.98] disabled:opacity-50"
-        : "bg-sky-600 text-white hover:bg-sky-700 active:scale-[0.98] disabled:opacity-50";
+        ? "bg-memorial-600 text-white hover:bg-memorial-700 active:scale-[0.98] disabled:opacity-50"
+        : "bg-memento-600 text-white hover:bg-memento-700 active:scale-[0.98] disabled:opacity-50";
 
     const subTextColor = isMemorialMode
-        ? "text-amber-700 dark:text-amber-300"
-        : "text-sky-700 dark:text-sky-300";
+        ? "text-memorial-700 dark:text-memorial-300"
+        : "text-memento-700 dark:text-memento-300";
 
     return (
         <div

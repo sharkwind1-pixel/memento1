@@ -51,8 +51,8 @@ interface AdminWithdrawalsTabProps {
 const TYPE_CONFIG = {
     abuse_concern: {
         label: "악용 우려",
-        color: "bg-amber-50 dark:bg-gray-700/20 border-amber-200 dark:border-gray-700/50",
-        badge: "bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300",
+        color: "bg-memorial-50 dark:bg-gray-700/20 border-memorial-200 dark:border-gray-700/50",
+        badge: "bg-memorial-100 text-memorial-700 dark:bg-memorial-400/10 dark:text-memorial-300",
     },
     banned: {
         label: "영구 차단",
@@ -319,8 +319,8 @@ export default function AdminWithdrawalsTab({
                     type="button"
                     className={`flex-1 inline-flex items-center justify-center rounded-md px-1.5 py-1 text-[10px] font-semibold transition-all ${
                         selectedType === "abuse_concern"
-                            ? "bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300"
-                            : "bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300 opacity-60 hover:opacity-100"
+                            ? "bg-memorial-100 text-memorial-700 dark:bg-memorial-400/10 dark:text-memorial-300"
+                            : "bg-memorial-100 text-memorial-700 dark:bg-memorial-400/10 dark:text-memorial-300 opacity-60 hover:opacity-100"
                     }`}
                     onClick={() => setSelectedType(selectedType === "abuse_concern" ? null : "abuse_concern")}
                 >
@@ -436,7 +436,7 @@ function WithdrawnUserCard({ user, onAllowRejoin, onDelete }: WithdrawnUserCardP
 
             {/* 재가입 가능일 */}
             {user.withdrawal_type === "abuse_concern" && user.rejoin_allowed_at && (
-                <p className="text-[10px] text-amber-600 mt-1">
+                <p className="text-[10px] text-memorial-600 mt-1">
                     재가입: {new Date(user.rejoin_allowed_at).toLocaleDateString("ko-KR")}
                     {canRejoin && " (가능)"}
                 </p>
@@ -457,7 +457,7 @@ function WithdrawnUserCard({ user, onAllowRejoin, onDelete }: WithdrawnUserCardP
                         onClick={onAllowRejoin}
                         className={`h-7 px-2 rounded border text-[10px] font-medium transition-colors bg-white dark:bg-gray-800 ${
                             user.withdrawal_type === "banned"
-                                ? "border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-400"
+                                ? "border-memorial-300 dark:border-memorial-700 text-memorial-600 dark:text-memorial-400"
                                 : "border-green-300 dark:border-green-700 text-green-600 dark:text-green-400"
                         }`}
                     >

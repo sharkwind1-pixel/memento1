@@ -28,8 +28,8 @@ const ACTIONS = [
         sub: "타임라인",
         icon: BookOpen,
         tab: "record" as TabType,
-        bg: "bg-sky-100 dark:bg-sky-900/30",
-        iconColor: "text-sky-500",
+        bg: "bg-memento-200 dark:bg-memento-900/30",
+        iconColor: "text-memento-500",
     },
     {
         label: "커뮤니티",
@@ -44,8 +44,8 @@ const ACTIONS = [
         sub: "읽을거리",
         icon: Newspaper,
         tab: "magazine" as TabType,
-        bg: "bg-amber-100 dark:bg-amber-900/30",
-        iconColor: "text-amber-500",
+        bg: "bg-memorial-100 dark:bg-memorial-900/30",
+        iconColor: "text-memorial-500",
     },
 ];
 

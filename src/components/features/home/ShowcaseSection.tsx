@@ -44,7 +44,7 @@ export default function ShowcaseSection({
         "from-pink-400 to-rose-300",
         "from-violet-400 to-purple-300",
         "from-emerald-400 to-teal-300",
-        "from-amber-400 to-orange-300",
+        "from-memorial-400 to-orange-300",
     ];
 
     const handleMoreClick = () => {
@@ -115,7 +115,7 @@ export default function ShowcaseSection({
         <section className="space-y-6 px-4">
             <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center space-x-3 min-w-0">
-                    <div className="w-10 h-10 flex-shrink-0 bg-gradient-to-br from-amber-400 to-yellow-300 rounded-2xl flex items-center justify-center shadow-sm shadow-amber-400/20">
+                    <div className="w-10 h-10 flex-shrink-0 bg-gradient-to-br from-memorial-400 to-yellow-300 rounded-2xl flex items-center justify-center shadow-sm shadow-memorial-400/20">
                         <Star className="w-5 h-5 text-white" />
                     </div>
                     <div className="min-w-0">
@@ -130,7 +130,7 @@ export default function ShowcaseSection({
                 <Button
                     variant="ghost"
                     onClick={handleMoreClick}
-                    className="text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-gray-700 rounded-xl flex-shrink-0 px-2 sm:px-4 min-h-[44px] active:scale-95 transition-transform"
+                    className="text-memorial-600 dark:text-memorial-400 hover:bg-memorial-100 dark:hover:bg-gray-700 rounded-xl flex-shrink-0 px-2 sm:px-4 min-h-[44px] active:scale-95 transition-transform"
                 >
                     <span className="hidden sm:inline">더 많은 이야기</span>
                     <span className="sm:hidden">더보기</span>
@@ -179,11 +179,11 @@ export default function ShowcaseSection({
                                         {/* 재생 아이콘 오버레이 */}
                                         <div className="absolute inset-0 flex items-center justify-center">
                                             <div className="w-10 h-10 rounded-full bg-white/80 flex items-center justify-center shadow-lg">
-                                                <Play className="w-5 h-5 text-amber-600 ml-0.5" />
+                                                <Play className="w-5 h-5 text-memorial-600 ml-0.5" />
                                             </div>
                                         </div>
                                         {/* AI 영상 뱃지 */}
-                                        <div className="absolute top-3 right-3 bg-amber-500/90 text-white text-xs font-bold px-2 py-1 rounded-full">
+                                        <div className="absolute top-3 right-3 bg-memorial-500/90 text-white text-xs font-bold px-2 py-1 rounded-full">
                                             AI 영상
                                         </div>
                                     </>
@@ -209,14 +209,14 @@ export default function ShowcaseSection({
                                     </div>
                                 )}
                                 <div className="absolute bottom-3 left-3">
-                                    <span className="bg-amber-400/90 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">
+                                    <span className="bg-memorial-400/90 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">
                                         함께 보기
                                     </span>
                                 </div>
                             </div>
 
                             <CardContent className="p-4 bg-white dark:bg-gray-800">
-                                <h3 className="font-bold text-gray-800 dark:text-white text-base mb-1.5 line-clamp-2 group-hover:text-amber-600 transition-colors">
+                                <h3 className="font-bold text-gray-800 dark:text-white text-base mb-1.5 line-clamp-2 group-hover:text-memorial-600 transition-colors">
                                     {post.title}
                                 </h3>
                                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 truncate">
@@ -233,7 +233,7 @@ export default function ShowcaseSection({
                                             {post.comments}
                                         </span>
                                     </div>
-                                    <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-amber-500 group-hover:translate-x-1 transition-all" />
+                                    <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-memorial-500 group-hover:translate-x-1 transition-all" />
                                 </div>
                             </CardContent>
                         </Card>

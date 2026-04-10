@@ -188,7 +188,7 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
         <div
             className={`min-h-screen flex flex-col relative transition-all duration-700 ease-in-out ${
                 chat.isMemorialMode
-                    ? "bg-gradient-to-b from-amber-50 via-orange-50 to-yellow-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-950"
+                    ? "bg-gradient-to-b from-memorial-50 via-orange-50 to-yellow-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-950"
                     : "bg-gradient-to-b from-memento-50 via-memento-75 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
             }`}
         >
@@ -197,8 +197,8 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                 <div
                     className={`flex-shrink-0 hidden lg:block lg:h-[180px] relative overflow-hidden transition-all duration-700 ease-in-out ${
                         chat.isMemorialMode
-                            ? "bg-gradient-to-b from-amber-100 to-amber-50"
-                            : "bg-gradient-to-b from-sky-100 to-sky-50"
+                            ? "bg-gradient-to-b from-memorial-100 to-memorial-50"
+                            : "bg-gradient-to-b from-memento-200 to-memento-200"
                     }`}
                 >
                     <DomeGallery
@@ -219,7 +219,7 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                     <div
                         className={`absolute bottom-0 left-0 right-0 h-12 pointer-events-none transition-all duration-700 ease-in-out ${
                             chat.isMemorialMode
-                                ? "bg-gradient-to-t from-amber-50 to-transparent"
+                                ? "bg-gradient-to-t from-memorial-50 to-transparent"
                                 : "bg-gradient-to-t from-memento-50 to-transparent"
                         }`}
                     />
@@ -242,7 +242,7 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                             }}
                         >
                             <Star
-                                className="w-3 h-3 text-amber-300/40 dark:text-amber-300/60"
+                                className="w-3 h-3 text-memorial-300/40 dark:text-memorial-300/60"
                                 fill="currentColor"
                             />
                         </div>
@@ -300,8 +300,8 @@ function AIChatPage({ setSelectedTab }: AIChatPageProps) {
                     <div
                         className={`mx-4 mt-2 mb-1 px-3 py-2 rounded-lg text-xs text-center transition-colors duration-700 ${
                             chat.isMemorialMode
-                                ? "bg-amber-100/80 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300"
-                                : "bg-sky-100/80 text-sky-700 dark:bg-sky-800/40 dark:text-sky-300 dark:border dark:border-sky-700/50"
+                                ? "bg-memorial-100/80 text-memorial-700 dark:bg-memorial-400/10 dark:text-memorial-300"
+                                : "bg-memento-200/80 text-memento-700 dark:bg-memento-800/40 dark:text-memento-300 dark:border dark:border-memento-700/50"
                         }`}
                     >
                         <span className="inline-flex items-center gap-1">

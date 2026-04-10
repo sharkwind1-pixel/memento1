@@ -181,7 +181,7 @@ export default function ExportChatModal({
                     </p>
                     <button
                         onClick={onClose}
-                        className="px-6 py-2 rounded-full bg-sky-500 text-white hover:bg-sky-600 transition-colors"
+                        className="px-6 py-2 rounded-full bg-memento-500 text-white hover:bg-memento-600 transition-colors"
                     >
                         확인
                     </button>
@@ -236,8 +236,8 @@ export default function ExportChatModal({
                                     className={`p-3 rounded-xl border-2 transition-all ${
                                         selectedTemplate === template.id
                                             ? isMemorialMode
-                                                ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20"
-                                                : "border-sky-500 bg-sky-50 dark:bg-sky-900/20"
+                                                ? "border-memorial-500 bg-memorial-50 dark:bg-memorial-900/20"
+                                                : "border-memento-500 bg-memento-200 dark:bg-memento-900/20"
                                             : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                                     }`}
                                 >
@@ -245,8 +245,8 @@ export default function ExportChatModal({
                                         className={`mb-2 ${
                                             selectedTemplate === template.id
                                                 ? isMemorialMode
-                                                    ? "text-amber-600"
-                                                    : "text-sky-600"
+                                                    ? "text-memorial-600"
+                                                    : "text-memento-600"
                                                 : "text-gray-500"
                                         }`}
                                     >
@@ -325,8 +325,8 @@ export default function ExportChatModal({
                         disabled={isExporting}
                         className={`flex-1 py-3 rounded-xl font-medium text-white transition-all disabled:opacity-50 flex items-center justify-center gap-2 ${
                             isMemorialMode
-                                ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-                                : "bg-gradient-to-r from-sky-500 to-blue-500 hover:from-sky-600 hover:to-blue-600"
+                                ? "bg-gradient-to-r from-memorial-500 to-orange-500 hover:from-memorial-600 hover:to-orange-600"
+                                : "bg-gradient-to-r from-memento-500 to-memento-500 hover:from-memento-600 hover:to-memento-600"
                         }`}
                     >
                         {isExporting ? (

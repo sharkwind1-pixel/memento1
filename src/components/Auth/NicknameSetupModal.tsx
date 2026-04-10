@@ -239,7 +239,7 @@ export default function NicknameSetupModal({
                                 className="mt-0.5 w-5 h-5 rounded border-gray-300 dark:border-gray-500 text-memento-500 focus:ring-memento-500 dark:bg-gray-700 flex-shrink-0"
                             />
                             <span className="text-xs text-gray-600 dark:text-gray-400">
-                                <span className="text-sky-500 font-medium">[선택]</span>{" "}
+                                <span className="text-memento-500 font-medium">[선택]</span>{" "}
                                 위치기반 서비스 이용에 동의합니다
                                 <span className="block text-[10px] text-gray-400 mt-0.5">
                                     주변 동물병원, 지역 정보 등 맞춤 서비스 제공에 활용됩니다.{" "}
@@ -253,7 +253,7 @@ export default function NicknameSetupModal({
                     <Button
                         type="submit"
                         disabled={loading || nicknameStatus === "taken" || nicknameStatus === "checking" || nickname.trim().length < 2 || !ageConfirmed || !termsAgreed}
-                        className="w-full h-12 bg-gradient-to-r from-memento-500 to-memento-400 hover:from-blue-600 hover:to-sky-600 rounded-xl text-base disabled:opacity-50"
+                        className="w-full h-12 bg-gradient-to-r from-memento-500 to-memento-400 hover:from-memento-600 hover:to-memento-600 rounded-xl text-base disabled:opacity-50"
                     >
                         {loading ? (
                             <InlineLoading />

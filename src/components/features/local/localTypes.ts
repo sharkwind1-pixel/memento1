@@ -108,8 +108,8 @@ export function getBadgeStyle(badge: string): string {
         case "모집중": return "bg-green-500 text-white";
         case "나눔": return "bg-purple-500 text-white";
         case "판매": return "bg-orange-500 text-white";
-        case "후기": return "bg-blue-500 text-white";
-        case "질문": return "bg-sky-500 text-white";
+        case "후기": return "bg-memento-500 text-white";
+        case "질문": return "bg-memento-500 text-white";
         case "정보": return "bg-teal-500 text-white";
         default: return "bg-gray-500 text-white";
     }

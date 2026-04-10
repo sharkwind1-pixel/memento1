@@ -224,18 +224,18 @@ export default function VideoResultModal({
                                 className={`flex-1 flex flex-col items-center gap-2 py-5 px-4 rounded-xl transition-colors ${
                                     isPosting
                                         ? "bg-gray-100 dark:bg-gray-700 opacity-60 cursor-not-allowed"
-                                        : "bg-amber-50 dark:bg-amber-900/30 hover:bg-amber-100 dark:hover:bg-amber-900/50"
+                                        : "bg-memorial-50 dark:bg-memorial-900/30 hover:bg-memorial-100 dark:hover:bg-memorial-900/50"
                                 }`}
                             >
                                 {isPosting ? (
-                                    <Loader2 className="w-7 h-7 text-amber-500 animate-spin" />
+                                    <Loader2 className="w-7 h-7 text-memorial-500 animate-spin" />
                                 ) : (
-                                    <Users className="w-7 h-7 text-amber-600 dark:text-amber-400" />
+                                    <Users className="w-7 h-7 text-memorial-600 dark:text-memorial-400" />
                                 )}
                                 <span className={`text-base font-medium ${
                                     isPosting
                                         ? "text-gray-500 dark:text-gray-400"
-                                        : "text-amber-700 dark:text-amber-300"
+                                        : "text-memorial-700 dark:text-memorial-300"
                                 }`}>
                                     {isPosting ? "등록 중..." : "자랑하기"}
                                 </span>
@@ -244,7 +244,7 @@ export default function VideoResultModal({
                             {/* 공유하기 */}
                             <button
                                 onClick={handleShare}
-                                className="flex-1 flex flex-col items-center gap-2 py-5 px-4 rounded-xl bg-sky-50 dark:bg-sky-900/30 hover:bg-sky-100 dark:hover:bg-sky-900/50 transition-colors"
+                                className="flex-1 flex flex-col items-center gap-2 py-5 px-4 rounded-xl bg-memento-200 dark:bg-memento-900/30 hover:bg-memento-200 dark:hover:bg-memento-900/50 transition-colors"
                             >
                                 <Share2 className="w-7 h-7 text-memento-500" />
                                 <span className="text-base font-medium text-memento-500">

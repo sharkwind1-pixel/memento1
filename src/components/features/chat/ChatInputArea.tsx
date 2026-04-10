@@ -119,57 +119,57 @@ export default function ChatInputArea({
 
     return (
         <div
-            className={`flex-shrink-0 px-4 pt-2 pb-2 border-t transition-all duration-700 ease-in-out ${isMemorialMode ? "bg-amber-50/80 dark:bg-gray-900/80 border-amber-200/50 dark:border-amber-700/50" : "bg-white/80 dark:bg-gray-900/80 border-sky-200/50 dark:border-sky-700/50"} backdrop-blur-lg`}
+            className={`flex-shrink-0 px-4 pt-2 pb-2 border-t transition-all duration-700 ease-in-out ${isMemorialMode ? "bg-memorial-50/80 dark:bg-gray-900/80 border-memorial-200/50 dark:border-memorial-700/50" : "bg-white/80 dark:bg-gray-900/80 border-memento-200/50 dark:border-memento-700/50"} backdrop-blur-lg`}
         >
             <div className="max-w-2xl mx-auto">
                 {isLimitReached ? (
                     <div className="text-center py-4">
                         {isMemorialMode ? (
-                            <div className="bg-gradient-to-r from-amber-100 to-orange-100 rounded-2xl p-6 mb-3">
-                                <p className="text-amber-800 font-medium mb-2">
+                            <div className="bg-gradient-to-r from-memorial-100 to-orange-100 rounded-2xl p-6 mb-3">
+                                <p className="text-memorial-800 font-medium mb-2">
                                     오늘은 여기까지 이야기 나눌 수 있어요
                                 </p>
-                                <p className="text-sm text-amber-700 mb-4">
+                                <p className="text-sm text-memorial-700 mb-4">
                                     {lastUserMessage
                                         ? `"${lastUserMessage.slice(0, 30)}${lastUserMessage.length > 30 ? "..." : ""}" 이야기, 내일 이어서 나눠요.`
                                         : `${selectedPet?.name}는 내일도 여기서 기다리고 있을게요.`
                                     }
                                 </p>
                                 <Button
-                                    className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-full px-6"
+                                    className="bg-gradient-to-r from-memorial-500 to-orange-500 hover:from-memorial-600 hover:to-orange-600 text-white rounded-full px-6"
                                     onClick={() => { if (onOpenPremiumModal) onOpenPremiumModal(); }}
                                 >
                                     <Crown className="w-4 h-4 mr-2" />
                                     {selectedPet?.name}와(과) 더 이야기하기
                                 </Button>
-                                <p className="text-xs text-amber-600/80 mt-2">
+                                <p className="text-xs text-memorial-600/80 mt-2">
                                     하루 약 330원, 월 9,900원
                                 </p>
                             </div>
                         ) : (
-                            <div className="bg-gradient-to-r from-memento-100 to-sky-100 dark:from-sky-900/30 dark:to-gray-800/30 rounded-2xl p-6 mb-3">
-                                <p className="text-memento-700 dark:text-sky-200 font-medium mb-2">
+                            <div className="bg-gradient-to-r from-memento-100 to-memento-200 dark:from-memento-900/30 dark:to-gray-800/30 rounded-2xl p-6 mb-3">
+                                <p className="text-memento-700 dark:text-memento-200 font-medium mb-2">
                                     오늘의 무료 대화를 모두 사용했어요
                                 </p>
-                                <p className="text-sm text-sky-700 dark:text-sky-300 mb-4">
+                                <p className="text-sm text-memento-700 dark:text-memento-300 mb-4">
                                     {lastUserMessage
                                         ? `"${lastUserMessage.slice(0, 30)}${lastUserMessage.length > 30 ? "..." : ""}" 이야기를 계속하려면 프리미엄으로 업그레이드하세요`
                                         : `프리미엄으로 ${selectedPet?.name}와(과) 무제한 대화하세요`
                                     }
                                 </p>
                                 <Button
-                                    className="bg-gradient-to-r from-memento-500 to-sky-500 hover:from-memento-600 hover:to-sky-600 text-white rounded-full px-6"
+                                    className="bg-gradient-to-r from-memento-500 to-memento-500 hover:from-memento-600 hover:to-memento-600 text-white rounded-full px-6"
                                     onClick={() => { if (onOpenPremiumModal) onOpenPremiumModal(); }}
                                 >
                                     <Sparkles className="w-4 h-4 mr-2" />
                                     프리미엄 시작하기
                                 </Button>
-                                <p className="text-xs text-memento-500 dark:text-sky-400 mt-2">
+                                <p className="text-xs text-memento-500 dark:text-memento-400 mt-2">
                                     하루 약 330원, 월 9,900원
                                 </p>
                             </div>
                         )}
-                        <p className={`text-xs ${isMemorialMode ? "text-amber-500" : "text-sky-500"}`}>
+                        <p className={`text-xs ${isMemorialMode ? "text-memorial-500" : "text-memento-500"}`}>
                             내일 다시 10회 무료 대화가 충전돼요
                         </p>
                     </div>
@@ -185,7 +185,7 @@ export default function ChatInputArea({
                                         disabled={isSending}
                                         className={`flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 rounded-full text-sm sm:text-[15px] font-medium min-h-[44px] shadow-sm cursor-pointer active:scale-95 hover:scale-[1.03] hover:shadow-md transition-all chip-enter disabled:opacity-50 disabled:cursor-not-allowed ${
                                             isMemorialMode
-                                                ? "bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-200"
+                                                ? "bg-memorial-100 hover:bg-memorial-200 text-memorial-700 border border-memorial-200"
                                                 : "bg-memento-100 hover:bg-memento-200 text-memento-600 border border-memento-200"
                                         }`}
                                         style={{ animationDelay: `${idx * 80}ms` }}
@@ -202,7 +202,7 @@ export default function ChatInputArea({
                                         disabled={isSending}
                                         className={`flex items-center gap-2 px-4 py-2.5 sm:px-5 sm:py-3 rounded-full text-sm sm:text-[15px] font-medium min-h-[44px] shadow-sm cursor-pointer active:scale-95 hover:scale-[1.03] hover:shadow-md transition-all chip-enter disabled:opacity-50 disabled:cursor-not-allowed ${
                                             isMemorialMode
-                                                ? "bg-amber-100 hover:bg-amber-200 text-amber-700 border border-amber-200"
+                                                ? "bg-memorial-100 hover:bg-memorial-200 text-memorial-700 border border-memorial-200"
                                                 : "bg-memento-100 hover:bg-memento-200 text-memento-600 border border-memento-200"
                                         }`}
                                         style={{ animationDelay: `${idx * 80}ms` }}
@@ -214,7 +214,7 @@ export default function ChatInputArea({
                             )}
                         </div>
                         <div className={`flex gap-2 sm:gap-3 items-end rounded-xl border transition-all ${
-                            isMemorialMode ? "textarea-glow-amber border-amber-200 dark:border-amber-700 bg-amber-50/30 dark:bg-amber-950/30" : "textarea-glow-sky border-sky-200 dark:border-sky-700 bg-white dark:bg-gray-800"
+                            isMemorialMode ? "textarea-glow-amber border-memorial-200 dark:border-memorial-700 bg-memorial-50/30 dark:bg-memorial-950/30" : "textarea-glow-sky border-memento-200 dark:border-memento-700 bg-white dark:bg-gray-800"
                         } p-1.5`}>
                             <Textarea
                                 ref={textareaRef}
@@ -225,7 +225,7 @@ export default function ChatInputArea({
                                 }}
                                 onKeyDown={handleKeyDown}
                                 placeholder={isMemorialMode ? `${selectedPet?.name}에게 하고 싶은 말을 적어보세요...` : `${selectedPet?.name}에게 말해보세요...`}
-                                className={`flex-1 rounded-lg border-0 bg-transparent shadow-none text-base resize-none min-h-[40px] max-h-[84px] py-2 px-2 focus-visible:ring-0 focus-visible:ring-offset-0 ${isMemorialMode ? "text-amber-900 dark:text-amber-100 placeholder:text-amber-400 dark:placeholder:text-amber-600" : "text-sky-900 dark:text-sky-100 placeholder:text-sky-400 dark:placeholder:text-sky-600"}`}
+                                className={`flex-1 rounded-lg border-0 bg-transparent shadow-none text-base resize-none min-h-[40px] max-h-[84px] py-2 px-2 focus-visible:ring-0 focus-visible:ring-offset-0 ${isMemorialMode ? "text-memorial-900 dark:text-memorial-100 placeholder:text-memorial-400 dark:placeholder:text-memorial-600" : "text-memento-900 dark:text-memento-200 placeholder:text-memento-400 dark:placeholder:text-memento-600"}`}
                                 rows={1}
                                 style={{ height: "40px" }}
                             />
@@ -236,11 +236,11 @@ export default function ChatInputArea({
                                 className={`rounded-lg px-3 min-w-[44px] min-h-[44px] flex-shrink-0 transition-all ${
                                     inputValue.trim()
                                         ? isMemorialMode
-                                            ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg"
+                                            ? "bg-gradient-to-r from-memorial-500 to-orange-500 hover:from-memorial-600 hover:to-orange-600 shadow-lg"
                                             : "bg-gradient-to-r from-memento-500 to-memento-400 hover:from-memento-600 hover:to-memento-500 shadow-lg"
                                         : isMemorialMode
-                                            ? "bg-amber-200/60 text-amber-400"
-                                            : "bg-sky-100 text-sky-300"
+                                            ? "bg-memorial-200/60 text-memorial-400"
+                                            : "bg-memento-200 text-memento-300"
                                 } active:scale-95 transition-transform`}
                             >
                                 <Send className="w-5 h-5" />
@@ -253,10 +253,10 @@ export default function ChatInputArea({
                                     inputValue.length >= msgLimit
                                         ? "text-red-500 font-medium"
                                         : inputValue.length >= msgLimit - 30
-                                        ? "text-amber-500"
+                                        ? "text-memorial-500"
                                         : isMemorialMode
-                                            ? "text-amber-400"
-                                            : "text-sky-400"
+                                            ? "text-memorial-400"
+                                            : "text-memento-400"
                                 }`}>
                                     {inputValue.length}/{msgLimit}
                                 </span>
@@ -275,8 +275,8 @@ export default function ChatInputArea({
                                         remainingChats <= 3
                                             ? "bg-red-100 text-red-600"
                                             : remainingChats <= 7
-                                            ? "bg-amber-100 text-amber-600"
-                                            : "bg-sky-100 text-sky-600"
+                                            ? "bg-memorial-100 text-memorial-600"
+                                            : "bg-memento-200 text-memento-600"
                                     }`}>
                                         오늘 {remainingChats}회 남음
                                     </span>

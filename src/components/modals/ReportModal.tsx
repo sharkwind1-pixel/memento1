@@ -146,9 +146,9 @@ export default function ReportModal({
                     )}
 
                     {/* 경고 메시지 */}
-                    <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-gray-700/20 rounded-lg">
-                        <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
-                        <p className="text-sm text-amber-700 dark:text-amber-300">
+                    <div className="flex items-start gap-2 p-3 bg-memorial-50 dark:bg-gray-700/20 rounded-lg">
+                        <AlertTriangle className="w-5 h-5 text-memorial-500 flex-shrink-0 mt-0.5" />
+                        <p className="text-sm text-memorial-700 dark:text-memorial-300">
                             허위 신고는 서비스 이용에 제한이 있을 수 있습니다.
                             신중하게 신고해주세요.
                         </p>

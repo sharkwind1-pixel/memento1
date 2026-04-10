@@ -134,8 +134,8 @@ export default function MemoryAlbumsSection({
         return (
             <section className="mb-6">
                 <div className="flex items-center gap-2 mb-3 px-1">
-                    <ImageIcon className="w-5 h-5 text-amber-500" />
-                    <h3 className="text-base font-semibold text-gray-800 dark:text-amber-200">
+                    <ImageIcon className="w-5 h-5 text-memorial-500" />
+                    <h3 className="text-base font-semibold text-gray-800 dark:text-memorial-200">
                         추억 앨범
                     </h3>
                 </div>
@@ -148,10 +148,10 @@ export default function MemoryAlbumsSection({
                             key={i}
                             className="w-32 flex-shrink-0 rounded-xl overflow-hidden"
                         >
-                            <div className="aspect-[3/4] bg-amber-100/60 animate-pulse rounded-xl" />
+                            <div className="aspect-[3/4] bg-memorial-100/60 animate-pulse rounded-xl" />
                             <div className="p-2 space-y-1.5">
-                                <div className="h-4 bg-amber-100/60 animate-pulse rounded w-3/4" />
-                                <div className="h-3 bg-amber-50/60 animate-pulse rounded w-1/2" />
+                                <div className="h-4 bg-memorial-100/60 animate-pulse rounded w-3/4" />
+                                <div className="h-3 bg-memorial-50/60 animate-pulse rounded w-1/2" />
                             </div>
                         </div>
                     ))}
@@ -170,12 +170,12 @@ export default function MemoryAlbumsSection({
             <section className="mb-6">
                 {/* 섹션 헤더 */}
                 <div className="flex items-center gap-2 mb-3 px-1">
-                    <ImageIcon className="w-5 h-5 text-amber-500" />
-                    <h3 className="text-base font-semibold text-gray-800 dark:text-amber-200">
+                    <ImageIcon className="w-5 h-5 text-memorial-500" />
+                    <h3 className="text-base font-semibold text-gray-800 dark:text-memorial-200">
                         추억 앨범
                     </h3>
                     {unreadCount > 0 && (
-                        <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-amber-500 rounded-full">
+                        <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-memorial-500 rounded-full">
                             {unreadCount}
                         </span>
                     )}
@@ -195,10 +195,10 @@ export default function MemoryAlbumsSection({
                             <div
                                 key={album.id}
                                 onClick={() => handleAlbumClick(album)}
-                                className="w-32 flex-shrink-0 rounded-xl overflow-hidden cursor-pointer bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/50 transition-all duration-200 hover:ring-2 hover:ring-amber-300 hover:scale-[1.02] active:ring-2 active:ring-amber-300 active:scale-[1.02]"
+                                className="w-32 flex-shrink-0 rounded-xl overflow-hidden cursor-pointer bg-gradient-to-br from-memorial-50 to-orange-50 border border-memorial-200/50 transition-all duration-200 hover:ring-2 hover:ring-memorial-300 hover:scale-[1.02] active:ring-2 active:ring-memorial-300 active:scale-[1.02]"
                             >
                                 {/* 커버 이미지 */}
-                                <div className="aspect-[3/4] relative bg-amber-100/40">
+                                <div className="aspect-[3/4] relative bg-memorial-100/40">
                                     {coverUrl ? (
                                         <OptimizedImage
                                             src={coverUrl}
@@ -213,13 +213,13 @@ export default function MemoryAlbumsSection({
                                         />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center">
-                                            <ImageIcon className="w-10 h-10 text-amber-300" />
+                                            <ImageIcon className="w-10 h-10 text-memorial-300" />
                                         </div>
                                     )}
 
                                     {/* 미읽은 앨범 NEW 뱃지 */}
                                     {!album.isRead && (
-                                        <span className="absolute top-2 right-2 px-1.5 py-0.5 text-[10px] font-bold text-white bg-amber-500 rounded-md shadow-sm">
+                                        <span className="absolute top-2 right-2 px-1.5 py-0.5 text-[10px] font-bold text-white bg-memorial-500 rounded-md shadow-sm">
                                             NEW
                                         </span>
                                     )}

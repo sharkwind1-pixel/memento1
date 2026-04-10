@@ -77,7 +77,7 @@ export default function LocalDetailModal({
                 <div className="p-6 space-y-4">
                     {loading && (
                         <div className="flex items-center justify-center py-4">
-                            <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
+                            <Loader2 className="w-5 h-5 animate-spin text-memento-500" />
                         </div>
                     )}
 
@@ -139,7 +139,7 @@ export default function LocalDetailModal({
                         <div className="flex gap-2 pt-2">
                             <Button
                                 variant="outline"
-                                className="flex-1 rounded-xl text-blue-600 border-blue-300 dark:border-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30"
+                                className="flex-1 rounded-xl text-memento-600 border-memento-300 dark:border-memento-600 dark:text-memento-400 hover:bg-memento-200 dark:hover:bg-memento-900/30"
                                 onClick={() => onClosePost(post.id)}
                             >
                                 <CheckCircle2 className="w-4 h-4 mr-1" />

@@ -53,7 +53,7 @@ export default function LocalHeader({
         <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg border border-white/50 dark:border-gray-700/50 rounded-3xl p-6">
             <div className="flex items-center justify-between gap-3 mb-6">
                 <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-500 to-sky-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-memento-500 to-memento-500 rounded-xl flex items-center justify-center flex-shrink-0">
                         <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                     </div>
                     <div className="min-w-0">
@@ -67,7 +67,7 @@ export default function LocalHeader({
                 </div>
                 <Button
                     onClick={onWriteClick}
-                    className="bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 rounded-xl flex-shrink-0 px-3 sm:px-4"
+                    className="bg-gradient-to-r from-memento-500 to-memento-500 hover:from-memento-600 hover:to-memento-600 rounded-xl flex-shrink-0 px-3 sm:px-4"
                 >
                     <PenSquare className="w-4 h-4 sm:mr-2" />
                     <span className="hidden sm:inline">글쓰기</span>
@@ -151,8 +151,8 @@ export default function LocalHeader({
                             onClick={() => onCategoryChange(cat.id)}
                             className={`rounded-xl flex-col sm:flex-row h-auto py-2 sm:py-1.5 px-1 sm:px-3 ${
                                 isActive
-                                    ? "bg-gradient-to-r from-blue-500 to-sky-500 text-white border-0"
-                                    : "bg-white/50 dark:bg-gray-700/50 border-blue-200 dark:border-blue-700 dark:text-gray-300"
+                                    ? "bg-gradient-to-r from-memento-500 to-memento-500 text-white border-0"
+                                    : "bg-white/50 dark:bg-gray-700/50 border-memento-200 dark:border-memento-700 dark:text-gray-300"
                             }`}
                         >
                             <Icon className="w-4 h-4 sm:mr-1" />

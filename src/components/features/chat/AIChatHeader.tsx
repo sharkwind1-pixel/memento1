@@ -78,8 +78,8 @@ export default function AIChatHeader({
         <div
             className={`flex-shrink-0 px-4 py-3 border-b relative z-20 transition-all duration-700 ease-in-out ${
                 isMemorialMode
-                    ? "bg-gradient-to-r from-amber-100/80 to-orange-100/80 dark:from-amber-900/40 dark:to-amber-800/40 border-amber-200/50 dark:border-amber-700/50"
-                    : "bg-white/80 dark:bg-gray-900/80 border-sky-200/50 dark:border-sky-700/50"
+                    ? "bg-gradient-to-r from-memorial-100/80 to-orange-100/80 dark:from-memorial-900/40 dark:to-memorial-800/40 border-memorial-200/50 dark:border-memorial-700/50"
+                    : "bg-white/80 dark:bg-gray-900/80 border-memento-200/50 dark:border-memento-700/50"
             } backdrop-blur-lg`}
         >
             <div className="max-w-2xl mx-auto flex items-center justify-between">
@@ -88,7 +88,7 @@ export default function AIChatHeader({
                         onClick={handleNewChatClick}
                         className={`p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-all duration-500 active:scale-95 ${
                             isMemorialMode
-                                ? "hover:bg-amber-200/50 text-amber-600"
+                                ? "hover:bg-memorial-200/50 text-memorial-600"
                                 : "hover:bg-memento-100 text-memento-600"
                         }`}
                         title="새 대화 시작"
@@ -101,7 +101,7 @@ export default function AIChatHeader({
                             onClick={onExport}
                             className={`p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-all duration-500 active:scale-95 ${
                                 isMemorialMode
-                                    ? "hover:bg-amber-200/50 text-amber-600"
+                                    ? "hover:bg-memorial-200/50 text-memorial-600"
                                     : "hover:bg-memento-100 text-memento-600"
                             }`}
                             title="대화 내보내기"
@@ -116,7 +116,7 @@ export default function AIChatHeader({
                     onValueChange={(id) => selectPet(id)}
                 >
                     <SelectTrigger className={`w-auto min-w-[140px] border-0 ${
-                        isMemorialMode ? "bg-amber-50/50 dark:bg-amber-900/30" : "bg-sky-50/50 dark:bg-sky-900/30"
+                        isMemorialMode ? "bg-memorial-50/50 dark:bg-memorial-900/30" : "bg-memento-200/50 dark:bg-memento-900/30"
                     }`}>
                         <SelectValue placeholder="반려동물 선택" />
                     </SelectTrigger>
@@ -141,14 +141,14 @@ export default function AIChatHeader({
                         {/* 추모 모드 펫 */}
                         {memorialPets.length > 0 && (
                             <SelectGroup>
-                                <SelectLabel className="flex items-center gap-2 text-amber-500">
+                                <SelectLabel className="flex items-center gap-2 text-memorial-500">
                                     <Star className="w-3 h-3" />
                                     기억 모드
                                 </SelectLabel>
                                 {memorialPets.map((pet) => (
                                     <SelectItem key={pet.id} value={pet.id}>
                                         <span className="flex items-center gap-2">
-                                            <Star className="w-4 h-4 text-amber-500" />
+                                            <Star className="w-4 h-4 text-memorial-500" />
                                             {pet.name}
                                         </span>
                                     </SelectItem>

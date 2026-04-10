@@ -31,7 +31,7 @@ export default function PetFormStep1({
                     onClick={() => fileInputRef.current?.click()}
                     className={`relative w-36 h-36 rounded-2xl cursor-pointer overflow-hidden border-4 transition-all ${
                         profilePreview && !profileCropped
-                            ? "border-amber-400"
+                            ? "border-memorial-400"
                             : profilePreview
                               ? "border-green-400"
                               : "border-dashed border-memento-500 hover:border-solid"
@@ -80,7 +80,7 @@ export default function PetFormStep1({
                     </div>
                 )}
                 {profilePreview && !profileCropped && (
-                    <p className="text-amber-600 text-xs mt-2 flex items-center gap-1">
+                    <p className="text-memorial-600 text-xs mt-2 flex items-center gap-1">
                         <AlertTriangle className="w-3 h-3" />
                         영역 선택이 필요해요
                     </p>

@@ -121,8 +121,8 @@ export function AnimalDetailModal({
 
                         {/* 특이사항 */}
                         {animal.specialMark && (
-                            <div className="p-3 bg-sky-50 dark:bg-sky-900/20 rounded-xl">
-                                <p className="text-sm font-medium text-sky-700 dark:text-sky-300 mb-1">
+                            <div className="p-3 bg-memento-200 dark:bg-memento-900/20 rounded-xl">
+                                <p className="text-sm font-medium text-memento-700 dark:text-memento-300 mb-1">
                                     특이사항
                                 </p>
                                 <p className="text-sm text-gray-700 dark:text-gray-300">
@@ -187,7 +187,7 @@ export function AnimalDetailModal({
                     <div className="flex gap-3">
                         {animal.shelterTel && (
                             <Button
-                                className="flex-1 bg-gradient-to-r from-blue-500 to-sky-500 hover:from-blue-600 hover:to-sky-600 rounded-xl"
+                                className="flex-1 bg-gradient-to-r from-memento-500 to-memento-500 hover:from-memento-600 hover:to-memento-600 rounded-xl"
                                 onClick={() => {
                                     window.open(`tel:${animal.shelterTel}`);
                                 }}

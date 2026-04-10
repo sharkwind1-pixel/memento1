@@ -270,7 +270,7 @@ export default function OnboardingModal({
                 {/* 헤더 */}
                 <div className="flex justify-between items-center p-4 border-b border-gray-100 dark:border-gray-800">
                     <div className="flex items-center gap-2">
-                        <PawPrint className="w-5 h-5 text-sky-500" />
+                        <PawPrint className="w-5 h-5 text-memento-500" />
                         <span id="onboarding-title" className="font-medium text-gray-700 dark:text-gray-200">메멘토애니</span>
                     </div>
                     <button
@@ -285,7 +285,7 @@ export default function OnboardingModal({
                 {/* 진행 바 */}
                 <div className="h-1 bg-gray-100 dark:bg-gray-800">
                     <div
-                        className="h-full bg-gradient-to-r from-sky-400 to-violet-500 transition-all duration-500"
+                        className="h-full bg-gradient-to-r from-memento-400 to-violet-500 transition-all duration-500"
                         style={{ width: `${getProgress()}%` }}
                     />
                 </div>
@@ -296,10 +296,10 @@ export default function OnboardingModal({
                     {step === 0 && (
                         <div className="text-center py-4">
                             <div className="relative w-24 h-24 mx-auto mb-6">
-                                <div className="w-24 h-24 bg-gradient-to-br from-sky-400 to-violet-500 rounded-full flex items-center justify-center shadow-lg">
+                                <div className="w-24 h-24 bg-gradient-to-br from-memento-400 to-violet-500 rounded-full flex items-center justify-center shadow-lg">
                                     <PawPrint className="w-12 h-12 text-white" />
                                 </div>
-                                <div className="absolute -top-1 -right-1 w-8 h-8 bg-gradient-to-br from-amber-300 to-amber-400 rounded-full flex items-center justify-center shadow-md">
+                                <div className="absolute -top-1 -right-1 w-8 h-8 bg-gradient-to-br from-memorial-300 to-memorial-400 rounded-full flex items-center justify-center shadow-md">
                                     <Sparkles className="w-4 h-4 text-white" />
                                 </div>
                             </div>
@@ -317,7 +317,7 @@ export default function OnboardingModal({
                     {/* Step 9: 크게 보기 (간편모드) */}
                     {step === 9 && (
                         <div className="text-center py-4">
-                            <div className="w-20 h-20 bg-gradient-to-br from-memento-400 to-sky-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                            <div className="w-20 h-20 bg-gradient-to-br from-memento-400 to-memento-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
                                 <Eye className="w-10 h-10 text-white" />
                             </div>
                             <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-3">
@@ -368,22 +368,22 @@ export default function OnboardingModal({
                                     onClick={() => setData({ ...data, userType: "planning" })}
                                     className={`w-full p-4 rounded-2xl border-2 transition-all flex items-center gap-4 ${
                                         data.userType === "planning"
-                                            ? "border-sky-500 bg-sky-50 dark:bg-sky-900/20"
+                                            ? "border-memento-500 bg-memento-200 dark:bg-memento-900/20"
                                             : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
                                     }`}
                                 >
                                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                                        data.userType === "planning" ? "bg-sky-500" : "bg-gray-100 dark:bg-gray-700"
+                                        data.userType === "planning" ? "bg-memento-500" : "bg-gray-100 dark:bg-gray-700"
                                     }`}>
                                         <Heart className={`w-6 h-6 ${data.userType === "planning" ? "text-white" : "text-gray-400"}`} />
                                     </div>
                                     <div className="text-left flex-1">
-                                        <p className={`font-semibold ${data.userType === "planning" ? "text-sky-700 dark:text-sky-300" : "text-gray-800 dark:text-white"}`}>
+                                        <p className={`font-semibold ${data.userType === "planning" ? "text-memento-700 dark:text-memento-300" : "text-gray-800 dark:text-white"}`}>
                                             반려동물을 맞이할 예정이에요
                                         </p>
                                         <p className="text-sm text-gray-500">입양/분양을 준비 중이에요</p>
                                     </div>
-                                    {data.userType === "planning" && <Check className="w-5 h-5 text-sky-500" />}
+                                    {data.userType === "planning" && <Check className="w-5 h-5 text-memento-500" />}
                                 </button>
 
                                 <button
@@ -412,22 +412,22 @@ export default function OnboardingModal({
                                     onClick={() => setData({ ...data, userType: "memorial" })}
                                     className={`w-full p-4 rounded-2xl border-2 transition-all flex items-center gap-4 ${
                                         data.userType === "memorial"
-                                            ? "border-amber-500 bg-amber-50 dark:bg-gray-700/20"
+                                            ? "border-memorial-500 bg-memorial-50 dark:bg-gray-700/20"
                                             : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
                                     }`}
                                 >
                                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                                        data.userType === "memorial" ? "bg-amber-500" : "bg-gray-100 dark:bg-gray-700"
+                                        data.userType === "memorial" ? "bg-memorial-500" : "bg-gray-100 dark:bg-gray-700"
                                     }`}>
                                         <Rainbow className={`w-6 h-6 ${data.userType === "memorial" ? "text-white" : "text-gray-400"}`} />
                                     </div>
                                     <div className="text-left flex-1">
-                                        <p className={`font-semibold ${data.userType === "memorial" ? "text-amber-700 dark:text-amber-300" : "text-gray-800 dark:text-white"}`}>
+                                        <p className={`font-semibold ${data.userType === "memorial" ? "text-memorial-700 dark:text-memorial-300" : "text-gray-800 dark:text-white"}`}>
                                             소중한 아이를 떠나보냈어요
                                         </p>
                                         <p className="text-sm text-gray-500">추억을 간직하고 싶어요</p>
                                     </div>
-                                    {data.userType === "memorial" && <Check className="w-5 h-5 text-amber-500" />}
+                                    {data.userType === "memorial" && <Check className="w-5 h-5 text-memorial-500" />}
                                 </button>
                             </div>
                         </div>
@@ -449,12 +449,12 @@ export default function OnboardingModal({
                                     onClick={() => setData({ ...data, petType: "dog" })}
                                     className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${
                                         data.petType === "dog"
-                                            ? "border-sky-500 bg-sky-50 dark:bg-sky-900/20"
+                                            ? "border-memento-500 bg-memento-200 dark:bg-memento-900/20"
                                             : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                                     }`}
                                 >
-                                    <Dog className={`w-8 h-8 ${data.petType === "dog" ? "text-sky-500" : "text-gray-400"}`} />
-                                    <span className={`font-medium ${data.petType === "dog" ? "text-sky-700 dark:text-sky-300" : "text-gray-600 dark:text-gray-300"}`}>
+                                    <Dog className={`w-8 h-8 ${data.petType === "dog" ? "text-memento-500" : "text-gray-400"}`} />
+                                    <span className={`font-medium ${data.petType === "dog" ? "text-memento-700 dark:text-memento-300" : "text-gray-600 dark:text-gray-300"}`}>
                                         강아지
                                     </span>
                                 </button>
@@ -475,12 +475,12 @@ export default function OnboardingModal({
                                     onClick={() => setData({ ...data, petType: "other" })}
                                     className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 ${
                                         data.petType === "other"
-                                            ? "border-amber-500 bg-amber-50 dark:bg-gray-700/20"
+                                            ? "border-memorial-500 bg-memorial-50 dark:bg-gray-700/20"
                                             : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                                     }`}
                                 >
-                                    <Bird className={`w-8 h-8 ${data.petType === "other" ? "text-amber-500" : "text-gray-400"}`} />
-                                    <span className={`font-medium ${data.petType === "other" ? "text-amber-700 dark:text-amber-300" : "text-gray-600 dark:text-gray-300"}`}>
+                                    <Bird className={`w-8 h-8 ${data.petType === "other" ? "text-memorial-500" : "text-gray-400"}`} />
+                                    <span className={`font-medium ${data.petType === "other" ? "text-memorial-700 dark:text-memorial-300" : "text-gray-600 dark:text-gray-300"}`}>
                                         기타
                                     </span>
                                 </button>
@@ -509,15 +509,15 @@ export default function OnboardingModal({
                                         onClick={() => setData({ ...data, adoptionTiming: option.value as AdoptionTiming })}
                                         className={`w-full p-4 rounded-xl border-2 transition-all flex items-center gap-3 ${
                                             data.adoptionTiming === option.value
-                                                ? "border-sky-500 bg-sky-50 dark:bg-sky-900/20"
+                                                ? "border-memento-500 bg-memento-200 dark:bg-memento-900/20"
                                                 : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                                         }`}
                                     >
-                                        <option.icon className={`w-5 h-5 ${data.adoptionTiming === option.value ? "text-sky-500" : "text-gray-400"}`} />
-                                        <span className={data.adoptionTiming === option.value ? "text-sky-700 dark:text-sky-300 font-medium" : "text-gray-600 dark:text-gray-300"}>
+                                        <option.icon className={`w-5 h-5 ${data.adoptionTiming === option.value ? "text-memento-500" : "text-gray-400"}`} />
+                                        <span className={data.adoptionTiming === option.value ? "text-memento-700 dark:text-memento-300 font-medium" : "text-gray-600 dark:text-gray-300"}>
                                             {option.label}
                                         </span>
-                                        {data.adoptionTiming === option.value && <Check className="w-5 h-5 text-sky-500 ml-auto" />}
+                                        {data.adoptionTiming === option.value && <Check className="w-5 h-5 text-memento-500 ml-auto" />}
                                     </button>
                                 ))}
                             </div>
@@ -538,12 +538,12 @@ export default function OnboardingModal({
                                     onClick={() => setData({ ...data, previousExperience: "first" })}
                                     className={`p-6 rounded-2xl border-2 transition-all flex flex-col items-center gap-3 ${
                                         data.previousExperience === "first"
-                                            ? "border-sky-500 bg-sky-50 dark:bg-sky-900/20"
+                                            ? "border-memento-500 bg-memento-200 dark:bg-memento-900/20"
                                             : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                                     }`}
                                 >
-                                    <Sparkles className={`w-8 h-8 ${data.previousExperience === "first" ? "text-sky-500" : "text-gray-400"}`} />
-                                    <span className={`font-medium text-center ${data.previousExperience === "first" ? "text-sky-700 dark:text-sky-300" : "text-gray-600 dark:text-gray-300"}`}>
+                                    <Sparkles className={`w-8 h-8 ${data.previousExperience === "first" ? "text-memento-500" : "text-gray-400"}`} />
+                                    <span className={`font-medium text-center ${data.previousExperience === "first" ? "text-memento-700 dark:text-memento-300" : "text-gray-600 dark:text-gray-300"}`}>
                                         처음이에요
                                     </span>
                                 </button>
@@ -585,15 +585,15 @@ export default function OnboardingModal({
                                         onClick={() => setData({ ...data, adoptionRoute: option.value as AdoptionRoute })}
                                         className={`w-full p-4 rounded-xl border-2 transition-all flex items-center gap-3 ${
                                             data.adoptionRoute === option.value
-                                                ? "border-sky-500 bg-sky-50 dark:bg-sky-900/20"
+                                                ? "border-memento-500 bg-memento-200 dark:bg-memento-900/20"
                                                 : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                                         }`}
                                     >
-                                        <option.icon className={`w-5 h-5 ${data.adoptionRoute === option.value ? "text-sky-500" : "text-gray-400"}`} />
-                                        <span className={data.adoptionRoute === option.value ? "text-sky-700 dark:text-sky-300 font-medium" : "text-gray-600 dark:text-gray-300"}>
+                                        <option.icon className={`w-5 h-5 ${data.adoptionRoute === option.value ? "text-memento-500" : "text-gray-400"}`} />
+                                        <span className={data.adoptionRoute === option.value ? "text-memento-700 dark:text-memento-300 font-medium" : "text-gray-600 dark:text-gray-300"}>
                                             {option.label}
                                         </span>
-                                        {data.adoptionRoute === option.value && <Check className="w-5 h-5 text-sky-500 ml-auto" />}
+                                        {data.adoptionRoute === option.value && <Check className="w-5 h-5 text-memento-500 ml-auto" />}
                                     </button>
                                 ))}
                             </div>
@@ -614,7 +614,7 @@ export default function OnboardingModal({
                                 value={data.petName || ""}
                                 onChange={(e) => setData({ ...data, petName: e.target.value })}
                                 placeholder="이름을 입력해주세요"
-                                className="w-full p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none text-center text-lg"
+                                className="w-full p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:border-memorial-500 focus:ring-2 focus:ring-memorial-200 outline-none text-center text-lg"
                                 autoFocus
                             />
                         </div>
@@ -641,11 +641,11 @@ export default function OnboardingModal({
                                         onClick={() => setData({ ...data, togetherPeriod: option.value as TogetherPeriod })}
                                         className={`p-4 rounded-xl border-2 transition-all ${
                                             data.togetherPeriod === option.value
-                                                ? "border-amber-500 bg-amber-50 dark:bg-gray-700/20"
+                                                ? "border-memorial-500 bg-memorial-50 dark:bg-gray-700/20"
                                                 : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                                         }`}
                                     >
-                                        <span className={`font-medium ${data.togetherPeriod === option.value ? "text-amber-700 dark:text-amber-300" : "text-gray-600 dark:text-gray-300"}`}>
+                                        <span className={`font-medium ${data.togetherPeriod === option.value ? "text-memorial-700 dark:text-memorial-300" : "text-gray-600 dark:text-gray-300"}`}>
                                             {option.label}
                                         </span>
                                     </button>
@@ -675,11 +675,11 @@ export default function OnboardingModal({
                                         onClick={() => setData({ ...data, passedPeriod: option.value as PassedPeriod })}
                                         className={`p-4 rounded-xl border-2 transition-all ${
                                             data.passedPeriod === option.value
-                                                ? "border-amber-500 bg-amber-50 dark:bg-gray-700/20"
+                                                ? "border-memorial-500 bg-memorial-50 dark:bg-gray-700/20"
                                                 : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                                         }`}
                                     >
-                                        <span className={`font-medium ${data.passedPeriod === option.value ? "text-amber-700 dark:text-amber-300" : "text-gray-600 dark:text-gray-300"}`}>
+                                        <span className={`font-medium ${data.passedPeriod === option.value ? "text-memorial-700 dark:text-memorial-300" : "text-gray-600 dark:text-gray-300"}`}>
                                             {option.label}
                                         </span>
                                     </button>
@@ -718,10 +718,10 @@ export default function OnboardingModal({
                                 disabled={!canProceed() || saving}
                                 className={`flex-1 rounded-xl ${
                                     data.userType === "memorial"
-                                        ? "bg-gradient-to-r from-amber-500 to-orange-500"
+                                        ? "bg-gradient-to-r from-memorial-500 to-orange-500"
                                         : data.userType === "current"
                                             ? "bg-gradient-to-r from-emerald-500 to-teal-500"
-                                            : "bg-gradient-to-r from-sky-500 to-violet-500"
+                                            : "bg-gradient-to-r from-memento-500 to-violet-500"
                                 }`}
                             >
                                 {saving ? (

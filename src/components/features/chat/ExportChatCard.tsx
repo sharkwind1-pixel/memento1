@@ -53,16 +53,16 @@ const ExportChatCard = forwardRef<HTMLDivElement, ExportChatCardProps>(
         const templateStyles = {
             letter: {
                 bg: isMemorialMode
-                    ? "bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-100"
-                    : "bg-gradient-to-br from-sky-50 via-blue-50 to-cyan-100",
-                border: isMemorialMode ? "border-amber-200" : "border-sky-200",
-                title: isMemorialMode ? "text-amber-800" : "text-sky-800",
+                    ? "bg-gradient-to-br from-memorial-50 via-orange-50 to-yellow-100"
+                    : "bg-gradient-to-br from-memento-200 via-memento-200 to-cyan-100",
+                border: isMemorialMode ? "border-memorial-200" : "border-memento-200",
+                title: isMemorialMode ? "text-memorial-800" : "text-memento-800",
                 userBubble: isMemorialMode
-                    ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white"
-                    : "bg-gradient-to-r from-sky-500 to-blue-500 text-white",
+                    ? "bg-gradient-to-r from-memorial-500 to-orange-500 text-white"
+                    : "bg-gradient-to-r from-memento-500 to-memento-500 text-white",
                 petBubble: isMemorialMode
-                    ? "bg-white/80 text-amber-900 border border-amber-200"
-                    : "bg-white/80 text-sky-900 border border-sky-200",
+                    ? "bg-white/80 text-memorial-900 border border-memorial-200"
+                    : "bg-white/80 text-memento-900 border border-memento-200",
             },
             polaroid: {
                 bg: "bg-white",
@@ -73,15 +73,15 @@ const ExportChatCard = forwardRef<HTMLDivElement, ExportChatCardProps>(
             },
             memorial: {
                 bg: "bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-900",
-                border: "border-amber-400/30",
-                title: "text-amber-200",
-                userBubble: "bg-amber-500/20 text-amber-100 border border-amber-400/30",
+                border: "border-memorial-400/30",
+                title: "text-memorial-200",
+                userBubble: "bg-memorial-500/20 text-memorial-100 border border-memorial-400/30",
                 petBubble: "bg-white/10 text-white/90 border border-white/20",
             },
             cute: {
                 bg: isMemorialMode
                     ? "bg-gradient-to-br from-pink-100 via-orange-100 to-yellow-100"
-                    : "bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100",
+                    : "bg-gradient-to-br from-pink-100 via-purple-100 to-memento-200",
                 border: isMemorialMode ? "border-orange-300" : "border-pink-300",
                 title: isMemorialMode ? "text-orange-700" : "text-pink-700",
                 userBubble: isMemorialMode
@@ -113,10 +113,10 @@ const ExportChatCard = forwardRef<HTMLDivElement, ExportChatCardProps>(
                             />
                         ) : (
                             <div className={`w-full h-full flex items-center justify-center ${
-                                isMemorialMode ? "bg-amber-200" : "bg-sky-200"
+                                isMemorialMode ? "bg-memorial-200" : "bg-memento-200"
                             }`}>
                                 <PawPrint className={`w-6 h-6 ${
-                                    isMemorialMode ? "text-amber-600" : "text-sky-600"
+                                    isMemorialMode ? "text-memorial-600" : "text-memento-600"
                                 }`} />
                             </div>
                         )}
@@ -125,7 +125,7 @@ const ExportChatCard = forwardRef<HTMLDivElement, ExportChatCardProps>(
                         <h2 className={`text-xl font-bold ${style.title}`}>
                             {pet.name}
                             {isMemorialMode && (
-                                <Star className="inline-block w-4 h-4 ml-1 text-amber-400" />
+                                <Star className="inline-block w-4 h-4 ml-1 text-memorial-400" />
                             )}
                         </h2>
                         <p className={`text-sm opacity-70 ${style.title}`}>
@@ -137,7 +137,7 @@ const ExportChatCard = forwardRef<HTMLDivElement, ExportChatCardProps>(
                             {[...Array(3)].map((_, i) => (
                                 <Star
                                     key={i}
-                                    className="w-4 h-4 text-amber-400 animate-pulse"
+                                    className="w-4 h-4 text-memorial-400 animate-pulse"
                                     style={{ animationDelay: `${i * 200}ms` }}
                                 />
                             ))}
@@ -189,7 +189,7 @@ const ExportChatCard = forwardRef<HTMLDivElement, ExportChatCardProps>(
                         {[...Array(8)].map((_, i) => (
                             <Star
                                 key={i}
-                                className="absolute text-amber-400/30 w-3 h-3"
+                                className="absolute text-memorial-400/30 w-3 h-3"
                                 style={{
                                     top: `${((i * 37 + 11) % 100)}%`,
                                     left: `${((i * 53 + 7) % 100)}%`,

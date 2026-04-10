@@ -35,7 +35,7 @@ export default function PostOnboardingGuide({
         <div className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-4">
             <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl overflow-hidden shadow-2xl">
                 <div className="p-8 text-center">
-                    <div className="w-20 h-20 bg-gradient-to-br from-sky-400 to-violet-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                    <div className="w-20 h-20 bg-gradient-to-br from-memento-400 to-violet-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
                         <Heart className="w-10 h-10 text-white" />
                     </div>
                     <h2 className="text-2xl font-display font-bold text-gray-800 dark:text-white mb-3">
@@ -51,7 +51,7 @@ export default function PostOnboardingGuide({
                             onClose();
                             onGoToHome();
                         }}
-                        className="w-full rounded-xl bg-gradient-to-r from-sky-500 to-violet-500 py-6 text-lg"
+                        className="w-full rounded-xl bg-gradient-to-r from-memento-500 to-violet-500 py-6 text-lg"
                     >
                         시작하기
                         <ArrowRight className="w-5 h-5 ml-2" />

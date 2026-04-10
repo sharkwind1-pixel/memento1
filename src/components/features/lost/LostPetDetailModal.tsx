@@ -174,11 +174,11 @@ export default function LostPetDetailModal({
 
                     {/* 연락처 */}
                     {post.contact && (
-                        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-2xl p-4 flex items-center gap-3">
-                            <Phone className="w-5 h-5 text-blue-500 dark:text-blue-400 flex-shrink-0" />
+                        <div className="bg-memento-200 dark:bg-memento-900/20 rounded-2xl p-4 flex items-center gap-3">
+                            <Phone className="w-5 h-5 text-memento-500 dark:text-memento-400 flex-shrink-0" />
                             <div>
-                                <span className="text-xs text-blue-600 dark:text-blue-400">연락처</span>
-                                <p className="font-medium text-blue-700 dark:text-blue-300">{post.contact}</p>
+                                <span className="text-xs text-memento-600 dark:text-memento-400">연락처</span>
+                                <p className="font-medium text-memento-700 dark:text-memento-300">{post.contact}</p>
                             </div>
                         </div>
                     )}

@@ -219,7 +219,7 @@ export default function AuthCallbackPage() {
     }, [router]);
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sky-50 to-white">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-memento-200 to-white">
             <div className="text-center space-y-3">
                 {error ? (
                     <>
@@ -229,7 +229,7 @@ export default function AuthCallbackPage() {
                     </>
                 ) : (
                     <>
-                        <div className="w-8 h-8 border-2 border-sky-400 border-t-transparent rounded-full animate-spin mx-auto" />
+                        <div className="w-8 h-8 border-2 border-memento-400 border-t-transparent rounded-full animate-spin mx-auto" />
                         <p className="text-gray-500 text-sm">로그인 처리 중...</p>
                     </>
                 )}

@@ -72,7 +72,7 @@ export default function MemorialSection({
     onCardClick,
 }: MemorialSectionProps) {
     return (
-        <section className="relative overflow-hidden space-y-6 px-4 py-8 -mx-4 bg-gradient-to-b from-amber-50/30 via-amber-50/10 to-transparent dark:from-amber-900/10 dark:via-transparent dark:to-transparent rounded-3xl flex-1">
+        <section className="relative overflow-hidden space-y-6 px-4 py-8 -mx-4 bg-gradient-to-b from-memorial-50/30 via-memorial-50/10 to-transparent dark:from-memorial-900/10 dark:via-transparent dark:to-transparent rounded-3xl flex-1">
             {/* 떠오르는 별 파티클 */}
             {MEMORIAL_STARS.map((star, i) => (
                 <span
@@ -103,11 +103,11 @@ export default function MemorialSection({
                 />
             ))}
             <div className="flex items-center space-x-3 min-w-0">
-                <div className="w-10 h-10 flex-shrink-0 bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-sm shadow-amber-500/20">
+                <div className="w-10 h-10 flex-shrink-0 bg-gradient-to-br from-memorial-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-sm shadow-memorial-500/20">
                     <Cloud className="w-5 h-5 text-white" />
                 </div>
                 <div className="min-w-0">
-                    <h2 className="text-base sm:text-xl md:text-2xl font-display font-bold bg-gradient-to-r from-amber-500 to-orange-500 dark:from-amber-400 dark:to-orange-400 bg-clip-text text-transparent leading-tight">
+                    <h2 className="text-base sm:text-xl md:text-2xl font-display font-bold bg-gradient-to-r from-memorial-500 to-orange-500 dark:from-memorial-400 dark:to-orange-400 bg-clip-text text-transparent leading-tight">
                         마음속에 영원히
                     </h2>
                     <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 hidden sm:block">
@@ -124,30 +124,30 @@ export default function MemorialSection({
                     Array.from({ length: 3 }).map((_, i) => (
                         <Card
                             key={`skeleton-${i}`}
-                            className="w-[200px] max-w-[200px] sm:w-56 sm:max-w-56 flex-shrink-0 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-gray-800/50 dark:to-gray-800/30 border-amber-100 dark:border-gray-700/50 rounded-2xl overflow-hidden shadow-sm animate-pulse"
+                            className="w-[200px] max-w-[200px] sm:w-56 sm:max-w-56 flex-shrink-0 bg-gradient-to-br from-memorial-50 to-orange-50 dark:from-gray-800/50 dark:to-gray-800/30 border-memorial-100 dark:border-gray-700/50 rounded-2xl overflow-hidden shadow-sm animate-pulse"
                         >
                             <CardHeader className="p-0">
-                                <div className="w-full aspect-square bg-amber-200 dark:bg-gray-700" />
+                                <div className="w-full aspect-square bg-memorial-200 dark:bg-gray-700" />
                             </CardHeader>
                             <CardContent className="p-4 text-center">
-                                <div className="h-5 bg-amber-200 dark:bg-gray-600 rounded w-16 mx-auto mb-2" />
-                                <div className="h-3 bg-amber-100 dark:bg-gray-700 rounded w-20 mx-auto mb-1" />
-                                <div className="h-4 bg-amber-100 dark:bg-gray-700 rounded w-12 mx-auto" />
+                                <div className="h-5 bg-memorial-200 dark:bg-gray-600 rounded w-16 mx-auto mb-2" />
+                                <div className="h-3 bg-memorial-100 dark:bg-gray-700 rounded w-20 mx-auto mb-1" />
+                                <div className="h-4 bg-memorial-100 dark:bg-gray-700 rounded w-12 mx-auto" />
                             </CardContent>
                         </Card>
                     ))
                 ) : displayMemorialData.length === 0 ? (
-                    <div className="w-full flex flex-col items-center justify-center py-10 text-center bg-gradient-to-b from-amber-50/50 to-transparent dark:from-amber-900/10 rounded-2xl">
-                        <div className="w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-4">
-                            <Cloud className="w-8 h-8 text-amber-400 dark:text-amber-500" />
+                    <div className="w-full flex flex-col items-center justify-center py-10 text-center bg-gradient-to-b from-memorial-50/50 to-transparent dark:from-memorial-900/10 rounded-2xl">
+                        <div className="w-16 h-16 rounded-full bg-memorial-100 dark:bg-memorial-900/30 flex items-center justify-center mb-4">
+                            <Cloud className="w-8 h-8 text-memorial-400 dark:text-memorial-500" />
                         </div>
-                        <p className="text-amber-700 dark:text-amber-300 text-sm font-medium">
+                        <p className="text-memorial-700 dark:text-memorial-300 text-sm font-medium">
                             무지개다리 건너편에서
                         </p>
-                        <p className="text-amber-700 dark:text-amber-300 text-sm font-medium">
+                        <p className="text-memorial-700 dark:text-memorial-300 text-sm font-medium">
                             모두 편히 쉬고 있을 거예요
                         </p>
-                        <p className="text-amber-500/70 dark:text-amber-400/50 text-xs mt-3">
+                        <p className="text-memorial-500/70 dark:text-memorial-400/50 text-xs mt-3">
                             추모 모드로 등록하면 이곳에서 함께 기억해요
                         </p>
                     </div>
@@ -157,7 +157,7 @@ export default function MemorialSection({
                         return (
                             <Card
                                 key={`${pet.id}-${idx}`}
-                                className="w-[220px] max-w-[220px] sm:w-64 sm:max-w-64 flex-shrink-0 bg-gradient-to-br from-amber-50 to-orange-50/80 dark:from-gray-800/50 dark:to-gray-800/30 border-amber-100/50 dark:border-gray-700/50 rounded-2xl overflow-hidden shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 will-change-transform cursor-pointer"
+                                className="w-[220px] max-w-[220px] sm:w-64 sm:max-w-64 flex-shrink-0 bg-gradient-to-br from-memorial-50 to-orange-50/80 dark:from-gray-800/50 dark:to-gray-800/30 border-memorial-100/50 dark:border-gray-700/50 rounded-2xl overflow-hidden shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 will-change-transform cursor-pointer"
                                 onClick={() => onCardClick?.(pet)}
                             >
                                 <CardHeader className="p-0 relative overflow-hidden">
@@ -183,24 +183,24 @@ export default function MemorialSection({
                                             />
                                         </button>
                                     ) : (
-                                        <div className="w-full aspect-square bg-gradient-to-br from-amber-200 to-orange-200 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center">
+                                        <div className="w-full aspect-square bg-gradient-to-br from-memorial-200 to-orange-200 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center">
                                             {(() => {
                                                 const PetIcon = getPetIcon(pet.type);
-                                                return <PetIcon className="w-16 h-16 text-amber-500/60" />;
+                                                return <PetIcon className="w-16 h-16 text-memorial-500/60" />;
                                             })()}
                                         </div>
                                     )}
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
                                     {pet.isNewlyRegistered ? (
                                         <div className="absolute top-3 right-3">
-                                            <Badge className="bg-amber-500/90 text-white text-xs font-medium gap-1">
+                                            <Badge className="bg-memorial-500/90 text-white text-xs font-medium gap-1">
                                                 <Sparkles className="w-3 h-3" />
                                                 새로운 기억
                                             </Badge>
                                         </div>
                                     ) : pet.yearsLabel ? (
                                         <div className="absolute bottom-3 left-3">
-                                            <Badge className="bg-amber-500/90 text-white text-xs font-medium">
+                                            <Badge className="bg-memorial-500/90 text-white text-xs font-medium">
                                                 {pet.yearsLabel}
                                             </Badge>
                                         </div>
@@ -213,7 +213,7 @@ export default function MemorialSection({
                                     <p className="text-xs text-gray-500 dark:text-gray-400">
                                         {pet.type}{pet.breed ? ` / ${pet.breed}` : ""}
                                     </p>
-                                    <div className="w-8 h-px bg-amber-300/60 mx-auto" />
+                                    <div className="w-8 h-px bg-memorial-300/60 mx-auto" />
                                     {onToggleCondolence ? (
                                         <button
                                             type="button"
@@ -226,16 +226,16 @@ export default function MemorialSection({
                                             <Heart
                                                 className={`w-4 h-4 transition-all duration-300 ${
                                                     condoledPets[pet.id]
-                                                        ? "fill-amber-500 text-amber-500 scale-110"
-                                                        : "text-amber-400 hover:text-amber-500"
+                                                        ? "fill-memorial-500 text-memorial-500 scale-110"
+                                                        : "text-memorial-400 hover:text-memorial-500"
                                                 }`}
                                             />
-                                            <span className={condoledPets[pet.id] ? "text-amber-500" : "text-amber-400"}>
+                                            <span className={condoledPets[pet.id] ? "text-memorial-500" : "text-memorial-400"}>
                                                 {pet.condolenceCount > 0 ? `위로 ${pet.condolenceCount}` : "위로하기"}
                                             </span>
                                         </button>
                                     ) : (
-                                        <p className="text-xs text-amber-500 dark:text-amber-400 font-medium">
+                                        <p className="text-xs text-memorial-500 dark:text-memorial-400 font-medium">
                                             영원히 기억할게
                                         </p>
                                     )}

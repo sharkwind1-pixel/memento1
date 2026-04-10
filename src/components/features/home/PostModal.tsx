@@ -130,9 +130,9 @@ export default function PostModal({
                         {/* 배지 */}
                         <Badge
                             className={`
-                                ${post.badge === "인기" ? "bg-memento-200 text-memento-700 dark:bg-blue-900/50 dark:text-blue-300" : ""}
+                                ${post.badge === "인기" ? "bg-memento-200 text-memento-700 dark:bg-memento-900/50 dark:text-memento-300" : ""}
                                 ${post.badge === "꿀팁" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300" : ""}
-                                ${post.badge === "후기" ? "bg-memento-100 text-memento-700 dark:bg-sky-900/50 dark:text-sky-300" : ""}
+                                ${post.badge === "후기" ? "bg-memento-100 text-memento-700 dark:bg-memento-900/50 dark:text-memento-300" : ""}
                                 rounded-lg
                             `}
                         >

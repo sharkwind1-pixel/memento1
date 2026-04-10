@@ -43,8 +43,8 @@ function getActionIcon(actionType: PointAction) {
 // 활동별 색상 매핑
 function getActionColor(actionType: PointAction) {
     switch (actionType) {
-        case "daily_login": return "text-amber-500 bg-amber-50 dark:bg-gray-700/20";
-        case "write_post": return "text-sky-500 bg-sky-50 dark:bg-sky-900/20";
+        case "daily_login": return "text-memorial-500 bg-memorial-50 dark:bg-gray-700/20";
+        case "write_post": return "text-memento-500 bg-memento-200 dark:bg-memento-900/20";
         case "write_comment": return "text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20";
         case "receive_like": return "text-rose-500 bg-rose-50 dark:bg-rose-900/20";
         case "ai_chat": return "text-violet-500 bg-violet-50 dark:bg-violet-900/20";
@@ -169,7 +169,7 @@ export default function PointsHistoryModal({ open, onClose }: PointsHistoryModal
                 <div className="px-4 pt-3">
                     <button
                         onClick={() => setShowLevelChart(!showLevelChart)}
-                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-gradient-to-r from-violet-50 to-sky-50 dark:from-violet-900/20 dark:to-sky-900/20 hover:from-violet-100 hover:to-sky-100 dark:hover:from-violet-900/30 dark:hover:to-sky-900/30 transition-all"
+                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-gradient-to-r from-violet-50 to-memento-200 dark:from-violet-900/20 dark:to-memento-900/20 hover:from-violet-100 hover:to-memento-200 dark:hover:from-violet-900/30 dark:hover:to-memento-900/30 transition-all"
                     >
                         <div className="flex items-center gap-2.5">
                             <div className="w-8 h-8 rounded-lg overflow-hidden bg-white/80 dark:bg-gray-800 shadow-sm flex items-center justify-center">
@@ -207,14 +207,14 @@ export default function PointsHistoryModal({ open, onClose }: PointsHistoryModal
                                         className={cn(
                                             "flex items-center gap-3 px-3 py-2.5 relative",
                                             idx < POINT_LEVELS.length - 1 && "border-b border-gray-100 dark:border-gray-800",
-                                            isCurrent && "bg-sky-50 dark:bg-sky-900/20",
+                                            isCurrent && "bg-memento-200 dark:bg-memento-900/20",
                                             !isCurrent && isAchieved && "bg-white dark:bg-gray-900",
                                             !isCurrent && !isAchieved && "bg-gray-50/80 dark:bg-gray-900/50"
                                         )}
                                     >
                                         {/* 현재 등급 표시바 */}
                                         {isCurrent && (
-                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-sky-500 rounded-r" />
+                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-memento-500 rounded-r" />
                                         )}
 
                                         {/* 아이콘 */}
@@ -235,13 +235,13 @@ export default function PointsHistoryModal({ open, onClose }: PointsHistoryModal
                                         <div className="flex-1 min-w-0">
                                             <span className={cn(
                                                 "text-xs font-bold",
-                                                isCurrent ? "text-sky-700 dark:text-sky-300" : isAchieved ? "text-gray-600 dark:text-gray-400" : "text-gray-400 dark:text-gray-500"
+                                                isCurrent ? "text-memento-700 dark:text-memento-300" : isAchieved ? "text-gray-600 dark:text-gray-400" : "text-gray-400 dark:text-gray-500"
                                             )}>
                                                 Lv.{lvl.level}
                                             </span>
                                             <span className={cn(
                                                 "text-xs tabular-nums ml-2",
-                                                isCurrent ? "text-sky-600 dark:text-sky-400 font-bold" : isAchieved ? "text-gray-400" : "text-gray-300 dark:text-gray-600"
+                                                isCurrent ? "text-memento-600 dark:text-memento-400 font-bold" : isAchieved ? "text-gray-400" : "text-gray-300 dark:text-gray-600"
                                             )}>
                                                 {lvl.minPoints.toLocaleString()}P
                                             </span>
@@ -249,7 +249,7 @@ export default function PointsHistoryModal({ open, onClose }: PointsHistoryModal
 
                                         {/* 현재 뱃지 */}
                                         {isCurrent && (
-                                            <span className="text-[10px] font-bold text-white bg-sky-500 px-2 py-1 rounded-full flex-shrink-0">
+                                            <span className="text-[10px] font-bold text-white bg-memento-500 px-2 py-1 rounded-full flex-shrink-0">
                                                 현재
                                             </span>
                                         )}
@@ -291,7 +291,7 @@ export default function PointsHistoryModal({ open, onClose }: PointsHistoryModal
                                                 {formatDate(tx.createdAt)}
                                             </p>
                                         </div>
-                                        <span className="text-sm font-bold text-sky-600 dark:text-sky-400">
+                                        <span className="text-sm font-bold text-memento-600 dark:text-memento-400">
                                             +{tx.pointsEarned}P
                                         </span>
                                     </div>

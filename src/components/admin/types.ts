@@ -57,7 +57,7 @@ export const WITHDRAWAL_TYPE_LABELS: Record<WithdrawalType, string> = {
  * 탈퇴 유형별 배지 색상
  */
 export const WITHDRAWAL_TYPE_COLORS: Record<WithdrawalType, string> = {
-    abuse_concern: "bg-amber-100 text-amber-700",
+    abuse_concern: "bg-memorial-100 text-memorial-700",
     banned: "bg-red-100 text-red-700",
     error_resolution: "bg-green-100 text-green-700",
 };

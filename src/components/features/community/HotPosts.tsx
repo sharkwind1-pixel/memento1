@@ -55,7 +55,7 @@ export default function HotPosts({ boardType, onSelectPost }: HotPostsProps) {
 
     return (
         <div className="px-4 sm:px-6 max-w-4xl mx-auto">
-            <div className="bg-gradient-to-r from-orange-50/80 to-amber-50/80 dark:from-orange-900/10 dark:to-amber-900/10 border border-orange-200/50 dark:border-orange-700/30 rounded-2xl p-4">
+            <div className="bg-gradient-to-r from-orange-50/80 to-memorial-50/80 dark:from-orange-900/10 dark:to-memorial-900/10 border border-orange-200/50 dark:border-orange-700/30 rounded-2xl p-4">
                 <div className="flex items-center gap-2 mb-3">
                     <Flame className="w-4 h-4 text-orange-500" />
                     <span className="text-sm font-bold text-orange-700 dark:text-orange-300">

@@ -98,7 +98,7 @@ export default function PostDetailBody({
                                     onClick={() => onSetEditBadge(opt)}
                                     className={`px-2.5 py-1 text-xs font-medium rounded-lg border transition-all ${
                                         editBadge === opt
-                                            ? `${getBadgeStyle(opt)} ring-2 ring-offset-1 ring-sky-400`
+                                            ? `${getBadgeStyle(opt)} ring-2 ring-offset-1 ring-memento-400`
                                             : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600"
                                     }`}
                                 >
@@ -186,7 +186,7 @@ export default function PostDetailBody({
                                 size="sm"
                                 onClick={onSaveEdit}
                                 disabled={isSavingEdit || !editTitle.trim() || !editContent.trim()}
-                                className="rounded-xl bg-sky-500 hover:bg-sky-600"
+                                className="rounded-xl bg-memento-500 hover:bg-memento-600"
                             >
                                 {isSavingEdit ? <InlineLoading /> : "저장"}
                             </Button>
@@ -262,7 +262,7 @@ export default function PostDetailBody({
                 </button>
                 <button
                     onClick={onFocusCommentInput}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:bg-blue-50 hover:text-blue-500 hover:border-blue-200 transition-all text-sm"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:bg-memento-200 hover:text-memento-500 hover:border-memento-200 transition-all text-sm"
                 >
                     <MessageCircle className="w-4 h-4" />
                     <span className="font-medium">{commentsCount}</span>

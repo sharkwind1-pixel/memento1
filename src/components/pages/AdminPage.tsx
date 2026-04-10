@@ -265,7 +265,7 @@ function AdminPage() {
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`flex items-center gap-2 whitespace-nowrap ${
                                     isActive
-                                        ? "bg-sky-500 hover:bg-sky-600"
+                                        ? "bg-memento-500 hover:bg-memento-600"
                                         : ""
                                 }`}
                             >

@@ -520,7 +520,7 @@ function UserDetailPanel({ detail, user }: { detail?: UserDetailData; user: User
         return (
             <div className="mx-2 mb-2 p-3 bg-white dark:bg-gray-800 border border-t-0 border-gray-200 dark:border-gray-600 rounded-b-xl">
                 <div className="flex items-center justify-center py-4">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-sky-500" />
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-memento-500" />
                     <span className="ml-2 text-sm text-gray-400">로딩 중...</span>
                 </div>
             </div>
@@ -567,7 +567,7 @@ function UserDetailPanel({ detail, user }: { detail?: UserDetailData; user: User
                     </div>
                 </div>
                 <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <Crown className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                    <Crown className="w-4 h-4 text-memorial-500 flex-shrink-0" />
                     <div>
                         <p className="text-[10px] text-gray-500 dark:text-gray-400">구독</p>
                         <p className="text-sm font-bold">{tierLabel(detail.subscriptionTier)}</p>
@@ -619,7 +619,7 @@ function UserDetailPanel({ detail, user }: { detail?: UserDetailData; user: User
                                 <span className="text-xs font-medium">{pet.name}</span>
                                 <span className="text-[9px] text-gray-400">{pet.type}</span>
                                 {pet.status === "memorial" && (
-                                    <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300 text-[8px] px-1 py-0">
+                                    <Badge className="bg-memorial-100 text-memorial-700 dark:bg-memorial-400/10 dark:text-memorial-300 text-[8px] px-1 py-0">
                                         추모
                                     </Badge>
                                 )}
@@ -664,14 +664,14 @@ function UserCard({
     return (
         <div
             className={`p-3 rounded-xl border transition-colors ${
-                isExpanded ? "ring-2 ring-sky-300 dark:ring-sky-600" : ""
+                isExpanded ? "ring-2 ring-memento-300 dark:ring-memento-600" : ""
             } ${
                 user.is_banned
                     ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/50"
                     : user.is_admin
                         ? "bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800/50"
                         : user.is_premium
-                            ? "bg-amber-50 dark:bg-gray-700/20 border-amber-200 dark:border-gray-700/50"
+                            ? "bg-memorial-50 dark:bg-gray-700/20 border-memorial-200 dark:border-gray-700/50"
                             : "bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700"
             } ${isExpanded ? "rounded-b-none" : ""}`}
         >
@@ -707,7 +707,7 @@ function UserCard({
                     </Badge>
                 )}
                 {user.is_premium && (
-                    <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300 text-[9px] px-1 py-0 leading-tight">
+                    <Badge className="bg-memorial-100 text-memorial-700 dark:bg-memorial-400/10 dark:text-memorial-300 text-[9px] px-1 py-0 leading-tight">
                         {user.subscription_tier === "basic" ? "베이직" : "프리미엄"}
                     </Badge>
                 )}
@@ -728,7 +728,7 @@ function UserCard({
 
             {/* 프리미엄 만료일 */}
             {user.is_premium && user.premium_expires_at && (
-                <p className="text-[10px] text-amber-600 mt-1">
+                <p className="text-[10px] text-memorial-600 mt-1">
                     만료: {new Date(user.premium_expires_at).toLocaleDateString("ko-KR")}
                 </p>
             )}
@@ -765,7 +765,7 @@ function UserCard({
                     className={`h-7 rounded border text-[10px] font-medium transition-colors ${
                         user.is_premium
                             ? "border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800"
-                            : "border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-400 bg-white dark:bg-gray-800"
+                            : "border-memorial-300 dark:border-memorial-700 text-memorial-600 dark:text-memorial-400 bg-white dark:bg-gray-800"
                     }`}
                 >
                     {user.is_premium ? "프리미엄해제" : "프리미엄"}
@@ -774,7 +774,7 @@ function UserCard({
                 <button
                     type="button"
                     onClick={onOpenPointsModal}
-                    className="h-7 rounded border border-sky-300 dark:border-sky-700 text-sky-600 dark:text-sky-400 bg-white dark:bg-gray-800 text-[10px] font-medium transition-colors"
+                    className="h-7 rounded border border-memento-300 dark:border-memento-700 text-memento-600 dark:text-memento-400 bg-white dark:bg-gray-800 text-[10px] font-medium transition-colors"
                 >
                     포인트
                 </button>

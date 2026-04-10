@@ -213,7 +213,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                             <a
                                 href="/terms"
                                 target="_blank"
-                                className="underline hover:text-sky-500"
+                                className="underline hover:text-memento-500"
                             >
                                 이용약관
                             </a>{" "}
@@ -221,7 +221,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                             <a
                                 href="/privacy"
                                 target="_blank"
-                                className="underline hover:text-sky-500"
+                                className="underline hover:text-memento-500"
                             >
                                 개인정보처리방침
                             </a>

@@ -167,15 +167,15 @@ export default function PointsBadge({ onModalChange }: PointsBadgeProps) {
                     onClick={() => openModal(setShowHistory)}
                     className={cn(
                         "w-full flex items-center justify-between px-3 py-2.5 rounded-xl",
-                        "bg-gradient-to-r from-sky-50 to-violet-50",
-                        "dark:from-sky-900/20 dark:to-violet-900/20",
-                        "hover:from-sky-100 hover:to-violet-100",
-                        "dark:hover:from-sky-900/30 dark:hover:to-violet-900/30",
+                        "bg-gradient-to-r from-memento-200 to-violet-50",
+                        "dark:from-memento-900/20 dark:to-violet-900/20",
+                        "hover:from-memento-200 hover:to-violet-100",
+                        "dark:hover:from-memento-900/30 dark:hover:to-violet-900/30",
                         "transition-all group"
                     )}
                 >
                     <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-400 to-violet-400 flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-memento-400 to-violet-400 flex items-center justify-center">
                             <Star className="w-4 h-4 text-white" />
                         </div>
                         <div className="text-left">
@@ -194,11 +194,11 @@ export default function PointsBadge({ onModalChange }: PointsBadgeProps) {
                     onClick={() => openModal(setShowShop)}
                     className={cn(
                         "w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl",
-                        "bg-gradient-to-r from-amber-50 to-orange-50",
+                        "bg-gradient-to-r from-memorial-50 to-orange-50",
                         "dark:from-gray-700/20 dark:to-gray-700/20",
-                        "hover:from-amber-100 hover:to-orange-100",
-                        "dark:hover:from-amber-900/30 dark:hover:to-orange-900/30",
-                        "transition-all text-sm font-medium text-amber-700 dark:text-amber-300"
+                        "hover:from-memorial-100 hover:to-orange-100",
+                        "dark:hover:from-memorial-900/30 dark:hover:to-orange-900/30",
+                        "transition-all text-sm font-medium text-memorial-700 dark:text-memorial-300"
                     )}
                 >
                     <ShoppingBag className="w-4 h-4" />

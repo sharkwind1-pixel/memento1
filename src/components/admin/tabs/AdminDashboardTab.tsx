@@ -100,7 +100,7 @@ export default function AdminDashboardTab({
     if (loading) {
         return (
             <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500" />
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-memento-500" />
             </div>
         );
     }
@@ -114,8 +114,8 @@ export default function AdminDashboardTab({
                 <StatCard
                     title="전체 회원"
                     value={stats.totalUsers}
-                    icon={<Users className="w-5 h-5 text-blue-600" />}
-                    color="bg-blue-100 dark:bg-blue-900/30"
+                    icon={<Users className="w-5 h-5 text-memento-600" />}
+                    color="bg-memento-200 dark:bg-memento-900/30"
                     subValue={`오늘 +${stats.todayUsers}`}
                 />
                 <StatCard
@@ -159,9 +159,9 @@ export default function AdminDashboardTab({
                             </p>
                         </div>
                         {/* WAU */}
-                        <div className="flex-1 text-center py-2 px-1 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                        <div className="flex-1 text-center py-2 px-1 bg-memento-200 dark:bg-memento-900/20 rounded-lg">
                             <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400">WAU</p>
-                            <p className="text-lg font-bold text-blue-600 leading-tight">
+                            <p className="text-lg font-bold text-memento-600 leading-tight">
                                 {stats.weeklyActiveUsers.toLocaleString()}
                             </p>
                         </div>
@@ -183,8 +183,8 @@ export default function AdminDashboardTab({
                 <Card>
                     <CardContent className="p-3">
                         <div className="flex items-center gap-2">
-                            <div className="p-2 bg-amber-100 dark:bg-amber-400/10 rounded-full flex-shrink-0">
-                                <Crown className="w-4 h-4 text-amber-600" />
+                            <div className="p-2 bg-memorial-100 dark:bg-memorial-400/10 rounded-full flex-shrink-0">
+                                <Crown className="w-4 h-4 text-memorial-600" />
                             </div>
                             <div className="min-w-0">
                                 <p className="text-xs text-gray-500 dark:text-gray-400">프리미엄</p>
@@ -214,7 +214,7 @@ export default function AdminDashboardTab({
             <Card>
                 <CardHeader className="pb-2">
                     <CardTitle className="text-base flex items-center gap-2">
-                        <TrendingUp className="w-4 h-4 text-sky-500" />
+                        <TrendingUp className="w-4 h-4 text-memento-500" />
                         최근 7일 추이
                     </CardTitle>
                 </CardHeader>
@@ -267,7 +267,7 @@ export default function AdminDashboardTab({
                 <Card>
                     <CardHeader className="pb-2">
                         <CardTitle className="text-base flex items-center gap-2">
-                            <Zap className="w-4 h-4 text-amber-500" />
+                            <Zap className="w-4 h-4 text-memorial-500" />
                             API 사용량
                         </CardTitle>
                     </CardHeader>
@@ -304,10 +304,10 @@ export default function AdminDashboardTab({
                             </div>
 
                             {/* fal.ai (AI 영상) */}
-                            <div className="p-3 bg-sky-50 dark:bg-sky-900/20 rounded-xl">
+                            <div className="p-3 bg-memento-200 dark:bg-memento-900/20 rounded-xl">
                                 <div className="flex items-center gap-1.5 mb-2">
-                                    <Video className="w-4 h-4 text-sky-500" />
-                                    <span className="text-xs font-medium text-sky-700 dark:text-sky-300">AI 영상</span>
+                                    <Video className="w-4 h-4 text-memento-500" />
+                                    <span className="text-xs font-medium text-memento-700 dark:text-memento-300">AI 영상</span>
                                 </div>
                                 <div className="space-y-1">
                                     <div className="flex justify-between text-[11px]">
@@ -320,7 +320,7 @@ export default function AdminDashboardTab({
                                     </div>
                                     <div className="flex justify-between text-[11px]">
                                         <span className="text-gray-500 dark:text-gray-400">예상 비용</span>
-                                        <span className="font-bold text-sky-600 dark:text-sky-400">
+                                        <span className="font-bold text-memento-600 dark:text-memento-400">
                                             ${apiUsage.fal.estimatedMonthlyCostUsd.toFixed(2)}
                                         </span>
                                     </div>
@@ -347,7 +347,7 @@ export default function AdminDashboardTab({
 function ApiUsageProgressBar({ used, budget }: { used: number; budget: number }) {
     const ratio = Math.min(used / budget, 1);
     const percent = Math.round(ratio * 100);
-    const color = ratio < 0.6 ? "bg-green-500" : ratio < 0.8 ? "bg-amber-500" : "bg-red-500";
+    const color = ratio < 0.6 ? "bg-green-500" : ratio < 0.8 ? "bg-memorial-500" : "bg-red-500";
 
     return (
         <div className="mt-1">

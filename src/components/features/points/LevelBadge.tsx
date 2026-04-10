@@ -92,7 +92,7 @@ export default function LevelBadge({
                         // Lv.7 무지개 / 나머지 골드
                         level.hasGlow
                             ? "bg-[conic-gradient(#ef4444,#f59e0b,#22c55e,#3b82f6,#8b5cf6,#ef4444)]"
-                            : "bg-gradient-to-br from-amber-300 to-amber-500",
+                            : "bg-gradient-to-br from-memorial-300 to-memorial-500",
                     )} />
                 )}
             </span>
@@ -100,7 +100,7 @@ export default function LevelBadge({
             {showName && (
                 <span className={cn(
                     "text-xs font-medium",
-                    isAdmin ? "text-amber-600" : level.textColor,
+                    isAdmin ? "text-memorial-600" : level.textColor,
                 )}>
                     {isAdmin ? "ADMIN" : `Lv.${level.level}`}
                 </span>
@@ -119,7 +119,7 @@ export function LevelProgress({ points, nickname, petType = "dog", isAdmin = fal
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <LevelBadge points={points} petType={petType} isAdmin={isAdmin} size="lg" showTooltip={false} />
-                    <span className={cn("text-sm font-bold", isAdmin ? "text-amber-600" : level.textColor)}>
+                    <span className={cn("text-sm font-bold", isAdmin ? "text-memorial-600" : level.textColor)}>
                         {nickname || (isAdmin ? "ADMIN" : `Lv.${level.level}`)}
                     </span>
                 </div>

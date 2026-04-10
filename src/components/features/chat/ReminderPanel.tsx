@@ -67,7 +67,7 @@ interface AddReminderForm {
 const REMINDER_TYPES = [
     { key: "walk", label: "산책", Icon: Footprints, color: "border-green-400", bg: "bg-green-50", text: "text-green-600" },
     { key: "meal", label: "식사", Icon: UtensilsCrossed, color: "border-orange-400", bg: "bg-orange-50", text: "text-orange-600" },
-    { key: "medicine", label: "약", Icon: Pill, color: "border-blue-400", bg: "bg-blue-50", text: "text-blue-600" },
+    { key: "medicine", label: "약", Icon: Pill, color: "border-memento-400", bg: "bg-memento-200", text: "text-memento-600" },
     { key: "vaccine", label: "접종", Icon: Syringe, color: "border-purple-400", bg: "bg-purple-50", text: "text-purple-600" },
     { key: "grooming", label: "미용", Icon: Scissors, color: "border-pink-400", bg: "bg-pink-50", text: "text-pink-600" },
     { key: "vet", label: "병원", Icon: Stethoscope, color: "border-red-400", bg: "bg-red-50", text: "text-red-600" },
@@ -286,10 +286,10 @@ export default function ReminderPanel({
     // 테마 색상
     const themeAccent = isMemorialMode ? "amber" : "sky";
     const headerBg = isMemorialMode
-        ? "bg-gradient-to-r from-amber-100 to-orange-100"
-        : "bg-gradient-to-r from-sky-100 to-blue-100";
-    const headerText = isMemorialMode ? "text-amber-800" : "text-sky-800";
-    const headerIcon = isMemorialMode ? "text-amber-500" : "text-sky-500";
+        ? "bg-gradient-to-r from-memorial-100 to-orange-100"
+        : "bg-gradient-to-r from-memento-200 to-memento-200";
+    const headerText = isMemorialMode ? "text-memorial-800" : "text-memento-800";
+    const headerIcon = isMemorialMode ? "text-memorial-500" : "text-memento-500";
 
     return (
         <div
@@ -351,10 +351,10 @@ export default function ReminderPanel({
                         /* 빈 상태 */
                         <div className="text-center py-10 px-4">
                             <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4 ${
-                                isMemorialMode ? "bg-amber-100" : "bg-sky-100"
+                                isMemorialMode ? "bg-memorial-100" : "bg-memento-200"
                             }`}>
                                 <Bell className={`w-8 h-8 ${
-                                    isMemorialMode ? "text-amber-400" : "text-sky-400"
+                                    isMemorialMode ? "text-memorial-400" : "text-memento-400"
                                 }`} />
                             </div>
                             <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
@@ -403,8 +403,8 @@ export default function ReminderPanel({
                                             className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${
                                                 reminder.enabled
                                                     ? isMemorialMode
-                                                        ? "bg-amber-500"
-                                                        : "bg-sky-500"
+                                                        ? "bg-memorial-500"
+                                                        : "bg-memento-500"
                                                     : "bg-gray-300 dark:bg-gray-600"
                                             }`}
                                             aria-label={reminder.enabled ? "알림 끄기" : "알림 켜기"}
@@ -435,11 +435,11 @@ export default function ReminderPanel({
                     {showAddForm && (
                         <div className={`mt-4 p-4 rounded-xl border ${
                             isMemorialMode
-                                ? "border-amber-200 bg-amber-50/50"
-                                : "border-sky-200 bg-sky-50/50"
+                                ? "border-memorial-200 bg-memorial-50/50"
+                                : "border-memento-200 bg-memento-200/50"
                         }`}>
                             <h3 className={`font-bold text-sm mb-3 ${
-                                isMemorialMode ? "text-amber-800" : "text-sky-800"
+                                isMemorialMode ? "text-memorial-800" : "text-memento-800"
                             }`}>
                                 새 알림 추가
                             </h3>
@@ -460,8 +460,8 @@ export default function ReminderPanel({
                                                 className={`flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all text-xs ${
                                                     isSelected
                                                         ? isMemorialMode
-                                                            ? "border-amber-400 bg-amber-100"
-                                                            : "border-sky-400 bg-sky-100"
+                                                            ? "border-memorial-400 bg-memorial-100"
+                                                            : "border-memento-400 bg-memento-200"
                                                         : "border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-600 hover:border-gray-300"
                                                 }`}
                                             >
@@ -486,7 +486,7 @@ export default function ReminderPanel({
                                     onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
                                     placeholder="예: 아침 산책"
                                     maxLength={100}
-                                    className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300 dark:focus:ring-sky-600 placeholder-gray-400"
+                                    className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-memento-300 dark:focus:ring-memento-600 placeholder-gray-400"
                                 />
                             </div>
 
@@ -499,7 +499,7 @@ export default function ReminderPanel({
                                     type="time"
                                     value={form.time}
                                     onChange={(e) => setForm((prev) => ({ ...prev, time: e.target.value }))}
-                                    className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300 dark:focus:ring-sky-600"
+                                    className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-memento-300 dark:focus:ring-memento-600"
                                 />
                             </div>
 
@@ -516,8 +516,8 @@ export default function ReminderPanel({
                                             className={`py-2 rounded-lg border-2 text-xs font-medium transition-all ${
                                                 form.repeatType === option.value
                                                     ? isMemorialMode
-                                                        ? "border-amber-400 bg-amber-100 text-amber-700"
-                                                        : "border-sky-400 bg-sky-100 text-sky-700"
+                                                        ? "border-memorial-400 bg-memorial-100 text-memorial-700"
+                                                        : "border-memento-400 bg-memento-200 text-memento-700"
                                                     : "border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-600 text-gray-500 hover:border-gray-300"
                                             }`}
                                         >
@@ -541,8 +541,8 @@ export default function ReminderPanel({
                                                 className={`flex-1 py-2 rounded-lg border-2 text-xs font-medium transition-all ${
                                                     form.dayOfWeek === idx
                                                         ? isMemorialMode
-                                                            ? "border-amber-400 bg-amber-100 text-amber-700"
-                                                            : "border-sky-400 bg-sky-100 text-sky-700"
+                                                            ? "border-memorial-400 bg-memorial-100 text-memorial-700"
+                                                            : "border-memento-400 bg-memento-200 text-memento-700"
                                                         : "border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-600 text-gray-500 hover:border-gray-300"
                                                 }`}
                                             >
@@ -562,7 +562,7 @@ export default function ReminderPanel({
                                     <select
                                         value={form.dayOfMonth}
                                         onChange={(e) => setForm((prev) => ({ ...prev, dayOfMonth: parseInt(e.target.value) }))}
-                                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300 dark:focus:ring-sky-600"
+                                        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-memento-300 dark:focus:ring-memento-600"
                                     >
                                         {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
                                             <option key={day} value={day}>
@@ -586,8 +586,8 @@ export default function ReminderPanel({
                                     disabled={isSubmitting || !form.title.trim()}
                                     className={`flex-1 py-2.5 rounded-xl text-sm font-medium text-white transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 ${
                                         isMemorialMode
-                                            ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
-                                            : "bg-gradient-to-r from-sky-500 to-blue-500 hover:from-sky-600 hover:to-blue-600"
+                                            ? "bg-gradient-to-r from-memorial-500 to-orange-500 hover:from-memorial-600 hover:to-orange-600"
+                                            : "bg-gradient-to-r from-memento-500 to-memento-500 hover:from-memento-600 hover:to-memento-600"
                                     }`}
                                 >
                                     {isSubmitting ? (
@@ -609,8 +609,8 @@ export default function ReminderPanel({
                             onClick={() => setShowAddForm(true)}
                             className={`w-full py-3 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${
                                 isMemorialMode
-                                    ? "bg-amber-100 hover:bg-amber-200 text-amber-700"
-                                    : "bg-sky-100 hover:bg-sky-200 text-sky-700"
+                                    ? "bg-memorial-100 hover:bg-memorial-200 text-memorial-700"
+                                    : "bg-memento-200 hover:bg-memento-200 text-memento-700"
                             }`}
                         >
                             <Plus className="w-4 h-4" />

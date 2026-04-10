@@ -40,7 +40,7 @@ export default function PaymentTermsPage() {
                         <div className="overflow-x-auto mt-3">
                             <table className="w-full text-sm border-collapse">
                                 <thead>
-                                    <tr className="bg-sky-50 dark:bg-sky-900/30">
+                                    <tr className="bg-memento-200 dark:bg-memento-900/30">
                                         <th className="border border-gray-200 dark:border-gray-600 px-4 py-2 text-left font-semibold">구분</th>
                                         <th className="border border-gray-200 dark:border-gray-600 px-4 py-2 text-left font-semibold">무료</th>
                                         <th className="border border-gray-200 dark:border-gray-600 px-4 py-2 text-left font-semibold">베이직</th>

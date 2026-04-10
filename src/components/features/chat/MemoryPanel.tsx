@@ -156,8 +156,8 @@ function ImportanceDots({
                     className={`w-1.5 h-1.5 rounded-full transition-colors ${
                         i < filledCount
                             ? isMemorialMode
-                                ? "bg-amber-400"
-                                : "bg-sky-400"
+                                ? "bg-memorial-400"
+                                : "bg-memento-400"
                             : "bg-gray-200 dark:bg-gray-600"
                     }`}
                 />
@@ -231,7 +231,7 @@ function DeleteConfirmDialog({
                         onClick={onConfirm}
                         className={`flex-1 py-2.5 rounded-xl text-white font-medium text-sm transition-colors ${
                             isMemorialMode
-                                ? "bg-amber-500 hover:bg-amber-600"
+                                ? "bg-memorial-500 hover:bg-memorial-600"
                                 : "bg-red-500 hover:bg-red-600"
                         }`}
                     >
@@ -262,8 +262,8 @@ function MemoryCard({
         <div
             className={`bg-white dark:bg-gray-800 rounded-xl p-3.5 border transition-all hover:shadow-md ${
                 isMemorialMode
-                    ? "border-amber-100 dark:border-gray-700/50 hover:border-amber-200"
-                    : "border-sky-100 dark:border-sky-800/50 hover:border-sky-200"
+                    ? "border-memorial-100 dark:border-gray-700/50 hover:border-memorial-200"
+                    : "border-memento-200 dark:border-memento-800/50 hover:border-memento-200"
             }`}
         >
             <div className="flex items-start gap-3">
@@ -271,15 +271,15 @@ function MemoryCard({
                 <div
                     className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
                         isMemorialMode
-                            ? "bg-amber-50 dark:bg-amber-400/10"
-                            : "bg-sky-50 dark:bg-sky-900/30"
+                            ? "bg-memorial-50 dark:bg-memorial-400/10"
+                            : "bg-memento-200 dark:bg-memento-900/30"
                     }`}
                 >
                     <IconComponent
                         className={`w-4 h-4 ${
                             isMemorialMode
-                                ? "text-amber-500"
-                                : "text-sky-500"
+                                ? "text-memorial-500"
+                                : "text-memento-500"
                         }`}
                     />
                 </div>
@@ -311,8 +311,8 @@ function MemoryCard({
                         <span
                             className={`inline-flex items-center gap-1 text-[10px] mt-1.5 px-2 py-0.5 rounded-full ${
                                 isMemorialMode
-                                    ? "bg-amber-50 text-amber-600 dark:bg-gray-700/20 dark:text-amber-400"
-                                    : "bg-sky-50 text-sky-600 dark:bg-sky-900/20 dark:text-sky-400"
+                                    ? "bg-memorial-50 text-memorial-600 dark:bg-gray-700/20 dark:text-memorial-400"
+                                    : "bg-memento-200 text-memento-600 dark:bg-memento-900/20 dark:text-memento-400"
                             }`}
                         >
                             <Clock className="w-2.5 h-2.5" />
@@ -349,8 +349,8 @@ function MemoryGroup({
                 onClick={() => setIsExpanded(!isExpanded)}
                 className={`flex items-center gap-2 w-full px-2 py-2 rounded-lg transition-colors ${
                     isMemorialMode
-                        ? "hover:bg-amber-50 dark:hover:bg-gray-700/10"
-                        : "hover:bg-sky-50 dark:hover:bg-sky-900/10"
+                        ? "hover:bg-memorial-50 dark:hover:bg-gray-700/10"
+                        : "hover:bg-memento-200 dark:hover:bg-memento-900/10"
                 }`}
             >
                 {isExpanded ? (
@@ -360,7 +360,7 @@ function MemoryGroup({
                 )}
                 <IconComponent
                     className={`w-4 h-4 ${
-                        isMemorialMode ? "text-amber-500" : "text-sky-500"
+                        isMemorialMode ? "text-memorial-500" : "text-memento-500"
                     }`}
                 />
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -369,8 +369,8 @@ function MemoryGroup({
                 <span
                     className={`text-xs px-1.5 py-0.5 rounded-full ${
                         isMemorialMode
-                            ? "bg-amber-100 text-amber-600 dark:bg-amber-400/10 dark:text-amber-400"
-                            : "bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400"
+                            ? "bg-memorial-100 text-memorial-600 dark:bg-memorial-400/10 dark:text-memorial-400"
+                            : "bg-memento-200 text-memento-600 dark:bg-memento-900/30 dark:text-memento-400"
                     }`}
                 >
                     {memories.length}
@@ -548,7 +548,7 @@ export default function MemoryPanel({
                 <div
                     className={`rounded-t-2xl shadow-2xl flex flex-col overflow-hidden ${
                         isMemorialMode
-                            ? "bg-amber-50 dark:bg-gray-900"
+                            ? "bg-memorial-50 dark:bg-gray-900"
                             : "bg-memento-50 dark:bg-gray-900"
                     }`}
                     style={{ maxHeight: "85vh" }}
@@ -564,8 +564,8 @@ export default function MemoryPanel({
                             <Sparkles
                                 className={`w-5 h-5 ${
                                     isMemorialMode
-                                        ? "text-amber-500"
-                                        : "text-sky-500"
+                                        ? "text-memorial-500"
+                                        : "text-memento-500"
                                 }`}
                             />
                             <h2 className="text-lg font-bold text-gray-800 dark:text-white">
@@ -575,8 +575,8 @@ export default function MemoryPanel({
                                 <span
                                     className={`text-xs px-2 py-0.5 rounded-full ${
                                         isMemorialMode
-                                            ? "bg-amber-100 text-amber-600 dark:bg-amber-400/10 dark:text-amber-400"
-                                            : "bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400"
+                                            ? "bg-memorial-100 text-memorial-600 dark:bg-memorial-400/10 dark:text-memorial-400"
+                                            : "bg-memento-200 text-memento-600 dark:bg-memento-900/30 dark:text-memento-400"
                                     }`}
                                 >
                                     {memories.length}
@@ -602,15 +602,15 @@ export default function MemoryPanel({
                                 <div
                                     className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
                                         isMemorialMode
-                                            ? "bg-amber-100 dark:bg-amber-400/10"
-                                            : "bg-sky-100 dark:bg-sky-900/30"
+                                            ? "bg-memorial-100 dark:bg-memorial-400/10"
+                                            : "bg-memento-200 dark:bg-memento-900/30"
                                     }`}
                                 >
                                     <Sparkles
                                         className={`w-8 h-8 ${
                                             isMemorialMode
-                                                ? "text-amber-400"
-                                                : "text-sky-400"
+                                                ? "text-memorial-400"
+                                                : "text-memento-400"
                                         }`}
                                     />
                                 </div>

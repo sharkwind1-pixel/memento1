@@ -213,7 +213,7 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                                                             entry.category === "건강" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
                                                             : entry.category === "기념일" || entry.category === "특별한날" ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
                                                             : entry.category === "여행" ? "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400"
-                                                            : "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400"
+                                                            : "bg-memento-200 text-memento-700 dark:bg-memento-900/30 dark:text-memento-400"
                                                         }`}>
                                                             {entry.category}
                                                         </span>

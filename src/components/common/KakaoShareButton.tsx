@@ -51,7 +51,7 @@ export default function KakaoShareButton({
         <button
             onClick={handleShare}
             disabled={isSharing}
-            className={`flex items-center justify-center gap-1.5 rounded-xl text-gray-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors ${sizeClass} ${className}`}
+            className={`flex items-center justify-center gap-1.5 rounded-xl text-gray-500 hover:text-memorial-600 hover:bg-memorial-50 dark:hover:bg-memorial-900/20 transition-colors ${sizeClass} ${className}`}
             aria-label="공유하기"
         >
             <Share2 className={size === "sm" ? "w-4 h-4" : "w-5 h-5"} />

@@ -7,7 +7,7 @@ export default function NotFound() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-memento-50 via-memento-75 to-white p-4">
             <div className="max-w-md w-full text-center">
-                <div className="text-7xl font-bold text-sky-200 mb-4">404</div>
+                <div className="text-7xl font-bold text-memento-200 mb-4">404</div>
                 <h2 className="text-xl font-bold text-gray-800 mb-2">
                     페이지를 찾을 수 없습니다
                 </h2>
@@ -16,7 +16,7 @@ export default function NotFound() {
                 </p>
                 <Link
                     href="/"
-                    className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-blue-500 text-white font-medium hover:opacity-90 transition-opacity"
+                    className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-gradient-to-r from-memento-500 to-memento-500 text-white font-medium hover:opacity-90 transition-opacity"
                 >
                     홈으로 돌아가기
                 </Link>

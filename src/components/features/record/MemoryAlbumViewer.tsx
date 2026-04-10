@@ -217,13 +217,13 @@ export default function MemoryAlbumViewer({
                 aria-label="추억 앨범"
             >
                 <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 max-w-sm w-full text-center animate-in fade-in zoom-in-95 duration-200">
-                    <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 rounded-full flex items-center justify-center">
-                        <ImageIcon className="w-8 h-8 text-amber-500" />
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-memorial-100 to-orange-100 dark:from-memorial-900/30 dark:to-orange-900/30 rounded-full flex items-center justify-center">
+                        <ImageIcon className="w-8 h-8 text-memorial-500" />
                     </div>
                     <p className="text-gray-600 dark:text-gray-300">앨범에 사진이 없습니다.</p>
                     <Button
                         onClick={handleClose}
-                        className="mt-5 bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-white rounded-xl px-6"
+                        className="mt-5 bg-gradient-to-r from-memorial-400 to-orange-400 hover:from-memorial-500 hover:to-orange-500 text-white rounded-xl px-6"
                     >
                         닫기
                     </Button>
@@ -300,7 +300,7 @@ export default function MemoryAlbumViewer({
 
                 {/* 사진 영역 */}
                 <div
-                    className="relative w-full aspect-[3/4] bg-gradient-to-br from-amber-50 to-orange-50 dark:from-gray-700 dark:to-gray-600 overflow-hidden"
+                    className="relative w-full aspect-[3/4] bg-gradient-to-br from-memorial-50 to-orange-50 dark:from-gray-700 dark:to-gray-600 overflow-hidden"
                     onTouchStart={handleTouchStart}
                     onTouchMove={handleTouchMove}
                     onTouchEnd={handleTouchEnd}
@@ -372,8 +372,8 @@ export default function MemoryAlbumViewer({
 
                     {/* 캡션 */}
                     {currentPhoto?.caption && (
-                        <div className="mt-2.5 px-3 py-2 bg-amber-50 dark:bg-amber-900/20 rounded-xl">
-                            <p className="text-sm text-amber-800 dark:text-amber-200">
+                        <div className="mt-2.5 px-3 py-2 bg-memorial-50 dark:bg-memorial-900/20 rounded-xl">
+                            <p className="text-sm text-memorial-800 dark:text-memorial-200">
                                 {currentPhoto.caption}
                             </p>
                         </div>
@@ -393,7 +393,7 @@ export default function MemoryAlbumViewer({
                                         onClick={() => navigateTo(index)}
                                         className={`rounded-full transition-all duration-200 ${
                                             index === currentIndex
-                                                ? "w-4 h-1.5 bg-amber-400"
+                                                ? "w-4 h-1.5 bg-memorial-400"
                                                 : "w-1.5 h-1.5 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500"
                                         }`}
                                         aria-label={`${index + 1}번째 사진으로 이동`}

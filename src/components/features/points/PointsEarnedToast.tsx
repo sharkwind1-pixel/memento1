@@ -46,7 +46,7 @@ export default function PointsEarnedToast({ points, label, onClose }: PointsEarn
         >
             <div className={cn(
                 "flex items-center gap-2.5 px-4 py-3 rounded-2xl shadow-lg",
-                "bg-gradient-to-r from-sky-500 to-violet-500",
+                "bg-gradient-to-r from-memento-500 to-violet-500",
                 "text-white text-sm font-medium"
             )}>
                 <Star className="w-4 h-4 flex-shrink-0" />

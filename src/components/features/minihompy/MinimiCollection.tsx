@@ -73,7 +73,7 @@ export default function MinimiCollection({ onMinimiClick }: MinimiCollectionProp
             {/* 헤더 */}
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                    <Book className="w-5 h-5 text-amber-500" />
+                    <Book className="w-5 h-5 text-memorial-500" />
                     <h3 className="font-semibold text-gray-800 dark:text-white">
                         미니미 도감
                     </h3>
@@ -84,7 +84,7 @@ export default function MinimiCollection({ onMinimiClick }: MinimiCollectionProp
                     </span>
                     <div className="w-20 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                         <div
-                            className="h-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all duration-500"
+                            className="h-full bg-gradient-to-r from-memorial-400 to-orange-500 transition-all duration-500"
                             style={{ width: `${completionPercent}%` }}
                         />
                     </div>
@@ -103,7 +103,7 @@ export default function MinimiCollection({ onMinimiClick }: MinimiCollectionProp
                                 "relative aspect-square rounded-xl p-2 transition-all duration-200",
                                 "flex flex-col items-center justify-center gap-1",
                                 owned
-                                    ? "bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-2 border-amber-200 dark:border-amber-700 hover:scale-105 active:scale-95"
+                                    ? "bg-gradient-to-br from-memorial-50 to-orange-50 dark:from-memorial-900/20 dark:to-orange-900/20 border-2 border-memorial-200 dark:border-memorial-700 hover:scale-105 active:scale-95"
                                     : "bg-gray-100 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 grayscale opacity-50"
                             )}
                         >
@@ -131,7 +131,7 @@ export default function MinimiCollection({ onMinimiClick }: MinimiCollectionProp
                             </span>
                             {/* 보유 뱃지 */}
                             {owned && (
-                                <div className="absolute -top-1 -right-1 w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center">
+                                <div className="absolute -top-1 -right-1 w-5 h-5 bg-memorial-500 rounded-full flex items-center justify-center">
                                     <Sparkles className="w-3 h-3 text-white" />
                                 </div>
                             )}
@@ -142,9 +142,9 @@ export default function MinimiCollection({ onMinimiClick }: MinimiCollectionProp
 
             {/* 도감 완성 메시지 */}
             {ownedCount === totalCount && (
-                <div className="mt-4 p-3 bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 rounded-xl text-center">
-                    <Sparkles className="w-5 h-5 text-amber-500 mx-auto mb-1" />
-                    <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                <div className="mt-4 p-3 bg-gradient-to-r from-memorial-100 to-orange-100 dark:from-memorial-900/30 dark:to-orange-900/30 rounded-xl text-center">
+                    <Sparkles className="w-5 h-5 text-memorial-500 mx-auto mb-1" />
+                    <p className="text-sm font-medium text-memorial-700 dark:text-memorial-300">
                         축하해요! 모든 미니미를 모았어요!
                     </p>
                 </div>

@@ -52,10 +52,10 @@ export default function ConfirmDialog({
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                         destructive
                             ? "bg-red-100 dark:bg-red-900/30"
-                            : "bg-sky-100 dark:bg-sky-900/30"
+                            : "bg-memento-200 dark:bg-memento-900/30"
                     }`}>
                         <AlertTriangle className={`w-5 h-5 ${
-                            destructive ? "text-red-600" : "text-sky-600"
+                            destructive ? "text-red-600" : "text-memento-600"
                         }`} />
                     </div>
                     <h3 id="confirm-dialog-title" className="text-lg font-semibold text-gray-800 dark:text-white">
@@ -78,7 +78,7 @@ export default function ConfirmDialog({
                         className={`flex-1 ${
                             destructive
                                 ? "bg-red-500 hover:bg-red-600 text-white"
-                                : "bg-sky-500 hover:bg-sky-600 text-white"
+                                : "bg-memento-500 hover:bg-memento-600 text-white"
                         }`}
                     >
                         <Check className="w-4 h-4 mr-2" />

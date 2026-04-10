@@ -666,7 +666,7 @@ export default function DomeGallery({
                   } as React.CSSProperties}
                 >
                   <div
-                    className="item__image absolute block overflow-hidden cursor-pointer bg-sky-100 transition-transform duration-300"
+                    className="item__image absolute block overflow-hidden cursor-pointer bg-memento-200 transition-transform duration-300"
                     role="button"
                     tabIndex={0}
                     aria-label={it.alt || '이미지 보기'}

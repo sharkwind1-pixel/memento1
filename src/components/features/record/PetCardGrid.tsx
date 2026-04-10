@@ -83,10 +83,10 @@ export default function PetCardGrid({
                                             {pet.name}
                                         </span>
                                         {pet.isPrimary && (
-                                            <Crown className="w-3 h-3 text-amber-400 flex-shrink-0" />
+                                            <Crown className="w-3 h-3 text-memorial-400 flex-shrink-0" />
                                         )}
                                         {pet.status === "memorial" && (
-                                            <Star className="w-3 h-3 text-amber-400 flex-shrink-0" />
+                                            <Star className="w-3 h-3 text-memorial-400 flex-shrink-0" />
                                         )}
                                     </div>
                                     <p className="text-white/80 text-sm text-center truncate">

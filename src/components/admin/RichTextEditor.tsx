@@ -212,9 +212,9 @@ export default function RichTextEditor({ content, onChange, onImageUpload }: Ric
 
     return (
         <div
-            className={`tiptap-editor rounded-md border overflow-hidden focus-within:ring-1 focus-within:ring-sky-500 focus-within:border-sky-500 transition-colors ${
+            className={`tiptap-editor rounded-md border overflow-hidden focus-within:ring-1 focus-within:ring-memento-500 focus-within:border-memento-500 transition-colors ${
                 isDragOver
-                    ? "border-sky-400 bg-sky-50/50 ring-2 ring-sky-300"
+                    ? "border-memento-400 bg-memento-200/50 ring-2 ring-memento-300"
                     : "border-gray-300"
             }`}
             onDragOver={handleDragOver}
@@ -359,13 +359,13 @@ export default function RichTextEditor({ content, onChange, onImageUpload }: Ric
 
             {/* 업로드 상태 / 드래그 힌트 */}
             {isImageUploading && (
-                <div className="flex items-center gap-2 px-3 py-2 bg-sky-50 border-t border-sky-200 text-xs text-sky-600">
+                <div className="flex items-center gap-2 px-3 py-2 bg-memento-200 border-t border-memento-200 text-xs text-memento-600">
                     <Loader2 className="w-3 h-3 animate-spin" />
                     이미지 업로드 중...
                 </div>
             )}
             {isDragOver && !isImageUploading && (
-                <div className="flex items-center justify-center gap-2 px-3 py-3 bg-sky-50 border-t border-sky-200 text-sm text-sky-600 font-medium">
+                <div className="flex items-center justify-center gap-2 px-3 py-3 bg-memento-200 border-t border-memento-200 text-sm text-memento-600 font-medium">
                     <ImagePlus className="w-4 h-4" />
                     여기에 놓으면 이미지가 삽입됩니다
                 </div>
@@ -408,7 +408,7 @@ function ToolbarButton({
             aria-label={title}
             className={`h-8 w-8 p-0 ${
                 isActive
-                    ? "bg-sky-100 text-sky-700 hover:bg-sky-200"
+                    ? "bg-memento-200 text-memento-700 hover:bg-memento-200"
                     : "text-gray-600 hover:bg-gray-100"
             }`}
         >

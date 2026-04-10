@@ -60,11 +60,11 @@ export default function ShowcaseGalleryView({ onBack, onWriteClick, onCreateVide
     }>({ isOpen: false, title: "", message: "", confirmText: "", destructive: false, onConfirm: () => {} });
 
     const gradients = [
-        "from-sky-400 to-blue-300",
+        "from-memento-400 to-memento-300",
         "from-pink-400 to-rose-300",
         "from-violet-400 to-purple-300",
         "from-emerald-400 to-teal-300",
-        "from-amber-400 to-orange-300",
+        "from-memorial-400 to-orange-300",
     ];
 
     const fetchPosts = useCallback(async () => {
@@ -180,24 +180,24 @@ export default function ShowcaseGalleryView({ onBack, onWriteClick, onCreateVide
     return (
         <div className="min-h-screen relative">
             {/* 배경 */}
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-50 via-orange-50 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-                <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-r from-amber-300/20 to-orange-200/20 dark:from-amber-800/10 dark:to-orange-800/10 rounded-full blur-3xl" />
+            <div className="absolute inset-0 bg-gradient-to-br from-memorial-50 via-orange-50 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+                <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-r from-memorial-300/20 to-orange-200/20 dark:from-memorial-800/10 dark:to-orange-800/10 rounded-full blur-3xl" />
             </div>
 
             <div className="relative z-10 pb-8">
                 {/* 헤더 */}
-                <div className="sticky top-0 z-20 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-amber-100 dark:border-gray-700">
+                <div className="sticky top-0 z-20 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-memorial-100 dark:border-gray-700">
                     <div className="flex items-center gap-3 px-4 py-3">
                         <Button
                             variant="ghost"
                             size="icon"
                             onClick={onBack}
-                            className="rounded-full hover:bg-amber-100 dark:hover:bg-gray-700 min-h-[44px] min-w-[44px]"
+                            className="rounded-full hover:bg-memorial-100 dark:hover:bg-gray-700 min-h-[44px] min-w-[44px]"
                         >
                             <ArrowLeft className="w-5 h-5" />
                         </Button>
                         <div className="flex items-center gap-2 flex-1">
-                            <div className="w-8 h-8 bg-gradient-to-r from-amber-400 to-yellow-300 rounded-lg flex items-center justify-center">
+                            <div className="w-8 h-8 bg-gradient-to-r from-memorial-400 to-yellow-300 rounded-lg flex items-center justify-center">
                                 <Star className="w-4 h-4 text-white" />
                             </div>
                             <div>
@@ -211,7 +211,7 @@ export default function ShowcaseGalleryView({ onBack, onWriteClick, onCreateVide
                         </div>
                         <Button
                             onClick={onCreateVideo || onWriteClick}
-                            className="bg-gradient-to-r from-sky-500 to-blue-500 text-white rounded-xl px-4 min-h-[44px] hover:from-sky-600 hover:to-blue-600 active:scale-95 transition-all"
+                            className="bg-gradient-to-r from-memento-500 to-memento-500 text-white rounded-xl px-4 min-h-[44px] hover:from-memento-600 hover:to-memento-600 active:scale-95 transition-all"
                         >
                             <Video className="w-4 h-4 mr-1.5" />
                             <span className="text-sm">영상 만들기</span>
@@ -232,8 +232,8 @@ export default function ShowcaseGalleryView({ onBack, onWriteClick, onCreateVide
                         </div>
                     ) : posts.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 text-center">
-                            <div className="w-20 h-20 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-4">
-                                <PawPrint className="w-10 h-10 text-amber-400" />
+                            <div className="w-20 h-20 rounded-full bg-memorial-100 dark:bg-memorial-900/30 flex items-center justify-center mb-4">
+                                <PawPrint className="w-10 h-10 text-memorial-400" />
                             </div>
                             <p className="text-gray-600 dark:text-gray-300 font-medium mb-2">
                                 아직 게시글이 없어요
@@ -243,7 +243,7 @@ export default function ShowcaseGalleryView({ onBack, onWriteClick, onCreateVide
                             </p>
                             <Button
                                 onClick={onCreateVideo || onWriteClick}
-                                className="bg-sky-500 hover:bg-sky-600 text-white rounded-xl"
+                                className="bg-memento-500 hover:bg-memento-600 text-white rounded-xl"
                             >
                                 <Video className="w-4 h-4 mr-1.5" />
                                 첫 번째 영상 만들기
@@ -344,12 +344,12 @@ function ShowcaseCard({
                         {!isPlaying && (
                             <div className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none">
                                 <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
-                                    <Play className="w-6 h-6 text-amber-600 ml-0.5" />
+                                    <Play className="w-6 h-6 text-memorial-600 ml-0.5" />
                                 </div>
                             </div>
                         )}
                         {/* AI 영상 뱃지 */}
-                        <div className="absolute top-2 left-2 bg-amber-500/90 text-white text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <div className="absolute top-2 left-2 bg-memorial-500/90 text-white text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
                             AI 영상
                         </div>
                     </>
@@ -384,7 +384,7 @@ function ShowcaseCard({
                             </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="min-w-[120px]">
-                            <DropdownMenuItem onClick={onHide} className="text-amber-600">
+                            <DropdownMenuItem onClick={onHide} className="text-memorial-600">
                                 <EyeOff className="w-4 h-4 mr-2" />
                                 숨기기
                             </DropdownMenuItem>
@@ -399,7 +399,7 @@ function ShowcaseCard({
 
             {/* 텍스트 영역 */}
             <div className="p-3">
-                <h3 className="font-bold text-sm text-gray-800 dark:text-white line-clamp-2 mb-1 group-hover:text-amber-600 transition-colors">
+                <h3 className="font-bold text-sm text-gray-800 dark:text-white line-clamp-2 mb-1 group-hover:text-memorial-600 transition-colors">
                     {post.title}
                 </h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 truncate">
@@ -416,7 +416,7 @@ function ShowcaseCard({
                             {post.comments}
                         </span>
                     </div>
-                    <ArrowRight className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 group-hover:text-amber-400 transition-colors" />
+                    <ArrowRight className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 group-hover:text-memorial-400 transition-colors" />
                 </div>
             </div>
         </div>

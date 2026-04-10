@@ -107,8 +107,8 @@ export default function MinimiPlacementPicker({
                             className={cn(
                                 "flex flex-col items-center gap-1 p-2 rounded-xl",
                                 "bg-gray-50 dark:bg-gray-700/50",
-                                "hover:bg-blue-50 dark:hover:bg-blue-900/20",
-                                "border border-transparent hover:border-blue-300 dark:hover:border-blue-600",
+                                "hover:bg-memento-200 dark:hover:bg-memento-900/20",
+                                "border border-transparent hover:border-memento-300 dark:hover:border-memento-600",
                                 "transition-all"
                             )}
                         >
@@ -121,7 +121,7 @@ export default function MinimiPlacementPicker({
                                     className="object-contain"
                                     style={{ imageRendering: "pixelated" }}
                                 />
-                                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-memento-500 rounded-full flex items-center justify-center">
                                     <Plus className="w-2.5 h-2.5 text-white" />
                                 </div>
                             </div>

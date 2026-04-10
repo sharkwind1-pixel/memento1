@@ -53,9 +53,9 @@ const PAGE_SIZE = 20;
 // 단계별 필터 (상단)
 const STAGES = [
     { id: "all", label: "전체", icon: BookOpen, color: "from-emerald-500 to-teal-500", iconColor: "text-emerald-500", description: "모든 콘텐츠" },
-    { id: "beginner", label: "처음 키워요", icon: Sparkles, color: "from-sky-400 to-blue-500", iconColor: "text-sky-500", description: "초보 보호자 가이드" },
+    { id: "beginner", label: "처음 키워요", icon: Sparkles, color: "from-memento-400 to-memento-500", iconColor: "text-memento-500", description: "초보 보호자 가이드" },
     { id: "companion", label: "함께 성장해요", icon: HeartHandshake, color: "from-emerald-400 to-green-500", iconColor: "text-emerald-500", description: "일상 케어 정보" },
-    { id: "senior", label: "오래오래 함께", icon: Shield, color: "from-amber-400 to-orange-500", iconColor: "text-amber-500", description: "시니어 케어" },
+    { id: "senior", label: "오래오래 함께", icon: Shield, color: "from-memorial-400 to-orange-500", iconColor: "text-memorial-500", description: "시니어 케어" },
 ];
 
 // 주제별 필터 (하단)
@@ -210,8 +210,8 @@ function MagazinePage({ setSelectedTab, isActive }: MagazinePageProps) {
             className="min-h-screen relative overflow-hidden"
             style={{ contain: 'layout style', transform: 'translateZ(0)' }}
         >
-            <div className={`absolute inset-0 bg-gradient-to-br ${isMemorialMode ? "from-amber-50 via-amber-50/50 to-white" : "from-emerald-50 via-teal-50 to-white"} dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300`}>
-                <div className={`absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-r ${isMemorialMode ? "from-amber-200/30 to-orange-200/30" : "from-emerald-200/30 to-teal-200/30"} dark:from-emerald-800/20 dark:to-teal-800/20 rounded-full blur-3xl animate-pulse`} />
+            <div className={`absolute inset-0 bg-gradient-to-br ${isMemorialMode ? "from-memorial-50 via-memorial-50/50 to-white" : "from-emerald-50 via-teal-50 to-white"} dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300`}>
+                <div className={`absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-r ${isMemorialMode ? "from-memorial-200/30 to-orange-200/30" : "from-emerald-200/30 to-teal-200/30"} dark:from-emerald-800/20 dark:to-teal-800/20 rounded-full blur-3xl animate-pulse`} />
             </div>
 
             <div className="relative z-10 space-y-6 pb-8">
@@ -227,7 +227,7 @@ function MagazinePage({ setSelectedTab, isActive }: MagazinePageProps) {
                 <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg border border-white/50 dark:border-gray-700/50 rounded-3xl p-6">
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center space-x-3">
-                            <div className={`w-12 h-12 bg-gradient-to-r ${isMemorialMode ? "from-amber-500 to-orange-500" : "from-emerald-500 to-teal-500"} rounded-xl flex items-center justify-center`}>
+                            <div className={`w-12 h-12 bg-gradient-to-r ${isMemorialMode ? "from-memorial-500 to-orange-500" : "from-emerald-500 to-teal-500"} rounded-xl flex items-center justify-center`}>
                                 <BookOpen className="w-6 h-6 text-white" />
                             </div>
                             <div>

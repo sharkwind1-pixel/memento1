@@ -40,24 +40,24 @@ export default function CommunitySection({
     isMemorial = false,
 }: CommunitySectionProps) {
     const gradients = isMemorial ? [
-        "from-amber-500 to-orange-300",
-        "from-amber-400 to-yellow-300",
-        "from-orange-400 to-amber-300",
-        "from-yellow-500 to-amber-300",
-        "from-amber-600 to-orange-400",
+        "from-memorial-500 to-orange-300",
+        "from-memorial-400 to-yellow-300",
+        "from-orange-400 to-memorial-300",
+        "from-yellow-500 to-memorial-300",
+        "from-memorial-600 to-orange-400",
     ] : [
-        "from-memento-500 to-sky-300",
+        "from-memento-500 to-memento-300",
         "from-rose-500 to-pink-300",
         "from-violet-500 to-purple-300",
         "from-emerald-500 to-teal-300",
-        "from-amber-500 to-orange-300",
+        "from-memorial-500 to-orange-300",
     ];
 
     return (
         <section className="space-y-6" data-tutorial-id="home-trending">
             <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center space-x-3 min-w-0">
-                    <div className={`w-10 h-10 flex-shrink-0 bg-gradient-to-br ${isMemorial ? "from-amber-500 to-orange-400 shadow-amber-500/20" : "from-memento-500 to-memento-400 shadow-memento-500/20"} rounded-2xl flex items-center justify-center shadow-sm`}>
+                    <div className={`w-10 h-10 flex-shrink-0 bg-gradient-to-br ${isMemorial ? "from-memorial-500 to-orange-400 shadow-memorial-500/20" : "from-memento-500 to-memento-400 shadow-memento-500/20"} rounded-2xl flex items-center justify-center shadow-sm`}>
                         <TrendingUp className="w-5 h-5 text-white" />
                     </div>
                     <div className="min-w-0">
@@ -71,7 +71,7 @@ export default function CommunitySection({
                 </div>
                 <button
                     onClick={() => setSelectedTab("community")}
-                    className={`text-sm font-medium flex items-center gap-1 ${isMemorial ? "text-amber-500 hover:text-amber-600" : "text-memento-500 hover:text-memento-600"}`}
+                    className={`text-sm font-medium flex items-center gap-1 ${isMemorial ? "text-memorial-500 hover:text-memorial-600" : "text-memento-500 hover:text-memento-600"}`}
                 >
                     더 많은 이야기 &rarr;
                 </button>
@@ -113,7 +113,7 @@ export default function CommunitySection({
 
                                 {/* 우측: 제목 + 작성자 + 좋아요/댓글 */}
                                 <div className="flex-1 text-left min-w-0">
-                                    <p className={`text-sm font-semibold text-gray-800 dark:text-gray-100 line-clamp-2 transition-colors ${isMemorial ? "group-hover:text-amber-600" : "group-hover:text-memento-600"}`}>
+                                    <p className={`text-sm font-semibold text-gray-800 dark:text-gray-100 line-clamp-2 transition-colors ${isMemorial ? "group-hover:text-memorial-600" : "group-hover:text-memento-600"}`}>
                                         {post.title}
                                     </p>
                                     <div className="flex items-center gap-2 mt-1">

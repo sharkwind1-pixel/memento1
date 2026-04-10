@@ -57,7 +57,7 @@ export function AdoptionFilters({
                 </div>
                 <Button
                     onClick={onSearch}
-                    className="bg-sky-500 hover:bg-sky-600 rounded-xl"
+                    className="bg-memento-500 hover:bg-memento-600 rounded-xl"
                 >
                     검색
                 </Button>
@@ -87,7 +87,7 @@ export function AdoptionFilters({
                         onClick={() => onKindChange(value)}
                         className={`rounded-xl flex-shrink-0 ${
                             kindFilter === value
-                                ? "bg-sky-500 hover:bg-sky-600"
+                                ? "bg-memento-500 hover:bg-memento-600"
                                 : "bg-white/60 dark:bg-gray-800/60"
                         }`}
                     >
@@ -111,7 +111,7 @@ export function AdoptionFilters({
                                     onClick={() => onRegionChange(r.code)}
                                     className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
                                         regionFilter === r.code
-                                            ? "bg-sky-500 text-white"
+                                            ? "bg-memento-500 text-white"
                                             : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                                     }`}
                                 >
@@ -135,7 +135,7 @@ export function AdoptionFilters({
                                     onClick={() => onStateChange(value)}
                                     className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                                         stateFilter === value
-                                            ? "bg-sky-500 text-white"
+                                            ? "bg-memento-500 text-white"
                                             : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                                     }`}
                                 >

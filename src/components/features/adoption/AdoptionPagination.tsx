@@ -53,7 +53,7 @@ export function AdoptionPagination({
                             size="sm"
                             onClick={() => onPageChange(pageNum)}
                             className={`rounded-xl w-9 h-9 p-0 ${
-                                page === pageNum ? "bg-sky-500" : ""
+                                page === pageNum ? "bg-memento-500" : ""
                             }`}
                         >
                             {pageNum}

@@ -84,7 +84,7 @@ export default function PostDetailComments({
                                             className="w-7 h-7 rounded-full"
                                         />
                                     ) : (
-                                        <div className="w-7 h-7 rounded-full bg-gradient-to-r from-sky-400 to-blue-400 flex items-center justify-center text-white text-xs font-bold">
+                                        <div className="w-7 h-7 rounded-full bg-gradient-to-r from-memento-400 to-memento-400 flex items-center justify-center text-white text-xs font-bold">
                                             {comment.authorNickname.charAt(0)}
                                         </div>
                                     )}
@@ -215,7 +215,7 @@ export default function PostDetailComments({
                         <Button
                             onClick={onSubmitComment}
                             disabled={!commentText.trim() || isSubmittingComment}
-                            className="rounded-xl bg-gradient-to-r from-sky-500 to-blue-500 self-end px-4"
+                            className="rounded-xl bg-gradient-to-r from-memento-500 to-memento-500 self-end px-4"
                         >
                             {isSubmittingComment ? (
                                 <InlineLoading />
@@ -227,7 +227,7 @@ export default function PostDetailComments({
                 ) : (
                     <button
                         onClick={() => window.dispatchEvent(new CustomEvent("openAuthModal"))}
-                        className="w-full py-3 text-center text-sm text-gray-500 hover:text-sky-500 transition-colors"
+                        className="w-full py-3 text-center text-sm text-gray-500 hover:text-memento-500 transition-colors"
                     >
                         로그인하고 댓글을 남겨보세요
                     </button>

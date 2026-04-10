@@ -114,9 +114,9 @@ export default function HealingJourneySection({
 
     if (loading) {
         return (
-            <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-2xl p-6 border border-amber-200/50 dark:border-amber-700/50">
+            <div className="bg-gradient-to-br from-memorial-50 to-orange-50 dark:from-memorial-900/20 dark:to-orange-900/20 rounded-2xl p-6 border border-memorial-200/50 dark:border-memorial-700/50">
                 <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-6 h-6 text-amber-500 animate-spin" />
+                    <Loader2 className="w-6 h-6 text-memorial-500 animate-spin" />
                 </div>
             </div>
         );
@@ -124,8 +124,8 @@ export default function HealingJourneySection({
 
     if (error) {
         return (
-            <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-2xl p-6 border border-amber-200/50 dark:border-amber-700/50">
-                <p className="text-center text-amber-600 dark:text-amber-400 text-sm">
+            <div className="bg-gradient-to-br from-memorial-50 to-orange-50 dark:from-memorial-900/20 dark:to-orange-900/20 rounded-2xl p-6 border border-memorial-200/50 dark:border-memorial-700/50">
+                <p className="text-center text-memorial-600 dark:text-memorial-400 text-sm">
                     {error}
                 </p>
             </div>
@@ -134,13 +134,13 @@ export default function HealingJourneySection({
 
     if (!data || data.conversationCount === 0) {
         return (
-            <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-2xl p-6 border border-amber-200/50 dark:border-amber-700/50">
+            <div className="bg-gradient-to-br from-memorial-50 to-orange-50 dark:from-memorial-900/20 dark:to-orange-900/20 rounded-2xl p-6 border border-memorial-200/50 dark:border-memorial-700/50">
                 <div className="text-center py-4">
-                    <Star className="w-10 h-10 text-amber-400 mx-auto mb-3" />
-                    <h3 className="font-medium text-amber-700 dark:text-amber-300 mb-2">
+                    <Star className="w-10 h-10 text-memorial-400 mx-auto mb-3" />
+                    <h3 className="font-medium text-memorial-700 dark:text-memorial-300 mb-2">
                         {petName}의 치유의 여정
                     </h3>
-                    <p className="text-sm text-amber-600/80 dark:text-amber-400/80">
+                    <p className="text-sm text-memorial-600/80 dark:text-memorial-400/80">
                         AI 펫톡에서 {petName}와(과) 대화를 시작하면<br />
                         치유의 여정을 기록해 드릴게요
                     </p>
@@ -152,16 +152,16 @@ export default function HealingJourneySection({
     const currentStage = data.summary.currentGriefStage || "unknown";
 
     return (
-        <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-2xl p-4 border border-amber-200/50 dark:border-amber-700/50 space-y-4">
+        <div className="bg-gradient-to-br from-memorial-50 to-orange-50 dark:from-memorial-900/20 dark:to-orange-900/20 rounded-2xl p-4 border border-memorial-200/50 dark:border-memorial-700/50 space-y-4">
             {/* 헤더 */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <Heart className="w-5 h-5 text-amber-500" />
-                    <h3 className="font-semibold text-amber-800 dark:text-amber-200">
+                    <Heart className="w-5 h-5 text-memorial-500" />
+                    <h3 className="font-semibold text-memorial-800 dark:text-memorial-200">
                         {petName}의 치유의 여정
                     </h3>
                 </div>
-                <span className="text-xs text-amber-600/70 dark:text-amber-400/70">
+                <span className="text-xs text-memorial-600/70 dark:text-memorial-400/70">
                     {data.conversationCount}번의 대화
                 </span>
             </div>
@@ -169,19 +169,19 @@ export default function HealingJourneySection({
             {/* 현재 애도 단계 */}
             <div className="bg-white/60 dark:bg-gray-800/60 rounded-xl p-4">
                 <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-memorial-400 to-orange-500 flex items-center justify-center">
                         <TrendingUp className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                        <p className="text-xs text-amber-600/80 dark:text-amber-400/80">
+                        <p className="text-xs text-memorial-600/80 dark:text-memorial-400/80">
                             현재 단계
                         </p>
-                        <p className="font-semibold text-amber-800 dark:text-amber-200">
+                        <p className="font-semibold text-memorial-800 dark:text-memorial-200">
                             {GRIEF_STAGE_NAMES[currentStage]}
                         </p>
                     </div>
                 </div>
-                <p className="text-sm text-amber-700/80 dark:text-amber-300/80">
+                <p className="text-sm text-memorial-700/80 dark:text-memorial-300/80">
                     {GRIEF_STAGE_DESCRIPTIONS[currentStage]}
                 </p>
             </div>
@@ -189,7 +189,7 @@ export default function HealingJourneySection({
             {/* 최근 감정 요약 */}
             {data.emotionTrend.length > 0 && (
                 <div className="bg-white/60 dark:bg-gray-800/60 rounded-xl p-4">
-                    <p className="text-xs text-amber-600/80 dark:text-amber-400/80 mb-3">
+                    <p className="text-xs text-memorial-600/80 dark:text-memorial-400/80 mb-3">
                         최근 감정 흐름
                     </p>
                     <div className="flex items-center gap-2">
@@ -200,12 +200,12 @@ export default function HealingJourneySection({
                                     "flex-1 h-8 rounded-lg flex items-center justify-center",
                                     item.category === "positive" && "bg-green-100 dark:bg-green-900/30",
                                     item.category === "neutral" && "bg-gray-100 dark:bg-gray-700/30",
-                                    item.category === "negative" && "bg-amber-100 dark:bg-amber-900/30"
+                                    item.category === "negative" && "bg-memorial-100 dark:bg-memorial-900/30"
                                 )}
                             >
                                 {item.category === "positive" && <Smile className="w-4 h-4 text-green-600" />}
                                 {item.category === "neutral" && <Meh className="w-4 h-4 text-gray-500" />}
-                                {item.category === "negative" && <Frown className="w-4 h-4 text-amber-600" />}
+                                {item.category === "negative" && <Frown className="w-4 h-4 text-memorial-600" />}
                             </div>
                         ))}
                     </div>
@@ -221,8 +221,8 @@ export default function HealingJourneySection({
             {/* 마일스톤 */}
             <div className="bg-white/60 dark:bg-gray-800/60 rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-3">
-                    <Award className="w-4 h-4 text-amber-500" />
-                    <p className="text-xs text-amber-600/80 dark:text-amber-400/80">
+                    <Award className="w-4 h-4 text-memorial-500" />
+                    <p className="text-xs text-memorial-600/80 dark:text-memorial-400/80">
                         마일스톤 ({data.summary.milestonesAchieved}/{data.summary.totalMilestones})
                     </p>
                 </div>
@@ -233,14 +233,14 @@ export default function HealingJourneySection({
                             className={cn(
                                 "flex items-center gap-3 p-2 rounded-lg transition-colors",
                                 milestone.achieved
-                                    ? "bg-amber-100/50 dark:bg-amber-900/20"
+                                    ? "bg-memorial-100/50 dark:bg-memorial-900/20"
                                     : "bg-gray-50/50 dark:bg-gray-800/50 opacity-50"
                             )}
                         >
                             <div className={cn(
                                 "w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0",
                                 milestone.achieved
-                                    ? "bg-amber-500 text-white"
+                                    ? "bg-memorial-500 text-white"
                                     : "bg-gray-200 dark:bg-gray-700 text-gray-400"
                             )}>
                                 {milestone.achieved ? (
@@ -253,13 +253,13 @@ export default function HealingJourneySection({
                                 <p className={cn(
                                     "text-sm font-medium truncate",
                                     milestone.achieved
-                                        ? "text-amber-800 dark:text-amber-200"
+                                        ? "text-memorial-800 dark:text-memorial-200"
                                         : "text-gray-400 dark:text-gray-500"
                                 )}>
                                     {milestone.title}
                                 </p>
                                 {milestone.achieved && milestone.achievedDate && (
-                                    <p className="text-[10px] text-amber-600/60 dark:text-amber-400/60 flex items-center gap-1">
+                                    <p className="text-[10px] text-memorial-600/60 dark:text-memorial-400/60 flex items-center gap-1">
                                         <Calendar className="w-2.5 h-2.5" />
                                         {new Date(milestone.achievedDate).toLocaleDateString("ko-KR")}
                                     </p>
@@ -281,8 +281,8 @@ export default function HealingJourneySection({
                     className={cn(
                         "inline-flex items-center gap-2 px-4 py-2 rounded-full",
                         "text-sm font-medium",
-                        "bg-amber-500 text-white",
-                        "hover:bg-amber-600 active:scale-95",
+                        "bg-memorial-500 text-white",
+                        "hover:bg-memorial-600 active:scale-95",
                         "transition-all"
                     )}
                 >

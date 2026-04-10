@@ -272,7 +272,7 @@ export default function MinihompyStage({
                 draggingIndex !== null ? "overflow-visible" : "overflow-hidden",
                 compact ? "h-[200px]" : "h-[280px]",
                 "border border-white/20 shadow-lg",
-                editMode && "ring-2 ring-blue-400/50"
+                editMode && "ring-2 ring-memento-400/50"
             )}
             style={{
                 background: bg.imageUrl ? undefined : bg.cssBackground,
@@ -358,7 +358,7 @@ export default function MinihompyStage({
                             >
                                 {/* 선택 표시 */}
                                 {isSelected && (
-                                    <div className="absolute -inset-2 border-2 border-dashed border-blue-400 rounded-lg bg-blue-400/10" />
+                                    <div className="absolute -inset-2 border-2 border-dashed border-memento-400 rounded-lg bg-memento-400/10" />
                                 )}
                                 {/* 그림자 제거됨 - 캐릭터별 발 위치 차이로 자연스러운 배치 어려움 */}
                                 <Image
@@ -426,7 +426,7 @@ export default function MinihompyStage({
 
             {/* 편집모드: 상단 컨트롤 바 */}
             {editMode && (
-                <div className="absolute top-0 left-0 right-0 z-30 bg-blue-500/90 backdrop-blur-sm px-3 py-2.5 flex items-center justify-between">
+                <div className="absolute top-0 left-0 right-0 z-30 bg-memento-500/90 backdrop-blur-sm px-3 py-2.5 flex items-center justify-between">
                     <span className="text-white text-xs font-medium">편집모드</span>
                     <div className="flex items-center gap-2">
                         {onCancelEdit && (
@@ -442,7 +442,7 @@ export default function MinihompyStage({
                                 onClick={(e) => { e.stopPropagation(); onSaveEdit(); }}
                                 disabled={saving}
                                 className={cn(
-                                    "flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-semibold bg-white text-blue-600 hover:bg-blue-50 transition-colors",
+                                    "flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-semibold bg-white text-memento-600 hover:bg-memento-200 transition-colors",
                                     saving && "opacity-50 cursor-not-allowed"
                                 )}
                             >
@@ -456,8 +456,8 @@ export default function MinihompyStage({
 
             {/* 편집모드: 드래그 드롭존 힌트 (하단) */}
             {editMode && draggingIndex !== null && (
-                <div className="absolute bottom-0 left-0 right-0 h-14 z-40 flex items-center justify-center bg-amber-500/40 border-t-2 border-dashed border-amber-400 backdrop-blur-sm">
-                    <div className="flex items-center gap-1.5 text-amber-800">
+                <div className="absolute bottom-0 left-0 right-0 h-14 z-40 flex items-center justify-center bg-memorial-500/40 border-t-2 border-dashed border-memorial-400 backdrop-blur-sm">
+                    <div className="flex items-center gap-1.5 text-memorial-800">
                         <ArrowDown className="w-4 h-4 animate-bounce" />
                         <span className="text-xs font-medium">여기에 놓으면 보관함으로 이동</span>
                     </div>
@@ -479,7 +479,7 @@ export default function MinihompyStage({
                         "border border-gray-200/50"
                     )}
                 >
-                    <Pencil className="w-3.5 h-3.5 text-blue-500" />
+                    <Pencil className="w-3.5 h-3.5 text-memento-500" />
                     미니미 배치
                 </button>
             )}

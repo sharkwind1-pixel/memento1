@@ -95,9 +95,9 @@ export function PremiumModal({ user, onClose, onGrant }: PremiumModalProps) {
             {/* 모달 본체 */}
             <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden" role="dialog" aria-modal="true" aria-labelledby="admin-premium-title">
                 {/* 헤더 */}
-                <div className="p-4 border-b bg-gradient-to-r from-amber-50 to-orange-50">
+                <div className="p-4 border-b bg-gradient-to-r from-memorial-50 to-orange-50">
                     <h3 id="admin-premium-title" className="font-bold text-gray-800 flex items-center gap-2">
-                        <Crown className="w-5 h-5 text-amber-500" />
+                        <Crown className="w-5 h-5 text-memorial-500" />
                         프리미엄 부여
                     </h3>
                     <p className="text-sm text-gray-500">{user.email}</p>
@@ -117,11 +117,11 @@ export function PremiumModal({ user, onClose, onGrant }: PremiumModalProps) {
                                     onClick={() => setPlan(option.value)}
                                     className={`p-3 rounded-lg text-left transition-all border-2 ${
                                         plan === option.value
-                                            ? "border-amber-500 bg-amber-50"
+                                            ? "border-memorial-500 bg-memorial-50"
                                             : "border-gray-200 bg-white hover:border-gray-300"
                                     }`}
                                 >
-                                    <p className={`text-sm font-medium ${plan === option.value ? "text-amber-700" : "text-gray-700"}`}>
+                                    <p className={`text-sm font-medium ${plan === option.value ? "text-memorial-700" : "text-gray-700"}`}>
                                         {option.label}
                                     </p>
                                     <p className="text-[10px] text-gray-500 mt-0.5">
@@ -147,7 +147,7 @@ export function PremiumModal({ user, onClose, onGrant }: PremiumModalProps) {
                                     onClick={() => setDuration(option.value)}
                                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                                         duration === option.value
-                                            ? "bg-amber-500 text-white"
+                                            ? "bg-memorial-500 text-white"
                                             : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                                     }`}
                                 >
@@ -170,9 +170,9 @@ export function PremiumModal({ user, onClose, onGrant }: PremiumModalProps) {
                     </div>
 
                     {/* 적용 미리보기 */}
-                    <div className="p-3 bg-amber-50 rounded-lg text-sm">
-                        <p className="font-medium text-amber-800 mb-1">적용 내용</p>
-                        <ul className="text-amber-700 space-y-1">
+                    <div className="p-3 bg-memorial-50 rounded-lg text-sm">
+                        <p className="font-medium text-memorial-800 mb-1">적용 내용</p>
+                        <ul className="text-memorial-700 space-y-1">
                             <li>- 플랜: {selectedPlan.label} ({selectedPlan.price.toLocaleString()}원/월)</li>
                             <li>- {selectedPlan.desc}</li>
                             <li>- 만료: {getExpiryDate()}</li>
@@ -186,7 +186,7 @@ export function PremiumModal({ user, onClose, onGrant }: PremiumModalProps) {
                         취소
                     </Button>
                     <Button
-                        className="bg-amber-500 hover:bg-amber-600"
+                        className="bg-memorial-500 hover:bg-memorial-600"
                         onClick={handleSave}
                         disabled={isSaving}
                     >

@@ -81,7 +81,7 @@ export default function BlockedUsersSection() {
                             setShowBlockedUsers(!showBlockedUsers);
                             if (!showBlockedUsers) loadBlockedUsers();
                         }}
-                        className="text-xs text-sky-500 hover:text-sky-600"
+                        className="text-xs text-memento-500 hover:text-memento-600"
                     >
                         {showBlockedUsers ? "접기" : "보기"}
                     </button>
@@ -115,7 +115,7 @@ export default function BlockedUsersSection() {
                                             size="sm"
                                             onClick={() => handleUnblock(block.blockedUserId, block.blockedNickname || "알 수 없음")}
                                             disabled={unblockingId === block.blockedUserId}
-                                            className="text-xs text-sky-500 hover:text-sky-600 h-7 px-2"
+                                            className="text-xs text-memento-500 hover:text-memento-600 h-7 px-2"
                                         >
                                             {unblockingId === block.blockedUserId ? (
                                                 <Loader2 className="w-3 h-3 animate-spin" />

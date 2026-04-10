@@ -115,7 +115,7 @@ export default function LoginPromptModal({
 
                 {/* 상단 아이콘 영역 */}
                 <div className="pt-8 pb-4 px-6 text-center">
-                    <div className="w-20 h-20 bg-gradient-to-br from-sky-100 to-violet-100 dark:from-sky-900/40 dark:to-violet-900/40 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div className="w-20 h-20 bg-gradient-to-br from-memento-200 to-violet-100 dark:from-memento-900/40 dark:to-violet-900/40 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Icon className="w-10 h-10 text-violet-500" />
                     </div>
                     <h2 id="login-prompt-title" className="text-xl font-bold text-gray-800 dark:text-white mb-2">
@@ -129,8 +129,8 @@ export default function LoginPromptModal({
                 {/* 본문 */}
                 <div className="px-6 pb-8">
                     {/* 설명 */}
-                    <div className="bg-gradient-to-r from-sky-50 to-violet-50 dark:from-sky-900/20 dark:to-violet-900/20 rounded-2xl p-4 mb-6 text-center">
-                        <Sparkles className="w-5 h-5 text-amber-500 mx-auto mb-2" />
+                    <div className="bg-gradient-to-r from-memento-200 to-violet-50 dark:from-memento-900/20 dark:to-violet-900/20 rounded-2xl p-4 mb-6 text-center">
+                        <Sparkles className="w-5 h-5 text-memorial-500 mx-auto mb-2" />
                         <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
                             {info.encouragement}
                         </p>
@@ -146,7 +146,7 @@ export default function LoginPromptModal({
                     {/* CTA 버튼 */}
                     <div className="space-y-3">
                         <Button
-                            className="w-full bg-gradient-to-r from-sky-500 to-violet-500 hover:from-sky-600 hover:to-violet-600 text-white rounded-xl py-6 font-bold"
+                            className="w-full bg-gradient-to-r from-memento-500 to-violet-500 hover:from-memento-600 hover:to-violet-600 text-white rounded-xl py-6 font-bold"
                             onClick={() => {
                                 onClose();
                                 onSignup();

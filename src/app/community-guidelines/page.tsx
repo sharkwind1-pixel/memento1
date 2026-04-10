@@ -81,7 +81,7 @@ export default function CommunityGuidelinesPage() {
                             <li>타인의 개인정보(실명, 주소, 전화번호 등)를 동의 없이 게시하는 행위</li>
                         </ul>
 
-                        <h3 className="text-lg font-semibold mt-4 text-amber-600 dark:text-amber-400">
+                        <h3 className="text-lg font-semibold mt-4 text-memorial-600 dark:text-memorial-400">
                             2. 단계적 제재 적용
                         </h3>
                         <ul className="list-disc list-inside text-gray-600 dark:text-gray-300 space-y-1 ml-2">

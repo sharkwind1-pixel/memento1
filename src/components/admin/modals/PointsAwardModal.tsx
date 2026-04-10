@@ -83,9 +83,9 @@ export function PointsAwardModal({ user, onClose, onAward }: PointsAwardModalPro
 
             <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden" role="dialog" aria-modal="true" aria-labelledby="points-award-title">
                 {/* 헤더 */}
-                <div className="p-4 border-b bg-gradient-to-r from-sky-50 to-violet-50">
+                <div className="p-4 border-b bg-gradient-to-r from-memento-200 to-violet-50">
                     <h3 id="points-award-title" className="font-bold text-gray-800 flex items-center gap-2">
-                        <Star className="w-5 h-5 text-sky-500" />
+                        <Star className="w-5 h-5 text-memento-500" />
                         포인트 지급
                     </h3>
                     <p className="text-sm text-gray-500">
@@ -110,7 +110,7 @@ export function PointsAwardModal({ user, onClose, onAward }: PointsAwardModalPro
                                     onClick={() => { setAmount(p.value); setUseCustom(false); }}
                                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                                         !useCustom && amount === p.value
-                                            ? "bg-sky-500 text-white"
+                                            ? "bg-memento-500 text-white"
                                             : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                                     }`}
                                 >
@@ -125,7 +125,7 @@ export function PointsAwardModal({ user, onClose, onAward }: PointsAwardModalPro
                                 onClick={() => setUseCustom(true)}
                                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                                     useCustom
-                                        ? "bg-sky-500 text-white"
+                                        ? "bg-memento-500 text-white"
                                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                                 }`}
                             >
@@ -159,8 +159,8 @@ export function PointsAwardModal({ user, onClose, onAward }: PointsAwardModalPro
                     </div>
 
                     {/* 미리보기 */}
-                    <div className={`p-3 rounded-lg text-sm ${isLevelUp ? "bg-violet-50" : "bg-sky-50"}`}>
-                        <p className={`font-medium mb-2 ${isLevelUp ? "text-violet-800" : "text-sky-800"}`}>
+                    <div className={`p-3 rounded-lg text-sm ${isLevelUp ? "bg-violet-50" : "bg-memento-200"}`}>
+                        <p className={`font-medium mb-2 ${isLevelUp ? "text-violet-800" : "text-memento-800"}`}>
                             적용 미리보기
                         </p>
                         <div className="flex items-center gap-3">
@@ -212,7 +212,7 @@ export function PointsAwardModal({ user, onClose, onAward }: PointsAwardModalPro
                         취소
                     </Button>
                     <Button
-                        className="bg-sky-500 hover:bg-sky-600 text-white"
+                        className="bg-memento-500 hover:bg-memento-600 text-white"
                         onClick={handleSave}
                         disabled={isSaving || awardAmount <= 0}
                     >

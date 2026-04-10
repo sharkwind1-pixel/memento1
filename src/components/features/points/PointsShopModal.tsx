@@ -45,8 +45,8 @@ const SHOP_ITEMS: ShopItem[] = [
         price: 150,
         icon: MessageCircle,
         category: "boost",
-        color: "text-sky-500",
-        bgColor: "bg-sky-50 dark:bg-sky-900/20",
+        color: "text-memento-500",
+        bgColor: "bg-memento-200 dark:bg-memento-900/20",
     },
     {
         id: "extra_chat_10",
@@ -55,8 +55,8 @@ const SHOP_ITEMS: ShopItem[] = [
         price: 250,
         icon: MessageCircle,
         category: "boost",
-        color: "text-sky-600",
-        bgColor: "bg-sky-50 dark:bg-sky-900/20",
+        color: "text-memento-600",
+        bgColor: "bg-memento-200 dark:bg-memento-900/20",
     },
 ];
 
@@ -128,7 +128,7 @@ export default function PointsShopModal({
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* 헤더 - sticky */}
-                    <div className="sticky top-0 z-10 bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400 px-4 py-2.5 text-white rounded-t-2xl">
+                    <div className="sticky top-0 z-10 bg-gradient-to-r from-memorial-400 via-orange-400 to-rose-400 px-4 py-2.5 text-white rounded-t-2xl">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <ShoppingBag className="w-5 h-5" />
@@ -157,7 +157,7 @@ export default function PointsShopModal({
                                 onClick={() => setSelectedCategory(cat)}
                                 className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all leading-tight ${
                                     selectedCategory === cat
-                                        ? "bg-amber-500 text-white"
+                                        ? "bg-memorial-500 text-white"
                                         : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200"
                                 }`}
                             >
@@ -176,7 +176,7 @@ export default function PointsShopModal({
                             return (
                                 <div
                                     key={item.id}
-                                    className="relative p-3 rounded-xl border transition-all border-gray-200 dark:border-gray-700 hover:border-amber-300 dark:hover:border-amber-600 hover:shadow-md"
+                                    className="relative p-3 rounded-xl border transition-all border-gray-200 dark:border-gray-700 hover:border-memorial-300 dark:hover:border-memorial-600 hover:shadow-md"
                                 >
                                     <div className="flex items-start gap-2.5">
                                         <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${item.bgColor}`}>
@@ -193,7 +193,7 @@ export default function PointsShopModal({
 
                                             <div className="flex items-center justify-between mt-2">
                                                 <span className={`text-xs font-bold ${
-                                                    canAfford ? "text-amber-600 dark:text-amber-400" : "text-gray-400"
+                                                    canAfford ? "text-memorial-600 dark:text-memorial-400" : "text-gray-400"
                                                 }`}>
                                                     {item.price.toLocaleString()}P
                                                 </span>
@@ -204,7 +204,7 @@ export default function PointsShopModal({
                                                     disabled={!canAfford || isPurchasing}
                                                     className={`rounded-lg text-[11px] h-7 ${
                                                         canAfford
-                                                            ? "bg-amber-500 hover:bg-amber-600 text-white"
+                                                            ? "bg-memorial-500 hover:bg-memorial-600 text-white"
                                                             : "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
                                                     }`}
                                                 >

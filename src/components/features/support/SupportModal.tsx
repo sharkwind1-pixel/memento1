@@ -31,7 +31,7 @@ interface SupportModalProps {
 }
 
 const INQUIRY_CATEGORIES = [
-    { id: "question", label: "질문", icon: HelpCircle, color: "text-blue-500" },
+    { id: "question", label: "질문", icon: HelpCircle, color: "text-memento-500" },
     { id: "report", label: "신고", icon: AlertTriangle, color: "text-red-500" },
 ];
 
@@ -136,13 +136,13 @@ export default function SupportModal({
                 <div
                     className={`sticky top-0 z-10 flex items-center justify-between p-4 border-b dark:border-gray-700 rounded-t-2xl ${
                         isInquiry
-                            ? "bg-blue-50 dark:bg-blue-900/20"
-                            : "bg-amber-50 dark:bg-gray-700/20"
+                            ? "bg-memento-200 dark:bg-memento-900/20"
+                            : "bg-memorial-50 dark:bg-gray-700/20"
                     }`}
                 >
                     <div className="flex items-center gap-2">
                         <ModalIcon
-                            className={`w-5 h-5 ${isInquiry ? "text-blue-500" : "text-amber-500"}`}
+                            className={`w-5 h-5 ${isInquiry ? "text-memento-500" : "text-memorial-500"}`}
                         />
                         <h2 id="support-title" className="text-lg font-bold text-gray-800 dark:text-white">
                             {modalTitle}
@@ -192,7 +192,7 @@ export default function SupportModal({
                                                     }
                                                     className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all ${
                                                         category === cat.id
-                                                            ? "border-sky-500 bg-sky-50 dark:bg-sky-900/30"
+                                                            ? "border-memento-500 bg-memento-200 dark:bg-memento-900/30"
                                                             : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                                                     }`}
                                                 >
@@ -211,8 +211,8 @@ export default function SupportModal({
 
                             {/* 비로그인 안내 */}
                             {!user && (
-                                <div className="p-4 bg-amber-50 dark:bg-gray-700/20 rounded-lg border border-amber-200 dark:border-gray-700">
-                                    <p className="text-sm text-amber-700 dark:text-amber-300 font-medium">
+                                <div className="p-4 bg-memorial-50 dark:bg-gray-700/20 rounded-lg border border-memorial-200 dark:border-gray-700">
+                                    <p className="text-sm text-memorial-700 dark:text-memorial-300 font-medium">
                                         로그인 후 문의하실 수 있습니다
                                     </p>
                                 </div>
@@ -278,8 +278,8 @@ export default function SupportModal({
                                 disabled={isSubmitting}
                                 className={`${
                                     isInquiry
-                                        ? "bg-gradient-to-r from-blue-500 to-sky-500"
-                                        : "bg-gradient-to-r from-amber-500 to-orange-500"
+                                        ? "bg-gradient-to-r from-memento-500 to-memento-500"
+                                        : "bg-gradient-to-r from-memorial-500 to-orange-500"
                                 }`}
                             >
                                 {isSubmitting ? (

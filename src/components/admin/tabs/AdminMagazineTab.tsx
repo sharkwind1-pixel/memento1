@@ -371,7 +371,7 @@ export default function AdminMagazineTab({
                 <button
                     type="button"
                     onClick={openCreateModal}
-                    className="h-8 px-2.5 rounded-md bg-sky-500 text-white text-xs font-medium transition-colors hover:bg-sky-600 flex items-center gap-1"
+                    className="h-8 px-2.5 rounded-md bg-memento-500 text-white text-xs font-medium transition-colors hover:bg-memento-600 flex items-center gap-1"
                 >
                     <Plus className="w-3.5 h-3.5" />
                     새 기사
@@ -414,7 +414,7 @@ export default function AdminMagazineTab({
                             <p className="text-sm">매거진 기사가 없습니다</p>
                             <button
                                 type="button"
-                                className="mt-2 text-[11px] text-sky-500 hover:text-sky-600 font-medium"
+                                className="mt-2 text-[11px] text-memento-500 hover:text-memento-600 font-medium"
                                 onClick={openCreateModal}
                             >
                                 + 첫 번째 기사 작성
@@ -558,7 +558,7 @@ function ArticleCard({
                             </Badge>
                         )}
                         {article.badge && (
-                            <Badge className="bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300 text-[10px] px-1.5 py-0">
+                            <Badge className="bg-memento-200 text-memento-700 dark:bg-memento-900/30 dark:text-memento-300 text-[10px] px-1.5 py-0">
                                 {getBadgeLabel(article.badge)}
                             </Badge>
                         )}
@@ -593,7 +593,7 @@ function ArticleCard({
                 <button
                     type="button"
                     onClick={onPreview}
-                    className="h-7 px-2 rounded border border-sky-300 dark:border-sky-700 text-sky-600 dark:text-sky-400 bg-white dark:bg-gray-800 text-[10px] font-medium transition-colors"
+                    className="h-7 px-2 rounded border border-memento-300 dark:border-memento-700 text-memento-600 dark:text-memento-400 bg-white dark:bg-gray-800 text-[10px] font-medium transition-colors"
                 >
                     미리보기
                 </button>
@@ -672,7 +672,7 @@ function ArticleFormModal({
             <div className="absolute inset-0 bg-black/50" onClick={onClose} />
             <div className="relative w-full max-w-4xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden flex flex-col">
                 {/* 헤더 */}
-                <div className="flex-shrink-0 flex items-center justify-between p-4 border-b dark:border-gray-700 bg-sky-50 dark:bg-sky-900/20">
+                <div className="flex-shrink-0 flex items-center justify-between p-4 border-b dark:border-gray-700 bg-memento-200 dark:bg-memento-900/20">
                     <h3 className="font-bold text-gray-800 dark:text-gray-100">
                         {isEditing ? "기사 수정" : "새 기사 작성"}
                     </h3>
@@ -692,7 +692,7 @@ function ArticleFormModal({
                             <select
                                 value={form.category}
                                 onChange={(e) => updateField("category", e.target.value)}
-                                className="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                                className="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-memento-500"
                             >
                                 {CATEGORIES.map(c => (
                                     <option key={c.value} value={c.value}>{c.label}</option>
@@ -706,7 +706,7 @@ function ArticleFormModal({
                             <select
                                 value={form.badge}
                                 onChange={(e) => updateField("badge", e.target.value)}
-                                className="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                                className="w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-memento-500"
                             >
                                 {BADGE_OPTIONS.map(b => (
                                     <option key={b.value} value={b.value}>{b.label}</option>
@@ -893,7 +893,7 @@ function ArticleFormModal({
                                 onChange={(e) =>
                                     updateField("status", e.target.checked ? "published" : "draft")
                                 }
-                                className="w-4 h-4 text-sky-500 border-gray-300 dark:border-gray-600 rounded focus:ring-sky-500"
+                                className="w-4 h-4 text-memento-500 border-gray-300 dark:border-gray-600 rounded focus:ring-memento-500"
                             />
                             <div>
                                 <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
@@ -913,7 +913,7 @@ function ArticleFormModal({
                         취소
                     </Button>
                     <Button
-                        className="bg-sky-500 hover:bg-sky-600"
+                        className="bg-memento-500 hover:bg-memento-600"
                         onClick={onSubmit}
                         disabled={isSubmitting || !form.title.trim() || !form.summary.trim() || !form.author.trim()}
                     >

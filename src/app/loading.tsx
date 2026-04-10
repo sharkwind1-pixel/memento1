@@ -7,7 +7,7 @@ export default function Loading() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900">
             <div className="text-center space-y-4">
-                <div className="w-16 h-16 mx-auto bg-gradient-to-br from-sky-100 to-sky-200 dark:from-sky-800 dark:to-sky-900 rounded-2xl animate-pulse" />
+                <div className="w-16 h-16 mx-auto bg-gradient-to-br from-memento-200 to-memento-200 dark:from-memento-800 dark:to-memento-900 rounded-2xl animate-pulse" />
                 <p className="text-sm text-gray-400 dark:text-gray-500">
                     불러오는 중...
                 </p>

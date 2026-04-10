@@ -192,7 +192,7 @@ export default function PremiumModal({
             {/* 모달 */}
             <div className="bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in-95 duration-200" role="dialog" aria-modal="true" aria-labelledby="premium-modal-title" onClick={(e) => e.stopPropagation()}>
                 {/* 상단 그라데이션 */}
-                <div className="bg-gradient-to-br from-violet-500 via-purple-500 to-sky-500 p-6 sm:p-8 text-white rounded-t-3xl">
+                <div className="bg-gradient-to-br from-violet-500 via-purple-500 to-memento-500 p-6 sm:p-8 text-white rounded-t-3xl">
                     <button
                         onClick={onClose}
                         className="absolute top-4 right-4 p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
@@ -228,12 +228,12 @@ export default function PremiumModal({
                             onClick={() => setSelectedPlan("basic")}
                             className={`relative rounded-2xl p-3.5 sm:p-4 text-left transition-all duration-200 border-2 ${
                                 selectedPlan === "basic"
-                                    ? "border-sky-500 bg-sky-50 dark:bg-sky-900/20 shadow-sm"
+                                    ? "border-memento-500 bg-memento-200 dark:bg-memento-900/20 shadow-sm"
                                     : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                             }`}
                         >
                             <div className="flex items-center gap-1.5 mb-2">
-                                <Star className="w-4 h-4 text-sky-500" />
+                                <Star className="w-4 h-4 text-memento-500" />
                                 <span className="text-sm font-bold text-gray-800 dark:text-white">베이직</span>
                             </div>
                             <div className="flex items-baseline gap-0.5">
@@ -242,19 +242,19 @@ export default function PremiumModal({
                             </div>
                             <ul className="mt-2.5 space-y-1">
                                 <li className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1">
-                                    <Check className="w-3 h-3 text-sky-500 flex-shrink-0 mt-0.5" />
+                                    <Check className="w-3 h-3 text-memento-500 flex-shrink-0 mt-0.5" />
                                     AI 펫톡 하루 {BASIC_LIMITS.DAILY_CHATS}회
                                 </li>
                                 <li className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1">
-                                    <Check className="w-3 h-3 text-sky-500 flex-shrink-0 mt-0.5" />
+                                    <Check className="w-3 h-3 text-memento-500 flex-shrink-0 mt-0.5" />
                                     반려동물 {BASIC_LIMITS.PETS}마리
                                 </li>
                                 <li className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1">
-                                    <Check className="w-3 h-3 text-sky-500 flex-shrink-0 mt-0.5" />
+                                    <Check className="w-3 h-3 text-memento-500 flex-shrink-0 mt-0.5" />
                                     사진 펫당 {BASIC_LIMITS.PHOTOS_PER_PET}장
                                 </li>
                                 <li className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1">
-                                    <Check className="w-3 h-3 text-sky-500 flex-shrink-0 mt-0.5" />
+                                    <Check className="w-3 h-3 text-memento-500 flex-shrink-0 mt-0.5" />
                                     AI 영상 월 {VIDEO.BASIC_MONTHLY}회
                                 </li>
                             </ul>
@@ -345,7 +345,7 @@ export default function PremiumModal({
                                 className={`w-full text-white rounded-xl py-6 font-bold transition-all ${
                                     selectedPlan === "premium"
                                         ? "bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700"
-                                        : "bg-gradient-to-r from-sky-500 to-blue-500 hover:from-sky-600 hover:to-blue-600"
+                                        : "bg-gradient-to-r from-memento-500 to-memento-500 hover:from-memento-600 hover:to-memento-600"
                                 } ${isProcessing ? "opacity-80 cursor-not-allowed" : ""}`}
                                 onClick={handlePayment}
                                 disabled={isProcessing}
@@ -374,7 +374,7 @@ export default function PremiumModal({
                     ) : (
                         <div className="space-y-3">
                             <Button
-                                className="w-full bg-gradient-to-r from-violet-500 to-sky-500 hover:from-violet-600 hover:to-sky-600 text-white rounded-xl py-6 font-bold"
+                                className="w-full bg-gradient-to-r from-violet-500 to-memento-500 hover:from-violet-600 hover:to-memento-600 text-white rounded-xl py-6 font-bold"
                                 onClick={onLogin}
                             >
                                 로그인하고 시작하기

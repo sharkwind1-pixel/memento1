@@ -46,7 +46,7 @@ import ConfirmDialog from "@/components/ui/ConfirmDialog";
 const REMINDER_TYPES = [
     { value: "walk", label: "산책", icon: Footprints, color: "text-green-500", bg: "bg-green-50" },
     { value: "meal", label: "식사", icon: UtensilsCrossed, color: "text-orange-500", bg: "bg-orange-50" },
-    { value: "medicine", label: "약/영양제", icon: Pill, color: "text-blue-500", bg: "bg-blue-50" },
+    { value: "medicine", label: "약/영양제", icon: Pill, color: "text-memento-500", bg: "bg-memento-200" },
     { value: "vaccine", label: "예방접종", icon: Syringe, color: "text-purple-500", bg: "bg-purple-50" },
     { value: "grooming", label: "미용/목욕", icon: Scissors, color: "text-pink-500", bg: "bg-pink-50" },
     { value: "vet", label: "병원", icon: Stethoscope, color: "text-red-500", bg: "bg-red-50" },

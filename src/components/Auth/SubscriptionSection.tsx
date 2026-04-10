@@ -78,12 +78,12 @@ export default function SubscriptionSection({
                 <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 space-y-3">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <Crown className="w-4 h-4 text-amber-500" />
+                            <Crown className="w-4 h-4 text-memorial-500" />
                             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                                 {subscriptionTier === "basic" ? "베이직" : "프리미엄"} 플랜
                             </span>
                         </div>
-                        <span className="text-xs bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300 px-2 py-0.5 rounded-full">
+                        <span className="text-xs bg-memento-200 text-memento-700 dark:bg-memento-900/30 dark:text-memento-300 px-2 py-0.5 rounded-full">
                             이용 중
                         </span>
                     </div>

@@ -76,11 +76,11 @@ export const getBadgeLabel = (badge: string) => {
 export const getBadgeStyle = (badge: string) => {
     switch (badge) {
         case "beginner":
-            return "bg-sky-500 text-white";
+            return "bg-memento-500 text-white";
         case "companion":
             return "bg-emerald-500 text-white";
         case "senior":
-            return "bg-amber-500 text-white";
+            return "bg-memorial-500 text-white";
         default:
             return "bg-gray-500 text-white";
     }

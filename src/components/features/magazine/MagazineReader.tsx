@@ -314,7 +314,7 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
             <div className="fixed top-0 left-0 right-0 z-[70]">
                 <div className="h-1 bg-gray-200 dark:bg-gray-700">
                     <div
-                        className="h-full bg-sky-400 transition-all duration-300 ease-out"
+                        className="h-full bg-memento-400 transition-all duration-300 ease-out"
                         style={{ width: `${progressPercent}%` }}
                     />
                 </div>

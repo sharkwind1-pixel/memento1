@@ -246,7 +246,7 @@ export default function AccountSettingsModal({
                             {!isEditingNickname && (
                                 <button
                                     onClick={() => setIsEditingNickname(true)}
-                                    className="text-xs text-sky-500 hover:text-sky-600 flex items-center gap-1"
+                                    className="text-xs text-memento-500 hover:text-memento-600 flex items-center gap-1"
                                 >
                                     <Edit3 className="w-3 h-3" />
                                     변경
@@ -321,7 +321,7 @@ export default function AccountSettingsModal({
                                             nicknameStatus !== "available" ||
                                             nickname.trim().length < 2
                                         }
-                                        className="bg-sky-500 hover:bg-sky-600"
+                                        className="bg-memento-500 hover:bg-memento-600"
                                     >
                                         {isSavingNickname ? (
                                             <InlineLoading />

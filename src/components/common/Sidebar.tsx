@@ -61,11 +61,11 @@ const COMMUNITY_SUBCATEGORIES: {
     icon: React.ElementType;
     color: string;
 }[] = [
-    { id: "free", label: "자유게시판", icon: MessageSquare, color: "text-blue-500" },
+    { id: "free", label: "자유게시판", icon: MessageSquare, color: "text-memento-500" },
     { id: "memorial", label: "기억게시판", icon: Sparkles, color: "text-violet-500" },
     { id: "adoption", label: "입양정보", icon: HandHeart, color: "text-rose-500" },
     { id: "local", label: "지역정보", icon: MapPin, color: "text-emerald-500" },
-    { id: "lost", label: "분실동물", icon: AlertCircle, color: "text-amber-500" },
+    { id: "lost", label: "분실동물", icon: AlertCircle, color: "text-memorial-500" },
 ];
 
 interface SidebarProps {
@@ -293,7 +293,7 @@ export default function Sidebar({
                         className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all text-gray-700 dark:text-gray-300"
                     >
                         <div className="flex items-center gap-3">
-                            {isDarkMode ? <Sun className="w-5 h-5 text-amber-500" /> : <Moon className="w-5 h-5 text-gray-500" />}
+                            {isDarkMode ? <Sun className="w-5 h-5 text-memorial-500" /> : <Moon className="w-5 h-5 text-gray-500" />}
                             <span className="text-sm">{isDarkMode ? "라이트 모드" : "다크 모드"}</span>
                         </div>
                     </button>
@@ -332,8 +332,8 @@ export default function Sidebar({
                                 "hover:bg-gray-100 dark:hover:bg-gray-800",
                                 isMainCategoryActive(category.id)
                                     ? isMemorialMode
-                                        ? "bg-amber-50 dark:bg-amber-400/10 text-amber-600 dark:text-amber-400 font-medium"
-                                        : "bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 font-medium"
+                                        ? "bg-memorial-50 dark:bg-memorial-400/10 text-memorial-600 dark:text-memorial-400 font-medium"
+                                        : "bg-memento-200 dark:bg-memento-900/30 text-memento-600 dark:text-memento-400 font-medium"
                                     : "text-gray-700 dark:text-gray-300"
                             )}
                         >
@@ -519,11 +519,11 @@ export default function Sidebar({
             className={cn(
                 "flex flex-col w-[420px] h-full overflow-y-auto",
                 isMemorialMode
-                    ? "bg-amber-50/80 dark:bg-gray-900/80"
+                    ? "bg-memorial-50/80 dark:bg-gray-900/80"
                     : "bg-white/80 dark:bg-gray-900/80",
                 "backdrop-blur-lg",
                 isMemorialMode
-                    ? "border-r border-amber-200/50 dark:border-gray-700/50"
+                    ? "border-r border-memorial-200/50 dark:border-gray-700/50"
                     : "border-r border-gray-200/50 dark:border-gray-700/50",
                 "transition-all duration-700 ease-in-out"
             )}

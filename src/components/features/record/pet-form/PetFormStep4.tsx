@@ -15,7 +15,7 @@ export default function PetFormStep4({ formData, setFormData }: StepFormProps) {
         <div className="space-y-4">
             <div className="grid grid-cols-1 gap-3">
                 <div className="flex items-start gap-3 p-3 bg-memento-50 dark:bg-gray-700/30 rounded-xl border border-memento-100 dark:border-gray-600/30">
-                    <Cookie className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" />
+                    <Cookie className="w-5 h-5 text-memorial-500 mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
                         <Label className="text-gray-700 dark:text-gray-200">좋아하는 간식</Label>
                         <Input
@@ -45,7 +45,7 @@ export default function PetFormStep4({ formData, setFormData }: StepFormProps) {
                 </div>
 
                 <div className="flex items-start gap-3 p-3 bg-memento-50 dark:bg-gray-700/30 rounded-xl border border-memento-100 dark:border-gray-600/30">
-                    <Home className="w-5 h-5 text-sky-500 mt-0.5 flex-shrink-0" />
+                    <Home className="w-5 h-5 text-memento-500 mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
                         <Label className="text-gray-700 dark:text-gray-200">좋아하는 장소</Label>
                         <Input

@@ -127,28 +127,28 @@ export default function ChatMessageList({
                         {/* 리마인더 안내 카드 */}
                         {message.role === "system" && message.type === "reminder-suggestion" ? (
                             <div className="flex justify-center chat-bubble-enter my-3">
-                                <div className="bg-gradient-to-br from-sky-50 to-blue-50 dark:from-sky-900/30 dark:to-blue-900/30 border border-sky-200 dark:border-sky-700 rounded-2xl px-5 py-4 max-w-[90%] shadow-sm">
+                                <div className="bg-gradient-to-br from-memento-200 to-memento-200 dark:from-memento-900/30 dark:to-memento-900/30 border border-memento-200 dark:border-memento-700 rounded-2xl px-5 py-4 max-w-[90%] shadow-sm">
                                     <div className="flex items-center gap-2 mb-2.5">
-                                        <div className="w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-800 flex items-center justify-center">
-                                            <Bell className="w-4 h-4 text-sky-600 dark:text-sky-300" />
+                                        <div className="w-8 h-8 rounded-full bg-memento-200 dark:bg-memento-800 flex items-center justify-center">
+                                            <Bell className="w-4 h-4 text-memento-600 dark:text-memento-300" />
                                         </div>
-                                        <span className="text-sm font-semibold text-sky-800 dark:text-sky-200">
+                                        <span className="text-sm font-semibold text-memento-800 dark:text-memento-200">
                                             케어 리마인더
                                         </span>
                                     </div>
-                                    <p className="text-sm text-sky-800 dark:text-sky-100 leading-relaxed mb-3">
+                                    <p className="text-sm text-memento-800 dark:text-memento-200 leading-relaxed mb-3">
                                         {message.content}
                                     </p>
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => onReminderAccept?.(message.id)}
-                                            className="flex-1 px-4 py-2 rounded-xl text-sm font-medium bg-sky-500 hover:bg-sky-600 text-white transition-all hover:scale-[1.02] active:scale-95 shadow-sm"
+                                            className="flex-1 px-4 py-2 rounded-xl text-sm font-medium bg-memento-500 hover:bg-memento-600 text-white transition-all hover:scale-[1.02] active:scale-95 shadow-sm"
                                         >
                                             알려주세요
                                         </button>
                                         <button
                                             onClick={() => onReminderDismiss?.(message.id)}
-                                            className="flex-1 px-4 py-2 rounded-xl text-sm font-medium bg-white hover:bg-sky-50 text-sky-600 dark:bg-sky-900/30 dark:hover:bg-sky-800/40 dark:text-sky-200 border border-sky-200 dark:border-sky-600 transition-all hover:scale-[1.02] active:scale-95"
+                                            className="flex-1 px-4 py-2 rounded-xl text-sm font-medium bg-white hover:bg-memento-200 text-memento-600 dark:bg-memento-900/30 dark:hover:bg-memento-800/40 dark:text-memento-200 border border-memento-200 dark:border-memento-600 transition-all hover:scale-[1.02] active:scale-95"
                                         >
                                             괜찮아요
                                         </button>
@@ -158,7 +158,7 @@ export default function ChatMessageList({
                         ) : message.role === "system" && message.type === "crisis-alert" && message.crisisAlert ? (
                             /* 위기 감지 상담 안내 카드 */
                             <div className="flex justify-center chat-bubble-enter my-3" role="alert" aria-live="assertive">
-                                <div className="bg-gradient-to-br from-rose-50 to-amber-50 dark:from-rose-950/40 dark:to-amber-950/30 border border-rose-200 dark:border-rose-800/50 rounded-2xl px-5 py-4 max-w-[90%] shadow-sm">
+                                <div className="bg-gradient-to-br from-rose-50 to-memorial-50 dark:from-rose-950/40 dark:to-memorial-950/30 border border-rose-200 dark:border-rose-800/50 rounded-2xl px-5 py-4 max-w-[90%] shadow-sm">
                                     <div className="flex items-center gap-2 mb-2.5">
                                         <div className="w-8 h-8 rounded-full bg-rose-100 dark:bg-rose-900/50 flex items-center justify-center">
                                             <Heart className="w-4 h-4 text-rose-500 dark:text-rose-400" />
@@ -200,13 +200,13 @@ export default function ChatMessageList({
                             <div className="flex justify-center chat-bubble-enter my-2">
                                 <div className={`rounded-xl px-4 py-3 max-w-[85%] text-center ${
                                     isMemorialMode
-                                        ? "bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-700"
-                                        : "bg-sky-50 dark:bg-sky-900/20 border border-sky-200/50 dark:border-sky-700"
+                                        ? "bg-memorial-50 dark:bg-memorial-900/20 border border-memorial-200/50 dark:border-memorial-700"
+                                        : "bg-memento-200 dark:bg-memento-900/20 border border-memento-200/50 dark:border-memento-700"
                                 }`}>
                                     <p className={`text-sm ${
                                         isMemorialMode
-                                            ? "text-amber-700 dark:text-amber-300"
-                                            : "text-sky-700 dark:text-sky-300"
+                                            ? "text-memorial-700 dark:text-memorial-300"
+                                            : "text-memento-700 dark:text-memento-300"
                                     }`}>
                                         {message.content}
                                     </p>
@@ -215,8 +215,8 @@ export default function ChatMessageList({
                                             onClick={() => onRetry(message.id, message.retryMessage!)}
                                             className={`mt-2 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all hover:scale-[1.03] active:scale-95 ${
                                                 isMemorialMode
-                                                    ? "bg-amber-100 hover:bg-amber-200 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300"
-                                                    : "bg-sky-100 hover:bg-sky-200 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300"
+                                                    ? "bg-memorial-100 hover:bg-memorial-200 text-memorial-700 dark:bg-memorial-400/15 dark:text-memorial-300"
+                                                    : "bg-memento-200 hover:bg-memento-200 text-memento-700 dark:bg-memento-900/50 dark:text-memento-300"
                                             }`}
                                         >
                                             <RotateCcw className="w-3.5 h-3.5" />
@@ -233,7 +233,7 @@ export default function ChatMessageList({
                                 {message.role === "pet" && (
                                     <div
                                         className={`w-9 h-9 rounded-full overflow-hidden mr-2 flex-shrink-0 ring-2 shadow-md transition-all duration-500 hover:scale-105 ${
-                                            isMemorialMode ? "ring-amber-200" : "ring-sky-200"
+                                            isMemorialMode ? "ring-memorial-200" : "ring-memento-200"
                                         }`}
                                         style={{
                                             boxShadow: lastEmotion && EMOTION_GLOW_COLORS[lastEmotion]
@@ -255,10 +255,10 @@ export default function ChatMessageList({
                                             />
                                         ) : (
                                             <div
-                                                className={`w-full h-full flex items-center justify-center ${isMemorialMode ? "bg-gradient-to-br from-amber-100 to-orange-100" : "bg-gradient-to-br from-memento-100 to-memento-200"}`}
+                                                className={`w-full h-full flex items-center justify-center ${isMemorialMode ? "bg-gradient-to-br from-memorial-100 to-orange-100" : "bg-gradient-to-br from-memento-100 to-memento-200"}`}
                                             >
                                                 <PawPrint
-                                                    className={`w-4 h-4 ${isMemorialMode ? "text-amber-500" : "text-memento-600"}`}
+                                                    className={`w-4 h-4 ${isMemorialMode ? "text-memorial-500" : "text-memento-600"}`}
                                                 />
                                             </div>
                                         )}
@@ -269,11 +269,11 @@ export default function ChatMessageList({
                                         className={`px-4 py-3 rounded-2xl shadow-md transition-all duration-500 hover:shadow-lg ${
                                             message.role === "user"
                                                 ? (isMemorialMode
-                                                    ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-br-sm"
+                                                    ? "bg-gradient-to-r from-memorial-500 to-orange-500 text-white rounded-br-sm"
                                                     : "bg-gradient-to-r from-memento-600 to-memento-500 text-white rounded-br-sm")
                                                 : isMemorialMode
-                                                        ? "bg-amber-100 dark:bg-amber-900/40 text-amber-900 dark:text-amber-100 rounded-bl-sm border border-amber-200/50 dark:border-amber-700/50"
-                                                        : "bg-white dark:bg-sky-900/40 text-sky-900 dark:text-sky-100 rounded-bl-sm border border-sky-100 dark:border-sky-700/50"
+                                                        ? "bg-memorial-100 dark:bg-memorial-900/40 text-memorial-900 dark:text-memorial-100 rounded-bl-sm border border-memorial-200/50 dark:border-memorial-700/50"
+                                                        : "bg-white dark:bg-memento-900/40 text-memento-900 dark:text-memento-200 rounded-bl-sm border border-memento-200 dark:border-memento-700/50"
                                         }`}
                                     >
                                         <p className="text-[15px] leading-relaxed">
@@ -288,7 +288,7 @@ export default function ChatMessageList({
                                     {/* 매칭된 추억 사진 */}
                                     {message.role === "pet" && message.matchedPhoto && (
                                         <div className={`mt-2 rounded-xl overflow-hidden shadow-md border ${
-                                            isMemorialMode ? "border-amber-200" : "border-sky-200"
+                                            isMemorialMode ? "border-memorial-200" : "border-memento-200"
                                         }`}>
                                             <OptimizedImage
                                                 src={message.matchedPhoto.url}
@@ -299,8 +299,8 @@ export default function ChatMessageList({
                                             />
                                             <div className={`px-2 py-1.5 text-xs flex items-center gap-1 ${
                                                 isMemorialMode
-                                                    ? "bg-amber-50 text-amber-700"
-                                                    : "bg-sky-50 text-sky-700"
+                                                    ? "bg-memorial-50 text-memorial-700"
+                                                    : "bg-memento-200 text-memento-700"
                                             }`}>
                                                 <Heart className="w-3 h-3" />
                                                 <span className="truncate">{message.matchedPhoto.caption}</span>
@@ -310,22 +310,22 @@ export default function ChatMessageList({
                                     {/* 매칭된 타임라인 카드 */}
                                     {message.role === "pet" && message.matchedTimeline && !message.matchedPhoto && (
                                         <div className={`mt-2 rounded-xl overflow-hidden shadow-sm border ${
-                                            isMemorialMode ? "border-amber-200 bg-amber-50/50 dark:bg-amber-900/20" : "border-sky-200 bg-sky-50/50 dark:bg-sky-900/20"
+                                            isMemorialMode ? "border-memorial-200 bg-memorial-50/50 dark:bg-memorial-900/20" : "border-memento-200 bg-memento-200/50 dark:bg-memento-900/20"
                                         }`}>
                                             <div className="px-3 py-2.5">
                                                 <div className={`flex items-center gap-1.5 mb-1 ${
-                                                    isMemorialMode ? "text-amber-600 dark:text-amber-400" : "text-sky-600 dark:text-sky-400"
+                                                    isMemorialMode ? "text-memorial-600 dark:text-memorial-400" : "text-memento-600 dark:text-memento-400"
                                                 }`}>
                                                     <BookOpen className="w-3.5 h-3.5" />
                                                     <span className="text-xs font-medium">우리의 기록</span>
                                                     <span className="text-[10px] opacity-60 ml-auto">{message.matchedTimeline.date}</span>
                                                 </div>
                                                 <p className={`text-sm font-medium ${
-                                                    isMemorialMode ? "text-amber-800 dark:text-amber-200" : "text-sky-800 dark:text-sky-200"
+                                                    isMemorialMode ? "text-memorial-800 dark:text-memorial-200" : "text-memento-800 dark:text-memento-200"
                                                 }`}>{message.matchedTimeline.title}</p>
                                                 {message.matchedTimeline.content && (
                                                     <p className={`text-xs mt-0.5 line-clamp-2 ${
-                                                        isMemorialMode ? "text-amber-600/80 dark:text-amber-300/80" : "text-sky-600/80 dark:text-sky-300/80"
+                                                        isMemorialMode ? "text-memorial-600/80 dark:text-memorial-300/80" : "text-memento-600/80 dark:text-memento-300/80"
                                                     }`}>{message.matchedTimeline.content}</p>
                                                 )}
                                             </div>
@@ -334,11 +334,11 @@ export default function ChatMessageList({
                                     {/* 주변 장소 추천 카드 */}
                                     {message.role === "pet" && message.nearbyPlaces && message.nearbyPlaces.places.length > 0 && (
                                         <div className={`mt-2 rounded-xl overflow-hidden shadow-sm border ${
-                                            isMemorialMode ? "border-amber-200 bg-amber-50/50 dark:bg-amber-900/20" : "border-emerald-200 bg-emerald-50/50 dark:bg-emerald-900/20"
+                                            isMemorialMode ? "border-memorial-200 bg-memorial-50/50 dark:bg-memorial-900/20" : "border-emerald-200 bg-emerald-50/50 dark:bg-emerald-900/20"
                                         }`}>
                                             <div className="px-3 py-2.5">
                                                 <div className={`flex items-center gap-1.5 mb-2 ${
-                                                    isMemorialMode ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"
+                                                    isMemorialMode ? "text-memorial-600 dark:text-memorial-400" : "text-emerald-600 dark:text-emerald-400"
                                                 }`}>
                                                     <MapPin className="w-3.5 h-3.5" />
                                                     <span className="text-xs font-medium">주변 {message.nearbyPlaces.query}</span>
@@ -352,7 +352,7 @@ export default function ChatMessageList({
                                                             rel="noopener noreferrer"
                                                             className={`block px-2.5 py-2 rounded-lg transition-all hover:scale-[1.01] active:scale-[0.99] ${
                                                                 isMemorialMode
-                                                                    ? "bg-amber-100/60 dark:bg-amber-800/20 hover:bg-amber-100 dark:hover:bg-amber-800/30"
+                                                                    ? "bg-memorial-100/60 dark:bg-memorial-800/20 hover:bg-memorial-100 dark:hover:bg-memorial-800/30"
                                                                     : "bg-emerald-100/60 dark:bg-emerald-800/20 hover:bg-emerald-100 dark:hover:bg-emerald-800/30"
                                                             }`}
                                                         >
@@ -360,19 +360,19 @@ export default function ChatMessageList({
                                                                 <div className="flex-1 min-w-0">
                                                                     <div className="flex items-center gap-1.5">
                                                                         <p className={`text-sm font-medium truncate ${
-                                                                            isMemorialMode ? "text-amber-800 dark:text-amber-200" : "text-emerald-800 dark:text-emerald-200"
+                                                                            isMemorialMode ? "text-memorial-800 dark:text-memorial-200" : "text-emerald-800 dark:text-emerald-200"
                                                                         }`}>{place.name}</p>
                                                                         <ExternalLink className={`w-3 h-3 flex-shrink-0 ${
-                                                                            isMemorialMode ? "text-amber-400" : "text-emerald-400"
+                                                                            isMemorialMode ? "text-memorial-400" : "text-emerald-400"
                                                                         }`} />
                                                                     </div>
                                                                     <p className={`text-[11px] mt-0.5 truncate ${
-                                                                        isMemorialMode ? "text-amber-600/70 dark:text-amber-300/70" : "text-emerald-600/70 dark:text-emerald-300/70"
+                                                                        isMemorialMode ? "text-memorial-600/70 dark:text-memorial-300/70" : "text-emerald-600/70 dark:text-emerald-300/70"
                                                                     }`}>{place.address}</p>
                                                                 </div>
                                                                 <span className={`text-xs font-semibold flex-shrink-0 px-1.5 py-0.5 rounded-full ${
                                                                     isMemorialMode
-                                                                        ? "bg-amber-200/60 dark:bg-amber-700/40 text-amber-700 dark:text-amber-300"
+                                                                        ? "bg-memorial-200/60 dark:bg-memorial-700/40 text-memorial-700 dark:text-memorial-300"
                                                                         : "bg-emerald-200/60 dark:bg-emerald-700/40 text-emerald-700 dark:text-emerald-300"
                                                                 }`}>{place.distance}</span>
                                                             </div>
@@ -392,7 +392,7 @@ export default function ChatMessageList({
             {isTyping && !isStreaming && (
                 <div className="flex justify-start chat-bubble-enter">
                     <div className={`w-9 h-9 rounded-full overflow-hidden mr-2 flex-shrink-0 ring-2 shadow-md transition-all duration-500 ${
-                        isMemorialMode ? "ring-amber-200" : "ring-sky-200"
+                        isMemorialMode ? "ring-memorial-200" : "ring-memento-200"
                     }`}>
                         {selectedPet?.profileImage ? (
                             <OptimizedImage
@@ -403,16 +403,16 @@ export default function ChatMessageList({
                             />
                         ) : (
                             <div
-                                className={`w-full h-full flex items-center justify-center transition-all duration-500 ${isMemorialMode ? "bg-gradient-to-br from-amber-100 to-orange-100" : "bg-gradient-to-br from-memento-100 to-memento-200"}`}
+                                className={`w-full h-full flex items-center justify-center transition-all duration-500 ${isMemorialMode ? "bg-gradient-to-br from-memorial-100 to-orange-100" : "bg-gradient-to-br from-memento-100 to-memento-200"}`}
                             >
                                 <PawPrint
-                                    className={`w-4 h-4 transition-colors duration-500 ${isMemorialMode ? "text-amber-500" : "text-memento-600"}`}
+                                    className={`w-4 h-4 transition-colors duration-500 ${isMemorialMode ? "text-memorial-500" : "text-memento-600"}`}
                                 />
                             </div>
                         )}
                     </div>
                     <div
-                        className={`px-5 py-3 rounded-2xl rounded-bl-sm transition-all duration-500 ${isMemorialMode ? "bg-amber-100 dark:bg-amber-900/40 border border-amber-200/50 dark:border-amber-700/50" : "bg-white dark:bg-sky-900/40 shadow-sm border border-sky-100 dark:border-sky-700/50"}`}
+                        className={`px-5 py-3 rounded-2xl rounded-bl-sm transition-all duration-500 ${isMemorialMode ? "bg-memorial-100 dark:bg-memorial-900/40 border border-memorial-200/50 dark:border-memorial-700/50" : "bg-white dark:bg-memento-900/40 shadow-sm border border-memento-200 dark:border-memento-700/50"}`}
                     >
                         <div className="flex items-end gap-1.5">
                             {[0, 1, 2].map((i) => (
@@ -427,8 +427,8 @@ export default function ChatMessageList({
                                     <PawPrint
                                         className={`w-4 h-4 ${
                                             isMemorialMode
-                                                ? "text-amber-400"
-                                                : "text-sky-400"
+                                                ? "text-memorial-400"
+                                                : "text-memento-400"
                                         }`}
                                         style={{
                                             transform: `rotate(${-15 + i * 15}deg)`,
@@ -440,7 +440,7 @@ export default function ChatMessageList({
                         <p className={`text-xs mt-1.5 font-medium transition-opacity duration-300 ${
                             isMemorialMode
                                 ? "memorial-shimmer-text"
-                                : "text-sky-500"
+                                : "text-memento-500"
                         }`}>
                             {typingTexts[typingTextIndex]}
                         </p>
