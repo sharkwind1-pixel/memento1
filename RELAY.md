@@ -91,10 +91,36 @@
 
 ### DB 마이그레이션
 - [x] profiles.device_fingerprint TEXT 컬럼 추가
+- [x] notifications 테이블 신규 (RLS + dedup 인덱스)
+
+### 디자인 토큰 전면 정리 (design-farmer)
+- [x] design-farmer v0.0.6 스킬 설치
+- [x] tailwind.config.ts: memento 800/900/950 + memorial 팔레트 신규
+- [x] 97개 파일 sky-*/blue-* → memento-* (376회 치환)
+- [x] 75개 파일 amber-* → memorial-* (460회 치환)
+- [x] DESIGN.md 신규: OKLCH 기반 디자인 시스템 문서
+
+### 블로그 크론 Claude API 어드바이저 패턴
+- [x] @anthropic-ai/sdk v0.87.0 설치
+- [x] Sonnet 4.6 executor + Opus 4.6 advisor 베타 적용
+- [x] 3단계 폴백 (Claude+advisor → Claude 단독 → GPT-4o-mini)
+- [x] ANTHROPIC_API_KEY 미설정 시 자동 GPT 폴백
+
+### 이미지 업로드 개선
+- [x] src/lib/image-compress.ts: Canvas API 기반 자동 압축 유틸
+- [x] uploadMedia/uploadImage 전 경로에 압축 적용
+- [x] 파일 크기 한도 10MB → 20MB 상승
+- [x] 서비스 워커 POST 캐싱 버그 수정 (GET만 캐싱)
+- [x] CACHE_NAME v1 → v3 업데이트
 
 ### 인프라
 - [x] Claude Code CLI + VS Code 확장 설치
 - [x] auto mode 설정 (~/.claude/settings.json)
+- [x] PowerShell 실행 정책 RemoteSigned 변경
+- [x] bypassPermissions 모드 전환
+
+### 마케팅
+- [x] 릴스 1 제작 + 업로드 (영상/캡션/썸네일/쇼츠 설명)
 
 ---
 

@@ -4,6 +4,42 @@
 
 ---
 
+## [2026-04-10] 이미지 업로드 자동 압축 + 서비스워커 버그 수정
+
+### 문제
+- 요즘 스마트폰 원본 사진(5-15MB)이 10MB 한도에 걸려 매거진 썸네일 업로드 실패
+- 서비스 워커가 Supabase Storage POST 요청까지 캐싱 시도 → `cache.put() POST unsupported` 에러
+
+### 해결 (3단계 커밋)
+
+**커밋 ffa263b — 클라이언트 자동 압축 + 한도 상승**
+- [x] src/lib/image-compress.ts 신규: Canvas API 기반 압축 유틸
+  - 500KB 이하 스킵, GIF/HEIC 원본 유지
+  - 1920px 이하 리사이즈 + JPEG 85% 5단계 품질 조정
+  - 압축 실패 시 원본 반환 (안전)
+- [x] src/lib/storage.ts: uploadMedia/uploadImage에 압축 적용
+  - 펫 사진, 매거진, 커뮤니티, 지역, 분실 이미지 전부 자동 압축
+  - 압축 후 contentType jpg 자동 전환
+- [x] validateFileSize 한도 10MB → 20MB
+- [x] VideoGenerateModal, useLostPostActions 에러 메시지 20MB 통일
+- [x] src/config/constants.ts MAX_IMAGE_SIZE 10MB → 20MB
+
+**커밋 f3b6900 — 서비스 워커 캐시 버전 업**
+- [x] CACHE_NAME v1 → v2 (구버전 JS 번들 강제 무효화)
+
+**커밋 3b9d59b — 진짜 원인 수정 (SW POST 캐싱 버그)**
+- [x] 서비스 워커 fetch 핸들러 최상단에 `method === "GET"` 체크 추가
+- [x] POST/PUT/DELETE는 브라우저 기본 동작에 맡김 (SW 관여 안 함)
+- [x] CACHE_NAME v2 → v3
+- [x] Cache API는 GET만 지원하는 한계를 준수
+
+### 결과
+- 아이폰 원본 12MB 사진 → 자동 압축 후 1MB 이하로 업로드 성공
+- 서비스 워커 콘솔 에러 소멸
+- 업로드 속도 빨라짐, Supabase Storage 사용량 절감
+
+---
+
 ## [2026-04-10] 블로그 크론 Claude API 전환 (어드바이저 패턴)
 
 ### 어드바이저 전략 도입
