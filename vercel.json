@@ -23,6 +23,10 @@
         {
             "path": "/api/cron/notification-check",
             "schedule": "0 23 * * *"
+        },
+        {
+            "path": "/api/cron/daily-summary",
+            "schedule": "5 0 * * *"
         }
     ]
 }

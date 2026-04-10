@@ -5,15 +5,15 @@
  * 매시간 크론에서 호출되어 서비스 상태를 점검:
  * 1. DB 연결 (Supabase)
  * 2. 주요 테이블 접근
- * 3. OpenAI API 연결
- * 4. 일일 통계 집계 (09시에만)
+ * 3. OpenAI API 연결 (6시간마다)
  *
- * 이상 발견 시 텔레그램 시스템 알림 전송
+ * 일일 요약은 /api/cron/daily-summary로 분리됨.
+ * 이상 발견 시 텔레그램 시스템 알림 전송.
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { verifyCronSecret, getServiceSupabase } from "@/lib/cron-utils";
-import { notifyError, notifyDailySummary } from "@/lib/telegram";
+import { notifyError } from "@/lib/telegram";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -68,33 +68,7 @@ export async function GET(request: NextRequest) {
             }
         }
 
-        // 3. 일일 통계 (09시에만 텔레그램 요약 발송)
-        if (kstHour === 9) {
-            try {
-                const today = new Date().toISOString().split("T")[0];
-
-                const [usersRes, newUsersRes, chatsRes, postsRes, reportsRes] = await Promise.allSettled([
-                    supabase.from("profiles").select("id", { count: "estimated", head: true }),
-                    supabase.from("profiles").select("id", { count: "exact", head: true }).gte("created_at", today),
-                    supabase.from("chat_messages").select("id", { count: "exact", head: true }).gte("created_at", today),
-                    supabase.from("community_posts").select("id", { count: "exact", head: true }).gte("created_at", today),
-                    supabase.from("reports").select("id", { count: "exact", head: true }).gte("created_at", today),
-                ]);
-
-                const getCount = (r: PromiseSettledResult<{ count: number | null }>) =>
-                    r.status === "fulfilled" ? (r.value.count ?? 0) : 0;
-
-                await notifyDailySummary({
-                    totalUsers: getCount(usersRes),
-                    newUsers: getCount(newUsersRes),
-                    totalChats: getCount(chatsRes),
-                    totalPosts: getCount(postsRes),
-                    reports: getCount(reportsRes),
-                });
-            } catch {
-                // 통계 실패해도 헬스체크는 계속
-            }
-        }
+        // 일일 요약은 /api/cron/daily-summary로 분리됨
 
         // 4. 에러가 있으면 텔레그램 알림
         if (result.errors.length > 0) {
