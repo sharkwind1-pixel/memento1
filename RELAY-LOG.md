@@ -4,6 +4,48 @@
 
 ---
 
+## [2026-04-10] 블로그 크론 Claude API 전환 (어드바이저 패턴)
+
+### 어드바이저 전략 도입
+- [x] @anthropic-ai/sdk v0.87.0 설치
+- [x] /api/cron/blog-generate: Claude Sonnet 4.6 executor + Opus 4.6 advisor 전환
+- [x] 베타 헤더 `advisor-tool-2026-03-01` 적용
+- [x] 어드바이저 max_uses=2 (블로그당 최대 2회 Opus 가이던스 요청)
+- [x] ANTHROPIC_API_KEY 미설정 시 GPT-4o-mini 폴백 자동
+- [x] Claude 어드바이저 실패 시 일반 Sonnet 재시도, 그 다음 GPT 폴백 (3단계 폴백)
+- [x] 텔레그램 헤더에 modelUsed 표시
+- [x] 릴스/쇼츠 대본은 GPT-4o-mini 유지 (짧은 작업, 어드바이저 불필요)
+
+### 다음 단계
+- [ ] Vercel에 ANTHROPIC_API_KEY 환경변수 추가 필요
+- [ ] 첫 실행 후 품질 비교 (GPT-4o-mini vs Claude Sonnet+Opus advisor)
+
+---
+
+## [2026-04-10] 디자인 토큰 전면 정리 (design-farmer)
+
+### 컬러 하드코딩 → 토큰 시스템 전환
+- [x] design-farmer v0.0.6 스킬 설치 (`~/.claude/skills/design-farmer/`)
+- [x] tailwind.config.ts: memento 800/900/950 + memorial 팔레트 신규 정의
+- [x] src/config/colors.ts: MEMENTO_COLORS 800-950 추가, MEMORIAL_COLORS 신규
+- [x] 97개 파일 sky-*/blue-* → memento-* 전면 치환 (376회)
+- [x] 75개 파일 amber-* → memorial-* 전면 치환 (460회)
+- [x] DESIGN.md 신규 생성: OKLCH 기반 디자인 시스템 문서 (토큰 계층, 듀얼 테마, 다크모드 전략)
+
+### 매핑 규칙
+- sky-50/blue-50 → memento-200 (라이트 블루 서피스)
+- sky-100/blue-100 → memento-200
+- sky-{200-700}/blue-{200-700} → memento-{같은 번호} (색상 동일)
+- sky-{800-950}/blue-{800-950} → memento-{같은 번호} (신규)
+- amber-{50-950} → memorial-{같은 번호} (1:1 치환)
+
+### 검증
+- next build 통과 (에러 0건)
+- 커밋 c1dfa71 — 127 files changed, +1150/-812
+- main 푸시 완료 → Vercel 자동 배포 트리거
+
+---
+
 ## [2026-04-10] 정기결제 크론 + 알림 벨 시스템
 
 ### DB 마이그레이션 2건

@@ -11,6 +11,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 import { tavily } from "@tavily/core";
 import { verifyCronSecret, getKstTime } from "@/lib/cron-utils";
 
@@ -207,12 +208,14 @@ export async function GET(request: NextRequest) {
     if (authError) return authError;
 
     try {
-        const apiKey = process.env.OPENAI_API_KEY;
-        if (!apiKey) {
+        const openaiKey = process.env.OPENAI_API_KEY;
+        const anthropicKey = process.env.ANTHROPIC_API_KEY;
+        if (!openaiKey) {
             return NextResponse.json({ error: "OPENAI_API_KEY_MISSING" }, { status: 500 });
         }
 
-        const openai = new OpenAI({ apiKey });
+        const openai = new OpenAI({ apiKey: openaiKey });
+        const anthropic = anthropicKey ? new Anthropic({ apiKey: anthropicKey }) : null;
         const { dateStr } = getKstTime();
         const currentMonth = new Date(Date.now() + 9 * 60 * 60 * 1000).getUTCMonth() + 1;
 
@@ -228,15 +231,8 @@ export async function GET(request: NextRequest) {
         // 1. Tavily로 최신 정보 검색
         const searchContext = await searchTopicInfo(selectedTopic.searchQuery);
 
-        // 2. GPT로 블로그 글 생성 (검색 결과 주입)
-        const completion = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
-            max_tokens: 3000,
-            temperature: 0.75,
-            messages: [
-                {
-                    role: "system",
-                    content: `당신은 수의학 지식을 갖춘 반려동물 전문 블로거입니다. 네이버 블로그에 게시할 정보성 글을 작성합니다.
+        // 2. 블로그 글 생성 (Claude Sonnet + Opus advisor 우선, OpenAI 폴백)
+        const systemPrompt = `당신은 수의학 지식을 갖춘 반려동물 전문 블로거입니다. 네이버 블로그에 게시할 정보성 글을 작성합니다.
 
 ## 작성 규칙
 - 한국어, 존댓말 (~해요/~됩니다 체)
@@ -266,20 +262,80 @@ export async function GET(request: NextRequest) {
 (소제목과 본문, 줄바꿈으로 구분)
 
 [태그]
-(#해시태그1 #해시태그2 ... 12~15개)`,
-                },
-                {
-                    role: "user",
-                    content: `주제: ${selectedTopic.topic}
+(#해시태그1 #해시태그2 ... 12~15개)
+
+## 어드바이저 활용
+어려운 판단이 필요할 때 (예: 의학적 정확성 검증, SEO 구조 최적화, 톤 조정) advisor 툴을 호출해 Opus에게 가이던스를 요청하세요. 최대 2회까지 사용 가능합니다.`;
+
+        const userPrompt = `주제: ${selectedTopic.topic}
 카테고리: ${selectedTopic.category}
 핵심 키워드: ${selectedTopic.keywords.join(", ")}
 
-${searchContext ? `## 참고 자료 (아래 검색 결과를 바탕으로 정확한 정보를 작성하세요)\n\n${searchContext}` : "## 참고 자료 없음\n일반적으로 알려진 수의학 지식을 바탕으로 작성하세요."}`,
-                },
-            ],
-        });
+${searchContext ? `## 참고 자료 (아래 검색 결과를 바탕으로 정확한 정보를 작성하세요)\n\n${searchContext}` : "## 참고 자료 없음\n일반적으로 알려진 수의학 지식을 바탕으로 작성하세요."}`;
 
-        const content = completion.choices[0]?.message?.content || "";
+        let content = "";
+        let modelUsed = "";
+
+        if (anthropic) {
+            // Claude Sonnet 4.6 executor + Opus 4.6 advisor (베타)
+            try {
+                const claudeResponse = await anthropic.beta.messages.create({
+                    model: "claude-sonnet-4-6",
+                    max_tokens: 4000,
+                    temperature: 0.75,
+                    system: systemPrompt,
+                    messages: [{ role: "user", content: userPrompt }],
+                    tools: [
+                        {
+                            type: "advisor_20260301" as never,
+                            name: "advisor",
+                            model: "claude-opus-4-6",
+                            max_uses: 2,
+                        } as never,
+                    ],
+                    betas: ["advisor-tool-2026-03-01"],
+                });
+
+                // 텍스트 블록만 추출
+                for (const block of claudeResponse.content) {
+                    if (block.type === "text") content += block.text;
+                }
+                modelUsed = "claude-sonnet-4-6 + opus-advisor";
+            } catch (err) {
+                // 어드바이저 베타 실패 시 일반 Sonnet으로 재시도
+                console.error("[blog-generate] Advisor failed, retrying without:", err);
+                try {
+                    const claudeResponse = await anthropic.messages.create({
+                        model: "claude-sonnet-4-6",
+                        max_tokens: 4000,
+                        temperature: 0.75,
+                        system: systemPrompt,
+                        messages: [{ role: "user", content: userPrompt }],
+                    });
+                    for (const block of claudeResponse.content) {
+                        if (block.type === "text") content += block.text;
+                    }
+                    modelUsed = "claude-sonnet-4-6 (advisor failed)";
+                } catch {
+                    content = "";
+                }
+            }
+        }
+
+        // Claude 실패 또는 미설정 시 GPT-4o-mini 폴백
+        if (!content) {
+            const completion = await openai.chat.completions.create({
+                model: "gpt-4o-mini",
+                max_tokens: 3000,
+                temperature: 0.75,
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: userPrompt },
+                ],
+            });
+            content = completion.choices[0]?.message?.content || "";
+            modelUsed = "gpt-4o-mini (fallback)";
+        }
 
         // 제목/본문/태그 파싱
         const titleMatch = content.match(/\[제목\]\s*\n(.+)/);
@@ -295,6 +351,7 @@ ${searchContext ? `## 참고 자료 (아래 검색 결과를 바탕으로 정확
             `<b>[블로그 초안 - ${dateStr}]</b>`,
             `카테고리: ${selectedTopic.category}`,
             `제목: ${title}`,
+            `모델: ${modelUsed}`,
             `검색 소스: ${searchContext ? "Tavily 검색 결과 반영" : "일반 지식 기반"}`,
             ``,
             `태그: ${tags}`,
@@ -360,6 +417,7 @@ ${searchContext ? `## 참고 자료 (아래 검색 결과를 바탕으로 정확
             title,
             bodyLength: body.length,
             hasSearchContext: !!searchContext,
+            modelUsed,
             tags,
             reels: true,
         });
