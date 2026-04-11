@@ -4,6 +4,78 @@
 
 ---
 
+## [2026-04-12] 검증 워크플로 도입 (leceipts 영감)
+
+### 배경
+GeekNews "AI가 거짓말 못 하게 만드는 완벽한 방법 - leceipts" 글을 받고
+승빈님 결정: "토큰 더 써도 정확한 게 중요. 옵션 4(풀)로 진행"
+
+### 핵심 원칙
+- "고쳤습니다" / "정상 작동" 같은 표현 단독 사용 금지
+- 검증 안 한 항목은 ⚠️ 미검증으로 명시 강제
+- 자동 검증으로 사람 의존도 최소화
+- 거짓말 패턴 발견 시 메모리에 누적 → 다음 세션이 자동 회피
+
+### 검증 레벨 (L0~L5)
+| 레벨 | 의미 | 신뢰도 |
+|---|---|---|
+| L0_미검증 | 코드만 작성 | 0% |
+| L1_빌드 | next build 통과 | 30% |
+| L2_타입+빌드 | typecheck + build | 50% |
+| L3_정적전수 | L2 + lint + import + DB | 70% |
+| L4_API응답 | L3 + curl/fetch | 85% |
+| L5_E2E | L4 + 사용자 시각 | 100% |
+
+### 신규 파일
+
+| 파일 | 역할 | 라인 |
+|---|---|---|
+| `docs/verification-workflow.md` | 전체 설계 문서 | 209 |
+| `scripts/verify-db-schema.ts` | Supabase 컬럼/제약 검증 | 304 |
+| `scripts/check-pending-migrations.ts` | 미실행 마이그레이션 감지 | 218 |
+| `scripts/check-import-graph.ts` | Import 그래프 + 죽은 코드 감지 | 192 |
+| `scripts/verify-all.ts` | 6단계 오케스트레이터 | 194 |
+| `.claude/commands/verify.md` | /verify 슬래시 커맨드 | 107 |
+
+### 수정 파일
+- `CLAUDE.md`: 검증 워크플로 섹션 (+51 lines)
+- `package.json`: typecheck/verify/verify:db/verify:migrations/verify:imports scripts (+6)
+- `tsconfig.json`: scripts 디렉토리 exclude
+
+### 메모리 통합
+- `memory/verification_workflow.md` — 다음 세션 자동 로드용 가이드
+- `memory/feedback_lying_patterns.md` — 거짓말 패턴 5개 사례 누적
+  - PetContext RPC 파라미터 silent fail
+  - Next.js 14 fetch 캐싱 → stale data
+  - 5단계 라이프사이클 → 즉시 폐기
+  - 매거진/AI펫톡 종별 컨텍스트 누락
+  - 포인트 시스템 4가지 버그
+- `MEMORY.md` 인덱스 갱신
+
+### 메타 검증 (이 작업 자체를 검증)
+- typecheck: ✅ pass (4.1s)
+- lint: ✅ pass (3.2s)
+- build: ✅ pass (46.9s)
+- import graph: ⚠️ 34 false positive (React.lazy 동적 import)
+- DB / migrations: ⏭️ skip (.env.local 없음 — 이 환경에서)
+
+**달성 검증 레벨: L2_타입+빌드**
+
+### 다음 세션부터 적용
+
+1. 작업 시작 → `memory/verification_workflow.md` 자동 로드
+2. 작업 중 "고쳤다" 같은 표현 자체 검열
+3. 작업 끝에 `npm run verify` 또는 `/verify` 실행
+4. 5섹션 보고서 강제 출력
+5. L4/L5 미검증 항목은 사용자 후속 작업으로 명시
+
+### 미해결 / 후속
+- import graph false positive 추가 정리 (React.lazy 패턴 인식 개선)
+- DB 스키마 검증을 위해 .env.local에 SUPABASE 환경변수 있어야 함 (CI는 별도 처리 필요)
+- exec_sql RPC가 Supabase에 없으면 일부 검증 SKIP — 대안 검증 방법 필요
+
+---
+
 ## [2026-04-12] 포인트 시스템 정상화 + 토스트 알림
 
 ### 배경
