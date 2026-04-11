@@ -4,6 +4,94 @@
 
 ---
 
+## [2026-04-12] 포인트 시스템 정상화 + 토스트 알림
+
+### 배경
+승빈님 지적: "포인트 제도가 제대로 작동하지 않는 것 같고, 시각적으로 보이지 않음. 추천 받았을 때 +N P / -N P 토스트가 필요."
+
+### 전수조사로 발견된 4가지 핵심 버그
+
+#### 🔴 버그 1: PetContext 잘못된 RPC 파라미터 이름 (silent fail)
+- 사용: `p_is_one_time` ❌
+- 실제: `p_one_time` ✅
+- 영향: pet_registration / photo_upload / timeline_entry 적립이 silent fail
+- 수정: 안전한 서버 API(/api/points/award)로 전환 + 행위 검증 + Rate limit + VPN 체크
+- targetId 사용 (verifyAction이 검증)
+
+#### 🔴 버그 2: PointsEarnedToast 죽은 코드
+- 컴포넌트는 있는데 import하는 곳이 0개 → 유저가 적립을 시각적으로 못 봄
+- 수정: 죽은 코드 삭제 + 새 PointsToastContainer로 대체
+
+#### 🔴 버그 3: dislike만 awardPoints 헬퍼 안 씀
+- like는 헬퍼, dislike는 직접 RPC → 일관성 없음
+- 수정: dislike도 awardPoints("receive_dislike") 사용
+
+#### 🔴 버그 4: 서버 응답에 포인트 정보 부재
+- 게시글/댓글/방명록 작성 시 적립되지만 응답에 없음 → 클라이언트가 알 수 없음
+- 수정: 모든 응답에 `pointAward: { earned, actionType }` 메타 추가
+
+### 신규 기능: PointsToastContainer
+
+`src/components/features/points/PointsToastContainer.tsx` (269 lines)
+- window CustomEvent("memento:points-earned") 전역 수신
+- 양수: 초록 그라데이션 + Star + ↑
+- 음수: 빨강 그라데이션 + ↓
+- 다중 발생 시 큐잉 (0.4초 간격 순차)
+- 자동 페이드아웃 (2.4 + 0.3s)
+- Layout 최하단에 한 번만 마운트
+
+#### Realtime 구독
+- supabase.channel로 본인 point_transactions INSERT 구독
+- receive_* 액션만 표시 (본인 활동은 응답으로 이미 표시 — 중복 방지)
+- 페이지에 있을 때 즉시 토스트, 없을 때는 NotificationBell 폴링에서 표시
+
+#### 헬퍼 함수
+- `showPointsFromResponse(data)` — API 응답에서 자동 추출
+- `emitPointsToast(earned, label, actionType)` — 직접 발행
+
+### 통합 지점
+
+| 위치 | 변경 |
+|---|---|
+| `posts/route.ts` | 응답에 pointAward 추가 (write_post) |
+| `posts/[id]/comments/route.ts` | await로 변경 + 응답에 pointAward |
+| `posts/[id]/dislike/route.ts` | awardPoints 헬퍼 통합 |
+| `minihompy/[userId]/guestbook/route.ts` | 작성자 포인트만 응답에 추가 |
+| `WritePostModal.tsx` | showPointsFromResponse 호출 |
+| `PostDetailView.tsx` | showPointsFromResponse 호출 |
+| `MinihompyVisitModal.tsx` | showPointsFromResponse 호출 |
+| `PetContext.tsx` | RPC 직접 호출 → /api/points/award + dispatchEvent |
+| `Layout.tsx` | PointsToastContainer 마운트 |
+
+### 적립 액션 12종 모두 정상화
+
+| 액션 | 트리거 | 표시 |
+|---|---|---|
+| daily_login | AuthContext | 기존 |
+| pet_registration | PetContext (수정 후) | 토스트 |
+| photo_upload | PetContext (수정 후) | 토스트 |
+| timeline_entry | PetContext (수정 후) | 토스트 |
+| write_post | posts API | 토스트 |
+| write_comment | comments API | 토스트 |
+| write_guestbook | guestbook API | 토스트 |
+| receive_guestbook | guestbook API | Realtime |
+| receive_like (post) | like API | Realtime |
+| receive_like (comment) | comment like API | Realtime |
+| receive_dislike | dislike API (헬퍼 통합) | Realtime |
+| ai_chat | chat-pipeline | 기존 |
+
+### 검증
+- next build 통과
+- 커밋: 9450cc3
+- 11 files changed, +350/-94
+
+### 미해결 / 후속
+- ai_chat은 일 10회 한도라 토스트 너무 잦아질 수 있어 제외
+- Realtime이 활성화되어 있지 않으면 받은 좋아요 토스트는 미작동 (NotificationBell 폴링은 계속 작동)
+- 포인트 내역 모달(PointsHistoryModal)도 받은 좋아요/비추천이 정상 표시되는지 검증 필요
+
+---
+
 ## [2026-04-12] 관리자 메시지/공지 발송 기능
 
 ### 배경
