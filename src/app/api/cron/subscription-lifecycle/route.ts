@@ -242,6 +242,20 @@ async function transitionToArchived(
     // 1. 대표 펫 결정
     let protectedPetId = profile.protected_pet_id;
 
+    // 전체 pets 리스트를 디버그용으로 수집
+    const { data: allPetsDebug } = await supabase
+        .from("pets")
+        .select("id, name, status, archived_at, created_at")
+        .eq("user_id", profile.id)
+        .order("created_at", { ascending: true });
+    debug.all_pets_count = allPetsDebug?.length ?? 0;
+    debug.all_pets_summary = (allPetsDebug || []).map((p) => ({
+        id: p.id,
+        name: p.name,
+        status: p.status,
+        archived: p.archived_at !== null,
+    }));
+
     if (!protectedPetId) {
         // 미지정 시 가장 오래된 활성 펫 (active 우선, 없으면 memorial)
         const { data: oldestActive, error: oldestActiveErr } = await supabase
@@ -290,6 +304,8 @@ async function transitionToArchived(
             .maybeSingle();
         debug.protected_pet_exists_check = petExists;
         if (!petExists) {
+            // debug 정보를 results에 먼저 push한 후 throw
+            results.debug!.push({ ...debug, path: "fk_guard_failed" });
             throw new Error(`protected_pet_id ${protectedPetId} does not exist in pets table`);
         }
     }
