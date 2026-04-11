@@ -151,6 +151,64 @@
 
 ---
 
+## [2026-04-11] 구독 라이프사이클 재설계 + E2E 전체 검증
+
+### 배경
+이전 5단계 설계(readonly/hidden/countdown/free)의 readonly가 "아무것도 할 수 없는 무료 회원"
+= 처벌 상태로 드러남. 승빈님이 지적: "readonly면 무료보다 못한 경험" → 재설계.
+
+### 새 설계 (3단계)
+- `active`: 평상시 (유료 or 무료 모두, 제약 없음)
+- `cancelled`: 해지됨, premium_expires_at 전 (유료 혜택 그대로)
+- `archived`: premium_expires_at 경과, 무료 회원 + 초과 데이터 잠금 (40일 후 hard delete)
+
+추가 정책: 40일 후 archived 데이터 영구 삭제 (긴박감 + 스토리지 비용).
+
+### 구현 (`391b910` 재설계 커밋)
+- DB: subscription_phase CHECK 3개 값, data_readonly_until/data_hidden_until 컬럼 DROP
+- types, AuthContext, hook, guard, banner, SubscriptionSection 전면 재작성
+- cron subscription-lifecycle 3 phase로 단순화
+- PetContext pets/pet_media 쿼리에 archived_at IS NULL 필터 추가
+
+### E2E 테스트 중 발견한 버그 4가지
+1. **Next.js 14 fetch 자동 캐싱** (가장 치명적)
+   - Supabase JS 내부 fetch가 PostgREST 응답을 stale data로 반환
+   - DB 변경 후에도 크론이 이전 상태 그대로 조회
+   - 수정: `createClient`에 `cache: "no-store"` 커스텀 fetch 전달
+   - cron-utils.ts (getServiceSupabase) + supabase-server.ts 모두 적용
+2. profile update silent fail — 모든 update에 error 체크 + throw 추가
+3. protected_pet_id FK 가드 누락 — 실존 검증 추가
+4. notifications CHECK 제약 신규 type 4종 누락 — CHECK 확장
+
+### E2E 전체 통과 (재설계 후)
+- Test 1 cancelled 상태 설정 ✅
+- Test 2 cancelled → archived 전환 + archive 2마리, 사진 9장 ✅
+- Test 3 archived 카운트다운 알림 (D-5 "5일 남았어요") ✅
+- Test 4 archived → active hard delete (펫 2 + 사진 9 영구 삭제) ✅
+- Test 5 재구독 복구 (archived 펫 2 + 사진 4 복원) ✅
+
+### 추가 기능 (`868ff42`)
+- **잠금 펫 UI** (ArchivedPetsSection.tsx)
+  - RecordPage에 "보관 중인 아이들" 섹션
+  - grayscale + 자물쇠 뱃지 + 남은 일 수 + 재구독 CTA
+- **Resend 이메일 채널** (src/lib/email.ts)
+  - sendSubscriptionCancelledEmail — 해지 시 즉시 발송
+  - sendArchiveCountdownEmail — D-10/D-5/D-1 경고
+  - RESEND_API_KEY 환경변수 필요 (미설정 시 skip)
+- cancel API, subscription-lifecycle 크론에 통합
+
+### 커밋 목록
+- `391b910` refactor: 구독 해지 라이프사이클 전면 재설계 (5→3단계)
+- `60c0efb` fix: 라이프사이클 크론 에러 전파 + protectedPetId null 가드
+- `0fb1726` debug: 디버그 정보 + FK 검증 가드
+- `210cbb6` debug: cancelled 유저 fetched profile 값 응답 포함
+- `aa8553c` debug: 전체 pets 리스트 디버그
+- `998cecf` **fix: getServiceSupabase fetch no-store (핵심 버그)**
+- `6d0411a` cleanup: 디버그 코드 제거 + supabase-server에도 no-store 적용
+- `868ff42` feat: 잠금 펫 UI + Resend 이메일 채널
+
+---
+
 ## [2026-04-10] 이미지 업로드 자동 압축 + 서비스워커 버그 수정
 
 ### 문제

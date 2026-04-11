@@ -7,33 +7,46 @@
 
 ## 즉시 — 대기 중
 
-### ✅ 마이그레이션 실행 완료 (2026-04-11)
+### ✅ 2026-04-11 오후 세션 — 라이프사이클 전면 재설계 완료
 
-- [x] **`supabase/migrations/20260411_subscription_lifecycle.sql`** — Supabase Dashboard에서 실행 완료
-  - pets.archived_at, pet_media.archived_at, pet_media.is_favorite 검증 통과 (3행)
-  - profiles 6컬럼 검증 통과 (subscription_phase, subscription_cancelled_at, data_readonly_until, data_hidden_until, data_reset_at, protected_pet_id)
+#### 배경
+이전 readonly/hidden/countdown/free 5단계 설계가 "아무것도 할 수 없는 무료 회원" 처벌 상태 문제.
+→ 3단계 (active/cancelled/archived) 재설계 + 40일 후 hard delete.
 
-### 🟡 이어서 할 작업
+#### 완료된 작업
+- [x] **DB 마이그레이션 재실행**: subscription_phase CHECK 'active'|'cancelled'|'archived', data_readonly_until/data_hidden_until 컬럼 DROP
+- [x] **cancel API 재작성**: premium_expires_at까지 혜택 유지, `data_reset_at = expiry + 40일`
+- [x] **subscription-lifecycle 크론 재작성**: 3 phase (cancelled→archived→hard delete)
+- [x] **types/AuthContext/hook/guard/banner/SubscriptionSection** 전면 재작성
+- [x] **E2E 전체 검증 통과** (Test 1-5)
+  - Test 2: cancelled → archived + archive 2마리, 사진 9장
+  - Test 3: archived countdown D-5 알림 생성
+  - Test 4: archived → active + hard delete 2마리, 사진 9장
+  - Test 5: 재구독 복구 archived 펫 2 + 사진 4
+- [x] **🔴 치명적 버그 수정: Next.js 14 fetch 자동 캐싱** (`998cecf`)
+  - Supabase JS가 PostgREST 응답을 stale data로 반환하던 문제
+  - cron-utils.ts + supabase-server.ts 모두 `cache: "no-store"` fetch 주입
+- [x] 크론 에러 전파 + FK 가드 + notifications CHECK 4 종 추가
+- [x] **ArchivedPetsSection.tsx** — RecordPage에 "보관 중인 아이들" 잠금 카드 섹션
+- [x] **Resend 이메일 채널** (`src/lib/email.ts`)
+  - sendSubscriptionCancelledEmail (해지 즉시)
+  - sendArchiveCountdownEmail (D-10/D-5/D-1)
+  - RESEND_API_KEY 환경변수 필요 (미설정 시 skip)
+- [x] cancel API, subscription-lifecycle 크론에 이메일 통합
 
-1. **수동 E2E 테스트**
-   - 본인 계정으로 SubscriptionSection 해지 → DB에서 `subscription_phase=readonly` 확인
-   - readonly에서 새 펫 등록 시도 → 차단 토스트 확인
-   - readonly에서 active→memorial 변경 → 허용 확인
-   - 라이프사이클 크론 수동 트리거: `curl -H "Authorization: Bearer $CRON_SECRET" https://www.memento-ani.com/api/cron/subscription-lifecycle`
-   - 회귀 가속 테스트: profiles의 `data_reset_at`을 과거로 수동 변경 후 크론 트리거 → archive 동작 확인
-   - 재구독 시 archived 복구 확인
+#### 남은 작업 (선택)
+1. **시각적 회귀 테스트 (브라우저)**
+   - 승빈님이 직접 본인 계정으로 해지 시도 (실제 해지는 X)
+   - archived 상태로 수동 세팅 후 UI 확인:
+     - 상단 배너 (`SubscriptionStatusBanner`) 톤/카운트다운
+     - RecordPage의 ArchivedPetsSection 잠금 카드 렌더
+     - 추모 모드 전환 가능 여부
+   - 작업 후 복원 SQL 제공
 
-2. **이메일 채널 연동** (Resend 또는 SendGrid)
-   - Supabase Auth는 인증 메일 전용이라 부적합 (이전 추천 잘못)
-   - countdown D-10/D-5/D-1에 이메일 발송 통합
-
-3. **펫 카드 시각적 뱃지** (선택)
-   - readonly 진입 시 펫 카드 우상단 `🔒 읽기 전용` 뱃지 추가
-   - design tokens: memento-700 텍스트 + memento-100 배경
-
-4. **시각적 회귀 테스트**
-   - free 단계 진입 시 대표 펫 외 카드들이 사라지는지 확인
-   - 보관함 진입 UI는 미구현 (필요 시 추가)
+2. **Vercel 환경변수 추가** (이메일 기능 사용 시)
+   - `RESEND_API_KEY` — Resend 대시보드에서 발급
+   - `RESEND_FROM_EMAIL` (선택) — 기본 "메멘토애니 <noreply@mementoani.com>"
+   - 미설정이면 이메일 발송 skip, 앱 동작에는 영향 없음
 
 ### ✅ 완료 (2026-04-11 세션)
 
