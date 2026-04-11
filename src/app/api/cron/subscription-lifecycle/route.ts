@@ -51,6 +51,7 @@ interface Results {
     deletedPets: number;      // hard delete된 펫 수
     deletedMedia: number;     // hard delete된 사진 수
     errors: string[];
+    debug?: Record<string, unknown>[]; // 디버그용
 }
 
 async function notifySystem(message: string): Promise<void> {
@@ -79,6 +80,7 @@ export async function GET(request: NextRequest) {
         deletedPets: 0,
         deletedMedia: 0,
         errors: [],
+        debug: [],
     };
 
     try {
@@ -224,6 +226,11 @@ async function transitionToArchived(
 ): Promise<void> {
     const now = new Date().toISOString();
 
+    const debug: Record<string, unknown> = {
+        profile_id: profile.id,
+        initial_protected_pet_id: profile.protected_pet_id,
+    };
+
     // 1. 대표 펫 결정
     let protectedPetId = profile.protected_pet_id;
 
@@ -243,6 +250,8 @@ async function transitionToArchived(
             throw new Error(`oldestActive fetch: ${oldestActiveErr.message}`);
         }
 
+        debug.oldest_active_raw = oldestActive;
+
         if (oldestActive?.id) {
             protectedPetId = oldestActive.id;
         } else {
@@ -257,8 +266,43 @@ async function transitionToArchived(
             if (oldestAnyErr) {
                 throw new Error(`oldestAny fetch: ${oldestAnyErr.message}`);
             }
+            debug.oldest_any_raw = oldestAny;
             protectedPetId = oldestAny?.id || null;
         }
+    }
+    debug.resolved_protected_pet_id = protectedPetId;
+    debug.protected_pet_id_type = typeof protectedPetId;
+
+    // 대표 펫 실존 검증 (FK 위반 예방)
+    if (protectedPetId) {
+        const { data: petExists } = await supabase
+            .from("pets")
+            .select("id")
+            .eq("id", protectedPetId)
+            .maybeSingle();
+        debug.protected_pet_exists_check = petExists;
+        if (!petExists) {
+            throw new Error(`protected_pet_id ${protectedPetId} does not exist in pets table`);
+        }
+    }
+
+    // 대표 펫 결정 불가: 유저에게 펫이 없는 경우 → profile만 전환
+    if (!protectedPetId) {
+        const { error: profUpdErr } = await supabase
+            .from("profiles")
+            .update({
+                subscription_phase: "archived",
+                is_premium: false,
+                premium_expires_at: new Date().toISOString(),
+                premium_plan: null,
+                subscription_tier: "free",
+            })
+            .eq("id", profile.id);
+        if (profUpdErr) {
+            throw new Error(`profile update (archived no-pet): ${profUpdErr.message}`);
+        }
+        results.debug!.push({ ...debug, path: "no_pet_shortcut" });
+        return;
     }
 
     // 2. 대표 펫 외 archive
@@ -365,6 +409,8 @@ async function transitionToArchived(
     if (notifErr && notifErr.code !== "23505") {
         throw new Error(`archive start notify failed: ${notifErr.message}`);
     }
+
+    results.debug!.push({ ...debug, path: "normal_complete" });
 }
 
 /**
