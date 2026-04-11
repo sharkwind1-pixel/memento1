@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
                     continue;
                 }
 
-                await supabase.from("notifications").insert({
+                const { error: notifErr } = await supabase.from("notifications").insert({
                     user_id: p.id,
                     type: "subscription_hidden_start",
                     title: "소중한 데이터를 잠시 보관 중이에요",
@@ -95,6 +95,9 @@ export async function GET(request: NextRequest) {
                     metadata: { phase: "hidden", reset_at: p.data_reset_at },
                     dedup_key: `sub_hidden_${nowIso.slice(0, 10)}_${p.id}`,
                 });
+                if (notifErr && notifErr.code !== "23505") {
+                    results.errors.push(`hidden notify ${p.id}: ${notifErr.message}`);
+                }
 
                 results.toHidden++;
             }
@@ -121,7 +124,7 @@ export async function GET(request: NextRequest) {
                     continue;
                 }
 
-                await supabase.from("notifications").insert({
+                const { error: notifErr } = await supabase.from("notifications").insert({
                     user_id: p.id,
                     type: "subscription_countdown",
                     title: "10일 후 데이터가 정리됩니다",
@@ -129,6 +132,9 @@ export async function GET(request: NextRequest) {
                     metadata: { phase: "countdown", days_remaining: 10, reset_at: p.data_reset_at },
                     dedup_key: `sub_countdown_${nowIso.slice(0, 10)}_${p.id}`,
                 });
+                if (notifErr && notifErr.code !== "23505") {
+                    results.errors.push(`countdown notify ${p.id}: ${notifErr.message}`);
+                }
 
                 results.toCountdown++;
             }
@@ -174,7 +180,7 @@ export async function GET(request: NextRequest) {
                     body = `무료 한도를 초과하는 데이터가 ${daysRemaining}일 후 정리됩니다. 재구독하면 모두 지킬 수 있어요.`;
                 }
 
-                await supabase.from("notifications").insert({
+                const { error: notifErr } = await supabase.from("notifications").insert({
                     user_id: p.id,
                     type: "subscription_countdown",
                     title,
@@ -182,6 +188,10 @@ export async function GET(request: NextRequest) {
                     metadata: { phase: "countdown", days_remaining: daysRemaining, reset_at: p.data_reset_at },
                     dedup_key: `sub_countdown_${nowIso.slice(0, 10)}_${p.id}`,
                 });
+                if (notifErr && notifErr.code !== "23505") {
+                    results.errors.push(`countdown daily notify ${p.id}: ${notifErr.message}`);
+                    continue;
+                }
 
                 results.countdownNotified++;
             }
@@ -362,7 +372,7 @@ async function applyFreeReset(
 
     const petLabel = keptPet ? `${keptPet.type || ""} '${keptPet.name}'` : "없음";
 
-    await supabase.from("notifications").insert({
+    const { error: notifErr } = await supabase.from("notifications").insert({
         user_id: profile.id,
         type: "subscription_reset_complete",
         title: "무료 플랜으로 돌아오셨어요",
@@ -375,4 +385,7 @@ async function applyFreeReset(
         },
         dedup_key: `sub_reset_${now.slice(0, 10)}_${profile.id}`,
     });
+    if (notifErr && notifErr.code !== "23505") {
+        throw new Error(`reset notify failed: ${notifErr.message}`);
+    }
 }
