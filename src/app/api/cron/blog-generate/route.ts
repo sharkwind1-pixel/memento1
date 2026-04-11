@@ -224,9 +224,31 @@ export async function GET(request: NextRequest) {
             t => !t.seasonal || t.seasonal.includes(currentMonth)
         );
 
-        // 날짜 기반 토픽 선택 (매일 순환)
-        const dayIndex = Math.floor(Date.now() / (24 * 60 * 60 * 1000)) % availableTopics.length;
-        const selectedTopic = availableTopics[dayIndex];
+        // 카테고리별 분리 (다양성 보장)
+        const infoTopics = availableTopics.filter(t => t.category === "반려동물 정보");
+        const petlossTopics = availableTopics.filter(t => t.category === "펫로스를 이겨내기");
+
+        // 요일 기반 선택: 일요일만 펫로스, 나머지 6일은 반려동물 정보
+        //   - 펫로스 비율 14.3% (주 1회)
+        //   - 정보글 85.7% (주 6회) → 다양한 견종/묘종/케어/영양/계절 보장
+        const kstNow = new Date(Date.now() + 9 * 60 * 60 * 1000);
+        const dayOfWeek = kstNow.getUTCDay(); // 0=일, 1=월, ..., 6=토
+        const daysSinceEpoch = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
+        const weeksSinceEpoch = Math.floor(daysSinceEpoch / 7);
+
+        let selectedTopic: BlogTopic;
+        if (dayOfWeek === 0 && petlossTopics.length > 0) {
+            // 일요일: 펫로스 토픽 (주 1개, 매주 순환)
+            selectedTopic = petlossTopics[weeksSinceEpoch % petlossTopics.length];
+        } else {
+            // 월~토: 반려동물 정보 (매일 순환, 6일마다 돌기 때문에 분포 균일)
+            //   daysSinceEpoch 기반으로 순환해서 같은 토픽 반복 최소화
+            const infoIndex = daysSinceEpoch % infoTopics.length;
+            selectedTopic = infoTopics[infoIndex] || availableTopics[0];
+        }
+
+        // 릴스 대본은 daysSinceEpoch 기반 4일 주기 컨셉 로테이션 유지
+        const dayIndex = daysSinceEpoch;
 
         // 1. Tavily로 최신 정보 검색
         const searchContext = await searchTopicInfo(selectedTopic.searchQuery);
