@@ -25,6 +25,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyCronSecret, getServiceSupabase } from "@/lib/cron-utils";
 import { FREE_LIMITS } from "@/config/constants";
+import { sendArchiveCountdownEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -161,6 +162,28 @@ export async function GET(request: NextRequest) {
                     continue;
                 }
                 results.countdownNotified++;
+
+                // D-10, D-5, D-1에만 이메일 발송 (실패해도 플로우 진행)
+                if (daysRemaining === 10 || daysRemaining === 5 || daysRemaining === 1) {
+                    const { data: profileForEmail } = await supabase
+                        .from("profiles")
+                        .select("nickname, email")
+                        .eq("id", p.id)
+                        .maybeSingle();
+                    if (profileForEmail?.email) {
+                        const { count: archivedCount } = await supabase
+                            .from("pets")
+                            .select("id", { count: "exact", head: true })
+                            .eq("user_id", p.id)
+                            .not("archived_at", "is", null);
+                        void sendArchiveCountdownEmail(
+                            profileForEmail.email,
+                            profileForEmail.nickname || null,
+                            daysRemaining,
+                            archivedCount || 0,
+                        );
+                    }
+                }
             }
         }
 

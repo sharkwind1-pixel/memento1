@@ -42,6 +42,7 @@ import TimelineSection from "@/components/features/record/TimelineSection";
 import ProfileTab from "@/components/features/record/ProfileTab";
 import PetCardGrid from "@/components/features/record/PetCardGrid";
 import RecordPageGuest from "@/components/features/record/RecordPageGuest";
+import ArchivedPetsSection from "@/components/features/subscription/ArchivedPetsSection";
 import VideoGenerationSection from "@/components/features/video/VideoGenerationSection";
 import { safeGetItem } from "@/lib/safe-storage";
 
@@ -491,6 +492,9 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
                                     onDeletePet={setPetToDelete}
                                     onAddNewPet={handleAddNewPet}
                                 />
+
+                                {/* 보관 중인 아이들 (구독 해지 후 archived 펫) */}
+                                <ArchivedPetsSection />
 
                                 {selectedPet && (
                                     <>

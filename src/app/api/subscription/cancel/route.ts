@@ -19,6 +19,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser, createServerSupabase, createAdminSupabase } from "@/lib/supabase-server";
+import { sendSubscriptionCancelledEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -92,7 +93,21 @@ export async function POST(_request: NextRequest) {
             .eq("user_id", user.id)
             .eq("status", "active");
 
-        // 3. 인앱 알림: 해지 완료 + 라이프사이클 안내
+        // 3. 이메일: 해지 완료 + 남은 유료 기간 안내 (실패해도 플로우 진행)
+        if (user.email && profile.premium_expires_at) {
+            const { data: profileDetail } = await adminSb
+                .from("profiles")
+                .select("nickname")
+                .eq("id", user.id)
+                .maybeSingle();
+            void sendSubscriptionCancelledEmail(
+                user.email,
+                profileDetail?.nickname || null,
+                profile.premium_expires_at,
+            );
+        }
+
+        // 4. 인앱 알림: 해지 완료 + 라이프사이클 안내
         const { error: notifErr } = await adminSb.from("notifications").insert({
             user_id: user.id,
             type: "subscription_cancelled",
