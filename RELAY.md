@@ -11,21 +11,11 @@
 
 - [x] **`supabase/migrations/20260411_subscription_lifecycle.sql`** — Supabase Dashboard에서 실행 완료
   - pets.archived_at, pet_media.archived_at, pet_media.is_favorite 검증 통과 (3행)
-  - profiles 6컬럼은 별도 검증 쿼리 결과 미회신 (다음 세션 시작 시 한 번 더 확인 권장)
+  - profiles 6컬럼 검증 통과 (subscription_phase, subscription_cancelled_at, data_readonly_until, data_hidden_until, data_reset_at, protected_pet_id)
 
-### 🟡 다음 세션 (코워크) 이어서 할 작업
+### 🟡 이어서 할 작업
 
-1. **profiles 컬럼 검증** (10초): 아래 쿼리 한 번 실행
-   ```sql
-   SELECT column_name FROM information_schema.columns
-   WHERE table_name = 'profiles'
-     AND column_name IN ('subscription_phase', 'subscription_cancelled_at',
-       'data_readonly_until', 'data_hidden_until', 'data_reset_at', 'protected_pet_id')
-   ORDER BY column_name;
-   ```
-   6행이면 마이그레이션 완료. 부족하면 `supabase/migrations/20260411_subscription_lifecycle.sql`의 profiles 섹션만 재실행.
-
-2. **수동 E2E 테스트**
+1. **수동 E2E 테스트**
    - 본인 계정으로 SubscriptionSection 해지 → DB에서 `subscription_phase=readonly` 확인
    - readonly에서 새 펫 등록 시도 → 차단 토스트 확인
    - readonly에서 active→memorial 변경 → 허용 확인
@@ -33,15 +23,15 @@
    - 회귀 가속 테스트: profiles의 `data_reset_at`을 과거로 수동 변경 후 크론 트리거 → archive 동작 확인
    - 재구독 시 archived 복구 확인
 
-3. **이메일 채널 연동** (Resend 또는 SendGrid)
+2. **이메일 채널 연동** (Resend 또는 SendGrid)
    - Supabase Auth는 인증 메일 전용이라 부적합 (이전 추천 잘못)
    - countdown D-10/D-5/D-1에 이메일 발송 통합
 
-4. **펫 카드 시각적 뱃지** (선택)
+3. **펫 카드 시각적 뱃지** (선택)
    - readonly 진입 시 펫 카드 우상단 `🔒 읽기 전용` 뱃지 추가
    - design tokens: memento-700 텍스트 + memento-100 배경
 
-5. **시각적 회귀 테스트**
+4. **시각적 회귀 테스트**
    - free 단계 진입 시 대표 펫 외 카드들이 사라지는지 확인
    - 보관함 진입 UI는 미구현 (필요 시 추가)
 

@@ -1,13 +1,12 @@
 /**
  * SubscriptionStatusBanner.tsx
- * 구독 라이프사이클 배너
+ * 구독 라이프사이클 상태 배너
  *
- * 단계별 톤:
- * - readonly: 부드러운 안내, 닫기 가능
- * - hidden: 경고 안내, 닫기 가능
- * - countdown D-10~D-4: 강한 경고, 닫기 가능
- * - countdown D-3~D-1: Sticky (닫기 불가)
- * - free: 회귀 안내 (1회 표시 후 자동 닫힘)
+ * 새 설계 (2026-04-11):
+ * - cancelled: 따뜻한 안내 (만료일까지 이용 가능, 닫기 가능)
+ * - archived (D-11~): 무료 전환됨 + 재구독 유도 (닫기 가능)
+ * - archived 카운트다운 (D-10~D-4): 강한 경고 (닫기 가능)
+ * - archived 카운트다운 (D-3~D-1): Sticky (닫기 불가, 영구 삭제 임박)
  *
  * 설계: docs/subscription-lifecycle.md
  */
@@ -16,7 +15,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { X, AlertTriangle, Lock, Heart } from "lucide-react";
+import { X, AlertTriangle, Heart, Archive } from "lucide-react";
 import { useSubscriptionPhase } from "@/hooks/useSubscriptionPhase";
 import { safeGetItem, safeSetItem } from "@/lib/safe-storage";
 
@@ -27,34 +26,32 @@ export default function SubscriptionStatusBanner() {
     const router = useRouter();
     const [isDismissed, setIsDismissed] = useState(false);
 
-    // localStorage 기반 닫기 상태 (날짜별)
+    // localStorage 기반 닫기 상태 (날짜별 + 단계별)
     useEffect(() => {
         if (!phaseInfo.isLifecycleActive) return;
         const today = new Date().toISOString().slice(0, 10);
-        const dismissedDate = safeGetItem(`${DISMISS_KEY_PREFIX}${phaseInfo.phase}`);
+        const key = `${DISMISS_KEY_PREFIX}${phaseInfo.phase}-${phaseInfo.daysUntilPurge ?? "none"}`;
+        const dismissedDate = safeGetItem(key);
         setIsDismissed(dismissedDate === today);
-    }, [phaseInfo.phase, phaseInfo.isLifecycleActive]);
+    }, [phaseInfo.phase, phaseInfo.isLifecycleActive, phaseInfo.daysUntilPurge]);
 
     if (!phaseInfo.isLifecycleActive) return null;
 
     // Sticky 단계 (D-3 ~ D-1)는 닫기 불가
-    const isSticky = phaseInfo.isCountdown
-        && phaseInfo.daysUntilReset !== null
-        && phaseInfo.daysUntilReset <= 3
-        && phaseInfo.daysUntilReset >= 1;
+    const isSticky = phaseInfo.isCritical;
 
     if (isDismissed && !isSticky) return null;
 
     const handleDismiss = () => {
         const today = new Date().toISOString().slice(0, 10);
-        safeSetItem(`${DISMISS_KEY_PREFIX}${phaseInfo.phase}`, today);
+        const key = `${DISMISS_KEY_PREFIX}${phaseInfo.phase}-${phaseInfo.daysUntilPurge ?? "none"}`;
+        safeSetItem(key, today);
         setIsDismissed(true);
     };
 
     const handleResubscribe = () => {
-        // 재구독 = 프리미엄 모달 열기 (현재는 / 로 이동)
         router.push("/?tab=home");
-        // TODO Phase 8: 전용 재구독 모달
+        // TODO: 전용 재구독 모달
     };
 
     // 단계별 컨텐츠
@@ -63,37 +60,37 @@ export default function SubscriptionStatusBanner() {
     let title = "";
     let description = "";
 
-    if (phaseInfo.phase === "readonly") {
-        bgClass = "bg-memento-100 dark:bg-memento-900/40 border-memento-300 dark:border-memento-700 text-memento-700 dark:text-memento-200";
-        icon = <Lock className="w-4 h-4 flex-shrink-0" />;
-        title = "읽기 전용 모드";
-        description = `소중한 추억은 그대로 보관 중이에요. ${phaseInfo.daysUntilNextPhase ?? 30}일 남음`;
-    } else if (phaseInfo.phase === "hidden") {
-        bgClass = "bg-memorial-100 dark:bg-memorial-900/40 border-memorial-300 dark:border-memorial-700 text-memorial-800 dark:text-memorial-200";
-        icon = <Lock className="w-4 h-4 flex-shrink-0" />;
-        title = "데이터가 보관 중입니다";
-        description = `${phaseInfo.daysUntilNextPhase ?? 50}일 후 일부 데이터가 정리됩니다. 재구독하면 즉시 복구됩니다.`;
-    } else if (phaseInfo.phase === "countdown") {
-        const days = phaseInfo.daysUntilReset ?? 0;
-        if (days <= 1) {
-            bgClass = "bg-red-100 dark:bg-red-900/40 border-red-400 dark:border-red-700 text-red-800 dark:text-red-200";
-            title = "내일 데이터가 정리됩니다";
-            description = "내일 자정에 무료 한도 초과 데이터가 영구 정리됩니다. 마지막 기회예요.";
-        } else if (days <= 3) {
-            bgClass = "bg-red-50 dark:bg-red-900/30 border-red-300 dark:border-red-700 text-red-700 dark:text-red-300";
-            title = `${days}일 남았어요`;
-            description = "재구독하면 모든 데이터를 그대로 지킬 수 있어요.";
-        } else {
-            bgClass = "bg-memorial-100 dark:bg-memorial-900/40 border-memorial-400 dark:border-memorial-700 text-memorial-800 dark:text-memorial-200";
-            title = `${days}일 후 데이터가 정리됩니다`;
-            description = "재구독하면 모두 지킬 수 있어요.";
-        }
-        icon = <AlertTriangle className="w-4 h-4 flex-shrink-0" />;
-    } else if (phaseInfo.phase === "free") {
+    if (phaseInfo.isCancelled) {
+        // 해지했지만 아직 유료 혜택 중
+        const days = phaseInfo.daysUntilExpiry ?? 0;
         bgClass = "bg-memento-100 dark:bg-memento-900/40 border-memento-300 dark:border-memento-700 text-memento-700 dark:text-memento-200";
         icon = <Heart className="w-4 h-4 flex-shrink-0" />;
-        title = "무료 플랜으로 돌아오셨어요";
-        description = "재구독하면 보관된 데이터를 모두 복구할 수 있어요.";
+        title = "구독이 해지되었습니다";
+        description = `결제 기간 종료까지 ${days}일 남음 — 그 후 무료 회원으로 전환됩니다. 언제든 재구독할 수 있어요.`;
+    } else if (phaseInfo.isArchived) {
+        const days = phaseInfo.daysUntilPurge ?? 0;
+        if (days <= 1 && days > 0) {
+            bgClass = "bg-red-100 dark:bg-red-900/40 border-red-400 dark:border-red-700 text-red-800 dark:text-red-200";
+            icon = <AlertTriangle className="w-4 h-4 flex-shrink-0" />;
+            title = "내일 데이터가 영구 삭제됩니다";
+            description = "내일 자정에 보관 중인 반려동물과 사진이 영구 삭제됩니다. 마지막 기회예요.";
+        } else if (days <= 3 && days > 0) {
+            bgClass = "bg-red-50 dark:bg-red-900/30 border-red-300 dark:border-red-700 text-red-700 dark:text-red-300";
+            icon = <AlertTriangle className="w-4 h-4 flex-shrink-0" />;
+            title = `${days}일 후 영구 삭제됩니다`;
+            description = "재구독하면 보관 중인 데이터를 모두 복구할 수 있어요.";
+        } else if (days <= 10 && days > 0) {
+            bgClass = "bg-memorial-100 dark:bg-memorial-900/40 border-memorial-400 dark:border-memorial-700 text-memorial-800 dark:text-memorial-200";
+            icon = <AlertTriangle className="w-4 h-4 flex-shrink-0" />;
+            title = `${days}일 후 보관 데이터가 정리됩니다`;
+            description = "재구독하면 모두 지킬 수 있어요.";
+        } else {
+            // D-11 ~ D-40
+            bgClass = "bg-memento-100 dark:bg-memento-900/40 border-memento-300 dark:border-memento-700 text-memento-700 dark:text-memento-200";
+            icon = <Archive className="w-4 h-4 flex-shrink-0" />;
+            title = "무료 회원으로 전환되었어요";
+            description = `보관된 데이터는 ${days}일 후 영구 삭제됩니다. 재구독하면 모두 복구됩니다.`;
+        }
     }
 
     return (

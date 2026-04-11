@@ -20,5 +20,9 @@ ALTER TABLE public.notifications
         'subscription_hidden_start',
         'subscription_countdown',
         'subscription_reset_complete',
-        'subscription_restored'
+        'subscription_restored',
+        'subscription_cancelled',
+        'subscription_archive_started',
+        'subscription_archive_countdown',
+        'subscription_archive_complete'
     ));

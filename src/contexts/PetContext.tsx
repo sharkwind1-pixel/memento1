@@ -177,22 +177,25 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
             setIsLoading(true);
             setIsSyncing(true);
 
-            // 반려동물 조회
+            // 반려동물 조회 (archived 제외 — 구독 해지 후 보관 상태의 펫은 별도 처리)
             const { data: petsData, error: petsError } = await supabase
                 .from("pets")
                 .select("id, name, type, breed, birthday, gender, weight, personality, profile_image, profile_crop_position, status, memorial_date, is_primary, created_at, adopted_date, how_we_met, nicknames, special_habits, favorite_food, favorite_activity, favorite_place, together_period, memorable_memory")
                 .eq("user_id", userId)
+                .is("archived_at", null)
                 .order("created_at", { ascending: true });
 
             if (petsError) throw petsError;
 
             // 모든 반려동물의 미디어를 한 번에 조회 (N+1 → 1 쿼리)
+            // archived 된 사진은 제외 (구독 해지 후 보관 상태)
             const petIds = (petsData || []).map((p) => p.id);
             const { data: allMediaData } = petIds.length > 0
                 ? await supabase
                     .from("pet_media")
                     .select("id, pet_id, url, storage_path, type, caption, date, crop_position, thumbnail_url")
                     .in("pet_id", petIds)
+                    .is("archived_at", null)
                     .order("date", { ascending: false })
                 : { data: [] };
 
@@ -495,13 +498,14 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                 return [];
             }
 
-            // 사진 제한 체크
+            // 사진 제한 체크 (archived 사진은 카운트 제외)
             const photoLimit = getLimitsForTier(subscriptionTier).PHOTOS_PER_PET;
             const { count: currentCount } = await supabase
                 .from("pet_media")
                 .select("id", { count: "exact", head: true })
                 .eq("pet_id", petId)
-                .eq("user_id", user.id);
+                .eq("user_id", user.id)
+                .is("archived_at", null);
             const existing = currentCount || 0;
             if (existing + files.length > photoLimit) {
                 const canUpload = Math.max(0, photoLimit - existing);

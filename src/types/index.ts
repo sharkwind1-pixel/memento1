@@ -90,7 +90,14 @@ export type PetStatus = "active" | "memorial";
  *
  * 참고: docs/subscription-lifecycle.md
  */
-export type SubscriptionPhase = "active" | "readonly" | "hidden" | "countdown" | "free";
+/**
+ * 구독 라이프사이클 단계
+ * - active: 평상시 (유료 or 무료 모두)
+ * - cancelled: 해지됨, premium_expires_at 전 (유료 혜택 그대로, 배너만 표시)
+ * - archived: premium_expires_at 경과, 무료 회원 + 초과 데이터 잠금 상태
+ *             data_reset_at 도달 시 archived 데이터 hard delete → active로 복귀
+ */
+export type SubscriptionPhase = "active" | "cancelled" | "archived";
 
 /** 반려동물 종류 */
 export type PetType = "강아지" | "고양이" | "기타";

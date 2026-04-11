@@ -61,7 +61,7 @@ export default function SubscriptionSection({
         }
     };
 
-    // 구독 해지 — 라이프사이클 시작 (즉시 해제 X, 단계적 회귀)
+    // 구독 해지 — premium_expires_at까지 유료 혜택 그대로, 이후 무료 회원으로 전환
     const handleCancelSubscription = async () => {
         setIsCancelling(true);
 
@@ -75,7 +75,9 @@ export default function SubscriptionSection({
 
             setShowCancelConfirm(false);
             toast.success(
-                "구독이 해지되었습니다. 소중한 추억은 30일간 그대로 보관됩니다."
+                premiumExpiresAt
+                    ? `구독이 해지되었습니다. ${new Date(premiumExpiresAt).toLocaleDateString("ko-KR")}까지 기존 혜택을 이용할 수 있어요.`
+                    : "구독이 해지되었습니다."
             );
 
             // AuthContext 프로필 새로고침
@@ -148,15 +150,18 @@ export default function SubscriptionSection({
                                 <div className="text-xs text-red-600 dark:text-red-400">
                                     <p className="font-medium">정말 구독을 해지하시겠습니까?</p>
                                     <p className="mt-1">
-                                        소중한 추억은 90일간 단계적으로 보관돼요.
+                                        {premiumExpiresAt
+                                            ? `${new Date(premiumExpiresAt).toLocaleDateString("ko-KR")}까지 기존 유료 혜택을 이용할 수 있어요.`
+                                            : "결제 만료일까지 기존 유료 혜택을 이용할 수 있어요."}
                                     </p>
+                                    <p className="mt-1">이후 자동으로 무료 회원으로 전환됩니다:</p>
                                     <ul className="mt-1 ml-3 list-disc space-y-0.5">
-                                        <li>30일간 보기 모드 (편집/추가만 제한)</li>
-                                        <li>이후 50일간 보관함 (커뮤니티는 계속 이용)</li>
-                                        <li>90일 후 무료 한도로 회귀 (대표 펫 1마리 + 사진 50장 유지)</li>
+                                        <li>대표 반려동물 1마리 + 사진 50장 유지</li>
+                                        <li>초과 데이터는 40일간 보관 (재구독 시 복구)</li>
+                                        <li>40일 후 초과 데이터 영구 삭제</li>
                                     </ul>
                                     <p className="mt-1">
-                                        그 동안 언제든 재구독하면 모든 데이터가 즉시 복구됩니다.
+                                        40일 이내 재구독하면 모든 데이터가 즉시 복구됩니다.
                                     </p>
                                 </div>
                             </div>

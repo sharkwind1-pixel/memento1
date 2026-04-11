@@ -2,14 +2,14 @@
  * subscription-guard.ts
  * 서버 측 구독 라이프사이클 가드
  *
- * 클라이언트 가드(useSubscriptionPhase)는 우회 가능하므로
- * API 라우트에서 반드시 이 함수로 권한 검증해야 한다.
- *
- * 단계별 차단 정책:
+ * 새 설계 (2026-04-11):
  * - active: 모든 액션 허용
- * - readonly: 보기만, 편집/추가 차단 (단 추모 모드 전환만 예외)
- * - hidden, countdown: 모든 데이터 액션 차단 (커뮤니티는 OK)
- * - free: 추가 차단 (편집은 무료 한도 내에서 OK)
+ * - cancelled: 유료 혜택 그대로 (active와 동일 동작)
+ * - archived: 일반 무료 회원과 동일 (편집 가능, add는 무료 한도에 따름)
+ *
+ * 주의: 이전 설계의 readonly/hidden/countdown 처벌 상태 제거.
+ * archived도 일반 무료 회원 경험을 유지하되 초과 데이터는 archived_at으로 잠금.
+ * 잠금된 데이터의 접근은 client UI + DB 쿼리 필터로 처리 (pets/pet_media archived_at IS NULL).
  *
  * 설계: docs/subscription-lifecycle.md
  */
@@ -26,12 +26,14 @@ export interface GuardResult {
 }
 
 /**
- * 유저의 현재 구독 단계를 조회하고 액션 가능 여부를 판단
- * 401/403 응답이 필요한 경우 caller가 GuardResult.allowed === false 보고 처리
+ * 유저의 현재 구독 단계 조회 + 액션 가능 여부 판단
+ *
+ * 새 설계에서는 phase 기반 차단이 거의 없고, 대부분 tier(subscription_tier)
+ * 기반으로 기존 한도 검증만 하면 됨. 이 함수는 호환성 유지 + 향후 확장 포인트.
  */
 export async function checkSubscriptionGuard(
     userId: string,
-    action: GuardAction
+    _action: GuardAction
 ): Promise<GuardResult> {
     const supabase = createAdminSupabase();
     const { data, error } = await supabase
@@ -41,49 +43,16 @@ export async function checkSubscriptionGuard(
         .maybeSingle();
 
     if (error || !data) {
-        // 프로필 조회 실패 시 보수적으로 허용 (기존 동작 유지)
         return { allowed: true, phase: "active" };
     }
 
     const phase = (data.subscription_phase as SubscriptionPhase) || "active";
 
-    if (phase === "active") {
-        return { allowed: true, phase };
-    }
-
-    if (phase === "readonly") {
-        // readonly 단계에서는 추모 전환만 허용
-        if (action === "memorial-switch") {
-            return { allowed: true, phase };
-        }
-        return {
-            allowed: false,
-            phase,
-            reason: "읽기 전용 모드입니다. 편집하려면 재구독해주세요.",
-        };
-    }
-
-    if (phase === "hidden" || phase === "countdown") {
-        // 모든 데이터 액션 차단
-        return {
-            allowed: false,
-            phase,
-            reason: "데이터가 보관 중입니다. 재구독하면 즉시 복구됩니다.",
-        };
-    }
-
-    if (phase === "free") {
-        // free 단계에서는 add만 차단 (무료 한도 초과)
-        // edit/delete는 기존 무료 유저 정책과 동일
-        if (action === "add") {
-            return {
-                allowed: false,
-                phase,
-                reason: "무료 플랜은 반려동물 1마리만 등록할 수 있습니다. 재구독해주세요.",
-            };
-        }
-        return { allowed: true, phase };
-    }
-
+    // 새 설계에서는 phase 기반 차단 없음.
+    // - active: 평소
+    // - cancelled: 유료 혜택 그대로 (premium_expires_at까지)
+    // - archived: 일반 무료 회원 (tier='free'로 이미 설정됨, FREE_LIMITS 적용)
+    //
+    // 실제 기능 제한은 subscription_tier 기반(getLimitsForTier)으로 처리됨.
     return { allowed: true, phase };
 }

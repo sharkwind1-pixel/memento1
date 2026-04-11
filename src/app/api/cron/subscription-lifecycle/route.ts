@@ -3,18 +3,23 @@
  * GET /api/cron/subscription-lifecycle
  *
  * 매일 KST 00:30 (UTC 15:30) 실행
- * 설계: docs/subscription-lifecycle.md
+ * 설계: docs/subscription-lifecycle.md (2026-04-11 재설계)
  *
- * 단계 전환:
- * 1. readonly 유저 중 D+30 지남 → hidden 전환 + 알림
- * 2. hidden 유저 중 D+80 지남 → countdown 전환 + 알림
- * 3. countdown 유저 → 매일 카운트다운 알림 (D-10 ~ D-1)
- * 4. countdown 유저 중 D+90 지남 → free 회귀 (Phase 6 회귀 로직)
+ * 새 설계 (3단계):
+ * 1. cancelled → archived (premium_expires_at 도달 시)
+ *    - 무료 회원으로 전환 (is_premium=false, tier='free')
+ *    - 대표 펫(protected_pet_id) 결정, 그 외 펫 archive
+ *    - 대표 펫의 사진 50장 초과분 archive
+ *    - 알림: "무료 회원으로 전환되었어요. 40일 후 초과 데이터 영구 삭제"
  *
- * Phase 6 회귀 로직 (이 크론에서 직접 처리):
- * - protected_pet_id 외 펫 archive (pets.archived_at = now())
- * - 각 펫의 사진을 50장으로 축소 (즐겨찾기 우선 + 최근순)
- * - subscription_phase = 'free', is_premium = false
+ * 2. archived 유저 카운트다운 알림 (D-10 ~ D-1, 매일)
+ *    - D-3부터는 강한 경고 톤
+ *
+ * 3. archived → active (data_reset_at 도달 시)
+ *    - archived 펫 hard delete
+ *    - archived 사진 hard delete
+ *    - subscription_phase='active', 라이프사이클 필드 NULL로
+ *    - 유저는 일반 무료 회원으로 복귀
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -24,20 +29,30 @@ import { FREE_LIMITS } from "@/config/constants";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-type Phase = "readonly" | "hidden" | "countdown" | "free";
+type Phase = "active" | "cancelled" | "archived";
+type SbClient = ReturnType<typeof getServiceSupabase>;
 
 interface ProfileLifecycle {
     id: string;
     nickname: string | null;
     subscription_phase: Phase;
     subscription_cancelled_at: string | null;
-    data_readonly_until: string | null;
-    data_hidden_until: string | null;
+    premium_expires_at: string | null;
     data_reset_at: string | null;
     protected_pet_id: string | null;
 }
 
-/** 텔레그램 시스템 알림 (실패 무시) */
+interface Results {
+    toArchived: number;       // cancelled → archived 전환
+    archivedPets: number;     // archive된 펫 수
+    archivedMedia: number;    // archive된 사진 수
+    countdownNotified: number; // 카운트다운 알림 발송
+    toActive: number;         // archived → active 복귀 (hard delete 후)
+    deletedPets: number;      // hard delete된 펫 수
+    deletedMedia: number;     // hard delete된 사진 수
+    errors: string[];
+}
+
 async function notifySystem(message: string): Promise<void> {
     try {
         const { notifyError } = await import("@/lib/telegram");
@@ -55,165 +70,117 @@ export async function GET(request: NextRequest) {
     const now = new Date();
     const nowIso = now.toISOString();
 
-    const results = {
-        toHidden: 0,
-        toCountdown: 0,
-        countdownNotified: 0,
-        toFree: 0,
+    const results: Results = {
+        toArchived: 0,
         archivedPets: 0,
         archivedMedia: 0,
-        errors: [] as string[],
+        countdownNotified: 0,
+        toActive: 0,
+        deletedPets: 0,
+        deletedMedia: 0,
+        errors: [],
     };
 
     try {
-        // ===== 1. readonly → hidden (D+30 지남) =====
-        const { data: readonlyDue, error: roErr } = await supabase
+        // ===== Phase 1: cancelled → archived (premium_expires_at 도달) =====
+        const { data: cancelledDue, error: cdErr } = await supabase
             .from("profiles")
-            .select("id, nickname, subscription_phase, subscription_cancelled_at, data_readonly_until, data_hidden_until, data_reset_at, protected_pet_id")
-            .eq("subscription_phase", "readonly")
-            .lte("data_readonly_until", nowIso);
-
-        if (roErr) {
-            results.errors.push(`readonly fetch: ${roErr.message}`);
-        } else {
-            for (const p of (readonlyDue || []) as ProfileLifecycle[]) {
-                const { error: upErr } = await supabase
-                    .from("profiles")
-                    .update({ subscription_phase: "hidden" })
-                    .eq("id", p.id);
-
-                if (upErr) {
-                    results.errors.push(`hidden transition ${p.id}: ${upErr.message}`);
-                    continue;
-                }
-
-                const { error: notifErr } = await supabase.from("notifications").insert({
-                    user_id: p.id,
-                    type: "subscription_hidden_start",
-                    title: "소중한 데이터를 잠시 보관 중이에요",
-                    body: "구독 해지 후 30일이 지났어요. 데이터는 안전하게 보관되어 있고, 재구독하면 즉시 복구됩니다. 50일 후 일부 데이터가 정리됩니다.",
-                    metadata: { phase: "hidden", reset_at: p.data_reset_at },
-                    dedup_key: `sub_hidden_${nowIso.slice(0, 10)}_${p.id}`,
-                });
-                if (notifErr && notifErr.code !== "23505") {
-                    results.errors.push(`hidden notify ${p.id}: ${notifErr.message}`);
-                }
-
-                results.toHidden++;
-            }
-        }
-
-        // ===== 2. hidden → countdown (D+80 지남) =====
-        const { data: hiddenDue, error: hdErr } = await supabase
-            .from("profiles")
-            .select("id, nickname, subscription_phase, subscription_cancelled_at, data_readonly_until, data_hidden_until, data_reset_at, protected_pet_id")
-            .eq("subscription_phase", "hidden")
-            .lte("data_hidden_until", nowIso);
-
-        if (hdErr) {
-            results.errors.push(`hidden fetch: ${hdErr.message}`);
-        } else {
-            for (const p of (hiddenDue || []) as ProfileLifecycle[]) {
-                const { error: upErr } = await supabase
-                    .from("profiles")
-                    .update({ subscription_phase: "countdown" })
-                    .eq("id", p.id);
-
-                if (upErr) {
-                    results.errors.push(`countdown transition ${p.id}: ${upErr.message}`);
-                    continue;
-                }
-
-                const { error: notifErr } = await supabase.from("notifications").insert({
-                    user_id: p.id,
-                    type: "subscription_countdown",
-                    title: "10일 후 데이터가 정리됩니다",
-                    body: "무료 한도를 초과하는 데이터가 10일 후 정리됩니다. 재구독하면 모두 지킬 수 있어요.",
-                    metadata: { phase: "countdown", days_remaining: 10, reset_at: p.data_reset_at },
-                    dedup_key: `sub_countdown_${nowIso.slice(0, 10)}_${p.id}`,
-                });
-                if (notifErr && notifErr.code !== "23505") {
-                    results.errors.push(`countdown notify ${p.id}: ${notifErr.message}`);
-                }
-
-                results.toCountdown++;
-            }
-        }
-
-        // ===== 3. countdown 유저 매일 알림 (D-10 ~ D-1) =====
-        const { data: countdownUsers, error: cdErr } = await supabase
-            .from("profiles")
-            .select("id, nickname, subscription_phase, subscription_cancelled_at, data_readonly_until, data_hidden_until, data_reset_at, protected_pet_id")
-            .eq("subscription_phase", "countdown")
-            .gt("data_reset_at", nowIso);
+            .select("id, nickname, subscription_phase, subscription_cancelled_at, premium_expires_at, data_reset_at, protected_pet_id")
+            .eq("subscription_phase", "cancelled")
+            .lte("premium_expires_at", nowIso);
 
         if (cdErr) {
-            results.errors.push(`countdown fetch: ${cdErr.message}`);
+            results.errors.push(`cancelled fetch: ${cdErr.message}`);
         } else {
-            for (const p of (countdownUsers || []) as ProfileLifecycle[]) {
+            for (const p of (cancelledDue || []) as ProfileLifecycle[]) {
+                try {
+                    await transitionToArchived(supabase, p, results);
+                    results.toArchived++;
+                } catch (e) {
+                    const msg = e instanceof Error ? e.message : String(e);
+                    results.errors.push(`archive ${p.id}: ${msg}`);
+                }
+            }
+        }
+
+        // ===== Phase 2: archived 유저 카운트다운 알림 (D-10 ~ D-1) =====
+        const { data: archivedUsers, error: auErr } = await supabase
+            .from("profiles")
+            .select("id, nickname, subscription_phase, subscription_cancelled_at, premium_expires_at, data_reset_at, protected_pet_id")
+            .eq("subscription_phase", "archived")
+            .gt("data_reset_at", nowIso);
+
+        if (auErr) {
+            results.errors.push(`archived fetch: ${auErr.message}`);
+        } else {
+            for (const p of (archivedUsers || []) as ProfileLifecycle[]) {
                 if (!p.data_reset_at) continue;
                 const resetAt = new Date(p.data_reset_at);
                 const daysRemaining = Math.ceil(
                     (resetAt.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)
                 );
 
+                // D-10 ~ D-1 범위만 매일 알림
                 if (daysRemaining < 1 || daysRemaining > 10) continue;
 
-                // D-3부터는 관리자 모니터링 알림 (재구독 권유 마지막 기회)
+                // D-3부터는 관리자 텔레그램 경고 (유저 이탈 직전 모니터링)
                 if (daysRemaining <= 3) {
                     await notifySystem(
-                        `구독 회귀 임박 (D-${daysRemaining}): ${p.nickname || p.id} - ${nowIso.slice(0, 10)} 알림`
+                        `아카이브 영구 삭제 임박 (D-${daysRemaining}): ${p.nickname || p.id}`
                     );
                 }
 
-                // 톤 강도: D-1 가장 강함
                 let title: string;
                 let body: string;
                 if (daysRemaining === 1) {
-                    title = "내일 데이터가 정리됩니다";
-                    body = "내일 자정에 무료 한도 초과 데이터가 영구 정리됩니다. 마지막 기회예요.";
+                    title = "내일 초과 데이터가 삭제됩니다";
+                    body = "내일 자정에 보관된 반려동물과 사진이 영구 삭제됩니다. 마지막 기회예요. 재구독하면 모두 복구됩니다.";
                 } else if (daysRemaining <= 5) {
                     title = `${daysRemaining}일 남았어요`;
-                    body = `등록된 반려동물과 사진이 ${daysRemaining}일 후 보관함에서 사라집니다. 재구독하면 전부 지킬 수 있어요.`;
+                    body = `보관 중인 데이터가 ${daysRemaining}일 후 영구 삭제됩니다. 재구독하면 전부 지킬 수 있어요.`;
                 } else {
-                    title = `${daysRemaining}일 후 데이터가 정리됩니다`;
-                    body = `무료 한도를 초과하는 데이터가 ${daysRemaining}일 후 정리됩니다. 재구독하면 모두 지킬 수 있어요.`;
+                    title = `${daysRemaining}일 후 보관 데이터가 삭제됩니다`;
+                    body = `초과 데이터가 ${daysRemaining}일 후 영구 삭제됩니다. 재구독하면 모두 복구됩니다.`;
                 }
 
                 const { error: notifErr } = await supabase.from("notifications").insert({
                     user_id: p.id,
-                    type: "subscription_countdown",
+                    type: "subscription_archive_countdown",
                     title,
                     body,
-                    metadata: { phase: "countdown", days_remaining: daysRemaining, reset_at: p.data_reset_at },
-                    dedup_key: `sub_countdown_${nowIso.slice(0, 10)}_${p.id}`,
+                    metadata: {
+                        phase: "archived",
+                        days_remaining: daysRemaining,
+                        reset_at: p.data_reset_at,
+                    },
+                    dedup_key: `sub_arch_cd_${nowIso.slice(0, 10)}_${p.id}`,
                 });
+
                 if (notifErr && notifErr.code !== "23505") {
-                    results.errors.push(`countdown daily notify ${p.id}: ${notifErr.message}`);
+                    results.errors.push(`countdown notify ${p.id}: ${notifErr.message}`);
                     continue;
                 }
-
                 results.countdownNotified++;
             }
         }
 
-        // ===== 4. countdown → free (D+90 지남) — 회귀 실행 =====
-        const { data: resetDue, error: rsErr } = await supabase
+        // ===== Phase 3: archived → active (data_reset_at 도달) — hard delete =====
+        const { data: resetDue, error: rdErr } = await supabase
             .from("profiles")
-            .select("id, nickname, subscription_phase, subscription_cancelled_at, data_readonly_until, data_hidden_until, data_reset_at, protected_pet_id")
-            .eq("subscription_phase", "countdown")
+            .select("id, nickname, subscription_phase, subscription_cancelled_at, premium_expires_at, data_reset_at, protected_pet_id")
+            .eq("subscription_phase", "archived")
             .lte("data_reset_at", nowIso);
 
-        if (rsErr) {
-            results.errors.push(`reset fetch: ${rsErr.message}`);
+        if (rdErr) {
+            results.errors.push(`reset fetch: ${rdErr.message}`);
         } else {
             for (const p of (resetDue || []) as ProfileLifecycle[]) {
                 try {
-                    await applyFreeReset(supabase, p, results);
-                    results.toFree++;
+                    await purgeArchivedData(supabase, p, results);
+                    results.toActive++;
                 } catch (e) {
                     const msg = e instanceof Error ? e.message : String(e);
-                    results.errors.push(`reset ${p.id}: ${msg}`);
+                    results.errors.push(`purge ${p.id}: ${msg}`);
                 }
             }
         }
@@ -228,7 +195,7 @@ export async function GET(request: NextRequest) {
         if (results.errors.length > 0) {
             await notifySystem(
                 `라이프사이클 크론 일부 실패: ${results.errors.length}건\n` +
-                `처리: hidden→${results.toHidden} countdown→${results.toCountdown} reset→${results.toFree}\n` +
+                `archived→${results.toArchived} countdown→${results.countdownNotified} purge→${results.toActive}\n` +
                 results.errors.slice(0, 5).join("\n")
             );
         }
@@ -241,29 +208,19 @@ export async function GET(request: NextRequest) {
     }
 }
 
-// ===== Phase 6 회귀 로직 =====
-
 /**
- * 무료 회귀 적용
- * 1. protected_pet_id 결정 (없으면 가장 오래된 활성 펫)
- * 2. 그 외 펫들 archive (pets.archived_at = now())
- * 3. 보호 펫의 사진을 FREE_LIMITS.PHOTOS_PER_PET장으로 축소
- *    - 즐겨찾기 우선 + 최근순
- *    - 초과분 archive (pet_media.archived_at = now())
- * 4. profiles: subscription_phase = 'free', is_premium = false
- * 5. 회귀 완료 알림
+ * cancelled → archived 전환
+ * 1. 대표 펫 결정 (미지정 시 가장 오래된 활성 펫)
+ * 2. 대표 펫 외 펫 archive (archived_at=now)
+ * 3. 대표 펫의 사진 50장 초과분 archive (즐겨찾기 + 최근순 유지)
+ * 4. archive된 펫들의 사진도 같이 archive
+ * 5. profiles: subscription_phase='archived', is_premium=false, tier='free'
+ * 6. 알림 insert
  */
-type SbClient = ReturnType<typeof getServiceSupabase>;
-
-interface ResetCounters {
-    archivedPets: number;
-    archivedMedia: number;
-}
-
-async function applyFreeReset(
+async function transitionToArchived(
     supabase: SbClient,
     profile: ProfileLifecycle,
-    results: ResetCounters
+    results: Results,
 ): Promise<void> {
     const now = new Date().toISOString();
 
@@ -285,7 +242,7 @@ async function applyFreeReset(
         if (oldestActive?.id) {
             protectedPetId = oldestActive.id;
         } else {
-            const { data: oldestMemorial } = await supabase
+            const { data: oldestAny } = await supabase
                 .from("pets")
                 .select("id")
                 .eq("user_id", profile.id)
@@ -293,11 +250,11 @@ async function applyFreeReset(
                 .order("created_at", { ascending: true })
                 .limit(1)
                 .maybeSingle();
-            protectedPetId = oldestMemorial?.id || null;
+            protectedPetId = oldestAny?.id || null;
         }
     }
 
-    // 2. 보호 펫 외 모두 archive
+    // 2. 대표 펫 외 archive
     if (protectedPetId) {
         const { data: archivedPets } = await supabase
             .from("pets")
@@ -309,8 +266,7 @@ async function applyFreeReset(
         const archivedPetIds = (archivedPets || []).map((r) => r.id);
         results.archivedPets += archivedPetIds.length;
 
-        // 2-1. archive된 펫들의 사진도 같이 archive (스토리지 비용 절감)
-        //      재구독 시 pets.archived_at을 null로 되돌릴 때 사진도 같이 복원됨
+        // 2-1. archive된 펫들의 사진도 archive
         if (archivedPetIds.length > 0) {
             const BATCH = 200;
             for (let i = 0; i < archivedPetIds.length; i += BATCH) {
@@ -324,14 +280,8 @@ async function applyFreeReset(
                 results.archivedMedia += (archivedMediaRows || []).length;
             }
         }
-    } else {
-        // 보호 펫 자체가 없는 경우 (펫 등록 안 함) — archive 대상 없음
-    }
 
-    // 3. 보호 펫의 사진 50장 초과분 archive
-    //    UUID 컬럼은 PostgREST .in() 문법이 까다로우므로 ID를 1개씩 update 대신
-    //    "유지 대상이 아닌 모든 활성 사진"을 가져와 ID 배열로 처리
-    if (protectedPetId) {
+        // 3. 대표 펫의 사진 50장 초과분 archive
         const { data: keepMedia } = await supabase
             .from("pet_media")
             .select("id")
@@ -343,7 +293,6 @@ async function applyFreeReset(
 
         const keepIds = new Set((keepMedia || []).map((m) => m.id));
 
-        // 모든 활성 사진 조회 후 keepIds에 없는 것만 archive
         const { data: allActive } = await supabase
             .from("pet_media")
             .select("id")
@@ -354,7 +303,6 @@ async function applyFreeReset(
             .map((m) => m.id)
             .filter((id) => !keepIds.has(id));
 
-        // 200개씩 배치로 archive (Supabase .in() 한도)
         const BATCH = 200;
         for (let i = 0; i < archiveIds.length; i += BATCH) {
             const batch = archiveIds.slice(i, i + BATCH);
@@ -367,11 +315,11 @@ async function applyFreeReset(
         }
     }
 
-    // 4. profile 회귀
+    // 4. profile 전환: archived + 무료 회원으로
     await supabase
         .from("profiles")
         .update({
-            subscription_phase: "free",
+            subscription_phase: "archived",
             is_premium: false,
             premium_expires_at: now,
             premium_plan: null,
@@ -380,31 +328,125 @@ async function applyFreeReset(
         })
         .eq("id", profile.id);
 
-    // 5. 회귀 완료 알림
-    const { data: keptPet } = protectedPetId
-        ? await supabase
-            .from("pets")
-            .select("name, type")
-            .eq("id", protectedPetId)
-            .maybeSingle()
-        : { data: null };
-
-    const petLabel = keptPet ? `${keptPet.type || ""} '${keptPet.name}'` : "없음";
+    // 5. 알림
+    const daysUntilPurge = profile.data_reset_at
+        ? Math.max(0, Math.ceil((new Date(profile.data_reset_at).getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
+        : 40;
 
     const { error: notifErr } = await supabase.from("notifications").insert({
         user_id: profile.id,
-        type: "subscription_reset_complete",
-        title: "무료 플랜으로 돌아오셨어요",
-        body: `일부 데이터가 보관함으로 이동되었습니다. 보관된 데이터: 반려동물 1마리 (${petLabel}), 사진 ${FREE_LIMITS.PHOTOS_PER_PET}장 이내. 재구독하시면 보관된 데이터를 모두 복구할 수 있어요.`,
+        type: "subscription_archive_started",
+        title: "무료 회원으로 전환되었어요",
+        body: `결제 기간이 만료되어 무료 회원으로 전환되었습니다. 초과 데이터(반려동물, 사진)는 ${daysUntilPurge}일간 보관 후 영구 삭제됩니다. 그 전에 재구독하면 모두 복구됩니다.`,
         metadata: {
-            phase: "free",
+            phase: "archived",
             protected_pet_id: protectedPetId,
             archived_pets: results.archivedPets,
             archived_media: results.archivedMedia,
+            days_until_purge: daysUntilPurge,
         },
-        dedup_key: `sub_reset_${now.slice(0, 10)}_${profile.id}`,
+        dedup_key: `sub_arch_start_${now.slice(0, 10)}_${profile.id}`,
     });
     if (notifErr && notifErr.code !== "23505") {
-        throw new Error(`reset notify failed: ${notifErr.message}`);
+        throw new Error(`archive start notify failed: ${notifErr.message}`);
+    }
+}
+
+/**
+ * archived → active (hard delete + 일반 무료 회원 복귀)
+ * 1. archived 펫들의 사진 hard delete
+ * 2. archived 펫들 hard delete
+ * 3. profile: phase='active', data_reset_at=null, cancelled_at=null
+ * 4. 완료 알림
+ *
+ * 주의: protected_pet_id는 유지 (무료 회원으로서의 대표 펫으로 남음)
+ */
+async function purgeArchivedData(
+    supabase: SbClient,
+    profile: ProfileLifecycle,
+    results: Results,
+): Promise<void> {
+    const nowIso = new Date().toISOString();
+
+    // 1. archived 펫 수집
+    const { data: archivedPetRows } = await supabase
+        .from("pets")
+        .select("id")
+        .eq("user_id", profile.id)
+        .not("archived_at", "is", null);
+    const archivedPetIds = (archivedPetRows || []).map((r) => r.id);
+
+    // 2. archived 펫들의 모든 사진 (archived or not) hard delete
+    //    (archive된 펫 = 삭제 대상)
+    let petMediaDeleted = 0;
+    if (archivedPetIds.length > 0) {
+        const BATCH = 200;
+        for (let i = 0; i < archivedPetIds.length; i += BATCH) {
+            const batch = archivedPetIds.slice(i, i + BATCH);
+            const { data: deletedRows } = await supabase
+                .from("pet_media")
+                .delete()
+                .in("pet_id", batch)
+                .select("id");
+            petMediaDeleted += (deletedRows || []).length;
+        }
+    }
+
+    // 3. archived 펫 hard delete
+    let petsDeleted = 0;
+    if (archivedPetIds.length > 0) {
+        const BATCH = 200;
+        for (let i = 0; i < archivedPetIds.length; i += BATCH) {
+            const batch = archivedPetIds.slice(i, i + BATCH);
+            const { data: deletedRows } = await supabase
+                .from("pets")
+                .delete()
+                .in("id", batch)
+                .select("id");
+            petsDeleted += (deletedRows || []).length;
+        }
+    }
+
+    // 4. 대표 펫의 archived 사진 hard delete (50장 초과분)
+    if (profile.protected_pet_id) {
+        const { data: deletedRows } = await supabase
+            .from("pet_media")
+            .delete()
+            .eq("pet_id", profile.protected_pet_id)
+            .not("archived_at", "is", null)
+            .select("id");
+        petMediaDeleted += (deletedRows || []).length;
+    }
+
+    results.deletedPets += petsDeleted;
+    results.deletedMedia += petMediaDeleted;
+
+    // 5. profile: 일반 무료 회원으로 복귀
+    await supabase
+        .from("profiles")
+        .update({
+            subscription_phase: "active",
+            subscription_cancelled_at: null,
+            data_reset_at: null,
+            // is_premium, tier는 이미 archive 전환 시점에 false/free로 설정됨
+            // protected_pet_id는 유지 (대표 펫은 계속 존재)
+        })
+        .eq("id", profile.id);
+
+    // 6. 완료 알림
+    const { error: notifErr } = await supabase.from("notifications").insert({
+        user_id: profile.id,
+        type: "subscription_archive_complete",
+        title: "보관 데이터가 정리되었습니다",
+        body: `보관 기간이 만료되어 초과 데이터가 영구 삭제되었습니다. 대표 반려동물과 ${FREE_LIMITS.PHOTOS_PER_PET}장의 사진은 그대로 유지됩니다.`,
+        metadata: {
+            phase: "active",
+            deleted_pets: petsDeleted,
+            deleted_media: petMediaDeleted,
+        },
+        dedup_key: `sub_arch_done_${nowIso.slice(0, 10)}_${profile.id}`,
+    });
+    if (notifErr && notifErr.code !== "23505") {
+        throw new Error(`archive complete notify failed: ${notifErr.message}`);
     }
 }

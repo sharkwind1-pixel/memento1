@@ -52,13 +52,12 @@ export async function restoreFromLifecycle(
     result.wasLifecycleActive = currentPhase !== "active";
 
     // 2. profiles 라이프사이클 컬럼 초기화
+    //    (data_readonly_until/data_hidden_until은 DB 컬럼 자체가 DROP됨)
     await supabase
         .from("profiles")
         .update({
             subscription_phase: "active",
             subscription_cancelled_at: null,
-            data_readonly_until: null,
-            data_hidden_until: null,
             data_reset_at: null,
             // protected_pet_id는 유지 (다음 해지 시 재사용 가능)
         })

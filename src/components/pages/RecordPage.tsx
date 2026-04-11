@@ -12,7 +12,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { usePets, Pet, PetPhoto, useMemorialMode } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useSubscriptionPhase } from "@/hooks/useSubscriptionPhase";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,7 +55,6 @@ interface RecordPageProps {
 function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false }: RecordPageProps) {
     const { isMemorialMode } = useMemorialMode();
     const { user, signOut, updateProfile, isPremiumUser, isAdminUser, points, userPetType, checkNickname, subscriptionTier } = useAuth();
-    const phaseInfo = useSubscriptionPhase();
     const {
         pets,
         selectedPetId,
@@ -277,14 +275,10 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
         }
     };
 
-    // 새 반려동물 추가 (무료 회원 제한 체크)
+    // 새 반려동물 추가 (tier 기반 한도만 체크 — 라이프사이클 차단 없음)
     const handleAddNewPet = () => {
-        // 라이프사이클 단계 가드 (해지 후 readonly/hidden/countdown/free)
-        if (phaseInfo.isLifecycleActive) {
-            toast.error(phaseInfo.blockMessage || "추가 등록이 제한된 상태입니다");
-            return;
-        }
         const petLimit = getLimitsForTier(subscriptionTier).PETS;
+        // archived 펫은 카운트 제외 (PetContext가 archived_at IS NULL 필터 적용)
         if (pets.length >= petLimit) {
             setPremiumFeature("pet-limit");
             setIsPremiumModalOpen(true);
@@ -298,16 +292,6 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
         petData: Omit<Pet, "id" | "createdAt" | "photos">,
     ) => {
         try {
-            // 라이프사이클 가드: 추모 전환은 readonly에서도 허용, 그 외 편집은 차단
-            if (phaseInfo.isLifecycleActive) {
-                const isMemorialSwitch =
-                    editingPet?.status === "active" && petData.status === "memorial";
-                if (!isMemorialSwitch) {
-                    toast.error(phaseInfo.blockMessage || "편집이 제한된 상태입니다");
-                    return;
-                }
-            }
-
             if (editingPet) {
                 await updatePet(editingPet.id, petData);
                 toast.success(`${petData.name} 정보를 바꿨어요`);
@@ -328,11 +312,6 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
         _cropPositions: { x: number; y: number; scale: number }[],
     ) => {
         if (!selectedPet) return;
-        // 라이프사이클 가드: 사진 추가는 active 단계에서만
-        if (phaseInfo.isLifecycleActive) {
-            toast.error(phaseInfo.blockMessage || "사진 추가가 제한된 상태입니다");
-            return;
-        }
         try {
             await addMedia(
                 selectedPet.id,
