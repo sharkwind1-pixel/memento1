@@ -33,20 +33,41 @@
   - sendArchiveCountdownEmail (D-10/D-5/D-1)
   - RESEND_API_KEY 환경변수 필요 (미설정 시 skip)
 - [x] cancel API, subscription-lifecycle 크론에 이메일 통합
+- [x] **블로그 크론 토픽 편중 수정** (`cec42a2`) — 요일 기반 결정론적 선택
+  - 일요일만 펫로스 (주 1회, 14%)
+  - 월~토 정보글 (주 6회, 86%)
+  - 배열 modulo 순환의 연속 편중 문제 해결
+- [x] **FK 타임머신 에러 진단** — 17:54 수신된 텔레그램 에러는 배포 타이밍 사이(fetch no-store 미반영)의 "유령" 에러. `998cecf` 이후 재발 안 함 확인.
 
-#### 남은 작업 (선택)
+#### 남은 작업 (VS Code 세션에서 진행 예정)
 1. **시각적 회귀 테스트 (브라우저)**
-   - 승빈님이 직접 본인 계정으로 해지 시도 (실제 해지는 X)
-   - archived 상태로 수동 세팅 후 UI 확인:
-     - 상단 배너 (`SubscriptionStatusBanner`) 톤/카운트다운
-     - RecordPage의 ArchivedPetsSection 잠금 카드 렌더
-     - 추모 모드 전환 가능 여부
-   - 작업 후 복원 SQL 제공
+   - 승빈님이 직접 본인 계정으로 archived 상태 수동 세팅 후 UI 확인
+   - 상단 배너 (`SubscriptionStatusBanner`) 톤/카운트다운
+   - RecordPage의 ArchivedPetsSection 잠금 카드 렌더
+   - 추모 모드 전환 가능 여부
+   - 테스트용 SQL (해지 → 복원):
+   ```sql
+   -- archived 상태 시뮬레이션 (D-5)
+   UPDATE profiles SET subscription_phase = 'archived',
+     is_premium = false, subscription_tier = 'free',
+     data_reset_at = NOW() + INTERVAL '5 days'
+   WHERE email = 'sharkwind1@gmail.com';
+
+   -- 복원
+   UPDATE profiles SET subscription_phase = 'active',
+     is_premium = true, subscription_tier = 'premium',
+     premium_expires_at = '2027-03-28 00:00:00+00',
+     subscription_cancelled_at = NULL, data_reset_at = NULL,
+     protected_pet_id = NULL
+   WHERE email = 'sharkwind1@gmail.com';
+   ```
 
 2. **Vercel 환경변수 추가** (이메일 기능 사용 시)
    - `RESEND_API_KEY` — Resend 대시보드에서 발급
    - `RESEND_FROM_EMAIL` (선택) — 기본 "메멘토애니 <noreply@mementoani.com>"
-   - 미설정이면 이메일 발송 skip, 앱 동작에는 영향 없음
+   - 미설정이면 이메일 발송 skip, 앱 동작 영향 없음
+
+3. **내일 아침 텔레그램 확인** — 월요일이므로 반려동물 정보 토픽 블로그 초안이 와야 정상. 펫로스가 오면 요일 로직 버그 재조사.
 
 ### ✅ 완료 (2026-04-11 세션)
 

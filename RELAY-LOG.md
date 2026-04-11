@@ -206,6 +206,24 @@
 - `998cecf` **fix: getServiceSupabase fetch no-store (핵심 버그)**
 - `6d0411a` cleanup: 디버그 코드 제거 + supabase-server에도 no-store 적용
 - `868ff42` feat: 잠금 펫 UI + Resend 이메일 채널
+- `9dd9f00` docs: 2026-04-11 오후 세션 기록
+
+### 후속 이슈 대응
+
+**텔레그램 FK 에러 알림 ("타임머신 에러")**
+- 17:54:45 수신: `archive fc09d16c...: protected_pet_id c66273f1... does not exist`
+- 원인 추적: 17:41~17:56 사이 배포 타이밍. FK 가드(`0fb1726`)는 있지만 fetch no-store(`998cecf`)는 아직 없던 시점의 Vercel 크론 자동 실행
+- 당시 PostgREST 캐시 때문에 stale UUID 반환 → 가드가 정상적으로 throw → 텔레그램 알림
+- DB 실제 상태는 정상 (승빈님 active+premium, protected_pet_id null, 라이프사이클 유저 0명)
+- **지금은 `998cecf` 이후 배포로 해결 완료**. 수동 크론 재호출 시 `errors: []` 확인.
+
+### 블로그 크론 토픽 편중 수정 (`cec42a2`)
+- 사용자 피드백: "자꾸 펫로스/추모 주제만 온다"
+- 원인: 42개 토픽 중 펫로스 8개가 배열 맨 뒤에 몰려 있어 `days % length` 선택 시 **연속 8일 펫로스** 가능
+- 수정: 요일 기반 결정론적 선택
+  - **일요일**: 펫로스 토픽 (주 1회, 매주 다른 토픽 순환)
+  - **월~토**: 반려동물 정보 토픽 (매일 다른 것)
+- 결과: 펫로스 14.3% (주 1회), 정보글 85.7% — 균형 보장
 
 ---
 
