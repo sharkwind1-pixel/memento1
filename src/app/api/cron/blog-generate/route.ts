@@ -14,6 +14,12 @@ import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
 import { tavily } from "@tavily/core";
 import { verifyCronSecret, getKstTime } from "@/lib/cron-utils";
+import {
+    type PetSpecies,
+    SPECIES_CONTEXT,
+    SPECIES_ENGLISH_KEYWORDS,
+    isExoticSpecies,
+} from "@/lib/species-context";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -21,21 +27,6 @@ export const maxDuration = 60;
 // ============================================================
 // 토픽 풀 — 종별로 분류된 디테일한 세부 주제
 // ============================================================
-
-/**
- * 반려동물 종 분류
- * - 메멘토애니는 "여러 반려동물을 함께 관리하는" 플랫폼이므로
- *   다양한 종을 평등하게 다뤄야 함 (개/고양이만 반복 X)
- * - 각 종마다 분류학적 특성, 한국에서 잘못 알려진 정보,
- *   흔한 키핑 실수를 프롬프트 컨텍스트로 주입
- */
-type PetSpecies =
-    | "강아지" | "고양이"
-    | "햄스터" | "기니피그" | "토끼" | "친칠라" | "고슴도치" | "페럿"
-    | "앵무새" | "문조" | "카나리아"
-    | "거북이" | "도마뱀" | "게코" | "이구아나"
-    | "물고기" | "새우"
-    | "공통"; // 펫로스 등 종 무관 토픽
 
 interface BlogTopic {
     category: "반려동물 정보" | "펫로스를 이겨내기";
@@ -45,31 +36,6 @@ interface BlogTopic {
     keywords: string[];
     seasonal?: number[]; // 해당 월에만 등장 (없으면 연중)
 }
-
-/**
- * 종별 컨텍스트 — 글 작성 시 시스템 프롬프트에 동적 주입
- * 한국에서 흔한 오해, 키핑 시 반드시 알아야 할 핵심 사항.
- */
-const SPECIES_CONTEXT: Record<PetSpecies, string> = {
-    "강아지": "강아지는 사회적 동물로 분리불안에 민감합니다. 견종마다 운동량/유전질환이 크게 다르므로 견종별 특성을 반영하세요. 한국에서는 소형견 위주(말티즈, 푸들, 포메라니안 등)가 많아 슬개골 탈구, 치주질환, 기관허탈 등이 흔합니다.",
-    "고양이": "고양이는 영역 동물이며 환경 변화에 매우 민감합니다. 의무적 육식동물(obligate carnivore)이라 단백질 요구량이 개보다 높습니다. 만성신부전(CKD), 하부요로계 질환(FLUTD), 비만이 가장 흔한 건강 문제입니다.",
-    "햄스터": "햄스터는 야행성 단독 생활 동물입니다. 합사 절대 금지(시리안), 드워프류도 어렸을 때만 일시 합사 가능. 평균 수명 2~3년으로 짧고, 종양 발생률이 높습니다. 케이지 최소 면적은 시리안 기준 60×40cm 이상 권장. 쳇바퀴는 시리안 21cm, 드워프 17cm 이상이 척추 건강에 필수.",
-    "기니피그": "기니피그는 군집 동물로 1마리 사육이 동물복지법상 권장되지 않습니다. 비타민C를 체내 합성 못하므로 사료/채소로 매일 보충 필요. 케이지는 2마리 기준 0.7m² 이상. 발바닥피부염(bumblefoot)과 부정교합이 흔한 질환.",
-    "토끼": "토끼는 의무적 초식동물로 건초가 식단의 80% 이상이어야 합니다. 한국에서 흔한 오해: 펠릿 위주 급여, 당근 과다 급여 → 위정체와 비만의 원인. 케이지 사육보다 방사 사육 권장. 부정교합과 요로결석이 가장 흔한 질환.",
-    "친칠라": "친칠라는 안데스 고지대 출신으로 25도 이상 열에 매우 취약합니다(열사병 위험). 모래목욕 필수(주 2~3회), 물목욕 절대 금지(곰팡이 감염). 평균 수명 15~20년으로 길어 장기 책임이 필요합니다. 부정교합, 모피탈락, 소화기 정체가 흔한 질환.",
-    "고슴도치": "고슴도치는 야행성 단독 동물로 합사 금지. 곤충식 위주(고품질 고양이 사료 + 밀웜 보충 가능). 적정 온도 24~28도(저온 시 위면 hibernation으로 사망 가능). 한국에서 가장 흔한 사망 원인은 저온, WHS(Wobbly Hedgehog Syndrome), 종양.",
-    "페럿": "페럿은 의무적 육식동물이며 매우 활동적이라 하루 최소 4시간 방사 필요. 일반 시리얼/과일 절대 금지(인슐린종 위험). 평균 수명 6~8년. 부신질환, 인슐린종, 림프종이 노령 페럿의 3대 사망 원인. 종합백신(디스템퍼)과 광견병 접종 필수.",
-    "앵무새": "앵무새는 매우 지능이 높고 사회적입니다(까마귀와 비슷한 인지 수준). 종에 따라 수명 10~80년까지 다양. 깃털뽑기(feather plucking)는 스트레스/지루함의 신호. 아보카도, 카페인, 초콜릿, PTFE(테플론) 가스 절대 금지(즉사 위험). PBFD, 사이타쿠스병 같은 전염병 주의.",
-    "문조": "문조는 군집성 작은 핀치과 새. 단독 사육 시 외로움/스트레스가 큽니다. 고온다습 환경 출신이라 한국 겨울에 보온 필수(20도 이상 유지). 평균 수명 7~10년. 알막힘(egg binding), 호흡기 감염이 흔한 질환.",
-    "카나리아": "카나리아는 노래를 부르는 핀치과 새로 수컷만 노래합니다. 단독 사육이 일반적이며, 짝짓기 외에는 합사 시 싸움 위험. 비만과 진드기 감염이 흔한 문제. 평균 수명 10~15년.",
-    "거북이": "거북이는 변온동물로 UVB 조명과 적정 온도(종마다 다름)가 필수. 한국에서 흔한 오해: 채광이 자외선이라고 착각 → UVB 조명 없이 사육 시 대사성 골질환(MBD) 발생. 수생/반수생/육생 따라 사육 방식이 완전히 다릅니다.",
-    "도마뱀": "도마뱀은 종마다 사육 환경이 극단적으로 다릅니다(사막/열대우림/초지). UVB와 온도구배(basking spot vs cool zone) 필수. 비어디 드래곤, 레오파드 게코, 크레스티드 게코가 한국에서 가장 흔한 종.",
-    "게코": "게코(특히 레오파드 게코, 크레스티드 게코)는 초보자에게 적합한 도마뱀이지만 UVB는 여전히 권장됩니다(과거에는 불필요하다고 알려졌으나 최근 연구는 D3 합성에 도움). 레오파드 게코는 사막종이라 보온이 중요(주간 28~32도, 야간 21~24도).",
-    "이구아나": "이구아나는 100% 초식이며, 동물성 단백질 급여 시 신부전으로 이어집니다. 성체는 1.5m 이상 자라며 매우 공격적이 될 수 있습니다. UVB 필수, 일광욕 권장. 한국에서는 사육 환경 부족으로 방치되거나 유기되는 경우가 많아 신중한 입양이 필요합니다.",
-    "물고기": "관상어는 종마다 수질 요구가 다릅니다. 사이클링(질소 사이클) 없이 입수 시 질소 중독으로 사망. 어항 크기, pH, 경도, 온도 매개변수가 핵심. 디스커스/구피/베타/금붕어 등 종별로 케어 차이가 큽니다.",
-    "새우": "관상새우(체리쉬림프, 크리스탈쉬림프 등)는 수질에 매우 민감하며, 구리(Cu) 함유 약품에 즉사. 어항은 안정화된 후 입수해야 합니다. TDS, GH, KH가 종별로 다릅니다.",
-    "공통": "메멘토애니는 '희노애락을 함께하는 곳' — 단순 정보 제공을 넘어 보호자의 마음을 어루만지는 톤이 중요합니다.",
-};
 
 const BLOG_TOPICS: BlogTopic[] = [
     // ============================================================
@@ -236,35 +202,12 @@ const BLOG_TOPICS: BlogTopic[] = [
 
 // ============================================================
 // 검색 쿼리 강화 — 종별 영문 키워드/학술 검색어 추가
+// (실제 매핑은 lib/species-context.ts의 SPECIES_ENGLISH_KEYWORDS 사용)
 // ============================================================
-
-/**
- * 종별 영문/학술 검색어 매핑
- * 한국어 검색은 정보가 부족한 특수반려동물 종이 많으므로
- * 영문 검색어를 함께 던져 더 정확한 정보를 가져옴.
- */
-const SPECIES_ENGLISH_KEYWORDS: Partial<Record<PetSpecies, string>> = {
-    "햄스터": "hamster care welfare RSPCA exotic vet",
-    "기니피그": "guinea pig care welfare cavies vitamin C",
-    "토끼": "rabbit care welfare RWAF House Rabbit Society",
-    "친칠라": "chinchilla care temperature exotic vet",
-    "고슴도치": "hedgehog care wobbly hedgehog syndrome WHS exotic",
-    "페럿": "ferret care insulinoma adrenal disease exotic vet",
-    "앵무새": "parrot care avian vet feather plucking PTFE",
-    "문조": "java sparrow finch care",
-    "카나리아": "canary care breeding song",
-    "거북이": "turtle tortoise care UVB MBD reptile",
-    "도마뱀": "lizard care UVB temperature gradient reptile",
-    "게코": "gecko care leopard crested UVB reptile",
-    "이구아나": "green iguana herbivore care reptile",
-    "물고기": "aquarium fish nitrogen cycle care",
-    "새우": "cherry shrimp neocaridina aquarium care",
-};
 
 function enhanceSearchQuery(topic: BlogTopic): string {
     const engKeywords = SPECIES_ENGLISH_KEYWORDS[topic.species];
     if (!engKeywords) return topic.searchQuery;
-    // 한국어 + 영어 키워드를 함께 → 학술 + 한국 자료 양쪽 커버
     return `${topic.searchQuery} ${engKeywords}`;
 }
 
@@ -472,7 +415,7 @@ export async function GET(request: NextRequest) {
         const searchContext = await searchTopicInfo(enhancedSearchQuery);
 
         // 2. 블로그 글 생성 (Claude Sonnet + Opus advisor 우선, OpenAI 폴백)
-        const isExoticSpecies = !["강아지", "고양이", "공통"].includes(selectedTopic.species);
+        const isExotic = isExoticSpecies(selectedTopic.species);
         const isPetloss = selectedTopic.category === "펫로스를 이겨내기";
 
         const systemPrompt = `당신은 수의학 + 동물행동학 + 종별 사육학을 갖춘 반려동물 전문 블로거입니다. 네이버 블로그에 게시할 정보성 글을 작성합니다.
@@ -482,7 +425,7 @@ export async function GET(request: NextRequest) {
 ### 종별 핵심 컨텍스트 (반드시 본문에 반영할 것)
 ${speciesContext}
 
-${isExoticSpecies ? `### 특수반려동물(엑조틱) 작성 시 추가 지침
+${isExotic ? `### 특수반려동물(엑조틱) 작성 시 추가 지침
 - 한국에서 잘못 알려진 정보를 정확하게 교정하세요 (예: "예전에는 ~라고 알려졌지만, 최신 연구는 ~")
 - 일반 반려동물(개/고양이) 보호자도 이해할 수 있도록 친절하게 설명
 - 해당 종의 사육이 "쉬워 보이지만 실제로는 까다로운" 측면을 솔직하게 전달
@@ -502,7 +445,7 @@ ${isExoticSpecies ? `### 특수반려동물(엑조틱) 작성 시 추가 지침
 - 마지막 단락에서 메멘토애니(mementoani.com)를 자연스럽게 1회 언급
 ${isPetloss
     ? `  - "반려동물과의 소중한 추억을 따뜻하게 간직하고 싶다면 메멘토애니(mementoani.com)에서 디지털 메모리얼을 만들어보세요"`
-    : isExoticSpecies
+    : isExotic
         ? `  - "${selectedTopic.species} 같은 특수반려동물의 케어 일정과 사육 환경 기록을 한곳에서 관리하고 싶다면 메멘토애니(mementoani.com)를 활용해보세요. 다양한 종을 함께 관리할 수 있어요."`
         : `  - "반려동물의 건강 기록과 케어 리마인더를 한곳에서 관리하고 싶다면 메멘토애니(mementoani.com)를 활용해보세요"`
 }
@@ -623,38 +566,100 @@ ${searchContext ? `## 참고 자료 (아래 검색 결과를 바탕으로 정확
         await sendToTelegram(header, body);
 
         // 4. 오늘의 릴스/쇼츠 대본 생성 + 전송
+        // 컨셉 7일 로테이션 (이전 4일 → 7일로 확장, 더 다양한 톤)
+        const REEL_CONCEPTS = [
+            {
+                name: "감성/공감",
+                description: "반려동물과의 일상, 이별, 그리움. 잔잔하고 따뜻한 톤.",
+                hookExample: "처음 만난 그날을 기억하시나요?",
+                outroStyle: "마지막 한 줄로 여운을 남기고, 메멘토애니가 그 추억을 지킨다는 메시지로 마무리",
+            },
+            {
+                name: "정보/꿀팁",
+                description: "수의학 기반 건강/케어/사료 정보. 빠른 템포, 숫자 강조.",
+                hookExample: "이거 모르면 우리 아이 위험해요",
+                outroStyle: "체크리스트 형식으로 정리, 메멘토애니의 케어 리마인더 기능 자연 연결",
+            },
+            {
+                name: "공감 챌린지",
+                description: "보호자라면 누구나 공감하는 장면 모음. 짧은 컷 빠른 전환.",
+                hookExample: "강아지 집사 vs 햄스터 집사 차이점 5가지",
+                outroStyle: "마지막 컷에서 모든 종을 함께 사랑하는 메멘토애니 어필",
+            },
+            {
+                name: "스토리텔링",
+                description: "한 보호자의 짧은 사연을 1인칭으로. 후크 → 갈등 → 반전.",
+                hookExample: "이 아이를 만나기 전엔 몰랐던 것",
+                outroStyle: "이야기 끝에 자연스럽게 메멘토애니로 추억을 기록한다는 것",
+            },
+            {
+                name: "트렌딩/밈",
+                description: "유행 포맷 활용. 빠른 컷, 자막 위주. 가벼운 유머.",
+                hookExample: "POV: 우리집 페럿이 새벽 3시에 한 일",
+                outroStyle: "밈 마지막에 메멘토애니 로고/배지 한 번 띄움",
+            },
+            {
+                name: "서비스 소개",
+                description: "메멘토애니 핵심 기능 1개를 30초로. UI 캡처 + 자막.",
+                hookExample: "이 앱 하나면 우리집 4마리 다 관리됨",
+                outroStyle: "기능 데모 → 직접 써보세요 CTA",
+            },
+            {
+                name: "특수반려동물 스포트라이트",
+                description: "햄스터/페럿/토끼/파충류/새 등 한 종을 집중 조명. 잘 알려지지 않은 사실 위주.",
+                hookExample: "고슴도치 이거 모르면 죽일 수도 있어요",
+                outroStyle: "엑조틱 종 보호자에게 실용적 정보, 메멘토애니의 다종 관리 강점 강조",
+            },
+        ];
+
+        const reelConceptIdx = dayIndex % REEL_CONCEPTS.length;
+        const reelConcept = REEL_CONCEPTS[reelConceptIdx];
+        const reelExoticHint = isExotic
+            ? `\n\n오늘의 종이 ${selectedTopic.species}(특수반려동물)이므로, 일반 강아지/고양이 보호자에게도 신선하게 느껴지도록 ${selectedTopic.species}만의 특이한 사실/매력을 강조하세요. ${SPECIES_CONTEXT[selectedTopic.species]}`
+            : "";
+
         const reelsCompletion = await openai.chat.completions.create({
             model: "gpt-4o-mini",
-            max_tokens: 800,
-            temperature: 0.85,
+            max_tokens: 900,
+            temperature: 0.9,
             messages: [
                 {
                     role: "system",
                     content: `당신은 메멘토애니(반려동물 메모리얼 플랫폼)의 숏폼 콘텐츠 기획자입니다.
 인스타그램 릴스/유튜브 쇼츠용 15~30초 대본을 작성합니다.
 
-## 규칙
-- 첫 1초에 강한 훅 (질문, 숫자, 감성 문장)
-- 자막 기반 (음소거로 보는 유저 대응)
-- 마지막에 메멘토애니 자연스럽게 언급 (매번 다른 방식으로)
-- 존댓말, 이모지 없음
-- 매일 다른 컨셉: 감성/공감, 정보/꿀팁, 트렌딩/밈, 서비스 소개 중 하나
+## 메멘토애니 핵심 USP
+- 일상부터 이별까지 모든 순간을 함께
+- 강아지/고양이뿐 아니라 햄스터/토끼/페럿/앵무새/파충류까지 모든 반려동물 평등하게 관리
+- AI 펫톡으로 떠난 아이와도 대화 가능
+- 듀얼 모드: 일상 모드(따뜻한 케어) + 추모 모드(기억의 공간)
 
-## 컨셉 분배 (4일 주기)
-- 1일차: 감성/공감 (반려동물과의 일상, 이별, 그리움)
-- 2일차: 정보/꿀팁 (수의학 기반 건강/케어/사료 정보)
-- 3일차: 트렌딩/밈 (유머, 공감, 바이럴 포맷)
-- 4일차: 서비스 소개 (AI 펫톡, AI 영상, 미니홈피, 타임라인 등)
+## 작성 규칙
+- 첫 1초에 강한 훅 (질문, 숫자, 감성 문장 등)
+- 자막 기반 (음소거로 보는 유저 대응) — 자막 한 줄 12자 이내 권장
+- 마지막에 메멘토애니 자연스럽게 언급 (매번 다른 방식, 광고 톤 X)
+- 존댓말, 이모지 사용 금지
+- "강아지/고양이만 반려동물" 같은 뉘앙스 절대 금지
+
+## 오늘의 컨셉
+**${reelConcept.name}**
+${reelConcept.description}
+훅 예시: "${reelConcept.hookExample}"
+아웃트로 스타일: ${reelConcept.outroStyle}
 
 ## 출력 형식
 [컨셉] (한 줄 설명)
-[대본] (자막 텍스트, 줄바꿈으로 구분)
+[대본] (자막 텍스트, 줄바꿈으로 구분 — 한 줄 12자 이내)
 [영상 연출] (촬영/편집 가이드 3줄)
-[해시태그] (12~15개)`,
+[해시태그] (12~15개, 한국어 + 영어 섞기)`,
                 },
                 {
                     role: "user",
-                    content: `오늘 날짜: ${dateStr}\n오늘은 ${dayIndex % 4 + 1}일차 컨셉으로 작성하세요.\n\n오늘의 블로그 주제가 "${selectedTopic.topic}" (${selectedTopic.category})이니, 가능하면 비슷한 주제로 릴스도 만들되 형식은 완전히 다르게 (짧고 임팩트 있게).`,
+                    content: `오늘 날짜: ${dateStr}
+오늘의 종: ${selectedTopic.species}
+오늘의 블로그 주제: "${selectedTopic.topic}" (${selectedTopic.category})
+
+이 주제와 관련 있되 형식은 완전히 다르게 (짧고 임팩트 있게) 작성하세요.${reelExoticHint}`,
                 },
             ],
         });
@@ -664,7 +669,8 @@ ${searchContext ? `## 참고 자료 (아래 검색 결과를 바탕으로 정확
         const reelsHeader = [
             ``,
             `<b>[오늘의 릴스/쇼츠 대본 - ${dateStr}]</b>`,
-            `컨셉 타입: ${["감성/공감", "정보/꿀팁", "트렌딩/밈", "서비스 소개"][dayIndex % 4]}`,
+            `컨셉 타입: ${reelConcept.name}`,
+            `오늘의 종: ${selectedTopic.species}`,
             ``,
             `--- 아래 복사해서 촬영/편집 ---`,
         ].join("\n");

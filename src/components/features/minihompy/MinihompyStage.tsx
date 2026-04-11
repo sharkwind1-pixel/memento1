@@ -13,7 +13,7 @@
 
 import React, { useRef, useCallback, useState, useMemo, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Music, Eye, Pencil, Check, Loader2, ArrowDown } from "lucide-react";
+import { Music, Eye, Pencil, Check, Loader2, ArrowDown, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { MinimiEquipState, PlacedMinimi } from "@/types";
 import { findBackground, getDefaultBackground } from "@/data/minihompyBackgrounds";
@@ -81,7 +81,9 @@ export default function MinihompyStage({
     const stageRef = useRef<HTMLDivElement>(null);
     const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+    const [dragOverTrash, setDragOverTrash] = useState(false);
     const dragStartRef = useRef<{ x: number; y: number; origX: number; origY: number } | null>(null);
+    const trashRef = useRef<HTMLDivElement | null>(null);
 
     // isMounted: 배경 효과 파티클을 CSR에서만 렌더링 (hydration mismatch 방지)
     const [isMounted, setIsMounted] = useState(false);
@@ -177,18 +179,34 @@ export default function MinihompyStage({
             const updated = [...placedMinimi];
             updated[index] = { ...updated[index], x: rawX, y: rawY };
             onPlacementChange?.(updated);
+
+            // 휴지통 hit-test (드래그 중 시각적 하이라이트)
+            if (trashRef.current) {
+                const trashRect = trashRef.current.getBoundingClientRect();
+                const isOver =
+                    moveEvent.clientX >= trashRect.left &&
+                    moveEvent.clientX <= trashRect.right &&
+                    moveEvent.clientY >= trashRect.top &&
+                    moveEvent.clientY <= trashRect.bottom;
+                setDragOverTrash(isOver);
+            }
         };
 
         const handlePointerUp = (upEvent: PointerEvent) => {
             window.removeEventListener("pointermove", handlePointerMove);
             window.removeEventListener("pointerup", handlePointerUp);
 
-            // 스테이지 밖으로 드래그하면 보관함으로 이동
-            if (stageRef.current && onRemoveMinimi) {
-                const stageRect = stageRef.current.getBoundingClientRect();
-                if (upEvent.clientY > stageRect.bottom || upEvent.clientY < stageRect.top
-                    || upEvent.clientX < stageRect.left || upEvent.clientX > stageRect.right) {
+            // 1. 휴지통 위에 놓았으면 보관함으로 이동 (우선)
+            if (trashRef.current && onRemoveMinimi) {
+                const trashRect = trashRef.current.getBoundingClientRect();
+                const isOverTrash =
+                    upEvent.clientX >= trashRect.left &&
+                    upEvent.clientX <= trashRect.right &&
+                    upEvent.clientY >= trashRect.top &&
+                    upEvent.clientY <= trashRect.bottom;
+                if (isOverTrash) {
                     setDraggingIndex(null);
+                    setDragOverTrash(false);
                     dragStartRef.current = null;
                     onRemoveMinimi(index);
                     toast.success("보관함으로 이동했습니다");
@@ -196,7 +214,21 @@ export default function MinihompyStage({
                 }
             }
 
-            // 스테이지 안에 놓으면 clamp 적용하여 위치 보정
+            // 2. 스테이지 밖으로 드래그해도 보관함으로 이동 (자동 반납 유지)
+            if (stageRef.current && onRemoveMinimi) {
+                const stageRect = stageRef.current.getBoundingClientRect();
+                if (upEvent.clientY > stageRect.bottom || upEvent.clientY < stageRect.top
+                    || upEvent.clientX < stageRect.left || upEvent.clientX > stageRect.right) {
+                    setDraggingIndex(null);
+                    setDragOverTrash(false);
+                    dragStartRef.current = null;
+                    onRemoveMinimi(index);
+                    toast.success("보관함으로 이동했습니다");
+                    return;
+                }
+            }
+
+            // 3. 스테이지 안에 놓으면 clamp 적용하여 위치 보정
             if (dragStartRef.current) {
                 const dx = upEvent.clientX - dragStartRef.current.x;
                 const dy = upEvent.clientY - dragStartRef.current.y;
@@ -212,6 +244,7 @@ export default function MinihompyStage({
             }
 
             setDraggingIndex(null);
+            setDragOverTrash(false);
             dragStartRef.current = null;
         };
 
@@ -454,13 +487,25 @@ export default function MinihompyStage({
                 </div>
             )}
 
-            {/* 편집모드: 드래그 드롭존 힌트 (하단) */}
+            {/* 편집모드: 드래그 시 우측 하단에 작은 휴지통 (스테이지 100% 활용)
+                기존 h-14 풀너비 드롭존을 작은 동그라미로 축소.
+                휴지통 위에 놓거나 스테이지 밖으로 드래그하면 보관함 이동. */}
             {editMode && draggingIndex !== null && (
-                <div className="absolute bottom-0 left-0 right-0 h-14 z-40 flex items-center justify-center bg-memorial-500/40 border-t-2 border-dashed border-memorial-400 backdrop-blur-sm">
-                    <div className="flex items-center gap-1.5 text-memorial-800">
-                        <ArrowDown className="w-4 h-4 animate-bounce" />
-                        <span className="text-xs font-medium">여기에 놓으면 보관함으로 이동</span>
-                    </div>
+                <div
+                    ref={trashRef}
+                    className={cn(
+                        "absolute z-40 flex items-center justify-center rounded-full transition-all duration-150 shadow-lg border-2",
+                        "bottom-2 right-2",
+                        dragOverTrash
+                            ? "w-12 h-12 bg-red-500 border-red-300 scale-110"
+                            : "w-9 h-9 bg-memorial-500/85 border-white/60",
+                    )}
+                    aria-label="보관함으로 이동"
+                >
+                    <Trash2 className={cn(
+                        "text-white transition-all",
+                        dragOverTrash ? "w-6 h-6" : "w-4 h-4"
+                    )} />
                 </div>
             )}
 

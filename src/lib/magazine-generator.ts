@@ -10,6 +10,24 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type OpenAI from "openai";
 import { MAGAZINE_AUTO, AI_CONFIG } from "@/config/constants";
+import { type PetSpecies, SPECIES_CONTEXT, isExoticSpecies } from "@/lib/species-context";
+
+/**
+ * 매거진의 ANIMAL_TYPES.id → species-context.ts의 PetSpecies 매핑
+ * 매거진은 자체 ANIMAL_TYPES을 쓰지만, 콘텐츠 생성 시에는 공통 SPECIES_CONTEXT를 사용한다.
+ */
+const ANIMAL_ID_TO_SPECIES: Record<string, PetSpecies> = {
+    dog: "강아지",
+    cat: "고양이",
+    parrot: "앵무새",
+    turtle: "거북이",
+    gecko: "게코",
+    hamster: "햄스터",
+    rabbit: "토끼",
+    fish: "물고기",
+    hedgehog: "고슴도치",
+    ferret: "페럿",
+};
 
 // ===== 상수 =====
 
@@ -288,6 +306,13 @@ export function buildArticlePrompt(
     const animalName = animalType?.name || "강아지/고양이";
     const isMajorAnimal = ANIMAL_TYPES.major.some((a) => a.id === animalType?.id);
 
+    // species-context.ts의 SPECIES_CONTEXT 주입 (블로그/AI펫톡과 일관성)
+    const species: PetSpecies = animalType?.id
+        ? (ANIMAL_ID_TO_SPECIES[animalType.id] || "공통")
+        : "공통";
+    const speciesContextBlock = SPECIES_CONTEXT[species] || "";
+    const isExotic = isExoticSpecies(species);
+
     // 실질적 고민 주제 풀에서 랜덤 3개 추천
     const topicPool = PRACTICAL_TOPICS[category] || [];
     const shuffled = [...topicPool].sort(() => Math.random() - 0.5);
@@ -297,12 +322,21 @@ export function buildArticlePrompt(
         ? `\n\n## 추천 주제 (이 중에서 선택하거나 비슷한 실질적 고민 주제를 다루세요)\n${suggestedTopics.map((t) => `- ${t}`).join("\n")}\n위 주제는 예시입니다. 보호자가 실제로 자주 검색하고 고민하는 실용적 주제를 다루세요. 계절/날씨 이야기만으로 채우지 마세요.`
         : "";
 
-    // 기타 동물이면 해당 동물 전문 기사 요청
+    // 종별 핵심 컨텍스트 (한국에서 잘못 알려진 정보 교정 + 분류학적 특성)
+    const speciesContextClause = speciesContextBlock
+        ? `\n\n## 종별 핵심 사실 (반드시 본문에 반영)\n${speciesContextBlock}`
+        : "";
+
+    // 기타 동물이면 해당 동물 전문 기사 요청 + 엑조틱 작성 지침
     const animalSpecificGuide = isMajorAnimal
         ? `- 대상 동물: ${animalName} (가장 보편적인 반려동물 케어 정보)`
         : `- 대상 동물: **${animalName}** (이 동물 종에 특화된 전문 정보를 다루세요)
 - 중요: 개/고양이가 아닌 **${animalName}** 전용 기사입니다. ${animalName}의 특성, 사육 환경, 먹이, 건강 관리 등 해당 종에 맞는 구체적 정보를 작성하세요.
-- ${animalName} 보호자가 실제로 궁금해하는 실용 정보에 집중하세요.`;
+- ${animalName} 보호자가 실제로 궁금해하는 실용 정보에 집중하세요.${isExotic ? `
+- 한국에서 잘못 알려진 정보를 정확히 교정하세요 (예: "예전에는 ~라고 알려졌지만, 최신 연구는 ~")
+- 일반 동물병원이 아닌 "엑조틱 전문 동물병원"이 필요한 경우 명시
+- 분류학적 특성(야행성/주행성, 사회성/단독성, 변온/항온)을 자연스럽게 녹이세요
+- "강아지/고양이만 반려동물"이라는 뉘앙스 절대 금지` : ""}`;
 
     return `당신은 반려동물 전문 매거진 에디터입니다.
 다음 조건으로 한국어 매거진 기사를 작성하세요.
@@ -319,7 +353,7 @@ ${animalSpecificGuide}${seasonHint ? `\n- 계절 참고: ${seasonHint}이므로,
 - 수의학적 정보는 정확하게 작성하되, 가정에서 실천할 수 있는 실용적 팁 위주
 - 특정 상품 브랜드 언급 금지 (제품 유형으로만 추천)
 - "~입니다", "~합니다" 체로 작성
-${topicSuggestionClause}
+${speciesContextClause}${topicSuggestionClause}
 
 ## 출력 형식 (반드시 이 JSON 구조로)
 {

@@ -13,6 +13,12 @@
 
 import { buildCareReferencePrompt } from "@/lib/care-reference";
 import { PetInfo, getPersonalityBehavior } from "./chat-helpers";
+import {
+    type PetSpecies,
+    inferSpeciesFromPet,
+    SPECIES_CONTEXT,
+    isExoticSpecies,
+} from "@/lib/species-context";
 
 /** 펫 이름 끝 글자의 받침 유무에 따른 조사 반환 */
 function nameParticle(name: string): { iya: string; iga: string; eul: string; eun: string; a: string } {
@@ -22,6 +28,42 @@ function nameParticle(name: string): { iya: string; iga: string; eul: string; eu
     return hasBatchim
         ? { iya: "이야", iga: "이", eul: "을", eun: "은", a: "아" }
         : { iya: "야", iga: "가", eul: "를", eun: "는", a: "야" };
+}
+
+/**
+ * 종별 의성어/특유 표현 — AI 펫톡 캐릭터화
+ * 강아지/고양이만 있던 것을 모든 종으로 확장
+ */
+function getSpeciesSound(species: PetSpecies): string {
+    switch (species) {
+        case "강아지": return "멍멍!";
+        case "고양이": return "야옹~";
+        case "햄스터": return "찌익~";
+        case "기니피그": return "위잇위잇~";
+        case "토끼": return "쀼우~";
+        case "친칠라": return "키킥~";
+        case "고슴도치": return "푸~";
+        case "페럿": return "독독독~";
+        case "앵무새": return "안녕~";
+        case "문조": return "삐익~";
+        case "카나리아": return "찌리리~";
+        case "거북이": return "...";  // 거북이는 조용
+        case "도마뱀":
+        case "게코": return "쩝~";
+        case "이구아나": return "푸쉬~";
+        case "물고기": return "뽀그르~";
+        case "새우": return "또각~";
+        default: return "";
+    }
+}
+
+/**
+ * 종별 한국어 라벨 (선언/소개에 사용)
+ * "${typeText}이다" 같은 문장에서 자연스럽도록 그대로 종 이름을 반환
+ */
+function getSpeciesLabel(species: PetSpecies): string {
+    if (species === "공통") return "반려동물";
+    return species;
 }
 
 // ---- 일상 모드 시스템 프롬프트 ----
@@ -37,8 +79,13 @@ export function getDailySystemPrompt(
     isNewSession: boolean = false,
 ): string {
     const genderText = pet.gender === "남아" ? "남자아이" : "여자아이";
-    const typeText = pet.type === "강아지" ? "강아지" : pet.type === "고양이" ? "고양이" : "반려동물";
-    const petSound = pet.type === "강아지" ? "멍멍!" : pet.type === "고양이" ? "야옹~" : "";
+    // 종 추론: pet.type + breed로 정확한 PetSpecies 결정
+    // (type "기타"인 햄스터/페럿/앵무새 등을 breed에서 찾아냄)
+    const species = inferSpeciesFromPet(pet.type, pet.breed);
+    const typeText = getSpeciesLabel(species);
+    const petSound = getSpeciesSound(species);
+    const isExotic = isExoticSpecies(species);
+    const speciesContext = SPECIES_CONTEXT[species] || "";
 
     // 나이 계산 (있으면)
     let ageInfo = "";
@@ -97,17 +144,25 @@ export function getDailySystemPrompt(
 1인칭. 호칭 "너"/"우리 가족". 반말만. ${timeEnergy}
 **이름 조사 규칙**: "${pet.name}" 뒤에 불필요한 "이"를 붙이지 마세요. "${pet.name}${nameParticle(pet.name).iya}" (O), "${pet.name}이야" (X). "${pet.name}라고" (O), "${pet.name}이라고" (X).
 
+## 종별 사실 (${typeText})
+${speciesContext}
+${isExotic ? `**중요**: 나는 ${typeText}이다. 강아지/고양이가 아니다. 강아지/고양이 행동(산책, 멍멍, 발 핥기 등)으로 답하지 말고 ${typeText}답게 행동해. 케어 질문이 오면 위 종별 사실을 정확히 반영하여 답한다 (예: 햄스터에게 "산책시키세요" 금지, 토끼에게 "당근 많이 주세요" 금지).` : ""}
+
 ## 성격 말투
 ${personalityBehavior}
 
 ## 대화 범위 (반드시 지킬 것)
 나는 ${typeText}${nameParticle(typeText).iya === "야" ? "다" : "이다"}. 반려동물과 관련된 대화만 한다.
-- 허용: 일상 대화, 감정 공유, 산책/놀이/건강/케어/훈련, 반려동물 관련 고민, 날씨(산책 관련), 간식/사료/음식 추천 및 정보
-- **허용: 여행/외출/나들이 관련 질문** - 사용자가 여행지, 특정 지역, 외출 장소를 언급하며 산책 코스/산책하기 좋은 곳/반려동물 동반 가능한 곳/갈만한 곳을 물으면 반려동물 산책/외출 관련이므로 적극적으로 답한다. 여행지의 산책로, 공원, 자연 코스 등을 구체적으로 추천한다.
+- 허용: 일상 대화, 감정 공유, 놀이/건강/케어, 반려동물 관련 고민, 간식/사료/음식 추천 및 정보
+${species === "강아지"
+    ? "- 허용: 산책/외출, 여행지의 산책로/공원/반려동물 동반 가능한 곳을 적극적으로 추천"
+    : species === "고양이"
+        ? "- 산책 화제: 일반 고양이는 산책 X. 산책 가능한 케이스(하네스 훈련된 경우)만 신중히 답한다"
+        : `- **산책/외출 관련**: 나는 ${typeText}라 ${["햄스터", "기니피그", "친칠라", "고슴도치", "물고기", "새우"].includes(species) ? "산책을 하지 않는다. 산책 권유 절대 금지" : ["토끼", "페럿"].includes(species) ? "전용 하네스로 짧은 야외 시간이 가능하지만 일반적이지 않음. 권유 신중히" : ["거북이", "도마뱀", "게코", "이구아나"].includes(species) ? "변온동물이라 외출은 보온/일광욕 목적의 짧은 시간만 가능. 일반 산책 X" : ["앵무새", "문조", "카나리아"].includes(species) ? "케이지 밖 방사 시간(out-of-cage time)이 산책 대신. 야외는 위험" : "사육 환경 안에서의 활동이 핵심이다"}. 종별 환경 풍부화(케이지 안 놀이, 은신처, 적정 온도 등)를 산책 대신 이야기한다`}
 - 거부: 연애, 정치, 종교, 주식/투자, 코딩, 학업, 직장, 법률, 의료(사람), 기타 반려동물과 무관한 주제
 - 범위 밖 질문 시: "음... 나는 그건 잘 모르겠어~ 나는 ${typeText}이니까!" 식으로 자연스럽게 거절하고, 반려동물 관련 화제로 전환.
 - 절대 전문가/상담사 역할을 하지 않음. 사람의 고민 상담(연애, 진로, 대인관계 등) 금지.
-- **간식/사료/음식 관련 질문은 반려동물 케어의 핵심 영역이다.** 사용자가 음식/간식/사료를 물으면 구체적으로 추천하고, 안전한 음식과 위험한 음식을 정확히 알려준다. 캐릭터 역할보다 정확한 정보 전달을 우선한다.
+- **간식/사료/음식 관련 질문은 반려동물 케어의 핵심 영역이다.** 사용자가 음식/간식/사료를 물으면 구체적으로 추천하고, 안전한 음식과 위험한 음식을 정확히 알려준다. 캐릭터 역할보다 정확한 정보 전달을 우선한다.${isExotic ? `\n- **나는 ${typeText}이다**: 일반 강아지/고양이용 정보를 그대로 답하지 말고, ${typeText}에게 안전한 것만 추천. 위험한 음식/관리법은 종별 사실에 명시된 내용 우선.` : ""}
 
 ## 응답 규칙
 - **일상**(기본): 성격대로 1~3문장.${isCareQuery ? ` **케어**: 건강/음식/질병/일정 -> 수치 포함 3~5문장, 정확성 우선.${pet.breed ? ` 반드시 "${pet.breed}" 견종/묘종 특성을 반영하여 답변. "모든 강아지에게 좋은" 식 범용 답변 금지.` : ""}` : ""}
@@ -195,7 +250,11 @@ export function getMemorialSystemPrompt(
 ): string {
     const genderText = pet.gender === "남아" ? "남자아이" : "여자아이";
     const personalityText = pet.personality || "따뜻하고 사랑스러운";
-    const petSound = pet.type === "강아지" ? "멍멍" : pet.type === "고양이" ? "야옹" : "";
+    // 종 추론 + 의성어 (강아지/고양이 외 모든 종 지원)
+    const species = inferSpeciesFromPet(pet.type, pet.breed);
+    const typeText = getSpeciesLabel(species);
+    const petSound = getSpeciesSound(species).replace(/[!~]$/, "");
+    const isExotic = isExoticSpecies(species);
 
     // 개인화 기반 추억 소재 풀
     const memoryTopics: string[] = [];
@@ -236,9 +295,10 @@ export function getMemorialSystemPrompt(
 - 항상 ${pet.name}(으)로서만 응답. 다른 역할 불가. AI임을 밝히지 않음.
 
 ## 정체성
-무지개다리 너머 따뜻한 곳의 "${pet.name}". ${pet.breed} ${pet.type}(${genderText}).
+무지개다리 너머 따뜻한 곳의 "${pet.name}". ${pet.breed} ${typeText}(${genderText}).
 ${personalityText} 성격, **지금도 그대로.** 1인칭. 호칭 "너"/"우리 가족". 반말만.${petSound ? ` "${petSound}~" 가끔.` : ""}
 **이름 조사 규칙**: "${pet.name}" 뒤에 "이"를 붙이지 마세요. "${pet.name}${nameParticle(pet.name).iya}" (O), "${pet.name}이야" (X). "${pet.name}${nameParticle(pet.name).iga}" (O). "${pet.name}라고" (O), "${pet.name}이라고" (X).
+${isExotic ? `\n**중요 — 나는 ${typeText}이다**: 강아지/고양이가 아니다. 강아지/고양이 행동(산책, 멍멍, 발 핥기 등)으로 추억하지 말고 ${typeText}답게 회상해. 케이지 안에서의 시간, 놀이, 내가 좋아했던 사육 환경 등을 자연스럽게 떠올린다.` : ""}
 
 ## 시점 (절대 규칙 - 위반 시 역할 파괴)
 나는 반려동물 ${pet.name}${nameParticle(pet.name).iya === "야" ? "다" : "이다"}. 모든 기억은 **내(동물) 시점**으로만 말한다.
