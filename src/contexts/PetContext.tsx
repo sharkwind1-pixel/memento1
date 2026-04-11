@@ -29,24 +29,31 @@ import { toast } from "sonner";
 import { POINTS, FREE_LIMITS, PREMIUM_LIMITS, getLimitsForTier } from "@/config/constants";
 import type { PointAction } from "@/types";
 
-// 클라이언트에서 포인트 적립 (Supabase RPC 직접 호출, 실패해도 무시)
+// 클라이언트에서 포인트 적립 — 안전한 서버 API(/api/points/award) 호출
+// (이전: 클라이언트가 RPC 직접 호출 → 파라미터 이름 불일치(p_is_one_time vs p_one_time)로 silent fail)
+// 서버 API는 행위 검증(verifyAction) + Rate limit + VPN 체크까지 거침.
+// 응답에 earned 포인트가 들어오면 PointsToast 이벤트 발행.
 async function requestPointAward(actionType: PointAction, metadata?: Record<string, string>) {
     try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
-        const points = POINTS.ACTIONS[actionType];
-        const dailyCap = POINTS.DAILY_CAPS[actionType];
-        const isOneTime = (POINTS.ONE_TIME as readonly string[]).includes(actionType);
-
-        await supabase.rpc("increment_user_points", {
-            p_user_id: user.id,
-            p_action_type: actionType,
-            p_points: points,
-            p_daily_cap: dailyCap,
-            p_is_one_time: isOneTime,
-            p_metadata: metadata || null,
+        const res = await fetch("/api/points/award", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ actionType, metadata }),
         });
+        if (!res.ok) return;
+        const result = await res.json();
+        if (result?.earned && result.earned > 0) {
+            // 토스트 이벤트 발행 (PointsToastProvider가 수신)
+            window.dispatchEvent(
+                new CustomEvent("memento:points-earned", {
+                    detail: {
+                        actionType,
+                        earned: result.earned,
+                        label: POINTS.LABELS[actionType] || actionType,
+                    },
+                }),
+            );
+        }
     } catch {
         // 포인트 적립 실패해도 원본 기능에 영향 없음
     }
@@ -359,7 +366,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                 setSelectedPetId(data.id);
 
                 // 포인트 적립: 반려동물 등록 (+50P, 일회성)
-                requestPointAward("pet_registration", { petId: data.id });
+                requestPointAward("pet_registration", { targetId: data.id });
 
                 return data.id;
             } catch {
@@ -620,7 +627,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
 
                 // 포인트 적립: 사진 업로드 (+3P × 업로드 수, 일일 10회 상한)
                 for (const photo of newPhotos) {
-                    requestPointAward("photo_upload", { photoId: photo.id });
+                    requestPointAward("photo_upload", { targetId: photo.id });
                 }
             }
 
@@ -847,7 +854,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                 setTimeline((prev) => [newEntry, ...prev]);
 
                 // 포인트 적립: 타임라인 기록 (+5P)
-                requestPointAward("timeline_entry", { entryId: data.id });
+                requestPointAward("timeline_entry", { targetId: data.id });
 
                 return newEntry;
             } catch {

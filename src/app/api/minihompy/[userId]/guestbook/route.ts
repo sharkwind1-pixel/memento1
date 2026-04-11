@@ -120,8 +120,17 @@ export async function POST(
         }
 
         // 포인트 적립 (작성자 +3P, 주인 +2P)
-        await awardPoints(supabase, user.id, "write_guestbook");
-        await awardPoints(supabase, userId, "receive_guestbook");
+        let pointAward: { earned: number; actionType: string } | null = null;
+        try {
+            const result = await awardPoints(supabase, user.id, "write_guestbook");
+            if (result.success && result.earned && result.earned > 0) {
+                pointAward = { earned: result.earned, actionType: "write_guestbook" };
+            }
+        } catch {
+            // 무시
+        }
+        // 주인 받기는 fire-and-forget (Realtime으로 전파)
+        awardPoints(supabase, userId, "receive_guestbook").catch(() => {});
 
         // 작성자 닉네임 + 미니미
         const { data: profile } = await supabase
@@ -140,6 +149,7 @@ export async function POST(
                 content: entry.content,
                 createdAt: entry.created_at,
             },
+            pointAward,
         });
     } catch {
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });

@@ -227,11 +227,18 @@ export async function POST(
         }
 
         // 9. 포인트 적립: 댓글 작성 (+3P, 일 50회 상한)
+        // await로 변경 — 응답에 earned 포함하기 위함 (토스트용)
+        let pointAward: { earned: number; actionType: string } | null = null;
         const pointsSb = getPointsSupabase();
         if (pointsSb) {
-            awardPoints(pointsSb, user.id, "write_comment", { postId }).catch((err) => {
+            try {
+                const result = await awardPoints(pointsSb, user.id, "write_comment", { postId });
+                if (result.success && result.earned && result.earned > 0) {
+                    pointAward = { earned: result.earned, actionType: "write_comment" };
+                }
+            } catch (err) {
                 console.error("[comments] 포인트 적립 실패:", err);
-            });
+            }
         }
 
         return NextResponse.json({
@@ -244,6 +251,7 @@ export async function POST(
                 authorAvatar: profile?.avatar_url || null,
                 createdAt: comment.created_at,
             },
+            pointAward,
         });
     } catch (err) {
         console.error("[Comments POST] 서버 오류:", err);

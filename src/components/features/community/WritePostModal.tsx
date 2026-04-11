@@ -201,7 +201,15 @@ export default function WritePostModal({
                 throw new Error(data.error || "게시글 작성 실패");
             }
 
-            // 성공
+            // 성공 — 포인트 토스트 발행 (응답에 pointAward가 있으면)
+            try {
+                const data = await response.clone().json();
+                const { showPointsFromResponse } = await import("@/components/features/points/PointsToastContainer");
+                showPointsFromResponse(data);
+            } catch {
+                // 포인트 표시 실패 무시
+            }
+
             setTitle("");
             setContent("");
             setBadge("");

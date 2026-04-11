@@ -56,6 +56,7 @@ import {
 import { safeSetItem } from "@/lib/safe-storage";
 import NotificationBell from "@/components/features/notifications/NotificationBell";
 import SubscriptionStatusBanner from "@/components/features/subscription/SubscriptionStatusBanner";
+import PointsToastContainer from "@/components/features/points/PointsToastContainer";
 
 // ============================================================================
 // 타입 정의
@@ -568,6 +569,8 @@ function Layout({
             {/* 모바일 하단 네비게이션 - 별도 컴포넌트로 분리 (isMemorialMode 변경이 Layout 본체 리렌더 안 함) */}
             <BottomNav selectedTab={selectedTab} setSelectedTab={setSelectedTab} />
 
+            {/* 전역 포인트 토스트 컨테이너 (window CustomEvent 수신) */}
+            <PointsToastContainer />
         </div>
     );
 }

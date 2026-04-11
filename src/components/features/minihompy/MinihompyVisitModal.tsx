@@ -142,6 +142,11 @@ export default function MinihompyVisitModal({
                 setGuestbookTotal(prev => prev + 1);
                 setGuestbookText("");
                 toast.success("방명록을 남겼습니다");
+                // 포인트 토스트
+                try {
+                    const { showPointsFromResponse } = await import("@/components/features/points/PointsToastContainer");
+                    showPointsFromResponse(result);
+                } catch { /* 무시 */ }
             } else {
                 const err = await res.json();
                 toast.error(err.error || "방명록 작성 실패");

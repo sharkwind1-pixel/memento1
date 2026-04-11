@@ -238,6 +238,14 @@ export default function PostDetailView({
                 createdAt: newComment.createdAt || newComment.created_at || new Date().toISOString(),
             }]);
             setCommentText("");
+
+            // 포인트 토스트 발행 (응답에 pointAward가 있으면)
+            try {
+                const { showPointsFromResponse } = await import("@/components/features/points/PointsToastContainer");
+                showPointsFromResponse(data);
+            } catch {
+                // 무시
+            }
         } catch (err) {
             toast.error(err instanceof Error ? err.message : "댓글 작성에 실패했습니다. 다시 시도해주세요");
         } finally {

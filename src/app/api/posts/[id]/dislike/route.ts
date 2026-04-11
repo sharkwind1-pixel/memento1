@@ -16,6 +16,7 @@ import {
     getVPNBlockResponse
 } from "@/lib/rate-limit";
 import { MODERATION } from "@/config/constants";
+import { awardPoints } from "@/lib/points";
 
 export const dynamic = "force-dynamic";
 
@@ -87,19 +88,9 @@ export async function POST(
             disliked = true;
 
             // 글쓴이 포인트 차감 (-5P, 자기 글 제외는 위에서 이미 검증)
+            // awardPoints 헬퍼 사용 (lib/points.ts) — POINTS.ACTIONS.receive_dislike = -5
             if (postData && postData.user_id !== userId) {
-                try {
-                    await supabase.rpc("increment_user_points", {
-                        p_user_id: postData.user_id,
-                        p_action_type: "receive_dislike",
-                        p_points: -5,
-                        p_daily_cap: null,
-                        p_one_time: false,
-                        p_metadata: { postId },
-                    });
-                } catch {
-                    // 포인트 차감 실패해도 비추천은 정상 처리
-                }
+                await awardPoints(supabase, postData.user_id, "receive_dislike", { postId });
             }
         }
 

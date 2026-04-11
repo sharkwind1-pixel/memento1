@@ -385,8 +385,12 @@ export async function POST(request: NextRequest) {
         }
 
         // 6. 포인트 적립 (게시글 작성 +10P, 실패해도 게시글은 정상 반환)
+        let pointAward: { earned: number; actionType: string } | null = null;
         try {
-            await awardPoints(supabase, user.id, "write_post", { postId: data.id });
+            const result = await awardPoints(supabase, user.id, "write_post", { postId: data.id });
+            if (result.success && result.earned && result.earned > 0) {
+                pointAward = { earned: result.earned, actionType: "write_post" };
+            }
         } catch {
             // 포인트 적립 실패 무시
         }
@@ -404,7 +408,7 @@ export async function POST(request: NextRequest) {
             // AI 모더레이션 초기화 실패 무시
         }
 
-        return NextResponse.json({ post: data, pointsEarned: 10 });
+        return NextResponse.json({ post: data, pointAward });
     } catch {
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });
     }
