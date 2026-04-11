@@ -51,7 +51,6 @@ interface Results {
     deletedPets: number;      // hard delete된 펫 수
     deletedMedia: number;     // hard delete된 사진 수
     errors: string[];
-    debug?: Record<string, unknown>[]; // 디버그용
 }
 
 async function notifySystem(message: string): Promise<void> {
@@ -80,7 +79,6 @@ export async function GET(request: NextRequest) {
         deletedPets: 0,
         deletedMedia: 0,
         errors: [],
-        debug: [],
     };
 
     try {
@@ -95,14 +93,6 @@ export async function GET(request: NextRequest) {
             results.errors.push(`cancelled fetch: ${cdErr.message}`);
         } else {
             for (const p of (cancelledDue || []) as ProfileLifecycle[]) {
-                // 디버그: 각 cancelled 유저의 현재 profile 상태를 결과에 포함
-                results.debug!.push({
-                    fetched_profile_id: p.id,
-                    fetched_subscription_phase: p.subscription_phase,
-                    fetched_protected_pet_id: p.protected_pet_id,
-                    fetched_premium_expires_at: p.premium_expires_at,
-                    fetched_data_reset_at: p.data_reset_at,
-                });
                 try {
                     await transitionToArchived(supabase, p, results);
                     results.toArchived++;
@@ -234,27 +224,8 @@ async function transitionToArchived(
 ): Promise<void> {
     const now = new Date().toISOString();
 
-    const debug: Record<string, unknown> = {
-        profile_id: profile.id,
-        initial_protected_pet_id: profile.protected_pet_id,
-    };
-
     // 1. 대표 펫 결정
     let protectedPetId = profile.protected_pet_id;
-
-    // 전체 pets 리스트를 디버그용으로 수집
-    const { data: allPetsDebug } = await supabase
-        .from("pets")
-        .select("id, name, status, archived_at, created_at")
-        .eq("user_id", profile.id)
-        .order("created_at", { ascending: true });
-    debug.all_pets_count = allPetsDebug?.length ?? 0;
-    debug.all_pets_summary = (allPetsDebug || []).map((p) => ({
-        id: p.id,
-        name: p.name,
-        status: p.status,
-        archived: p.archived_at !== null,
-    }));
 
     if (!protectedPetId) {
         // 미지정 시 가장 오래된 활성 펫 (active 우선, 없으면 memorial)
@@ -272,8 +243,6 @@ async function transitionToArchived(
             throw new Error(`oldestActive fetch: ${oldestActiveErr.message}`);
         }
 
-        debug.oldest_active_raw = oldestActive;
-
         if (oldestActive?.id) {
             protectedPetId = oldestActive.id;
         } else {
@@ -288,24 +257,18 @@ async function transitionToArchived(
             if (oldestAnyErr) {
                 throw new Error(`oldestAny fetch: ${oldestAnyErr.message}`);
             }
-            debug.oldest_any_raw = oldestAny;
             protectedPetId = oldestAny?.id || null;
         }
     }
-    debug.resolved_protected_pet_id = protectedPetId;
-    debug.protected_pet_id_type = typeof protectedPetId;
 
-    // 대표 펫 실존 검증 (FK 위반 예방)
+    // 대표 펫 실존 검증 (FK 위반 예방 + stale data 가드)
     if (protectedPetId) {
         const { data: petExists } = await supabase
             .from("pets")
             .select("id")
             .eq("id", protectedPetId)
             .maybeSingle();
-        debug.protected_pet_exists_check = petExists;
         if (!petExists) {
-            // debug 정보를 results에 먼저 push한 후 throw
-            results.debug!.push({ ...debug, path: "fk_guard_failed" });
             throw new Error(`protected_pet_id ${protectedPetId} does not exist in pets table`);
         }
     }
@@ -325,7 +288,6 @@ async function transitionToArchived(
         if (profUpdErr) {
             throw new Error(`profile update (archived no-pet): ${profUpdErr.message}`);
         }
-        results.debug!.push({ ...debug, path: "no_pet_shortcut" });
         return;
     }
 
@@ -433,8 +395,6 @@ async function transitionToArchived(
     if (notifErr && notifErr.code !== "23505") {
         throw new Error(`archive start notify failed: ${notifErr.message}`);
     }
-
-    results.debug!.push({ ...debug, path: "normal_complete" });
 }
 
 /**

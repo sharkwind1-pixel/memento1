@@ -17,6 +17,15 @@ function getEnv() {
 }
 
 /**
+ * Next.js 14 fetch 자동 캐싱 우회용 커스텀 fetch.
+ * Supabase JS가 내부적으로 사용하는 fetch가 PostgREST 응답을 stale data로
+ * 반환하는 문제 해결. (2026-04-11 E2E 테스트 중 발견)
+ * 참고: https://github.com/orgs/supabase/discussions/19543
+ */
+const noStoreFetch: typeof fetch = (input, init) =>
+    fetch(input, { ...init, cache: "no-store" });
+
+/**
  * API Route Handler용 Supabase 클라이언트 생성
  * Authorization 헤더에서 JWT 토큰을 읽어 인증
  */
@@ -29,6 +38,7 @@ export async function createServerSupabase() {
     const supabase = createClient(url, key, {
         global: {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
+            fetch: noStoreFetch,
         },
     });
 
@@ -44,7 +54,11 @@ export function createAdminSupabase() {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!url || !serviceKey) throw new Error("Supabase Admin 환경변수가 설정되지 않았습니다.");
-    return createClient(url, serviceKey);
+    return createClient(url, serviceKey, {
+        global: {
+            fetch: noStoreFetch,
+        },
+    });
 }
 
 /**
