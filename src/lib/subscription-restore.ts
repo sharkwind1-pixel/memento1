@@ -81,11 +81,12 @@ export async function restoreFromLifecycle(
         const BATCH = 200;
         for (let i = 0; i < petIds.length; i += BATCH) {
             const batch = petIds.slice(i, i + BATCH);
-            const { count } = await supabase
+            const { data: restoredRows } = await supabase
                 .from("pets")
                 .update({ archived_at: null })
-                .in("id", batch);
-            result.restoredPets += count || batch.length;
+                .in("id", batch)
+                .select("id");
+            result.restoredPets += (restoredRows || []).length;
         }
 
         // 4. 복구된 펫들의 archived 사진도 복구
@@ -100,11 +101,12 @@ export async function restoreFromLifecycle(
 
         for (let i = 0; i < mediaIds.length; i += BATCH) {
             const batch = mediaIds.slice(i, i + BATCH);
-            const { count } = await supabase
+            const { data: restoredMediaRows } = await supabase
                 .from("pet_media")
                 .update({ archived_at: null })
-                .in("id", batch);
-            result.restoredMedia += count || batch.length;
+                .in("id", batch)
+                .select("id");
+            result.restoredMedia += (restoredMediaRows || []).length;
         }
     }
 
@@ -133,11 +135,12 @@ export async function restoreFromLifecycle(
         let restoredAdditional = 0;
         for (let i = 0; i < ownerArchivedMediaIds.length; i += BATCH) {
             const batch = ownerArchivedMediaIds.slice(i, i + BATCH);
-            const { count } = await supabase
+            const { data: restoredExtra } = await supabase
                 .from("pet_media")
                 .update({ archived_at: null })
-                .in("id", batch);
-            restoredAdditional += count || batch.length;
+                .in("id", batch)
+                .select("id");
+            restoredAdditional += (restoredExtra || []).length;
         }
         // 위 4단계에서 이미 처리된 것과 중복 가능 — 최종 총합만 사용
         if (restoredAdditional > result.restoredMedia) {
@@ -148,7 +151,7 @@ export async function restoreFromLifecycle(
     // 6. 복구 완료 알림 (라이프사이클이 진행 중이었던 경우만)
     if (result.wasLifecycleActive) {
         const now = new Date().toISOString();
-        await supabase.from("notifications").insert({
+        const { error: notifErr } = await supabase.from("notifications").insert({
             user_id: userId,
             type: "subscription_restored",
             title: "재구독 환영합니다",
@@ -159,6 +162,10 @@ export async function restoreFromLifecycle(
             },
             dedup_key: `sub_restored_${now.slice(0, 10)}_${userId}`,
         });
+        // 23505 = dedup_key 중복은 정상 (같은 날 중복 호출), 그 외는 로그만
+        if (notifErr && notifErr.code !== "23505") {
+            console.error(`[subscription-restore] notification insert failed: ${notifErr.message}`);
+        }
     }
 
     return result;

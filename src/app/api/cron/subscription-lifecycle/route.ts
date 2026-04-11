@@ -299,13 +299,31 @@ async function applyFreeReset(
 
     // 2. 보호 펫 외 모두 archive
     if (protectedPetId) {
-        const { count: petArchCount } = await supabase
+        const { data: archivedPets } = await supabase
             .from("pets")
             .update({ archived_at: now })
             .eq("user_id", profile.id)
             .neq("id", protectedPetId)
-            .is("archived_at", null);
-        results.archivedPets += petArchCount || 0;
+            .is("archived_at", null)
+            .select("id");
+        const archivedPetIds = (archivedPets || []).map((r) => r.id);
+        results.archivedPets += archivedPetIds.length;
+
+        // 2-1. archive된 펫들의 사진도 같이 archive (스토리지 비용 절감)
+        //      재구독 시 pets.archived_at을 null로 되돌릴 때 사진도 같이 복원됨
+        if (archivedPetIds.length > 0) {
+            const BATCH = 200;
+            for (let i = 0; i < archivedPetIds.length; i += BATCH) {
+                const batch = archivedPetIds.slice(i, i + BATCH);
+                const { data: archivedMediaRows } = await supabase
+                    .from("pet_media")
+                    .update({ archived_at: now })
+                    .in("pet_id", batch)
+                    .is("archived_at", null)
+                    .select("id");
+                results.archivedMedia += (archivedMediaRows || []).length;
+            }
+        }
     } else {
         // 보호 펫 자체가 없는 경우 (펫 등록 안 함) — archive 대상 없음
     }
@@ -340,11 +358,12 @@ async function applyFreeReset(
         const BATCH = 200;
         for (let i = 0; i < archiveIds.length; i += BATCH) {
             const batch = archiveIds.slice(i, i + BATCH);
-            const { count: mediaArchCount } = await supabase
+            const { data: archivedRows } = await supabase
                 .from("pet_media")
                 .update({ archived_at: now })
-                .in("id", batch);
-            results.archivedMedia += mediaArchCount || 0;
+                .in("id", batch)
+                .select("id");
+            results.archivedMedia += (archivedRows || []).length;
         }
     }
 
