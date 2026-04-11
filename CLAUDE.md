@@ -150,6 +150,57 @@ if (selectedPet?.status === "memorial") {
 - 모드별 테마 색상 적용
 - 타입 안전성 확보
 
+---
+
+## 🔍 검증 워크플로 (필수 — leceipts 영감)
+
+> 상세 문서: `docs/verification-workflow.md`
+> "AI가 거짓말 못 하게" — 작업 끝마다 강제 검증.
+
+### ❌ 절대 금지 표현 (단독 사용)
+- "고쳤습니다" / "수정 완료" / "정상 작동합니다" / "통과했습니다" / "문제 없습니다" / "에러 없습니다"
+
+이런 표현 단독 사용 시 **거짓말로 간주**. 반드시 다음 형식으로 표현:
+- ✅ "L2 통과 (typecheck + build). L3-5는 미검증"
+- ✅ "코드 변경 완료. 마이그레이션 미실행으로 L3 미달"
+- ✅ "API 작성 완료. 빌드 통과. curl 미실행이라 응답 검증은 사용자 필요"
+
+### 검증 레벨 (작업 완료 시 반드시 명시)
+| 레벨 | 의미 |
+|---|---|
+| L0_미검증 | 코드만 작성 |
+| L1_빌드 | next build 통과 |
+| L2_타입+빌드 | typecheck + build |
+| L3_정적전수 | L2 + lint + import 연결 + DB 스키마 |
+| L4_API응답 | L3 + curl/fetch 응답 확인 |
+| L5_E2E | L4 + 사용자 시각 확인 |
+
+### 작업 끝마다 강제 출력 형식
+```markdown
+## 🔍 Verification Report
+
+### 1. 작업 요약 / 2. Change Map / 3. Automated Checks
+### 4. Manual Verification / 5. Verification Level (Lx)
+### 6. Remaining Risk / 7. Confidence Statement
+```
+
+### 자동 검증 명령어
+- `npm run verify` — 전체 자동 검증 (typecheck + build + lint + db + imports)
+- `npm run verify:db` — DB 스키마만
+- `npm run verify:migrations` — 미실행 마이그레이션 감지
+- `npm run verify:imports` — Import 그래프 분석
+- `/verify` 슬래시 커맨드 — 자동 검증 + 보고서 생성
+
+### 자체 검열 체크리스트 (작업 끝낼 때마다)
+1. "고쳤다"고 했는데 build 안 돌렸나?
+2. "통과했다"고 했는데 어떤 명령어를 어떤 결과로?
+3. "정상 작동"이라 했는데 실제 호출해봤나?
+4. DB 변경 있는데 마이그레이션 실행했나?
+5. UI 변경 있는데 사용자 시각 확인이 필요한 거 아닌가?
+6. import 추가했는데 정말 어디서 쓰이나?
+
+하나라도 NO면 그 항목은 ⚠️ 미검증.
+
 ### DB 변경 작업 완료 기준 (필수)
 - **SQL 파일 작성만으로는 "완료"가 아님**
 - 완료 조건 3가지:

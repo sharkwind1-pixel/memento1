@@ -7,6 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "verify": "npx tsx scripts/verify-all.ts",
+    "verify:fast": "npx tsx scripts/verify-all.ts --skip-build",
+    "verify:db": "npx tsx scripts/verify-db-schema.ts",
+    "verify:migrations": "npx tsx scripts/check-pending-migrations.ts",
+    "verify:imports": "npx tsx scripts/check-import-graph.ts",
     "optimize-images": "node scripts/optimize-images.js",
     "test": "vitest run",
     "test:watch": "vitest"
