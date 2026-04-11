@@ -95,6 +95,14 @@ export async function GET(request: NextRequest) {
             results.errors.push(`cancelled fetch: ${cdErr.message}`);
         } else {
             for (const p of (cancelledDue || []) as ProfileLifecycle[]) {
+                // 디버그: 각 cancelled 유저의 현재 profile 상태를 결과에 포함
+                results.debug!.push({
+                    fetched_profile_id: p.id,
+                    fetched_subscription_phase: p.subscription_phase,
+                    fetched_protected_pet_id: p.protected_pet_id,
+                    fetched_premium_expires_at: p.premium_expires_at,
+                    fetched_data_reset_at: p.data_reset_at,
+                });
                 try {
                     await transitionToArchived(supabase, p, results);
                     results.toArchived++;
