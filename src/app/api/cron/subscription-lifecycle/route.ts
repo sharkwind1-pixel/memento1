@@ -229,7 +229,7 @@ async function transitionToArchived(
 
     if (!protectedPetId) {
         // 미지정 시 가장 오래된 활성 펫 (active 우선, 없으면 memorial)
-        const { data: oldestActive } = await supabase
+        const { data: oldestActive, error: oldestActiveErr } = await supabase
             .from("pets")
             .select("id")
             .eq("user_id", profile.id)
@@ -239,10 +239,14 @@ async function transitionToArchived(
             .limit(1)
             .maybeSingle();
 
+        if (oldestActiveErr) {
+            throw new Error(`oldestActive fetch: ${oldestActiveErr.message}`);
+        }
+
         if (oldestActive?.id) {
             protectedPetId = oldestActive.id;
         } else {
-            const { data: oldestAny } = await supabase
+            const { data: oldestAny, error: oldestAnyErr } = await supabase
                 .from("pets")
                 .select("id")
                 .eq("user_id", profile.id)
@@ -250,19 +254,27 @@ async function transitionToArchived(
                 .order("created_at", { ascending: true })
                 .limit(1)
                 .maybeSingle();
+            if (oldestAnyErr) {
+                throw new Error(`oldestAny fetch: ${oldestAnyErr.message}`);
+            }
             protectedPetId = oldestAny?.id || null;
         }
     }
 
     // 2. 대표 펫 외 archive
+    //    ⚠️ 중요: protectedPetId가 null이면 .neq("id", null)이 모든 행을 매칭시킬 수 있어
+    //    대표 펫까지 archive되는 버그가 있음. 명시적으로 분기.
     if (protectedPetId) {
-        const { data: archivedPets } = await supabase
+        const { data: archivedPets, error: petArchErr } = await supabase
             .from("pets")
             .update({ archived_at: now })
             .eq("user_id", profile.id)
             .neq("id", protectedPetId)
             .is("archived_at", null)
             .select("id");
+        if (petArchErr) {
+            throw new Error(`pets archive: ${petArchErr.message}`);
+        }
         const archivedPetIds = (archivedPets || []).map((r) => r.id);
         results.archivedPets += archivedPetIds.length;
 
@@ -316,7 +328,7 @@ async function transitionToArchived(
     }
 
     // 4. profile 전환: archived + 무료 회원으로
-    await supabase
+    const { error: profUpdErr } = await supabase
         .from("profiles")
         .update({
             subscription_phase: "archived",
@@ -327,6 +339,9 @@ async function transitionToArchived(
             protected_pet_id: protectedPetId,
         })
         .eq("id", profile.id);
+    if (profUpdErr) {
+        throw new Error(`profile update (archived): ${profUpdErr.message}`);
+    }
 
     // 5. 알림
     const daysUntilPurge = profile.data_reset_at
@@ -422,7 +437,7 @@ async function purgeArchivedData(
     results.deletedMedia += petMediaDeleted;
 
     // 5. profile: 일반 무료 회원으로 복귀
-    await supabase
+    const { error: profPurgeErr } = await supabase
         .from("profiles")
         .update({
             subscription_phase: "active",
@@ -432,6 +447,9 @@ async function purgeArchivedData(
             // protected_pet_id는 유지 (대표 펫은 계속 존재)
         })
         .eq("id", profile.id);
+    if (profPurgeErr) {
+        throw new Error(`profile update (purge): ${profPurgeErr.message}`);
+    }
 
     // 6. 완료 알림
     const { error: notifErr } = await supabase.from("notifications").insert({
