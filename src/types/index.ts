@@ -901,13 +901,23 @@ export interface CondolenceMessage {
 // 19. 알림
 // ============================================
 
-/** 알림 타입 */
+/** 알림 타입 — DB CHECK 제약과 동기화 유지 */
 export type NotificationType =
     | "subscription_expiring"
     | "subscription_expired"
     | "payment_failed"
     | "payment_success"
-    | "welcome";
+    | "welcome"
+    | "subscription_hidden_start"
+    | "subscription_countdown"
+    | "subscription_reset_complete"
+    | "subscription_restored"
+    | "subscription_cancelled"
+    | "subscription_archive_started"
+    | "subscription_archive_countdown"
+    | "subscription_archive_complete"
+    | "admin_message"   // 개별/그룹 메시지 (관리자 → 유저)
+    | "admin_notice";   // 전체 공지 (관리자 → 모든 유저)
 
 /** 알림 데이터 */
 export interface AppNotification {
@@ -918,4 +928,5 @@ export interface AppNotification {
     metadata: Record<string, unknown>;
     read_at: string | null;
     created_at: string;
+    sender_id?: string | null;  // 관리자 발송 시 발신자 ID
 }
