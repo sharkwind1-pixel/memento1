@@ -29,6 +29,12 @@ export function getServiceSupabase(): SupabaseClient {
     if (!url || !key) throw new Error("SUPABASE_CONFIG_MISSING");
     return createClient(url, key, {
         auth: { autoRefreshToken: false, persistSession: false },
+        // Next.js 14는 fetch를 기본적으로 캐싱함. Supabase JS 내부 fetch가
+        // PostgREST 응답을 stale data로 반환하는 문제가 발생.
+        // cache: 'no-store' 옵션으로 강제 무효화.
+        global: {
+            fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }),
+        },
     });
 }
 
