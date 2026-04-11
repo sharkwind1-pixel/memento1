@@ -4,7 +4,87 @@
 
 ---
 
-## [2026-04-11] 구독 해지 라이프사이클 전체 구현 + 논리 충돌 3건 수정
+## [2026-04-11] 오후 — 라이프사이클 5→3단계 전면 재설계 + Next.js fetch 캐싱 버그 수정
+
+### 배경
+오전에 구현한 5단계 (active/readonly/hidden/countdown/free) 설계가
+"아무것도 할 수 없는 무료 회원" 처벌 상태 문제 → 3단계로 단순화 재설계.
+
+### 새 설계 (3단계)
+- **active**: 평상시 (유료 또는 무료)
+- **cancelled**: 해지됨, premium_expires_at 전 — **유료 혜택 그대로 유지**, 배너만 표시
+- **archived**: premium_expires_at 경과, 무료 회원 + 초과 데이터 잠금
+  - data_reset_at = premium_expires_at + 40일
+  - 도달 시 archived 데이터 hard delete → active 복귀
+
+핵심 차이: cancelled는 처벌 X (혜택 유지), archived는 일반 무료 회원 경험 + 초과분만 잠금.
+
+### 🔴 핵심 버그 — Next.js 14 fetch 자동 캐싱 (998cecf)
+- **증상**: Supabase JS가 PostgREST 응답을 stale data로 반환
+- **원인**: Next.js 14가 모든 fetch에 자동 캐시 적용 → Supabase JS 내부 fetch도 캐싱됨
+- **해결**: `cron-utils.ts`(`getServiceSupabase`) + `supabase-server.ts` 양쪽에 `cache: "no-store"` 커스텀 fetch 주입
+- **영향**: 17:54 텔레그램 FK 에러는 배포 타이밍 사이의 "유령" 에러 → 998cecf 이후 재발 X
+
+### DB 마이그레이션 재실행
+- subscription_phase CHECK ('active'|'cancelled'|'archived')로 수정
+- data_readonly_until / data_hidden_until 컬럼 DROP
+- notifications type CHECK 4종 추가
+
+### 코드 재작성
+- `types/index.ts`: SubscriptionPhase 3개로 단순화
+- `AuthContext.tsx`: subscriptionCancelledAt 추가, dataReadonlyUntil/dataHiddenUntil 제거
+- `useSubscriptionPhase.ts`: isCancelled / isArchived / isCritical 단순화
+- `subscription-guard.ts`: phase 기반 차단 거의 제거 (tier 기반으로 위임)
+- `subscription-restore.ts`: 컬럼 DROP 반영, count 집계 정확화
+- `cancel/route.ts`: premium_expires_at 유지 + data_reset_at = expiry + 40일
+- `subscription-lifecycle/route.ts`: 3 phase 크론 (cancelled→archived→hard delete)
+- `SubscriptionStatusBanner.tsx`: cancelled/archived 단계별 톤
+- `SubscriptionSection.tsx`: 해지 안내 문구 수정 (premium_expires_at 강조)
+
+### E2E 검증 (Test 1-5 통과)
+- Test 2: cancelled → archived + archive 2마리, 사진 9장
+- Test 3: archived countdown D-5 알림 생성
+- Test 4: archived → active + hard delete 2마리, 사진 9장
+- Test 5: 재구독 복구 archived 펫 2 + 사진 4
+
+### UX 추가
+- **ArchivedPetsSection.tsx**: RecordPage에 "보관 중인 아이들" 잠금 카드 섹션
+- **Resend 이메일 채널** (`src/lib/email.ts`)
+  - sendSubscriptionCancelledEmail (해지 즉시)
+  - sendArchiveCountdownEmail (D-10/D-5/D-1)
+  - RESEND_API_KEY 환경변수 필요 (미설정 시 silent skip)
+
+### 블로그 크론 토픽 편중 수정 (cec42a2)
+- 배열 modulo 순환 → 펫로스 연속 편중 문제
+- 요일 기반 결정론적 선택으로 교체
+- 일요일만 펫로스 (주 1회, 14%), 월~토 정보글 (주 6회, 86%)
+
+### 커밋 (총 14개)
+```
+c3b592c  docs: 블로그 토픽 편중 수정 + FK 유령 에러 진단 기록
+cec42a2  fix: 블로그 크론 토픽 선택 로직 — 펫로스 편중 해소
+9dd9f00  docs: 2026-04-11 오후 세션 기록
+868ff42  feat: 잠금 펫 UI + Resend 이메일 채널
+6d0411a  cleanup: 디버그 코드 제거 + supabase-server에도 no-store 적용
+998cecf  🔴 fix: getServiceSupabase fetch no-store (핵심 버그)
+aa8553c  debug: 전체 pets 리스트 디버그
+210cbb6  debug: cancelled 유저 fetched profile 값 응답 포함
+0fb1726  debug: 디버그 정보 + FK 검증 가드
+60c0efb  fix: 라이프사이클 크론 에러 전파 + protectedPetId null 가드
+391b910  refactor: 구독 해지 라이프사이클 전면 재설계 (5→3단계)
+c6fa390  fix: 라이프사이클/복구 로직 count 집계 + archive 펫 사진 함께 archive
+c0bf580  fix: 라이프사이클 알림 silent fail 수정 (CHECK 제약 확장)
+3ff726b  feat: 구독 해지 라이프사이클 8 Phase 전체 구현 (오전 세션)
+```
+
+### 남은 작업 (다음 세션)
+1. 시각적 회귀 테스트 — RELAY.md에 SQL 시뮬레이션 코드 포함
+2. Vercel `RESEND_API_KEY` 추가 (이메일 활성화 시)
+3. 2026-04-12 아침 블로그 토픽 확인 (월요일 = 정보글 와야 정상)
+
+---
+
+## [2026-04-11] 오전 — 구독 해지 라이프사이클 전체 구현 + 논리 충돌 3건 수정
 
 ### 논리 충돌 3건 수정
 - [x] **차단 유저 AI 펫톡 차단** — `chat-pipeline.ts` profile select에 `is_banned, ban_reason` 추가, true면 403 + 텔레그램 로그
