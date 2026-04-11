@@ -4,6 +4,70 @@
 
 ---
 
+## [2026-04-12] 관리자 메시지/공지 발송 기능
+
+### 배경
+승빈님 요청 — 관리자가 유저들에게 공지/개별 인삿말/정책 안내를 보낼 수 있어야 함.
+기존 notifications 인프라를 재사용하되 새 type(admin_message, admin_notice) 추가.
+
+### 변경 내역
+
+#### 1. DB 마이그레이션 (`supabase/migrations/20260412_admin_messages.sql`)
+- notifications.type CHECK 확장 (admin_message, admin_notice 추가)
+- sender_id UUID 컬럼 (auth.users 참조)
+- idx_notifications_admin_messages 인덱스
+- **미실행** — RELAY.md 최상단에 SQL 본문 포함
+
+#### 2. POST/GET `/api/admin/messages`
+- POST: 발송
+  - recipient: "all" | "premium" | "free" | "memorial" | { userIds: string[] }
+  - 200명씩 배치 INSERT (PostgREST 한도)
+  - 차단 유저(is_banned) 자동 제외
+  - 23505(dedup 중복) 무시
+  - 보안: 이메일 + DB is_admin 이중 검증
+- GET: 발송 이력 (최근 50건, 분 단위로 그룹화)
+
+#### 3. AdminMessagesTab.tsx (신규)
+- 메시지 타입 선택 (개별 안내 / 공지사항)
+- 수신자 그룹 (전체/유료/무료/추모/개별)
+- 개별 발송 시 유저 ID 입력 (쉼표/공백 구분)
+- 제목 100자, 본문 2000자 제한
+- 발송 검토 → 확인 후 발송 (실수 방지)
+- 발송 이력 (수신자/읽음 비율 표시)
+
+#### 4. AdminPage 통합
+- TABS 배열에 메시지 탭 추가 (Megaphone 아이콘)
+- localStorage 검증에 messages 추가
+- 활성 탭 렌더링에 AdminMessagesTab
+
+#### 5. NotificationItem 강화
+- admin_message → 메일 아이콘 + "관리자" 배지
+- admin_notice → 메가폰 아이콘 + "공지" 배지
+- 관리자 메시지는 line-clamp 해제 + whitespace-pre-wrap (전체 본문 표시)
+- 라이프사이클 알림 8종 아이콘 추가 (이전엔 default Bell)
+- 관리자 메시지 미읽음 시 memorial-50 배경 (일반 알림과 구분)
+
+#### 6. types/index.ts NotificationType 확장
+- 5종 → 15종 (subscription 8종 + admin_message + admin_notice 추가)
+- AppNotification.sender_id 필드 추가
+
+### 사용 시나리오
+1. 공지사항: 점검/업데이트/이벤트를 전체 유저에게
+2. 개별 안내: 특정 유저에게 정책 안내, 환불 처리 알림 등
+3. 그룹 메시지: 유료 회원 전용 혜택, 무료 회원 전환 유도
+4. 추모 모드 유저: 펫로스 서포트 안내, 추모 이벤트
+
+### 검증
+- next build 통과 (에러 0건)
+- 커밋: 193e2bb
+- 8 files changed, +812/-8
+
+### 미해결 / 후속
+- **DB 마이그레이션 실행 필수** (미실행 시 발송 실패)
+- 향후 추가 가능: 발송 예약, 푸시 알림 동시 발송, 텔레그램 동시 전파
+
+---
+
 ## [2026-04-12] AI 종별 컨텍스트 전 시스템 일관 적용 + 미니홈피 드롭존 축소
 
 ### 배경
