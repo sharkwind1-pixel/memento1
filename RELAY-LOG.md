@@ -83,9 +83,18 @@
 - 최종 빌드 후 커밋 + 푸시
 
 ### 미해결 / 후속 작업
-- DB 마이그레이션 실행 필요 (Supabase 대시보드)
-- 마이그레이션 후 수동 E2E 테스트
+- ~~DB 마이그레이션 실행 필요~~ → **2026-04-11 실행 완료** (Supabase Dashboard)
+  - 검증 통과: pets.archived_at, pet_media.archived_at, pet_media.is_favorite (3행)
+  - profiles 6컬럼은 다음 세션 시작 시 한 번 더 검증 권장
+- 마이그레이션 후 수동 E2E 테스트 (다음 세션 — 코워크)
 - 이메일 알림 채널 (Resend 또는 SendGrid)
+- 펫 카드 readonly 뱃지 (선택)
+
+### 세션 종료 상태
+- 커밋: 3ff726b (라이프사이클 + 논리 충돌)
+- 푸시: main 완료, Vercel 자동 배포 트리거됨
+- 마이그레이션: Supabase 실행 완료
+- 다음 세션은 코워크에서 수동 테스트부터 시작
 
 ---
 

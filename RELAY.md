@@ -7,14 +7,43 @@
 
 ## 즉시 — 대기 중
 
-### 🔴 미실행 마이그레이션 (Supabase 대시보드에서 실행 필요)
+### ✅ 마이그레이션 실행 완료 (2026-04-11)
 
-- [ ] **`supabase/migrations/20260411_subscription_lifecycle.sql`** — 구독 라이프사이클 컬럼 추가
-  - profiles: subscription_phase, subscription_cancelled_at, data_readonly_until, data_hidden_until, data_reset_at, protected_pet_id
-  - pets.archived_at, pet_media.archived_at + is_favorite
-  - 인덱스 4개
-  - **이거 실행 안 하면 라이프사이클 크론 + 해지 API + 재구독 복구 전부 작동 안 함**
-  - 실행 방법: Supabase Dashboard → SQL Editor → 파일 내용 붙여넣고 Run
+- [x] **`supabase/migrations/20260411_subscription_lifecycle.sql`** — Supabase Dashboard에서 실행 완료
+  - pets.archived_at, pet_media.archived_at, pet_media.is_favorite 검증 통과 (3행)
+  - profiles 6컬럼은 별도 검증 쿼리 결과 미회신 (다음 세션 시작 시 한 번 더 확인 권장)
+
+### 🟡 다음 세션 (코워크) 이어서 할 작업
+
+1. **profiles 컬럼 검증** (10초): 아래 쿼리 한 번 실행
+   ```sql
+   SELECT column_name FROM information_schema.columns
+   WHERE table_name = 'profiles'
+     AND column_name IN ('subscription_phase', 'subscription_cancelled_at',
+       'data_readonly_until', 'data_hidden_until', 'data_reset_at', 'protected_pet_id')
+   ORDER BY column_name;
+   ```
+   6행이면 마이그레이션 완료. 부족하면 `supabase/migrations/20260411_subscription_lifecycle.sql`의 profiles 섹션만 재실행.
+
+2. **수동 E2E 테스트**
+   - 본인 계정으로 SubscriptionSection 해지 → DB에서 `subscription_phase=readonly` 확인
+   - readonly에서 새 펫 등록 시도 → 차단 토스트 확인
+   - readonly에서 active→memorial 변경 → 허용 확인
+   - 라이프사이클 크론 수동 트리거: `curl -H "Authorization: Bearer $CRON_SECRET" https://www.memento-ani.com/api/cron/subscription-lifecycle`
+   - 회귀 가속 테스트: profiles의 `data_reset_at`을 과거로 수동 변경 후 크론 트리거 → archive 동작 확인
+   - 재구독 시 archived 복구 확인
+
+3. **이메일 채널 연동** (Resend 또는 SendGrid)
+   - Supabase Auth는 인증 메일 전용이라 부적합 (이전 추천 잘못)
+   - countdown D-10/D-5/D-1에 이메일 발송 통합
+
+4. **펫 카드 시각적 뱃지** (선택)
+   - readonly 진입 시 펫 카드 우상단 `🔒 읽기 전용` 뱃지 추가
+   - design tokens: memento-700 텍스트 + memento-100 배경
+
+5. **시각적 회귀 테스트**
+   - free 단계 진입 시 대표 펫 외 카드들이 사라지는지 확인
+   - 보관함 진입 UI는 미구현 (필요 시 추가)
 
 ### ✅ 완료 (2026-04-11 세션)
 
