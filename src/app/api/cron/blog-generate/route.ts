@@ -29,7 +29,7 @@ export const maxDuration = 60;
 // ============================================================
 
 interface BlogTopic {
-    category: "반려동물 정보" | "펫로스를 이겨내기";
+    category: "반려동물 정보" | "펫로스를 이겨내기" | "메멘토애니 소식";
     species: PetSpecies;
     topic: string;
     searchQuery: string; // Tavily 검색 쿼리
@@ -198,6 +198,20 @@ const BLOG_TOPICS: BlogTopic[] = [
     { category: "펫로스를 이겨내기", species: "공통", topic: "반려동물 장례 절차 — 화장, 수목장, 자연장 비교", searchQuery: "반려동물 장례 화장 수목장 자연장 비용 절차 장례식장", keywords: ["반려동물장례", "펫장례", "동물장례식장"] },
     { category: "펫로스를 이겨내기", species: "공통", topic: "특수반려동물 펫로스 — 햄스터, 새, 파충류 보호자의 슬픔", searchQuery: "햄스터 새 파충류 펫로스 슬픔 짧은 수명 애도", keywords: ["특수반려동물펫로스", "햄스터펫로스", "엑조틱펫로스"] },
     { category: "펫로스를 이겨내기", species: "공통", topic: "수명이 짧은 반려동물과 함께한 시간의 의미", searchQuery: "수명 짧은 반려동물 햄스터 페럿 시간 의미 애도", keywords: ["짧은수명", "반려동물수명", "함께한시간"] },
+
+    // ============================================================
+    // 메멘토애니 소식 — 서비스 기능 소개 + 활용법
+    // ============================================================
+    { category: "메멘토애니 소식", species: "공통", topic: "반려동물 타임라인 일기 — 매일 한 줄이면 충분한 기록법", searchQuery: "반려동물 일기 기록 앱 타임라인 다이어리 사진 정리", keywords: ["반려동물일기", "반려동물타임라인", "펫다이어리"] },
+    { category: "메멘토애니 소식", species: "공통", topic: "AI 펫톡 — 우리 아이 성격으로 대화하는 AI가 있다면", searchQuery: "반려동물 AI 대화 챗봇 펫 성격 맞춤 인공지능 반려", keywords: ["AI펫톡", "반려동물AI", "펫챗봇"] },
+    { category: "메멘토애니 소식", species: "공통", topic: "반려동물 케어 리마인더 — 예방접종, 병원, 산책을 깜빡하지 않는 법", searchQuery: "반려동물 예방접종 일정 관리 앱 리마인더 병원 알림", keywords: ["반려동물리마인더", "예방접종일정", "펫케어관리"] },
+    { category: "메멘토애니 소식", species: "공통", topic: "반려동물 사진 정리 — 갤러리에 묻힌 만 장을 되살리는 법", searchQuery: "반려동물 사진 정리 앱 추억 앨범 자동 생성 기록", keywords: ["반려동물사진정리", "반려동물앨범", "펫사진관리"] },
+    { category: "메멘토애니 소식", species: "공통", topic: "미니홈피로 우리 아이만의 공간 꾸미기", searchQuery: "반려동물 미니홈피 커스텀 공간 싸이월드 감성 SNS", keywords: ["반려동물미니홈피", "펫꾸미기", "반려동물SNS"] },
+    { category: "메멘토애니 소식", species: "공통", topic: "AI가 만들어주는 추억 앨범 — 한 달의 기록이 작품이 되는 순간", searchQuery: "반려동물 자동 앨범 생성 AI 추억 정리 월간 기록", keywords: ["AI추억앨범", "반려동물앨범자동", "월간기록"] },
+    { category: "메멘토애니 소식", species: "공통", topic: "반려동물 커뮤니티 — 같은 마음을 가진 사람들과 연결되기", searchQuery: "반려동물 커뮤니티 게시판 경험 공유 입양 정보 지역", keywords: ["반려동물커뮤니티", "펫커뮤니티", "반려인모임"] },
+    { category: "메멘토애니 소식", species: "공통", topic: "무지개다리를 건넌 아이를 위한 추모 공간", searchQuery: "반려동물 추모 디지털 메모리얼 무지개다리 기록 보존", keywords: ["반려동물추모", "디지털메모리얼", "무지개다리추모"] },
+    { category: "메멘토애니 소식", species: "공통", topic: "포인트와 등급 시스템 — 기록할수록 성장하는 우리 아이", searchQuery: "반려동물 앱 포인트 등급 게이미피케이션 리텐션", keywords: ["반려동물포인트", "펫앱등급", "게이미피케이션"] },
+    { category: "메멘토애니 소식", species: "공통", topic: "반려동물 기록, 왜 지금 시작해야 할까", searchQuery: "반려동물 기록 중요성 추억 보관 디지털 시대 사진 일기", keywords: ["반려동물기록", "추억보관", "지금시작"] },
 ];
 
 // ============================================================
@@ -339,71 +353,30 @@ export async function GET(request: NextRequest) {
             t => !t.seasonal || t.seasonal.includes(currentMonth)
         );
 
-        // 카테고리별 분리 (다양성 보장)
+        // 3카테고리 균형 로테이션: 정보 → 소식 → 펫로스 → 정보 → 소식 → 펫로스 ...
+        // 매일 카테고리가 바뀌고, 같은 카테고리 안에서는 순환
         const infoTopics = availableTopics.filter(t => t.category === "반려동물 정보");
         const petlossTopics = availableTopics.filter(t => t.category === "펫로스를 이겨내기");
+        const newsTopics = availableTopics.filter(t => t.category === "메멘토애니 소식");
 
-        // 종별 그룹화 — 같은 종이 연속으로 나오지 않도록 종 우선 로테이션
-        const speciesOrder: PetSpecies[] = [
-            "강아지", "고양이",          // 메인 (월~화)
-            "햄스터", "토끼",            // 소형 포유류 (수~목)
-            "앵무새", "게코",            // 새/파충류 (금~토)
-            // 일요일은 펫로스
-        ];
-
-        // 요일 기반 선택:
-        // - 일요일: 펫로스 (주 1회, 14%)
-        // - 월~토: 종 로테이션 — 매일 다른 종 (강/고/햄/토/앵/게)
-        // - 같은 종 안에서는 weeksSinceEpoch로 매주 다른 토픽 순환
-        // - 추가: 격주마다 "보너스" 종 등장 (고슴도치/페럿/친칠라/거북이/물고기/이구아나 등)
-        const kstNow = new Date(Date.now() + 9 * 60 * 60 * 1000);
-        const dayOfWeek = kstNow.getUTCDay(); // 0=일, 1=월, ..., 6=토
         const daysSinceEpoch = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
-        const weeksSinceEpoch = Math.floor(daysSinceEpoch / 7);
+        const categoryIndex = daysSinceEpoch % 3; // 0=정보, 1=소식, 2=펫로스
+        const cycleCount = Math.floor(daysSinceEpoch / 3); // 3일 주기 몇 번째
 
         let selectedTopic: BlogTopic;
 
-        if (dayOfWeek === 0 && petlossTopics.length > 0) {
-            // 일요일: 펫로스 토픽 (주 1개, 매주 순환)
-            selectedTopic = petlossTopics[weeksSinceEpoch % petlossTopics.length];
+        if (categoryIndex === 0 && infoTopics.length > 0) {
+            // 정보글 (반려동물 건강/케어/사료/견종/묘종 등)
+            selectedTopic = infoTopics[cycleCount % infoTopics.length];
+        } else if (categoryIndex === 1 && newsTopics.length > 0) {
+            // 메멘토애니 소식 (기능 소개/활용법/서비스 스토리)
+            selectedTopic = newsTopics[cycleCount % newsTopics.length];
+        } else if (categoryIndex === 2 && petlossTopics.length > 0) {
+            // 펫로스 (극복/추모/장례/재입양)
+            selectedTopic = petlossTopics[cycleCount % petlossTopics.length];
         } else {
-            // 월~토 종 로테이션 (1=월 → 강아지, 2=화 → 고양이, ...)
-            // 격주(weeksSinceEpoch 홀수)에는 "보너스 종"으로 교체
-            const dayIdx = dayOfWeek - 1; // 0~5
-            let primarySpecies = speciesOrder[dayIdx] ?? "강아지";
-
-            // 격주마다 일부 종을 희귀 종으로 치환 (다양성 강화)
-            // 짝수 주차: 메인 6종 그대로
-            // 홀수 주차: 일부 종 → 희귀 종 매핑
-            if (weeksSinceEpoch % 2 === 1) {
-                const bonusMap: Record<string, PetSpecies> = {
-                    "햄스터": "기니피그",
-                    "토끼": "친칠라",
-                    "앵무새": "문조",
-                    "게코": "도마뱀",
-                };
-                if (bonusMap[primarySpecies]) {
-                    primarySpecies = bonusMap[primarySpecies];
-                }
-            }
-
-            // 4주마다 한 번은 더 희귀한 종 (페럿, 고슴도치, 거북이, 이구아나, 물고기, 새우)
-            if (weeksSinceEpoch % 4 === 2 && dayIdx >= 2) {
-                const rareSpecies: PetSpecies[] = [
-                    "고슴도치", "페럿", "거북이", "이구아나", "물고기", "새우", "카나리아",
-                ];
-                primarySpecies = rareSpecies[(dayIdx - 2 + weeksSinceEpoch) % rareSpecies.length];
-            }
-
-            // 해당 종의 토픽 풀에서 매주 다른 토픽 선택
-            const speciesTopics = infoTopics.filter(t => t.species === primarySpecies);
-
-            if (speciesTopics.length > 0) {
-                selectedTopic = speciesTopics[weeksSinceEpoch % speciesTopics.length];
-            } else {
-                // 폴백: 해당 종 토픽이 0개이면 daysSinceEpoch 순환으로 전체 풀에서
-                selectedTopic = infoTopics[daysSinceEpoch % infoTopics.length] || availableTopics[0];
-            }
+            // 폴백: 어떤 카테고리든 비어있으면 전체 풀에서
+            selectedTopic = availableTopics[daysSinceEpoch % availableTopics.length];
         }
 
         // 릴스 대본은 daysSinceEpoch 기반 4일 주기 컨셉 로테이션 유지
