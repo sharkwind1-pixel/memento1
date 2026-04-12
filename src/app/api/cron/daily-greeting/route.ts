@@ -49,6 +49,7 @@ async function callPhase(
                 Authorization: `Bearer ${cronSecret}`,
             },
             signal,
+            cache: "no-store",
         });
 
         if (!res.ok) {
