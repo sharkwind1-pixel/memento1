@@ -14,6 +14,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { authFetch } from "@/lib/auth-fetch";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,7 +84,7 @@ export default function AdminMessagesTab() {
     const loadHistory = useCallback(async () => {
         setLoadingHistory(true);
         try {
-            const res = await fetch("/api/admin/messages");
+            const res = await authFetch("/api/admin/messages");
             const data = await res.json();
             if (res.ok) {
                 setHistory(data.messages || []);
@@ -135,9 +136,8 @@ export default function AdminMessagesTab() {
                 recipient = recipientGroup;
             }
 
-            const res = await fetch("/api/admin/messages", {
+            const res = await authFetch("/api/admin/messages", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     recipient,
                     title: title.trim(),

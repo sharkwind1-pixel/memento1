@@ -24,7 +24,7 @@ export function middleware(request: NextRequest) {
         "media-src 'self' blob: *.supabase.co *.supabase.in *.fal.ai *.fal.media",
         "font-src 'self'",
         "worker-src 'self'",
-        "connect-src 'self' *.supabase.co *.supabase.in api.openai.com apis.data.go.kr dog.ceo api.thecatapi.com *.push.services.mozilla.com fcm.googleapis.com *.fal.ai *.fal.media https://*.iamport.co https://*.iamport.kr https://*.portone.io https://*.kcp.co.kr https://pay.kcp.co.kr https://*.kakao.com",
+        "connect-src 'self' *.supabase.co wss://*.supabase.co *.supabase.in api.openai.com apis.data.go.kr dog.ceo api.thecatapi.com *.push.services.mozilla.com fcm.googleapis.com *.fal.ai *.fal.media https://*.iamport.co https://*.iamport.kr https://*.portone.io https://*.kcp.co.kr https://pay.kcp.co.kr https://*.kakao.com",
         "frame-src 'self' https://*.iamport.co https://*.iamport.kr https://*.portone.io https://*.kcp.co.kr https://pay.kcp.co.kr",
         "object-src 'none'",
         "base-uri 'self'",
