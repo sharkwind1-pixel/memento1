@@ -26,6 +26,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser, createAdminSupabase } from "@/lib/supabase-server";
 import { ADMIN_EMAILS } from "@/config/constants";
+import { setupVapid, sendPushBatch, fetchSubsForUsers, cleanupExpiredSubscriptions } from "@/lib/cron-utils";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -197,12 +198,51 @@ export async function POST(request: NextRequest) {
             inserted += (data || []).length;
         }
 
+        // 5. 웹 푸시 발송 (비동기 — 실패해도 인앱 알림은 이미 전달됨)
+        let pushSent = 0;
+        let pushFailed = 0;
+        try {
+            setupVapid();
+            const subsMap = await fetchSubsForUsers(sb, recipientIds);
+            const pushItems: { sub: { endpoint: string; p256dh: string; auth: string }; payload: { title: string; body: string; icon?: string; url?: string } }[] = [];
+
+            for (const [, subs] of Array.from(subsMap)) {
+                for (const sub of subs) {
+                    pushItems.push({
+                        sub: { endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth },
+                        payload: {
+                            title: type === "admin_notice" ? `[공지] ${title.trim()}` : title.trim(),
+                            body: body.trim().slice(0, 200),
+                            icon: "/logo.png",
+                            url: "/?tab=home",
+                        },
+                    });
+                }
+            }
+
+            if (pushItems.length > 0) {
+                const pushResult = await sendPushBatch(pushItems);
+                pushSent = pushResult.sent;
+                pushFailed = pushResult.failed;
+
+                // 만료된 구독 정리
+                if (pushResult.expiredEndpoints.length > 0) {
+                    await cleanupExpiredSubscriptions(sb, pushResult.expiredEndpoints);
+                }
+            }
+        } catch (pushErr) {
+            // VAPID 미설정 등 — 푸시 실패해도 인앱 알림은 이미 전달됨
+            console.error("[admin/messages] push failed:", pushErr instanceof Error ? pushErr.message : pushErr);
+        }
+
         return NextResponse.json({
             ok: true,
             type,
             recipientCount: recipientIds.length,
             inserted,
             failed,
+            pushSent,
+            pushFailed,
             errors: errors.slice(0, 3),
         });
     } catch (e) {
