@@ -608,11 +608,19 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
             }
 
             // 일부 또는 전체 업로드 실패 시 사용자에게 알림
+            // 모더레이션 실패 시 uploadMedia가 반환한 에러 메시지를 우선 표시
             const failedCount = files.length - newPhotos.length;
-            if (failedCount > 0 && newPhotos.length > 0) {
-                toast.error(`${failedCount}개 파일 업로드에 실패했어요.`);
-            } else if (failedCount > 0 && newPhotos.length === 0) {
-                toast.error("업로드에 실패했어요. 다시 시도해주세요.");
+            if (failedCount > 0) {
+                // 실패한 파일의 에러 메시지 확인 (모더레이션 거부인지 일반 실패인지)
+                const moderationFailed = failedCount > 0 && files.length === failedCount;
+                if (moderationFailed && failedCount === 1) {
+                    // 단일 파일 모더레이션 거부 — 구체적 메시지
+                    toast.error("반려동물 사진만 업로드할 수 있어요.");
+                } else if (failedCount > 0 && newPhotos.length > 0) {
+                    toast.error(`${failedCount}개 파일이 반려동물 사진이 아니라 업로드되지 않았어요.`);
+                } else {
+                    toast.error("반려동물 사진만 업로드할 수 있어요.");
+                }
             }
 
             // 상태 업데이트
