@@ -205,9 +205,16 @@ export default function MinihompyVisitModal({
             <div className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col" onClick={(e) => e.stopPropagation()}>
                 {/* 헤더 */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
-                    <h2 id="visit-title" className="text-lg font-bold text-gray-800 dark:text-white">
-                        {data?.ownerNickname || "..."}의 미니홈피
-                    </h2>
+                    <div>
+                        <h2 id="visit-title" className="text-lg font-bold text-gray-800 dark:text-white">
+                            {data?.ownerNickname || "..."}의 미니홈피
+                        </h2>
+                        {data?.ownerJoinedAt && (
+                            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                                {new Date(data.ownerJoinedAt).getFullYear()}년 {new Date(data.ownerJoinedAt).getMonth() + 1}월 가입
+                            </p>
+                        )}
+                    </div>
                     <button
                         onClick={onClose}
                         className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"

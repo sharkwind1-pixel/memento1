@@ -740,6 +740,7 @@ export interface GuestbookEntry {
 export interface MinihompyViewData {
     settings: MinihompySettings;
     ownerNickname: string;
+    ownerJoinedAt: string | null;
     ownerPetType: string;
     ownerMinimiEquip: MinimiEquipState;
     guestbook: GuestbookEntry[];

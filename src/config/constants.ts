@@ -121,17 +121,25 @@ export const POINTS = {
     /** 일일 상한선 (null = 무제한) */
     DAILY_CAPS: {
         daily_login: 1,
-        write_post: 5,
-        write_comment: 50,
+        write_post: 20,         // 5→20 (활성화 유도)
+        write_comment: null,    // 50→무제한
         receive_like: null,
         receive_dislike: null,
         ai_chat: 10,
         pet_registration: null,
         timeline_entry: 10,
         photo_upload: 10,
-        admin_award: null,  // 관리자 지급은 제한 없음
-        write_guestbook: 30,  // 하루 30캡
+        admin_award: null,
+        write_guestbook: 30,
         receive_guestbook: null,
+    } as const,
+
+    /** 연속 출석 보너스 (DB RPC에서 처리, UI 표시용) */
+    STREAK_BONUS: {
+        3: 5,       // 3일 연속: +5P
+        7: 15,      // 7일 연속: +15P
+        14: 30,     // 14일 연속: +30P
+        30: 100,    // 30일 연속: +100P
     } as const,
 
     /** 일회성 활동 (평생 1회만) */

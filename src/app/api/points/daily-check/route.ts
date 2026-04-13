@@ -51,11 +51,24 @@ export async function POST() {
             return NextResponse.json({ error: "포인트 처리 중 오류가 발생했습니다" }, { status: 500 });
         }
 
+        // 연속 출석 정보 조회
+        const row = Array.isArray(data) ? data[0] : data;
+        let streak = 0;
+        if (row?.success) {
+            const { data: profile } = await supabase
+                .from("profiles")
+                .select("login_streak")
+                .eq("id", user.id)
+                .single();
+            streak = profile?.login_streak ?? 0;
+        }
+
         return NextResponse.json({
-            success: data?.success ?? false,
-            reason: data?.reason,
-            points: data?.points ?? 0,
-            earned: data?.earned ?? 0,
+            success: row?.success ?? false,
+            reason: row?.reason,
+            points: row?.points ?? 0,
+            earned: row?.earned ?? 0,
+            streak,
         });
     } catch {
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });

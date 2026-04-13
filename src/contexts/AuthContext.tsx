@@ -476,7 +476,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             if (data.success && data.earned > 0) {
                 await refreshPoints();
-                toast.success(`출석 체크 완료! +${data.earned}P`);
+                const streakMsg = data.streak > 1 ? ` (${data.streak}일 연속)` : "";
+                toast.success(`출석 체크 완료! +${data.earned}P${streakMsg}`);
             }
         } catch {
             // 출석 체크 실패해도 앱 사용에 영향 없음

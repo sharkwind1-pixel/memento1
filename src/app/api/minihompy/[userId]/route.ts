@@ -70,7 +70,7 @@ export async function GET(
         // 프로필 조회 (닉네임 + 미니미 + 펫타입)
         const { data: profile } = await supabase
             .from("profiles")
-            .select("nickname, equipped_minimi_id, equipped_accessories, minimi_pixel_data, minimi_accessories_data, onboarding_data")
+            .select("nickname, equipped_minimi_id, equipped_accessories, minimi_pixel_data, minimi_accessories_data, onboarding_data, created_at")
             .eq("id", userId)
             .single();
 
@@ -146,6 +146,7 @@ export async function GET(
         return NextResponse.json({
             settings,
             ownerNickname,
+            ownerJoinedAt: profile?.created_at || null,
             ownerPetType,
             ownerMinimiEquip,
             guestbook: formattedGuestbook,
