@@ -78,104 +78,10 @@ const BLOG_TOPICS: BlogTopic[] = [
     { category: "반려동물 정보", species: "고양이", topic: "스코티시폴드 귀 관절 유전 질환의 진실", searchQuery: "스코티시폴드 유전 질환 접힌귀 관절 골연골이형성증", keywords: ["스코티시폴드", "스코티시폴드유전질환", "고양이유전병"] },
 
     // ============================================================
-    // 햄스터 (소형 설치류)
+    // NOTE: 햄스터/토끼/앵무새/파충류/물고기 등 특수반려동물 토픽은
+    // 유저 대부분이 강아지/고양이이므로 제거됨 (2026-04-12).
+    // 유저 수가 늘고 특수반려동물 유저 비율이 의미있어지면 재추가.
     // ============================================================
-    { category: "반려동물 정보", species: "햄스터", topic: "햄스터 케이지 크기 — 시리안과 드워프의 적정 면적", searchQuery: "햄스터 케이지 크기 시리안 드워프 적정 면적 동물복지 영국", keywords: ["햄스터케이지", "햄스터사육", "햄스터복지"] },
-    { category: "반려동물 정보", species: "햄스터", topic: "햄스터 쳇바퀴 크기와 척추 건강의 관계", searchQuery: "햄스터 쳇바퀴 크기 척추 건강 시리안 21cm 드워프 17cm", keywords: ["햄스터쳇바퀴", "햄스터척추", "햄스터운동"] },
-    { category: "반려동물 정보", species: "햄스터", topic: "햄스터 합사가 위험한 이유 — 종별 사회성 차이", searchQuery: "햄스터 합사 위험 시리안 드워프 사회성 단독사육 동물행동학", keywords: ["햄스터합사", "햄스터단독", "햄스터행동"] },
-    { category: "반려동물 정보", species: "햄스터", topic: "햄스터 종양 — 노령 햄스터에서 흔한 이유와 케어", searchQuery: "햄스터 종양 노령 케어 수의사 엑조틱 반려동물 종양", keywords: ["햄스터종양", "햄스터노화", "햄스터수명"] },
-    { category: "반려동물 정보", species: "햄스터", topic: "햄스터 식단 — 씨앗믹스 vs 펠릿 vs 자연식 비교", searchQuery: "햄스터 사료 씨앗믹스 펠릿 자연식 영양 균형 햄스터복지", keywords: ["햄스터사료", "햄스터식단", "햄스터영양"] },
-    { category: "반려동물 정보", species: "햄스터", topic: "햄스터 베딩 선택 — 솔방울 톱밥이 위험한 이유", searchQuery: "햄스터 베딩 톱밥 솔방울 호흡기 안전 종이 베딩", keywords: ["햄스터베딩", "햄스터바닥재", "햄스터호흡기"] },
-    { category: "반려동물 정보", species: "햄스터", topic: "햄스터가 친해지는 신호와 손올림 단계 훈련법", searchQuery: "햄스터 핸들링 친해지기 사회화 훈련 단계 행동", keywords: ["햄스터핸들링", "햄스터친해지기", "햄스터훈련"] },
-
-    // ============================================================
-    // 기니피그
-    // ============================================================
-    { category: "반려동물 정보", species: "기니피그", topic: "기니피그는 왜 한 마리만 키우면 안 될까 — 군집성의 진실", searchQuery: "기니피그 단독사육 금지 군집성 동물복지 스위스 법", keywords: ["기니피그합사", "기니피그군집", "기니피그복지"] },
-    { category: "반려동물 정보", species: "기니피그", topic: "기니피그 비타민C 보충 — 매일 필요한 양과 급여 방법", searchQuery: "기니피그 비타민C 일일 권장량 채소 사료 결핍 괴혈병", keywords: ["기니피그비타민C", "기니피그영양", "기니피그건강"] },
-    { category: "반려동물 정보", species: "기니피그", topic: "기니피그 부정교합 — 원인과 조기 발견법", searchQuery: "기니피그 부정교합 치아 건초 수의사 엑조틱", keywords: ["기니피그부정교합", "기니피그치아", "기니피그건강"] },
-    { category: "반려동물 정보", species: "기니피그", topic: "기니피그 케이지와 방사 환경 만들기", searchQuery: "기니피그 케이지 크기 방사 환경 풍부화 미드웨스트", keywords: ["기니피그케이지", "기니피그사육", "기니피그방사"] },
-
-    // ============================================================
-    // 토끼
-    // ============================================================
-    { category: "반려동물 정보", species: "토끼", topic: "토끼 식단의 80%는 건초 — 한국 보호자가 흔히 하는 오해", searchQuery: "토끼 건초 80퍼센트 식단 펠릿 과다 위정체 동물병원", keywords: ["토끼건초", "토끼식단", "토끼위정체"] },
-    { category: "반려동물 정보", species: "토끼", topic: "토끼 위정체(GI Stasis) — 응급상황 신호와 예방", searchQuery: "토끼 위정체 GI stasis 응급 증상 변비 식욕부진 수의사", keywords: ["토끼위정체", "토끼응급", "토끼소화"] },
-    { category: "반려동물 정보", species: "토끼", topic: "토끼 케이지 사육 vs 방사 사육 — 무엇이 옳을까", searchQuery: "토끼 방사 사육 케이지 동물복지 운동 영국 RSPCA", keywords: ["토끼방사", "토끼케이지", "토끼복지"] },
-    { category: "반려동물 정보", species: "토끼", topic: "토끼 부정교합과 치아 관리 — 평생 자라는 이빨", searchQuery: "토끼 부정교합 이빨 평생 자라 마모 건초 수의사", keywords: ["토끼부정교합", "토끼치아", "토끼건강"] },
-    { category: "반려동물 정보", species: "토끼", topic: "토끼 중성화 — 시기, 비용, 회복 관리", searchQuery: "토끼 중성화 시기 비용 회복 자궁암 예방 수의사", keywords: ["토끼중성화", "토끼자궁암", "토끼수술"] },
-
-    // ============================================================
-    // 고슴도치
-    // ============================================================
-    { category: "반려동물 정보", species: "고슴도치", topic: "고슴도치 적정 온도 — 24~28도가 생명을 가르는 이유", searchQuery: "고슴도치 적정 온도 hibernation 위면 사망 보온 24도", keywords: ["고슴도치온도", "고슴도치보온", "고슴도치사육"] },
-    { category: "반려동물 정보", species: "고슴도치", topic: "고슴도치 식단 — 곤충식과 고품질 사료의 균형", searchQuery: "고슴도치 사료 곤충식 밀웜 단백질 지방 영양 엑조틱", keywords: ["고슴도치사료", "고슴도치식단", "고슴도치영양"] },
-    { category: "반려동물 정보", species: "고슴도치", topic: "WHS(Wobbly Hedgehog Syndrome) — 알아둬야 할 신경 질환", searchQuery: "WHS Wobbly Hedgehog Syndrome 고슴도치 신경 질환 증상 진행", keywords: ["WHS", "고슴도치질병", "고슴도치신경"] },
-    { category: "반려동물 정보", species: "고슴도치", topic: "고슴도치 케이지 환경 — 쳇바퀴와 은신처의 중요성", searchQuery: "고슴도치 케이지 쳇바퀴 은신처 환경 풍부화 사육", keywords: ["고슴도치케이지", "고슴도치환경", "고슴도치쳇바퀴"] },
-
-    // ============================================================
-    // 페럿
-    // ============================================================
-    { category: "반려동물 정보", species: "페럿", topic: "페럿 인슐린종 — 노령 페럿의 가장 흔한 사망 원인", searchQuery: "페럿 인슐린종 증상 진단 치료 노령 췌장 수의사", keywords: ["페럿인슐린종", "페럿노화", "페럿건강"] },
-    { category: "반려동물 정보", species: "페럿", topic: "페럿 식단 — 의무적 육식동물의 영양 요구", searchQuery: "페럿 식단 육식동물 동물성단백질 사료 곡물 금지", keywords: ["페럿식단", "페럿사료", "페럿영양"] },
-    { category: "반려동물 정보", species: "페럿", topic: "페럿 부신질환 — 호르몬 이상의 신호와 치료", searchQuery: "페럿 부신질환 탈모 가려움 호르몬 데슬로렐린 수의사", keywords: ["페럿부신질환", "페럿탈모", "페럿질병"] },
-    { category: "반려동물 정보", species: "페럿", topic: "페럿 방사 시간과 안전 점검 — 페럿 프루핑(ferret proofing)", searchQuery: "페럿 방사 환경 안전 페럿 프루핑 가구 위험요소", keywords: ["페럿방사", "페럿환경", "페럿안전"] },
-    { category: "반려동물 정보", species: "페럿", topic: "페럿 예방접종 — 디스템퍼와 광견병의 필요성", searchQuery: "페럿 예방접종 디스템퍼 광견병 백신 시기 수의사", keywords: ["페럿예방접종", "페럿백신", "페럿건강"] },
-
-    // ============================================================
-    // 친칠라
-    // ============================================================
-    { category: "반려동물 정보", species: "친칠라", topic: "친칠라 사육의 기본 — 25도를 넘지 않는 환경 만들기", searchQuery: "친칠라 적정 온도 열사병 25도 에어컨 안데스 사육", keywords: ["친칠라온도", "친칠라사육", "친칠라열사병"] },
-    { category: "반려동물 정보", species: "친칠라", topic: "친칠라 모래목욕 — 빈도와 모래 종류 선택", searchQuery: "친칠라 모래목욕 빈도 모래 종류 화산모래 곰팡이 예방", keywords: ["친칠라모래목욕", "친칠라케어", "친칠라위생"] },
-    { category: "반려동물 정보", species: "친칠라", topic: "친칠라의 평균 수명과 장기 책임 — 15년의 약속", searchQuery: "친칠라 수명 15년 노화 장기 책임 사육", keywords: ["친칠라수명", "친칠라노화", "친칠라책임"] },
-
-    // ============================================================
-    // 앵무새
-    // ============================================================
-    { category: "반려동물 정보", species: "앵무새", topic: "앵무새 깃털뽑기(Feather Plucking) — 원인과 환경 개선", searchQuery: "앵무새 깃털뽑기 feather plucking 원인 스트레스 환경", keywords: ["앵무새깃털뽑기", "앵무새스트레스", "앵무새행동"] },
-    { category: "반려동물 정보", species: "앵무새", topic: "앵무새가 절대 먹으면 안 되는 음식 (아보카도, 초콜릿)", searchQuery: "앵무새 위험 식품 아보카도 초콜릿 카페인 PTFE 테플론 사망", keywords: ["앵무새위험음식", "앵무새독성", "앵무새식단"] },
-    { category: "반려동물 정보", species: "앵무새", topic: "PTFE(테플론) 가스가 새에게 치명적인 이유", searchQuery: "PTFE 테플론 새 사망 가스 코팅 후라이팬 앵무새", keywords: ["앵무새테플론", "PTFE", "새안전"] },
-    { category: "반려동물 정보", species: "앵무새", topic: "앵무새 사회화와 지능 — 새장 밖 시간의 중요성", searchQuery: "앵무새 지능 사회화 방사 시간 환경 풍부화 인지", keywords: ["앵무새지능", "앵무새사회화", "앵무새훈련"] },
-    { category: "반려동물 정보", species: "앵무새", topic: "코카티엘(왕관앵무) 키우기 — 초보자에게 적합한 이유", searchQuery: "코카티엘 왕관앵무 키우기 성격 초보 반려조", keywords: ["코카티엘", "왕관앵무", "초보반려조"] },
-    { category: "반려동물 정보", species: "앵무새", topic: "회색앵무(아프리칸 그레이)의 인지 능력과 책임", searchQuery: "회색앵무 아프리칸 그레이 지능 인지 수명 50년 책임", keywords: ["회색앵무", "아프리칸그레이", "앵무새지능"] },
-    { category: "반려동물 정보", species: "앵무새", topic: "사이타쿠스병(Psittacosis) — 사람에게 옮을 수 있는 인수공통감염병", searchQuery: "사이타쿠스병 psittacosis 앵무새 인수공통감염병 증상 예방", keywords: ["사이타쿠스병", "앵무새질병", "인수공통"] },
-
-    // ============================================================
-    // 문조 / 카나리아 / 핀치류
-    // ============================================================
-    { category: "반려동물 정보", species: "문조", topic: "문조 사육의 기본 — 사회적 새의 외로움 이해하기", searchQuery: "문조 단독사육 외로움 사회성 행동 사육 환경", keywords: ["문조사육", "문조외로움", "문조사회성"] },
-    { category: "반려동물 정보", species: "문조", topic: "문조 알막힘(Egg Binding) — 응급 상황과 예방", searchQuery: "문조 알막힘 egg binding 응급 칼슘 산란 수의사", keywords: ["문조알막힘", "문조산란", "문조응급"] },
-    { category: "반려동물 정보", species: "카나리아", topic: "카나리아 노래의 비밀 — 수컷만 부르는 이유", searchQuery: "카나리아 노래 수컷 호르몬 광주기 사육", keywords: ["카나리아노래", "카나리아수컷", "카나리아사육"] },
-
-    // ============================================================
-    // 거북이
-    // ============================================================
-    { category: "반려동물 정보", species: "거북이", topic: "거북이 UVB 조명 — 채광이 자외선이 아닌 이유", searchQuery: "거북이 UVB 조명 자외선 채광 유리 차단 MBD 골질환", keywords: ["거북이UVB", "거북이조명", "MBD"] },
-    { category: "반려동물 정보", species: "거북이", topic: "수생/반수생/육생 거북이 — 종별 사육 환경 차이", searchQuery: "수생 반수생 육생 거북이 종별 환경 사육 수온 육지", keywords: ["거북이종류", "거북이사육", "수생거북이"] },
-    { category: "반려동물 정보", species: "거북이", topic: "거북이 대사성 골질환(MBD) — 칼슘과 D3의 균형", searchQuery: "거북이 MBD 대사성 골질환 칼슘 비타민D3 UVB 식단", keywords: ["거북이MBD", "거북이칼슘", "거북이건강"] },
-    { category: "반려동물 정보", species: "거북이", topic: "한국에서 사육 가능한 거북이 종류와 법적 주의점", searchQuery: "한국 사육 가능 거북이 CITES 멸종위기종 법 합법", keywords: ["거북이법", "거북이종류", "CITES"] },
-
-    // ============================================================
-    // 도마뱀 / 게코 / 이구아나
-    // ============================================================
-    { category: "반려동물 정보", species: "게코", topic: "레오파드 게코 사육 가이드 — 초보자에게 가장 적합한 도마뱀", searchQuery: "레오파드 게코 사육 초보 온도 사육장 식단 밀웜", keywords: ["레오파드게코", "게코사육", "초보파충류"] },
-    { category: "반려동물 정보", species: "게코", topic: "크레스티드 게코 — UVB 없이도 키울 수 있을까", searchQuery: "크레스티드 게코 UVB D3 식단 CGD 사육", keywords: ["크레스티드게코", "게코UVB", "CGD"] },
-    { category: "반려동물 정보", species: "게코", topic: "게코 탈피 문제 — 탈피 부전과 환경 습도", searchQuery: "게코 탈피 부전 습도 환경 발가락 탈피촉진", keywords: ["게코탈피", "게코습도", "파충류건강"] },
-    { category: "반려동물 정보", species: "도마뱀", topic: "비어디 드래곤 사육 — 온도구배와 UVB의 핵심", searchQuery: "비어디 드래곤 bearded dragon 사육 온도구배 basking UVB", keywords: ["비어디드래곤", "도마뱀사육", "파충류"] },
-    { category: "반려동물 정보", species: "도마뱀", topic: "파충류 사육의 기본 — 5가지 환경 매개변수", searchQuery: "파충류 사육 온도 습도 UVB 광주기 환경 매개변수", keywords: ["파충류사육", "파충류환경", "파충류기초"] },
-    { category: "반려동물 정보", species: "이구아나", topic: "그린 이구아나 — 초식 식단과 평생 책임의 무게", searchQuery: "그린 이구아나 초식 식단 동물성단백질 신부전 수명 사육", keywords: ["이구아나", "이구아나식단", "이구아나사육"] },
-    { category: "반려동물 정보", species: "이구아나", topic: "한국에서 이구아나가 유기되는 이유와 입양 전 고민", searchQuery: "이구아나 유기 한국 사육 환경 부족 입양 책임", keywords: ["이구아나유기", "이구아나책임", "파충류입양"] },
-
-    // ============================================================
-    // 물고기 / 새우 (관상어)
-    // ============================================================
-    { category: "반려동물 정보", species: "물고기", topic: "어항 사이클링 — 질소 사이클을 이해해야 하는 이유", searchQuery: "어항 사이클링 질소 사이클 박테리아 암모니아 아질산", keywords: ["어항사이클링", "질소사이클", "물고기사육"] },
-    { category: "반려동물 정보", species: "물고기", topic: "베타 사육 가이드 — 한 컵 사육이 학대인 이유", searchQuery: "베타 사육 어항 크기 5리터 단독 환경 풍부화", keywords: ["베타사육", "베타어항", "베타복지"] },
-    { category: "반려동물 정보", species: "물고기", topic: "구피 사육 — 가장 쉽지만 가장 많이 죽는 이유", searchQuery: "구피 사육 사이클링 합사 질병 백점병 초보", keywords: ["구피사육", "구피초보", "구피질병"] },
-    { category: "반려동물 정보", species: "물고기", topic: "디스커스 사육의 어려움 — 수질과 사료 관리", searchQuery: "디스커스 사육 수질 사료 PH 디스커스 비프하트", keywords: ["디스커스", "디스커스사육", "디스커스수질"] },
-    { category: "반려동물 정보", species: "새우", topic: "체리쉬림프 사육 — 가장 쉬운 관상새우의 비밀", searchQuery: "체리쉬림프 사육 수질 PH GH KH 합사 번식", keywords: ["체리쉬림프", "관상새우", "쉬림프사육"] },
-    { category: "반려동물 정보", species: "새우", topic: "관상새우와 구리(Cu) — 약품 한 방울에 전멸하는 이유", searchQuery: "관상새우 구리 사망 약품 백점병 안전한 약 쉬림프", keywords: ["관상새우", "쉬림프구리", "쉬림프약품"] },
-
     // ============================================================
     // 계절 한정 (모든 종 공통)
     // ============================================================
@@ -366,26 +272,8 @@ export async function GET(request: NextRequest) {
         let selectedTopic: BlogTopic;
 
         if (categoryIndex === 0 && infoTopics.length > 0) {
-            // 정보글 — 강아지/고양이 70%, 나머지 종 30% 가중치
-            // 대부분의 유저가 강아지/고양이이므로 메인 종 위주로 발송
-            const mainTopics = infoTopics.filter(t => t.species === "강아지" || t.species === "고양이");
-            const otherTopics = infoTopics.filter(t => t.species !== "강아지" && t.species !== "고양이" && t.species !== "공통");
-            const commonTopics = infoTopics.filter(t => t.species === "공통");
-
-            // 10일 주기: 7일은 메인(강아지/고양이), 2일은 기타 종, 1일은 공통
-            const infoSlot = cycleCount % 10;
-            if (infoSlot < 7 && mainTopics.length > 0) {
-                // 강아지/고양이 (70%)
-                selectedTopic = mainTopics[cycleCount % mainTopics.length];
-            } else if (infoSlot < 9 && otherTopics.length > 0) {
-                // 햄스터/토끼/앵무새/파충류 등 (20%)
-                selectedTopic = otherTopics[cycleCount % otherTopics.length];
-            } else if (commonTopics.length > 0) {
-                // 공통 (10%)
-                selectedTopic = commonTopics[cycleCount % commonTopics.length];
-            } else {
-                selectedTopic = infoTopics[cycleCount % infoTopics.length];
-            }
+            // 정보글 (강아지/고양이/공통만 남음 — 특수반려동물 제거됨)
+            selectedTopic = infoTopics[cycleCount % infoTopics.length];
         } else if (categoryIndex === 1 && newsTopics.length > 0) {
             // 메멘토애니 소식 (기능 소개/활용법/서비스 스토리)
             selectedTopic = newsTopics[cycleCount % newsTopics.length];
