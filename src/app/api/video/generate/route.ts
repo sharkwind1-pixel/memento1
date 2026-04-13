@@ -150,7 +150,36 @@ export async function POST(request: NextRequest) {
             }
             finalPrompt = template.prompt;
         } else if (customPrompt) {
-            finalPrompt = sanitizeInput(customPrompt);
+            // 직접 입력 프롬프트: 영어 번역 + 모션 키워드 보강
+            // Veo는 영문 프롬프트가 품질 훨씬 높음. 한국어 → 영어 변환.
+            try {
+                const openai = new (await import("openai")).default({
+                    apiKey: process.env.OPENAI_API_KEY,
+                });
+                const translateResult = await openai.chat.completions.create({
+                    model: "gpt-4o-mini",
+                    max_tokens: 400,
+                    temperature: 0.3,
+                    messages: [
+                        {
+                            role: "system",
+                            content: `You are a video prompt translator. Convert the user's Korean description into an English video generation prompt.
+Rules:
+- Translate to natural English
+- Add motion keywords: "gentle movement", "slow motion", "breathing", "blinking", "tail wagging" etc.
+- Add quality keywords: "cinematic", "photorealistic", "soft lighting", "shallow depth of field"
+- Add "9:16 vertical" for mobile format
+- Keep under 500 characters
+- Output ONLY the English prompt, nothing else`,
+                        },
+                        { role: "user", content: sanitizeInput(customPrompt) },
+                    ],
+                });
+                finalPrompt = translateResult.choices[0]?.message?.content?.trim() || sanitizeInput(customPrompt);
+            } catch {
+                // 번역 실패 시 원본 그대로
+                finalPrompt = sanitizeInput(customPrompt);
+            }
         }
 
         if (!finalPrompt) {
