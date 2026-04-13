@@ -72,7 +72,10 @@ export default function PetPhotoAlbum({
     const handleDeleteSelected = async () => {
         if (selectedPhotos.length === 0) return;
 
+        toast.dismiss();
         toast(`선택한 ${selectedPhotos.length}개의 항목을 삭제할까요?`, {
+            id: "delete-selected-photos",
+            duration: 10000,
             action: {
                 label: "삭제",
                 onClick: async () => {
@@ -236,7 +239,10 @@ export default function PetPhotoAlbum({
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
+                                            toast.dismiss(); // 기존 토스트 전부 닫기
                                             toast("이 사진을 삭제할까요?", {
+                                                id: `delete-photo-${photo.id}`,
+                                                duration: 10000,
                                                 action: {
                                                     label: "삭제",
                                                     onClick: async () => {
@@ -318,7 +324,10 @@ export default function PetPhotoAlbum({
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
+                                            toast.dismiss(); // 기존 토스트 전부 닫기
                                             toast("이 사진을 삭제할까요?", {
+                                                id: `delete-photo-${photo.id}`,
+                                                duration: 10000,
                                                 action: {
                                                     label: "삭제",
                                                     onClick: async () => {
