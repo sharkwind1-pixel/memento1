@@ -39,6 +39,7 @@ import Sidebar from "@/components/common/Sidebar";
 import SupportModal from "@/components/features/support/SupportModal";
 import LevelBadge from "@/components/features/points/LevelBadge";
 import MagazineBanner from "@/components/features/magazine/MagazineBanner";
+import NotificationBell from "@/components/features/notifications/NotificationBell";
 import {
     Home,
     Users,
@@ -501,6 +502,9 @@ function Layout({
                                     <Moon className="w-5 h-5" />
                                 )}
                             </Button>
+
+                            {/* 알림 벨 - 로그인 유저만 */}
+                            {!loading && user && profileLoaded && <NotificationBell />}
 
                             {/* 모바일 auth 영역 - 별도 컴포넌트로 분리하여 points/minimiEquip 변경이 Layout을 리렌더하지 않음 */}
                             <HeaderAuthArea setSelectedTab={setSelectedTab} />

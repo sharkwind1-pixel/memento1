@@ -63,7 +63,8 @@ export const API = {
     MINIHOMPY_BG_CATALOG: "/api/minihompy/backgrounds",
     MINIHOMPY_BG_PURCHASE: "/api/minihompy/backgrounds/purchase",
 
-    // 푸시 알림
+    // 알림
+    NOTIFICATIONS: "/api/notifications",
     NOTIFICATIONS_SUBSCRIBE: "/api/notifications/subscribe",
 
     // 추억 앨범

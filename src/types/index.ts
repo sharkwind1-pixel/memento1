@@ -877,3 +877,36 @@ export interface CondolenceMessage {
     nickname: string | null;
     createdAt: string;
 }
+
+// ============================================================================
+// 알림 (Notification)
+// ============================================================================
+
+export type NotificationType =
+    | "subscription_expiring"
+    | "subscription_expired"
+    | "payment_failed"
+    | "payment_success"
+    | "welcome"
+    | "subscription_hidden_start"
+    | "subscription_countdown"
+    | "subscription_reset_complete"
+    | "subscription_restored"
+    | "subscription_cancelled"
+    | "subscription_archive_started"
+    | "subscription_archive_countdown"
+    | "subscription_archive_complete"
+    | "admin_message"
+    | "admin_notice";
+
+export interface AppNotification {
+    id: string;
+    userId: string;
+    type: NotificationType;
+    title: string;
+    body: string;
+    metadata: Record<string, unknown> | null;
+    readAt: string | null;
+    createdAt: string;
+    dedupKey: string | null;
+}
