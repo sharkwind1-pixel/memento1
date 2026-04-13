@@ -20,6 +20,7 @@ import ShowcaseGalleryView from "@/components/features/community/ShowcaseGallery
 import VideoGenerateModal from "@/components/features/video/VideoGenerateModal";
 import HotPosts from "@/components/features/community/HotPosts";
 import MinihompyVisitModal from "@/components/features/minihompy/MinihompyVisitModal";
+import UserProfileCard from "@/components/features/community/UserProfileCard";
 import ReportModal from "@/components/modals/ReportModal";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import type { CommunitySubcategory, PostTag, CommunityPageProps } from "@/types";
@@ -128,6 +129,7 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey, i
         setSelectedRegion("all");
     }, [resetKey]);
     const [visitUserId, setVisitUserId] = useState<string | null>(null);
+    const [profileUserId, setProfileUserId] = useState<string | null>(null);
     const sentinelRef = useRef<HTMLDivElement>(null);
     const POSTS_PER_PAGE = 15;
 
@@ -503,7 +505,7 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey, i
                     userId={user?.id}
                     sentinelRef={sentinelRef}
                     onSelectPost={handleSelectPost}
-                    onVisitUser={setVisitUserId}
+                    onVisitUser={setProfileUserId}
                     onReportPost={(post) => setReportTarget({ id: post.id, type: "post", title: post.title })}
                     onBlockUser={handleBlockUser}
                     onWriteClick={handleWriteClick}
@@ -527,6 +529,18 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey, i
                     targetType={reportTarget.type}
                     targetId={reportTarget.id}
                     targetTitle={reportTarget.title}
+                />
+            )}
+
+            {/* 유저 프로필 카드 */}
+            {profileUserId && (
+                <UserProfileCard
+                    userId={profileUserId}
+                    onClose={() => setProfileUserId(null)}
+                    onVisitMinihompy={(uid) => {
+                        setProfileUserId(null);
+                        setVisitUserId(uid);
+                    }}
                 />
             )}
 

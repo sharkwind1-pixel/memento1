@@ -14,6 +14,7 @@ import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
 import ReportModal from "@/components/modals/ReportModal";
 import MinihompyVisitModal from "@/components/features/minihompy/MinihompyVisitModal";
+import UserProfileCard from "./UserProfileCard";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import type { CommunitySubcategory } from "@/types";
 import type { PostData, PostComment } from "./postDetailTypes";
@@ -59,6 +60,7 @@ export default function PostDetailView({
     } | null>(null);
     const commentInputRef = useRef<HTMLTextAreaElement>(null);
     const [visitUserId, setVisitUserId] = useState<string | null>(null);
+    const [profileUserId, setProfileUserId] = useState<string | null>(null);
 
     // 게시글 수정 상태
     const [isEditing, setIsEditing] = useState(false);
@@ -584,7 +586,7 @@ export default function PostDetailView({
                 onSaveEdit={handleSaveEdit}
                 onLike={handleLike}
                 onDislike={handleDislike}
-                onVisitUser={(uid) => setVisitUserId(uid)}
+                onVisitUser={(uid) => setProfileUserId(uid)}
                 onReport={() => setReportTarget({ id: postId, type: "post", title: post?.title || "" })}
             />
 
@@ -599,7 +601,7 @@ export default function PostDetailView({
                 onDeleteComment={handleDeleteComment}
                 onReportComment={(commentId) => setReportTarget({ id: commentId, type: "comment" })}
                 onBlockUser={handleBlockUser}
-                onVisitUser={(uid) => setVisitUserId(uid)}
+                onVisitUser={(uid) => setProfileUserId(uid)}
                 onCommentLike={handleCommentLike}
                 onCommentDislike={handleCommentDislike}
             />
@@ -612,6 +614,18 @@ export default function PostDetailView({
                     targetType={reportTarget.type}
                     targetId={reportTarget.id}
                     targetTitle={reportTarget.title}
+                />
+            )}
+
+            {/* 유저 프로필 카드 */}
+            {profileUserId && (
+                <UserProfileCard
+                    userId={profileUserId}
+                    onClose={() => setProfileUserId(null)}
+                    onVisitMinihompy={(uid) => {
+                        setProfileUserId(null);
+                        setVisitUserId(uid);
+                    }}
                 />
             )}
 
