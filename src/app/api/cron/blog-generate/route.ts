@@ -366,8 +366,26 @@ export async function GET(request: NextRequest) {
         let selectedTopic: BlogTopic;
 
         if (categoryIndex === 0 && infoTopics.length > 0) {
-            // 정보글 (반려동물 건강/케어/사료/견종/묘종 등)
-            selectedTopic = infoTopics[cycleCount % infoTopics.length];
+            // 정보글 — 강아지/고양이 70%, 나머지 종 30% 가중치
+            // 대부분의 유저가 강아지/고양이이므로 메인 종 위주로 발송
+            const mainTopics = infoTopics.filter(t => t.species === "강아지" || t.species === "고양이");
+            const otherTopics = infoTopics.filter(t => t.species !== "강아지" && t.species !== "고양이" && t.species !== "공통");
+            const commonTopics = infoTopics.filter(t => t.species === "공통");
+
+            // 10일 주기: 7일은 메인(강아지/고양이), 2일은 기타 종, 1일은 공통
+            const infoSlot = cycleCount % 10;
+            if (infoSlot < 7 && mainTopics.length > 0) {
+                // 강아지/고양이 (70%)
+                selectedTopic = mainTopics[cycleCount % mainTopics.length];
+            } else if (infoSlot < 9 && otherTopics.length > 0) {
+                // 햄스터/토끼/앵무새/파충류 등 (20%)
+                selectedTopic = otherTopics[cycleCount % otherTopics.length];
+            } else if (commonTopics.length > 0) {
+                // 공통 (10%)
+                selectedTopic = commonTopics[cycleCount % commonTopics.length];
+            } else {
+                selectedTopic = infoTopics[cycleCount % infoTopics.length];
+            }
         } else if (categoryIndex === 1 && newsTopics.length > 0) {
             // 메멘토애니 소식 (기능 소개/활용법/서비스 스토리)
             selectedTopic = newsTopics[cycleCount % newsTopics.length];
