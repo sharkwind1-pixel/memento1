@@ -529,6 +529,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
             }
 
             const newPhotos: PetPhoto[] = [];
+            let moderationRejected = 0; // 모더레이션 거부 카운트
 
             // 단일 파일 업로드 함수
             const uploadSingleFile = async (index: number): Promise<PetPhoto | null> => {
@@ -546,6 +547,12 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
 
                 try {
                     const uploadResult = await uploadMedia(file, user.id, petId);
+
+                    // 모더레이션 거부인지 체크
+                    if (!uploadResult.success && uploadResult.moderated === false) {
+                        moderationRejected++;
+                        return null;
+                    }
 
                     if (uploadResult.success && uploadResult.url) {
                         const { data, error } = await supabase
@@ -608,18 +615,17 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
             }
 
             // 일부 또는 전체 업로드 실패 시 사용자에게 알림
-            // 모더레이션 실패 시 uploadMedia가 반환한 에러 메시지를 우선 표시
             const failedCount = files.length - newPhotos.length;
             if (failedCount > 0) {
-                // 실패한 파일의 에러 메시지 확인 (모더레이션 거부인지 일반 실패인지)
-                const moderationFailed = failedCount > 0 && files.length === failedCount;
-                if (moderationFailed && failedCount === 1) {
-                    // 단일 파일 모더레이션 거부 — 구체적 메시지
+                if (moderationRejected > 0 && moderationRejected === failedCount) {
+                    // 전부 모더레이션 거부
                     toast.error("반려동물 사진만 업로드할 수 있어요.");
-                } else if (failedCount > 0 && newPhotos.length > 0) {
-                    toast.error(`${failedCount}개 파일이 반려동물 사진이 아니라 업로드되지 않았어요.`);
+                } else if (moderationRejected > 0) {
+                    // 일부 모더레이션 거부 + 일부 기타 실패
+                    toast.error(`${moderationRejected}개 파일이 반려동물 사진이 아니라 업로드되지 않았어요.`);
                 } else {
-                    toast.error("반려동물 사진만 업로드할 수 있어요.");
+                    // 모더레이션과 무관한 일반 실패 (네트워크, 용량 초과 등)
+                    toast.error("업로드에 실패했어요. 다시 시도해주세요.");
                 }
             }
 
