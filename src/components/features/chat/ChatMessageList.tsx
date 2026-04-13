@@ -70,8 +70,9 @@ export default function ChatMessageList({
     onReminderDismiss,
 }: ChatMessageListProps) {
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const hasInteracted = useRef(false);
-    const prevMessageCount = useRef(messages.length);
+    const initialLoadDone = useRef(false);
+    const userSentMessage = useRef(false);
+    const prevMessageCount = useRef(0);
 
     // 타이핑 인디케이터 감성 텍스트 순환
     const [typingTextIndex, setTypingTextIndex] = useState(0);
@@ -95,17 +96,33 @@ export default function ChatMessageList({
     }, [isTyping, typingTexts.length]);
 
     useEffect(() => {
-        // 초기 로드 시에는 자동 스크롤하지 않음 (유저가 위에서부터 시작)
-        // 유저가 메시지를 보낸 후(메시지 수 증가)에만 스크롤
-        if (!hasInteracted.current) {
-            if (messages.length > prevMessageCount.current) {
-                hasInteracted.current = true;
+        const currentCount = messages.length;
+        const prevCount = prevMessageCount.current;
+
+        // 1. 초기 로드 (DB에서 기존 대화 불러오기) → 스크롤 안 함
+        //    유저가 위에서부터 차분히 볼 수 있도록
+        if (!initialLoadDone.current) {
+            if (currentCount > 0) {
+                initialLoadDone.current = true;
             }
-            prevMessageCount.current = messages.length;
+            prevMessageCount.current = currentCount;
             return;
         }
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-        prevMessageCount.current = messages.length;
+
+        // 2. 유저가 메시지를 보냄 (messages 수 증가 + 마지막이 user role)
+        if (currentCount > prevCount) {
+            const lastMsg = messages[messages.length - 1];
+            if (lastMsg?.role === "user") {
+                userSentMessage.current = true;
+            }
+        }
+
+        // 3. 유저가 보낸 이후에만 자동 스크롤 (AI 응답/타이핑 포함)
+        if (userSentMessage.current) {
+            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        }
+
+        prevMessageCount.current = currentCount;
     }, [messages, isTyping]);
 
     return (
