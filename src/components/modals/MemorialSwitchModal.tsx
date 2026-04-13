@@ -183,9 +183,12 @@ export default function MemorialSwitchModal({
                                         </p>
                                     </div>
                                 </div>
-                                <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 mb-4">
-                                    <p className="text-center text-gray-600 dark:text-gray-400 text-sm">
-                                        준비가 되셨을 때 진행해 주세요.
+                                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 rounded-xl p-4 mb-4">
+                                    <p className="text-center text-red-600 dark:text-red-400 text-sm font-medium">
+                                        이 전환은 되돌릴 수 없습니다.
+                                    </p>
+                                    <p className="text-center text-red-500/80 dark:text-red-400/70 text-xs mt-1">
+                                        신중하게 결정해 주세요.
                                     </p>
                                 </div>
                                 <div className="flex gap-3">

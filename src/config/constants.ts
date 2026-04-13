@@ -6,6 +6,14 @@
 // ===== 관리자 설정 =====
 export const ADMIN_EMAILS = ["sharkwind1@gmail.com", "ahaadh@hanmail.net"];
 
+/** 추모 모드 → 일상 모드 복구를 허용하는 이메일 (관리자 + 테스트 계정) */
+export const MEMORIAL_RECOVER_EMAILS = [
+    ...ADMIN_EMAILS,
+    "sharkwind1@naver.com",
+    "kinosis.h@gmail.com",
+    "dojin3497@gmail.com",
+];
+
 // ===== 무료/베이직/프리미엄 제한 =====
 export const FREE_LIMITS = {
     PETS: 1,                    // 무료 회원 반려동물 등록 수
