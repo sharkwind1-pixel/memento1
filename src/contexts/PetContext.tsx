@@ -35,9 +35,9 @@ import type { PointAction } from "@/types";
 // 응답에 earned 포인트가 들어오면 PointsToast 이벤트 발행.
 async function requestPointAward(actionType: PointAction, metadata?: Record<string, string>) {
     try {
-        const res = await fetch("/api/points/award", {
+        const { authFetch: af } = await import("@/lib/auth-fetch");
+        const res = await af("/api/points/award", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ actionType, metadata }),
         });
         if (!res.ok) return;
