@@ -5,6 +5,7 @@
 
 import { supabase } from "./supabase";
 import { compressImage } from "./image-compress";
+import { authFetch } from "./auth-fetch";
 
 // 지원하는 미디어 타입
 export type MediaType = "image" | "video";
@@ -13,6 +14,7 @@ export interface UploadResult {
     success: boolean;
     url?: string;
     path?: string;
+    moderated?: boolean; // 이미지 모더레이션 통과 여부
     error?: string;
 }
 
@@ -165,10 +167,33 @@ export async function uploadMedia(
             data: { publicUrl },
         } = supabase.storage.from("pet-media").getPublicUrl(path);
 
+        // 이미지 모더레이션 (반려동물 사진인지 검증)
+        if (mediaType === "image") {
+            try {
+                const modRes = await authFetch("/api/moderation", {
+                    method: "POST",
+                    body: JSON.stringify({ imageUrl: publicUrl }),
+                });
+                const modResult = await modRes.json();
+                if (modResult.allowed === false) {
+                    // 모더레이션 실패 → 업로드된 파일 삭제
+                    await supabase.storage.from("pet-media").remove([data.path]);
+                    return {
+                        success: false,
+                        error: modResult.reason || "반려동물 사진만 업로드할 수 있어요.",
+                        moderated: false,
+                    };
+                }
+            } catch {
+                // 모더레이션 API 실패 시 통과 (fail-open)
+            }
+        }
+
         return {
             success: true,
             url: publicUrl,
             path: data.path,
+            moderated: true,
         };
     } catch {
         return {
@@ -292,10 +317,36 @@ async function uploadImage(
             data: { publicUrl },
         } = supabase.storage.from("pet-media").getPublicUrl(path);
 
+        // 이미지 모더레이션 (반려동물 사진인지 검증)
+        // 매거진/커뮤니티는 검증 안 함 (관리자/일반 글), 펫 관련 경로만
+        const petPaths = ["", "lost-pets"]; // uploadMedia의 기본 경로 + 분실동물
+        const needsModeration = petPaths.includes(pathPrefix) || pathPrefix === "";
+        if (needsModeration) {
+            try {
+                const modRes = await authFetch("/api/moderation", {
+                    method: "POST",
+                    body: JSON.stringify({ imageUrl: publicUrl }),
+                });
+                const modResult = await modRes.json();
+                if (modResult.allowed === false) {
+                    // 모더레이션 실패 → 업로드된 파일 삭제
+                    await supabase.storage.from("pet-media").remove([data.path]);
+                    return {
+                        success: false,
+                        error: modResult.reason || "반려동물 사진만 업로드할 수 있어요.",
+                        moderated: false,
+                    };
+                }
+            } catch {
+                // 모더레이션 API 실패 시 통과 (fail-open)
+            }
+        }
+
         return {
             success: true,
             url: publicUrl,
             path: data.path,
+            moderated: true,
         };
     } catch {
         return { success: false, error: "이미지 업로드 중 오류가 발생했습니다." };

@@ -72,6 +72,16 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // 4-1. 이미지 모더레이션 (반려동물 사진인지 검증)
+        const { moderateImage } = await import("@/lib/image-moderation");
+        const modResult = await moderateImage(sourcePhotoUrl);
+        if (!modResult.allowed) {
+            return NextResponse.json(
+                { error: modResult.reason || "반려동물 사진만 사용할 수 있어요." },
+                { status: 400 }
+            );
+        }
+
         // 5. 서버 사이드 쿼터 검증
         // 5-1. 프리미엄/구독 등급 확인
         const { data: profile } = await supabase
