@@ -314,13 +314,17 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
     ) => {
         if (!selectedPet) return;
         try {
-            await addMedia(
+            const uploaded = await addMedia(
                 selectedPet.id,
                 files,
                 captions,
                 files.map(() => new Date().toISOString().split("T")[0]),
             );
-            toast.success("사진을 올렸어요!");
+            // addMedia 내부에서 이미 실패 토스트를 띄우므로
+            // 여기서는 성공한 사진이 있을 때만 성공 토스트
+            if (uploaded && uploaded.length > 0) {
+                toast.success("사진을 올렸어요!");
+            }
         } catch {
             toast.error("사진을 올리지 못했어요");
         }
