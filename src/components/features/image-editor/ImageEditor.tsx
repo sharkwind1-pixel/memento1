@@ -59,6 +59,7 @@ const ASPECT_RATIOS: { value: CropAspectRatio; label: string }[] = [
     { value: "1:1", label: "1:1" },
     { value: "4:3", label: "4:3" },
     { value: "16:9", label: "16:9" },
+    { value: "9:16", label: "9:16" },
 ];
 
 // ============================================================================
@@ -71,6 +72,14 @@ export default function ImageEditor({
     onCancel,
     initialAspectRatio = "free",
 }: ImageEditorProps) {
+    // 브라우저 뒤로가기(백스페이스/모바일 뒤로)로 에디터 닫기
+    useEffect(() => {
+        window.history.pushState({ modal: "image-editor" }, "");
+        const handlePopState = () => onCancel();
+        window.addEventListener("popstate", handlePopState);
+        return () => window.removeEventListener("popstate", handlePopState);
+    }, [onCancel]);
+
     // 편집 상태
     const [editState, setEditState] = useState<ImageEditState>({
         cropAspectRatio: initialAspectRatio,

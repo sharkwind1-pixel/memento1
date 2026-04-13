@@ -8,7 +8,7 @@
 
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
 
 import { VIDEO_TEMPLATES } from "@/config/videoTemplates";
@@ -56,6 +56,15 @@ export default function VideoResultModal({
     authorName,
 }: VideoResultModalProps) {
     useEscapeClose(isOpen, onClose);
+
+    // 브라우저 뒤로가기(백스페이스/모바일 뒤로)로 모달 닫기
+    useEffect(() => {
+        if (!isOpen) return;
+        window.history.pushState({ modal: "video-result" }, "");
+        const handlePopState = () => onClose();
+        window.addEventListener("popstate", handlePopState);
+        return () => window.removeEventListener("popstate", handlePopState);
+    }, [isOpen, onClose]);
 
     const [isPosting, setIsPosting] = useState(false);
 
