@@ -60,8 +60,11 @@ export default function CropOverlay({
         (region: CropRegion, anchor: "nw" | "ne" | "sw" | "se" | "center"): CropRegion => {
             if (!ratioValue) return region;
 
-            // 컨테이너의 실제 비율 보정
-            const displayRatio = ratioValue * (containerHeight / containerWidth);
+            // 크롭 영역은 0-1 정규화 좌표이므로, 컨테이너 px 비율로 보정 필요
+            // ratioValue: 원하는 비율 (1:1=1, 4:3=1.333, 16:9=1.778)
+            // 크롭 width/height는 컨테이너 상대값이라 컨테이너 비율 보정 필수
+            const containerAspect = containerWidth > 0 ? containerWidth / containerHeight : 1;
+            const displayRatio = ratioValue / containerAspect;
             let { x, y, width, height } = region;
 
             // 높이 기준 비율 보정
