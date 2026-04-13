@@ -267,6 +267,8 @@ export function getAspectRatioValue(
             return 4 / 3;
         case "16:9":
             return 16 / 9;
+        case "9:16":
+            return 9 / 16;
         default:
             return null;
     }

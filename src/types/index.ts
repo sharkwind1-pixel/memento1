@@ -843,7 +843,7 @@ export interface VideoQuota {
 // ============================================
 
 /** 크롭 비율 프리셋 */
-export type CropAspectRatio = "free" | "1:1" | "4:3" | "16:9";
+export type CropAspectRatio = "free" | "1:1" | "4:3" | "16:9" | "9:16";
 
 /** 회전 각도 (시계 방향, 90도 단위) */
 export type RotationAngle = 0 | 90 | 180 | 270;
