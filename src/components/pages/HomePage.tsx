@@ -19,6 +19,7 @@ import {
     MemorialSection,
 } from "@/components/features/home";
 import AnnouncementBanner from "@/components/features/home/AnnouncementBanner";
+import QuestCard from "@/components/features/quests/QuestCard";
 import Lightbox from "@/components/features/home/Lightbox";
 import MemorialDetailModal from "@/components/features/home/MemorialDetailModal";
 import SimpleHomeLauncher from "@/components/features/home/SimpleHomeLauncher";
@@ -136,6 +137,9 @@ function HomePage({ setSelectedTab, isActive, onOpenCommunityPost }: HomePagePro
             <div className="relative z-10 space-y-10 sm:space-y-14 pb-28">
                 {/* 히어로 */}
                 <HeroSection setSelectedTab={setSelectedTab} user={user} isMemorial={isMemorialMode} />
+
+                {/* 온보딩 미션 카드 — 신규 유저 끈끈한 가이드 */}
+                {user && <QuestCard setSelectedTab={(t) => setSelectedTab(t)} />}
 
                 {/* 공지 */}
                 <AnnouncementBanner setSelectedTab={setSelectedTab} />

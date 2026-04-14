@@ -210,6 +210,11 @@ export default function WritePostModal({
                 // 포인트 표시 실패 무시
             }
 
+            // 미션 트리거 (커뮤니티 첫 글)
+            import("@/lib/quest-trigger").then(({ triggerQuest }) => {
+                triggerQuest("first_post");
+            });
+
             setTitle("");
             setContent("");
             setBadge("");

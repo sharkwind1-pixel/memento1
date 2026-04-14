@@ -759,6 +759,11 @@ export function useAIChat({
                 }
             }
 
+            // 미션 트리거 (AI 펫톡 첫 응답 완료 시)
+            import("@/lib/quest-trigger").then(({ triggerQuest }) => {
+                triggerQuest(selectedPet.status === "memorial" ? "memorial_chat" : "first_chat");
+            });
+
             // 일상 모드 + 세션 첫 대화 후 리마인더 안내 (1회만)
             if (!isMemorialMode && !reminderSuggestionShown.current) {
                 reminderSuggestionShown.current = true;

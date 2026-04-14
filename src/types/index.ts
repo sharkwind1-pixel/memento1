@@ -930,3 +930,10 @@ export interface AppNotification {
     created_at: string;
     sender_id?: string | null;  // 관리자 발송 시 발신자 ID
 }
+
+// ============================================================================
+// 온보딩 미션 (Quest)
+// ============================================================================
+
+/** 유저별 미션 완료 시각 맵 */
+export type QuestProgress = Record<string, string>; // { quest_id: ISO timestamp }
