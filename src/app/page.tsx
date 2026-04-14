@@ -617,10 +617,23 @@ function HomeContent() {
                 <>
                     <NicknameSetupModal
                         isOpen={showNicknameSetup}
-                        onComplete={() => {
+                        onComplete={async () => {
                             setShowNicknameSetup(false);
-                            // 닉네임 설정 완료 → 온보딩 시작
-                            if (safeGetItem("memento-ani-onboarding-complete") !== "true") {
+                            // 닉네임 설정 완료 → DB의 실제 온보딩 상태 재확인 후 온보딩 시작
+                            // (localStorage만 의존하면 어드민 리셋 직후 동기화 미스 발생)
+                            try {
+                                const { data } = await supabase
+                                    .from("profiles")
+                                    .select("onboarding_completed_at")
+                                    .eq("id", user.id)
+                                    .single();
+                                if (!data?.onboarding_completed_at) {
+                                    safeRemoveItem("memento-ani-onboarding-complete");
+                                    onboardingTriggeredRef.current = true;
+                                    setShowOnboarding(true);
+                                }
+                            } catch {
+                                // 조회 실패 시 안전하게 온보딩 띄움
                                 onboardingTriggeredRef.current = true;
                                 setShowOnboarding(true);
                             }
