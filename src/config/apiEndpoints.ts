@@ -42,6 +42,9 @@ export const API = {
     POINTS_AWARD: "/api/points/award",
     POINTS_SHOP: "/api/points/shop",
 
+    // 온보딩 미션
+    QUESTS: "/api/quests",
+
     // 리마인더
     REMINDERS: "/api/reminders",
     REMINDER_DETAIL: (id: string) => `/api/reminders/${id}`,

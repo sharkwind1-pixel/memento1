@@ -368,6 +368,11 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                 // 포인트 적립: 반려동물 등록 (+50P, 일회성)
                 requestPointAward("pet_registration", { targetId: data.id });
 
+                // 미션 트리거 (펫 상태에 따라 분기)
+                import("@/lib/quest-trigger").then(({ triggerQuest }) => {
+                    triggerQuest(newPet.status === "memorial" ? "memorial_register" : "register_pet");
+                });
+
                 return data.id;
             } catch {
                 toast.error("등록에 실패했어요. 다시 시도해주세요.");
@@ -643,6 +648,11 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                 for (const photo of newPhotos) {
                     requestPointAward("photo_upload", { targetId: photo.id });
                 }
+
+                // 미션 트리거 (사진 1장이라도 업로드 성공 시)
+                import("@/lib/quest-trigger").then(({ triggerQuest }) => {
+                    triggerQuest("upload_photo");
+                });
             }
 
             return newPhotos;
@@ -869,6 +879,12 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
 
                 // 포인트 적립: 타임라인 기록 (+5P)
                 requestPointAward("timeline_entry", { targetId: data.id });
+
+                // 미션 트리거 (첫 타임라인 / 추모 메시지)
+                const targetPet = petsRef.current.find((p) => p.id === petId);
+                import("@/lib/quest-trigger").then(({ triggerQuest }) => {
+                    triggerQuest(targetPet?.status === "memorial" ? "memorial_message" : "first_timeline");
+                });
 
                 return newEntry;
             } catch {
