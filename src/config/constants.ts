@@ -6,6 +6,17 @@
 // ===== 관리자 설정 =====
 export const ADMIN_EMAILS = ["sharkwind1@gmail.com", "ahaadh@hanmail.net"];
 
+/**
+ * 신뢰 계정 — 관리자 + 테스트 계정
+ * 다중 계정 탐지(multi-account-alert) 화이트리스트 용도
+ */
+export const TRUSTED_EMAILS = [
+    ...ADMIN_EMAILS,
+    "sharkwind1@naver.com",
+    "kinosis.h@gmail.com",
+    "dojin3497@gmail.com",
+];
+
 // ===== 무료/베이직/프리미엄 제한 =====
 export const FREE_LIMITS = {
     PETS: 1,                    // 무료 회원 반려동물 등록 수
