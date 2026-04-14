@@ -799,7 +799,7 @@ export interface VideoGeneration {
 }
 
 /** 영상 템플릿 카테고리 */
-export type VideoTemplateCategory = "fun" | "memorial" | "transform";
+export type VideoTemplateCategory = "fun" | "memorial" | "transform" | "fantasy";
 
 /** 영상 생성 템플릿 */
 export interface VideoTemplate {

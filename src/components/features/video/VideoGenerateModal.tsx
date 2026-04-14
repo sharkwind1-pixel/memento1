@@ -30,6 +30,21 @@ import {
     CloudRain,
     Cloud,
     Sunset,
+    Coffee,
+    Building,
+    Droplet,
+    Flame,
+    Car,
+    Home,
+    Trees,
+    Sparkles,
+    Mountain,
+    CloudFog,
+    Bed,
+    Search,
+    Rocket,
+    Camera,
+    Lamp,
 } from "lucide-react";
 import { toast } from "sonner";
 import { authFetch } from "@/lib/auth-fetch";
@@ -58,6 +73,21 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
     CloudRain,
     Cloud,
     Sunset,
+    Coffee,
+    Building,
+    Droplet,
+    Flame,
+    Car,
+    Home,
+    Trees,
+    Sparkles,
+    Mountain,
+    CloudFog,
+    Bed,
+    Search,
+    Rocket,
+    Camera,
+    Lamp,
 };
 
 // ============================================
@@ -75,6 +105,10 @@ const CATEGORY_BADGE: Record<string, { label: string; className: string }> = {
     transform: {
         label: "변신",
         className: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
+    },
+    fantasy: {
+        label: "판타지",
+        className: "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300",
     },
 };
 
@@ -441,8 +475,8 @@ export default function VideoGenerateModal({
             <div className="grid grid-cols-2 gap-3 mb-4">
                 {VIDEO_TEMPLATES.filter((t) =>
                     pet.status === "memorial"
-                        ? t.category === "memorial" || t.category === "transform"
-                        : t.category === "fun" || t.category === "transform"
+                        ? t.category === "memorial" || t.category === "transform" || t.category === "fantasy"
+                        : t.category === "fun" || t.category === "transform" || t.category === "fantasy"
                 ).map((template) => {
                     const IconComponent = ICON_MAP[template.icon];
                     const badge = CATEGORY_BADGE[template.category];
