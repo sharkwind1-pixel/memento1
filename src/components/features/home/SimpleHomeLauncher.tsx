@@ -20,6 +20,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useMemorialMode } from "@/contexts/PetContext";
 import { TabType, CommunitySubcategory } from "@/types";
 import { safeSetItem } from "@/lib/safe-storage";
+import QuestCard from "@/components/features/quests/QuestCard";
 
 interface SimpleHomeLauncherProps {
     setSelectedTab: (tab: TabType) => void;
@@ -140,8 +141,13 @@ export default function SimpleHomeLauncher({ setSelectedTab, onSubcategoryChange
                     </div>
                 </div>
 
+                {/* 온보딩 미션 카드 — 신규 유저 가이드 */}
+                <div className="max-w-lg mx-auto -mx-4">
+                    <QuestCard setSelectedTab={setSelectedTab} />
+                </div>
+
                 {/* 카드 그리드 */}
-                <div className="grid grid-cols-2 gap-3 max-w-lg mx-auto">
+                <div className="grid grid-cols-2 gap-3 max-w-lg mx-auto mt-4">
                     {LAUNCHER_ITEMS.map((item) => {
                         const Icon = item.icon;
                         return (
