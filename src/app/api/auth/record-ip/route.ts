@@ -17,7 +17,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getAuthUser } from "@/lib/supabase-server";
 import { getClientIP } from "@/lib/rate-limit";
-import { ADMIN_EMAILS } from "@/config/constants";
+import { ADMIN_EMAILS, TRUSTED_EMAILS } from "@/config/constants";
 
 function getServiceSupabase() {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -89,6 +89,8 @@ export async function POST(request: NextRequest) {
 
         // 관리자 여부 확인
         const isCurrentUserAdmin = allEmails.some(e => ADMIN_EMAILS.includes(e));
+        // 신뢰 계정 여부 (관리자 + 테스트 계정) — 다중 계정 알림에서 제외
+        const isCurrentUserTrusted = allEmails.some(e => TRUSTED_EMAILS.includes(e));
 
         // IP 기록 + 핑거프린트 저장
         if (clientIP !== "unknown") {
@@ -112,7 +114,8 @@ export async function POST(request: NextRequest) {
 
         // 디바이스 핑거프린트 기반 다중 계정 탐지 (IP 차단 대체)
         // 같은 디바이스에서 3개 이상 계정이면 경고 (차단은 아직 안 함, 텔레그램 알림만)
-        if (deviceFingerprint) {
+        // 신뢰 계정(관리자/테스트)은 제외
+        if (deviceFingerprint && !isCurrentUserTrusted) {
             try {
                 const { data: sameDevice } = await supabase
                     .from("profiles")
@@ -120,12 +123,17 @@ export async function POST(request: NextRequest) {
                     .eq("device_fingerprint", deviceFingerprint)
                     .neq("id", user.id);
 
-                if (sameDevice && sameDevice.length >= 2) {
-                    // 같은 디바이스에서 3개 이상 계정 → 텔레그램 경고
+                // 신뢰 계정은 카운트에서 제외 (관리자/QA 본인이 테스트 중인 경우)
+                const untrustedSameDevice = (sameDevice || []).filter(
+                    p => !p.email || !TRUSTED_EMAILS.includes(p.email)
+                );
+
+                if (untrustedSameDevice.length >= 2) {
+                    // 같은 디바이스에서 3개 이상 비신뢰 계정 → 텔레그램 경고
                     import("@/lib/telegram").then(({ notifyError }) =>
                         notifyError({
                             endpoint: "multi-account-alert",
-                            error: `같은 디바이스에서 ${sameDevice.length + 1}개 계정 감지. user=${user.id}, email=${userEmail}, 기존계정=${sameDevice.map(p => p.email).join(",")}`,
+                            error: `같은 디바이스에서 ${untrustedSameDevice.length + 1}개 계정 감지. user=${user.id}, email=${userEmail}, 기존계정=${untrustedSameDevice.map(p => p.email).join(",")}`,
                         })
                     ).catch(() => {});
                 }

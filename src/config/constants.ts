@@ -6,13 +6,22 @@
 // ===== 관리자 설정 =====
 export const ADMIN_EMAILS = ["sharkwind1@gmail.com", "ahaadh@hanmail.net"];
 
-/** 추모 모드 → 일상 모드 복구를 허용하는 이메일 (관리자 + 테스트 계정) */
-export const MEMORIAL_RECOVER_EMAILS = [
+/**
+ * 신뢰 계정 — 관리자 + 테스트 계정
+ * 용도:
+ *  1) 추모 모드 → 일상 모드 복구
+ *  2) 다중 계정 탐지 (multi-account-alert) 화이트리스트
+ *  3) 기타 관리자/QA 예외 처리
+ */
+export const TRUSTED_EMAILS = [
     ...ADMIN_EMAILS,
     "sharkwind1@naver.com",
     "kinosis.h@gmail.com",
     "dojin3497@gmail.com",
 ];
+
+/** @deprecated TRUSTED_EMAILS 사용 */
+export const MEMORIAL_RECOVER_EMAILS = TRUSTED_EMAILS;
 
 // ===== 무료/베이직/프리미엄 제한 =====
 export const FREE_LIMITS = {
