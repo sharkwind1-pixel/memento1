@@ -204,7 +204,7 @@ export default function AdminUsersTab({
         setConfirmState({
             isOpen: true,
             title: "온보딩 리셋",
-            message: `${userEmail}의 온보딩을 리셋하시겠습니까?\n\n초기화 항목:\n- 튜토리얼 완료 상태\n- 온보딩 완료 상태\n- 사용자 유형`,
+            message: `${userEmail}의 온보딩을 리셋하시겠습니까?\n\n초기화 항목:\n- 튜토리얼 완료 상태\n- 온보딩 완료 상태\n- 사용자 유형\n- 미션 진행 상태`,
             confirmText: "리셋",
             destructive: true,
             onConfirm: () => executeResetOnboarding(userId, userEmail),
@@ -222,6 +222,7 @@ export default function AdminUsersTab({
                         onboarding_completed_at: null,
                         user_type: null,
                         onboarding_data: null,
+                        onboarding_quests: {},
                     },
                 }),
             });
