@@ -257,7 +257,7 @@ export default async function RootLayout({
                 <CookieConsentBanner />
 
                 {/* 푸터 - 사업자 정보 + 법적 링크 (사용자 노출) + SEO 정보 (크롤러 전용) */}
-                <footer className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-xs text-gray-500 dark:text-gray-400 py-6 px-4 xl:ml-[420px]">
+                <footer className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-xs text-gray-500 dark:text-gray-400 py-6 px-4 pb-[calc(env(safe-area-inset-bottom)+90px)] xl:pb-6 xl:ml-[420px]">
                     <div className="max-w-4xl mx-auto space-y-4">
                         {/* 크롤러 전용 SEO 텍스트 (시각적으로 숨김) */}
                         <div className="sr-only">
