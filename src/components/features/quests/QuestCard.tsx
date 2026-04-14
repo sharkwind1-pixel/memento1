@@ -11,10 +11,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CheckCircle2, ArrowRight, X, Sparkles } from "lucide-react";
+import { CheckCircle2, ArrowRight, X, Sparkles, FlaskConical } from "lucide-react";
 import { useMemorialMode } from "@/contexts/PetContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useQuests } from "./useQuests";
 import { TabType } from "@/types";
+import { TRUSTED_EMAILS, QuestId } from "@/config/constants";
 import { safeGetItem, safeSetItem } from "@/lib/safe-storage";
 
 interface QuestCardProps {
@@ -24,10 +26,17 @@ interface QuestCardProps {
 const HIDE_KEY = "memento-quest-card-hidden";
 
 export default function QuestCard({ setSelectedTab }: QuestCardProps) {
+    const { user } = useAuth();
     const { isMemorialMode } = useMemorialMode();
-    const { quests, progress, completedCount, totalCount, currentQuest, isAllDone, loading } = useQuests();
+    const { quests, progress, completedCount, totalCount, currentQuest, isAllDone, loading, completeQuest } = useQuests();
     const [isHidden, setIsHidden] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
+
+    const isTester = TRUSTED_EMAILS.includes(user?.email ?? "");
+
+    const handleTestComplete = async (questId: QuestId) => {
+        await completeQuest(questId);
+    };
 
     useEffect(() => {
         setIsHidden(safeGetItem(HIDE_KEY) === "true");
@@ -117,6 +126,17 @@ export default function QuestCard({ setSelectedTab }: QuestCardProps) {
                         <ArrowRight className="w-3.5 h-3.5" />
                     </div>
                 </button>
+
+                {/* 테스터 전용: 강제 완료 버튼 (관리자 + 테스트 계정만) */}
+                {isTester && (
+                    <button
+                        onClick={() => handleTestComplete(currentQuest.id)}
+                        className="mt-2 w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-300 text-[11px] font-medium transition-colors"
+                    >
+                        <FlaskConical className="w-3 h-3" />
+                        테스트: 이 단계 완료 처리
+                    </button>
+                )}
             </div>
 
             {/* 펼치기 — 전체 단계 보기 */}
@@ -144,9 +164,19 @@ export default function QuestCard({ setSelectedTab }: QuestCardProps) {
                                     ) : (
                                         <div className={`w-4 h-4 rounded-full border-2 ${isCurrent ? themeAccent.replace("text-", "border-") : "border-gray-300 dark:border-gray-600"}`} />
                                     )}
-                                    <span className={`text-xs ${done ? "line-through text-gray-400" : "text-gray-700 dark:text-gray-300"}`}>
+                                    <span className={`text-xs ${done ? "line-through text-gray-400" : "text-gray-700 dark:text-gray-300"} flex-1`}>
                                         {idx + 1}. {q.title}
                                     </span>
+                                    {/* 테스터 전용: 미완료 단계마다 강제 완료 */}
+                                    {isTester && !done && (
+                                        <button
+                                            onClick={() => handleTestComplete(q.id)}
+                                            className="px-2 py-0.5 rounded text-[10px] bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50"
+                                            aria-label={`${q.title} 테스트 완료`}
+                                        >
+                                            완료
+                                        </button>
+                                    )}
                                 </div>
                             );
                         })}
