@@ -17,6 +17,7 @@ import {
 import LevelBadge from "@/components/features/points/LevelBadge";
 import type { CommunityPost } from "./types";
 import { TabType } from "@/types";
+import { safeSessionSetItem } from "@/lib/safe-storage";
 
 interface CommunitySectionProps {
     communityPosts: CommunityPost[];
@@ -70,7 +71,11 @@ export default function CommunitySection({
                     </div>
                 </div>
                 <button
-                    onClick={() => setSelectedTab("community")}
+                    onClick={() => {
+                        safeSessionSetItem("memento-community-view", "list");
+                        setSelectedTab("community");
+                        window.dispatchEvent(new CustomEvent("community-deeplink"));
+                    }}
                     className={`text-sm font-medium flex items-center gap-1 ${isMemorial ? "text-amber-500 hover:text-amber-600" : "text-memento-500 hover:text-memento-600"}`}
                 >
                     더 많은 이야기 &rarr;

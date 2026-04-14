@@ -65,16 +65,12 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey, i
     useEffect(() => {
         if (hasRestoredFilters.current) return;
         hasRestoredFilters.current = true;
-        // 말머리
+        // 말머리 (localStorage 유저 기본값)
         const savedTag = safeGetItem("memento-community-tag");
         if (savedTag && VALID_TAGS.includes(savedTag as PostTag | "all")) setSelectedTag(savedTag as PostTag | "all");
-        // 뱃지 (홈 딥링크 우선)
-        const fromHomeBadge = safeSessionGetItem("memento-community-badge");
-        if (fromHomeBadge) { safeSessionRemoveItem("memento-community-badge"); setSelectedBadge(fromHomeBadge); }
-        else { const saved = safeGetItem("memento-community-badge"); if (saved) setSelectedBadge(saved); }
-        // 쇼케이스 뷰
-        const fromHomeView = safeSessionGetItem("memento-community-view");
-        if (fromHomeView === "showcase") { safeSessionRemoveItem("memento-community-view"); setShowcaseView(true); }
+        // 뱃지 localStorage 기본값 (session 딥링크는 아래 useEffect에서 처리)
+        const savedBadge = safeGetItem("memento-community-badge");
+        if (savedBadge) setSelectedBadge(savedBadge);
         // 지역
         const savedRegion = safeGetItem("memento-community-region");
         if (savedRegion) setSelectedRegion(savedRegion);
@@ -82,6 +78,29 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey, i
         const savedSort = safeGetItem("memento-community-sort");
         if (savedSort) setSortBy(savedSort);
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // 세션 딥링크 — 홈에서 "함께 보기 더보기"/뱃지 클릭 시마다 적용
+    // (CommunityPage가 mountedTabs로 계속 마운트 상태라 위 useEffect는 1회만 실행되므로 별도 처리)
+    useEffect(() => {
+        const applyDeepLink = () => {
+            const fromHomeView = safeSessionGetItem("memento-community-view");
+            if (fromHomeView === "showcase") {
+                safeSessionRemoveItem("memento-community-view");
+                setShowcaseView(true);
+            } else if (fromHomeView === "list") {
+                safeSessionRemoveItem("memento-community-view");
+                setShowcaseView(false);
+            }
+            const fromHomeBadge = safeSessionGetItem("memento-community-badge");
+            if (fromHomeBadge) {
+                safeSessionRemoveItem("memento-community-badge");
+                setSelectedBadge(fromHomeBadge);
+            }
+        };
+        applyDeepLink();
+        window.addEventListener("community-deeplink", applyDeepLink);
+        return () => window.removeEventListener("community-deeplink", applyDeepLink);
+    }, []);
 
     // 실제 데이터 상태
     const [posts, setPosts] = useState<Post[]>([]);

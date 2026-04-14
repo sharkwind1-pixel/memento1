@@ -50,6 +50,8 @@ export default function ShowcaseSection({
     const handleMoreClick = () => {
         safeSessionSetItem("memento-community-view", "showcase");
         setSelectedTab("community");
+        // CommunityPage가 이미 마운트되어 있을 수 있으므로 커스텀 이벤트로 딥링크 적용
+        window.dispatchEvent(new CustomEvent("community-deeplink"));
     };
 
     // 자동 슬라이드 (4초 간격)
