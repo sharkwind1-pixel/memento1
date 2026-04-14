@@ -28,7 +28,8 @@ type AllowedField =
     | "tutorial_completed_at"
     | "onboarding_completed_at"
     | "user_type"
-    | "onboarding_data";
+    | "onboarding_data"
+    | "onboarding_quests";
 
 const ALLOWED_FIELDS: AllowedField[] = [
     "is_admin",
@@ -43,6 +44,7 @@ const ALLOWED_FIELDS: AllowedField[] = [
     "onboarding_completed_at",
     "user_type",
     "onboarding_data",
+    "onboarding_quests",
 ];
 
 export async function PATCH(request: NextRequest) {
