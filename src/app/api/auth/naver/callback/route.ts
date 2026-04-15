@@ -25,26 +25,19 @@ function getSupabaseAdmin() {
 }
 
 /**
- * 이메일로 Supabase 유저를 페이지네이션 조회
- * (Supabase Admin API에 getUserByEmail이 없으므로 페이지별 검색)
+ * profiles 테이블 email 인덱스로 1회 조회해 유저 id를 얻는다.
+ * 기존의 auth.admin.listUsers 페이지네이션 스캔을 대체 (O(N) → O(1)).
  */
-async function findUserByEmail(
+async function findUserIdByEmail(
     supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
     email: string,
-) {
-    let page = 1;
-    const perPage = 100;
-    while (true) {
-        const { data: userPage } = await supabaseAdmin.auth.admin.listUsers({
-            page,
-            perPage,
-        });
-        if (!userPage?.users?.length) return null;
-        const match = userPage.users.find((u) => u.email === email);
-        if (match) return match;
-        if (userPage.users.length < perPage) return null;
-        page++;
-    }
+): Promise<string | null> {
+    const { data } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("email", email)
+        .maybeSingle();
+    return (data as { id: string } | null)?.id || null;
 }
 
 export async function GET(request: NextRequest) {
@@ -117,51 +110,51 @@ export async function GET(request: NextRequest) {
         }
 
         // 3. Supabase에서 유저 찾기/생성
+        // profiles 테이블을 email로 먼저 조회 (인덱스 1쿼리). 기존 유저면 createUser 호출 자체를 스킵.
         const supabaseAdmin = getSupabaseAdmin();
+        const existingUserId = await findUserIdByEmail(supabaseAdmin, naverEmail);
         let userId: string;
 
-        // 먼저 createUser 시도 (새 유저면 성공, 기존 유저면 에러)
-        const { data: newUser, error: createError } =
-            await supabaseAdmin.auth.admin.createUser({
-                email: naverEmail,
-                email_confirm: true,
-                user_metadata: {
-                    naver_id: naverId,
-                    nickname:
-                        naverUser.nickname ||
-                        naverEmail.split("@")[0],
-                    avatar_url: naverUser.profile_image,
-                    full_name: naverUser.name,
-                    provider: "naver",
-                },
-            });
-
-        if (createError) {
-            // 이미 존재하는 유저 -> 이메일로 조회
-            const existingUser = await findUserByEmail(supabaseAdmin, naverEmail);
-
-            if (!existingUser) {
-                console.error("[Naver Auth] User exists but lookup failed");
-                throw new Error("USER_LOOKUP_FAILED");
-            }
-
-            userId = existingUser.id;
-
-            // 네이버 정보 업데이트
-            await supabaseAdmin.auth.admin.updateUserById(userId, {
-                user_metadata: {
-                    ...existingUser.user_metadata,
-                    naver_id: naverId,
-                    avatar_url:
-                        existingUser.user_metadata?.avatar_url ||
-                        naverUser.profile_image,
-                    nickname:
-                        existingUser.user_metadata?.nickname ||
-                        naverUser.nickname,
-                },
-            });
+        if (existingUserId) {
+            // 기존 유저 — auth metadata 업데이트 (비차단, 실패해도 로그인은 진행)
+            userId = existingUserId;
+            supabaseAdmin.auth.admin
+                .updateUserById(userId, {
+                    user_metadata: {
+                        naver_id: naverId,
+                        avatar_url: naverUser.profile_image,
+                        nickname: naverUser.nickname,
+                        provider: "naver",
+                    },
+                })
+                .then(() => {})
+                .catch((err: unknown) => {
+                    console.warn(
+                        "[Naver Auth] updateUserById failed:",
+                        err instanceof Error ? err.message : err,
+                    );
+                });
         } else {
-            userId = newUser.user!.id;
+            // 신규 유저
+            const { data: newUser, error: createError } =
+                await supabaseAdmin.auth.admin.createUser({
+                    email: naverEmail,
+                    email_confirm: true,
+                    user_metadata: {
+                        naver_id: naverId,
+                        nickname:
+                            naverUser.nickname ||
+                            naverEmail.split("@")[0],
+                        avatar_url: naverUser.profile_image,
+                        full_name: naverUser.name,
+                        provider: "naver",
+                    },
+                });
+            if (createError || !newUser?.user) {
+                console.error("[Naver Auth] createUser failed:", createError?.message);
+                throw new Error("USER_CREATE_FAILED");
+            }
+            userId = newUser.user.id;
         }
 
         // 3.5 IP 기반 다중 계정 제한 체크 (관리자 예외)
