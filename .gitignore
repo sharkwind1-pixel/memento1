@@ -45,3 +45,9 @@ next-env.d.ts
 
 # logs
 *.log
+
+# Claude Code 작업용 로컬 파일 (의도치 않은 임베디드 repo 커밋 방지)
+.claude/worktrees/
+.pr_body.json
+.pr_response.json
+.merge_response.json
