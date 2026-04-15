@@ -11,7 +11,7 @@ import useHorizontalScroll from "@/hooks/useHorizontalScroll";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
 
 import { X, Download, Image as ImageIcon, FileText, Star, Heart, Loader2 } from "lucide-react";
-import html2canvas from "html2canvas";
+// html2canvas는 75KB로 초기 번들에 넣지 않고 실제로 다운로드/공유 버튼을 눌렀을 때 동적 import.
 import { toast } from "sonner";
 import type { Pet } from "@/types";
 import type { ChatMessage } from "./chatTypes";
@@ -76,6 +76,7 @@ export default function ExportChatModal({
         try {
             // 폰트 로드 완료 대기 (html2canvas가 커스텀 폰트를 캡처하지 못하는 문제 방지)
             await document.fonts.ready;
+            const { default: html2canvas } = await import("html2canvas");
             const canvas = await html2canvas(cardRef.current, {
                 scale: 2, // 고해상도
                 useCORS: true,
@@ -111,6 +112,7 @@ export default function ExportChatModal({
         setIsExporting(true);
 
         try {
+            const { default: html2canvas } = await import("html2canvas");
             const canvas = await html2canvas(cardRef.current, {
                 scale: 2,
                 useCORS: true,
