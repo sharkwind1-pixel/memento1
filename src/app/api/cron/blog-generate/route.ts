@@ -444,117 +444,8 @@ ${searchContext ? `## 참고 자료 (아래 검색 결과를 바탕으로 정확
 
         await sendToTelegram(header, body);
 
-        // 4. 오늘의 릴스/쇼츠 대본 생성 + 전송
-        // 컨셉 7일 로테이션 (이전 4일 → 7일로 확장, 더 다양한 톤)
-        const REEL_CONCEPTS = [
-            {
-                name: "감성/공감",
-                description: "반려동물과의 일상, 이별, 그리움. 잔잔하고 따뜻한 톤.",
-                hookExample: "처음 만난 그날을 기억하시나요?",
-                outroStyle: "마지막 한 줄로 여운을 남기고, 메멘토애니가 그 추억을 지킨다는 메시지로 마무리",
-            },
-            {
-                name: "정보/꿀팁",
-                description: "수의학 기반 건강/케어/사료 정보. 빠른 템포, 숫자 강조.",
-                hookExample: "이거 모르면 우리 아이 위험해요",
-                outroStyle: "체크리스트 형식으로 정리, 메멘토애니의 케어 리마인더 기능 자연 연결",
-            },
-            {
-                name: "공감 챌린지",
-                description: "보호자라면 누구나 공감하는 장면 모음. 짧은 컷 빠른 전환.",
-                hookExample: "강아지 집사 vs 햄스터 집사 차이점 5가지",
-                outroStyle: "마지막 컷에서 모든 종을 함께 사랑하는 메멘토애니 어필",
-            },
-            {
-                name: "스토리텔링",
-                description: "한 보호자의 짧은 사연을 1인칭으로. 후크 → 갈등 → 반전.",
-                hookExample: "이 아이를 만나기 전엔 몰랐던 것",
-                outroStyle: "이야기 끝에 자연스럽게 메멘토애니로 추억을 기록한다는 것",
-            },
-            {
-                name: "트렌딩/밈",
-                description: "유행 포맷 활용. 빠른 컷, 자막 위주. 가벼운 유머.",
-                hookExample: "POV: 우리집 페럿이 새벽 3시에 한 일",
-                outroStyle: "밈 마지막에 메멘토애니 로고/배지 한 번 띄움",
-            },
-            {
-                name: "서비스 소개",
-                description: "메멘토애니 핵심 기능 1개를 30초로. UI 캡처 + 자막.",
-                hookExample: "이 앱 하나면 우리집 4마리 다 관리됨",
-                outroStyle: "기능 데모 → 직접 써보세요 CTA",
-            },
-            {
-                name: "특수반려동물 스포트라이트",
-                description: "햄스터/페럿/토끼/파충류/새 등 한 종을 집중 조명. 잘 알려지지 않은 사실 위주.",
-                hookExample: "고슴도치 이거 모르면 죽일 수도 있어요",
-                outroStyle: "엑조틱 종 보호자에게 실용적 정보, 메멘토애니의 다종 관리 강점 강조",
-            },
-        ];
-
-        const reelConceptIdx = dayIndex % REEL_CONCEPTS.length;
-        const reelConcept = REEL_CONCEPTS[reelConceptIdx];
-        const reelExoticHint = isExotic
-            ? `\n\n오늘의 종이 ${selectedTopic.species}(특수반려동물)이므로, 일반 강아지/고양이 보호자에게도 신선하게 느껴지도록 ${selectedTopic.species}만의 특이한 사실/매력을 강조하세요. ${SPECIES_CONTEXT[selectedTopic.species]}`
-            : "";
-
-        const reelsCompletion = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
-            max_tokens: 900,
-            temperature: 0.9,
-            messages: [
-                {
-                    role: "system",
-                    content: `당신은 메멘토애니(반려동물 메모리얼 플랫폼)의 숏폼 콘텐츠 기획자입니다.
-인스타그램 릴스/유튜브 쇼츠용 15~30초 대본을 작성합니다.
-
-## 메멘토애니 핵심 USP
-- 일상부터 이별까지 모든 순간을 함께
-- 강아지/고양이뿐 아니라 햄스터/토끼/페럿/앵무새/파충류까지 모든 반려동물 평등하게 관리
-- AI 펫톡으로 떠난 아이와도 대화 가능
-- 듀얼 모드: 일상 모드(따뜻한 케어) + 추모 모드(기억의 공간)
-
-## 작성 규칙
-- 첫 1초에 강한 훅 (질문, 숫자, 감성 문장 등)
-- 자막 기반 (음소거로 보는 유저 대응) — 자막 한 줄 12자 이내 권장
-- 마지막에 메멘토애니 자연스럽게 언급 (매번 다른 방식, 광고 톤 X)
-- 존댓말, 이모지 사용 금지
-- "강아지/고양이만 반려동물" 같은 뉘앙스 절대 금지
-
-## 오늘의 컨셉
-**${reelConcept.name}**
-${reelConcept.description}
-훅 예시: "${reelConcept.hookExample}"
-아웃트로 스타일: ${reelConcept.outroStyle}
-
-## 출력 형식
-[컨셉] (한 줄 설명)
-[대본] (자막 텍스트, 줄바꿈으로 구분 — 한 줄 12자 이내)
-[영상 연출] (촬영/편집 가이드 3줄)
-[해시태그] (12~15개, 한국어 + 영어 섞기)`,
-                },
-                {
-                    role: "user",
-                    content: `오늘 날짜: ${dateStr}
-오늘의 종: ${selectedTopic.species}
-오늘의 블로그 주제: "${selectedTopic.topic}" (${selectedTopic.category})
-
-이 주제와 관련 있되 형식은 완전히 다르게 (짧고 임팩트 있게) 작성하세요.${reelExoticHint}`,
-                },
-            ],
-        });
-
-        const reelsContent = reelsCompletion.choices[0]?.message?.content || "";
-
-        const reelsHeader = [
-            ``,
-            `<b>[오늘의 릴스/쇼츠 대본 - ${dateStr}]</b>`,
-            `컨셉 타입: ${reelConcept.name}`,
-            `오늘의 종: ${selectedTopic.species}`,
-            ``,
-            `--- 아래 복사해서 촬영/편집 ---`,
-        ].join("\n");
-
-        await sendToTelegram(reelsHeader, reelsContent);
+        // 릴스/쇼츠 대본 자동 생성 제거 — 실사용 가치 낮음
+        // (필요 시 수동으로 별도 툴에서 생성)
 
         return NextResponse.json({
             success: true,
@@ -565,7 +456,7 @@ ${reelConcept.description}
             hasSearchContext: !!searchContext,
             modelUsed,
             tags,
-            reels: true,
+            reels: false,
         });
     } catch (err) {
         const msg = err instanceof Error ? err.message : "알 수 없는 오류";
