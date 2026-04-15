@@ -38,6 +38,7 @@ import {
     ResponsiveContainer,
 } from "recharts";
 import { DashboardStats, ChartData, ApiUsageData } from "../types";
+import Open100AdminSection from "./Open100AdminSection";
 
 // ============================================================================
 // Props 타입 정의
@@ -336,6 +337,9 @@ export default function AdminDashboardTab({
                     </CardContent>
                 </Card>
             )}
+
+            {/* Open 100 오픈 이벤트 현황 */}
+            <Open100AdminSection />
         </div>
     );
 }
