@@ -257,6 +257,26 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
                 });
             }
 
+            // 케어 리마인더 자동 비활성화 (추모 펫은 알림 의미 없음)
+            if (user) {
+                const { data: disabledReminders } = await supabase
+                    .from("pet_reminders")
+                    .update({ enabled: false })
+                    .eq("pet_id", selectedPet.id)
+                    .eq("user_id", user.id)
+                    .eq("enabled", true)
+                    .select("id");
+
+                if (disabledReminders && disabledReminders.length > 0) {
+                    // 안내 토스트 (메인 토스트 이후)
+                    setTimeout(() => {
+                        toast("케어 리마인더는 조용히 꺼두었어요", {
+                            description: "필요하시면 언제든 다시 켤 수 있어요",
+                        });
+                    }, 1500);
+                }
+            }
+
             toast.success("무지개다리를 건넜어요. 소중한 기억을 간직합니다.");
         } catch {
             toast.error("상태 전환에 실패했어요. 다시 시도해주세요.");
