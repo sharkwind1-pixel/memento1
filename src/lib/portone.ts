@@ -153,9 +153,22 @@ export async function requestPortOnePayment(
                         return;
                     }
                     console.error("[PortOne V1] 결제 실패:", response.error_code, msg);
+                    // KB국민카드 심사 대기 중 안내 (카드사 심사 미완료 시 응답에 카드명 노출)
+                    const isKbKookmin = msg.includes("국민")
+                        || msg.includes("KB")
+                        || msg.includes("KOOKMIN");
+                    if (isKbKookmin) {
+                        resolve({
+                            success: false,
+                            error: "KB국민카드는 심사 진행 중이라 아직 결제할 수 없어요. 다른 카드로 시도해주세요.",
+                        });
+                        return;
+                    }
                     resolve({
                         success: false,
-                        error: "결제에 실패했습니다.",
+                        error: msg
+                            ? `결제에 실패했어요: ${msg}`
+                            : "결제에 실패했습니다. 다른 카드로 시도해주세요.",
                     });
                     return;
                 }
