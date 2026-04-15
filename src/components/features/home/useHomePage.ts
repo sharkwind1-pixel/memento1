@@ -308,9 +308,15 @@ export function useHomePage() {
     const fetchMemorialPets = useCallback(async () => {
         setIsLoadingMemorial(true);
         try {
-            const res = await fetch(API.MEMORIAL_TODAY);
-            if (res.ok) {
-                const data = await res.json();
+            // MEMORIAL_TODAY 네트워크 응답 기다리는 동안 getSession은 로컬이라 병렬 처리 가능
+            const [memorialRes, sessionRes] = await Promise.all([
+                fetch(API.MEMORIAL_TODAY),
+                supabase.auth.getSession(),
+            ]);
+            const session = sessionRes.data.session;
+
+            if (memorialRes.ok) {
+                const data = await memorialRes.json();
                 const pets: MemorialPetItem[] = (data.pets || []).map(
                     (p: MemorialPetItem & { condolenceCount?: number }) => ({
                         ...p,
@@ -320,7 +326,6 @@ export function useHomePage() {
                 setMemorialPets(pets);
 
                 // 로그인 상태라면 내 위로 상태 조회
-                const { data: { session } } = await supabase.auth.getSession();
                 if (session && pets.length > 0) {
                     try {
                         const petIds = pets.map((p) => p.id);

@@ -7,39 +7,10 @@
 
 ## 🔴 미실행 마이그레이션 (Supabase Dashboard에서 실행 필요)
 
-### `supabase/migrations/20260412_admin_messages.sql`
-관리자 메시지/공지 발송 기능. 실행 전에는 발송 시도 시 CHECK 제약 위반으로 실패함.
+_(현재 미실행 마이그레이션 없음)_
 
-```sql
--- 1. type CHECK 확장 (admin_message, admin_notice 추가)
-ALTER TABLE public.notifications DROP CONSTRAINT IF EXISTS notifications_type_check;
-
-ALTER TABLE public.notifications ADD CONSTRAINT notifications_type_check
-CHECK (type IN (
-    'subscription_expiring','subscription_expired','payment_failed','payment_success','welcome',
-    'subscription_hidden_start','subscription_countdown','subscription_reset_complete','subscription_restored',
-    'subscription_cancelled','subscription_archive_started','subscription_archive_countdown','subscription_archive_complete',
-    'admin_message','admin_notice'
-));
-
--- 2. sender_id 컬럼
-ALTER TABLE public.notifications
-    ADD COLUMN IF NOT EXISTS sender_id UUID REFERENCES auth.users(id) ON DELETE SET NULL;
-
--- 3. 인덱스
-CREATE INDEX IF NOT EXISTS idx_notifications_admin_messages
-    ON public.notifications(sender_id, created_at DESC)
-    WHERE sender_id IS NOT NULL;
-```
-
-검증 쿼리:
-```sql
-SELECT column_name FROM information_schema.columns
-WHERE table_name = 'notifications' AND column_name = 'sender_id';
-
-SELECT pg_get_constraintdef(oid) FROM pg_constraint
-WHERE conname = 'notifications_type_check';
-```
+### ✅ 2026-04-16 실행 완료 — `20260412_admin_messages`
+관리자 메시지/공지 발송 기능. Supabase MCP로 실적용, sender_id/CHECK/인덱스 3개 모두 검증됨.
 
 ---
 
