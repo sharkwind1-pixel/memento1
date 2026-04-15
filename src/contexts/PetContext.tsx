@@ -184,27 +184,28 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
             setIsLoading(true);
             setIsSyncing(true);
 
-            // 반려동물 조회 (archived 제외 — 구독 해지 후 보관 상태의 펫은 별도 처리)
-            const { data: petsData, error: petsError } = await supabase
-                .from("pets")
-                .select("id, name, type, breed, birthday, gender, weight, personality, profile_image, profile_crop_position, status, memorial_date, is_primary, created_at, adopted_date, how_we_met, nicknames, special_habits, favorite_food, favorite_activity, favorite_place, together_period, memorable_memory")
-                .eq("user_id", userId)
-                .is("archived_at", null)
-                .order("created_at", { ascending: true });
-
-            if (petsError) throw petsError;
-
-            // 모든 반려동물의 미디어를 한 번에 조회 (N+1 → 1 쿼리)
-            // archived 된 사진은 제외 (구독 해지 후 보관 상태)
-            const petIds = (petsData || []).map((p) => p.id);
-            const { data: allMediaData } = petIds.length > 0
-                ? await supabase
+            // pets와 pet_media를 user_id로 병렬 조회 (pet_media에도 user_id 컬럼이 있어 직접 필터 가능)
+            // archived 제외 — 구독 해지 후 보관 상태의 펫/사진은 별도 처리
+            const [petsResult, mediaResult] = await Promise.all([
+                supabase
+                    .from("pets")
+                    .select("id, name, type, breed, birthday, gender, weight, personality, profile_image, profile_crop_position, status, memorial_date, is_primary, created_at, adopted_date, how_we_met, nicknames, special_habits, favorite_food, favorite_activity, favorite_place, together_period, memorable_memory")
+                    .eq("user_id", userId)
+                    .is("archived_at", null)
+                    .order("created_at", { ascending: true }),
+                supabase
                     .from("pet_media")
                     .select("id, pet_id, url, storage_path, type, caption, date, crop_position, thumbnail_url")
-                    .in("pet_id", petIds)
+                    .eq("user_id", userId)
                     .is("archived_at", null)
-                    .order("date", { ascending: false })
-                : { data: [] };
+                    .order("date", { ascending: false }),
+            ]);
+
+            const { data: petsData, error: petsError } = petsResult;
+            if (petsError) throw petsError;
+
+            // media는 이미 user 전체 기준으로 당겨왔고, 아래 groupBy에서 pet_id 기준으로 재분배
+            const allMediaData = mediaResult.data;
 
             // pet_id별로 미디어 그룹핑
             const mediaByPetId = new Map<string, PetPhoto[]>();
