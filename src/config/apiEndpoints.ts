@@ -45,6 +45,9 @@ export const API = {
     // 온보딩 미션
     QUESTS: "/api/quests",
 
+    // Open 100 오픈 이벤트 (선착순 100명 미션 완주 시 1000P)
+    EVENT_OPEN100: "/api/events/open100",
+
     // 리마인더
     REMINDERS: "/api/reminders",
     REMINDER_DETAIL: (id: string) => `/api/reminders/${id}`,

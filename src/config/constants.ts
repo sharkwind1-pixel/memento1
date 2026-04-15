@@ -17,6 +17,17 @@ export const TRUSTED_EMAILS = [
     "dojin3497@gmail.com",
 ];
 
+// ===== Open 100 오픈 이벤트 =====
+/**
+ * 출시 기념 선착순 100명: 가입 후 온보딩 미션 전체 완료 시 1000P 지급.
+ * 이벤트 시작 이전에 가입한 기존 유저는 대상 외 (profiles.created_at > OPEN100_EVENT_START_AT).
+ * 관리자/신뢰 계정은 카운트에서 제외 (TRUSTED_EMAILS).
+ */
+export const OPEN100_LIMIT = 100;
+export const OPEN100_REWARD_POINTS = 1000;
+/** 이벤트 오픈 시각 (KST). 이 시각 이후 가입자만 대상. */
+export const OPEN100_EVENT_START_AT = "2026-04-16T03:00:00+09:00";
+
 // ===== 온보딩 미션 (게임화 가이드) =====
 export type QuestId =
     | "register_pet"
