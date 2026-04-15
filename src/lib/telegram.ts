@@ -134,6 +134,22 @@ export async function notifyError(params: {
     return sendTelegram(lines.join("\n"), "system");
 }
 
+/** Open 100 이벤트 달성 알림 -> 시스템 알림 그룹 */
+export async function notifyOpen100Award(params: {
+    email: string;
+    awardedCount: number;
+    remaining: number;
+}) {
+    const lines = [
+        "<b>[Open 100 달성]</b>",
+        `진행률: ${params.awardedCount}/100`,
+        `남은 자리: ${params.remaining}`,
+        `유저: ${escapeHtml(params.email)}`,
+    ];
+    if (params.remaining === 0) lines.push("🎉 <b>이벤트 완주 — 100명 전원 달성</b>");
+    return sendTelegram(lines.join("\n"), "system");
+}
+
 /** 일일 요약 알림 -> 시스템 알림 그룹 */
 export async function notifyDailySummary(params: {
     totalUsers: number;

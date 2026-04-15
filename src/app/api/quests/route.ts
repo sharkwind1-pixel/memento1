@@ -10,6 +10,7 @@
 import { NextResponse } from "next/server";
 import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
 import { DAILY_QUESTS, MEMORIAL_QUESTS, QuestId } from "@/config/constants";
+import { isAllQuestsCompleted, isEligibleForOpen100, tryAwardOpen100 } from "@/lib/open100";
 
 const ALL_QUESTS = [...DAILY_QUESTS, ...MEMORIAL_QUESTS];
 
@@ -50,10 +51,10 @@ export async function POST(request: Request) {
 
     const supabase = await createServerSupabase();
 
-    // 현재 진행 상태 조회
+    // 현재 진행 상태 + Open 100 이벤트 판별용 메타 같이 조회
     const { data: profile } = await supabase
         .from("profiles")
-        .select("onboarding_quests")
+        .select("onboarding_quests, email, created_at, open100_awarded_at")
         .eq("id", user.id)
         .single();
 
@@ -97,11 +98,35 @@ export async function POST(request: Request) {
         }
     }
 
+    // Open 100 이벤트 — 전체 미션 완주 + 자격 만족 시 1000P 지급
+    let open100Awarded = false;
+    let open100Remaining: number | null = null;
+    if (isAllQuestsCompleted(updated)) {
+        const eligible = isEligibleForOpen100({
+            email: profile?.email ?? user.email ?? null,
+            createdAt: profile?.created_at ?? null,
+            alreadyAwarded: !!profile?.open100_awarded_at,
+        });
+        if (eligible) {
+            const awardResult = await tryAwardOpen100(
+                supabase,
+                user.id,
+                profile?.email ?? user.email ?? null,
+            );
+            if (awardResult.awarded) {
+                open100Awarded = true;
+                open100Remaining = awardResult.remaining ?? null;
+            }
+        }
+    }
+
     return NextResponse.json({
         success: true,
         alreadyCompleted: false,
         progress: updated,
         bonusEarned,
         nextQuestId: quest.nextQuestId,
+        open100Awarded,
+        open100Remaining,
     });
 }

@@ -36,7 +36,7 @@ interface UseQuestsResult {
 }
 
 export function useQuests(): UseQuestsResult {
-    const { user } = useAuth();
+    const { user, refreshPoints } = useAuth();
     const { isMemorialMode } = useMemorialMode();
     const [progress, setProgress] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(true);
@@ -96,6 +96,20 @@ export function useQuests(): UseQuestsResult {
                     });
                 }
 
+                // Open 100 이벤트 달성 — 추가 토스트 + 포인트 UI 갱신
+                if (data.open100Awarded) {
+                    toast.success("🎉 오픈 100 이벤트 달성! +1,000P", {
+                        description:
+                            typeof data.open100Remaining === "number"
+                                ? `남은 자리 ${data.open100Remaining}명`
+                                : "선착순 100명 한정 보너스가 지급됐어요",
+                        duration: 6000,
+                    });
+                    window.dispatchEvent(new CustomEvent("open100-awarded"));
+                    // 헤더/사이드바 포인트 즉시 반영
+                    refreshPoints().catch(() => {});
+                }
+
                 return {
                     bonusEarned: data.bonusEarned ?? 0,
                     nextQuestId: data.nextQuestId,
@@ -104,7 +118,7 @@ export function useQuests(): UseQuestsResult {
                 return null;
             }
         },
-        [user, quests]
+        [user, quests, refreshPoints]
     );
 
     const completedCount = quests.filter((q) => progress[q.id]).length;
