@@ -34,6 +34,7 @@ import {
     X,
     ChevronDown,
     ChevronUp,
+    Pencil,
 } from "lucide-react";
 import PawLoading from "@/components/ui/PawLoading";
 import { API } from "@/config/apiEndpoints";
@@ -73,6 +74,7 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
     const [isLoading, setIsLoading] = useState(true);
     const [isExpanded, setIsExpanded] = useState(true);
     const [showAddForm, setShowAddForm] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
     // 새 리마인더 폼 상태
@@ -118,49 +120,77 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
         fetchReminders();
     }, [fetchReminders]);
 
-    // 리마인더 생성
-    const handleCreateReminder = async () => {
+    // 편집 시작 — 기존 리마인더 데이터를 폼에 채움
+    const handleStartEdit = (reminder: Reminder) => {
+        setEditingId(reminder.id);
+        setNewReminder({
+            type: reminder.type,
+            title: reminder.title,
+            scheduleType: reminder.schedule.type,
+            time: reminder.schedule.time || "09:00",
+            dayOfWeek: reminder.schedule.dayOfWeek ?? 1,
+            dayOfMonth: reminder.schedule.dayOfMonth ?? 1,
+            date: reminder.schedule.date || "",
+        });
+        setShowAddForm(true);
+    };
+
+    const handleCancelForm = () => {
+        setShowAddForm(false);
+        setEditingId(null);
+        setNewReminder({
+            type: "walk",
+            title: "",
+            scheduleType: "daily",
+            time: "09:00",
+            dayOfWeek: 1,
+            dayOfMonth: 1,
+            date: "",
+        });
+    };
+
+    // 리마인더 저장 (생성 또는 수정)
+    const handleSaveReminder = async () => {
         if (!user?.id || !petId || !newReminder.title) return;
 
+        const schedule = {
+            type: newReminder.scheduleType,
+            time: newReminder.time,
+            dayOfWeek: newReminder.scheduleType === "weekly" ? newReminder.dayOfWeek : undefined,
+            dayOfMonth: newReminder.scheduleType === "monthly" ? newReminder.dayOfMonth : undefined,
+            date: newReminder.scheduleType === "once" ? newReminder.date : undefined,
+        };
+
         try {
-            const response = await authFetch(API.REMINDERS, {
-                method: "POST",
-                body: JSON.stringify({
-                    petId,
-                    type: newReminder.type,
-                    title: newReminder.title,
-                    schedule: {
-                        type: newReminder.scheduleType,
-                        time: newReminder.time,
-                        dayOfWeek: newReminder.scheduleType === "weekly" ? newReminder.dayOfWeek : undefined,
-                        dayOfMonth: newReminder.scheduleType === "monthly" ? newReminder.dayOfMonth : undefined,
-                        date: newReminder.scheduleType === "once" ? newReminder.date : undefined,
-                    },
-                }),
-            });
+            const isEdit = !!editingId;
+            const response = await authFetch(
+                isEdit ? API.REMINDER_DETAIL(editingId!) : API.REMINDERS,
+                {
+                    method: isEdit ? "PUT" : "POST",
+                    body: JSON.stringify(
+                        isEdit
+                            ? { title: newReminder.title, type: newReminder.type, schedule }
+                            : { petId, type: newReminder.type, title: newReminder.title, schedule }
+                    ),
+                }
+            );
 
             if (response.ok) {
-                toast.success("리마인더가 생성되었습니다");
+                toast.success(isEdit ? "리마인더가 수정되었습니다" : "리마인더가 생성되었습니다");
                 // 푸시 구독 안 되어 있으면 자동 구독 (알림 받기 위해)
                 ensurePushSubscription(authFetch, API.NOTIFICATIONS_SUBSCRIBE);
-                setShowAddForm(false);
-                setNewReminder({
-                    type: "walk",
-                    title: "",
-                    scheduleType: "daily",
-                    time: "09:00",
-                    dayOfWeek: 1,
-                    dayOfMonth: 1,
-                    date: "",
-                });
+                handleCancelForm();
                 fetchReminders();
             } else {
-                toast.error("리마인더 생성에 실패했습니다");
+                toast.error(isEdit ? "리마인더 수정에 실패했습니다" : "리마인더 생성에 실패했습니다");
             }
         } catch {
-            toast.error("리마인더 생성 중 오류가 발생했습니다");
+            toast.error("리마인더 저장 중 오류가 발생했습니다");
         }
     };
+
+    // 하위호환: 기존 이름 유지하는 alias
+    const handleCreateReminder = handleSaveReminder;
 
     // 리마인더 토글
     const handleToggle = async (id: string, currentEnabled: boolean) => {
@@ -297,6 +327,7 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
                                                                 ? "text-memento-600 hover:bg-memento-100 dark:hover:bg-memento-900/30"
                                                                 : "text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                                                         }`}
+                                                        aria-label={reminder.enabled ? "알림 끄기" : "알림 켜기"}
                                                     >
                                                         {reminder.enabled ? (
                                                             <ToggleRight className="w-5 h-5" />
@@ -305,8 +336,16 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
                                                         )}
                                                     </button>
                                                     <button
+                                                        onClick={() => handleStartEdit(reminder)}
+                                                        className="p-1.5 rounded-lg text-gray-400 hover:text-memento-600 hover:bg-memento-50 dark:hover:bg-memento-900/20 transition-colors"
+                                                        aria-label="수정"
+                                                    >
+                                                        <Pencil className="w-4 h-4" />
+                                                    </button>
+                                                    <button
                                                         onClick={() => handleDelete(reminder.id)}
                                                         className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                                        aria-label="삭제"
                                                     >
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
@@ -328,9 +367,11 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
                             {showAddForm ? (
                                 <div className="border dark:border-gray-700 rounded-xl p-4 bg-gray-50 dark:bg-gray-800/50 space-y-3">
                                     <div className="flex items-center justify-between mb-2">
-                                        <span className="font-medium text-sm text-gray-700 dark:text-gray-200">새 리마인더</span>
+                                        <span className="font-medium text-sm text-gray-700 dark:text-gray-200">
+                                            {editingId ? "리마인더 수정" : "새 리마인더"}
+                                        </span>
                                         <button
-                                            onClick={() => setShowAddForm(false)}
+                                            onClick={handleCancelForm}
                                             className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full"
                                         >
                                             <X className="w-4 h-4 text-gray-500" />
@@ -436,11 +477,11 @@ export default function RemindersSection({ petId, petName }: RemindersSectionPro
                                     </div>
 
                                     <Button
-                                        onClick={handleCreateReminder}
+                                        onClick={handleSaveReminder}
                                         disabled={!newReminder.title}
                                         className="w-full bg-memento-500 hover:bg-memento-600 text-white h-9"
                                     >
-                                        추가하기
+                                        {editingId ? "수정 완료" : "추가하기"}
                                     </Button>
                                 </div>
                             ) : (

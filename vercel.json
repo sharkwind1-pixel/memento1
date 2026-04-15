@@ -13,6 +13,10 @@
             "schedule": "0 22 * * *"
         },
         {
+            "path": "/api/cron/daily-greeting/reminders",
+            "schedule": "5 * * * *"
+        },
+        {
             "path": "/api/cron/blog-generate",
             "schedule": "0 0 * * *"
         },
