@@ -52,6 +52,12 @@ declare global {
 const getMerchantCode = () => process.env.NEXT_PUBLIC_PORTONE_MERCHANT_CODE || "";
 const getChannelKey = () => process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY || "";
 const getBatchChannelKey = () => process.env.NEXT_PUBLIC_PORTONE_BATCH_CHANNEL_KEY || "";
+/**
+ * KCP PG 상점 ID (사이트코드) — V1 SDK에 pg 파라미터 명시용.
+ * channelKey만 넘겼을 때 KCP 라우팅에서 "미등록 사이트 코드(3014)" 에러 발생 시
+ * pg: "kcp.{MID}" (일반) 또는 "kcp_billing.{MID}" (정기)로 명시해서 해결.
+ */
+const getKcpMid = () => process.env.NEXT_PUBLIC_PORTONE_KCP_MID || "A52LD";
 
 export interface PaymentRequest {
     paymentId: string;     // 서버에서 발급받은 결제 ID (merchant_uid)
@@ -125,7 +131,13 @@ export async function requestPortOnePayment(
         IMP.init(merchantCode);
 
         return new Promise((resolve) => {
+            // V1 SDK는 channelKey만으로 KCP 라우팅 시 "3014 미등록 사이트 코드" 에러가 날 수 있어
+            // pg 파라미터를 명시적으로 넘긴다. kcp_billing.{MID}는 정기결제(빌링키), kcp.{MID}는 일반결제.
+            const kcpMid = getKcpMid();
+            const pg = isSubscription ? `kcp_billing.${kcpMid}` : `kcp.${kcpMid}`;
+
             const payParams: IMPRequestPayParams = {
+                pg,
                 channelKey,
                 pay_method: "card",
                 merchant_uid: params.paymentId,
