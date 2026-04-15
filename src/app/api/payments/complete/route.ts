@@ -155,7 +155,19 @@ export async function POST(request: NextRequest) {
             console.error("[payments/complete] 포트원 조회 오류:", errMsg);
             await adminSupabase
                 .from("payments")
-                .update({ status: "failed", metadata: { ...payment.metadata, portone_api_error: errMsg } })
+                .update({
+                    status: "failed",
+                    metadata: {
+                        ...payment.metadata,
+                        portone_api_error: errMsg,
+                        // 진단용: 어떤 impUid/paymentId로 조회했는지 + 서버가 본 API key prefix + is_subscription 여부
+                        debug_imp_uid: impUid,
+                        debug_payment_id: paymentId,
+                        debug_api_key_prefix: (process.env.PORTONE_REST_API_KEY || "").slice(0, 6),
+                        debug_endpoint: "payments/complete",
+                        debug_is_subscription_row: payment.metadata?.is_subscription === true,
+                    },
+                })
                 .eq("id", payment.id);
             return NextResponse.json(
                 { error: "결제 검증에 실패했습니다." },
@@ -204,6 +216,11 @@ export async function POST(request: NextRequest) {
         }
 
         // 7. payments 상태 업데이트 → paid
+        // 구독 결제가 이 엔드포인트로 넘어온 경우(PC 팝업 차단 폴백 등) subscription 메타도 함께 저장
+        const isSubscriptionRow = payment.metadata?.is_subscription === true;
+        const customerUid = payment.metadata?.customer_uid || (isSubscriptionRow ? `memento_sub_${user.id}` : undefined);
+        const nextBillingDate = isSubscriptionRow ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) : null;
+
         const { error: updateError } = await adminSupabase
             .from("payments")
             .update({
@@ -215,6 +232,12 @@ export async function POST(request: NextRequest) {
                     imp_uid: impUid,
                     portone_method: portoneData.pay_method,
                     portone_card: portoneData.card_name,
+                    ...(isSubscriptionRow && customerUid
+                        ? {
+                              customer_uid: customerUid,
+                              next_billing_date: nextBillingDate?.toISOString(),
+                          }
+                        : {}),
                 },
             })
             .eq("id", payment.id)
@@ -263,6 +286,26 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // 8.5. 구독 결제가 이 엔드포인트로 넘어온 경우 subscriptions 테이블 upsert
+        if (isSubscriptionRow && customerUid && nextBillingDate) {
+            await adminSupabase
+                .from("subscriptions")
+                .upsert(
+                    {
+                        user_id: user.id,
+                        plan,
+                        status: "active",
+                        last_payment_id: payment.id,
+                        metadata: {
+                            customer_uid: customerUid,
+                            next_billing_date: nextBillingDate.toISOString(),
+                            auto_renew: true,
+                        },
+                    },
+                    { onConflict: "user_id" }
+                );
+        }
+
         // 9. 라이프사이클 복구 (해지 후 재구독 시 archived 데이터 복원)
         try {
             const { restoreFromLifecycle } = await import("@/lib/subscription-restore");
@@ -285,7 +328,11 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
             success: true,
             plan,
-            message: "프리미엄이 활성화되었습니다!",
+            isSubscription: isSubscriptionRow,
+            ...(isSubscriptionRow && nextBillingDate
+                ? { nextBillingDate: nextBillingDate.toISOString() }
+                : {}),
+            message: isSubscriptionRow ? "정기구독이 시작되었습니다!" : "프리미엄이 활성화되었습니다!",
         });
     } catch (err) {
         console.error("[payments/complete] 에러:", err instanceof Error ? err.message : err);
