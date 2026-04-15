@@ -128,7 +128,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // 프로필+포인트 통합 조회 (단일 쿼리)
     const refreshProfile = useCallback(async () => {
         try {
-            const { data: { user: currentUser } } = await supabase.auth.getUser();
+            // getSession은 로컬 storage에서 읽어 네트워크 호출 없음. getUser보다 훨씬 빠름.
+            const { data: { session: currentSession } } = await supabase.auth.getSession();
+            const currentUser = currentSession?.user || null;
             if (!currentUser) {
                 setIsAdminUser(false);
                 setIsPremiumUser(false);
@@ -136,24 +138,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 return;
             }
 
-            // 탈퇴/차단 계정 체크 (관리자 포함 — 반드시 프로필 로드 전에 수행)
-            if (currentUser.email) {
-                try {
-                    const { data: rejoinCheck } = await supabase.rpc("can_rejoin", {
-                        check_email: currentUser.email,
-                        check_ip: null,
-                    });
-                    if (rejoinCheck && rejoinCheck.length > 0 && !rejoinCheck[0].can_join) {
-                        setIsAdminUser(false);
-                        setIsPremiumUser(false);
-                        setProfileLoaded(true);
-                        await supabase.auth.signOut();
-                        return;
-                    }
-                } catch {
-                    // RPC 실패 시에도 로그인은 허용 (네트워크 오류 등)
-                }
-            }
+            // 탈퇴/차단 체크는 onAuthStateChange(SIGNED_IN/INITIAL_SESSION)에서 1회만 수행.
+            // refreshProfile은 로그인 후에도 여러 번 호출되므로 여기서 RPC를 돌리면 중복 부하가 큼.
 
             // profiles, user_minimi, 첫 번째 펫을 병렬 조회
             const [profileResult, minimiListResult, firstPetResult] = await Promise.all([
@@ -361,7 +347,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.error("[AuthContext] refreshProfile failed:", err instanceof Error ? err.message : err);
             // refreshProfile 실패 시에도 petType 최소 복구 시도 (고양이 유저에게 강아지 아이콘이 보이는 버그 방지)
             try {
-                const { data: { user: fallbackUser } } = await supabase.auth.getUser();
+                const { data: { session: fallbackSession } } = await supabase.auth.getSession();
+                const fallbackUser = fallbackSession?.user || null;
                 if (fallbackUser) {
                     const { data: fallbackPet } = await supabase
                         .from("pets")
@@ -386,7 +373,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // 포인트만 새로고침 (포인트 변경 후 호출용)
     const refreshPoints = useCallback(async () => {
         try {
-            const { data: { user: currentUser } } = await supabase.auth.getUser();
+            const { data: { session: currentSession } } = await supabase.auth.getSession();
+            const currentUser = currentSession?.user || null;
             if (!currentUser) return;
 
             const { data: profile } = await supabase
@@ -408,7 +396,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // 미니미 장착 상태만 새로고침 (장착/구매/판매 후 호출용)
     const refreshMinimi = useCallback(async () => {
         try {
-            const { data: { user: currentUser } } = await supabase.auth.getUser();
+            const { data: { session: currentSession } } = await supabase.auth.getSession();
+            const currentUser = currentSession?.user || null;
             if (!currentUser) return;
 
             const { data } = await supabase
@@ -874,9 +863,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // .subscribe() 내부의 비동기 WebSocket 연결 실패가 unhandledrejection으로 전파되어
         // try-catch로도 잡을 수 없음. visibilitychange 폴백으로 동일 기능 대체.
         //
-        // 탭 포커스 복귀 시 차단/탈퇴 체크 (Realtime 대체)
+        // 탭 포커스 복귀 시 차단/탈퇴 체크 (최대 60초에 1회로 debounce — 탭 전환마다 RPC 방지)
+        let lastVisibilityCheck = 0;
+        const VISIBILITY_CHECK_INTERVAL_MS = 60 * 1000;
         const handleVisibilityChange = async () => {
             if (document.visibilityState !== "visible") return;
+            const now = Date.now();
+            if (now - lastVisibilityCheck < VISIBILITY_CHECK_INTERVAL_MS) return;
+            lastVisibilityCheck = now;
 
             const { data: { session: currentSession } } = await supabase.auth.getSession();
             if (!currentSession?.user?.email) return;

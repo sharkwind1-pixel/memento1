@@ -19,110 +19,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { API } from "@/config/apiEndpoints";
-
-/**
- * 탈퇴/차단 계정인지 체크하고, 해당 시 강제 로그아웃
- * @returns 차단된 경우 에러 메시지, 아니면 null
- */
-/**
- * OAuth로 새로 생성된 auth.users를 서버에서 삭제
- * (클라이언트에서는 auth.admin.deleteUser 호출 불가)
- */
-async function cleanupBlockedAuthUser(): Promise<void> {
-    try {
-        const session = await supabase.auth.getSession();
-        const token = session.data.session?.access_token;
-        if (token) {
-            await fetch(API.AUTH_CLEANUP_BLOCKED, {
-                method: "POST",
-                headers: { Authorization: `Bearer ${token}` },
-            });
-        }
-    } catch {
-        // 정리 실패해도 signOut은 진행
-    }
-}
-
-/**
- * 프로필이 없으면 자동 생성 (트리거 실패 대비)
- * 카카오 등 소셜 로그인 시 handle_new_user 트리거가 실패할 수 있음
- */
-async function ensureProfileExists(userId: string, email?: string | null): Promise<void> {
-    try {
-        const { data } = await supabase
-            .from("profiles")
-            .select("id")
-            .eq("id", userId)
-            .single();
-        if (!data) {
-            await supabase.from("profiles").upsert({
-                id: userId,
-                email: email || null,
-                points: 0,
-                total_points_earned: 0,
-                is_premium: false,
-                is_admin: false,
-                is_banned: false,
-            }, { onConflict: "id" });
-        }
-    } catch { /* 프로필 확인 실패 시 AuthContext에서 재시도 */ }
-}
-
-async function checkWithdrawnAndBlock(email: string | undefined): Promise<string | null> {
-    if (!email) return null;
-
-    try {
-        // 1. withdrawn_users 체크 (can_rejoin RPC)
-        const { data: rejoinData } = await supabase.rpc("can_rejoin", {
-            check_email: email,
-            check_ip: null,
-        });
-
-        if (rejoinData && rejoinData.length > 0) {
-            const record = rejoinData[0];
-            if (!record.can_join) {
-                // 차단/대기 중 — 새로 생성된 auth.users 삭제 후 로그아웃
-                await cleanupBlockedAuthUser();
-                await supabase.auth.signOut();
-
-                if (record.block_reason === "영구 차단된 계정입니다.") {
-                    return "이용이 제한된 계정입니다.";
-                }
-                if (record.wait_until) {
-                    const waitDate = new Date(record.wait_until);
-                    const now = new Date();
-                    const diffDays = Math.ceil(
-                        (waitDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-                    );
-                    if (diffDays > 0) {
-                        return `탈퇴 후 ${diffDays}일 후에 재가입 가능합니다.`;
-                    }
-                }
-                return record.block_reason || "가입이 제한된 계정입니다.";
-            }
-        }
-
-        // 2. deleted_accounts 체크 (기존 호환성)
-        const { data: deletedData } = await supabase.rpc("check_deleted_account", {
-            check_email: email,
-        });
-
-        if (deletedData && deletedData.length > 0) {
-            const record = deletedData[0];
-            if (!record.can_rejoin) {
-                await cleanupBlockedAuthUser();
-                await supabase.auth.signOut();
-                return `탈퇴 후 ${record.days_until_rejoin}일 후에 재가입 가능합니다.`;
-            }
-        }
-
-        return null; // 문제 없음
-    } catch {
-        // 체크 실패 시 로그인 허용 (가용성 우선)
-        return null;
-    }
-}
 
 export default function AuthCallbackPage() {
     const router = useRouter();
@@ -146,6 +42,7 @@ export default function AuthCallbackPage() {
             }
 
             // 네이버 로그인: token_hash + magiclink으로 세션 교환
+            // 탈퇴/차단 체크는 AuthContext의 onAuthStateChange(SIGNED_IN)가 수행하므로 여기선 스킵
             if (tokenHash && type === "magiclink") {
                 try {
                     const { error: verifyError } = await supabase.auth.verifyOtp({
@@ -164,18 +61,6 @@ export default function AuthCallbackPage() {
                     setError("로그인 처리 중 오류가 발생했습니다");
                     setTimeout(() => router.replace("/"), 2000);
                     return;
-                }
-
-                // 탈퇴/차단 계정 체크
-                const { data: { session } } = await supabase.auth.getSession();
-                if (session?.user) {
-                    await ensureProfileExists(session.user.id, session.user.email);
-                    const blockMsg = await checkWithdrawnAndBlock(session.user.email);
-                    if (blockMsg) {
-                        setError(blockMsg);
-                        setTimeout(() => router.replace("/"), 3000);
-                        return;
-                    }
                 }
 
                 router.replace("/");
@@ -197,21 +82,9 @@ export default function AuthCallbackPage() {
                     console.error("[auth/callback] Unexpected error:", err);
                     // 에러가 나도 메인으로 이동 (onAuthStateChange가 처리할 수 있음)
                 }
-
-                // 탈퇴/차단 계정 체크 + 프로필 보장
-                const { data: { session: codeSession } } = await supabase.auth.getSession();
-                if (codeSession?.user) {
-                    await ensureProfileExists(codeSession.user.id, codeSession.user.email);
-                    const blockMsg = await checkWithdrawnAndBlock(codeSession.user.email);
-                    if (blockMsg) {
-                        setError(blockMsg);
-                        setTimeout(() => router.replace("/"), 3000);
-                        return;
-                    }
-                }
             }
 
-            // 성공 시 메인으로
+            // 성공 시 메인으로 (탈퇴/차단 체크는 AuthContext가 처리)
             router.replace("/");
         };
 
