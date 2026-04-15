@@ -118,7 +118,17 @@ export async function POST(request: NextRequest) {
             const errMsg = err instanceof Error ? err.message : "알 수 없는 오류";
             await adminSupabase
                 .from("payments")
-                .update({ status: "failed", metadata: { ...payment.metadata, portone_api_error: errMsg } })
+                .update({
+                    status: "failed",
+                    metadata: {
+                        ...payment.metadata,
+                        portone_api_error: errMsg,
+                        // 진단용: 어떤 impUid/paymentId로 조회했는지 + 서버가 본 API key prefix
+                        debug_imp_uid: impUid,
+                        debug_payment_id: paymentId,
+                        debug_api_key_prefix: (process.env.PORTONE_REST_API_KEY || "").slice(0, 6),
+                    },
+                })
                 .eq("id", payment.id);
             return NextResponse.json({ error: "결제 검증에 실패했습니다." }, { status: 500 });
         }
