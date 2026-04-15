@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser, createAdminSupabase } from "@/lib/supabase-server";
 import { PLAN_DURATION_DAYS } from "@/config/constants";
 import { getClientIP, checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
+import { maskSensitive } from "@/lib/safe-log";
 
 const PORTONE_API_SECRET = process.env.PORTONE_API_SECRET || "";
 
@@ -27,10 +28,10 @@ async function getPortoneAccessToken(): Promise<string | null> {
         if (data.code === 0 && data.response?.access_token) {
             return data.response.access_token;
         }
-        console.error("[subscribe/complete] 토큰 발급 실패:", data.message);
+        console.error("[subscribe/complete] 토큰 발급 실패:", maskSensitive(data.message));
         return null;
     } catch (err) {
-        console.error("[subscribe/complete] 토큰 발급 에러:", err);
+        console.error("[subscribe/complete] 토큰 발급 에러:", maskSensitive(err instanceof Error ? err.message : String(err)));
         return null;
     }
 }
