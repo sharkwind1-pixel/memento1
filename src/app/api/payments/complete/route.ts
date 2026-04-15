@@ -36,10 +36,12 @@ async function getPortoneAccessToken(): Promise<string | null> {
         if (data.code === 0 && data.response?.access_token) {
             return data.response.access_token;
         }
-        console.error("[payments/complete] 토큰 발급 실패:", data.message);
+        const { maskSensitive } = await import("@/lib/safe-log");
+        console.error("[payments/complete] 토큰 발급 실패:", maskSensitive(data.message));
         return null;
     } catch (err) {
-        console.error("[payments/complete] 토큰 발급 에러:", err);
+        const { maskSensitive } = await import("@/lib/safe-log");
+        console.error("[payments/complete] 토큰 발급 에러:", maskSensitive(err instanceof Error ? err.message : String(err)));
         return null;
     }
 }
