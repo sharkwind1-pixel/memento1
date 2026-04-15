@@ -106,8 +106,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [profileLoaded, setProfileLoaded] = useState(false);
     const [userPetType, setUserPetType] = useState<PetIconType>("dog");
     const [onboardingData, setOnboardingData] = useState<OnboardingData | null>(null);
-    // 초기 세션 복원 완료 플래그 — onAuthStateChange가 getSession 결과를 덮어쓰는 것을 방지
-    const initialSessionHandledRef = useRef(false);
+    // 초기 세션에서 이미 프로필까지 로드한 유저 id (SIGNED_IN 중복 처리 방지용).
+    // boolean 플래그로는 "초기 세션이 null이었던 뒤 SIGNED_IN이 들어오는 경우"를 구분할 수 없어
+    // 로그인 직후 refreshProfile이 스킵되며 화면이 비어 보이는 버그가 있었음.
+    const handledUserIdRef = useRef<string | null>(null);
     const [minimiEquip, setMinimiEquip] = useState<MinimiEquipState>({
         minimiId: null,
         accessoryIds: [],
@@ -521,12 +523,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     // 로그인 상태: 프로필 로드 완료 후 로딩 해제
                     // (프로필 로드 전에 UI 표시하면 닉네임 설정창, Lv1 아이콘 등 깜빡임 발생)
                     await refreshProfile();
-                    initialSessionHandledRef.current = true;
+                    handledUserIdRef.current = session.user.id;
                     setLoading(false);
                     checkDailyLogin();
                 } else {
-                    // 비로그인 상태: 즉시 로딩 해제
-                    initialSessionHandledRef.current = true;
+                    // 비로그인 상태: 즉시 로딩 해제 (handledUserIdRef는 null 유지)
                     setLoading(false);
                 }
             } catch (err) {
@@ -564,9 +565,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // 로그인 이벤트일 때는 차단/탈퇴 체크가 끝날 때까지 loading 유지
             // 체크 통과 후에야 user/session을 설정하고 loading을 false로 전환
             if (event === "SIGNED_IN" && session?.user) {
-                // 초기 getSession에서 이미 동일 유저를 처리했으면 중복 프로필 리셋 건너뜀
+                // 초기 getSession에서 이미 "동일 유저"를 처리했으면 중복 프로필 리셋 건너뜀
                 // (모바일에서 profileLoaded false→true→false→true 깜빡임 방지)
-                const alreadyHandledSameUser = initialSessionHandledRef.current;
+                // 주의: handledUserIdRef를 세션 유저 id와 비교해야 함.
+                // boolean 플래그로는 "초기 세션 null → SIGNED_IN(로그인)" 케이스에서
+                // 잘못 스킵되어 refreshProfile이 안 불려 UI가 비어 보이는 버그 발생.
+                const alreadyHandledSameUser = handledUserIdRef.current === session.user.id;
                 if (!alreadyHandledSameUser) {
                     setProfileLoaded(false);
                 }
@@ -703,6 +707,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
                         setSession(session);
                         setUser(session.user);
+                        handledUserIdRef.current = session.user.id;
                         setLoading(false);
 
                         // 프로필 로드 + 출석 체크
@@ -733,6 +738,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         // 체크 실패 시 로그인 허용 (가용성 우선)
                         setSession(session);
                         setUser(session?.user ?? null);
+                        if (session?.user) handledUserIdRef.current = session.user.id;
                         setLoading(false);
                         Promise.all([refreshProfile(), checkDailyLogin()]).catch((err) => { console.error("[AuthContext] post-login tasks failed:", err instanceof Error ? err.message : err); });
                     }
@@ -749,8 +755,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setLoading(false);
             } else if (event === "INITIAL_SESSION" && session?.user) {
                 // 페이지 새로고침 시 기존 세션 복원 — 차단 체크 필요
-                // getSession에서 이미 처리했으면 중복 작업 방지
-                if (initialSessionHandledRef.current) {
+                // getSession에서 이미 동일 유저를 처리했으면 중복 작업 방지
+                if (handledUserIdRef.current === session.user.id) {
                     setSession(session);
                     setUser(session.user);
                     setLoading(false);
@@ -813,11 +819,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         // 통과 — 로그인 상태 설정
                         setSession(session);
                         setUser(session.user);
+                        handledUserIdRef.current = session.user.id;
                         setLoading(false);
                         Promise.all([refreshProfile(), checkDailyLogin()]).catch((err) => { console.error("[AuthContext] post-login tasks failed:", err instanceof Error ? err.message : err); });
                     } catch {
                         setSession(session);
                         setUser(session.user);
+                        handledUserIdRef.current = session.user.id;
                         setLoading(false);
                         Promise.all([refreshProfile(), checkDailyLogin()]).catch((err) => { console.error("[AuthContext] post-login tasks failed:", err instanceof Error ? err.message : err); });
                     }
@@ -831,6 +839,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             // 로그아웃 시 상태 초기화 + 홈으로 이동
             if (event === "SIGNED_OUT") {
+                handledUserIdRef.current = null;
                 setPoints(0);
                 setPointsLoaded(false);
                 setProfileLoaded(false);
