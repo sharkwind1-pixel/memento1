@@ -15,7 +15,6 @@ import OfflineBanner from "@/components/common/OfflineBanner";
 export const viewport: Viewport = {
     width: "device-width",
     initialScale: 1,
-    maximumScale: 5,
     userScalable: true,
     viewportFit: "cover",
 };
@@ -56,7 +55,9 @@ export const metadata: Metadata = {
             { url: "/favicon.ico", sizes: "32x32" },
             { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
         ],
-        apple: "/icon-192.png",
+        apple: [
+            { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+        ],
     },
     openGraph: {
         type: "website",
