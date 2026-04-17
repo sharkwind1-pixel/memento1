@@ -1,16 +1,18 @@
 /**
  * Open100Banner.tsx
- * 홈 상단 오픈 100 이벤트 배너. 로그인/비로그인 모두 노출 (선착순 압박).
+ * 홈 상단 오픈 100 이벤트 진행률 배너.
  *
- * 표시:
- * - 진행 중: "오픈 기념 100명 한정 — 미션 완주하면 1000P · 남은 자리 N명"
- * - 종료: "100명 달성 — 이벤트 종료" (뱃지만 유지, 작게)
+ * 노출 정책: **관리자 전용**. 일반 유저에게 "선착순 N명 남음" 카운트를
+ * 노출하면 메멘토애니 톤(희노애락을 함께하는 곳)과 충돌하고 역효과가
+ * 커서 감춘다. 미션 완주 보상은 조용히 지급되고, 관리자만 홈에서
+ * 진행률을 한눈에 보기 위한 내부 도구.
  */
 "use client";
 
 import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { API } from "@/config/apiEndpoints";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Open100Status {
     awarded: number;
@@ -20,9 +22,11 @@ interface Open100Status {
 }
 
 export default function Open100Banner() {
+    const { isAdminUser } = useAuth();
     const [status, setStatus] = useState<Open100Status | null>(null);
 
     useEffect(() => {
+        if (!isAdminUser) return;
         let cancelled = false;
         const load = async () => {
             try {
@@ -42,8 +46,9 @@ export default function Open100Banner() {
             cancelled = true;
             window.removeEventListener("open100-awarded", onAwarded);
         };
-    }, []);
+    }, [isAdminUser]);
 
+    if (!isAdminUser) return null;
     if (!status) return null;
 
     const progressPercent = Math.round((status.awarded / status.limit) * 100);
@@ -51,8 +56,9 @@ export default function Open100Banner() {
     if (status.isClosed) {
         return (
             <div className="mb-3 flex items-center justify-center gap-2 rounded-xl border border-memento-200 bg-memento-50/60 px-4 py-2 text-xs text-memento-700 dark:border-memento-800/40 dark:bg-memento-900/20 dark:text-memento-300">
+                <span className="rounded bg-memento-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">ADMIN</span>
                 <Sparkles className="h-3.5 w-3.5" />
-                <span>오픈 100 이벤트 종료 — 100명 전원 달성</span>
+                <span>Open 100 이벤트 종료 — 100명 전원 달성</span>
             </div>
         );
     }
@@ -64,12 +70,14 @@ export default function Open100Banner() {
                     <Sparkles className="h-5 w-5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                        오픈 기념 100명 한정 이벤트
-                    </p>
+                    <div className="flex items-center gap-2">
+                        <span className="rounded bg-memento-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">ADMIN</span>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                            Open 100 진행률
+                        </p>
+                    </div>
                     <p className="mt-0.5 text-xs text-gray-600 dark:text-gray-400">
-                        온보딩 미션을 모두 완료하면 <b className="text-memento-600 dark:text-memento-400">1,000P</b> 지급.
-                        선착순이라 빠르게 완주할수록 확실해요.
+                        온보딩 미션 완주 시 <b className="text-memento-600 dark:text-memento-400">1,000P</b> 자동 지급 (관리자 전용 모니터링).
                     </p>
                     <div className="mt-2 flex items-center gap-2">
                         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-memento-100 dark:bg-memento-900/50">
@@ -79,7 +87,7 @@ export default function Open100Banner() {
                             />
                         </div>
                         <span className="whitespace-nowrap text-xs font-medium text-memento-700 dark:text-memento-300">
-                            남은 자리 {status.remaining}명
+                            {status.awarded}/{status.limit}
                         </span>
                     </div>
                 </div>
