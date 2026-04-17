@@ -56,8 +56,10 @@ const getBatchChannelKey = () => process.env.NEXT_PUBLIC_PORTONE_BATCH_CHANNEL_K
  * KCP PG 상점 ID (사이트코드) — V1 SDK에 pg 파라미터 명시용.
  * channelKey만 넘겼을 때 KCP 라우팅에서 "미등록 사이트 코드(3014)" 에러 발생 시
  * pg: "kcp.{MID}" (일반) 또는 "kcp_billing.{MID}" (정기)로 명시해서 해결.
+ * 폴백 "IP6S2"는 KCP 상점관리자에서 확인된 실연동 사이트코드.
+ * (이전 폴백 "A52LD"는 포트원 공용 테스트 MID였음 — 2026-04-16 포트원 Benny 답변으로 확정)
  */
-const getKcpMid = () => process.env.NEXT_PUBLIC_PORTONE_KCP_MID || "A52LD";
+const getKcpMid = () => process.env.NEXT_PUBLIC_PORTONE_KCP_MID || "IP6S2";
 
 export interface PaymentRequest {
     paymentId: string;     // 서버에서 발급받은 결제 ID (merchant_uid)
