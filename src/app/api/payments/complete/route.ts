@@ -287,8 +287,9 @@ export async function POST(request: NextRequest) {
         }
 
         // 8.5. 구독 결제가 이 엔드포인트로 넘어온 경우 subscriptions 테이블 upsert
+        // UNIQUE(user_id) 제약이 있어야 onConflict가 동작함 (20260418 마이그레이션)
         if (isSubscriptionRow && customerUid && nextBillingDate) {
-            await adminSupabase
+            const { error: subUpsertError } = await adminSupabase
                 .from("subscriptions")
                 .upsert(
                     {
@@ -304,6 +305,19 @@ export async function POST(request: NextRequest) {
                     },
                     { onConflict: "user_id" }
                 );
+
+            if (subUpsertError) {
+                // 결제 자체는 성공했으므로 유저 응답은 성공 유지.
+                // 다만 subscription row가 없으면 renewal 크론이 돌지 못하므로 관리자 알림.
+                console.error("[payments/complete] subscriptions upsert 실패:", subUpsertError);
+                import("@/lib/telegram").then(({ notifyError }) =>
+                    notifyError({
+                        endpoint: "/api/payments/complete",
+                        error: `subscriptions upsert 실패: ${subUpsertError.message}`,
+                        userId: user.id,
+                    })
+                ).catch(() => {});
+            }
         }
 
         // 9. 라이프사이클 복구 (해지 후 재구독 시 archived 데이터 복원)

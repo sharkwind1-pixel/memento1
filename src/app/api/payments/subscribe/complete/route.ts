@@ -204,7 +204,8 @@ export async function POST(request: NextRequest) {
         }
 
         // 구독 정보를 subscriptions 테이블에 저장 (있으면)
-        await adminSupabase
+        // UNIQUE(user_id) 제약이 있어야 onConflict가 동작함 (20260418 마이그레이션)
+        const { error: subUpsertError } = await adminSupabase
             .from("subscriptions")
             .upsert({
                 user_id: user.id,
@@ -219,6 +220,19 @@ export async function POST(request: NextRequest) {
             }, { onConflict: "user_id" })
             .select()
             .single();
+
+        if (subUpsertError) {
+            // 결제/프리미엄은 이미 성공. subscription row가 없으면 다음달 renewal 크론이
+            // 이 유저를 건너뛰어서 묵시적 만료됨 → 관리자가 수동 복구해야 하므로 즉시 알림.
+            console.error("[subscribe/complete] subscriptions upsert 실패:", subUpsertError);
+            import("@/lib/telegram").then(({ notifyError }) =>
+                notifyError({
+                    endpoint: "/api/payments/subscribe/complete",
+                    error: `subscriptions upsert 실패 (renewal 크론 누락 위험): ${subUpsertError.message}`,
+                    userId: user.id,
+                })
+            ).catch(() => {});
+        }
 
         // 라이프사이클 복구 (해지 후 재구독 시 archived 데이터 복원)
         try {
