@@ -24,6 +24,7 @@ import {
     deleteMedia,
     getMediaType,
     generateVideoThumbnail,
+    ensurePetProfileStorageUrl,
 } from "@/lib/storage";
 import { toast } from "sonner";
 import { POINTS, FREE_LIMITS, PREMIUM_LIMITS, getLimitsForTier } from "@/config/constants";
@@ -318,6 +319,14 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                 return "";
             }
             try {
+                // 프로필 이미지가 blob:/data: URL이면 Storage 업로드 후 public URL로 교체.
+                // 이 전처리 없이 blob/data URL을 그대로 저장하면 다른 세션/디바이스에서
+                // 렌더 불가능 (blob) 또는 DB 비대화 (data URL 2~5MB base64).
+                const profileImageUrl = await ensurePetProfileStorageUrl(
+                    petData.profileImage,
+                    user.id,
+                );
+
                 const { data, error } = await supabase
                     .from("pets")
                     .insert([
@@ -330,7 +339,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                             gender: petData.gender,
                             weight: petData.weight || null,
                             personality: petData.personality || null,
-                            profile_image: petData.profileImage || null,
+                            profile_image: profileImageUrl,
                             profile_crop_position: petData.profileCropPosition,
                             status: petData.status,
                             memorial_date: petData.memorialDate || null,
@@ -358,6 +367,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                 const newPet: Pet = {
                     id: data.id,
                     ...petData,
+                    profileImage: profileImageUrl || undefined,
                     photos: [],
                     isPrimary: petsRef.current.length === 0,
                     createdAt: data.created_at,
@@ -386,10 +396,23 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
     const updatePet = useCallback(
         async (id: string, data: Partial<Pet>) => {
             if (user) {
+                // 프로필 이미지가 blob:/data: URL이면 먼저 Storage 업로드 후 URL로 교체.
+                // (낙관적 업데이트 전에 실행 — 실패 시 원본 state에 blob/data가 들어가지 않도록)
+                let normalizedProfileImage: string | null | undefined = undefined;
+                if (data.profileImage !== undefined) {
+                    normalizedProfileImage = data.profileImage
+                        ? await ensurePetProfileStorageUrl(data.profileImage, user.id)
+                        : null;
+                }
+
                 // 낙관적 업데이트: 먼저 로컬 상태 반영
                 const previousPets = petsRef.current;
+                const localPatch: Partial<Pet> = { ...data };
+                if (normalizedProfileImage !== undefined) {
+                    localPatch.profileImage = normalizedProfileImage || undefined;
+                }
                 setPets((prev) =>
-                    prev.map((pet) => (pet.id === id ? { ...pet, ...data } : pet))
+                    prev.map((pet) => (pet.id === id ? { ...pet, ...localPatch } : pet))
                 );
 
                 try {
@@ -404,8 +427,8 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                         updateData.weight = data.weight || null;
                     if (data.personality !== undefined)
                         updateData.personality = data.personality || null;
-                    if (data.profileImage !== undefined)
-                        updateData.profile_image = data.profileImage || null;
+                    if (normalizedProfileImage !== undefined)
+                        updateData.profile_image = normalizedProfileImage;
                     if (data.profileCropPosition !== undefined)
                         updateData.profile_crop_position = data.profileCropPosition;
                     if (data.status !== undefined) updateData.status = data.status;
