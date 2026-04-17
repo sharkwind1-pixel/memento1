@@ -373,6 +373,67 @@ export async function uploadLostPetImage(file: File, userId: string): Promise<Up
     return uploadImage(file, userId, "lost-pets");
 }
 
+/** 펫 프로필 사진 업로드 (addPet/updatePet에서 Storage 우회 버그 재발 방지용) */
+export async function uploadPetProfile(file: File, userId: string): Promise<UploadResult> {
+    return uploadImage(file, userId, "pet-profiles");
+}
+
+/**
+ * blob: URL을 File로 변환 (같은 브라우저 세션 내에서만 가능).
+ * blob URL은 브라우저 메모리 전용이라 다른 세션/디바이스에서는 fetch 실패.
+ */
+export async function blobUrlToFile(blobUrl: string, filename = "pet-profile.jpg"): Promise<File | null> {
+    try {
+        const res = await fetch(blobUrl);
+        if (!res.ok) return null;
+        const blob = await res.blob();
+        const mime = blob.type || "image/jpeg";
+        const ext = mime === "image/png" ? "png" : "jpg";
+        const safeName = filename.replace(/\.\w+$/, "") + "." + ext;
+        return new File([blob], safeName, { type: mime });
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * 임의 이미지 소스를 Storage URL로 정규화.
+ * - http(s)://로 시작하면 그대로 반환 (이미 올라간 이미지)
+ * - data:image/...;base64,... → base64ToFile → uploadPetProfile
+ * - blob:https://... → fetch → uploadPetProfile
+ * - 그 외 (null, 빈문자열 등) → null
+ *
+ * 사용처: PetContext.addPet / updatePet에서 DB INSERT 전 반드시 호출.
+ */
+export async function ensurePetProfileStorageUrl(
+    source: string | null | undefined,
+    userId: string,
+): Promise<string | null> {
+    if (!source) return null;
+    if (source.startsWith("http://") || source.startsWith("https://")) {
+        return source;
+    }
+
+    const filename = `pet-profile-${Date.now()}`;
+
+    if (source.startsWith("data:")) {
+        const file = base64ToFile(source, `${filename}.jpg`);
+        if (!file) return null;
+        const result = await uploadPetProfile(file, userId);
+        return result.success ? result.url || null : null;
+    }
+
+    if (source.startsWith("blob:")) {
+        const file = await blobUrlToFile(source, `${filename}.jpg`);
+        if (!file) return null;
+        const result = await uploadPetProfile(file, userId);
+        return result.success ? result.url || null : null;
+    }
+
+    // 알 수 없는 스킴 — 저장 거부
+    return null;
+}
+
 // Base64를 File로 변환 (기존 localStorage 데이터 마이그레이션용)
 export function base64ToFile(
     base64: string,

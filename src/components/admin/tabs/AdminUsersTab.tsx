@@ -516,6 +516,26 @@ export default function AdminUsersTab({
 // 유저 상세 패널 컴포넌트
 // ============================================================================
 
+/**
+ * 펫 프로필 이미지 썸네일 — http(s) URL만 렌더, 로드 실패/비정상 스킴은 PawPrint fallback.
+ * 2026-04-18 이전 저장된 blob/data URL 대응용 (이미 마이그레이션으로 정리됐지만 안전망).
+ */
+function PetAvatar({ src, alt }: { src?: string | null; alt: string }) {
+    const [failed, setFailed] = useState(false);
+    const isHttpUrl = !!src && (src.startsWith("http://") || src.startsWith("https://"));
+    if (!isHttpUrl || failed) {
+        return <PawPrint className="w-4 h-4 text-gray-400" />;
+    }
+    return (
+        <img
+            src={src as string}
+            alt={alt}
+            className="w-5 h-5 rounded-full object-cover"
+            onError={() => setFailed(true)}
+        />
+    );
+}
+
 function UserDetailPanel({ detail, user }: { detail?: UserDetailData; user: UserRow }) {
     if (!detail) {
         return (
@@ -612,11 +632,7 @@ function UserDetailPanel({ detail, user }: { detail?: UserDetailData; user: User
                     <div className="flex flex-wrap gap-2">
                         {detail.pets.map(pet => (
                             <div key={pet.id} className="flex items-center gap-1.5 px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                                {pet.profile_image ? (
-                                    <img src={pet.profile_image} alt={pet.name} className="w-5 h-5 rounded-full object-cover" />
-                                ) : (
-                                    <PawPrint className="w-4 h-4 text-gray-400" />
-                                )}
+                                <PetAvatar src={pet.profile_image} alt={pet.name} />
                                 <span className="text-xs font-medium">{pet.name}</span>
                                 <span className="text-[9px] text-gray-400">{pet.type}</span>
                                 {pet.status === "memorial" && (
