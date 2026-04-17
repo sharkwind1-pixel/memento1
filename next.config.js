@@ -63,11 +63,41 @@ const nextConfig = {
                 ],
             },
             {
-                source: "/(logo\\.png|logo2\\.png|og-image\\.png|icon-192\\.png|icon-512\\.png)",
+                source: "/(logo\\.png|logo2\\.png|og-image\\.png|icon-192\\.png|icon-512\\.png|apple-touch-icon\\.png)",
                 headers: [
                     {
                         key: "Cache-Control",
                         value: "public, max-age=86400, must-revalidate",
+                    },
+                ],
+            },
+            {
+                // sitemap.xml / robots.txt — 크롤러 재방문 빈도 고려, 1시간 edge 캐시 + 5분 SWR
+                source: "/(sitemap\\.xml|robots\\.txt)",
+                headers: [
+                    {
+                        key: "Cache-Control",
+                        value: "public, max-age=300, s-maxage=3600, stale-while-revalidate=300",
+                    },
+                ],
+            },
+            {
+                // PWA manifest — 거의 안 바뀜, 1일 브라우저 캐시
+                source: "/manifest.webmanifest",
+                headers: [
+                    {
+                        key: "Cache-Control",
+                        value: "public, max-age=86400, must-revalidate",
+                    },
+                ],
+            },
+            {
+                // favicon.ico — 브라우저 공격적 캐시, 1주일
+                source: "/favicon.ico",
+                headers: [
+                    {
+                        key: "Cache-Control",
+                        value: "public, max-age=604800, must-revalidate",
                     },
                 ],
             },
