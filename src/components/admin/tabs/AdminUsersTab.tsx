@@ -517,23 +517,49 @@ export default function AdminUsersTab({
 // ============================================================================
 
 /**
- * 펫 프로필 이미지 썸네일 — http(s) URL만 렌더, 로드 실패/비정상 스킴은 PawPrint fallback.
- * 2026-04-18 이전 저장된 blob/data URL 대응용 (이미 마이그레이션으로 정리됐지만 안전망).
+ * 펫 프로필 이미지 썸네일 (관리자 전용).
+ *
+ * 우선순위:
+ * 1. profile_image (http/https만 유효, 실패 시 2로)
+ * 2. fallback_photo (pet_media 대표 사진, 실패 시 3으로)
+ * 3. PawPrint 아이콘
+ *
+ * 배경: 일부 펫은 profile_image가 NULL이거나(복구 불가 blob URL),
+ * 유저가 아예 프로필 사진을 안 올린 경우가 있다. 하지만 타임라인에 사진이
+ * 쌓여 있으면 그걸 대표로 써서 관리자가 펫을 식별할 수 있게 한다.
  */
-function PetAvatar({ src, alt }: { src?: string | null; alt: string }) {
-    const [failed, setFailed] = useState(false);
-    const isHttpUrl = !!src && (src.startsWith("http://") || src.startsWith("https://"));
-    if (!isHttpUrl || failed) {
-        return <PawPrint className="w-4 h-4 text-gray-400" />;
+function PetAvatar({ profileImage, fallbackPhoto, alt }: { profileImage?: string | null; fallbackPhoto?: string | null; alt: string }) {
+    const [primaryFailed, setPrimaryFailed] = useState(false);
+    const [fallbackFailed, setFallbackFailed] = useState(false);
+
+    const isValidHttp = (v?: string | null): v is string =>
+        !!v && (v.startsWith("http://") || v.startsWith("https://"));
+
+    const primary = isValidHttp(profileImage) && !primaryFailed ? profileImage : null;
+    const fallback = !primary && isValidHttp(fallbackPhoto) && !fallbackFailed ? fallbackPhoto : null;
+
+    if (primary) {
+        return (
+            <img
+                src={primary}
+                alt={alt}
+                className="w-5 h-5 rounded-full object-cover"
+                onError={() => setPrimaryFailed(true)}
+            />
+        );
     }
-    return (
-        <img
-            src={src as string}
-            alt={alt}
-            className="w-5 h-5 rounded-full object-cover"
-            onError={() => setFailed(true)}
-        />
-    );
+    if (fallback) {
+        return (
+            <img
+                src={fallback}
+                alt={alt}
+                className="w-5 h-5 rounded-full object-cover ring-1 ring-memento-300 dark:ring-memento-700"
+                title="타임라인 대표 사진 (프로필 미등록)"
+                onError={() => setFallbackFailed(true)}
+            />
+        );
+    }
+    return <PawPrint className="w-4 h-4 text-gray-400" />;
 }
 
 function UserDetailPanel({ detail, user }: { detail?: UserDetailData; user: UserRow }) {
@@ -632,7 +658,7 @@ function UserDetailPanel({ detail, user }: { detail?: UserDetailData; user: User
                     <div className="flex flex-wrap gap-2">
                         {detail.pets.map(pet => (
                             <div key={pet.id} className="flex items-center gap-1.5 px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                                <PetAvatar src={pet.profile_image} alt={pet.name} />
+                                <PetAvatar profileImage={pet.profile_image} fallbackPhoto={pet.fallback_photo} alt={pet.name} />
                                 <span className="text-xs font-medium">{pet.name}</span>
                                 <span className="text-[9px] text-gray-400">{pet.type}</span>
                                 {pet.status === "memorial" && (

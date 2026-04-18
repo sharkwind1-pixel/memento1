@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
 
         const adminSupabase = createAdminSupabase();
 
-        const [profileResult, petsResult, chatCountResult, authUserResult] = await Promise.all([
+        const [profileResult, petsResult, mediaResult, chatCountResult, authUserResult] = await Promise.all([
             adminSupabase
                 .from("profiles")
                 .select("avatar_url, last_seen_at, subscription_tier, premium_expires_at, points")
@@ -52,6 +52,17 @@ export async function GET(request: NextRequest) {
                 .select("id, name, type, status, profile_image")
                 .eq("user_id", userId)
                 .order("created_at", { ascending: true }),
+            // 각 펫의 fallback 사진 후보: type=image, archived 제외, 즐겨찾기 우선, 최신순.
+            // 펫당 1장씩만 쓰므로 user_id 스코프의 모든 이미지 중 상위 몇 개만 가져와도 충분.
+            adminSupabase
+                .from("pet_media")
+                .select("pet_id, url, is_favorite, created_at")
+                .eq("user_id", userId)
+                .eq("type", "image")
+                .is("archived_at", null)
+                .order("is_favorite", { ascending: false })
+                .order("created_at", { ascending: false })
+                .limit(200),
             adminSupabase
                 .from("chat_messages")
                 .select("*", { count: "exact", head: true })
@@ -61,8 +72,17 @@ export async function GET(request: NextRequest) {
 
         const profile = profileResult.data;
         const pets = petsResult.data || [];
+        const mediaRows = (mediaResult.data || []) as Array<{ pet_id: string; url: string }>;
         const chatCount = chatCountResult.count || 0;
         const authUser = authUserResult.data?.user;
+
+        // 펫별 첫 매치만 고름 (이미 우선순위 정렬된 상태)
+        const fallbackByPet = new Map<string, string>();
+        for (const m of mediaRows) {
+            if (!fallbackByPet.has(m.pet_id) && m.url) {
+                fallbackByPet.set(m.pet_id, m.url);
+            }
+        }
 
         return NextResponse.json({
             avatarUrl: profile?.avatar_url || null,
@@ -78,6 +98,7 @@ export async function GET(request: NextRequest) {
                 type: p.type,
                 status: p.status,
                 profile_image: p.profile_image,
+                fallback_photo: fallbackByPet.get(p.id) || null,
             })),
             chatMessagesCount: chatCount,
         });

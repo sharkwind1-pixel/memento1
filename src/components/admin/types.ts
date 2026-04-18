@@ -270,6 +270,11 @@ export interface UserDetailPet {
     type: string;
     status: string;
     profile_image: string | null;
+    /**
+     * profile_image가 없거나 비정상 스킴일 때 대체로 쓸 pet_media 대표 사진.
+     * 우선순위: 즐겨찾기 사진 > 최신 사진. type='image' + archived_at IS NULL 조건.
+     */
+    fallback_photo: string | null;
 }
 
 export interface UserDetailData {
