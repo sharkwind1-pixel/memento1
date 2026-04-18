@@ -132,7 +132,12 @@ export default function AIChatHeader({
                                     <SelectItem key={pet.id} value={pet.id}>
                                         <span className="flex items-center gap-2">
                                             <Heart className="w-4 h-4 text-pink-500" />
-                                            {pet.name}
+                                            <span>
+                                                {pet.name}
+                                                {pet.breed && (
+                                                    <span className="ml-1 text-xs text-gray-500 dark:text-gray-400">· {pet.breed}</span>
+                                                )}
+                                            </span>
                                         </span>
                                     </SelectItem>
                                 ))}
@@ -149,7 +154,12 @@ export default function AIChatHeader({
                                     <SelectItem key={pet.id} value={pet.id}>
                                         <span className="flex items-center gap-2">
                                             <Star className="w-4 h-4 text-memorial-500" />
-                                            {pet.name}
+                                            <span>
+                                                {pet.name}
+                                                {pet.breed && (
+                                                    <span className="ml-1 text-xs text-gray-500 dark:text-gray-400">· {pet.breed}</span>
+                                                )}
+                                            </span>
                                         </span>
                                     </SelectItem>
                                 ))}

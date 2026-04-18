@@ -5,9 +5,11 @@
  * 원칙:
  * 1. 수의학 교과서/공식 가이드라인 기반 정보만 수록
  * 2. 프롬프트 토큰 최적화를 위해 핵심만 압축
- * 3. 강아지(dog)와 고양이(cat) 분기
+ * 3. **종 평등**: 강아지/고양이뿐 아니라 18종 모두 커버 (species-context 활용)
  * 4. "확실한 것만 말하고, 불확실하면 수의사 권장" 원칙
  */
+
+import { SPECIES_CONTEXT, type PetSpecies } from "./species-context";
 
 // ============================================
 // 1. 독성 음식 레퍼런스 (강아지/고양이 공통 + 개별)
@@ -179,17 +181,32 @@ export const CARE_FRAMING_RULES = ``;
 // ============================================
 
 /**
- * 반려동물 타입에 따른 케어 레퍼런스 텍스트 생성
- * 프롬프트 삽입용 (토큰 최적화)
+ * 반려동물 종에 따른 케어 레퍼런스 텍스트 생성 (프롬프트 삽입용).
+ *
+ * 종 평등 원칙: 강아지/고양이만 상세하고 나머지는 범용 1줄로 처리하던
+ * 이전 버전의 문제를 해결. species-context의 SPECIES_CONTEXT를 엑조틱
+ * 종별로 주입해 햄스터 저온 hibernation, 앵무새 PTFE 즉사 등 종별 치명
+ * 위험까지 AI가 인지하도록 함.
+ *
+ * @param species inferSpeciesFromPet() 결과. 18종 + "공통" 중 하나.
+ * @param breed 견종/묘종/세부 종명. 있으면 맞춤 응답 규칙 추가.
  */
-export function buildCareReferencePrompt(petType: "강아지" | "고양이" | "기타", breed?: string): string {
-    const isDog = petType === "강아지";
-    const isCat = petType === "고양이";
+export function buildCareReferencePrompt(species: PetSpecies, breed?: string): string {
+    const isDog = species === "강아지";
+    const isCat = species === "고양이";
 
-    // 기타 동물은 간략한 범용 정보만
+    // 엑조틱·소형 포유류·조류·파충류·수서 종: SPECIES_CONTEXT 활용
     if (!isDog && !isCat) {
-        return `### 케어 레퍼런스
-일반: 초콜릿/포도/양파/자일리톨/카페인 모든 반려동물에 독성. 이상 증상 시 수의사 상담 권장.
+        const speciesContext = SPECIES_CONTEXT[species] || SPECIES_CONTEXT["공통"];
+        const breedNote = breed
+            ? `\n**[필수] ${species} "${breed}" 맞춤 응답 규칙**:\n1. "모든 ${species}" 범용 답변 금지, "${breed}" 특성에 맞춰 답하세요.\n2. "${breed}"에 흔한 질환·사육 환경 특이점이 있으면 반드시 언급하세요.\n3. 한국에서 자주 잘못 알려진 정보(예: 저온 hibernation, UVB 미설치, 영양제 누락)는 명확히 교정하세요.`
+            : "";
+        return `### ${species} 케어 레퍼런스 (종별 사육 컨텍스트)
+${speciesContext}
+
+**공통 독성**: 초콜릿, 포도, 양파, 자일리톨, 카페인, 아보카도는 거의 모든 반려동물에 위험. PTFE(테플론) 연기는 앵무새 즉사.
+**응급 기준**: 평소와 다른 호흡, 먹지 않음, 움직이지 않음, 피·점액 분비 → 해당 종 전문 수의사(엑조틱 진료 가능) 상담 필수.
+**한국 현실**: 엑조틱 진료 가능 병원이 적으므로 사전에 지역 엑조틱 수의사 연락처 확보 권장.${breedNote}
 ${HALLUCINATION_GUARD_RULES}`;
     }
 

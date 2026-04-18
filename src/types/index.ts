@@ -19,8 +19,16 @@ export type MainCategory = "home" | "record" | "community" | "ai-chat" | "magazi
 /** 커뮤니티 서브카테고리 (5개) */
 export type CommunitySubcategory = "free" | "memorial" | "adoption" | "local" | "lost";
 
-/** 자유게시판 말머리(태그) */
-export type PostTag = "정보" | "강아지" | "고양이" | "일상" | "질문" | "새" | "물고기" | "토끼" | "파충류";
+/**
+ * 자유게시판 말머리(태그) — 종 평등 원칙으로 엑조틱 종 확장.
+ * 메멘토애니는 강아지/고양이뿐 아니라 햄스터·토끼·앵무새·파충류·수서 등
+ * 모든 반려동물을 평등하게 다룬다. "작은포유류"는 기니피그·친칠라·고슴도치·페럿 그룹.
+ */
+export type PostTag =
+    | "정보" | "일상" | "질문"
+    | "강아지" | "고양이"
+    | "햄스터" | "토끼" | "작은포유류"
+    | "새" | "파충류" | "물고기";
 
 /** 공지 범위 */
 export type NoticeScope = "board" | "global";
