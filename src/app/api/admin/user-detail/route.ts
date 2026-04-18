@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
                 .single(),
             adminSupabase
                 .from("pets")
-                .select("id, name, type, status, profile_image")
+                .select("id, name, type, breed, status, profile_image, created_at")
                 .eq("user_id", userId)
                 .order("created_at", { ascending: true }),
             // 각 펫의 fallback 사진 후보: type=image, archived 제외, 즐겨찾기 우선, 최신순.
@@ -96,9 +96,11 @@ export async function GET(request: NextRequest) {
                 id: p.id,
                 name: p.name,
                 type: p.type,
+                breed: p.breed ?? null,
                 status: p.status,
                 profile_image: p.profile_image,
                 fallback_photo: fallbackByPet.get(p.id) || null,
+                created_at: p.created_at,
             })),
             chatMessagesCount: chatCount,
         });
