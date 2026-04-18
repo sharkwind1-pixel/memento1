@@ -208,6 +208,16 @@ export default function CommunityPostList({
                                         showTooltip={false}
                                     />
                                     <span className="truncate max-w-[100px]">{post.authorName}</span>
+                                    {/* 연결된 반려동물 — 동명 펫 보호자 구분 + 종 평등 노출 */}
+                                    {post.authorPet && (
+                                        <span className="flex items-center gap-1 text-[11px] text-gray-400 dark:text-gray-500 truncate max-w-[160px]">
+                                            <span>·</span>
+                                            <span className="truncate">
+                                                {post.authorPet.name}
+                                                {post.authorPet.breed ? ` · ${post.authorPet.breed}` : ""}
+                                            </span>
+                                        </span>
+                                    )}
                                 </button>
                                 <div className="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500">
                                     <span className="flex items-center gap-0.5">

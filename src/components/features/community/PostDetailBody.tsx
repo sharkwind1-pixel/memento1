@@ -148,6 +148,19 @@ export default function PostDetailBody({
                             />
                             <span>{post.author_name}</span>
                         </button>
+                        {/* 연결된 반려동물 — 동명 펫 구분 + 종 평등 노출 */}
+                        {post.author_pet && (
+                            <span
+                                className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400"
+                                title={`${post.author_pet.name} · ${post.author_pet.type}${post.author_pet.breed ? ` · ${post.author_pet.breed}` : ""}`}
+                            >
+                                <span>·</span>
+                                <span className="truncate max-w-[160px]">
+                                    {post.author_pet.name}
+                                    {post.author_pet.breed ? ` · ${post.author_pet.breed}` : ` · ${post.author_pet.type}`}
+                                </span>
+                            </span>
+                        )}
                         <span className="flex items-center gap-1">
                             <Clock className="w-3.5 h-3.5" />
                             {formatTime(post.created_at)}

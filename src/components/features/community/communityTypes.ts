@@ -13,6 +13,18 @@ import {
 } from "lucide-react";
 import type { CommunitySubcategory, PostTag } from "@/types";
 
+/** 게시글에 연결된 작성자 반려동물 정보 (optional) */
+export interface PostAuthorPet {
+    id: string;
+    name: string;
+    /** pet.type: "강아지" / "고양이" / "기타" */
+    type: string;
+    /** 세부 품종 (예: 말티즈, 왕관앵무, 시리안 햄스터) */
+    breed: string | null;
+    /** Storage URL. null이면 UI에서 PawPrint 폴백 */
+    profileImage: string | null;
+}
+
 /** DB 연동 게시글 타입 */
 export interface Post {
     id: string;
@@ -36,6 +48,8 @@ export interface Post {
     authorMinimiSlug?: string | null; // 작성자 미니미 slug (미니홈피 아바타 표시용)
     authorPoints?: number; // 작성자 포인트 (등급 아이콘 표시용)
     authorIsAdmin?: boolean; // 작성자 관리자 여부 (관리자 아이콘 표시용)
+    /** 작성자가 글 작성 시 연결한 반려동물. null 가능 (종 평등/동명 펫 식별용) */
+    authorPet?: PostAuthorPet | null;
 }
 
 // 서브카테고리 정의 (5개)
@@ -85,17 +99,19 @@ export const SUBCATEGORIES: {
     },
 ];
 
-// 자유게시판 말머리(태그) 옵션
+// 자유게시판 말머리(태그) 옵션 — 종 평등 원칙 반영 (엑조틱 종 확장)
 export const POST_TAGS: { id: PostTag; label: string; color: string }[] = [
     { id: "일상", label: "일상", color: "sky" },
     { id: "정보", label: "정보", color: "emerald" },
     { id: "질문", label: "질문", color: "amber" },
     { id: "강아지", label: "강아지", color: "orange" },
     { id: "고양이", label: "고양이", color: "pink" },
-    { id: "새", label: "새", color: "cyan" },
-    { id: "물고기", label: "물고기", color: "blue" },
+    { id: "햄스터", label: "햄스터", color: "amber" },
     { id: "토끼", label: "토끼", color: "rose" },
+    { id: "작은포유류", label: "작은포유류", color: "emerald" },
+    { id: "새", label: "새", color: "cyan" },
     { id: "파충류", label: "파충류", color: "green" },
+    { id: "물고기", label: "물고기", color: "blue" },
 ];
 
 // 자유게시판 뱃지(게시글 유형) 필터 옵션
