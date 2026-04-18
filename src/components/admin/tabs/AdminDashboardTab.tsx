@@ -39,6 +39,7 @@ import {
 } from "recharts";
 import { DashboardStats, ChartData, ApiUsageData } from "../types";
 import Open100AdminSection from "./Open100AdminSection";
+import PetProfileMigrationCard from "./PetProfileMigrationCard";
 
 // ============================================================================
 // Props 타입 정의
@@ -108,6 +109,9 @@ export default function AdminDashboardTab({
 
     return (
         <div className="space-y-6">
+            {/* 일회성 데이터 복구 카드 — 복구할 것 없으면 자동 숨김 */}
+            <PetProfileMigrationCard />
+
             {/* ================================================================
                 섹션 1: 핵심 지표 카드
             ================================================================ */}
