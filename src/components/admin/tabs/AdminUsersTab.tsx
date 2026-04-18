@@ -656,18 +656,29 @@ function UserDetailPanel({ detail, user }: { detail?: UserDetailData; user: User
                 <div>
                     <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-1">반려동물 목록</p>
                     <div className="flex flex-wrap gap-2">
-                        {detail.pets.map(pet => (
-                            <div key={pet.id} className="flex items-center gap-1.5 px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                                <PetAvatar profileImage={pet.profile_image} fallbackPhoto={pet.fallback_photo} alt={pet.name} />
-                                <span className="text-xs font-medium">{pet.name}</span>
-                                <span className="text-[9px] text-gray-400">{pet.type}</span>
-                                {pet.status === "memorial" && (
-                                    <Badge className="bg-memorial-100 text-memorial-700 dark:bg-memorial-400/10 dark:text-memorial-300 text-[8px] px-1 py-0">
-                                        추모
-                                    </Badge>
-                                )}
-                            </div>
-                        ))}
+                        {detail.pets.map(pet => {
+                            const registered = new Date(pet.created_at)
+                                .toLocaleDateString("ko-KR", { year: "2-digit", month: "2-digit", day: "2-digit" })
+                                .replaceAll(" ", "");
+                            // 종 + 품종 조합 표기 (동물 종류 무관 — 강아지/고양이/앵무새/파충류/햄스터 등)
+                            const typeLabel = pet.breed ? `${pet.type} · ${pet.breed}` : pet.type;
+                            return (
+                                <div key={pet.id} className="flex items-center gap-1.5 px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                                    <PetAvatar profileImage={pet.profile_image} fallbackPhoto={pet.fallback_photo} alt={pet.name} />
+                                    <div className="flex flex-col leading-tight min-w-0">
+                                        <span className="text-xs font-medium truncate">{pet.name}</span>
+                                        <span className="text-[9px] text-gray-400 dark:text-gray-500 truncate">
+                                            {typeLabel} · {registered}
+                                        </span>
+                                    </div>
+                                    {pet.status === "memorial" && (
+                                        <Badge className="bg-memorial-100 text-memorial-700 dark:bg-memorial-400/10 dark:text-memorial-300 text-[8px] px-1 py-0 shrink-0">
+                                            추모
+                                        </Badge>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             )}

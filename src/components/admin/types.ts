@@ -268,6 +268,8 @@ export interface UserDetailPet {
     id: string;
     name: string;
     type: string;
+    /** 세부 품종 (예: 말티즈, 왕관앵무, 레오파드 게코, 시리안 햄스터). 없을 수 있음. */
+    breed: string | null;
     status: string;
     profile_image: string | null;
     /**
@@ -275,6 +277,8 @@ export interface UserDetailPet {
      * 우선순위: 즐겨찾기 사진 > 최신 사진. type='image' + archived_at IS NULL 조건.
      */
     fallback_photo: string | null;
+    /** 펫 등록일 (같은 유저 내 동명 펫 구분용) */
+    created_at: string;
 }
 
 export interface UserDetailData {
