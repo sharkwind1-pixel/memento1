@@ -67,9 +67,11 @@ export async function GET(request: NextRequest) {
             }
         }
 
+        // author_pet(id, name, type, breed, profile_image)를 함께 조회해서
+        // 작성자의 반려동물 정보를 게시글 목록에 즉시 노출.
         let query = supabase
             .from("community_posts")
-            .select("*, post_comments(count)", { count: "exact" })
+            .select("*, post_comments(count), author_pet:pets!community_posts_author_pet_id_fkey(id, name, type, breed, profile_image)", { count: "exact" })
             .or("is_hidden.is.null,is_hidden.eq.false");
 
         // 게시판 필터 (전체 공지 전용 조회는 별도 처리)
@@ -147,7 +149,7 @@ export async function GET(request: NextRequest) {
             try {
                 const { data: globalNotices } = await supabase
                     .from("community_posts")
-                    .select("*, post_comments(count)")
+                    .select("*, post_comments(count), author_pet:pets!community_posts_author_pet_id_fkey(id, name, type, breed, profile_image)")
                     .eq("notice_scope", "global")
                     .neq("board_type", boardType)
                     .or("is_hidden.is.null,is_hidden.eq.false")
@@ -221,29 +223,43 @@ export async function GET(request: NextRequest) {
         // 댓글 수 계산
         // DB 실제 컬럼: id, user_id, board_type, animal_type, badge, title, content,
         //               author_name, likes, views, created_at, updated_at, video_url
-        const posts = (data || []).map(post => ({
-            id: post.id,
-            userId: post.user_id,
-            boardType: post.board_type || "free",
-            animalType: post.animal_type,
-            badge: post.badge || "",
-            title: post.title,
-            content: post.content,
-            authorName: post.author_name,
-            likes: post.likes ?? 0,
-            views: post.views ?? 0,
-            comments: post.post_comments?.[0]?.count ?? 0,
-            imageUrls: post.image_urls || [],
-            videoUrl: post.video_url || null,
-            region: post.region || null,
-            isPinned: post.is_pinned ?? false,
-            noticeScope: post.notice_scope || null,
-            authorMinimiSlug: userIdToMinimiSlug[post.user_id] || null,
-            authorPoints: userIdToPoints[post.user_id] ?? 0,
-            authorIsAdmin: userIdToIsAdmin[post.user_id] ?? false,
-            userLiked: userLikedPostIds.has(post.id),
-            createdAt: post.created_at,
-        }));
+        const posts = (data || []).map(post => {
+            // Supabase PostgREST가 1:1 관계를 객체 또는 배열로 반환할 수 있어 방어적 언랩
+            const rawPet = Array.isArray(post.author_pet) ? post.author_pet[0] : post.author_pet;
+            const authorPet = rawPet
+                ? {
+                      id: rawPet.id as string,
+                      name: rawPet.name as string,
+                      type: rawPet.type as string,
+                      breed: (rawPet.breed as string | null) ?? null,
+                      profileImage: (rawPet.profile_image as string | null) ?? null,
+                  }
+                : null;
+            return {
+                id: post.id,
+                userId: post.user_id,
+                boardType: post.board_type || "free",
+                animalType: post.animal_type,
+                badge: post.badge || "",
+                title: post.title,
+                content: post.content,
+                authorName: post.author_name,
+                likes: post.likes ?? 0,
+                views: post.views ?? 0,
+                comments: post.post_comments?.[0]?.count ?? 0,
+                imageUrls: post.image_urls || [],
+                videoUrl: post.video_url || null,
+                region: post.region || null,
+                isPinned: post.is_pinned ?? false,
+                noticeScope: post.notice_scope || null,
+                authorMinimiSlug: userIdToMinimiSlug[post.user_id] || null,
+                authorPoints: userIdToPoints[post.user_id] ?? 0,
+                authorIsAdmin: userIdToIsAdmin[post.user_id] ?? false,
+                authorPet,
+                userLiked: userLikedPostIds.has(post.id),
+                createdAt: post.created_at,
+            };
+        });
 
         // 댓글 수 정렬이 요청된 경우 JS에서 재정렬
         if (sortBy === "comments") {
@@ -293,7 +309,7 @@ export async function POST(request: NextRequest) {
         const supabase = await createServerSupabase();
         const body = await request.json();
 
-        const { boardType: rawBoardType, subcategory, animalType, tag, badge, title, content, authorName, imageUrls, videoUrl, isPublic, region, isPinned, noticeScope } = body;
+        const { boardType: rawBoardType, subcategory, animalType, tag, badge, title, content, authorName, imageUrls, videoUrl, isPublic, region, isPinned, noticeScope, authorPetId } = body;
         const boardType = rawBoardType || subcategory || "free";
 
         // 3. 필수 필드 검증
@@ -359,6 +375,23 @@ export async function POST(request: NextRequest) {
             finalBadge = "공지";
         }
 
+        // 5.7. 작성자 반려동물 연결 검증
+        // authorPetId가 넘어오면 반드시 본인(user.id) 소유 펫인지 DB로 확인.
+        // 다른 유저 펫을 연결해 신원 사칭하는 경로를 차단.
+        let validAuthorPetId: string | null = null;
+        if (typeof authorPetId === "string" && authorPetId.length > 0) {
+            const { data: ownedPet } = await supabase
+                .from("pets")
+                .select("id")
+                .eq("id", authorPetId)
+                .eq("user_id", user.id)
+                .maybeSingle();
+            if (ownedPet) {
+                validAuthorPetId = ownedPet.id;
+            }
+            // 본인 소유가 아니면 조용히 null 처리 (작성 자체는 계속 진행)
+        }
+
         // 6. 게시글 저장 (세션에서 가져온 userId 사용)
         const { data, error } = await supabase
             .from("community_posts")
@@ -372,6 +405,7 @@ export async function POST(request: NextRequest) {
                 author_name: sanitizedAuthorName,
                 is_pinned: finalIsPinned,
                 notice_scope: finalNoticeScope,
+                author_pet_id: validAuthorPetId,
                 ...(validImageUrls.length > 0 && { image_urls: validImageUrls }),
                 ...(validVideoUrl && { video_url: validVideoUrl }),
                 ...(boardType === "local" && region ? { region: sanitizeInput(region).slice(0, 20) } : {}),

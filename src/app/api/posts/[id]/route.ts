@@ -63,10 +63,10 @@ export async function GET(
             }
         }).catch((err) => { console.error("[posts/GET] view increment failed:", err); });
 
-        // 게시글 조회
+        // 게시글 조회 + 연결된 작성자 반려동물 함께 조회
         const { data: post, error } = await supabase
             .from("community_posts")
-            .select("*")
+            .select("*, author_pet:pets!community_posts_author_pet_id_fkey(id, name, type, breed, profile_image)")
             .eq("id", id)
             .single();
 
@@ -155,9 +155,22 @@ export async function GET(
             userDisliked = !!dislikeRes.data;
         }
 
+        // PostgREST가 1:1 관계를 배열로 반환할 수 있어 방어적 언랩 후 snake_case 유지
+        const rawPet = Array.isArray(post.author_pet) ? post.author_pet[0] : post.author_pet;
+        const authorPet = rawPet
+            ? {
+                  id: rawPet.id as string,
+                  name: rawPet.name as string,
+                  type: rawPet.type as string,
+                  breed: (rawPet.breed as string | null) ?? null,
+                  profile_image: (rawPet.profile_image as string | null) ?? null,
+              }
+            : null;
+
         return NextResponse.json({
             post: {
                 ...post,
+                author_pet: authorPet,
                 authorMinimiSlug: authorInfo.minimiSlug,
                 authorPoints: authorInfo.points,
                 authorIsAdmin: authorInfo.isAdmin,

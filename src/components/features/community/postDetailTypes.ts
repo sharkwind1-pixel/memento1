@@ -25,6 +25,14 @@ export interface PostComment {
     created_at?: string;
 }
 
+export interface PostAuthorPetDetail {
+    id: string;
+    name: string;
+    type: string;
+    breed: string | null;
+    profile_image: string | null;
+}
+
 export interface PostData {
     id: string;
     user_id: string;
@@ -45,6 +53,8 @@ export interface PostData {
     authorMinimiSlug?: string | null;
     authorPoints?: number;
     authorIsAdmin?: boolean;
+    /** 게시글과 연결된 작성자 반려동물 — 동명 펫 구분 + 종 평등 노출 */
+    author_pet?: PostAuthorPetDetail | null;
     created_at: string;
     updated_at?: string;
 }

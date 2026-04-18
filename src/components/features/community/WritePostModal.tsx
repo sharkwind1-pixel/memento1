@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { X, Send, Home, Eye, EyeOff, ImagePlus, Loader2, Pin, Globe, Megaphone, Pencil } from "lucide-react";
 import { InlineLoading } from "@/components/ui/PawLoading";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePets } from "@/contexts/PetContext";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
 
 import { uploadCommunityImage } from "@/lib/storage";
@@ -73,6 +74,7 @@ export default function WritePostModal({
     onSuccess,
 }: WritePostModalProps) {
     const { user, isAdminUser } = useAuth();
+    const { pets } = usePets();
     useEscapeClose(isOpen, onClose);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const imageScrollRef = useHorizontalScroll();
@@ -81,6 +83,7 @@ export default function WritePostModal({
     const [badge, setBadge] = useState("");
     const [tag, setTag] = useState<PostTag | "">("");
     const [region, setRegion] = useState("");
+    const [authorPetId, setAuthorPetId] = useState<string>(""); // 연결할 반려동물 (선택)
     const [isPublic, setIsPublic] = useState(false); // 홈화면 공개 여부
     const [isNotice, setIsNotice] = useState(false); // 공지로 등록 (관리자 전용)
     const [noticeScope, setNoticeScope] = useState<"board" | "global">("board"); // 공지 범위
@@ -107,6 +110,7 @@ export default function WritePostModal({
         setBadge("");
         setTag("");
         setRegion("");
+        setAuthorPetId("");
         setIsPublic(false);
         setIsNotice(false);
         setNoticeScope("board");
@@ -191,6 +195,7 @@ export default function WritePostModal({
                     title: title.trim(),
                     content: content.trim(),
                     authorName: userNickname,
+                    authorPetId: authorPetId || undefined,
                     isPublic: isMemorial ? isPublic : undefined,
                     imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
                     isPinned: isNotice ? true : undefined,
@@ -301,6 +306,32 @@ export default function WritePostModal({
                                     </button>
                                 ))}
                             </div>
+                        </div>
+                    )}
+
+                    {/* 반려동물 연결 (선택) — 펫이 1마리라도 있으면 표시 */}
+                    {pets.length > 0 && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                반려동물 연결 <span className="text-xs text-gray-400">(선택)</span>
+                            </label>
+                            <select
+                                value={authorPetId}
+                                onChange={(e) => setAuthorPetId(e.target.value)}
+                                className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-memento-400"
+                            >
+                                <option value="">연결 안 함</option>
+                                {pets.map((p) => (
+                                    <option key={p.id} value={p.id}>
+                                        {p.name}
+                                        {p.breed ? ` · ${p.type} · ${p.breed}` : ` · ${p.type}`}
+                                        {p.status === "memorial" ? " (추모)" : ""}
+                                    </option>
+                                ))}
+                            </select>
+                            <p className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
+                                같은 이름의 다른 보호자와 구분될 수 있도록, 어떤 아이 이야기인지 선택해주세요.
+                            </p>
                         </div>
                     )}
 
