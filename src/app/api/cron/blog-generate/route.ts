@@ -13,6 +13,7 @@ import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
 import { tavily } from "@tavily/core";
+import { createClient } from "@supabase/supabase-js";
 import { verifyCronSecret, getKstTime } from "@/lib/cron-utils";
 import {
     type PetSpecies,
@@ -20,6 +21,17 @@ import {
     SPECIES_ENGLISH_KEYWORDS,
     isExoticSpecies,
 } from "@/lib/species-context";
+
+/** 서비스 롤 Supabase — blog_topic_history + magazine_articles 조회용 (서버 전용) */
+function getAdminSupabase() {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!url || !key) return null;
+    return createClient(url, key, {
+        auth: { autoRefreshToken: false, persistSession: false },
+        global: { fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }) },
+    });
+}
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -255,9 +267,47 @@ export async function GET(request: NextRequest) {
         const currentMonth = new Date(Date.now() + 9 * 60 * 60 * 1000).getUTCMonth() + 1;
 
         // 현재 월에 맞는 토픽만 필터 (계절 한정 + 연중)
-        const availableTopics = BLOG_TOPICS.filter(
+        const seasonalFiltered = BLOG_TOPICS.filter(
             t => !t.seasonal || t.seasonal.includes(currentMonth)
         );
+
+        // 최근 14일 이내 전송된 topic은 제외 (중복 방지)
+        // + 최근 4주 매거진 제목도 조회해 프롬프트에 피해야 할 목록으로 전달
+        const supabaseAdmin = getAdminSupabase();
+        let recentSentTopics = new Set<string>();
+        let recentTitles: string[] = [];
+        if (supabaseAdmin) {
+            try {
+                const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+                const fourWeeksAgo = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString();
+
+                const [{ data: histRows }, { data: magazineRows }] = await Promise.all([
+                    supabaseAdmin
+                        .from("blog_topic_history")
+                        .select("topic, title")
+                        .gte("sent_at", fourteenDaysAgo),
+                    supabaseAdmin
+                        .from("magazine_articles")
+                        .select("title")
+                        .eq("status", "published")
+                        .gte("published_at", fourWeeksAgo)
+                        .limit(40),
+                ]);
+
+                recentSentTopics = new Set((histRows || []).map(r => r.topic as string));
+                recentTitles = [
+                    ...(histRows || []).map(r => r.title as string).filter(Boolean),
+                    ...(magazineRows || []).map(r => r.title as string).filter(Boolean),
+                ];
+            } catch (err) {
+                console.warn("[blog-generate] 중복 필터 조회 실패, 전체 풀에서 선택:", err);
+            }
+        }
+
+        // 중복 topic 제외된 풀
+        const dedupedTopics = seasonalFiltered.filter(t => !recentSentTopics.has(t.topic));
+        // 전부 제외됐으면 (엣지 케이스) 원본 풀 사용
+        const availableTopics = dedupedTopics.length > 0 ? dedupedTopics : seasonalFiltered;
 
         // 3카테고리 균형 로테이션: 정보 → 소식 → 펫로스 → 정보 → 소식 → 펫로스 ...
         // 매일 카테고리가 바뀌고, 같은 카테고리 안에서는 순환
@@ -350,11 +400,23 @@ ${isPetloss
 ## 어드바이저 활용
 어려운 판단이 필요할 때 (예: 의학적 정확성 검증, SEO 구조 최적화, 톤 조정) advisor 툴을 호출해 Opus에게 가이던스를 요청하세요. 최대 2회까지 사용 가능합니다.`;
 
+        // 최근 전송/게재된 제목을 프롬프트에 노출 → LLM이 서론/구조/CTA 중복 회피
+        const recentTitlesBlock = recentTitles.length > 0
+            ? `\n\n## 최근 전송/게재된 글 제목 (아래와 "서론 문장, 소제목 구조, CTA 문구, 예시 비유, 결말"이 **겹치지 않도록** 다른 앵글로 작성하세요)\n${recentTitles.slice(0, 20).map((t, i) => `${i + 1}. ${t}`).join("\n")}`
+            : "";
+
         const userPrompt = `주제: ${selectedTopic.topic}
 카테고리: ${selectedTopic.category}
 핵심 키워드: ${selectedTopic.keywords.join(", ")}
+${recentTitlesBlock}
 
-${searchContext ? `## 참고 자료 (아래 검색 결과를 바탕으로 정확한 정보를 작성하세요)\n\n${searchContext}` : "## 참고 자료 없음\n일반적으로 알려진 수의학 지식을 바탕으로 작성하세요."}`;
+${searchContext ? `## 참고 자료 (아래 검색 결과를 바탕으로 정확한 정보를 작성하세요)\n\n${searchContext}` : "## 참고 자료 없음\n일반적으로 알려진 수의학 지식을 바탕으로 작성하세요."}
+
+## 중복 방지 원칙 (중요)
+- 서론을 "많은 반려인들은 ~을 겪을 때" / "반려동물은 우리의 일상에서" 같은 전형적 오프닝으로 시작하지 마세요.
+- "복합 애도 과정", "슬픔을 부정하지 말고 받아들이기", "감정 정리를 위한 활동" 같은 반복되는 소제목 표현을 피하고, 이 글만의 구체적 앵글로 소제목을 잡으세요.
+- CTA는 매번 같은 문구가 되지 않도록 반려동물 종/상황/톤에 맞춰 자연스럽게 변주하세요 (메멘토애니 언급 1회는 유지).
+- 구체적 사례·수치·최신 연구·한국 현실 데이터를 1개 이상 포함해 범용 글이 아닌 "이 주제만의" 글을 만드세요.`;
 
         let content = "";
         let modelUsed = "";
@@ -443,6 +505,20 @@ ${searchContext ? `## 참고 자료 (아래 검색 결과를 바탕으로 정확
         ].join("\n");
 
         await sendToTelegram(header, body);
+
+        // 전송 이력 기록 — 다음 실행부터 최근 14일 내 topic은 중복 선택 방지
+        if (supabaseAdmin) {
+            try {
+                await supabaseAdmin.from("blog_topic_history").insert({
+                    topic: selectedTopic.topic,
+                    category: selectedTopic.category,
+                    species: selectedTopic.species,
+                    title,
+                });
+            } catch (err) {
+                console.warn("[blog-generate] history insert 실패 (전송은 정상):", err);
+            }
+        }
 
         // 릴스/쇼츠 대본 자동 생성 제거 — 실사용 가치 낮음
         // (필요 시 수동으로 별도 툴에서 생성)
