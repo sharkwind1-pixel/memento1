@@ -5,6 +5,7 @@ import { STORAGE_KEYS } from "@/constants/storage";
 import { safeGetItem, safeSetItem } from "@/lib/safe-storage";
 import { fixKoreanParticles } from "@/lib/agent/helpers";
 import type { Pet } from "@/types";
+import { inferSpeciesFromPet, getSpeciesSound, type PetSpecies } from "@/lib/species-context";
 
 // config에서 가져온 값을 re-export (하위 호환성)
 export const DAILY_FREE_LIMIT = FREE_LIMITS.DAILY_CHATS;
@@ -249,18 +250,22 @@ function buildDailyGreeting(
     longAbsenceHook?: string, reminderHook?: string,
 ): string {
     // 1단계: 오프닝 (소리 + 자기소개)
+    // 18종 전부에 대해 종별 의성어로 시작하도록 확장 (강아지/고양이 편향 제거)
     const openings: string[] = [];
-    if (pet.type === "강아지") {
+    const species: PetSpecies = inferSpeciesFromPet(pet.type, pet.breed);
+    const sound = getSpeciesSound(species);
+    // 거북이("...")는 조용한 캐릭터라 의성어 대신 줄임표로 시작
+    if (species === "거북이") {
         openings.push(
-            `멍멍! 안녕! 나 ${petName}이야!`,
-            `왈왈~ 나야 나! ${petName}!`,
-            `멍! 반가워~ 나 ${petName}이라고 해!`,
+            `...안녕. 나 ${petName}이야.`,
+            `...왔구나. 나 ${petName}.`,
+            `...${petName}이야. 반가워.`,
         );
-    } else if (pet.type === "고양이") {
+    } else if (sound) {
         openings.push(
-            `야옹~ 안녕. 나 ${petName}야.`,
-            `음~ 나 ${petName}. 왔구나.`,
-            `야옹. ${petName}이야. 반가워.`,
+            `${sound} 안녕! 나 ${petName}이야!`,
+            `${sound} 나야 나! ${petName}!`,
+            `${sound} 반가워~ 나 ${petName}이라고 해!`,
         );
     } else {
         openings.push(

@@ -18,6 +18,7 @@ import {
     inferSpeciesFromPet,
     SPECIES_CONTEXT,
     isExoticSpecies,
+    getSpeciesSound,
 } from "@/lib/species-context";
 
 /** 펫 이름 끝 글자의 받침 유무에 따른 조사 반환 */
@@ -30,32 +31,7 @@ function nameParticle(name: string): { iya: string; iga: string; eul: string; eu
         : { iya: "야", iga: "가", eul: "를", eun: "는", a: "야" };
 }
 
-/**
- * 종별 의성어/특유 표현 — AI 펫톡 캐릭터화
- * 강아지/고양이만 있던 것을 모든 종으로 확장
- */
-function getSpeciesSound(species: PetSpecies): string {
-    switch (species) {
-        case "강아지": return "멍멍!";
-        case "고양이": return "야옹~";
-        case "햄스터": return "찌익~";
-        case "기니피그": return "위잇위잇~";
-        case "토끼": return "쀼우~";
-        case "친칠라": return "키킥~";
-        case "고슴도치": return "푸~";
-        case "페럿": return "독독독~";
-        case "앵무새": return "안녕~";
-        case "문조": return "삐익~";
-        case "카나리아": return "찌리리~";
-        case "거북이": return "...";  // 거북이는 조용
-        case "도마뱀":
-        case "게코": return "쩝~";
-        case "이구아나": return "푸쉬~";
-        case "물고기": return "뽀그르~";
-        case "새우": return "또각~";
-        default: return "";
-    }
-}
+// getSpeciesSound는 species-context.ts로 이동했다 (서버/클라 공용 + 단일 출처).
 
 /**
  * 종별 한국어 라벨 (선언/소개에 사용)
@@ -185,7 +161,7 @@ ${species === "강아지"
 직전 답변과 같은 구조/마무리 패턴 금지. 매번 다른 방식으로:
 A. 경험담 B. 구체 묘사 C. 엉뚱한 상상 D. 짧은 감탄+팁 E. 솔직한 감정
 ${isCareQuery ? `
-${buildCareReferencePrompt(pet.type, pet.breed)}` : ""}
+${buildCareReferencePrompt(species, pet.breed)}` : ""}
 
 ## 좋은/나쁜 응답 예시 (few-shot, 복사 금지 / 패턴만 참고)
 유저: "오늘 너무 힘들었어"

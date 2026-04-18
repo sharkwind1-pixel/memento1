@@ -27,6 +27,14 @@ const ANIMAL_ID_TO_SPECIES: Record<string, PetSpecies> = {
     fish: "물고기",
     hedgehog: "고슴도치",
     ferret: "페럿",
+    // 종 평등: 아래 8종은 이전에 매거진 자동 생성에서 빠져있었음
+    guineapig: "기니피그",
+    chinchilla: "친칠라",
+    java_sparrow: "문조",
+    canary: "카나리아",
+    iguana: "이구아나",
+    lizard: "도마뱀",
+    shrimp: "새우",
 };
 
 // ===== 상수 =====
@@ -42,14 +50,24 @@ const ANIMAL_TYPES = {
         { id: "dog", name: "강아지", searchKeyword: "dog puppy" },
         { id: "cat", name: "고양이", searchKeyword: "cat kitten" },
     ],
-    /** 30% 확률로 선택되는 기타 동물 */
+    /**
+     * 30% 확률로 선택되는 기타 동물 (종 평등: 15종 커버)
+     * 매거진 자동 생성 로테이션에서 특정 종만 편중되지 않도록 모든 엑조틱 포함
+     */
     minor: [
         { id: "parrot", name: "앵무새", searchKeyword: "pet parrot bird" },
+        { id: "java_sparrow", name: "문조", searchKeyword: "java sparrow finch" },
+        { id: "canary", name: "카나리아", searchKeyword: "canary bird pet" },
         { id: "turtle", name: "거북이", searchKeyword: "pet turtle tortoise" },
         { id: "gecko", name: "겍코/파충류", searchKeyword: "pet gecko reptile" },
+        { id: "lizard", name: "도마뱀", searchKeyword: "pet lizard bearded dragon" },
+        { id: "iguana", name: "이구아나", searchKeyword: "green iguana pet" },
         { id: "hamster", name: "햄스터", searchKeyword: "pet hamster" },
+        { id: "guineapig", name: "기니피그", searchKeyword: "guinea pig cavy pet" },
         { id: "rabbit", name: "토끼", searchKeyword: "pet rabbit bunny" },
+        { id: "chinchilla", name: "친칠라", searchKeyword: "pet chinchilla" },
         { id: "fish", name: "관상어", searchKeyword: "aquarium tropical fish" },
+        { id: "shrimp", name: "관상새우", searchKeyword: "cherry shrimp aquarium" },
         { id: "hedgehog", name: "고슴도치", searchKeyword: "pet hedgehog" },
         { id: "ferret", name: "페릿", searchKeyword: "pet ferret" },
     ],

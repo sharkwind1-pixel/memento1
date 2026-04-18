@@ -156,6 +156,45 @@ export function inferSpeciesFromPet(petType: PetType, breed?: string | null): Pe
 }
 
 /**
+ * 종별 의성어/인사말 — AI 펫톡 오프닝/의성어 주입용.
+ * 서버·클라이언트 모두 공통 사용 (chat-prompts.ts / chatUtils.ts 등).
+ * 18종 + "공통" 모두 커버.
+ */
+export function getSpeciesSound(species: PetSpecies): string {
+    switch (species) {
+        case "강아지": return "멍멍!";
+        case "고양이": return "야옹~";
+        case "햄스터": return "찌익~";
+        case "기니피그": return "위잇위잇~";
+        case "토끼": return "쀼우~";
+        case "친칠라": return "키킥~";
+        case "고슴도치": return "푸~";
+        case "페럿": return "독독독~";
+        case "앵무새": return "안녕~";
+        case "문조": return "삐익~";
+        case "카나리아": return "찌리리~";
+        case "거북이": return "..."; // 거북이는 조용
+        case "도마뱀":
+        case "게코": return "쩝~";
+        case "이구아나": return "푸쉬~";
+        case "물고기": return "뽀그르~";
+        case "새우": return "또각~";
+        case "공통":
+        default: return "안녕!";
+    }
+}
+
+/**
+ * 종별 사람 친화적 라벨 — UI 문구용.
+ * pet.type은 DB값(강아지/고양이/기타)이지만 "기타"는 유저에게 어색하므로
+ * breed 기반 species로 추론해 구체 종명을 노출한다.
+ */
+export function getSpeciesLabel(species: PetSpecies): string {
+    if (species === "공통") return "반려동물";
+    return species;
+}
+
+/**
  * 시스템 프롬프트에 주입할 종별 컨텍스트 블록 생성
  * 사용처: 블로그/매거진/AI 펫톡 어디든 동일한 형식으로 주입 가능
  *

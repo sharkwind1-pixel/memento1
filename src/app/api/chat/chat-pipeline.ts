@@ -69,6 +69,7 @@ import {
     findRelatedMagazineArticles,
 } from "./chat-helpers";
 import { getDailySystemPrompt, getMemorialSystemPrompt } from "./chat-prompts";
+import { inferSpeciesFromPet, getSpeciesLabel } from "@/lib/species-context";
 import * as agent from "@/lib/agent";
 
 // ---- 타입 정의 ----
@@ -746,7 +747,9 @@ export async function buildAIContext(
         // 현재 메시지 포함
         consecutiveOffTopic++;
 
-        const petType = pet.type === "강아지" ? "강아지" : pet.type === "고양이" ? "고양이" : "반려동물";
+        // 종 평등: 강아지/고양이 삼항 대신 inferSpeciesFromPet로 실제 종 이름 사용.
+        // 햄스터/앵무새/파충류도 "나는 햄스터라" 식으로 자기 정체성 말하게 됨.
+        const petType = getSpeciesLabel(inferSpeciesFromPet(pet.type, pet.breed));
 
         if (consecutiveOffTopic >= 3) {
             // 3회 이상 반복 → GPT 호출 스킵, 고정 응답 반환 (토큰 절약 + 탈옥 불가)

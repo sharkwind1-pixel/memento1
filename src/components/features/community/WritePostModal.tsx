@@ -40,17 +40,19 @@ const BADGES_BY_SUBCATEGORY: Record<string, string[]> = {
     lost: ["분실", "발견"],
 };
 
-// 자유게시판 말머리 옵션
+// 자유게시판 말머리 옵션 (종 평등: 엑조틱 종 확장)
 const POST_TAGS: { id: PostTag; label: string }[] = [
     { id: "일상", label: "일상" },
     { id: "정보", label: "정보" },
     { id: "질문", label: "질문" },
     { id: "강아지", label: "강아지" },
     { id: "고양이", label: "고양이" },
-    { id: "새", label: "새" },
-    { id: "물고기", label: "물고기" },
+    { id: "햄스터", label: "햄스터" },
     { id: "토끼", label: "토끼" },
+    { id: "작은포유류", label: "작은포유류" }, // 기니피그/친칠라/고슴도치/페럿
+    { id: "새", label: "새" },
     { id: "파충류", label: "파충류" },
+    { id: "물고기", label: "물고기" },
 ];
 
 // 서브카테고리별 라벨
