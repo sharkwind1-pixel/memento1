@@ -93,11 +93,11 @@ export default function SubscriptionSection({
             }
 
             setShowCancelConfirm(false);
-            toast.success(
-                premiumExpiresAt
-                    ? `구독이 해지되었습니다. ${new Date(premiumExpiresAt).toLocaleDateString("ko-KR")}까지 기존 혜택을 이용할 수 있어요.`
-                    : "구독이 해지되었습니다."
-            );
+            if (result.refund_status === "refunded") {
+                toast.success("구독이 해지되고 환불이 완료되었습니다. 카드 환불은 3~5영업일 내 반영됩니다.");
+            } else {
+                toast.success("구독이 해지되었습니다.");
+            }
 
             // AuthContext 프로필 새로고침
             window.location.reload();
@@ -171,11 +171,10 @@ export default function SubscriptionSection({
                                 <div className="text-xs text-red-600 dark:text-red-400">
                                     <p className="font-medium">정말 구독을 해지하시겠습니까?</p>
                                     <p className="mt-1">
-                                        {premiumExpiresAt
-                                            ? `${new Date(premiumExpiresAt).toLocaleDateString("ko-KR")}까지 기존 유료 혜택을 이용할 수 있어요.`
-                                            : "결제 만료일까지 기존 유료 혜택을 이용할 수 있어요."}
+                                        해지하면 <b>즉시 결제가 환불되고 유료 기능이 종료</b>됩니다.
+                                        카드 환불은 카드사 영업일 기준 3~5일 이내 반영됩니다.
                                     </p>
-                                    <p className="mt-1">이후 자동으로 무료 회원으로 전환됩니다:</p>
+                                    <p className="mt-2">즉시 무료 회원으로 전환됩니다:</p>
                                     <ul className="mt-1 ml-3 list-disc space-y-0.5">
                                         <li>대표 반려동물 1마리 + 사진 50장 유지</li>
                                         <li>초과 데이터는 40일간 보관 (재구독 시 복구)</li>

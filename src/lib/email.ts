@@ -81,38 +81,37 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
 // ===== 구독 라이프사이클 이메일 템플릿 =====
 
 /**
- * 구독 해지 완료 이메일 (premium_expires_at까지 유료 혜택 유지 안내)
+ * 구독 해지 완료 이메일.
+ * 2026-04-20 "즉시 환불" 정책 전환: premiumExpiresAt은 더 이상 사용하지 않지만
+ * 하위 호환을 위해 파라미터는 유지 (null 허용).
+ * 문구는 즉시 환불/즉시 차단 기반으로 작성.
  */
 export async function sendSubscriptionCancelledEmail(
     to: string,
     nickname: string | null,
-    premiumExpiresAt: string,
+    premiumExpiresAt: string | null,
 ): Promise<SendEmailResult> {
-    const expiryDate = new Date(premiumExpiresAt).toLocaleDateString("ko-KR", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-    });
+    void premiumExpiresAt; // 호환용 파라미터 — 현재 템플릿에서는 미사용
     const name = nickname || "회원";
 
     return sendEmail({
         to,
-        subject: "[메멘토애니] 구독이 해지되었습니다",
+        subject: "[메멘토애니] 구독 해지 및 환불이 완료되었습니다",
         html: `
             <div style="font-family: 'Pretendard', -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #333;">
-                <h1 style="color: #05B2DC; font-size: 20px; margin-bottom: 16px;">구독이 해지되었습니다</h1>
+                <h1 style="color: #05B2DC; font-size: 20px; margin-bottom: 16px;">구독 해지 및 환불 완료</h1>
                 <p>${name}님,</p>
-                <p>메멘토애니 구독 해지가 완료되었습니다.</p>
+                <p>메멘토애니 구독 해지 및 결제 환불이 완료되었습니다.</p>
                 <div style="background: #FFF3E8; padding: 16px; border-radius: 12px; margin: 20px 0;">
-                    <p style="margin: 0; font-size: 14px;"><strong>${expiryDate}까지</strong> 기존 유료 혜택을 이용하실 수 있어요.</p>
-                    <p style="margin: 8px 0 0; font-size: 13px; color: #666;">이후 무료 회원으로 전환되며, 초과 데이터는 40일간 보관 후 영구 삭제됩니다.</p>
+                    <p style="margin: 0; font-size: 14px;"><strong>카드 환불은 카드사 영업일 기준 3~5일 이내</strong> 반영됩니다.</p>
+                    <p style="margin: 8px 0 0; font-size: 13px; color: #666;">유료 기능은 즉시 종료되며, 초과 데이터는 40일간 보관 후 영구 삭제됩니다.</p>
                 </div>
                 <p>그 전에 재구독하시면 모든 데이터가 즉시 복구됩니다.</p>
                 <p style="margin-top: 32px;"><a href="https://www.mementoani.com" style="display: inline-block; padding: 12px 24px; background: #05B2DC; color: white; text-decoration: none; border-radius: 8px;">메멘토애니 방문</a></p>
                 <p style="margin-top: 32px; font-size: 12px; color: #999;">문의: sharkwind1@gmail.com</p>
             </div>
         `,
-        text: `${name}님, 메멘토애니 구독 해지가 완료되었습니다. ${expiryDate}까지 기존 유료 혜택을 이용하실 수 있어요. 이후 무료 회원으로 전환됩니다. https://www.mementoani.com`,
+        text: `${name}님, 메멘토애니 구독 해지 및 결제 환불이 완료되었습니다. 카드 환불은 3~5영업일 내 반영됩니다. https://www.mementoani.com`,
         tags: [{ name: "category", value: "subscription_cancelled" }],
     });
 }
