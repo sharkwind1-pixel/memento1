@@ -52,6 +52,7 @@ import {
     LogOut,
     User,
     ChevronDown,
+    CreditCard,
 } from "lucide-react";
 import { safeSetItem } from "@/lib/safe-storage";
 import NotificationBell from "@/components/features/notifications/NotificationBell";
@@ -96,7 +97,7 @@ function HeaderAuthArea({
 }: {
     setSelectedTab: (tab: TabType) => void;
 }) {
-    const { user, loading, signOut, isAdminUser, points, userPetType, minimiEquip, profileLoaded } = useAuth();
+    const { user, loading, signOut, isAdminUser, isPremiumUser, points, userPetType, minimiEquip, profileLoaded } = useAuth();
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
     const displayName = user?.user_metadata?.nickname || user?.email?.split("@")[0] || "사용자";
@@ -168,13 +169,13 @@ function HeaderAuthArea({
                                 </div>
                                 <button
                                     onClick={() => {
-                                        setSelectedTab("record");
+                                        window.dispatchEvent(new CustomEvent("openAccountSettings"));
                                         setIsUserMenuOpen(false);
                                     }}
                                     className="w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-memento-100 dark:hover:bg-gray-700 flex items-center gap-2"
                                 >
                                     <User className="w-4 h-4" />
-                                    내 정보
+                                    내 정보 / 계정 설정
                                 </button>
                                 <button
                                     onClick={() => {
@@ -187,6 +188,22 @@ function HeaderAuthArea({
                                     <Home className="w-4 h-4" />
                                     내 미니홈피
                                 </button>
+                                {isPremiumUser && (
+                                    <button
+                                        onClick={() => {
+                                            window.dispatchEvent(
+                                                new CustomEvent("openAccountSettings", {
+                                                    detail: { scrollTo: "subscription-section" },
+                                                }),
+                                            );
+                                            setIsUserMenuOpen(false);
+                                        }}
+                                        className="w-full px-4 py-3 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-memento-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                    >
+                                        <CreditCard className="w-4 h-4" />
+                                        구독 관리
+                                    </button>
+                                )}
                                 <button
                                     onClick={handleSignOut}
                                     className="w-full px-4 py-3 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
@@ -359,6 +376,7 @@ function Layout({
         "inquiry" | "suggestion" | null
     >(null);
     const [isAccountSettingsOpen, setIsAccountSettingsOpen] = useState(false);
+    const [accountSettingsScrollTo, setAccountSettingsScrollTo] = useState<string | undefined>(undefined);
 
 
     useEffect(() => {
@@ -374,9 +392,12 @@ function Layout({
         };
     }, []);
 
-    // RecordPage에서 "계정 설정" 버튼 클릭 시 AccountSettingsModal 열기
+    // RecordPage/Sidebar/헤더 드롭다운에서 "계정 설정" 또는 "구독 관리" 클릭 시 AccountSettingsModal 열기.
+    // event.detail.scrollTo 가 주어지면 해당 섹션으로 자동 스크롤 (예: "subscription-section").
     useEffect(() => {
-        const handleOpenAccountSettings = () => {
+        const handleOpenAccountSettings = (e: Event) => {
+            const detail = (e as CustomEvent<{ scrollTo?: string } | undefined>).detail;
+            setAccountSettingsScrollTo(detail?.scrollTo);
             setIsAccountSettingsOpen(true);
         };
         window.addEventListener("openAccountSettings", handleOpenAccountSettings);
@@ -432,7 +453,11 @@ function Layout({
             {user && (
                 <AccountSettingsModal
                     isOpen={isAccountSettingsOpen}
-                    onClose={() => setIsAccountSettingsOpen(false)}
+                    onClose={() => {
+                        setIsAccountSettingsOpen(false);
+                        setAccountSettingsScrollTo(undefined);
+                    }}
+                    scrollTo={accountSettingsScrollTo}
                 />
             )}
 

@@ -96,7 +96,7 @@ export default function SubscriptionSection({
     }, []);
 
     return (
-        <div>
+        <div id="subscription-section" className="scroll-mt-4">
             <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1.5 mb-3">
                 <CreditCard className="w-4 h-4" />
                 구독 관리
@@ -137,12 +137,14 @@ export default function SubscriptionSection({
                     </div>
 
                     {!showCancelConfirm ? (
-                        <button
+                        <Button
                             onClick={() => setShowCancelConfirm(true)}
-                            className="text-xs text-gray-400 hover:text-red-500 transition-colors underline"
+                            variant="outline"
+                            size="sm"
+                            className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-900/40 dark:text-red-400 dark:hover:bg-red-900/20"
                         >
-                            구독 해지
-                        </button>
+                            구독 해지하기
+                        </Button>
                     ) : (
                         <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg space-y-2">
                             <div className="flex items-start gap-2">
