@@ -51,3 +51,4 @@ next-env.d.ts
 .pr_body.json
 .pr_response.json
 .merge_response.json
+.env.local.full

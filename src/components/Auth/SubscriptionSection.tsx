@@ -52,6 +52,7 @@ export default function SubscriptionSection({
     const [refundPreview, setRefundPreview] = useState<{
         refundable_amount: number;
         original_amount: number;
+        is_full_refund: boolean;
         days_used: number;
         days_total: number;
         days_remaining: number;
@@ -74,6 +75,7 @@ export default function SubscriptionSection({
                 setRefundPreview({
                     refundable_amount: data.refundable_amount ?? 0,
                     original_amount: data.original_amount ?? 0,
+                    is_full_refund: !!data.is_full_refund,
                     days_used: data.days_used ?? 0,
                     days_total: data.days_total ?? 0,
                     days_remaining: data.days_remaining ?? 0,
@@ -132,9 +134,11 @@ export default function SubscriptionSection({
             }
 
             setShowCancelConfirm(false);
-            if (result.refund_status === "refunded") {
-                const amount = (result.refunded_amount ?? 0).toLocaleString();
-                toast.success(`구독이 해지되었습니다. ${amount}원 환불 완료 (카드사 3~5영업일 내 반영).`);
+            const amount = (result.refunded_amount ?? 0).toLocaleString();
+            if (result.refund_status === "refunded_full") {
+                toast.success(`구독 해지 완료. ${amount}원 전액 환불 (카드사 3~5영업일 내 반영).`);
+            } else if (result.refund_status === "refunded_prorata") {
+                toast.success(`구독 해지 완료. ${amount}원 일할 환불 (카드사 3~5영업일 내 반영).`);
             } else if (result.refund_status === "skipped_no_remaining") {
                 toast.success("구독이 해지되었습니다. 이용 기간이 끝나가 환불 금액은 없습니다.");
             } else {
@@ -213,7 +217,7 @@ export default function SubscriptionSection({
                                 <div className="text-xs text-red-600 dark:text-red-400">
                                     <p className="font-medium">정말 구독을 해지하시겠습니까?</p>
                                     <p className="mt-1">
-                                        해지 즉시 유료 기능이 종료되고, <b>사용하지 않은 기간만큼 일할 환불</b>됩니다.
+                                        해지 즉시 유료 기능이 종료되고, <b>결제 후 24시간 이내면 전액 환불</b>, 이후엔 사용 일수 차감 후 일할 환불됩니다.
                                     </p>
                                     {/* 환불 예상액 카드 */}
                                     <div className="mt-2 p-2 bg-white/80 dark:bg-gray-800/60 rounded border border-red-200 dark:border-red-900/40 text-gray-700 dark:text-gray-200">
@@ -221,14 +225,21 @@ export default function SubscriptionSection({
                                             <p className="text-[11px]">환불 금액 계산 중...</p>
                                         ) : refundPreview && refundPreview.original_amount > 0 ? (
                                             <div className="space-y-0.5 text-[11px]">
+                                                {refundPreview.is_full_refund && (
+                                                    <div className="mb-1 px-1.5 py-0.5 inline-block bg-memento-100 text-memento-700 dark:bg-memento-900/40 dark:text-memento-300 rounded font-medium">
+                                                        24시간 이내 해지 — 전액 환불
+                                                    </div>
+                                                )}
                                                 <div className="flex justify-between">
                                                     <span>결제 금액</span>
                                                     <span>{refundPreview.original_amount.toLocaleString()}원</span>
                                                 </div>
-                                                <div className="flex justify-between text-gray-500 dark:text-gray-400">
-                                                    <span>사용 일수</span>
-                                                    <span>{refundPreview.days_used}일 / {refundPreview.days_total}일</span>
-                                                </div>
+                                                {!refundPreview.is_full_refund && (
+                                                    <div className="flex justify-between text-gray-500 dark:text-gray-400">
+                                                        <span>사용 일수</span>
+                                                        <span>{refundPreview.days_used}일 / {refundPreview.days_total}일</span>
+                                                    </div>
+                                                )}
                                                 <div className="flex justify-between font-semibold text-red-600 dark:text-red-400 pt-1 border-t border-red-100 dark:border-red-900/40">
                                                     <span>예상 환불 금액</span>
                                                     <span>{refundPreview.refundable_amount.toLocaleString()}원</span>

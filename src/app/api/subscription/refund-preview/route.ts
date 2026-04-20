@@ -12,6 +12,8 @@ import { getAuthUser, createAdminSupabase } from "@/lib/supabase-server";
 export const dynamic = "force-dynamic";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+/** 숙려기간: 이 시간 이내 해지면 전액 환불 */
+const COOLING_OFF_MS = 24 * 60 * 60 * 1000;
 
 export async function GET(_request: NextRequest) {
     const user = await getAuthUser();
@@ -31,6 +33,7 @@ export async function GET(_request: NextRequest) {
             return NextResponse.json({
                 is_premium: false,
                 refundable_amount: 0,
+                is_full_refund: false,
                 days_used: 0,
                 days_total: 0,
                 days_remaining: 0,
@@ -51,6 +54,7 @@ export async function GET(_request: NextRequest) {
             return NextResponse.json({
                 is_premium: true,
                 refundable_amount: 0,
+                is_full_refund: false,
                 days_used: 0,
                 days_total: 0,
                 days_remaining: 0,
@@ -65,7 +69,7 @@ export async function GET(_request: NextRequest) {
             ? new Date(profile.premium_expires_at)
             : new Date(paidAt.getTime() + 30 * DAY_MS);
 
-        // cancel route와 동일한 ms 비율 계산 (정수 일수 반올림 버그 방지)
+        // cancel route와 동일 로직: 24h 이내 → 전액, 이후 → ms 비율
         const totalMs = Math.max(1, expiresAt.getTime() - paidAt.getTime());
         const usedMs = Math.max(0, now.getTime() - paidAt.getTime());
         const remainingMs = Math.max(0, expiresAt.getTime() - now.getTime());
@@ -74,15 +78,23 @@ export async function GET(_request: NextRequest) {
         const daysUsed = Math.max(0, Math.floor(usedMs / DAY_MS));
         const daysRemaining = Math.max(0, Math.round(remainingMs / DAY_MS));
         const original = latestPaid.amount || 0;
-        const refundable =
-            remainingMs <= 0
-                ? 0
-                : Math.min(original, Math.max(0, Math.floor((original * remainingMs) / totalMs)));
+
+        let refundable = 0;
+        let isFullRefund = false;
+        if (remainingMs <= 0) {
+            refundable = 0;
+        } else if (usedMs < COOLING_OFF_MS) {
+            refundable = original; // 숙려기간 전액
+            isFullRefund = true;
+        } else {
+            refundable = Math.min(original, Math.max(0, Math.floor((original * remainingMs) / totalMs)));
+        }
 
         return NextResponse.json({
             is_premium: true,
             original_amount: original,
             refundable_amount: refundable,
+            is_full_refund: isFullRefund,
             days_used: daysUsed,
             days_total: daysTotal,
             days_remaining: daysRemaining,

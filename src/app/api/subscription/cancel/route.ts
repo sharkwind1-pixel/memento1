@@ -2,27 +2,23 @@
  * 구독 해지 API
  * POST /api/subscription/cancel
  *
- * **Pro-rata 환불 + 즉시 차단 (2026-04-20 재재재설계)**:
- * 전액 환불은 abuse vector. 사용자가 29일 쓰고 해지해도 전액 돌려주면
- * 매달 공짜 premium 가능. Korean 표준(Netflix/웨이브 등)은 사용 일수 차감
- * 또는 예약 해지. 메멘토애니는 pro-rata 채택 (공정 + abuse 방지).
+ * **숙려기간(24h) 전액 환불 + 이후 Pro-rata + 즉시 차단 (2026-04-20 최종)**:
+ * - 결제 후 24h 이내 해지: **전액 환불** (전자상거래법 숙려기간 + 유저 기대)
+ * - 24h 이후 해지: **일할 환불** (ms 비율, abuse 방지)
+ * - 어느 경우든 **즉시 유료 기능 차단**
  *
  * 환불 금액 계산:
- *   refund = amount × (남은일수 / 총일수)
- *   - 총일수 = 결제일 ~ premium_expires_at (보통 30일)
- *   - 남은일수 = 지금 ~ premium_expires_at
- *   - 당일 해지: 거의 전액 환불
- *   - 29일 사용 후 해지: 1/30만 환불
- *   - floor 단위 (원 단위 내림)
+ *   usedMs < COOLING_OFF_MS  → refund = amount (전액)
+ *   usedMs >= COOLING_OFF_MS → refund = amount × (remainingMs / totalMs)
  *
  * 처리 흐름:
  * 1. 최근 paid 결제 + profiles.premium_expires_at 조회
- * 2. pro-rata 환불 금액 계산 (0원이면 환불 스킵)
- * 3. PortOne /payments/cancel 호출 (amount 명시 = 부분 환불)
- * 4. 성공 시 DB 즉시 정리 (profiles 무료화, subscriptions/payments 기록)
+ * 2. 환불 금액 계산
+ * 3. PortOne /payments/cancel 호출 (amount 명시)
+ * 4. DB 즉시 정리 (is_premium=false, tier=free, payments/subscriptions 반영)
  *
  * 실패 처리:
- * - PortOne 환불 실패 시 DB 건들지 않음 → 502 (재시도 or 수동 환불)
+ * - PortOne 환불 실패 시 DB 수정 없이 502 반환
  * - 이미 취소된 결제는 성공으로 간주
  */
 
@@ -34,6 +30,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+/** 숙려기간: 이 시간 이내 해지 시 무조건 전액 환불 */
+const COOLING_OFF_MS = 24 * 60 * 60 * 1000;
 
 /** PortOne V1 토큰 발급 */
 async function getPortOneToken(): Promise<string | null> {
@@ -92,36 +90,42 @@ async function cancelPortOnePayment(params: {
 }
 
 /**
- * Pro-rata 환불 금액 계산.
- * **핵심**: 정수 일 단위 비율이 아니라 **밀리초 비율**로 계산해야 정확.
- *   정수 ceil을 쓰면 30일 + 1ms 차이로 total=31 되어 9900 → 9580원 환불되는 버그.
- *
- * - refund = amount × (remainingMs / totalMs) floor
- * - remainingMs ≤ 0 이면 0 (만료 임박/지남)
- * - daysUsed/daysTotal/daysRemaining은 표시용 (UI)
+ * 환불 금액 계산.
+ * - 결제 후 COOLING_OFF_MS 이내 해지 → 전액 환불 (isFullRefund=true)
+ * - 그 이후 해지 → ms 비율 pro-rata (abuse 방지)
+ * - 만료 지난 결제: 0원
  */
-function computeProrataRefund(params: {
+function computeRefund(params: {
     amount: number;
     paidAt: Date;
     expiresAt: Date;
     now: Date;
-}): { refund: number; daysUsed: number; daysTotal: number; daysRemaining: number } {
+}): {
+    refund: number;
+    isFullRefund: boolean;
+    daysUsed: number;
+    daysTotal: number;
+    daysRemaining: number;
+} {
     const { amount, paidAt, expiresAt, now } = params;
     const totalMs = Math.max(1, expiresAt.getTime() - paidAt.getTime());
     const usedMs = Math.max(0, now.getTime() - paidAt.getTime());
     const remainingMs = Math.max(0, expiresAt.getTime() - now.getTime());
 
-    // 표시용 정수 일수 (round로 30일±몇ms 부동소수 오차 흡수)
     const daysTotal = Math.max(1, Math.round(totalMs / DAY_MS));
     const daysUsed = Math.max(0, Math.floor(usedMs / DAY_MS));
     const daysRemaining = Math.max(0, Math.round(remainingMs / DAY_MS));
 
     if (remainingMs <= 0) {
-        return { refund: 0, daysUsed, daysTotal, daysRemaining };
+        return { refund: 0, isFullRefund: false, daysUsed, daysTotal, daysRemaining };
     }
-    // 실제 환불액은 ms 비율 (정수 일수 변환 없이)
+    // 숙려기간 내 → 전액 환불
+    if (usedMs < COOLING_OFF_MS) {
+        return { refund: amount, isFullRefund: true, daysUsed, daysTotal, daysRemaining };
+    }
+    // 이후 → 일할 환불 (ms 비율)
     const refund = Math.min(amount, Math.max(0, Math.floor((amount * remainingMs) / totalMs)));
-    return { refund, daysUsed, daysTotal, daysRemaining };
+    return { refund, isFullRefund: false, daysUsed, daysTotal, daysRemaining };
 }
 
 export async function POST(_request: NextRequest) {
@@ -162,9 +166,10 @@ export async function POST(_request: NextRequest) {
             ? (latestPaid.metadata as Record<string, unknown>).imp_uid
             : null;
 
-        // 2. pro-rata 환불 금액 계산
-        let refundStatus: "refunded" | "skipped_no_payment" | "skipped_no_remaining" | "skipped_no_imp_uid" = "skipped_no_payment";
+        // 2. 환불 금액 계산
+        let refundStatus: "refunded_full" | "refunded_prorata" | "skipped_no_payment" | "skipped_no_remaining" | "skipped_no_imp_uid" = "skipped_no_payment";
         let refundedAmount = 0;
+        let isFullRefund = false;
         let daysUsed = 0;
         let daysRemaining = 0;
         let daysTotal = 0;
@@ -174,7 +179,7 @@ export async function POST(_request: NextRequest) {
             const expiresAt = profile.premium_expires_at
                 ? new Date(profile.premium_expires_at)
                 : new Date(paidAt.getTime() + 30 * DAY_MS); // 폴백: 결제일 +30일
-            const calc = computeProrataRefund({
+            const calc = computeRefund({
                 amount: latestPaid.amount || 0,
                 paidAt,
                 expiresAt,
@@ -184,13 +189,14 @@ export async function POST(_request: NextRequest) {
             daysRemaining = calc.daysRemaining;
             daysTotal = calc.daysTotal;
             refundedAmount = calc.refund;
+            isFullRefund = calc.isFullRefund;
 
             if (refundedAmount <= 0) {
                 refundStatus = "skipped_no_remaining";
             } else if (typeof impUid !== "string" || !impUid) {
                 refundStatus = "skipped_no_imp_uid";
             } else {
-                // 3. PortOne 부분 환불 호출
+                // 3. PortOne 환불 호출 (숙려기간 내면 전액, 아니면 부분)
                 const token = await getPortOneToken();
                 if (!token) {
                     return NextResponse.json(
@@ -203,7 +209,9 @@ export async function POST(_request: NextRequest) {
                     impUid,
                     merchantUid: latestPaid.merchant_uid || undefined,
                     amount: refundedAmount,
-                    reason: `사용자 요청 — 구독 해지 (사용 ${daysUsed}일 / 총 ${daysTotal}일)`,
+                    reason: isFullRefund
+                        ? `사용자 요청 — 24h 이내 해지 (전액 환불)`
+                        : `사용자 요청 — 구독 해지 (사용 ${daysUsed}일 / 총 ${daysTotal}일 일할 환불)`,
                 });
                 if (!cancelResult.ok) {
                     return NextResponse.json(
@@ -214,10 +222,9 @@ export async function POST(_request: NextRequest) {
                         { status: 502 }
                     );
                 }
-                refundStatus = "refunded";
+                refundStatus = isFullRefund ? "refunded_full" : "refunded_prorata";
 
-                // payments: 부분 환불은 status 유지(paid)하고 metadata에 환불액 기록하는 게 일반적이지만
-                // 우리 모델은 "이 결제 건이 해지됨" 트래킹이 우선 → status=cancelled + refunded_amount 기록
+                // payments 취소 반영 + 메타데이터
                 await adminSb
                     .from("payments")
                     .update({
@@ -225,10 +232,11 @@ export async function POST(_request: NextRequest) {
                         metadata: {
                             ...((latestPaid.metadata as Record<string, unknown>) || {}),
                             cancelled_at: now.toISOString(),
-                            cancel_reason: `사용자 해지 (pro-rata)`,
+                            cancel_reason: isFullRefund ? "사용자 해지 (숙려기간 전액 환불)" : "사용자 해지 (일할 환불)",
                             cancel_source: "user_cancel_api",
                             refunded_amount: refundedAmount,
                             original_amount: latestPaid.amount,
+                            is_full_refund: isFullRefund,
                             days_used: daysUsed,
                             days_total: daysTotal,
                             days_remaining: daysRemaining,
@@ -286,8 +294,10 @@ export async function POST(_request: NextRequest) {
 
         // 7. 인앱 알림
         const notifBody =
-            refundStatus === "refunded"
-                ? `구독이 해지되고 ${refundedAmount.toLocaleString()}원이 환불되었습니다. (사용 ${daysUsed}일 / 총 ${daysTotal}일 기준 일할 계산) 카드 환불은 카드사 영업일 기준 3~5일 이내 반영됩니다.`
+            refundStatus === "refunded_full"
+                ? `구독이 해지되고 ${refundedAmount.toLocaleString()}원이 전액 환불되었습니다 (24시간 이내 해지). 카드 환불은 카드사 영업일 기준 3~5일 이내 반영됩니다.`
+                : refundStatus === "refunded_prorata"
+                ? `구독이 해지되고 ${refundedAmount.toLocaleString()}원이 환불되었습니다 (사용 ${daysUsed}일 / 총 ${daysTotal}일 일할 계산). 카드 환불은 카드사 영업일 기준 3~5일 이내 반영됩니다.`
                 : refundStatus === "skipped_no_remaining"
                 ? "구독이 해지되었습니다. 이용 기간이 거의 끝나 환불 금액은 발생하지 않았습니다."
                 : "구독이 해지되었습니다. 환불 대상 결제 정보가 없어 자동 환불이 진행되지 않았습니다.";
