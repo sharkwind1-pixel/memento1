@@ -9,8 +9,41 @@
 
 _(현재 미실행 마이그레이션 없음)_
 
+### ✅ 2026-04-20~21 실행 완료 (Supabase MCP apply)
+- `20260420_subscription_cancel_audit` — 감사 로그 테이블 신설 (RLS admin SELECT / service_role INSERT)
+- `20260420_grant_premium_tier_fix` — grant_premium RPC tier 버그 수정 + subscriptions UPSERT
+- `20260421_audit_retain_on_withdraw` — audit.user_id FK CASCADE → SET NULL (탈퇴 시 분쟁 기록 보존)
+- `20260421_purchase_minimi_item_fix` — 미니미 구매 RPC auth.uid() 체크 제거 (service_role 호출 시 NULL 문제)
+
 ### ✅ 2026-04-16 실행 완료 — `20260412_admin_messages`
 관리자 메시지/공지 발송 기능. Supabase MCP로 실적용, sender_id/CHECK/인덱스 3개 모두 검증됨.
+
+---
+
+## ✅ 2026-04-20~21 완료 — 구독 해지 전면 재설계 + 미니미 버그 수정
+
+상세: `memory/session_20260420_21.md`
+
+**구독 해지 새 정책**:
+- 24h 이내 해지 → 전액 환불 (전자상거래법 숙려기간)
+- 24h 이후 → ms 비율 pro-rata
+- AI 영상 사용 -3,500원/건 차감 (월쿼터 내에서만, 이중 차감 금지)
+- 해지 즉시 유료 기능 차단 + 4중 방어막 (락/선조회/롤백/텔레그램)
+- **전액 환불은 `amount` 파라미터 생략** → PortOne clean 승인취소 (KCP 매입요청 hold 방지)
+
+**신설 리소스**:
+- `/api/subscription/cancel` (전면 재작성)
+- `/api/subscription/refund-preview` (모달 표시용)
+- `/api/admin/payment-refund` (관리자 강제 환불 + 상태 비교)
+- `/api/cron/stuck-refund-check` (daily KST 11:30)
+- `src/components/admin/tabs/PaymentRefundCard.tsx` (관리자 대시보드 카드)
+- `src/data/minimiReactions.ts` (터치 반응 풀 9종 × 2모드 × 3레벨)
+
+**해결된 사고 (imp_244463017101)**: 츄츄/dojin3497 9,900원 → 전액 환불 확정 (cancel_history 2건, PortOne cancel_amount 9900).
+
+**미니미 구매 성공 복구**: RPC의 `auth.uid()` 체크가 service_role 호출 시 NULL이라 한 달간 성공 0건이었음. auth 체크 제거 후 복구.
+
+**Vercel Hobby 크론 제약 학습**: 하루 1회 초과 시 배포 reject — 모든 크론 `0 X * * *` 또는 `Y X * * *` 패턴으로 고정 필요.
 
 ---
 
