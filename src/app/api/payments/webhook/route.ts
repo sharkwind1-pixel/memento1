@@ -84,10 +84,25 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "invalid_body" }, { status: 400 });
     }
 
-    const impUid = typeof bodyJson.imp_uid === "string" ? bodyJson.imp_uid : "";
-    const merchantUid = typeof bodyJson.merchant_uid === "string" ? bodyJson.merchant_uid : "";
+    // 디버깅을 위해 포트원 원본 payload 기록 — 포맷이 V1인지 V2인지 파악 + 필드 누락 감지
+    console.log("[webhook] incoming body:", JSON.stringify(bodyJson).slice(0, 800));
+
+    // 포트원 V1 포맷: { imp_uid, merchant_uid, status }
+    // 포트원 V2 포맷: { type: "Transaction.*", data: { paymentId, transactionId, ... } }
+    let impUid = "";
+    let merchantUid = "";
+    if (typeof bodyJson.imp_uid === "string" && bodyJson.imp_uid) {
+        impUid = bodyJson.imp_uid;
+        merchantUid = typeof bodyJson.merchant_uid === "string" ? bodyJson.merchant_uid : "";
+    } else if (typeof bodyJson.type === "string" && bodyJson.data && typeof bodyJson.data === "object") {
+        const data = bodyJson.data as Record<string, unknown>;
+        // V2는 paymentId(우리 merchant_uid)와 transactionId 둘 다 존재 가능
+        merchantUid = typeof data.paymentId === "string" ? data.paymentId : "";
+        impUid = typeof data.transactionId === "string" ? data.transactionId : merchantUid;
+    }
 
     if (!impUid || !merchantUid) {
+        console.error("[webhook] missing ids, body keys:", Object.keys(bodyJson));
         return NextResponse.json({ error: "missing_ids" }, { status: 400 });
     }
 
@@ -105,13 +120,26 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "payment_not_found" }, { status: 404 });
         }
 
-        // 2. DB에서 해당 payment row 조회 (merchant_uid = our payment id)
+        // 2. DB에서 해당 payment row 조회.
+        // payments.id(UUID)와 payments.merchant_uid("memento_xxx")가 별도 컬럼이므로
+        // 포트원이 돌려준 merchant_uid는 merchant_uid 컬럼으로 조회해야 매칭됨.
+        // 구형 결제나 포맷 변화 대비 imp_uid 컬럼도 fallback 시도.
         const supabase = getAdminSupabase();
-        const { data: dbPayment, error: fetchErr } = await supabase
+        let { data: dbPayment, error: fetchErr } = await supabase
             .from("payments")
             .select("id, user_id, status, metadata")
-            .eq("id", merchantUid)
+            .eq("merchant_uid", merchantUid)
             .maybeSingle();
+
+        if (!dbPayment && impUid) {
+            const fallback = await supabase
+                .from("payments")
+                .select("id, user_id, status, metadata")
+                .eq("imp_uid", impUid)
+                .maybeSingle();
+            dbPayment = fallback.data;
+            fetchErr = fallback.error;
+        }
 
         if (fetchErr || !dbPayment) {
             console.error(`[webhook] DB payment not found: ${merchantUid}`, fetchErr);
@@ -135,7 +163,7 @@ export async function POST(request: NextRequest) {
                         cancel_amount: payment.cancel_amount || null,
                     },
                 })
-                .eq("id", merchantUid);
+                .eq("id", dbPayment.id);
 
             await supabase
                 .from("profiles")
@@ -176,7 +204,7 @@ export async function POST(request: NextRequest) {
                         fail_reason: payment.fail_reason || null,
                     },
                 })
-                .eq("id", merchantUid);
+                .eq("id", dbPayment.id);
 
             import("@/lib/telegram").then(({ notifyError }) =>
                 notifyError({
@@ -203,7 +231,7 @@ export async function POST(request: NextRequest) {
                             note: "complete 경로 놓친 결제를 웹훅이 보정",
                         },
                     })
-                    .eq("id", merchantUid);
+                    .eq("id", dbPayment.id);
             }
             return NextResponse.json({ ack: true, handled: "paid", already: dbPayment.status === "paid" });
         }
