@@ -109,8 +109,13 @@ export async function POST(request: NextRequest) {
                 user_not_found: "사용자 정보를 찾을 수 없습니다",
                 insufficient_points: "포인트가 부족합니다",
             };
+            const rawError = rpcData?.error || "";
+            // 매핑 안 되는 에러는 서버 로그에 원본 error 기록 (디버깅용)
+            if (rawError && !errorMap[rawError]) {
+                console.error("[minimi/purchase] RPC unmapped error:", rawError);
+            }
             return NextResponse.json(
-                { error: errorMap[rpcData?.error || ""] || "구매 처리에 실패했습니다" },
+                { error: errorMap[rawError] || "구매 처리에 실패했습니다", detail: rawError },
                 { status: 400 }
             );
         }
