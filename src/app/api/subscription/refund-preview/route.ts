@@ -26,7 +26,7 @@ export async function GET(_request: NextRequest) {
         const adminSb = createAdminSupabase();
         const { data: profile } = await adminSb
             .from("profiles")
-            .select("is_premium, premium_expires_at")
+            .select("is_premium, premium_expires_at, subscription_tier")
             .eq("id", user.id)
             .maybeSingle();
 
@@ -42,12 +42,15 @@ export async function GET(_request: NextRequest) {
             });
         }
 
+        // 단품(video_*) 제외. allowlist 대신 denylist로 향후 신규 플랜 자동 포함.
         const { data: latestPaid } = await adminSb
             .from("payments")
             .select("amount, created_at, plan")
             .eq("user_id", user.id)
             .eq("status", "paid")
-            .in("plan", ["basic", "premium"])  // 단품(video_single) 제외
+            .not("plan", "like", "video_%")
+            .not("plan", "like", "%_single")
+            .not("plan", "is", null)
             .order("created_at", { ascending: false })
             .limit(1)
             .maybeSingle();
@@ -102,7 +105,14 @@ export async function GET(_request: NextRequest) {
             .eq("user_id", user.id)
             .neq("status", "failed")
             .gte("created_at", paidAt.toISOString());
-        const tier: SubscriptionTier = (latestPaid.plan === "premium" ? "premium" : "basic") as SubscriptionTier;
+        // tier 판정: plan 매칭 실패 시 profile.subscription_tier fallback
+        const planStr = typeof latestPaid.plan === "string" ? latestPaid.plan.toLowerCase() : "";
+        const profileTier = profile?.subscription_tier === "premium" ? "premium" : "basic";
+        const tier: SubscriptionTier = planStr.startsWith("premium")
+            ? "premium"
+            : planStr.startsWith("basic")
+            ? "basic"
+            : (profileTier as SubscriptionTier);
         const monthlyQuota = getVideoMonthlyQuota(tier);
         const videosUsedCharged = Math.min(videosSincePaid ?? 0, monthlyQuota);
         const videoDeduction = videosUsedCharged * VIDEO.SINGLE_PRICE;

@@ -151,8 +151,55 @@ export async function POST(request: NextRequest) {
     const syncOnly = !!body.sync_only;
 
     if (!impUid) return NextResponse.json({ error: "imp_uid 필수" }, { status: 400 });
+    if (amount !== undefined && !Number.isInteger(amount)) {
+        return NextResponse.json({ error: "amount는 정수여야 합니다" }, { status: 400 });
+    }
 
     const adminSb = createAdminSupabase();
+
+    // 동일 imp_uid가 DB에 여러 row로 존재할 가능성 (중복 insert 등). 여러 row면 wrong-user 리셋 위험.
+    const { data: dbRows, error: dbErr } = await adminSb
+        .from("payments")
+        .select("id, user_id, status, metadata, amount")
+        .eq("metadata->>imp_uid", impUid)
+        .limit(2);
+    if (dbErr) return NextResponse.json({ error: "DB 조회 실패", detail: dbErr.message }, { status: 500 });
+    if (dbRows && dbRows.length > 1) {
+        return NextResponse.json(
+            {
+                error: `imp_uid '${impUid}'가 DB에 ${dbRows.length}건 이상 존재합니다. 수동 조사 필요.`,
+                duplicate_payment_ids: dbRows.map((r) => r.id),
+            },
+            { status: 409 }
+        );
+    }
+    const dbPayment = dbRows && dbRows.length === 1 ? dbRows[0] : null;
+
+    // 서버측 advisory lock: 짧은 시간창에 같은 imp_uid 중복 호출 방지
+    // payments.status를 'paid' → 'cancelling' (pseudo)로 바꾸는 대신 metadata에 lock stamp 추가.
+    // 이미 lock 잡혀있고 5분 안이면 409.
+    if (dbPayment) {
+        const lockKey = "admin_cancel_lock_at";
+        const metadata = (dbPayment.metadata || {}) as Record<string, unknown>;
+        const prevLock = typeof metadata[lockKey] === "string" ? Date.parse(metadata[lockKey] as string) : 0;
+        if (prevLock && Date.now() - prevLock < 5 * 60 * 1000) {
+            return NextResponse.json(
+                { error: "같은 결제에 5분 이내 관리자 환불 작업이 진행 중입니다. 잠시 후 재시도해주세요." },
+                { status: 409 }
+            );
+        }
+        await adminSb
+            .from("payments")
+            .update({
+                metadata: {
+                    ...metadata,
+                    [lockKey]: new Date().toISOString(),
+                    admin_cancel_by: user.email,
+                },
+            })
+            .eq("id", dbPayment.id);
+    }
+
     const token = await getPortOneToken();
     if (!token) return NextResponse.json({ error: "포트원 토큰 실패" }, { status: 500 });
 
@@ -176,9 +223,12 @@ export async function POST(request: NextRequest) {
         });
         const data = await res.json();
         if (data.code !== 0) {
-            const msg = String(data.message || "");
-            if (!(msg.includes("이미") || msg.includes("취소"))) {
-                cancelResult = { ok: false, error: msg || "포트원 취소 실패", code: data.code };
+            // 문자열 매칭 대신 status 기반 판정
+            if (data.response?.status !== "cancelled") {
+                const verify = await fetchPortOnePayment(token, impUid);
+                if (verify?.status !== "cancelled") {
+                    cancelResult = { ok: false, error: String(data.message || "포트원 취소 실패"), code: data.code };
+                }
             }
         }
     }
@@ -194,32 +244,38 @@ export async function POST(request: NextRequest) {
     const afterPortone = await fetchPortOnePayment(token, impUid);
     const finalCancelAmount = afterPortone?.cancel_amount ?? 0;
 
-    // DB payments 동기화
-    const { data: dbPayment } = await adminSb
-        .from("payments")
-        .select("id, user_id, status, metadata, amount")
-        .eq("metadata->>imp_uid", impUid)
-        .maybeSingle();
+    // DB payments 동기화 — 위에서 lock 잡으면서 fetch한 dbPayment 재사용하되
+    // metadata가 lock 타임스탬프 추가로 업데이트됐으니 최신 메타 재조회
+    const { data: refreshedPayment } = dbPayment
+        ? await adminSb
+            .from("payments")
+            .select("id, user_id, status, metadata, amount")
+            .eq("id", dbPayment.id)
+            .maybeSingle()
+        : { data: null };
 
-    if (dbPayment) {
+    if (refreshedPayment) {
         await adminSb
             .from("payments")
             .update({
                 status: "cancelled",
                 metadata: {
-                    ...((dbPayment.metadata as Record<string, unknown>) || {}),
+                    ...((refreshedPayment.metadata as Record<string, unknown>) || {}),
                     cancelled_at: new Date().toISOString(),
                     cancel_reason: reason,
                     cancel_source: "admin_manual",
                     admin_email: user.email,
                     refunded_amount: finalCancelAmount,
-                    original_amount: dbPayment.amount,
+                    original_amount: refreshedPayment.amount,
                 },
             })
-            .eq("id", dbPayment.id);
+            .eq("id", refreshedPayment.id);
 
-        // 프로필 무료화 (결제자)
-        if (dbPayment.user_id) {
+        // 부분/전액 구분 — 부분 환불은 프로필 premium 유지 (남은 기간 사용)
+        const isFullCancel =
+            finalCancelAmount >= (refreshedPayment.amount || 0) && (refreshedPayment.amount || 0) > 0;
+
+        if (refreshedPayment.user_id && isFullCancel) {
             await adminSb
                 .from("profiles")
                 .update({
@@ -232,24 +288,27 @@ export async function POST(request: NextRequest) {
                     protected_pet_id: null,
                     premium_plan: null,
                 })
-                .eq("id", dbPayment.user_id);
+                .eq("id", refreshedPayment.user_id);
 
             await adminSb
                 .from("subscriptions")
                 .update({ status: "cancelled", cancelled_at: new Date().toISOString() })
-                .eq("user_id", dbPayment.user_id);
+                .eq("user_id", refreshedPayment.user_id);
+        }
 
-            // 감사 로그 기록
+        // 감사 로그 기록 (부분/전액 무관)
+        if (refreshedPayment.user_id) {
             await adminSb.from("subscription_cancel_audit").insert({
-                user_id: dbPayment.user_id,
+                user_id: refreshedPayment.user_id,
                 user_email: null,
                 action: syncOnly ? "admin_sync_only" : "admin_force_refund",
                 success: true,
                 imp_uid: impUid,
-                payment_id: dbPayment.id,
-                amount: dbPayment.amount,
+                payment_id: refreshedPayment.id,
+                amount: refreshedPayment.amount,
                 refunded_amount: finalCancelAmount,
-                metadata: { admin_email: user.email, reason },
+                is_full_refund: isFullCancel,
+                metadata: { admin_email: user.email, reason, is_full_cancel: isFullCancel },
             });
         }
     }

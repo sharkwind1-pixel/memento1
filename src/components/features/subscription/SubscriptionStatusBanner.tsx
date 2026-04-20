@@ -69,17 +69,23 @@ export default function SubscriptionStatusBanner() {
         description = `결제 기간 종료까지 ${days}일 남음 — 그 후 무료 회원으로 전환됩니다. 언제든 재구독할 수 있어요.`;
     } else if (phaseInfo.isArchived) {
         const days = phaseInfo.daysUntilPurge ?? 0;
-        if (days <= 1 && days > 0) {
+        // data_reset_at null/과거이면 days <= 0. 기존 D-11+ 분기로 떨어지면 "0일 후 영구 삭제" 오표시.
+        if (days <= 0) {
+            bgClass = "bg-memento-100 dark:bg-memento-900/40 border-memento-300 dark:border-memento-700 text-memento-700 dark:text-memento-200";
+            icon = <Archive className="w-4 h-4 flex-shrink-0" />;
+            title = "무료 회원으로 전환되었어요";
+            description = "언제든 재구독할 수 있어요.";
+        } else if (days <= 1) {
             bgClass = "bg-red-100 dark:bg-red-900/40 border-red-400 dark:border-red-700 text-red-800 dark:text-red-200";
             icon = <AlertTriangle className="w-4 h-4 flex-shrink-0" />;
             title = "내일 데이터가 영구 삭제됩니다";
             description = "내일 자정에 보관 중인 반려동물과 사진이 영구 삭제됩니다. 마지막 기회예요.";
-        } else if (days <= 3 && days > 0) {
+        } else if (days <= 3) {
             bgClass = "bg-red-50 dark:bg-red-900/30 border-red-300 dark:border-red-700 text-red-700 dark:text-red-300";
             icon = <AlertTriangle className="w-4 h-4 flex-shrink-0" />;
             title = `${days}일 후 영구 삭제됩니다`;
             description = "재구독하면 보관 중인 데이터를 모두 복구할 수 있어요.";
-        } else if (days <= 10 && days > 0) {
+        } else if (days <= 10) {
             bgClass = "bg-memorial-100 dark:bg-memorial-900/40 border-memorial-400 dark:border-memorial-700 text-memorial-800 dark:text-memorial-200";
             icon = <AlertTriangle className="w-4 h-4 flex-shrink-0" />;
             title = `${days}일 후 보관 데이터가 정리됩니다`;

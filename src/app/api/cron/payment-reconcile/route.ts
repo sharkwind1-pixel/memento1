@@ -98,7 +98,13 @@ export async function GET(request: NextRequest) {
             const portoneStatus = data.response.status;
             if (portoneStatus !== "cancelled") continue;
 
-            // 포트원은 cancelled인데 DB는 paid — 강제 동기화
+            // 부분 취소(pro-rata 환불) vs 전액 취소 구분.
+            // - 전액 취소: 유료 기능 전부 해제
+            // - 부분 취소: payments 상태만 동기화 (profile은 premium 유지; 남은 기간 사용)
+            const cancelAmount = Number(data.response.cancel_amount) || 0;
+            const totalAmount = Number(data.response.amount) || 0;
+            const isFullCancel = cancelAmount >= totalAmount && totalAmount > 0;
+
             await supabase
                 .from("payments")
                 .update({
@@ -108,28 +114,36 @@ export async function GET(request: NextRequest) {
                         reconcile_cancelled_at: new Date().toISOString(),
                         reconcile_source: "cron",
                         cancel_reason: data.response.cancel_reason || null,
+                        portone_cancel_amount: cancelAmount,
+                        portone_original_amount: totalAmount,
+                        is_full_cancel: isFullCancel,
                     },
                 })
                 .eq("id", row.id);
 
-            await supabase
-                .from("profiles")
-                .update({
-                    is_premium: false,
-                    premium_expires_at: null,
-                    subscription_tier: "free",
-                    subscription_phase: "active",
-                    subscription_cancelled_at: null,
-                })
-                .eq("id", row.user_id);
+            if (isFullCancel) {
+                // 전액 환불이 확인된 경우에만 프로필/구독도 정리
+                await supabase
+                    .from("profiles")
+                    .update({
+                        is_premium: false,
+                        premium_expires_at: null,
+                        subscription_tier: "free",
+                        subscription_phase: "active",
+                        subscription_cancelled_at: null,
+                    })
+                    .eq("id", row.user_id);
 
-            await supabase
-                .from("subscriptions")
-                .update({
-                    status: "cancelled",
-                    cancelled_at: new Date().toISOString(),
-                })
-                .eq("user_id", row.user_id);
+                await supabase
+                    .from("subscriptions")
+                    .update({
+                        status: "cancelled",
+                        cancelled_at: new Date().toISOString(),
+                    })
+                    .eq("user_id", row.user_id);
+            }
+            // 부분 취소는 payments만 cancelled 로 표시하고, 유저는 premium_expires_at까지 기존 혜택 유지.
+            // (pro-rata 환불 정책상 이미 일수만큼 돈 받은 상태라 현재 남은 기간 쓰는 게 맞음)
 
             reconciled++;
             reconciledIds.push(row.id);

@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import type { SubscriptionTier } from "@/config/constants";
 import { useSubscriptionPhase } from "@/hooks/useSubscriptionPhase";
 import { usePets } from "@/contexts/PetContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 
 /**
@@ -61,19 +62,31 @@ export default function SubscriptionSection({
         days_total: number;
         days_remaining: number;
     } | null>(null);
+    const [previewError, setPreviewError] = useState<string | null>(null);
     const [loadingPreview, setLoadingPreview] = useState(false);
+    const { refreshProfile } = useAuth();
 
     // 해지 확인 모달 열 때 예상 환불액 미리 조회
     React.useEffect(() => {
         if (!showCancelConfirm || !isPremiumUser) return;
         let cancelled = false;
         setLoadingPreview(true);
+        setPreviewError(null);
         (async () => {
             try {
                 const res = await fetch("/api/subscription/refund-preview", {
                     headers: await authHeaders(),
                 });
-                if (!res.ok) return;
+                if (!res.ok) {
+                    if (!cancelled) {
+                        if (res.status === 401) {
+                            setPreviewError("세션이 만료됐습니다. 다시 로그인해주세요.");
+                        } else {
+                            setPreviewError("환불 금액 조회에 실패했습니다. 다시 시도해주세요.");
+                        }
+                    }
+                    return;
+                }
                 const data = await res.json();
                 if (cancelled) return;
                 setRefundPreview({
@@ -115,7 +128,14 @@ export default function SubscriptionSection({
                 body: JSON.stringify({ petId }),
             });
             const data = await res.json();
-            if (!res.ok) throw new Error(data.error || "지정 실패");
+            if (!res.ok) {
+                if (res.status === 401) {
+                    toast.error("로그인이 만료됐습니다. 다시 로그인해주세요.");
+                    window.dispatchEvent(new CustomEvent("openAuthModal"));
+                    return;
+                }
+                throw new Error(data.error || "지정 실패");
+            }
             setProtectedPetId(petId);
             toast.success("대표 반려동물이 지정되었습니다");
         } catch (e) {
@@ -138,6 +158,17 @@ export default function SubscriptionSection({
             const result = await res.json();
 
             if (!res.ok) {
+                // 401: 세션 만료 → 로그인 모달 유도
+                if (res.status === 401) {
+                    toast.error("로그인이 만료됐습니다. 다시 로그인해주세요.");
+                    window.dispatchEvent(new CustomEvent("openAuthModal"));
+                    return;
+                }
+                // 409: 중복 요청
+                if (res.status === 409) {
+                    toast.error(result.error || "이미 해지 처리 중입니다. 잠시 후 새로고침해주세요.");
+                    return;
+                }
                 throw new Error(result.error || "구독 해지에 실패했습니다");
             }
 
@@ -153,8 +184,13 @@ export default function SubscriptionSection({
                 toast.success("구독이 해지되었습니다.");
             }
 
-            // AuthContext 프로필 새로고침
-            window.location.reload();
+            // AuthContext 프로필 refresh — 전체 reload 대신 (UX 개선: 백화면 없음)
+            try {
+                await refreshProfile();
+            } catch {
+                // fallback: reload
+                window.location.reload();
+            }
         } catch (e) {
             const msg = e instanceof Error ? e.message : "구독 해지에 실패했습니다";
             toast.error(msg);
@@ -229,7 +265,9 @@ export default function SubscriptionSection({
                                     </p>
                                     {/* 환불 예상액 카드 */}
                                     <div className="mt-2 p-2 bg-white/80 dark:bg-gray-800/60 rounded border border-red-200 dark:border-red-900/40 text-gray-700 dark:text-gray-200">
-                                        {loadingPreview && !refundPreview ? (
+                                        {previewError ? (
+                                            <p className="text-[11px] text-red-600 dark:text-red-400">{previewError}</p>
+                                        ) : loadingPreview && !refundPreview ? (
                                             <p className="text-[11px]">환불 금액 계산 중...</p>
                                         ) : refundPreview && refundPreview.original_amount > 0 ? (
                                             <div className="space-y-0.5 text-[11px]">
@@ -267,6 +305,11 @@ export default function SubscriptionSection({
                                                 {refundPreview.videos_used_charged > 0 && (
                                                     <p className="text-[10px] text-gray-500 pt-0.5">
                                                         * AI 영상 생성은 1건당 {(refundPreview.video_unit_price ?? 3500).toLocaleString()}원 비용이 차감됩니다
+                                                    </p>
+                                                )}
+                                                {refundPreview.refundable_amount === 0 && refundPreview.videos_used_charged > 0 && (
+                                                    <p className="text-[10px] text-orange-600 dark:text-orange-400 pt-0.5">
+                                                        AI 영상 사용 비용이 구독료와 같거나 커서 환불 금액이 0원입니다.
                                                     </p>
                                                 )}
                                             </div>

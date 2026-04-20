@@ -83,6 +83,7 @@ interface Finding {
     portone_status: string;
     diff: number;
     age_hours: number;
+    already_alerted: boolean;
 }
 
 export async function GET(request: NextRequest) {
@@ -112,10 +113,24 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: "PORTONE_TOKEN_FAILED" }, { status: 500 });
     }
 
+    // 24h 내에 이미 경보 보낸 imp_uid는 중복 알림 스킵 (dedup)
+    const dedupSince = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { data: recentlyAlerted } = await supabase
+        .from("subscription_cancel_audit")
+        .select("imp_uid")
+        .eq("action", "stuck_refund_alerted")
+        .gte("created_at", dedupSince);
+    const dedupSet = new Set(
+        (recentlyAlerted ?? [])
+            .map((r: { imp_uid: string | null }) => r.imp_uid)
+            .filter(Boolean) as string[],
+    );
+
     for (const row of rows) {
         const md = row.metadata || {};
         const impUid = typeof md.imp_uid === "string" ? md.imp_uid : "";
-        const dbRefunded = typeof md.refunded_amount === "number" ? md.refunded_amount : 0;
+        // JSONB는 number/string 구분 유지하지만 과거 데이터 중 string 저장된 것도 있을 수 있음 → Number() 강제 변환
+        const dbRefunded = Number(md.refunded_amount) || 0;
         if (!impUid || dbRefunded <= 0) continue;
 
         const portone = await fetchPortOnePayment(token, impUid);
@@ -125,6 +140,7 @@ export async function GET(request: NextRequest) {
         // DB가 더 큰 환불액을 기록했는데 포트원은 덜 환불한 상태 = 누락
         if (portoneCancelAmount < dbRefunded) {
             const ageHours = (Date.now() - new Date(row.created_at).getTime()) / (60 * 60 * 1000);
+            const alreadyAlerted = dedupSet.has(impUid);
             findings.push({
                 imp_uid: impUid,
                 payment_id: row.id,
@@ -134,6 +150,7 @@ export async function GET(request: NextRequest) {
                 portone_status: portone.status,
                 diff: dbRefunded - portoneCancelAmount,
                 age_hours: Math.round(ageHours * 10) / 10,
+                already_alerted: alreadyAlerted,
             });
         }
     }
@@ -148,16 +165,34 @@ export async function GET(request: NextRequest) {
         .order("created_at", { ascending: false })
         .limit(50);
 
-    // 텔레그램 알림 (이상 있을 때만)
-    if (findings.length > 0 || (recentFailures && recentFailures.length > 0)) {
+    // 24h 이내 이미 알린 건은 제외 (dedup)
+    const newFindings = findings.filter((f) => !f.already_alerted);
+
+    // 텔레그램 알림 (신규 이상만)
+    if (newFindings.length > 0 || (recentFailures && recentFailures.length > 0)) {
         const lines: string[] = ["🚨 환불 이상 감지 (stuck-refund-check)"];
-        if (findings.length > 0) {
-            lines.push(`\n[A] DB/포트원 환불액 불일치: ${findings.length}건`);
-            for (const f of findings.slice(0, 10)) {
+        if (newFindings.length > 0) {
+            lines.push(`\n[A] DB/포트원 환불액 불일치: ${newFindings.length}건 신규`);
+            for (const f of newFindings.slice(0, 10)) {
                 lines.push(
                     `• imp_uid: ${f.imp_uid}\n  DB: ${f.db_refunded.toLocaleString()}원 / 포트원: ${f.portone_cancel_amount.toLocaleString()}원 (차이 ${f.diff.toLocaleString()}원)\n  status: ${f.portone_status}, 경과: ${f.age_hours}h`,
                 );
             }
+            // dedup 기록 — 다음 실행부터 같은 imp_uid는 24h 스킵
+            await supabase.from("subscription_cancel_audit").insert(
+                newFindings.map((f) => ({
+                    user_id: f.user_id,
+                    imp_uid: f.imp_uid,
+                    action: "stuck_refund_alerted",
+                    success: false,
+                    refunded_amount: f.db_refunded,
+                    error_message: `포트원 cancel_amount=${f.portone_cancel_amount}, DB=${f.db_refunded}, 차이=${f.diff}`,
+                    metadata: {
+                        portone_status: f.portone_status,
+                        age_hours: f.age_hours,
+                    },
+                })),
+            );
         }
         if (recentFailures && recentFailures.length > 0) {
             lines.push(`\n[B] 감사 로그 24h 내 실패 이벤트: ${recentFailures.length}건`);
@@ -179,6 +214,8 @@ export async function GET(request: NextRequest) {
         ok: true,
         checked: rows.length,
         findings_count: findings.length,
+        new_findings_count: newFindings.length,
+        deduped_count: findings.length - newFindings.length,
         failed_audit_count: recentFailures?.length ?? 0,
         findings,
     });

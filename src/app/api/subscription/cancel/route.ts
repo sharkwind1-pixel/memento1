@@ -103,12 +103,20 @@ async function cancelPortOnePayment(params: {
             body: JSON.stringify(body),
         });
         const data = await res.json();
+        // code 0 = 성공
         if (data.code === 0) return { ok: true };
-        const msg = String(data.message || "");
-        if (msg.includes("이미") || msg.includes("취소") || data.response?.status === "cancelled") {
+        // 성공 판정은 "실제 status가 cancelled"만 신뢰.
+        // 문자열 파싱("취소" 포함 여부)은 실패 메시지도 성공으로 오판하므로 제거.
+        // cancel API 응답 자체에 status가 없을 수 있으니 재조회.
+        if (data.response?.status === "cancelled") {
             return { ok: true };
         }
-        return { ok: false, error: msg || "PortOne 취소 실패", code: data.code };
+        // 재조회로 실제 상태 확인
+        const verify = await fetchPortOnePayment(params.token, params.impUid);
+        if (verify?.status === "cancelled") {
+            return { ok: true };
+        }
+        return { ok: false, error: String(data.message || "PortOne 취소 실패"), code: data.code };
     } catch (e) {
         const msg = e instanceof Error ? e.message : "PortOne 네트워크 실패";
         return { ok: false, error: msg };
@@ -270,13 +278,16 @@ export async function POST(_request: NextRequest) {
             metadata: { tier: profile.subscription_tier, expires_at: profile.premium_expires_at },
         });
 
-        // 2. 최근 구독 paid 결제 조회 (환불 source) — 단품(video_single) 제외
+        // 2. 최근 구독 paid 결제 조회 (환불 source) — 단품(video_* / *_single) 제외
+        // allowlist 대신 denylist 써서 향후 basic_yearly/premium_yearly 등 신규 플랜 자동 포함
         const { data: latestPaid } = await adminSb
             .from("payments")
             .select("id, merchant_uid, metadata, amount, created_at, status, plan")
             .eq("user_id", user.id)
-            .in("status", ["paid", "cancelled"])  // cancelled 도 조회해서 이중취소 방지 판단
-            .in("plan", ["basic", "premium"])     // 단품 결제(video_single)는 구독 환불 대상 아님
+            .in("status", ["paid", "cancelled"])
+            .not("plan", "like", "video_%")
+            .not("plan", "like", "%_single")
+            .not("plan", "is", null)
             .order("created_at", { ascending: false })
             .limit(1)
             .maybeSingle();
@@ -329,7 +340,16 @@ export async function POST(_request: NextRequest) {
                 .eq("user_id", user.id)
                 .neq("status", "failed")
                 .gte("created_at", paidAt.toISOString());
-            const tier: SubscriptionTier = (latestPaid.plan === "premium" ? "premium" : "basic") as SubscriptionTier;
+
+            // tier 판정: latestPaid.plan이 premium 계열이면 premium, basic 계열이면 basic,
+            // 매칭 안 되면 profile.subscription_tier fallback (이도 실패면 basic 보수적 default)
+            const planStr = typeof latestPaid.plan === "string" ? latestPaid.plan.toLowerCase() : "";
+            const profileTier = profile.subscription_tier === "premium" ? "premium" : "basic";
+            const tier: SubscriptionTier = planStr.startsWith("premium")
+                ? "premium"
+                : planStr.startsWith("basic")
+                ? "basic"
+                : (profileTier as SubscriptionTier);
             const monthlyQuota = getVideoMonthlyQuota(tier);
             videosUsedCharged = Math.min(videosSincePaid ?? 0, monthlyQuota);
             videoDeduction = videosUsedCharged * VIDEO.SINGLE_PRICE;
@@ -461,29 +481,56 @@ export async function POST(_request: NextRequest) {
         }
 
         // 4. profiles 즉시 무료화 (환불 성공/스킵 무관, 해지는 즉시 반영)
-        const { error: updateErr } = await adminSb
-            .from("profiles")
-            .update({
-                is_premium: false,
-                premium_expires_at: null,
-                subscription_tier: "free",
-                subscription_phase: "active",
-                subscription_cancelled_at: now.toISOString(),
-                data_reset_at: null,
-                protected_pet_id: null,
-                premium_plan: null,
-            })
-            .eq("id", user.id);
+        // 포트원 환불은 이미 성공한 상태 → profile 갱신 실패 시에도 claim을 롤백하면 안 됨
+        // (유저가 재시도하면 포트원 "이미 취소" 응답에서 해결되지만, 그 사이 premium 유지는 CS 악몽).
+        // 최대 3회 재시도 + 실패 시 critical alert + audit 기록 후 명확한 상태로 에러.
+        const profileUpdatePayload = {
+            is_premium: false,
+            premium_expires_at: null,
+            subscription_tier: "free",
+            subscription_phase: "active",
+            subscription_cancelled_at: now.toISOString(),
+            data_reset_at: null,
+            protected_pet_id: null,
+            premium_plan: null,
+        };
+
+        let updateErr: { message: string } | null = null;
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            const { error } = await adminSb
+                .from("profiles")
+                .update(profileUpdatePayload)
+                .eq("id", user.id);
+            if (!error) {
+                updateErr = null;
+                break;
+            }
+            updateErr = error;
+            if (attempt < 3) {
+                await new Promise((r) => setTimeout(r, 200 * attempt));
+            }
+        }
 
         if (updateErr) {
             await audit({
                 action: "db_updated",
                 success: false,
-                error_message: updateErr.message,
+                error_message: `3회 재시도 실패: ${updateErr.message}`,
+                refunded_amount: refundedAmount,
             });
-            alertAdmin("profiles 갱신 실패 (포트원 cancel은 성공했을 수 있음, 수동 확인 필요)", `user: ${user.email || user.id}, error: ${updateErr.message}`);
+            // 포트원은 이미 cancel 됐을 가능성이 매우 큼 → 돈은 돌아갔는데 DB가 안 바뀐 상태.
+            // 유저가 재시도해도 409("이미 해지 처리 중") 걸리므로 여기서 claim을 강제로 풀어서
+            // 재시도 가능 상태로 만든다. 포트원 선조회가 이미 cancelled 감지하므로 중복 환불 없음.
+            await rollbackClaim();
+            alertAdmin(
+                "⚠️ CRITICAL: 포트원 환불은 성공했을 가능성 높음 + DB profile 갱신 3회 재시도 실패",
+                `user: ${user.email || user.id}\nimp_uid: ${impUid}\nrefunded: ${refundedAmount}\nerror: ${updateErr.message}\n→ 관리자 /admin 대시보드에서 강제 DB 동기화 필요`,
+            );
             return NextResponse.json(
-                { error: "프로필 갱신 실패", detail: updateErr.message },
+                {
+                    error: "환불은 완료됐을 수 있으나 프로필 갱신에 실패했습니다. 관리자에게 자동 알림 전송되었습니다. 잠시 후 다시 시도해주세요.",
+                    detail: updateErr.message,
+                },
                 { status: 500 }
             );
         }
