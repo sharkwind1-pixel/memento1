@@ -38,7 +38,7 @@
         },
         {
             "path": "/api/cron/stuck-refund-check",
-            "schedule": "15 */6 * * *"
+            "schedule": "30 2 * * *"
         }
     ]
 }
