@@ -40,6 +40,7 @@ import {
 import { DashboardStats, ChartData, ApiUsageData } from "../types";
 import Open100AdminSection from "./Open100AdminSection";
 import PetProfileMigrationCard from "./PetProfileMigrationCard";
+import PaymentRefundCard from "./PaymentRefundCard";
 
 // ============================================================================
 // Props 타입 정의
@@ -111,6 +112,9 @@ export default function AdminDashboardTab({
         <div className="space-y-6">
             {/* 일회성 데이터 복구 카드 — 복구할 것 없으면 자동 숨김 */}
             <PetProfileMigrationCard />
+
+            {/* 결제 강제 환불 / 상태 동기화 (CS 대응 툴) */}
+            <PaymentRefundCard />
 
             {/* ================================================================
                 섹션 1: 핵심 지표 카드

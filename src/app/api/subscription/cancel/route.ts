@@ -192,6 +192,48 @@ export async function POST(_request: NextRequest) {
             .catch(() => {});
     }
 
+    /**
+     * 감사 로그 기록. 분쟁 대응 + 버그 추적용.
+     * 실패해도 메인 플로우 영향 없게 try/catch 삼킴.
+     */
+    async function audit(entry: {
+        action: string;
+        success?: boolean;
+        imp_uid?: string | null;
+        merchant_uid?: string | null;
+        payment_id?: string | null;
+        amount?: number | null;
+        refunded_amount?: number | null;
+        is_full_refund?: boolean | null;
+        days_used?: number | null;
+        days_total?: number | null;
+        error_message?: string | null;
+        portone_code?: number | null;
+        metadata?: Record<string, unknown>;
+    }) {
+        try {
+            await adminSb.from("subscription_cancel_audit").insert({
+                user_id: user!.id,
+                user_email: user!.email ?? null,
+                action: entry.action,
+                success: entry.success ?? true,
+                imp_uid: entry.imp_uid ?? null,
+                merchant_uid: entry.merchant_uid ?? null,
+                payment_id: entry.payment_id ?? null,
+                amount: entry.amount ?? null,
+                refunded_amount: entry.refunded_amount ?? null,
+                is_full_refund: entry.is_full_refund ?? null,
+                days_used: entry.days_used ?? null,
+                days_total: entry.days_total ?? null,
+                error_message: entry.error_message ?? null,
+                portone_code: entry.portone_code ?? null,
+                metadata: entry.metadata ?? {},
+            });
+        } catch (e) {
+            console.error("[cancel] audit log insert failed:", e);
+        }
+    }
+
     try {
         // ========================================================================
         // 1. 원자적 락 획득
@@ -210,15 +252,22 @@ export async function POST(_request: NextRequest) {
             .maybeSingle();
 
         if (claimErr) {
+            await audit({ action: "lock_failed", success: false, error_message: claimErr.message });
             return NextResponse.json({ error: "프로필 조회 실패", detail: claimErr.message }, { status: 500 });
         }
         if (!profile) {
             // 조건에 맞는 행이 없음 — 이미 해지되었거나 다른 요청이 진행 중
+            await audit({ action: "lock_failed", success: false, error_message: "already_cancelling_or_cancelled" });
             return NextResponse.json(
                 { error: "이미 해지 처리 중이거나 완료됐습니다. 잠시 후 다시 확인해주세요." },
                 { status: 409 }
             );
         }
+
+        await audit({
+            action: "started",
+            metadata: { tier: profile.subscription_tier, expires_at: profile.premium_expires_at },
+        });
 
         // 2. 최근 paid 결제 조회 (환불 source)
         const { data: latestPaid } = await adminSb
@@ -276,6 +325,13 @@ export async function POST(_request: NextRequest) {
                 const token = await getPortOneToken();
                 if (!token) {
                     await rollbackClaim();
+                    await audit({
+                        action: "portone_token_failed",
+                        success: false,
+                        imp_uid: impUid,
+                        merchant_uid: latestPaid.merchant_uid,
+                        payment_id: latestPaid.id,
+                    });
                     alertAdmin("PortOne 토큰 발급 실패", `user: ${user.email || user.id}`);
                     return NextResponse.json(
                         { error: "결제 시스템 인증 실패 — 잠시 후 다시 시도해주세요" },
@@ -291,6 +347,14 @@ export async function POST(_request: NextRequest) {
                         ? "refunded_full"
                         : "refunded_prorata";
                     refundedAmount = remoteStatus.cancel_amount ?? refundedAmount;
+                    await audit({
+                        action: "portone_already_cancelled",
+                        imp_uid: impUid,
+                        merchant_uid: latestPaid.merchant_uid,
+                        payment_id: latestPaid.id,
+                        amount: latestPaid.amount,
+                        refunded_amount: refundedAmount,
+                    });
                     alertAdmin(
                         "포트원 이미 cancelled — 재호출 생략",
                         `user: ${user.email || user.id}, imp_uid: ${impUid}, cancel_amount: ${refundedAmount}`,
@@ -310,6 +374,20 @@ export async function POST(_request: NextRequest) {
                     if (!cancelResult.ok) {
                         // 실패: claim 롤백 + 관리자 경보 + 502
                         await rollbackClaim();
+                        await audit({
+                            action: "portone_cancel_failed",
+                            success: false,
+                            imp_uid: impUid,
+                            merchant_uid: latestPaid.merchant_uid,
+                            payment_id: latestPaid.id,
+                            amount: latestPaid.amount,
+                            refunded_amount: refundedAmount,
+                            is_full_refund: isFullRefund,
+                            days_used: daysUsed,
+                            days_total: daysTotal,
+                            error_message: cancelResult.error,
+                            portone_code: cancelResult.code ?? null,
+                        });
                         alertAdmin(
                             "PortOne cancel 실패 — 유저 재시도 가능 상태로 롤백",
                             `user: ${user.email || user.id}, imp_uid: ${impUid}, amount: ${refundedAmount}, error: ${cancelResult.error}, code: ${cancelResult.code ?? "n/a"}`,
@@ -323,6 +401,17 @@ export async function POST(_request: NextRequest) {
                         );
                     }
                     refundStatus = isFullRefund ? "refunded_full" : "refunded_prorata";
+                    await audit({
+                        action: "portone_cancel_success",
+                        imp_uid: impUid,
+                        merchant_uid: latestPaid.merchant_uid,
+                        payment_id: latestPaid.id,
+                        amount: latestPaid.amount,
+                        refunded_amount: refundedAmount,
+                        is_full_refund: isFullRefund,
+                        days_used: daysUsed,
+                        days_total: daysTotal,
+                    });
                 }
 
                 // payments 취소 반영 + 메타데이터
@@ -363,11 +452,18 @@ export async function POST(_request: NextRequest) {
             .eq("id", user.id);
 
         if (updateErr) {
+            await audit({
+                action: "db_updated",
+                success: false,
+                error_message: updateErr.message,
+            });
+            alertAdmin("profiles 갱신 실패 (포트원 cancel은 성공했을 수 있음, 수동 확인 필요)", `user: ${user.email || user.id}, error: ${updateErr.message}`);
             return NextResponse.json(
                 { error: "프로필 갱신 실패", detail: updateErr.message },
                 { status: 500 }
             );
         }
+        await audit({ action: "db_updated" });
 
         // 5. subscriptions 취소
         await adminSb
@@ -431,6 +527,15 @@ export async function POST(_request: NextRequest) {
             )
             .catch(() => {});
 
+        await audit({
+            action: refundedAmount > 0 ? "completed" : "completed_no_refund",
+            refunded_amount: refundedAmount,
+            is_full_refund: isFullRefund,
+            days_used: daysUsed,
+            days_total: daysTotal,
+            metadata: { refund_status: refundStatus },
+        });
+
         return NextResponse.json({
             ok: true,
             refund_status: refundStatus,
@@ -441,6 +546,8 @@ export async function POST(_request: NextRequest) {
         });
     } catch (e) {
         const msg = e instanceof Error ? e.message : "서버 오류";
+        await audit({ action: "exception", success: false, error_message: msg });
+        alertAdmin("cancel route 예외 발생", `user: ${user.email || user.id}, error: ${msg}`);
         return NextResponse.json({ error: msg }, { status: 500 });
     }
 }
