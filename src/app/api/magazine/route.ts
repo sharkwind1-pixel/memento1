@@ -8,7 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
+import { createServerSupabase, createAdminSupabase, getAuthUser } from "@/lib/supabase-server";
 import { ADMIN_EMAILS } from "@/config/constants";
 import {
     getClientIP,
@@ -58,6 +58,26 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: "매거진 처리 중 오류가 발생했습니다" }, { status: 500 });
         }
 
+        // 유저별 liked 상태 조회 (로그인 유저가 있을 때만)
+        let userLikedIds = new Set<string>();
+        try {
+            const user = await getAuthUser();
+            if (user && data && data.length > 0) {
+                const adminSb = createAdminSupabase();
+                const articleIds = data.map((a) => a.id);
+                const { data: myLikes } = await adminSb
+                    .from("magazine_likes")
+                    .select("article_id")
+                    .eq("user_id", user.id)
+                    .in("article_id", articleIds);
+                if (myLikes) {
+                    userLikedIds = new Set(myLikes.map((l) => l.article_id));
+                }
+            }
+        } catch {
+            // 비로그인이거나 테이블 미존재 시 무시 (liked=false로 폴백)
+        }
+
         const articles = (data || []).map((a) => ({
             id: a.id,
             category: a.category,
@@ -72,6 +92,7 @@ export async function GET(request: NextRequest) {
             tags: a.tags || [],
             views: a.views,
             likes: a.likes,
+            liked: userLikedIds.has(a.id), // 현재 유저의 좋아요 여부
             publishedAt: a.published_at,
             createdAt: a.created_at,
         }));
@@ -213,30 +234,60 @@ export async function PATCH(request: NextRequest) {
         }
 
         if (action === "like" || action === "unlike") {
-            const { data: article, error: fetchError } = await supabase
-                .from("magazine_articles")
-                .select("likes")
-                .eq("id", articleId)
-                .single();
+            // magazine_likes 테이블 기반 토글 (post_likes 패턴)
+            // UNIQUE(article_id, user_id)로 중복 방지 + 실제 count 집계로 음수 불가
+            const adminSb = createAdminSupabase();
 
-            if (fetchError || !article) {
-                return NextResponse.json({ error: "기사를 찾을 수 없습니다" }, { status: 404 });
+            // 기존 좋아요 확인
+            const { data: existingLike } = await adminSb
+                .from("magazine_likes")
+                .select("id")
+                .eq("article_id", articleId)
+                .eq("user_id", user.id)
+                .maybeSingle();
+
+            let liked: boolean;
+
+            if (existingLike) {
+                // 이미 좋아요 → 삭제 (토글)
+                await adminSb
+                    .from("magazine_likes")
+                    .delete()
+                    .eq("article_id", articleId)
+                    .eq("user_id", user.id);
+                liked = false;
+            } else {
+                // 좋아요 추가
+                const { error: insertErr } = await adminSb
+                    .from("magazine_likes")
+                    .insert({ article_id: articleId, user_id: user.id });
+
+                if (insertErr) {
+                    // 23505 = UNIQUE 위반 (동시 요청) → 이미 좋아요 상태
+                    if (insertErr.code === "23505") {
+                        liked = true;
+                    } else {
+                        console.error("[Magazine PATCH] 좋아요 INSERT 에러:", insertErr);
+                        return NextResponse.json({ error: "좋아요 처리 실패" }, { status: 500 });
+                    }
+                } else {
+                    liked = true;
+                }
             }
 
-            const delta = action === "like" ? 1 : -1;
-            const newLikes = Math.max(0, (article.likes || 0) + delta);
+            // 실제 카운트 집계 (magazine_likes 테이블 행 수 = 정확한 좋아요 수)
+            const { count: likesCount } = await adminSb
+                .from("magazine_likes")
+                .select("id", { count: "exact", head: true })
+                .eq("article_id", articleId);
 
-            const { error: updateError } = await supabase
+            // magazine_articles.likes 동기화
+            await adminSb
                 .from("magazine_articles")
-                .update({ likes: newLikes })
+                .update({ likes: likesCount || 0 })
                 .eq("id", articleId);
 
-            if (updateError) {
-                console.error("[Magazine PATCH] 좋아요 업데이트 에러:", updateError);
-                return NextResponse.json({ error: "좋아요 업데이트 실패" }, { status: 500 });
-            }
-
-            return NextResponse.json({ likes: newLikes });
+            return NextResponse.json({ liked, likes: likesCount || 0 });
         }
 
         return NextResponse.json({ error: "알 수 없는 action" }, { status: 400 });

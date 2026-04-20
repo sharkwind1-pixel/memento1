@@ -414,8 +414,8 @@ function MagazinePage({ setSelectedTab, isActive }: MagazinePageProps) {
                                                     <Eye className="w-3 h-3" />
                                                     {(article.views ?? 0).toLocaleString()}
                                                 </span>
-                                                <span className="flex items-center gap-1">
-                                                    <Heart className="w-3 h-3" />
+                                                <span className={`flex items-center gap-1 ${article.liked ? "text-red-500" : ""}`}>
+                                                    <Heart className={`w-3 h-3 ${article.liked ? "fill-current" : ""}`} />
                                                     {article.likes ?? 0}
                                                 </span>
                                             </div>

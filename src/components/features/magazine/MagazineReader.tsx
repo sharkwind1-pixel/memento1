@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import type { MagazineArticle } from "@/data/magazineArticles";
 import { API } from "@/config/apiEndpoints";
-import { safeGetItem, safeSetItem, safeRemoveItem, safeSessionGetItem, safeSessionSetItem } from "@/lib/safe-storage";
+import { safeSessionGetItem, safeSessionSetItem } from "@/lib/safe-storage";
 import { buildCards } from "./magazineCardUtils";
 import { CardRenderer } from "./MagazineCardRenderer";
 import { CardIndicator } from "./CardIndicator";
@@ -48,16 +48,12 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
     const containerRef = useRef<HTMLDivElement>(null);
     const sliderRef = useRef<HTMLDivElement>(null);
 
-    // 좋아요 상태 (localStorage 기반 중복 방지)
-    const likeKey = `magazine_likes_${article.id}`;
-    const [isLiked, setIsLiked] = useState(() => {
-        if (typeof window !== "undefined") {
-            return safeGetItem(likeKey) === "1";
-        }
-        return false;
-    });
+    // 좋아요 상태 — 서버 liked 필드 기반 (localStorage 의존 제거)
+    // article.liked는 GET 응답에서 현재 유저의 좋아요 여부를 서버가 알려줌
+    const [isLiked, setIsLiked] = useState(!!(article as MagazineArticle & { liked?: boolean }).liked);
     const [displayLikes, setDisplayLikes] = useState(article.likes);
     const [likeAnimating, setLikeAnimating] = useState(false);
+    const likingRef = useRef(false); // 이중 클릭 방지
 
     // 조회수 상태 (sessionStorage 기반 중복 방지)
     const [displayViews, setDisplayViews] = useState(article.views);
@@ -84,19 +80,17 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
         }
     }, [article.id]);
 
-    // 좋아요 토글 핸들러
+    // 좋아요 토글 핸들러 — 서버 기반 + 낙관적 UI + 이중 클릭 방지
     const handleLike = useCallback(async () => {
+        if (likingRef.current) return; // 이중 클릭 방지
+        likingRef.current = true;
+
         const willLike = !isLiked;
+        // 낙관적 UI 업데이트
         setIsLiked(willLike);
-        setDisplayLikes((prev) => prev + (willLike ? 1 : -1));
+        setDisplayLikes((prev) => Math.max(0, prev + (willLike ? 1 : -1)));
         setLikeAnimating(true);
         setTimeout(() => setLikeAnimating(false), 300);
-
-        if (willLike) {
-            safeSetItem(likeKey, "1");
-        } else {
-            safeRemoveItem(likeKey);
-        }
 
         try {
             const res = await fetch(API.MAGAZINE, {
@@ -109,19 +103,20 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
             });
             const data = await res.json();
             if (data.likes != null) {
+                // 서버 응답으로 정확한 값 동기화
                 setDisplayLikes(data.likes);
+            }
+            if (typeof data.liked === "boolean") {
+                setIsLiked(data.liked);
             }
         } catch {
             // 실패 시 롤백
             setIsLiked(!willLike);
-            setDisplayLikes((prev) => prev + (willLike ? -1 : 1));
-            if (!willLike) {
-                safeSetItem(likeKey, "1");
-            } else {
-                safeRemoveItem(likeKey);
-            }
+            setDisplayLikes((prev) => Math.max(0, prev + (willLike ? -1 : 1)));
+        } finally {
+            likingRef.current = false;
         }
-    }, [isLiked, article.id, likeKey]);
+    }, [isLiked, article.id]);
 
     const cards = useMemo(() => buildCards(article), [article]);
     const totalCards = cards.length;

@@ -530,11 +530,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         getSession();
 
-        // 안전장치: 10초 이내에 로딩이 끝나지 않으면 강제로 비로그인 상태로 진입
-        // (느린 네트워크 환경 고려하여 5초 → 10초로 여유 확보)
+        // 안전장치: 5초 이내에 로딩이 끝나지 않으면 강제로 비로그인 상태로 진입
+        // (10초는 너무 길어 유저가 빈 화면을 오래 봄 → 5초로 단축)
         const safetyTimer = setTimeout(() => {
             setLoading((prev) => {
                 if (prev) {
+                    console.warn("[AuthContext] 5s safety timeout — forcing non-login state");
                     setSession(null);
                     setUser(null);
                     setProfileLoaded(true);
@@ -542,7 +543,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 }
                 return false;
             });
-        }, 10000);
+        }, 5000);
 
         // 인증 상태 변경 리스너
         // 주의: onAuthStateChange 콜백은 Supabase 내부 lock 안에서 호출된다.

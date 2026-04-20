@@ -15,6 +15,7 @@ export interface MagazineArticle {
     readTime: string;
     views: number;
     likes: number;
+    liked?: boolean; // 현재 유저의 좋아요 여부 (서버 응답)
     badge: string;
     image: string;
     tags: string[];
@@ -33,6 +34,7 @@ export function dbArticleToMagazineArticle(row: {
     readTime?: string | null;
     views: number;
     likes: number;
+    liked?: boolean;
     badge?: string | null;
     tags?: string[];
     publishedAt?: string | null;
@@ -53,6 +55,7 @@ export function dbArticleToMagazineArticle(row: {
         readTime: row.readTime || "5분",
         views: row.views,
         likes: row.likes,
+        liked: row.liked || false,
         badge: row.badge || "",
         image: row.imageUrl || "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400",
         tags: row.tags || [],
