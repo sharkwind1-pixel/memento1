@@ -32,11 +32,14 @@ import DeleteAccountSection from "@/components/Auth/DeleteAccountSection";
 interface AccountSettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
+    /** 모달 열릴 때 자동 스크롤할 섹션 id (예: "subscription-section") */
+    scrollTo?: string;
 }
 
 export default function AccountSettingsModal({
     isOpen,
     onClose,
+    scrollTo,
 }: AccountSettingsModalProps) {
     const { user, updateProfile, isSimpleMode, toggleSimpleMode, isPremiumUser, subscriptionTier } = useAuth();
 
@@ -68,6 +71,19 @@ export default function AccountSettingsModal({
             window.removeEventListener("popstate", handlePopState);
         };
     }, [isOpen, onClose]);
+
+    // scrollTo prop으로 특정 섹션으로 자동 스크롤 (모달 내부 스크롤 컨테이너 기준)
+    useEffect(() => {
+        if (!isOpen || !scrollTo) return;
+        // 모달 렌더 완료 후 스크롤 (두 번 rAF로 섹션 DOM 안정화 보장)
+        const raf1 = requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                const el = document.getElementById(scrollTo);
+                if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+            });
+        });
+        return () => cancelAnimationFrame(raf1);
+    }, [isOpen, scrollTo]);
 
     const [currentNickname, setCurrentNickname] = useState("");
     const [nickname, setNickname] = useState("");

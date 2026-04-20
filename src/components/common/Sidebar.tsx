@@ -31,6 +31,7 @@ import {
     LogOut,
     Settings,
     Eye,
+    CreditCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -103,7 +104,7 @@ export default function Sidebar({
     onOpenAccountSettings,
     authLoading,
 }: SidebarProps) {
-    const { user, isAdminUser, isSimpleMode, toggleSimpleMode } = useAuth();
+    const { user, isAdminUser, isPremiumUser, isSimpleMode, toggleSimpleMode } = useAuth();
     const { selectedPet } = usePets();
     const isMemorialMode = selectedPet?.status === "memorial";
     const [expandedCategory, setExpandedCategory] = useState<MainCategory | null>(
@@ -440,6 +441,22 @@ export default function Sidebar({
                                 <Home className="w-4 h-4" />
                                 <span>내 미니홈피</span>
                             </button>
+                            {isPremiumUser && (
+                                <button
+                                    onClick={() => {
+                                        window.dispatchEvent(
+                                            new CustomEvent("openAccountSettings", {
+                                                detail: { scrollTo: "subscription-section" },
+                                            }),
+                                        );
+                                        if (isMobile) onClose();
+                                    }}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"
+                                >
+                                    <CreditCard className="w-4 h-4" />
+                                    <span>구독 관리</span>
+                                </button>
+                            )}
                             <button
                                 onClick={() => {
                                     onSignOut?.();
