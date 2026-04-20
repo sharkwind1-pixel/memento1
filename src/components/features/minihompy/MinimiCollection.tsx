@@ -8,7 +8,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
-import { Book, Loader2, Lock, Sparkles } from "lucide-react";
+import { Book, Loader2, Lock, Sparkles, ShoppingBag } from "lucide-react";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
 import { CHARACTER_CATALOG } from "@/data/minimiPixels";
@@ -23,9 +23,11 @@ interface OwnedCharRow {
 
 interface MinimiCollectionProps {
     onMinimiClick?: (slug: string, owned: boolean) => void;
+    /** "상점 열기" 버튼과 미보유 미니미 클릭 시 상점 모달 오픈 — initialSlug 있으면 해당 캐릭터로 스크롤 */
+    onOpenShop?: (initialSlug?: string) => void;
 }
 
-export default function MinimiCollection({ onMinimiClick }: MinimiCollectionProps) {
+export default function MinimiCollection({ onMinimiClick, onOpenShop }: MinimiCollectionProps) {
     const [ownedMinimi, setOwnedMinimi] = useState<OwnedCharRow[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -71,7 +73,7 @@ export default function MinimiCollection({ onMinimiClick }: MinimiCollectionProp
     return (
         <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border-0 shadow-lg p-4">
             {/* 헤더 */}
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
                 <div className="flex items-center gap-2">
                     <Book className="w-5 h-5 text-memorial-500" />
                     <h3 className="font-semibold text-gray-800 dark:text-white">
@@ -82,7 +84,7 @@ export default function MinimiCollection({ onMinimiClick }: MinimiCollectionProp
                     <span className="text-sm text-gray-500 dark:text-gray-400">
                         {ownedCount}/{totalCount}
                     </span>
-                    <div className="w-20 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div className="w-16 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                         <div
                             className="h-full bg-gradient-to-r from-memorial-400 to-orange-500 transition-all duration-500"
                             style={{ width: `${completionPercent}%` }}
@@ -91,20 +93,39 @@ export default function MinimiCollection({ onMinimiClick }: MinimiCollectionProp
                 </div>
             </div>
 
+            {/* 상점 열기 버튼 — 치타 피드백: 도감에서 구매 진입점이 없어 헷갈림 */}
+            {onOpenShop && (
+                <button
+                    onClick={() => onOpenShop()}
+                    className="w-full mb-3 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 text-white font-medium text-sm shadow-sm hover:shadow-md active:scale-[0.98] transition-all"
+                >
+                    <ShoppingBag className="w-4 h-4" />
+                    미니미 상점 열기
+                </button>
+            )}
+
             {/* 도감 그리드 */}
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
                 {CHARACTER_CATALOG.map((character) => {
                     const owned = isOwned(character.slug);
+                    const handleClick = () => {
+                        // 1. 기존 콜백 (있으면)
+                        onMinimiClick?.(character.slug, owned);
+                        // 2. 미보유 미니미 클릭 시 상점 자동 오픈 — 해당 slug로 스크롤
+                        if (!owned && onOpenShop) {
+                            onOpenShop(character.slug);
+                        }
+                    };
                     return (
                         <button
                             key={character.slug}
-                            onClick={() => onMinimiClick?.(character.slug, owned)}
+                            onClick={handleClick}
                             className={cn(
                                 "relative aspect-square rounded-xl p-2 transition-all duration-200",
                                 "flex flex-col items-center justify-center gap-1",
                                 owned
                                     ? "bg-gradient-to-br from-memorial-50 to-orange-50 dark:from-memorial-900/20 dark:to-orange-900/20 border-2 border-memorial-200 dark:border-memorial-700 hover:scale-105 active:scale-95"
-                                    : "bg-gray-100 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 grayscale opacity-50"
+                                    : "bg-gray-100 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 hover:border-memento-300 hover:shadow-sm active:scale-95"
                             )}
                         >
                             {/* 미니미 이미지 */}
@@ -113,7 +134,10 @@ export default function MinimiCollection({ onMinimiClick }: MinimiCollectionProp
                                     src={character.imageUrl}
                                     alt={character.name}
                                     fill
-                                    className="object-contain"
+                                    className={cn(
+                                        "object-contain transition-all",
+                                        !owned && "grayscale opacity-60"
+                                    )}
                                     style={{ imageRendering: "pixelated" }}
                                 />
                                 {!owned && (
@@ -122,13 +146,18 @@ export default function MinimiCollection({ onMinimiClick }: MinimiCollectionProp
                                     </div>
                                 )}
                             </div>
-                            {/* 이름 */}
+                            {/* 이름 + 가격 — 미보유여도 이름과 가격 보여주어 구매 유도 */}
                             <span className={cn(
                                 "text-[10px] sm:text-xs font-medium truncate w-full text-center",
-                                owned ? "text-gray-700 dark:text-gray-200" : "text-gray-400 dark:text-gray-500"
+                                owned ? "text-gray-700 dark:text-gray-200" : "text-gray-500 dark:text-gray-400"
                             )}>
-                                {owned ? character.name : "???"}
+                                {character.name}
                             </span>
+                            {!owned && (
+                                <span className="text-[9px] sm:text-[10px] font-semibold text-memento-600 dark:text-memento-400">
+                                    {character.price}P
+                                </span>
+                            )}
                             {/* 보유 뱃지 */}
                             {owned && (
                                 <div className="absolute -top-1 -right-1 w-5 h-5 bg-memorial-500 rounded-full flex items-center justify-center">

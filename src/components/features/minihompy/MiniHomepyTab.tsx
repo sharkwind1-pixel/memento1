@@ -12,7 +12,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Loader2, MessageSquare, Trash2, ChevronDown, Archive, Plus } from "lucide-react";
+import { Loader2, MessageSquare, Trash2, ChevronDown, Archive, Plus, ShoppingBag } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
@@ -22,6 +22,7 @@ import { CHARACTER_CATALOG } from "@/data/minimiPixels";
 import MinihompyStage from "./MinihompyStage";
 import MinihompySettingsSection from "./MinihompySettingsSection";
 import MinimiCollection from "./MinimiCollection";
+import MinimiShopModal from "@/components/features/minimi/MinimiShopModal";
 import Image from "next/image";
 
 interface OwnedChar {
@@ -48,6 +49,20 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
     // 보관함 (보유 미니미 목록)
     const [ownedMinimis, setOwnedMinimis] = useState<OwnedChar[]>([]);
     const [loadingOwned, setLoadingOwned] = useState(false);
+
+    // 미니미 상점 모달 (도감/스테이지에서 진입)
+    const [shopOpen, setShopOpen] = useState(false);
+    const [shopInitialSlug, setShopInitialSlug] = useState<string | undefined>();
+
+    const openShop = useCallback((initialSlug?: string) => {
+        setShopInitialSlug(initialSlug);
+        setShopOpen(true);
+    }, []);
+
+    const closeShop = useCallback(() => {
+        setShopOpen(false);
+        setShopInitialSlug(undefined);
+    }, []);
 
     // 설정 로드
     const loadSettings = useCallback(async () => {
@@ -273,6 +288,21 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
                 saving={saving}
             />
 
+            {/* 스테이지 바로 아래 "미니미 상점" 바로가기 — 치타 피드백:
+                "이 화면에서 구매하기 기능이 있는 줄 알고 한참 찾았어".
+                편집모드에선 보관함 트레이와 겹치므로 숨김. */}
+            {!editMode && (
+                <button
+                    type="button"
+                    onClick={() => openShop()}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 text-white font-semibold shadow-md hover:shadow-lg active:scale-[0.99] transition-all"
+                >
+                    <ShoppingBag className="w-5 h-5" />
+                    <span>미니미 상점</span>
+                    <span className="text-white/80 text-xs font-normal">새 캐릭터 구매하기</span>
+                </button>
+            )}
+
             {/* 편집모드: 인라인 보관함 트레이 */}
             {editMode && (
                 <StorageTray
@@ -291,8 +321,19 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
                 isActive={isActive}
             />
 
-            {/* 미니미 도감 */}
-            <MinimiCollection />
+            {/* 미니미 도감 — 미보유 클릭 시 상점 자동 오픈, 헤더에 "상점 열기" 버튼 */}
+            <MinimiCollection onOpenShop={openShop} />
+
+            {/* 미니미 상점 모달 */}
+            <MinimiShopModal
+                isOpen={shopOpen}
+                onClose={closeShop}
+                ownedCharacters={ownedMinimis.map((m) => m.slug)}
+                initialSlug={shopInitialSlug}
+                onPurchased={() => {
+                    loadOwnedMinimis();
+                }}
+            />
 
             {/* 방명록 섹션 */}
             <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border-0 shadow-lg p-4">

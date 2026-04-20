@@ -30,6 +30,8 @@ interface MinimiShopModalProps {
     onClose: () => void;
     ownedCharacters?: string[];
     onPurchased?: () => void;
+    /** 모달 열릴 때 이 slug로 자동 스크롤 + 1회 펄스 강조 (미니미 도감에서 미보유 클릭 시 등) */
+    initialSlug?: string;
 }
 
 interface CatalogCharacter {
@@ -57,6 +59,7 @@ export default function MinimiShopModal({
     onClose,
     ownedCharacters = [],
     onPurchased,
+    initialSlug,
 }: MinimiShopModalProps) {
     const { points, refreshPoints } = useAuth();
     useEscapeClose(isOpen, onClose);
@@ -66,6 +69,7 @@ export default function MinimiShopModal({
     const [purchasingId, setPurchasingId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [purchaseConfirm, setPurchaseConfirm] = useState<{ slug: string; name: string; price: number } | null>(null);
+    const [highlightedSlug, setHighlightedSlug] = useState<string | null>(null);
 
     useEffect(() => {
         if (!isOpen) return;
@@ -78,6 +82,30 @@ export default function MinimiShopModal({
             .catch(() => toast.error("카탈로그를 불러오지 못했습니다"))
             .finally(() => setLoading(false));
     }, [isOpen]);
+
+    // initialSlug 전달 시: 필터 맞추고 → 로딩 완료 후 해당 카드로 스크롤 + 펄스 강조
+    useEffect(() => {
+        if (!isOpen || !initialSlug || loading) return;
+        const target = characters.find((c) => c.slug === initialSlug);
+        if (!target) return;
+        // 카테고리 필터 전환
+        if (selectedFilter !== "all" && selectedFilter !== target.category) {
+            setSelectedFilter(target.category as FilterCategory);
+        }
+        setHighlightedSlug(initialSlug);
+        // 2프레임 대기 후 scroll (카드 DOM mount 보장)
+        const raf1 = requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                const el = document.getElementById(`minimi-card-${initialSlug}`);
+                if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+            });
+        });
+        const timer = setTimeout(() => setHighlightedSlug(null), 2000);
+        return () => {
+            cancelAnimationFrame(raf1);
+            clearTimeout(timer);
+        };
+    }, [isOpen, initialSlug, loading, characters, selectedFilter]);
 
     if (!isOpen) return null;
 
@@ -199,14 +227,17 @@ export default function MinimiShopModal({
                                                 const canAfford = points >= char.price;
                                                 const isPurchasing = purchasingId === char.slug;
 
+                                                const isHighlighted = highlightedSlug === char.slug;
+
                                                 return (
                                                     <div
                                                         key={char.slug}
+                                                        id={`minimi-card-${char.slug}`}
                                                         className={`relative p-2.5 rounded-xl border transition-all text-center flex flex-col ${
                                                             owned
                                                                 ? "border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20"
                                                                 : "border-gray-200 dark:border-gray-700 hover:border-emerald-300 hover:shadow-md"
-                                                        }`}
+                                                        } ${isHighlighted ? "ring-4 ring-memento-400 ring-offset-2 animate-pulse" : ""}`}
                                                     >
                                                         {owned && (
                                                             <div className="absolute top-1.5 right-1.5">
