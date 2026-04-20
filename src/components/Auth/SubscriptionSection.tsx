@@ -49,6 +49,45 @@ export default function SubscriptionSection({
     const { pets } = usePets();
     const [savingProtectedPet, setSavingProtectedPet] = useState(false);
     const [protectedPetId, setProtectedPetId] = useState<string | null>(null);
+    const [refundPreview, setRefundPreview] = useState<{
+        refundable_amount: number;
+        original_amount: number;
+        days_used: number;
+        days_total: number;
+        days_remaining: number;
+    } | null>(null);
+    const [loadingPreview, setLoadingPreview] = useState(false);
+
+    // 해지 확인 모달 열 때 예상 환불액 미리 조회
+    React.useEffect(() => {
+        if (!showCancelConfirm || !isPremiumUser) return;
+        let cancelled = false;
+        setLoadingPreview(true);
+        (async () => {
+            try {
+                const res = await fetch("/api/subscription/refund-preview", {
+                    headers: await authHeaders(),
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (cancelled) return;
+                setRefundPreview({
+                    refundable_amount: data.refundable_amount ?? 0,
+                    original_amount: data.original_amount ?? 0,
+                    days_used: data.days_used ?? 0,
+                    days_total: data.days_total ?? 0,
+                    days_remaining: data.days_remaining ?? 0,
+                });
+            } catch {
+                // preview 실패해도 해지 자체는 가능하게 — 기본 UI 유지
+            } finally {
+                if (!cancelled) setLoadingPreview(false);
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [showCancelConfirm, isPremiumUser]);
 
     // 본인 펫 중 archive 안 된 것만 (대표 지정 가능 후보)
     const eligiblePets = React.useMemo(
@@ -94,7 +133,10 @@ export default function SubscriptionSection({
 
             setShowCancelConfirm(false);
             if (result.refund_status === "refunded") {
-                toast.success("구독이 해지되고 환불이 완료되었습니다. 카드 환불은 3~5영업일 내 반영됩니다.");
+                const amount = (result.refunded_amount ?? 0).toLocaleString();
+                toast.success(`구독이 해지되었습니다. ${amount}원 환불 완료 (카드사 3~5영업일 내 반영).`);
+            } else if (result.refund_status === "skipped_no_remaining") {
+                toast.success("구독이 해지되었습니다. 이용 기간이 끝나가 환불 금액은 없습니다.");
             } else {
                 toast.success("구독이 해지되었습니다.");
             }
@@ -171,18 +213,37 @@ export default function SubscriptionSection({
                                 <div className="text-xs text-red-600 dark:text-red-400">
                                     <p className="font-medium">정말 구독을 해지하시겠습니까?</p>
                                     <p className="mt-1">
-                                        해지하면 <b>즉시 결제가 환불되고 유료 기능이 종료</b>됩니다.
-                                        카드 환불은 카드사 영업일 기준 3~5일 이내 반영됩니다.
+                                        해지 즉시 유료 기능이 종료되고, <b>사용하지 않은 기간만큼 일할 환불</b>됩니다.
                                     </p>
-                                    <p className="mt-2">즉시 무료 회원으로 전환됩니다:</p>
+                                    {/* 환불 예상액 카드 */}
+                                    <div className="mt-2 p-2 bg-white/80 dark:bg-gray-800/60 rounded border border-red-200 dark:border-red-900/40 text-gray-700 dark:text-gray-200">
+                                        {loadingPreview && !refundPreview ? (
+                                            <p className="text-[11px]">환불 금액 계산 중...</p>
+                                        ) : refundPreview && refundPreview.original_amount > 0 ? (
+                                            <div className="space-y-0.5 text-[11px]">
+                                                <div className="flex justify-between">
+                                                    <span>결제 금액</span>
+                                                    <span>{refundPreview.original_amount.toLocaleString()}원</span>
+                                                </div>
+                                                <div className="flex justify-between text-gray-500 dark:text-gray-400">
+                                                    <span>사용 일수</span>
+                                                    <span>{refundPreview.days_used}일 / {refundPreview.days_total}일</span>
+                                                </div>
+                                                <div className="flex justify-between font-semibold text-red-600 dark:text-red-400 pt-1 border-t border-red-100 dark:border-red-900/40">
+                                                    <span>예상 환불 금액</span>
+                                                    <span>{refundPreview.refundable_amount.toLocaleString()}원</span>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <p className="text-[11px]">환불 대상 결제가 없어 환불 금액은 0원입니다.</p>
+                                        )}
+                                    </div>
+                                    <p className="mt-2">무료 회원으로 전환되며:</p>
                                     <ul className="mt-1 ml-3 list-disc space-y-0.5">
                                         <li>대표 반려동물 1마리 + 사진 50장 유지</li>
                                         <li>초과 데이터는 40일간 보관 (재구독 시 복구)</li>
                                         <li>40일 후 초과 데이터 영구 삭제</li>
                                     </ul>
-                                    <p className="mt-1">
-                                        40일 이내 재구독하면 모든 데이터가 즉시 복구됩니다.
-                                    </p>
                                 </div>
                             </div>
                             <div className="flex gap-2">

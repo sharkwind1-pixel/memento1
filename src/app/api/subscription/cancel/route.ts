@@ -2,22 +2,28 @@
  * 구독 해지 API
  * POST /api/subscription/cancel
  *
- * **즉시 환불 + 즉시 차단 설계 (2026-04-20 재재설계)**:
- * 유저/운영 관점에서 "예약 해지(만료일까지 혜택 유지)"는 혼란 유발 +
- * 환불 CS 폭증. Netflix·카카오처럼 클릭 즉시 결제 취소·환불·유료기능 차단.
+ * **Pro-rata 환불 + 즉시 차단 (2026-04-20 재재재설계)**:
+ * 전액 환불은 abuse vector. 사용자가 29일 쓰고 해지해도 전액 돌려주면
+ * 매달 공짜 premium 가능. Korean 표준(Netflix/웨이브 등)은 사용 일수 차감
+ * 또는 예약 해지. 메멘토애니는 pro-rata 채택 (공정 + abuse 방지).
+ *
+ * 환불 금액 계산:
+ *   refund = amount × (남은일수 / 총일수)
+ *   - 총일수 = 결제일 ~ premium_expires_at (보통 30일)
+ *   - 남은일수 = 지금 ~ premium_expires_at
+ *   - 당일 해지: 거의 전액 환불
+ *   - 29일 사용 후 해지: 1/30만 환불
+ *   - floor 단위 (원 단위 내림)
  *
  * 처리 흐름:
- * 1. 가장 최근 `paid` 결제 1건 조회 (refund source)
- * 2. PortOne V1 `/payments/cancel` 호출 → 카드사 환불 요청
- * 3. 성공 시 DB 즉시 정리:
- *    - payments.status='cancelled'
- *    - profiles: is_premium=false, tier=free, phase=active (lifecycle 정리), expires_at=null
- *    - subscriptions.status='cancelled'
- * 4. 웹훅이 뒤늦게 도착해도 idempotent (이미 cancelled면 덮어써도 상태 동일)
+ * 1. 최근 paid 결제 + profiles.premium_expires_at 조회
+ * 2. pro-rata 환불 금액 계산 (0원이면 환불 스킵)
+ * 3. PortOne /payments/cancel 호출 (amount 명시 = 부분 환불)
+ * 4. 성공 시 DB 즉시 정리 (profiles 무료화, subscriptions/payments 기록)
  *
  * 실패 처리:
- * - PortOne 환불 실패 시 DB 수정 없이 500 반환 → 유저 재시도 or CS 수동 환불
- * - "이미 환불된 결제" 응답은 성공으로 간주하고 DB만 정리
+ * - PortOne 환불 실패 시 DB 건들지 않음 → 502 (재시도 or 수동 환불)
+ * - 이미 취소된 결제는 성공으로 간주
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -26,6 +32,8 @@ import { sendSubscriptionCancelledEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** PortOne V1 토큰 발급 */
 async function getPortOneToken(): Promise<string | null> {
@@ -43,7 +51,7 @@ async function getPortOneToken(): Promise<string | null> {
 }
 
 /**
- * PortOne V1 결제 취소 (전액 환불).
+ * PortOne V1 결제 취소. amount 명시 시 부분 환불, 생략 시 전액 환불.
  * 반환:
  *  - { ok: true }                 — 취소 성공 or 이미 취소된 상태
  *  - { ok: false, error, code }   — 카드사 거절/네트워크/인증 실패
@@ -52,26 +60,26 @@ async function cancelPortOnePayment(params: {
     token: string;
     impUid: string;
     merchantUid?: string;
+    amount: number;
     reason: string;
 }): Promise<{ ok: true } | { ok: false; error: string; code?: number }> {
     try {
+        const body: Record<string, unknown> = {
+            imp_uid: params.impUid,
+            merchant_uid: params.merchantUid,
+            reason: params.reason,
+            amount: params.amount,
+        };
         const res = await fetch("https://api.iamport.kr/payments/cancel", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 Authorization: params.token,
             },
-            body: JSON.stringify({
-                imp_uid: params.impUid,
-                merchant_uid: params.merchantUid,
-                reason: params.reason,
-                // amount 생략 = 전액 환불
-            }),
+            body: JSON.stringify(body),
         });
         const data = await res.json();
-        // code 0 = 성공
         if (data.code === 0) return { ok: true };
-        // 이미 취소된 건: 메시지에 "취소" 혹은 status=cancelled 포함
         const msg = String(data.message || "");
         if (msg.includes("이미") || msg.includes("취소") || data.response?.status === "cancelled") {
             return { ok: true };
@@ -81,6 +89,41 @@ async function cancelPortOnePayment(params: {
         const msg = e instanceof Error ? e.message : "PortOne 네트워크 실패";
         return { ok: false, error: msg };
     }
+}
+
+/**
+ * Pro-rata 환불 금액 계산.
+ * expiresAt > now 이고 paidAt < now 인 조건에서만 의미 있음.
+ * 남은 일수 ≤ 0 이면 0 (만료 임박/지남 → 환불 없음).
+ * 사용 일수 ≥ 전체 일수 이면 0.
+ */
+function computeProrataRefund(params: {
+    amount: number;
+    paidAt: Date;
+    expiresAt: Date;
+    now: Date;
+}): { refund: number; daysUsed: number; daysTotal: number; daysRemaining: number } {
+    const { amount, paidAt, expiresAt, now } = params;
+    const totalMs = expiresAt.getTime() - paidAt.getTime();
+    const usedMs = now.getTime() - paidAt.getTime();
+    const remainingMs = expiresAt.getTime() - now.getTime();
+
+    const daysTotal = Math.max(1, Math.ceil(totalMs / DAY_MS));
+    const daysUsed = Math.max(0, Math.floor(usedMs / DAY_MS));
+    const daysRemaining = Math.max(0, Math.ceil(remainingMs / DAY_MS));
+
+    if (daysRemaining <= 0 || remainingMs <= 0) {
+        return { refund: 0, daysUsed, daysTotal, daysRemaining };
+    }
+    // 원 단위 내림
+    const refund = Math.max(0, Math.floor((amount * daysRemaining) / daysTotal));
+    // 환불이 결제금액을 넘으면 클램프 (안전장치)
+    return {
+        refund: Math.min(refund, amount),
+        daysUsed,
+        daysTotal,
+        daysRemaining,
+    };
 }
 
 export async function POST(_request: NextRequest) {
@@ -93,14 +136,13 @@ export async function POST(_request: NextRequest) {
         const supabase = await createServerSupabase();
         const { data: profile, error: profileErr } = await supabase
             .from("profiles")
-            .select("is_premium, premium_expires_at, subscription_tier, subscription_phase")
+            .select("is_premium, premium_expires_at, premium_started_at, subscription_tier, subscription_phase")
             .eq("id", user.id)
             .single();
 
         if (profileErr || !profile) {
             return NextResponse.json({ error: "프로필을 불러오지 못했습니다" }, { status: 500 });
         }
-
         if (!profile.is_premium) {
             return NextResponse.json({ error: "활성 구독이 없습니다" }, { status: 400 });
         }
@@ -108,10 +150,10 @@ export async function POST(_request: NextRequest) {
         const adminSb = createAdminSupabase();
         const now = new Date();
 
-        // 1. 가장 최근 paid 결제 1건 조회 (환불 source)
+        // 1. 최근 paid 결제 조회 (환불 source)
         const { data: latestPaid } = await adminSb
             .from("payments")
-            .select("id, merchant_uid, metadata, amount")
+            .select("id, merchant_uid, metadata, amount, created_at")
             .eq("user_id", user.id)
             .eq("status", "paid")
             .order("created_at", { ascending: false })
@@ -122,61 +164,90 @@ export async function POST(_request: NextRequest) {
             ? (latestPaid.metadata as Record<string, unknown>).imp_uid
             : null;
 
-        // 2. PortOne 환불 요청 (imp_uid 존재 시만)
-        let refundStatus: "refunded" | "skipped_no_imp_uid" | "failed" = "skipped_no_imp_uid";
-        let refundError: string | null = null;
-        let refundedAmount: number | null = null;
+        // 2. pro-rata 환불 금액 계산
+        let refundStatus: "refunded" | "skipped_no_payment" | "skipped_no_remaining" | "skipped_no_imp_uid" = "skipped_no_payment";
+        let refundedAmount = 0;
+        let daysUsed = 0;
+        let daysRemaining = 0;
+        let daysTotal = 0;
 
-        if (latestPaid && typeof impUid === "string" && impUid) {
-            const token = await getPortOneToken();
-            if (!token) {
-                return NextResponse.json(
-                    { error: "결제 시스템 인증 실패 — 잠시 후 다시 시도해주세요" },
-                    { status: 500 }
-                );
-            }
-            const cancelResult = await cancelPortOnePayment({
-                token,
-                impUid,
-                merchantUid: latestPaid.merchant_uid || undefined,
-                reason: "사용자 요청 — 구독 해지",
+        if (latestPaid) {
+            const paidAt = new Date(latestPaid.created_at);
+            const expiresAt = profile.premium_expires_at
+                ? new Date(profile.premium_expires_at)
+                : new Date(paidAt.getTime() + 30 * DAY_MS); // 폴백: 결제일 +30일
+            const calc = computeProrataRefund({
+                amount: latestPaid.amount || 0,
+                paidAt,
+                expiresAt,
+                now,
             });
-            if (!cancelResult.ok) {
-                // 환불 실패 시 DB 건들지 않음 (재시도 가능 상태 유지)
-                return NextResponse.json(
-                    {
-                        error: `환불 처리 실패: ${cancelResult.error}. 문제가 계속되면 고객센터로 문의해주세요.`,
-                        code: cancelResult.code,
-                    },
-                    { status: 502 }
-                );
-            }
-            refundStatus = "refunded";
-            refundedAmount = latestPaid.amount || null;
+            daysUsed = calc.daysUsed;
+            daysRemaining = calc.daysRemaining;
+            daysTotal = calc.daysTotal;
+            refundedAmount = calc.refund;
 
-            // payments 취소 반영
-            await adminSb
-                .from("payments")
-                .update({
-                    status: "cancelled",
-                    metadata: {
-                        ...((latestPaid.metadata as Record<string, unknown>) || {}),
-                        cancelled_at: now.toISOString(),
-                        cancel_reason: "사용자 요청 — 구독 해지 (즉시 환불)",
-                        cancel_source: "user_cancel_api",
-                    },
-                })
-                .eq("id", latestPaid.id);
+            if (refundedAmount <= 0) {
+                refundStatus = "skipped_no_remaining";
+            } else if (typeof impUid !== "string" || !impUid) {
+                refundStatus = "skipped_no_imp_uid";
+            } else {
+                // 3. PortOne 부분 환불 호출
+                const token = await getPortOneToken();
+                if (!token) {
+                    return NextResponse.json(
+                        { error: "결제 시스템 인증 실패 — 잠시 후 다시 시도해주세요" },
+                        { status: 500 }
+                    );
+                }
+                const cancelResult = await cancelPortOnePayment({
+                    token,
+                    impUid,
+                    merchantUid: latestPaid.merchant_uid || undefined,
+                    amount: refundedAmount,
+                    reason: `사용자 요청 — 구독 해지 (사용 ${daysUsed}일 / 총 ${daysTotal}일)`,
+                });
+                if (!cancelResult.ok) {
+                    return NextResponse.json(
+                        {
+                            error: `환불 처리 실패: ${cancelResult.error}. 문제가 계속되면 고객센터로 문의해주세요.`,
+                            code: cancelResult.code,
+                        },
+                        { status: 502 }
+                    );
+                }
+                refundStatus = "refunded";
+
+                // payments: 부분 환불은 status 유지(paid)하고 metadata에 환불액 기록하는 게 일반적이지만
+                // 우리 모델은 "이 결제 건이 해지됨" 트래킹이 우선 → status=cancelled + refunded_amount 기록
+                await adminSb
+                    .from("payments")
+                    .update({
+                        status: "cancelled",
+                        metadata: {
+                            ...((latestPaid.metadata as Record<string, unknown>) || {}),
+                            cancelled_at: now.toISOString(),
+                            cancel_reason: `사용자 해지 (pro-rata)`,
+                            cancel_source: "user_cancel_api",
+                            refunded_amount: refundedAmount,
+                            original_amount: latestPaid.amount,
+                            days_used: daysUsed,
+                            days_total: daysTotal,
+                            days_remaining: daysRemaining,
+                        },
+                    })
+                    .eq("id", latestPaid.id);
+            }
         }
 
-        // 3. profiles 즉시 무료화
+        // 4. profiles 즉시 무료화 (환불 성공/스킵 무관, 해지는 즉시 반영)
         const { error: updateErr } = await adminSb
             .from("profiles")
             .update({
                 is_premium: false,
                 premium_expires_at: null,
                 subscription_tier: "free",
-                subscription_phase: "active", // lifecycle 리셋
+                subscription_phase: "active",
                 subscription_cancelled_at: now.toISOString(),
                 data_reset_at: null,
                 protected_pet_id: null,
@@ -191,7 +262,7 @@ export async function POST(_request: NextRequest) {
             );
         }
 
-        // 4. subscriptions 취소
+        // 5. subscriptions 취소
         await adminSb
             .from("subscriptions")
             .update({
@@ -201,7 +272,7 @@ export async function POST(_request: NextRequest) {
             })
             .eq("user_id", user.id);
 
-        // 5. 이메일 (실패해도 플로우 유지)
+        // 6. 이메일 (실패해도 플로우 유지)
         if (user.email) {
             const { data: profileDetail } = await adminSb
                 .from("profiles")
@@ -211,15 +282,17 @@ export async function POST(_request: NextRequest) {
             void sendSubscriptionCancelledEmail(
                 user.email,
                 profileDetail?.nickname || null,
-                null, // 즉시 해지이므로 만료일 없음
+                null,
             );
         }
 
-        // 6. 인앱 알림
+        // 7. 인앱 알림
         const notifBody =
             refundStatus === "refunded"
-                ? "구독이 즉시 해지되고 결제가 환불되었습니다. 카드 환불은 카드사 영업일 기준 3~5일 이내 반영됩니다."
-                : "구독이 즉시 해지되었습니다. 환불 대상 결제가 없어 환불 처리는 진행되지 않았습니다.";
+                ? `구독이 해지되고 ${refundedAmount.toLocaleString()}원이 환불되었습니다. (사용 ${daysUsed}일 / 총 ${daysTotal}일 기준 일할 계산) 카드 환불은 카드사 영업일 기준 3~5일 이내 반영됩니다.`
+                : refundStatus === "skipped_no_remaining"
+                ? "구독이 해지되었습니다. 이용 기간이 거의 끝나 환불 금액은 발생하지 않았습니다."
+                : "구독이 해지되었습니다. 환불 대상 결제 정보가 없어 자동 환불이 진행되지 않았습니다.";
 
         const { error: notifErr } = await adminSb.from("notifications").insert({
             user_id: user.id,
@@ -229,6 +302,8 @@ export async function POST(_request: NextRequest) {
             metadata: {
                 refund_status: refundStatus,
                 refunded_amount: refundedAmount,
+                days_used: daysUsed,
+                days_total: daysTotal,
             },
             dedup_key: `sub_cancelled_${now.toISOString().slice(0, 10)}_${user.id}`,
         });
@@ -236,12 +311,12 @@ export async function POST(_request: NextRequest) {
             console.error("[subscription/cancel] notification insert failed:", notifErr.message);
         }
 
-        // 7. 관리자 텔레그램 알림
+        // 8. 관리자 텔레그램
         void import("@/lib/telegram")
             .then(({ notifyPayment }) =>
                 notifyPayment({
                     email: user.email || "(unknown)",
-                    plan: `cancelled (${refundStatus})`,
+                    plan: `cancelled (${refundStatus}, ${daysUsed}/${daysTotal}일)`,
                     amount: refundedAmount ? -refundedAmount : 0,
                 })
             )
@@ -250,8 +325,10 @@ export async function POST(_request: NextRequest) {
         return NextResponse.json({
             ok: true,
             refund_status: refundStatus,
-            refund_error: refundError,
             refunded_amount: refundedAmount,
+            days_used: daysUsed,
+            days_total: daysTotal,
+            days_remaining: daysRemaining,
         });
     } catch (e) {
         const msg = e instanceof Error ? e.message : "서버 오류";

@@ -1,0 +1,93 @@
+/**
+ * 환불 예상액 미리보기
+ * GET /api/subscription/refund-preview
+ *
+ * 해지 확인 모달에 "이만큼 환불됩니다" 투명하게 노출하기 위한 read-only 엔드포인트.
+ * PortOne 호출 없이 DB만 조회 → 실제 환불액과 동일한 계산식.
+ */
+
+import { NextRequest, NextResponse } from "next/server";
+import { getAuthUser, createAdminSupabase } from "@/lib/supabase-server";
+
+export const dynamic = "force-dynamic";
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export async function GET(_request: NextRequest) {
+    const user = await getAuthUser();
+    if (!user) {
+        return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
+    }
+
+    try {
+        const adminSb = createAdminSupabase();
+        const { data: profile } = await adminSb
+            .from("profiles")
+            .select("is_premium, premium_expires_at")
+            .eq("id", user.id)
+            .maybeSingle();
+
+        if (!profile?.is_premium) {
+            return NextResponse.json({
+                is_premium: false,
+                refundable_amount: 0,
+                days_used: 0,
+                days_total: 0,
+                days_remaining: 0,
+                original_amount: 0,
+            });
+        }
+
+        const { data: latestPaid } = await adminSb
+            .from("payments")
+            .select("amount, created_at")
+            .eq("user_id", user.id)
+            .eq("status", "paid")
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (!latestPaid) {
+            return NextResponse.json({
+                is_premium: true,
+                refundable_amount: 0,
+                days_used: 0,
+                days_total: 0,
+                days_remaining: 0,
+                original_amount: 0,
+                note: "최근 결제 기록 없음",
+            });
+        }
+
+        const now = new Date();
+        const paidAt = new Date(latestPaid.created_at);
+        const expiresAt = profile.premium_expires_at
+            ? new Date(profile.premium_expires_at)
+            : new Date(paidAt.getTime() + 30 * DAY_MS);
+
+        const totalMs = expiresAt.getTime() - paidAt.getTime();
+        const usedMs = now.getTime() - paidAt.getTime();
+        const remainingMs = expiresAt.getTime() - now.getTime();
+
+        const daysTotal = Math.max(1, Math.ceil(totalMs / DAY_MS));
+        const daysUsed = Math.max(0, Math.floor(usedMs / DAY_MS));
+        const daysRemaining = Math.max(0, Math.ceil(remainingMs / DAY_MS));
+        const original = latestPaid.amount || 0;
+        const refundable =
+            remainingMs <= 0
+                ? 0
+                : Math.min(original, Math.max(0, Math.floor((original * daysRemaining) / daysTotal)));
+
+        return NextResponse.json({
+            is_premium: true,
+            original_amount: original,
+            refundable_amount: refundable,
+            days_used: daysUsed,
+            days_total: daysTotal,
+            days_remaining: daysRemaining,
+        });
+    } catch (e) {
+        const msg = e instanceof Error ? e.message : "서버 오류";
+        return NextResponse.json({ error: msg }, { status: 500 });
+    }
+}
