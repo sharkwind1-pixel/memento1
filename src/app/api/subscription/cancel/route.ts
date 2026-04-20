@@ -58,7 +58,8 @@ async function cancelPortOnePayment(params: {
     token: string;
     impUid: string;
     merchantUid?: string;
-    amount: number;
+    /** 부분 환불일 때만 지정. 전액 환불이면 undefined로 두어 PortOne이 clean 승인취소 처리 */
+    amount?: number;
     reason: string;
 }): Promise<{ ok: true } | { ok: false; error: string; code?: number }> {
     try {
@@ -66,8 +67,11 @@ async function cancelPortOnePayment(params: {
             imp_uid: params.impUid,
             merchant_uid: params.merchantUid,
             reason: params.reason,
-            amount: params.amount,
         };
+        // amount 생략 시 전액 승인취소 (당일 결제면 카드사 매입 전이라 즉시 반영)
+        if (typeof params.amount === "number" && params.amount > 0) {
+            body.amount = params.amount;
+        }
         const res = await fetch("https://api.iamport.kr/payments/cancel", {
             method: "POST",
             headers: {
@@ -208,9 +212,11 @@ export async function POST(_request: NextRequest) {
                     token,
                     impUid,
                     merchantUid: latestPaid.merchant_uid || undefined,
-                    amount: refundedAmount,
+                    // 전액 환불이면 amount 생략 → clean 승인취소 (KCP 매입요청 단계에 묶이지 않음)
+                    // 부분 환불(24h 이후)일 때만 amount 명시
+                    amount: isFullRefund ? undefined : refundedAmount,
                     reason: isFullRefund
-                        ? `사용자 요청 — 24h 이내 해지 (전액 환불)`
+                        ? `사용자 요청 — 24h 이내 해지 (전액 승인취소)`
                         : `사용자 요청 — 구독 해지 (사용 ${daysUsed}일 / 총 ${daysTotal}일 일할 환불)`,
                 });
                 if (!cancelResult.ok) {
