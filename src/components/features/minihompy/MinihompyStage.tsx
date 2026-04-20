@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import type { MinimiEquipState, PlacedMinimi } from "@/types";
 import { findBackground, getDefaultBackground } from "@/data/minihompyBackgrounds";
 import { CHARACTER_CATALOG } from "@/data/minimiPixels";
+import { pickReaction, type MinimiAction } from "@/data/minimiReactions";
 import Image from "next/image";
 
 /** 시드 기반 난수 생성 - SSR/CSR 결과 일치 보장 */
@@ -47,6 +48,8 @@ interface MinihompyStageProps {
     compact?: boolean;
     placedMinimi?: PlacedMinimi[];
     editMode?: boolean;
+    /** 추모 모드 여부 — 미니미 터치 대사/액션이 "재회 + 응원" 톤으로 바뀜 */
+    isMemorialMode?: boolean;
     onPlacementChange?: (placed: PlacedMinimi[]) => void;
     onRemoveMinimi?: (index: number) => void;
     // 편집모드 컨트롤 콜백 (스테이지 안에 버튼 표시)
@@ -67,6 +70,7 @@ export default function MinihompyStage({
     compact = false,
     placedMinimi = [],
     editMode = false,
+    isMemorialMode = false,
     onPlacementChange,
     onRemoveMinimi,
     onEnterEdit,
@@ -101,29 +105,16 @@ export default function MinihompyStage({
     // 터치 이펙트 상태 (미니미 클릭 시 애니메이션)
     const [touchEffectIndex, setTouchEffectIndex] = useState<number | null>(null);
     const [touchEffectMessage, setTouchEffectMessage] = useState<string>("");
+    const [touchEffectAction, setTouchEffectAction] = useState<MinimiAction>("heart");
 
-    // 미니미 종류별 터치 이펙트 메시지 (slug → 메시지 풀)
-    // 종 평등: 강아지/고양이 6종 외에 엑조틱 미니미(햄스터/토끼/앵무새/파충류 등)가
-    // 추가되면 아래에 slug 키를 계속 늘리면 된다. slug 매칭 실패 시 DEFAULT가
-    // 범용 문구로 폴백 — 어떤 종이든 자연스럽게 읽히는 중립적 표현 유지.
-    const TOUCH_MESSAGES_BY_TYPE: Record<string, string[]> = {
-        // 강아지 계열
-        maltipoo: ["깡총!", "꼬리 살랑~", "안아줘!", "헤헤~", "같이 놀자!", "기분 좋다~", "간식..?", "사랑해!"],
-        yorkshire: ["멍!", "나 용감해!", "놀자놀자!", "쓰담해줘~", "힘세다!", "같이 뛰자!", "배고파~", "최고야!"],
-        golden_retriever: ["반가워~!", "산책 갈까?", "꼬리 흔들~", "좋아좋아!", "공 던져줘!", "헤벌쭉~", "행복해!", "뒹굴뒹굴~"],
-        // 고양이 계열
-        russian_blue: ["..냥", "쓰담 허락", "...뭐야", "그르릉~", "관심 없어", "..한번만 더", "졸려..", "..고마워"],
-        ragdoll: ["안겨도 돼?", "폭신~", "눈 마주쳤다!", "같이 있자~", "따뜻해..", "좋아~", "놀아줘!", "뭐 봐~"],
-        cheese_cat: ["야옹!", "배 만져봐!", "츄르..!", "낮잠 중..", "기지개~", "놀아줄 거야?", "꾹꾹이~", "뒹굴!"],
-        // 엑조틱 미니미 (향후 추가 시 대응. 현재는 DEFAULT가 커버)
-        hamster: ["찌익~", "볼주머니 가득!", "쳇바퀴 탈까?", "해바라기씨..!", "밤이 좋아~", "조용히..", "잠깐만!", "부스럭~"],
-        rabbit: ["쀼우~", "귀 쫑긋!", "건초..!", "깡총!", "코찡긋~", "모래목욕~", "조심조심", "헤헷~"],
-        parrot: ["안녕~", "이름 불러줘!", "푸드덕!", "말 걸어줘~", "어깨 위로!", "바나나 좋아~", "노래 부를까?", "왜왜~"],
-    };
-    const TOUCH_MESSAGES_DEFAULT = [
-        "안녕!", "놀아줘~", "기분 좋아!", "반가워!", "뭐해?",
-        "좋아!", "오늘도 힘내!", "나 여기있어!", "같이 있자", "쓰담~",
-    ];
+    // 연속 터치 추적 — 같은 미니미를 반복 터치하면 대사가 점진적으로 바뀐다.
+    // (1~3회: 반가움 · 4~6회: 장난 · 7+: 간지러움/만족)
+    // 다른 미니미를 누르거나 2.5초 이상 텀이 생기면 카운트 리셋.
+    const consecutiveRef = useRef<{ index: number; count: number; lastAt: number }>({
+        index: -1,
+        count: 0,
+        lastAt: 0,
+    });
 
     // 시드 기반 사전 계산된 랜덤 값 (SSR/CSR 동일)
     const starPositions = useMemo(() => {
@@ -287,15 +278,23 @@ export default function MinihompyStage({
             clearTimeout(touchTimerRef.current);
         }
 
-        // 미니미 종류에 맞는 메시지 선택
+        // 연속 터치 카운트 업데이트 (같은 미니미 + 2.5초 이내면 누적)
+        const now = Date.now();
+        const prev = consecutiveRef.current;
+        const isSameAndRecent = prev.index === index && now - prev.lastAt < 2500;
+        const nextCount = isSameAndRecent ? prev.count + 1 : 1;
+        consecutiveRef.current = { index, count: nextCount, lastAt: now };
+
+        // slug + 모드 + 연속카운트 기반 반응 선택
         const slug = placedMinimi[index]?.slug || "";
-        const messages = TOUCH_MESSAGES_BY_TYPE[slug] || TOUCH_MESSAGES_DEFAULT;
-        const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+        const mode = isMemorialMode ? "memorial" : "daily";
+        const reaction = pickReaction(slug, mode, nextCount);
 
         // 동일 미니미 연속 터치 시에도 애니메이션 재실행
         setTouchEffectIndex(null);
         requestAnimationFrame(() => {
-            setTouchEffectMessage(randomMessage);
+            setTouchEffectMessage(reaction.message);
+            setTouchEffectAction(reaction.action);
             setTouchEffectIndex(index);
             setTouchKey(k => k + 1);
         });
@@ -306,8 +305,7 @@ export default function MinihompyStage({
             setTouchEffectMessage("");
             touchTimerRef.current = null;
         }, 1800);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [editMode, placedMinimi]);
+    }, [editMode, placedMinimi, isMemorialMode]);
 
     return (
         <div
@@ -398,7 +396,20 @@ export default function MinihompyStage({
                                     isDragging && "opacity-60 scale-90"
                                 )}
                                 style={{
-                                    animation: hasTouchEffect ? "minimiJump 0.3s ease-out" : undefined,
+                                    // 터치 액션별 애니메이션 분기
+                                    // heart/star/sparkle은 파티클만 (미니미 자체 움직임 없음)
+                                    // jump/spin/wiggle/bounce는 미니미가 직접 움직임
+                                    animation: hasTouchEffect
+                                        ? (() => {
+                                              switch (touchEffectAction) {
+                                                  case "jump": return "minimiJump 0.5s ease-out";
+                                                  case "spin": return "minimiSpin 0.6s ease-in-out";
+                                                  case "wiggle": return "minimiWiggle 0.5s ease-in-out";
+                                                  case "bounce": return "minimiBounce 0.6s ease-out";
+                                                  default: return "minimiJump 0.3s ease-out";
+                                              }
+                                          })()
+                                        : undefined,
                                 }}
                             >
                                 {/* 선택 표시 */}
@@ -425,23 +436,33 @@ export default function MinihompyStage({
                                         <span className="text-[9px]">아래로 끌어서 보관</span>
                                     </div>
                                 )}
-                                {/* 터치 이펙트: 하트/별 파티클 */}
-                                {hasTouchEffect && (
+                                {/* 터치 이펙트: 액션에 맞는 파티클 (heart/star/sparkle 시에만 표시) */}
+                                {hasTouchEffect && ["heart", "star", "sparkle"].includes(touchEffectAction) && (
                                     <div key={`particle-${touchKey}`} className="absolute inset-0 pointer-events-none overflow-visible">
-                                        {[...Array(4)].map((_, i) => (
-                                            <div
-                                                key={i}
-                                                className="absolute text-pink-400 text-sm"
-                                                style={{
-                                                    left: `${50 + (i - 1.5) * 20}%`,
-                                                    top: "30%",
-                                                    animation: `minimiParticle 0.6s ease-out ${i * 0.1}s forwards`,
-                                                    opacity: 0,
-                                                }}
-                                            >
-                                                {i % 2 === 0 ? "♥" : "★"}
-                                            </div>
-                                        ))}
+                                        {[...Array(touchEffectAction === "sparkle" ? 6 : 4)].map((_, i) => {
+                                            const symbol =
+                                                touchEffectAction === "heart" ? "♥" :
+                                                touchEffectAction === "star" ? "★" :
+                                                /* sparkle */ (i % 2 === 0 ? "✦" : "·");
+                                            const color =
+                                                touchEffectAction === "heart" ? "text-pink-400" :
+                                                touchEffectAction === "star" ? "text-yellow-400" :
+                                                /* sparkle */ (isMemorialMode ? "text-memorial-400" : "text-memento-300");
+                                            return (
+                                                <div
+                                                    key={i}
+                                                    className={cn("absolute text-sm", color)}
+                                                    style={{
+                                                        left: `${50 + (i - (touchEffectAction === "sparkle" ? 2.5 : 1.5)) * 18}%`,
+                                                        top: "30%",
+                                                        animation: `minimiParticle 0.7s ease-out ${i * 0.08}s forwards`,
+                                                        opacity: 0,
+                                                    }}
+                                                >
+                                                    {symbol}
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </div>

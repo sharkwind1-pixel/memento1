@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Loader2, MessageSquare, Trash2, ChevronDown, Archive, Plus, ShoppingBag } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useMemorialMode } from "@/contexts/PetContext";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
 import { MINIHOMPY } from "@/config/constants";
@@ -33,6 +34,7 @@ interface OwnedChar {
 
 export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean }) {
     const { user, minimiEquip } = useAuth();
+    const { isMemorialMode } = useMemorialMode();
     const nickname = user?.user_metadata?.nickname || user?.email?.split("@")[0] || "익명";
 
     const [settings, setSettings] = useState<MinihompySettings | null>(null);
@@ -278,6 +280,7 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
                 todayVisitors={currentSettings.todayVisitors}
                 totalVisitors={currentSettings.totalVisitors}
                 isOwner
+                isMemorialMode={isMemorialMode}
                 placedMinimi={displayPlaced}
                 editMode={editMode}
                 onPlacementChange={editMode ? setEditPlaced : undefined}
