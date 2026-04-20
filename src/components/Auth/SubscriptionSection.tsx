@@ -14,6 +14,22 @@ import { toast } from "sonner";
 import type { SubscriptionTier } from "@/config/constants";
 import { useSubscriptionPhase } from "@/hooks/useSubscriptionPhase";
 import { usePets } from "@/contexts/PetContext";
+import { supabase } from "@/lib/supabase";
+
+/**
+ * getAuthUser(@/lib/supabase-server)가 쿠키가 아니라
+ * Authorization 헤더의 Bearer 토큰으로 인증하기 때문에
+ * 모든 fetch에 access_token 헤더 필수.
+ * 세션 없으면 빈 토큰 반환 → 서버가 401 처리.
+ */
+async function authHeaders(extra?: Record<string, string>): Promise<Record<string, string>> {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token || "";
+    return {
+        ...(extra || {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+}
 
 interface SubscriptionSectionProps {
     userId: string;
@@ -46,7 +62,7 @@ export default function SubscriptionSection({
         try {
             const res = await fetch("/api/subscription/protected-pet", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: await authHeaders({ "Content-Type": "application/json" }),
                 body: JSON.stringify({ petId }),
             });
             const data = await res.json();
@@ -66,7 +82,10 @@ export default function SubscriptionSection({
         setIsCancelling(true);
 
         try {
-            const res = await fetch("/api/subscription/cancel", { method: "POST" });
+            const res = await fetch("/api/subscription/cancel", {
+                method: "POST",
+                headers: await authHeaders(),
+            });
             const result = await res.json();
 
             if (!res.ok) {
