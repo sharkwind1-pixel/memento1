@@ -93,9 +93,12 @@ async function cancelPortOnePayment(params: {
 
 /**
  * Pro-rata 환불 금액 계산.
- * expiresAt > now 이고 paidAt < now 인 조건에서만 의미 있음.
- * 남은 일수 ≤ 0 이면 0 (만료 임박/지남 → 환불 없음).
- * 사용 일수 ≥ 전체 일수 이면 0.
+ * **핵심**: 정수 일 단위 비율이 아니라 **밀리초 비율**로 계산해야 정확.
+ *   정수 ceil을 쓰면 30일 + 1ms 차이로 total=31 되어 9900 → 9580원 환불되는 버그.
+ *
+ * - refund = amount × (remainingMs / totalMs) floor
+ * - remainingMs ≤ 0 이면 0 (만료 임박/지남)
+ * - daysUsed/daysTotal/daysRemaining은 표시용 (UI)
  */
 function computeProrataRefund(params: {
     amount: number;
@@ -104,26 +107,21 @@ function computeProrataRefund(params: {
     now: Date;
 }): { refund: number; daysUsed: number; daysTotal: number; daysRemaining: number } {
     const { amount, paidAt, expiresAt, now } = params;
-    const totalMs = expiresAt.getTime() - paidAt.getTime();
-    const usedMs = now.getTime() - paidAt.getTime();
-    const remainingMs = expiresAt.getTime() - now.getTime();
+    const totalMs = Math.max(1, expiresAt.getTime() - paidAt.getTime());
+    const usedMs = Math.max(0, now.getTime() - paidAt.getTime());
+    const remainingMs = Math.max(0, expiresAt.getTime() - now.getTime());
 
-    const daysTotal = Math.max(1, Math.ceil(totalMs / DAY_MS));
+    // 표시용 정수 일수 (round로 30일±몇ms 부동소수 오차 흡수)
+    const daysTotal = Math.max(1, Math.round(totalMs / DAY_MS));
     const daysUsed = Math.max(0, Math.floor(usedMs / DAY_MS));
-    const daysRemaining = Math.max(0, Math.ceil(remainingMs / DAY_MS));
+    const daysRemaining = Math.max(0, Math.round(remainingMs / DAY_MS));
 
-    if (daysRemaining <= 0 || remainingMs <= 0) {
+    if (remainingMs <= 0) {
         return { refund: 0, daysUsed, daysTotal, daysRemaining };
     }
-    // 원 단위 내림
-    const refund = Math.max(0, Math.floor((amount * daysRemaining) / daysTotal));
-    // 환불이 결제금액을 넘으면 클램프 (안전장치)
-    return {
-        refund: Math.min(refund, amount),
-        daysUsed,
-        daysTotal,
-        daysRemaining,
-    };
+    // 실제 환불액은 ms 비율 (정수 일수 변환 없이)
+    const refund = Math.min(amount, Math.max(0, Math.floor((amount * remainingMs) / totalMs)));
+    return { refund, daysUsed, daysTotal, daysRemaining };
 }
 
 export async function POST(_request: NextRequest) {

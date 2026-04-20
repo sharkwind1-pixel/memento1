@@ -65,18 +65,19 @@ export async function GET(_request: NextRequest) {
             ? new Date(profile.premium_expires_at)
             : new Date(paidAt.getTime() + 30 * DAY_MS);
 
-        const totalMs = expiresAt.getTime() - paidAt.getTime();
-        const usedMs = now.getTime() - paidAt.getTime();
-        const remainingMs = expiresAt.getTime() - now.getTime();
+        // cancel route와 동일한 ms 비율 계산 (정수 일수 반올림 버그 방지)
+        const totalMs = Math.max(1, expiresAt.getTime() - paidAt.getTime());
+        const usedMs = Math.max(0, now.getTime() - paidAt.getTime());
+        const remainingMs = Math.max(0, expiresAt.getTime() - now.getTime());
 
-        const daysTotal = Math.max(1, Math.ceil(totalMs / DAY_MS));
+        const daysTotal = Math.max(1, Math.round(totalMs / DAY_MS));
         const daysUsed = Math.max(0, Math.floor(usedMs / DAY_MS));
-        const daysRemaining = Math.max(0, Math.ceil(remainingMs / DAY_MS));
+        const daysRemaining = Math.max(0, Math.round(remainingMs / DAY_MS));
         const original = latestPaid.amount || 0;
         const refundable =
             remainingMs <= 0
                 ? 0
-                : Math.min(original, Math.max(0, Math.floor((original * daysRemaining) / daysTotal)));
+                : Math.min(original, Math.max(0, Math.floor((original * remainingMs) / totalMs)));
 
         return NextResponse.json({
             is_premium: true,
