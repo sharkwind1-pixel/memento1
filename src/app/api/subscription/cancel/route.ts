@@ -25,6 +25,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser, createServerSupabase, createAdminSupabase } from "@/lib/supabase-server";
 import { sendSubscriptionCancelledEmail } from "@/lib/email";
+import { VIDEO, type SubscriptionTier, getVideoMonthlyQuota } from "@/config/constants";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -269,12 +270,13 @@ export async function POST(_request: NextRequest) {
             metadata: { tier: profile.subscription_tier, expires_at: profile.premium_expires_at },
         });
 
-        // 2. 최근 paid 결제 조회 (환불 source)
+        // 2. 최근 구독 paid 결제 조회 (환불 source) — 단품(video_single) 제외
         const { data: latestPaid } = await adminSb
             .from("payments")
-            .select("id, merchant_uid, metadata, amount, created_at, status")
+            .select("id, merchant_uid, metadata, amount, created_at, status, plan")
             .eq("user_id", user.id)
             .in("status", ["paid", "cancelled"])  // cancelled 도 조회해서 이중취소 방지 판단
+            .in("plan", ["basic", "premium"])     // 단품 결제(video_single)는 구독 환불 대상 아님
             .order("created_at", { ascending: false })
             .limit(1)
             .maybeSingle();
@@ -294,10 +296,13 @@ export async function POST(_request: NextRequest) {
         // 2. 환불 금액 계산
         let refundStatus: "refunded_full" | "refunded_prorata" | "skipped_no_payment" | "skipped_no_remaining" | "skipped_no_imp_uid" = "skipped_no_payment";
         let refundedAmount = 0;
+        let grossRefund = 0; // 영상 차감 전 금액 (알림/감사로그용)
         let isFullRefund = false;
         let daysUsed = 0;
         let daysRemaining = 0;
         let daysTotal = 0;
+        let videosUsedCharged = 0;
+        let videoDeduction = 0;
 
         if (latestPaid) {
             const paidAt = new Date(latestPaid.created_at);
@@ -313,8 +318,23 @@ export async function POST(_request: NextRequest) {
             daysUsed = calc.daysUsed;
             daysRemaining = calc.daysRemaining;
             daysTotal = calc.daysTotal;
-            refundedAmount = calc.refund;
+            grossRefund = calc.refund;
             isFullRefund = calc.isFullRefund;
+
+            // 영상 사용량 차감: 결제 이후 생성한 영상 중 구독 쿼터분만 × 3,500원
+            // (쿼터 초과분은 단품(video_single)으로 이미 별도 결제·이용했으므로 이중 차감 방지)
+            const { count: videosSincePaid } = await adminSb
+                .from("video_generations")
+                .select("id", { count: "exact", head: true })
+                .eq("user_id", user.id)
+                .neq("status", "failed")
+                .gte("created_at", paidAt.toISOString());
+            const tier: SubscriptionTier = (latestPaid.plan === "premium" ? "premium" : "basic") as SubscriptionTier;
+            const monthlyQuota = getVideoMonthlyQuota(tier);
+            videosUsedCharged = Math.min(videosSincePaid ?? 0, monthlyQuota);
+            videoDeduction = videosUsedCharged * VIDEO.SINGLE_PRICE;
+
+            refundedAmount = Math.max(0, grossRefund - videoDeduction);
 
             if (refundedAmount <= 0) {
                 refundStatus = "skipped_no_remaining";
@@ -425,11 +445,15 @@ export async function POST(_request: NextRequest) {
                             cancel_reason: isFullRefund ? "사용자 해지 (숙려기간 전액 환불)" : "사용자 해지 (일할 환불)",
                             cancel_source: "user_cancel_api",
                             refunded_amount: refundedAmount,
+                            gross_refund_before_video_deduction: grossRefund,
                             original_amount: latestPaid.amount,
                             is_full_refund: isFullRefund,
                             days_used: daysUsed,
                             days_total: daysTotal,
                             days_remaining: daysRemaining,
+                            videos_used_charged: videosUsedCharged,
+                            video_deduction: videoDeduction,
+                            video_unit_price: VIDEO.SINGLE_PRICE,
                         },
                     })
                     .eq("id", latestPaid.id);
@@ -490,13 +514,17 @@ export async function POST(_request: NextRequest) {
         }
 
         // 7. 인앱 알림
+        const videoDeductLine = videosUsedCharged > 0
+            ? ` (영상 ${videosUsedCharged}건 × ${VIDEO.SINGLE_PRICE.toLocaleString()}원 = -${videoDeduction.toLocaleString()}원 차감)`
+            : "";
+
         const notifBody =
             refundStatus === "refunded_full"
-                ? `구독이 해지되고 ${refundedAmount.toLocaleString()}원이 전액 환불되었습니다 (24시간 이내 해지). 카드 환불은 카드사 영업일 기준 3~5일 이내 반영됩니다.`
+                ? `구독이 해지되고 ${refundedAmount.toLocaleString()}원이 환불되었습니다${videoDeductLine}. 카드 환불은 카드사 영업일 기준 3~5일 이내 반영됩니다.`
                 : refundStatus === "refunded_prorata"
-                ? `구독이 해지되고 ${refundedAmount.toLocaleString()}원이 환불되었습니다 (사용 ${daysUsed}일 / 총 ${daysTotal}일 일할 계산). 카드 환불은 카드사 영업일 기준 3~5일 이내 반영됩니다.`
+                ? `구독이 해지되고 ${refundedAmount.toLocaleString()}원이 환불되었습니다 (사용 ${daysUsed}일/${daysTotal}일 일할${videoDeductLine}). 카드 환불은 카드사 영업일 기준 3~5일 이내 반영됩니다.`
                 : refundStatus === "skipped_no_remaining"
-                ? "구독이 해지되었습니다. 이용 기간이 거의 끝나 환불 금액은 발생하지 않았습니다."
+                ? `구독이 해지되었습니다${videosUsedCharged > 0 ? ` (영상 ${videosUsedCharged}건 사용으로 환불 금액 0원)` : ". 이용 기간이 거의 끝나 환불 금액은 발생하지 않았습니다."}`
                 : "구독이 해지되었습니다. 환불 대상 결제 정보가 없어 자동 환불이 진행되지 않았습니다.";
 
         const { error: notifErr } = await adminSb.from("notifications").insert({
@@ -507,6 +535,9 @@ export async function POST(_request: NextRequest) {
             metadata: {
                 refund_status: refundStatus,
                 refunded_amount: refundedAmount,
+                gross_refund: grossRefund,
+                video_deduction: videoDeduction,
+                videos_used_charged: videosUsedCharged,
                 days_used: daysUsed,
                 days_total: daysTotal,
             },
@@ -533,13 +564,21 @@ export async function POST(_request: NextRequest) {
             is_full_refund: isFullRefund,
             days_used: daysUsed,
             days_total: daysTotal,
-            metadata: { refund_status: refundStatus },
+            metadata: {
+                refund_status: refundStatus,
+                gross_refund: grossRefund,
+                video_deduction: videoDeduction,
+                videos_used_charged: videosUsedCharged,
+            },
         });
 
         return NextResponse.json({
             ok: true,
             refund_status: refundStatus,
             refunded_amount: refundedAmount,
+            gross_refund: grossRefund,
+            video_deduction: videoDeduction,
+            videos_used_charged: videosUsedCharged,
             days_used: daysUsed,
             days_total: daysTotal,
             days_remaining: daysRemaining,

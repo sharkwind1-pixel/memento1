@@ -52,6 +52,10 @@ export default function SubscriptionSection({
     const [refundPreview, setRefundPreview] = useState<{
         refundable_amount: number;
         original_amount: number;
+        gross_refund: number;
+        video_deduction: number;
+        videos_used_charged: number;
+        video_unit_price?: number;
         is_full_refund: boolean;
         days_used: number;
         days_total: number;
@@ -75,6 +79,10 @@ export default function SubscriptionSection({
                 setRefundPreview({
                     refundable_amount: data.refundable_amount ?? 0,
                     original_amount: data.original_amount ?? 0,
+                    gross_refund: data.gross_refund ?? data.refundable_amount ?? 0,
+                    video_deduction: data.video_deduction ?? 0,
+                    videos_used_charged: data.videos_used_charged ?? 0,
+                    video_unit_price: data.video_unit_price ?? 3500,
                     is_full_refund: !!data.is_full_refund,
                     days_used: data.days_used ?? 0,
                     days_total: data.days_total ?? 0,
@@ -227,7 +235,7 @@ export default function SubscriptionSection({
                                             <div className="space-y-0.5 text-[11px]">
                                                 {refundPreview.is_full_refund && (
                                                     <div className="mb-1 px-1.5 py-0.5 inline-block bg-memento-100 text-memento-700 dark:bg-memento-900/40 dark:text-memento-300 rounded font-medium">
-                                                        24시간 이내 해지 — 전액 환불
+                                                        24시간 이내 해지 — 전액 환불 기준
                                                     </div>
                                                 )}
                                                 <div className="flex justify-between">
@@ -240,10 +248,27 @@ export default function SubscriptionSection({
                                                         <span>{refundPreview.days_used}일 / {refundPreview.days_total}일</span>
                                                     </div>
                                                 )}
+                                                {refundPreview.gross_refund !== refundPreview.refundable_amount && (
+                                                    <div className="flex justify-between text-gray-500 dark:text-gray-400">
+                                                        <span>일반 환불 금액</span>
+                                                        <span>{refundPreview.gross_refund.toLocaleString()}원</span>
+                                                    </div>
+                                                )}
+                                                {refundPreview.videos_used_charged > 0 && (
+                                                    <div className="flex justify-between text-orange-600 dark:text-orange-400">
+                                                        <span>AI 영상 {refundPreview.videos_used_charged}건 차감</span>
+                                                        <span>-{refundPreview.video_deduction.toLocaleString()}원</span>
+                                                    </div>
+                                                )}
                                                 <div className="flex justify-between font-semibold text-red-600 dark:text-red-400 pt-1 border-t border-red-100 dark:border-red-900/40">
                                                     <span>예상 환불 금액</span>
                                                     <span>{refundPreview.refundable_amount.toLocaleString()}원</span>
                                                 </div>
+                                                {refundPreview.videos_used_charged > 0 && (
+                                                    <p className="text-[10px] text-gray-500 pt-0.5">
+                                                        * AI 영상 생성은 1건당 {(refundPreview.video_unit_price ?? 3500).toLocaleString()}원 비용이 차감됩니다
+                                                    </p>
+                                                )}
                                             </div>
                                         ) : (
                                             <p className="text-[11px]">환불 대상 결제가 없어 환불 금액은 0원입니다.</p>

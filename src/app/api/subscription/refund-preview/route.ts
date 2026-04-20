@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser, createAdminSupabase } from "@/lib/supabase-server";
+import { VIDEO, type SubscriptionTier, getVideoMonthlyQuota } from "@/config/constants";
 
 export const dynamic = "force-dynamic";
 
@@ -43,9 +44,10 @@ export async function GET(_request: NextRequest) {
 
         const { data: latestPaid } = await adminSb
             .from("payments")
-            .select("amount, created_at")
+            .select("amount, created_at, plan")
             .eq("user_id", user.id)
             .eq("status", "paid")
+            .in("plan", ["basic", "premium"])  // 단품(video_single) 제외
             .order("created_at", { ascending: false })
             .limit(1)
             .maybeSingle();
@@ -59,6 +61,9 @@ export async function GET(_request: NextRequest) {
                 days_total: 0,
                 days_remaining: 0,
                 original_amount: 0,
+                gross_refund: 0,
+                video_deduction: 0,
+                videos_used_charged: 0,
                 note: "최근 결제 기록 없음",
             });
         }
@@ -79,21 +84,38 @@ export async function GET(_request: NextRequest) {
         const daysRemaining = Math.max(0, Math.round(remainingMs / DAY_MS));
         const original = latestPaid.amount || 0;
 
-        let refundable = 0;
+        let grossRefund = 0;
         let isFullRefund = false;
         if (remainingMs <= 0) {
-            refundable = 0;
+            grossRefund = 0;
         } else if (usedMs < COOLING_OFF_MS) {
-            refundable = original; // 숙려기간 전액
+            grossRefund = original; // 숙려기간 전액
             isFullRefund = true;
         } else {
-            refundable = Math.min(original, Math.max(0, Math.floor((original * remainingMs) / totalMs)));
+            grossRefund = Math.min(original, Math.max(0, Math.floor((original * remainingMs) / totalMs)));
         }
+
+        // 영상 사용량 차감 (cancel route와 동일 로직)
+        const { count: videosSincePaid } = await adminSb
+            .from("video_generations")
+            .select("id", { count: "exact", head: true })
+            .eq("user_id", user.id)
+            .neq("status", "failed")
+            .gte("created_at", paidAt.toISOString());
+        const tier: SubscriptionTier = (latestPaid.plan === "premium" ? "premium" : "basic") as SubscriptionTier;
+        const monthlyQuota = getVideoMonthlyQuota(tier);
+        const videosUsedCharged = Math.min(videosSincePaid ?? 0, monthlyQuota);
+        const videoDeduction = videosUsedCharged * VIDEO.SINGLE_PRICE;
+        const refundable = Math.max(0, grossRefund - videoDeduction);
 
         return NextResponse.json({
             is_premium: true,
             original_amount: original,
             refundable_amount: refundable,
+            gross_refund: grossRefund,
+            video_deduction: videoDeduction,
+            videos_used_charged: videosUsedCharged,
+            video_unit_price: VIDEO.SINGLE_PRICE,
             is_full_refund: isFullRefund,
             days_used: daysUsed,
             days_total: daysTotal,
