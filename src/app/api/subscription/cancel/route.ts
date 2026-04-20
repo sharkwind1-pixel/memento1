@@ -54,6 +54,27 @@ async function getPortOneToken(): Promise<string | null> {
  *  - { ok: true }                 — 취소 성공 or 이미 취소된 상태
  *  - { ok: false, error, code }   — 카드사 거절/네트워크/인증 실패
  */
+/**
+ * PortOne V1 결제 단건 조회 — cancel 호출 전 현재 status 확인용.
+ * 이미 cancelled 면 우리 쪽에서 재호출하지 않아야 부분취소 중첩 안 남.
+ */
+async function fetchPortOnePayment(token: string, impUid: string): Promise<{
+    status: "ready" | "paid" | "cancelled" | "failed";
+    cancel_amount?: number;
+    amount?: number;
+} | null> {
+    try {
+        const res = await fetch(`https://api.iamport.kr/payments/${encodeURIComponent(impUid)}`, {
+            headers: { Authorization: token },
+        });
+        const data = await res.json();
+        if (data.code !== 0 || !data.response) return null;
+        return data.response;
+    } catch {
+        return null;
+    }
+}
+
 async function cancelPortOnePayment(params: {
     token: string;
     impUid: string;
@@ -138,33 +159,84 @@ export async function POST(_request: NextRequest) {
         return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
     }
 
+    const adminSb = createAdminSupabase();
+    const now = new Date();
+    const claimedAt = now.toISOString();
+
+    /**
+     * 롤백 헬퍼: 포트원 cancel 실패했을 때 claim 풀어서 유저가 재시도 가능하게.
+     * claimedAt 과 일치할 때만 null 로 되돌림 (타 요청이 덮어썼으면 그대로 둠)
+     */
+    async function rollbackClaim() {
+        try {
+            await adminSb
+                .from("profiles")
+                .update({ subscription_cancelled_at: null })
+                .eq("id", user!.id)
+                .eq("subscription_cancelled_at", claimedAt);
+        } catch (e) {
+            console.error("[cancel] rollback claim failed:", e);
+        }
+    }
+
+    /** 환불 실패/이상 상태 시 관리자 텔레그램 알림 (비동기) */
+    function alertAdmin(subject: string, detail: string) {
+        void import("@/lib/telegram")
+            .then(({ notifyError }) =>
+                notifyError({
+                    endpoint: "/api/subscription/cancel",
+                    error: `${subject}\n${detail}`,
+                    userId: user!.id,
+                }),
+            )
+            .catch(() => {});
+    }
+
     try {
-        const supabase = await createServerSupabase();
-        const { data: profile, error: profileErr } = await supabase
+        // ========================================================================
+        // 1. 원자적 락 획득
+        //   - is_premium=true AND subscription_cancelled_at IS NULL 조건에서만 claim
+        //   - 동시 요청/더블클릭: 둘 중 하나만 통과, 나머지는 409
+        //   - 이미 해지 완료: is_premium=false → 조건 불일치 → 409
+        //   - 이전 사고처럼 "부분취소 누적" 원천 차단
+        // ========================================================================
+        const { data: profile, error: claimErr } = await adminSb
             .from("profiles")
-            .select("is_premium, premium_expires_at, premium_started_at, subscription_tier, subscription_phase")
+            .update({ subscription_cancelled_at: claimedAt })
             .eq("id", user.id)
-            .single();
+            .eq("is_premium", true)
+            .is("subscription_cancelled_at", null)
+            .select("is_premium, premium_expires_at, premium_started_at, subscription_tier, subscription_phase")
+            .maybeSingle();
 
-        if (profileErr || !profile) {
-            return NextResponse.json({ error: "프로필을 불러오지 못했습니다" }, { status: 500 });
+        if (claimErr) {
+            return NextResponse.json({ error: "프로필 조회 실패", detail: claimErr.message }, { status: 500 });
         }
-        if (!profile.is_premium) {
-            return NextResponse.json({ error: "활성 구독이 없습니다" }, { status: 400 });
+        if (!profile) {
+            // 조건에 맞는 행이 없음 — 이미 해지되었거나 다른 요청이 진행 중
+            return NextResponse.json(
+                { error: "이미 해지 처리 중이거나 완료됐습니다. 잠시 후 다시 확인해주세요." },
+                { status: 409 }
+            );
         }
 
-        const adminSb = createAdminSupabase();
-        const now = new Date();
-
-        // 1. 최근 paid 결제 조회 (환불 source)
+        // 2. 최근 paid 결제 조회 (환불 source)
         const { data: latestPaid } = await adminSb
             .from("payments")
-            .select("id, merchant_uid, metadata, amount, created_at")
+            .select("id, merchant_uid, metadata, amount, created_at, status")
             .eq("user_id", user.id)
-            .eq("status", "paid")
+            .in("status", ["paid", "cancelled"])  // cancelled 도 조회해서 이중취소 방지 판단
             .order("created_at", { ascending: false })
             .limit(1)
             .maybeSingle();
+
+        // 이미 cancelled 상태면 다시 포트원 호출하지 않음 (DB/포트원 싱크만 맞춤)
+        if (latestPaid && latestPaid.status === "cancelled") {
+            alertAdmin(
+                "최근 결제가 이미 cancelled 상태 — 포트원 재호출 없이 DB 정리만 진행",
+                `user: ${user.email || user.id}, payment: ${latestPaid.id}`,
+            );
+        }
 
         const impUid = latestPaid && typeof latestPaid.metadata === "object" && latestPaid.metadata
             ? (latestPaid.metadata as Record<string, unknown>).imp_uid
@@ -203,32 +275,55 @@ export async function POST(_request: NextRequest) {
                 // 3. PortOne 환불 호출 (숙려기간 내면 전액, 아니면 부분)
                 const token = await getPortOneToken();
                 if (!token) {
+                    await rollbackClaim();
+                    alertAdmin("PortOne 토큰 발급 실패", `user: ${user.email || user.id}`);
                     return NextResponse.json(
                         { error: "결제 시스템 인증 실패 — 잠시 후 다시 시도해주세요" },
                         { status: 500 }
                     );
                 }
-                const cancelResult = await cancelPortOnePayment({
-                    token,
-                    impUid,
-                    merchantUid: latestPaid.merchant_uid || undefined,
-                    // 전액 환불이면 amount 생략 → clean 승인취소 (KCP 매입요청 단계에 묶이지 않음)
-                    // 부분 환불(24h 이후)일 때만 amount 명시
-                    amount: isFullRefund ? undefined : refundedAmount,
-                    reason: isFullRefund
-                        ? `사용자 요청 — 24h 이내 해지 (전액 승인취소)`
-                        : `사용자 요청 — 구독 해지 (사용 ${daysUsed}일 / 총 ${daysTotal}일 일할 환불)`,
-                });
-                if (!cancelResult.ok) {
-                    return NextResponse.json(
-                        {
-                            error: `환불 처리 실패: ${cancelResult.error}. 문제가 계속되면 고객센터로 문의해주세요.`,
-                            code: cancelResult.code,
-                        },
-                        { status: 502 }
+
+                // 3-1. 포트원 현재 상태 선조회 — 이미 cancelled 면 재호출하지 않음 (부분취소 중첩 방지)
+                const remoteStatus = await fetchPortOnePayment(token, impUid);
+                if (remoteStatus?.status === "cancelled") {
+                    // 포트원은 이미 cancelled, DB만 맞지 않았던 상태
+                    refundStatus = (remoteStatus.cancel_amount ?? 0) >= (latestPaid.amount ?? 0)
+                        ? "refunded_full"
+                        : "refunded_prorata";
+                    refundedAmount = remoteStatus.cancel_amount ?? refundedAmount;
+                    alertAdmin(
+                        "포트원 이미 cancelled — 재호출 생략",
+                        `user: ${user.email || user.id}, imp_uid: ${impUid}, cancel_amount: ${refundedAmount}`,
                     );
+                } else {
+                    const cancelResult = await cancelPortOnePayment({
+                        token,
+                        impUid,
+                        merchantUid: latestPaid.merchant_uid || undefined,
+                        // 전액 환불이면 amount 생략 → clean 승인취소 (KCP 매입요청 단계에 묶이지 않음)
+                        // 부분 환불(24h 이후)일 때만 amount 명시
+                        amount: isFullRefund ? undefined : refundedAmount,
+                        reason: isFullRefund
+                            ? `사용자 요청 — 24h 이내 해지 (전액 승인취소)`
+                            : `사용자 요청 — 구독 해지 (사용 ${daysUsed}일 / 총 ${daysTotal}일 일할 환불)`,
+                    });
+                    if (!cancelResult.ok) {
+                        // 실패: claim 롤백 + 관리자 경보 + 502
+                        await rollbackClaim();
+                        alertAdmin(
+                            "PortOne cancel 실패 — 유저 재시도 가능 상태로 롤백",
+                            `user: ${user.email || user.id}, imp_uid: ${impUid}, amount: ${refundedAmount}, error: ${cancelResult.error}, code: ${cancelResult.code ?? "n/a"}`,
+                        );
+                        return NextResponse.json(
+                            {
+                                error: `환불 처리 실패: ${cancelResult.error}. 문제가 계속되면 고객센터로 문의해주세요.`,
+                                code: cancelResult.code,
+                            },
+                            { status: 502 }
+                        );
+                    }
+                    refundStatus = isFullRefund ? "refunded_full" : "refunded_prorata";
                 }
-                refundStatus = isFullRefund ? "refunded_full" : "refunded_prorata";
 
                 // payments 취소 반영 + 메타데이터
                 await adminSb
