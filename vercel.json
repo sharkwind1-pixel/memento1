@@ -31,6 +31,10 @@
         {
             "path": "/api/cron/subscription-lifecycle",
             "schedule": "30 15 * * *"
+        },
+        {
+            "path": "/api/cron/payment-reconcile",
+            "schedule": "0 1 * * *"
         }
     ]
 }
