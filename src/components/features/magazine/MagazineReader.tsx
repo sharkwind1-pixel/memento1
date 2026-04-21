@@ -100,9 +100,17 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
                     action: willLike ? "like" : "unlike",
                 }),
             });
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                console.error("[Magazine Like] API error:", res.status, errData);
+                // 401이면 로그인 모달
+                if (res.status === 401) {
+                    window.dispatchEvent(new CustomEvent("openAuthModal"));
+                }
+                throw new Error(errData.error || `HTTP ${res.status}`);
+            }
             const data = await res.json();
             if (data.likes != null) {
-                // 서버 응답으로 정확한 값 동기화
                 setDisplayLikes(data.likes);
             }
             if (typeof data.liked === "boolean") {
@@ -119,6 +127,20 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
 
     const cards = useMemo(() => buildCards(article), [article]);
     const totalCards = cards.length;
+
+    // 브라우저 뒤로가기 시 매거진 목록으로 돌아가기 (홈으로 안 가게)
+    // 진입 시 history.pushState → popstate로 onBack 호출
+    useEffect(() => {
+        history.pushState({ magazineReader: true }, "");
+        const handlePopState = (e: PopStateEvent) => {
+            // 우리가 push한 state가 pop되면 = 뒤로가기 = 매거진 목록으로
+            onBack();
+        };
+        window.addEventListener("popstate", handlePopState);
+        return () => {
+            window.removeEventListener("popstate", handlePopState);
+        };
+    }, [onBack]);
 
     // 터치 디바이스 감지 (모바일에서만 스와이프 활성화)
     useEffect(() => {
