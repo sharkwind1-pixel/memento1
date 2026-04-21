@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import type { MagazineArticle } from "@/data/magazineArticles";
 import { API } from "@/config/apiEndpoints";
+import { authFetch } from "@/lib/auth-fetch";
 import { safeSessionGetItem, safeSessionSetItem } from "@/lib/safe-storage";
 import { buildCards } from "./magazineCardUtils";
 import { CardRenderer } from "./MagazineCardRenderer";
@@ -63,9 +64,8 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
         const viewKey = `magazine_viewed_${article.id}`;
         if (typeof window !== "undefined" && !safeSessionGetItem(viewKey)) {
             safeSessionSetItem(viewKey, "1");
-            fetch(API.MAGAZINE, {
+            authFetch(API.MAGAZINE, {
                 method: "PATCH",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ articleId: article.id, action: "view" }),
             })
                 .then((res) => res.json())
@@ -93,9 +93,8 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
         setTimeout(() => setLikeAnimating(false), 300);
 
         try {
-            const res = await fetch(API.MAGAZINE, {
+            const res = await authFetch(API.MAGAZINE, {
                 method: "PATCH",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     articleId: article.id,
                     action: willLike ? "like" : "unlike",
