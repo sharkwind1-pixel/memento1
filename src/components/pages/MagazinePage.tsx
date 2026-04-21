@@ -220,6 +220,18 @@ function MagazinePage({ setSelectedTab, isActive }: MagazinePageProps) {
                     <MagazineReader
                         article={selectedArticle}
                         onBack={() => setSelectedArticle(null)}
+                        onLikeChange={(articleId, liked, likes) => {
+                            // 목록의 articles state도 즉시 업데이트 → 뒤로가기 시 반영
+                            setArticles((prev) =>
+                                prev.map((a) =>
+                                    a.id === articleId ? { ...a, liked, likes } : a
+                                )
+                            );
+                            // selectedArticle 자체도 업데이트 (리더 내에서도 최신값 유지)
+                            setSelectedArticle((prev) =>
+                                prev && prev.id === articleId ? { ...prev, liked, likes } : prev
+                            );
+                        }}
                     />
                 ) : (
                 <>

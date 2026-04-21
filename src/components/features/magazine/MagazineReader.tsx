@@ -37,13 +37,14 @@ import { CardIndicator } from "./CardIndicator";
 interface MagazineReaderProps {
     article: MagazineArticle;
     onBack: () => void;
+    onLikeChange?: (articleId: string | number, liked: boolean, likes: number) => void;
 }
 
 // ──────────────────────────────────────────────
 //  MagazineReader 메인 컴포넌트
 // ──────────────────────────────────────────────
 
-export default function MagazineReader({ article, onBack }: MagazineReaderProps) {
+export default function MagazineReader({ article, onBack, onLikeChange }: MagazineReaderProps) {
     const [currentCard, setCurrentCard] = useState(0);
     const [isTouchDevice, setIsTouchDevice] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -116,6 +117,8 @@ export default function MagazineReader({ article, onBack }: MagazineReaderProps)
             if (typeof data.liked === "boolean") {
                 setIsLiked(data.liked);
             }
+            // 부모(목록)에도 즉시 반영 → 뒤로가기 시 업데이트된 수 표시
+            onLikeChange?.(article.id, data.liked ?? willLike, data.likes ?? (willLike ? 1 : 0));
         } catch {
             // 실패 시 롤백
             setIsLiked(!willLike);
