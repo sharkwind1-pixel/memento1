@@ -393,6 +393,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
+    // 포인트 갱신 이벤트 리스닝 (PetContext 등 비-React 코드에서 발행)
+    useEffect(() => {
+        const handleRefreshPoints = () => { refreshPoints(); };
+        window.addEventListener("memento:refresh-points", handleRefreshPoints);
+        return () => window.removeEventListener("memento:refresh-points", handleRefreshPoints);
+    }, [refreshPoints]);
+
     // 미니미 장착 상태만 새로고침 (장착/구매/판매 후 호출용)
     const refreshMinimi = useCallback(async () => {
         try {

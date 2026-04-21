@@ -34,7 +34,7 @@ export default function PostDetailView({
     onBack,
     onPostDeleted,
 }: PostDetailViewProps) {
-    const { user, isAdminUser } = useAuth();
+    const { user, isAdminUser, refreshPoints } = useAuth();
     const [post, setPost] = useState<PostData | null>(null);
     const [comments, setComments] = useState<PostComment[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -239,10 +239,11 @@ export default function PostDetailView({
             }]);
             setCommentText("");
 
-            // 포인트 토스트 발행 (응답에 pointAward가 있으면)
+            // 포인트 토스트 + 배지 갱신
             try {
                 const { showPointsFromResponse } = await import("@/components/features/points/PointsToastContainer");
                 showPointsFromResponse(data);
+                refreshPoints(); // 헤더 포인트 배지 즉시 갱신
             } catch {
                 // 무시
             }

@@ -54,6 +54,8 @@ async function requestPointAward(actionType: PointAction, metadata?: Record<stri
                     },
                 }),
             );
+            // 헤더 포인트 배지 갱신 신호 (AuthContext가 수신)
+            window.dispatchEvent(new CustomEvent("memento:refresh-points"));
         }
     } catch {
         // 포인트 적립 실패해도 원본 기능에 영향 없음

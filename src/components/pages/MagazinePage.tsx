@@ -94,10 +94,17 @@ function MagazinePage({ setSelectedTab, isActive }: MagazinePageProps) {
     const hasMore = articles.length < totalCount;
     const loadMoreRef = useRef<HTMLDivElement>(null);
 
-    // 다른 탭으로 이동하면 기사 상세 닫기 (목록으로 복원)
+    // 탭 전환 처리: 비활성 시 상세 닫기, 활성화 시 목록 갱신
+    const [refreshCounter, setRefreshCounter] = useState(0);
+    const prevMagActiveRef = useRef(false);
     useEffect(() => {
-        if (!isActive && selectedArticle) {
-            setSelectedArticle(null);
+        if (!isActive) {
+            if (selectedArticle) setSelectedArticle(null);
+            prevMagActiveRef.current = false;
+        } else if (!prevMagActiveRef.current) {
+            // 비활성→활성 전환 = 다른 탭에서 돌아옴 → 목록 새로고침
+            setRefreshCounter((c) => c + 1);
+            prevMagActiveRef.current = true;
         }
     }, [isActive]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -140,7 +147,7 @@ function MagazinePage({ setSelectedTab, isActive }: MagazinePageProps) {
             }
         }
         fetchArticles();
-    }, [selectedStage, selectedTopic, searchQuery, buildFilterParams]);
+    }, [selectedStage, selectedTopic, searchQuery, buildFilterParams, refreshCounter]);
 
     // 더 불러오기
     const loadMore = useCallback(async () => {

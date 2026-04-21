@@ -70,13 +70,15 @@ function HomePage({ setSelectedTab, isActive, onOpenCommunityPost }: HomePagePro
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isSimpleMode]);
 
-    // 홈 탭 재진입 시 데이터 갱신 (커뮤니티에서 좋아요/댓글 후 홈으로 돌아올 때)
-    const wasActiveRef = useRef(isActive);
+    // 홈 탭 재진입 시 데이터 갱신
+    // 다른 탭 갔다가 돌아올 때마다 최신 데이터로 갱신
+    const prevActiveRef = useRef(isActive);
     useEffect(() => {
-        if (isActive && !wasActiveRef.current) {
+        // 비활성→활성 전환 = 다른 탭에서 돌아옴 → refetch
+        if (isActive && !prevActiveRef.current) {
             refetchAll();
         }
-        wasActiveRef.current = isActive;
+        prevActiveRef.current = isActive;
     }, [isActive, refetchAll]);
 
     useEffect(() => {

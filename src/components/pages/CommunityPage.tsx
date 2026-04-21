@@ -96,7 +96,7 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey, i
     // 외부 리셋 처리 (isActive / subcategory / resetKey 변경 감지)
     // ============================================================
 
-    // 다른 탭으로 이동 시 리셋
+    // 다른 탭으로 이동 시 상세/갤러리 닫기
     useEffect(() => {
         if (!isActive) {
             setSelectedPostId(null);
@@ -163,10 +163,13 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey, i
         window.scrollTo({ top: 0, behavior: "instant" });
     }, []);
 
-    // 게시글 목록으로 돌아가기
+    // 게시글 목록으로 돌아가기 + 데이터 갱신
+    // fetchPosts는 아래에서 정의 → needsRefreshRef로 지연 실행
+    const needsRefreshRef = useRef(false);
     const handleBackToList = useCallback(() => {
         if (selectedPostId) {
             isNavigatingBackRef.current = true;
+            needsRefreshRef.current = true; // 돌아갈 때 refetch 예약
             window.history.back();
         }
     }, [selectedPostId]);
@@ -175,11 +178,10 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey, i
     useEffect(() => {
         const handlePopState = () => {
             if (isNavigatingBackRef.current) {
-                // handleBackToList에서 호출한 history.back()
                 isNavigatingBackRef.current = false;
                 setSelectedPostId(null);
             } else if (selectedPostId) {
-                // 브라우저 뒤로가기 버튼
+                needsRefreshRef.current = true; // 뒤로가기에서도 refetch 예약
                 setSelectedPostId(null);
             }
         };
@@ -298,6 +300,23 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey, i
             }
         }
     }, [currentSubcategory, sortBy, selectedTag, selectedBadge, selectedRegion, searchQuery]);
+
+    // 탭 재진입 시 목록 갱신 (다른 탭에서 돌아올 때 최신 데이터)
+    const prevCommunityActiveRef = useRef(false);
+    useEffect(() => {
+        if (isActive && !prevCommunityActiveRef.current) {
+            fetchPosts(false);
+        }
+        prevCommunityActiveRef.current = !!isActive;
+    }, [isActive, fetchPosts]);
+
+    // 상세→목록 복귀 시 예약된 refetch 실행
+    useEffect(() => {
+        if (!selectedPostId && needsRefreshRef.current) {
+            needsRefreshRef.current = false;
+            fetchPosts(false);
+        }
+    }, [selectedPostId, fetchPosts]);
 
     // 검색어 debounce (300ms)
     useEffect(() => {
