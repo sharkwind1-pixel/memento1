@@ -378,6 +378,10 @@ export async function POST(request: NextRequest) {
         // 5.7. 작성자 반려동물 연결 검증
         // authorPetId가 넘어오면 반드시 본인(user.id) 소유 펫인지 DB로 확인.
         // 다른 유저 펫을 연결해 신원 사칭하는 경로를 차단.
+        //
+        // 기존 동작: 본인 소유 아니면 silent null 처리 → 유저는 펫 태그가 반영된 줄
+        // 착각했지만 실제로는 드롭됐음. 위조 authorPetId 공격에도 200 OK 반환.
+        // 변경: 검증 실패 시 400 반환. 정상 유저는 재선택, 공격은 즉시 차단.
         let validAuthorPetId: string | null = null;
         if (typeof authorPetId === "string" && authorPetId.length > 0) {
             const { data: ownedPet } = await supabase
@@ -386,10 +390,14 @@ export async function POST(request: NextRequest) {
                 .eq("id", authorPetId)
                 .eq("user_id", user.id)
                 .maybeSingle();
-            if (ownedPet) {
-                validAuthorPetId = ownedPet.id;
+            if (!ownedPet) {
+                console.warn(`[Posts POST] authorPetId mismatch: user=${user.id}, attempted_pet=${authorPetId}`);
+                return NextResponse.json(
+                    { error: "선택한 반려동물을 확인할 수 없습니다. 다시 선택해 주세요.", field: "authorPetId" },
+                    { status: 400 },
+                );
             }
-            // 본인 소유가 아니면 조용히 null 처리 (작성 자체는 계속 진행)
+            validAuthorPetId = ownedPet.id;
         }
 
         // 6. 게시글 저장 (세션에서 가져온 userId 사용)

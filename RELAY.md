@@ -9,6 +9,13 @@
 
 _(현재 미실행 마이그레이션 없음)_
 
+### ✅ 2026-04-22 실행 완료 (Supabase MCP apply)
+- `stories_24h_ttl` — stories 테이블 + 인덱스 3개 + RLS 3정책.
+  (지난 세션에서 "실행 완료"로 기록됐지만 실제로는 partial index의 `NOW()` 제약으로
+   실패해 테이블 자체가 없던 것을 이번 세션에서 발견 · 수정본으로 재적용)
+- `protect_lifecycle_columns` — profiles 라이프사이클 7컬럼 보호 추가.
+- `protect_lifecycle_search_path_fix` — SECURITY DEFINER + search_path 고정 (advisor WARN 해결).
+
 ### ✅ 2026-04-20~21 실행 완료 (Supabase MCP apply)
 - `20260420_subscription_cancel_audit` — 감사 로그 테이블 신설 (RLS admin SELECT / service_role INSERT)
 - `20260420_grant_premium_tier_fix` — grant_premium RPC tier 버그 수정 + subscriptions UPSERT

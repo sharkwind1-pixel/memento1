@@ -61,6 +61,7 @@ async function getPortOneToken(): Promise<string | null> {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ imp_key, imp_secret }),
+        cache: "no-store",
     });
     const data = await res.json();
     return data?.response?.access_token || null;
@@ -70,6 +71,7 @@ async function getPortOneToken(): Promise<string | null> {
 async function fetchPortOnePayment(impUid: string, token: string): Promise<PortOneV1Payment | null> {
     const res = await fetch(`https://api.iamport.kr/payments/${encodeURIComponent(impUid)}`, {
         headers: { Authorization: token },
+        cache: "no-store",
     });
     const data = await res.json();
     if (data.code !== 0 || !data.response) return null;
@@ -143,8 +145,19 @@ export async function POST(request: NextRequest) {
 
         if (fetchErr || !dbPayment) {
             console.error(`[webhook] DB payment not found: ${merchantUid}`, fetchErr);
-            // 404여도 200 반환: 포트원이 재시도하지 않도록 (데이터 정합 문제면 수동 조사)
-            return NextResponse.json({ ack: true, note: "db_row_missing" });
+            // 503 반환: 포트원이 재시도하도록 유도 + 관리자 알림.
+            // (이전에는 200 OK로 재시도 막았으나 위조 merchantUid 공격 + 실제 누락 모두 조용히 먹힘)
+            // 포트원 재시도 한도 있음 → 무한 루프 아님. 재시도 동안 DB row가 생기면 다음 콜에서 정상 처리.
+            import("@/lib/telegram").then(({ notifyError }) =>
+                notifyError({
+                    endpoint: "/api/payments/webhook",
+                    error: `DB row missing: merchant_uid=${merchantUid}, imp_uid=${impUid}, portone_status=${payment.status}`,
+                }),
+            ).catch(() => {});
+            return NextResponse.json(
+                { error: "db_row_missing", merchant_uid: merchantUid },
+                { status: 503 },
+            );
         }
 
         // 3. 실제 포트원 status 기반 처리

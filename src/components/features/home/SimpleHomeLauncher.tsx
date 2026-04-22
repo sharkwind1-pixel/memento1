@@ -142,7 +142,7 @@ export default function SimpleHomeLauncher({ setSelectedTab, onSubcategoryChange
                     </div>
                 </div>
 
-                {/* Open 100 이벤트 배너 */}
+                {/* Open 100 이벤트 배너 (관리자 전용) */}
                 <div className="max-w-lg mx-auto -mx-4">
                     <Open100Banner />
                 </div>

@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
             const { data: recentPosts } = await supabase
                 .from("community_posts")
                 .select("content, title")
-                .eq("is_hidden", false)
+                .or("is_hidden.is.null,is_hidden.eq.false")
                 .order("created_at", { ascending: false })
                 .limit(200);
 
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
             const { data: posts, count } = await supabase
                 .from("community_posts")
                 .select("id, user_id, board_type, animal_type, badge, title, content, author_name, image_urls, likes, dislikes, comments, created_at, is_hidden", { count: "exact" })
-                .eq("is_hidden", false)
+                .or("is_hidden.is.null,is_hidden.eq.false")
                 .or(`content.ilike.%#${searchTag}%,title.ilike.%#${searchTag}%`)
                 .order("created_at", { ascending: false })
                 .range(offset, offset + limit - 1);

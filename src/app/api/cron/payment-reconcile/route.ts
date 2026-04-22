@@ -38,6 +38,7 @@ async function getPortOneToken(): Promise<string | null> {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ imp_key, imp_secret }),
+        cache: "no-store",
     });
     const data = await res.json();
     return data?.response?.access_token || null;
@@ -56,13 +57,15 @@ export async function GET(request: NextRequest) {
 
     const supabase = getAdminSupabase();
 
-    // 최근 60일 paid 결제 조회 (너무 오래된 건 무시)
-    const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString();
+    // 최근 90일 paid 결제 조회 (KCP 카드사 분쟁 기간 60~90일 커버).
+    // NOTE: Vercel Hobby cron 하루 1회 제약 → 최대 24h 지연 가능.
+    // Pro 전환 또는 다른 크론에서 호출 보강 필요.
+    const windowStart = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
     const { data: paid, error: fetchErr } = await supabase
         .from("payments")
         .select("id, user_id, merchant_uid, metadata")
         .eq("status", "paid")
-        .gte("created_at", sixtyDaysAgo)
+        .gte("created_at", windowStart)
         .limit(500);
 
     if (fetchErr) {
@@ -81,16 +84,22 @@ export async function GET(request: NextRequest) {
 
     let reconciled = 0;
     let errors = 0;
+    let missingImpUid = 0;
     const reconciledIds: string[] = [];
 
     for (const row of rows) {
         const impUid = typeof row.metadata?.imp_uid === "string" ? row.metadata.imp_uid : "";
-        if (!impUid) continue;
+        if (!impUid) {
+            // metadata.imp_uid가 없는 row는 포트원 재조회 불가 → 수동 조사 필요.
+            // 신규 결제 파이프라인은 imp_uid를 항상 저장하지만, 구형/마이그레이션 누락 row 가능.
+            missingImpUid++;
+            continue;
+        }
 
         try {
             const res = await fetch(
                 `https://api.iamport.kr/payments/${encodeURIComponent(impUid)}`,
-                { headers: { Authorization: token } },
+                { headers: { Authorization: token }, cache: "no-store" },
             );
             const data = await res.json();
             if (data.code !== 0 || !data.response) continue;
@@ -153,15 +162,18 @@ export async function GET(request: NextRequest) {
         }
     }
 
-    // 실제로 동기화된 건이 있거나 에러 있을 때만 텔레그램 알림
-    if (reconciled > 0 || errors > 0) {
+    // 실제로 동기화된 건/에러/imp_uid 누락 건 중 하나라도 있으면 텔레그램 알림
+    if (reconciled > 0 || errors > 0 || missingImpUid > 0) {
+        const errorParts: string[] = [];
+        if (errors > 0) errorParts.push(`${errors}건 재검증 실패`);
+        if (missingImpUid > 0) errorParts.push(`${missingImpUid}건 imp_uid 누락 (수동 조사 필요)`);
         import("@/lib/telegram").then(({ notifyCronResult }) =>
             notifyCronResult({
                 phase: "payment-reconcile",
                 kstHour: new Date().getUTCHours() + 9,
                 sent: reconciled,
-                failed: errors,
-                error: errors > 0 ? `${errors}건 재검증 실패` : undefined,
+                failed: errors + missingImpUid,
+                error: errorParts.length > 0 ? errorParts.join(" / ") : undefined,
             }),
         ).catch(() => {});
     }
@@ -172,5 +184,6 @@ export async function GET(request: NextRequest) {
         reconciled,
         reconciled_ids: reconciledIds,
         errors,
+        missing_imp_uid: missingImpUid,
     });
 }

@@ -77,7 +77,7 @@ export default function Open100Banner() {
                         </p>
                     </div>
                     <p className="mt-0.5 text-xs text-gray-600 dark:text-gray-400">
-                        온보딩 미션 완주 시 <b className="text-memento-600 dark:text-memento-400">1,000P</b> 자동 지급 (관리자 전용 모니터링).
+                        온보딩 미션 완주 시 <b className="text-memento-600 dark:text-memento-400">1,000P</b> 자동 지급.
                     </p>
                     <div className="mt-2 flex items-center gap-2">
                         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-memento-100 dark:bg-memento-900/50">

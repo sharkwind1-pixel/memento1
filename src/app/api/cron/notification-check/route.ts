@@ -172,12 +172,33 @@ export async function GET(request: NextRequest) {
             .delete()
             .lt("created_at", new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString());
 
+        // ===== 만료된 스토리 자동 삭제 (24시간 TTL) =====
+        // stories.expires_at이 지난 row 삭제. RLS는 피드에서 숨기기만 하므로 DB 누적 방지.
+        // NOTE: Storage 이미지(stories/{user_id}/*.ext)는 여기서 삭제하지 않음 →
+        //       별도 후속 작업으로 storage cleanup 크론 필요 (현재는 고아 파일 누적 위험).
+        let storiesDeleted = 0;
+        try {
+            const { data: expired, error: expErr } = await supabase
+                .from("stories")
+                .delete()
+                .lt("expires_at", now.toISOString())
+                .select("id");
+            if (!expErr && expired) {
+                storiesDeleted = expired.length;
+            } else if (expErr) {
+                console.error("[notification-check] stories cleanup error:", expErr);
+            }
+        } catch (stErr) {
+            console.error("[notification-check] stories cleanup exception:", stErr);
+        }
+
         return NextResponse.json({
             message: "알림 체크 완료",
             expiring: expiringSubs.length,
             created,
             skipped,
             memorialAlerts,
+            storiesDeleted,
         });
     } catch (err) {
         const msg = err instanceof Error ? err.message : "알 수 없는 오류";

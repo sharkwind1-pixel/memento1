@@ -146,7 +146,7 @@ function HomePage({ setSelectedTab, isActive, onOpenCommunityPost }: HomePagePro
                 {/* 스토리 피드 (24시간 임시 게시물, 인스타 스타일) */}
                 <StoryFeed />
 
-                {/* Open 100 오픈 이벤트 배너 — 비로그인에도 표시 */}
+                {/* Open 100 오픈 이벤트 배너 (관리자 전용 — 내부 모니터링 도구) */}
                 <Open100Banner />
 
                 {/* 온보딩 미션 카드 — 신규 유저 끈끈한 가이드 */}
