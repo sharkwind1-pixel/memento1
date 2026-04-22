@@ -4,6 +4,48 @@
 
 ---
 
+## [2026-04-21~22] 매거진 좋아요 -1 버그 + 전체 UI 동기화 + 4대 신규 기능 + Claude Design 리디자인 준비
+
+### 버그 수정
+- [x] 매거진 좋아요 -1 근본 수정 (magazine_likes 테이블 + UNIQUE + count 집계)
+- [x] 매거진 좋아요 인증 토큰 누락 (fetch→authFetch)
+- [x] 매거진 좋아요 실시간 반영 (onLikeChange 콜백)
+- [x] 매거진 뒤로가기 홈 이동 수정 (history.pushState)
+- [x] 전체 앱 실시간 UI 동기화 (탭 전환 refetch + 포인트 배지 갱신)
+- [x] AuthContext 안전장치 10s→5s 단축
+
+### 신규 기능
+- [x] 해시태그 탐색 (API + 인기 태그 칩 + 태그별 검색)
+- [x] 자가진단/퀴즈 (비만도 5문항 + 분리불안 7문항 + QuizModal + QuizSection)
+- [x] 스토리 24시간 (DB + API + StoryFeed + StoryViewer + StoryCreateModal)
+- [x] 기일 알림 (무지개다리 기념일 리마인더, notification-check 크론 통합)
+- [x] 좋아요 하트 애니메이션 (heartPop)
+
+### Claude Design 리디자인 준비
+- [x] 에이전트 3개 병렬 분석 (현재 UI 상태 + Claude Design 실현 가능성 + 경쟁사 벤치마크)
+- [x] 홈페이지 리디자인 프롬프트 작성
+- [x] 승빈님 Claude Max → claude.ai/design에서 프로토타입 진행 중
+
+### 커밋 8개
+```
+1a016cb  feat: 해시태그 + 퀴즈 + 스토리 + 맞춤 추천
+fa0a3ae  feat: 기일 알림 + 하트 애니메이션
+49db287  fix: 전체 앱 실시간 UI 동기화
+8a50e19  fix: 매거진 좋아요 실시간 반영
+dc71b8c  fix: 매거진 뒤로가기 + 에러 핸들링
+b6402b2  fix: 매거진 좋아요 인증 토큰
+2243163  fix: 매거진 좋아요 -1 버그 근본 수정
+```
+
+### 다음 세션 (코워크)
+1. Claude Design 프로토타입 결과 → 기존 코드에 Tailwind만 교체
+2. 색상 토큰 위반 10-15파일 정리
+3. 포커스 스타일 완성
+4. 스토리 자동 삭제 크론 (24시간 만료분)
+5. 320원 환불 건 KCP 상태 확인
+
+---
+
 ## [2026-04-12] 검증 워크플로 도입 (leceipts 영감)
 
 ### 배경
