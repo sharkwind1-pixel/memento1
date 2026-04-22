@@ -402,11 +402,17 @@ export default function MinihompyStage({
                                     animation: hasTouchEffect
                                         ? (() => {
                                               switch (touchEffectAction) {
-                                                  case "jump": return "minimiJump 0.5s ease-out";
-                                                  case "spin": return "minimiSpin 0.6s ease-in-out";
-                                                  case "wiggle": return "minimiWiggle 0.5s ease-in-out";
-                                                  case "bounce": return "minimiBounce 0.6s ease-out";
-                                                  default: return "minimiJump 0.3s ease-out";
+                                                  case "jump":     return "minimiJump 0.5s ease-out";
+                                                  case "spin":     return "minimiSpin 0.6s ease-in-out";
+                                                  case "wiggle":   return "minimiWiggle 0.5s ease-in-out";
+                                                  case "bounce":   return "minimiBounce 0.6s ease-out";
+                                                  case "runLeft":  return "minimiRunLeft 0.8s ease-in-out";
+                                                  case "runRight": return "minimiRunRight 0.8s ease-in-out";
+                                                  case "dash":     return "minimiDash 1s ease-in-out";
+                                                  case "shrink":   return "minimiShrink 0.5s ease-in-out";
+                                                  case "flip":     return "minimiFlip 0.6s ease-in-out";
+                                                  case "nod":      return "minimiNod 0.7s ease-in-out";
+                                                  default:         return "minimiJump 0.3s ease-out";
                                               }
                                           })()
                                         : undefined,
