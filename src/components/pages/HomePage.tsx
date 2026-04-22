@@ -17,6 +17,8 @@ import {
     CommunitySection,
     ShowcaseSection,
     MemorialSection,
+    QuizSection,
+    StoryFeed,
 } from "@/components/features/home";
 import AnnouncementBanner from "@/components/features/home/AnnouncementBanner";
 import Open100Banner from "@/components/features/home/Open100Banner";
@@ -141,6 +143,9 @@ function HomePage({ setSelectedTab, isActive, onOpenCommunityPost }: HomePagePro
                 {/* 히어로 */}
                 <HeroSection setSelectedTab={setSelectedTab} user={user} isMemorial={isMemorialMode} />
 
+                {/* 스토리 피드 (24시간 임시 게시물, 인스타 스타일) */}
+                <StoryFeed />
+
                 {/* Open 100 오픈 이벤트 배너 — 비로그인에도 표시 */}
                 <Open100Banner />
 
@@ -187,8 +192,9 @@ function HomePage({ setSelectedTab, isActive, onOpenCommunityPost }: HomePagePro
                                     isMemorial={isMemorialMode}
                                 />
                             </div>
-                            {/* 우: 함께 보기 (쇼케이스) */}
-                            <div>
+                            {/* 우: 함께 보기 (쇼케이스) + 자가진단 */}
+                            <div className="space-y-8">
+                                <QuizSection />
                                 <ShowcaseSection
                                     showcasePosts={showcasePosts}
                                     scrollRef={scroll.showcaseScrollRef}

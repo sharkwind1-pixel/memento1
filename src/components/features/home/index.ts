@@ -5,5 +5,7 @@ export { default as HeroSection } from "./HeroSection";
 export { default as CommunitySection } from "./CommunitySection";
 export { default as MemorialSection } from "./MemorialSection";
 export { default as ShowcaseSection } from "./ShowcaseSection";
+export { default as QuizSection } from "./QuizSection";
+export { default as StoryFeed } from "./StoryFeed";
 export { useHomePage } from "./useHomePage";
 export type { LightboxItem, CommunityPost, Comment, ShowcasePost } from "./types";

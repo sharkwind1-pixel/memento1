@@ -59,6 +59,7 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey, i
     const [searchQuery, setSearchQuery] = useState<string>("");
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
     const [sortBy, setSortBy] = useState<string>("latest");
+    const [trendingTags, setTrendingTags] = useState<Array<{ tag: string; count: number }>>([]);
 
     const hasRestoredFilters = useRef(false);
     useEffect(() => {
@@ -318,6 +319,14 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey, i
         }
     }, [selectedPostId, fetchPosts]);
 
+    // 인기 해시태그 로드 (마운트 시 1회)
+    useEffect(() => {
+        fetch(`${API.HASHTAGS}?type=trending&limit=10`)
+            .then((r) => r.ok ? r.json() : null)
+            .then((d) => { if (d?.tags) setTrendingTags(d.tags); })
+            .catch(() => {});
+    }, []);
+
     // 검색어 debounce (300ms)
     useEffect(() => {
         if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
@@ -495,6 +504,25 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey, i
                     onSortChange={setSortBy}
                     onWriteClick={handleWriteClick}
                 />
+
+                {/* 인기 해시태그 */}
+                {trendingTags.length > 0 && (
+                    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                        <span className="text-[11px] text-gray-400 flex-shrink-0">인기</span>
+                        {trendingTags.slice(0, 8).map((t) => (
+                            <button
+                                key={t.tag}
+                                onClick={() => {
+                                    setSearchInput(`#${t.tag}`);
+                                    setSearchQuery(`#${t.tag}`);
+                                }}
+                                className="flex-shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium bg-memento-100 text-memento-600 dark:bg-memento-900/30 dark:text-memento-300 hover:bg-memento-200 transition-colors"
+                            >
+                                #{t.tag}
+                            </button>
+                        ))}
+                    </div>
+                )}
 
                 {/* "함께 보기" 배너 - 자유게시판에서만 표시 (추모 등 다른 게시판 톤앤매너 보호) */}
                 {currentSubcategory === "free" && showcasePostCount > 0 && (

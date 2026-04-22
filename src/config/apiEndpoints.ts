@@ -119,6 +119,12 @@ export const API = {
     ADMIN_POSTS: "/api/admin/posts",
     ADMIN_API_USAGE: "/api/admin/api-usage",
 
+    // 해시태그
+    HASHTAGS: "/api/hashtags",
+
+    // 스토리 (24시간)
+    STORIES: "/api/stories",
+
     // 추모 펫 위로 리액션
     PET_CONDOLENCE: (petId: string) => `/api/pets/${petId}/condolence`,
 
