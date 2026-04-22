@@ -258,7 +258,7 @@ export default function PostDetailBody({
                             : "bg-gray-50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:bg-rose-50 hover:text-rose-500 hover:border-rose-200"
                     }`}
                 >
-                    <Heart className={`w-4 h-4 ${isLiked ? "fill-current" : ""}`} />
+                    <Heart className={`w-4 h-4 transition-transform duration-200 ${isLiked ? "fill-current scale-125" : ""} ${isLiking ? "animate-ping" : ""}`} style={isLiked ? { animation: "heartPop 0.3s ease-out" } : undefined} />
                     <span className="font-medium">{likeCount}</span>
                 </button>
                 <button

@@ -6,6 +6,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { authFetch } from "@/lib/auth-fetch";
 import { Button } from "@/components/ui/button";
 import { PRICING } from "@/config/constants";
 import { CreditCard, Crown, AlertTriangle, Heart } from "lucide-react";

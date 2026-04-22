@@ -111,6 +111,61 @@ export async function GET(request: NextRequest) {
             }
         }
 
+        // ===== 기일 알림 (무지개다리 기념일 리마인더) =====
+        // 추모 펫의 memorial_date 월-일이 오늘과 같으면 보호자에게 알림
+        let memorialAlerts = 0;
+        try {
+            const kstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+            const todayMmDd = `${String(kstNow.getUTCMonth() + 1).padStart(2, "0")}-${String(kstNow.getUTCDate()).padStart(2, "0")}`;
+
+            // memorial 상태 펫 중 memorial_date가 있는 것 조회
+            const { data: memorialPets } = await supabase
+                .from("pets")
+                .select("id, name, user_id, memorial_date")
+                .eq("status", "memorial")
+                .not("memorial_date", "is", null);
+
+            if (memorialPets) {
+                for (const pet of memorialPets) {
+                    if (!pet.memorial_date) continue;
+                    // memorial_date에서 MM-DD 추출
+                    const petDate = new Date(pet.memorial_date);
+                    const petMmDd = `${String(petDate.getMonth() + 1).padStart(2, "0")}-${String(petDate.getDate()).padStart(2, "0")}`;
+
+                    if (petMmDd !== todayMmDd) continue;
+
+                    // 몇 주기인지 계산
+                    const years = kstNow.getUTCFullYear() - petDate.getFullYear();
+                    const yearLabel = years > 0 ? `${years}년이 지났어요` : "오늘이에요";
+
+                    const dedupKey = `memorial_anniversary_${dateStr}_${pet.id}`;
+
+                    const { error: memErr } = await supabase
+                        .from("notifications")
+                        .insert({
+                            user_id: pet.user_id,
+                            type: "welcome", // 기존 CHECK 제약에 있는 type 사용
+                            title: `${pet.name}의 기억의 날`,
+                            body: `${pet.name}이(가) 무지개다리를 건넌 지 ${yearLabel}. 소중한 추억은 언제나 함께해요.`,
+                            metadata: {
+                                pet_id: pet.id,
+                                pet_name: pet.name,
+                                memorial_date: pet.memorial_date,
+                                years,
+                            },
+                            dedup_key: dedupKey,
+                        });
+
+                    if (!memErr) {
+                        memorialAlerts++;
+                    }
+                    // 23505 중복은 무시
+                }
+            }
+        } catch (memErr) {
+            console.error("[notification-check] memorial anniversary error:", memErr);
+        }
+
         // 30일 지난 알림 정리
         await supabase
             .from("notifications")
@@ -122,6 +177,7 @@ export async function GET(request: NextRequest) {
             expiring: expiringSubs.length,
             created,
             skipped,
+            memorialAlerts,
         });
     } catch (err) {
         const msg = err instanceof Error ? err.message : "알 수 없는 오류";

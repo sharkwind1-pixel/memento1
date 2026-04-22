@@ -30,6 +30,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { authFetch } from "@/lib/auth-fetch";
 import useHorizontalScroll from "@/hooks/useHorizontalScroll";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
