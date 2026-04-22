@@ -38,7 +38,6 @@ import {
     ResponsiveContainer,
 } from "recharts";
 import { DashboardStats, ChartData, ApiUsageData } from "../types";
-import Open100AdminSection from "./Open100AdminSection";
 import PetProfileMigrationCard from "./PetProfileMigrationCard";
 import PaymentRefundCard from "./PaymentRefundCard";
 
@@ -346,8 +345,6 @@ export default function AdminDashboardTab({
                 </Card>
             )}
 
-            {/* Open 100 오픈 이벤트 현황 */}
-            <Open100AdminSection />
         </div>
     );
 }
