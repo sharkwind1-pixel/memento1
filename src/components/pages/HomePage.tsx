@@ -21,7 +21,6 @@ import {
     StoryFeed,
 } from "@/components/features/home";
 import AnnouncementBanner from "@/components/features/home/AnnouncementBanner";
-import Open100Banner from "@/components/features/home/Open100Banner";
 import QuestCard from "@/components/features/quests/QuestCard";
 import Lightbox from "@/components/features/home/Lightbox";
 import MemorialDetailModal from "@/components/features/home/MemorialDetailModal";
@@ -145,9 +144,6 @@ function HomePage({ setSelectedTab, isActive, onOpenCommunityPost }: HomePagePro
 
                 {/* 스토리 피드 (24시간 임시 게시물, 인스타 스타일) */}
                 <StoryFeed />
-
-                {/* Open 100 오픈 이벤트 배너 (관리자 전용 — 내부 모니터링 도구) */}
-                <Open100Banner />
 
                 {/* 온보딩 미션 카드 — 신규 유저 끈끈한 가이드 */}
                 {user && <QuestCard setSelectedTab={(t) => setSelectedTab(t)} />}

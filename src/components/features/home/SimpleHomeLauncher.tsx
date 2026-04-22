@@ -21,7 +21,6 @@ import { useMemorialMode } from "@/contexts/PetContext";
 import { TabType, CommunitySubcategory } from "@/types";
 import { safeSetItem } from "@/lib/safe-storage";
 import QuestCard from "@/components/features/quests/QuestCard";
-import Open100Banner from "@/components/features/home/Open100Banner";
 
 interface SimpleHomeLauncherProps {
     setSelectedTab: (tab: TabType) => void;
@@ -140,11 +139,6 @@ export default function SimpleHomeLauncher({ setSelectedTab, onSubcategoryChange
                             </p>
                         </div>
                     </div>
-                </div>
-
-                {/* Open 100 이벤트 배너 (관리자 전용) */}
-                <div className="max-w-lg mx-auto -mx-4">
-                    <Open100Banner />
                 </div>
 
                 {/* 온보딩 미션 카드 — 신규 유저 가이드 */}
