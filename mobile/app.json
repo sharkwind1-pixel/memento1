@@ -1,0 +1,65 @@
+{
+  "expo": {
+    "name": "메멘토애니",
+    "slug": "mementoani",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "scheme": "mementoani",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#E0F7FF"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.mementoani.app",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "반려동물 사진을 업로드하기 위해 갤러리에 접근합니다.",
+        "NSCameraUsageDescription": "반려동물 사진을 촬영하기 위해 카메라에 접근합니다.",
+        "NSMicrophoneUsageDescription": "동영상 촬영 시 마이크에 접근합니다."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#E0F7FF"
+      },
+      "package": "com.mementoani.app",
+      "permissions": [
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "CAMERA",
+        "NOTIFICATIONS"
+      ],
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#05B2DC"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "반려동물 사진을 업로드하기 위해 갤러리에 접근합니다.",
+          "cameraPermission": "반려동물 사진을 촬영하기 위해 카메라에 접근합니다."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
