@@ -1,0 +1,10 @@
+# 모바일 앱(독립 Expo 프로젝트) — 웹 Vercel 배포에서 제외
+# mobile/은 자체 package.json과 의존성을 가지므로 Next.js 빌드에 포함되면 안 됨
+mobile/
+
+# Claude Code worktrees — 배포 불필요
+.claude/worktrees/
+
+# 백업/스태시 폴더
+**/app-full-backup/
+**/app-routes-stash/
