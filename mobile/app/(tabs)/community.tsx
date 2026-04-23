@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { API_BASE_URL } from "@/config/constants";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
@@ -24,6 +25,7 @@ const SUBCATEGORIES: { id: CommunitySubcategory; label: string }[] = [
 ];
 
 export default function CommunityScreen() {
+    const router = useRouter();
     const { session } = useAuth();
     const { isMemorialMode } = usePet();
     const [activeTab, setActiveTab] = useState<CommunitySubcategory>("free");
@@ -76,6 +78,7 @@ export default function CommunityScreen() {
                         커뮤니티
                     </Text>
                     <TouchableOpacity
+                        onPress={() => router.push({ pathname: "/post/write", params: { subcategory: activeTab } })}
                         className="w-9 h-9 rounded-full items-center justify-center"
                         style={{ backgroundColor: accentColor + "20" }}
                     >
@@ -163,7 +166,12 @@ export default function CommunityScreen() {
                         </View>
                     }
                     renderItem={({ item }) => (
-                        <PostCard post={item} isMemorialMode={isMemorialMode} accentColor={accentColor} />
+                        <PostCard
+                            post={item}
+                            isMemorialMode={isMemorialMode}
+                            accentColor={accentColor}
+                            onPress={() => item.id && router.push(`/post/${item.id}`)}
+                        />
                     )}
                     ItemSeparatorComponent={() => (
                         <View
@@ -177,15 +185,17 @@ export default function CommunityScreen() {
     );
 }
 
-function PostCard({ post, isMemorialMode, accentColor }: {
+function PostCard({ post, isMemorialMode, accentColor, onPress }: {
     post: CommunityPost;
     isMemorialMode: boolean;
     accentColor: string;
+    onPress?: () => void;
 }) {
     return (
         <TouchableOpacity
             className="py-4"
             activeOpacity={0.75}
+            onPress={onPress}
         >
             <View className="flex-row items-start gap-2 mb-1.5">
                 {post.tag && (

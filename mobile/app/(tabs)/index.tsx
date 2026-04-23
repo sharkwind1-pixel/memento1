@@ -58,7 +58,7 @@ export default function HomeScreen() {
             >
                 {/* 헤더 */}
                 <View className="flex-row items-center justify-between px-5 pt-4 pb-2">
-                    <View>
+                    <View className="flex-1">
                         <Text className={`text-xl font-bold ${isMemorialMode ? "text-white" : "text-gray-900"}`}>
                             안녕하세요, {nickname}님
                         </Text>
@@ -74,6 +74,14 @@ export default function HomeScreen() {
                                 {(points ?? 0).toLocaleString()}P
                             </Text>
                         </View>
+                        {/* 알림 */}
+                        <TouchableOpacity onPress={() => router.push("/notifications")} activeOpacity={0.7}>
+                            <Ionicons name="notifications-outline" size={24} color={isMemorialMode ? "#9CA3AF" : "#6B7280"} />
+                        </TouchableOpacity>
+                        {/* 프로필 */}
+                        <TouchableOpacity onPress={() => router.push("/profile")} activeOpacity={0.7}>
+                            <Ionicons name="person-circle-outline" size={28} color={isMemorialMode ? "#9CA3AF" : "#6B7280"} />
+                        </TouchableOpacity>
                     </View>
                 </View>
 
@@ -195,8 +203,10 @@ function PetChip({ pet, isSelected, isMemorialMode, onSelect }: {
 }
 
 function AddPetChip({ isMemorialMode }: { isMemorialMode: boolean }) {
+    const router = useRouter();
     return (
         <TouchableOpacity
+            onPress={() => router.push("/pet/new")}
             className="flex-row items-center gap-1.5 px-3 py-2 rounded-full border border-dashed border-gray-300"
             activeOpacity={0.7}
         >
