@@ -22,6 +22,23 @@ import {
     type KstTime,
 } from "@/lib/cron-utils";
 
+// ===== 유틸 =====
+
+/**
+ * Fisher-Yates 균등 분포 셔플.
+ * `arr.sort(() => Math.random() - 0.5)`는 V8 TimSort 특성상 편향된 분포를 만듦
+ * (작은 배열에서 특정 인덱스가 유의미하게 자주 선택됨). 이 함수는 각 순열의
+ * 확률이 1/n!로 균등함이 수학적으로 보장됨.
+ */
+function fisherYatesShuffle<T>(arr: T[]): T[] {
+    const result = [...arr];
+    for (let i = result.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [result[i], result[j]] = [result[j], result[i]];
+    }
+    return result;
+}
+
 // ===== 기념일 타입 =====
 
 type SpecialDayType = "birthday" | "adoption_100" | "adoption_yearly" | "memorial_100" | "memorial_yearly" | null;
@@ -199,7 +216,7 @@ export async function GET(request: NextRequest) {
                         if (allMedia && allMedia.length >= 3) {
                             const filtered = allMedia;
                             if (filtered.length >= 3) {
-                                const shuffled = filtered.sort(() => Math.random() - 0.5);
+                                const shuffled = fisherYatesShuffle(filtered);
                                 const pickCount = Math.min(
                                     Math.max(5, Math.floor(Math.random() * 6) + 5),
                                     shuffled.length,
@@ -280,7 +297,7 @@ export async function GET(request: NextRequest) {
                         if (allMedia && allMedia.length >= 3) {
                             const filtered = allMedia;
                             if (filtered.length >= 3) {
-                                const shuffled = filtered.sort(() => Math.random() - 0.5);
+                                const shuffled = fisherYatesShuffle(filtered);
                                 const pickCount = Math.min(
                                     Math.max(5, Math.floor(Math.random() * 6) + 5),
                                     shuffled.length,

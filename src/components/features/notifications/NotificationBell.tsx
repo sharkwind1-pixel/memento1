@@ -111,10 +111,15 @@ export default function NotificationBell() {
             return;
         }
 
-        // 3. 구독/결제 알림 → 홈(프로필 탭/구독 UI 확인)
+        // 3. 구독/결제 알림 → 계정 설정 모달 열고 구독 섹션으로 자동 스크롤
+        //    Layout.tsx의 "구독 관리" 버튼과 동일한 이벤트 사용
         if (n.type.startsWith("subscription_") || n.type.startsWith("payment_")) {
             setIsOpen(false);
-            router.push("/");
+            window.dispatchEvent(
+                new CustomEvent("openAccountSettings", {
+                    detail: { scrollTo: "subscription-section" },
+                }),
+            );
             return;
         }
 

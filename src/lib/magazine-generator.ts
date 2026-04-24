@@ -208,13 +208,17 @@ export interface GenerationResult {
 
 /**
  * 다음 기사의 동물 종을 결정한다.
- * - 70% 확률: 개/고양이 (major)
- * - 30% 확률: 앵무새/거북이/겍코/햄스터/토끼/관상어/고슴도치/페릿 (minor)
+ * - 55% 확률: 개/고양이 (major)  ← 기존 70%에서 조정, exotic 노출 증가
+ * - 45% 확률: 앵무새/거북이/겍코/햄스터/토끼/관상어/고슴도치/페릿 (minor)
  * - 최근 10편에서 가장 적게 나온 종을 우선 선택하여 다양성 확보
+ *
+ * 조정 근거 (2026-04-24): minor 8종이 기존 30%만 받아 종당 평균 3.75% 노출,
+ * 희귀동물 독자는 한 달에 한 편 볼까말까 수준이었음. 45%로 올리면 종당 5.6%
+ * 로 증가하여 최근 10편 로테이션과 결합 시 2주에 1편 꼴로 순환.
  */
 export function pickAnimalType(recentAnimalIds: string[]): AnimalInfo {
     const roll = Math.random();
-    const isMajor = roll < 0.7;
+    const isMajor = roll < 0.55;
 
     const pool = isMajor ? [...ANIMAL_TYPES.major] : [...ANIMAL_TYPES.minor];
 
