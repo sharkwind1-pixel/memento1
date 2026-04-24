@@ -6,7 +6,8 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Bell, CheckCheck } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Bell, CheckCheck, X, Megaphone, Mail } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
@@ -14,10 +15,12 @@ import NotificationItem, { type NotificationData } from "./NotificationItem";
 
 export default function NotificationBell() {
     const { user } = useAuth();
+    const router = useRouter();
     const [notifications, setNotifications] = useState<NotificationData[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [isOpen, setIsOpen] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [selectedNotification, setSelectedNotification] = useState<NotificationData | null>(null);
     const panelRef = useRef<HTMLDivElement>(null);
 
     const fetchNotifications = useCallback(async () => {
@@ -86,6 +89,40 @@ export default function NotificationBell() {
         setIsOpen(!isOpen);
     };
 
+    /**
+     * 알림 클릭 시 타입별 목적지 결정
+     * - admin_notice / admin_message: 모달로 전체 내용 표시
+     * - metadata.link 있으면: 해당 URL로 이동
+     * - 구독/결제 관련: 홈으로 이동 (프로필/구독 UI 접근)
+     * - 그 외: 읽음 처리만
+     */
+    const handleItemClick = (n: NotificationData) => {
+        // 1. 관리자 공지/메시지 → 모달
+        if (n.type === "admin_notice" || n.type === "admin_message") {
+            setSelectedNotification(n);
+            return;
+        }
+
+        // 2. metadata.link 명시돼 있으면 그쪽으로
+        const link = (n.metadata as { link?: unknown })?.link;
+        if (typeof link === "string" && link.length > 0) {
+            setIsOpen(false);
+            router.push(link);
+            return;
+        }
+
+        // 3. 구독/결제 알림 → 홈(프로필 탭/구독 UI 확인)
+        if (n.type.startsWith("subscription_") || n.type.startsWith("payment_")) {
+            setIsOpen(false);
+            router.push("/");
+            return;
+        }
+
+        // 4. 나머지는 읽음 처리만 (이미 NotificationItem에서 처리됨)
+    };
+
+    const closeModal = () => setSelectedNotification(null);
+
     if (!user) return null;
 
     return (
@@ -152,6 +189,7 @@ export default function NotificationBell() {
                                             key={n.id}
                                             notification={n}
                                             onMarkRead={markAsRead}
+                                            onNavigate={handleItemClick}
                                         />
                                     ))}
                                 </div>
@@ -159,6 +197,79 @@ export default function NotificationBell() {
                         </div>
                     </div>
                 </>
+            )}
+
+            {/* 관리자 공지/메시지 상세 모달 */}
+            {selectedNotification && (
+                <div
+                    className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4"
+                    onClick={closeModal}
+                    role="dialog"
+                    aria-modal="true"
+                >
+                    <div
+                        className="w-full sm:max-w-md bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[85vh]"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* 모달 헤더 */}
+                        <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-2 min-w-0">
+                                {selectedNotification.type === "admin_notice" ? (
+                                    <Megaphone className="w-5 h-5 text-memorial-600 flex-shrink-0" />
+                                ) : (
+                                    <Mail className="w-5 h-5 text-memento-500 flex-shrink-0" />
+                                )}
+                                <div className="min-w-0">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                                            selectedNotification.type === "admin_notice"
+                                                ? "bg-memorial-200 text-memorial-800 dark:bg-memorial-900/40 dark:text-memorial-200"
+                                                : "bg-memento-200 text-memento-800 dark:bg-memento-900/40 dark:text-memento-200"
+                                        }`}>
+                                            {selectedNotification.type === "admin_notice" ? "공지" : "관리자"}
+                                        </span>
+                                        <span className="text-xs text-gray-400 dark:text-gray-500">
+                                            {new Date(selectedNotification.created_at).toLocaleString("ko-KR", {
+                                                year: "numeric",
+                                                month: "2-digit",
+                                                day: "2-digit",
+                                                hour: "2-digit",
+                                                minute: "2-digit",
+                                            })}
+                                        </span>
+                                    </div>
+                                    <h2 className="mt-1 text-base font-bold text-gray-900 dark:text-gray-100 break-words">
+                                        {selectedNotification.title}
+                                    </h2>
+                                </div>
+                            </div>
+                            <button
+                                onClick={closeModal}
+                                className="p-1.5 -mr-1 -mt-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 flex-shrink-0"
+                                aria-label="닫기"
+                            >
+                                <X className="w-5 h-5 text-gray-500" />
+                            </button>
+                        </div>
+
+                        {/* 모달 본문 — 스크롤 가능 */}
+                        <div className="px-5 py-4 overflow-y-auto flex-1">
+                            <p className="text-sm text-gray-700 dark:text-gray-200 whitespace-pre-wrap leading-relaxed break-words">
+                                {selectedNotification.body}
+                            </p>
+                        </div>
+
+                        {/* 모달 푸터 */}
+                        <div className="px-5 py-3 border-t border-gray-200 dark:border-gray-700 flex justify-end flex-shrink-0">
+                            <button
+                                onClick={closeModal}
+                                className="px-4 py-2 rounded-lg bg-memento-500 hover:bg-memento-600 text-white text-sm font-medium transition-colors"
+                            >
+                                확인
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

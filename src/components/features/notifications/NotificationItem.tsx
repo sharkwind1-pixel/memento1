@@ -69,16 +69,23 @@ function TypeIcon({ type }: { type: string }) {
 interface Props {
     notification: NotificationData;
     onMarkRead: (id: string) => void;
+    onNavigate?: (notification: NotificationData) => void;
 }
 
-export default function NotificationItem({ notification, onMarkRead }: Props) {
+export default function NotificationItem({ notification, onMarkRead, onNavigate }: Props) {
     const isUnread = !notification.read_at;
     const isAdminMsg = notification.type === "admin_message" || notification.type === "admin_notice";
     const isNotice = notification.type === "admin_notice";
 
+    const handleClick = () => {
+        if (isUnread) onMarkRead(notification.id);
+        onNavigate?.(notification);
+    };
+
     return (
         <button
-            onClick={() => isUnread && onMarkRead(notification.id)}
+            type="button"
+            onClick={handleClick}
             className={`w-full text-left px-4 py-3 flex gap-3 transition-colors ${
                 isAdminMsg && isUnread
                     ? "bg-memorial-50 dark:bg-memorial-900/20 hover:bg-memorial-100 dark:hover:bg-memorial-900/30"
