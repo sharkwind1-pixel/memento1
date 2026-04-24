@@ -309,31 +309,64 @@ export async function GET(request: NextRequest) {
         // 전부 제외됐으면 (엣지 케이스) 원본 풀 사용
         const availableTopics = dedupedTopics.length > 0 ? dedupedTopics : seasonalFiltered;
 
-        // 3카테고리 균형 로테이션: 정보 → 소식 → 펫로스 → 정보 → 소식 → 펫로스 ...
-        // 매일 카테고리가 바뀌고, 같은 카테고리 안에서는 순환
+        // 7일 요일 기반 가중 로테이션 (이전: 3일 주기 33%씩 동등 → 펫로스 편중 발생)
+        // 정보 4/7 (57%), 소식 2/7 (29%), 펫로스 1/7 (14%)
+        // 폴백 시 펫로스 제외 — 정보/소식 풀이 14일 중복필터로 고갈되면 펫로스로 빠지던 기존 버그 차단
         const infoTopics = availableTopics.filter(t => t.category === "반려동물 정보");
         const petlossTopics = availableTopics.filter(t => t.category === "펫로스를 이겨내기");
         const newsTopics = availableTopics.filter(t => t.category === "메멘토애니 소식");
 
         const daysSinceEpoch = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
-        const categoryIndex = daysSinceEpoch % 3; // 0=정보, 1=소식, 2=펫로스
-        const cycleCount = Math.floor(daysSinceEpoch / 3); // 3일 주기 몇 번째
+        // KST 기준 요일 (0=일, 1=월, ..., 6=토)
+        const kstDayOfWeek = new Date(Date.now() + 9 * 60 * 60 * 1000).getUTCDay();
+
+        // 요일 매핑
+        // 월/화/목/금/토 = 정보 (5일)
+        // 수/일 = 소식 (2일)  ※ 펫로스가 주 1회도 안 나오게 소식 포함
+        // 14일에 1회만 펫로스 (= daysSinceEpoch % 14 === 0일 때 강제 오버라이드)
+        let categoryKey: "info" | "news" | "petloss";
+        const isPetlossDay = daysSinceEpoch % 14 === 0; // 2주 1회
+        if (isPetlossDay) {
+            categoryKey = "petloss";
+        } else if (kstDayOfWeek === 3 || kstDayOfWeek === 0) {
+            categoryKey = "news";
+        } else {
+            categoryKey = "info";
+        }
+
+        // 같은 카테고리 내 순환 선택 (인덱스는 누적 일수로 단조증가)
+        const cycleCount = daysSinceEpoch;
 
         let selectedTopic: BlogTopic;
+        let selectionReason: string;
 
-        if (categoryIndex === 0 && infoTopics.length > 0) {
-            // 정보글 (강아지/고양이/공통만 남음 — 특수반려동물 제거됨)
-            selectedTopic = infoTopics[cycleCount % infoTopics.length];
-        } else if (categoryIndex === 1 && newsTopics.length > 0) {
-            // 메멘토애니 소식 (기능 소개/활용법/서비스 스토리)
-            selectedTopic = newsTopics[cycleCount % newsTopics.length];
-        } else if (categoryIndex === 2 && petlossTopics.length > 0) {
-            // 펫로스 (극복/추모/장례/재입양)
-            selectedTopic = petlossTopics[cycleCount % petlossTopics.length];
+        const pickFromPool = (pool: BlogTopic[]): BlogTopic =>
+            pool[cycleCount % pool.length];
+
+        // 폴백 전용 풀: 펫로스 제외한 전체 (펫로스 편중 방지)
+        const nonPetlossPool = availableTopics.filter(t => t.category !== "펫로스를 이겨내기");
+
+        if (categoryKey === "info" && infoTopics.length > 0) {
+            selectedTopic = pickFromPool(infoTopics);
+            selectionReason = `요일 기반 (정보, KST ${kstDayOfWeek}요일)`;
+        } else if (categoryKey === "news" && newsTopics.length > 0) {
+            selectedTopic = pickFromPool(newsTopics);
+            selectionReason = `요일 기반 (소식, KST ${kstDayOfWeek}요일)`;
+        } else if (categoryKey === "petloss" && petlossTopics.length > 0) {
+            selectedTopic = pickFromPool(petlossTopics);
+            selectionReason = `2주 1회 (펫로스, day ${daysSinceEpoch})`;
+        } else if (nonPetlossPool.length > 0) {
+            // 폴백 1차: 펫로스 제외한 풀에서
+            selectedTopic = pickFromPool(nonPetlossPool);
+            selectionReason = `폴백 — 원래 ${categoryKey} 풀 비어있음, 펫로스 제외하고 선택`;
         } else {
-            // 폴백: 어떤 카테고리든 비어있으면 전체 풀에서
-            selectedTopic = availableTopics[daysSinceEpoch % availableTopics.length];
+            // 폴백 2차: 정말 전부 비어있을 때만 전체 풀
+            selectedTopic = pickFromPool(availableTopics);
+            selectionReason = `최후 폴백 — 모든 카테고리 고갈`;
         }
+
+        // 디버깅용 로그 (Vercel 로그에서 추적 가능)
+        console.log(`[blog-generate] reason="${selectionReason}", category=${selectedTopic.category}, topic=${selectedTopic.topic}, pools={info:${infoTopics.length},news:${newsTopics.length},petloss:${petlossTopics.length}}`);
 
         // 릴스 대본은 daysSinceEpoch 기반 4일 주기 컨셉 로테이션 유지
         const dayIndex = daysSinceEpoch;
@@ -495,6 +528,8 @@ ${searchContext ? `## 참고 자료 (아래 검색 결과를 바탕으로 정확
         const header = [
             `<b>[블로그 초안 - ${dateStr}]</b>`,
             `카테고리: ${selectedTopic.category}`,
+            `선택 이유: ${selectionReason}`,
+            `풀 상태: 정보 ${infoTopics.length} / 소식 ${newsTopics.length} / 펫로스 ${petlossTopics.length}`,
             `제목: ${title}`,
             `모델: ${modelUsed}`,
             `검색 소스: ${searchContext ? "Tavily 검색 결과 반영" : "일반 지식 기반"}`,
