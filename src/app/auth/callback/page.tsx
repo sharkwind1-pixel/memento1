@@ -49,7 +49,11 @@ export default function AuthCallbackPage() {
                 if (type) forwardParams.push(`type=${encodeURIComponent(type)}`);
                 if (authError) forwardParams.push(`error=${encodeURIComponent(authError)}`);
                 if (errorDescription) forwardParams.push(`error_description=${encodeURIComponent(errorDescription)}`);
-                const deepLink = `${decoded}${separator}${forwardParams.join("&")}`;
+                let deepLink = `${decoded}${separator}${forwardParams.join("&")}`;
+                // implicit flow: access_token이 hash(#)로 오는 경우 그대로 포워딩
+                if (window.location.hash && window.location.hash.length > 1) {
+                    deepLink += window.location.hash;
+                }
                 window.location.href = deepLink;
                 return;
             }
