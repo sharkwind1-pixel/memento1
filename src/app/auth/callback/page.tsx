@@ -53,14 +53,8 @@ export default function AuthCallbackPage() {
                     deepLink += window.location.hash;
                 }
                 setMobileDeepLink(deepLink);
-                // 1차 시도: 즉시 location 변경
-                window.location.href = deepLink;
-                // 2차 시도: 100ms 후 anchor click (custom scheme 차단 우회)
-                setTimeout(() => {
-                    const a = document.createElement("a");
-                    a.href = deepLink;
-                    a.click();
-                }, 100);
+                // location.replace: 현재 history entry를 대체 → 브라우저 탭에 흔적 안 남음
+                window.location.replace(deepLink);
                 return;
             }
 
