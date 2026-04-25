@@ -6,14 +6,15 @@ import { useState, useEffect } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity,
     Image, TextInput, Alert, ActivityIndicator,
-    KeyboardAvoidingView, Platform, FlatList,
+    KeyboardAvoidingView, Platform, StyleSheet,
 } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { API_BASE_URL } from "@/config/constants";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
+import { COLORS } from "@/lib/theme";
 
 interface Comment {
     id: number;
@@ -46,8 +47,7 @@ interface PostDetail {
 
 export default function PostDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
-    const router = useRouter();
-    const { session, user } = useAuth();
+    const { session } = useAuth();
     const { isMemorialMode } = usePet();
     const [post, setPost] = useState<PostDetail | null>(null);
     const [comments, setComments] = useState<Comment[]>([]);
@@ -56,11 +56,9 @@ export default function PostDetailScreen() {
     const [isSubmittingComment, setIsSubmittingComment] = useState(false);
     const [isLiking, setIsLiking] = useState(false);
 
-    const accentColor = isMemorialMode ? "#F59E0B" : "#05B2DC";
+    const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
 
-    useEffect(() => {
-        loadPost();
-    }, [id]);
+    useEffect(() => { loadPost(); }, [id]);
 
     async function loadPost() {
         try {
@@ -104,7 +102,6 @@ export default function PostDetailScreen() {
                 },
             });
         } catch {
-            // 롤백
             setPost((p) => p ? { ...p, isLiked: !newLiked, likes: p.likes + (newLiked ? -1 : 1) } : p);
         } finally {
             setIsLiking(false);
@@ -138,123 +135,138 @@ export default function PostDetailScreen() {
 
     if (isLoading) {
         return (
-            <View className="flex-1 items-center justify-center bg-white">
-                <ActivityIndicator size="large" color="#05B2DC" />
+            <View style={styles.loading}>
+                <ActivityIndicator size="large" color={COLORS.memento[500]} />
             </View>
         );
     }
 
     if (!post) {
         return (
-            <View className="flex-1 items-center justify-center bg-white px-6">
-                <Text className="text-gray-400">게시글을 불러올 수 없습니다.</Text>
+            <View style={styles.loading}>
+                <Text style={{ color: COLORS.gray[400] }}>게시글을 불러올 수 없습니다.</Text>
             </View>
         );
     }
 
+    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.white;
+    const borderColor = isMemorialMode ? COLORS.gray[800] : COLORS.gray[100];
+
     return (
         <KeyboardAvoidingView
-            className={`flex-1 ${isMemorialMode ? "bg-gray-950" : "bg-white"}`}
+            style={[styles.flex1, { backgroundColor: bgColor }]}
             behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
-            <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-                <View className="px-5 pt-4 pb-2">
-                    {/* 말머리 */}
+            <ScrollView style={styles.flex1} showsVerticalScrollIndicator={false}>
+                <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 }}>
                     {post.tag && (
-                        <View
-                            className="self-start px-2.5 py-1 rounded-full mb-2"
-                            style={{ backgroundColor: accentColor + "20" }}
-                        >
-                            <Text className="text-xs font-medium" style={{ color: accentColor }}>{post.tag}</Text>
+                        <View style={[styles.tagBadge, { backgroundColor: accentColor + "20" }]}>
+                            <Text style={{ fontSize: 12, fontWeight: "500", color: accentColor }}>{post.tag}</Text>
                         </View>
                     )}
 
-                    {/* 제목 */}
-                    <Text className={`text-lg font-bold leading-7 mb-3 ${isMemorialMode ? "text-white" : "text-gray-900"}`}>
+                    <Text style={{
+                        fontSize: 18,
+                        fontWeight: "bold",
+                        lineHeight: 28,
+                        marginBottom: 12,
+                        color: isMemorialMode ? COLORS.white : COLORS.gray[900],
+                    }}>
                         {post.title}
                     </Text>
 
-                    {/* 작성자 정보 */}
-                    <View className="flex-row items-center gap-2 mb-4">
+                    <View style={styles.authorRow}>
                         {post.authorAvatar ? (
-                            <Image source={{ uri: post.authorAvatar }} className="w-8 h-8 rounded-full" />
+                            <Image source={{ uri: post.authorAvatar }} style={styles.authorAvatar} />
                         ) : (
-                            <View className="w-8 h-8 rounded-full bg-gray-200 items-center justify-center">
-                                <Ionicons name="person" size={16} color="#9CA3AF" />
+                            <View style={[styles.authorAvatar, styles.authorAvatarFallback]}>
+                                <Ionicons name="person" size={16} color={COLORS.gray[400]} />
                             </View>
                         )}
                         <View>
-                            <Text className={`text-sm font-medium ${isMemorialMode ? "text-white" : "text-gray-800"}`}>
+                            <Text style={{
+                                fontSize: 14,
+                                fontWeight: "500",
+                                color: isMemorialMode ? COLORS.white : COLORS.gray[800],
+                            }}>
                                 {post.author}
                             </Text>
-                            <Text className="text-xs text-gray-400">{post.createdAt}</Text>
+                            <Text style={{ fontSize: 12, color: COLORS.gray[400] }}>{post.createdAt}</Text>
                         </View>
                     </View>
 
-                    {/* 이미지 */}
                     {post.images && post.images.length > 0 && (
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4" contentContainerStyle={{ gap: 8 }}>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }} contentContainerStyle={{ gap: 8 }}>
                             {post.images.map((img, i) => (
-                                <Image key={i} source={{ uri: img }} className="w-60 h-44 rounded-xl" resizeMode="cover" />
+                                <Image key={i} source={{ uri: img }} style={styles.postImg} resizeMode="cover" />
                             ))}
                         </ScrollView>
                     )}
 
-                    {/* 본문 */}
                     <Text
-                        className={`text-sm leading-6 mb-4 ${isMemorialMode ? "text-gray-300" : "text-gray-700"}`}
+                        style={{
+                            fontSize: 14,
+                            lineHeight: 24,
+                            marginBottom: 16,
+                            color: isMemorialMode ? COLORS.gray[300] : COLORS.gray[700],
+                        }}
                         selectable
                     >
                         {post.content}
                     </Text>
 
-                    {/* 반응 버튼 */}
-                    <View className="flex-row gap-4 py-3 border-t border-b mb-4" style={{ borderColor: isMemorialMode ? "#1F2937" : "#F3F4F6" }}>
-                        <TouchableOpacity onPress={handleLike} className="flex-row items-center gap-1.5" activeOpacity={0.7}>
+                    <View style={[styles.reactionRow, { borderColor }]}>
+                        <TouchableOpacity onPress={handleLike} style={styles.reactionBtn} activeOpacity={0.7}>
                             <Ionicons
                                 name={post.isLiked ? "heart" : "heart-outline"}
                                 size={20}
-                                color={post.isLiked ? "#EF4444" : "#9CA3AF"}
+                                color={post.isLiked ? "#EF4444" : COLORS.gray[400]}
                             />
-                            <Text className={`text-sm ${isMemorialMode ? "text-gray-400" : "text-gray-500"}`}>
+                            <Text style={{ fontSize: 14, color: isMemorialMode ? COLORS.gray[400] : COLORS.gray[500] }}>
                                 {post.likes}
                             </Text>
                         </TouchableOpacity>
-                        <View className="flex-row items-center gap-1.5">
-                            <Ionicons name="chatbubble-outline" size={18} color="#9CA3AF" />
-                            <Text className="text-sm text-gray-400">{post.comments}</Text>
+                        <View style={styles.reactionBtn}>
+                            <Ionicons name="chatbubble-outline" size={18} color={COLORS.gray[400]} />
+                            <Text style={{ fontSize: 14, color: COLORS.gray[400] }}>{post.comments}</Text>
                         </View>
-                        <View className="flex-row items-center gap-1.5">
-                            <Ionicons name="eye-outline" size={18} color="#9CA3AF" />
-                            <Text className="text-sm text-gray-400">{post.views}</Text>
+                        <View style={styles.reactionBtn}>
+                            <Ionicons name="eye-outline" size={18} color={COLORS.gray[400]} />
+                            <Text style={{ fontSize: 14, color: COLORS.gray[400] }}>{post.views}</Text>
                         </View>
                     </View>
 
-                    {/* 댓글 */}
-                    <Text className={`text-sm font-semibold mb-3 ${isMemorialMode ? "text-gray-300" : "text-gray-700"}`}>
+                    <Text style={{
+                        fontSize: 14,
+                        fontWeight: "600",
+                        marginBottom: 12,
+                        color: isMemorialMode ? COLORS.gray[300] : COLORS.gray[700],
+                    }}>
                         댓글 {comments.length}
                     </Text>
                     {comments.map((c) => (
                         <CommentItem key={c.id} comment={c} isMemorialMode={isMemorialMode} />
                     ))}
                     {comments.length === 0 && (
-                        <Text className="text-sm text-gray-400 text-center py-4">
+                        <Text style={{ fontSize: 14, color: COLORS.gray[400], textAlign: "center", paddingVertical: 16 }}>
                             첫 댓글을 남겨보세요.
                         </Text>
                     )}
                 </View>
             </ScrollView>
 
-            {/* 댓글 입력 */}
             {session && (
-                <View
-                    className="flex-row items-end gap-2 px-4 py-3 border-t"
-                    style={{ borderTopColor: isMemorialMode ? "#1F2937" : "#F3F4F6" }}
-                >
+                <View style={[styles.inputRow, { borderTopColor: borderColor }]}>
                     <TextInput
-                        className={`flex-1 rounded-2xl px-4 py-3 text-sm max-h-24 ${isMemorialMode ? "bg-gray-800 text-white" : "bg-gray-100 text-gray-900"}`}
+                        style={[
+                            styles.commentInput,
+                            {
+                                backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100],
+                                color: isMemorialMode ? COLORS.white : COLORS.gray[900],
+                            },
+                        ]}
                         placeholder="댓글 입력..."
-                        placeholderTextColor="#9CA3AF"
+                        placeholderTextColor={COLORS.gray[400]}
                         value={commentInput}
                         onChangeText={setCommentInput}
                         multiline
@@ -262,13 +274,15 @@ export default function PostDetailScreen() {
                     <TouchableOpacity
                         onPress={submitComment}
                         disabled={!commentInput.trim() || isSubmittingComment}
-                        className="w-10 h-10 rounded-full items-center justify-center"
-                        style={{ backgroundColor: commentInput.trim() ? accentColor : "#E5E7EB" }}
+                        style={[
+                            styles.sendBtn,
+                            { backgroundColor: commentInput.trim() ? accentColor : COLORS.gray[200] },
+                        ]}
                     >
                         {isSubmittingComment ? (
                             <ActivityIndicator size="small" color="#fff" />
                         ) : (
-                            <Ionicons name="arrow-up" size={18} color={commentInput.trim() ? "#fff" : "#9CA3AF"} />
+                            <Ionicons name="arrow-up" size={18} color={commentInput.trim() ? "#fff" : COLORS.gray[400]} />
                         )}
                     </TouchableOpacity>
                 </View>
@@ -279,25 +293,71 @@ export default function PostDetailScreen() {
 
 function CommentItem({ comment, isMemorialMode }: { comment: Comment; isMemorialMode: boolean }) {
     return (
-        <View className="flex-row gap-2.5 mb-4">
+        <View style={{ flexDirection: "row", gap: 10, marginBottom: 16 }}>
             {comment.authorAvatar ? (
-                <Image source={{ uri: comment.authorAvatar }} className="w-7 h-7 rounded-full flex-shrink-0" />
+                <Image source={{ uri: comment.authorAvatar }} style={styles.commentAvatar} />
             ) : (
-                <View className="w-7 h-7 rounded-full bg-gray-200 items-center justify-center flex-shrink-0">
-                    <Ionicons name="person" size={13} color="#9CA3AF" />
+                <View style={[styles.commentAvatar, styles.commentAvatarFallback]}>
+                    <Ionicons name="person" size={13} color={COLORS.gray[400]} />
                 </View>
             )}
-            <View className="flex-1">
-                <View className="flex-row items-center gap-2 mb-0.5">
-                    <Text className={`text-xs font-semibold ${isMemorialMode ? "text-white" : "text-gray-800"}`}>
+            <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 2 }}>
+                    <Text style={{
+                        fontSize: 12,
+                        fontWeight: "600",
+                        color: isMemorialMode ? COLORS.white : COLORS.gray[800],
+                    }}>
                         {comment.author}
                     </Text>
-                    <Text className="text-xs text-gray-400">{comment.createdAt}</Text>
+                    <Text style={{ fontSize: 12, color: COLORS.gray[400] }}>{comment.createdAt}</Text>
                 </View>
-                <Text className={`text-sm leading-5 ${isMemorialMode ? "text-gray-300" : "text-gray-700"}`}>
+                <Text style={{
+                    fontSize: 14,
+                    lineHeight: 20,
+                    color: isMemorialMode ? COLORS.gray[300] : COLORS.gray[700],
+                }}>
                     {comment.content}
                 </Text>
             </View>
         </View>
     );
 }
+
+const styles = StyleSheet.create({
+    flex1: { flex: 1 },
+    loading: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: COLORS.white, paddingHorizontal: 24 },
+    tagBadge: { alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 9999, marginBottom: 8 },
+    authorRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 },
+    authorAvatar: { width: 32, height: 32, borderRadius: 16 },
+    authorAvatarFallback: { backgroundColor: COLORS.gray[200], alignItems: "center", justifyContent: "center" },
+    postImg: { width: 240, height: 176, borderRadius: 12 },
+    reactionRow: {
+        flexDirection: "row",
+        gap: 16,
+        paddingVertical: 12,
+        borderTopWidth: 1,
+        borderBottomWidth: 1,
+        marginBottom: 16,
+    },
+    reactionBtn: { flexDirection: "row", alignItems: "center", gap: 6 },
+    inputRow: {
+        flexDirection: "row",
+        alignItems: "flex-end",
+        gap: 8,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderTopWidth: 1,
+    },
+    commentInput: {
+        flex: 1,
+        borderRadius: 16,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        fontSize: 14,
+        maxHeight: 96,
+    },
+    sendBtn: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
+    commentAvatar: { width: 28, height: 28, borderRadius: 14 },
+    commentAvatarFallback: { backgroundColor: COLORS.gray[200], alignItems: "center", justifyContent: "center" },
+});

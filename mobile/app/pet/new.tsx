@@ -5,7 +5,7 @@
 import { useState } from "react";
 import {
     View, Text, TextInput, TouchableOpacity, ScrollView,
-    Image, Alert, ActivityIndicator, Platform,
+    Image, Alert, ActivityIndicator, StyleSheet,
 } from "react-native";
 import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
@@ -13,7 +13,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
-import { PetType, PetGender, PetStatus } from "@/types";
+import { PetType, PetGender } from "@/types";
+import { COLORS } from "@/lib/theme";
 
 const PET_TYPES: PetType[] = ["강아지", "고양이", "기타"];
 const PET_GENDERS: PetGender[] = ["남아", "여아"];
@@ -59,15 +60,15 @@ export default function NewPetScreen() {
     }
 
     async function uploadProfileImage(petId: string): Promise<string | null> {
-        if (!profileImageFile) return null;
+        if (!profileImageFile || !user) return null;
         try {
-            const path = `${user!.id}/${petId}/profile.${profileImageFile.name.split(".").pop()}`;
-            const base64 = await fetch(profileImageFile.uri)
-                .then((r) => r.blob());
+            const ext = profileImageFile.name.split(".").pop();
+            const path = `${user.id}/${petId}/profile.${ext}`;
+            const blob = await fetch(profileImageFile.uri).then((r) => r.blob());
 
             const { error } = await supabase.storage
                 .from("pet-media")
-                .upload(path, base64, { upsert: true, contentType: profileImageFile.type });
+                .upload(path, blob, { upsert: true, contentType: profileImageFile.type });
 
             if (error) return null;
 
@@ -87,7 +88,6 @@ export default function NewPetScreen() {
 
         setIsLoading(true);
         try {
-            // 1. 펫 생성
             const { data: pet, error: petError } = await supabase
                 .from("pets")
                 .insert({
@@ -105,11 +105,8 @@ export default function NewPetScreen() {
                 .select()
                 .single();
 
-            if (petError || !pet) {
-                throw petError ?? new Error("펫 생성 실패");
-            }
+            if (petError || !pet) throw petError ?? new Error("펫 생성 실패");
 
-            // 2. 프로필 이미지 업로드
             if (profileImageFile) {
                 const imageUrl = await uploadProfileImage(pet.id);
                 if (imageUrl) {
@@ -122,7 +119,7 @@ export default function NewPetScreen() {
 
             await refreshPets();
             router.back();
-        } catch (e: unknown) {
+        } catch {
             Alert.alert("오류", "반려동물 등록 중 오류가 발생했습니다.");
         } finally {
             setIsLoading(false);
@@ -131,90 +128,102 @@ export default function NewPetScreen() {
 
     return (
         <ScrollView
-            className="flex-1 bg-white"
+            style={styles.flex1White}
             contentContainerStyle={{ padding: 20, paddingBottom: 60 }}
             keyboardShouldPersistTaps="handled"
         >
-            {/* 프로필 사진 */}
-            <View className="items-center mb-6">
+            <View style={{ alignItems: "center", marginBottom: 24 }}>
                 <TouchableOpacity onPress={pickImage} activeOpacity={0.85}>
                     {profileImage ? (
-                        <Image source={{ uri: profileImage }} className="w-28 h-28 rounded-full" />
+                        <Image source={{ uri: profileImage }} style={styles.avatar} />
                     ) : (
-                        <View className="w-28 h-28 rounded-full bg-memento-50 border-2 border-dashed border-memento-200 items-center justify-center">
-                            <Ionicons name="camera-outline" size={32} color="#05B2DC" />
+                        <View style={[styles.avatar, styles.avatarFallback]}>
+                            <Ionicons name="camera-outline" size={32} color={COLORS.memento[500]} />
                         </View>
                     )}
-                    <View className="absolute bottom-0 right-0 w-8 h-8 bg-memento-500 rounded-full items-center justify-center">
+                    <View style={styles.avatarEdit}>
                         <Ionicons name="pencil" size={14} color="#fff" />
                     </View>
                 </TouchableOpacity>
-                <Text className="text-sm text-gray-400 mt-2">프로필 사진 선택</Text>
+                <Text style={{ fontSize: 14, color: COLORS.gray[400], marginTop: 8 }}>프로필 사진 선택</Text>
             </View>
 
-            {/* 이름 */}
             <FormField label="이름 *">
                 <TextInput
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 bg-gray-50"
+                    style={styles.input}
                     placeholder="반려동물 이름"
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor={COLORS.gray[400]}
                     value={name}
                     onChangeText={setName}
                     maxLength={20}
                 />
             </FormField>
 
-            {/* 종류 */}
             <FormField label="종류">
-                <View className="flex-row gap-2">
+                <View style={{ flexDirection: "row", gap: 8 }}>
                     {PET_TYPES.map((t) => (
                         <TouchableOpacity
                             key={t}
                             onPress={() => setType(t)}
-                            className={`flex-1 py-3 rounded-xl items-center border ${
-                                type === t ? "bg-memento-500 border-memento-500" : "border-gray-200 bg-gray-50"
-                            }`}
+                            style={[
+                                styles.chipBtn,
+                                type === t
+                                    ? { backgroundColor: COLORS.memento[500], borderColor: COLORS.memento[500] }
+                                    : { borderColor: COLORS.gray[200], backgroundColor: COLORS.gray[50] },
+                            ]}
                         >
-                            <Text className={`text-sm font-medium ${type === t ? "text-white" : "text-gray-600"}`}>{t}</Text>
+                            <Text style={{
+                                fontSize: 14,
+                                fontWeight: "500",
+                                color: type === t ? "#fff" : COLORS.gray[600],
+                            }}>
+                                {t}
+                            </Text>
                         </TouchableOpacity>
                     ))}
                 </View>
             </FormField>
 
-            {/* 품종 */}
             <FormField label="품종">
                 <TextInput
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 bg-gray-50"
+                    style={styles.input}
                     placeholder="예: 말티즈, 코리안숏헤어"
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor={COLORS.gray[400]}
                     value={breed}
                     onChangeText={setBreed}
                 />
             </FormField>
 
-            {/* 성별 */}
             <FormField label="성별">
-                <View className="flex-row gap-2">
+                <View style={{ flexDirection: "row", gap: 8 }}>
                     {PET_GENDERS.map((g) => (
                         <TouchableOpacity
                             key={g}
                             onPress={() => setGender(g)}
-                            className={`flex-1 py-3 rounded-xl items-center border ${
-                                gender === g ? "bg-memento-500 border-memento-500" : "border-gray-200 bg-gray-50"
-                            }`}
+                            style={[
+                                styles.chipBtn,
+                                gender === g
+                                    ? { backgroundColor: COLORS.memento[500], borderColor: COLORS.memento[500] }
+                                    : { borderColor: COLORS.gray[200], backgroundColor: COLORS.gray[50] },
+                            ]}
                         >
-                            <Text className={`text-sm font-medium ${gender === g ? "text-white" : "text-gray-600"}`}>{g}</Text>
+                            <Text style={{
+                                fontSize: 14,
+                                fontWeight: "500",
+                                color: gender === g ? "#fff" : COLORS.gray[600],
+                            }}>
+                                {g}
+                            </Text>
                         </TouchableOpacity>
                     ))}
                 </View>
             </FormField>
 
-            {/* 생일 */}
             <FormField label="생일">
                 <TextInput
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 bg-gray-50"
+                    style={styles.input}
                     placeholder="YYYY-MM-DD"
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor={COLORS.gray[400]}
                     value={birthday}
                     onChangeText={setBirthday}
                     keyboardType="numbers-and-punctuation"
@@ -222,44 +231,40 @@ export default function NewPetScreen() {
                 />
             </FormField>
 
-            {/* 체중 */}
             <FormField label="체중 (kg)">
                 <TextInput
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 bg-gray-50"
+                    style={styles.input}
                     placeholder="예: 3.5"
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor={COLORS.gray[400]}
                     value={weight}
                     onChangeText={setWeight}
                     keyboardType="decimal-pad"
                 />
             </FormField>
 
-            {/* 성격 */}
             <FormField label="성격/특징">
                 <TextInput
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 bg-gray-50"
+                    style={[styles.input, { minHeight: 80, textAlignVertical: "top" }]}
                     placeholder="예: 활발하고 장난기 많음, 낯가림 심함"
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor={COLORS.gray[400]}
                     value={personality}
                     onChangeText={setPersonality}
                     multiline
                     numberOfLines={3}
                     maxLength={200}
-                    style={{ minHeight: 80, textAlignVertical: "top" }}
                 />
             </FormField>
 
-            {/* 저장 버튼 */}
             <TouchableOpacity
                 onPress={handleSave}
                 disabled={isLoading}
-                className="w-full bg-memento-500 rounded-xl py-4 items-center mt-4"
+                style={styles.primaryButton}
                 activeOpacity={0.85}
             >
                 {isLoading ? (
                     <ActivityIndicator color="#fff" />
                 ) : (
-                    <Text className="text-white font-semibold text-base">등록하기</Text>
+                    <Text style={styles.primaryButtonText}>등록하기</Text>
                 )}
             </TouchableOpacity>
         </ScrollView>
@@ -268,9 +273,60 @@ export default function NewPetScreen() {
 
 function FormField({ label, children }: { label: string; children: React.ReactNode }) {
     return (
-        <View className="mb-4">
-            <Text className="text-sm font-medium text-gray-700 mb-1.5">{label}</Text>
+        <View style={{ marginBottom: 16 }}>
+            <Text style={{ fontSize: 14, fontWeight: "500", color: COLORS.gray[700], marginBottom: 6 }}>{label}</Text>
             {children}
         </View>
     );
 }
+
+const styles = StyleSheet.create({
+    flex1White: { flex: 1, backgroundColor: COLORS.white },
+    avatar: { width: 112, height: 112, borderRadius: 56 },
+    avatarFallback: {
+        backgroundColor: COLORS.memento[50],
+        borderWidth: 2,
+        borderStyle: "dashed",
+        borderColor: COLORS.memento[200],
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    avatarEdit: {
+        position: "absolute",
+        bottom: 0,
+        right: 0,
+        width: 32,
+        height: 32,
+        backgroundColor: COLORS.memento[500],
+        borderRadius: 16,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    input: {
+        width: "100%",
+        borderWidth: 1,
+        borderColor: COLORS.gray[200],
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        fontSize: 14,
+        color: COLORS.gray[900],
+        backgroundColor: COLORS.gray[50],
+    },
+    chipBtn: {
+        flex: 1,
+        paddingVertical: 12,
+        borderRadius: 12,
+        alignItems: "center",
+        borderWidth: 1,
+    },
+    primaryButton: {
+        width: "100%",
+        backgroundColor: COLORS.memento[500],
+        borderRadius: 12,
+        paddingVertical: 16,
+        alignItems: "center",
+        marginTop: 16,
+    },
+    primaryButtonText: { color: "#fff", fontWeight: "600", fontSize: 16 },
+});

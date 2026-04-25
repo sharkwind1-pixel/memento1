@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity,
     FlatList, RefreshControl, ActivityIndicator,
-    TextInput,
+    TextInput, StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -15,6 +15,7 @@ import { API_BASE_URL } from "@/config/constants";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
 import { CommunityPost, CommunitySubcategory } from "@/types";
+import { COLORS } from "@/lib/theme";
 
 const SUBCATEGORIES: { id: CommunitySubcategory; label: string }[] = [
     { id: "free", label: "자유" },
@@ -34,14 +35,12 @@ export default function CommunityScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
 
-    const accentColor = isMemorialMode ? "#F59E0B" : "#05B2DC";
+    const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
 
     const fetchPosts = useCallback(async () => {
         try {
             const url = `${API_BASE_URL}/api/posts?subcategory=${activeTab}&limit=20`;
-            const headers: Record<string, string> = {
-                "Content-Type": "application/json",
-            };
+            const headers: Record<string, string> = { "Content-Type": "application/json" };
             if (session) headers["Authorization"] = `Bearer ${session.access_token}`;
 
             const res = await fetch(url, { headers });
@@ -49,7 +48,7 @@ export default function CommunityScreen() {
             const data = await res.json();
             setPosts(data.posts ?? data ?? []);
         } catch {
-            // 에러 무시
+            // ignore
         } finally {
             setIsLoading(false);
             setRefreshing(false);
@@ -66,78 +65,70 @@ export default function CommunityScreen() {
         await fetchPosts();
     }
 
+    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.white;
+
     return (
-        <SafeAreaView
-            className={`flex-1 ${isMemorialMode ? "bg-gray-950" : "bg-white"}`}
-            edges={["top"]}
-        >
-            {/* 헤더 */}
-            <View className="px-5 pt-4 pb-3">
-                <View className="flex-row items-center justify-between mb-3">
-                    <Text className={`text-xl font-bold ${isMemorialMode ? "text-white" : "text-gray-900"}`}>
+        <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
+            <View style={styles.header}>
+                <View style={styles.headerRow}>
+                    <Text style={[styles.title, { color: isMemorialMode ? COLORS.white : COLORS.gray[900] }]}>
                         커뮤니티
                     </Text>
                     <TouchableOpacity
                         onPress={() => router.push({ pathname: "/post/write", params: { subcategory: activeTab } })}
-                        className="w-9 h-9 rounded-full items-center justify-center"
-                        style={{ backgroundColor: accentColor + "20" }}
+                        style={[styles.writeBtn, { backgroundColor: accentColor + "20" }]}
                     >
                         <Ionicons name="create-outline" size={20} color={accentColor} />
                     </TouchableOpacity>
                 </View>
 
-                {/* 검색 */}
-                <View
-                    className={`flex-row items-center rounded-xl px-3 py-2.5 ${
-                        isMemorialMode ? "bg-gray-800" : "bg-gray-100"
-                    }`}
-                >
-                    <Ionicons name="search-outline" size={16} color="#9CA3AF" />
+                <View style={[styles.searchBar, { backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100] }]}>
+                    <Ionicons name="search-outline" size={16} color={COLORS.gray[400]} />
                     <TextInput
-                        className={`flex-1 ml-2 text-sm ${isMemorialMode ? "text-white" : "text-gray-900"}`}
+                        style={[styles.searchInput, { color: isMemorialMode ? COLORS.white : COLORS.gray[900] }]}
                         placeholder="게시글 검색..."
-                        placeholderTextColor="#9CA3AF"
+                        placeholderTextColor={COLORS.gray[400]}
                         value={searchQuery}
                         onChangeText={setSearchQuery}
                     />
                 </View>
             </View>
 
-            {/* 서브카테고리 탭 */}
             <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                className="px-5 mb-3"
-                contentContainerStyle={{ gap: 8 }}
+                style={styles.subcatScroll}
+                contentContainerStyle={{ gap: 8, paddingHorizontal: 20 }}
             >
                 {SUBCATEGORIES.map((cat) => (
                     <TouchableOpacity
                         key={cat.id}
                         onPress={() => setActiveTab(cat.id)}
-                        className="px-4 py-1.5 rounded-full"
-                        style={{
-                            backgroundColor:
-                                activeTab === cat.id
+                        style={[
+                            styles.subcatPill,
+                            {
+                                backgroundColor: activeTab === cat.id
                                     ? accentColor
-                                    : isMemorialMode ? "#1F2937" : "#F3F4F6",
-                        }}
+                                    : isMemorialMode ? COLORS.gray[800] : COLORS.gray[100],
+                            },
+                        ]}
                         activeOpacity={0.8}
                     >
-                        <Text
-                            className={`text-sm font-medium ${
-                                activeTab === cat.id ? "text-white" :
-                                isMemorialMode ? "text-gray-400" : "text-gray-600"
-                            }`}
-                        >
+                        <Text style={{
+                            fontSize: 14,
+                            fontWeight: "500",
+                            color: activeTab === cat.id
+                                ? "#fff"
+                                : isMemorialMode ? COLORS.gray[400] : COLORS.gray[600],
+                        }}>
                             {cat.label}
                         </Text>
                     </TouchableOpacity>
                 ))}
             </ScrollView>
 
-            {/* 게시글 목록 */}
             {isLoading ? (
-                <View className="flex-1 items-center justify-center">
+                <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
                     <ActivityIndicator size="large" color={accentColor} />
                 </View>
             ) : (
@@ -151,16 +142,12 @@ export default function CommunityScreen() {
                     contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}
                     showsVerticalScrollIndicator={false}
                     refreshControl={
-                        <RefreshControl
-                            refreshing={refreshing}
-                            onRefresh={onRefresh}
-                            tintColor={accentColor}
-                        />
+                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accentColor} />
                     }
                     ListEmptyComponent={
-                        <View className="items-center py-16">
-                            <Ionicons name="chatbubbles-outline" size={44} color="#D1D5DB" />
-                            <Text className="text-gray-400 mt-3 text-sm">
+                        <View style={{ alignItems: "center", paddingVertical: 64 }}>
+                            <Ionicons name="chatbubbles-outline" size={44} color={COLORS.gray[300]} />
+                            <Text style={{ color: COLORS.gray[400], marginTop: 12, fontSize: 14 }}>
                                 아직 게시글이 없어요.
                             </Text>
                         </View>
@@ -174,10 +161,7 @@ export default function CommunityScreen() {
                         />
                     )}
                     ItemSeparatorComponent={() => (
-                        <View
-                            className="h-px mx-0 my-1"
-                            style={{ backgroundColor: isMemorialMode ? "#1F2937" : "#F3F4F6" }}
-                        />
+                        <View style={{ height: 1, marginVertical: 4, backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100] }} />
                     )}
                 />
             )}
@@ -192,58 +176,64 @@ function PostCard({ post, isMemorialMode, accentColor, onPress }: {
     onPress?: () => void;
 }) {
     return (
-        <TouchableOpacity
-            className="py-4"
-            activeOpacity={0.75}
-            onPress={onPress}
-        >
-            <View className="flex-row items-start gap-2 mb-1.5">
-                {post.tag && (
-                    <View
-                        className="px-2 py-0.5 rounded-full"
-                        style={{ backgroundColor: accentColor + "20" }}
-                    >
-                        <Text className="text-xs font-medium" style={{ color: accentColor }}>
+        <TouchableOpacity style={{ paddingVertical: 16 }} activeOpacity={0.75} onPress={onPress}>
+            {post.tag && (
+                <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8, marginBottom: 6 }}>
+                    <View style={[styles.tagBadge, { backgroundColor: accentColor + "20" }]}>
+                        <Text style={{ fontSize: 12, fontWeight: "500", color: accentColor }}>
                             {post.tag}
                         </Text>
                     </View>
-                )}
-            </View>
+                </View>
+            )}
             <Text
-                className={`text-sm font-semibold leading-5 ${isMemorialMode ? "text-white" : "text-gray-900"}`}
+                style={{
+                    fontSize: 14,
+                    fontWeight: "600",
+                    lineHeight: 20,
+                    color: isMemorialMode ? COLORS.white : COLORS.gray[900],
+                }}
                 numberOfLines={2}
             >
                 {post.title}
             </Text>
             {post.preview && (
                 <Text
-                    className={`text-xs mt-1 leading-4 ${isMemorialMode ? "text-gray-400" : "text-gray-500"}`}
+                    style={{
+                        fontSize: 12,
+                        marginTop: 4,
+                        lineHeight: 16,
+                        color: isMemorialMode ? COLORS.gray[400] : COLORS.gray[500],
+                    }}
                     numberOfLines={2}
                 >
                     {post.preview}
                 </Text>
             )}
-            <View className="flex-row items-center gap-3 mt-2">
-                <Text className={`text-xs ${isMemorialMode ? "text-gray-500" : "text-gray-400"}`}>
+            <View style={styles.metaRow}>
+                <Text style={{
+                    fontSize: 12,
+                    color: isMemorialMode ? COLORS.gray[500] : COLORS.gray[400],
+                }}>
                     {post.author}
                 </Text>
-                <Text className={`text-xs ${isMemorialMode ? "text-gray-600" : "text-gray-300"}`}>·</Text>
-                <View className="flex-row items-center gap-1">
-                    <Ionicons name="heart-outline" size={11} color="#9CA3AF" />
-                    <Text className={`text-xs ${isMemorialMode ? "text-gray-500" : "text-gray-400"}`}>
+                <Text style={{ fontSize: 12, color: isMemorialMode ? COLORS.gray[600] : COLORS.gray[300] }}>·</Text>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                    <Ionicons name="heart-outline" size={11} color={COLORS.gray[400]} />
+                    <Text style={{ fontSize: 12, color: isMemorialMode ? COLORS.gray[500] : COLORS.gray[400] }}>
                         {post.likes}
                     </Text>
                 </View>
-                <View className="flex-row items-center gap-1">
-                    <Ionicons name="chatbubble-outline" size={11} color="#9CA3AF" />
-                    <Text className={`text-xs ${isMemorialMode ? "text-gray-500" : "text-gray-400"}`}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                    <Ionicons name="chatbubble-outline" size={11} color={COLORS.gray[400]} />
+                    <Text style={{ fontSize: 12, color: isMemorialMode ? COLORS.gray[500] : COLORS.gray[400] }}>
                         {post.comments}
                     </Text>
                 </View>
                 {post.time && (
                     <>
-                        <Text className={`text-xs ${isMemorialMode ? "text-gray-600" : "text-gray-300"}`}>·</Text>
-                        <Text className={`text-xs ${isMemorialMode ? "text-gray-500" : "text-gray-400"}`}>
+                        <Text style={{ fontSize: 12, color: isMemorialMode ? COLORS.gray[600] : COLORS.gray[300] }}>·</Text>
+                        <Text style={{ fontSize: 12, color: isMemorialMode ? COLORS.gray[500] : COLORS.gray[400] }}>
                             {post.time}
                         </Text>
                     </>
@@ -252,3 +242,23 @@ function PostCard({ post, isMemorialMode, accentColor, onPress }: {
         </TouchableOpacity>
     );
 }
+
+const styles = StyleSheet.create({
+    flex1: { flex: 1 },
+    header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12 },
+    headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
+    title: { fontSize: 20, fontWeight: "bold" },
+    writeBtn: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },
+    searchBar: {
+        flexDirection: "row",
+        alignItems: "center",
+        borderRadius: 12,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+    },
+    searchInput: { flex: 1, marginLeft: 8, fontSize: 14 },
+    subcatScroll: { marginBottom: 12 },
+    subcatPill: { paddingHorizontal: 16, paddingVertical: 6, borderRadius: 9999 },
+    tagBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 9999 },
+    metaRow: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 8 },
+});

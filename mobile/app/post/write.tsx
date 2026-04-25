@@ -5,7 +5,7 @@
 import { useState } from "react";
 import {
     View, Text, TextInput, TouchableOpacity, ScrollView,
-    Alert, ActivityIndicator, Image,
+    Alert, ActivityIndicator, Image, StyleSheet,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -14,6 +14,7 @@ import { API_BASE_URL } from "@/config/constants";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
 import { CommunitySubcategory, PostTag } from "@/types";
+import { COLORS } from "@/lib/theme";
 
 const POST_TAGS: PostTag[] = ["정보", "일상", "질문", "강아지", "고양이", "햄스터", "토끼"];
 
@@ -29,7 +30,7 @@ export default function WritePostScreen() {
     const [images, setImages] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
-    const accentColor = isMemorialMode ? "#F59E0B" : "#05B2DC";
+    const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
 
     async function pickImage() {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -87,28 +88,40 @@ export default function WritePostScreen() {
         }
     }
 
+    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.white;
+    const borderColor = isMemorialMode ? COLORS.gray[800] : COLORS.gray[100];
+
     return (
-        <View className={`flex-1 ${isMemorialMode ? "bg-gray-950" : "bg-white"}`}>
-            <ScrollView className="flex-1 px-5" keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-                {/* 말머리 */}
+        <View style={[styles.flex1, { backgroundColor: bgColor }]}>
+            <ScrollView style={[styles.flex1, { paddingHorizontal: 20 }]} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
                 {(subcategory === "free" || !subcategory) && (
-                    <View className="mt-4 mb-3">
-                        <Text className={`text-xs font-medium mb-2 ${isMemorialMode ? "text-gray-400" : "text-gray-500"}`}>말머리</Text>
+                    <View style={{ marginTop: 16, marginBottom: 12 }}>
+                        <Text style={{
+                            fontSize: 12,
+                            fontWeight: "500",
+                            marginBottom: 8,
+                            color: isMemorialMode ? COLORS.gray[400] : COLORS.gray[500],
+                        }}>
+                            말머리
+                        </Text>
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
                             {POST_TAGS.map((tag) => (
                                 <TouchableOpacity
                                     key={tag}
                                     onPress={() => setSelectedTag(selectedTag === tag ? null : tag)}
-                                    className="px-3 py-1.5 rounded-full border"
-                                    style={{
-                                        backgroundColor: selectedTag === tag ? accentColor : "transparent",
-                                        borderColor: selectedTag === tag ? accentColor : (isMemorialMode ? "#374151" : "#E5E7EB"),
-                                    }}
+                                    style={[
+                                        styles.tagPill,
+                                        {
+                                            backgroundColor: selectedTag === tag ? accentColor : "transparent",
+                                            borderColor: selectedTag === tag ? accentColor : (isMemorialMode ? COLORS.gray[700] : COLORS.gray[200]),
+                                        },
+                                    ]}
                                 >
-                                    <Text
-                                        className="text-xs font-medium"
-                                        style={{ color: selectedTag === tag ? "#fff" : (isMemorialMode ? "#9CA3AF" : "#6B7280") }}
-                                    >
+                                    <Text style={{
+                                        fontSize: 12,
+                                        fontWeight: "500",
+                                        color: selectedTag === tag ? "#fff" : (isMemorialMode ? COLORS.gray[400] : COLORS.gray[500]),
+                                    }}>
                                         {tag}
                                     </Text>
                                 </TouchableOpacity>
@@ -117,21 +130,28 @@ export default function WritePostScreen() {
                     </View>
                 )}
 
-                {/* 제목 */}
                 <TextInput
-                    className={`text-lg font-semibold py-3 border-b ${isMemorialMode ? "text-white border-gray-800" : "text-gray-900 border-gray-100"}`}
+                    style={[
+                        styles.titleInput,
+                        {
+                            color: isMemorialMode ? COLORS.white : COLORS.gray[900],
+                            borderBottomColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100],
+                        },
+                    ]}
                     placeholder="제목을 입력하세요"
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor={COLORS.gray[400]}
                     value={title}
                     onChangeText={setTitle}
                     maxLength={100}
                 />
 
-                {/* 본문 */}
                 <TextInput
-                    className={`text-sm leading-6 py-4 min-h-48 ${isMemorialMode ? "text-gray-200" : "text-gray-700"}`}
+                    style={[
+                        styles.contentInput,
+                        { color: isMemorialMode ? COLORS.gray[200] : COLORS.gray[700] },
+                    ]}
                     placeholder="내용을 입력하세요..."
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor={COLORS.gray[400]}
                     value={content}
                     onChangeText={setContent}
                     multiline
@@ -139,15 +159,14 @@ export default function WritePostScreen() {
                     maxLength={5000}
                 />
 
-                {/* 첨부 이미지 미리보기 */}
                 {images.length > 0 && (
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4" contentContainerStyle={{ gap: 8 }}>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }} contentContainerStyle={{ gap: 8 }}>
                         {images.map((uri, i) => (
-                            <View key={i} className="relative">
-                                <Image source={{ uri }} className="w-24 h-24 rounded-xl" />
+                            <View key={i} style={{ position: "relative" }}>
+                                <Image source={{ uri }} style={styles.imgThumb} />
                                 <TouchableOpacity
                                     onPress={() => setImages((prev) => prev.filter((_, idx) => idx !== i))}
-                                    className="absolute top-1 right-1 w-5 h-5 bg-black/50 rounded-full items-center justify-center"
+                                    style={styles.imgRemove}
                                 >
                                     <Ionicons name="close" size={12} color="#fff" />
                                 </TouchableOpacity>
@@ -157,29 +176,28 @@ export default function WritePostScreen() {
                 )}
             </ScrollView>
 
-            {/* 하단 툴바 */}
-            <View
-                className="flex-row items-center justify-between px-5 py-3 border-t"
-                style={{ borderTopColor: isMemorialMode ? "#1F2937" : "#F3F4F6" }}
-            >
-                <TouchableOpacity onPress={pickImage} className="flex-row items-center gap-1.5" activeOpacity={0.7}>
-                    <Ionicons name="image-outline" size={22} color="#9CA3AF" />
-                    <Text className="text-sm text-gray-400">사진 ({images.length}/5)</Text>
+            <View style={[styles.toolbar, { borderTopColor: borderColor }]}>
+                <TouchableOpacity onPress={pickImage} style={styles.toolbarBtn} activeOpacity={0.7}>
+                    <Ionicons name="image-outline" size={22} color={COLORS.gray[400]} />
+                    <Text style={{ fontSize: 14, color: COLORS.gray[400] }}>사진 ({images.length}/5)</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                     onPress={handleSubmit}
                     disabled={isLoading || !title.trim() || !content.trim()}
-                    className="px-5 py-2.5 rounded-xl"
-                    style={{ backgroundColor: title.trim() && content.trim() ? accentColor : "#E5E7EB" }}
+                    style={[
+                        styles.submitBtn,
+                        { backgroundColor: title.trim() && content.trim() ? accentColor : COLORS.gray[200] },
+                    ]}
                 >
                     {isLoading ? (
                         <ActivityIndicator size="small" color="#fff" />
                     ) : (
-                        <Text
-                            className="text-sm font-semibold"
-                            style={{ color: title.trim() && content.trim() ? "#fff" : "#9CA3AF" }}
-                        >
+                        <Text style={{
+                            fontSize: 14,
+                            fontWeight: "600",
+                            color: title.trim() && content.trim() ? "#fff" : COLORS.gray[400],
+                        }}>
                             게시하기
                         </Text>
                     )}
@@ -188,3 +206,42 @@ export default function WritePostScreen() {
         </View>
     );
 }
+
+const styles = StyleSheet.create({
+    flex1: { flex: 1 },
+    tagPill: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 9999, borderWidth: 1 },
+    titleInput: {
+        fontSize: 18,
+        fontWeight: "600",
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+    },
+    contentInput: {
+        fontSize: 14,
+        lineHeight: 24,
+        paddingVertical: 16,
+        minHeight: 192,
+    },
+    imgThumb: { width: 96, height: 96, borderRadius: 12 },
+    imgRemove: {
+        position: "absolute",
+        top: 4,
+        right: 4,
+        width: 20,
+        height: 20,
+        backgroundColor: "rgba(0,0,0,0.5)",
+        borderRadius: 10,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    toolbar: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+        borderTopWidth: 1,
+    },
+    toolbarBtn: { flexDirection: "row", alignItems: "center", gap: 6 },
+    submitBtn: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12 },
+});

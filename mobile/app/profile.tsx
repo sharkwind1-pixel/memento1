@@ -5,22 +5,25 @@
 import { useState } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity,
-    Image, Alert, Switch, ActivityIndicator,
+    Image, Alert, ActivityIndicator, StyleSheet,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
-import { PRICING } from "@/config/constants";
+import { COLORS } from "@/lib/theme";
 
 export default function ProfileScreen() {
     const router = useRouter();
-    const { user, profile, isPremium, isAdminUser, points, signOut } = useAuth();
+    const { user, profile, isPremium, points, signOut } = useAuth();
     const { pets, isMemorialMode } = usePet();
     const [signingOut, setSigningOut] = useState(false);
 
-    const accentColor = isMemorialMode ? "#F59E0B" : "#05B2DC";
-    const nickname = profile?.nickname ?? user?.user_metadata?.nickname ?? user?.email?.split("@")[0] ?? "사용자";
+    const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
+    const nickname = profile?.nickname
+        ?? (user?.user_metadata?.nickname as string | undefined)
+        ?? user?.email?.split("@")[0]
+        ?? "사용자";
     const email = user?.email ?? "";
 
     async function handleSignOut() {
@@ -38,71 +41,63 @@ export default function ProfileScreen() {
         ]);
     }
 
+    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.gray[50];
+
     return (
-        <ScrollView
-            className={`flex-1 ${isMemorialMode ? "bg-gray-950" : "bg-gray-50"}`}
-            showsVerticalScrollIndicator={false}
-        >
-            {/* 프로필 헤더 */}
-            <View
-                className="items-center pt-8 pb-6 mx-4 mt-4 rounded-3xl"
-                style={{ backgroundColor: isMemorialMode ? "#111827" : "#fff" }}
-            >
+        <ScrollView style={[styles.flex1, { backgroundColor: bgColor }]} showsVerticalScrollIndicator={false}>
+            <View style={[styles.headerCard, { backgroundColor: isMemorialMode ? COLORS.gray[900] : COLORS.white }]}>
                 {profile?.avatar ? (
-                    <Image source={{ uri: profile.avatar }} className="w-20 h-20 rounded-full mb-3" />
+                    <Image source={{ uri: profile.avatar }} style={styles.avatar} />
                 ) : (
-                    <View
-                        className="w-20 h-20 rounded-full mb-3 items-center justify-center"
-                        style={{ backgroundColor: accentColor + "20" }}
-                    >
+                    <View style={[styles.avatar, styles.avatarFallback, { backgroundColor: accentColor + "20" }]}>
                         <Ionicons name="person" size={36} color={accentColor} />
                     </View>
                 )}
-                <Text className={`text-lg font-bold ${isMemorialMode ? "text-white" : "text-gray-900"}`}>
+                <Text style={{ fontSize: 18, fontWeight: "bold", color: isMemorialMode ? COLORS.white : COLORS.gray[900] }}>
                     {nickname}
                 </Text>
-                <Text className="text-sm text-gray-400 mt-0.5">{email}</Text>
+                <Text style={{ fontSize: 14, color: COLORS.gray[400], marginTop: 2 }}>{email}</Text>
 
-                {/* 구독 배지 */}
-                <View className="flex-row gap-2 mt-3">
+                <View style={styles.badgeRow}>
                     {isPremium ? (
-                        <View className="flex-row items-center gap-1 px-3 py-1 rounded-full bg-memento-500">
+                        <View style={[styles.premiumBadge, { backgroundColor: COLORS.memento[500] }]}>
                             <Ionicons name="star" size={12} color="#fff" />
-                            <Text className="text-xs font-semibold text-white">프리미엄</Text>
+                            <Text style={{ fontSize: 12, fontWeight: "600", color: "#fff" }}>프리미엄</Text>
                         </View>
                     ) : (
                         <TouchableOpacity
                             onPress={() => router.push("/subscription")}
-                            className="flex-row items-center gap-1 px-3 py-1 rounded-full border border-memento-300"
+                            style={styles.upgradeBadge}
                         >
                             <Ionicons name="arrow-up-circle-outline" size={12} color={accentColor} />
-                            <Text className="text-xs font-medium" style={{ color: accentColor }}>업그레이드</Text>
+                            <Text style={{ fontSize: 12, fontWeight: "500", color: accentColor }}>업그레이드</Text>
                         </TouchableOpacity>
                     )}
-                    <View className="flex-row items-center gap-1 px-3 py-1 rounded-full bg-gray-100">
-                        <Ionicons name="star" size={12} color="#F59E0B" />
-                        <Text className="text-xs font-semibold text-gray-700">{(points ?? 0).toLocaleString()}P</Text>
+                    <View style={styles.pointBadge}>
+                        <Ionicons name="star" size={12} color={COLORS.memorial[500]} />
+                        <Text style={{ fontSize: 12, fontWeight: "600", color: COLORS.gray[700] }}>
+                            {(points ?? 0).toLocaleString()}P
+                        </Text>
                     </View>
                 </View>
             </View>
 
-            {/* 내 반려동물 */}
             <SectionCard title="내 반려동물" isMemorialMode={isMemorialMode}>
                 {pets.map((pet) => (
                     <SettingsRow
                         key={pet.id}
                         icon={
-                            <View className="w-8 h-8 rounded-full overflow-hidden bg-gray-100 items-center justify-center">
+                            <View style={styles.petIconWrap}>
                                 {pet.profileImage ? (
-                                    <Image source={{ uri: pet.profileImage }} className="w-8 h-8" />
+                                    <Image source={{ uri: pet.profileImage }} style={{ width: 32, height: 32 }} />
                                 ) : (
-                                    <Text className="text-base">{pet.type === "강아지" ? "🐶" : "🐱"}</Text>
+                                    <Text style={{ fontSize: 16 }}>{pet.type === "강아지" ? "🐶" : "🐱"}</Text>
                                 )}
                             </View>
                         }
                         label={pet.name}
                         sublabel={`${pet.breed || pet.type} · ${pet.gender}`}
-                        onPress={() => router.push(`/pet/${pet.id}`)}
+                        onPress={() => router.push(`/pet/${pet.id}` as never)}
                         isMemorialMode={isMemorialMode}
                     />
                 ))}
@@ -115,58 +110,57 @@ export default function ProfileScreen() {
                 />
             </SectionCard>
 
-            {/* 계정 설정 */}
             <SectionCard title="계정" isMemorialMode={isMemorialMode}>
                 <SettingsRow
-                    icon={<Ionicons name="card-outline" size={22} color="#6B7280" />}
+                    icon={<Ionicons name="card-outline" size={22} color={COLORS.gray[500]} />}
                     label="구독 관리"
                     sublabel={isPremium ? "프리미엄 이용 중" : "무료 플랜"}
                     onPress={() => router.push("/subscription")}
                     isMemorialMode={isMemorialMode}
                 />
                 <SettingsRow
-                    icon={<Ionicons name="notifications-outline" size={22} color="#6B7280" />}
+                    icon={<Ionicons name="notifications-outline" size={22} color={COLORS.gray[500]} />}
                     label="알림 설정"
                     onPress={() => router.push("/notifications")}
                     isMemorialMode={isMemorialMode}
                 />
             </SectionCard>
 
-            {/* 앱 정보 */}
             <SectionCard title="앱 정보" isMemorialMode={isMemorialMode}>
                 <SettingsRow
-                    icon={<Ionicons name="document-text-outline" size={22} color="#6B7280" />}
+                    icon={<Ionicons name="document-text-outline" size={22} color={COLORS.gray[500]} />}
                     label="이용약관"
                     onPress={() => {}}
                     isMemorialMode={isMemorialMode}
                 />
                 <SettingsRow
-                    icon={<Ionicons name="shield-outline" size={22} color="#6B7280" />}
+                    icon={<Ionicons name="shield-outline" size={22} color={COLORS.gray[500]} />}
                     label="개인정보처리방침"
                     onPress={() => {}}
                     isMemorialMode={isMemorialMode}
                 />
-                <View className="flex-row items-center justify-between px-4 py-3.5">
-                    <View className="flex-row items-center gap-3">
-                        <Ionicons name="information-circle-outline" size={22} color="#6B7280" />
-                        <Text className={`text-sm ${isMemorialMode ? "text-gray-300" : "text-gray-700"}`}>버전</Text>
+                <View style={styles.versionRow}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                        <Ionicons name="information-circle-outline" size={22} color={COLORS.gray[500]} />
+                        <Text style={{ fontSize: 14, color: isMemorialMode ? COLORS.gray[300] : COLORS.gray[700] }}>버전</Text>
                     </View>
-                    <Text className="text-sm text-gray-400">1.0.0</Text>
+                    <Text style={{ fontSize: 14, color: COLORS.gray[400] }}>1.0.0</Text>
                 </View>
             </SectionCard>
 
-            {/* 로그아웃 */}
-            <View className="mx-4 mb-8">
+            <View style={{ marginHorizontal: 16, marginBottom: 32 }}>
                 <TouchableOpacity
                     onPress={handleSignOut}
                     disabled={signingOut}
-                    className="w-full py-4 rounded-2xl items-center border border-red-200"
-                    style={{ backgroundColor: isMemorialMode ? "#1F0000" : "#FEF2F2" }}
+                    style={[
+                        styles.signoutBtn,
+                        { backgroundColor: isMemorialMode ? "#1F0000" : COLORS.red[50] },
+                    ]}
                 >
                     {signingOut ? (
-                        <ActivityIndicator color="#EF4444" />
+                        <ActivityIndicator color={COLORS.red[500]} />
                     ) : (
-                        <Text className="text-red-500 font-semibold text-sm">로그아웃</Text>
+                        <Text style={{ color: COLORS.red[500], fontWeight: "600", fontSize: 14 }}>로그아웃</Text>
                     )}
                 </TouchableOpacity>
             </View>
@@ -180,14 +174,22 @@ function SectionCard({ title, children, isMemorialMode }: {
     isMemorialMode: boolean;
 }) {
     return (
-        <View className="mx-4 mb-3">
-            <Text className={`text-xs font-semibold uppercase tracking-wider mb-2 px-1 ${isMemorialMode ? "text-gray-500" : "text-gray-400"}`}>
+        <View style={{ marginHorizontal: 16, marginBottom: 12 }}>
+            <Text style={{
+                fontSize: 12,
+                fontWeight: "600",
+                textTransform: "uppercase",
+                letterSpacing: 0.5,
+                marginBottom: 8,
+                paddingHorizontal: 4,
+                color: isMemorialMode ? COLORS.gray[500] : COLORS.gray[400],
+            }}>
                 {title}
             </Text>
-            <View
-                className="rounded-2xl overflow-hidden"
-                style={{ backgroundColor: isMemorialMode ? "#111827" : "#fff" }}
-            >
+            <View style={[
+                styles.sectionCardInner,
+                { backgroundColor: isMemorialMode ? COLORS.gray[900] : COLORS.white },
+            ]}>
                 {children}
             </View>
         </View>
@@ -206,21 +208,101 @@ function SettingsRow({ icon, label, sublabel, onPress, isMemorialMode, labelColo
         <TouchableOpacity
             onPress={onPress}
             activeOpacity={0.7}
-            className="flex-row items-center justify-between px-4 py-3.5 border-b"
-            style={{ borderBottomColor: isMemorialMode ? "#1F2937" : "#F9FAFB" }}
+            style={[
+                styles.settingsRow,
+                { borderBottomColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[50] },
+            ]}
         >
-            <View className="flex-row items-center gap-3">
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
                 {icon}
                 <View>
-                    <Text className="text-sm" style={{ color: labelColor ?? (isMemorialMode ? "#F9FAFB" : "#111827") }}>
+                    <Text style={{
+                        fontSize: 14,
+                        color: labelColor ?? (isMemorialMode ? COLORS.gray[50] : COLORS.gray[900]),
+                    }}>
                         {label}
                     </Text>
                     {sublabel && (
-                        <Text className="text-xs text-gray-400 mt-0.5">{sublabel}</Text>
+                        <Text style={{ fontSize: 12, color: COLORS.gray[400], marginTop: 2 }}>{sublabel}</Text>
                     )}
                 </View>
             </View>
-            <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+            <Ionicons name="chevron-forward" size={16} color={COLORS.gray[400]} />
         </TouchableOpacity>
     );
 }
+
+const styles = StyleSheet.create({
+    flex1: { flex: 1 },
+    headerCard: {
+        alignItems: "center",
+        paddingTop: 32,
+        paddingBottom: 24,
+        marginHorizontal: 16,
+        marginTop: 16,
+        borderRadius: 24,
+    },
+    avatar: { width: 80, height: 80, borderRadius: 40, marginBottom: 12 },
+    avatarFallback: { alignItems: "center", justifyContent: "center" },
+    badgeRow: { flexDirection: "row", gap: 8, marginTop: 12 },
+    premiumBadge: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+        borderRadius: 9999,
+    },
+    upgradeBadge: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+        borderRadius: 9999,
+        borderWidth: 1,
+        borderColor: COLORS.memento[300],
+    },
+    pointBadge: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+        borderRadius: 9999,
+        backgroundColor: COLORS.gray[100],
+    },
+    sectionCardInner: { borderRadius: 16, overflow: "hidden" },
+    settingsRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        borderBottomWidth: 1,
+    },
+    petIconWrap: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        overflow: "hidden",
+        backgroundColor: COLORS.gray[100],
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    versionRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+    },
+    signoutBtn: {
+        width: "100%",
+        paddingVertical: 16,
+        borderRadius: 16,
+        alignItems: "center",
+        borderWidth: 1,
+        borderColor: COLORS.red[200],
+    },
+});

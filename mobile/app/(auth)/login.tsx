@@ -1,129 +1,229 @@
 /**
- * 로그인 화면
+ * 로그인 화면 (소셜 로그인: 네이버 / 카카오 / 구글)
+ * 이메일/비번 직접 입력은 지원하지 않음 — 메멘토애니 정책
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
-    View, Text, TextInput, TouchableOpacity,
-    KeyboardAvoidingView, Platform, ScrollView,
-    Image, ActivityIndicator, Alert,
+    View, Text, TouchableOpacity, Image, Alert,
+    ActivityIndicator, ScrollView, StyleSheet, Linking,
 } from "react-native";
-import { Link, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import Svg, { Path } from "react-native-svg";
 import { useAuth } from "@/contexts/AuthContext";
+import { COLORS } from "@/lib/theme";
+
+type Provider = "naver" | "kakao" | "google";
 
 export default function LoginScreen() {
     const router = useRouter();
-    const { signIn } = useAuth();
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
+    const { signInWithGoogle, signInWithKakao, signInWithNaver, session } = useAuth();
+    const [loadingProvider, setLoadingProvider] = useState<Provider | null>(null);
 
-    async function handleLogin() {
-        if (!email.trim() || !password.trim()) {
-            Alert.alert("알림", "이메일과 비밀번호를 입력해주세요.");
-            return;
-        }
+    // 세션이 늦게라도 set되면 자동으로 탭 화면 이동 (cold-start hard guard 폴백)
+    useEffect(() => {
+        if (session) router.replace("/(tabs)");
+    }, [session, router]);
 
-        setIsLoading(true);
-        const { error } = await signIn(email.trim(), password);
-        setIsLoading(false);
+    async function handleLogin(provider: Provider) {
+        if (loadingProvider) return;
+        setLoadingProvider(provider);
 
-        if (error) {
-            Alert.alert("로그인 실패", "이메일 또는 비밀번호를 확인해주세요.");
-        } else {
+        try {
+            const fn =
+                provider === "google" ? signInWithGoogle
+                : provider === "kakao" ? signInWithKakao
+                : signInWithNaver;
+
+            const { error } = await fn();
+            if (error) {
+                Alert.alert("로그인 실패", error.message);
+                return;
+            }
             router.replace("/(tabs)");
+        } catch (e) {
+            Alert.alert("로그인 실패", (e as Error).message || "다시 시도해주세요.");
+        } finally {
+            setLoadingProvider(null);
         }
     }
 
     return (
-        <KeyboardAvoidingView
-            className="flex-1 bg-white"
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
+        <ScrollView
+            style={styles.flex1White}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
         >
-            <ScrollView
-                contentContainerStyle={{ flexGrow: 1 }}
-                keyboardShouldPersistTaps="handled"
-            >
-                <View className="flex-1 px-6 pt-20 pb-10">
-                    {/* 로고 */}
-                    <View className="items-center mb-12">
-                        <Image
-                            source={require("@/assets/icon.png")}
-                            className="w-20 h-20 rounded-2xl mb-4"
-                            resizeMode="contain"
-                        />
-                        <Text className="text-2xl font-bold text-gray-900">메멘토애니</Text>
-                        <Text className="text-sm text-gray-500 mt-1">특별한 매일을 함께</Text>
-                    </View>
-
-                    {/* 입력 폼 */}
-                    <View className="gap-4">
-                        <View>
-                            <Text className="text-sm font-medium text-gray-700 mb-1.5">이메일</Text>
-                            <TextInput
-                                className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-base text-gray-900 bg-gray-50"
-                                placeholder="이메일 주소"
-                                placeholderTextColor="#9CA3AF"
-                                value={email}
-                                onChangeText={setEmail}
-                                keyboardType="email-address"
-                                autoCapitalize="none"
-                                autoCorrect={false}
-                            />
-                        </View>
-
-                        <View>
-                            <Text className="text-sm font-medium text-gray-700 mb-1.5">비밀번호</Text>
-                            <TextInput
-                                className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-base text-gray-900 bg-gray-50"
-                                placeholder="비밀번호"
-                                placeholderTextColor="#9CA3AF"
-                                value={password}
-                                onChangeText={setPassword}
-                                secureTextEntry
-                            />
-                        </View>
-
-                        <TouchableOpacity
-                            className="w-full bg-memento-500 rounded-xl py-4 items-center mt-2"
-                            onPress={handleLogin}
-                            disabled={isLoading}
-                            activeOpacity={0.85}
-                        >
-                            {isLoading ? (
-                                <ActivityIndicator color="#fff" />
-                            ) : (
-                                <Text className="text-white font-semibold text-base">로그인</Text>
-                            )}
-                        </TouchableOpacity>
-                    </View>
-
-                    {/* 구분선 */}
-                    <View className="flex-row items-center my-6">
-                        <View className="flex-1 h-px bg-gray-200" />
-                        <Text className="mx-4 text-xs text-gray-400">또는</Text>
-                        <View className="flex-1 h-px bg-gray-200" />
-                    </View>
-
-                    {/* 회원가입 링크 */}
-                    <View className="items-center gap-3">
-                        <Link href="/(auth)/signup" asChild>
-                            <TouchableOpacity
-                                className="w-full border border-memento-300 rounded-xl py-4 items-center"
-                                activeOpacity={0.85}
-                            >
-                                <Text className="text-memento-600 font-semibold text-base">새 계정 만들기</Text>
-                            </TouchableOpacity>
-                        </Link>
-                    </View>
-
-                    {/* 하단 여백 */}
-                    <View className="flex-1" />
-                    <Text className="text-center text-xs text-gray-400 mt-8">
-                        로그인 시 이용약관 및 개인정보처리방침에 동의합니다.
-                    </Text>
+            <View style={styles.container}>
+                <View style={styles.logoWrap}>
+                    <Image
+                        source={require("@/assets/icon.png")}
+                        style={styles.logo}
+                        resizeMode="contain"
+                    />
+                    <Text style={styles.title}>메멘토애니</Text>
+                    <Text style={styles.tagline}>특별한 매일을 함께</Text>
                 </View>
-            </ScrollView>
-        </KeyboardAvoidingView>
+
+                <Text style={styles.intro}>
+                    소셜 계정으로 간편하게 시작하세요
+                </Text>
+
+                <View style={styles.buttonGroup}>
+                    <SocialButton
+                        provider="naver"
+                        label="네이버로 계속하기"
+                        bg="#03C75A"
+                        fg="#FFFFFF"
+                        loading={loadingProvider === "naver"}
+                        disabled={loadingProvider !== null}
+                        onPress={() => handleLogin("naver")}
+                        icon={
+                            <Svg width={18} height={18} viewBox="0 0 24 24">
+                                <Path
+                                    d="M16.273 12.845 7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z"
+                                    fill="#FFFFFF"
+                                />
+                            </Svg>
+                        }
+                    />
+
+                    <SocialButton
+                        provider="kakao"
+                        label="카카오로 계속하기"
+                        bg="#FEE500"
+                        fg="#191919"
+                        loading={loadingProvider === "kakao"}
+                        disabled={loadingProvider !== null}
+                        onPress={() => handleLogin("kakao")}
+                        icon={
+                            <Svg width={18} height={18} viewBox="0 0 24 24">
+                                <Path
+                                    d="M12 3C6.477 3 2 6.463 2 10.691c0 2.738 1.82 5.135 4.55 6.48-.168.607-.61 2.198-.7 2.543-.112.428.157.422.33.307.135-.09 2.15-1.46 3.02-2.048.57.083 1.16.127 1.8.127 5.523 0 10-3.463 10-7.409C22 6.463 17.523 3 12 3z"
+                                    fill="#191919"
+                                />
+                            </Svg>
+                        }
+                    />
+
+                    <SocialButton
+                        provider="google"
+                        label="Google로 계속하기"
+                        bg="#FFFFFF"
+                        fg={COLORS.gray[800]}
+                        bordered
+                        loading={loadingProvider === "google"}
+                        disabled={loadingProvider !== null}
+                        onPress={() => handleLogin("google")}
+                        icon={
+                            <Svg width={18} height={18} viewBox="0 0 24 24">
+                                <Path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                                <Path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                                <Path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                                <Path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                            </Svg>
+                        }
+                    />
+                </View>
+
+                <Text style={styles.disclaimer}>
+                    계속 진행하면{" "}
+                    <Text
+                        style={styles.linkText}
+                        onPress={() => Linking.openURL("https://mementoani.com/terms")}
+                    >
+                        이용약관
+                    </Text>
+                    {" 및 "}
+                    <Text
+                        style={styles.linkText}
+                        onPress={() => Linking.openURL("https://mementoani.com/privacy")}
+                    >
+                        개인정보처리방침
+                    </Text>
+                    에 동의하는 것으로 간주됩니다.
+                </Text>
+            </View>
+        </ScrollView>
     );
 }
+
+function SocialButton({
+    label, bg, fg, bordered, loading, disabled, onPress, icon,
+}: {
+    provider: Provider;
+    label: string;
+    bg: string;
+    fg: string;
+    bordered?: boolean;
+    loading: boolean;
+    disabled: boolean;
+    onPress: () => void;
+    icon: React.ReactNode;
+}) {
+    return (
+        <TouchableOpacity
+            onPress={onPress}
+            disabled={disabled}
+            activeOpacity={0.85}
+            style={[
+                styles.socialButton,
+                { backgroundColor: bg },
+                bordered ? { borderWidth: 1, borderColor: COLORS.gray[200] } : null,
+                disabled && !loading ? { opacity: 0.55 } : null,
+            ]}
+        >
+            {loading ? (
+                <ActivityIndicator color={fg} />
+            ) : (
+                <>
+                    <View style={{ marginRight: 10 }}>{icon}</View>
+                    <Text style={[styles.socialButtonText, { color: fg }]}>
+                        {label}
+                    </Text>
+                </>
+            )}
+        </TouchableOpacity>
+    );
+}
+
+const styles = StyleSheet.create({
+    flex1White: { flex: 1, backgroundColor: COLORS.white },
+    scrollContent: { flexGrow: 1 },
+    container: {
+        flex: 1,
+        paddingHorizontal: 24,
+        paddingTop: 80,
+        paddingBottom: 48,
+    },
+    logoWrap: { alignItems: "center", marginBottom: 40 },
+    logo: { width: 88, height: 88, borderRadius: 20, marginBottom: 16 },
+    title: { fontSize: 26, fontWeight: "bold", color: COLORS.gray[900] },
+    tagline: { fontSize: 14, color: COLORS.gray[500], marginTop: 4 },
+    intro: {
+        fontSize: 14,
+        color: COLORS.gray[500],
+        textAlign: "center",
+        marginBottom: 24,
+    },
+    buttonGroup: { gap: 12 },
+    socialButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        width: "100%",
+        height: 52,
+        borderRadius: 14,
+        paddingHorizontal: 16,
+    },
+    socialButtonText: { fontSize: 15, fontWeight: "600" },
+    disclaimer: {
+        textAlign: "center",
+        fontSize: 12,
+        color: COLORS.gray[400],
+        marginTop: 32,
+        lineHeight: 18,
+    },
+    linkText: { textDecorationLine: "underline", color: COLORS.memento[500] },
+});

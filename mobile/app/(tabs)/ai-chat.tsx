@@ -6,7 +6,7 @@ import { useState, useRef, useEffect } from "react";
 import {
     View, Text, TextInput, TouchableOpacity,
     FlatList, KeyboardAvoidingView, Platform,
-    ActivityIndicator, Image, Alert,
+    ActivityIndicator, Image, StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -15,21 +15,20 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
 import { ChatMessage } from "@/types";
 import { API_BASE_URL } from "@/config/constants";
-import { supabase } from "@/lib/supabase";
+import { COLORS } from "@/lib/theme";
 
 export default function AiChatScreen() {
-    const { user, session } = useAuth();
+    const { session } = useAuth();
     const { selectedPet, isMemorialMode } = usePet();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [suggestions, setSuggestions] = useState<string[]>([]);
-    const flatListRef = useRef<FlatList>(null);
+    const flatListRef = useRef<FlatList<ChatMessage>>(null);
 
-    const accentColor = isMemorialMode ? "#F59E0B" : "#05B2DC";
+    const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
 
     useEffect(() => {
-        // 초기 인사 메시지
         if (selectedPet) {
             setMessages([{
                 id: "welcome",
@@ -74,9 +73,7 @@ export default function AiChatScreen() {
                 }),
             });
 
-            if (!res.ok) {
-                throw new Error(`API error ${res.status}`);
-            }
+            if (!res.ok) throw new Error(`API error ${res.status}`);
 
             const data = await res.json();
 
@@ -115,64 +112,55 @@ export default function AiChatScreen() {
 
     if (!selectedPet) {
         return (
-            <View className="flex-1 items-center justify-center bg-white px-6">
-                <Ionicons name="paw-outline" size={48} color="#D1D5DB" />
-                <Text className="text-gray-400 mt-3 text-center">
+            <View style={styles.emptyCenter}>
+                <Ionicons name="paw-outline" size={48} color={COLORS.gray[300]} />
+                <Text style={styles.emptyText}>
                     홈에서 반려동물을 선택하면{"\n"}AI 펫톡을 이용할 수 있어요.
                 </Text>
             </View>
         );
     }
 
+    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.white;
+    const borderColor = isMemorialMode ? COLORS.gray[800] : COLORS.gray[100];
+
     return (
-        <SafeAreaView
-            className={`flex-1 ${isMemorialMode ? "bg-gray-950" : "bg-white"}`}
-            edges={["top"]}
-        >
+        <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
             <KeyboardAvoidingView
-                className="flex-1"
+                style={styles.flex1}
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
                 keyboardVerticalOffset={0}
             >
-                {/* 헤더 */}
-                <View
-                    className="flex-row items-center px-5 py-3 border-b"
-                    style={{ borderBottomColor: isMemorialMode ? "#1F2937" : "#F3F4F6" }}
-                >
+                <View style={[styles.header, { borderBottomColor: borderColor }]}>
                     {selectedPet.profileImage ? (
-                        <Image
-                            source={{ uri: selectedPet.profileImage }}
-                            className="w-9 h-9 rounded-full mr-3"
-                        />
+                        <Image source={{ uri: selectedPet.profileImage }} style={styles.headerAvatar} />
                     ) : (
-                        <View
-                            className="w-9 h-9 rounded-full mr-3 items-center justify-center"
-                            style={{ backgroundColor: accentColor + "20" }}
-                        >
-                            <Text className="text-base">
+                        <View style={[styles.headerAvatar, styles.headerAvatarFallback, { backgroundColor: accentColor + "20" }]}>
+                            <Text style={{ fontSize: 16 }}>
                                 {selectedPet.type === "강아지" ? "🐶" : "🐱"}
                             </Text>
                         </View>
                     )}
                     <View>
-                        <Text
-                            className={`text-base font-semibold ${isMemorialMode ? "text-white" : "text-gray-900"}`}
-                        >
+                        <Text style={{
+                            fontSize: 16,
+                            fontWeight: "600",
+                            color: isMemorialMode ? COLORS.white : COLORS.gray[900],
+                        }}>
                             {selectedPet.name}
                         </Text>
-                        <Text className={`text-xs ${isMemorialMode ? "text-gray-400" : "text-gray-500"}`}>
+                        <Text style={{ fontSize: 12, color: isMemorialMode ? COLORS.gray[400] : COLORS.gray[500] }}>
                             AI 펫톡
                         </Text>
                     </View>
                 </View>
 
-                {/* 메시지 목록 */}
                 <FlatList
                     ref={flatListRef}
                     data={messages}
                     keyExtractor={(item) => item.id}
-                    className="flex-1 px-4"
-                    contentContainerStyle={{ paddingTop: 16, paddingBottom: 8 }}
+                    style={styles.messages}
+                    contentContainerStyle={{ paddingTop: 16, paddingBottom: 8, paddingHorizontal: 16 }}
                     showsVerticalScrollIndicator={false}
                     renderItem={({ item }) => (
                         <MessageBubble
@@ -184,18 +172,17 @@ export default function AiChatScreen() {
                     )}
                     ListFooterComponent={
                         isLoading ? (
-                            <View className="flex-row items-center gap-2 mb-3">
-                                <View
-                                    className="w-7 h-7 rounded-full items-center justify-center"
-                                    style={{ backgroundColor: accentColor + "20" }}
-                                >
-                                    <Text className="text-xs">
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                                <View style={[styles.bubbleAvatar, { backgroundColor: accentColor + "20" }]}>
+                                    <Text style={{ fontSize: 12 }}>
                                         {selectedPet.type === "강아지" ? "🐶" : "🐱"}
                                     </Text>
                                 </View>
                                 <View
-                                    className="px-4 py-3 rounded-2xl rounded-tl-sm"
-                                    style={{ backgroundColor: isMemorialMode ? "#1F2937" : "#F3F4F6" }}
+                                    style={[
+                                        styles.bubblePet,
+                                        { backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100] },
+                                    ]}
                                 >
                                     <ActivityIndicator size="small" color={accentColor} />
                                 </View>
@@ -204,7 +191,6 @@ export default function AiChatScreen() {
                     }
                 />
 
-                {/* 추천 질문 */}
                 {suggestions.length > 0 && (
                     <ScrollableSuggestions
                         suggestions={suggestions}
@@ -213,17 +199,17 @@ export default function AiChatScreen() {
                     />
                 )}
 
-                {/* 입력창 */}
-                <View
-                    className="flex-row items-end gap-2 px-4 py-3 border-t"
-                    style={{ borderTopColor: isMemorialMode ? "#1F2937" : "#F3F4F6" }}
-                >
+                <View style={[styles.inputRow, { borderTopColor: borderColor }]}>
                     <TextInput
-                        className={`flex-1 rounded-2xl px-4 py-3 text-sm max-h-28 ${
-                            isMemorialMode ? "bg-gray-800 text-white" : "bg-gray-100 text-gray-900"
-                        }`}
+                        style={[
+                            styles.textInput,
+                            {
+                                backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100],
+                                color: isMemorialMode ? COLORS.white : COLORS.gray[900],
+                            },
+                        ]}
                         placeholder="메시지 입력..."
-                        placeholderTextColor={isMemorialMode ? "#6B7280" : "#9CA3AF"}
+                        placeholderTextColor={isMemorialMode ? COLORS.gray[500] : COLORS.gray[400]}
                         value={input}
                         onChangeText={setInput}
                         multiline
@@ -233,16 +219,16 @@ export default function AiChatScreen() {
                     <TouchableOpacity
                         onPress={sendMessage}
                         disabled={!input.trim() || isLoading}
-                        className="w-10 h-10 rounded-full items-center justify-center"
-                        style={{
-                            backgroundColor: input.trim() && !isLoading ? accentColor : "#E5E7EB",
-                        }}
+                        style={[
+                            styles.sendBtn,
+                            { backgroundColor: input.trim() && !isLoading ? accentColor : COLORS.gray[200] },
+                        ]}
                         activeOpacity={0.85}
                     >
                         <Ionicons
                             name="arrow-up"
                             size={18}
-                            color={input.trim() && !isLoading ? "#fff" : "#9CA3AF"}
+                            color={input.trim() && !isLoading ? "#fff" : COLORS.gray[400]}
                         />
                     </TouchableOpacity>
                 </View>
@@ -250,8 +236,6 @@ export default function AiChatScreen() {
         </SafeAreaView>
     );
 }
-
-// ─── 서브 컴포넌트 ─────────────────────────────────────────
 
 function MessageBubble({ message, pet, isMemorialMode, accentColor }: {
     message: ChatMessage;
@@ -263,43 +247,36 @@ function MessageBubble({ message, pet, isMemorialMode, accentColor }: {
 
     if (isUser) {
         return (
-            <View className="flex-row justify-end mb-3">
-                <View
-                    className="max-w-[80%] px-4 py-3 rounded-2xl rounded-br-sm"
-                    style={{ backgroundColor: accentColor }}
-                >
-                    <Text className="text-white text-sm leading-5">{message.content}</Text>
+            <View style={{ flexDirection: "row", justifyContent: "flex-end", marginBottom: 12 }}>
+                <View style={[styles.bubbleUser, { backgroundColor: accentColor }]}>
+                    <Text style={{ color: "#fff", fontSize: 14, lineHeight: 20 }}>{message.content}</Text>
                 </View>
             </View>
         );
     }
 
+    const errorBg = "#FEE2E2";
+    const petBubbleBg = message.isError ? errorBg : isMemorialMode ? COLORS.gray[800] : COLORS.gray[100];
+
     return (
-        <View className="flex-row items-end gap-2 mb-3">
-            <View
-                className="w-7 h-7 rounded-full items-center justify-center mb-1 flex-shrink-0"
-                style={{ backgroundColor: accentColor + "20" }}
-            >
+        <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 8, marginBottom: 12 }}>
+            <View style={[styles.bubbleAvatar, { backgroundColor: accentColor + "20", marginBottom: 4 }]}>
                 {pet.profileImage ? (
-                    <Image source={{ uri: pet.profileImage }} className="w-7 h-7 rounded-full" />
+                    <Image source={{ uri: pet.profileImage }} style={styles.bubbleAvatar} />
                 ) : (
-                    <Text className="text-xs">{pet.type === "강아지" ? "🐶" : "🐱"}</Text>
+                    <Text style={{ fontSize: 12 }}>{pet.type === "강아지" ? "🐶" : "🐱"}</Text>
                 )}
             </View>
-            <View className="max-w-[80%]">
-                <View
-                    className="px-4 py-3 rounded-2xl rounded-tl-sm"
-                    style={{
-                        backgroundColor: message.isError
-                            ? "#FEE2E2"
-                            : isMemorialMode ? "#1F2937" : "#F3F4F6",
-                    }}
-                >
+            <View style={{ maxWidth: "80%" }}>
+                <View style={[styles.bubblePet, { backgroundColor: petBubbleBg }]}>
                     <Text
-                        className={`text-sm leading-5 ${
-                            message.isError ? "text-red-600" :
-                            isMemorialMode ? "text-white" : "text-gray-800"
-                        }`}
+                        style={{
+                            fontSize: 14,
+                            lineHeight: 20,
+                            color: message.isError
+                                ? "#DC2626"
+                                : isMemorialMode ? COLORS.white : COLORS.gray[800],
+                        }}
                     >
                         {message.content}
                     </Text>
@@ -307,7 +284,7 @@ function MessageBubble({ message, pet, isMemorialMode, accentColor }: {
                 {message.matchedPhoto && (
                     <Image
                         source={{ uri: message.matchedPhoto.url }}
-                        className="w-48 h-32 rounded-xl mt-2"
+                        style={{ width: 192, height: 128, borderRadius: 12, marginTop: 8 }}
                         resizeMode="cover"
                     />
                 )}
@@ -322,7 +299,7 @@ function ScrollableSuggestions({ suggestions, accentColor, onSelect }: {
     onSelect: (s: string) => void;
 }) {
     return (
-        <View className="px-4 pb-2">
+        <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
             <FlatList
                 data={suggestions}
                 horizontal
@@ -332,14 +309,84 @@ function ScrollableSuggestions({ suggestions, accentColor, onSelect }: {
                 renderItem={({ item }) => (
                     <TouchableOpacity
                         onPress={() => onSelect(item)}
-                        className="px-3 py-2 rounded-full border"
-                        style={{ borderColor: accentColor }}
+                        style={{
+                            paddingHorizontal: 12,
+                            paddingVertical: 8,
+                            borderRadius: 9999,
+                            borderWidth: 1,
+                            borderColor: accentColor,
+                        }}
                         activeOpacity={0.8}
                     >
-                        <Text className="text-xs" style={{ color: accentColor }}>{item}</Text>
+                        <Text style={{ fontSize: 12, color: accentColor }}>{item}</Text>
                     </TouchableOpacity>
                 )}
             />
         </View>
     );
 }
+
+const styles = StyleSheet.create({
+    flex1: { flex: 1 },
+    emptyCenter: {
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: COLORS.white,
+        paddingHorizontal: 24,
+    },
+    emptyText: { color: COLORS.gray[400], marginTop: 12, textAlign: "center" },
+    header: {
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+    },
+    headerAvatar: { width: 36, height: 36, borderRadius: 18, marginRight: 12 },
+    headerAvatarFallback: { alignItems: "center", justifyContent: "center" },
+    messages: { flex: 1 },
+    bubbleAvatar: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    bubbleUser: {
+        maxWidth: "80%",
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderRadius: 16,
+        borderBottomRightRadius: 4,
+    },
+    bubblePet: {
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderRadius: 16,
+        borderTopLeftRadius: 4,
+    },
+    inputRow: {
+        flexDirection: "row",
+        alignItems: "flex-end",
+        gap: 8,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderTopWidth: 1,
+    },
+    textInput: {
+        flex: 1,
+        borderRadius: 16,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        fontSize: 14,
+        maxHeight: 112,
+    },
+    sendBtn: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+});

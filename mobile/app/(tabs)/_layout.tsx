@@ -1,13 +1,14 @@
 /**
  * 탭 네비게이터 레이아웃
  * 5개 탭: 홈 / 기록 / AI펫톡 / 커뮤니티 / 매거진
- * 미니홈피는 기록 탭 내부 서브탭으로 이동
+ * 미니홈피는 탭에서 숨김 (기록 탭 내부 서브탭으로 접근)
  */
 
 import { Tabs } from "expo-router";
-import { View, Text, Platform } from "react-native";
+import { View, Text, Platform, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { usePet } from "@/contexts/PetContext";
+import { COLORS } from "@/lib/theme";
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>["name"];
 
@@ -23,7 +24,7 @@ function TabIcon({
     color: string;
 }) {
     return (
-        <View className="items-center justify-center pt-1">
+        <View style={styles.tabIconWrap}>
             <Ionicons name={name} size={22} color={color} />
             <Text
                 style={{
@@ -41,7 +42,7 @@ function TabIcon({
 
 export default function TabsLayout() {
     const { isMemorialMode } = usePet();
-    const activeColor = isMemorialMode ? "#F59E0B" : "#05B2DC";
+    const activeColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
 
     return (
         <Tabs
@@ -50,7 +51,7 @@ export default function TabsLayout() {
                 tabBarShowLabel: false,
                 tabBarStyle: {
                     backgroundColor: "#fff",
-                    borderTopColor: "#F3F4F6",
+                    borderTopColor: COLORS.gray[100],
                     borderTopWidth: 1,
                     height: Platform.OS === "ios" ? 80 : 62,
                     paddingBottom: Platform.OS === "ios" ? 20 : 6,
@@ -61,7 +62,7 @@ export default function TabsLayout() {
                     shadowRadius: 12,
                 },
                 tabBarActiveTintColor: activeColor,
-                tabBarInactiveTintColor: "#9CA3AF",
+                tabBarInactiveTintColor: COLORS.gray[400],
             }}
         >
             <Tabs.Screen
@@ -90,17 +91,16 @@ export default function TabsLayout() {
                     ),
                 }}
             />
-            {/* AI 펫톡 — 중앙 강조 탭 */}
             <Tabs.Screen
                 name="ai-chat"
                 options={{
-                    tabBarIcon: ({ focused, color }) => (
+                    tabBarIcon: ({ focused }) => (
                         <View
                             style={{
                                 width: 52,
                                 height: 52,
                                 borderRadius: 26,
-                                backgroundColor: focused ? activeColor : "#E5E7EB",
+                                backgroundColor: focused ? activeColor : COLORS.gray[200],
                                 alignItems: "center",
                                 justifyContent: "center",
                                 marginBottom: Platform.OS === "ios" ? 0 : 8,
@@ -114,7 +114,7 @@ export default function TabsLayout() {
                             <Ionicons
                                 name={focused ? "chatbubble-ellipses" : "chatbubble-ellipses-outline"}
                                 size={24}
-                                color={focused ? "#fff" : "#9CA3AF"}
+                                color={focused ? "#fff" : COLORS.gray[400]}
                             />
                         </View>
                     ),
@@ -146,7 +146,6 @@ export default function TabsLayout() {
                     ),
                 }}
             />
-            {/* 미니홈피 — 탭에서 숨김, 기록 탭 내부에서 접근 */}
             <Tabs.Screen
                 name="minihompy"
                 options={{ href: null }}
@@ -154,3 +153,7 @@ export default function TabsLayout() {
         </Tabs>
     );
 }
+
+const styles = StyleSheet.create({
+    tabIconWrap: { alignItems: "center", justifyContent: "center", paddingTop: 4 },
+});

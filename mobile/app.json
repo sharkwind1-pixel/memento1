@@ -6,7 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "scheme": "mementoani",
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -56,10 +55,11 @@
           "photosPermission": "반려동물 사진을 업로드하기 위해 갤러리에 접근합니다.",
           "cameraPermission": "반려동물 사진을 촬영하기 위해 카메라에 접근합니다."
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
-      "typedRoutes": true
+      "typedRoutes": false
     }
   }
 }

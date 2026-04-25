@@ -1,13 +1,12 @@
 /**
  * 매거진 탭 — 펫 정보 아티클 목록
- * 웹 /api/magazine 그대로 재사용
  */
 
 import { useState, useEffect, useCallback } from "react";
 import {
     View, Text, FlatList, TouchableOpacity,
     Image, TextInput, RefreshControl, ActivityIndicator,
-    ScrollView,
+    ScrollView, StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -15,6 +14,7 @@ import { useRouter } from "expo-router";
 import { API_BASE_URL } from "@/config/constants";
 import { usePet } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { COLORS } from "@/lib/theme";
 
 interface Article {
     id: number;
@@ -60,7 +60,7 @@ export default function MagazineScreen() {
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
 
-    const accentColor = isMemorialMode ? "#F59E0B" : "#05B2DC";
+    const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
 
     const fetchArticles = useCallback(async (reset = false) => {
         const currentPage = reset ? 1 : page;
@@ -106,76 +106,88 @@ export default function MagazineScreen() {
         fetchArticles(true);
     }
 
+    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.white;
+
     return (
-        <SafeAreaView
-            className={`flex-1 ${isMemorialMode ? "bg-gray-950" : "bg-white"}`}
-            edges={["top"]}
-        >
-            {/* 헤더 */}
-            <View className="px-5 pt-4 pb-2">
-                <Text className={`text-xl font-bold mb-3 ${isMemorialMode ? "text-white" : "text-gray-900"}`}>
+        <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
+            <View style={styles.header}>
+                <Text style={[styles.title, { color: isMemorialMode ? COLORS.white : COLORS.gray[900] }]}>
                     펫 매거진
                 </Text>
-                {/* 검색 */}
-                <View
-                    className={`flex-row items-center rounded-xl px-3 py-2.5 ${isMemorialMode ? "bg-gray-800" : "bg-gray-100"}`}
-                >
-                    <Ionicons name="search-outline" size={16} color="#9CA3AF" />
+                <View style={[styles.searchBar, { backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100] }]}>
+                    <Ionicons name="search-outline" size={16} color={COLORS.gray[400]} />
                     <TextInput
-                        className={`flex-1 ml-2 text-sm ${isMemorialMode ? "text-white" : "text-gray-900"}`}
+                        style={[styles.searchInput, { color: isMemorialMode ? COLORS.white : COLORS.gray[900] }]}
                         placeholder="기사 검색..."
-                        placeholderTextColor="#9CA3AF"
+                        placeholderTextColor={COLORS.gray[400]}
                         value={search}
-                        onChangeText={(t) => { setSearch(t); }}
+                        onChangeText={(t) => setSearch(t)}
                         returnKeyType="search"
                         onSubmitEditing={() => { setIsLoading(true); fetchArticles(true); }}
                     />
                     {search.length > 0 && (
                         <TouchableOpacity onPress={() => { setSearch(""); fetchArticles(true); }}>
-                            <Ionicons name="close-circle" size={16} color="#9CA3AF" />
+                            <Ionicons name="close-circle" size={16} color={COLORS.gray[400]} />
                         </TouchableOpacity>
                     )}
                 </View>
             </View>
 
-            {/* 단계 필터 */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-5 mb-1" contentContainerStyle={{ gap: 8 }}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow} contentContainerStyle={{ gap: 8, paddingHorizontal: 20 }}>
                 {STAGES.map((s) => (
                     <TouchableOpacity
                         key={s.id}
                         onPress={() => setSelectedStage(s.id)}
-                        className="px-3.5 py-1.5 rounded-full"
-                        style={{ backgroundColor: selectedStage === s.id ? accentColor : (isMemorialMode ? "#1F2937" : "#F3F4F6") }}
+                        style={[
+                            styles.stagePill,
+                            {
+                                backgroundColor: selectedStage === s.id
+                                    ? accentColor
+                                    : isMemorialMode ? COLORS.gray[800] : COLORS.gray[100],
+                            },
+                        ]}
                     >
-                        <Text className={`text-xs font-medium ${selectedStage === s.id ? "text-white" : (isMemorialMode ? "text-gray-400" : "text-gray-600")}`}>
+                        <Text style={{
+                            fontSize: 12,
+                            fontWeight: "500",
+                            color: selectedStage === s.id
+                                ? "#fff"
+                                : isMemorialMode ? COLORS.gray[400] : COLORS.gray[600],
+                        }}>
                             {s.label}
                         </Text>
                     </TouchableOpacity>
                 ))}
             </ScrollView>
 
-            {/* 카테고리 필터 */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-5 mb-3" contentContainerStyle={{ gap: 8 }}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow} contentContainerStyle={{ gap: 8, paddingHorizontal: 20 }}>
                 {CATEGORIES.map((c) => (
                     <TouchableOpacity
                         key={c.id}
                         onPress={() => setSelectedCategory(c.id)}
-                        className="px-3 py-1 rounded-full border"
-                        style={{ borderColor: selectedCategory === c.id ? accentColor : (isMemorialMode ? "#374151" : "#E5E7EB") }}
+                        style={[
+                            styles.categoryPill,
+                            {
+                                borderColor: selectedCategory === c.id
+                                    ? accentColor
+                                    : isMemorialMode ? COLORS.gray[700] : COLORS.gray[200],
+                            },
+                        ]}
                     >
-                        <Text
-                            className="text-xs"
-                            style={{ color: selectedCategory === c.id ? accentColor : (isMemorialMode ? "#9CA3AF" : "#6B7280") }}
-                        >
+                        <Text style={{
+                            fontSize: 12,
+                            color: selectedCategory === c.id
+                                ? accentColor
+                                : isMemorialMode ? COLORS.gray[400] : COLORS.gray[500],
+                        }}>
                             {c.label}
                         </Text>
                     </TouchableOpacity>
                 ))}
             </ScrollView>
 
-            {/* 기사 목록 */}
             {isLoading ? (
-                <View className="flex-1 items-center justify-center">
+                <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
                     <ActivityIndicator size="large" color={accentColor} />
                 </View>
             ) : (
@@ -188,9 +200,9 @@ export default function MagazineScreen() {
                     onEndReached={() => { if (hasMore) fetchArticles(); }}
                     onEndReachedThreshold={0.3}
                     ListEmptyComponent={
-                        <View className="items-center py-16">
-                            <Ionicons name="newspaper-outline" size={44} color="#D1D5DB" />
-                            <Text className="text-gray-400 mt-3 text-sm">기사가 없어요.</Text>
+                        <View style={{ alignItems: "center", paddingVertical: 64 }}>
+                            <Ionicons name="newspaper-outline" size={44} color={COLORS.gray[300]} />
+                            <Text style={{ color: COLORS.gray[400], marginTop: 12, fontSize: 14 }}>기사가 없어요.</Text>
                         </View>
                     }
                     renderItem={({ item }) => (
@@ -202,7 +214,7 @@ export default function MagazineScreen() {
                         />
                     )}
                     ItemSeparatorComponent={() => (
-                        <View className="h-px" style={{ backgroundColor: isMemorialMode ? "#1F2937" : "#F3F4F6" }} />
+                        <View style={{ height: 1, backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100] }} />
                     )}
                 />
             )}
@@ -217,50 +229,61 @@ function ArticleCard({ article, isMemorialMode, accentColor, onPress }: {
     onPress: () => void;
 }) {
     return (
-        <TouchableOpacity onPress={onPress} activeOpacity={0.75} className="py-4">
-            <View className="flex-row gap-3">
+        <TouchableOpacity onPress={onPress} activeOpacity={0.75} style={{ paddingVertical: 16 }}>
+            <View style={{ flexDirection: "row", gap: 12 }}>
                 {article.image_url ? (
                     <Image
                         source={{ uri: article.image_url }}
-                        className="w-20 h-20 rounded-xl flex-shrink-0"
+                        style={styles.articleImg}
                         resizeMode="cover"
                     />
                 ) : (
-                    <View
-                        className="w-20 h-20 rounded-xl flex-shrink-0 items-center justify-center"
-                        style={{ backgroundColor: isMemorialMode ? "#1F2937" : "#F3F4F6" }}
-                    >
-                        <Ionicons name="newspaper-outline" size={28} color="#9CA3AF" />
+                    <View style={[styles.articleImg, styles.articleImgPlaceholder, { backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100] }]}>
+                        <Ionicons name="newspaper-outline" size={28} color={COLORS.gray[400]} />
                     </View>
                 )}
-                <View className="flex-1">
+                <View style={{ flex: 1 }}>
                     {article.category && (
-                        <Text className="text-xs mb-1" style={{ color: accentColor }}>
+                        <Text style={{ fontSize: 12, marginBottom: 4, color: accentColor }}>
                             {article.category}
                         </Text>
                     )}
                     <Text
-                        className={`text-sm font-semibold leading-5 ${isMemorialMode ? "text-white" : "text-gray-900"}`}
+                        style={{
+                            fontSize: 14,
+                            fontWeight: "600",
+                            lineHeight: 20,
+                            color: isMemorialMode ? COLORS.white : COLORS.gray[900],
+                        }}
                         numberOfLines={2}
                     >
                         {article.title}
                     </Text>
                     {article.summary && (
                         <Text
-                            className={`text-xs mt-1 leading-4 ${isMemorialMode ? "text-gray-400" : "text-gray-500"}`}
+                            style={{
+                                fontSize: 12,
+                                marginTop: 4,
+                                lineHeight: 16,
+                                color: isMemorialMode ? COLORS.gray[400] : COLORS.gray[500],
+                            }}
                             numberOfLines={2}
                         >
                             {article.summary}
                         </Text>
                     )}
-                    <View className="flex-row items-center gap-3 mt-2">
-                        <View className="flex-row items-center gap-1">
-                            <Ionicons name={article.liked ? "heart" : "heart-outline"} size={11} color={article.liked ? "#EF4444" : "#9CA3AF"} />
-                            <Text className="text-xs text-gray-400">{article.likes}</Text>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginTop: 8 }}>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                            <Ionicons
+                                name={article.liked ? "heart" : "heart-outline"}
+                                size={11}
+                                color={article.liked ? "#EF4444" : COLORS.gray[400]}
+                            />
+                            <Text style={{ fontSize: 12, color: COLORS.gray[400] }}>{article.likes}</Text>
                         </View>
-                        <View className="flex-row items-center gap-1">
-                            <Ionicons name="eye-outline" size={11} color="#9CA3AF" />
-                            <Text className="text-xs text-gray-400">{article.views}</Text>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                            <Ionicons name="eye-outline" size={11} color={COLORS.gray[400]} />
+                            <Text style={{ fontSize: 12, color: COLORS.gray[400] }}>{article.views}</Text>
                         </View>
                     </View>
                 </View>
@@ -268,3 +291,22 @@ function ArticleCard({ article, isMemorialMode, accentColor, onPress }: {
         </TouchableOpacity>
     );
 }
+
+const styles = StyleSheet.create({
+    flex1: { flex: 1 },
+    header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 },
+    title: { fontSize: 20, fontWeight: "bold", marginBottom: 12 },
+    searchBar: {
+        flexDirection: "row",
+        alignItems: "center",
+        borderRadius: 12,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+    },
+    searchInput: { flex: 1, marginLeft: 8, fontSize: 14 },
+    filterRow: { marginBottom: 4, flexGrow: 0 },
+    stagePill: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 9999 },
+    categoryPill: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 9999, borderWidth: 1 },
+    articleImg: { width: 80, height: 80, borderRadius: 12 },
+    articleImgPlaceholder: { alignItems: "center", justifyContent: "center" },
+});

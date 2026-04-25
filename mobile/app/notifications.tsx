@@ -3,11 +3,12 @@
  */
 
 import { useState, useEffect } from "react";
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { API_BASE_URL } from "@/config/constants";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
+import { COLORS } from "@/lib/theme";
 
 interface Notification {
     id: string;
@@ -43,15 +44,21 @@ export default function NotificationsScreen() {
     }
 
     if (isLoading) {
-        return <View className="flex-1 items-center justify-center"><ActivityIndicator size="large" color="#05B2DC" /></View>;
+        return (
+            <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+                <ActivityIndicator size="large" color={COLORS.memento[500]} />
+            </View>
+        );
     }
 
+    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.white;
+
     return (
-        <View className={`flex-1 ${isMemorialMode ? "bg-gray-950" : "bg-white"}`}>
+        <View style={[styles.flex1, { backgroundColor: bgColor }]}>
             {notifications.length === 0 ? (
-                <View className="flex-1 items-center justify-center px-6">
-                    <Ionicons name="notifications-off-outline" size={48} color="#D1D5DB" />
-                    <Text className="text-gray-400 mt-3 text-sm text-center">
+                <View style={styles.emptyCenter}>
+                    <Ionicons name="notifications-off-outline" size={48} color={COLORS.gray[300]} />
+                    <Text style={{ color: COLORS.gray[400], marginTop: 12, fontSize: 14, textAlign: "center" }}>
                         아직 알림이 없어요.
                     </Text>
                 </View>
@@ -62,26 +69,39 @@ export default function NotificationsScreen() {
                     renderItem={({ item }) => (
                         <TouchableOpacity
                             activeOpacity={0.75}
-                            className="flex-row items-start gap-3 px-5 py-4 border-b"
-                            style={{ borderBottomColor: isMemorialMode ? "#1F2937" : "#F3F4F6" }}
+                            style={[
+                                styles.row,
+                                { borderBottomColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100] },
+                            ]}
                         >
                             <View
-                                className="w-10 h-10 rounded-full items-center justify-center flex-shrink-0"
-                                style={{ backgroundColor: item.isRead ? "#F3F4F6" : "#E0F7FF" }}
+                                style={[
+                                    styles.iconBg,
+                                    { backgroundColor: item.isRead ? COLORS.gray[100] : COLORS.memento[100] },
+                                ]}
                             >
-                                <Ionicons name="notifications" size={18} color={item.isRead ? "#9CA3AF" : "#05B2DC"} />
+                                <Ionicons name="notifications" size={18} color={item.isRead ? COLORS.gray[400] : COLORS.memento[500]} />
                             </View>
-                            <View className="flex-1">
-                                <Text className={`text-sm font-semibold ${isMemorialMode ? "text-white" : "text-gray-900"}`}>
+                            <View style={{ flex: 1 }}>
+                                <Text style={{
+                                    fontSize: 14,
+                                    fontWeight: "600",
+                                    color: isMemorialMode ? COLORS.white : COLORS.gray[900],
+                                }}>
                                     {item.title}
                                 </Text>
-                                <Text className={`text-xs mt-0.5 leading-4 ${isMemorialMode ? "text-gray-400" : "text-gray-500"}`}>
+                                <Text style={{
+                                    fontSize: 12,
+                                    marginTop: 2,
+                                    lineHeight: 16,
+                                    color: isMemorialMode ? COLORS.gray[400] : COLORS.gray[500],
+                                }}>
                                     {item.body}
                                 </Text>
-                                <Text className="text-xs text-gray-400 mt-1">{item.createdAt}</Text>
+                                <Text style={{ fontSize: 12, color: COLORS.gray[400], marginTop: 4 }}>{item.createdAt}</Text>
                             </View>
                             {!item.isRead && (
-                                <View className="w-2 h-2 rounded-full bg-memento-500 mt-1.5" />
+                                <View style={styles.unreadDot} />
                             )}
                         </TouchableOpacity>
                     )}
@@ -90,3 +110,30 @@ export default function NotificationsScreen() {
         </View>
     );
 }
+
+const styles = StyleSheet.create({
+    flex1: { flex: 1 },
+    emptyCenter: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 24 },
+    row: {
+        flexDirection: "row",
+        alignItems: "flex-start",
+        gap: 12,
+        paddingHorizontal: 20,
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+    },
+    iconBg: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    unreadDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: COLORS.memento[500],
+        marginTop: 6,
+    },
+});

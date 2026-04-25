@@ -5,7 +5,7 @@
 import { useState, useEffect } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity,
-    Image, ActivityIndicator, Share,
+    Image, ActivityIndicator, Share, StyleSheet,
 } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -13,6 +13,7 @@ import * as Haptics from "expo-haptics";
 import { API_BASE_URL } from "@/config/constants";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
+import { COLORS } from "@/lib/theme";
 
 interface ArticleDetail {
     id: number;
@@ -37,11 +38,9 @@ export default function MagazineReaderScreen() {
     const [isLoading, setIsLoading] = useState(true);
     const [isLiking, setIsLiking] = useState(false);
 
-    const accentColor = isMemorialMode ? "#F59E0B" : "#05B2DC";
+    const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
 
-    useEffect(() => {
-        load();
-    }, [id]);
+    useEffect(() => { load(); }, [id]);
 
     async function load() {
         try {
@@ -91,61 +90,70 @@ export default function MagazineReaderScreen() {
 
     if (isLoading) {
         return (
-            <View className="flex-1 items-center justify-center bg-white">
-                <ActivityIndicator size="large" color="#05B2DC" />
+            <View style={styles.loading}>
+                <ActivityIndicator size="large" color={COLORS.memento[500]} />
             </View>
         );
     }
 
     if (!article) {
         return (
-            <View className="flex-1 items-center justify-center px-6">
-                <Text className="text-gray-400">기사를 불러올 수 없습니다.</Text>
+            <View style={styles.loading}>
+                <Text style={{ color: COLORS.gray[400] }}>기사를 불러올 수 없습니다.</Text>
             </View>
         );
     }
 
+    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.white;
+
     return (
-        <View className={`flex-1 ${isMemorialMode ? "bg-gray-950" : "bg-white"}`}>
+        <View style={[styles.flex1, { backgroundColor: bgColor }]}>
             <ScrollView showsVerticalScrollIndicator={false}>
-                {/* 히어로 이미지 */}
                 {article.image_url && (
-                    <Image
-                        source={{ uri: article.image_url }}
-                        className="w-full h-56"
-                        resizeMode="cover"
-                    />
+                    <Image source={{ uri: article.image_url }} style={styles.heroImg} resizeMode="cover" />
                 )}
 
-                <View className="px-5 pt-5 pb-24">
-                    {/* 카테고리 + 단계 */}
-                    <View className="flex-row gap-2 mb-3">
+                <View style={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 96 }}>
+                    <View style={{ flexDirection: "row", gap: 8, marginBottom: 12 }}>
                         {article.category && (
-                            <View className="px-2.5 py-1 rounded-full" style={{ backgroundColor: accentColor + "20" }}>
-                                <Text className="text-xs font-medium" style={{ color: accentColor }}>{article.category}</Text>
+                            <View style={[styles.catBadge, { backgroundColor: accentColor + "20" }]}>
+                                <Text style={{ fontSize: 12, fontWeight: "500", color: accentColor }}>
+                                    {article.category}
+                                </Text>
                             </View>
                         )}
                     </View>
 
-                    {/* 제목 */}
-                    <Text className={`text-xl font-bold leading-7 mb-2 ${isMemorialMode ? "text-white" : "text-gray-900"}`}>
+                    <Text style={{
+                        fontSize: 20,
+                        fontWeight: "bold",
+                        lineHeight: 28,
+                        marginBottom: 8,
+                        color: isMemorialMode ? COLORS.white : COLORS.gray[900],
+                    }}>
                         {article.title}
                     </Text>
                     {article.summary && (
-                        <Text className={`text-sm leading-5 mb-4 ${isMemorialMode ? "text-gray-400" : "text-gray-500"}`}>
+                        <Text style={{
+                            fontSize: 14,
+                            lineHeight: 20,
+                            marginBottom: 16,
+                            color: isMemorialMode ? COLORS.gray[400] : COLORS.gray[500],
+                        }}>
                             {article.summary}
                         </Text>
                     )}
 
-                    {/* 작성일 */}
-                    <Text className="text-xs text-gray-400 mb-5">{article.created_at}</Text>
+                    <Text style={{ fontSize: 12, color: COLORS.gray[400], marginBottom: 20 }}>{article.created_at}</Text>
 
-                    {/* 본문 구분선 */}
-                    <View className="h-px mb-5" style={{ backgroundColor: isMemorialMode ? "#1F2937" : "#F3F4F6" }} />
+                    <View style={[styles.divider, { backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100] }]} />
 
-                    {/* 본문 */}
                     <Text
-                        className={`text-sm leading-7 ${isMemorialMode ? "text-gray-200" : "text-gray-700"}`}
+                        style={{
+                            fontSize: 14,
+                            lineHeight: 28,
+                            color: isMemorialMode ? COLORS.gray[200] : COLORS.gray[700],
+                        }}
                         selectable
                     >
                         {article.content}
@@ -153,33 +161,55 @@ export default function MagazineReaderScreen() {
                 </View>
             </ScrollView>
 
-            {/* 하단 반응 바 */}
-            <View
-                className="absolute bottom-0 left-0 right-0 flex-row items-center justify-between px-5 py-4 border-t"
-                style={{
-                    backgroundColor: isMemorialMode ? "#111827" : "#fff",
-                    borderTopColor: isMemorialMode ? "#1F2937" : "#F3F4F6",
-                }}
-            >
-                <View className="flex-row items-center gap-4">
-                    <TouchableOpacity onPress={handleLike} className="flex-row items-center gap-1.5" activeOpacity={0.7}>
+            <View style={[
+                styles.footer,
+                {
+                    backgroundColor: isMemorialMode ? COLORS.gray[900] : COLORS.white,
+                    borderTopColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100],
+                },
+            ]}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
+                    <TouchableOpacity onPress={handleLike} style={styles.footerBtn} activeOpacity={0.7}>
                         <Ionicons
                             name={article.liked ? "heart" : "heart-outline"}
                             size={22}
-                            color={article.liked ? "#EF4444" : "#9CA3AF"}
+                            color={article.liked ? "#EF4444" : COLORS.gray[400]}
                         />
-                        <Text className={`text-sm ${isMemorialMode ? "text-gray-400" : "text-gray-500"}`}>{article.likes}</Text>
+                        <Text style={{ fontSize: 14, color: isMemorialMode ? COLORS.gray[400] : COLORS.gray[500] }}>
+                            {article.likes}
+                        </Text>
                     </TouchableOpacity>
-                    <View className="flex-row items-center gap-1.5">
-                        <Ionicons name="eye-outline" size={20} color="#9CA3AF" />
-                        <Text className="text-sm text-gray-400">{article.views}</Text>
+                    <View style={styles.footerBtn}>
+                        <Ionicons name="eye-outline" size={20} color={COLORS.gray[400]} />
+                        <Text style={{ fontSize: 14, color: COLORS.gray[400] }}>{article.views}</Text>
                     </View>
                 </View>
-                <TouchableOpacity onPress={handleShare} className="flex-row items-center gap-1.5" activeOpacity={0.7}>
-                    <Ionicons name="share-outline" size={20} color="#9CA3AF" />
-                    <Text className="text-sm text-gray-400">공유</Text>
+                <TouchableOpacity onPress={handleShare} style={styles.footerBtn} activeOpacity={0.7}>
+                    <Ionicons name="share-outline" size={20} color={COLORS.gray[400]} />
+                    <Text style={{ fontSize: 14, color: COLORS.gray[400] }}>공유</Text>
                 </TouchableOpacity>
             </View>
         </View>
     );
 }
+
+const styles = StyleSheet.create({
+    flex1: { flex: 1 },
+    loading: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: COLORS.white, paddingHorizontal: 24 },
+    heroImg: { width: "100%", height: 224 },
+    catBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 9999 },
+    divider: { height: 1, marginBottom: 20 },
+    footer: {
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: 20,
+        paddingVertical: 16,
+        borderTopWidth: 1,
+    },
+    footerBtn: { flexDirection: "row", alignItems: "center", gap: 6 },
+});
