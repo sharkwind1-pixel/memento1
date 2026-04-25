@@ -148,3 +148,85 @@ export interface UserProfile {
 // ============================================
 
 export type SubscriptionPhase = "active" | "cancelled" | "archived";
+
+// ============================================
+// 7. 입양정보 (공공데이터 동물보호관리시스템)
+// ============================================
+
+export interface AdoptionAnimal {
+    id: string;             // desertionNo
+    kind: string;           // 강아지 / 고양이 / 기타
+    breed?: string;
+    color?: string;
+    age?: string;
+    weight?: string;
+    gender?: string;
+    neutered?: string;
+    specialMark?: string;
+    noticeNo?: string;
+    noticeStart?: string;
+    noticeEnd?: string;
+    status?: string;        // 공고중 / 보호중 / 종료
+    shelterName?: string;
+    shelterTel?: string;
+    shelterAddr?: string;
+    foundPlace?: string;
+    foundDate?: string;
+    imageUrl?: string;
+    thumbnailUrl?: string;
+}
+
+// ============================================
+// 8. 분실/발견 동물
+// ============================================
+
+export type LostPetType = "lost" | "found";
+
+export interface LostPet {
+    id: string;
+    userId?: string;
+    type: LostPetType;
+    title: string;
+    petType?: string;
+    breed?: string;
+    color?: string;
+    gender?: string;
+    age?: string;
+    region?: string;
+    district?: string;
+    locationDetail?: string;
+    date?: string;
+    description?: string;
+    contact?: string;
+    reward?: string;
+    imageUrl?: string;
+    views?: number;
+    status?: "active" | "resolved";
+    createdAt?: string;
+    updatedAt?: string;
+}
+
+// ============================================
+// 9. 지역정보
+// ============================================
+
+export type LocalPostCategory = "hospital" | "walk" | "share" | "trade" | "meet" | "place";
+export type LocalPostBadge = "질문" | "모집중" | "나눔" | "판매" | "후기" | "정보" | "기타";
+
+export interface LocalPost {
+    id: string;
+    userId?: string;
+    category: LocalPostCategory;
+    title: string;
+    content?: string;
+    region?: string;
+    district?: string;
+    badge?: LocalPostBadge;
+    imageUrl?: string;
+    likesCount?: number;
+    commentsCount?: number;
+    views?: number;
+    status?: "active" | "hidden";
+    createdAt?: string;
+    updatedAt?: string;
+}

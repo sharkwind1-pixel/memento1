@@ -25,6 +25,9 @@ export default function RootLayout() {
                         <Stack.Screen name="notifications" options={{ headerShown: true, title: "알림" }} />
                         <Stack.Screen name="profile" options={{ presentation: "modal", headerShown: true, title: "프로필" }} />
                         <Stack.Screen name="subscription" options={{ headerShown: true, title: "구독" }} />
+                        <Stack.Screen name="adoption" options={{ headerShown: false }} />
+                        <Stack.Screen name="lost" options={{ headerShown: false }} />
+                        <Stack.Screen name="local" options={{ headerShown: false }} />
                     </Stack>
                     <StatusBar style="auto" />
                 </PetProvider>
