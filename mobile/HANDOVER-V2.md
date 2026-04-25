@@ -240,3 +240,62 @@ V1 끝에 네가 "한 번에 다 해드릴게요 금지" 같은 충고 남겼는
 행운을 빈다.
 
 — VS Code Claude (실패한 OAuth 세션, 2026-04-25)
+
+---
+
+## 8. Cowork Claude 후속 작업 (2026-04-26)
+
+V2 인계받아 Phase A Step 2 (모바일 코드 단순화) 완료. 커밋 `1ad6471` 푸시됨.
+
+### 변경 파일
+- `mobile/lib/supabase.ts` — LoggedStorage 제거, AsyncStorage 직접 사용. PKCE flow 유지. (38줄 → 22줄)
+- `mobile/contexts/AuthContext.tsx` — V2의 우회 코드 전부 제거:
+  - 직접 `/auth/v1/token` POST 호출 → 제거
+  - AsyncStorage에서 verifier 직접 읽기 → 제거
+  - hash + query 분기 → 제거
+  - `redirectTo`: 웹 브릿지 URL → `Linking.createURL("/auth/callback")` 직접 deep link
+  - 표준 3단계로 단순화: `signInWithOAuth` → `openAuthSessionAsync` → `exchangeCodeForSession`
+  - hardGuard 8초 → 4초
+- `mobile/app/auth/callback.tsx` — 변경 없음 (이미 표준 `exchangeCodeForSession` 사용, 시스템 브라우저 폴백 역할)
+
+### 의도적으로 안 건드린 것 (V2 Phase A Step 3 — 선택사항)
+- `src/app/auth/callback/page.tsx` 모바일 브릿지 분기 — 이제 mobile에서 호출 안 함. 하지만 dead code라 손대면 위험 (이미 deployed). 그대로 둠. 다음 사람이 필요하면 정리.
+
+### 검증
+- L2 통과: `npx tsc --noEmit` 에러 0건
+- L4 미검증: 실제 OAuth 동작 테스트는 **Supabase 대시보드 작업 + 폰 검증** 후 가능
+
+### 사용자 (승빈님) 액션 — 이거만 하면 OAuth 검증 가능
+
+**Step 1: Supabase Redirect URLs**
+1. https://supabase.com/dashboard/project/kuqhjgrlrzskvuutqbce
+2. Authentication → URL Configuration → Redirect URLs
+3. 두 줄 추가:
+   ```
+   exp://**
+   mementoani://**
+   ```
+4. Save
+
+**Step 2: Metro 풀 사이클 재시작**
+```
+cd C:\Users\shark\memento1\mobile
+set REACT_NATIVE_PACKAGER_HOSTNAME=192.168.0.42
+npx expo start --clear
+```
+
+**Step 3: 폰**
+- Expo Go **강제 종료** (스와이프로 완전 종료, 백그라운드 잔류 금지)
+- QR 재스캔 (cold start)
+- 카카오 또는 Google 버튼 터치 → OAuth 진행
+
+**Step 4: 결과 보고**
+- 성공: 탭 화면 진입 확인
+- 실패: 에러 메시지 + Metro 터미널의 `[OAuth]`, `[Auth]` 로그
+
+### 다음 세션 (검증 후)
+- OAuth 성공 시 → 21개 작업 로드맵 진행 (Phase 1부터)
+- 네이버 로그인 (V2 Phase B) — A안 추천: `/api/auth/naver/callback`이 `?mobile=1` 받으면 토큰을 query로 응답
+- 웹 브릿지(`src/app/auth/callback/page.tsx`)의 모바일 분기 제거 (선택사항)
+
+— Cowork Claude (mystifying-dewdney worktree, 2026-04-26)
