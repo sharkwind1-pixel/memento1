@@ -23,6 +23,8 @@ import { supabase } from "@/lib/supabase";
 export default function AuthCallbackPage() {
     const router = useRouter();
     const [error, setError] = useState<string | null>(null);
+    // 모바일 브릿지: 자동 redirect 실패 시 사용자가 탭할 수 있도록 deeplink 노출
+    const [mobileDeepLink, setMobileDeepLink] = useState<string | null>(null);
 
     useEffect(() => {
         const handleCallback = async () => {
@@ -34,10 +36,7 @@ export default function AuthCallbackPage() {
             const errorDescription = params.get("error_description");
 
             // ── 모바일 앱 브릿지 ──
-            // Supabase Redirect URLs allowlist에 mementoani:// / exp:// 를 추가하지 않아도
-            // 동작하도록, 모바일 앱이 redirectTo를 `https://mementoani.com/auth/callback?mobile=1&nativeUrl=...`로
-            // 지정하면 이 페이지가 code를 딥링크 URL에 붙여 앱으로 넘긴다.
-            // PKCE code_verifier가 앱의 SecureStore에 있으므로 웹에서는 exchange하지 않는다.
+            // 자동 redirect 시도 후 사용자 탭 가능 버튼도 노출 (Chrome custom scheme 차단 대비).
             const isMobile = params.get("mobile") === "1";
             const nativeUrlRaw = params.get("nativeUrl");
             if (isMobile && nativeUrlRaw) {
@@ -50,11 +49,18 @@ export default function AuthCallbackPage() {
                 if (authError) forwardParams.push(`error=${encodeURIComponent(authError)}`);
                 if (errorDescription) forwardParams.push(`error_description=${encodeURIComponent(errorDescription)}`);
                 let deepLink = `${decoded}${separator}${forwardParams.join("&")}`;
-                // implicit flow: access_token이 hash(#)로 오는 경우 그대로 포워딩
                 if (window.location.hash && window.location.hash.length > 1) {
                     deepLink += window.location.hash;
                 }
+                setMobileDeepLink(deepLink);
+                // 1차 시도: 즉시 location 변경
                 window.location.href = deepLink;
+                // 2차 시도: 100ms 후 anchor click (custom scheme 차단 우회)
+                setTimeout(() => {
+                    const a = document.createElement("a");
+                    a.href = deepLink;
+                    a.click();
+                }, 100);
                 return;
             }
 
@@ -117,13 +123,25 @@ export default function AuthCallbackPage() {
     }, [router]);
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-memento-200 to-white">
-            <div className="text-center space-y-3">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-memento-200 to-white px-6">
+            <div className="text-center space-y-4 max-w-sm">
                 {error ? (
                     <>
                         <p className="text-red-500 text-sm">로그인 중 문제가 발생했습니다</p>
                         <p className="text-gray-400 text-xs">{error}</p>
                         <p className="text-gray-400 text-xs">잠시 후 메인 페이지로 이동합니다...</p>
+                    </>
+                ) : mobileDeepLink ? (
+                    <>
+                        <div className="w-8 h-8 border-2 border-memento-400 border-t-transparent rounded-full animate-spin mx-auto" />
+                        <p className="text-gray-700 text-sm font-medium">앱으로 돌아가는 중...</p>
+                        <p className="text-gray-500 text-xs">자동으로 안 열리면 아래 버튼을 탭하세요</p>
+                        <a
+                            href={mobileDeepLink}
+                            className="inline-block bg-memento-500 hover:bg-memento-600 text-white px-6 py-3 rounded-xl text-sm font-semibold mt-2"
+                        >
+                            메멘토애니 앱으로 돌아가기
+                        </a>
                     </>
                 ) : (
                     <>
