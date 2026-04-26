@@ -16,7 +16,7 @@ import { Session, User } from "@supabase/supabase-js";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
 import { supabase } from "@/lib/supabase";
-import { ADMIN_EMAILS } from "@/config/constants";
+import { ADMIN_EMAILS, API_BASE_URL } from "@/config/constants";
 import { UserProfile } from "@/types";
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL!;
@@ -234,19 +234,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async function signInWithProvider(provider: OAuthProvider): Promise<{ error: Error | null }> {
         try {
             const nativeDeepLink = Linking.createURL("/auth/callback");
-            // 직접 deep link로 redirect → 웹 브릿지 화면("앱으로 돌아가는 중") 제거.
+            // webBridge 경유: supabase의 wildcard redirect 매칭이 exp://IP:port/-- 패턴을
+            // 제대로 못 잡아서 Site URL(mementoani.com)로 fallback되는 문제 회피.
+            // https URL은 매칭 안정적, 페이지가 deep link로 forward.
             // Chrome 확인창("Expo Go 앱 열려고 합니다 / 계속")은 OS 보안 정책이라 못 없앰.
-            // EAS production 빌드 + App Links 등록 시점에 그것도 사라짐.
+            const webBridge = `${API_BASE_URL}/auth/callback?mobile=1&nativeUrl=${encodeURIComponent(nativeDeepLink)}`;
 
             // 1. PKCE verifier 생성 → 메모리 보관
             const verifier = generatePKCEVerifier();
             verifierMap[provider] = verifier;
             console.log(`[OAuth] provider=${provider} verifier=(${verifier.length} chars)`);
 
-            // 2. Supabase authorize URL 직접 빌드 (deep link redirect)
+            // 2. Supabase authorize URL 직접 빌드 (https webBridge redirect)
             const authorizeUrl = new URL(`${SUPABASE_URL}/auth/v1/authorize`);
             authorizeUrl.searchParams.set("provider", provider);
-            authorizeUrl.searchParams.set("redirect_to", nativeDeepLink);
+            authorizeUrl.searchParams.set("redirect_to", webBridge);
             authorizeUrl.searchParams.set("code_challenge", verifier);
             authorizeUrl.searchParams.set("code_challenge_method", "plain");
             if (provider === "kakao") {
