@@ -15,9 +15,16 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "@/lib/supabase";
 import { ADMIN_EMAILS, API_BASE_URL } from "@/config/constants";
 import { UserProfile } from "@/types";
+
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL!;
+const PROJECT_REF = SUPABASE_URL.replace(/^https?:\/\//, "").split(".")[0];
+// supabase-js가 PKCE verifier를 저장하는 기본 키 + 우리가 만드는 백업 키
+const SUPABASE_VERIFIER_KEY = `sb-${PROJECT_REF}-auth-token-code-verifier`;
+export const VERIFIER_BACKUP_KEY = "mementoani-pkce-verifier-backup";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -158,6 +165,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             if (error) return { error };
             if (!data?.url) return { error: new Error("OAuth URL을 받지 못했습니다.") };
+
+            // PKCE verifier 백업: 앱이 deep link로 cold start될 때 supabase-js가 verifier를
+            // 잃어버리는 케이스 방어. supabase가 저장한 키를 즉시 우리 키로 복사.
+            // (AsyncStorage write race를 피하려고 짧게 retry)
+            for (let i = 0; i < 5; i++) {
+                const v = await AsyncStorage.getItem(SUPABASE_VERIFIER_KEY);
+                if (v) {
+                    await AsyncStorage.setItem(VERIFIER_BACKUP_KEY, v);
+                    console.log(`[OAuth] verifier 백업 완료 (${v.length} chars)`);
+                    break;
+                }
+                if (i === 4) {
+                    console.warn("[OAuth] supabase가 verifier를 storage에 저장 안 함 — backup 실패");
+                }
+                await new Promise((r) => setTimeout(r, 50));
+            }
 
             // 인앱 브라우저: nativeDeepLink를 감지해서 자동 닫힘
             // 자동 안 되면 사용자가 웹 브릿지 화면에서 "앱으로 돌아가기" 탭 → deepLink 발동
