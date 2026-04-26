@@ -49,7 +49,29 @@ export default function MagazineReaderScreen() {
             const res = await fetch(`${API_BASE_URL}/api/magazine/${id}`, { headers });
             if (res.ok) {
                 const data = await res.json();
-                setArticle(data.article ?? data);
+                const raw = data?.article ?? data;
+                if (raw && typeof raw === "object") {
+                    setArticle({
+                        id: typeof raw.id === "number" ? raw.id : 0,
+                        title: typeof raw.title === "string" ? raw.title : "",
+                        content: typeof raw.content === "string" ? raw.content : "",
+                        summary: typeof raw.summary === "string" ? raw.summary : undefined,
+                        image_url: typeof raw.image_url === "string"
+                            ? raw.image_url
+                            : (typeof raw.imageUrl === "string" ? raw.imageUrl : undefined),
+                        category: typeof raw.category === "string" ? raw.category : undefined,
+                        stage: typeof raw.stage === "string" ? raw.stage : undefined,
+                        likes: typeof raw.likes === "number" ? raw.likes : 0,
+                        views: typeof raw.views === "number" ? raw.views : 0,
+                        liked: typeof raw.liked === "boolean" ? raw.liked : undefined,
+                        created_at: typeof raw.created_at === "string"
+                            ? raw.created_at
+                            : (typeof raw.createdAt === "string" ? raw.createdAt : ""),
+                        author: typeof raw.author === "string"
+                            ? raw.author
+                            : (typeof raw.author_name === "string" ? raw.author_name : undefined),
+                    });
+                }
             }
         } catch {
             // ignore

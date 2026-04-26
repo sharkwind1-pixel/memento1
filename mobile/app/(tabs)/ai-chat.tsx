@@ -281,7 +281,7 @@ function MessageBubble({ message, pet, isMemorialMode, accentColor }: {
                         {message.content}
                     </Text>
                 </View>
-                {message.matchedPhoto && (
+                {message.matchedPhoto && typeof message.matchedPhoto.url === "string" && (
                     <Image
                         source={{ uri: message.matchedPhoto.url }}
                         style={{ width: 192, height: 128, borderRadius: 12, marginTop: 8 }}

@@ -34,7 +34,24 @@ export default function NotificationsScreen() {
             const res = await fetch(`${API_BASE_URL}/api/notifications`, { headers });
             if (res.ok) {
                 const data = await res.json();
-                setNotifications(data.notifications ?? data ?? []);
+                const list = Array.isArray(data?.notifications)
+                    ? data.notifications
+                    : Array.isArray(data)
+                        ? data
+                        : [];
+                // snake_case (is_read, created_at) ↔ camelCase 정규화
+                setNotifications(list.map((raw: any): Notification => ({
+                    id: typeof raw?.id === "string" ? raw.id : String(raw?.id ?? ""),
+                    type: typeof raw?.type === "string" ? raw.type : "",
+                    title: typeof raw?.title === "string" ? raw.title : "",
+                    body: typeof raw?.body === "string" ? raw.body : "",
+                    isRead: typeof raw?.isRead === "boolean"
+                        ? raw.isRead
+                        : (raw?.read_at != null || raw?.is_read === true),
+                    createdAt: typeof raw?.createdAt === "string"
+                        ? raw.createdAt
+                        : (typeof raw?.created_at === "string" ? raw.created_at : ""),
+                })));
             }
         } catch {
             // ignore

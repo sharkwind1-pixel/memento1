@@ -46,7 +46,36 @@ export default function CommunityScreen() {
             const res = await fetch(url, { headers });
             if (!res.ok) return;
             const data = await res.json();
-            setPosts(data.posts ?? data ?? []);
+            const list = Array.isArray(data?.posts) ? data.posts : Array.isArray(data) ? data : [];
+            // snake_case ↔ camelCase 정규화 + JSX-safe 타입 강제
+            setPosts(list.map((raw: any): CommunityPost => ({
+                id: typeof raw?.id === "number" ? raw.id : 0,
+                title: typeof raw?.title === "string" ? raw.title : "",
+                content: typeof raw?.content === "string" ? raw.content : "",
+                author: typeof raw?.author === "string"
+                    ? raw.author
+                    : (typeof raw?.author_name === "string" ? raw.author_name : "익명"),
+                authorId: typeof raw?.authorId === "string"
+                    ? raw.authorId
+                    : (typeof raw?.author_id === "string" ? raw.author_id : (typeof raw?.user_id === "string" ? raw.user_id : "")),
+                authorAvatar: typeof raw?.authorAvatar === "string"
+                    ? raw.authorAvatar
+                    : (typeof raw?.author_avatar === "string" ? raw.author_avatar : undefined),
+                likes: typeof raw?.likes === "number" ? raw.likes : 0,
+                comments: typeof raw?.comments === "number" ? raw.comments : (typeof raw?.comments_count === "number" ? raw.comments_count : 0),
+                views: typeof raw?.views === "number" ? raw.views : 0,
+                category: typeof raw?.category === "string" ? raw.category : undefined,
+                subcategory: typeof raw?.subcategory === "string" ? raw.subcategory : undefined,
+                tag: typeof raw?.tag === "string" ? raw.tag : undefined,
+                isLiked: typeof raw?.isLiked === "boolean" ? raw.isLiked : undefined,
+                preview: typeof raw?.preview === "string"
+                    ? raw.preview
+                    : (typeof raw?.content === "string" ? raw.content.slice(0, 100) : undefined),
+                createdAt: typeof raw?.createdAt === "string"
+                    ? raw.createdAt
+                    : (typeof raw?.created_at === "string" ? raw.created_at : undefined),
+                images: Array.isArray(raw?.images) ? raw.images.filter((x: unknown) => typeof x === "string") : undefined,
+            })));
         } catch {
             // ignore
         } finally {

@@ -78,7 +78,26 @@ export default function MagazineScreen() {
             const res = await fetch(`${API_BASE_URL}/api/magazine?${params}`, { headers });
             if (!res.ok) return;
             const data = await res.json();
-            const items: Article[] = data.articles ?? data ?? [];
+            const rawList = Array.isArray(data?.articles)
+                ? data.articles
+                : Array.isArray(data) ? data : [];
+            const items: Article[] = rawList.map((raw: any): Article => ({
+                id: typeof raw?.id === "number" ? raw.id : 0,
+                title: typeof raw?.title === "string" ? raw.title : "",
+                summary: typeof raw?.summary === "string" ? raw.summary : undefined,
+                content: typeof raw?.content === "string" ? raw.content : undefined,
+                image_url: typeof raw?.image_url === "string"
+                    ? raw.image_url
+                    : (typeof raw?.imageUrl === "string" ? raw.imageUrl : undefined),
+                category: typeof raw?.category === "string" ? raw.category : undefined,
+                stage: typeof raw?.stage === "string" ? raw.stage : undefined,
+                likes: typeof raw?.likes === "number" ? raw.likes : 0,
+                views: typeof raw?.views === "number" ? raw.views : 0,
+                liked: typeof raw?.liked === "boolean" ? raw.liked : undefined,
+                created_at: typeof raw?.created_at === "string"
+                    ? raw.created_at
+                    : (typeof raw?.createdAt === "string" ? raw.createdAt : ""),
+            }));
 
             if (reset) {
                 setArticles(items);
