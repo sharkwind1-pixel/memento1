@@ -65,6 +65,10 @@ export function getSupabaseClient(): SupabaseClient {
         supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
             auth: {
                 lock: promiseLock,
+                // 자동 URL 감지 비활성: callback 페이지가 명시적으로 exchangeCodeForSession 호출.
+                // 모바일 브릿지(?mobile=1) 흐름에서 웹 클라이언트가 verifier 없는 채로 자동
+                // exchange 시도해서 "auth code and code verifier should be non-empty" 에러 발생하던 문제 차단.
+                detectSessionInUrl: false,
             },
         });
     }
