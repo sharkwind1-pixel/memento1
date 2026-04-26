@@ -98,7 +98,7 @@ export function useQuests(): UseQuestsResult {
 
                 // Open 100 이벤트 달성 — 추가 토스트 + 포인트 UI 갱신
                 if (data.open100Awarded) {
-                    toast.success("🎉 오픈 100 이벤트 달성! +1,000P", {
+                    toast.success("오픈 100 이벤트 달성 +1,000P", {
                         description:
                             typeof data.open100Remaining === "number"
                                 ? `남은 자리 ${data.open100Remaining}명`

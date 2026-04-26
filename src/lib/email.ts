@@ -132,7 +132,7 @@ export async function sendArchiveCountdownEmail(
         : `${daysRemaining}일 후`;
 
     const subject = daysRemaining === 1
-        ? "[메멘토애니] ⚠️ 내일 데이터가 영구 삭제됩니다"
+        ? "[메멘토애니] 내일 데이터가 영구 삭제됩니다"
         : `[메멘토애니] ${daysRemaining}일 후 보관 데이터가 삭제됩니다`;
 
     return sendEmail({
@@ -141,7 +141,7 @@ export async function sendArchiveCountdownEmail(
         html: `
             <div style="font-family: 'Pretendard', -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #333;">
                 <h1 style="color: ${daysRemaining <= 3 ? "#DC2626" : "#F59E0B"}; font-size: 20px; margin-bottom: 16px;">
-                    ${daysRemaining === 1 ? "⚠️ 마지막 안내" : "보관 데이터 삭제 예정 안내"}
+                    ${daysRemaining === 1 ? "마지막 안내" : "보관 데이터 삭제 예정 안내"}
                 </h1>
                 <p>${name}님,</p>
                 <p>메멘토애니에 보관 중인 반려동물 <strong>${archivedPetCount}마리</strong>의 데이터가 ${urgency} 영구 삭제됩니다.</p>

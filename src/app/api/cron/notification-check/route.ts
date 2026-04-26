@@ -172,21 +172,58 @@ export async function GET(request: NextRequest) {
             .delete()
             .lt("created_at", new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString());
 
-        // ===== 만료된 스토리 자동 삭제 (24시간 TTL) =====
-        // stories.expires_at이 지난 row 삭제. RLS는 피드에서 숨기기만 하므로 DB 누적 방지.
-        // NOTE: Storage 이미지(stories/{user_id}/*.ext)는 여기서 삭제하지 않음 →
-        //       별도 후속 작업으로 storage cleanup 크론 필요 (현재는 고아 파일 누적 위험).
+        // ===== 만료된 스토리 + Storage 이미지 자동 삭제 (24시간 TTL) =====
+        // 1) 만료 stories 조회 (image_url 확보) → 2) pet-media bucket에서 파일 삭제 →
+        // 3) DB row 삭제. 순서를 지켜 Storage 고아 파일 방지.
         let storiesDeleted = 0;
+        let storageFilesDeleted = 0;
         try {
-            const { data: expired, error: expErr } = await supabase
+            // 1. 만료 stories 조회
+            const { data: expiredStories, error: fetchErr } = await supabase
                 .from("stories")
-                .delete()
-                .lt("expires_at", now.toISOString())
-                .select("id");
-            if (!expErr && expired) {
-                storiesDeleted = expired.length;
-            } else if (expErr) {
-                console.error("[notification-check] stories cleanup error:", expErr);
+                .select("id, image_url")
+                .lt("expires_at", now.toISOString());
+
+            if (fetchErr) {
+                console.error("[notification-check] stories fetch error:", fetchErr);
+            } else if (expiredStories && expiredStories.length > 0) {
+                // 2. image_url에서 pet-media bucket의 path 추출
+                const storagePaths = expiredStories
+                    .map((s: { image_url: string | null }) => {
+                        if (!s.image_url) return null;
+                        const idx = s.image_url.indexOf("/pet-media/");
+                        if (idx < 0) return null;
+                        return s.image_url.slice(idx + "/pet-media/".length);
+                    })
+                    .filter((p: string | null): p is string => typeof p === "string" && p.length > 0);
+
+                // 3. Storage 파일 삭제 (100개씩 batch)
+                if (storagePaths.length > 0) {
+                    const batchSize = 100;
+                    for (let i = 0; i < storagePaths.length; i += batchSize) {
+                        const batch = storagePaths.slice(i, i + batchSize);
+                        const { error: stErr } = await supabase.storage
+                            .from("pet-media")
+                            .remove(batch);
+                        if (stErr) {
+                            console.error(`[notification-check] storage remove batch ${i}:`, stErr);
+                        } else {
+                            storageFilesDeleted += batch.length;
+                        }
+                    }
+                }
+
+                // 4. DB row 삭제
+                const { error: delErr } = await supabase
+                    .from("stories")
+                    .delete()
+                    .lt("expires_at", now.toISOString());
+
+                if (!delErr) {
+                    storiesDeleted = expiredStories.length;
+                } else {
+                    console.error("[notification-check] stories delete error:", delErr);
+                }
             }
         } catch (stErr) {
             console.error("[notification-check] stories cleanup exception:", stErr);
@@ -199,6 +236,7 @@ export async function GET(request: NextRequest) {
             skipped,
             memorialAlerts,
             storiesDeleted,
+            storageFilesDeleted,
         });
     } catch (err) {
         const msg = err instanceof Error ? err.message : "알 수 없는 오류";

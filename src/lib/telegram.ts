@@ -146,7 +146,7 @@ export async function notifyOpen100Award(params: {
         `남은 자리: ${params.remaining}`,
         `유저: ${escapeHtml(params.email)}`,
     ];
-    if (params.remaining === 0) lines.push("🎉 <b>이벤트 완주 — 100명 전원 달성</b>");
+    if (params.remaining === 0) lines.push("<b>[이벤트 완주] 100명 전원 달성</b>");
     return sendTelegram(lines.join("\n"), "system");
 }
 
