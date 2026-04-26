@@ -5,10 +5,10 @@
  *
  * 목적:
  * - 포트원 웹훅이 실패·누락됐을 때를 위한 안전망.
- * - 최근 60일 `payments.status='paid'` 결제를 포트원 API로 재조회해
- *   실제 cancelled 상태면 DB 강제 동기화(결제/프리미엄/구독 모두 정리).
- * - 이로써 어떤 경로의 환불(카드사 분쟁, KCP 직접 취소, 포트원 콘솔 등)도
- *   최대 1시간 내 반드시 반영됨.
+ * - 최근 90일 `payments.status='paid'` 결제 → 포트온 재조회 → cancelled면 DB 동기화
+ * - **pending 결제(1시간+)**: 포트원 재조회 → paid면 promote, cancelled/없음이면 정리
+ *   (전수 감사 2026-04-27 발견: pending 결제가 20일째 stuck. 웹훅 누락 케이스 자동 정리.)
+ * - 이로써 어떤 경로의 환불·웹훅 누락도 최대 1시간 내 반영됨.
  *
  * 보안: CRON_SECRET 인증 필수.
  */
@@ -178,6 +178,99 @@ export async function GET(request: NextRequest) {
         ).catch(() => {});
     }
 
+    // ===== pending 결제 stuck 처리 =====
+    // 1시간 이상 pending인 결제 → 포트원 재조회.
+    //   - paid면: status=paid로 promote (단, 자동 grant_premium은 위험하므로 metadata에 표시만)
+    //   - cancelled/없음이면: status=failed로 정리 (프로필 영향 없음)
+    //   - 결과 모름이면: 24시간 후 자동 failed
+    const pendingThreshold = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const pendingStaleThreshold = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+    const { data: pendings } = await supabase
+        .from("payments")
+        .select("id, user_id, merchant_uid, metadata, created_at, amount")
+        .eq("status", "pending")
+        .lt("created_at", pendingThreshold)
+        .limit(100);
+
+    let pendingPromoted = 0;
+    let pendingFailed = 0;
+    let pendingChecked = 0;
+
+    if (pendings && pendings.length > 0) {
+        for (const p of pendings as Array<{
+            id: string;
+            user_id: string;
+            merchant_uid: string | null;
+            metadata: Record<string, unknown> | null;
+            created_at: string;
+            amount: number;
+        }>) {
+            pendingChecked++;
+            const impUid = typeof p.metadata?.imp_uid === "string" ? p.metadata.imp_uid : "";
+            const merchantUid = p.merchant_uid;
+
+            try {
+                let portoneRes: Record<string, unknown> | null = null;
+
+                if (impUid) {
+                    const r = await fetch(
+                        `https://api.iamport.kr/payments/${encodeURIComponent(impUid)}`,
+                        { headers: { Authorization: token }, cache: "no-store" },
+                    );
+                    const d = await r.json();
+                    if (d.code === 0) portoneRes = d.response;
+                } else if (merchantUid) {
+                    // imp_uid 없으면 merchant_uid로 조회 (V1 API)
+                    const r = await fetch(
+                        `https://api.iamport.kr/payments/find/${encodeURIComponent(merchantUid)}`,
+                        { headers: { Authorization: token }, cache: "no-store" },
+                    );
+                    const d = await r.json();
+                    if (d.code === 0) portoneRes = d.response;
+                }
+
+                const status = (portoneRes?.status as string | undefined) ?? "";
+
+                if (status === "paid") {
+                    // 웹훅 누락된 paid — DB만 promote (grant_premium은 별도 수동/관리자)
+                    await supabase
+                        .from("payments")
+                        .update({
+                            status: "paid",
+                            metadata: {
+                                ...(p.metadata || {}),
+                                imp_uid: portoneRes?.imp_uid ?? impUid,
+                                reconcile_promoted_at: new Date().toISOString(),
+                                reconcile_source: "cron_pending_promote",
+                                portone_paid_at: portoneRes?.paid_at ?? null,
+                            },
+                        })
+                        .eq("id", p.id);
+                    pendingPromoted++;
+                } else if (status === "cancelled" || status === "failed" || (!portoneRes && p.created_at < pendingStaleThreshold)) {
+                    // 명확히 실패/취소이거나, 포트원에서 결과 모르고 24h 지난 stale
+                    await supabase
+                        .from("payments")
+                        .update({
+                            status: "failed",
+                            metadata: {
+                                ...(p.metadata || {}),
+                                reconcile_failed_at: new Date().toISOString(),
+                                reconcile_source: "cron_pending_cleanup",
+                                portone_status: status || "no_response",
+                            },
+                        })
+                        .eq("id", p.id);
+                    pendingFailed++;
+                }
+                // 그 외 (1시간~24시간 사이 결과 미상)는 다음 사이클에서 재시도
+            } catch (err) {
+                console.error(`[payment-reconcile pending] ${p.id} 재검증 실패:`, err);
+            }
+        }
+    }
+
     return NextResponse.json({
         ok: true,
         checked: rows.length,
@@ -185,5 +278,8 @@ export async function GET(request: NextRequest) {
         reconciled_ids: reconciledIds,
         errors,
         missing_imp_uid: missingImpUid,
+        pending_checked: pendingChecked,
+        pending_promoted: pendingPromoted,
+        pending_failed: pendingFailed,
     });
 }

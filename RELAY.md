@@ -7,7 +7,25 @@
 
 ## 🔴 미실행 마이그레이션 (Supabase Dashboard에서 실행 필요)
 
-_(현재 미실행 마이그레이션 없음)_
+### ⚠️ 2026-04-27 발견 — production DB에 적용 안 됨 (전수 감사로 확정)
+
+PostgREST 직접 쿼리 시 `Could not find the table 'public.local_posts'` / `'public.lost_pets'` 에러 — feedback_lying_patterns 사례 6과 동일 (마이그레이션 파일은 git에 있는데 DB 실행은 누락된 케이스).
+
+| 마이그레이션 | 영향 |
+|---|---|
+| `004_lost_pets.sql` | `/api/lost-pets` GET production 500 에러. 모바일 V3 lost.tsx 화면 동작 불가. |
+| `005_local_posts.sql` | `/api/local-posts` GET production 500 에러. 모바일 V3 local.tsx 화면 동작 불가. |
+| `20260427_rls_initplan_auto_optimize.sql` | RLS auth.uid() initplan 자동 치환 (116건) — 적용 시 RLS CPU 30~50% 절감. |
+
+**적용 방법** — Supabase Studio:
+1. https://supabase.com/dashboard/project/kuqhjgrlrzskvuutqbce/sql/new
+2. 위 3개 SQL 파일 내용을 차례로 복붙 + Run
+3. 적용 후 `select count(*) from local_posts` / `lost_pets`로 검증
+4. RLS initplan은 적용 후 advisor 재실행 → `auth_rls_initplan` 0건 확인
+
+---
+
+_(다른 미실행 없음)_
 
 ### ✅ 2026-04-22 실행 완료 (Supabase MCP apply)
 - `stories_24h_ttl` — stories 테이블 + 인덱스 3개 + RLS 3정책.
