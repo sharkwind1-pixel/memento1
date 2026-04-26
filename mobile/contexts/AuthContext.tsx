@@ -53,17 +53,26 @@ function generatePKCEVerifier(): string {
     return result;
 }
 
+// 사용된 code 추적 — 같은 code로 두 번 token endpoint POST 안 가도록 차단
+const usedCodes = new Set<string>();
+
 /**
  * 메모리에 보관된 verifier로 /auth/v1/token POST → setSession.
- * provider 인자는 verifierMap key. 두 provider 동시 시도 거의 없으므로
- * 마지막 호출자의 verifier 사용해도 무방하게 fallback도 포함.
+ * 같은 code로 중복 호출 방지 (자동 경로 + callback.tsx 동시 실행 race).
  */
 export async function exchangeWithStoredVerifier(
     providerOrAny: string | undefined,
     code: string,
 ): Promise<{ error: Error | null }> {
+    // 같은 code 중복 호출 차단 (flow_state_not_found 에러 방지)
+    if (usedCodes.has(code)) {
+        console.log(`[Auth] 이 code는 이미 처리됨 → skip`);
+        return { error: null };
+    }
+    usedCodes.add(code);
+
     // 1. 정확한 provider 키로 시도, 없으면 verifierMap에 있는 아무거나
-    let verifier =
+    const verifier =
         (providerOrAny && verifierMap[providerOrAny]) ||
         Object.values(verifierMap)[0];
 
@@ -84,6 +93,8 @@ export async function exchangeWithStoredVerifier(
         if (!tokenRes.ok) {
             const errText = await tokenRes.text();
             console.log(`[Auth] token endpoint ${tokenRes.status}: ${errText.slice(0, 300)}`);
+            // 실패하면 used 표시 풀어서 재시도 가능하게
+            usedCodes.delete(code);
             return { error: new Error(`token endpoint ${tokenRes.status}: ${errText.slice(0, 100)}`) };
         }
 
@@ -101,6 +112,7 @@ export async function exchangeWithStoredVerifier(
         console.log(`[Auth] PKCE 직접 처리로 세션 교환 성공`);
         return { error: null };
     } catch (e) {
+        usedCodes.delete(code);
         return { error: e as Error };
     }
 }

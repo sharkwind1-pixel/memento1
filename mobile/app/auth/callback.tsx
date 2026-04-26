@@ -8,6 +8,7 @@
 import { useEffect, useState } from "react";
 import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { supabase } from "@/lib/supabase";
 import { COLORS } from "@/lib/theme";
 import { exchangeWithStoredVerifier } from "@/contexts/AuthContext";
 
@@ -31,9 +32,25 @@ export default function AuthCallbackScreen() {
                 return;
             }
 
+            // 자동 경로(AuthContext.signInWithProvider)가 먼저 끝났는지 체크.
+            // 이미 세션 있으면 같은 code 재사용 시도하지 않고 바로 탭으로 이동.
+            // (이전 race로 "flow_state_not_found" 에러 나던 케이스 차단)
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                router.replace("/(tabs)");
+                return;
+            }
+
             // 메모리에 있는 verifier로 직접 token endpoint POST
-            // (provider는 unknown이므로 verifierMap에 있는 첫 번째 사용)
             const { error } = await exchangeWithStoredVerifier(undefined, code);
+
+            // exchange 후에도 세션 한 번 더 확인 (자동 경로가 동시에 setSession했을 수 있음)
+            const { data: { session: afterSession } } = await supabase.auth.getSession();
+            if (afterSession) {
+                router.replace("/(tabs)");
+                return;
+            }
+
             if (error) {
                 setMessage(`로그인 실패: ${error.message}`);
                 setTimeout(() => router.replace("/(auth)/login"), 1500);
