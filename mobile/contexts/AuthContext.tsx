@@ -26,10 +26,11 @@ const PROJECT_REF = SUPABASE_URL.replace(/^https?:\/\//, "").split(".")[0];
 export const SUPABASE_VERIFIER_KEY = `sb-${PROJECT_REF}-auth-token-code-verifier`;
 export const VERIFIER_BACKUP_KEY = "mementoani-pkce-verifier-backup";
 
+const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
+
 /**
  * supabase-js가 exchangeCodeForSession 시 자기 키로 verifier를 찾는데,
  * cold start로 잃어버린 경우 우리 백업을 supabase 키로 복원해서 발견되게 함.
- * @returns true면 verifier 사용 가능 상태, false면 백업도 없음
  */
 export async function ensureVerifierInStorage(): Promise<boolean> {
     const current = await AsyncStorage.getItem(SUPABASE_VERIFIER_KEY);
@@ -41,6 +42,63 @@ export async function ensureVerifierInStorage(): Promise<boolean> {
     await AsyncStorage.setItem(SUPABASE_VERIFIER_KEY, backup);
     console.log(`[OAuth] supabase verifier 키 복원 완료 (${backup.length} chars)`);
     return true;
+}
+
+/**
+ * 표준 exchange 시도 → 실패 시 백업 verifier로 직접 token endpoint POST 폴백.
+ * supabase-js의 PKCE 구현이 React Native에서 storage 읽기 race condition을 가질 때
+ * 우리가 보관한 verifier로 직접 토큰 교환.
+ *
+ * 자동 경로(signInWithProvider)와 deep-link 경로(callback.tsx) 양쪽에서 사용.
+ */
+export async function exchangeCodeWithFallback(code: string): Promise<{ error: Error | null }> {
+    // 1단계: supabase 키 복원 + 표준 exchange
+    await ensureVerifierInStorage();
+    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+    if (!exchangeError) {
+        await AsyncStorage.removeItem(VERIFIER_BACKUP_KEY);
+        console.log(`[Auth] 표준 exchange 성공`);
+        return { error: null };
+    }
+    console.log(`[Auth] 표준 exchange 실패: ${exchangeError.message} → 직접 token POST 폴백`);
+
+    // 2단계: 백업 verifier로 직접 /auth/v1/token?grant_type=pkce POST
+    const verifier = await AsyncStorage.getItem(VERIFIER_BACKUP_KEY);
+    if (!verifier) {
+        return { error: new Error("PKCE verifier가 없습니다. 다시 로그인해주세요.") };
+    }
+
+    try {
+        const tokenRes = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=pkce`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "apikey": SUPABASE_ANON_KEY,
+            },
+            body: JSON.stringify({ auth_code: code, code_verifier: verifier }),
+        });
+
+        if (!tokenRes.ok) {
+            const errText = await tokenRes.text();
+            console.log(`[Auth] token endpoint ${tokenRes.status}: ${errText.slice(0, 300)}`);
+            return { error: new Error(`token endpoint 실패 (${tokenRes.status}): ${errText.slice(0, 100)}`) };
+        }
+
+        const tokens = await tokenRes.json() as { access_token: string; refresh_token: string };
+        await AsyncStorage.removeItem(VERIFIER_BACKUP_KEY);
+        await AsyncStorage.removeItem(SUPABASE_VERIFIER_KEY);
+
+        const { error: setErr } = await supabase.auth.setSession({
+            access_token: tokens.access_token,
+            refresh_token: tokens.refresh_token,
+        });
+        if (setErr) return { error: setErr };
+
+        console.log(`[Auth] 직접 token POST 폴백으로 세션 교환 성공`);
+        return { error: null };
+    } catch (e) {
+        return { error: e as Error };
+    }
 }
 
 WebBrowser.maybeCompleteAuthSession();
@@ -217,18 +275,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     return { error: new Error(`콜백에 code 없음. URL=${result.url.slice(0, 200)}`) };
                 }
 
-                // exchange 호출 전에 백업 verifier를 supabase 키로 복원 (cold start 방어)
-                await ensureVerifierInStorage();
-
-                const { error: exchangeErr } = await supabase.auth.exchangeCodeForSession(code);
-                if (exchangeErr) {
-                    console.log(`[OAuth] exchangeCodeForSession error: ${exchangeErr.message}`);
-                    return { error: exchangeErr };
-                }
-                // 성공 후 백업도 정리 (1회용)
-                await AsyncStorage.removeItem(VERIFIER_BACKUP_KEY);
-                console.log(`[OAuth] 세션 교환 성공 (자동 경로)`);
-                return { error: null };
+                // 표준 exchange + 직접 token POST 2단계 시도
+                return await exchangeCodeWithFallback(code);
             }
 
             // 수동 폴백 경로: 사용자가 "앱으로 돌아가기" 탭 → app/auth/callback.tsx가 처리
