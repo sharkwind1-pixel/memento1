@@ -16,7 +16,7 @@ import { Session, User } from "@supabase/supabase-js";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
 import { supabase } from "@/lib/supabase";
-import { ADMIN_EMAILS } from "@/config/constants";
+import { ADMIN_EMAILS, API_BASE_URL } from "@/config/constants";
 import { UserProfile } from "@/types";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -124,21 +124,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     /**
-     * 표준 OAuth 흐름 — supabase-js + expo-web-browser + expo-linking
+     * OAuth 흐름 — Chrome Custom Tabs는 mementoani:// / exp:// 직접 redirect를 차단하므로
+     * 웹 브릿지(https mementoani.com/auth/callback)를 경유한다.
      *
-     * 1) signInWithOAuth: provider URL 생성 (브라우저 열지 않음)
-     * 2) openAuthSessionAsync: 인앱 브라우저로 OAuth 진행, deep link로 복귀
-     * 3) exchangeCodeForSession: 받은 code를 세션으로 교환
-     *
-     * supabase-js가 PKCE verifier를 AsyncStorage에 저장 → 같은 supabase 인스턴스에서
-     * exchangeCodeForSession 호출 시 storage에서 읽어 사용. 우리는 손대지 않는다.
+     * 흐름:
+     * 1) signInWithOAuth → provider URL 받음
+     * 2) openAuthSessionAsync로 인앱 브라우저 열기 (redirectTo = 웹 브릿지 URL)
+     * 3) Provider → Supabase → 웹 브릿지 → window.location.replace(deepLink) 시도
+     *    - 자동 redirect 성공: 인앱 브라우저가 deepLink 감지 → success 반환
+     *    - Chrome Custom Tabs 차단 시: 사용자가 "앱으로 돌아가기" 버튼 탭 → deepLink 발동
+     *      → mobile/app/auth/callback.tsx 라우트가 code 받음 → exchangeCodeForSession
+     * 4) 어느 경로든 supabase가 PKCE verifier를 AsyncStorage에 저장했으므로 exchange 가능
      */
     async function signInWithProvider(provider: OAuthProvider): Promise<{ error: Error | null }> {
         try {
             // dev: exp://192.168.0.42:8081/--/auth/callback
             // prod: mementoani://auth/callback
-            const redirectTo = Linking.createURL("/auth/callback");
-            console.log(`[OAuth] provider=${provider} redirectTo=${redirectTo}`);
+            const nativeDeepLink = Linking.createURL("/auth/callback");
+            // 웹 브릿지 경유: Custom Tabs가 차단하면 사용자 수동 탭으로 deepLink 발동
+            const redirectTo = `${API_BASE_URL}/auth/callback?mobile=1&nativeUrl=${encodeURIComponent(nativeDeepLink)}`;
+            console.log(`[OAuth] provider=${provider} nativeDeepLink=${nativeDeepLink}`);
 
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider,
@@ -154,33 +159,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (error) return { error };
             if (!data?.url) return { error: new Error("OAuth URL을 받지 못했습니다.") };
 
-            const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+            // 인앱 브라우저: nativeDeepLink를 감지해서 자동 닫힘
+            // 자동 안 되면 사용자가 웹 브릿지 화면에서 "앱으로 돌아가기" 탭 → deepLink 발동
+            //   → app/auth/callback.tsx 라우트가 code 받아 exchangeCodeForSession 처리
+            const result = await WebBrowser.openAuthSessionAsync(data.url, nativeDeepLink);
             console.log(`[OAuth] result.type=${result.type}`);
 
-            if (result.type !== "success" || !result.url) {
-                return { error: new Error(`로그인 취소 (type=${result.type})`) };
+            // 자동 redirect 경로: result.url에 code 있음
+            if (result.type === "success" && result.url) {
+                const callbackUrl = new URL(result.url);
+                const code = callbackUrl.searchParams.get("code");
+                const oauthError = callbackUrl.searchParams.get("error");
+                const oauthErrorDesc = callbackUrl.searchParams.get("error_description");
+
+                if (oauthError) return { error: new Error(oauthErrorDesc ?? oauthError) };
+                if (!code) {
+                    return { error: new Error(`콜백에 code 없음. URL=${result.url.slice(0, 200)}`) };
+                }
+
+                const { error: exchangeErr } = await supabase.auth.exchangeCodeForSession(code);
+                if (exchangeErr) {
+                    console.log(`[OAuth] exchangeCodeForSession error: ${exchangeErr.message}`);
+                    return { error: exchangeErr };
+                }
+                console.log(`[OAuth] 세션 교환 성공 (자동 경로)`);
+                return { error: null };
             }
 
-            // PKCE flow: query string에서 code 추출 → 표준 exchange
-            const callbackUrl = new URL(result.url);
-            const code = callbackUrl.searchParams.get("code");
-            const oauthError = callbackUrl.searchParams.get("error");
-            const oauthErrorDesc = callbackUrl.searchParams.get("error_description");
-
-            if (oauthError) {
-                return { error: new Error(oauthErrorDesc ?? oauthError) };
-            }
-            if (!code) {
-                return { error: new Error(`콜백에 code 없음. URL=${result.url.slice(0, 200)}`) };
-            }
-
-            const { error: exchangeErr } = await supabase.auth.exchangeCodeForSession(code);
-            if (exchangeErr) {
-                console.log(`[OAuth] exchangeCodeForSession error: ${exchangeErr.message}`);
-                return { error: exchangeErr };
-            }
-
-            console.log(`[OAuth] 세션 교환 성공`);
+            // 수동 폴백 경로: 사용자가 "앱으로 돌아가기" 탭 → app/auth/callback.tsx가 처리
+            // openAuthSessionAsync는 dismiss로 끝났지만 deep link 핸들러가 별도로 작동 중
+            // onAuthStateChange가 SIGNED_IN을 캐치하면 자동으로 세션 set됨
+            console.log(`[OAuth] 인앱 브라우저 dismiss — deep link 핸들러 대기`);
             return { error: null };
         } catch (e) {
             return { error: e as Error };

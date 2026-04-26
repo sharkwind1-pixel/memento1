@@ -23,6 +23,8 @@ import { supabase } from "@/lib/supabase";
 export default function AuthCallbackPage() {
     const router = useRouter();
     const [error, setError] = useState<string | null>(null);
+    // 모바일 브릿지: 자동 redirect 실패 시 사용자가 탭할 수 있도록 deeplink 노출
+    const [mobileDeepLink, setMobileDeepLink] = useState<string | null>(null);
 
     useEffect(() => {
         const handleCallback = async () => {
@@ -33,9 +35,28 @@ export default function AuthCallbackPage() {
             const authError = params.get("error");
             const errorDescription = params.get("error_description");
 
-            // 참고 (2026-04-26): 이전에 모바일 브릿지(mobile=1 + nativeUrl 분기)가 있었으나
-            // V2 후속 작업에서 모바일은 redirectTo를 직접 deep link(Linking.createURL)로 보내도록 변경됨.
-            // 이제 이 페이지는 웹 OAuth 콜백 전용. 모바일 브릿지 분기 제거됨.
+            // ── 모바일 앱 브릿지 ──
+            // 자동 redirect 시도 후 사용자 탭 가능 버튼도 노출 (Chrome custom scheme 차단 대비).
+            const isMobile = params.get("mobile") === "1";
+            const nativeUrlRaw = params.get("nativeUrl");
+            if (isMobile && nativeUrlRaw) {
+                const decoded = decodeURIComponent(nativeUrlRaw);
+                const separator = decoded.includes("?") ? "&" : "?";
+                const forwardParams: string[] = [];
+                if (code) forwardParams.push(`code=${encodeURIComponent(code)}`);
+                if (tokenHash) forwardParams.push(`token_hash=${encodeURIComponent(tokenHash)}`);
+                if (type) forwardParams.push(`type=${encodeURIComponent(type)}`);
+                if (authError) forwardParams.push(`error=${encodeURIComponent(authError)}`);
+                if (errorDescription) forwardParams.push(`error_description=${encodeURIComponent(errorDescription)}`);
+                let deepLink = `${decoded}${separator}${forwardParams.join("&")}`;
+                if (window.location.hash && window.location.hash.length > 1) {
+                    deepLink += window.location.hash;
+                }
+                setMobileDeepLink(deepLink);
+                // location.replace: 현재 history entry를 대체 → 브라우저 탭에 흔적 안 남음
+                window.location.replace(deepLink);
+                return;
+            }
 
             // OAuth 에러 처리
             if (authError) {
@@ -103,6 +124,18 @@ export default function AuthCallbackPage() {
                         <p className="text-red-500 text-sm">로그인 중 문제가 발생했습니다</p>
                         <p className="text-gray-400 text-xs">{error}</p>
                         <p className="text-gray-400 text-xs">잠시 후 메인 페이지로 이동합니다...</p>
+                    </>
+                ) : mobileDeepLink ? (
+                    <>
+                        <div className="w-8 h-8 border-2 border-memento-400 border-t-transparent rounded-full animate-spin mx-auto" />
+                        <p className="text-gray-700 text-sm font-medium">앱으로 돌아가는 중...</p>
+                        <p className="text-gray-500 text-xs">자동으로 안 열리면 아래 버튼을 탭하세요</p>
+                        <a
+                            href={mobileDeepLink}
+                            className="inline-block bg-memento-500 hover:bg-memento-600 text-white px-6 py-3 rounded-xl text-sm font-semibold mt-2"
+                        >
+                            메멘토애니 앱으로 돌아가기
+                        </a>
                     </>
                 ) : (
                     <>
