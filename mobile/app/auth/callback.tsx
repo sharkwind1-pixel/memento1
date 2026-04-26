@@ -16,7 +16,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "@/lib/supabase";
 import { COLORS } from "@/lib/theme";
-import { VERIFIER_BACKUP_KEY } from "@/contexts/AuthContext";
+import { VERIFIER_BACKUP_KEY, ensureVerifierInStorage } from "@/contexts/AuthContext";
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
@@ -41,14 +41,16 @@ export default function AuthCallbackScreen() {
                 return;
             }
 
-            // 1단계: 표준 supabase exchange
+            // 1단계: 백업 verifier를 supabase 키로 복원 후 표준 exchange
+            await ensureVerifierInStorage();
             const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
             if (!exchangeError) {
+                await AsyncStorage.removeItem(VERIFIER_BACKUP_KEY);
                 router.replace("/(tabs)");
                 return;
             }
 
-            console.log(`[callback] exchangeCodeForSession 실패: ${exchangeError.message} → 백업 verifier로 폴백`);
+            console.log(`[callback] exchangeCodeForSession 실패: ${exchangeError.message} → 백업 verifier로 직접 token POST 폴백`);
 
             // 2단계: 백업 verifier로 직접 token endpoint POST
             const verifier = await AsyncStorage.getItem(VERIFIER_BACKUP_KEY);

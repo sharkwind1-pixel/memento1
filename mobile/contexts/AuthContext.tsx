@@ -23,8 +23,25 @@ import { UserProfile } from "@/types";
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL!;
 const PROJECT_REF = SUPABASE_URL.replace(/^https?:\/\//, "").split(".")[0];
 // supabase-js가 PKCE verifier를 저장하는 기본 키 + 우리가 만드는 백업 키
-const SUPABASE_VERIFIER_KEY = `sb-${PROJECT_REF}-auth-token-code-verifier`;
+export const SUPABASE_VERIFIER_KEY = `sb-${PROJECT_REF}-auth-token-code-verifier`;
 export const VERIFIER_BACKUP_KEY = "mementoani-pkce-verifier-backup";
+
+/**
+ * supabase-js가 exchangeCodeForSession 시 자기 키로 verifier를 찾는데,
+ * cold start로 잃어버린 경우 우리 백업을 supabase 키로 복원해서 발견되게 함.
+ * @returns true면 verifier 사용 가능 상태, false면 백업도 없음
+ */
+export async function ensureVerifierInStorage(): Promise<boolean> {
+    const current = await AsyncStorage.getItem(SUPABASE_VERIFIER_KEY);
+    if (current) return true;
+
+    const backup = await AsyncStorage.getItem(VERIFIER_BACKUP_KEY);
+    if (!backup) return false;
+
+    await AsyncStorage.setItem(SUPABASE_VERIFIER_KEY, backup);
+    console.log(`[OAuth] supabase verifier 키 복원 완료 (${backup.length} chars)`);
+    return true;
+}
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -200,11 +217,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     return { error: new Error(`콜백에 code 없음. URL=${result.url.slice(0, 200)}`) };
                 }
 
+                // exchange 호출 전에 백업 verifier를 supabase 키로 복원 (cold start 방어)
+                await ensureVerifierInStorage();
+
                 const { error: exchangeErr } = await supabase.auth.exchangeCodeForSession(code);
                 if (exchangeErr) {
                     console.log(`[OAuth] exchangeCodeForSession error: ${exchangeErr.message}`);
                     return { error: exchangeErr };
                 }
+                // 성공 후 백업도 정리 (1회용)
+                await AsyncStorage.removeItem(VERIFIER_BACKUP_KEY);
                 console.log(`[OAuth] 세션 교환 성공 (자동 경로)`);
                 return { error: null };
             }
