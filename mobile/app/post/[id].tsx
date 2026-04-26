@@ -45,6 +45,66 @@ interface PostDetail {
     createdAt: string;
 }
 
+/**
+ * API 응답을 안전하게 정규화 (snake_case ↔ camelCase, null/object 보호)
+ * 웹 API가 author_name, created_at 같은 snake_case 또는 nested object로 응답하는 경우 대응.
+ * 핵심: Text의 child로 들어가는 모든 필드는 string이어야 함 (객체면 React 에러).
+ */
+function asString(v: unknown, fallback = ""): string {
+    if (typeof v === "string") return v;
+    if (typeof v === "number") return String(v);
+    return fallback;
+}
+function asNumber(v: unknown, fallback = 0): number {
+    return typeof v === "number" ? v : fallback;
+}
+
+function normalizeComment(raw: any): Comment {
+    return {
+        id: asNumber(raw?.id),
+        content: asString(raw?.content),
+        author: asString(raw?.author ?? raw?.author_name ?? raw?.nickname, "익명"),
+        authorId: asString(raw?.authorId ?? raw?.author_id ?? raw?.user_id),
+        authorAvatar: typeof raw?.authorAvatar === "string"
+            ? raw.authorAvatar
+            : typeof raw?.author_avatar === "string"
+                ? raw.author_avatar
+                : undefined,
+        createdAt: asString(raw?.createdAt ?? raw?.created_at),
+        likes: asNumber(raw?.likes),
+        isLiked: typeof raw?.isLiked === "boolean" ? raw.isLiked : undefined,
+    };
+}
+
+function normalizePost(raw: any): PostDetail | null {
+    if (!raw || typeof raw !== "object") return null;
+    return {
+        id: asNumber(raw.id),
+        title: asString(raw.title),
+        content: asString(raw.content),
+        author: asString(raw.author ?? raw.author_name ?? raw.nickname, "익명"),
+        authorId: asString(raw.authorId ?? raw.author_id ?? raw.user_id),
+        authorAvatar: typeof raw.authorAvatar === "string"
+            ? raw.authorAvatar
+            : typeof raw.author_avatar === "string"
+                ? raw.author_avatar
+                : undefined,
+        authorPetImage: typeof raw.authorPetImage === "string"
+            ? raw.authorPetImage
+            : typeof raw.author_pet_image === "string"
+                ? raw.author_pet_image
+                : undefined,
+        likes: asNumber(raw.likes),
+        comments: asNumber(raw.comments ?? raw.comments_count),
+        views: asNumber(raw.views),
+        isLiked: typeof raw.isLiked === "boolean" ? raw.isLiked : undefined,
+        images: Array.isArray(raw.images) ? raw.images.filter((x: unknown) => typeof x === "string") : undefined,
+        tag: typeof raw.tag === "string" ? raw.tag : undefined,
+        subcategory: typeof raw.subcategory === "string" ? raw.subcategory : undefined,
+        createdAt: asString(raw.createdAt ?? raw.created_at),
+    };
+}
+
 export default function PostDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const { session } = useAuth();
@@ -72,11 +132,16 @@ export default function PostDetailScreen() {
 
             if (postRes.ok) {
                 const data = await postRes.json();
-                setPost(data.post ?? data);
+                setPost(normalizePost(data?.post ?? data));
             }
             if (commentsRes.ok) {
                 const data = await commentsRes.json();
-                setComments(data.comments ?? data ?? []);
+                const list = Array.isArray(data?.comments)
+                    ? data.comments
+                    : Array.isArray(data)
+                        ? data
+                        : [];
+                setComments(list.map(normalizeComment));
             }
         } catch {
             // ignore
@@ -122,7 +187,7 @@ export default function PostDetailScreen() {
             });
             if (res.ok) {
                 const data = await res.json();
-                setComments((prev) => [...prev, data.comment ?? data]);
+                setComments((prev) => [...prev, normalizeComment(data?.comment ?? data)]);
                 setCommentInput("");
                 setPost((p) => p ? { ...p, comments: p.comments + 1 } : p);
             }
