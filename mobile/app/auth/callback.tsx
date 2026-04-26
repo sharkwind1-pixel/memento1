@@ -1,19 +1,15 @@
 /**
- * OAuth 콜백 — Supabase 세션 교환 처리
+ * OAuth 콜백 — deep link로 앱 깨운 케이스 처리
  *
- * 시스템 브라우저 / Custom Tabs가 mementoani:// 또는 exp:// deep link로 앱을 열었을 때
- * 이 화면이 code를 꺼내 세션을 교환하고 탭으로 보낸다.
- *
- * AuthContext의 exchangeCodeWithFallback 헬퍼 사용:
- *   1) supabase 표준 exchange
- *   2) 실패 시 백업 verifier로 직접 /auth/v1/token POST
+ * 시스템 브라우저 / Custom Tabs가 mementoani:// 또는 exp:// deep link로 앱을 열면
+ * 이 화면이 code 추출 → 메모리 verifier로 token endpoint POST → 탭 화면.
  */
 
 import { useEffect, useState } from "react";
 import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { COLORS } from "@/lib/theme";
-import { exchangeCodeWithFallback } from "@/contexts/AuthContext";
+import { exchangeWithStoredVerifier } from "@/contexts/AuthContext";
 
 export default function AuthCallbackScreen() {
     const router = useRouter();
@@ -35,7 +31,9 @@ export default function AuthCallbackScreen() {
                 return;
             }
 
-            const { error } = await exchangeCodeWithFallback(code);
+            // 메모리에 있는 verifier로 직접 token endpoint POST
+            // (provider는 unknown이므로 verifierMap에 있는 첫 번째 사용)
+            const { error } = await exchangeWithStoredVerifier(undefined, code);
             if (error) {
                 setMessage(`로그인 실패: ${error.message}`);
                 setTimeout(() => router.replace("/(auth)/login"), 1500);
