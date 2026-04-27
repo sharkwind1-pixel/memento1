@@ -98,27 +98,23 @@ export default function RecordScreen() {
             >
                 {TABS.map((tab) => {
                     const active = activeTab === tab.id;
-                    const inactiveBg = isMemorialMode ? COLORS.gray[800] : COLORS.white;
-                    const inactiveBorder = isMemorialMode ? COLORS.gray[700] : COLORS.gray[200];
-                    const inactiveColor = isMemorialMode ? COLORS.gray[400] : COLORS.gray[600];
+                    const inactiveBg = isMemorialMode ? COLORS.gray[800] : COLORS.gray[100];
+                    const inactiveColor = isMemorialMode ? COLORS.gray[300] : COLORS.gray[700];
                     return (
                         <TouchableOpacity
                             key={tab.id}
                             onPress={() => setActiveTab(tab.id)}
                             activeOpacity={0.85}
+                            style={{ marginRight: 8 }}
                         >
                             {active ? (
                                 <LinearGradient colors={accentGradient} style={styles.tabPill}>
-                                    <Ionicons name={tab.icon} size={14} color="#fff" />
+                                    <Ionicons name={tab.icon} size={14} color="#fff" style={{ marginRight: 6 }} />
                                     <Text style={styles.tabLabelActive}>{tab.label}</Text>
                                 </LinearGradient>
                             ) : (
-                                <View style={[styles.tabPill, {
-                                    backgroundColor: inactiveBg,
-                                    borderWidth: 1,
-                                    borderColor: inactiveBorder,
-                                }]}>
-                                    <Ionicons name={tab.icon} size={14} color={inactiveColor} />
+                                <View style={[styles.tabPill, { backgroundColor: inactiveBg }]}>
+                                    <Ionicons name={tab.icon} size={14} color={inactiveColor} style={{ marginRight: 6 }} />
                                     <Text style={[styles.tabLabel, { color: inactiveColor }]}>{tab.label}</Text>
                                 </View>
                             )}
@@ -695,21 +691,16 @@ const styles = StyleSheet.create({
     title: { fontSize: 22, fontWeight: "700" },
     subtitle: { fontSize: 13, color: COLORS.gray[500], marginTop: 2 },
     addBtn: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
-    tabScroll: { paddingHorizontal: 16, gap: 8, paddingVertical: 12, alignItems: "center" },
+    tabScroll: { paddingHorizontal: 16, paddingVertical: 12 },
     tabPill: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 6,
-        paddingHorizontal: 16,
-        paddingVertical: 9,
+        paddingHorizontal: 18,
+        paddingVertical: 10,
         borderRadius: 9999,
     },
-    tabLabel: {
-        fontSize: 13,
-        fontWeight: "500",
-        includeFontPadding: false,
-    },
-    tabLabelActive: { fontSize: 13, fontWeight: "600", color: "#fff", includeFontPadding: false },
+    tabLabel: { fontSize: 13, fontWeight: "500" },
+    tabLabelActive: { fontSize: 13, fontWeight: "600", color: "#fff" },
     tabContent: { padding: 16, paddingBottom: 32 },
     emptyCenter: {
         flex: 1,

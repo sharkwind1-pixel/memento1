@@ -177,9 +177,8 @@ export default function CommunityScreen() {
             >
                 {SUBCATEGORIES.map((cat) => {
                     const active = activeTab === cat.id;
-                    const inactiveBg = isMemorialMode ? COLORS.gray[800] : COLORS.white;
-                    const inactiveBorder = isMemorialMode ? COLORS.gray[700] : COLORS.gray[200];
-                    const inactiveColor = isMemorialMode ? COLORS.gray[400] : COLORS.gray[600];
+                    const inactiveBg = isMemorialMode ? COLORS.gray[800] : COLORS.gray[100];
+                    const inactiveColor = isMemorialMode ? COLORS.gray[300] : COLORS.gray[700];
                     return (
                         <TouchableOpacity
                             key={cat.id}
@@ -190,19 +189,16 @@ export default function CommunityScreen() {
                                 setActiveTab(cat.id);
                             }}
                             activeOpacity={0.85}
+                            style={{ marginRight: 8 }}
                         >
                             {active ? (
                                 <LinearGradient colors={cat.gradient} style={styles.subcatPill}>
-                                    <Ionicons name={cat.icon} size={14} color="#fff" />
+                                    <Ionicons name={cat.icon} size={14} color="#fff" style={{ marginRight: 6 }} />
                                     <Text style={styles.subcatLabelActive}>{cat.label}</Text>
                                 </LinearGradient>
                             ) : (
-                                <View style={[styles.subcatPill, {
-                                    backgroundColor: inactiveBg,
-                                    borderWidth: 1,
-                                    borderColor: inactiveBorder,
-                                }]}>
-                                    <Ionicons name={cat.icon} size={14} color={inactiveColor} />
+                                <View style={[styles.subcatPill, { backgroundColor: inactiveBg }]}>
+                                    <Ionicons name={cat.icon} size={14} color={inactiveColor} style={{ marginRight: 6 }} />
                                     <Text style={[styles.subcatLabel, { color: inactiveColor }]}>{cat.label}</Text>
                                 </View>
                             )}
@@ -354,21 +350,16 @@ const styles = StyleSheet.create({
         borderWidth: 1,
     },
     searchInput: { flex: 1, fontSize: 14, padding: 0 },
-    subcatScroll: { paddingHorizontal: 16, gap: 8, paddingVertical: 12, alignItems: "center" },
+    subcatScroll: { paddingHorizontal: 16, paddingVertical: 12 },
     subcatPill: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 6,
-        paddingHorizontal: 16,
-        paddingVertical: 9,
+        paddingHorizontal: 18,
+        paddingVertical: 10,
         borderRadius: 9999,
     },
-    subcatLabel: {
-        fontSize: 13,
-        fontWeight: "500",
-        includeFontPadding: false,
-    },
-    subcatLabelActive: { fontSize: 13, fontWeight: "600", color: "#fff", includeFontPadding: false },
+    subcatLabel: { fontSize: 13, fontWeight: "500" },
+    subcatLabelActive: { fontSize: 13, fontWeight: "600", color: "#fff" },
     card: {
         marginHorizontal: 16,
         marginVertical: 6,
