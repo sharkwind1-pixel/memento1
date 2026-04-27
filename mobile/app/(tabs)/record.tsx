@@ -22,6 +22,7 @@ import { API_BASE_URL } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
 import AppHeader from "@/components/common/AppHeader";
 import AppDrawer from "@/components/common/AppDrawer";
+import PetSwitcher from "@/components/common/PetSwitcher";
 import TimelineWriteModal, { type TimelineEntryDraft, type TimelineMood } from "@/components/record/TimelineWriteModal";
 import MediaUploadModal from "@/components/record/MediaUploadModal";
 import PhotoLightbox from "@/components/record/PhotoLightbox";
@@ -91,6 +92,9 @@ export default function RecordScreen() {
                     <Ionicons name="add" size={22} color={accentColor} />
                 </TouchableOpacity>
             </View>
+
+            {/* 펫 카드 가로 스크롤 (2마리 이상 시) */}
+            <PetSwitcher accentColor={accentColor} onAddPet={() => router.push("/pet/new")} />
 
             {/* 탭 (가로 스크롤) */}
             <ScrollView

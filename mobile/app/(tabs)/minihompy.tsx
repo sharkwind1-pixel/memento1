@@ -8,11 +8,13 @@ import {
     Image, Dimensions, StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
 import { COLORS } from "@/lib/theme";
+import PetSwitcher from "@/components/common/PetSwitcher";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -32,6 +34,7 @@ const PLAYFUL = [
 ];
 
 export default function MinihompyScreen() {
+    const router = useRouter();
     const { points } = useAuth();
     const { selectedPet, isMemorialMode } = usePet();
     const [touchCount, setTouchCount] = useState(0);
@@ -69,6 +72,11 @@ export default function MinihompyScreen() {
                         </Text>
                     </View>
                 </View>
+
+                <PetSwitcher
+                    accentColor={isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500]}
+                    onAddPet={() => router.push("/pet/new")}
+                />
 
                 <View style={[styles.stage, { backgroundColor: stageBg }]}>
                     {message && (

@@ -17,6 +17,7 @@
 import { useState, useCallback } from "react";
 import { ScrollView, RefreshControl, View, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
 import { COLORS } from "@/lib/theme";
@@ -32,8 +33,10 @@ import QuizSection from "@/components/home/QuizSection";
 import ShowcaseSection from "@/components/home/ShowcaseSection";
 import MemorialSection from "@/components/home/MemorialSection";
 import AppHeader from "@/components/common/AppHeader";
+import PetSwitcher from "@/components/common/PetSwitcher";
 
 export default function HomeScreen() {
+    const router = useRouter();
     const { session } = useAuth();
     const { selectedPet, isMemorialMode, refreshPets } = usePet();
     const [refreshing, setRefreshing] = useState(false);
@@ -69,6 +72,10 @@ export default function HomeScreen() {
                 <AnnouncementBanner />
                 <HeroSection session={session} isMemorialMode={isMemorialMode} />
                 <StoryFeed />
+                <PetSwitcher
+                    accentColor={isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500]}
+                    onAddPet={() => router.push("/pet/new")}
+                />
                 <QuestCard />
                 <PetCardSection pet={selectedPet} isMemorialMode={isMemorialMode} />
                 <CommunityPreview session={session} isMemorialMode={isMemorialMode} />

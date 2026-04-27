@@ -19,6 +19,7 @@ import { API_BASE_URL } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
 import AppHeader from "@/components/common/AppHeader";
 import AppDrawer from "@/components/common/AppDrawer";
+import PetSwitcher from "@/components/common/PetSwitcher";
 
 export default function AiChatScreen() {
     const router = useRouter();
@@ -149,6 +150,7 @@ export default function AiChatScreen() {
         <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
             <AppHeader onOpenDrawer={() => setDrawerOpen(true)} />
             <AppDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
+            <PetSwitcher accentColor={accentColor} onAddPet={() => router.push("/pet/new")} />
             <KeyboardAvoidingView
                 style={styles.flex1}
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
