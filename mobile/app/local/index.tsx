@@ -13,9 +13,11 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { API_BASE_URL } from "@/config/constants";
 import { LocalPost, LocalPostCategory } from "@/types";
 import { COLORS } from "@/lib/theme";
+import AppHeader from "@/components/common/AppHeader";
 
 type CategoryFilter = "all" | LocalPostCategory;
 
@@ -91,19 +93,13 @@ export default function LocalPostsScreen() {
     return (
         <SafeAreaView style={styles.container} edges={["top"]}>
             <Stack.Screen options={{ headerShown: false }} />
-
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-                    <Ionicons name="chevron-back" size={24} color={COLORS.gray[700]} />
-                </TouchableOpacity>
-                <Text style={styles.title}>지역정보</Text>
-                <View style={{ width: 40 }} />
-            </View>
+            <AppHeader showBack title="지역정보" hideActions />
 
             <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.filterRow}
+                style={styles.filterScrollOuter}
             >
                 {CATEGORY_LABELS.map((c) => {
                     const active = categoryFilter === c.id;
@@ -111,18 +107,23 @@ export default function LocalPostsScreen() {
                         <TouchableOpacity
                             key={c.id}
                             onPress={() => setCategoryFilter(c.id)}
-                            style={[styles.chip, active ? styles.chipActive : styles.chipInactive]}
                             activeOpacity={0.85}
+                            style={{ marginRight: 8 }}
                         >
-                            <Ionicons
-                                name={c.icon}
-                                size={14}
-                                color={active ? COLORS.white : COLORS.gray[700]}
-                                style={{ marginRight: 6 }}
-                            />
-                            <Text style={[styles.chipText, { color: active ? COLORS.white : COLORS.gray[700] }]}>
-                                {c.label}
-                            </Text>
+                            {active ? (
+                                <LinearGradient
+                                    colors={["#A78BFA", "#8B5CF6"]}
+                                    style={styles.chip}
+                                >
+                                    <Ionicons name={c.icon} size={14} color="#fff" style={{ marginRight: 6 }} />
+                                    <Text style={styles.chipTextActive}>{c.label}</Text>
+                                </LinearGradient>
+                            ) : (
+                                <View style={[styles.chip, styles.chipInactive]}>
+                                    <Ionicons name={c.icon} size={14} color={COLORS.gray[700]} style={{ marginRight: 6 }} />
+                                    <Text style={styles.chipText}>{c.label}</Text>
+                                </View>
+                            )}
                         </TouchableOpacity>
                     );
                 })}
@@ -136,6 +137,7 @@ export default function LocalPostsScreen() {
                 <FlatList
                     data={posts}
                     keyExtractor={(item) => item.id}
+                    style={{ flex: 1 }}
                     renderItem={({ item }) => <LocalCard post={item} />}
                     refreshControl={
                         <RefreshControl
@@ -241,29 +243,18 @@ function LocalCard({ post }: { post: LocalPost }) {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: COLORS.white },
-    header: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        paddingHorizontal: 12,
-        paddingVertical: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: COLORS.gray[100],
-    },
-    backBtn: { padding: 8, width: 40 },
-    title: { fontSize: 18, fontWeight: "bold", color: COLORS.gray[900] },
-    filterRow: { paddingHorizontal: 12, paddingVertical: 12, gap: 8 },
+    filterScrollOuter: { flexGrow: 0, flexShrink: 0 },
+    filterRow: { paddingHorizontal: 16, paddingVertical: 12 },
     chip: {
         flexDirection: "row",
         alignItems: "center",
-        paddingHorizontal: 14,
-        paddingVertical: 8,
-        borderRadius: 16,
-        marginRight: 8,
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 9999,
     },
-    chipActive: { backgroundColor: COLORS.memento[500] },
     chipInactive: { backgroundColor: COLORS.gray[100] },
-    chipText: { fontSize: 13, fontWeight: "600" },
+    chipText: { fontSize: 13, fontWeight: "500", color: COLORS.gray[700] },
+    chipTextActive: { fontSize: 13, fontWeight: "600", color: "#fff" },
     center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24, gap: 8 },
     helpText: { fontSize: 13, color: COLORS.gray[500] },
     listContent: { padding: 12, gap: 12 },

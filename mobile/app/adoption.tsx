@@ -11,23 +11,24 @@ import {
     ActivityIndicator, RefreshControl, ScrollView, StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack, useRouter } from "expo-router";
+import { Stack } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { API_BASE_URL } from "@/config/constants";
 import { AdoptionAnimal } from "@/types";
 import { COLORS } from "@/lib/theme";
+import AppHeader from "@/components/common/AppHeader";
 
 type KindFilter = "all" | "dog" | "cat" | "etc";
 
-const KIND_LABELS: { id: KindFilter; label: string }[] = [
-    { id: "all", label: "전체" },
-    { id: "dog", label: "강아지" },
-    { id: "cat", label: "고양이" },
-    { id: "etc", label: "기타" },
+const KIND_LABELS: { id: KindFilter; label: string; icon: React.ComponentProps<typeof Ionicons>["name"] }[] = [
+    { id: "all", label: "전체", icon: "apps-outline" },
+    { id: "dog", label: "강아지", icon: "paw-outline" },
+    { id: "cat", label: "고양이", icon: "paw-outline" },
+    { id: "etc", label: "기타", icon: "ellipsis-horizontal" },
 ];
 
 export default function AdoptionScreen() {
-    const router = useRouter();
     const [animals, setAnimals] = useState<AdoptionAnimal[]>([]);
     const [kindFilter, setKindFilter] = useState<KindFilter>("all");
     const [isLoading, setIsLoading] = useState(true);
@@ -88,21 +89,14 @@ export default function AdoptionScreen() {
     return (
         <SafeAreaView style={styles.container} edges={["top"]}>
             <Stack.Screen options={{ headerShown: false }} />
-
-            {/* 헤더 */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-                    <Ionicons name="chevron-back" size={24} color={COLORS.gray[700]} />
-                </TouchableOpacity>
-                <Text style={styles.title}>입양정보</Text>
-                <View style={{ width: 40 }} />
-            </View>
+            <AppHeader showBack title="입양정보" hideActions />
 
             {/* 카인드 필터 */}
             <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.filterRow}
+                style={styles.filterScrollOuter}
             >
                 {KIND_LABELS.map((k) => {
                     const active = kindFilter === k.id;
@@ -110,15 +104,23 @@ export default function AdoptionScreen() {
                         <TouchableOpacity
                             key={k.id}
                             onPress={() => setKindFilter(k.id)}
-                            style={[
-                                styles.chip,
-                                active ? styles.chipActive : styles.chipInactive,
-                            ]}
                             activeOpacity={0.85}
+                            style={{ marginRight: 8 }}
                         >
-                            <Text style={[styles.chipText, { color: active ? COLORS.white : COLORS.gray[700] }]}>
-                                {k.label}
-                            </Text>
+                            {active ? (
+                                <LinearGradient
+                                    colors={[COLORS.memento[500], COLORS.memento[400]]}
+                                    style={styles.chip}
+                                >
+                                    <Ionicons name={k.icon} size={14} color="#fff" style={{ marginRight: 6 }} />
+                                    <Text style={styles.chipTextActive}>{k.label}</Text>
+                                </LinearGradient>
+                            ) : (
+                                <View style={[styles.chip, styles.chipInactive]}>
+                                    <Ionicons name={k.icon} size={14} color={COLORS.gray[700]} style={{ marginRight: 6 }} />
+                                    <Text style={styles.chipText}>{k.label}</Text>
+                                </View>
+                            )}
                         </TouchableOpacity>
                     );
                 })}
@@ -134,6 +136,7 @@ export default function AdoptionScreen() {
                 <FlatList
                     data={animals}
                     keyExtractor={(item) => item.id}
+                    style={{ flex: 1 }}
                     renderItem={({ item }) => <AnimalCard animal={item} />}
                     refreshControl={
                         <RefreshControl
@@ -179,15 +182,18 @@ function AnimalCard({ animal }: { animal: AdoptionAnimal }) {
                 />
             ) : (
                 <View style={[styles.cardImage, styles.imagePlaceholder]}>
-                    <Ionicons name="paw" size={32} color={COLORS.gray[300]} />
+                    <Ionicons name="paw" size={36} color={COLORS.gray[300]} />
                 </View>
             )}
             <View style={styles.cardBody}>
                 <View style={styles.cardHeaderRow}>
-                    <Text style={styles.cardKind}>{animal.kind ?? "기타"}</Text>
+                    <View style={styles.kindBadge}>
+                        <Text style={styles.kindBadgeText}>{animal.kind ?? "기타"}</Text>
+                    </View>
                     {isAvailable ? (
-                        <View style={styles.badgeAvailable}>
-                            <Text style={styles.badgeText}>{animal.status}</Text>
+                        <View style={styles.statusBadge}>
+                            <View style={styles.statusDot} />
+                            <Text style={styles.statusText}>{animal.status}</Text>
                         </View>
                     ) : null}
                 </View>
@@ -195,22 +201,15 @@ function AnimalCard({ animal }: { animal: AdoptionAnimal }) {
                     {animal.breed ?? "품종 정보 없음"}
                 </Text>
                 <View style={styles.cardMetaRow}>
-                    {animal.gender ? (
-                        <Text style={styles.cardMeta}>{animal.gender}</Text>
-                    ) : null}
-                    {animal.age ? (
-                        <Text style={styles.cardMeta}> · {animal.age}</Text>
-                    ) : null}
-                    {animal.color ? (
-                        <Text style={styles.cardMeta}> · {animal.color}</Text>
-                    ) : null}
+                    {animal.gender ? <Text style={styles.cardMeta}>{animal.gender}</Text> : null}
+                    {animal.age ? <Text style={styles.cardMeta}> · {animal.age}</Text> : null}
+                    {animal.color ? <Text style={styles.cardMeta}> · {animal.color}</Text> : null}
                 </View>
                 {animal.shelterName ? (
-                    <Text style={styles.cardShelter} numberOfLines={1}>
-                        <Ionicons name="location-outline" size={12} color={COLORS.gray[500]} />
-                        {" "}
-                        {animal.shelterName}
-                    </Text>
+                    <View style={styles.shelterRow}>
+                        <Ionicons name="location-outline" size={11} color={COLORS.gray[500]} />
+                        <Text style={styles.cardShelter} numberOfLines={1}>{animal.shelterName}</Text>
+                    </View>
                 ) : null}
             </View>
         </View>
@@ -219,63 +218,58 @@ function AnimalCard({ animal }: { animal: AdoptionAnimal }) {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: COLORS.white },
-    header: {
+    filterScrollOuter: { flexGrow: 0, flexShrink: 0 },
+    filterRow: { paddingHorizontal: 16, paddingVertical: 12 },
+    chip: {
         flexDirection: "row",
         alignItems: "center",
-        justifyContent: "space-between",
-        paddingHorizontal: 12,
-        paddingVertical: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: COLORS.gray[100],
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 9999,
     },
-    backBtn: { padding: 8, width: 40 },
-    title: { fontSize: 18, fontWeight: "bold", color: COLORS.gray[900] },
-    filterRow: {
-        paddingHorizontal: 12,
-        paddingVertical: 12,
-        gap: 8,
-    },
-    chip: {
-        paddingHorizontal: 14,
-        paddingVertical: 8,
-        borderRadius: 16,
-        marginRight: 8,
-    },
-    chipActive: { backgroundColor: COLORS.memento[500] },
     chipInactive: { backgroundColor: COLORS.gray[100] },
-    chipText: { fontSize: 13, fontWeight: "600" },
-    center: {
-        flex: 1,
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 24,
-        gap: 8,
-    },
+    chipText: { fontSize: 13, fontWeight: "500", color: COLORS.gray[700] },
+    chipTextActive: { fontSize: 13, fontWeight: "600", color: "#fff" },
+    center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24, gap: 8 },
     helpText: { fontSize: 13, color: COLORS.gray[500] },
-    listContent: { padding: 12, gap: 12 },
+    listContent: { padding: 12, gap: 12, paddingBottom: 32 },
     footer: { paddingVertical: 24, alignItems: "center" },
     card: {
         flexDirection: "row",
         backgroundColor: COLORS.white,
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: COLORS.gray[100],
+        borderRadius: 16,
         overflow: "hidden",
+        elevation: 2,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 4,
     },
-    cardImage: { width: 96, height: 96, backgroundColor: COLORS.gray[50] },
+    cardImage: { width: 104, height: 104, backgroundColor: COLORS.gray[50] },
     imagePlaceholder: { alignItems: "center", justifyContent: "center" },
-    cardBody: { flex: 1, padding: 12, gap: 4 },
+    cardBody: { flex: 1, padding: 12, gap: 6 },
     cardHeaderRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-    cardKind: { fontSize: 12, fontWeight: "700", color: COLORS.memento[600] },
-    badgeAvailable: {
-        paddingHorizontal: 6,
-        paddingVertical: 2,
+    kindBadge: {
+        paddingHorizontal: 8,
+        paddingVertical: 3,
         backgroundColor: COLORS.memento[100],
-        borderRadius: 4,
+        borderRadius: 6,
     },
-    badgeText: { fontSize: 10, fontWeight: "600", color: COLORS.memento[700] },
-    cardTitle: { fontSize: 14, fontWeight: "600", color: COLORS.gray[900] },
+    kindBadgeText: { fontSize: 11, fontWeight: "700", color: COLORS.memento[700] },
+    statusBadge: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        backgroundColor: "#10B98115",
+        borderRadius: 6,
+    },
+    statusDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#10B981" },
+    statusText: { fontSize: 10, fontWeight: "600", color: "#059669" },
+    cardTitle: { fontSize: 15, fontWeight: "700", color: COLORS.gray[900] },
     cardMetaRow: { flexDirection: "row", flexWrap: "wrap" },
-    cardMeta: { fontSize: 12, color: COLORS.gray[500] },
-    cardShelter: { fontSize: 11, color: COLORS.gray[500], marginTop: 2 },
+    cardMeta: { fontSize: 12, color: COLORS.gray[600] },
+    shelterRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 },
+    cardShelter: { fontSize: 11, color: COLORS.gray[500], flex: 1 },
 });

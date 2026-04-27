@@ -13,9 +13,11 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { API_BASE_URL } from "@/config/constants";
 import { LostPet, LostPetType } from "@/types";
 import { COLORS } from "@/lib/theme";
+import AppHeader from "@/components/common/AppHeader";
 
 type TypeFilter = "all" | LostPetType;
 
@@ -87,19 +89,13 @@ export default function LostPetsScreen() {
     return (
         <SafeAreaView style={styles.container} edges={["top"]}>
             <Stack.Screen options={{ headerShown: false }} />
-
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-                    <Ionicons name="chevron-back" size={24} color={COLORS.gray[700]} />
-                </TouchableOpacity>
-                <Text style={styles.title}>분실 / 발견</Text>
-                <View style={{ width: 40 }} />
-            </View>
+            <AppHeader showBack title="분실 / 발견" hideActions />
 
             <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.filterRow}
+                style={styles.filterScrollOuter}
             >
                 {TYPE_LABELS.map((t) => {
                     const active = typeFilter === t.id;
@@ -107,12 +103,21 @@ export default function LostPetsScreen() {
                         <TouchableOpacity
                             key={t.id}
                             onPress={() => setTypeFilter(t.id)}
-                            style={[styles.chip, active ? styles.chipActive : styles.chipInactive]}
                             activeOpacity={0.85}
+                            style={{ marginRight: 8 }}
                         >
-                            <Text style={[styles.chipText, { color: active ? COLORS.white : COLORS.gray[700] }]}>
-                                {t.label}
-                            </Text>
+                            {active ? (
+                                <LinearGradient
+                                    colors={["#F87171", "#EF4444"]}
+                                    style={styles.chip}
+                                >
+                                    <Text style={styles.chipTextActive}>{t.label}</Text>
+                                </LinearGradient>
+                            ) : (
+                                <View style={[styles.chip, styles.chipInactive]}>
+                                    <Text style={styles.chipText}>{t.label}</Text>
+                                </View>
+                            )}
                         </TouchableOpacity>
                     );
                 })}
@@ -126,6 +131,7 @@ export default function LostPetsScreen() {
                 <FlatList
                     data={posts}
                     keyExtractor={(item) => item.id}
+                    style={{ flex: 1 }}
                     renderItem={({ item }) => <LostCard post={item} />}
                     refreshControl={
                         <RefreshControl
@@ -226,22 +232,18 @@ function LostCard({ post }: { post: LostPet }) {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: COLORS.white },
-    header: {
+    filterScrollOuter: { flexGrow: 0, flexShrink: 0 },
+    filterRow: { paddingHorizontal: 16, paddingVertical: 12 },
+    chip: {
         flexDirection: "row",
         alignItems: "center",
-        justifyContent: "space-between",
-        paddingHorizontal: 12,
-        paddingVertical: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: COLORS.gray[100],
+        paddingHorizontal: 18,
+        paddingVertical: 10,
+        borderRadius: 9999,
     },
-    backBtn: { padding: 8, width: 40 },
-    title: { fontSize: 18, fontWeight: "bold", color: COLORS.gray[900] },
-    filterRow: { paddingHorizontal: 12, paddingVertical: 12, gap: 8 },
-    chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 16, marginRight: 8 },
-    chipActive: { backgroundColor: COLORS.memento[500] },
     chipInactive: { backgroundColor: COLORS.gray[100] },
-    chipText: { fontSize: 13, fontWeight: "600" },
+    chipText: { fontSize: 13, fontWeight: "500", color: COLORS.gray[700] },
+    chipTextActive: { fontSize: 13, fontWeight: "600", color: "#fff" },
     center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24, gap: 8 },
     helpText: { fontSize: 13, color: COLORS.gray[500] },
     listContent: { padding: 12, gap: 12 },
