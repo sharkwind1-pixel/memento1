@@ -24,6 +24,7 @@ import AppHeader from "@/components/common/AppHeader";
 import AppDrawer from "@/components/common/AppDrawer";
 import TimelineWriteModal, { type TimelineEntryDraft, type TimelineMood } from "@/components/record/TimelineWriteModal";
 import MediaUploadModal from "@/components/record/MediaUploadModal";
+import PhotoLightbox from "@/components/record/PhotoLightbox";
 import { supabase } from "@/lib/supabase";
 import * as Haptics from "expo-haptics";
 import { Alert as RNAlert } from "react-native";
@@ -423,6 +424,7 @@ function GalleryTab({ petId, photos, isMemorialMode, accentColor, refreshing, on
     onRefresh: () => void;
 }) {
     const [uploadOpen, setUploadOpen] = useState(false);
+    const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
     return (
         <>
@@ -465,8 +467,12 @@ function GalleryTab({ petId, photos, isMemorialMode, accentColor, refreshing, on
                         </TouchableOpacity>
                     </View>
                 }
-                renderItem={({ item }) => (
-                    <TouchableOpacity activeOpacity={0.85} style={styles.gridItem}>
+                renderItem={({ item, index }) => (
+                    <TouchableOpacity
+                        activeOpacity={0.85}
+                        style={styles.gridItem}
+                        onPress={() => setLightboxIdx(index)}
+                    >
                         <Image source={{ uri: item.url }} style={styles.gridImg} resizeMode="cover" />
                     </TouchableOpacity>
                 )}
@@ -477,6 +483,12 @@ function GalleryTab({ petId, photos, isMemorialMode, accentColor, refreshing, on
                 visible={uploadOpen}
                 onClose={() => setUploadOpen(false)}
                 onSuccess={() => { setUploadOpen(false); onRefresh(); }}
+            />
+            <PhotoLightbox
+                photos={photos.map((p) => ({ id: p.id, url: p.url, caption: (p as any).caption }))}
+                initialIndex={lightboxIdx ?? 0}
+                visible={lightboxIdx !== null}
+                onClose={() => setLightboxIdx(null)}
             />
         </>
     );
