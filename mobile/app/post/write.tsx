@@ -67,11 +67,18 @@ export default function WritePostScreen() {
             if (selectedTag) formData.append("tag", selectedTag);
 
             images.forEach((uri, i) => {
-                const ext = uri.split(".").pop() ?? "jpg";
+                const ext = (uri.split(".").pop() ?? "jpg").toLowerCase();
+                const mime = ext === "jpg" || ext === "jpeg" ? "image/jpeg"
+                    : ext === "png" ? "image/png"
+                    : ext === "gif" ? "image/gif"
+                    : ext === "webp" ? "image/webp"
+                    : ext === "heic" ? "image/heic"
+                    : ext === "heif" ? "image/heif"
+                    : "image/jpeg";
                 formData.append("images", {
                     uri,
                     name: `image_${i}.${ext}`,
-                    type: `image/${ext}`,
+                    type: mime,
                 } as unknown as Blob);
             });
 

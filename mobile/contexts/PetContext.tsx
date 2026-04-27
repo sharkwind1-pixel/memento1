@@ -56,7 +56,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                         id: pet.id,
                         userId: pet.user_id,
                         name: pet.name,
-                        type: pet.pet_type,
+                        type: pet.type,
                         breed: pet.breed ?? "",
                         gender: pet.gender ?? "남아",
                         birthday: pet.birthday,

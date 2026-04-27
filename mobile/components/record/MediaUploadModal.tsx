@@ -52,6 +52,23 @@ export default function MediaUploadModal({ petId, visible, onClose, onSuccess }:
         onClose();
     }
 
+    function extToMime(ext: string, kind: "image" | "video"): string {
+        const e = ext.toLowerCase();
+        if (kind === "video") {
+            if (e === "mov") return "video/quicktime";
+            if (e === "m4v") return "video/x-m4v";
+            if (e === "webm") return "video/webm";
+            return "video/mp4";
+        }
+        if (e === "jpg" || e === "jpeg") return "image/jpeg";
+        if (e === "png") return "image/png";
+        if (e === "gif") return "image/gif";
+        if (e === "webp") return "image/webp";
+        if (e === "heic") return "image/heic";
+        if (e === "heif") return "image/heif";
+        return "image/jpeg";
+    }
+
     async function pickMedia() {
         const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (!perm.granted) {
@@ -92,9 +109,7 @@ export default function MediaUploadModal({ petId, visible, onClose, onSuccess }:
                 const response = await fetch(a.uri);
                 const arrayBuffer = await response.arrayBuffer();
 
-                const contentType = a.type === "video"
-                    ? `video/${ext}`
-                    : `image/${ext === "jpg" ? "jpeg" : ext}`;
+                const contentType = extToMime(ext, a.type);
 
                 const { error: uploadErr } = await supabase.storage
                     .from("pet-media")

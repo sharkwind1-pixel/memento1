@@ -168,7 +168,7 @@ export default function NewPetScreen() {
                 .insert({
                     user_id: user.id,
                     name: form.name.trim(),
-                    pet_type: form.type,
+                    type: form.type,
                     breed: form.breed.trim() || null,
                     gender: form.gender,
                     birthday: form.birthday || null,
