@@ -16,6 +16,7 @@ import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
 import { COLORS } from "@/lib/theme";
+import { getLevelIcon, type PetIconType } from "@/lib/levels";
 
 interface AppHeaderProps {
     onOpenDrawer?: () => void;
@@ -28,8 +29,14 @@ interface AppHeaderProps {
 
 export default function AppHeader({ onOpenDrawer, showBack, title, hideActions }: AppHeaderProps) {
     const router = useRouter();
-    const { user, profile, points } = useAuth();
-    const { isMemorialMode } = usePet();
+    const { user, profile, points, isAdminUser } = useAuth();
+    const { selectedPet, isMemorialMode } = usePet();
+
+    // 레벨 뱃지 아이콘 (포인트 + 펫 타입 기반)
+    const petType: PetIconType = selectedPet?.type === "고양이" ? "cat"
+        : selectedPet?.type === "강아지" ? "dog"
+        : "other";
+    const levelIcon = getLevelIcon(points ?? 0, petType, isAdminUser);
 
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
     const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.white;
@@ -80,15 +87,7 @@ export default function AppHeader({ onOpenDrawer, showBack, title, hideActions }
                         <Ionicons name="notifications-outline" size={22} color={iconColor} />
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => router.push("/profile")} hitSlop={6} style={styles.profileBtn}>
-                        {profile?.avatar ? (
-                            <Image source={{ uri: profile.avatar }} style={styles.avatarImg} />
-                        ) : (
-                            <Image
-                                source={require("@/assets/icon.png")}
-                                style={styles.avatarImg}
-                                resizeMode="cover"
-                            />
-                        )}
+                        <Image source={levelIcon} style={styles.avatarImg} resizeMode="cover" />
                     </TouchableOpacity>
                 </View>
             ) : (
