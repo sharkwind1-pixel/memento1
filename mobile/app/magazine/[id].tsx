@@ -24,7 +24,7 @@ import { usePet } from "@/contexts/PetContext";
 import { COLORS } from "@/lib/theme";
 
 interface ArticleDetail {
-    id: number;
+    id: string;
     title: string;
     content: string;
     summary?: string;
@@ -63,7 +63,7 @@ function normalizeArticle(raw: unknown): ArticleDetail | null {
     if (!raw || typeof raw !== "object") return null;
     const r = raw as Record<string, unknown>;
     return {
-        id: asNumber(r.id),
+        id: r.id != null ? String(r.id) : "",
         title: asString(r.title),
         content: asString(r.content),
         summary: typeof r.summary === "string" ? r.summary : undefined,

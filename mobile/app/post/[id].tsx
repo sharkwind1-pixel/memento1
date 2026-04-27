@@ -17,7 +17,7 @@ import { usePet } from "@/contexts/PetContext";
 import { COLORS } from "@/lib/theme";
 
 interface Comment {
-    id: number;
+    id: string;
     content: string;
     author: string;
     authorId: string;
@@ -28,7 +28,7 @@ interface Comment {
 }
 
 interface PostDetail {
-    id: number;
+    id: string;
     title: string;
     content: string;
     author: string;
@@ -61,7 +61,7 @@ function asNumber(v: unknown, fallback = 0): number {
 
 function normalizeComment(raw: any): Comment {
     return {
-        id: asNumber(raw?.id),
+        id: raw?.id != null ? String(raw.id) : "",
         content: asString(raw?.content),
         author: asString(raw?.author ?? raw?.author_name ?? raw?.nickname, "익명"),
         authorId: asString(raw?.authorId ?? raw?.author_id ?? raw?.user_id),
@@ -79,7 +79,7 @@ function normalizeComment(raw: any): Comment {
 function normalizePost(raw: any): PostDetail | null {
     if (!raw || typeof raw !== "object") return null;
     return {
-        id: asNumber(raw.id),
+        id: raw.id != null ? String(raw.id) : "",
         title: asString(raw.title),
         content: asString(raw.content),
         author: asString(raw.author ?? raw.author_name ?? raw.nickname, "익명"),
