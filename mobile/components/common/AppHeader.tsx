@@ -83,13 +83,11 @@ export default function AppHeader({ onOpenDrawer, showBack, title, hideActions }
                         {profile?.avatar ? (
                             <Image source={{ uri: profile.avatar }} style={styles.avatarImg} />
                         ) : (
-                            <View style={[styles.avatarFallback, { backgroundColor: accentColor }]}>
-                                <Text style={styles.avatarFallbackText}>
-                                    {(profile?.nickname?.[0]
-                                        ?? user?.email?.[0]
-                                        ?? "?").toUpperCase()}
-                                </Text>
-                            </View>
+                            <Image
+                                source={require("@/assets/icon.png")}
+                                style={styles.avatarImg}
+                                resizeMode="cover"
+                            />
                         )}
                     </TouchableOpacity>
                 </View>
@@ -134,17 +132,5 @@ const styles = StyleSheet.create({
     avatarImg: { width: 32, height: 32, borderRadius: 16 },
     profileBtn: {
         width: 36, height: 36, alignItems: "center", justifyContent: "center",
-    },
-    avatarFallback: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    avatarFallbackText: {
-        color: "#fff",
-        fontSize: 14,
-        fontWeight: "700",
     },
 });
