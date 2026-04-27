@@ -1,51 +1,18 @@
 /**
  * 탭 네비게이터 레이아웃 — 웹 모바일 매칭
  * 5개 탭: 기록 / 커뮤니티 / 홈 (가운데 강조) / AI펫톡 / 매거진
- * 미니홈피는 탭에서 숨김 (기록 탭 내부 서브탭으로 접근)
+ *
+ * React Navigation의 native tabBarLabel 시스템 사용 (커스텀 TabIcon 라벨 클립 방지).
+ * 미니홈피는 탭에서 숨김 (기록 탭 내부 서브탭으로 접근).
  */
 
 import { Tabs } from "expo-router";
-import { View, Text, Platform, StyleSheet } from "react-native";
+import { View, Platform, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { usePet } from "@/contexts/PetContext";
 import { COLORS } from "@/lib/theme";
-
-type IoniconsName = React.ComponentProps<typeof Ionicons>["name"];
-
-function TabIcon({
-    name,
-    focused,
-    label,
-    color,
-}: {
-    name: IoniconsName;
-    focused: boolean;
-    label: string;
-    color: string;
-}) {
-    return (
-        <View style={styles.tabIconWrap}>
-            <Ionicons name={name} size={22} color={color} />
-            <Text
-                numberOfLines={1}
-                allowFontScaling={false}
-                style={{
-                    color,
-                    fontSize: 10,
-                    marginTop: 2,
-                    fontWeight: focused ? "700" : "400",
-                    textAlign: "center",
-                    width: "100%",
-                    includeFontPadding: false,
-                }}
-            >
-                {label}
-            </Text>
-        </View>
-    );
-}
 
 export default function TabsLayout() {
     const { isMemorialMode } = usePet();
@@ -55,24 +22,28 @@ export default function TabsLayout() {
         ? [COLORS.memorial[400], "#F97316"]
         : [COLORS.memento[400], COLORS.memento[500]];
 
-    // 안드로이드 제스처 네비 + 홈 바, iOS 홈 인디케이터 회피용 패딩.
-    // bottom inset이 0인 기기는 최소 8px 확보.
     const bottomInset = Math.max(insets.bottom, 8);
-    const tabHeight = (Platform.OS === "ios" ? 56 : 56) + bottomInset;
+    const tabHeight = 60 + bottomInset;
 
     return (
         <Tabs
             screenOptions={{
                 headerShown: false,
-                tabBarShowLabel: false,
                 tabBarItemStyle: { flex: 1, paddingHorizontal: 0 },
+                tabBarLabelStyle: {
+                    fontSize: 10,
+                    marginTop: 0,
+                    marginBottom: Platform.OS === "android" ? 4 : 0,
+                    includeFontPadding: false,
+                },
+                tabBarIconStyle: { marginTop: 4 },
                 tabBarStyle: {
                     backgroundColor: "#fff",
                     borderTopColor: COLORS.gray[100],
                     borderTopWidth: 1,
                     height: tabHeight,
                     paddingBottom: bottomInset,
-                    paddingTop: 6,
+                    paddingTop: 4,
                     elevation: 4,
                     shadowColor: "#000",
                     shadowOffset: { width: 0, height: -2 },
@@ -87,11 +58,11 @@ export default function TabsLayout() {
             <Tabs.Screen
                 name="record"
                 options={{
+                    tabBarLabel: "기록",
                     tabBarIcon: ({ focused, color }) => (
-                        <TabIcon
+                        <Ionicons
                             name={focused ? "albums" : "albums-outline"}
-                            focused={focused}
-                            label="기록"
+                            size={22}
                             color={color}
                         />
                     ),
@@ -101,20 +72,21 @@ export default function TabsLayout() {
             <Tabs.Screen
                 name="community"
                 options={{
+                    tabBarLabel: "커뮤니티",
                     tabBarIcon: ({ focused, color }) => (
-                        <TabIcon
+                        <Ionicons
                             name={focused ? "people" : "people-outline"}
-                            focused={focused}
-                            label="커뮤니티"
+                            size={22}
                             color={color}
                         />
                     ),
                 }}
             />
-            {/* 3. 홈 — 가운데 강조 (웹 모바일과 동일) */}
+            {/* 3. 홈 — 가운데 강조 */}
             <Tabs.Screen
                 name="index"
                 options={{
+                    tabBarLabel: "",
                     tabBarIcon: ({ focused }) => (
                         <View style={styles.homeBtnWrap}>
                             {focused ? (
@@ -122,11 +94,11 @@ export default function TabsLayout() {
                                     colors={homeGradient}
                                     style={styles.homeBtnActive}
                                 >
-                                    <Ionicons name="home" size={24} color="#fff" />
+                                    <Ionicons name="home" size={22} color="#fff" />
                                 </LinearGradient>
                             ) : (
                                 <View style={styles.homeBtnInactive}>
-                                    <Ionicons name="home-outline" size={24} color={COLORS.gray[400]} />
+                                    <Ionicons name="home-outline" size={22} color={COLORS.gray[400]} />
                                 </View>
                             )}
                         </View>
@@ -137,11 +109,11 @@ export default function TabsLayout() {
             <Tabs.Screen
                 name="ai-chat"
                 options={{
+                    tabBarLabel: "AI펫톡",
                     tabBarIcon: ({ focused, color }) => (
-                        <TabIcon
+                        <Ionicons
                             name={focused ? "chatbubble-ellipses" : "chatbubble-ellipses-outline"}
-                            focused={focused}
-                            label="AI펫톡"
+                            size={22}
                             color={color}
                         />
                     ),
@@ -151,11 +123,11 @@ export default function TabsLayout() {
             <Tabs.Screen
                 name="magazine"
                 options={{
+                    tabBarLabel: "매거진",
                     tabBarIcon: ({ focused, color }) => (
-                        <TabIcon
+                        <Ionicons
                             name={focused ? "book" : "book-outline"}
-                            focused={focused}
-                            label="매거진"
+                            size={22}
                             color={color}
                         />
                     ),
@@ -170,18 +142,16 @@ export default function TabsLayout() {
 }
 
 const styles = StyleSheet.create({
-    tabIconWrap: { alignItems: "center", justifyContent: "center", paddingTop: 4, width: "100%" },
     homeBtnWrap: {
         alignItems: "center",
         justifyContent: "center",
     },
     homeBtnActive: {
-        width: 52,
-        height: 52,
-        borderRadius: 26,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         alignItems: "center",
         justifyContent: "center",
-        marginBottom: 0,
         shadowColor: COLORS.memento[500],
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.4,
@@ -189,12 +159,11 @@ const styles = StyleSheet.create({
         elevation: 6,
     },
     homeBtnInactive: {
-        width: 52,
-        height: 52,
-        borderRadius: 26,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         backgroundColor: COLORS.gray[100],
         alignItems: "center",
         justifyContent: "center",
-        marginBottom: 0,
     },
 });
