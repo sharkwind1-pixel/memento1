@@ -28,6 +28,8 @@ export default function RootLayout() {
                         <Stack.Screen name="adoption" options={{ headerShown: false }} />
                         <Stack.Screen name="lost" options={{ headerShown: false }} />
                         <Stack.Screen name="local" options={{ headerShown: false }} />
+                        <Stack.Screen name="lost/new" options={{ headerShown: false, presentation: "modal" }} />
+                        <Stack.Screen name="local/new" options={{ headerShown: false, presentation: "modal" }} />
                     </Stack>
                     <StatusBar style="auto" />
                 </PetProvider>
