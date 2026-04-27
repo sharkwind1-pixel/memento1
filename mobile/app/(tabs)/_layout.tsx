@@ -30,7 +30,6 @@ function TabIcon({
             <Ionicons name={name} size={22} color={color} />
             <Text
                 numberOfLines={1}
-                ellipsizeMode="clip"
                 allowFontScaling={false}
                 style={{
                     color,
@@ -38,6 +37,8 @@ function TabIcon({
                     marginTop: 2,
                     fontWeight: focused ? "700" : "400",
                     textAlign: "center",
+                    width: "100%",
+                    includeFontPadding: false,
                 }}
             >
                 {label}
@@ -72,11 +73,11 @@ export default function TabsLayout() {
                     height: tabHeight,
                     paddingBottom: bottomInset,
                     paddingTop: 6,
-                    elevation: 12,
+                    elevation: 4,
                     shadowColor: "#000",
                     shadowOffset: { width: 0, height: -2 },
-                    shadowOpacity: 0.07,
-                    shadowRadius: 12,
+                    shadowOpacity: 0.05,
+                    shadowRadius: 6,
                 },
                 tabBarActiveTintColor: activeColor,
                 tabBarInactiveTintColor: COLORS.gray[400],
@@ -169,7 +170,7 @@ export default function TabsLayout() {
 }
 
 const styles = StyleSheet.create({
-    tabIconWrap: { alignItems: "center", justifyContent: "center", paddingTop: 4 },
+    tabIconWrap: { alignItems: "center", justifyContent: "center", paddingTop: 4, width: "100%" },
     homeBtnWrap: {
         alignItems: "center",
         justifyContent: "center",
