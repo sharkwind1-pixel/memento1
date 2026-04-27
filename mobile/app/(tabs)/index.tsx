@@ -30,6 +30,7 @@ import QuestCard from "@/components/home/QuestCard";
 import QuizSection from "@/components/home/QuizSection";
 import ShowcaseSection from "@/components/home/ShowcaseSection";
 import MemorialSection from "@/components/home/MemorialSection";
+import AppHeader from "@/components/common/AppHeader";
 
 export default function HomeScreen() {
     const { session } = useAuth();
@@ -49,6 +50,7 @@ export default function HomeScreen() {
 
     return (
         <SafeAreaView edges={["top"]} style={[styles.container, { backgroundColor: bgColor }]}>
+            <AppHeader />
             <ScrollView
                 style={styles.scroll}
                 contentContainerStyle={styles.scrollContent}
