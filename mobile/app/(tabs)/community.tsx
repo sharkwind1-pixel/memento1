@@ -16,6 +16,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { API_BASE_URL } from "@/config/constants";
 import { useAuth } from "@/contexts/AuthContext";
@@ -60,6 +61,7 @@ function relativeTime(dateStr?: string): string {
 
 export default function CommunityScreen() {
     const router = useRouter();
+    const insets = useSafeAreaInsets();
     const { session } = useAuth();
     const { isMemorialMode } = usePet();
     const [activeTab, setActiveTab] = useState<CommunitySubcategory>("free");
@@ -245,7 +247,7 @@ export default function CommunityScreen() {
             {/* FAB 글쓰기 */}
             <TouchableOpacity
                 onPress={() => router.push({ pathname: "/post/write", params: { subcategory: activeTab } })}
-                style={styles.fab}
+                style={[styles.fab, { bottom: 84 + Math.max(insets.bottom, 8) }]}
                 activeOpacity={0.85}
             >
                 <LinearGradient
