@@ -132,6 +132,8 @@ export default function MediaUploadModal({ petId, visible, onClose, onSuccess }:
                     user_id: user.id,
                     type: a.type,
                     url: urlData.publicUrl,
+                    storage_path: path,
+                    date: new Date().toISOString().slice(0, 10),
                     caption: caption.trim() || null,
                 });
                 if (insertErr) {

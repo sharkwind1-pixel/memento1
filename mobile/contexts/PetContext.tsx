@@ -15,6 +15,7 @@ interface PetContextValue {
     setSelectedPet: (pet: Pet | null) => void;
     selectPet: (petId: string) => void;
     refreshPets: () => Promise<void>;
+    deletePhotos: (petId: string, photoIds: string[]) => Promise<{ success: boolean; deleted: number }>;
 }
 
 const PetContext = createContext<PetContextValue | null>(null);
@@ -79,7 +80,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                             id: p.id,
                             url: p.url,
                             storagePath: p.storage_path,
-                            type: p.media_type ?? "image",
+                            type: (p.type as "image" | "video") ?? "image",
                             caption: p.caption ?? "",
                             date: p.date ?? p.created_at,
                             thumbnailUrl: p.thumbnail_url,
@@ -116,6 +117,41 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
         if (pet) setSelectedPet(pet);
     }
 
+    const deletePhotos = useCallback(
+        async (petId: string, photoIds: string[]): Promise<{ success: boolean; deleted: number }> => {
+            if (!user || photoIds.length === 0) return { success: false, deleted: 0 };
+
+            const pet = pets.find((p) => p.id === petId);
+            if (!pet) return { success: false, deleted: 0 };
+
+            const paths = photoIds
+                .map((pid) => pet.photos.find((ph) => ph.id === pid)?.storagePath)
+                .filter((p): p is string => typeof p === "string" && p.length > 0);
+
+            if (paths.length > 0) {
+                await supabase.storage.from("pet-media").remove(paths);
+            }
+
+            const { error } = await supabase.from("pet_media").delete().in("id", photoIds);
+            if (error) return { success: false, deleted: 0 };
+
+            setPets((prev) =>
+                prev.map((p) =>
+                    p.id === petId
+                        ? { ...p, photos: p.photos.filter((ph) => !photoIds.includes(ph.id)) }
+                        : p,
+                ),
+            );
+            setSelectedPet((prev) =>
+                prev && prev.id === petId
+                    ? { ...prev, photos: prev.photos.filter((ph) => !photoIds.includes(ph.id)) }
+                    : prev,
+            );
+            return { success: true, deleted: photoIds.length };
+        },
+        [user, pets],
+    );
+
     const isMemorialMode = selectedPet?.status === "memorial";
 
     return (
@@ -123,6 +159,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
             pets, selectedPet, isLoading, isMemorialMode,
             setSelectedPet, selectPet,
             refreshPets: fetchPets,
+            deletePhotos,
         }}>
             {children}
         </PetContext.Provider>

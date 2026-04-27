@@ -423,8 +423,67 @@ function GalleryTab({ petId, photos, isMemorialMode, accentColor, refreshing, on
     refreshing: boolean;
     onRefresh: () => void;
 }) {
+    const { deletePhotos } = usePet();
     const [uploadOpen, setUploadOpen] = useState(false);
     const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+    const [selectionMode, setSelectionMode] = useState(false);
+    const [selected, setSelected] = useState<Set<string>>(new Set());
+    const [deleting, setDeleting] = useState(false);
+
+    function exitSelection() {
+        setSelectionMode(false);
+        setSelected(new Set());
+    }
+
+    function toggleSelect(photoId: string) {
+        setSelected((prev) => {
+            const next = new Set(prev);
+            if (next.has(photoId)) next.delete(photoId);
+            else next.add(photoId);
+            return next;
+        });
+    }
+
+    function enterSelection(photoId: string) {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+        setSelectionMode(true);
+        setSelected(new Set([photoId]));
+    }
+
+    function handleItemPress(photoId: string, index: number) {
+        if (selectionMode) {
+            toggleSelect(photoId);
+            return;
+        }
+        setLightboxIdx(index);
+    }
+
+    function confirmDelete() {
+        if (selected.size === 0) return;
+        RNAlert.alert(
+            "사진 삭제",
+            `선택한 ${selected.size}개의 사진을 삭제할까요? 되돌릴 수 없어요.`,
+            [
+                { text: "취소", style: "cancel" },
+                {
+                    text: "삭제",
+                    style: "destructive",
+                    onPress: async () => {
+                        setDeleting(true);
+                        const result = await deletePhotos(petId, Array.from(selected));
+                        setDeleting(false);
+                        if (result.success) {
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+                            exitSelection();
+                            onRefresh();
+                        } else {
+                            RNAlert.alert("오류", "사진 삭제에 실패했어요. 다시 시도해주세요.");
+                        }
+                    },
+                },
+            ],
+        );
+    }
 
     return (
         <>
@@ -436,20 +495,49 @@ function GalleryTab({ petId, photos, isMemorialMode, accentColor, refreshing, on
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accentColor} />}
                 ListHeaderComponent={
                     <View style={styles.galleryHeader}>
-                        <View style={{ flex: 1 }}>
-                            <Text style={[styles.galleryHeaderTitle, isMemorialMode && { color: COLORS.white }]}>
-                                사진/영상
-                            </Text>
-                            <Text style={styles.galleryHeaderCount}>{photos.length}장</Text>
-                        </View>
-                        <TouchableOpacity
-                            onPress={() => setUploadOpen(true)}
-                            style={[styles.uploadBtn, { backgroundColor: accentColor }]}
-                            activeOpacity={0.85}
-                        >
-                            <Ionicons name="add" size={16} color="#fff" />
-                            <Text style={styles.uploadBtnText}>업로드</Text>
-                        </TouchableOpacity>
+                        {selectionMode ? (
+                            <>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={[styles.galleryHeaderTitle, isMemorialMode && { color: COLORS.white }]}>
+                                        {selected.size}개 선택됨
+                                    </Text>
+                                    <Text style={styles.galleryHeaderCount}>길게 눌러 시작 · 탭하여 추가</Text>
+                                </View>
+                                <TouchableOpacity onPress={exitSelection} style={styles.galleryActionBtn} activeOpacity={0.85}>
+                                    <Text style={styles.galleryActionText}>취소</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    onPress={confirmDelete}
+                                    disabled={selected.size === 0 || deleting}
+                                    style={[
+                                        styles.galleryActionBtn,
+                                        { backgroundColor: "#EF4444" },
+                                        (selected.size === 0 || deleting) && { opacity: 0.5 },
+                                    ]}
+                                    activeOpacity={0.85}
+                                >
+                                    <Ionicons name="trash-outline" size={14} color="#fff" />
+                                    <Text style={[styles.galleryActionText, { color: "#fff" }]}>삭제</Text>
+                                </TouchableOpacity>
+                            </>
+                        ) : (
+                            <>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={[styles.galleryHeaderTitle, isMemorialMode && { color: COLORS.white }]}>
+                                        사진/영상
+                                    </Text>
+                                    <Text style={styles.galleryHeaderCount}>{photos.length}장 · 길게 눌러 선택</Text>
+                                </View>
+                                <TouchableOpacity
+                                    onPress={() => setUploadOpen(true)}
+                                    style={[styles.uploadBtn, { backgroundColor: accentColor }]}
+                                    activeOpacity={0.85}
+                                >
+                                    <Ionicons name="add" size={16} color="#fff" />
+                                    <Text style={styles.uploadBtnText}>업로드</Text>
+                                </TouchableOpacity>
+                            </>
+                        )}
                     </View>
                 }
                 ListEmptyComponent={
@@ -467,15 +555,35 @@ function GalleryTab({ petId, photos, isMemorialMode, accentColor, refreshing, on
                         </TouchableOpacity>
                     </View>
                 }
-                renderItem={({ item, index }) => (
-                    <TouchableOpacity
-                        activeOpacity={0.85}
-                        style={styles.gridItem}
-                        onPress={() => setLightboxIdx(index)}
-                    >
-                        <Image source={{ uri: item.url }} style={styles.gridImg} resizeMode="cover" />
-                    </TouchableOpacity>
-                )}
+                renderItem={({ item, index }) => {
+                    const isSelected = selected.has(item.id);
+                    return (
+                        <TouchableOpacity
+                            activeOpacity={0.85}
+                            style={styles.gridItem}
+                            onPress={() => handleItemPress(item.id, index)}
+                            onLongPress={() => enterSelection(item.id)}
+                            delayLongPress={300}
+                        >
+                            <Image source={{ uri: item.url }} style={styles.gridImg} resizeMode="cover" />
+                            {selectionMode && (
+                                <View style={[
+                                    styles.selectOverlay,
+                                    isSelected && { backgroundColor: "rgba(5,178,220,0.35)" },
+                                ]}>
+                                    <View style={[
+                                        styles.selectCheck,
+                                        isSelected
+                                            ? { backgroundColor: accentColor, borderColor: "#fff" }
+                                            : { backgroundColor: "rgba(255,255,255,0.7)", borderColor: "rgba(0,0,0,0.2)" },
+                                    ]}>
+                                        {isSelected && <Ionicons name="checkmark" size={14} color="#fff" />}
+                                    </View>
+                                </View>
+                            )}
+                        </TouchableOpacity>
+                    );
+                }}
                 contentContainerStyle={photos.length === 0 ? { padding: 16 } : { padding: 12, paddingBottom: 32 }}
             />
             <MediaUploadModal
@@ -834,6 +942,32 @@ const styles = StyleSheet.create({
     uploadBtnText: { color: "#fff", fontSize: 13, fontWeight: "700" },
     gridItem: { flex: 1 / 3, aspectRatio: 1, padding: 1 },
     gridImg: { flex: 1 },
+    selectOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: "transparent",
+        justifyContent: "flex-start",
+        alignItems: "flex-end",
+        padding: 6,
+    },
+    selectCheck: {
+        width: 22,
+        height: 22,
+        borderRadius: 11,
+        borderWidth: 2,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    galleryActionBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 12,
+        backgroundColor: COLORS.gray[100],
+        marginLeft: 6,
+    },
+    galleryActionText: { fontSize: 13, fontWeight: "600", color: COLORS.gray[700] },
     albumCard: {
         flex: 1,
         borderRadius: 14,
