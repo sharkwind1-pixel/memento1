@@ -16,6 +16,8 @@ import { usePet } from "@/contexts/PetContext";
 import { ChatMessage } from "@/types";
 import { API_BASE_URL } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
+import AppHeader from "@/components/common/AppHeader";
+import AppDrawer from "@/components/common/AppDrawer";
 
 export default function AiChatScreen() {
     const { session } = useAuth();
@@ -24,6 +26,7 @@ export default function AiChatScreen() {
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [suggestions, setSuggestions] = useState<string[]>([]);
+    const [drawerOpen, setDrawerOpen] = useState(false);
     const flatListRef = useRef<FlatList<ChatMessage>>(null);
 
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
@@ -110,22 +113,28 @@ export default function AiChatScreen() {
         }
     }, [messages]);
 
-    if (!selectedPet) {
-        return (
-            <View style={styles.emptyCenter}>
-                <Ionicons name="paw-outline" size={48} color={COLORS.gray[300]} />
-                <Text style={styles.emptyText}>
-                    홈에서 반려동물을 선택하면{"\n"}AI 펫톡을 이용할 수 있어요.
-                </Text>
-            </View>
-        );
-    }
-
     const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.white;
     const borderColor = isMemorialMode ? COLORS.gray[800] : COLORS.gray[100];
 
+    if (!selectedPet) {
+        return (
+            <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
+                <AppHeader onOpenDrawer={() => setDrawerOpen(true)} />
+                <AppDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
+                <View style={styles.emptyCenter}>
+                    <Ionicons name="paw-outline" size={48} color={COLORS.gray[300]} />
+                    <Text style={styles.emptyText}>
+                        홈에서 반려동물을 선택하면{"\n"}AI 펫톡을 이용할 수 있어요.
+                    </Text>
+                </View>
+            </SafeAreaView>
+        );
+    }
+
     return (
         <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
+            <AppHeader onOpenDrawer={() => setDrawerOpen(true)} />
+            <AppDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
             <KeyboardAvoidingView
                 style={styles.flex1}
                 behavior={Platform.OS === "ios" ? "padding" : "height"}

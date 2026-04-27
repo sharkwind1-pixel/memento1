@@ -22,6 +22,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
 import { CommunityPost, CommunitySubcategory } from "@/types";
 import { COLORS } from "@/lib/theme";
+import AppHeader from "@/components/common/AppHeader";
+import AppDrawer from "@/components/common/AppDrawer";
 
 const SUBCATEGORIES: Array<{
     id: CommunitySubcategory;
@@ -65,6 +67,7 @@ export default function CommunityScreen() {
     const [isLoading, setIsLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+    const [drawerOpen, setDrawerOpen] = useState(false);
 
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
     const activeSubcat = SUBCATEGORIES.find((s) => s.id === activeTab)!;
@@ -136,6 +139,8 @@ export default function CommunityScreen() {
 
     return (
         <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
+            <AppHeader onOpenDrawer={() => setDrawerOpen(true)} />
+            <AppDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
             {/* 헤더 + 검색 */}
             <View style={styles.headerWrap}>
                 <View style={styles.headerRow}>

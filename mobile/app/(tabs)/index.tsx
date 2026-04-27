@@ -20,6 +20,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
 import { COLORS } from "@/lib/theme";
+import AppDrawer from "@/components/common/AppDrawer";
 import HeroSection from "@/components/home/HeroSection";
 import PetCardSection from "@/components/home/PetCardSection";
 import CommunityPreview from "@/components/home/CommunityPreview";
@@ -36,6 +37,7 @@ export default function HomeScreen() {
     const { session } = useAuth();
     const { selectedPet, isMemorialMode, refreshPets } = usePet();
     const [refreshing, setRefreshing] = useState(false);
+    const [drawerOpen, setDrawerOpen] = useState(false);
 
     const onRefresh = useCallback(async () => {
         setRefreshing(true);
@@ -50,7 +52,8 @@ export default function HomeScreen() {
 
     return (
         <SafeAreaView edges={["top"]} style={[styles.container, { backgroundColor: bgColor }]}>
-            <AppHeader />
+            <AppHeader onOpenDrawer={() => setDrawerOpen(true)} />
+            <AppDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
             <ScrollView
                 style={styles.scroll}
                 contentContainerStyle={styles.scrollContent}

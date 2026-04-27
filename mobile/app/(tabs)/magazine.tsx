@@ -23,6 +23,8 @@ import { API_BASE_URL } from "@/config/constants";
 import { usePet } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { COLORS } from "@/lib/theme";
+import AppHeader from "@/components/common/AppHeader";
+import AppDrawer from "@/components/common/AppDrawer";
 
 interface Article {
     id: number;
@@ -75,6 +77,7 @@ export default function MagazineScreen() {
     const [selectedTopic, setSelectedTopic] = useState("all");
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
+    const [drawerOpen, setDrawerOpen] = useState(false);
 
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
 
@@ -177,6 +180,8 @@ export default function MagazineScreen() {
 
     return (
         <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
+            <AppHeader onOpenDrawer={() => setDrawerOpen(true)} />
+            <AppDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
             <FlatList
                 data={isLoading ? [] : articles}
                 keyExtractor={(item) => String(item.id)}

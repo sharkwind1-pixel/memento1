@@ -20,6 +20,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
 import { API_BASE_URL } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
+import AppHeader from "@/components/common/AppHeader";
+import AppDrawer from "@/components/common/AppDrawer";
 
 type TabType = "timeline" | "gallery" | "albums" | "videos";
 
@@ -35,6 +37,7 @@ export default function RecordScreen() {
     const { selectedPet, isLoading: petsLoading, isMemorialMode, refreshPets } = usePet();
     const [activeTab, setActiveTab] = useState<TabType>("timeline");
     const [refreshing, setRefreshing] = useState(false);
+    const [drawerOpen, setDrawerOpen] = useState(false);
 
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
     const accentGradient: [string, string] = isMemorialMode
@@ -59,6 +62,8 @@ export default function RecordScreen() {
 
     return (
         <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
+            <AppHeader onOpenDrawer={() => setDrawerOpen(true)} />
+            <AppDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
             {/* 헤더 */}
             <View style={styles.headerRow}>
                 <View style={{ flex: 1 }}>
