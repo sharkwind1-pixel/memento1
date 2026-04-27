@@ -73,6 +73,7 @@ export default function StoryFeed() {
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
+                style={{ flexGrow: 0 }}
             >
                 {/* 내 스토리 추가 */}
                 {user ? (
@@ -135,14 +136,21 @@ export default function StoryFeed() {
 }
 
 const styles = StyleSheet.create({
-    section: { marginTop: -8, marginBottom: 8 },
+    section: {
+        marginTop: 12,
+        marginBottom: 16,
+        minHeight: 92,
+    },
     scrollContent: {
         paddingHorizontal: 16,
-        gap: 12,
-        alignItems: "center",
-        paddingBottom: 8,
+        paddingVertical: 4,
+        alignItems: "flex-start",
     },
-    item: { alignItems: "center", gap: 4, width: 64 },
+    item: {
+        alignItems: "center",
+        width: 68,
+        marginRight: 12,
+    },
     addCircle: {
         width: 56,
         height: 56,
@@ -153,6 +161,7 @@ const styles = StyleSheet.create({
         borderStyle: "dashed",
         alignItems: "center",
         justifyContent: "center",
+        marginBottom: 6,
     },
     avatarBorder: {
         width: 56,
@@ -161,6 +170,7 @@ const styles = StyleSheet.create({
         padding: 2,
         alignItems: "center",
         justifyContent: "center",
+        marginBottom: 6,
     },
     avatarInner: {
         width: "100%",
@@ -176,10 +186,10 @@ const styles = StyleSheet.create({
         justifyContent: "center",
     },
     label: {
-        fontSize: 10,
+        fontSize: 11,
         color: COLORS.gray[500],
         textAlign: "center",
-        maxWidth: 64,
+        maxWidth: 68,
     },
     emptyHint: {
         fontSize: 12,
