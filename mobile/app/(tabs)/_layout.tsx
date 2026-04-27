@@ -1,12 +1,13 @@
 /**
- * 탭 네비게이터 레이아웃
- * 5개 탭: 홈 / 기록 / AI펫톡 / 커뮤니티 / 매거진
+ * 탭 네비게이터 레이아웃 — 웹 모바일 매칭
+ * 5개 탭: 기록 / 커뮤니티 / 홈 (가운데 강조) / AI펫톡 / 매거진
  * 미니홈피는 탭에서 숨김 (기록 탭 내부 서브탭으로 접근)
  */
 
 import { Tabs } from "expo-router";
 import { View, Text, Platform, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { usePet } from "@/contexts/PetContext";
 import { COLORS } from "@/lib/theme";
 
@@ -43,6 +44,9 @@ function TabIcon({
 export default function TabsLayout() {
     const { isMemorialMode } = usePet();
     const activeColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
+    const homeGradient: [string, string] = isMemorialMode
+        ? [COLORS.memorial[400], "#F97316"]
+        : [COLORS.memento[400], COLORS.memento[500]];
 
     return (
         <Tabs
@@ -65,19 +69,7 @@ export default function TabsLayout() {
                 tabBarInactiveTintColor: COLORS.gray[400],
             }}
         >
-            <Tabs.Screen
-                name="index"
-                options={{
-                    tabBarIcon: ({ focused, color }) => (
-                        <TabIcon
-                            name={focused ? "home" : "home-outline"}
-                            focused={focused}
-                            label="홈"
-                            color={color}
-                        />
-                    ),
-                }}
-            />
+            {/* 1. 기록 */}
             <Tabs.Screen
                 name="record"
                 options={{
@@ -91,35 +83,7 @@ export default function TabsLayout() {
                     ),
                 }}
             />
-            <Tabs.Screen
-                name="ai-chat"
-                options={{
-                    tabBarIcon: ({ focused }) => (
-                        <View
-                            style={{
-                                width: 52,
-                                height: 52,
-                                borderRadius: 26,
-                                backgroundColor: focused ? activeColor : COLORS.gray[200],
-                                alignItems: "center",
-                                justifyContent: "center",
-                                marginBottom: Platform.OS === "ios" ? 0 : 8,
-                                shadowColor: activeColor,
-                                shadowOffset: { width: 0, height: 4 },
-                                shadowOpacity: focused ? 0.4 : 0,
-                                shadowRadius: 8,
-                                elevation: focused ? 6 : 0,
-                            }}
-                        >
-                            <Ionicons
-                                name={focused ? "chatbubble-ellipses" : "chatbubble-ellipses-outline"}
-                                size={24}
-                                color={focused ? "#fff" : COLORS.gray[400]}
-                            />
-                        </View>
-                    ),
-                }}
-            />
+            {/* 2. 커뮤니티 */}
             <Tabs.Screen
                 name="community"
                 options={{
@@ -133,6 +97,43 @@ export default function TabsLayout() {
                     ),
                 }}
             />
+            {/* 3. 홈 — 가운데 강조 (웹 모바일과 동일) */}
+            <Tabs.Screen
+                name="index"
+                options={{
+                    tabBarIcon: ({ focused }) => (
+                        <View style={styles.homeBtnWrap}>
+                            {focused ? (
+                                <LinearGradient
+                                    colors={homeGradient}
+                                    style={styles.homeBtnActive}
+                                >
+                                    <Ionicons name="home" size={24} color="#fff" />
+                                </LinearGradient>
+                            ) : (
+                                <View style={styles.homeBtnInactive}>
+                                    <Ionicons name="home-outline" size={24} color={COLORS.gray[400]} />
+                                </View>
+                            )}
+                        </View>
+                    ),
+                }}
+            />
+            {/* 4. AI펫톡 */}
+            <Tabs.Screen
+                name="ai-chat"
+                options={{
+                    tabBarIcon: ({ focused, color }) => (
+                        <TabIcon
+                            name={focused ? "chatbubble-ellipses" : "chatbubble-ellipses-outline"}
+                            focused={focused}
+                            label="AI펫톡"
+                            color={color}
+                        />
+                    ),
+                }}
+            />
+            {/* 5. 매거진 */}
             <Tabs.Screen
                 name="magazine"
                 options={{
@@ -156,4 +157,30 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
     tabIconWrap: { alignItems: "center", justifyContent: "center", paddingTop: 4 },
+    homeBtnWrap: {
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    homeBtnActive: {
+        width: 52,
+        height: 52,
+        borderRadius: 26,
+        alignItems: "center",
+        justifyContent: "center",
+        marginBottom: Platform.OS === "ios" ? 0 : 8,
+        shadowColor: COLORS.memento[500],
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.4,
+        shadowRadius: 8,
+        elevation: 6,
+    },
+    homeBtnInactive: {
+        width: 52,
+        height: 52,
+        borderRadius: 26,
+        backgroundColor: COLORS.gray[100],
+        alignItems: "center",
+        justifyContent: "center",
+        marginBottom: Platform.OS === "ios" ? 0 : 8,
+    },
 });
