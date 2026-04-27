@@ -37,7 +37,7 @@ export default function AuthCallbackScreen() {
             // (이전 race로 "flow_state_not_found" 에러 나던 케이스 차단)
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
-                router.replace("/(tabs)");
+                router.replace("/");
                 return;
             }
 
@@ -47,7 +47,7 @@ export default function AuthCallbackScreen() {
             // exchange 후에도 세션 한 번 더 확인 (자동 경로가 동시에 setSession했을 수 있음)
             const { data: { session: afterSession } } = await supabase.auth.getSession();
             if (afterSession) {
-                router.replace("/(tabs)");
+                router.replace("/");
                 return;
             }
 
@@ -57,7 +57,7 @@ export default function AuthCallbackScreen() {
                 return;
             }
 
-            router.replace("/(tabs)");
+            router.replace("/");
         })();
     }, [params.code, params.error]);
 

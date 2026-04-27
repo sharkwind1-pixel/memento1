@@ -23,7 +23,7 @@ export default function LoginScreen() {
 
     // 세션이 늦게라도 set되면 자동으로 탭 화면 이동 (cold-start hard guard 폴백)
     useEffect(() => {
-        if (session) router.replace("/(tabs)");
+        if (session) router.replace("/");
     }, [session, router]);
 
     async function handleLogin(provider: Provider) {
@@ -41,7 +41,7 @@ export default function LoginScreen() {
                 Alert.alert("로그인 실패", error.message);
                 return;
             }
-            router.replace("/(tabs)");
+            router.replace("/");
         } catch (e) {
             Alert.alert("로그인 실패", (e as Error).message || "다시 시도해주세요.");
         } finally {
