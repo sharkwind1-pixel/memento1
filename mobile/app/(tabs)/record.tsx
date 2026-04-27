@@ -98,35 +98,46 @@ export default function RecordScreen() {
             >
                 {TABS.map((tab) => {
                     const active = activeTab === tab.id;
+                    const pillWidth = tab.label.length * 14 + 56; // 아이콘 + gap + 패딩 합산 + 글자당 14
+                    const inactiveBg = isMemorialMode ? COLORS.gray[800] : COLORS.white;
+                    const inactiveBorder = isMemorialMode ? COLORS.gray[700] : COLORS.gray[200];
+                    const inactiveColor = isMemorialMode ? COLORS.gray[400] : COLORS.gray[600];
                     return (
                         <TouchableOpacity
                             key={tab.id}
                             onPress={() => setActiveTab(tab.id)}
                             activeOpacity={0.85}
+                            style={{ width: pillWidth }}
                         >
                             {active ? (
                                 <LinearGradient
                                     colors={accentGradient}
-                                    style={styles.tabPill}
+                                    style={[styles.tabPill, { width: pillWidth }]}
                                 >
                                     <Ionicons name={tab.icon} size={14} color="#fff" />
-                                    <Text numberOfLines={1} allowFontScaling={false} style={styles.tabLabelActive}>{tab.label}</Text>
+                                    <Text
+                                        numberOfLines={1}
+                                        allowFontScaling={false}
+                                        style={{ fontSize: 13, fontWeight: "600", color: "#fff", includeFontPadding: false }}
+                                    >
+                                        {tab.label}
+                                    </Text>
                                 </LinearGradient>
                             ) : (
                                 <View style={[styles.tabPill, {
-                                    backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.white,
+                                    width: pillWidth,
+                                    backgroundColor: inactiveBg,
                                     borderWidth: 1,
-                                    borderColor: isMemorialMode ? COLORS.gray[700] : COLORS.gray[200],
+                                    borderColor: inactiveBorder,
                                 }]}>
-                                    <Ionicons name={tab.icon} size={14} color={isMemorialMode ? COLORS.gray[400] : COLORS.gray[600]} />
+                                    <Ionicons name={tab.icon} size={14} color={inactiveColor} />
                                     <Text
                                         numberOfLines={1}
                                         allowFontScaling={false}
                                         style={{
                                             fontSize: 13,
                                             fontWeight: "500",
-                                            color: isMemorialMode ? COLORS.gray[400] : COLORS.gray[600],
-                                            flexShrink: 0,
+                                            color: inactiveColor,
                                             includeFontPadding: false,
                                         }}
                                     >

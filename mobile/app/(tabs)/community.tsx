@@ -177,6 +177,10 @@ export default function CommunityScreen() {
             >
                 {SUBCATEGORIES.map((cat) => {
                     const active = activeTab === cat.id;
+                    const pillWidth = cat.label.length * 14 + 56;
+                    const inactiveBg = isMemorialMode ? COLORS.gray[800] : COLORS.white;
+                    const inactiveBorder = isMemorialMode ? COLORS.gray[700] : COLORS.gray[200];
+                    const inactiveColor = isMemorialMode ? COLORS.gray[400] : COLORS.gray[600];
                     return (
                         <TouchableOpacity
                             key={cat.id}
@@ -188,30 +192,37 @@ export default function CommunityScreen() {
                                 setActiveTab(cat.id);
                             }}
                             activeOpacity={0.85}
+                            style={{ width: pillWidth }}
                         >
                             {active ? (
                                 <LinearGradient
                                     colors={cat.gradient}
-                                    style={styles.subcatPill}
+                                    style={[styles.subcatPill, { width: pillWidth }]}
                                 >
                                     <Ionicons name={cat.icon} size={14} color="#fff" />
-                                    <Text numberOfLines={1} allowFontScaling={false} style={styles.subcatLabelActive}>{cat.label}</Text>
+                                    <Text
+                                        numberOfLines={1}
+                                        allowFontScaling={false}
+                                        style={{ fontSize: 13, fontWeight: "600", color: "#fff", includeFontPadding: false }}
+                                    >
+                                        {cat.label}
+                                    </Text>
                                 </LinearGradient>
                             ) : (
                                 <View style={[styles.subcatPill, {
-                                    backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.white,
+                                    width: pillWidth,
+                                    backgroundColor: inactiveBg,
                                     borderWidth: 1,
-                                    borderColor: isMemorialMode ? COLORS.gray[700] : COLORS.gray[200],
+                                    borderColor: inactiveBorder,
                                 }]}>
-                                    <Ionicons name={cat.icon} size={14} color={isMemorialMode ? COLORS.gray[400] : COLORS.gray[600]} />
+                                    <Ionicons name={cat.icon} size={14} color={inactiveColor} />
                                     <Text
                                         numberOfLines={1}
                                         allowFontScaling={false}
                                         style={{
                                             fontSize: 13,
                                             fontWeight: "500",
-                                            color: isMemorialMode ? COLORS.gray[400] : COLORS.gray[600],
-                                            flexShrink: 0,
+                                            color: inactiveColor,
                                             includeFontPadding: false,
                                         }}
                                     >

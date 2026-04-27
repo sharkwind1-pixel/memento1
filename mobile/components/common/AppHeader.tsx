@@ -79,11 +79,17 @@ export default function AppHeader({ onOpenDrawer, showBack, title, hideActions }
                     <TouchableOpacity onPress={() => router.push("/notifications")} style={styles.iconBtn} hitSlop={6}>
                         <Ionicons name="notifications-outline" size={22} color={iconColor} />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => router.push("/profile")} style={styles.iconBtn} hitSlop={6}>
+                    <TouchableOpacity onPress={() => router.push("/profile")} hitSlop={6} style={styles.profileBtn}>
                         {profile?.avatar ? (
                             <Image source={{ uri: profile.avatar }} style={styles.avatarImg} />
                         ) : (
-                            <Ionicons name="person-circle-outline" size={26} color={iconColor} />
+                            <View style={[styles.avatarFallback, { backgroundColor: accentColor }]}>
+                                <Text style={styles.avatarFallbackText}>
+                                    {(profile?.nickname?.[0]
+                                        ?? user?.email?.[0]
+                                        ?? "?").toUpperCase()}
+                                </Text>
+                            </View>
                         )}
                     </TouchableOpacity>
                 </View>
@@ -125,5 +131,20 @@ const styles = StyleSheet.create({
         marginRight: 4,
     },
     pointText: { fontSize: 11, fontWeight: "600" },
-    avatarImg: { width: 28, height: 28, borderRadius: 14 },
+    avatarImg: { width: 32, height: 32, borderRadius: 16 },
+    profileBtn: {
+        width: 36, height: 36, alignItems: "center", justifyContent: "center",
+    },
+    avatarFallback: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    avatarFallbackText: {
+        color: "#fff",
+        fontSize: 14,
+        fontWeight: "700",
+    },
 });
