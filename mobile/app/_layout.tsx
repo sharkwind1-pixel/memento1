@@ -26,8 +26,8 @@ export default function RootLayout() {
                         <Stack.Screen name="profile" options={{ presentation: "modal", headerShown: true, title: "프로필" }} />
                         <Stack.Screen name="subscription" options={{ headerShown: true, title: "구독" }} />
                         <Stack.Screen name="adoption" options={{ headerShown: false }} />
-                        <Stack.Screen name="lost" options={{ headerShown: false }} />
-                        <Stack.Screen name="local" options={{ headerShown: false }} />
+                        <Stack.Screen name="lost/index" options={{ headerShown: false }} />
+                        <Stack.Screen name="local/index" options={{ headerShown: false }} />
                         <Stack.Screen name="lost/new" options={{ headerShown: false, presentation: "modal" }} />
                         <Stack.Screen name="local/new" options={{ headerShown: false, presentation: "modal" }} />
                     </Stack>
