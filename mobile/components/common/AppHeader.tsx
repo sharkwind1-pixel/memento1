@@ -30,12 +30,15 @@ interface AppHeaderProps {
 export default function AppHeader({ onOpenDrawer, showBack, title, hideActions }: AppHeaderProps) {
     const router = useRouter();
     const { user, profile, points, isAdminUser } = useAuth();
-    const { selectedPet, isMemorialMode } = usePet();
+    const { selectedPet, pets, isMemorialMode } = usePet();
 
     // 레벨 뱃지 아이콘 (포인트 + 펫 타입 기반)
-    const petType: PetIconType = selectedPet?.type === "고양이" ? "cat"
-        : selectedPet?.type === "강아지" ? "dog"
-        : "other";
+    // 우선순위: selectedPet → pets[0] → 기본값 "dog"
+    const firstPet = selectedPet ?? pets?.[0];
+    const petType: PetIconType = firstPet?.type === "고양이" ? "cat"
+        : firstPet?.type === "강아지" ? "dog"
+        : firstPet?.type ? "other"
+        : "dog";
     const levelIcon = getLevelIcon(points ?? 0, petType, isAdminUser);
 
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];

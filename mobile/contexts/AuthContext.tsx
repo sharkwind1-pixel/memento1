@@ -193,16 +193,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     async function loadProfile(userId: string) {
         try {
-            const { data } = await supabase
+            const { data, error } = await supabase
                 .from("profiles")
                 .select("id, nickname, avatar_url, bio, is_premium, is_admin, points, premium_expires_at")
                 .eq("id", userId)
                 .single();
 
+            if (error) {
+                console.warn("[Profile] load error:", error.message, "code=", error.code);
+            }
+
             if (data) {
                 const isPremiumActive =
                     data.is_premium &&
                     (!data.premium_expires_at || new Date(data.premium_expires_at) > new Date());
+
+                console.log(`[Profile] loaded id=${data.id} nickname=${data.nickname} points=${data.points} isAdmin=${data.is_admin}`);
 
                 setProfile({
                     id: data.id,
@@ -213,9 +219,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     isAdmin: data.is_admin,
                     points: data.points ?? 0,
                 });
+            } else {
+                console.warn(`[Profile] no row for userId=${userId} — creating fallback profile`);
+                // RLS 또는 trigger 미실행으로 row 없는 경우 빈 프로필로 폴백
+                setProfile({
+                    id: userId,
+                    nickname: undefined,
+                    avatar: undefined,
+                    bio: undefined,
+                    isPremium: false,
+                    isAdmin: false,
+                    points: 0,
+                });
             }
-        } catch {
-            // 프로필 로드 실패해도 앱 동작 유지
+        } catch (e) {
+            console.warn("[Profile] exception:", (e as Error).message);
         } finally {
             setIsLoading(false);
         }
