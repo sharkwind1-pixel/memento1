@@ -1,15 +1,21 @@
 /**
- * 커뮤니티 탭
+ * 커뮤니티 탭 (V3 Phase 4: 디자인 강화)
+ *
+ * - 5개 서브카테고리 가로 칩 (free/memorial/adoption/local/lost)
+ * - 검색바
+ * - FAB 글쓰기 버튼
+ * - 카드 (이미지 + 본문 + 좋아요/댓글/시간 메타)
  */
 
 import { useState, useEffect, useCallback } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity,
     FlatList, RefreshControl, ActivityIndicator,
-    TextInput, StyleSheet,
+    TextInput, Image, StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { API_BASE_URL } from "@/config/constants";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,13 +23,38 @@ import { usePet } from "@/contexts/PetContext";
 import { CommunityPost, CommunitySubcategory } from "@/types";
 import { COLORS } from "@/lib/theme";
 
-const SUBCATEGORIES: { id: CommunitySubcategory; label: string }[] = [
-    { id: "free", label: "자유" },
-    { id: "memorial", label: "추모" },
-    { id: "adoption", label: "입양" },
-    { id: "local", label: "지역" },
-    { id: "lost", label: "분실" },
+const SUBCATEGORIES: Array<{
+    id: CommunitySubcategory;
+    label: string;
+    icon: React.ComponentProps<typeof Ionicons>["name"];
+    gradient: [string, string];
+}> = [
+    { id: "free", label: "자유", icon: "chatbubbles-outline", gradient: [COLORS.memento[400], COLORS.memento[500]] },
+    { id: "memorial", label: "추모", icon: "heart-outline", gradient: [COLORS.memorial[400], "#F97316"] },
+    { id: "adoption", label: "입양", icon: "home-outline", gradient: ["#34D399", "#10B981"] },
+    { id: "local", label: "지역", icon: "location-outline", gradient: ["#A78BFA", "#8B5CF6"] },
+    { id: "lost", label: "분실", icon: "search-outline", gradient: ["#F87171", "#EF4444"] },
 ];
+
+function asString(v: unknown, fb = ""): string {
+    return typeof v === "string" ? v : typeof v === "number" ? String(v) : fb;
+}
+function asNumber(v: unknown, fb = 0): number {
+    return typeof v === "number" ? v : fb;
+}
+
+function relativeTime(dateStr?: string): string {
+    if (!dateStr) return "";
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "방금";
+    if (mins < 60) return `${mins}분 전`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}시간 전`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}일 전`;
+    return new Date(dateStr).toLocaleDateString("ko-KR", { month: "short", day: "numeric" });
+}
 
 export default function CommunityScreen() {
     const router = useRouter();
@@ -36,6 +67,7 @@ export default function CommunityScreen() {
     const [searchQuery, setSearchQuery] = useState("");
 
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
+    const activeSubcat = SUBCATEGORIES.find((s) => s.id === activeTab)!;
 
     const fetchPosts = useCallback(async () => {
         try {
@@ -47,37 +79,37 @@ export default function CommunityScreen() {
             if (!res.ok) return;
             const data = await res.json();
             const list = Array.isArray(data?.posts) ? data.posts : Array.isArray(data) ? data : [];
-            // snake_case ↔ camelCase 정규화 + JSX-safe 타입 강제
-            setPosts(list.map((raw: any): CommunityPost => ({
-                id: typeof raw?.id === "number" ? raw.id : 0,
-                title: typeof raw?.title === "string" ? raw.title : "",
-                content: typeof raw?.content === "string" ? raw.content : "",
-                author: typeof raw?.author === "string"
-                    ? raw.author
-                    : (typeof raw?.author_name === "string" ? raw.author_name : "익명"),
-                authorId: typeof raw?.authorId === "string"
-                    ? raw.authorId
-                    : (typeof raw?.author_id === "string" ? raw.author_id : (typeof raw?.user_id === "string" ? raw.user_id : "")),
+
+            setPosts(list.map((raw: Record<string, unknown>): CommunityPost => ({
+                id: asNumber(raw?.id),
+                title: asString(raw?.title),
+                content: asString(raw?.content),
+                author: asString(raw?.author ?? raw?.author_name ?? raw?.nickname, "익명"),
+                authorId: asString(raw?.authorId ?? raw?.author_id ?? raw?.user_id),
                 authorAvatar: typeof raw?.authorAvatar === "string"
                     ? raw.authorAvatar
                     : (typeof raw?.author_avatar === "string" ? raw.author_avatar : undefined),
-                likes: typeof raw?.likes === "number" ? raw.likes : 0,
-                comments: typeof raw?.comments === "number" ? raw.comments : (typeof raw?.comments_count === "number" ? raw.comments_count : 0),
-                views: typeof raw?.views === "number" ? raw.views : 0,
+                likes: asNumber(raw?.likes),
+                comments: asNumber(raw?.comments ?? raw?.comments_count),
+                views: asNumber(raw?.views),
                 category: typeof raw?.category === "string" ? raw.category : undefined,
-                subcategory: typeof raw?.subcategory === "string" ? raw.subcategory : undefined,
-                tag: typeof raw?.tag === "string" ? raw.tag : undefined,
+                subcategory: typeof raw?.subcategory === "string"
+                    ? raw.subcategory as CommunitySubcategory
+                    : undefined,
+                tag: typeof raw?.tag === "string" ? raw.tag as CommunityPost["tag"] : undefined,
                 isLiked: typeof raw?.isLiked === "boolean" ? raw.isLiked : undefined,
                 preview: typeof raw?.preview === "string"
                     ? raw.preview
-                    : (typeof raw?.content === "string" ? raw.content.slice(0, 100) : undefined),
+                    : (typeof raw?.content === "string" ? raw.content.slice(0, 120) : undefined),
                 createdAt: typeof raw?.createdAt === "string"
                     ? raw.createdAt
                     : (typeof raw?.created_at === "string" ? raw.created_at : undefined),
-                images: Array.isArray(raw?.images) ? raw.images.filter((x: unknown) => typeof x === "string") : undefined,
+                images: Array.isArray(raw?.images)
+                    ? raw.images.filter((x): x is string => typeof x === "string")
+                    : undefined,
             })));
         } catch {
-            // ignore
+            // 조용히
         } finally {
             setIsLoading(false);
             setRefreshing(false);
@@ -94,25 +126,29 @@ export default function CommunityScreen() {
         await fetchPosts();
     }
 
-    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.white;
+    const filtered = posts.filter((p) =>
+        !searchQuery
+        || p.title.toLowerCase().includes(searchQuery.toLowerCase())
+        || (p.content ?? "").toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.gray[50];
 
     return (
         <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
-            <View style={styles.header}>
+            {/* 헤더 + 검색 */}
+            <View style={styles.headerWrap}>
                 <View style={styles.headerRow}>
                     <Text style={[styles.title, { color: isMemorialMode ? COLORS.white : COLORS.gray[900] }]}>
                         커뮤니티
                     </Text>
-                    <TouchableOpacity
-                        onPress={() => router.push({ pathname: "/post/write", params: { subcategory: activeTab } })}
-                        style={[styles.writeBtn, { backgroundColor: accentColor + "20" }]}
-                    >
-                        <Ionicons name="create-outline" size={20} color={accentColor} />
-                    </TouchableOpacity>
                 </View>
 
-                <View style={[styles.searchBar, { backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100] }]}>
-                    <Ionicons name="search-outline" size={16} color={COLORS.gray[400]} />
+                <View style={[styles.searchBar, {
+                    backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.white,
+                    borderColor: isMemorialMode ? COLORS.gray[700] : COLORS.gray[200],
+                }]}>
+                    <Ionicons name="search-outline" size={18} color={COLORS.gray[400]} />
                     <TextInput
                         style={[styles.searchInput, { color: isMemorialMode ? COLORS.white : COLORS.gray[900] }]}
                         placeholder="게시글 검색..."
@@ -120,153 +156,180 @@ export default function CommunityScreen() {
                         value={searchQuery}
                         onChangeText={setSearchQuery}
                     />
+                    {searchQuery.length > 0 && (
+                        <TouchableOpacity onPress={() => setSearchQuery("")}>
+                            <Ionicons name="close-circle" size={18} color={COLORS.gray[400]} />
+                        </TouchableOpacity>
+                    )}
                 </View>
             </View>
 
+            {/* 서브카테고리 탭 */}
             <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                style={styles.subcatScroll}
-                contentContainerStyle={{ gap: 8, paddingHorizontal: 20 }}
+                contentContainerStyle={styles.subcatScroll}
             >
-                {SUBCATEGORIES.map((cat) => (
-                    <TouchableOpacity
-                        key={cat.id}
-                        onPress={() => setActiveTab(cat.id)}
-                        style={[
-                            styles.subcatPill,
-                            {
-                                backgroundColor: activeTab === cat.id
-                                    ? accentColor
-                                    : isMemorialMode ? COLORS.gray[800] : COLORS.gray[100],
-                            },
-                        ]}
-                        activeOpacity={0.8}
-                    >
-                        <Text style={{
-                            fontSize: 14,
-                            fontWeight: "500",
-                            color: activeTab === cat.id
-                                ? "#fff"
-                                : isMemorialMode ? COLORS.gray[400] : COLORS.gray[600],
-                        }}>
-                            {cat.label}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
+                {SUBCATEGORIES.map((cat) => {
+                    const active = activeTab === cat.id;
+                    return (
+                        <TouchableOpacity
+                            key={cat.id}
+                            onPress={() => setActiveTab(cat.id)}
+                            activeOpacity={0.85}
+                        >
+                            {active ? (
+                                <LinearGradient
+                                    colors={cat.gradient}
+                                    style={styles.subcatPill}
+                                >
+                                    <Ionicons name={cat.icon} size={14} color="#fff" />
+                                    <Text style={styles.subcatLabelActive}>{cat.label}</Text>
+                                </LinearGradient>
+                            ) : (
+                                <View style={[styles.subcatPill, {
+                                    backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.white,
+                                    borderWidth: 1,
+                                    borderColor: isMemorialMode ? COLORS.gray[700] : COLORS.gray[200],
+                                }]}>
+                                    <Ionicons name={cat.icon} size={14} color={isMemorialMode ? COLORS.gray[400] : COLORS.gray[600]} />
+                                    <Text style={{
+                                        fontSize: 13,
+                                        fontWeight: "500",
+                                        color: isMemorialMode ? COLORS.gray[400] : COLORS.gray[600],
+                                    }}>
+                                        {cat.label}
+                                    </Text>
+                                </View>
+                            )}
+                        </TouchableOpacity>
+                    );
+                })}
             </ScrollView>
 
+            {/* 카드 리스트 */}
             {isLoading ? (
                 <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
                     <ActivityIndicator size="large" color={accentColor} />
                 </View>
             ) : (
                 <FlatList
-                    data={posts.filter((p) =>
-                        !searchQuery ||
-                        p.title.includes(searchQuery) ||
-                        (p.content ?? "").includes(searchQuery)
-                    )}
+                    data={filtered}
                     keyExtractor={(item, i) => `${item.id ?? i}`}
-                    contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}
+                    contentContainerStyle={{ paddingBottom: 96 }}
                     showsVerticalScrollIndicator={false}
                     refreshControl={
                         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accentColor} />
                     }
                     ListEmptyComponent={
-                        <View style={{ alignItems: "center", paddingVertical: 64 }}>
-                            <Ionicons name="chatbubbles-outline" size={44} color={COLORS.gray[300]} />
-                            <Text style={{ color: COLORS.gray[400], marginTop: 12, fontSize: 14 }}>
-                                아직 게시글이 없어요.
-                            </Text>
+                        <View style={styles.emptyWrap}>
+                            <View style={styles.emptyIconBg}>
+                                <Ionicons name={activeSubcat.icon} size={32} color={COLORS.gray[400]} />
+                            </View>
+                            <Text style={styles.emptyText}>아직 게시글이 없어요</Text>
+                            <Text style={styles.emptyHint}>첫 글을 남겨보세요</Text>
                         </View>
                     }
                     renderItem={({ item }) => (
                         <PostCard
                             post={item}
                             isMemorialMode={isMemorialMode}
-                            accentColor={accentColor}
                             onPress={() => item.id && router.push(`/post/${item.id}`)}
                         />
                     )}
-                    ItemSeparatorComponent={() => (
-                        <View style={{ height: 1, marginVertical: 4, backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100] }} />
-                    )}
                 />
             )}
+
+            {/* FAB 글쓰기 */}
+            <TouchableOpacity
+                onPress={() => router.push({ pathname: "/post/write", params: { subcategory: activeTab } })}
+                style={styles.fab}
+                activeOpacity={0.85}
+            >
+                <LinearGradient
+                    colors={activeSubcat.gradient}
+                    style={styles.fabGradient}
+                >
+                    <Ionicons name="create" size={22} color="#fff" />
+                </LinearGradient>
+            </TouchableOpacity>
         </SafeAreaView>
     );
 }
 
-function PostCard({ post, isMemorialMode, accentColor, onPress }: {
+function PostCard({ post, isMemorialMode, onPress }: {
     post: CommunityPost;
     isMemorialMode: boolean;
-    accentColor: string;
-    onPress?: () => void;
+    onPress: () => void;
 }) {
+    const hasImage = post.images && post.images.length > 0;
     return (
-        <TouchableOpacity style={{ paddingVertical: 16 }} activeOpacity={0.75} onPress={onPress}>
-            {post.tag && (
-                <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 8, marginBottom: 6 }}>
-                    <View style={[styles.tagBadge, { backgroundColor: accentColor + "20" }]}>
-                        <Text style={{ fontSize: 12, fontWeight: "500", color: accentColor }}>
-                            {post.tag}
-                        </Text>
+        <TouchableOpacity
+            onPress={onPress}
+            activeOpacity={0.85}
+            style={[styles.card, {
+                backgroundColor: isMemorialMode ? COLORS.gray[900] : COLORS.white,
+                borderColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100],
+            }]}
+        >
+            <View style={styles.cardBody}>
+                {post.tag ? (
+                    <View style={styles.tagBadge}>
+                        <Text style={styles.tagBadgeText}>{post.tag}</Text>
+                    </View>
+                ) : null}
+
+                <Text style={[styles.cardTitle, {
+                    color: isMemorialMode ? COLORS.white : COLORS.gray[900],
+                }]} numberOfLines={2}>
+                    {post.title}
+                </Text>
+
+                {post.preview ? (
+                    <Text style={[styles.cardPreview, {
+                        color: isMemorialMode ? COLORS.gray[400] : COLORS.gray[600],
+                    }]} numberOfLines={2}>
+                        {post.preview}
+                    </Text>
+                ) : null}
+
+                {hasImage && post.images ? (
+                    <View style={styles.imagesRow}>
+                        {post.images.slice(0, 3).map((img, idx) => (
+                            <Image key={idx} source={{ uri: img }} style={styles.thumb} resizeMode="cover" />
+                        ))}
+                        {post.images.length > 3 ? (
+                            <View style={[styles.thumb, styles.moreThumb]}>
+                                <Text style={styles.moreText}>+{post.images.length - 3}</Text>
+                            </View>
+                        ) : null}
+                    </View>
+                ) : null}
+
+                <View style={styles.metaRow}>
+                    <Text style={[styles.metaText, {
+                        color: isMemorialMode ? COLORS.gray[500] : COLORS.gray[500],
+                    }]}>
+                        {post.author}
+                    </Text>
+                    <Text style={styles.metaDot}>·</Text>
+                    <Text style={styles.metaText}>{relativeTime(post.createdAt)}</Text>
+
+                    <View style={styles.metaRight}>
+                        <View style={styles.statRow}>
+                            <Ionicons
+                                name={post.isLiked ? "heart" : "heart-outline"}
+                                size={12}
+                                color={post.isLiked ? "#EF4444" : COLORS.gray[500]}
+                            />
+                            <Text style={styles.metaText}>{post.likes}</Text>
+                        </View>
+                        <View style={styles.statRow}>
+                            <Ionicons name="chatbubble-outline" size={12} color={COLORS.gray[500]} />
+                            <Text style={styles.metaText}>{post.comments}</Text>
+                        </View>
                     </View>
                 </View>
-            )}
-            <Text
-                style={{
-                    fontSize: 14,
-                    fontWeight: "600",
-                    lineHeight: 20,
-                    color: isMemorialMode ? COLORS.white : COLORS.gray[900],
-                }}
-                numberOfLines={2}
-            >
-                {post.title}
-            </Text>
-            {post.preview && (
-                <Text
-                    style={{
-                        fontSize: 12,
-                        marginTop: 4,
-                        lineHeight: 16,
-                        color: isMemorialMode ? COLORS.gray[400] : COLORS.gray[500],
-                    }}
-                    numberOfLines={2}
-                >
-                    {post.preview}
-                </Text>
-            )}
-            <View style={styles.metaRow}>
-                <Text style={{
-                    fontSize: 12,
-                    color: isMemorialMode ? COLORS.gray[500] : COLORS.gray[400],
-                }}>
-                    {post.author}
-                </Text>
-                <Text style={{ fontSize: 12, color: isMemorialMode ? COLORS.gray[600] : COLORS.gray[300] }}>·</Text>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                    <Ionicons name="heart-outline" size={11} color={COLORS.gray[400]} />
-                    <Text style={{ fontSize: 12, color: isMemorialMode ? COLORS.gray[500] : COLORS.gray[400] }}>
-                        {post.likes}
-                    </Text>
-                </View>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                    <Ionicons name="chatbubble-outline" size={11} color={COLORS.gray[400]} />
-                    <Text style={{ fontSize: 12, color: isMemorialMode ? COLORS.gray[500] : COLORS.gray[400] }}>
-                        {post.comments}
-                    </Text>
-                </View>
-                {post.time && (
-                    <>
-                        <Text style={{ fontSize: 12, color: isMemorialMode ? COLORS.gray[600] : COLORS.gray[300] }}>·</Text>
-                        <Text style={{ fontSize: 12, color: isMemorialMode ? COLORS.gray[500] : COLORS.gray[400] }}>
-                            {post.time}
-                        </Text>
-                    </>
-                )}
             </View>
         </TouchableOpacity>
     );
@@ -274,20 +337,83 @@ function PostCard({ post, isMemorialMode, accentColor, onPress }: {
 
 const styles = StyleSheet.create({
     flex1: { flex: 1 },
-    header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12 },
-    headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
-    title: { fontSize: 20, fontWeight: "bold" },
-    writeBtn: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },
+    headerWrap: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8 },
+    headerRow: { marginBottom: 12 },
+    title: { fontSize: 24, fontWeight: "700" },
     searchBar: {
         flexDirection: "row",
         alignItems: "center",
-        borderRadius: 12,
-        paddingHorizontal: 12,
+        gap: 8,
+        paddingHorizontal: 14,
         paddingVertical: 10,
+        borderRadius: 14,
+        borderWidth: 1,
     },
-    searchInput: { flex: 1, marginLeft: 8, fontSize: 14 },
-    subcatScroll: { marginBottom: 12 },
-    subcatPill: { paddingHorizontal: 16, paddingVertical: 6, borderRadius: 9999 },
-    tagBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 9999 },
-    metaRow: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 8 },
+    searchInput: { flex: 1, fontSize: 14, padding: 0 },
+    subcatScroll: { paddingHorizontal: 16, gap: 8, paddingVertical: 12 },
+    subcatPill: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 9999,
+    },
+    subcatLabelActive: { fontSize: 13, fontWeight: "600", color: "#fff" },
+    card: {
+        marginHorizontal: 16,
+        marginVertical: 6,
+        borderRadius: 14,
+        borderWidth: 1,
+        overflow: "hidden",
+    },
+    cardBody: { padding: 16, gap: 8 },
+    tagBadge: {
+        alignSelf: "flex-start",
+        backgroundColor: "rgba(5, 178, 220, 0.1)",
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 6,
+    },
+    tagBadgeText: { fontSize: 11, fontWeight: "500", color: COLORS.memento[600] },
+    cardTitle: { fontSize: 15, fontWeight: "700", lineHeight: 20 },
+    cardPreview: { fontSize: 13, lineHeight: 18 },
+    imagesRow: { flexDirection: "row", gap: 6, marginTop: 4 },
+    thumb: { width: 64, height: 64, borderRadius: 8, backgroundColor: COLORS.gray[100] },
+    moreThumb: { alignItems: "center", justifyContent: "center" },
+    moreText: { fontSize: 12, fontWeight: "600", color: COLORS.gray[600] },
+    metaRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 },
+    metaText: { fontSize: 11, color: COLORS.gray[500] },
+    metaDot: { fontSize: 11, color: COLORS.gray[300] },
+    metaRight: { flexDirection: "row", alignItems: "center", gap: 12, marginLeft: "auto" },
+    statRow: { flexDirection: "row", alignItems: "center", gap: 4 },
+    emptyWrap: { alignItems: "center", paddingVertical: 64 },
+    emptyIconBg: {
+        width: 72,
+        height: 72,
+        borderRadius: 36,
+        backgroundColor: COLORS.gray[100],
+        alignItems: "center",
+        justifyContent: "center",
+        marginBottom: 16,
+    },
+    emptyText: { fontSize: 15, fontWeight: "500", color: COLORS.gray[600] },
+    emptyHint: { fontSize: 13, color: COLORS.gray[400], marginTop: 4 },
+    fab: {
+        position: "absolute",
+        bottom: 24,
+        right: 24,
+        elevation: 6,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+    },
+    fabGradient: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        alignItems: "center",
+        justifyContent: "center",
+    },
 });
