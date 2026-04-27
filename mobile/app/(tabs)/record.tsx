@@ -26,6 +26,7 @@ import PetSwitcher from "@/components/common/PetSwitcher";
 import TimelineWriteModal, { type TimelineEntryDraft, type TimelineMood } from "@/components/record/TimelineWriteModal";
 import MediaUploadModal from "@/components/record/MediaUploadModal";
 import PhotoLightbox from "@/components/record/PhotoLightbox";
+import AlbumDetailModal from "@/components/record/AlbumDetailModal";
 import { supabase } from "@/lib/supabase";
 import * as Haptics from "expo-haptics";
 import { Alert as RNAlert } from "react-native";
@@ -168,6 +169,7 @@ export default function RecordScreen() {
                     )}
                     {activeTab === "albums" && (
                         <AlbumsTab
+                            petId={selectedPet.id}
                             isMemorialMode={isMemorialMode}
                             accentColor={accentColor}
                             refreshing={refreshing}
@@ -609,15 +611,25 @@ function GalleryTab({ petId, photos, isMemorialMode, accentColor, refreshing, on
 // ============================================
 // 앨범 탭 (memory_albums)
 // ============================================
+interface AlbumPhoto {
+    id: string;
+    url: string;
+    caption?: string | null;
+}
+
 interface MemoryAlbum {
     id: string;
     title: string;
+    description: string;
+    concept: string;
     coverImage: string | null;
     photoCount: number;
     createdAt: string;
+    photos: AlbumPhoto[];
 }
 
-function AlbumsTab({ isMemorialMode, accentColor, refreshing, onRefresh }: {
+function AlbumsTab({ petId, isMemorialMode, accentColor, refreshing, onRefresh }: {
+    petId: string;
     isMemorialMode: boolean;
     accentColor: string;
     refreshing: boolean;
@@ -626,35 +638,47 @@ function AlbumsTab({ isMemorialMode, accentColor, refreshing, onRefresh }: {
     const { session } = useAuth();
     const [albums, setAlbums] = useState<MemoryAlbum[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selected, setSelected] = useState<MemoryAlbum | null>(null);
 
     const load = useCallback(async () => {
-        if (!session) { setLoading(false); return; }
+        if (!session || !petId) { setLoading(false); return; }
         try {
-            const res = await fetch(`${API_BASE_URL}/api/memory-albums`, {
+            const res = await fetch(`${API_BASE_URL}/api/memory-albums?petId=${encodeURIComponent(petId)}`, {
                 headers: { "Authorization": `Bearer ${session.access_token}` },
             });
             if (!res.ok) return;
             const data = await res.json();
             const list = Array.isArray(data?.albums) ? data.albums : Array.isArray(data) ? data : [];
-            setAlbums(list.map((raw: Record<string, unknown>): MemoryAlbum => ({
-                id: typeof raw.id === "string" ? raw.id : String(raw.id ?? ""),
-                title: typeof raw.title === "string" ? raw.title : "",
-                coverImage: typeof raw.coverImage === "string"
-                    ? raw.coverImage
-                    : (typeof raw.cover_image === "string" ? raw.cover_image : null),
-                photoCount: typeof raw.photoCount === "number"
-                    ? raw.photoCount
-                    : (typeof raw.photo_count === "number" ? raw.photo_count : 0),
-                createdAt: typeof raw.createdAt === "string"
-                    ? raw.createdAt
-                    : (typeof raw.created_at === "string" ? raw.created_at : ""),
-            })));
+            setAlbums(list.map((raw: Record<string, unknown>): MemoryAlbum => {
+                const photosRaw = Array.isArray(raw.photos) ? raw.photos : [];
+                const photos: AlbumPhoto[] = photosRaw
+                    .map((p: Record<string, unknown>) => ({
+                        id: typeof p.id === "string" ? p.id : String(p.id ?? ""),
+                        url: typeof p.url === "string" ? p.url : "",
+                        caption: typeof p.caption === "string" ? p.caption : null,
+                    }))
+                    .filter((p: AlbumPhoto) => p.url.length > 0);
+                return {
+                    id: typeof raw.id === "string" ? raw.id : String(raw.id ?? ""),
+                    title: typeof raw.title === "string" ? raw.title : "",
+                    description: typeof raw.description === "string" ? raw.description : "",
+                    concept: typeof raw.concept === "string" ? raw.concept : "",
+                    coverImage: photos[0]?.url ?? null,
+                    photoCount: photos.length,
+                    createdAt: typeof raw.createdDate === "string"
+                        ? raw.createdDate
+                        : (typeof raw.createdAt === "string"
+                            ? raw.createdAt
+                            : (typeof raw.created_at === "string" ? raw.created_at : "")),
+                    photos,
+                };
+            }));
         } catch {
             // 조용히
         } finally {
             setLoading(false);
         }
-    }, [session]);
+    }, [session, petId]);
 
     useEffect(() => { load(); }, [load]);
 
@@ -680,37 +704,49 @@ function AlbumsTab({ isMemorialMode, accentColor, refreshing, onRefresh }: {
     }
 
     return (
-        <FlatList
-            data={albums}
-            keyExtractor={(a) => a.id}
-            numColumns={2}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accentColor} />}
-            contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
-            columnWrapperStyle={{ gap: 12 }}
-            renderItem={({ item }) => (
-                <TouchableOpacity activeOpacity={0.85} style={[styles.albumCard, {
-                    backgroundColor: isMemorialMode ? COLORS.gray[900] : COLORS.white,
-                }]}>
-                    {item.coverImage ? (
-                        <Image source={{ uri: item.coverImage }} style={styles.albumCover} resizeMode="cover" />
-                    ) : (
-                        <View style={[styles.albumCover, {
-                            backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100],
-                            alignItems: "center",
-                            justifyContent: "center",
-                        }]}>
-                            <Ionicons name="albums" size={32} color={COLORS.gray[400]} />
+        <>
+            <FlatList
+                data={albums}
+                keyExtractor={(a) => a.id}
+                numColumns={2}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accentColor} />}
+                contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+                columnWrapperStyle={{ gap: 12 }}
+                renderItem={({ item }) => (
+                    <TouchableOpacity
+                        activeOpacity={0.85}
+                        onPress={() => setSelected(item)}
+                        style={[styles.albumCard, {
+                            backgroundColor: isMemorialMode ? COLORS.gray[900] : COLORS.white,
+                        }]}
+                    >
+                        {item.coverImage ? (
+                            <Image source={{ uri: item.coverImage }} style={styles.albumCover} resizeMode="cover" />
+                        ) : (
+                            <View style={[styles.albumCover, {
+                                backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100],
+                                alignItems: "center",
+                                justifyContent: "center",
+                            }]}>
+                                <Ionicons name="albums" size={32} color={COLORS.gray[400]} />
+                            </View>
+                        )}
+                        <View style={{ padding: 12 }}>
+                            <Text style={[styles.albumTitle, {
+                                color: isMemorialMode ? COLORS.white : COLORS.gray[800],
+                            }]} numberOfLines={1}>{item.title}</Text>
+                            <Text style={styles.albumMeta}>{item.photoCount}장 · {item.createdAt.slice(0, 10)}</Text>
                         </View>
-                    )}
-                    <View style={{ padding: 12 }}>
-                        <Text style={[styles.albumTitle, {
-                            color: isMemorialMode ? COLORS.white : COLORS.gray[800],
-                        }]} numberOfLines={1}>{item.title}</Text>
-                        <Text style={styles.albumMeta}>{item.photoCount}장 · {item.createdAt.slice(0, 10)}</Text>
-                    </View>
-                </TouchableOpacity>
-            )}
-        />
+                    </TouchableOpacity>
+                )}
+            />
+            <AlbumDetailModal
+                album={selected}
+                visible={selected !== null}
+                onClose={() => setSelected(null)}
+                isMemorialMode={isMemorialMode}
+            />
+        </>
     );
 }
 
