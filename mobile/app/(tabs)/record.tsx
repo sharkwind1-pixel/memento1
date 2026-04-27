@@ -23,6 +23,7 @@ import { COLORS } from "@/lib/theme";
 import AppHeader from "@/components/common/AppHeader";
 import AppDrawer from "@/components/common/AppDrawer";
 import TimelineWriteModal, { type TimelineEntryDraft, type TimelineMood } from "@/components/record/TimelineWriteModal";
+import MediaUploadModal from "@/components/record/MediaUploadModal";
 import { supabase } from "@/lib/supabase";
 import * as Haptics from "expo-haptics";
 import { Alert as RNAlert } from "react-native";
@@ -152,6 +153,7 @@ export default function RecordScreen() {
                     )}
                     {activeTab === "gallery" && (
                         <GalleryTab
+                            petId={selectedPet.id}
                             photos={selectedPet.photos}
                             isMemorialMode={isMemorialMode}
                             accentColor={accentColor}
@@ -412,41 +414,71 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
 // ============================================
 // 사진첩 탭
 // ============================================
-function GalleryTab({ photos, isMemorialMode, accentColor, refreshing, onRefresh }: {
+function GalleryTab({ petId, photos, isMemorialMode, accentColor, refreshing, onRefresh }: {
+    petId: string;
     photos: NonNullable<ReturnType<typeof usePet>["selectedPet"]>["photos"];
     isMemorialMode: boolean;
     accentColor: string;
     refreshing: boolean;
     onRefresh: () => void;
 }) {
-    if (photos.length === 0) {
-        return (
-            <ScrollView
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accentColor} />}
-                contentContainerStyle={styles.tabContent}
-            >
-                <View style={styles.emptyCard}>
-                    <Ionicons name="images-outline" size={36} color={COLORS.gray[300]} />
-                    <Text style={styles.emptyCardTitle}>아직 사진이 없어요</Text>
-                    <Text style={styles.emptyCardHint}>소중한 순간을 담아보세요</Text>
-                </View>
-            </ScrollView>
-        );
-    }
+    const [uploadOpen, setUploadOpen] = useState(false);
 
     return (
-        <FlatList
-            data={photos}
-            keyExtractor={(item) => item.id}
-            numColumns={3}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accentColor} />}
-            renderItem={({ item }) => (
-                <TouchableOpacity activeOpacity={0.85} style={styles.gridItem}>
-                    <Image source={{ uri: item.url }} style={styles.gridImg} resizeMode="cover" />
-                </TouchableOpacity>
-            )}
-            contentContainerStyle={{ paddingTop: 8, paddingBottom: 32 }}
-        />
+        <>
+            <FlatList
+                data={photos}
+                keyExtractor={(item) => item.id}
+                numColumns={3}
+                style={{ flex: 1 }}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accentColor} />}
+                ListHeaderComponent={
+                    <View style={styles.galleryHeader}>
+                        <View style={{ flex: 1 }}>
+                            <Text style={[styles.galleryHeaderTitle, isMemorialMode && { color: COLORS.white }]}>
+                                사진/영상
+                            </Text>
+                            <Text style={styles.galleryHeaderCount}>{photos.length}장</Text>
+                        </View>
+                        <TouchableOpacity
+                            onPress={() => setUploadOpen(true)}
+                            style={[styles.uploadBtn, { backgroundColor: accentColor }]}
+                            activeOpacity={0.85}
+                        >
+                            <Ionicons name="add" size={16} color="#fff" />
+                            <Text style={styles.uploadBtnText}>업로드</Text>
+                        </TouchableOpacity>
+                    </View>
+                }
+                ListEmptyComponent={
+                    <View style={styles.emptyCard}>
+                        <Ionicons name="images-outline" size={36} color={COLORS.gray[300]} />
+                        <Text style={styles.emptyCardTitle}>아직 사진이 없어요</Text>
+                        <Text style={styles.emptyCardHint}>소중한 순간을 담아보세요</Text>
+                        <TouchableOpacity
+                            onPress={() => setUploadOpen(true)}
+                            style={[styles.emptyAction, { borderColor: accentColor }]}
+                            activeOpacity={0.85}
+                        >
+                            <Ionicons name="cloud-upload-outline" size={16} color={accentColor} />
+                            <Text style={[styles.emptyActionText, { color: accentColor }]}>첫 사진 올리기</Text>
+                        </TouchableOpacity>
+                    </View>
+                }
+                renderItem={({ item }) => (
+                    <TouchableOpacity activeOpacity={0.85} style={styles.gridItem}>
+                        <Image source={{ uri: item.url }} style={styles.gridImg} resizeMode="cover" />
+                    </TouchableOpacity>
+                )}
+                contentContainerStyle={photos.length === 0 ? { padding: 16 } : { padding: 12, paddingBottom: 32 }}
+            />
+            <MediaUploadModal
+                petId={petId}
+                visible={uploadOpen}
+                onClose={() => setUploadOpen(false)}
+                onSuccess={() => { setUploadOpen(false); onRefresh(); }}
+            />
+        </>
     );
 }
 
@@ -771,6 +803,23 @@ const styles = StyleSheet.create({
         borderWidth: 1.5,
     },
     emptyActionText: { fontSize: 13, fontWeight: "600" },
+    galleryHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 12,
+        paddingHorizontal: 4,
+    },
+    galleryHeaderTitle: { fontSize: 16, fontWeight: "700", color: COLORS.gray[800] },
+    galleryHeaderCount: { fontSize: 12, color: COLORS.gray[400], marginTop: 2 },
+    uploadBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 12,
+    },
+    uploadBtnText: { color: "#fff", fontSize: 13, fontWeight: "700" },
     gridItem: { flex: 1 / 3, aspectRatio: 1, padding: 1 },
     gridImg: { flex: 1 },
     albumCard: {
