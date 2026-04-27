@@ -29,11 +29,15 @@ function TabIcon({
         <View style={styles.tabIconWrap}>
             <Ionicons name={name} size={22} color={color} />
             <Text
+                numberOfLines={1}
+                allowFontScaling={false}
                 style={{
                     color,
                     fontSize: 10,
                     marginTop: 2,
                     fontWeight: focused ? "700" : "400",
+                    width: 64,
+                    textAlign: "center",
                 }}
             >
                 {label}

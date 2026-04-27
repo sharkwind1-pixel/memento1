@@ -28,7 +28,7 @@ interface AppHeaderProps {
 
 export default function AppHeader({ onOpenDrawer, showBack, title, hideActions }: AppHeaderProps) {
     const router = useRouter();
-    const { user, points } = useAuth();
+    const { user, profile, points } = useAuth();
     const { isMemorialMode } = usePet();
 
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
@@ -80,7 +80,11 @@ export default function AppHeader({ onOpenDrawer, showBack, title, hideActions }
                         <Ionicons name="notifications-outline" size={22} color={iconColor} />
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => router.push("/profile")} style={styles.iconBtn} hitSlop={6}>
-                        <Ionicons name="person-circle-outline" size={26} color={iconColor} />
+                        {profile?.avatar ? (
+                            <Image source={{ uri: profile.avatar }} style={styles.avatarImg} />
+                        ) : (
+                            <Ionicons name="person-circle-outline" size={26} color={iconColor} />
+                        )}
                     </TouchableOpacity>
                 </View>
             ) : (
@@ -121,4 +125,5 @@ const styles = StyleSheet.create({
         marginRight: 4,
     },
     pointText: { fontSize: 11, fontWeight: "600" },
+    avatarImg: { width: 28, height: 28, borderRadius: 14 },
 });

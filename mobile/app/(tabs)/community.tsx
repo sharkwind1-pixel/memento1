@@ -195,7 +195,7 @@ export default function CommunityScreen() {
                                     style={styles.subcatPill}
                                 >
                                     <Ionicons name={cat.icon} size={14} color="#fff" />
-                                    <Text style={styles.subcatLabelActive}>{cat.label}</Text>
+                                    <Text numberOfLines={1} allowFontScaling={false} style={styles.subcatLabelActive}>{cat.label}</Text>
                                 </LinearGradient>
                             ) : (
                                 <View style={[styles.subcatPill, {
@@ -204,11 +204,16 @@ export default function CommunityScreen() {
                                     borderColor: isMemorialMode ? COLORS.gray[700] : COLORS.gray[200],
                                 }]}>
                                     <Ionicons name={cat.icon} size={14} color={isMemorialMode ? COLORS.gray[400] : COLORS.gray[600]} />
-                                    <Text style={{
-                                        fontSize: 13,
-                                        fontWeight: "500",
-                                        color: isMemorialMode ? COLORS.gray[400] : COLORS.gray[600],
-                                    }}>
+                                    <Text
+                                        numberOfLines={1}
+                                        allowFontScaling={false}
+                                        style={{
+                                            fontSize: 13,
+                                            fontWeight: "500",
+                                            color: isMemorialMode ? COLORS.gray[400] : COLORS.gray[600],
+                                            flexShrink: 0,
+                                        }}
+                                    >
                                         {cat.label}
                                     </Text>
                                 </View>
@@ -369,8 +374,9 @@ const styles = StyleSheet.create({
         paddingHorizontal: 14,
         paddingVertical: 8,
         borderRadius: 9999,
+        flexShrink: 0,
     },
-    subcatLabelActive: { fontSize: 13, fontWeight: "600", color: "#fff" },
+    subcatLabelActive: { fontSize: 13, fontWeight: "600", color: "#fff", flexShrink: 0 },
     card: {
         marginHorizontal: 16,
         marginVertical: 6,

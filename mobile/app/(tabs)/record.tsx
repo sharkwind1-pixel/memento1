@@ -110,7 +110,7 @@ export default function RecordScreen() {
                                     style={styles.tabPill}
                                 >
                                     <Ionicons name={tab.icon} size={14} color="#fff" />
-                                    <Text style={styles.tabLabelActive}>{tab.label}</Text>
+                                    <Text numberOfLines={1} allowFontScaling={false} style={styles.tabLabelActive}>{tab.label}</Text>
                                 </LinearGradient>
                             ) : (
                                 <View style={[styles.tabPill, {
@@ -119,11 +119,16 @@ export default function RecordScreen() {
                                     borderColor: isMemorialMode ? COLORS.gray[700] : COLORS.gray[200],
                                 }]}>
                                     <Ionicons name={tab.icon} size={14} color={isMemorialMode ? COLORS.gray[400] : COLORS.gray[600]} />
-                                    <Text style={{
-                                        fontSize: 13,
-                                        fontWeight: "500",
-                                        color: isMemorialMode ? COLORS.gray[400] : COLORS.gray[600],
-                                    }}>
+                                    <Text
+                                        numberOfLines={1}
+                                        allowFontScaling={false}
+                                        style={{
+                                            fontSize: 13,
+                                            fontWeight: "500",
+                                            color: isMemorialMode ? COLORS.gray[400] : COLORS.gray[600],
+                                            flexShrink: 0,
+                                        }}
+                                    >
                                         {tab.label}
                                     </Text>
                                 </View>
@@ -709,8 +714,9 @@ const styles = StyleSheet.create({
         paddingHorizontal: 14,
         paddingVertical: 8,
         borderRadius: 9999,
+        flexShrink: 0,
     },
-    tabLabelActive: { fontSize: 13, fontWeight: "600", color: "#fff" },
+    tabLabelActive: { fontSize: 13, fontWeight: "600", color: "#fff", flexShrink: 0 },
     tabContent: { padding: 16, paddingBottom: 32 },
     emptyCenter: {
         flex: 1,
