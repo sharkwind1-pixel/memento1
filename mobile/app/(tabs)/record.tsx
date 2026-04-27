@@ -27,6 +27,7 @@ import TimelineWriteModal, { type TimelineEntryDraft, type TimelineMood } from "
 import MediaUploadModal from "@/components/record/MediaUploadModal";
 import PhotoLightbox from "@/components/record/PhotoLightbox";
 import AlbumDetailModal from "@/components/record/AlbumDetailModal";
+import VideoGenerateModal from "@/components/record/VideoGenerateModal";
 import { supabase } from "@/lib/supabase";
 import * as Haptics from "expo-haptics";
 import { Alert as RNAlert } from "react-native";
@@ -178,6 +179,7 @@ export default function RecordScreen() {
                     )}
                     {activeTab === "videos" && (
                         <VideosTab
+                            pet={selectedPet}
                             isMemorialMode={isMemorialMode}
                             accentColor={accentColor}
                             refreshing={refreshing}
@@ -762,7 +764,8 @@ interface Video {
     createdAt: string;
 }
 
-function VideosTab({ isMemorialMode, accentColor, refreshing, onRefresh }: {
+function VideosTab({ pet, isMemorialMode, accentColor, refreshing, onRefresh }: {
+    pet: NonNullable<ReturnType<typeof usePet>["selectedPet"]>;
     isMemorialMode: boolean;
     accentColor: string;
     refreshing: boolean;
@@ -771,6 +774,7 @@ function VideosTab({ isMemorialMode, accentColor, refreshing, onRefresh }: {
     const { session } = useAuth();
     const [videos, setVideos] = useState<Video[]>([]);
     const [loading, setLoading] = useState(true);
+    const [generateOpen, setGenerateOpen] = useState(false);
 
     const load = useCallback(async () => {
         if (!session) { setLoading(false); return; }
@@ -810,27 +814,63 @@ function VideosTab({ isMemorialMode, accentColor, refreshing, onRefresh }: {
 
     if (videos.length === 0) {
         return (
-            <ScrollView
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accentColor} />}
-                contentContainerStyle={styles.tabContent}
-            >
-                <View style={styles.emptyCard}>
-                    <Ionicons name="videocam-outline" size={36} color={COLORS.gray[300]} />
-                    <Text style={styles.emptyCardTitle}>AI 영상이 없어요</Text>
-                    <Text style={styles.emptyCardHint}>
-                        프리미엄 구독 시 월 3회{"\n"}AI 영상을 만들 수 있어요
-                    </Text>
-                </View>
-            </ScrollView>
+            <>
+                <ScrollView
+                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accentColor} />}
+                    contentContainerStyle={styles.tabContent}
+                >
+                    <View style={styles.emptyCard}>
+                        <Ionicons name="videocam-outline" size={36} color={COLORS.gray[300]} />
+                        <Text style={styles.emptyCardTitle}>AI 영상이 없어요</Text>
+                        <Text style={styles.emptyCardHint}>
+                            반려동물 사진을 토대로{"\n"}AI 영상을 만들어보세요
+                        </Text>
+                        <TouchableOpacity
+                            onPress={() => setGenerateOpen(true)}
+                            style={[styles.emptyAction, { borderColor: accentColor }]}
+                            activeOpacity={0.85}
+                        >
+                            <Ionicons name="sparkles-outline" size={16} color={accentColor} />
+                            <Text style={[styles.emptyActionText, { color: accentColor }]}>첫 영상 만들기</Text>
+                        </TouchableOpacity>
+                    </View>
+                </ScrollView>
+                <VideoGenerateModal
+                    visible={generateOpen}
+                    onClose={() => setGenerateOpen(false)}
+                    onSuccess={() => { setGenerateOpen(false); onRefresh(); load(); }}
+                    pet={pet}
+                    isMemorialMode={isMemorialMode}
+                />
+            </>
         );
     }
 
     return (
+        <>
         <FlatList
             data={videos}
             keyExtractor={(v) => v.id}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accentColor} />}
             contentContainerStyle={{ padding: 16, paddingBottom: 32, gap: 12 }}
+            ListHeaderComponent={
+                <View style={styles.galleryHeader}>
+                    <View style={{ flex: 1 }}>
+                        <Text style={[styles.galleryHeaderTitle, isMemorialMode && { color: COLORS.white }]}>
+                            AI 영상
+                        </Text>
+                        <Text style={styles.galleryHeaderCount}>{videos.length}개</Text>
+                    </View>
+                    <TouchableOpacity
+                        onPress={() => setGenerateOpen(true)}
+                        style={[styles.uploadBtn, { backgroundColor: accentColor }]}
+                        activeOpacity={0.85}
+                    >
+                        <Ionicons name="sparkles" size={14} color="#fff" />
+                        <Text style={styles.uploadBtnText}>새로 만들기</Text>
+                    </TouchableOpacity>
+                </View>
+            }
             renderItem={({ item }) => (
                 <View style={[styles.videoCard, {
                     backgroundColor: isMemorialMode ? COLORS.gray[900] : COLORS.white,
@@ -868,6 +908,14 @@ function VideosTab({ isMemorialMode, accentColor, refreshing, onRefresh }: {
                 </View>
             )}
         />
+        <VideoGenerateModal
+            visible={generateOpen}
+            onClose={() => setGenerateOpen(false)}
+            onSuccess={() => { setGenerateOpen(false); load(); }}
+            pet={pet}
+            isMemorialMode={isMemorialMode}
+        />
+        </>
     );
 }
 
