@@ -177,7 +177,6 @@ export default function CommunityScreen() {
             >
                 {SUBCATEGORIES.map((cat) => {
                     const active = activeTab === cat.id;
-                    const pillWidth = cat.label.length * 14 + 56;
                     const inactiveBg = isMemorialMode ? COLORS.gray[800] : COLORS.white;
                     const inactiveBorder = isMemorialMode ? COLORS.gray[700] : COLORS.gray[200];
                     const inactiveColor = isMemorialMode ? COLORS.gray[400] : COLORS.gray[600];
@@ -185,49 +184,26 @@ export default function CommunityScreen() {
                         <TouchableOpacity
                             key={cat.id}
                             onPress={() => {
-                                // adoption/lost/local은 독립 스택 화면으로 라우팅
                                 if (cat.id === "adoption") { router.push("/adoption"); return; }
                                 if (cat.id === "lost") { router.push("/lost"); return; }
                                 if (cat.id === "local") { router.push("/local"); return; }
                                 setActiveTab(cat.id);
                             }}
                             activeOpacity={0.85}
-                            style={{ width: pillWidth }}
                         >
                             {active ? (
-                                <LinearGradient
-                                    colors={cat.gradient}
-                                    style={[styles.subcatPill, { width: pillWidth }]}
-                                >
+                                <LinearGradient colors={cat.gradient} style={styles.subcatPill}>
                                     <Ionicons name={cat.icon} size={14} color="#fff" />
-                                    <Text
-                                        numberOfLines={1}
-                                        allowFontScaling={false}
-                                        style={{ fontSize: 13, fontWeight: "600", color: "#fff", includeFontPadding: false }}
-                                    >
-                                        {cat.label}
-                                    </Text>
+                                    <Text style={styles.subcatLabelActive}>{cat.label}</Text>
                                 </LinearGradient>
                             ) : (
                                 <View style={[styles.subcatPill, {
-                                    width: pillWidth,
                                     backgroundColor: inactiveBg,
                                     borderWidth: 1,
                                     borderColor: inactiveBorder,
                                 }]}>
                                     <Ionicons name={cat.icon} size={14} color={inactiveColor} />
-                                    <Text
-                                        numberOfLines={1}
-                                        allowFontScaling={false}
-                                        style={{
-                                            fontSize: 13,
-                                            fontWeight: "500",
-                                            color: inactiveColor,
-                                            includeFontPadding: false,
-                                        }}
-                                    >
-                                        {cat.label}
-                                    </Text>
+                                    <Text style={[styles.subcatLabel, { color: inactiveColor }]}>{cat.label}</Text>
                                 </View>
                             )}
                         </TouchableOpacity>
@@ -386,11 +362,13 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 9,
         borderRadius: 9999,
-        flexShrink: 0,
-        minWidth: 76,
-        justifyContent: "center",
     },
-    subcatLabelActive: { fontSize: 13, fontWeight: "600", color: "#fff", flexShrink: 0, includeFontPadding: false },
+    subcatLabel: {
+        fontSize: 13,
+        fontWeight: "500",
+        includeFontPadding: false,
+    },
+    subcatLabelActive: { fontSize: 13, fontWeight: "600", color: "#fff", includeFontPadding: false },
     card: {
         marginHorizontal: 16,
         marginVertical: 6,
