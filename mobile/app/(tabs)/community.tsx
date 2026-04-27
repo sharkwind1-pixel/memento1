@@ -174,6 +174,7 @@ export default function CommunityScreen() {
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.subcatScroll}
+                style={styles.subcatScrollOuter}
             >
                 {SUBCATEGORIES.map((cat) => {
                     const active = activeTab === cat.id;
@@ -216,6 +217,7 @@ export default function CommunityScreen() {
                 <FlatList
                     data={filtered}
                     keyExtractor={(item, i) => `${item.id ?? i}`}
+                    style={{ flex: 1 }}
                     contentContainerStyle={{ paddingBottom: 96 }}
                     showsVerticalScrollIndicator={false}
                     refreshControl={
@@ -350,6 +352,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
     },
     searchInput: { flex: 1, fontSize: 14, padding: 0 },
+    subcatScrollOuter: { flexGrow: 0, flexShrink: 0 },
     subcatScroll: { paddingHorizontal: 16, paddingVertical: 12 },
     subcatPill: {
         flexDirection: "row",

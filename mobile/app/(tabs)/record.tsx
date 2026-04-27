@@ -95,6 +95,7 @@ export default function RecordScreen() {
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.tabScroll}
+                style={styles.tabScrollOuter}
             >
                 {TABS.map((tab) => {
                     const active = activeTab === tab.id;
@@ -331,6 +332,7 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
             <FlatList
                 data={entries}
                 keyExtractor={(e) => e.id}
+                style={{ flex: 1 }}
                 contentContainerStyle={[styles.tabContent, { paddingBottom: 96 }]}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accentColor} />}
                 ListHeaderComponent={
@@ -691,6 +693,7 @@ const styles = StyleSheet.create({
     title: { fontSize: 22, fontWeight: "700" },
     subtitle: { fontSize: 13, color: COLORS.gray[500], marginTop: 2 },
     addBtn: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
+    tabScrollOuter: { flexGrow: 0, flexShrink: 0 },
     tabScroll: { paddingHorizontal: 16, paddingVertical: 12 },
     tabPill: {
         flexDirection: "row",
