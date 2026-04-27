@@ -7,12 +7,37 @@
  */
 
 import { Tabs } from "expo-router";
-import { View, Platform, StyleSheet } from "react-native";
+import { View, Text, Platform, StyleSheet, Dimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { usePet } from "@/contexts/PetContext";
 import { COLORS } from "@/lib/theme";
+
+const { width: SCREEN_W } = Dimensions.get("window");
+const TAB_ITEM_W = Math.floor(SCREEN_W / 5);
+
+function makeLabel(label: string) {
+    return ({ color }: { color: string }) => (
+        <Text
+            numberOfLines={1}
+            allowFontScaling={false}
+            adjustsFontSizeToFit
+            minimumFontScale={0.7}
+            style={{
+                color,
+                fontSize: 10,
+                fontWeight: "500",
+                textAlign: "center",
+                width: TAB_ITEM_W - 8,
+                paddingHorizontal: 2,
+                includeFontPadding: false,
+            }}
+        >
+            {label}
+        </Text>
+    );
+}
 
 export default function TabsLayout() {
     const { isMemorialMode } = usePet();
@@ -58,7 +83,7 @@ export default function TabsLayout() {
             <Tabs.Screen
                 name="record"
                 options={{
-                    tabBarLabel: "기록",
+                    tabBarLabel: makeLabel("기록"),
                     tabBarIcon: ({ focused, color }) => (
                         <Ionicons
                             name={focused ? "albums" : "albums-outline"}
@@ -72,7 +97,7 @@ export default function TabsLayout() {
             <Tabs.Screen
                 name="community"
                 options={{
-                    tabBarLabel: "커뮤니티",
+                    tabBarLabel: makeLabel("커뮤니티"),
                     tabBarIcon: ({ focused, color }) => (
                         <Ionicons
                             name={focused ? "people" : "people-outline"}
@@ -109,7 +134,7 @@ export default function TabsLayout() {
             <Tabs.Screen
                 name="ai-chat"
                 options={{
-                    tabBarLabel: "AI펫톡",
+                    tabBarLabel: makeLabel("AI펫톡"),
                     tabBarIcon: ({ focused, color }) => (
                         <Ionicons
                             name={focused ? "chatbubble-ellipses" : "chatbubble-ellipses-outline"}
@@ -123,7 +148,7 @@ export default function TabsLayout() {
             <Tabs.Screen
                 name="magazine"
                 options={{
-                    tabBarLabel: "매거진",
+                    tabBarLabel: makeLabel("매거진"),
                     tabBarIcon: ({ focused, color }) => (
                         <Ionicons
                             name={focused ? "book" : "book-outline"}
