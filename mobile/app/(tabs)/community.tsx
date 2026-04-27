@@ -175,7 +175,13 @@ export default function CommunityScreen() {
                     return (
                         <TouchableOpacity
                             key={cat.id}
-                            onPress={() => setActiveTab(cat.id)}
+                            onPress={() => {
+                                // adoption/lost/local은 독립 스택 화면으로 라우팅
+                                if (cat.id === "adoption") { router.push("/adoption"); return; }
+                                if (cat.id === "lost") { router.push("/lost"); return; }
+                                if (cat.id === "local") { router.push("/local"); return; }
+                                setActiveTab(cat.id);
+                            }}
                             activeOpacity={0.85}
                         >
                             {active ? (

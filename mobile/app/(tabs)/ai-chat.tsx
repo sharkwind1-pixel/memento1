@@ -258,6 +258,18 @@ function MessageBubble({ message, pet, isMemorialMode, accentColor }: {
     const errorBg = "#FEE2E2";
     const petBubbleBg = message.isError ? errorBg : isMemorialMode ? COLORS.gray[800] : COLORS.gray[100];
 
+    const emotionMap: Record<string, { label: string; color: string }> = {
+        happy: { label: "기쁨", color: "#FBBF24" },
+        sad: { label: "슬픔", color: "#60A5FA" },
+        anxious: { label: "불안", color: "#A78BFA" },
+        angry: { label: "화남", color: "#EF4444" },
+        grateful: { label: "고마움", color: "#F472B6" },
+        lonely: { label: "외로움", color: "#94A3B8" },
+        peaceful: { label: "평온", color: "#34D399" },
+        excited: { label: "신남", color: "#FB923C" },
+    };
+    const emotionInfo = message.emotion ? emotionMap[message.emotion] : null;
+
     return (
         <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 8, marginBottom: 12 }}>
             <View style={[styles.bubbleAvatar, { backgroundColor: accentColor + "20", marginBottom: 4 }]}>
@@ -268,6 +280,20 @@ function MessageBubble({ message, pet, isMemorialMode, accentColor }: {
                 )}
             </View>
             <View style={{ maxWidth: "80%" }}>
+                {emotionInfo && (
+                    <View style={{
+                        alignSelf: "flex-start",
+                        backgroundColor: emotionInfo.color + "20",
+                        paddingHorizontal: 8,
+                        paddingVertical: 2,
+                        borderRadius: 9999,
+                        marginBottom: 4,
+                    }}>
+                        <Text style={{ fontSize: 10, fontWeight: "600", color: emotionInfo.color }}>
+                            {emotionInfo.label}
+                        </Text>
+                    </View>
+                )}
                 <View style={[styles.bubblePet, { backgroundColor: petBubbleBg }]}>
                     <Text
                         style={{
