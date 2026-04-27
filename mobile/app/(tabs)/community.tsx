@@ -84,7 +84,7 @@ export default function CommunityScreen() {
             const list = Array.isArray(data?.posts) ? data.posts : Array.isArray(data) ? data : [];
 
             setPosts(list.map((raw: Record<string, unknown>): CommunityPost => ({
-                id: asNumber(raw?.id),
+                id: raw?.id != null ? String(raw.id) : undefined,
                 title: asString(raw?.title),
                 content: asString(raw?.content),
                 author: asString(raw?.author ?? raw?.author_name ?? raw?.nickname, "익명"),

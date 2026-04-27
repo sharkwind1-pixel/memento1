@@ -108,7 +108,7 @@ export type PostTag =
     | "새" | "파충류" | "물고기";
 
 export interface CommunityPost {
-    id?: number;
+    id?: string | number;
     title: string;
     content?: string;
     author: string;
