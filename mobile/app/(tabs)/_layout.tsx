@@ -8,6 +8,7 @@ import { Tabs } from "expo-router";
 import { View, Text, Platform, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { usePet } from "@/contexts/PetContext";
 import { COLORS } from "@/lib/theme";
 
@@ -43,10 +44,16 @@ function TabIcon({
 
 export default function TabsLayout() {
     const { isMemorialMode } = usePet();
+    const insets = useSafeAreaInsets();
     const activeColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
     const homeGradient: [string, string] = isMemorialMode
         ? [COLORS.memorial[400], "#F97316"]
         : [COLORS.memento[400], COLORS.memento[500]];
+
+    // 안드로이드 제스처 네비 + 홈 바, iOS 홈 인디케이터 회피용 패딩.
+    // bottom inset이 0인 기기는 최소 8px 확보.
+    const bottomInset = Math.max(insets.bottom, 8);
+    const tabHeight = (Platform.OS === "ios" ? 56 : 56) + bottomInset;
 
     return (
         <Tabs
@@ -57,8 +64,9 @@ export default function TabsLayout() {
                     backgroundColor: "#fff",
                     borderTopColor: COLORS.gray[100],
                     borderTopWidth: 1,
-                    height: Platform.OS === "ios" ? 80 : 62,
-                    paddingBottom: Platform.OS === "ios" ? 20 : 6,
+                    height: tabHeight,
+                    paddingBottom: bottomInset,
+                    paddingTop: 6,
                     elevation: 12,
                     shadowColor: "#000",
                     shadowOffset: { width: 0, height: -2 },
@@ -167,7 +175,7 @@ const styles = StyleSheet.create({
         borderRadius: 26,
         alignItems: "center",
         justifyContent: "center",
-        marginBottom: Platform.OS === "ios" ? 0 : 8,
+        marginBottom: 0,
         shadowColor: COLORS.memento[500],
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.4,
@@ -181,6 +189,6 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.gray[100],
         alignItems: "center",
         justifyContent: "center",
-        marginBottom: Platform.OS === "ios" ? 0 : 8,
+        marginBottom: 0,
     },
 });
