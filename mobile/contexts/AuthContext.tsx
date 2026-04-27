@@ -195,7 +195,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
             const { data, error } = await supabase
                 .from("profiles")
-                .select("id, nickname, avatar_url, bio, is_premium, is_admin, points, premium_expires_at")
+                .select("id, nickname, avatar_url, is_premium, is_admin, points, premium_expires_at")
                 .eq("id", userId)
                 .single();
 
@@ -214,7 +214,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     id: data.id,
                     nickname: data.nickname,
                     avatar: data.avatar_url,
-                    bio: data.bio,
                     isPremium: isPremiumActive,
                     isAdmin: data.is_admin,
                     points: data.points ?? 0,
@@ -226,7 +225,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     id: userId,
                     nickname: undefined,
                     avatar: undefined,
-                    bio: undefined,
                     isPremium: false,
                     isAdmin: false,
                     points: 0,
