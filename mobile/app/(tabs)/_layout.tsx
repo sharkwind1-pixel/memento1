@@ -30,13 +30,13 @@ function TabIcon({
             <Ionicons name={name} size={22} color={color} />
             <Text
                 numberOfLines={1}
+                ellipsizeMode="clip"
                 allowFontScaling={false}
                 style={{
                     color,
                     fontSize: 10,
                     marginTop: 2,
                     fontWeight: focused ? "700" : "400",
-                    width: 64,
                     textAlign: "center",
                 }}
             >
@@ -64,6 +64,7 @@ export default function TabsLayout() {
             screenOptions={{
                 headerShown: false,
                 tabBarShowLabel: false,
+                tabBarItemStyle: { flex: 1, paddingHorizontal: 0 },
                 tabBarStyle: {
                     backgroundColor: "#fff",
                     borderTopColor: COLORS.gray[100],

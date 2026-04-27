@@ -127,6 +127,7 @@ export default function RecordScreen() {
                                             fontWeight: "500",
                                             color: isMemorialMode ? COLORS.gray[400] : COLORS.gray[600],
                                             flexShrink: 0,
+                                            includeFontPadding: false,
                                         }}
                                     >
                                         {tab.label}
@@ -706,17 +707,19 @@ const styles = StyleSheet.create({
     title: { fontSize: 22, fontWeight: "700" },
     subtitle: { fontSize: 13, color: COLORS.gray[500], marginTop: 2 },
     addBtn: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
-    tabScroll: { paddingHorizontal: 16, gap: 8, paddingVertical: 12 },
+    tabScroll: { paddingHorizontal: 16, gap: 8, paddingVertical: 12, alignItems: "center" },
     tabPill: {
         flexDirection: "row",
         alignItems: "center",
         gap: 6,
-        paddingHorizontal: 14,
-        paddingVertical: 8,
+        paddingHorizontal: 16,
+        paddingVertical: 9,
         borderRadius: 9999,
         flexShrink: 0,
+        minWidth: 88,
+        justifyContent: "center",
     },
-    tabLabelActive: { fontSize: 13, fontWeight: "600", color: "#fff", flexShrink: 0 },
+    tabLabelActive: { fontSize: 13, fontWeight: "600", color: "#fff", flexShrink: 0, includeFontPadding: false },
     tabContent: { padding: 16, paddingBottom: 32 },
     emptyCenter: {
         flex: 1,

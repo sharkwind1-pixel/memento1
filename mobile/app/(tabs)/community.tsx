@@ -212,6 +212,7 @@ export default function CommunityScreen() {
                                             fontWeight: "500",
                                             color: isMemorialMode ? COLORS.gray[400] : COLORS.gray[600],
                                             flexShrink: 0,
+                                            includeFontPadding: false,
                                         }}
                                     >
                                         {cat.label}
@@ -366,17 +367,19 @@ const styles = StyleSheet.create({
         borderWidth: 1,
     },
     searchInput: { flex: 1, fontSize: 14, padding: 0 },
-    subcatScroll: { paddingHorizontal: 16, gap: 8, paddingVertical: 12 },
+    subcatScroll: { paddingHorizontal: 16, gap: 8, paddingVertical: 12, alignItems: "center" },
     subcatPill: {
         flexDirection: "row",
         alignItems: "center",
         gap: 6,
-        paddingHorizontal: 14,
-        paddingVertical: 8,
+        paddingHorizontal: 16,
+        paddingVertical: 9,
         borderRadius: 9999,
         flexShrink: 0,
+        minWidth: 76,
+        justifyContent: "center",
     },
-    subcatLabelActive: { fontSize: 13, fontWeight: "600", color: "#fff", flexShrink: 0 },
+    subcatLabelActive: { fontSize: 13, fontWeight: "600", color: "#fff", flexShrink: 0, includeFontPadding: false },
     card: {
         marginHorizontal: 16,
         marginVertical: 6,
