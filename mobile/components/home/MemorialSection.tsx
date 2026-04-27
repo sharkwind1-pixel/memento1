@@ -9,13 +9,16 @@
 import { useEffect, useRef, useState } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity, Image,
-    Animated, Easing, StyleSheet,
+    Animated, Easing, StyleSheet, Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import * as Haptics from "expo-haptics";
+import { useAuth } from "@/contexts/AuthContext";
 import { API_BASE_URL } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
+import MemorialDetailModal from "./MemorialDetailModal";
 
 interface MemorialPet {
     id: string;
@@ -76,8 +79,61 @@ function StarParticle({ left, size, duration, delay }: typeof STARS[0]) {
 
 export default function MemorialSection() {
     const router = useRouter();
+    const { session } = useAuth();
     const [pets, setPets] = useState<MemorialPet[]>([]);
     const [loading, setLoading] = useState(true);
+    const [condoledPets, setCondoledPets] = useState<Record<string, boolean>>({});
+    const [selectedPet, setSelectedPet] = useState<MemorialPet | null>(null);
+    const condolingRef = useRef<Set<string>>(new Set());
+
+    async function toggleCondolence(petId: string) {
+        if (condolingRef.current.has(petId)) return;
+        if (!session) {
+            Alert.alert("로그인 필요", "위로하려면 로그인이 필요해요", [
+                { text: "취소", style: "cancel" },
+                { text: "로그인", onPress: () => router.push("/(auth)/login") },
+            ]);
+            return;
+        }
+        condolingRef.current.add(petId);
+        Haptics.selectionAsync().catch(() => {});
+
+        const wasCondoled = condoledPets[petId] || false;
+        // 낙관적 업데이트
+        setCondoledPets((prev) => ({ ...prev, [petId]: !wasCondoled }));
+        setPets((prev) => prev.map((p) =>
+            p.id === petId
+                ? { ...p, condolenceCount: wasCondoled ? p.condolenceCount - 1 : p.condolenceCount + 1 }
+                : p
+        ));
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/pets/${petId}/condolence`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${session.access_token}` },
+            });
+            if (!res.ok) throw new Error("위로 실패");
+            const data = await res.json();
+            setCondoledPets((prev) => ({ ...prev, [petId]: data.condoled }));
+            setPets((prev) => prev.map((p) =>
+                p.id === petId ? { ...p, condolenceCount: data.count } : p
+            ));
+            // selectedPet도 동기화
+            setSelectedPet((cur) => cur && cur.id === petId
+                ? { ...cur, condolenceCount: data.count } : cur);
+        } catch {
+            // 롤백
+            setCondoledPets((prev) => ({ ...prev, [petId]: wasCondoled }));
+            setPets((prev) => prev.map((p) =>
+                p.id === petId
+                    ? { ...p, condolenceCount: wasCondoled ? p.condolenceCount : p.condolenceCount - 1 }
+                    : p
+            ));
+            Alert.alert("오류", "위로 처리에 실패했습니다");
+        } finally {
+            condolingRef.current.delete(petId);
+        }
+    }
 
     useEffect(() => {
         (async () => {
@@ -154,7 +210,7 @@ export default function MemorialSection() {
                             key={pet.id}
                             style={styles.card}
                             activeOpacity={0.85}
-                            onPress={() => router.push(`/pet/${pet.id}` as never)}
+                            onPress={() => setSelectedPet(pet)}
                         >
                             <View style={styles.cardImageWrap}>
                                 {pet.profileImage ? (
@@ -185,17 +241,40 @@ export default function MemorialSection() {
                                     {pet.type}{pet.breed ? ` / ${pet.breed}` : ""}
                                 </Text>
                                 <View style={styles.divider} />
-                                <View style={styles.condolenceRow}>
-                                    <Ionicons name="heart" size={12} color={COLORS.memorial[400]} />
-                                    <Text style={styles.condolenceText}>
-                                        {pet.condolenceCount > 0 ? `위로 ${pet.condolenceCount}` : "영원히 기억할게"}
+                                <TouchableOpacity
+                                    onPress={(e) => {
+                                        e.stopPropagation?.();
+                                        toggleCondolence(pet.id);
+                                    }}
+                                    style={styles.condolenceRow}
+                                    hitSlop={6}
+                                    activeOpacity={0.7}
+                                >
+                                    <Ionicons
+                                        name={condoledPets[pet.id] ? "heart" : "heart-outline"}
+                                        size={14}
+                                        color={condoledPets[pet.id] ? COLORS.memorial[500] : COLORS.memorial[400]}
+                                    />
+                                    <Text style={[
+                                        styles.condolenceText,
+                                        { color: condoledPets[pet.id] ? COLORS.memorial[600] : COLORS.memorial[500] },
+                                    ]}>
+                                        {pet.condolenceCount > 0 ? `위로 ${pet.condolenceCount}` : "위로하기"}
                                     </Text>
-                                </View>
+                                </TouchableOpacity>
                             </View>
                         </TouchableOpacity>
                     ))
                 )}
             </ScrollView>
+
+            <MemorialDetailModal
+                pet={selectedPet}
+                visible={!!selectedPet}
+                isCondoled={selectedPet ? !!condoledPets[selectedPet.id] : false}
+                onClose={() => setSelectedPet(null)}
+                onToggleCondolence={toggleCondolence}
+            />
         </View>
     );
 }
