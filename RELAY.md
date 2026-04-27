@@ -7,25 +7,19 @@
 
 ## 🔴 미실행 마이그레이션 (Supabase Dashboard에서 실행 필요)
 
-### ⚠️ 2026-04-27 발견 — production DB에 적용 안 됨 (전수 감사로 확정)
+_(현재 미실행 마이그레이션 없음)_
 
-PostgREST 직접 쿼리 시 `Could not find the table 'public.local_posts'` / `'public.lost_pets'` 에러 — feedback_lying_patterns 사례 6과 동일 (마이그레이션 파일은 git에 있는데 DB 실행은 누락된 케이스).
+### ✅ 2026-04-27 적용 완료 (Supabase Studio SQL Editor)
 
-| 마이그레이션 | 영향 |
+전수 감사 (API 105개 production curl + DB 직접 조회)로 발견된 누락 마이그레이션 일괄 적용:
+
+| 항목 | 결과 |
 |---|---|
-| `004_lost_pets.sql` | `/api/lost-pets` GET production 500 에러. 모바일 V3 lost.tsx 화면 동작 불가. |
-| `005_local_posts.sql` | `/api/local-posts` GET production 500 에러. 모바일 V3 local.tsx 화면 동작 불가. |
-| `20260427_rls_initplan_auto_optimize.sql` | RLS auth.uid() initplan 자동 치환 (116건) — 적용 시 RLS CPU 30~50% 절감. |
+| `004_lost_pets.sql` | lost_pets 테이블 + RLS 4정책 + updated_at trigger 생성. `/api/lost-pets` 500 해소. |
+| `005_local_posts.sql` | local_posts 테이블 + RLS 4정책 + updated_at trigger 생성. `/api/local-posts` 500 해소. |
+| RLS auth.uid() initplan 정리 | 120개 정책 모두 1단계 wrap으로 정리. truly_nested=0 검증 완료. |
 
-**적용 방법** — Supabase Studio:
-1. https://supabase.com/dashboard/project/kuqhjgrlrzskvuutqbce/sql/new
-2. 위 3개 SQL 파일 내용을 차례로 복붙 + Run
-3. 적용 후 `select count(*) from local_posts` / `lost_pets`로 검증
-4. RLS initplan은 적용 후 advisor 재실행 → `auth_rls_initplan` 0건 확인
-
----
-
-_(다른 미실행 없음)_
+**RLS 정리 도중 발견**: 이전 시도들이 매번 wrap 추가 → 5중 nested 발생 (`((SELECT (SELECT (SELECT ... auth.uid() AS uid) AS uid)... = user_id)`). LOOP regex로 모든 nested unwrap 후 1번만 wrap → 표준 형태로 복구.
 
 ### ✅ 2026-04-22 실행 완료 (Supabase MCP apply)
 - `stories_24h_ttl` — stories 테이블 + 인덱스 3개 + RLS 3정책.
