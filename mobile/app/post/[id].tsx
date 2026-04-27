@@ -8,13 +8,15 @@ import {
     Image, TextInput, Alert, ActivityIndicator,
     KeyboardAvoidingView, Platform, StyleSheet,
 } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { Stack, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { API_BASE_URL } from "@/config/constants";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
 import { COLORS } from "@/lib/theme";
+import AppHeader from "@/components/common/AppHeader";
 
 interface Comment {
     id: string;
@@ -109,6 +111,7 @@ export default function PostDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const { session } = useAuth();
     const { isMemorialMode } = usePet();
+    const insets = useSafeAreaInsets();
     const [post, setPost] = useState<PostDetail | null>(null);
     const [comments, setComments] = useState<Comment[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -198,30 +201,42 @@ export default function PostDetailScreen() {
         }
     }
 
+    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.white;
+    const borderColor = isMemorialMode ? COLORS.gray[800] : COLORS.gray[100];
+
     if (isLoading) {
         return (
-            <View style={styles.loading}>
-                <ActivityIndicator size="large" color={COLORS.memento[500]} />
-            </View>
+            <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
+                <Stack.Screen options={{ headerShown: false }} />
+                <AppHeader showBack title="게시글" hideActions />
+                <View style={styles.loading}>
+                    <ActivityIndicator size="large" color={COLORS.memento[500]} />
+                </View>
+            </SafeAreaView>
         );
     }
 
     if (!post) {
         return (
-            <View style={styles.loading}>
-                <Text style={{ color: COLORS.gray[400] }}>게시글을 불러올 수 없습니다.</Text>
-            </View>
+            <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
+                <Stack.Screen options={{ headerShown: false }} />
+                <AppHeader showBack title="게시글" hideActions />
+                <View style={styles.loading}>
+                    <Text style={{ color: COLORS.gray[400] }}>게시글을 불러올 수 없습니다.</Text>
+                </View>
+            </SafeAreaView>
         );
     }
 
-    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.white;
-    const borderColor = isMemorialMode ? COLORS.gray[800] : COLORS.gray[100];
-
     return (
-        <KeyboardAvoidingView
-            style={[styles.flex1, { backgroundColor: bgColor }]}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-        >
+        <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
+            <Stack.Screen options={{ headerShown: false }} />
+            <AppHeader showBack title="게시글" hideActions />
+            <KeyboardAvoidingView
+                style={styles.flex1}
+                behavior={Platform.OS === "ios" ? "padding" : undefined}
+                keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+            >
             <ScrollView style={styles.flex1} showsVerticalScrollIndicator={false}>
                 <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 }}>
                     {post.tag && (
@@ -321,7 +336,13 @@ export default function PostDetailScreen() {
             </ScrollView>
 
             {session && (
-                <View style={[styles.inputRow, { borderTopColor: borderColor }]}>
+                <View style={[
+                    styles.inputRow,
+                    {
+                        borderTopColor: borderColor,
+                        paddingBottom: 12 + Math.max(insets.bottom, 0),
+                    },
+                ]}>
                     <TextInput
                         style={[
                             styles.commentInput,
@@ -352,7 +373,8 @@ export default function PostDetailScreen() {
                     </TouchableOpacity>
                 </View>
             )}
-        </KeyboardAvoidingView>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     );
 }
 

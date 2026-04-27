@@ -18,13 +18,13 @@ export default function RootLayout() {
                         <Stack.Screen name="(auth)" />
                         <Stack.Screen name="(tabs)" />
                         <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
-                        <Stack.Screen name="pet/new" options={{ presentation: "modal", headerShown: true, title: "반려동물 등록" }} />
-                        <Stack.Screen name="post/[id]" options={{ headerShown: true, title: "게시글" }} />
-                        <Stack.Screen name="post/write" options={{ presentation: "modal", headerShown: true, title: "글 작성" }} />
-                        <Stack.Screen name="magazine/[id]" options={{ headerShown: true, title: "매거진" }} />
-                        <Stack.Screen name="notifications" options={{ headerShown: true, title: "알림" }} />
-                        <Stack.Screen name="profile" options={{ presentation: "modal", headerShown: true, title: "프로필" }} />
-                        <Stack.Screen name="subscription" options={{ headerShown: true, title: "구독" }} />
+                        <Stack.Screen name="pet/new" options={{ presentation: "modal", headerShown: false }} />
+                        <Stack.Screen name="post/[id]" options={{ headerShown: false }} />
+                        <Stack.Screen name="post/write" options={{ presentation: "modal", headerShown: false }} />
+                        <Stack.Screen name="magazine/[id]" options={{ headerShown: false }} />
+                        <Stack.Screen name="notifications" options={{ headerShown: false }} />
+                        <Stack.Screen name="profile" options={{ presentation: "modal", headerShown: false }} />
+                        <Stack.Screen name="subscription" options={{ headerShown: false }} />
                         <Stack.Screen name="adoption" options={{ headerShown: false }} />
                         <Stack.Screen name="lost/index" options={{ headerShown: false }} />
                         <Stack.Screen name="local/index" options={{ headerShown: false }} />

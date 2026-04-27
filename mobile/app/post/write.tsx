@@ -6,8 +6,10 @@ import { useState } from "react";
 import {
     View, Text, TextInput, TouchableOpacity, ScrollView,
     Alert, ActivityIndicator, Image, StyleSheet,
+    KeyboardAvoidingView, Platform,
 } from "react-native";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { Stack, useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { API_BASE_URL } from "@/config/constants";
@@ -15,11 +17,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
 import { CommunitySubcategory, PostTag } from "@/types";
 import { COLORS } from "@/lib/theme";
+import AppHeader from "@/components/common/AppHeader";
 
 const POST_TAGS: PostTag[] = ["정보", "일상", "질문", "강아지", "고양이", "햄스터", "토끼"];
 
 export default function WritePostScreen() {
     const router = useRouter();
+    const insets = useSafeAreaInsets();
     const { subcategory } = useLocalSearchParams<{ subcategory?: CommunitySubcategory }>();
     const { session } = useAuth();
     const { isMemorialMode } = usePet();
@@ -92,7 +96,13 @@ export default function WritePostScreen() {
     const borderColor = isMemorialMode ? COLORS.gray[800] : COLORS.gray[100];
 
     return (
-        <View style={[styles.flex1, { backgroundColor: bgColor }]}>
+        <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
+            <Stack.Screen options={{ headerShown: false }} />
+            <AppHeader showBack title="글 작성" hideActions />
+            <KeyboardAvoidingView
+                style={styles.flex1}
+                behavior={Platform.OS === "ios" ? "padding" : undefined}
+            >
             <ScrollView style={[styles.flex1, { paddingHorizontal: 20 }]} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
                 {(subcategory === "free" || !subcategory) && (
                     <View style={{ marginTop: 16, marginBottom: 12 }}>
@@ -176,7 +186,13 @@ export default function WritePostScreen() {
                 )}
             </ScrollView>
 
-            <View style={[styles.toolbar, { borderTopColor: borderColor }]}>
+            <View style={[
+                styles.toolbar,
+                {
+                    borderTopColor: borderColor,
+                    paddingBottom: 12 + Math.max(insets.bottom, 0),
+                },
+            ]}>
                 <TouchableOpacity onPress={pickImage} style={styles.toolbarBtn} activeOpacity={0.7}>
                     <Ionicons name="image-outline" size={22} color={COLORS.gray[400]} />
                     <Text style={{ fontSize: 14, color: COLORS.gray[400] }}>사진 ({images.length}/5)</Text>
@@ -203,7 +219,8 @@ export default function WritePostScreen() {
                     )}
                 </TouchableOpacity>
             </View>
-        </View>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     );
 }
 

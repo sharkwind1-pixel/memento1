@@ -7,11 +7,13 @@ import {
     View, Text, ScrollView, TouchableOpacity,
     Image, Alert, ActivityIndicator, StyleSheet,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Stack, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
 import { COLORS } from "@/lib/theme";
+import AppHeader from "@/components/common/AppHeader";
 
 export default function ProfileScreen() {
     const router = useRouter();
@@ -44,7 +46,10 @@ export default function ProfileScreen() {
     const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.gray[50];
 
     return (
-        <ScrollView style={[styles.flex1, { backgroundColor: bgColor }]} showsVerticalScrollIndicator={false}>
+        <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
+            <Stack.Screen options={{ headerShown: false }} />
+            <AppHeader showBack title="프로필" hideActions />
+            <ScrollView style={styles.flex1} showsVerticalScrollIndicator={false}>
             <View style={[styles.headerCard, { backgroundColor: isMemorialMode ? COLORS.gray[900] : COLORS.white }]}>
                 {profile?.avatar ? (
                     <Image source={{ uri: profile.avatar }} style={styles.avatar} />
@@ -164,7 +169,8 @@ export default function ProfileScreen() {
                     )}
                 </TouchableOpacity>
             </View>
-        </ScrollView>
+            </ScrollView>
+        </SafeAreaView>
     );
 }
 

@@ -7,7 +7,8 @@ import {
     View, Text, TextInput, TouchableOpacity, ScrollView,
     Image, Alert, ActivityIndicator, StyleSheet,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Stack, useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "@/lib/supabase";
@@ -15,6 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
 import { PetType, PetGender } from "@/types";
 import { COLORS } from "@/lib/theme";
+import AppHeader from "@/components/common/AppHeader";
 
 const PET_TYPES: PetType[] = ["강아지", "고양이", "기타"];
 const PET_GENDERS: PetGender[] = ["남아", "여아"];
@@ -127,11 +129,14 @@ export default function NewPetScreen() {
     }
 
     return (
-        <ScrollView
-            style={styles.flex1White}
-            contentContainerStyle={{ padding: 20, paddingBottom: 60 }}
-            keyboardShouldPersistTaps="handled"
-        >
+        <SafeAreaView style={styles.flex1White} edges={["top"]}>
+            <Stack.Screen options={{ headerShown: false }} />
+            <AppHeader showBack title="반려동물 등록" hideActions />
+            <ScrollView
+                style={{ flex: 1 }}
+                contentContainerStyle={{ padding: 20, paddingBottom: 60 }}
+                keyboardShouldPersistTaps="handled"
+            >
             <View style={{ alignItems: "center", marginBottom: 24 }}>
                 <TouchableOpacity onPress={pickImage} activeOpacity={0.85}>
                     {profileImage ? (
@@ -267,7 +272,8 @@ export default function NewPetScreen() {
                     <Text style={styles.primaryButtonText}>등록하기</Text>
                 )}
             </TouchableOpacity>
-        </ScrollView>
+            </ScrollView>
+        </SafeAreaView>
     );
 }
 

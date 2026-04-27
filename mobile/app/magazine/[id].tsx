@@ -14,7 +14,7 @@ import {
     Image, ActivityIndicator, Share, Dimensions, StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
@@ -191,6 +191,7 @@ export default function MagazineReaderScreen() {
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: bgColor }]} edges={["top"]}>
+            <Stack.Screen options={{ headerShown: false }} />
             {/* 상단 바: close + progress + share */}
             <View style={styles.topBar}>
                 <TouchableOpacity onPress={() => router.back()} hitSlop={8}>

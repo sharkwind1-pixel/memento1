@@ -4,11 +4,14 @@
 
 import { useState, useEffect } from "react";
 import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Stack } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { API_BASE_URL } from "@/config/constants";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
 import { COLORS } from "@/lib/theme";
+import AppHeader from "@/components/common/AppHeader";
 
 interface Notification {
     id: string;
@@ -60,18 +63,24 @@ export default function NotificationsScreen() {
         }
     }
 
+    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.white;
+
     if (isLoading) {
         return (
-            <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-                <ActivityIndicator size="large" color={COLORS.memento[500]} />
-            </View>
+            <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
+                <Stack.Screen options={{ headerShown: false }} />
+                <AppHeader showBack title="알림" hideActions />
+                <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+                    <ActivityIndicator size="large" color={COLORS.memento[500]} />
+                </View>
+            </SafeAreaView>
         );
     }
 
-    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.white;
-
     return (
-        <View style={[styles.flex1, { backgroundColor: bgColor }]}>
+        <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
+            <Stack.Screen options={{ headerShown: false }} />
+            <AppHeader showBack title="알림" hideActions />
             {notifications.length === 0 ? (
                 <View style={styles.emptyCenter}>
                     <Ionicons name="notifications-off-outline" size={48} color={COLORS.gray[300]} />
@@ -82,6 +91,7 @@ export default function NotificationsScreen() {
             ) : (
                 <FlatList
                     data={notifications}
+                    style={{ flex: 1 }}
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
                         <TouchableOpacity
@@ -124,7 +134,7 @@ export default function NotificationsScreen() {
                     )}
                 />
             )}
-        </View>
+        </SafeAreaView>
     );
 }
 

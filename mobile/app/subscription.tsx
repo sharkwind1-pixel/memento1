@@ -4,11 +4,14 @@
  */
 
 import { View, Text, ScrollView, TouchableOpacity, Linking, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Stack } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
 import { PRICING } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
+import AppHeader from "@/components/common/AppHeader";
 
 interface Plan {
     id: "free" | "basic" | "premium";
@@ -70,11 +73,14 @@ export default function SubscriptionScreen() {
     const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.gray[50];
 
     return (
-        <ScrollView
-            style={[styles.flex1, { backgroundColor: bgColor }]}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
-        >
+        <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
+            <Stack.Screen options={{ headerShown: false }} />
+            <AppHeader showBack title="구독" hideActions />
+            <ScrollView
+                style={styles.flex1}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
+            >
             <Text style={{
                 fontSize: 20,
                 fontWeight: "bold",
@@ -177,7 +183,8 @@ export default function SubscriptionScreen() {
                     <Ionicons name="open-outline" size={14} color={COLORS.memento[500]} />
                 </TouchableOpacity>
             </View>
-        </ScrollView>
+            </ScrollView>
+        </SafeAreaView>
     );
 }
 
