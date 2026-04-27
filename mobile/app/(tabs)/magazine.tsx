@@ -27,7 +27,7 @@ import AppHeader from "@/components/common/AppHeader";
 import AppDrawer from "@/components/common/AppDrawer";
 
 interface Article {
-    id: number;
+    id: string;
     title: string;
     summary?: string;
     image_url?: string;
@@ -100,7 +100,7 @@ export default function MagazineScreen() {
             const rawList = Array.isArray(data?.articles) ? data.articles : Array.isArray(data) ? data : [];
 
             const items: Article[] = rawList.map((raw: Record<string, unknown>): Article => ({
-                id: typeof raw.id === "number" ? raw.id : 0,
+                id: raw.id != null ? String(raw.id) : "",
                 title: typeof raw.title === "string" ? raw.title : "",
                 summary: typeof raw.summary === "string" ? raw.summary : undefined,
                 image_url: typeof raw.image_url === "string"
@@ -184,7 +184,7 @@ export default function MagazineScreen() {
             <AppDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
             <FlatList
                 data={isLoading ? [] : articles}
-                keyExtractor={(item) => String(item.id)}
+                keyExtractor={(item, idx) => item.id || `idx-${idx}`}
                 contentContainerStyle={{ paddingBottom: 32 }}
                 showsVerticalScrollIndicator={false}
                 refreshControl={
