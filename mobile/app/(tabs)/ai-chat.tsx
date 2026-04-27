@@ -8,7 +8,8 @@ import {
     FlatList, KeyboardAvoidingView, Platform,
     ActivityIndicator, Image, StyleSheet,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,8 +21,10 @@ import AppHeader from "@/components/common/AppHeader";
 import AppDrawer from "@/components/common/AppDrawer";
 
 export default function AiChatScreen() {
+    const router = useRouter();
     const { session } = useAuth();
     const { selectedPet, isMemorialMode } = usePet();
+    const insets = useSafeAreaInsets();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -122,10 +125,21 @@ export default function AiChatScreen() {
                 <AppHeader onOpenDrawer={() => setDrawerOpen(true)} />
                 <AppDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
                 <View style={styles.emptyCenter}>
-                    <Ionicons name="paw-outline" size={48} color={COLORS.gray[300]} />
+                    <View style={[styles.emptyIconWrap, { backgroundColor: COLORS.memento[50] }]}>
+                        <Ionicons name="chatbubbles-outline" size={36} color={COLORS.memento[500]} />
+                    </View>
+                    <Text style={styles.emptyTitle}>AI 펫톡을 시작해보세요</Text>
                     <Text style={styles.emptyText}>
-                        홈에서 반려동물을 선택하면{"\n"}AI 펫톡을 이용할 수 있어요.
+                        반려동물을 등록하면{"\n"}AI 펫톡으로 대화할 수 있어요
                     </Text>
+                    <TouchableOpacity
+                        onPress={() => router.push("/pet/new")}
+                        style={[styles.emptyCta, { backgroundColor: COLORS.memento[500] }]}
+                        activeOpacity={0.85}
+                    >
+                        <Ionicons name="add" size={16} color="#fff" />
+                        <Text style={styles.emptyCtaText}>반려동물 등록하기</Text>
+                    </TouchableOpacity>
                 </View>
             </SafeAreaView>
         );
@@ -208,7 +222,13 @@ export default function AiChatScreen() {
                     />
                 )}
 
-                <View style={[styles.inputRow, { borderTopColor: borderColor }]}>
+                <View style={[
+                    styles.inputRow,
+                    {
+                        borderTopColor: borderColor,
+                        paddingBottom: 10 + Math.max(insets.bottom, 0),
+                    },
+                ]}>
                     <TextInput
                         style={[
                             styles.textInput,
@@ -367,10 +387,29 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: COLORS.white,
         paddingHorizontal: 24,
+        gap: 4,
     },
-    emptyText: { color: COLORS.gray[400], marginTop: 12, textAlign: "center" },
+    emptyIconWrap: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        alignItems: "center",
+        justifyContent: "center",
+        marginBottom: 16,
+    },
+    emptyTitle: { fontSize: 17, fontWeight: "700", color: COLORS.gray[800], marginBottom: 4 },
+    emptyText: { fontSize: 14, color: COLORS.gray[500], textAlign: "center", lineHeight: 20 },
+    emptyCta: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        marginTop: 16,
+        paddingHorizontal: 18,
+        paddingVertical: 12,
+        borderRadius: 12,
+    },
+    emptyCtaText: { color: "#fff", fontSize: 14, fontWeight: "700" },
     header: {
         flexDirection: "row",
         alignItems: "center",
