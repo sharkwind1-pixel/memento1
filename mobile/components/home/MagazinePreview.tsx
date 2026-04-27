@@ -12,7 +12,7 @@ import { COLORS, SPACING, RADIUS } from "@/lib/theme";
 import SectionHeader from "./SectionHeader";
 
 interface ArticlePreview {
-    id: number;
+    id: string;
     title: string;
     summary?: string;
     image_url?: string;
@@ -39,7 +39,7 @@ export default function MagazinePreview({ session, isMemorialMode }: Props) {
                 const data = await res.json();
                 const list = Array.isArray(data?.articles) ? data.articles : Array.isArray(data) ? data : [];
                 setArticles(list.slice(0, 3).map((raw: any): ArticlePreview => ({
-                    id: typeof raw?.id === "number" ? raw.id : 0,
+                    id: raw?.id != null ? String(raw.id) : "",
                     title: typeof raw?.title === "string" ? raw.title : "",
                     summary: typeof raw?.summary === "string" ? raw.summary : undefined,
                     image_url: typeof raw?.image_url === "string"
@@ -75,9 +75,9 @@ export default function MagazinePreview({ session, isMemorialMode }: Props) {
                 </View>
             ) : (
                 <View style={styles.list}>
-                    {articles.map((article) => (
+                    {articles.map((article, idx) => (
                         <TouchableOpacity
-                            key={article.id}
+                            key={article.id || `idx-${idx}`}
                             onPress={() => router.push(`/magazine/${article.id}`)}
                             style={styles.card}
                             activeOpacity={0.85}

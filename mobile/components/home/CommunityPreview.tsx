@@ -13,7 +13,7 @@ import { COLORS, SPACING, RADIUS } from "@/lib/theme";
 import SectionHeader from "./SectionHeader";
 
 interface CommunityPostPreview {
-    id: number;
+    id: string;
     title: string;
     author: string;
     likes: number;
@@ -49,7 +49,7 @@ export default function CommunityPreview({ session, isMemorialMode }: Props) {
                 const data = await res.json();
                 const list = Array.isArray(data?.posts) ? data.posts : Array.isArray(data) ? data : [];
                 setPosts(list.map((raw: any): CommunityPostPreview => ({
-                    id: typeof raw?.id === "number" ? raw.id : 0,
+                    id: raw?.id != null ? String(raw.id) : "",
                     title: typeof raw?.title === "string" ? raw.title : "",
                     author: typeof raw?.author === "string"
                         ? raw.author
@@ -90,7 +90,7 @@ export default function CommunityPreview({ session, isMemorialMode }: Props) {
                 <View style={styles.list}>
                     {posts.map((post, idx) => (
                         <TouchableOpacity
-                            key={post.id}
+                            key={post.id || `idx-${idx}`}
                             onPress={() => router.push(`/post/${post.id}`)}
                             style={styles.card}
                             activeOpacity={0.85}
