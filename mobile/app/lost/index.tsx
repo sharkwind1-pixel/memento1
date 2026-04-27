@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { API_BASE_URL } from "@/config/constants";
 import { LostPet, LostPetType } from "@/types";
 import { COLORS } from "@/lib/theme";
@@ -29,6 +30,7 @@ const TYPE_LABELS: { id: TypeFilter; label: string }[] = [
 
 export default function LostPetsScreen() {
     const router = useRouter();
+    const insets = useSafeAreaInsets();
     const [posts, setPosts] = useState<LostPet[]>([]);
     const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
     const [isLoading, setIsLoading] = useState(true);
@@ -163,22 +165,7 @@ export default function LostPetsScreen() {
 
             <TouchableOpacity
                 onPress={() => router.push("/lost/new")}
-                style={{
-                    position: "absolute",
-                    bottom: 24,
-                    right: 24,
-                    width: 56,
-                    height: 56,
-                    borderRadius: 28,
-                    backgroundColor: "#EF4444",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    elevation: 6,
-                    shadowColor: "#000",
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 0.2,
-                    shadowRadius: 8,
-                }}
+                style={[styles.fab, { bottom: 24 + Math.max(insets.bottom, 8) }]}
                 activeOpacity={0.85}
             >
                 <Ionicons name="create" size={22} color="#fff" />
@@ -244,6 +231,21 @@ const styles = StyleSheet.create({
     chipInactive: { backgroundColor: COLORS.gray[100] },
     chipText: { fontSize: 13, fontWeight: "500", color: COLORS.gray[700] },
     chipTextActive: { fontSize: 13, fontWeight: "600", color: "#fff" },
+    fab: {
+        position: "absolute",
+        right: 20,
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: "#EF4444",
+        alignItems: "center",
+        justifyContent: "center",
+        elevation: 8,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 8,
+    },
     center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24, gap: 8 },
     helpText: { fontSize: 13, color: COLORS.gray[500] },
     listContent: { padding: 12, gap: 12 },
