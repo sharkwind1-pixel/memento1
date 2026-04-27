@@ -66,13 +66,16 @@ export type TimelineEntryType =
 export interface TimelineEntry {
     id: string;
     petId: string;
-    type: TimelineEntryType;
+    type?: TimelineEntryType;
     title: string;
     content?: string;
     date: string;
     photos?: PetPhoto[];
     createdAt?: string;
     isAiGenerated?: boolean;
+    mood?: "happy" | "normal" | "sad" | "sick";
+    category?: string;
+    mediaIds?: string[];
 }
 
 // ============================================

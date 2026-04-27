@@ -22,6 +22,10 @@ import { API_BASE_URL } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
 import AppHeader from "@/components/common/AppHeader";
 import AppDrawer from "@/components/common/AppDrawer";
+import TimelineWriteModal, { type TimelineEntryDraft, type TimelineMood } from "@/components/record/TimelineWriteModal";
+import { supabase } from "@/lib/supabase";
+import * as Haptics from "expo-haptics";
+import { Alert as RNAlert } from "react-native";
 
 type TabType = "timeline" | "gallery" | "albums" | "videos";
 
@@ -148,6 +152,7 @@ export default function RecordScreen() {
                     {activeTab === "timeline" && (
                         <TimelineTab
                             petId={selectedPet.id}
+                            petName={selectedPet.name}
                             isMemorialMode={isMemorialMode}
                             accentColor={accentColor}
                             refreshing={refreshing}
@@ -197,25 +202,46 @@ interface TimelineEntry {
     photos: string[];
 }
 
-function TimelineTab({ petId, isMemorialMode, accentColor, refreshing, onRefresh }: {
+function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, onRefresh }: {
     petId: string;
+    petName: string;
     isMemorialMode: boolean;
     accentColor: string;
     refreshing: boolean;
     onRefresh: () => void;
 }) {
-    const { session } = useAuth();
+    const { user, session } = useAuth();
     const [entries, setEntries] = useState<TimelineEntry[]>([]);
     const [loading, setLoading] = useState(true);
+    const [modalOpen, setModalOpen] = useState(false);
+    const [editingEntry, setEditingEntry] = useState<TimelineEntryDraft | undefined>(undefined);
 
     const load = useCallback(async () => {
         if (!session) { setLoading(false); return; }
         try {
-            // timeline_entries는 별도 API 없을 수 있어서 supabase 직접 호출은 client-side에서 어려움.
-            // 우선 빈 상태로 처리. 추후 /api/timeline endpoint 추가 시 fetch.
-            setEntries([]);
+            const { data, error } = await supabase
+                .from("timeline_entries")
+                .select("id, pet_id, date, title, content, mood, media_ids, created_at")
+                .eq("pet_id", petId)
+                .order("date", { ascending: false });
+            if (error) {
+                console.warn("[Timeline] load error", error.message);
+                setEntries([]);
+                return;
+            }
+            const list: TimelineEntry[] = (data || []).map((e: any) => ({
+                id: e.id,
+                petId: e.pet_id,
+                title: e.title,
+                content: e.content || "",
+                date: e.date,
+                mood: e.mood as TimelineMood | undefined,
+                mediaIds: e.media_ids || undefined,
+                createdAt: e.created_at,
+            }));
+            setEntries(list);
         } catch {
-            // 조용히
+            setEntries([]);
         } finally {
             setLoading(false);
         }
@@ -223,45 +249,171 @@ function TimelineTab({ petId, isMemorialMode, accentColor, refreshing, onRefresh
 
     useEffect(() => { load(); }, [load]);
 
+    function openAdd() {
+        setEditingEntry(undefined);
+        setModalOpen(true);
+    }
+
+    function openEdit(entry: TimelineEntry) {
+        setEditingEntry({
+            id: entry.id,
+            date: entry.date,
+            title: entry.title,
+            content: entry.content || "",
+            mood: (entry.mood as TimelineMood) || "normal",
+        });
+        setModalOpen(true);
+    }
+
+    async function handleSave(draft: TimelineEntryDraft): Promise<boolean> {
+        if (!user || !session) {
+            RNAlert.alert("로그인 필요", "로그인 후 다시 시도해주세요");
+            return false;
+        }
+        try {
+            if (draft.id) {
+                // 수정
+                const { error } = await supabase
+                    .from("timeline_entries")
+                    .update({
+                        date: draft.date,
+                        title: draft.title,
+                        content: draft.content || null,
+                        mood: draft.mood,
+                    })
+                    .eq("id", draft.id);
+                if (error) throw error;
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+                await load();
+                return true;
+            } else {
+                // 추가
+                const { error } = await supabase
+                    .from("timeline_entries")
+                    .insert([{
+                        pet_id: petId,
+                        user_id: user.id,
+                        date: draft.date,
+                        title: draft.title,
+                        content: draft.content || null,
+                        mood: draft.mood,
+                    }]);
+                if (error) throw error;
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+                await load();
+                return true;
+            }
+        } catch (e: any) {
+            RNAlert.alert("저장 실패", e?.message || "다시 시도해주세요");
+            return false;
+        }
+    }
+
+    function handleDelete(entryId: string) {
+        RNAlert.alert("삭제 확인", "이 일기를 삭제할까요?", [
+            { text: "취소", style: "cancel" },
+            {
+                text: "삭제",
+                style: "destructive",
+                onPress: async () => {
+                    if (!session) return;
+                    const { error } = await supabase
+                        .from("timeline_entries")
+                        .delete()
+                        .eq("id", entryId);
+                    if (error) {
+                        RNAlert.alert("삭제 실패", error.message);
+                        return;
+                    }
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+                    setEntries((prev) => prev.filter((e) => e.id !== entryId));
+                },
+            },
+        ]);
+    }
+
     if (loading) {
         return <View style={styles.loadingInline}><ActivityIndicator color={accentColor} /></View>;
     }
 
-    if (entries.length === 0) {
-        return (
-            <ScrollView
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accentColor} />}
-                contentContainerStyle={styles.tabContent}
-            >
-                <View style={styles.emptyCard}>
-                    <Ionicons name="calendar-outline" size={36} color={COLORS.gray[300]} />
-                    <Text style={styles.emptyCardTitle}>타임라인이 비어있어요</Text>
-                    <Text style={styles.emptyCardHint}>
-                        함께한 순간들을 일기로 남겨보세요.{"\n"}AI 펫톡 10턴마다 자동 기록됩니다.
-                    </Text>
-                </View>
-            </ScrollView>
-        );
-    }
-
     return (
-        <FlatList
-            data={entries}
-            keyExtractor={(e) => e.id}
-            contentContainerStyle={styles.tabContent}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accentColor} />}
-            renderItem={({ item }) => (
-                <View style={[styles.timelineItem, {
-                    backgroundColor: isMemorialMode ? COLORS.gray[900] : COLORS.white,
-                }]}>
-                    <Text style={styles.timelineDate}>{item.date}</Text>
-                    <Text style={[styles.timelineTitle, {
-                        color: isMemorialMode ? COLORS.white : COLORS.gray[900],
-                    }]}>{item.title}</Text>
-                    <Text style={styles.timelineContent} numberOfLines={3}>{item.content}</Text>
-                </View>
-            )}
-        />
+        <>
+            <FlatList
+                data={entries}
+                keyExtractor={(e) => e.id}
+                contentContainerStyle={[styles.tabContent, { paddingBottom: 96 }]}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accentColor} />}
+                ListHeaderComponent={
+                    <View style={styles.timelineHeader}>
+                        <View style={{ flex: 1 }}>
+                            <Text style={[styles.timelineHeaderTitle, isMemorialMode && { color: COLORS.white }]}>
+                                타임라인 일기
+                            </Text>
+                            <Text style={styles.timelineHeaderCount}>{entries.length}개</Text>
+                        </View>
+                        <TouchableOpacity
+                            onPress={openAdd}
+                            style={[styles.addEntryBtn, { backgroundColor: accentColor }]}
+                            activeOpacity={0.85}
+                        >
+                            <Ionicons name="add" size={16} color="#fff" />
+                            <Text style={styles.addEntryText}>일기 쓰기</Text>
+                        </TouchableOpacity>
+                    </View>
+                }
+                ListEmptyComponent={
+                    <View style={styles.emptyCard}>
+                        <Ionicons name="book-outline" size={36} color={COLORS.gray[300]} />
+                        <Text style={styles.emptyCardTitle}>아직 기록된 일기가 없어요</Text>
+                        <Text style={styles.emptyCardHint}>
+                            오늘 하루를 기록해보세요.{"\n"}AI 펫톡 10턴마다 자동 기록도 됩니다.
+                        </Text>
+                        <TouchableOpacity
+                            onPress={openAdd}
+                            style={[styles.emptyAction, { borderColor: accentColor }]}
+                            activeOpacity={0.85}
+                        >
+                            <Ionicons name="create-outline" size={16} color={accentColor} />
+                            <Text style={[styles.emptyActionText, { color: accentColor }]}>첫 일기 쓰기</Text>
+                        </TouchableOpacity>
+                    </View>
+                }
+                renderItem={({ item }) => (
+                    <View style={[styles.timelineItem, {
+                        backgroundColor: isMemorialMode ? COLORS.gray[900] : COLORS.white,
+                    }]}>
+                        <View style={styles.timelineRow}>
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.timelineDate}>{item.date}</Text>
+                                <Text style={[styles.timelineTitle, {
+                                    color: isMemorialMode ? COLORS.white : COLORS.gray[900],
+                                }]}>{item.title}</Text>
+                            </View>
+                            <View style={styles.timelineActions}>
+                                <TouchableOpacity onPress={() => openEdit(item)} hitSlop={6} style={styles.iconBtnSm}>
+                                    <Ionicons name="pencil" size={14} color={COLORS.gray[400]} />
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={() => handleDelete(item.id)} hitSlop={6} style={styles.iconBtnSm}>
+                                    <Ionicons name="trash-outline" size={14} color={COLORS.gray[400]} />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                        {item.content ? (
+                            <Text style={[styles.timelineContent, isMemorialMode && { color: COLORS.gray[300] }]} numberOfLines={3}>
+                                {item.content}
+                            </Text>
+                        ) : null}
+                    </View>
+                )}
+            />
+            <TimelineWriteModal
+                visible={modalOpen}
+                petName={petName}
+                initialEntry={editingEntry}
+                onClose={() => setModalOpen(false)}
+                onSave={handleSave}
+            />
+        </>
     );
 }
 
@@ -593,9 +745,39 @@ const styles = StyleSheet.create({
         borderRadius: 14,
         marginBottom: 12,
     },
+    timelineRow: { flexDirection: "row", alignItems: "flex-start" },
+    timelineActions: { flexDirection: "row", gap: 4 },
+    iconBtnSm: { padding: 6 },
     timelineDate: { fontSize: 11, color: COLORS.gray[500], marginBottom: 4 },
     timelineTitle: { fontSize: 15, fontWeight: "700", marginBottom: 6 },
     timelineContent: { fontSize: 13, color: COLORS.gray[600], lineHeight: 18 },
+    timelineHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 12,
+    },
+    timelineHeaderTitle: { fontSize: 16, fontWeight: "700", color: COLORS.gray[800] },
+    timelineHeaderCount: { fontSize: 12, color: COLORS.gray[400], marginTop: 2 },
+    addEntryBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 12,
+    },
+    addEntryText: { color: "#fff", fontSize: 13, fontWeight: "700" },
+    emptyAction: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        marginTop: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 12,
+        borderWidth: 1.5,
+    },
+    emptyActionText: { fontSize: 13, fontWeight: "600" },
     gridItem: { flex: 1 / 3, aspectRatio: 1, padding: 1 },
     gridImg: { flex: 1 },
     albumCard: {
