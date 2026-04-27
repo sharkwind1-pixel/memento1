@@ -1,32 +1,28 @@
 /**
- * QuizSection — 자가진단 카드 2x2 그리드
+ * QuizSection — 자가진단 카드 2x2 그리드 (웹 src/components/features/home/QuizSection.tsx 매칭)
  *
- * 모바일에선 카드만 표시 (실제 퀴즈 진행은 다음 phase).
- * 카드 탭 시 향후 quiz 화면으로 라우팅.
+ * 카드 클릭 시 QuizModal 열림 → 문항 진행 → 결과 표시.
+ * 펫 종류에 맞는 퀴즈만 필터.
  */
 
-import { View, Text, TouchableOpacity, Alert, StyleSheet } from "react-native";
+import { useState } from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { usePet } from "@/contexts/PetContext";
 import { COLORS } from "@/lib/theme";
+import { PET_QUIZZES, type PetQuiz } from "@/lib/petQuizzes";
+import QuizModal from "./QuizModal";
 
-interface QuizCard {
-    id: string;
-    title: string;
-    subtitle: string;
-    icon: React.ComponentProps<typeof Ionicons>["name"];
-    petType: "all" | "dog" | "cat";
-}
-
-const QUIZZES: QuizCard[] = [
-    { id: "obesity", title: "우리 아이 비만도 체크", subtitle: "5문항으로 간단 확인", icon: "scale-outline", petType: "all" },
-    { id: "separation", title: "분리불안 테스트", subtitle: "7문항으로 진단", icon: "heart-dislike-outline", petType: "dog" },
-];
+const QUIZ_ICON_MAP: Record<string, React.ComponentProps<typeof Ionicons>["name"]> = {
+    Scale: "scale-outline",
+    HeartCrack: "heart-dislike-outline",
+};
 
 export default function QuizSection() {
     const { selectedPet } = usePet();
+    const [activeQuiz, setActiveQuiz] = useState<PetQuiz | null>(null);
 
-    const filtered = QUIZZES.filter((q) => {
+    const availableQuizzes = PET_QUIZZES.filter((q) => {
         if (q.petType === "all") return true;
         if (!selectedPet) return true;
         if (q.petType === "dog" && selectedPet.type === "강아지") return true;
@@ -34,7 +30,7 @@ export default function QuizSection() {
         return false;
     });
 
-    if (filtered.length === 0) return null;
+    if (availableQuizzes.length === 0) return null;
 
     return (
         <View style={styles.section}>
@@ -44,30 +40,42 @@ export default function QuizSection() {
             </View>
 
             <View style={styles.grid}>
-                {filtered.map((q) => (
-                    <TouchableOpacity
-                        key={q.id}
-                        style={styles.card}
-                        onPress={() => Alert.alert(q.title, "자가진단 퀴즈는 다음 업데이트에 추가됩니다.")}
-                        activeOpacity={0.85}
-                    >
-                        <View style={styles.cardHeader}>
-                            <View style={styles.iconBg}>
-                                <Ionicons name={q.icon} size={16} color={COLORS.memento[500]} />
+                {availableQuizzes.map((quiz) => {
+                    const iconName = QUIZ_ICON_MAP[quiz.icon] || "scale-outline";
+                    return (
+                        <TouchableOpacity
+                            key={quiz.id}
+                            onPress={() => setActiveQuiz(quiz)}
+                            style={styles.card}
+                            activeOpacity={0.85}
+                        >
+                            <View style={styles.cardHeader}>
+                                <View style={styles.iconBg}>
+                                    <Ionicons name={iconName} size={16} color={COLORS.memento[500]} />
+                                </View>
+                                <Ionicons name="chevron-forward" size={14} color={COLORS.gray[300]} />
                             </View>
-                            <Ionicons name="chevron-forward" size={14} color={COLORS.gray[300]} />
-                        </View>
-                        <Text style={styles.cardTitle}>{q.title}</Text>
-                        <Text style={styles.cardSubtitle}>{q.subtitle}</Text>
-                    </TouchableOpacity>
-                ))}
+                            <Text style={styles.cardTitle}>{quiz.title}</Text>
+                            <Text style={styles.cardSubtitle}>{quiz.subtitle}</Text>
+                        </TouchableOpacity>
+                    );
+                })}
             </View>
+
+            {activeQuiz ? (
+                <QuizModal
+                    quiz={activeQuiz}
+                    petName={selectedPet?.name}
+                    visible={!!activeQuiz}
+                    onClose={() => setActiveQuiz(null)}
+                />
+            ) : null}
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    section: { paddingHorizontal: 16, marginTop: 16 },
+    section: { paddingHorizontal: 16, marginTop: 24 },
     header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
     title: { fontSize: 16, fontWeight: "700", color: COLORS.gray[800] },
     subtitle: { fontSize: 11, color: COLORS.gray[400] },
