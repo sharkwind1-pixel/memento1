@@ -5,7 +5,7 @@
 import { useState } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity,
-    Image, Alert, ActivityIndicator, StyleSheet,
+    Image, Alert, ActivityIndicator, Linking, StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useRouter } from "expo-router";
@@ -135,13 +135,19 @@ export default function ProfileScreen() {
                 <SettingsRow
                     icon={<Ionicons name="document-text-outline" size={22} color={COLORS.gray[500]} />}
                     label="이용약관"
-                    onPress={() => {}}
+                    onPress={() => Linking.openURL("https://mementoani.com/terms")}
                     isMemorialMode={isMemorialMode}
                 />
                 <SettingsRow
                     icon={<Ionicons name="shield-outline" size={22} color={COLORS.gray[500]} />}
                     label="개인정보처리방침"
-                    onPress={() => {}}
+                    onPress={() => Linking.openURL("https://mementoani.com/privacy")}
+                    isMemorialMode={isMemorialMode}
+                />
+                <SettingsRow
+                    icon={<Ionicons name="help-circle-outline" size={22} color={COLORS.gray[500]} />}
+                    label="고객 문의"
+                    onPress={() => Linking.openURL("https://mementoani.com/support")}
                     isMemorialMode={isMemorialMode}
                 />
                 <View style={styles.versionRow}>

@@ -96,7 +96,19 @@ export default function MagazineReaderScreen() {
 
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
 
-    useEffect(() => { load(); }, [id]);
+    useEffect(() => { load(); incrementView(); }, [id]);
+
+    async function incrementView() {
+        try {
+            await fetch(`${API_BASE_URL}/api/magazine`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ articleId: Number(id), action: "view" }),
+            });
+        } catch {
+            // silent
+        }
+    }
 
     async function load() {
         try {
@@ -118,10 +130,13 @@ export default function MagazineReaderScreen() {
         if (!session || !article || isLiking) return;
         setIsLiking(true);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        const newLiked = !article.liked;
+        const prevLiked = article.liked;
+        const prevLikes = article.likes;
+        const newLiked = !prevLiked;
+        // 낙관적 업데이트
         setArticle((a) => a ? { ...a, liked: newLiked, likes: a.likes + (newLiked ? 1 : -1) } : a);
         try {
-            await fetch(`${API_BASE_URL}/api/magazine`, {
+            const res = await fetch(`${API_BASE_URL}/api/magazine`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
@@ -129,8 +144,15 @@ export default function MagazineReaderScreen() {
                 },
                 body: JSON.stringify({ articleId: Number(id), action: newLiked ? "like" : "unlike" }),
             });
+            if (!res.ok) throw new Error("PATCH failed");
+            const data = await res.json();
+            // 서버 응답으로 truth 정렬 (race/중복 클릭 방어)
+            if (typeof data.liked === "boolean" && typeof data.likes === "number") {
+                setArticle((a) => a ? { ...a, liked: data.liked, likes: data.likes } : a);
+            }
         } catch {
-            setArticle((a) => a ? { ...a, liked: !newLiked, likes: a.likes + (newLiked ? -1 : 1) } : a);
+            // 롤백
+            setArticle((a) => a ? { ...a, liked: prevLiked, likes: prevLikes } : a);
         } finally {
             setIsLiking(false);
         }

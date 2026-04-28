@@ -43,6 +43,7 @@ const TABS: Array<{ id: TabType; label: string; icon: React.ComponentProps<typeo
 
 export default function RecordScreen() {
     const router = useRouter();
+    const { user } = useAuth();
     const { selectedPet, isLoading: petsLoading, isMemorialMode, refreshPets } = usePet();
     const [activeTab, setActiveTab] = useState<TabType>("timeline");
     const [refreshing, setRefreshing] = useState(false);
@@ -133,7 +134,27 @@ export default function RecordScreen() {
             </ScrollView>
 
             {/* 컨텐츠 */}
-            {!selectedPet ? (
+            {!user ? (
+                <View style={styles.emptyCenter}>
+                    <View style={[styles.emptyIcon, { backgroundColor: accentColor + "1a" }]}>
+                        <Ionicons name="lock-closed-outline" size={32} color={accentColor} />
+                    </View>
+                    <Text style={[styles.emptyTitle, { color: isMemorialMode ? COLORS.white : COLORS.gray[900] }]}>
+                        로그인이 필요해요
+                    </Text>
+                    <Text style={styles.emptyHint}>
+                        반려동물을 등록하고 기록을 남기려면{"\n"}먼저 로그인해주세요
+                    </Text>
+                    <TouchableOpacity
+                        onPress={() => router.push("/(auth)/login")}
+                        style={[styles.primaryBtn, { backgroundColor: accentColor }]}
+                        activeOpacity={0.85}
+                    >
+                        <Ionicons name="log-in-outline" size={16} color="#fff" />
+                        <Text style={styles.primaryBtnText}>로그인하기</Text>
+                    </TouchableOpacity>
+                </View>
+            ) : !selectedPet ? (
                 <View style={styles.emptyCenter}>
                     <Ionicons name="paw-outline" size={48} color={COLORS.gray[300]} />
                     <Text style={styles.emptyHint}>
@@ -960,11 +981,23 @@ const styles = StyleSheet.create({
     },
     primaryBtn: {
         marginTop: 8,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
         paddingHorizontal: 24,
         paddingVertical: 12,
         borderRadius: 12,
     },
     primaryBtnText: { color: "#fff", fontWeight: "600", fontSize: 14 },
+    emptyIcon: {
+        width: 72,
+        height: 72,
+        borderRadius: 36,
+        alignItems: "center",
+        justifyContent: "center",
+        marginBottom: 4,
+    },
+    emptyTitle: { fontSize: 18, fontWeight: "700", textAlign: "center" },
     emptyCard: {
         alignItems: "center",
         paddingVertical: 64,

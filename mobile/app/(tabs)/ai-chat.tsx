@@ -20,6 +20,7 @@ import { COLORS } from "@/lib/theme";
 import AppHeader from "@/components/common/AppHeader";
 import AppDrawer from "@/components/common/AppDrawer";
 import PetSwitcher from "@/components/common/PetSwitcher";
+import RemindersModal from "@/components/chat/RemindersModal";
 
 export default function AiChatScreen() {
     const router = useRouter();
@@ -31,6 +32,8 @@ export default function AiChatScreen() {
     const [isLoading, setIsLoading] = useState(false);
     const [suggestions, setSuggestions] = useState<string[]>([]);
     const [drawerOpen, setDrawerOpen] = useState(false);
+    const [remindersOpen, setRemindersOpen] = useState(false);
+    const [usage, setUsage] = useState<{ used: number; limit: number; remaining: number } | null>(null);
     const flatListRef = useRef<FlatList<ChatMessage>>(null);
 
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
@@ -45,6 +48,28 @@ export default function AiChatScreen() {
             }]);
         }
     }, [selectedPet?.id]);
+
+    async function loadUsage() {
+        if (!session) return;
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/chat/usage`, {
+                headers: { "Authorization": `Bearer ${session.access_token}` },
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            setUsage({
+                used: data.used ?? 0,
+                limit: data.limit ?? 0,
+                remaining: data.remaining ?? 0,
+            });
+        } catch {
+            // silent
+        }
+    }
+
+    useEffect(() => {
+        loadUsage();
+    }, [session?.access_token]);
 
     async function sendMessage() {
         if (!input.trim() || isLoading || !selectedPet || !session) return;
@@ -95,6 +120,16 @@ export default function AiChatScreen() {
 
             setMessages((prev) => [...prev, petMessage]);
             if (data.suggestions?.length) setSuggestions(data.suggestions);
+            // 사용량 갱신
+            if (typeof data.remaining === "number" && typeof data.limit === "number") {
+                setUsage({
+                    used: data.limit - data.remaining,
+                    limit: data.limit,
+                    remaining: data.remaining,
+                });
+            } else {
+                loadUsage();
+            }
         } catch {
             setMessages((prev) => [
                 ...prev,
@@ -166,7 +201,7 @@ export default function AiChatScreen() {
                             </Text>
                         </View>
                     )}
-                    <View>
+                    <View style={{ flex: 1 }}>
                         <Text style={{
                             fontSize: 16,
                             fontWeight: "600",
@@ -178,6 +213,37 @@ export default function AiChatScreen() {
                             AI 펫톡
                         </Text>
                     </View>
+                    {usage ? (
+                        <View style={[
+                            styles.usageBadge,
+                            {
+                                backgroundColor: usage.remaining === 0
+                                    ? "#FEE2E2"
+                                    : (isMemorialMode ? COLORS.gray[800] : accentColor + "1a"),
+                            },
+                        ]}>
+                            <Ionicons
+                                name="chatbubble-ellipses-outline"
+                                size={12}
+                                color={usage.remaining === 0 ? "#B91C1C" : accentColor}
+                            />
+                            <Text style={[
+                                styles.usageText,
+                                { color: usage.remaining === 0 ? "#B91C1C" : (isMemorialMode ? COLORS.white : accentColor) },
+                            ]}>
+                                {usage.limit === Infinity || usage.limit > 9999
+                                    ? "무제한"
+                                    : `${usage.used}/${usage.limit}`}
+                            </Text>
+                        </View>
+                    ) : null}
+                    <TouchableOpacity
+                        onPress={() => setRemindersOpen(true)}
+                        style={[styles.headerIconBtn, { backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100] }]}
+                        activeOpacity={0.85}
+                    >
+                        <Ionicons name="alarm-outline" size={18} color={isMemorialMode ? COLORS.white : COLORS.gray[700]} />
+                    </TouchableOpacity>
                 </View>
 
                 <FlatList
@@ -264,6 +330,14 @@ export default function AiChatScreen() {
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>
+            <RemindersModal
+                visible={remindersOpen}
+                onClose={() => setRemindersOpen(false)}
+                petId={selectedPet.id}
+                petName={selectedPet.name}
+                accentColor={accentColor}
+                isMemorialMode={isMemorialMode}
+            />
         </SafeAreaView>
     );
 }
@@ -418,9 +492,26 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingVertical: 12,
         borderBottomWidth: 1,
+        gap: 8,
     },
     headerAvatar: { width: 36, height: 36, borderRadius: 18, marginRight: 12 },
     headerAvatarFallback: { alignItems: "center", justifyContent: "center" },
+    usageBadge: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 999,
+    },
+    usageText: { fontSize: 11, fontWeight: "700" },
+    headerIconBtn: {
+        width: 34,
+        height: 34,
+        borderRadius: 17,
+        alignItems: "center",
+        justifyContent: "center",
+    },
     messages: { flex: 1 },
     bubbleAvatar: {
         width: 28,

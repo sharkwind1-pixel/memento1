@@ -6,10 +6,10 @@ import { useState, useEffect } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity,
     Image, TextInput, Alert, ActivityIndicator,
-    KeyboardAvoidingView, Platform, StyleSheet,
+    KeyboardAvoidingView, Platform, Share, StyleSheet,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { API_BASE_URL } from "@/config/constants";
@@ -109,7 +109,8 @@ function normalizePost(raw: any): PostDetail | null {
 
 export default function PostDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
-    const { session } = useAuth();
+    const router = useRouter();
+    const { session, user } = useAuth();
     const { isMemorialMode } = usePet();
     const insets = useSafeAreaInsets();
     const [post, setPost] = useState<PostDetail | null>(null);
@@ -173,6 +174,112 @@ export default function PostDetailScreen() {
             setPost((p) => p ? { ...p, isLiked: !newLiked, likes: p.likes + (newLiked ? -1 : 1) } : p);
         } finally {
             setIsLiking(false);
+        }
+    }
+
+    async function handleShare() {
+        if (!post) return;
+        const url = `https://mementoani.com/?postId=${post.id}`;
+        try {
+            await Share.share({
+                title: post.title,
+                message: `${post.title}\n\n${url}`,
+                url,
+            });
+        } catch {
+            // 사용자 취소
+        }
+    }
+
+    function handleMore() {
+        if (!post) return;
+        const isAuthor = user && post.authorId && user.id === post.authorId;
+        const options = isAuthor
+            ? [
+                { text: "취소", style: "cancel" as const },
+                {
+                    text: "삭제",
+                    style: "destructive" as const,
+                    onPress: confirmDelete,
+                },
+            ]
+            : [
+                { text: "취소", style: "cancel" as const },
+                { text: "신고", style: "destructive" as const, onPress: showReportPicker },
+            ];
+        Alert.alert(
+            isAuthor ? "이 게시글" : "게시글",
+            isAuthor ? "어떻게 할까요?" : "신고하시겠어요?",
+            options,
+        );
+    }
+
+    function showReportPicker() {
+        const reasons: Array<{ id: "spam" | "abuse" | "inappropriate" | "harassment" | "misinformation" | "other"; label: string }> = [
+            { id: "spam", label: "스팸/광고" },
+            { id: "abuse", label: "욕설/비방" },
+            { id: "inappropriate", label: "부적절한 내용" },
+            { id: "harassment", label: "괴롭힘" },
+            { id: "misinformation", label: "허위 정보" },
+            { id: "other", label: "기타" },
+        ];
+        Alert.alert(
+            "신고 사유",
+            "사유를 선택해주세요",
+            [
+                ...reasons.map((r) => ({ text: r.label, onPress: () => submitReport(r.id) })),
+                { text: "취소", style: "cancel" as const },
+            ],
+        );
+    }
+
+    async function submitReport(reason: string) {
+        if (!session || !post) return;
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/reports`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${session.access_token}`,
+                },
+                body: JSON.stringify({
+                    targetType: "post",
+                    targetId: post.id,
+                    reason,
+                }),
+            });
+            if (res.ok) {
+                Alert.alert("신고 접수", "검토 후 조치할게요. 감사합니다.");
+            } else {
+                const data = await res.json().catch(() => ({}));
+                Alert.alert("실패", data?.error || "신고 접수에 실패했어요");
+            }
+        } catch {
+            Alert.alert("오류", "네트워크 오류가 발생했어요");
+        }
+    }
+
+    function confirmDelete() {
+        Alert.alert("게시글 삭제", "정말 삭제할까요? 되돌릴 수 없어요.", [
+            { text: "취소", style: "cancel" },
+            { text: "삭제", style: "destructive", onPress: doDelete },
+        ]);
+    }
+
+    async function doDelete() {
+        if (!session || !post) return;
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/posts/${post.id}`, {
+                method: "DELETE",
+                headers: { "Authorization": `Bearer ${session.access_token}` },
+            });
+            if (res.ok) {
+                router.back();
+            } else {
+                Alert.alert("실패", "게시글 삭제에 실패했어요");
+            }
+        } catch {
+            Alert.alert("오류", "네트워크 오류가 발생했어요");
         }
     }
 
@@ -314,6 +421,13 @@ export default function PostDetailScreen() {
                             <Ionicons name="eye-outline" size={18} color={COLORS.gray[400]} />
                             <Text style={{ fontSize: 14, color: COLORS.gray[400] }}>{post.views}</Text>
                         </View>
+                        <View style={{ flex: 1 }} />
+                        <TouchableOpacity onPress={handleShare} style={styles.reactionIconBtn} activeOpacity={0.7} hitSlop={8}>
+                            <Ionicons name="share-outline" size={18} color={COLORS.gray[500]} />
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={handleMore} style={styles.reactionIconBtn} activeOpacity={0.7} hitSlop={8}>
+                            <Ionicons name="ellipsis-horizontal" size={18} color={COLORS.gray[500]} />
+                        </TouchableOpacity>
                     </View>
 
                     <Text style={{
@@ -428,6 +542,13 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     reactionBtn: { flexDirection: "row", alignItems: "center", gap: 6 },
+    reactionIconBtn: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        alignItems: "center",
+        justifyContent: "center",
+    },
     inputRow: {
         flexDirection: "row",
         alignItems: "flex-end",

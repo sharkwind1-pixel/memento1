@@ -70,6 +70,16 @@ export default function SubscriptionScreen() {
         Linking.openURL("https://mementoani.com?tab=home#subscription");
     }
 
+    function openCancelPage() {
+        Linking.openURL("https://mementoani.com?tab=home#subscription");
+    }
+
+    const expiresAt = (profile as { premiumExpiresAt?: string } | null | undefined)?.premiumExpiresAt
+        ?? (profile as { premium_expires_at?: string } | null | undefined)?.premium_expires_at;
+    const expiresText = expiresAt
+        ? new Date(expiresAt).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })
+        : null;
+
     const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.gray[50];
 
     return (
@@ -89,9 +99,24 @@ export default function SubscriptionScreen() {
             }}>
                 구독 플랜
             </Text>
-            <Text style={{ fontSize: 14, color: COLORS.gray[400], marginBottom: 24 }}>
+            <Text style={{ fontSize: 14, color: COLORS.gray[400], marginBottom: 16 }}>
                 반려동물과의 특별한 순간을 더 많이 담아보세요.
             </Text>
+
+            {isPremium && expiresText && (
+                <View style={[styles.expiresCard, { backgroundColor: isMemorialMode ? COLORS.gray[900] : COLORS.memento[50] }]}>
+                    <Ionicons name="calendar-outline" size={18} color={COLORS.memento[500]} />
+                    <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 12, color: COLORS.gray[500] }}>현재 구독 만료일</Text>
+                        <Text style={{ fontSize: 14, fontWeight: "700", color: isMemorialMode ? COLORS.white : COLORS.gray[900], marginTop: 2 }}>
+                            {expiresText}
+                        </Text>
+                    </View>
+                    <TouchableOpacity onPress={openCancelPage} activeOpacity={0.7}>
+                        <Text style={{ fontSize: 12, color: COLORS.gray[500], textDecorationLine: "underline" }}>해지</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
 
             {PLANS.map((plan) => {
                 const isCurrentPlan =
@@ -202,4 +227,12 @@ const styles = StyleSheet.create({
     featureRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
     planButton: { marginTop: 16, paddingVertical: 12, borderRadius: 12, alignItems: "center" },
     notice: { borderRadius: 16, padding: 16, marginTop: 8 },
+    expiresCard: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        padding: 14,
+        borderRadius: 14,
+        marginBottom: 16,
+    },
 });
