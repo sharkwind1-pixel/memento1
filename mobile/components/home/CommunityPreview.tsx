@@ -193,6 +193,7 @@ interface CardProps {
 }
 
 function CommunityCard({ post, gradient, onPress, onToggleLike }: CardProps) {
+    const { isDarkMode } = useDarkMode();
     const heartScale = useRef(new Animated.Value(1)).current;
 
     function handleLike() {

@@ -42,6 +42,7 @@ const STARS = [
 ];
 
 function StarParticle({ left, size, duration, delay }: typeof STARS[0]) {
+    const { isDarkMode } = useDarkMode();
     const anim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {

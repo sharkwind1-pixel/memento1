@@ -270,6 +270,7 @@ function PostCard({ post, isMemorialMode, onPress }: {
     isMemorialMode: boolean;
     onPress: () => void;
 }) {
+    const { isDarkMode } = useDarkMode();
     const hasImage = post.images && post.images.length > 0;
     return (
         <TouchableOpacity

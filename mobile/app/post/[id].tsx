@@ -109,6 +109,7 @@ function normalizePost(raw: any): PostDetail | null {
 }
 
 export default function PostDetailScreen() {
+    const { isDarkMode } = useDarkMode();
     const { id } = useLocalSearchParams<{ id: string }>();
     const router = useRouter();
     const { session, user } = useAuth();
@@ -495,6 +496,7 @@ export default function PostDetailScreen() {
 }
 
 function CommentItem({ comment, isMemorialMode }: { comment: Comment; isMemorialMode: boolean }) {
+    const { isDarkMode } = useDarkMode();
     return (
         <View style={{ flexDirection: "row", gap: 10, marginBottom: 16 }}>
             {comment.authorAvatar ? (

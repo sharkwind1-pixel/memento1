@@ -23,6 +23,7 @@ import AppHeader from "@/components/common/AppHeader";
 const POST_TAGS: PostTag[] = ["정보", "일상", "질문", "강아지", "고양이", "햄스터", "토끼"];
 
 export default function WritePostScreen() {
+    const { isDarkMode } = useDarkMode();
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const { subcategory } = useLocalSearchParams<{ subcategory?: CommunitySubcategory }>();

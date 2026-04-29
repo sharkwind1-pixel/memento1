@@ -213,6 +213,7 @@ function DecoCard({ icon, label, color, bgColor, isMemorialMode, onPress }: {
     isMemorialMode: boolean;
     onPress: () => void;
 }) {
+    const { isDarkMode } = useDarkMode();
     return (
         <TouchableOpacity
             onPress={onPress}

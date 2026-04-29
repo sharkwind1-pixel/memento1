@@ -187,6 +187,7 @@ function SectionCard({ title, children, isMemorialMode }: {
     children: React.ReactNode;
     isMemorialMode: boolean;
 }) {
+    const { isDarkMode } = useDarkMode();
     return (
         <View style={{ marginHorizontal: 16, marginBottom: 12 }}>
             <Text style={{
@@ -218,6 +219,7 @@ function SettingsRow({ icon, label, sublabel, onPress, isMemorialMode, labelColo
     isMemorialMode: boolean;
     labelColor?: string;
 }) {
+    const { isDarkMode } = useDarkMode();
     return (
         <TouchableOpacity
             onPress={onPress}

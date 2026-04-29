@@ -376,6 +376,7 @@ function MessageBubble({ message, pet, isMemorialMode, accentColor }: {
     isMemorialMode: boolean;
     accentColor: string;
 }) {
+    const { isDarkMode } = useDarkMode();
     const isUser = message.role === "user";
 
     if (isUser) {
@@ -457,6 +458,7 @@ function ScrollableSuggestions({ suggestions, accentColor, onSelect }: {
     accentColor: string;
     onSelect: (s: string) => void;
 }) {
+    const { isDarkMode } = useDarkMode();
     return (
         <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
             <FlatList

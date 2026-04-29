@@ -242,6 +242,7 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
     refreshing: boolean;
     onRefresh: () => void;
 }) {
+    const { isDarkMode } = useDarkMode();
     const { user, session } = useAuth();
     const [entries, setEntries] = useState<TimelineEntry[]>([]);
     const [loading, setLoading] = useState(true);
@@ -461,6 +462,7 @@ function GalleryTab({ petId, photos, isMemorialMode, accentColor, refreshing, on
     refreshing: boolean;
     onRefresh: () => void;
 }) {
+    const { isDarkMode } = useDarkMode();
     const { deletePhotos } = usePet();
     const [uploadOpen, setUploadOpen] = useState(false);
     const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
@@ -667,6 +669,7 @@ function AlbumsTab({ petId, isMemorialMode, accentColor, refreshing, onRefresh }
     refreshing: boolean;
     onRefresh: () => void;
 }) {
+    const { isDarkMode } = useDarkMode();
     const { session } = useAuth();
     const [albums, setAlbums] = useState<MemoryAlbum[]>([]);
     const [loading, setLoading] = useState(true);
@@ -801,6 +804,7 @@ function VideosTab({ pet, isMemorialMode, accentColor, refreshing, onRefresh }: 
     refreshing: boolean;
     onRefresh: () => void;
 }) {
+    const { isDarkMode } = useDarkMode();
     const { session } = useAuth();
     const [videos, setVideos] = useState<Video[]>([]);
     const [loading, setLoading] = useState(true);

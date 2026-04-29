@@ -368,6 +368,7 @@ function ArticleCard({ article, isMemorialMode, onPress, badgeLabel, badgeColor 
     badgeLabel: (b?: string) => string;
     badgeColor: (b?: string) => [string, string];
 }) {
+    const { isDarkMode } = useDarkMode();
     return (
         <TouchableOpacity
             onPress={onPress}

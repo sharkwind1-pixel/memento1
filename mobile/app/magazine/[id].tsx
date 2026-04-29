@@ -84,6 +84,7 @@ function normalizeArticle(raw: unknown): ArticleDetail | null {
 }
 
 export default function MagazineReaderScreen() {
+    const { isDarkMode } = useDarkMode();
     const router = useRouter();
     const { id } = useLocalSearchParams<{ id: string }>();
     const { session } = useAuth();
@@ -295,6 +296,7 @@ export default function MagazineReaderScreen() {
 }
 
 function CoverCard({ article, isMemorialMode }: { article: ArticleDetail; isMemorialMode: boolean }) {
+    const { isDarkMode } = useDarkMode();
     const gradient = STAGE_GRADIENTS[article.badge ?? ""] ?? [COLORS.gray[400], COLORS.gray[500]];
     return (
         <View style={[styles.card, { width: SCREEN_W }]}>
@@ -335,6 +337,7 @@ function CoverCard({ article, isMemorialMode }: { article: ArticleDetail; isMemo
 }
 
 function SummaryCard({ article, isMemorialMode, accentColor }: { article: ArticleDetail; isMemorialMode: boolean; accentColor: string }) {
+    const { isDarkMode } = useDarkMode();
     return (
         <ScrollView
             style={[styles.card, { width: SCREEN_W }]}
@@ -369,6 +372,7 @@ function SummaryCard({ article, isMemorialMode, accentColor }: { article: Articl
 }
 
 function BodyCard({ text, isMemorialMode, index }: { text: string; isMemorialMode: boolean; index: number }) {
+    const { isDarkMode } = useDarkMode();
     const isAlt = index % 2 === 0;
     const bg = isMemorialMode
         ? (isAlt ? COLORS.gray[900] : COLORS.gray[950])
@@ -396,6 +400,7 @@ function EndCard({ article, isMemorialMode, accentColor, isLiking, onLike, onBac
     onLike: () => void;
     onBack: () => void;
 }) {
+    const { isDarkMode } = useDarkMode();
     return (
         <ScrollView
             style={[styles.card, { width: SCREEN_W }]}
