@@ -29,8 +29,6 @@ export default function WritePostScreen() {
     const { subcategory } = useLocalSearchParams<{ subcategory?: CommunitySubcategory }>();
     const { session } = useAuth();
     const { isMemorialMode } = usePet();
-    const { isDarkMode } = useDarkMode();
-
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
     const [selectedTag, setSelectedTag] = useState<PostTag | null>(null);

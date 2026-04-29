@@ -114,7 +114,6 @@ export default function PostDetailScreen() {
     const router = useRouter();
     const { session, user } = useAuth();
     const { isMemorialMode } = usePet();
-    const { isDarkMode } = useDarkMode();
     const insets = useSafeAreaInsets();
     const [post, setPost] = useState<PostDetail | null>(null);
     const [comments, setComments] = useState<Comment[]>([]);

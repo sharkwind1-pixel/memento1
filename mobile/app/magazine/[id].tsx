@@ -89,7 +89,6 @@ export default function MagazineReaderScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const { session } = useAuth();
     const { isMemorialMode } = usePet();
-    const { isDarkMode } = useDarkMode();
     const scrollRef = useRef<ScrollView>(null);
 
     const [article, setArticle] = useState<ArticleDetail | null>(null);
