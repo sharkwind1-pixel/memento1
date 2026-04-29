@@ -107,25 +107,49 @@ export default function AiChatScreen() {
 
             if (!res.ok) throw new Error(`API error ${res.status}`);
 
-            const data = await res.json();
+            // /api/chat은 SSE (text/event-stream) 응답. 전체 텍스트 받아서 마지막 done 이벤트 추출.
+            const text = await res.text();
+            const lines = text.split("\n").filter((l) => l.startsWith("data:"));
+            let reply = "...";
+            let suggestionsList: string[] = [];
+            let emotion: string | undefined;
+            let matchedPhoto: string | undefined;
+            let remaining: number | undefined;
+            let limit: number | undefined;
+
+            for (const line of lines) {
+                try {
+                    const obj = JSON.parse(line.slice(5).trim());
+                    if (obj.type === "done") {
+                        if (typeof obj.reply === "string") reply = obj.reply;
+                        if (Array.isArray(obj.suggestedQuestions)) suggestionsList = obj.suggestedQuestions;
+                        if (typeof obj.emotion === "string") emotion = obj.emotion;
+                        if (typeof obj.matchedPhoto === "string") matchedPhoto = obj.matchedPhoto;
+                        if (typeof obj.remaining === "number") remaining = obj.remaining;
+                        if (typeof obj.limit === "number") limit = obj.limit;
+                    }
+                } catch {
+                    // skip non-JSON lines
+                }
+            }
 
             const petMessage: ChatMessage = {
                 id: (Date.now() + 1).toString(),
                 role: "pet",
-                content: data.message ?? data.content ?? "...",
+                content: reply,
                 timestamp: new Date(),
-                emotion: data.emotion,
-                matchedPhoto: data.matchedPhoto,
+                emotion,
+                matchedPhoto,
             };
 
             setMessages((prev) => [...prev, petMessage]);
-            if (data.suggestions?.length) setSuggestions(data.suggestions);
+            if (suggestionsList.length) setSuggestions(suggestionsList);
             // 사용량 갱신
-            if (typeof data.remaining === "number" && typeof data.limit === "number") {
+            if (typeof remaining === "number" && typeof limit === "number") {
                 setUsage({
-                    used: data.limit - data.remaining,
-                    limit: data.limit,
-                    remaining: data.remaining,
+                    used: limit - remaining,
+                    limit,
+                    remaining,
                 });
             } else {
                 loadUsage();

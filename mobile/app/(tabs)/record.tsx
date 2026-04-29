@@ -114,7 +114,13 @@ export default function RecordScreen() {
                     return (
                         <TouchableOpacity
                             key={tab.id}
-                            onPress={() => setActiveTab(tab.id)}
+                            onPress={() => {
+                                if (tab.id === "minihompy") {
+                                    router.push("/(tabs)/minihompy");
+                                } else {
+                                    setActiveTab(tab.id);
+                                }
+                            }}
                             activeOpacity={0.85}
                             style={{ marginRight: 8 }}
                         >
@@ -207,25 +213,6 @@ export default function RecordScreen() {
                             refreshing={refreshing}
                             onRefresh={onRefresh}
                         />
-                    )}
-                    {activeTab === "minihompy" && (
-                        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24, gap: 12 }}>
-                            <Ionicons name="star-outline" size={48} color={accentColor} />
-                            <Text style={{ fontSize: 16, fontWeight: "700", color: isMemorialMode ? COLORS.white : COLORS.gray[900] }}>
-                                미니홈피로 이동
-                            </Text>
-                            <Text style={{ fontSize: 13, color: COLORS.gray[500], textAlign: "center" }}>
-                                {selectedPet.name}의 미니홈피를 꾸며보세요
-                            </Text>
-                            <TouchableOpacity
-                                onPress={() => router.push("/(tabs)/minihompy")}
-                                style={[styles.primaryBtn, { backgroundColor: accentColor }]}
-                                activeOpacity={0.85}
-                            >
-                                <Ionicons name="arrow-forward" size={16} color="#fff" />
-                                <Text style={styles.primaryBtnText}>미니홈피 열기</Text>
-                            </TouchableOpacity>
-                        </View>
                     )}
                 </>
             )}

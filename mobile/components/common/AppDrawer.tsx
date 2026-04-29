@@ -9,14 +9,13 @@
 import { useEffect, useRef, useState } from "react";
 import {
     Modal, View, Text, TouchableOpacity, Animated, Dimensions,
-    Pressable, StyleSheet, ScrollView, Image, Switch,
+    Pressable, StyleSheet, ScrollView, Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
-import { useTheme } from "@/contexts/ThemeContext";
 import { COLORS } from "@/lib/theme";
 
 const { width: SCREEN_W } = Dimensions.get("window");
@@ -61,7 +60,6 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
     const router = useRouter();
     const { user, profile, points, isPremium, signOut } = useAuth();
     const { isMemorialMode } = usePet();
-    const { isDark, toggleTheme } = useTheme();
     const [communityExpanded, setCommunityExpanded] = useState(false);
 
     const slideAnim = useRef(new Animated.Value(-DRAWER_W)).current;
@@ -213,23 +211,6 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
                                     )}
                                 </View>
                             ))}
-                        </View>
-
-                        <View style={[styles.menuSection, { marginTop: 16 }]}>
-                            <Text style={styles.sectionLabel}>화면</Text>
-                            <View style={styles.menuItem}>
-                                <Ionicons name={isDark ? "moon" : "sunny-outline"} size={20} color={isMemorialMode ? COLORS.gray[300] : COLORS.gray[600]} />
-                                <Text style={[styles.menuLabel, {
-                                    color: isMemorialMode ? COLORS.gray[200] : COLORS.gray[800],
-                                }]}>
-                                    다크 모드
-                                </Text>
-                                <Switch
-                                    value={isDark}
-                                    onValueChange={toggleTheme}
-                                    trackColor={{ false: COLORS.gray[200], true: accentColor }}
-                                />
-                            </View>
                         </View>
 
                         <View style={[styles.menuSection, { marginTop: 16 }]}>

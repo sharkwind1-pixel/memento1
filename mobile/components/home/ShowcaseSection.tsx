@@ -151,6 +151,13 @@ export default function ShowcaseSection() {
                             <View style={styles.heroContainer}>
                                 {firstImage ? (
                                     <Image source={{ uri: firstImage }} style={styles.heroImg} />
+                                ) : post.videoUrl ? (
+                                    <LinearGradient
+                                        colors={[COLORS.memorial[500], "#F97316"]}
+                                        style={styles.heroImg}
+                                    >
+                                        <Ionicons name="videocam" size={48} color="rgba(255,255,255,0.6)" />
+                                    </LinearGradient>
                                 ) : (
                                     <LinearGradient
                                         colors={[COLORS.memorial[400], "#FBA74D"]}
@@ -165,7 +172,7 @@ export default function ShowcaseSection() {
                                     </View>
                                 )}
                                 <View style={styles.badge}>
-                                    <Text style={styles.badgeText}>함께 보기</Text>
+                                    <Text style={styles.badgeText}>{post.videoUrl ? "AI 영상" : "함께 보기"}</Text>
                                 </View>
                             </View>
 

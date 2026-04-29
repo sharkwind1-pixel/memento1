@@ -76,7 +76,9 @@ export default function CommunityScreen() {
 
     const fetchPosts = useCallback(async () => {
         try {
-            const url = `${API_BASE_URL}/api/posts?subcategory=${activeTab}&limit=20`;
+            // 자유게시판 전체보기 시 자랑 게시글 숨기기 (함께보기 갤러리에서만 표시 — 웹과 동일)
+            const excludeParam = activeTab === "free" ? "&exclude_badge=자랑" : "";
+            const url = `${API_BASE_URL}/api/posts?subcategory=${activeTab}&limit=20${excludeParam}`;
             const headers: Record<string, string> = { "Content-Type": "application/json" };
             if (session) headers["Authorization"] = `Bearer ${session.access_token}`;
 

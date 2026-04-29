@@ -67,7 +67,8 @@ export default function CommunityPreview({ session, isMemorialMode }: Props) {
             try {
                 const headers: Record<string, string> = {};
                 if (session) headers["Authorization"] = `Bearer ${session.access_token}`;
-                const res = await fetch(`${API_BASE_URL}/api/posts?featured=true&limit=5`, { headers });
+                // 인기글 = 자유게시판 + 자랑 제외 (웹 기준)
+                const res = await fetch(`${API_BASE_URL}/api/posts?featured=true&subcategory=free&exclude_badge=자랑&limit=5`, { headers });
                 if (!res.ok) return;
                 const data = await res.json();
                 const list = Array.isArray(data?.posts) ? data.posts : Array.isArray(data) ? data : [];
@@ -139,7 +140,7 @@ export default function CommunityPreview({ session, isMemorialMode }: Props) {
                         <Ionicons name="trending-up" size={18} color="#fff" />
                     </LinearGradient>
                     <View>
-                        <Text style={styles.title}>인기 있는 이야기</Text>
+                        <Text style={[styles.title, isMemorialMode && { color: COLORS.white }]}>인기 있는 이야기</Text>
                         <Text style={styles.subtitle}>커뮤니티에서 가장 사랑받는 글들</Text>
                     </View>
                 </View>

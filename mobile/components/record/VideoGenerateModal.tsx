@@ -128,8 +128,9 @@ export default function VideoGenerateModal({ visible, onClose, onSuccess, pet, i
         }
     }
 
+    // quota 로드 실패해도 시도는 가능. 서버가 quota 검증.
     const remaining = quota ? quota.limit - quota.used : 0;
-    const canGenerate = quota !== null && remaining > 0;
+    const canGenerate = !quota || remaining > 0;
 
     // 모드별 카테고리 분류
     const visibleTemplates = VIDEO_TEMPLATES.filter((t) => {
