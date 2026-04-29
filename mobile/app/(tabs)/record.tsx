@@ -32,13 +32,14 @@ import { supabase } from "@/lib/supabase";
 import * as Haptics from "expo-haptics";
 import { Alert as RNAlert } from "react-native";
 
-type TabType = "timeline" | "gallery" | "albums" | "videos";
+type TabType = "timeline" | "gallery" | "albums" | "videos" | "minihompy";
 
 const TABS: Array<{ id: TabType; label: string; icon: React.ComponentProps<typeof Ionicons>["name"] }> = [
     { id: "timeline", label: "타임라인", icon: "time-outline" },
     { id: "gallery", label: "사진첩", icon: "images-outline" },
     { id: "albums", label: "앨범", icon: "albums-outline" },
     { id: "videos", label: "AI 영상", icon: "videocam-outline" },
+    { id: "minihompy", label: "미니홈피", icon: "home-outline" },
 ];
 
 export default function RecordScreen() {
@@ -206,6 +207,25 @@ export default function RecordScreen() {
                             refreshing={refreshing}
                             onRefresh={onRefresh}
                         />
+                    )}
+                    {activeTab === "minihompy" && (
+                        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24, gap: 12 }}>
+                            <Ionicons name="star-outline" size={48} color={accentColor} />
+                            <Text style={{ fontSize: 16, fontWeight: "700", color: isMemorialMode ? COLORS.white : COLORS.gray[900] }}>
+                                미니홈피로 이동
+                            </Text>
+                            <Text style={{ fontSize: 13, color: COLORS.gray[500], textAlign: "center" }}>
+                                {selectedPet.name}의 미니홈피를 꾸며보세요
+                            </Text>
+                            <TouchableOpacity
+                                onPress={() => router.push("/(tabs)/minihompy")}
+                                style={[styles.primaryBtn, { backgroundColor: accentColor }]}
+                                activeOpacity={0.85}
+                            >
+                                <Ionicons name="arrow-forward" size={16} color="#fff" />
+                                <Text style={styles.primaryBtnText}>미니홈피 열기</Text>
+                            </TouchableOpacity>
+                        </View>
                     )}
                 </>
             )}

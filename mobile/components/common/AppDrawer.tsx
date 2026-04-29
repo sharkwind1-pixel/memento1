@@ -6,16 +6,17 @@
  * - 계정: 닉네임, 프로필, 로그아웃
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
     Modal, View, Text, TouchableOpacity, Animated, Dimensions,
-    Pressable, StyleSheet, ScrollView, Image,
+    Pressable, StyleSheet, ScrollView, Image, Switch,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { COLORS } from "@/lib/theme";
 
 const { width: SCREEN_W } = Dimensions.get("window");
@@ -26,27 +27,42 @@ interface AppDrawerProps {
     onClose: () => void;
 }
 
-const MENU: Array<{
+// 웹 Sidebar.tsx와 동일 구조 (메인 5개)
+const MAIN_MENU: Array<{
     id: string;
     label: string;
     icon: React.ComponentProps<typeof Ionicons>["name"];
     route: string;
+    hasSubcategories?: boolean;
 }> = [
     { id: "home", label: "홈", icon: "home-outline", route: "/(tabs)" },
-    { id: "record", label: "내 기록", icon: "albums-outline", route: "/(tabs)/record" },
-    { id: "community", label: "커뮤니티", icon: "people-outline", route: "/(tabs)/community" },
-    { id: "ai-chat", label: "AI펫톡", icon: "chatbubble-ellipses-outline", route: "/(tabs)/ai-chat" },
-    { id: "magazine", label: "펫매거진", icon: "book-outline", route: "/(tabs)/magazine" },
-    { id: "adoption", label: "입양정보", icon: "home-outline", route: "/adoption" },
-    { id: "local", label: "지역정보", icon: "location-outline", route: "/local" },
-    { id: "lost", label: "분실동물", icon: "search-outline", route: "/lost" },
-    { id: "minihompy", label: "미니홈피", icon: "star-outline", route: "/(tabs)/minihompy" },
+    { id: "record", label: "내 기록", icon: "camera-outline", route: "/(tabs)/record" },
+    { id: "community", label: "커뮤니티", icon: "people-outline", route: "/(tabs)/community", hasSubcategories: true },
+    { id: "ai-chat", label: "AI 펫톡", icon: "chatbubble-ellipses-outline", route: "/(tabs)/ai-chat" },
+    { id: "magazine", label: "매거진", icon: "book-outline", route: "/(tabs)/magazine" },
+];
+
+// 커뮤니티 서브카테고리 (웹과 동일)
+const COMMUNITY_SUBS: Array<{
+    id: string;
+    label: string;
+    icon: React.ComponentProps<typeof Ionicons>["name"];
+    color: string;
+    route: string;
+}> = [
+    { id: "free", label: "자유게시판", icon: "chatbox-outline", color: COLORS.memento[500], route: "/(tabs)/community" },
+    { id: "memorial", label: "기억게시판", icon: "sparkles-outline", color: "#8B5CF6", route: "/(tabs)/community" },
+    { id: "adoption", label: "입양정보", icon: "heart-outline", color: "#F43F5E", route: "/adoption" },
+    { id: "local", label: "지역정보", icon: "location-outline", color: "#10B981", route: "/local" },
+    { id: "lost", label: "분실동물", icon: "alert-circle-outline", color: COLORS.memorial[500], route: "/lost" },
 ];
 
 export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
     const router = useRouter();
     const { user, profile, points, isPremium, signOut } = useAuth();
     const { isMemorialMode } = usePet();
+    const { isDark, toggleTheme } = useTheme();
+    const [communityExpanded, setCommunityExpanded] = useState(false);
 
     const slideAnim = useRef(new Animated.Value(-DRAWER_W)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -147,22 +163,73 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
                     <ScrollView style={{ flex: 1 }}>
                         <View style={styles.menuSection}>
                             <Text style={styles.sectionLabel}>메뉴</Text>
-                            {MENU.map((m) => (
-                                <TouchableOpacity
-                                    key={m.id}
-                                    onPress={() => navigate(m.route)}
-                                    style={styles.menuItem}
-                                    activeOpacity={0.7}
-                                >
-                                    <Ionicons name={m.icon} size={20} color={isMemorialMode ? COLORS.gray[300] : COLORS.gray[600]} />
-                                    <Text style={[styles.menuLabel, {
-                                        color: isMemorialMode ? COLORS.gray[200] : COLORS.gray[800],
-                                    }]}>
-                                        {m.label}
-                                    </Text>
-                                    <Ionicons name="chevron-forward" size={16} color={COLORS.gray[400]} />
-                                </TouchableOpacity>
+                            {MAIN_MENU.map((m) => (
+                                <View key={m.id}>
+                                    <TouchableOpacity
+                                        onPress={() => {
+                                            if (m.hasSubcategories) {
+                                                setCommunityExpanded((v) => !v);
+                                            } else {
+                                                navigate(m.route);
+                                            }
+                                        }}
+                                        style={styles.menuItem}
+                                        activeOpacity={0.7}
+                                    >
+                                        <Ionicons name={m.icon} size={20} color={isMemorialMode ? COLORS.gray[300] : COLORS.gray[600]} />
+                                        <Text style={[styles.menuLabel, {
+                                            color: isMemorialMode ? COLORS.gray[200] : COLORS.gray[800],
+                                        }]}>
+                                            {m.label}
+                                        </Text>
+                                        {m.hasSubcategories ? (
+                                            <Ionicons
+                                                name={communityExpanded ? "chevron-up" : "chevron-down"}
+                                                size={16}
+                                                color={COLORS.gray[400]}
+                                            />
+                                        ) : (
+                                            <Ionicons name="chevron-forward" size={16} color={COLORS.gray[400]} />
+                                        )}
+                                    </TouchableOpacity>
+                                    {m.hasSubcategories && communityExpanded && (
+                                        <View style={styles.subMenu}>
+                                            {COMMUNITY_SUBS.map((s) => (
+                                                <TouchableOpacity
+                                                    key={s.id}
+                                                    onPress={() => navigate(s.route)}
+                                                    style={styles.subMenuItem}
+                                                    activeOpacity={0.7}
+                                                >
+                                                    <Ionicons name={s.icon} size={16} color={s.color} />
+                                                    <Text style={[styles.subMenuLabel, {
+                                                        color: isMemorialMode ? COLORS.gray[300] : COLORS.gray[700],
+                                                    }]}>
+                                                        {s.label}
+                                                    </Text>
+                                                </TouchableOpacity>
+                                            ))}
+                                        </View>
+                                    )}
+                                </View>
                             ))}
+                        </View>
+
+                        <View style={[styles.menuSection, { marginTop: 16 }]}>
+                            <Text style={styles.sectionLabel}>화면</Text>
+                            <View style={styles.menuItem}>
+                                <Ionicons name={isDark ? "moon" : "sunny-outline"} size={20} color={isMemorialMode ? COLORS.gray[300] : COLORS.gray[600]} />
+                                <Text style={[styles.menuLabel, {
+                                    color: isMemorialMode ? COLORS.gray[200] : COLORS.gray[800],
+                                }]}>
+                                    다크 모드
+                                </Text>
+                                <Switch
+                                    value={isDark}
+                                    onValueChange={toggleTheme}
+                                    trackColor={{ false: COLORS.gray[200], true: accentColor }}
+                                />
+                            </View>
                         </View>
 
                         <View style={[styles.menuSection, { marginTop: 16 }]}>
@@ -293,6 +360,16 @@ const styles = StyleSheet.create({
         borderRadius: 10,
     },
     menuLabel: { flex: 1, fontSize: 14, fontWeight: "500" },
+    subMenu: { paddingLeft: 32, paddingRight: 4 },
+    subMenuItem: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        borderRadius: 8,
+    },
+    subMenuLabel: { fontSize: 13, fontWeight: "500" },
     footer: {
         padding: 16,
         borderTopWidth: 1,

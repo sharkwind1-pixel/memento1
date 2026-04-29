@@ -59,19 +59,23 @@ export default function AppHeader({ onOpenDrawer, showBack, title, hideActions }
                 </TouchableOpacity>
             )}
 
-            {/* 가운데: 로고 + 제목 */}
+            {/* 가운데: 로고 + 제목 (로고 탭 → 홈) */}
             <View style={styles.titleWrap}>
                 {title ? (
                     <Text style={[styles.title, { color: textColor }]} numberOfLines={1}>{title}</Text>
                 ) : (
-                    <View style={styles.logoRow}>
+                    <TouchableOpacity
+                        onPress={() => router.push("/(tabs)")}
+                        activeOpacity={0.7}
+                        style={styles.logoRow}
+                    >
                         <Image
                             source={require("@/assets/icon.png")}
                             style={styles.logoImg}
                             resizeMode="contain"
                         />
                         <Text style={[styles.brandText, { color: textColor }]}>메멘토애니</Text>
-                    </View>
+                    </TouchableOpacity>
                 )}
             </View>
 
