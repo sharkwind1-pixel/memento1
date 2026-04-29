@@ -9,6 +9,7 @@
  */
 
 import { useEffect, useState, useRef } from "react";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import {
     View, Text, TouchableOpacity, StyleSheet,
     ActivityIndicator, Animated,
@@ -52,6 +53,7 @@ interface Props {
 }
 
 export default function CommunityPreview({ session, isMemorialMode }: Props) {
+    const { isDarkMode } = useDarkMode();
     const router = useRouter();
     const [posts, setPosts] = useState<CommunityPostPreview[]>([]);
     const [isLoading, setIsLoading] = useState(true);

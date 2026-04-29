@@ -21,6 +21,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { API_BASE_URL } from "@/config/constants";
 import { usePet } from "@/contexts/PetContext";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { COLORS } from "@/lib/theme";
 import AppHeader from "@/components/common/AppHeader";
@@ -68,6 +69,7 @@ export default function MagazineScreen() {
     const router = useRouter();
     const { session } = useAuth();
     const { isMemorialMode } = usePet();
+    const { isDarkMode } = useDarkMode();
 
     const [articles, setArticles] = useState<Article[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -175,7 +177,7 @@ export default function MagazineScreen() {
         return map[badge] ?? [COLORS.gray[400], COLORS.gray[500]];
     }
 
-    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.gray[50];
+    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.gray[50];
     const filtersActive = selectedStage !== "all" || selectedTopic !== "all" || search.length > 0;
 
     return (
@@ -196,18 +198,18 @@ export default function MagazineScreen() {
                     <View>
                         {/* 헤더 + 검색 */}
                         <View style={styles.headerWrap}>
-                            <Text style={[styles.title, { color: isMemorialMode ? COLORS.white : COLORS.gray[900] }]}>
+                            <Text style={[styles.title, { color: isDarkMode ? COLORS.white : COLORS.gray[900] }]}>
                                 펫 매거진
                             </Text>
                             <Text style={styles.titleSub}>전문가와 함께 만든 반려동물 정보</Text>
 
                             <View style={[styles.searchBar, {
-                                backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.white,
-                                borderColor: isMemorialMode ? COLORS.gray[700] : COLORS.gray[200],
+                                backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.white,
+                                borderColor: isDarkMode ? COLORS.gray[700] : COLORS.gray[200],
                             }]}>
                                 <Ionicons name="search-outline" size={18} color={COLORS.gray[400]} />
                                 <TextInput
-                                    style={[styles.searchInput, { color: isMemorialMode ? COLORS.white : COLORS.gray[900] }]}
+                                    style={[styles.searchInput, { color: isDarkMode ? COLORS.white : COLORS.gray[900] }]}
                                     placeholder="기사 검색..."
                                     placeholderTextColor={COLORS.gray[400]}
                                     value={search}
@@ -249,12 +251,12 @@ export default function MagazineScreen() {
                                             </LinearGradient>
                                         ) : (
                                             <View style={[styles.stageCard, styles.stageCardInactive, {
-                                                backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.white,
-                                                borderColor: isMemorialMode ? COLORS.gray[700] : COLORS.gray[200],
+                                                backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.white,
+                                                borderColor: isDarkMode ? COLORS.gray[700] : COLORS.gray[200],
                                             }]}>
                                                 <Ionicons name={s.icon} size={20} color={s.gradient[1]} />
                                                 <Text style={[styles.stageLabel, {
-                                                    color: isMemorialMode ? COLORS.white : COLORS.gray[800],
+                                                    color: isDarkMode ? COLORS.white : COLORS.gray[800],
                                                 }]}>
                                                     {s.label}
                                                 </Text>
@@ -282,22 +284,22 @@ export default function MagazineScreen() {
                                         style={[styles.topicChip, {
                                             backgroundColor: active
                                                 ? "#10B981"
-                                                : (isMemorialMode ? COLORS.gray[800] : COLORS.white),
+                                                : (isDarkMode ? COLORS.gray[800] : COLORS.white),
                                             borderColor: active
                                                 ? "#10B981"
-                                                : (isMemorialMode ? COLORS.gray[700] : COLORS.gray[200]),
+                                                : (isDarkMode ? COLORS.gray[700] : COLORS.gray[200]),
                                         }]}
                                         activeOpacity={0.8}
                                     >
                                         <Ionicons
                                             name={t.icon}
                                             size={14}
-                                            color={active ? "#fff" : (isMemorialMode ? COLORS.gray[300] : COLORS.gray[600])}
+                                            color={active ? "#fff" : (isDarkMode ? COLORS.gray[300] : COLORS.gray[600])}
                                         />
                                         <Text style={{
                                             fontSize: 13,
                                             fontWeight: "500",
-                                            color: active ? "#fff" : (isMemorialMode ? COLORS.gray[300] : COLORS.gray[600]),
+                                            color: active ? "#fff" : (isDarkMode ? COLORS.gray[300] : COLORS.gray[600]),
                                         }}>
                                             {t.label}
                                         </Text>
@@ -339,7 +341,7 @@ export default function MagazineScreen() {
                     !isLoading ? (
                         <View style={styles.emptyWrap}>
                             <View style={[styles.emptyIconBg, {
-                                backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100],
+                                backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100],
                             }]}>
                                 <Ionicons name="book-outline" size={32} color={COLORS.gray[400]} />
                             </View>
@@ -371,15 +373,15 @@ function ArticleCard({ article, isMemorialMode, onPress, badgeLabel, badgeColor 
             onPress={onPress}
             activeOpacity={0.85}
             style={[styles.card, {
-                backgroundColor: isMemorialMode ? COLORS.gray[900] : COLORS.white,
-                borderColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100],
+                backgroundColor: isDarkMode ? COLORS.gray[900] : COLORS.white,
+                borderColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100],
             }]}
         >
             {article.image_url ? (
                 <Image source={{ uri: article.image_url }} style={styles.cardImage} resizeMode="cover" />
             ) : (
                 <View style={[styles.cardImage, {
-                    backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100],
+                    backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100],
                     alignItems: "center",
                     justifyContent: "center",
                 }]}>
@@ -398,14 +400,14 @@ function ArticleCard({ article, isMemorialMode, onPress, badgeLabel, badgeColor 
                 ) : null}
 
                 <Text style={[styles.cardTitle, {
-                    color: isMemorialMode ? COLORS.white : COLORS.gray[800],
+                    color: isDarkMode ? COLORS.white : COLORS.gray[800],
                 }]} numberOfLines={2}>
                     {article.title}
                 </Text>
 
                 {article.summary ? (
                     <Text style={[styles.cardSummary, {
-                        color: isMemorialMode ? COLORS.gray[400] : COLORS.gray[600],
+                        color: isDarkMode ? COLORS.gray[400] : COLORS.gray[600],
                     }]} numberOfLines={2}>
                         {article.summary}
                     </Text>

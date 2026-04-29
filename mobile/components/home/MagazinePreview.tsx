@@ -3,6 +3,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { View, Text, TouchableOpacity, Image, StyleSheet, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -25,6 +26,7 @@ interface Props {
 }
 
 export default function MagazinePreview({ session, isMemorialMode }: Props) {
+    const { isDarkMode } = useDarkMode();
     const router = useRouter();
     const [articles, setArticles] = useState<ArticlePreview[]>([]);
     const [isLoading, setIsLoading] = useState(true);

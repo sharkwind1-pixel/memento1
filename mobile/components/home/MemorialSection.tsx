@@ -6,6 +6,7 @@
  * 발자국 데코는 단순 Image/이모지로 대체.
  */
 
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { useEffect, useRef, useState } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity, Image,
@@ -78,6 +79,7 @@ function StarParticle({ left, size, duration, delay }: typeof STARS[0]) {
 }
 
 export default function MemorialSection() {
+    const { isDarkMode } = useDarkMode();
     const router = useRouter();
     const { session } = useAuth();
     const [pets, setPets] = useState<MemorialPet[]>([]);
@@ -181,7 +183,7 @@ export default function MemorialSection() {
                     <Ionicons name="cloudy-outline" size={18} color="#fff" />
                 </LinearGradient>
                 <View>
-                    <Text style={styles.title}>마음속에 영원히</Text>
+                    <Text style={[styles.title, isDarkMode && { color: COLORS.white }]}>마음속에 영원히</Text>
                     <Text style={styles.subtitle}>영원히 마음속에 함께해요</Text>
                 </View>
             </View>

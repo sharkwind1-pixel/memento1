@@ -14,6 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { ChatMessage } from "@/types";
 import { API_BASE_URL } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
@@ -26,6 +27,7 @@ export default function AiChatScreen() {
     const router = useRouter();
     const { session } = useAuth();
     const { selectedPet, isMemorialMode } = usePet();
+    const { isDarkMode } = useDarkMode();
     const insets = useSafeAreaInsets();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState("");
@@ -154,13 +156,15 @@ export default function AiChatScreen() {
             } else {
                 loadUsage();
             }
-        } catch {
+        } catch (err) {
+            const errMsg = err instanceof Error ? err.message : String(err);
+            console.error("[AI Chat] error:", errMsg);
             setMessages((prev) => [
                 ...prev,
                 {
                     id: (Date.now() + 1).toString(),
                     role: "pet",
-                    content: "잠시 연결이 불안정해요. 조금 뒤 다시 시도해주세요.",
+                    content: `연결 오류: ${errMsg}`,
                     timestamp: new Date(),
                     isError: true,
                 },
@@ -176,8 +180,8 @@ export default function AiChatScreen() {
         }
     }, [messages]);
 
-    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.white;
-    const borderColor = isMemorialMode ? COLORS.gray[800] : COLORS.gray[100];
+    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.white;
+    const borderColor = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
 
     if (!selectedPet) {
         return (
@@ -229,11 +233,11 @@ export default function AiChatScreen() {
                         <Text style={{
                             fontSize: 16,
                             fontWeight: "600",
-                            color: isMemorialMode ? COLORS.white : COLORS.gray[900],
+                            color: isDarkMode ? COLORS.white : COLORS.gray[900],
                         }}>
                             {selectedPet.name}
                         </Text>
-                        <Text style={{ fontSize: 12, color: isMemorialMode ? COLORS.gray[400] : COLORS.gray[500] }}>
+                        <Text style={{ fontSize: 12, color: isDarkMode ? COLORS.gray[400] : COLORS.gray[500] }}>
                             AI 펫톡
                         </Text>
                     </View>
@@ -243,7 +247,7 @@ export default function AiChatScreen() {
                             {
                                 backgroundColor: usage.remaining === 0
                                     ? "#FEE2E2"
-                                    : (isMemorialMode ? COLORS.gray[800] : accentColor + "1a"),
+                                    : (isDarkMode ? COLORS.gray[800] : accentColor + "1a"),
                             },
                         ]}>
                             <Ionicons
@@ -253,7 +257,7 @@ export default function AiChatScreen() {
                             />
                             <Text style={[
                                 styles.usageText,
-                                { color: usage.remaining === 0 ? "#B91C1C" : (isMemorialMode ? COLORS.white : accentColor) },
+                                { color: usage.remaining === 0 ? "#B91C1C" : (isDarkMode ? COLORS.white : accentColor) },
                             ]}>
                                 {usage.limit === Infinity || usage.limit > 9999
                                     ? "무제한"
@@ -263,10 +267,10 @@ export default function AiChatScreen() {
                     ) : null}
                     <TouchableOpacity
                         onPress={() => setRemindersOpen(true)}
-                        style={[styles.headerIconBtn, { backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100] }]}
+                        style={[styles.headerIconBtn, { backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100] }]}
                         activeOpacity={0.85}
                     >
-                        <Ionicons name="alarm-outline" size={18} color={isMemorialMode ? COLORS.white : COLORS.gray[700]} />
+                        <Ionicons name="alarm-outline" size={18} color={isDarkMode ? COLORS.white : COLORS.gray[700]} />
                     </TouchableOpacity>
                 </View>
 
@@ -296,7 +300,7 @@ export default function AiChatScreen() {
                                 <View
                                     style={[
                                         styles.bubblePet,
-                                        { backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100] },
+                                        { backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100] },
                                     ]}
                                 >
                                     <ActivityIndicator size="small" color={accentColor} />
@@ -325,8 +329,8 @@ export default function AiChatScreen() {
                         style={[
                             styles.textInput,
                             {
-                                backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100],
-                                color: isMemorialMode ? COLORS.white : COLORS.gray[900],
+                                backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100],
+                                color: isDarkMode ? COLORS.white : COLORS.gray[900],
                             },
                         ]}
                         placeholder="메시지 입력..."
@@ -385,7 +389,7 @@ function MessageBubble({ message, pet, isMemorialMode, accentColor }: {
     }
 
     const errorBg = "#FEE2E2";
-    const petBubbleBg = message.isError ? errorBg : isMemorialMode ? COLORS.gray[800] : COLORS.gray[100];
+    const petBubbleBg = message.isError ? errorBg : isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
 
     const emotionMap: Record<string, { label: string; color: string }> = {
         happy: { label: "기쁨", color: "#FBBF24" },
@@ -430,7 +434,7 @@ function MessageBubble({ message, pet, isMemorialMode, accentColor }: {
                             lineHeight: 20,
                             color: message.isError
                                 ? "#DC2626"
-                                : isMemorialMode ? COLORS.white : COLORS.gray[800],
+                                : isDarkMode ? COLORS.white : COLORS.gray[800],
                         }}
                     >
                         {message.content}

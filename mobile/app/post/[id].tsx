@@ -15,6 +15,7 @@ import * as Haptics from "expo-haptics";
 import { API_BASE_URL } from "@/config/constants";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { COLORS } from "@/lib/theme";
 import AppHeader from "@/components/common/AppHeader";
 
@@ -112,6 +113,7 @@ export default function PostDetailScreen() {
     const router = useRouter();
     const { session, user } = useAuth();
     const { isMemorialMode } = usePet();
+    const { isDarkMode } = useDarkMode();
     const insets = useSafeAreaInsets();
     const [post, setPost] = useState<PostDetail | null>(null);
     const [comments, setComments] = useState<Comment[]>([]);
@@ -308,8 +310,8 @@ export default function PostDetailScreen() {
         }
     }
 
-    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.white;
-    const borderColor = isMemorialMode ? COLORS.gray[800] : COLORS.gray[100];
+    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.white;
+    const borderColor = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
 
     if (isLoading) {
         return (
@@ -357,7 +359,7 @@ export default function PostDetailScreen() {
                         fontWeight: "bold",
                         lineHeight: 28,
                         marginBottom: 12,
-                        color: isMemorialMode ? COLORS.white : COLORS.gray[900],
+                        color: isDarkMode ? COLORS.white : COLORS.gray[900],
                     }}>
                         {post.title}
                     </Text>
@@ -374,7 +376,7 @@ export default function PostDetailScreen() {
                             <Text style={{
                                 fontSize: 14,
                                 fontWeight: "500",
-                                color: isMemorialMode ? COLORS.white : COLORS.gray[800],
+                                color: isDarkMode ? COLORS.white : COLORS.gray[800],
                             }}>
                                 {post.author}
                             </Text>
@@ -395,7 +397,7 @@ export default function PostDetailScreen() {
                             fontSize: 14,
                             lineHeight: 24,
                             marginBottom: 16,
-                            color: isMemorialMode ? COLORS.gray[300] : COLORS.gray[700],
+                            color: isDarkMode ? COLORS.gray[300] : COLORS.gray[700],
                         }}
                         selectable
                     >
@@ -409,7 +411,7 @@ export default function PostDetailScreen() {
                                 size={20}
                                 color={post.isLiked ? "#EF4444" : COLORS.gray[400]}
                             />
-                            <Text style={{ fontSize: 14, color: isMemorialMode ? COLORS.gray[400] : COLORS.gray[500] }}>
+                            <Text style={{ fontSize: 14, color: isDarkMode ? COLORS.gray[400] : COLORS.gray[500] }}>
                                 {post.likes}
                             </Text>
                         </TouchableOpacity>
@@ -434,7 +436,7 @@ export default function PostDetailScreen() {
                         fontSize: 14,
                         fontWeight: "600",
                         marginBottom: 12,
-                        color: isMemorialMode ? COLORS.gray[300] : COLORS.gray[700],
+                        color: isDarkMode ? COLORS.gray[300] : COLORS.gray[700],
                     }}>
                         댓글 {comments.length}
                     </Text>
@@ -461,8 +463,8 @@ export default function PostDetailScreen() {
                         style={[
                             styles.commentInput,
                             {
-                                backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100],
-                                color: isMemorialMode ? COLORS.white : COLORS.gray[900],
+                                backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100],
+                                color: isDarkMode ? COLORS.white : COLORS.gray[900],
                             },
                         ]}
                         placeholder="댓글 입력..."
@@ -507,7 +509,7 @@ function CommentItem({ comment, isMemorialMode }: { comment: Comment; isMemorial
                     <Text style={{
                         fontSize: 12,
                         fontWeight: "600",
-                        color: isMemorialMode ? COLORS.white : COLORS.gray[800],
+                        color: isDarkMode ? COLORS.white : COLORS.gray[800],
                     }}>
                         {comment.author}
                     </Text>
@@ -516,7 +518,7 @@ function CommentItem({ comment, isMemorialMode }: { comment: Comment; isMemorial
                 <Text style={{
                     fontSize: 14,
                     lineHeight: 20,
-                    color: isMemorialMode ? COLORS.gray[300] : COLORS.gray[700],
+                    color: isDarkMode ? COLORS.gray[300] : COLORS.gray[700],
                 }}>
                     {comment.content}
                 </Text>

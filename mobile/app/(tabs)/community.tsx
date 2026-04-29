@@ -21,6 +21,7 @@ import { useRouter } from "expo-router";
 import { API_BASE_URL } from "@/config/constants";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { CommunityPost, CommunitySubcategory } from "@/types";
 import { COLORS } from "@/lib/theme";
 import AppHeader from "@/components/common/AppHeader";
@@ -64,6 +65,7 @@ export default function CommunityScreen() {
     const insets = useSafeAreaInsets();
     const { session } = useAuth();
     const { isMemorialMode } = usePet();
+    const { isDarkMode } = useDarkMode();
     const [activeTab, setActiveTab] = useState<CommunitySubcategory>("free");
     const [posts, setPosts] = useState<CommunityPost[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -139,7 +141,7 @@ export default function CommunityScreen() {
         || (p.content ?? "").toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.gray[50];
+    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.gray[50];
 
     return (
         <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
@@ -148,18 +150,18 @@ export default function CommunityScreen() {
             {/* 헤더 + 검색 */}
             <View style={styles.headerWrap}>
                 <View style={styles.headerRow}>
-                    <Text style={[styles.title, { color: isMemorialMode ? COLORS.white : COLORS.gray[900] }]}>
+                    <Text style={[styles.title, { color: isDarkMode ? COLORS.white : COLORS.gray[900] }]}>
                         커뮤니티
                     </Text>
                 </View>
 
                 <View style={[styles.searchBar, {
-                    backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.white,
-                    borderColor: isMemorialMode ? COLORS.gray[700] : COLORS.gray[200],
+                    backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.white,
+                    borderColor: isDarkMode ? COLORS.gray[700] : COLORS.gray[200],
                 }]}>
                     <Ionicons name="search-outline" size={18} color={COLORS.gray[400]} />
                     <TextInput
-                        style={[styles.searchInput, { color: isMemorialMode ? COLORS.white : COLORS.gray[900] }]}
+                        style={[styles.searchInput, { color: isDarkMode ? COLORS.white : COLORS.gray[900] }]}
                         placeholder="게시글 검색..."
                         placeholderTextColor={COLORS.gray[400]}
                         value={searchQuery}
@@ -182,8 +184,8 @@ export default function CommunityScreen() {
             >
                 {SUBCATEGORIES.map((cat) => {
                     const active = activeTab === cat.id;
-                    const inactiveBg = isMemorialMode ? COLORS.gray[800] : COLORS.gray[100];
-                    const inactiveColor = isMemorialMode ? COLORS.gray[300] : COLORS.gray[700];
+                    const inactiveBg = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
+                    const inactiveColor = isDarkMode ? COLORS.gray[300] : COLORS.gray[700];
                     return (
                         <TouchableOpacity
                             key={cat.id}
@@ -274,8 +276,8 @@ function PostCard({ post, isMemorialMode, onPress }: {
             onPress={onPress}
             activeOpacity={0.85}
             style={[styles.card, {
-                backgroundColor: isMemorialMode ? COLORS.gray[900] : COLORS.white,
-                borderColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100],
+                backgroundColor: isDarkMode ? COLORS.gray[900] : COLORS.white,
+                borderColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100],
             }]}
         >
             <View style={styles.cardBody}>
@@ -286,14 +288,14 @@ function PostCard({ post, isMemorialMode, onPress }: {
                 ) : null}
 
                 <Text style={[styles.cardTitle, {
-                    color: isMemorialMode ? COLORS.white : COLORS.gray[900],
+                    color: isDarkMode ? COLORS.white : COLORS.gray[900],
                 }]} numberOfLines={2}>
                     {post.title}
                 </Text>
 
                 {post.preview ? (
                     <Text style={[styles.cardPreview, {
-                        color: isMemorialMode ? COLORS.gray[400] : COLORS.gray[600],
+                        color: isDarkMode ? COLORS.gray[400] : COLORS.gray[600],
                     }]} numberOfLines={2}>
                         {post.preview}
                     </Text>

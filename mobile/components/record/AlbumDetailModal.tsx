@@ -10,6 +10,7 @@
  */
 
 import { useState } from "react";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import {
     View, Text, Modal, TouchableOpacity, Image,
     ScrollView, StyleSheet,
@@ -42,19 +43,20 @@ interface Props {
 }
 
 export default function AlbumDetailModal({ album, visible, onClose, isMemorialMode }: Props) {
+    const { isDarkMode } = useDarkMode();
     const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
     if (!album) return null;
 
-    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.gray[50];
-    const cardBg = isMemorialMode ? COLORS.gray[900] : "#fff";
+    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.gray[50];
+    const cardBg = isDarkMode ? COLORS.gray[900] : "#fff";
     const titleColor = isMemorialMode ? "#fff" : COLORS.gray[900];
-    const subColor = isMemorialMode ? COLORS.gray[300] : COLORS.gray[600];
+    const subColor = isDarkMode ? COLORS.gray[300] : COLORS.gray[600];
 
     return (
         <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
             <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
-                <View style={[styles.header, { borderBottomColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100] }]}>
+                <View style={[styles.header, { borderBottomColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100] }]}>
                     <TouchableOpacity onPress={onClose} hitSlop={8} style={styles.headerBtn}>
                         <Ionicons name="close" size={22} color={titleColor} />
                     </TouchableOpacity>

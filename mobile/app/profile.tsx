@@ -12,6 +12,7 @@ import { Stack, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { COLORS } from "@/lib/theme";
 import AppHeader from "@/components/common/AppHeader";
 
@@ -19,6 +20,7 @@ export default function ProfileScreen() {
     const router = useRouter();
     const { user, profile, isPremium, points, signOut } = useAuth();
     const { pets, isMemorialMode } = usePet();
+    const { isDarkMode } = useDarkMode();
     const [signingOut, setSigningOut] = useState(false);
 
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
@@ -43,14 +45,14 @@ export default function ProfileScreen() {
         ]);
     }
 
-    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.gray[50];
+    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.gray[50];
 
     return (
         <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
             <Stack.Screen options={{ headerShown: false }} />
             <AppHeader showBack title="프로필" hideActions />
             <ScrollView style={styles.flex1} showsVerticalScrollIndicator={false}>
-            <View style={[styles.headerCard, { backgroundColor: isMemorialMode ? COLORS.gray[900] : COLORS.white }]}>
+            <View style={[styles.headerCard, { backgroundColor: isDarkMode ? COLORS.gray[900] : COLORS.white }]}>
                 {profile?.avatar ? (
                     <Image source={{ uri: profile.avatar }} style={styles.avatar} />
                 ) : (
@@ -58,7 +60,7 @@ export default function ProfileScreen() {
                         <Ionicons name="person" size={36} color={accentColor} />
                     </View>
                 )}
-                <Text style={{ fontSize: 18, fontWeight: "bold", color: isMemorialMode ? COLORS.white : COLORS.gray[900] }}>
+                <Text style={{ fontSize: 18, fontWeight: "bold", color: isDarkMode ? COLORS.white : COLORS.gray[900] }}>
                     {nickname}
                 </Text>
                 <Text style={{ fontSize: 14, color: COLORS.gray[400], marginTop: 2 }}>{email}</Text>
@@ -153,7 +155,7 @@ export default function ProfileScreen() {
                 <View style={styles.versionRow}>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
                         <Ionicons name="information-circle-outline" size={22} color={COLORS.gray[500]} />
-                        <Text style={{ fontSize: 14, color: isMemorialMode ? COLORS.gray[300] : COLORS.gray[700] }}>버전</Text>
+                        <Text style={{ fontSize: 14, color: isDarkMode ? COLORS.gray[300] : COLORS.gray[700] }}>버전</Text>
                     </View>
                     <Text style={{ fontSize: 14, color: COLORS.gray[400] }}>1.0.0</Text>
                 </View>
@@ -165,7 +167,7 @@ export default function ProfileScreen() {
                     disabled={signingOut}
                     style={[
                         styles.signoutBtn,
-                        { backgroundColor: isMemorialMode ? "#1F0000" : COLORS.red[50] },
+                        { backgroundColor: isDarkMode ? "#1F0000" : COLORS.red[50] },
                     ]}
                 >
                     {signingOut ? (
@@ -200,7 +202,7 @@ function SectionCard({ title, children, isMemorialMode }: {
             </Text>
             <View style={[
                 styles.sectionCardInner,
-                { backgroundColor: isMemorialMode ? COLORS.gray[900] : COLORS.white },
+                { backgroundColor: isDarkMode ? COLORS.gray[900] : COLORS.white },
             ]}>
                 {children}
             </View>
@@ -222,7 +224,7 @@ function SettingsRow({ icon, label, sublabel, onPress, isMemorialMode, labelColo
             activeOpacity={0.7}
             style={[
                 styles.settingsRow,
-                { borderBottomColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[50] },
+                { borderBottomColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[50] },
             ]}
         >
             <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
@@ -230,7 +232,7 @@ function SettingsRow({ icon, label, sublabel, onPress, isMemorialMode, labelColo
                 <View>
                     <Text style={{
                         fontSize: 14,
-                        color: labelColor ?? (isMemorialMode ? COLORS.gray[50] : COLORS.gray[900]),
+                        color: labelColor ?? (isDarkMode ? COLORS.gray[50] : COLORS.gray[900]),
                     }}>
                         {label}
                     </Text>

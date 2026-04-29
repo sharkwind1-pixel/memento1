@@ -5,6 +5,7 @@
  * 펫 종류에 맞는 퀴즈만 필터.
  */
 
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,6 +20,7 @@ const QUIZ_ICON_MAP: Record<string, React.ComponentProps<typeof Ionicons>["name"
 };
 
 export default function QuizSection() {
+    const { isDarkMode } = useDarkMode();
     const { selectedPet } = usePet();
     const [activeQuiz, setActiveQuiz] = useState<PetQuiz | null>(null);
 
@@ -35,7 +37,7 @@ export default function QuizSection() {
     return (
         <View style={styles.section}>
             <View style={styles.header}>
-                <Text style={styles.title}>자가진단</Text>
+                <Text style={[styles.title, isDarkMode && { color: COLORS.white }]}>자가진단</Text>
                 <Text style={styles.subtitle}>우리 아이 건강 체크</Text>
             </View>
 

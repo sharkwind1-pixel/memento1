@@ -13,6 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { COLORS } from "@/lib/theme";
 import PetSwitcher from "@/components/common/PetSwitcher";
 
@@ -37,6 +38,7 @@ export default function MinihompyScreen() {
     const router = useRouter();
     const { points } = useAuth();
     const { selectedPet, isMemorialMode } = usePet();
+    const { isDarkMode } = useDarkMode();
     const [touchCount, setTouchCount] = useState(0);
     const [message, setMessage] = useState<string | null>(null);
     const [messageTimer, setMessageTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
@@ -55,14 +57,14 @@ export default function MinihompyScreen() {
         setMessageTimer(timer);
     }
 
-    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.white;
-    const stageBg = isMemorialMode ? "#0F172A" : COLORS.memento[100];
+    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.white;
+    const stageBg = isDarkMode ? "#0F172A" : COLORS.memento[100];
 
     return (
         <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
             <ScrollView style={styles.flex1} showsVerticalScrollIndicator={false}>
                 <View style={styles.headerRow}>
-                    <Text style={[styles.title, { color: isMemorialMode ? COLORS.white : COLORS.gray[900] }]}>
+                    <Text style={[styles.title, { color: isDarkMode ? COLORS.white : COLORS.gray[900] }]}>
                         미니홈피
                     </Text>
                     <View style={styles.pointPill}>
@@ -80,18 +82,18 @@ export default function MinihompyScreen() {
 
                 <View style={[styles.stage, { backgroundColor: stageBg }]}>
                     {message && (
-                        <View style={[styles.speechBubble, { backgroundColor: isMemorialMode ? COLORS.gray[800] : "#fff" }]}>
+                        <View style={[styles.speechBubble, { backgroundColor: isDarkMode ? COLORS.gray[800] : "#fff" }]}>
                             <Text style={{
                                 fontSize: 14,
                                 fontWeight: "500",
-                                color: isMemorialMode ? COLORS.white : COLORS.gray[800],
+                                color: isDarkMode ? COLORS.white : COLORS.gray[800],
                             }}>
                                 {message}
                             </Text>
                             <View
                                 style={[
                                     styles.speechTail,
-                                    { borderTopColor: isMemorialMode ? COLORS.gray[800] : "#fff" },
+                                    { borderTopColor: isDarkMode ? COLORS.gray[800] : "#fff" },
                                 ]}
                             />
                         </View>
@@ -111,7 +113,7 @@ export default function MinihompyScreen() {
                             <View style={[
                                 styles.minimiImg,
                                 styles.minimiImgFallback,
-                                { backgroundColor: isMemorialMode ? COLORS.gray[800] : "#B3EDFF" },
+                                { backgroundColor: isDarkMode ? COLORS.gray[800] : "#B3EDFF" },
                             ]}>
                                 <Text style={{ fontSize: 48 }}>
                                     {selectedPet?.type === "강아지" ? "🐶"
@@ -124,7 +126,7 @@ export default function MinihompyScreen() {
                             fontSize: 14,
                             fontWeight: "600",
                             marginTop: 8,
-                            color: isMemorialMode ? COLORS.white : COLORS.gray[700],
+                            color: isDarkMode ? COLORS.white : COLORS.gray[700],
                         }}>
                             {selectedPet?.name ?? "미니미"}
                         </Text>
@@ -146,7 +148,7 @@ export default function MinihompyScreen() {
                         fontSize: 14,
                         fontWeight: "600",
                         marginBottom: 12,
-                        color: isMemorialMode ? COLORS.gray[400] : COLORS.gray[500],
+                        color: isDarkMode ? COLORS.gray[400] : COLORS.gray[500],
                     }}>
                         꾸미기
                     </Text>
@@ -183,11 +185,11 @@ export default function MinihompyScreen() {
                         fontSize: 14,
                         fontWeight: "600",
                         marginBottom: 12,
-                        color: isMemorialMode ? COLORS.gray[400] : COLORS.gray[500],
+                        color: isDarkMode ? COLORS.gray[400] : COLORS.gray[500],
                     }}>
                         방문록
                     </Text>
-                    <View style={[styles.guestbook, { backgroundColor: isMemorialMode ? COLORS.gray[900] : COLORS.gray[50] }]}>
+                    <View style={[styles.guestbook, { backgroundColor: isDarkMode ? COLORS.gray[900] : COLORS.gray[50] }]}>
                         <Ionicons name="chatbubbles-outline" size={32} color={COLORS.gray[300]} />
                         <Text style={{
                             fontSize: 14,
@@ -215,7 +217,7 @@ function DecoCard({ icon, label, color, bgColor, isMemorialMode, onPress }: {
         <TouchableOpacity
             onPress={onPress}
             activeOpacity={0.8}
-            style={[styles.decoCard, { backgroundColor: isMemorialMode ? COLORS.gray[900] : bgColor }]}
+            style={[styles.decoCard, { backgroundColor: isDarkMode ? COLORS.gray[900] : bgColor }]}
         >
             <View style={[styles.decoIconBg, { backgroundColor: color + "20" }]}>
                 <Ionicons name={icon} size={20} color={color} />
@@ -224,7 +226,7 @@ function DecoCard({ icon, label, color, bgColor, isMemorialMode, onPress }: {
                 fontSize: 12,
                 fontWeight: "500",
                 textAlign: "center",
-                color: isMemorialMode ? COLORS.gray[400] : COLORS.gray[600],
+                color: isDarkMode ? COLORS.gray[400] : COLORS.gray[600],
             }}>
                 {label}
             </Text>

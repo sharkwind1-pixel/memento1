@@ -20,6 +20,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { COLORS } from "@/lib/theme";
 import AppDrawer from "@/components/common/AppDrawer";
 import HeroSection from "@/components/home/HeroSection";
@@ -39,6 +40,7 @@ export default function HomeScreen() {
     const router = useRouter();
     const { session } = useAuth();
     const { selectedPet, isMemorialMode, refreshPets } = usePet();
+    const { isDarkMode } = useDarkMode();
     const [refreshing, setRefreshing] = useState(false);
     const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -51,7 +53,7 @@ export default function HomeScreen() {
         }
     }, [refreshPets]);
 
-    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.gray[50];
+    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.gray[50];
 
     return (
         <SafeAreaView edges={["top"]} style={[styles.container, { backgroundColor: bgColor }]}>

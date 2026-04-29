@@ -7,6 +7,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -20,6 +21,7 @@ import { computeQuestState, type QuestDef } from "@/data/quests";
 const HIDE_KEY = "memento-quest-card-hidden";
 
 export default function QuestCard() {
+    const { isDarkMode } = useDarkMode();
     const router = useRouter();
     const { session } = useAuth();
     const { isMemorialMode } = usePet();
@@ -128,7 +130,7 @@ export default function QuestCard() {
                 </View>
                 <View style={{ flex: 1 }}>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                        <Text style={styles.title}>{titleText}</Text>
+                        <Text style={[styles.title, isDarkMode && { color: COLORS.white }]}>{titleText}</Text>
                         <Text style={[styles.percent, { color: accent }]}>{percent}%</Text>
                     </View>
                     <Text style={styles.subtitle}>{subtitleText}</Text>

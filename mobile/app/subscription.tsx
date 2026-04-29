@@ -9,6 +9,7 @@ import { Stack } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { PRICING } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
 import AppHeader from "@/components/common/AppHeader";
@@ -65,6 +66,7 @@ const PLANS: Plan[] = [
 export default function SubscriptionScreen() {
     const { isPremium, profile } = useAuth();
     const { isMemorialMode } = usePet();
+    const { isDarkMode } = useDarkMode();
 
     function openWebPayment() {
         Linking.openURL("https://mementoani.com?tab=home#subscription");
@@ -80,7 +82,7 @@ export default function SubscriptionScreen() {
         ? new Date(expiresAt).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })
         : null;
 
-    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.gray[50];
+    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.gray[50];
 
     return (
         <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
@@ -95,7 +97,7 @@ export default function SubscriptionScreen() {
                 fontSize: 20,
                 fontWeight: "bold",
                 marginBottom: 4,
-                color: isMemorialMode ? COLORS.white : COLORS.gray[900],
+                color: isDarkMode ? COLORS.white : COLORS.gray[900],
             }}>
                 구독 플랜
             </Text>
@@ -104,11 +106,11 @@ export default function SubscriptionScreen() {
             </Text>
 
             {isPremium && expiresText && (
-                <View style={[styles.expiresCard, { backgroundColor: isMemorialMode ? COLORS.gray[900] : COLORS.memento[50] }]}>
+                <View style={[styles.expiresCard, { backgroundColor: isDarkMode ? COLORS.gray[900] : COLORS.memento[50] }]}>
                     <Ionicons name="calendar-outline" size={18} color={COLORS.memento[500]} />
                     <View style={{ flex: 1 }}>
                         <Text style={{ fontSize: 12, color: COLORS.gray[500] }}>현재 구독 만료일</Text>
-                        <Text style={{ fontSize: 14, fontWeight: "700", color: isMemorialMode ? COLORS.white : COLORS.gray[900], marginTop: 2 }}>
+                        <Text style={{ fontSize: 14, fontWeight: "700", color: isDarkMode ? COLORS.white : COLORS.gray[900], marginTop: 2 }}>
                             {expiresText}
                         </Text>
                     </View>
@@ -130,11 +132,11 @@ export default function SubscriptionScreen() {
                         style={[
                             styles.planCard,
                             {
-                                backgroundColor: isMemorialMode ? COLORS.gray[900] : COLORS.white,
+                                backgroundColor: isDarkMode ? COLORS.gray[900] : COLORS.white,
                                 borderWidth: plan.popular ? 2 : 1,
                                 borderColor: plan.popular
                                     ? plan.color
-                                    : isMemorialMode ? COLORS.gray[800] : COLORS.gray[100],
+                                    : isDarkMode ? COLORS.gray[800] : COLORS.gray[100],
                             },
                         ]}
                     >
@@ -149,7 +151,7 @@ export default function SubscriptionScreen() {
                                     <Text style={{
                                         fontSize: 18,
                                         fontWeight: "bold",
-                                        color: isCurrentPlan ? plan.color : (isMemorialMode ? COLORS.white : COLORS.gray[900]),
+                                        color: isCurrentPlan ? plan.color : (isDarkMode ? COLORS.white : COLORS.gray[900]),
                                     }}>
                                         {plan.name}
                                     </Text>
@@ -169,7 +171,7 @@ export default function SubscriptionScreen() {
                             {plan.features.map((f, i) => (
                                 <View key={i} style={styles.featureRow}>
                                     <Ionicons name="checkmark-circle" size={16} color={plan.color} />
-                                    <Text style={{ fontSize: 14, color: isMemorialMode ? COLORS.gray[300] : COLORS.gray[600] }}>
+                                    <Text style={{ fontSize: 14, color: isDarkMode ? COLORS.gray[300] : COLORS.gray[600] }}>
                                         {f}
                                     </Text>
                                 </View>
@@ -191,14 +193,14 @@ export default function SubscriptionScreen() {
                 );
             })}
 
-            <View style={[styles.notice, { backgroundColor: isMemorialMode ? COLORS.gray[900] : COLORS.memento[50] }]}>
+            <View style={[styles.notice, { backgroundColor: isDarkMode ? COLORS.gray[900] : COLORS.memento[50] }]}>
                 <View style={{ flexDirection: "row", gap: 8, alignItems: "flex-start" }}>
                     <Ionicons name="information-circle-outline" size={18} color={COLORS.memento[500]} style={{ marginTop: 1 }} />
                     <Text style={{
                         fontSize: 12,
                         lineHeight: 20,
                         flex: 1,
-                        color: isMemorialMode ? COLORS.gray[400] : COLORS.gray[500],
+                        color: isDarkMode ? COLORS.gray[400] : COLORS.gray[500],
                     }}>
                         현재 앱 내 결제는 준비 중입니다. 구독을 원하시면 웹(mementoani.com)에서 결제해주세요. 결제 후 동일한 계정으로 로그인하면 앱에서도 프리미엄 혜택이 적용됩니다.
                     </Text>

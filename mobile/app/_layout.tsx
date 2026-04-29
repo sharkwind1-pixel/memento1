@@ -7,10 +7,12 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PetProvider } from "@/contexts/PetContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 export default function RootLayout() {
     return (
         <SafeAreaProvider>
+            <ThemeProvider>
             <AuthProvider>
                 <PetProvider>
                     <Stack screenOptions={{ headerShown: false }}>
@@ -34,6 +36,7 @@ export default function RootLayout() {
                     <StatusBar style="auto" />
                 </PetProvider>
             </AuthProvider>
+            </ThemeProvider>
         </SafeAreaProvider>
     );
 }

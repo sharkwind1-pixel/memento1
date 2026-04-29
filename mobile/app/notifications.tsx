@@ -10,6 +10,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { API_BASE_URL } from "@/config/constants";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { COLORS } from "@/lib/theme";
 import AppHeader from "@/components/common/AppHeader";
 
@@ -42,6 +43,7 @@ export default function NotificationsScreen() {
     const router = useRouter();
     const { session } = useAuth();
     const { isMemorialMode } = usePet();
+    const { isDarkMode } = useDarkMode();
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selected, setSelected] = useState<Notification | null>(null);
@@ -115,7 +117,7 @@ export default function NotificationsScreen() {
         setSelected(n);
     }
 
-    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.white;
+    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.white;
 
     if (isLoading) {
         return (
@@ -154,7 +156,7 @@ export default function NotificationsScreen() {
                                 onPress={() => handlePress(item)}
                                 style={[
                                     styles.row,
-                                    { borderBottomColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100] },
+                                    { borderBottomColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100] },
                                 ]}
                             >
                                 <View
@@ -175,7 +177,7 @@ export default function NotificationsScreen() {
                                         <Text style={{
                                             fontSize: 14,
                                             fontWeight: "600",
-                                            color: isMemorialMode ? COLORS.white : COLORS.gray[900],
+                                            color: isDarkMode ? COLORS.white : COLORS.gray[900],
                                             flexShrink: 1,
                                         }}>
                                             {item.title}
@@ -185,7 +187,7 @@ export default function NotificationsScreen() {
                                         fontSize: 12,
                                         marginTop: 2,
                                         lineHeight: 16,
-                                        color: isMemorialMode ? COLORS.gray[400] : COLORS.gray[500],
+                                        color: isDarkMode ? COLORS.gray[400] : COLORS.gray[500],
                                     }} numberOfLines={2}>
                                         {item.body}
                                     </Text>
@@ -207,7 +209,7 @@ export default function NotificationsScreen() {
                 onRequestClose={() => setSelected(null)}
             >
                 <View style={styles.modalBackdrop}>
-                    <View style={[styles.modalSheet, { backgroundColor: isMemorialMode ? COLORS.gray[900] : "#fff" }]}>
+                    <View style={[styles.modalSheet, { backgroundColor: isDarkMode ? COLORS.gray[900] : "#fff" }]}>
                         <View style={styles.modalHeader}>
                             <Text style={[styles.modalTitle, { color: isMemorialMode ? "#fff" : COLORS.gray[900] }]} numberOfLines={2}>
                                 {selected?.title}
@@ -220,7 +222,7 @@ export default function NotificationsScreen() {
                         <ScrollView style={{ maxHeight: 400 }} contentContainerStyle={{ paddingVertical: 8 }}>
                             <Text style={[
                                 styles.modalBody,
-                                { color: isMemorialMode ? COLORS.gray[200] : COLORS.gray[700] },
+                                { color: isDarkMode ? COLORS.gray[200] : COLORS.gray[700] },
                             ]}>
                                 {selected?.body}
                             </Text>

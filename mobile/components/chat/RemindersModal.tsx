@@ -19,6 +19,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@/contexts/AuthContext";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { API_BASE_URL } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
 
@@ -55,6 +56,7 @@ const REMINDER_TYPES = [
 
 export default function RemindersModal({ visible, onClose, petId, petName, accentColor, isMemorialMode }: Props) {
     const { session } = useAuth();
+    const { isDarkMode } = useDarkMode();
     const [reminders, setReminders] = useState<Reminder[]>([]);
     const [loading, setLoading] = useState(true);
     const [adding, setAdding] = useState(false);
@@ -180,15 +182,15 @@ export default function RemindersModal({ visible, onClose, petId, petName, accen
         ]);
     }
 
-    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.gray[50];
-    const cardBg = isMemorialMode ? COLORS.gray[900] : "#fff";
+    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.gray[50];
+    const cardBg = isDarkMode ? COLORS.gray[900] : "#fff";
     const titleColor = isMemorialMode ? "#fff" : COLORS.gray[900];
-    const subColor = isMemorialMode ? COLORS.gray[300] : COLORS.gray[600];
+    const subColor = isDarkMode ? COLORS.gray[300] : COLORS.gray[600];
 
     return (
         <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
             <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
-                <View style={[styles.header, { borderBottomColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100] }]}>
+                <View style={[styles.header, { borderBottomColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100] }]}>
                     <TouchableOpacity onPress={onClose} hitSlop={8} style={styles.headerBtn}>
                         <Ionicons name="close" size={22} color={titleColor} />
                     </TouchableOpacity>
@@ -243,7 +245,7 @@ export default function RemindersModal({ visible, onClose, petId, petName, accen
                             style={[styles.input, {
                                 backgroundColor: cardBg,
                                 color: titleColor,
-                                borderColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[200],
+                                borderColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[200],
                             }]}
                             maxLength={100}
                         />
@@ -257,7 +259,7 @@ export default function RemindersModal({ visible, onClose, petId, petName, accen
                             style={[styles.input, {
                                 backgroundColor: cardBg,
                                 color: titleColor,
-                                borderColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[200],
+                                borderColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[200],
                             }]}
                             maxLength={5}
                             keyboardType={Platform.OS === "ios" ? "numbers-and-punctuation" : "default"}

@@ -10,6 +10,7 @@
  */
 
 import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -22,6 +23,7 @@ interface Props {
 }
 
 export default function HeroSection({ session, isMemorialMode }: Props) {
+    const { isDarkMode } = useDarkMode();
     const router = useRouter();
 
     const gradientColors = isMemorialMode

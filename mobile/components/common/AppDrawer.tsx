@@ -9,13 +9,14 @@
 import { useEffect, useRef, useState } from "react";
 import {
     Modal, View, Text, TouchableOpacity, Animated, Dimensions,
-    Pressable, StyleSheet, ScrollView, Image,
+    Pressable, StyleSheet, ScrollView, Image, Switch,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { COLORS } from "@/lib/theme";
 
 const { width: SCREEN_W } = Dimensions.get("window");
@@ -60,6 +61,7 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
     const router = useRouter();
     const { user, profile, points, isPremium, signOut } = useAuth();
     const { isMemorialMode } = usePet();
+    const { isDarkMode, toggleTheme } = useDarkMode();
     const [communityExpanded, setCommunityExpanded] = useState(false);
 
     const slideAnim = useRef(new Animated.Value(-DRAWER_W)).current;
@@ -122,7 +124,7 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
                         {
                             width: DRAWER_W,
                             transform: [{ translateX: slideAnim }],
-                            backgroundColor: isMemorialMode ? COLORS.gray[950] : COLORS.white,
+                            backgroundColor: isDarkMode ? COLORS.gray[950] : COLORS.white,
                         },
                     ]}
                 >
@@ -174,9 +176,9 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
                                         style={styles.menuItem}
                                         activeOpacity={0.7}
                                     >
-                                        <Ionicons name={m.icon} size={20} color={isMemorialMode ? COLORS.gray[300] : COLORS.gray[600]} />
+                                        <Ionicons name={m.icon} size={20} color={isDarkMode ? COLORS.gray[300] : COLORS.gray[600]} />
                                         <Text style={[styles.menuLabel, {
-                                            color: isMemorialMode ? COLORS.gray[200] : COLORS.gray[800],
+                                            color: isDarkMode ? COLORS.gray[200] : COLORS.gray[800],
                                         }]}>
                                             {m.label}
                                         </Text>
@@ -201,7 +203,7 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
                                                 >
                                                     <Ionicons name={s.icon} size={16} color={s.color} />
                                                     <Text style={[styles.subMenuLabel, {
-                                                        color: isMemorialMode ? COLORS.gray[300] : COLORS.gray[700],
+                                                        color: isDarkMode ? COLORS.gray[300] : COLORS.gray[700],
                                                     }]}>
                                                         {s.label}
                                                     </Text>
@@ -220,9 +222,9 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
                                 style={styles.menuItem}
                                 activeOpacity={0.7}
                             >
-                                <Ionicons name="person-circle-outline" size={20} color={isMemorialMode ? COLORS.gray[300] : COLORS.gray[600]} />
+                                <Ionicons name="person-circle-outline" size={20} color={isDarkMode ? COLORS.gray[300] : COLORS.gray[600]} />
                                 <Text style={[styles.menuLabel, {
-                                    color: isMemorialMode ? COLORS.gray[200] : COLORS.gray[800],
+                                    color: isDarkMode ? COLORS.gray[200] : COLORS.gray[800],
                                 }]}>프로필</Text>
                                 <Ionicons name="chevron-forward" size={16} color={COLORS.gray[400]} />
                             </TouchableOpacity>
@@ -231,9 +233,9 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
                                 style={styles.menuItem}
                                 activeOpacity={0.7}
                             >
-                                <Ionicons name="card-outline" size={20} color={isMemorialMode ? COLORS.gray[300] : COLORS.gray[600]} />
+                                <Ionicons name="card-outline" size={20} color={isDarkMode ? COLORS.gray[300] : COLORS.gray[600]} />
                                 <Text style={[styles.menuLabel, {
-                                    color: isMemorialMode ? COLORS.gray[200] : COLORS.gray[800],
+                                    color: isDarkMode ? COLORS.gray[200] : COLORS.gray[800],
                                 }]}>구독 관리</Text>
                                 <Ionicons name="chevron-forward" size={16} color={COLORS.gray[400]} />
                             </TouchableOpacity>
@@ -242,9 +244,9 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
                                 style={styles.menuItem}
                                 activeOpacity={0.7}
                             >
-                                <Ionicons name="notifications-outline" size={20} color={isMemorialMode ? COLORS.gray[300] : COLORS.gray[600]} />
+                                <Ionicons name="notifications-outline" size={20} color={isDarkMode ? COLORS.gray[300] : COLORS.gray[600]} />
                                 <Text style={[styles.menuLabel, {
-                                    color: isMemorialMode ? COLORS.gray[200] : COLORS.gray[800],
+                                    color: isDarkMode ? COLORS.gray[200] : COLORS.gray[800],
                                 }]}>알림</Text>
                                 <Ionicons name="chevron-forward" size={16} color={COLORS.gray[400]} />
                             </TouchableOpacity>

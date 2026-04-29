@@ -15,6 +15,7 @@ import * as ImagePicker from "expo-image-picker";
 import { API_BASE_URL } from "@/config/constants";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { CommunitySubcategory, PostTag } from "@/types";
 import { COLORS } from "@/lib/theme";
 import AppHeader from "@/components/common/AppHeader";
@@ -27,6 +28,7 @@ export default function WritePostScreen() {
     const { subcategory } = useLocalSearchParams<{ subcategory?: CommunitySubcategory }>();
     const { session } = useAuth();
     const { isMemorialMode } = usePet();
+    const { isDarkMode } = useDarkMode();
 
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
@@ -99,8 +101,8 @@ export default function WritePostScreen() {
         }
     }
 
-    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.white;
-    const borderColor = isMemorialMode ? COLORS.gray[800] : COLORS.gray[100];
+    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.white;
+    const borderColor = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
 
     return (
         <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
@@ -117,7 +119,7 @@ export default function WritePostScreen() {
                             fontSize: 12,
                             fontWeight: "500",
                             marginBottom: 8,
-                            color: isMemorialMode ? COLORS.gray[400] : COLORS.gray[500],
+                            color: isDarkMode ? COLORS.gray[400] : COLORS.gray[500],
                         }}>
                             말머리
                         </Text>
@@ -130,14 +132,14 @@ export default function WritePostScreen() {
                                         styles.tagPill,
                                         {
                                             backgroundColor: selectedTag === tag ? accentColor : "transparent",
-                                            borderColor: selectedTag === tag ? accentColor : (isMemorialMode ? COLORS.gray[700] : COLORS.gray[200]),
+                                            borderColor: selectedTag === tag ? accentColor : (isDarkMode ? COLORS.gray[700] : COLORS.gray[200]),
                                         },
                                     ]}
                                 >
                                     <Text style={{
                                         fontSize: 12,
                                         fontWeight: "500",
-                                        color: selectedTag === tag ? "#fff" : (isMemorialMode ? COLORS.gray[400] : COLORS.gray[500]),
+                                        color: selectedTag === tag ? "#fff" : (isDarkMode ? COLORS.gray[400] : COLORS.gray[500]),
                                     }}>
                                         {tag}
                                     </Text>
@@ -151,8 +153,8 @@ export default function WritePostScreen() {
                     style={[
                         styles.titleInput,
                         {
-                            color: isMemorialMode ? COLORS.white : COLORS.gray[900],
-                            borderBottomColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100],
+                            color: isDarkMode ? COLORS.white : COLORS.gray[900],
+                            borderBottomColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100],
                         },
                     ]}
                     placeholder="제목을 입력하세요"
@@ -165,7 +167,7 @@ export default function WritePostScreen() {
                 <TextInput
                     style={[
                         styles.contentInput,
-                        { color: isMemorialMode ? COLORS.gray[200] : COLORS.gray[700] },
+                        { color: isDarkMode ? COLORS.gray[200] : COLORS.gray[700] },
                     ]}
                     placeholder="내용을 입력하세요..."
                     placeholderTextColor={COLORS.gray[400]}

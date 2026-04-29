@@ -4,6 +4,7 @@
  */
 
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS, SPACING } from "@/lib/theme";
 
@@ -22,9 +23,10 @@ export default function SectionHeader({
     onAction,
     isMemorialMode,
 }: Props) {
+    const { isDarkMode } = useDarkMode();
     const accentColor = isMemorialMode ? COLORS.memorial[600] : COLORS.memento[600];
 
-    const titleColor = isMemorialMode ? COLORS.white : COLORS.gray[900];
+    const titleColor = isDarkMode ? COLORS.white : COLORS.gray[900];
 
     return (
         <View style={styles.container}>

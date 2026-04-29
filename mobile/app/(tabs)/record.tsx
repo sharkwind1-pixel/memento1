@@ -18,6 +18,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { API_BASE_URL } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
 import AppHeader from "@/components/common/AppHeader";
@@ -46,6 +47,7 @@ export default function RecordScreen() {
     const router = useRouter();
     const { user } = useAuth();
     const { selectedPet, isLoading: petsLoading, isMemorialMode, refreshPets } = usePet();
+    const { isDarkMode } = useDarkMode();
     const [activeTab, setActiveTab] = useState<TabType>("timeline");
     const [refreshing, setRefreshing] = useState(false);
     const [drawerOpen, setDrawerOpen] = useState(false);
@@ -69,7 +71,7 @@ export default function RecordScreen() {
         );
     }
 
-    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.gray[50];
+    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.gray[50];
 
     return (
         <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
@@ -78,7 +80,7 @@ export default function RecordScreen() {
             {/* 헤더 */}
             <View style={styles.headerRow}>
                 <View style={{ flex: 1 }}>
-                    <Text style={[styles.title, { color: isMemorialMode ? COLORS.white : COLORS.gray[900] }]}>
+                    <Text style={[styles.title, { color: isDarkMode ? COLORS.white : COLORS.gray[900] }]}>
                         {selectedPet ? `${selectedPet.name}의 기록` : "우리의 기록"}
                     </Text>
                     {selectedPet ? (
@@ -109,8 +111,8 @@ export default function RecordScreen() {
             >
                 {TABS.map((tab) => {
                     const active = activeTab === tab.id;
-                    const inactiveBg = isMemorialMode ? COLORS.gray[800] : COLORS.gray[100];
-                    const inactiveColor = isMemorialMode ? COLORS.gray[300] : COLORS.gray[700];
+                    const inactiveBg = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
+                    const inactiveColor = isDarkMode ? COLORS.gray[300] : COLORS.gray[700];
                     return (
                         <TouchableOpacity
                             key={tab.id}
@@ -146,7 +148,7 @@ export default function RecordScreen() {
                     <View style={[styles.emptyIcon, { backgroundColor: accentColor + "1a" }]}>
                         <Ionicons name="lock-closed-outline" size={32} color={accentColor} />
                     </View>
-                    <Text style={[styles.emptyTitle, { color: isMemorialMode ? COLORS.white : COLORS.gray[900] }]}>
+                    <Text style={[styles.emptyTitle, { color: isDarkMode ? COLORS.white : COLORS.gray[900] }]}>
                         로그인이 필요해요
                     </Text>
                     <Text style={styles.emptyHint}>
@@ -411,13 +413,13 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
                 }
                 renderItem={({ item }) => (
                     <View style={[styles.timelineItem, {
-                        backgroundColor: isMemorialMode ? COLORS.gray[900] : COLORS.white,
+                        backgroundColor: isDarkMode ? COLORS.gray[900] : COLORS.white,
                     }]}>
                         <View style={styles.timelineRow}>
                             <View style={{ flex: 1 }}>
                                 <Text style={styles.timelineDate}>{item.date}</Text>
                                 <Text style={[styles.timelineTitle, {
-                                    color: isMemorialMode ? COLORS.white : COLORS.gray[900],
+                                    color: isDarkMode ? COLORS.white : COLORS.gray[900],
                                 }]}>{item.title}</Text>
                             </View>
                             <View style={styles.timelineActions}>
@@ -747,14 +749,14 @@ function AlbumsTab({ petId, isMemorialMode, accentColor, refreshing, onRefresh }
                         activeOpacity={0.85}
                         onPress={() => setSelected(item)}
                         style={[styles.albumCard, {
-                            backgroundColor: isMemorialMode ? COLORS.gray[900] : COLORS.white,
+                            backgroundColor: isDarkMode ? COLORS.gray[900] : COLORS.white,
                         }]}
                     >
                         {item.coverImage ? (
                             <Image source={{ uri: item.coverImage }} style={styles.albumCover} resizeMode="cover" />
                         ) : (
                             <View style={[styles.albumCover, {
-                                backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100],
+                                backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100],
                                 alignItems: "center",
                                 justifyContent: "center",
                             }]}>
@@ -763,7 +765,7 @@ function AlbumsTab({ petId, isMemorialMode, accentColor, refreshing, onRefresh }
                         )}
                         <View style={{ padding: 12 }}>
                             <Text style={[styles.albumTitle, {
-                                color: isMemorialMode ? COLORS.white : COLORS.gray[800],
+                                color: isDarkMode ? COLORS.white : COLORS.gray[800],
                             }]} numberOfLines={1}>{item.title}</Text>
                             <Text style={styles.albumMeta}>{item.photoCount}장 · {item.createdAt.slice(0, 10)}</Text>
                         </View>
@@ -901,7 +903,7 @@ function VideosTab({ pet, isMemorialMode, accentColor, refreshing, onRefresh }: 
             }
             renderItem={({ item }) => (
                 <View style={[styles.videoCard, {
-                    backgroundColor: isMemorialMode ? COLORS.gray[900] : COLORS.white,
+                    backgroundColor: isDarkMode ? COLORS.gray[900] : COLORS.white,
                 }]}>
                     <View style={styles.videoHero}>
                         {item.thumbnailUrl ? (
@@ -929,7 +931,7 @@ function VideosTab({ pet, isMemorialMode, accentColor, refreshing, onRefresh }: 
                     </View>
                     <View style={{ padding: 12 }}>
                         <Text style={[styles.videoTitle, {
-                            color: isMemorialMode ? COLORS.white : COLORS.gray[800],
+                            color: isDarkMode ? COLORS.white : COLORS.gray[800],
                         }]} numberOfLines={2}>{item.prompt || "AI 영상"}</Text>
                         <Text style={styles.videoMeta}>{item.createdAt.slice(0, 10)} · {item.status}</Text>
                     </View>

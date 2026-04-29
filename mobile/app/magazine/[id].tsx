@@ -21,6 +21,7 @@ import * as Haptics from "expo-haptics";
 import { API_BASE_URL } from "@/config/constants";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { COLORS } from "@/lib/theme";
 
 interface ArticleDetail {
@@ -87,6 +88,7 @@ export default function MagazineReaderScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
     const { session } = useAuth();
     const { isMemorialMode } = usePet();
+    const { isDarkMode } = useDarkMode();
     const scrollRef = useRef<ScrollView>(null);
 
     const [article, setArticle] = useState<ArticleDetail | null>(null);
@@ -189,7 +191,7 @@ export default function MagazineReaderScreen() {
 
     if (isLoading) {
         return (
-            <SafeAreaView style={[styles.container, { backgroundColor: isMemorialMode ? COLORS.gray[950] : COLORS.white }]}>
+            <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode ? COLORS.gray[950] : COLORS.white }]}>
                 <View style={styles.center}>
                     <ActivityIndicator size="large" color={accentColor} />
                 </View>
@@ -199,7 +201,7 @@ export default function MagazineReaderScreen() {
 
     if (!article) {
         return (
-            <SafeAreaView style={[styles.container, { backgroundColor: isMemorialMode ? COLORS.gray[950] : COLORS.white }]}>
+            <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode ? COLORS.gray[950] : COLORS.white }]}>
                 <View style={styles.center}>
                     <Text style={{ color: COLORS.gray[500] }}>기사를 불러올 수 없습니다.</Text>
                 </View>
@@ -207,7 +209,7 @@ export default function MagazineReaderScreen() {
         );
     }
 
-    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.white;
+    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.white;
     const totalCards = cards.length;
     const progressPct = Math.min(100, Math.round(((currentCard + 1) / totalCards) * 100));
 
@@ -217,13 +219,13 @@ export default function MagazineReaderScreen() {
             {/* 상단 바: close + progress + share */}
             <View style={styles.topBar}>
                 <TouchableOpacity onPress={() => router.back()} hitSlop={8}>
-                    <Ionicons name="arrow-back" size={22} color={isMemorialMode ? COLORS.white : COLORS.gray[800]} />
+                    <Ionicons name="arrow-back" size={22} color={isDarkMode ? COLORS.white : COLORS.gray[800]} />
                 </TouchableOpacity>
                 <View style={styles.progressTrack}>
                     <View style={[styles.progressFill, { width: `${progressPct}%`, backgroundColor: accentColor }]} />
                 </View>
                 <TouchableOpacity onPress={handleShare} hitSlop={8}>
-                    <Ionicons name="share-outline" size={22} color={isMemorialMode ? COLORS.white : COLORS.gray[800]} />
+                    <Ionicons name="share-outline" size={22} color={isDarkMode ? COLORS.white : COLORS.gray[800]} />
                 </TouchableOpacity>
             </View>
 
@@ -274,7 +276,7 @@ export default function MagazineReaderScreen() {
                     disabled={currentCard === 0}
                     style={[styles.navBtn, currentCard === 0 && { opacity: 0.3 }]}
                 >
-                    <Ionicons name="chevron-back" size={20} color={isMemorialMode ? COLORS.white : COLORS.gray[800]} />
+                    <Ionicons name="chevron-back" size={20} color={isDarkMode ? COLORS.white : COLORS.gray[800]} />
                 </TouchableOpacity>
                 <TouchableOpacity
                     onPress={() => {
@@ -285,7 +287,7 @@ export default function MagazineReaderScreen() {
                     disabled={currentCard >= totalCards - 1}
                     style={[styles.navBtn, currentCard >= totalCards - 1 && { opacity: 0.3 }]}
                 >
-                    <Ionicons name="chevron-forward" size={20} color={isMemorialMode ? COLORS.white : COLORS.gray[800]} />
+                    <Ionicons name="chevron-forward" size={20} color={isDarkMode ? COLORS.white : COLORS.gray[800]} />
                 </TouchableOpacity>
             </View>
         </SafeAreaView>
@@ -316,7 +318,7 @@ function CoverCard({ article, isMemorialMode }: { article: ArticleDetail; isMemo
                 ) : null}
 
                 <Text style={[styles.coverTitle, {
-                    color: isMemorialMode ? COLORS.white : COLORS.gray[900],
+                    color: isDarkMode ? COLORS.white : COLORS.gray[900],
                 }]}>
                     {article.title}
                 </Text>
@@ -340,11 +342,11 @@ function SummaryCard({ article, isMemorialMode, accentColor }: { article: Articl
         >
             <Text style={[styles.cardLabel, { color: accentColor }]}>요약</Text>
             <View style={[styles.summaryBox, {
-                backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[50],
+                backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[50],
                 borderLeftColor: accentColor,
             }]}>
                 <Text style={[styles.summaryText, {
-                    color: isMemorialMode ? COLORS.gray[200] : COLORS.gray[700],
+                    color: isDarkMode ? COLORS.gray[200] : COLORS.gray[700],
                 }]}>
                     {article.summary}
                 </Text>
@@ -378,7 +380,7 @@ function BodyCard({ text, isMemorialMode, index }: { text: string; isMemorialMod
             contentContainerStyle={styles.cardScrollContent}
         >
             <Text style={[styles.bodyText, {
-                color: isMemorialMode ? COLORS.gray[200] : COLORS.gray[800],
+                color: isDarkMode ? COLORS.gray[200] : COLORS.gray[800],
             }]}>
                 {text}
             </Text>
@@ -402,7 +404,7 @@ function EndCard({ article, isMemorialMode, accentColor, isLiking, onLike, onBac
             <View style={styles.endTop}>
                 <Ionicons name="checkmark-circle" size={48} color={accentColor} />
                 <Text style={[styles.endTitle, {
-                    color: isMemorialMode ? COLORS.white : COLORS.gray[900],
+                    color: isDarkMode ? COLORS.white : COLORS.gray[900],
                 }]}>
                     읽어주셔서 감사해요
                 </Text>

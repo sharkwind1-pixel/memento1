@@ -5,6 +5,7 @@
  * 4초 자동 슬라이드. 사용자가 터치하면 5초간 일시 정지.
  */
 
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { useEffect, useRef, useState } from "react";
 import {
     View, Text, TouchableOpacity, ScrollView, Image,
@@ -32,6 +33,7 @@ const CARD_GAP = 16;
 const SLIDE_INTERVAL = 4000;
 
 export default function ShowcaseSection() {
+    const { isDarkMode } = useDarkMode();
     const router = useRouter();
     const [posts, setPosts] = useState<ShowcasePost[]>([]);
     const scrollRef = useRef<ScrollView>(null);
@@ -42,9 +44,17 @@ export default function ShowcaseSection() {
         (async () => {
             try {
                 const res = await fetch(`${API_BASE_URL}/api/posts?badge=자랑&limit=10`);
-                if (!res.ok) return;
+                if (!res.ok) {
+                    console.warn("[Showcase] fetch failed:", res.status);
+                    return;
+                }
                 const data = await res.json();
                 const list = Array.isArray(data?.posts) ? data.posts : [];
+                console.log("[Showcase] posts count:", list.length, "first:", list[0] && {
+                    id: list[0].id,
+                    imageUrls: list[0].imageUrls,
+                    videoUrl: list[0].videoUrl,
+                });
                 setPosts(list.map((p: Record<string, unknown>): ShowcasePost => ({
                     id: typeof p.id === "string" ? p.id : String(p.id ?? ""),
                     title: typeof p.title === "string" ? p.title : "",
@@ -111,7 +121,7 @@ export default function ShowcaseSection() {
                         <Ionicons name="star" size={18} color="#fff" />
                     </LinearGradient>
                     <View>
-                        <Text style={styles.title}>함께 보기</Text>
+                        <Text style={[styles.title, isDarkMode && { color: COLORS.white }]}>함께 보기</Text>
                         <Text style={styles.subtitle}>AI로 만든 우리 아이 영상</Text>
                     </View>
                 </View>

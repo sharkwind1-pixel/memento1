@@ -6,6 +6,7 @@
  */
 
 import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Pet } from "@/types";
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export default function PetCardSection({ pet, isMemorialMode }: Props) {
+    const { isDarkMode } = useDarkMode();
     const router = useRouter();
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
     const accentSoft = isMemorialMode ? COLORS.memorial[100] : COLORS.memento[100];
