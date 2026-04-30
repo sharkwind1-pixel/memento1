@@ -77,9 +77,13 @@ export default function CommunityPreview({ session, isMemorialMode }: Props) {
                 setPosts(list.map((raw: any): CommunityPostPreview => ({
                     id: raw?.id != null ? String(raw.id) : "",
                     title: typeof raw?.title === "string" ? raw.title : "",
-                    author: typeof raw?.author === "string"
-                        ? raw.author
-                        : typeof raw?.author_name === "string" ? raw.author_name : "익명",
+                    author: (typeof raw?.authorName === "string" && raw.authorName.trim())
+                        ? raw.authorName
+                        : (typeof raw?.author === "string" && raw.author.trim())
+                            ? raw.author
+                            : (typeof raw?.author_name === "string" && raw.author_name.trim())
+                                ? raw.author_name
+                                : "익명",
                     likes: typeof raw?.likes === "number" ? raw.likes : 0,
                     comments: typeof raw?.comments === "number"
                         ? raw.comments

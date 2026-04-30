@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { Video, ResizeMode } from "expo-av";
 import { useRouter } from "expo-router";
 import { API_BASE_URL } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
@@ -25,6 +26,7 @@ interface ShowcasePost {
     comments: number;
     imageUrls: string[];
     videoUrl: string | null;
+    thumbnailUrl: string | null;
     createdAt: string;
 }
 
@@ -58,9 +60,11 @@ export default function ShowcaseSection() {
                 setPosts(list.map((p: Record<string, unknown>): ShowcasePost => ({
                     id: typeof p.id === "string" ? p.id : String(p.id ?? ""),
                     title: typeof p.title === "string" ? p.title : "",
-                    authorName: typeof p.authorName === "string"
+                    authorName: (typeof p.authorName === "string" && p.authorName.trim())
                         ? p.authorName
-                        : (typeof p.author === "string" ? p.author : "익명"),
+                        : (typeof p.author_name === "string" && p.author_name.trim())
+                            ? p.author_name
+                            : (typeof p.author === "string" && p.author.trim() ? p.author : "익명"),
                     likes: typeof p.likes === "number" ? p.likes : 0,
                     comments: typeof p.comments === "number" ? p.comments : 0,
                     imageUrls: Array.isArray(p.imageUrls)
@@ -69,6 +73,9 @@ export default function ShowcaseSection() {
                             ? (p.images as unknown[]).filter((x): x is string => typeof x === "string")
                             : [],
                     videoUrl: typeof p.videoUrl === "string" ? p.videoUrl : null,
+                    thumbnailUrl: typeof p.thumbnailUrl === "string"
+                        ? p.thumbnailUrl
+                        : (typeof p.thumbnail_url === "string" ? p.thumbnail_url : null),
                     createdAt: typeof p.createdAt === "string"
                         ? p.createdAt
                         : (typeof p.created_at === "string" ? p.created_at : ""),
@@ -151,6 +158,7 @@ export default function ShowcaseSection() {
                     </View>
                 ) : posts.map((post) => {
                     const firstImage = post.imageUrls[0];
+                    // 우선순위: thumbnailUrl > firstImage > videoUrl(첫 프레임) > 폴백 그라데이션
                     return (
                         <TouchableOpacity
                             key={post.id}
@@ -159,15 +167,21 @@ export default function ShowcaseSection() {
                             activeOpacity={0.85}
                         >
                             <View style={styles.heroContainer}>
-                                {firstImage ? (
-                                    <Image source={{ uri: firstImage }} style={styles.heroImg} />
+                                {post.thumbnailUrl ? (
+                                    <Image source={{ uri: post.thumbnailUrl }} style={styles.heroImg} resizeMode="cover" />
+                                ) : firstImage ? (
+                                    <Image source={{ uri: firstImage }} style={styles.heroImg} resizeMode="cover" />
                                 ) : post.videoUrl ? (
-                                    <LinearGradient
-                                        colors={[COLORS.memorial[500], "#F97316"]}
+                                    // 영상 첫 프레임 표시 (paused + muted). iOS는 마운트 즉시,
+                                    // Android는 일부 코덱에서 검은 화면 가능 → 0.3초 지점으로 jump.
+                                    <Video
+                                        source={{ uri: post.videoUrl }}
                                         style={styles.heroImg}
-                                    >
-                                        <Ionicons name="videocam" size={48} color="rgba(255,255,255,0.6)" />
-                                    </LinearGradient>
+                                        resizeMode={ResizeMode.COVER}
+                                        shouldPlay={false}
+                                        isMuted
+                                        positionMillis={300}
+                                    />
                                 ) : (
                                     <LinearGradient
                                         colors={[COLORS.memorial[400], "#FBA74D"]}
@@ -178,7 +192,9 @@ export default function ShowcaseSection() {
                                 )}
                                 {post.videoUrl && (
                                     <View style={styles.playOverlay}>
-                                        <Ionicons name="play" size={20} color={COLORS.memorial[600]} />
+                                        <View style={styles.playCircle}>
+                                            <Ionicons name="play" size={22} color={COLORS.memorial[600]} />
+                                        </View>
                                     </View>
                                 )}
                                 <View style={styles.badge}>
@@ -256,6 +272,16 @@ const styles = StyleSheet.create({
         top: 0, left: 0, right: 0, bottom: 0,
         alignItems: "center",
         justifyContent: "center",
+    },
+    playCircle: {
+        width: 48, height: 48, borderRadius: 24,
+        backgroundColor: "rgba(255,255,255,0.92)",
+        alignItems: "center", justifyContent: "center",
+        shadowColor: "#000",
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        shadowOffset: { width: 0, height: 2 },
+        elevation: 4,
     },
     badge: {
         position: "absolute",
