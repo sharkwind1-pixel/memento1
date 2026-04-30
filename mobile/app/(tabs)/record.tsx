@@ -19,8 +19,10 @@ import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
 import { useDarkMode } from "@/contexts/ThemeContext";
-import { API_BASE_URL } from "@/config/constants";
+import { API_BASE_URL, VIDEO } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
+import type { TimelineEntry } from "@/types";
+import VideoResultModal, { type VideoResult } from "@/components/record/VideoResultModal";
 import AppHeader from "@/components/common/AppHeader";
 import AppDrawer from "@/components/common/AppDrawer";
 import PetSwitcher from "@/components/common/PetSwitcher";
@@ -223,16 +225,8 @@ export default function RecordScreen() {
 }
 
 // ============================================
-// 타임라인 탭
+// 타임라인 탭 — TimelineEntry는 @/types에서 import (CLAUDE.md 컨벤션)
 // ============================================
-interface TimelineEntry {
-    id: string;
-    type: string;
-    title: string;
-    content: string;
-    date: string;
-    photos: string[];
-}
 
 function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, onRefresh }: {
     petId: string;
@@ -786,15 +780,55 @@ function AlbumsTab({ petId, isMemorialMode, accentColor, refreshing, onRefresh }
 }
 
 // ============================================
-// 비디오 탭 (AI 영상)
+// 비디오 탭 (AI 영상) — 웹 VideoGenerationSection 1:1 매칭
+//   - 마운트 시 list 패치 + 진행 중 항목 발견 시 자동 폴링
+//   - generate 성공 시 activeGeneration 설정 → 15초 간격 폴링
+//   - completed: 리스트 갱신 + 결과 모달 자동 오픈
+//   - failed: 에러 알림 + 리스트에서 제거
+//   - max 60회(15분) 초과 시 폴링 중단 + 안내
 // ============================================
+import { useRef } from "react";
+
 interface Video {
     id: string;
     status: string;
     videoUrl: string | null;
     thumbnailUrl: string | null;
     prompt: string;
+    petName?: string;
     createdAt: string;
+    errorMessage?: string;
+    durationSeconds?: number | null;
+}
+
+function normalizeVideo(raw: Record<string, unknown>): Video {
+    const get = <T,>(snake: string, camel: string): T | undefined => {
+        const v = (raw[camel] ?? raw[snake]) as T | undefined;
+        return v;
+    };
+    return {
+        id: typeof raw.id === "string" ? raw.id : String(raw.id ?? ""),
+        status: typeof raw.status === "string" ? raw.status : "pending",
+        videoUrl: (get<string>("video_url", "videoUrl") as string | null) ?? null,
+        thumbnailUrl: (get<string>("thumbnail_url", "thumbnailUrl") as string | null) ?? null,
+        prompt: typeof raw.prompt === "string"
+            ? raw.prompt
+            : (typeof raw.custom_prompt === "string"
+                ? raw.custom_prompt
+                : (typeof raw.template_id === "string" ? raw.template_id : "")),
+        petName: typeof raw.pet_name === "string"
+            ? raw.pet_name
+            : (typeof raw.petName === "string" ? raw.petName : undefined),
+        createdAt: typeof raw.createdAt === "string"
+            ? raw.createdAt
+            : (typeof raw.created_at === "string" ? raw.created_at : ""),
+        errorMessage: typeof raw.errorMessage === "string"
+            ? raw.errorMessage
+            : (typeof raw.error_message === "string" ? raw.error_message : undefined),
+        durationSeconds: typeof raw.durationSeconds === "number"
+            ? raw.durationSeconds
+            : (typeof raw.duration_seconds === "number" ? raw.duration_seconds : null),
+    };
 }
 
 function VideosTab({ pet, isMemorialMode, accentColor, refreshing, onRefresh }: {
@@ -809,42 +843,171 @@ function VideosTab({ pet, isMemorialMode, accentColor, refreshing, onRefresh }: 
     const [videos, setVideos] = useState<Video[]>([]);
     const [loading, setLoading] = useState(true);
     const [generateOpen, setGenerateOpen] = useState(false);
+    const [activeGenId, setActiveGenId] = useState<string | null>(null);
+    const [activeStartedAt, setActiveStartedAt] = useState<number | null>(null);
+    const [selectedVideo, setSelectedVideo] = useState<VideoResult | null>(null);
+    const [tick, setTick] = useState(0); // 경과 시간 매초 갱신
+
+    const pollCountRef = useRef(0);
+    const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const elapsedTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const load = useCallback(async () => {
         if (!session) { setLoading(false); return; }
         try {
-            const res = await fetch(`${API_BASE_URL}/api/video/list`, {
-                headers: { "Authorization": `Bearer ${session.access_token}` },
+            const res = await fetch(`${API_BASE_URL}/api/video/list?petId=${pet.id}&limit=10`, {
+                headers: { Authorization: `Bearer ${session.access_token}` },
             });
             if (!res.ok) return;
             const data = await res.json();
             const list = Array.isArray(data?.videos) ? data.videos : Array.isArray(data) ? data : [];
-            setVideos(list.map((raw: Record<string, unknown>): Video => ({
-                id: typeof raw.id === "string" ? raw.id : String(raw.id ?? ""),
-                status: typeof raw.status === "string" ? raw.status : "pending",
-                videoUrl: typeof raw.videoUrl === "string"
-                    ? raw.videoUrl
-                    : (typeof raw.video_url === "string" ? raw.video_url : null),
-                thumbnailUrl: typeof raw.thumbnailUrl === "string"
-                    ? raw.thumbnailUrl
-                    : (typeof raw.thumbnail_url === "string" ? raw.thumbnail_url : null),
-                prompt: typeof raw.prompt === "string" ? raw.prompt : "",
-                createdAt: typeof raw.createdAt === "string"
-                    ? raw.createdAt
-                    : (typeof raw.created_at === "string" ? raw.created_at : ""),
-            })));
+            const normalized = list.map(normalizeVideo);
+            setVideos(normalized);
+            // 진행 중 항목 자동 인식
+            const inProgress = normalized.find((v: Video) => v.status === "pending" || v.status === "processing");
+            if (inProgress && !activeGenId) {
+                setActiveGenId(inProgress.id);
+                setActiveStartedAt(inProgress.createdAt ? new Date(inProgress.createdAt).getTime() : Date.now());
+            }
         } catch {
             // 조용히
         } finally {
             setLoading(false);
         }
-    }, [session]);
+    }, [session, pet.id, activeGenId]);
 
     useEffect(() => { load(); }, [load]);
+
+    // 폴링 정지 헬퍼
+    const stopPolling = useCallback(() => {
+        if (pollTimerRef.current) {
+            clearInterval(pollTimerRef.current);
+            pollTimerRef.current = null;
+        }
+        if (elapsedTimerRef.current) {
+            clearInterval(elapsedTimerRef.current);
+            elapsedTimerRef.current = null;
+        }
+        pollCountRef.current = 0;
+    }, []);
+
+    // 폴링 effect
+    useEffect(() => {
+        if (!activeGenId || !session?.access_token) {
+            stopPolling();
+            return;
+        }
+        if (pollTimerRef.current) return; // 중복 방지
+
+        pollCountRef.current = 0;
+
+        // 경과 시간 매초 업데이트
+        elapsedTimerRef.current = setInterval(() => setTick((t) => t + 1), 1000);
+
+        const poll = async () => {
+            pollCountRef.current += 1;
+            if (pollCountRef.current > VIDEO.MAX_POLL_COUNT) {
+                stopPolling();
+                setActiveGenId(null);
+                setActiveStartedAt(null);
+                RNAlert.alert(
+                    "영상 생성 지연",
+                    "예상보다 오래 걸리고 있어요. 잠시 후 다시 확인해주세요.",
+                );
+                return;
+            }
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/video/status/${activeGenId}`, {
+                    headers: { Authorization: `Bearer ${session.access_token}` },
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                const updated = normalizeVideo(data);
+
+                if (updated.status === "completed") {
+                    stopPolling();
+                    setActiveGenId(null);
+                    setActiveStartedAt(null);
+                    setVideos((prev) => {
+                        const filtered = prev.filter((v) => v.id !== updated.id);
+                        return [updated, ...filtered];
+                    });
+                    // 결과 모달 자동 오픈
+                    setSelectedVideo({
+                        id: updated.id,
+                        petName: updated.petName ?? pet.name,
+                        videoUrl: updated.videoUrl,
+                        thumbnailUrl: updated.thumbnailUrl,
+                        prompt: updated.prompt,
+                        createdAt: updated.createdAt,
+                        durationSeconds: updated.durationSeconds,
+                    });
+                } else if (updated.status === "failed") {
+                    stopPolling();
+                    setActiveGenId(null);
+                    setActiveStartedAt(null);
+                    setVideos((prev) => prev.filter((v) => v.id !== updated.id));
+                    RNAlert.alert(
+                        "영상 생성 실패",
+                        updated.errorMessage || "영상 생성에 실패했어요. 다시 시도해주세요.",
+                    );
+                } else {
+                    // 진행 중 — 리스트에 반영
+                    setVideos((prev) => {
+                        const exists = prev.find((v) => v.id === updated.id);
+                        if (exists) {
+                            return prev.map((v) => v.id === updated.id ? updated : v);
+                        }
+                        return [updated, ...prev];
+                    });
+                }
+            } catch {
+                // 네트워크 에러 — 다음 사이클에 재시도
+            }
+        };
+
+        // 즉시 한 번 + 그 뒤 15초 간격
+        poll();
+        pollTimerRef.current = setInterval(poll, VIDEO.POLL_INTERVAL_MS);
+
+        return stopPolling;
+    }, [activeGenId, session?.access_token, stopPolling, pet.name]);
+
+    // 컴포넌트 unmount 시 폴링 정리
+    useEffect(() => {
+        return () => stopPolling();
+    }, [stopPolling]);
+
+    function handleGenerationSuccess(generationId: string) {
+        setGenerateOpen(false);
+        if (!generationId) return;
+        // 진행 중 placeholder 추가
+        setVideos((prev) => [{
+            id: generationId,
+            status: "pending",
+            videoUrl: null,
+            thumbnailUrl: null,
+            prompt: "",
+            createdAt: new Date().toISOString(),
+        }, ...prev]);
+        setActiveGenId(generationId);
+        setActiveStartedAt(Date.now());
+    }
+
+    function getElapsed(): string {
+        if (!activeStartedAt) return "";
+        const sec = Math.floor((Date.now() - activeStartedAt) / 1000);
+        if (sec < 60) return `${sec}초`;
+        const min = Math.floor(sec / 60);
+        return `${min}분 ${sec % 60}초`;
+    }
 
     if (loading) {
         return <View style={styles.loadingInline}><ActivityIndicator color={accentColor} /></View>;
     }
+
+    const hasActive = activeGenId !== null;
+    const completedVideos = videos.filter((v) => v.status === "completed");
 
     if (videos.length === 0) {
         return (
@@ -872,7 +1035,7 @@ function VideosTab({ pet, isMemorialMode, accentColor, refreshing, onRefresh }: 
                 <VideoGenerateModal
                     visible={generateOpen}
                     onClose={() => setGenerateOpen(false)}
-                    onSuccess={() => { setGenerateOpen(false); onRefresh(); load(); }}
+                    onSuccess={handleGenerationSuccess}
                     pet={pet}
                     isMemorialMode={isMemorialMode}
                 />
@@ -880,77 +1043,151 @@ function VideosTab({ pet, isMemorialMode, accentColor, refreshing, onRefresh }: 
         );
     }
 
+    // tick은 경과 시간 표시 트리거용 (eslint 경고 회피)
+    void tick;
+
     return (
         <>
-        <FlatList
-            data={videos}
-            keyExtractor={(v) => v.id}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accentColor} />}
-            contentContainerStyle={{ padding: 16, paddingBottom: 32, gap: 12 }}
-            ListHeaderComponent={
-                <View style={styles.galleryHeader}>
-                    <View style={{ flex: 1 }}>
-                        <Text style={[styles.galleryHeaderTitle, isMemorialMode && { color: COLORS.white }]}>
-                            AI 영상
-                        </Text>
-                        <Text style={styles.galleryHeaderCount}>{videos.length}개</Text>
-                    </View>
-                    <TouchableOpacity
-                        onPress={() => setGenerateOpen(true)}
-                        style={[styles.uploadBtn, { backgroundColor: accentColor }]}
-                        activeOpacity={0.85}
-                    >
-                        <Ionicons name="sparkles" size={14} color="#fff" />
-                        <Text style={styles.uploadBtnText}>새로 만들기</Text>
-                    </TouchableOpacity>
-                </View>
-            }
-            renderItem={({ item }) => (
-                <View style={[styles.videoCard, {
-                    backgroundColor: isDarkMode ? COLORS.gray[900] : COLORS.white,
-                }]}>
-                    <View style={styles.videoHero}>
-                        {item.thumbnailUrl ? (
-                            <Image source={{ uri: item.thumbnailUrl }} style={styles.videoThumb} resizeMode="cover" />
-                        ) : (
-                            <LinearGradient
-                                colors={[COLORS.memorial[400], "#F97316"]}
-                                style={styles.videoThumb}
+            <FlatList
+                data={videos}
+                keyExtractor={(v) => v.id}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accentColor} />}
+                contentContainerStyle={{ padding: 16, paddingBottom: 32, gap: 12 }}
+                ListHeaderComponent={
+                    <>
+                        <View style={styles.galleryHeader}>
+                            <View style={{ flex: 1 }}>
+                                <Text style={[styles.galleryHeaderTitle, isMemorialMode && { color: COLORS.white }]}>
+                                    AI 영상
+                                </Text>
+                                <Text style={styles.galleryHeaderCount}>
+                                    {completedVideos.length}개{hasActive ? " · 1개 생성 중" : ""}
+                                </Text>
+                            </View>
+                            <TouchableOpacity
+                                onPress={() => setGenerateOpen(true)}
+                                disabled={hasActive}
+                                style={[
+                                    styles.uploadBtn,
+                                    { backgroundColor: accentColor, opacity: hasActive ? 0.4 : 1 },
+                                ]}
+                                activeOpacity={0.85}
                             >
-                                <Ionicons name="videocam" size={36} color="rgba(255,255,255,0.5)" />
-                            </LinearGradient>
-                        )}
-                        {item.status === "completed" && item.videoUrl ? (
-                            <View style={styles.playOverlay}>
-                                <View style={styles.playCircle}>
-                                    <Ionicons name="play" size={20} color={COLORS.memorial[600]} />
+                                <Ionicons name="sparkles" size={14} color="#fff" />
+                                <Text style={styles.uploadBtnText}>{hasActive ? "생성 중" : "새로 만들기"}</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* 진행 중 카드 */}
+                        {hasActive && (
+                            <View style={[styles.activeGenCard, { borderColor: accentColor + "33", backgroundColor: accentColor + "0a" }]}>
+                                <View style={[styles.activeGenDot, { backgroundColor: accentColor }]} />
+                                <View style={{ flex: 1 }}>
+                                    <Text style={[styles.activeGenTitle, { color: isDarkMode ? COLORS.white : COLORS.gray[900] }]}>
+                                        영상을 만들고 있어요...
+                                    </Text>
+                                    <Text style={styles.activeGenSub}>
+                                        경과 시간: {getElapsed()} · 보통 5~10분
+                                    </Text>
+                                    <Text style={styles.activeGenHint}>
+                                        다른 페이지로 이동해도 괜찮아요
+                                    </Text>
                                 </View>
+                                <ActivityIndicator color={accentColor} />
                             </View>
-                        ) : item.status === "processing" ? (
-                            <View style={styles.statusOverlay}>
-                                <ActivityIndicator color="#fff" />
-                                <Text style={styles.statusOverlayText}>생성 중...</Text>
+                        )}
+                    </>
+                }
+                renderItem={({ item }) => {
+                    const playable = item.status === "completed" && !!item.videoUrl;
+                    return (
+                        <TouchableOpacity
+                            disabled={!playable}
+                            onPress={() => {
+                                if (!playable) return;
+                                setSelectedVideo({
+                                    id: item.id,
+                                    petName: item.petName ?? pet.name,
+                                    videoUrl: item.videoUrl,
+                                    thumbnailUrl: item.thumbnailUrl,
+                                    prompt: item.prompt,
+                                    createdAt: item.createdAt,
+                                    durationSeconds: item.durationSeconds,
+                                });
+                            }}
+                            activeOpacity={0.85}
+                            style={[styles.videoCard, {
+                                backgroundColor: isDarkMode ? COLORS.gray[900] : COLORS.white,
+                            }]}
+                        >
+                            <View style={styles.videoHero}>
+                                {item.thumbnailUrl ? (
+                                    <Image source={{ uri: item.thumbnailUrl }} style={styles.videoThumb} resizeMode="cover" />
+                                ) : (
+                                    <LinearGradient
+                                        colors={[COLORS.memorial[400], "#F97316"]}
+                                        style={styles.videoThumb}
+                                    >
+                                        <Ionicons name="videocam" size={36} color="rgba(255,255,255,0.5)" />
+                                    </LinearGradient>
+                                )}
+                                {playable ? (
+                                    <View style={styles.playOverlay}>
+                                        <View style={styles.playCircle}>
+                                            <Ionicons name="play" size={20} color={COLORS.memorial[600]} />
+                                        </View>
+                                    </View>
+                                ) : item.status === "processing" || item.status === "pending" ? (
+                                    <View style={styles.statusOverlay}>
+                                        <ActivityIndicator color="#fff" />
+                                        <Text style={styles.statusOverlayText}>
+                                            {item.status === "pending" ? "대기 중..." : "생성 중..."}
+                                        </Text>
+                                    </View>
+                                ) : item.status === "failed" ? (
+                                    <View style={styles.statusOverlay}>
+                                        <Ionicons name="close-circle-outline" size={28} color="#fff" />
+                                        <Text style={styles.statusOverlayText}>실패</Text>
+                                    </View>
+                                ) : null}
                             </View>
-                        ) : null}
-                    </View>
-                    <View style={{ padding: 12 }}>
-                        <Text style={[styles.videoTitle, {
-                            color: isDarkMode ? COLORS.white : COLORS.gray[800],
-                        }]} numberOfLines={2}>{item.prompt || "AI 영상"}</Text>
-                        <Text style={styles.videoMeta}>{item.createdAt.slice(0, 10)} · {item.status}</Text>
-                    </View>
-                </View>
-            )}
-        />
-        <VideoGenerateModal
-            visible={generateOpen}
-            onClose={() => setGenerateOpen(false)}
-            onSuccess={() => { setGenerateOpen(false); load(); }}
-            pet={pet}
-            isMemorialMode={isMemorialMode}
-        />
+                            <View style={{ padding: 12 }}>
+                                <Text style={[styles.videoTitle, {
+                                    color: isDarkMode ? COLORS.white : COLORS.gray[800],
+                                }]} numberOfLines={2}>{item.prompt || "AI 영상"}</Text>
+                                <Text style={styles.videoMeta}>
+                                    {item.createdAt.slice(0, 10)} · {translateStatus(item.status)}
+                                </Text>
+                            </View>
+                        </TouchableOpacity>
+                    );
+                }}
+            />
+            <VideoGenerateModal
+                visible={generateOpen}
+                onClose={() => setGenerateOpen(false)}
+                onSuccess={handleGenerationSuccess}
+                pet={pet}
+                isMemorialMode={isMemorialMode}
+            />
+            <VideoResultModal
+                visible={selectedVideo !== null}
+                onClose={() => setSelectedVideo(null)}
+                video={selectedVideo}
+                accentColor={accentColor}
+            />
         </>
     );
+}
+
+function translateStatus(s: string): string {
+    switch (s) {
+        case "pending": return "대기 중";
+        case "processing": return "생성 중";
+        case "completed": return "완료";
+        case "failed": return "실패";
+        default: return s;
+    }
 }
 
 const styles = StyleSheet.create({
@@ -1142,4 +1379,21 @@ const styles = StyleSheet.create({
     statusOverlayText: { color: "#fff", fontSize: 12, fontWeight: "500" },
     videoTitle: { fontSize: 14, fontWeight: "600", lineHeight: 18 },
     videoMeta: { fontSize: 11, color: COLORS.gray[500], marginTop: 4 },
+    activeGenCard: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        padding: 14,
+        borderRadius: 12,
+        borderWidth: 1,
+        marginBottom: 12,
+    },
+    activeGenDot: {
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+    },
+    activeGenTitle: { fontSize: 14, fontWeight: "700" },
+    activeGenSub: { fontSize: 12, color: COLORS.gray[500], marginTop: 2 },
+    activeGenHint: { fontSize: 11, color: COLORS.gray[400], marginTop: 2 },
 });

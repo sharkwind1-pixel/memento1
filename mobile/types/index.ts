@@ -88,10 +88,23 @@ export interface ChatMessage {
     content: string;
     timestamp: Date;
     emotion?: string;
+    emotionScore?: number;
     isError?: boolean;
     isStreaming?: boolean;
-    matchedPhoto?: { url: string; caption: string };
+    type?: "reminder-suggestion" | "crisis-alert";
+    matchedPhoto?: { url: string; caption?: string };
     matchedTimeline?: { date: string; title: string; content: string };
+    nearbyPlaces?: Array<{ name: string; address?: string; distance?: number; phone?: string }>;
+    crisisAlert?: {
+        message: string;
+        resources?: Array<{ name: string; phone: string; description?: string }>;
+    };
+    suggestedReminder?: {
+        title: string;
+        type: string;
+        schedule: { type: string; time: string; dayOfWeek?: number; dayOfMonth?: number };
+    };
+    retryMessage?: string;
 }
 
 export type EmotionType =
@@ -212,6 +225,69 @@ export interface LostPet {
 // ============================================
 // 9. 지역정보
 // ============================================
+
+// ============================================
+// 9.5 미니홈피 / 미니미
+// ============================================
+
+export type MinimiCategory = "dog" | "cat";
+
+export interface MinimiCharacter {
+    slug: string;
+    name: string;
+    category: MinimiCategory;
+    imageUrl: string;
+    price: number;
+    description?: string;
+    imageAspect?: number;
+    footPadding?: number;
+}
+
+export interface MinimiCatalogItem extends MinimiCharacter {
+    id: string;
+    resellPrice: number;
+    isAvailable: boolean;
+    releasedAt?: string;
+    sortOrder?: number;
+}
+
+export interface UserMinimiRow {
+    id: string;            // user_minimi PK (UUID)
+    minimi_id: string;     // catalog slug
+    purchased_at?: string;
+    purchase_price?: number;
+}
+
+export type BackgroundCategory = "nature" | "season" | "special";
+
+export interface BackgroundTheme {
+    id: string;
+    slug: string;
+    name: string;
+    category: BackgroundCategory;
+    price: number;
+    description: string;
+    cssBackground: string;
+    imageUrl?: string;
+}
+
+export interface MinihompySettings {
+    isPublic: boolean;
+    backgroundSlug: string;
+    greeting: string;
+    todayVisitors?: number;
+    totalVisitors?: number;
+    totalLikes?: number;
+}
+
+export interface GuestbookEntry {
+    id: string;
+    writerId: string;
+    writerNickname?: string;
+    writerAvatar?: string;
+    content: string;
+    createdAt: string;
+}
 
 export type LocalPostCategory = "hospital" | "walk" | "share" | "trade" | "meet" | "place";
 export type LocalPostBadge = "질문" | "모집중" | "나눔" | "판매" | "후기" | "정보" | "기타";

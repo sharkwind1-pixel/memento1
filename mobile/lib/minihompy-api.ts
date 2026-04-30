@@ -1,0 +1,206 @@
+/**
+ * 미니홈피 API 클라이언트 — 웹 API 그대로 호출.
+ * 모든 함수는 access_token 필요. 실패 시 throw.
+ */
+
+import { API_BASE_URL } from "@/config/constants";
+import type {
+    MinihompySettings, GuestbookEntry,
+    MinimiCatalogItem, UserMinimiRow,
+} from "@/types";
+
+interface FetchOpts {
+    accessToken: string;
+}
+
+async function callApi<T>(
+    path: string,
+    opts: FetchOpts & {
+        method?: "GET" | "POST" | "PATCH" | "DELETE";
+        body?: unknown;
+    },
+): Promise<T> {
+    const { accessToken, method = "GET", body } = opts;
+    const res = await fetch(`${API_BASE_URL}${path}`, {
+        method,
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+            ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
+        },
+        body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+    if (!res.ok) {
+        let msg = `HTTP ${res.status}`;
+        try {
+            const err = await res.json();
+            msg = err.error || err.message || msg;
+        } catch {
+            try { msg = (await res.text()).slice(0, 200) || msg; } catch {}
+        }
+        throw new Error(msg);
+    }
+    return (await res.json()) as T;
+}
+
+// ============================================================================
+// 미니홈피 설정
+// ============================================================================
+
+interface SettingsResponse {
+    settings: {
+        isPublic: boolean;
+        backgroundSlug: string;
+        greeting: string | null;
+        todayVisitors?: number;
+        totalVisitors?: number;
+        totalLikes?: number;
+    };
+}
+
+export async function getMyMinihompySettings(accessToken: string): Promise<MinihompySettings> {
+    const data = await callApi<SettingsResponse>("/api/minihompy/settings", { accessToken });
+    return {
+        isPublic: !!data.settings.isPublic,
+        backgroundSlug: data.settings.backgroundSlug || "default_sky",
+        greeting: data.settings.greeting ?? "",
+        todayVisitors: data.settings.todayVisitors ?? 0,
+        totalVisitors: data.settings.totalVisitors ?? 0,
+        totalLikes: data.settings.totalLikes ?? 0,
+    };
+}
+
+export async function patchMinihompySettings(
+    accessToken: string,
+    update: Partial<{ isPublic: boolean; greeting: string; backgroundSlug: string }>,
+): Promise<MinihompySettings> {
+    const data = await callApi<SettingsResponse>("/api/minihompy/settings", {
+        accessToken,
+        method: "PATCH",
+        body: update,
+    });
+    return {
+        isPublic: !!data.settings.isPublic,
+        backgroundSlug: data.settings.backgroundSlug || "default_sky",
+        greeting: data.settings.greeting ?? "",
+        todayVisitors: data.settings.todayVisitors ?? 0,
+        totalVisitors: data.settings.totalVisitors ?? 0,
+        totalLikes: data.settings.totalLikes ?? 0,
+    };
+}
+
+// ============================================================================
+// 미니미 카탈로그 / 인벤토리 / 구매·장착·판매
+// ============================================================================
+
+interface CatalogResponse {
+    characters: MinimiCatalogItem[];
+}
+
+export async function getMinimiCatalog(accessToken: string, category?: string): Promise<MinimiCatalogItem[]> {
+    const q = category && category !== "all" ? `?category=${encodeURIComponent(category)}` : "";
+    const data = await callApi<CatalogResponse>(`/api/minimi/catalog${q}`, { accessToken });
+    return data.characters || [];
+}
+
+interface InventoryResponse {
+    characters: UserMinimiRow[];
+    equipped: { minimiId: string | null; pixelData: unknown };
+}
+
+export async function getMinimiInventory(accessToken: string): Promise<{
+    owned: UserMinimiRow[];
+    equippedSlug: string | null;
+}> {
+    const data = await callApi<InventoryResponse>("/api/minimi/inventory", { accessToken });
+    return {
+        owned: data.characters || [],
+        equippedSlug: data.equipped?.minimiId ?? null,
+    };
+}
+
+export async function purchaseMinimi(accessToken: string, minimiId: string): Promise<void> {
+    await callApi<unknown>("/api/minimi/purchase", {
+        accessToken,
+        method: "POST",
+        body: { minimiId },
+    });
+}
+
+export async function equipMinimi(accessToken: string, minimiSlug: string | null): Promise<void> {
+    await callApi<unknown>("/api/minimi/equip", {
+        accessToken,
+        method: "POST",
+        body: { minimiSlug },
+    });
+}
+
+export async function sellMinimi(accessToken: string, userMinimiId: string): Promise<{ refundedPoints: number }> {
+    return await callApi<{ refundedPoints: number }>("/api/minimi/sell", {
+        accessToken,
+        method: "POST",
+        body: { userMinimiId },
+    });
+}
+
+// ============================================================================
+// 배경 (구매 / 보유 목록)
+// ============================================================================
+
+interface BackgroundsResponse {
+    owned: string[]; // background slug 목록
+}
+
+export async function getOwnedBackgrounds(accessToken: string): Promise<string[]> {
+    const data = await callApi<BackgroundsResponse>("/api/minihompy/backgrounds", { accessToken });
+    return data.owned || [];
+}
+
+export async function purchaseBackground(accessToken: string, slug: string): Promise<void> {
+    await callApi<unknown>("/api/minihompy/backgrounds/purchase", {
+        accessToken,
+        method: "POST",
+        body: { slug },
+    });
+}
+
+// ============================================================================
+// 방명록
+// ============================================================================
+
+interface GuestbookResponse {
+    entries: Array<{
+        id: string;
+        writer_id: string;
+        writer_nickname?: string;
+        writer_avatar?: string;
+        content: string;
+        created_at: string;
+    }>;
+}
+
+export async function getGuestbook(
+    accessToken: string,
+    ownerUserId: string,
+): Promise<GuestbookEntry[]> {
+    const data = await callApi<GuestbookResponse>(`/api/minihompy/${ownerUserId}/guestbook`, { accessToken });
+    return (data.entries || []).map((e) => ({
+        id: e.id,
+        writerId: e.writer_id,
+        writerNickname: e.writer_nickname,
+        writerAvatar: e.writer_avatar,
+        content: e.content,
+        createdAt: e.created_at,
+    }));
+}
+
+export async function postGuestbookEntry(
+    accessToken: string,
+    ownerUserId: string,
+    content: string,
+): Promise<void> {
+    await callApi<unknown>(`/api/minihompy/${ownerUserId}/guestbook`, {
+        accessToken,
+        method: "POST",
+        body: { content },
+    });
+}

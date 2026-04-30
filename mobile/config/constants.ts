@@ -33,3 +33,9 @@ export const APP_TAGLINE = "특별한 매일을 함께";
 // API base — 웹 백엔드 재사용
 export const API_BASE_URL =
     process.env.EXPO_PUBLIC_API_BASE_URL ?? "https://mementoani.com";
+
+// 영상 생성 폴링 (웹 src/config/constants.ts VIDEO와 동일)
+export const VIDEO = {
+    POLL_INTERVAL_MS: 15000, // 15초
+    MAX_POLL_COUNT: 60,      // 15분 (60 × 15초)
+} as const;
