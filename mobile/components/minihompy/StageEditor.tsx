@@ -14,7 +14,7 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import {
     View, Text, Image, ImageBackground, TouchableOpacity,
-    PanResponder, Animated, StyleSheet, Alert, ActivityIndicator,
+    PanResponder, StyleSheet, Alert, ActivityIndicator,
     LayoutChangeEvent,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -139,7 +139,13 @@ export default function StageEditor({
         );
     }
 
-    function updatePosition(index: number, x: number, y: number) {
+    // 드래그 중 (clamp 안 함 — stage 밖으로도 끌 수 있음, 웹 패턴 동일)
+    function updatePositionLive(index: number, x: number, y: number) {
+        setWorking((prev) => prev.map((p, i) => i === index ? { ...p, x, y } : p));
+    }
+
+    // 드래그 끝 (clamp 적용)
+    function updatePositionEnd(index: number, x: number, y: number) {
         setWorking((prev) => prev.map((p, i) => i === index ? { ...p, ...clampPosition(x, y) } : p));
     }
 
@@ -154,7 +160,8 @@ export default function StageEditor({
                     editMode={editMode}
                     stageWidth={stageWidth}
                     stageHeight={stageHeight}
-                    onMove={updatePosition}
+                    onMove={updatePositionLive}
+                    onMoveEnd={updatePositionEnd}
                     onLongPress={() => editMode && removeMinimi(idx)}
                 />
             ))}
@@ -252,72 +259,80 @@ export default function StageEditor({
 // 드래그 가능한 단일 미니미
 // ============================================================================
 
+/**
+ * 웹 MinihompyStage handlePointerDown 패턴 1:1 이식:
+ *  - down: dragStartRef = {origX, origY}, gesture state {dx,dy} = 0
+ *  - move: dxPct = (dx/stageWidth)*100, dyPct = (dy/stageHeight)*100
+ *          새 x = origX + dxPct, 새 y = origY + dyPct → 부모 state 즉시 업데이트
+ *          (Animated translate 안 씀 — 매 frame setState로 직접 위치 변경)
+ *  - up: clamp(5~95, 10~85) 적용 + 최종 state
+ */
 function DraggableMinimi({
-    placed, index, editMode, stageWidth, stageHeight, onMove, onLongPress,
+    placed, index, editMode, stageWidth, stageHeight, onMove, onMoveEnd, onLongPress,
 }: {
     placed: PlacedMinimi;
     index: number;
     editMode: boolean;
     stageWidth: number;
     stageHeight: number;
-    onMove: (index: number, x: number, y: number) => void;
+    onMove: (index: number, x: number, y: number) => void;        // 드래그 중 (clamp X)
+    onMoveEnd: (index: number, x: number, y: number) => void;     // 드래그 끝 (clamp O)
     onLongPress: () => void;
 }) {
     const minimi = findMinimi(placed.slug);
-    const startPos = useRef({ x: placed.x, y: placed.y });
-    const pan = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
-
-    // placed가 외부에서 변경되면 startPos 갱신 (편집 모드 진입 시 등)
-    useEffect(() => {
-        startPos.current = { x: placed.x, y: placed.y };
-        pan.setValue({ x: 0, y: 0 });
-    }, [placed.x, placed.y, pan]);
+    const dragStart = useRef<{ origX: number; origY: number } | null>(null);
 
     const panResponder = useMemo(() => PanResponder.create({
-        // Capture를 true로 → 부모 ScrollView가 vertical scroll 가로채기 전에 미니미가 먼저 잡음
         onStartShouldSetPanResponder: () => editMode,
         onStartShouldSetPanResponderCapture: () => editMode,
         onMoveShouldSetPanResponder: () => editMode,
         onMoveShouldSetPanResponderCapture: () => editMode,
         onPanResponderTerminationRequest: () => false,
+        onShouldBlockNativeResponder: () => true,
         onPanResponderGrant: () => {
-            pan.setOffset({ x: 0, y: 0 });
-            pan.setValue({ x: 0, y: 0 });
+            // 웹 dragStartRef.current = { origX: placed.x, origY: placed.y }
+            dragStart.current = { origX: placed.x, origY: placed.y };
         },
-        onPanResponderMove: Animated.event([null, { dx: pan.x, dy: pan.y }], { useNativeDriver: false }),
-        onPanResponderRelease: (_, g) => {
-            if (stageWidth === 0 || stageHeight === 0) return;
+        onPanResponderMove: (_, g) => {
+            if (!dragStart.current || stageWidth === 0 || stageHeight === 0) return;
             const dxPct = (g.dx / stageWidth) * 100;
             const dyPct = (g.dy / stageHeight) * 100;
-            const nextX = startPos.current.x + dxPct;
-            const nextY = startPos.current.y + dyPct;
-            onMove(index, nextX, nextY);
-            pan.setValue({ x: 0, y: 0 });
+            // 드래그 중에는 clamp 안 함 (웹 동일)
+            onMove(index, dragStart.current.origX + dxPct, dragStart.current.origY + dyPct);
         },
-    }), [editMode, stageWidth, stageHeight, index, onMove, pan]);
+        onPanResponderRelease: (_, g) => {
+            if (!dragStart.current || stageWidth === 0 || stageHeight === 0) {
+                dragStart.current = null;
+                return;
+            }
+            const dxPct = (g.dx / stageWidth) * 100;
+            const dyPct = (g.dy / stageHeight) * 100;
+            // release 시 clamp 적용 (웹 동일)
+            onMoveEnd(index, dragStart.current.origX + dxPct, dragStart.current.origY + dyPct);
+            dragStart.current = null;
+        },
+        onPanResponderTerminate: () => {
+            dragStart.current = null;
+        },
+    }), [editMode, stageWidth, stageHeight, index, onMove, onMoveEnd, placed.x, placed.y]);
 
     if (!minimi) return null;
 
-    // 좌상단 기준 % → 좌상단 px 계산 후 minimi 중앙 정렬
+    // 위치는 placed.x/y % → absolute px (translate 안 씀, setState로 직접 변경)
     const leftPx = (placed.x / 100) * stageWidth - MINIMI_SIZE / 2;
     const topPx = (placed.y / 100) * stageHeight - MINIMI_SIZE / 2;
 
     return (
-        <Animated.View
+        <View
             style={[
                 styles.minimiWrap,
-                {
-                    left: leftPx,
-                    top: topPx,
-                    zIndex: placed.zIndex ?? index,
-                    transform: [{ translateX: pan.x }, { translateY: pan.y }],
-                },
-                editMode && styles.minimiEdit,
+                { left: leftPx, top: topPx, zIndex: placed.zIndex ?? index },
             ]}
             {...panResponder.panHandlers}
         >
             <TouchableOpacity
                 onLongPress={onLongPress}
+                delayLongPress={400}
                 disabled={!editMode}
                 activeOpacity={editMode ? 0.7 : 1}
                 style={styles.minimiTouch}
@@ -329,7 +344,7 @@ function DraggableMinimi({
                     </View>
                 )}
             </TouchableOpacity>
-        </Animated.View>
+        </View>
     );
 }
 
