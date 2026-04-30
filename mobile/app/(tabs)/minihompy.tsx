@@ -256,42 +256,62 @@ export default function MinihompyScreen() {
                         )}
                     </View>
                 ) : (
-                    // 보유 미니미 0 + 배치 0 → 기존 단일 stage (펫 프로필 폴백)
-                    <TouchableOpacity
-                        activeOpacity={0.95}
-                        onPress={handleStageTouch}
-                        style={styles.stageWrap}
-                    >
-                        <StageBackground background={background}>
-                            {(message || settings?.greeting) && (
-                                <View style={styles.speechBubble}>
-                                    <Text style={styles.speechText}>
-                                        {message ?? settings?.greeting ?? ""}
-                                    </Text>
-                                    <View style={styles.speechTail} />
-                                </View>
-                            )}
-
-                            <View style={styles.minimiSlot}>
-                                {equippedMinimi ? (
-                                    <Image source={{ uri: equippedMinimi.imageUrl }} style={styles.minimiImg} resizeMode="contain" />
-                                ) : selectedPet?.profileImage ? (
-                                    <Image source={{ uri: selectedPet.profileImage }} style={styles.petImg} />
-                                ) : (
-                                    <View style={[styles.petImg, styles.petImgFallback]}>
-                                        <Text style={{ fontSize: 56 }}>
-                                            {selectedPet?.type === "강아지" ? "🐶" : selectedPet?.type === "고양이" ? "🐱" : "🐾"}
+                    // 보유 미니미 0 + 배치 0 → 단일 stage + 상점 CTA
+                    <View style={styles.stageWrap}>
+                        <TouchableOpacity
+                            activeOpacity={0.95}
+                            onPress={handleStageTouch}
+                            style={{ borderRadius: 24, overflow: "hidden" }}
+                        >
+                            <StageBackground background={background}>
+                                {(message || settings?.greeting) && (
+                                    <View style={styles.speechBubble}>
+                                        <Text style={styles.speechText}>
+                                            {message ?? settings?.greeting ?? ""}
                                         </Text>
+                                        <View style={styles.speechTail} />
                                     </View>
                                 )}
-                                <Text style={styles.minimiName}>
-                                    {equippedMinimi?.name ?? selectedPet?.name ?? "미니미"}
+
+                                <View style={styles.minimiSlot}>
+                                    {selectedPet?.profileImage ? (
+                                        <Image source={{ uri: selectedPet.profileImage }} style={styles.petImg} />
+                                    ) : (
+                                        <View style={[styles.petImg, styles.petImgFallback]}>
+                                            <Text style={{ fontSize: 56 }}>
+                                                {selectedPet?.type === "강아지" ? "🐶" : selectedPet?.type === "고양이" ? "🐱" : "🐾"}
+                                            </Text>
+                                        </View>
+                                    )}
+                                    <Text style={styles.minimiName}>
+                                        {selectedPet?.name ?? "내 친구"}
+                                    </Text>
+                                </View>
+
+                                <Text style={styles.tapHint}>탭해서 반응 보기</Text>
+                            </StageBackground>
+                        </TouchableOpacity>
+
+                        {/* 미니미 상점 CTA */}
+                        <TouchableOpacity
+                            onPress={() => setShopOpen(true)}
+                            style={[styles.shopCta, { borderColor: accentColor + "40", backgroundColor: isDarkMode ? COLORS.gray[900] : "#fff" }]}
+                            activeOpacity={0.85}
+                        >
+                            <View style={[styles.shopCtaIcon, { backgroundColor: accentColor + "15" }]}>
+                                <Ionicons name="paw" size={18} color={accentColor} />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                                <Text style={[styles.shopCtaTitle, { color: isDarkMode ? COLORS.white : COLORS.gray[900] }]}>
+                                    미니미 캐릭터 만나보기
+                                </Text>
+                                <Text style={styles.shopCtaSub}>
+                                    상점에서 미니미를 사면 스테이지에 자유롭게 배치할 수 있어요
                                 </Text>
                             </View>
-
-                            <Text style={styles.tapHint}>탭해서 반응 보기</Text>
-                        </StageBackground>
-                    </TouchableOpacity>
+                            <Ionicons name="chevron-forward" size={16} color={accentColor} />
+                        </TouchableOpacity>
+                    </View>
                 )}
 
                 {/* 4개 액션 카드 */}
@@ -517,6 +537,21 @@ const styles = StyleSheet.create({
         top: 0, left: 0, right: 0, bottom: 60,
         zIndex: 1,
     },
+    shopCta: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        marginTop: 12,
+        padding: 14,
+        borderRadius: 14,
+        borderWidth: 1,
+    },
+    shopCtaIcon: {
+        width: 36, height: 36, borderRadius: 12,
+        alignItems: "center", justifyContent: "center",
+    },
+    shopCtaTitle: { fontSize: 14, fontWeight: "700" },
+    shopCtaSub: { fontSize: 11, color: COLORS.gray[500], marginTop: 2 },
     speechText: { fontSize: 13, fontWeight: "600", color: COLORS.gray[900] },
     speechTail: {
         position: "absolute",

@@ -32,7 +32,7 @@ export default function AppHeader({ onOpenDrawer, showBack, title, hideActions }
     const router = useRouter();
     const { user, profile, points, isAdminUser } = useAuth();
     const { selectedPet, pets, isMemorialMode } = usePet();
-    const { isDarkMode } = useDarkMode();
+    const { isDarkMode, toggleTheme } = useDarkMode();
 
     // 레벨 뱃지 아이콘 (포인트 + 펫 타입 기반)
     // 우선순위: selectedPet → pets[0] → 기본값 "dog"
@@ -94,6 +94,13 @@ export default function AppHeader({ onOpenDrawer, showBack, title, hideActions }
                     )}
                     <TouchableOpacity onPress={() => router.push("/notifications")} style={styles.iconBtn} hitSlop={6}>
                         <Ionicons name="notifications-outline" size={22} color={iconColor} />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={toggleTheme} style={styles.iconBtn} hitSlop={6}>
+                        <Ionicons
+                            name={isDarkMode ? "sunny" : "moon"}
+                            size={20}
+                            color={isDarkMode ? "#FBBF24" : iconColor}
+                        />
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => router.push("/profile")} hitSlop={6} style={styles.profileBtn}>
                         <Image source={levelIcon} style={styles.avatarImg} resizeMode="cover" />
