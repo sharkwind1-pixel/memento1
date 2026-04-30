@@ -96,25 +96,35 @@ export interface UseAIChatReturn {
 
 /** 장소 질문 감지 키워드 */
 const PLACE_PATTERNS: { pattern: RegExp; keyword: string }[] = [
-    { pattern: /산책|공원|놀이터|야외|걷기|뛰기/, keyword: "공원" },
+    { pattern: /산책|공원|놀이터|야외|걷기|뛰기|걸을|걸을만한|걸을 만한|산책로|산책 코스|산책코스/, keyword: "공원" },
     { pattern: /병원|수의사|진료|응급|건강검진/, keyword: "동물병원" },
-    { pattern: /펫카페|카페|놀 곳/, keyword: "펫카페" },
+    { pattern: /펫카페|애견카페|펫프렌들리|놀 곳|놀곳|놀 데|놀데/, keyword: "펫카페" },
     { pattern: /미용|그루밍|목욕|트리밍/, keyword: "애견미용" },
-    { pattern: /호텔|펫호텔|맡길|돌봄/, keyword: "펫호텔" },
-    { pattern: /용품|사료|간식.*사/, keyword: "애견용품" },
+    { pattern: /호텔|펫호텔|맡길|돌봄|위탁/, keyword: "펫호텔" },
+    { pattern: /용품|사료|간식.*사|쇼핑/, keyword: "애견용품" },
+    { pattern: /수영장|수영/, keyword: "애견수영장" },
+    { pattern: /운동장/, keyword: "애견운동장" },
 ];
+
+/** 일반 장소 질문 (특정 카테고리 없이 "어디 갈만한 곳" 같은 표현) */
+const GENERIC_PLACE_PATTERN = /갈만한|갈 만한|갈 데|갈데|놀러|볼만한|볼 만한|시설|명소|구경|데이트/;
 
 /** 특정 지역명이 포함되면 GPS 기반 검색 불필요 (AI가 지역명 기반으로 답변) */
 const SPECIFIC_LOCATION_PATTERN = /강릉|속초|양양|삼척|동해|제주|부산|대구|광주|대전|울산|세종|춘천|원주|천안|전주|목포|포항|경주|여수|통영|거제|김해|창원|안동|충주|제천|태백|정선|평창|서귀포|송정|해운대|송도|인천공항|김포공항/;
 
 /** 유저 메시지에서 장소 질문 감지 */
 function detectPlaceQueryClient(text: string): { detected: boolean; keyword?: string } {
-    const questionPattern = /어디|어느|가까운|근처|주변|추천|갈까|가볼|찾아/;
+    const questionPattern = /어디|어느|가까운|근처|주변|추천|갈까|가볼|찾아|알려|있어|있을까|있나|있는지|어딨/;
     if (!questionPattern.test(text)) return { detected: false };
     // 특정 지역명이 포함되면 GPS 검색 스킵 (강릉, 부산 등)
     if (SPECIFIC_LOCATION_PATTERN.test(text)) return { detected: false };
+    // 1) 명시 카테고리 키워드 우선
     for (const { pattern, keyword } of PLACE_PATTERNS) {
         if (pattern.test(text)) return { detected: true, keyword };
+    }
+    // 2) 일반 장소 질문 fallback ("갈만한 곳/시설/명소" 등) → 펫 동반 가능 시설
+    if (GENERIC_PLACE_PATTERN.test(text)) {
+        return { detected: true, keyword: "펫동반가능시설" };
     }
     return { detected: false };
 }

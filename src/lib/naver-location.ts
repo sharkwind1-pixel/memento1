@@ -40,14 +40,19 @@ interface NaverSearchItem {
 /** 유저 메시지에서 장소 질문 감지 + 검색 키워드 반환 */
 /** keyword를 배열로 바꿔 복수 검색어 지원 (네이버 검색은 단일 키워드가 결과 품질이 좋음) */
 const PLACE_PATTERNS: { pattern: RegExp; keyword: string; altKeyword?: string }[] = [
-    { pattern: /산책|공원|놀이터|야외|걷기|뛰기/, keyword: "공원", altKeyword: "산책로" },
+    { pattern: /산책|공원|놀이터|야외|걷기|뛰기|걸을|산책로|산책 ?코스/, keyword: "공원", altKeyword: "산책로" },
     { pattern: /병원|수의사|진료|응급|건강검진|예방접종/, keyword: "동물병원" },
-    { pattern: /펫카페|카페|놀 곳|놀이/, keyword: "펫카페" },
+    { pattern: /펫카페|애견카페|펫프렌들리|놀 ?곳|놀 ?데|놀이/, keyword: "펫카페" },
     { pattern: /미용|그루밍|목욕|트리밍/, keyword: "애견미용" },
-    { pattern: /호텔|펫호텔|맡길|돌봄/, keyword: "펫호텔" },
-    { pattern: /용품|사료|간식.*사/, keyword: "애견용품" },
+    { pattern: /호텔|펫호텔|맡길|돌봄|위탁/, keyword: "펫호텔" },
+    { pattern: /용품|사료|간식.*사|쇼핑/, keyword: "애견용품" },
+    { pattern: /수영장|수영/, keyword: "애견수영장" },
+    { pattern: /운동장/, keyword: "애견운동장" },
     { pattern: /장례|장묘|화장|납골|추모공원|장의사|수습|유골/, keyword: "반려동물장례", altKeyword: "펫장례식장" },
 ];
+
+/** 일반 장소 표현 (특정 카테고리 없이 "갈만한/시설/명소" 같은 일반 질문) */
+const GENERIC_PLACE_PATTERN = /갈 ?만한|갈 ?데|놀러|볼 ?만한|시설|명소|구경|데이트|나들이|외출/;
 
 /**
  * 메시지에 특정 지역명이 포함되어 있는지 검사
@@ -56,8 +61,8 @@ const PLACE_PATTERNS: { pattern: RegExp; keyword: string; altKeyword?: string }[
 const SPECIFIC_LOCATION_PATTERN = /강릉|속초|양양|삼척|동해|제주|부산|대구|광주|대전|울산|세종|춘천|원주|천안|전주|목포|포항|경주|여수|통영|거제|김해|창원|안동|충주|제천|태백|정선|평창|서귀포|송정|해운대|송도|인천공항|김포공항/;
 
 export function detectPlaceQuery(message: string): { detected: boolean; keyword?: string; altKeyword?: string; hasSpecificLocation?: boolean; locationName?: string } {
-    // 장소 관련 의문형 패턴이 있는지 먼저 체크
-    const questionPatterns = /어디|어느|가까운|근처|주변|추천|갈까|가볼|찾아|코스|갈만|산책/;
+    // 장소 관련 의문형 패턴이 있는지 먼저 체크 ("있어/있을까/어딨" 등 일반 표현 보강)
+    const questionPatterns = /어디|어느|가까운|근처|주변|추천|갈까|가볼|찾아|코스|갈만|산책|있어|있을까|있나|있는지|어딨|알려/;
     // 장례/장묘 키워드는 의문형 없어도 장소 검색 트리거 (추모 모드 핵심 기능)
     const memorialPlacePatterns = /장례.*어디|장례.*해야|장묘|화장.*해야|장례식장|납골|추모공원/;
     if (!questionPatterns.test(message) && !memorialPlacePatterns.test(message)) {
@@ -69,14 +74,21 @@ export function detectPlaceQuery(message: string): { detected: boolean; keyword?
     const hasSpecificLocation = !!locationMatch;
     const locationName = locationMatch ? locationMatch[0] : undefined;
 
+    // 1) 명시 카테고리 키워드 우선
     for (const { pattern, keyword, altKeyword } of PLACE_PATTERNS) {
         if (pattern.test(message)) {
             return { detected: true, keyword, altKeyword, hasSpecificLocation, locationName };
         }
     }
 
-    // 여행/산책 코스 질문이면 "공원"/"산책로" 키워드로 감지
+    // 2) 특정 지역명 + 여행/산책 코스 질문이면 "공원"/"산책로"
     if (hasSpecificLocation && /여행|코스|갈만|산책|걷|나들이|외출/.test(message)) {
+        return { detected: true, keyword: "공원", altKeyword: "산책로", hasSpecificLocation, locationName };
+    }
+
+    // 3) 일반 장소 질문 fallback ("갈만한/시설/놀러" 등) → 산책 코스 추천
+    //    펫과 함께 갈 만한 곳이라는 컨텍스트라 "공원/산책로"가 가장 안전한 기본값.
+    if (GENERIC_PLACE_PATTERN.test(message)) {
         return { detected: true, keyword: "공원", altKeyword: "산책로", hasSpecificLocation, locationName };
     }
 
