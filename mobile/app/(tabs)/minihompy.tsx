@@ -241,7 +241,7 @@ export default function MinihompyScreen() {
                                 onChanged={handlePlacedChanged}
                             />
                         )}
-                        {/* 인사말 말풍선 + 터치 메시지 (stage 위 절대 배치) */}
+                        {/* 인사말 말풍선 (stage 위 절대 배치, pointerEvents=none으로 터치 통과) */}
                         {(message || settings?.greeting) && (
                             <View pointerEvents="none" style={styles.speechBubbleAbsolute}>
                                 <Text style={styles.speechText}>
@@ -250,14 +250,7 @@ export default function MinihompyScreen() {
                                 <View style={styles.speechTail} />
                             </View>
                         )}
-                        {/* 터치 반응 (placedMinimi 비어있을 때만) */}
-                        {(!settings?.placedMinimi || settings.placedMinimi.length === 0) && (
-                            <TouchableOpacity
-                                activeOpacity={0.7}
-                                onPress={handleStageTouch}
-                                style={styles.tapAreaAbsolute}
-                            />
-                        )}
+                        {/* 터치 영역 제거 — StageEditor가 자체 터치/드래그 처리 (간섭 방지) */}
                     </View>
                 ) : (
                     // 보유 미니미 0 + 배치 0 → 단일 stage + 상점 CTA
