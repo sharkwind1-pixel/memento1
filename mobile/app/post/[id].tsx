@@ -453,7 +453,19 @@ export default function PostDetailScreen() {
                         댓글 {comments.length}
                     </Text>
                     {comments.map((c) => (
-                        <CommentItem key={c.id} comment={c} isMemorialMode={isMemorialMode} />
+                        <CommentItem
+                            key={c.id}
+                            comment={c}
+                            isMemorialMode={isMemorialMode}
+                            currentUserId={user?.id ?? null}
+                            accessToken={session?.access_token ?? null}
+                            postId={String(id)}
+                            onAuthorPress={(authorId) => router.push(`/minihompy/${authorId}`)}
+                            onDeleted={(commentId) => {
+                                setComments((prev) => prev.filter((x) => x.id !== commentId));
+                                setPost((p) => p ? { ...p, comments: Math.max(0, p.comments - 1) } : p);
+                            }}
+                        />
                     ))}
                     {comments.length === 0 && (
                         <Text style={{ fontSize: 14, color: COLORS.gray[400], textAlign: "center", paddingVertical: 16 }}>
@@ -506,27 +518,113 @@ export default function PostDetailScreen() {
     );
 }
 
-function CommentItem({ comment, isMemorialMode }: { comment: Comment; isMemorialMode: boolean }) {
+function formatCommentTime(iso: string): string {
+    if (!iso) return "";
+    try {
+        const t = new Date(iso).getTime();
+        if (isNaN(t)) return iso;
+        const diff = Math.floor((Date.now() - t) / 1000);
+        if (diff < 60) return "방금";
+        if (diff < 3600) return `${Math.floor(diff / 60)}분 전`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`;
+        if (diff < 86400 * 7) return `${Math.floor(diff / 86400)}일 전`;
+        const d = new Date(t);
+        return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
+    } catch { return iso; }
+}
+
+function CommentItem({
+    comment, isMemorialMode, currentUserId, accessToken, postId, onAuthorPress, onDeleted,
+}: {
+    comment: Comment;
+    isMemorialMode: boolean;
+    currentUserId: string | null;
+    accessToken: string | null;
+    postId: string;
+    onAuthorPress: (authorId: string) => void;
+    onDeleted: (commentId: string) => void;
+}) {
     const { isDarkMode } = useDarkMode();
+    const isMine = !!currentUserId && currentUserId === comment.authorId;
+    const hasAuthorLink = !!comment.authorId;
+
+    function handleLongPress() {
+        if (!isMine || !accessToken) return;
+        Alert.alert(
+            "댓글 삭제",
+            "이 댓글을 삭제할까요?",
+            [
+                { text: "취소", style: "cancel" },
+                {
+                    text: "삭제",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            const res = await fetch(
+                                `${API_BASE_URL}/api/posts/${postId}/comments?commentId=${encodeURIComponent(comment.id)}`,
+                                {
+                                    method: "DELETE",
+                                    headers: { Authorization: `Bearer ${accessToken}` },
+                                },
+                            );
+                            if (!res.ok) {
+                                let msg = `HTTP ${res.status}`;
+                                try { msg = (await res.json()).error || msg; } catch {}
+                                Alert.alert("삭제 실패", msg);
+                                return;
+                            }
+                            onDeleted(comment.id);
+                        } catch (e) {
+                            Alert.alert("오류", e instanceof Error ? e.message : "");
+                        }
+                    },
+                },
+            ],
+        );
+    }
+
     return (
-        <View style={{ flexDirection: "row", gap: 10, marginBottom: 16 }}>
-            {comment.authorAvatar ? (
-                <Image source={{ uri: comment.authorAvatar }} style={styles.commentAvatar} />
-            ) : (
-                <View style={[styles.commentAvatar, styles.commentAvatarFallback]}>
-                    <Ionicons name="person" size={13} color={COLORS.gray[400]} />
-                </View>
-            )}
+        <TouchableOpacity
+            activeOpacity={isMine ? 0.7 : 1}
+            onLongPress={isMine ? handleLongPress : undefined}
+            style={{ flexDirection: "row", gap: 10, marginBottom: 16 }}
+        >
+            <TouchableOpacity
+                onPress={() => hasAuthorLink && onAuthorPress(comment.authorId)}
+                disabled={!hasAuthorLink}
+                activeOpacity={hasAuthorLink ? 0.7 : 1}
+            >
+                {comment.authorAvatar ? (
+                    <Image source={{ uri: comment.authorAvatar }} style={styles.commentAvatar} />
+                ) : (
+                    <View style={[styles.commentAvatar, styles.commentAvatarFallback]}>
+                        <Ionicons name="person" size={13} color={COLORS.gray[400]} />
+                    </View>
+                )}
+            </TouchableOpacity>
             <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 2 }}>
-                    <Text style={{
-                        fontSize: 12,
-                        fontWeight: "600",
-                        color: isDarkMode ? COLORS.white : COLORS.gray[800],
-                    }}>
-                        {comment.author}
+                    <TouchableOpacity
+                        onPress={() => hasAuthorLink && onAuthorPress(comment.authorId)}
+                        disabled={!hasAuthorLink}
+                        activeOpacity={hasAuthorLink ? 0.7 : 1}
+                    >
+                        <Text style={{
+                            fontSize: 12,
+                            fontWeight: "600",
+                            color: isDarkMode ? COLORS.white : COLORS.gray[800],
+                        }}>
+                            {comment.author}
+                        </Text>
+                    </TouchableOpacity>
+                    <Text style={{ fontSize: 12, color: COLORS.gray[400] }}>
+                        {formatCommentTime(comment.createdAt)}
                     </Text>
-                    <Text style={{ fontSize: 12, color: COLORS.gray[400] }}>{comment.createdAt}</Text>
+                    {isMine && (
+                        <View style={styles.myCommentBadge}>
+                            <Text style={styles.myCommentBadgeText}>내 댓글</Text>
+                        </View>
+                    )}
                 </View>
                 <Text style={{
                     fontSize: 14,
@@ -535,8 +633,13 @@ function CommentItem({ comment, isMemorialMode }: { comment: Comment; isMemorial
                 }}>
                     {comment.content}
                 </Text>
+                {isMine && (
+                    <Text style={{ fontSize: 10, color: COLORS.gray[400], marginTop: 4 }}>
+                        길게 눌러서 삭제
+                    </Text>
+                )}
             </View>
-        </View>
+        </TouchableOpacity>
     );
 }
 
@@ -583,4 +686,9 @@ const styles = StyleSheet.create({
     sendBtn: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
     commentAvatar: { width: 28, height: 28, borderRadius: 14 },
     commentAvatarFallback: { backgroundColor: COLORS.gray[200], alignItems: "center", justifyContent: "center" },
+    myCommentBadge: {
+        paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4,
+        backgroundColor: COLORS.memento[100],
+    },
+    myCommentBadgeText: { fontSize: 9, fontWeight: "700", color: COLORS.memento[700] },
 });
