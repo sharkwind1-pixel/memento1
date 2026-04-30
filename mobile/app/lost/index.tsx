@@ -18,7 +18,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { API_BASE_URL } from "@/config/constants";
 import { LostPet, LostPetType } from "@/types";
 import { COLORS } from "@/lib/theme";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import AppHeader from "@/components/common/AppHeader";
+import LostDetailModal from "@/components/lost/LostDetailModal";
 
 type TypeFilter = "all" | LostPetType;
 
@@ -31,12 +33,14 @@ const TYPE_LABELS: { id: TypeFilter; label: string }[] = [
 export default function LostPetsScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
+    const { isDarkMode } = useDarkMode();
     const [posts, setPosts] = useState<LostPet[]>([]);
     const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
     const [isLoading, setIsLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
+    const [selected, setSelected] = useState<LostPet | null>(null);
 
     const fetchPosts = useCallback(
         async (targetPage: number, append: boolean) => {
@@ -89,7 +93,7 @@ export default function LostPetsScreen() {
     }
 
     return (
-        <SafeAreaView style={styles.container} edges={["top"]}>
+        <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode ? COLORS.gray[950] : COLORS.white }]} edges={["top"]}>
             <Stack.Screen options={{ headerShown: false }} />
             <AppHeader showBack title="분실 / 발견" hideActions />
 
@@ -134,7 +138,9 @@ export default function LostPetsScreen() {
                     data={posts}
                     keyExtractor={(item) => item.id}
                     style={{ flex: 1 }}
-                    renderItem={({ item }) => <LostCard post={item} />}
+                    renderItem={({ item }) => (
+                        <LostCard post={item} isDarkMode={isDarkMode} onPress={() => setSelected(item)} />
+                    )}
                     refreshControl={
                         <RefreshControl
                             refreshing={refreshing}
@@ -170,17 +176,26 @@ export default function LostPetsScreen() {
             >
                 <Ionicons name="create" size={22} color="#fff" />
             </TouchableOpacity>
+
+            <LostDetailModal
+                visible={selected !== null}
+                onClose={() => setSelected(null)}
+                post={selected}
+            />
         </SafeAreaView>
     );
 }
 
-function LostCard({ post }: { post: LostPet }) {
+function LostCard({ post, isDarkMode, onPress }: { post: LostPet; isDarkMode: boolean; onPress: () => void }) {
     const isLost = post.type === "lost";
     const accent = isLost ? COLORS.memorial[500] : COLORS.memento[500];
     const accentBg = isLost ? COLORS.memorial[100] : COLORS.memento[100];
+    const cardBg = isDarkMode ? COLORS.gray[900] : COLORS.white;
+    const titleColor = isDarkMode ? COLORS.white : COLORS.gray[900];
+    const metaColor = isDarkMode ? COLORS.gray[400] : COLORS.gray[500];
 
     return (
-        <View style={styles.card}>
+        <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={[styles.card, { backgroundColor: cardBg, borderColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100] }]}>
             {post.imageUrl ? (
                 <Image source={{ uri: post.imageUrl }} style={styles.cardImage} resizeMode="cover" />
             ) : (
@@ -199,21 +214,21 @@ function LostCard({ post }: { post: LostPet }) {
                         <Text style={styles.cardKind}>{post.petType}</Text>
                     ) : null}
                 </View>
-                <Text style={styles.cardTitle} numberOfLines={1}>
+                <Text style={[styles.cardTitle, { color: titleColor }]} numberOfLines={1}>
                     {post.title}
                 </Text>
                 {post.region || post.district ? (
-                    <Text style={styles.cardLocation} numberOfLines={1}>
-                        <Ionicons name="location-outline" size={12} color={COLORS.gray[500]} />
+                    <Text style={[styles.cardLocation, { color: metaColor }]} numberOfLines={1}>
+                        <Ionicons name="location-outline" size={12} color={metaColor} />
                         {" "}
                         {[post.region, post.district].filter(Boolean).join(" ")}
                     </Text>
                 ) : null}
                 {post.date ? (
-                    <Text style={styles.cardDate}>{post.date}</Text>
+                    <Text style={[styles.cardDate, { color: metaColor }]}>{post.date}</Text>
                 ) : null}
             </View>
-        </View>
+        </TouchableOpacity>
     );
 }
 

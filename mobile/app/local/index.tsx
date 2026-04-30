@@ -18,7 +18,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { API_BASE_URL } from "@/config/constants";
 import { LocalPost, LocalPostCategory } from "@/types";
 import { COLORS } from "@/lib/theme";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import AppHeader from "@/components/common/AppHeader";
+import LocalDetailModal from "@/components/local/LocalDetailModal";
 
 type CategoryFilter = "all" | LocalPostCategory;
 
@@ -35,12 +37,14 @@ const CATEGORY_LABELS: { id: CategoryFilter; label: string; icon: keyof typeof I
 export default function LocalPostsScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
+    const { isDarkMode } = useDarkMode();
     const [posts, setPosts] = useState<LocalPost[]>([]);
     const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("all");
     const [isLoading, setIsLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
+    const [selected, setSelected] = useState<LocalPost | null>(null);
 
     const fetchPosts = useCallback(
         async (targetPage: number, append: boolean) => {
@@ -93,7 +97,7 @@ export default function LocalPostsScreen() {
     }
 
     return (
-        <SafeAreaView style={styles.container} edges={["top"]}>
+        <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode ? COLORS.gray[950] : COLORS.white }]} edges={["top"]}>
             <Stack.Screen options={{ headerShown: false }} />
             <AppHeader showBack title="지역정보" hideActions />
 
@@ -140,7 +144,9 @@ export default function LocalPostsScreen() {
                     data={posts}
                     keyExtractor={(item) => item.id}
                     style={{ flex: 1 }}
-                    renderItem={({ item }) => <LocalCard post={item} />}
+                    renderItem={({ item }) => (
+                        <LocalCard post={item} isDarkMode={isDarkMode} onPress={() => setSelected(item)} />
+                    )}
                     refreshControl={
                         <RefreshControl
                             refreshing={refreshing}
@@ -176,15 +182,28 @@ export default function LocalPostsScreen() {
             >
                 <Ionicons name="create" size={22} color="#fff" />
             </TouchableOpacity>
+
+            <LocalDetailModal
+                visible={selected !== null}
+                onClose={() => setSelected(null)}
+                post={selected}
+            />
         </SafeAreaView>
     );
 }
 
-function LocalCard({ post }: { post: LocalPost }) {
+function LocalCard({ post, isDarkMode, onPress }: { post: LocalPost; isDarkMode: boolean; onPress: () => void }) {
     const cat = CATEGORY_LABELS.find((c) => c.id === post.category);
+    const cardBg = isDarkMode ? COLORS.gray[900] : COLORS.white;
+    const titleColor = isDarkMode ? COLORS.white : COLORS.gray[900];
+    const metaColor = isDarkMode ? COLORS.gray[400] : COLORS.gray[500];
 
     return (
-        <View style={styles.card}>
+        <TouchableOpacity
+            onPress={onPress}
+            activeOpacity={0.85}
+            style={[styles.card, { backgroundColor: cardBg, borderColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100] }]}
+        >
             {post.imageUrl ? (
                 <Image source={{ uri: post.imageUrl }} style={styles.cardImage} resizeMode="cover" />
             ) : (
@@ -203,28 +222,28 @@ function LocalCard({ post }: { post: LocalPost }) {
                         <Text style={styles.postBadge}>{post.badge}</Text>
                     ) : null}
                 </View>
-                <Text style={styles.cardTitle} numberOfLines={2}>
+                <Text style={[styles.cardTitle, { color: titleColor }]} numberOfLines={2}>
                     {post.title}
                 </Text>
                 {post.region || post.district ? (
-                    <Text style={styles.cardLocation} numberOfLines={1}>
-                        <Ionicons name="location-outline" size={12} color={COLORS.gray[500]} />
+                    <Text style={[styles.cardLocation, { color: metaColor }]} numberOfLines={1}>
+                        <Ionicons name="location-outline" size={12} color={metaColor} />
                         {" "}
                         {[post.region, post.district].filter(Boolean).join(" ")}
                     </Text>
                 ) : null}
                 <View style={styles.cardStats}>
                     <View style={styles.statItem}>
-                        <Ionicons name="heart-outline" size={12} color={COLORS.gray[500]} />
-                        <Text style={styles.statText}>{post.likesCount ?? 0}</Text>
+                        <Ionicons name="heart-outline" size={12} color={metaColor} />
+                        <Text style={[styles.statText, { color: metaColor }]}>{post.likesCount ?? 0}</Text>
                     </View>
                     <View style={styles.statItem}>
-                        <Ionicons name="chatbubble-outline" size={12} color={COLORS.gray[500]} />
-                        <Text style={styles.statText}>{post.commentsCount ?? 0}</Text>
+                        <Ionicons name="chatbubble-outline" size={12} color={metaColor} />
+                        <Text style={[styles.statText, { color: metaColor }]}>{post.commentsCount ?? 0}</Text>
                     </View>
                 </View>
             </View>
-        </View>
+        </TouchableOpacity>
     );
 }
 
