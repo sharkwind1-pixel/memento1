@@ -33,6 +33,7 @@ import PetSwitcher from "@/components/common/PetSwitcher";
 import MinimiShopModal from "@/components/minihompy/MinimiShopModal";
 import BackgroundShopModal from "@/components/minihompy/BackgroundShopModal";
 import GuestbookModal from "@/components/minihompy/GuestbookModal";
+import GreetingEditModal from "@/components/minihompy/GreetingEditModal";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const STAGE_HEIGHT = 300;
@@ -79,6 +80,7 @@ export default function MinihompyScreen() {
     const [shopOpen, setShopOpen] = useState(false);
     const [bgShopOpen, setBgShopOpen] = useState(false);
     const [guestbookOpen, setGuestbookOpen] = useState(false);
+    const [greetingOpen, setGreetingOpen] = useState(false);
 
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
     const accessToken = session?.access_token ?? null;
@@ -287,17 +289,24 @@ export default function MinihompyScreen() {
                     />
                 </View>
 
-                {/* 인사말 편집 안내 */}
-                <View style={styles.greetingHint}>
-                    <Text style={styles.greetingHintTitle}>
-                        {settings?.greeting ? "내 인사말" : "인사말 미설정"}
-                    </Text>
-                    <Text style={styles.greetingHintText}>
-                        {settings?.greeting
-                            ? `"${settings.greeting}"`
-                            : "방문자에게 보여줄 인사말을 등록할 수 있어요. (웹에서 설정)"}
-                    </Text>
-                </View>
+                {/* 인사말 편집 (탭하면 편집 모달) */}
+                <TouchableOpacity
+                    onPress={() => setGreetingOpen(true)}
+                    activeOpacity={0.85}
+                    style={styles.greetingHint}
+                >
+                    <View style={{ flex: 1 }}>
+                        <Text style={styles.greetingHintTitle}>
+                            {settings?.greeting ? "내 인사말" : "인사말 미설정"}
+                        </Text>
+                        <Text style={styles.greetingHintText}>
+                            {settings?.greeting
+                                ? `"${settings.greeting}"`
+                                : "방문자에게 보여줄 인사말을 등록해보세요"}
+                        </Text>
+                    </View>
+                    <Ionicons name="pencil" size={16} color={accentColor} />
+                </TouchableOpacity>
             </ScrollView>
 
             {/* Drawer */}
@@ -332,6 +341,16 @@ export default function MinihompyScreen() {
                             accentColor={accentColor}
                         />
                     )}
+                    <GreetingEditModal
+                        visible={greetingOpen}
+                        onClose={() => setGreetingOpen(false)}
+                        accessToken={accessToken}
+                        initialGreeting={settings?.greeting ?? ""}
+                        accentColor={accentColor}
+                        onSaved={(greeting) => {
+                            if (settings) setSettings({ ...settings, greeting });
+                        }}
+                    />
                 </>
             )}
         </SafeAreaView>
@@ -501,6 +520,9 @@ const styles = StyleSheet.create({
     actionLabel: { fontSize: 14, fontWeight: "700", color: COLORS.gray[900] },
     actionSub: { fontSize: 11, color: COLORS.gray[500] },
     greetingHint: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
         marginHorizontal: 20,
         marginBottom: 32,
         padding: 14,

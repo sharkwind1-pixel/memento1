@@ -364,7 +364,14 @@ export default function PostDetailScreen() {
                         {post.title}
                     </Text>
 
-                    <View style={styles.authorRow}>
+                    <TouchableOpacity
+                        style={styles.authorRow}
+                        activeOpacity={post.authorId ? 0.7 : 1}
+                        disabled={!post.authorId}
+                        onPress={() => {
+                            if (post.authorId) router.push(`/minihompy/${post.authorId}`);
+                        }}
+                    >
                         {post.authorAvatar ? (
                             <Image source={{ uri: post.authorAvatar }} style={styles.authorAvatar} />
                         ) : (
@@ -372,17 +379,22 @@ export default function PostDetailScreen() {
                                 <Ionicons name="person" size={16} color={COLORS.gray[400]} />
                             </View>
                         )}
-                        <View>
-                            <Text style={{
-                                fontSize: 14,
-                                fontWeight: "500",
-                                color: isDarkMode ? COLORS.white : COLORS.gray[800],
-                            }}>
-                                {post.author}
-                            </Text>
+                        <View style={{ flex: 1 }}>
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                                <Text style={{
+                                    fontSize: 14,
+                                    fontWeight: "500",
+                                    color: isDarkMode ? COLORS.white : COLORS.gray[800],
+                                }}>
+                                    {post.author}
+                                </Text>
+                                {post.authorId && (
+                                    <Ionicons name="chevron-forward" size={12} color={COLORS.gray[400]} />
+                                )}
+                            </View>
                             <Text style={{ fontSize: 12, color: COLORS.gray[400] }}>{post.createdAt}</Text>
                         </View>
-                    </View>
+                    </TouchableOpacity>
 
                     {post.images && post.images.length > 0 && (
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }} contentContainerStyle={{ gap: 8 }}>

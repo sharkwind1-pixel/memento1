@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { Video as ExpoVideo, ResizeMode } from "expo-av";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
@@ -1123,6 +1124,16 @@ function VideosTab({ pet, isMemorialMode, accentColor, refreshing, onRefresh }: 
                             <View style={styles.videoHero}>
                                 {item.thumbnailUrl ? (
                                     <Image source={{ uri: item.thumbnailUrl }} style={styles.videoThumb} resizeMode="cover" />
+                                ) : item.videoUrl ? (
+                                    // 영상 첫 프레임 표시 (paused + muted)
+                                    <ExpoVideo
+                                        source={{ uri: item.videoUrl }}
+                                        style={styles.videoThumb}
+                                        resizeMode={ResizeMode.COVER}
+                                        shouldPlay={false}
+                                        isMuted
+                                        positionMillis={300}
+                                    />
                                 ) : (
                                     <LinearGradient
                                         colors={[COLORS.memorial[400], "#F97316"]}

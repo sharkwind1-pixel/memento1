@@ -19,9 +19,9 @@ import { COLORS } from "@/lib/theme";
 import { MINIMI_CATALOG } from "@/data/minihompyData";
 import {
     getMinimiCatalog, getMinimiInventory,
-    purchaseMinimi, equipMinimi,
+    purchaseMinimi, equipMinimi, sellMinimi,
 } from "@/lib/minihompy-api";
-import type { MinimiCatalogItem } from "@/types";
+import type { MinimiCatalogItem, UserMinimiRow } from "@/types";
 
 type CategoryFilter = "all" | "dog" | "cat";
 
@@ -40,6 +40,7 @@ export default function MinimiShopModal({
     const insets = useSafeAreaInsets();
     const [catalog, setCatalog] = useState<MinimiCatalogItem[]>([]);
     const [ownedSlugs, setOwnedSlugs] = useState<Set<string>>(new Set());
+    const [slugToUserMinimiId, setSlugToUserMinimiId] = useState<Record<string, string>>({});
     const [equippedSlug, setEquippedSlug] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [busy, setBusy] = useState<string | null>(null);
@@ -61,6 +62,10 @@ export default function MinimiShopModal({
                 sortOrder: i,
             })));
             setOwnedSlugs(new Set(inventory.owned.map((o) => o.minimi_id)));
+            // 판매(sell)는 user_minimi.id (UUID)가 필요 → slug → UUID 맵 구성
+            const slugToId: Record<string, string> = {};
+            inventory.owned.forEach((o: UserMinimiRow) => { slugToId[o.minimi_id] = o.id; });
+            setSlugToUserMinimiId(slugToId);
             setEquippedSlug(inventory.equippedSlug);
         } finally {
             setLoading(false);
@@ -71,39 +76,81 @@ export default function MinimiShopModal({
         if (visible) load();
     }, [visible, load]);
 
-    async function handlePress(item: MinimiCatalogItem) {
+    async function doEquipToggle(item: MinimiCatalogItem, equipping: boolean) {
+        setBusy(item.slug);
+        try {
+            await equipMinimi(accessToken, equipping ? item.slug : null);
+            setEquippedSlug(equipping ? item.slug : null);
+            onChanged();
+        } catch (e) {
+            Alert.alert("실패", e instanceof Error ? e.message : "장착 변경 실패");
+        } finally {
+            setBusy(null);
+        }
+    }
+
+    async function doSell(item: MinimiCatalogItem) {
+        const userMinimiId = slugToUserMinimiId[item.slug];
+        if (!userMinimiId) {
+            Alert.alert("판매 불가", "보유 정보를 찾을 수 없어요. 새로고침 후 다시 시도해주세요.");
+            return;
+        }
+        Alert.alert(
+            `${item.name} 판매`,
+            `${item.resellPrice}P를 환불받고 판매할까요? (장착 중이면 자동 해제)`,
+            [
+                { text: "취소", style: "cancel" },
+                {
+                    text: "판매",
+                    style: "destructive",
+                    onPress: async () => {
+                        setBusy(item.slug);
+                        try {
+                            const result = await sellMinimi(accessToken, userMinimiId);
+                            // 보유/장착/맵 갱신
+                            setOwnedSlugs((prev) => {
+                                const next = new Set(prev);
+                                next.delete(item.slug);
+                                return next;
+                            });
+                            setSlugToUserMinimiId((prev) => {
+                                const next = { ...prev };
+                                delete next[item.slug];
+                                return next;
+                            });
+                            if (equippedSlug === item.slug) setEquippedSlug(null);
+                            onChanged();
+                            Alert.alert("판매 완료", `${result.refundedPoints}P가 환불됐어요.`);
+                        } catch (e) {
+                            Alert.alert("판매 실패", e instanceof Error ? e.message : "");
+                        } finally {
+                            setBusy(null);
+                        }
+                    },
+                },
+            ],
+        );
+    }
+
+    function handlePress(item: MinimiCatalogItem) {
         if (busy) return;
 
         const owned = ownedSlugs.has(item.slug);
         const equipped = equippedSlug === item.slug;
 
-        if (equipped) {
-            // 장착 해제
-            setBusy(item.slug);
-            try {
-                await equipMinimi(accessToken, null);
-                setEquippedSlug(null);
-                onChanged();
-            } catch (e) {
-                Alert.alert("실패", e instanceof Error ? e.message : "장착 해제 실패");
-            } finally {
-                setBusy(null);
-            }
-            return;
-        }
-
         if (owned) {
-            // 장착
-            setBusy(item.slug);
-            try {
-                await equipMinimi(accessToken, item.slug);
-                setEquippedSlug(item.slug);
-                onChanged();
-            } catch (e) {
-                Alert.alert("실패", e instanceof Error ? e.message : "장착 실패");
-            } finally {
-                setBusy(null);
-            }
+            // 보유한 미니미: 장착/해제 + 판매 옵션
+            Alert.alert(
+                item.name,
+                equipped ? "장착 중인 미니미예요." : "보유 중인 미니미예요.",
+                [
+                    { text: "취소", style: "cancel" },
+                    equipped
+                        ? { text: "장착 해제", onPress: () => doEquipToggle(item, false) }
+                        : { text: "장착하기", onPress: () => doEquipToggle(item, true) },
+                    { text: `판매 (${item.resellPrice}P)`, style: "destructive", onPress: () => doSell(item) },
+                ],
+            );
             return;
         }
 
@@ -249,7 +296,7 @@ export default function MinimiShopModal({
                                         <View style={styles.cardFooter}>
                                             {owned ? (
                                                 <Text style={[styles.cardPrice, { color: accentColor }]}>
-                                                    {equipped ? "탭해서 해제" : "탭해서 장착"}
+                                                    {equipped ? "장착 중 · 탭" : "보유 · 탭"}
                                                 </Text>
                                             ) : (
                                                 <View style={styles.priceRow}>

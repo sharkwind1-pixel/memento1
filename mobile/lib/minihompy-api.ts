@@ -164,6 +164,83 @@ export async function purchaseBackground(accessToken: string, slug: string): Pro
 }
 
 // ============================================================================
+// 다른 유저 미니홈피 방문
+// ============================================================================
+
+interface VisitProfileResponse {
+    settings?: {
+        isPublic: boolean;
+        backgroundSlug: string;
+        greeting: string | null;
+        todayVisitors?: number;
+        totalVisitors?: number;
+        totalLikes?: number;
+    };
+    owner?: {
+        id: string;
+        nickname?: string;
+        avatar_url?: string;
+        avatar?: string;
+        equipped_minimi_slug?: string | null;
+        equippedMinimiSlug?: string | null;
+    };
+    isLiked?: boolean;
+}
+
+export interface VisitedMinihompy {
+    isPublic: boolean;
+    backgroundSlug: string;
+    greeting: string;
+    todayVisitors: number;
+    totalVisitors: number;
+    totalLikes: number;
+    ownerNickname: string;
+    ownerAvatar: string | null;
+    equippedMinimiSlug: string | null;
+    isLiked: boolean;
+}
+
+export async function visitMinihompy(
+    accessToken: string,
+    ownerUserId: string,
+): Promise<VisitedMinihompy> {
+    const data = await callApi<VisitProfileResponse>(`/api/minihompy/${ownerUserId}`, { accessToken });
+    return {
+        isPublic: !!data.settings?.isPublic,
+        backgroundSlug: data.settings?.backgroundSlug || "default_sky",
+        greeting: data.settings?.greeting ?? "",
+        todayVisitors: data.settings?.todayVisitors ?? 0,
+        totalVisitors: data.settings?.totalVisitors ?? 0,
+        totalLikes: data.settings?.totalLikes ?? 0,
+        ownerNickname: data.owner?.nickname ?? "익명",
+        ownerAvatar: data.owner?.avatar_url ?? data.owner?.avatar ?? null,
+        equippedMinimiSlug: data.owner?.equippedMinimiSlug ?? data.owner?.equipped_minimi_slug ?? null,
+        isLiked: !!data.isLiked,
+    };
+}
+
+export async function postMinihompyVisit(
+    accessToken: string,
+    ownerUserId: string,
+): Promise<void> {
+    // 방문 카운트 +1 (서버가 중복 방문 처리)
+    await callApi<unknown>(`/api/minihompy/${ownerUserId}/visit`, {
+        accessToken,
+        method: "POST",
+    });
+}
+
+export async function toggleMinihompyLike(
+    accessToken: string,
+    ownerUserId: string,
+): Promise<{ liked: boolean; totalLikes: number }> {
+    return await callApi<{ liked: boolean; totalLikes: number }>(
+        `/api/minihompy/${ownerUserId}/like`,
+        { accessToken, method: "POST" },
+    );
+}
+
+// ============================================================================
 // 방명록
 // ============================================================================
 
