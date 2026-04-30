@@ -3,7 +3,8 @@
  * 모바일 앱 내 결제는 아직 준비 중 — 웹 결제 안내
  */
 
-import { View, Text, ScrollView, TouchableOpacity, Linking, StyleSheet } from "react-native";
+import { useState } from "react";
+import { View, Text, ScrollView, TouchableOpacity, Linking, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -13,6 +14,7 @@ import { useDarkMode } from "@/contexts/ThemeContext";
 import { PRICING } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
 import AppHeader from "@/components/common/AppHeader";
+import CancelConfirmModal from "@/components/subscription/CancelConfirmModal";
 
 interface Plan {
     id: "free" | "basic" | "premium";
@@ -64,16 +66,21 @@ const PLANS: Plan[] = [
 ];
 
 export default function SubscriptionScreen() {
-    const { isPremium, profile } = useAuth();
+    const { session, isPremium, profile, refreshProfile } = useAuth();
     const { isMemorialMode } = usePet();
     const { isDarkMode } = useDarkMode();
+    const [cancelOpen, setCancelOpen] = useState(false);
 
     function openWebPayment() {
         Linking.openURL("https://mementoani.com?tab=home#subscription");
     }
 
-    function openCancelPage() {
-        Linking.openURL("https://mementoani.com?tab=home#subscription");
+    function handleCancel() {
+        if (!session) {
+            Alert.alert("로그인 필요", "로그인이 필요합니다.");
+            return;
+        }
+        setCancelOpen(true);
     }
 
     const expiresAt = (profile as { premiumExpiresAt?: string } | null | undefined)?.premiumExpiresAt
@@ -81,6 +88,10 @@ export default function SubscriptionScreen() {
     const expiresText = expiresAt
         ? new Date(expiresAt).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })
         : null;
+    const phase = (profile as { subscriptionPhase?: string; subscription_phase?: string } | null | undefined)?.subscriptionPhase
+        ?? (profile as { subscription_phase?: string } | null | undefined)?.subscription_phase
+        ?? null;
+    const isCancelled = phase === "cancelled";
 
     const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.gray[50];
 
@@ -105,18 +116,38 @@ export default function SubscriptionScreen() {
                 반려동물과의 특별한 순간을 더 많이 담아보세요.
             </Text>
 
-            {isPremium && expiresText && (
-                <View style={[styles.expiresCard, { backgroundColor: isDarkMode ? COLORS.gray[900] : COLORS.memento[50] }]}>
-                    <Ionicons name="calendar-outline" size={18} color={COLORS.memento[500]} />
+            {isPremium && (
+                <View style={[
+                    styles.expiresCard,
+                    {
+                        backgroundColor: isDarkMode ? COLORS.gray[900] : (isCancelled ? "#FEF3C7" : COLORS.memento[50]),
+                        borderColor: isCancelled ? "#FDE68A" : "transparent",
+                        borderWidth: isCancelled ? 1 : 0,
+                    },
+                ]}>
+                    <Ionicons
+                        name={isCancelled ? "warning-outline" : "calendar-outline"}
+                        size={18}
+                        color={isCancelled ? "#B45309" : COLORS.memento[500]}
+                    />
                     <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 12, color: COLORS.gray[500] }}>현재 구독 만료일</Text>
-                        <Text style={{ fontSize: 14, fontWeight: "700", color: isDarkMode ? COLORS.white : COLORS.gray[900], marginTop: 2 }}>
-                            {expiresText}
+                        <Text style={{ fontSize: 12, color: isCancelled ? "#92400E" : COLORS.gray[500] }}>
+                            {isCancelled ? "해지 예정" : "다음 결제일"}
+                        </Text>
+                        <Text style={{
+                            fontSize: 14, fontWeight: "700",
+                            color: isCancelled ? "#78350F" : (isDarkMode ? COLORS.white : COLORS.gray[900]),
+                            marginTop: 2,
+                        }}>
+                            {expiresText ?? "만료일 정보 없음"}
+                            {isCancelled ? " 까지 이용 가능" : ""}
                         </Text>
                     </View>
-                    <TouchableOpacity onPress={openCancelPage} activeOpacity={0.7}>
-                        <Text style={{ fontSize: 12, color: COLORS.gray[500], textDecorationLine: "underline" }}>해지</Text>
-                    </TouchableOpacity>
+                    {!isCancelled && (
+                        <TouchableOpacity onPress={handleCancel} activeOpacity={0.7} style={styles.cancelLink}>
+                            <Text style={{ fontSize: 12, color: COLORS.gray[600], fontWeight: "600" }}>해지</Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
             )}
 
@@ -211,6 +242,18 @@ export default function SubscriptionScreen() {
                 </TouchableOpacity>
             </View>
             </ScrollView>
+
+            {session && (
+                <CancelConfirmModal
+                    visible={cancelOpen}
+                    onClose={() => setCancelOpen(false)}
+                    accessToken={session.access_token}
+                    accentColor={COLORS.memento[500]}
+                    onCancelled={() => {
+                        refreshProfile().catch(() => {});
+                    }}
+                />
+            )}
         </SafeAreaView>
     );
 }
@@ -236,5 +279,12 @@ const styles = StyleSheet.create({
         padding: 14,
         borderRadius: 14,
         marginBottom: 16,
+    },
+    cancelLink: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 9999,
+        borderWidth: 1,
+        borderColor: COLORS.gray[300],
     },
 });
