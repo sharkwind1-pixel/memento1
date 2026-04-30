@@ -21,6 +21,7 @@ export default function RootLayout() {
                         <Stack.Screen name="(tabs)" />
                         <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
                         <Stack.Screen name="pet/new" options={{ presentation: "modal", headerShown: false }} />
+                        <Stack.Screen name="pet/[id]" options={{ headerShown: false }} />
                         <Stack.Screen name="post/[id]" options={{ headerShown: false }} />
                         <Stack.Screen name="post/write" options={{ presentation: "modal", headerShown: false }} />
                         <Stack.Screen name="magazine/[id]" options={{ headerShown: false }} />
