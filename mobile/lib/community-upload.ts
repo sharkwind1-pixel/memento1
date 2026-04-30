@@ -38,9 +38,14 @@ function pickMime(uri: string, fallbackType?: string): { mime: string; ext: stri
     }
 }
 
-export async function uploadCommunityPostImage(
+/**
+ * 통합 업로더 — pet-media 버킷의 prefix별 디렉토리에 업로드.
+ * 웹 src/lib/storage.ts uploadImage(file, userId, pathPrefix) 패턴 매칭.
+ */
+async function uploadToStorage(
     uri: string,
     userId: string,
+    prefix: string,
     options?: { mimeType?: string },
 ): Promise<UploadResult> {
     try {
@@ -56,7 +61,7 @@ export async function uploadCommunityPostImage(
         const { mime, ext } = pickMime(uri, options?.mimeType);
         const timestamp = Date.now();
         const randomId = Math.random().toString(36).substring(2, 9);
-        const path = `community/${userId}/${timestamp}-${randomId}.${ext}`;
+        const path = `${prefix}/${userId}/${timestamp}-${randomId}.${ext}`;
 
         const { data, error } = await supabase.storage
             .from(BUCKET)
@@ -81,4 +86,30 @@ export async function uploadCommunityPostImage(
             error: e instanceof Error ? e.message : "이미지 업로드 실패",
         };
     }
+}
+
+export async function uploadCommunityPostImage(
+    uri: string,
+    userId: string,
+    options?: { mimeType?: string },
+): Promise<UploadResult> {
+    return uploadToStorage(uri, userId, "community", options);
+}
+
+/** 분실/발견 동물 게시글 이미지 (웹 uploadLostPetImage 매칭, prefix=lost-pets) */
+export async function uploadLostPetImage(
+    uri: string,
+    userId: string,
+    options?: { mimeType?: string },
+): Promise<UploadResult> {
+    return uploadToStorage(uri, userId, "lost-pets", options);
+}
+
+/** 지역정보 게시글 이미지 (웹 uploadLocalPostImage 매칭, prefix=local-posts) */
+export async function uploadLocalPostImage(
+    uri: string,
+    userId: string,
+    options?: { mimeType?: string },
+): Promise<UploadResult> {
+    return uploadToStorage(uri, userId, "local-posts", options);
 }
