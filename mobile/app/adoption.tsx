@@ -17,7 +17,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import { API_BASE_URL } from "@/config/constants";
 import { AdoptionAnimal } from "@/types";
 import { COLORS } from "@/lib/theme";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import AppHeader from "@/components/common/AppHeader";
+import AdoptionDetailModal from "@/components/adoption/AdoptionDetailModal";
 
 type KindFilter = "all" | "dog" | "cat" | "etc";
 
@@ -29,12 +31,14 @@ const KIND_LABELS: { id: KindFilter; label: string; icon: React.ComponentProps<t
 ];
 
 export default function AdoptionScreen() {
+    const { isDarkMode } = useDarkMode();
     const [animals, setAnimals] = useState<AdoptionAnimal[]>([]);
     const [kindFilter, setKindFilter] = useState<KindFilter>("all");
     const [isLoading, setIsLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
+    const [selected, setSelected] = useState<AdoptionAnimal | null>(null);
 
     const fetchAnimals = useCallback(
         async (targetPage: number, append: boolean) => {
@@ -87,7 +91,7 @@ export default function AdoptionScreen() {
     }
 
     return (
-        <SafeAreaView style={styles.container} edges={["top"]}>
+        <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode ? COLORS.gray[950] : COLORS.white }]} edges={["top"]}>
             <Stack.Screen options={{ headerShown: false }} />
             <AppHeader showBack title="입양정보" hideActions />
 
@@ -137,7 +141,9 @@ export default function AdoptionScreen() {
                     data={animals}
                     keyExtractor={(item) => item.id}
                     style={{ flex: 1 }}
-                    renderItem={({ item }) => <AnimalCard animal={item} />}
+                    renderItem={({ item }) => (
+                        <AnimalCard animal={item} isDarkMode={isDarkMode} onPress={() => setSelected(item)} />
+                    )}
                     refreshControl={
                         <RefreshControl
                             refreshing={refreshing}
@@ -165,15 +171,29 @@ export default function AdoptionScreen() {
                     contentContainerStyle={animals.length === 0 ? { flex: 1 } : styles.listContent}
                 />
             )}
+
+            <AdoptionDetailModal
+                visible={selected !== null}
+                onClose={() => setSelected(null)}
+                animal={selected}
+            />
         </SafeAreaView>
     );
 }
 
-function AnimalCard({ animal }: { animal: AdoptionAnimal }) {
+function AnimalCard({ animal, isDarkMode, onPress }: {
+    animal: AdoptionAnimal;
+    isDarkMode: boolean;
+    onPress: () => void;
+}) {
     const isAvailable = animal.status === "공고중" || animal.status === "보호중";
+    const cardBg = isDarkMode ? COLORS.gray[900] : COLORS.white;
+    const titleColor = isDarkMode ? COLORS.white : COLORS.gray[900];
+    const metaColor = isDarkMode ? COLORS.gray[400] : COLORS.gray[600];
+    const shelterColor = isDarkMode ? COLORS.gray[500] : COLORS.gray[500];
 
     return (
-        <View style={styles.card}>
+        <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={[styles.card, { backgroundColor: cardBg }]}>
             {animal.thumbnailUrl || animal.imageUrl ? (
                 <Image
                     source={{ uri: animal.thumbnailUrl ?? animal.imageUrl }}
@@ -197,22 +217,22 @@ function AnimalCard({ animal }: { animal: AdoptionAnimal }) {
                         </View>
                     ) : null}
                 </View>
-                <Text style={styles.cardTitle} numberOfLines={1}>
+                <Text style={[styles.cardTitle, { color: titleColor }]} numberOfLines={1}>
                     {animal.breed ?? "품종 정보 없음"}
                 </Text>
                 <View style={styles.cardMetaRow}>
-                    {animal.gender ? <Text style={styles.cardMeta}>{animal.gender}</Text> : null}
-                    {animal.age ? <Text style={styles.cardMeta}> · {animal.age}</Text> : null}
-                    {animal.color ? <Text style={styles.cardMeta}> · {animal.color}</Text> : null}
+                    {animal.gender ? <Text style={[styles.cardMeta, { color: metaColor }]}>{animal.gender}</Text> : null}
+                    {animal.age ? <Text style={[styles.cardMeta, { color: metaColor }]}> · {animal.age}</Text> : null}
+                    {animal.color ? <Text style={[styles.cardMeta, { color: metaColor }]}> · {animal.color}</Text> : null}
                 </View>
                 {animal.shelterName ? (
                     <View style={styles.shelterRow}>
-                        <Ionicons name="location-outline" size={11} color={COLORS.gray[500]} />
-                        <Text style={styles.cardShelter} numberOfLines={1}>{animal.shelterName}</Text>
+                        <Ionicons name="location-outline" size={11} color={shelterColor} />
+                        <Text style={[styles.cardShelter, { color: shelterColor }]} numberOfLines={1}>{animal.shelterName}</Text>
                     </View>
                 ) : null}
             </View>
-        </View>
+        </TouchableOpacity>
     );
 }
 
