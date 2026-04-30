@@ -254,7 +254,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // 제대로 못 잡아서 Site URL(mementoani.com)로 fallback되는 문제 회피.
             // https URL은 매칭 안정적, 페이지가 deep link로 forward.
             // Chrome 확인창("Expo Go 앱 열려고 합니다 / 계속")은 OS 보안 정책이라 못 없앰.
-            const webBridge = `${API_BASE_URL}/auth/callback?mobile=1&nativeUrl=${encodeURIComponent(nativeDeepLink)}`;
+            //
+            // **중요**: API_BASE_URL은 www.mementoani.com로 normalize되지만,
+            // Supabase 대시보드에 등록된 redirect URL은 mementoani.com (no www)일 수 있음.
+            // OAuth용 redirect는 raw 도메인 사용 → Vercel이 webBridge 페이지 도달 후
+            // window.location.replace(deepLink)로 앱 deep link 호출.
+            const oauthOrigin = API_BASE_URL.replace(
+                /^https:\/\/www\.mementoani\.com/i,
+                "https://mementoani.com",
+            );
+            const webBridge = `${oauthOrigin}/auth/callback?mobile=1&nativeUrl=${encodeURIComponent(nativeDeepLink)}`;
 
             // 1. PKCE verifier 생성 → 메모리 보관
             const verifier = generatePKCEVerifier();
