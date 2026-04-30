@@ -4,7 +4,7 @@
 
 import { useState } from "react";
 import {
-    View, Text, ScrollView, TouchableOpacity,
+    View, Text, ScrollView, TouchableOpacity, Switch,
     Image, Alert, ActivityIndicator, Linking, StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -13,15 +13,19 @@ import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
 import { useDarkMode } from "@/contexts/ThemeContext";
+import { API_BASE_URL } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
 import AppHeader from "@/components/common/AppHeader";
+import ProfileEditModal from "@/components/profile/ProfileEditModal";
 
 export default function ProfileScreen() {
     const router = useRouter();
-    const { user, profile, isPremium, points, signOut } = useAuth();
+    const { user, session, profile, isPremium, points, signOut, refreshProfile } = useAuth();
     const { pets, isMemorialMode } = usePet();
-    const { isDarkMode } = useDarkMode();
+    const { isDarkMode, toggleTheme } = useDarkMode();
     const [signingOut, setSigningOut] = useState(false);
+    const [editOpen, setEditOpen] = useState(false);
+    const [deleting, setDeleting] = useState(false);
 
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
     const nickname = profile?.nickname
@@ -52,15 +56,24 @@ export default function ProfileScreen() {
             <Stack.Screen options={{ headerShown: false }} />
             <AppHeader showBack title="프로필" hideActions />
             <ScrollView style={styles.flex1} showsVerticalScrollIndicator={false}>
-            <View style={[styles.headerCard, { backgroundColor: isDarkMode ? COLORS.gray[900] : COLORS.white }]}>
-                {profile?.avatar ? (
-                    <Image source={{ uri: profile.avatar }} style={styles.avatar} />
-                ) : (
-                    <View style={[styles.avatar, styles.avatarFallback, { backgroundColor: accentColor + "20" }]}>
-                        <Ionicons name="person" size={36} color={accentColor} />
+            <TouchableOpacity
+                onPress={() => setEditOpen(true)}
+                activeOpacity={0.85}
+                style={[styles.headerCard, { backgroundColor: isDarkMode ? COLORS.gray[900] : COLORS.white }]}
+            >
+                <View style={{ position: "relative" }}>
+                    {profile?.avatar ? (
+                        <Image source={{ uri: profile.avatar }} style={styles.avatar} />
+                    ) : (
+                        <View style={[styles.avatar, styles.avatarFallback, { backgroundColor: accentColor + "20" }]}>
+                            <Ionicons name="person" size={36} color={accentColor} />
+                        </View>
+                    )}
+                    <View style={[styles.editBadge, { backgroundColor: accentColor }]}>
+                        <Ionicons name="pencil" size={11} color="#fff" />
                     </View>
-                )}
-                <Text style={{ fontSize: 18, fontWeight: "bold", color: isDarkMode ? COLORS.white : COLORS.gray[900] }}>
+                </View>
+                <Text style={{ fontSize: 18, fontWeight: "bold", color: isDarkMode ? COLORS.white : COLORS.gray[900], marginTop: 12 }}>
                     {nickname}
                 </Text>
                 <Text style={{ fontSize: 14, color: COLORS.gray[400], marginTop: 2 }}>{email}</Text>
@@ -87,7 +100,7 @@ export default function ProfileScreen() {
                         </Text>
                     </View>
                 </View>
-            </View>
+            </TouchableOpacity>
 
             <SectionCard title="내 반려동물" isMemorialMode={isMemorialMode}>
                 {pets.map((pet) => (
@@ -127,10 +140,35 @@ export default function ProfileScreen() {
                 />
                 <SettingsRow
                     icon={<Ionicons name="notifications-outline" size={22} color={COLORS.gray[500]} />}
-                    label="알림 설정"
+                    label="알림"
                     onPress={() => router.push("/notifications")}
                     isMemorialMode={isMemorialMode}
                 />
+            </SectionCard>
+
+            <SectionCard title="화면" isMemorialMode={isMemorialMode}>
+                <View style={[
+                    styles.settingsRow,
+                    { borderBottomColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[50], borderBottomWidth: 0 },
+                ]}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                        <Ionicons name={isDarkMode ? "moon" : "sunny"} size={22} color={COLORS.gray[500]} />
+                        <View>
+                            <Text style={{ fontSize: 14, color: isDarkMode ? COLORS.gray[50] : COLORS.gray[900] }}>
+                                다크 모드
+                            </Text>
+                            <Text style={{ fontSize: 12, color: COLORS.gray[400], marginTop: 2 }}>
+                                {isDarkMode ? "어두운 테마 사용 중" : "밝은 테마 사용 중"}
+                            </Text>
+                        </View>
+                    </View>
+                    <Switch
+                        value={isDarkMode}
+                        onValueChange={toggleTheme}
+                        trackColor={{ false: COLORS.gray[300], true: accentColor }}
+                        thumbColor="#fff"
+                    />
+                </View>
             </SectionCard>
 
             <SectionCard title="앱 정보" isMemorialMode={isMemorialMode}>
@@ -161,10 +199,10 @@ export default function ProfileScreen() {
                 </View>
             </SectionCard>
 
-            <View style={{ marginHorizontal: 16, marginBottom: 32 }}>
+            <View style={{ marginHorizontal: 16, marginBottom: 12, gap: 10 }}>
                 <TouchableOpacity
                     onPress={handleSignOut}
-                    disabled={signingOut}
+                    disabled={signingOut || deleting}
                     style={[
                         styles.signoutBtn,
                         { backgroundColor: isDarkMode ? "#1F0000" : COLORS.red[50] },
@@ -177,9 +215,89 @@ export default function ProfileScreen() {
                     )}
                 </TouchableOpacity>
             </View>
+
+            {/* 계정 삭제 (위험 액션, 따로 분리) */}
+            <View style={{ marginHorizontal: 16, marginBottom: 32 }}>
+                <TouchableOpacity
+                    onPress={handleDeleteAccount}
+                    disabled={deleting || signingOut}
+                    activeOpacity={0.7}
+                    style={styles.deleteAccountBtn}
+                >
+                    {deleting ? (
+                        <ActivityIndicator size="small" color={COLORS.gray[400]} />
+                    ) : (
+                        <Text style={{ color: COLORS.gray[400], fontSize: 12 }}>계정 삭제</Text>
+                    )}
+                </TouchableOpacity>
+            </View>
             </ScrollView>
+
+            {user && (
+                <ProfileEditModal
+                    visible={editOpen}
+                    onClose={() => setEditOpen(false)}
+                    userId={user.id}
+                    initialNickname={profile?.nickname ?? ""}
+                    initialAvatar={profile?.avatar ?? null}
+                    accentColor={accentColor}
+                    onSaved={() => { refreshProfile().catch(() => {}); }}
+                />
+            )}
         </SafeAreaView>
     );
+
+    function handleDeleteAccount() {
+        if (!session) return;
+        Alert.alert(
+            "계정 삭제",
+            "정말 계정을 삭제할까요? 모든 펫 / 사진 / 게시글 / 대화 기록이 함께 삭제되고 복구할 수 없어요.",
+            [
+                { text: "취소", style: "cancel" },
+                {
+                    text: "계정 삭제",
+                    style: "destructive",
+                    onPress: () => {
+                        Alert.alert(
+                            "다시 한번 확인",
+                            "삭제 후에는 30일간 같은 이메일/소셜계정으로 재가입할 수 없어요. 계속할까요?",
+                            [
+                                { text: "취소", style: "cancel" },
+                                {
+                                    text: "삭제 진행",
+                                    style: "destructive",
+                                    onPress: async () => {
+                                        setDeleting(true);
+                                        try {
+                                            const res = await fetch(`${API_BASE_URL}/api/auth/delete-account`, {
+                                                method: "POST",
+                                                headers: { Authorization: `Bearer ${session.access_token}` },
+                                            });
+                                            if (!res.ok) {
+                                                let msg = `HTTP ${res.status}`;
+                                                try {
+                                                    const err = await res.json();
+                                                    msg = err.error || msg;
+                                                } catch {}
+                                                Alert.alert("삭제 실패", msg);
+                                                return;
+                                            }
+                                            await signOut();
+                                            router.replace("/(auth)/login");
+                                        } catch (e) {
+                                            Alert.alert("오류", e instanceof Error ? e.message : "");
+                                        } finally {
+                                            setDeleting(false);
+                                        }
+                                    },
+                                },
+                            ],
+                        );
+                    },
+                },
+            ],
+        );
+    }
 }
 
 function SectionCard({ title, children, isMemorialMode }: {
@@ -258,8 +376,15 @@ const styles = StyleSheet.create({
         marginTop: 16,
         borderRadius: 24,
     },
-    avatar: { width: 80, height: 80, borderRadius: 40, marginBottom: 12 },
+    avatar: { width: 80, height: 80, borderRadius: 40 },
     avatarFallback: { alignItems: "center", justifyContent: "center" },
+    editBadge: {
+        position: "absolute",
+        bottom: 0, right: 0,
+        width: 26, height: 26, borderRadius: 13,
+        alignItems: "center", justifyContent: "center",
+        borderWidth: 2, borderColor: "#fff",
+    },
     badgeRow: { flexDirection: "row", gap: 8, marginTop: 12 },
     premiumBadge: {
         flexDirection: "row",
@@ -320,5 +445,10 @@ const styles = StyleSheet.create({
         alignItems: "center",
         borderWidth: 1,
         borderColor: COLORS.red[200],
+    },
+    deleteAccountBtn: {
+        alignSelf: "center",
+        paddingHorizontal: 16,
+        paddingVertical: 10,
     },
 });
