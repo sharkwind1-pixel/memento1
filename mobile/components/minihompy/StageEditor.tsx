@@ -23,7 +23,7 @@ import { findMinimi, findBackgroundOrDefault } from "@/data/minihompyData";
 import { putPlacedMinimi } from "@/lib/minihompy-api";
 import type { PlacedMinimi, BackgroundTheme, UserMinimiRow } from "@/types";
 
-const MINIMI_SIZE = 96;
+const MINIMI_SIZE = 64;
 const MAX_PLACED = 6;
 
 interface Props {
@@ -274,9 +274,12 @@ function DraggableMinimi({
     }, [placed.x, placed.y, pan]);
 
     const panResponder = useMemo(() => PanResponder.create({
+        // Capture를 true로 → 부모 ScrollView가 vertical scroll 가로채기 전에 미니미가 먼저 잡음
         onStartShouldSetPanResponder: () => editMode,
-        onMoveShouldSetPanResponder: (_, g) =>
-            editMode && (Math.abs(g.dx) > 2 || Math.abs(g.dy) > 2),
+        onStartShouldSetPanResponderCapture: () => editMode,
+        onMoveShouldSetPanResponder: () => editMode,
+        onMoveShouldSetPanResponderCapture: () => editMode,
+        onPanResponderTerminationRequest: () => false,
         onPanResponderGrant: () => {
             pan.setOffset({ x: 0, y: 0 });
             pan.setValue({ x: 0, y: 0 });

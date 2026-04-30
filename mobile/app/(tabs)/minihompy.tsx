@@ -116,6 +116,10 @@ export default function MinihompyScreen() {
     }
 
     function handleStageTouch() {
+        // 미니미가 배치/장착된 경우만 미니미 인사말. 그 외엔 터치 무반응 (혼동 방지)
+        const hasMinimi = (settings?.placedMinimi && settings.placedMinimi.length > 0) || !!equippedSlug;
+        if (!hasMinimi) return;
+
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
         const newCount = touchCount + 1;
         setTouchCount(newCount);
@@ -288,7 +292,7 @@ export default function MinihompyScreen() {
                                     </Text>
                                 </View>
 
-                                <Text style={styles.tapHint}>탭해서 반응 보기</Text>
+                                {/* 미니미 없으니 "탭해서 반응" 안내 X */}
                             </StageBackground>
                         </TouchableOpacity>
 

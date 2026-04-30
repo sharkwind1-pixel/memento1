@@ -23,7 +23,7 @@ import {
 } from "@/lib/minihompy-api";
 import type { MinimiCatalogItem, UserMinimiRow } from "@/types";
 
-type CategoryFilter = "all" | "dog" | "cat";
+type CategoryFilter = "all" | "owned" | "dog" | "cat";
 
 interface Props {
     visible: boolean;
@@ -210,7 +210,9 @@ export default function MinimiShopModal({
 
     const filtered = filter === "all"
         ? catalog
-        : catalog.filter((c) => c.category === filter);
+        : filter === "owned"
+            ? catalog.filter((c) => ownedSlugs.has(c.slug))
+            : catalog.filter((c) => c.category === filter);
 
     return (
         <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
@@ -231,24 +233,30 @@ export default function MinimiShopModal({
 
                 {/* 카테고리 필터 */}
                 <View style={styles.filterRow}>
-                    {(["all", "dog", "cat"] as CategoryFilter[]).map((c) => (
-                        <TouchableOpacity
-                            key={c}
-                            onPress={() => setFilter(c)}
-                            style={[
-                                styles.filterChip,
-                                filter === c && { backgroundColor: accentColor, borderColor: accentColor },
-                            ]}
-                        >
-                            <Text style={{
-                                fontSize: 12,
-                                fontWeight: "600",
-                                color: filter === c ? "#fff" : COLORS.gray[700],
-                            }}>
-                                {c === "all" ? "전체" : c === "dog" ? "강아지" : "고양이"}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
+                    {(["all", "owned", "dog", "cat"] as CategoryFilter[]).map((c) => {
+                        const ownedCount = ownedSlugs.size;
+                        return (
+                            <TouchableOpacity
+                                key={c}
+                                onPress={() => setFilter(c)}
+                                style={[
+                                    styles.filterChip,
+                                    filter === c && { backgroundColor: accentColor, borderColor: accentColor },
+                                ]}
+                            >
+                                <Text style={{
+                                    fontSize: 12,
+                                    fontWeight: "600",
+                                    color: filter === c ? "#fff" : COLORS.gray[700],
+                                }}>
+                                    {c === "all" ? "전체"
+                                        : c === "owned" ? `보관함 (${ownedCount})`
+                                        : c === "dog" ? "강아지"
+                                        : "고양이"}
+                                </Text>
+                            </TouchableOpacity>
+                        );
+                    })}
                 </View>
 
                 {loading ? (
