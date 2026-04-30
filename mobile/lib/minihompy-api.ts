@@ -7,7 +7,10 @@ import { API_BASE_URL } from "@/config/constants";
 import type {
     MinihompySettings, GuestbookEntry,
     MinimiCatalogItem, UserMinimiRow,
+    PlacedMinimi,
 } from "@/types";
+
+export type { PlacedMinimi };
 
 interface FetchOpts {
     accessToken: string;
@@ -16,7 +19,7 @@ interface FetchOpts {
 async function callApi<T>(
     path: string,
     opts: FetchOpts & {
-        method?: "GET" | "POST" | "PATCH" | "DELETE";
+        method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
         body?: unknown;
     },
 ): Promise<T> {
@@ -54,6 +57,7 @@ interface SettingsResponse {
         todayVisitors?: number;
         totalVisitors?: number;
         totalLikes?: number;
+        placedMinimi?: PlacedMinimi[];
     };
 }
 
@@ -160,6 +164,21 @@ export async function purchaseBackground(accessToken: string, slug: string): Pro
         accessToken,
         method: "POST",
         body: { slug },
+    });
+}
+
+// ============================================================================
+// 미니미 배치 (스테이지 자유 배치)
+// ============================================================================
+
+export async function putPlacedMinimi(
+    accessToken: string,
+    placedMinimi: PlacedMinimi[],
+): Promise<void> {
+    await callApi<unknown>("/api/minihompy/settings/placed-minimi", {
+        accessToken,
+        method: "PUT",
+        body: { placedMinimi },
     });
 }
 

@@ -278,6 +278,15 @@ export interface MinihompySettings {
     todayVisitors?: number;
     totalVisitors?: number;
     totalLikes?: number;
+    placedMinimi?: PlacedMinimi[];
+}
+
+/** 스테이지에 자유 배치된 미니미 (x/y는 5~95 범위 %) */
+export interface PlacedMinimi {
+    slug: string;
+    x: number;
+    y: number;
+    zIndex: number;
 }
 
 export interface GuestbookEntry {

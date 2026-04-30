@@ -26,7 +26,7 @@ import { findMinimi, findBackgroundOrDefault } from "@/data/minihompyData";
 import {
     getMyMinihompySettings, patchMinihompySettings, getMinimiInventory,
 } from "@/lib/minihompy-api";
-import type { MinihompySettings } from "@/types";
+import type { MinihompySettings, PlacedMinimi, UserMinimiRow } from "@/types";
 import AppHeader from "@/components/common/AppHeader";
 import AppDrawer from "@/components/common/AppDrawer";
 import PetSwitcher from "@/components/common/PetSwitcher";
@@ -34,6 +34,7 @@ import MinimiShopModal from "@/components/minihompy/MinimiShopModal";
 import BackgroundShopModal from "@/components/minihompy/BackgroundShopModal";
 import GuestbookModal from "@/components/minihompy/GuestbookModal";
 import GreetingEditModal from "@/components/minihompy/GreetingEditModal";
+import StageEditor from "@/components/minihompy/StageEditor";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const STAGE_HEIGHT = 300;
@@ -71,6 +72,7 @@ export default function MinihompyScreen() {
 
     const [settings, setSettings] = useState<MinihompySettings | null>(null);
     const [equippedSlug, setEquippedSlug] = useState<string | null>(null);
+    const [ownedMinimis, setOwnedMinimis] = useState<UserMinimiRow[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [touchCount, setTouchCount] = useState(0);
@@ -97,6 +99,7 @@ export default function MinihompyScreen() {
             ]);
             if (s) setSettings(s);
             setEquippedSlug(inv.equippedSlug);
+            setOwnedMinimis(inv.owned);
         } finally {
             setLoading(false);
         }
@@ -153,8 +156,13 @@ export default function MinihompyScreen() {
         try {
             const inv = await getMinimiInventory(accessToken);
             setEquippedSlug(inv.equippedSlug);
+            setOwnedMinimis(inv.owned);
         } catch {}
         refreshProfile().catch(() => {});
+    }
+
+    function handlePlacedChanged(next: PlacedMinimi[]) {
+        if (settings) setSettings({ ...settings, placedMinimi: next });
     }
 
     const bgSlug = settings?.backgroundSlug ?? "default_sky";
@@ -214,44 +222,77 @@ export default function MinihompyScreen() {
 
                 <PetSwitcher accentColor={accentColor} onAddPet={() => router.push("/pet/new")} />
 
-                {/* Stage */}
-                <TouchableOpacity
-                    activeOpacity={0.95}
-                    onPress={handleStageTouch}
-                    style={styles.stageWrap}
-                >
-                    <StageBackground background={background}>
-                        {/* 인사말 말풍선 (settings.greeting 또는 터치 메시지) */}
+                {/* Stage — 자유 배치 미니미가 있으면 StageEditor, 없으면 단일 장착 미니미 */}
+                {(settings?.placedMinimi && settings.placedMinimi.length > 0) || ownedMinimis.length > 0 ? (
+                    <View style={styles.stageWrap}>
+                        {accessToken && (
+                            <StageEditor
+                                stageHeight={STAGE_HEIGHT}
+                                background={background}
+                                placedMinimi={settings?.placedMinimi ?? []}
+                                ownedSlugs={ownedMinimis.map((o) => o.minimi_id)}
+                                inventory={ownedMinimis}
+                                accessToken={accessToken}
+                                accentColor={accentColor}
+                                onChanged={handlePlacedChanged}
+                            />
+                        )}
+                        {/* 인사말 말풍선 + 터치 메시지 (stage 위 절대 배치) */}
                         {(message || settings?.greeting) && (
-                            <View style={styles.speechBubble}>
+                            <View pointerEvents="none" style={styles.speechBubbleAbsolute}>
                                 <Text style={styles.speechText}>
                                     {message ?? settings?.greeting ?? ""}
                                 </Text>
                                 <View style={styles.speechTail} />
                             </View>
                         )}
-
-                        {/* 장착된 미니미 (없으면 펫 프로필 폴백) */}
-                        <View style={styles.minimiSlot}>
-                            {equippedMinimi ? (
-                                <Image source={{ uri: equippedMinimi.imageUrl }} style={styles.minimiImg} resizeMode="contain" />
-                            ) : selectedPet?.profileImage ? (
-                                <Image source={{ uri: selectedPet.profileImage }} style={styles.petImg} />
-                            ) : (
-                                <View style={[styles.petImg, styles.petImgFallback]}>
-                                    <Text style={{ fontSize: 56 }}>
-                                        {selectedPet?.type === "강아지" ? "🐶" : selectedPet?.type === "고양이" ? "🐱" : "🐾"}
+                        {/* 터치 반응 (placedMinimi 비어있을 때만) */}
+                        {(!settings?.placedMinimi || settings.placedMinimi.length === 0) && (
+                            <TouchableOpacity
+                                activeOpacity={0.7}
+                                onPress={handleStageTouch}
+                                style={styles.tapAreaAbsolute}
+                            />
+                        )}
+                    </View>
+                ) : (
+                    // 보유 미니미 0 + 배치 0 → 기존 단일 stage (펫 프로필 폴백)
+                    <TouchableOpacity
+                        activeOpacity={0.95}
+                        onPress={handleStageTouch}
+                        style={styles.stageWrap}
+                    >
+                        <StageBackground background={background}>
+                            {(message || settings?.greeting) && (
+                                <View style={styles.speechBubble}>
+                                    <Text style={styles.speechText}>
+                                        {message ?? settings?.greeting ?? ""}
                                     </Text>
+                                    <View style={styles.speechTail} />
                                 </View>
                             )}
-                            <Text style={styles.minimiName}>
-                                {equippedMinimi?.name ?? selectedPet?.name ?? "미니미"}
-                            </Text>
-                        </View>
 
-                        <Text style={styles.tapHint}>탭해서 반응 보기</Text>
-                    </StageBackground>
-                </TouchableOpacity>
+                            <View style={styles.minimiSlot}>
+                                {equippedMinimi ? (
+                                    <Image source={{ uri: equippedMinimi.imageUrl }} style={styles.minimiImg} resizeMode="contain" />
+                                ) : selectedPet?.profileImage ? (
+                                    <Image source={{ uri: selectedPet.profileImage }} style={styles.petImg} />
+                                ) : (
+                                    <View style={[styles.petImg, styles.petImgFallback]}>
+                                        <Text style={{ fontSize: 56 }}>
+                                            {selectedPet?.type === "강아지" ? "🐶" : selectedPet?.type === "고양이" ? "🐱" : "🐾"}
+                                        </Text>
+                                    </View>
+                                )}
+                                <Text style={styles.minimiName}>
+                                    {equippedMinimi?.name ?? selectedPet?.name ?? "미니미"}
+                                </Text>
+                            </View>
+
+                            <Text style={styles.tapHint}>탭해서 반응 보기</Text>
+                        </StageBackground>
+                    </TouchableOpacity>
+                )}
 
                 {/* 4개 액션 카드 */}
                 <View style={styles.actionGrid}>
@@ -454,6 +495,27 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         elevation: 3,
         maxWidth: SCREEN_WIDTH - 80,
+    },
+    speechBubbleAbsolute: {
+        position: "absolute",
+        top: 32,
+        alignSelf: "center",
+        left: 0, right: 0,
+        marginHorizontal: 60,
+        backgroundColor: "rgba(255,255,255,0.95)",
+        paddingHorizontal: 16, paddingVertical: 8,
+        borderRadius: 16,
+        shadowColor: "#000",
+        shadowOpacity: 0.1, shadowRadius: 8,
+        shadowOffset: { width: 0, height: 2 },
+        elevation: 3,
+        zIndex: 100,
+        alignItems: "center",
+    },
+    tapAreaAbsolute: {
+        position: "absolute",
+        top: 0, left: 0, right: 0, bottom: 60,
+        zIndex: 1,
     },
     speechText: { fontSize: 13, fontWeight: "600", color: COLORS.gray[900] },
     speechTail: {
