@@ -2,8 +2,8 @@
  * 알림 화면
  */
 
-import { useState, useEffect } from "react";
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Modal, ScrollView, StyleSheet } from "react-native";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, Modal, ScrollView, StyleSheet, RefreshControl, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -13,6 +13,23 @@ import { usePet } from "@/contexts/PetContext";
 import { useDarkMode } from "@/contexts/ThemeContext";
 import { COLORS } from "@/lib/theme";
 import AppHeader from "@/components/common/AppHeader";
+
+function formatRelative(iso: string): string {
+    if (!iso) return "";
+    try {
+        const t = new Date(iso).getTime();
+        if (isNaN(t)) return iso;
+        const diffSec = Math.floor((Date.now() - t) / 1000);
+        if (diffSec < 60) return "방금 전";
+        if (diffSec < 3600) return `${Math.floor(diffSec / 60)}분 전`;
+        if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}시간 전`;
+        if (diffSec < 86400 * 7) return `${Math.floor(diffSec / 86400)}일 전`;
+        const d = new Date(t);
+        return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
+    } catch {
+        return iso;
+    }
+}
 
 interface Notification {
     id: string;
@@ -46,11 +63,16 @@ export default function NotificationsScreen() {
     const { isDarkMode } = useDarkMode();
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [selected, setSelected] = useState<Notification | null>(null);
+    const [markingAll, setMarkingAll] = useState(false);
 
-    useEffect(() => { load(); }, []);
+    const unreadCount = useMemo(
+        () => notifications.filter((n) => !n.isRead).length,
+        [notifications],
+    );
 
-    async function load() {
+    const load = useCallback(async () => {
         try {
             const headers: Record<string, string> = {};
             if (session) headers["Authorization"] = `Bearer ${session.access_token}`;
@@ -82,6 +104,14 @@ export default function NotificationsScreen() {
         } finally {
             setIsLoading(false);
         }
+    }, [session]);
+
+    useEffect(() => { load(); }, [load]);
+
+    async function handleRefresh() {
+        setRefreshing(true);
+        await load();
+        setRefreshing(false);
     }
 
     async function markRead(id: string) {
@@ -94,6 +124,36 @@ export default function NotificationsScreen() {
             setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, isRead: true } : n));
         } catch {
             // silent
+        }
+    }
+
+    async function markAllRead() {
+        if (!session || markingAll || unreadCount === 0) return;
+        setMarkingAll(true);
+        // 낙관적 업데이트
+        setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+        try {
+            // 서버 일괄 endpoint 우선 시도, 미지원 시 개별 호출 fallback
+            const res = await fetch(`${API_BASE_URL}/api/notifications/read-all`, {
+                method: "PUT",
+                headers: { "Authorization": `Bearer ${session.access_token}` },
+            });
+            if (!res.ok) {
+                // fallback: 개별 PUT 병렬 호출
+                const unread = notifications.filter((n) => !n.isRead);
+                await Promise.all(unread.map((n) =>
+                    fetch(`${API_BASE_URL}/api/notifications/${n.id}/read`, {
+                        method: "PUT",
+                        headers: { "Authorization": `Bearer ${session.access_token}` },
+                    }).catch(() => {})
+                ));
+            }
+        } catch {
+            Alert.alert("실패", "모두 읽음 처리에 실패했어요. 잠시 후 다시 시도해주세요.");
+            // 롤백 위해 다시 로드
+            load();
+        } finally {
+            setMarkingAll(false);
         }
     }
 
@@ -134,19 +194,53 @@ export default function NotificationsScreen() {
     return (
         <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
             <Stack.Screen options={{ headerShown: false }} />
-            <AppHeader showBack title="알림" hideActions />
-            {notifications.length === 0 ? (
-                <View style={styles.emptyCenter}>
-                    <Ionicons name="notifications-off-outline" size={48} color={COLORS.gray[300]} />
-                    <Text style={{ color: COLORS.gray[400], marginTop: 12, fontSize: 14, textAlign: "center" }}>
-                        아직 알림이 없어요.
+            <AppHeader showBack title={`알림${unreadCount > 0 ? ` (${unreadCount})` : ""}`} hideActions />
+
+            {/* 헤더 액션 (모두 읽음) */}
+            {notifications.length > 0 && (
+                <View style={[styles.headerActions, { borderBottomColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100] }]}>
+                    <Text style={{ fontSize: 12, color: COLORS.gray[500] }}>
+                        {unreadCount > 0 ? `읽지 않은 알림 ${unreadCount}개` : "모든 알림을 확인했어요"}
                     </Text>
+                    {unreadCount > 0 && (
+                        <TouchableOpacity
+                            onPress={markAllRead}
+                            disabled={markingAll}
+                            style={styles.markAllBtn}
+                            activeOpacity={0.7}
+                        >
+                            {markingAll ? (
+                                <ActivityIndicator size="small" color={COLORS.memento[500]} />
+                            ) : (
+                                <>
+                                    <Ionicons name="checkmark-done-outline" size={14} color={COLORS.memento[600]} />
+                                    <Text style={{ fontSize: 12, color: COLORS.memento[600], fontWeight: "600" }}>모두 읽음</Text>
+                                </>
+                            )}
+                        </TouchableOpacity>
+                    )}
                 </View>
+            )}
+
+            {notifications.length === 0 ? (
+                <ScrollView
+                    contentContainerStyle={styles.emptyCenter}
+                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={COLORS.memento[500]} />}
+                >
+                    <Ionicons name="notifications-off-outline" size={48} color={COLORS.gray[300]} />
+                    <Text style={{ color: COLORS.gray[500], marginTop: 12, fontSize: 14, textAlign: "center", fontWeight: "600" }}>
+                        아직 알림이 없어요
+                    </Text>
+                    <Text style={{ color: COLORS.gray[400], marginTop: 6, fontSize: 12, textAlign: "center", lineHeight: 18 }}>
+                        공지/관리자 메시지/구독·결제 알림이{"\n"}여기에 표시돼요
+                    </Text>
+                </ScrollView>
             ) : (
                 <FlatList
                     data={notifications}
                     style={{ flex: 1 }}
                     keyExtractor={(item) => item.id}
+                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={COLORS.memento[500]} />}
                     renderItem={({ item }) => {
                         const badge = badgeForType(item.type);
                         const iconName = iconForType(item.type);
@@ -191,7 +285,7 @@ export default function NotificationsScreen() {
                                     }} numberOfLines={2}>
                                         {item.body}
                                     </Text>
-                                    <Text style={{ fontSize: 12, color: COLORS.gray[400], marginTop: 4 }}>{item.createdAt}</Text>
+                                    <Text style={{ fontSize: 12, color: COLORS.gray[400], marginTop: 4 }}>{formatRelative(item.createdAt)}</Text>
                                 </View>
                                 {!item.isRead && (
                                     <View style={styles.unreadDot} />
@@ -218,7 +312,7 @@ export default function NotificationsScreen() {
                                 <Ionicons name="close" size={22} color={isMemorialMode ? "#fff" : COLORS.gray[700]} />
                             </TouchableOpacity>
                         </View>
-                        <Text style={[styles.modalDate, { color: COLORS.gray[400] }]}>{selected?.createdAt}</Text>
+                        <Text style={[styles.modalDate, { color: COLORS.gray[400] }]}>{formatRelative(selected?.createdAt ?? "")}</Text>
                         <ScrollView style={{ maxHeight: 400 }} contentContainerStyle={{ paddingVertical: 8 }}>
                             <Text style={[
                                 styles.modalBody,
@@ -236,7 +330,24 @@ export default function NotificationsScreen() {
 
 const styles = StyleSheet.create({
     flex1: { flex: 1 },
-    emptyCenter: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 24 },
+    emptyCenter: { flexGrow: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 24, paddingVertical: 80 },
+    headerActions: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+    },
+    markAllBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 9999,
+        backgroundColor: COLORS.memento[50],
+    },
     row: {
         flexDirection: "row",
         alignItems: "flex-start",
