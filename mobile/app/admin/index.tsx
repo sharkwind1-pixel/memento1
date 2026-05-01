@@ -21,6 +21,8 @@ import AppHeader from "@/components/common/AppHeader";
 import AdminReportsTab from "@/components/admin/AdminReportsTab";
 import AdminUsersTab from "@/components/admin/AdminUsersTab";
 import AdminMessagesTab from "@/components/admin/AdminMessagesTab";
+import AdminDashboardTab from "@/components/admin/AdminDashboardTab";
+import AdminPostsTab from "@/components/admin/AdminPostsTab";
 import type { AdminTab } from "@/types";
 
 const TABS: Array<{ id: AdminTab; label: string; icon: React.ComponentProps<typeof Ionicons>["name"] }> = [
@@ -102,10 +104,14 @@ export default function AdminScreen() {
 
             {/* 탭 내용 */}
             <View style={styles.flex1}>
-                {accessToken && tab === "reports" ? (
+                {accessToken && tab === "dashboard" ? (
+                    <AdminDashboardTab />
+                ) : accessToken && tab === "reports" ? (
                     <AdminReportsTab accessToken={accessToken} />
                 ) : accessToken && tab === "users" ? (
                     <AdminUsersTab accessToken={accessToken} />
+                ) : accessToken && tab === "posts" ? (
+                    <AdminPostsTab accessToken={accessToken} />
                 ) : accessToken && tab === "messages" ? (
                     <AdminMessagesTab accessToken={accessToken} />
                 ) : (
