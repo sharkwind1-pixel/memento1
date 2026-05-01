@@ -666,7 +666,7 @@ function SpeechBubble({ message }: { message: string }) {
             pointerEvents="none"
             style={[styles.bubble, { opacity, transform: [{ scale }] }]}
         >
-            <Text style={styles.bubbleText} numberOfLines={1}>{message}</Text>
+            <Text style={styles.bubbleText}>{message}</Text>
             <View style={styles.bubbleTail} />
         </Animated.View>
     );
@@ -696,10 +696,12 @@ const styles = StyleSheet.create({
         position: "absolute",
         top: -8,
         alignSelf: "center",
+        minWidth: 120,
+        maxWidth: 240,
         backgroundColor: "rgba(255,255,255,0.96)",
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 9999,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 14,
         shadowColor: "#000",
         shadowOpacity: 0.15,
         shadowRadius: 4,
@@ -707,7 +709,14 @@ const styles = StyleSheet.create({
         elevation: 4,
         zIndex: 60,
     },
-    bubbleText: { fontSize: 11, fontWeight: "700", color: COLORS.gray[800] },
+    bubbleText: {
+        fontSize: 11,
+        fontWeight: "700",
+        color: COLORS.gray[800],
+        textAlign: "center",
+        lineHeight: 16,
+        flexWrap: "wrap",
+    },
     bubbleTail: {
         position: "absolute",
         bottom: -4,

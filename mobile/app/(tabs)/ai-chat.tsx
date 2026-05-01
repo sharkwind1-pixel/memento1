@@ -18,7 +18,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import {
     View, Text, TextInput, TouchableOpacity,
     FlatList, KeyboardAvoidingView, Platform,
-    ActivityIndicator, Image, StyleSheet, Alert, Share,
+    ActivityIndicator, Image, StyleSheet, Alert, Share, Linking,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -897,24 +897,50 @@ function MessageRenderer({
                 )}
                 {message.nearbyPlaces && message.nearbyPlaces.length > 0 && (
                     <View style={{ marginTop: 8, gap: 6 }}>
-                        {message.nearbyPlaces.slice(0, 3).map((place, idx) => (
-                            <View key={idx} style={{
-                                padding: 10,
-                                borderRadius: 10,
-                                backgroundColor: isDarkMode ? COLORS.gray[700] : "#fff",
-                                borderWidth: 1,
-                                borderColor: isDarkMode ? COLORS.gray[600] : COLORS.gray[200],
-                            }}>
-                                <Text style={{ fontSize: 13, fontWeight: "600", color: isDarkMode ? COLORS.white : COLORS.gray[900] }}>
-                                    {place.name}
-                                </Text>
-                                {place.address && (
-                                    <Text style={{ fontSize: 11, color: isDarkMode ? COLORS.gray[400] : COLORS.gray[500], marginTop: 2 }}>
-                                        {place.address}
-                                    </Text>
-                                )}
-                            </View>
-                        ))}
+                        {message.nearbyPlaces.slice(0, 3).map((place, idx) => {
+                            // mapUrl 우선, 없으면 네이버 지도 검색 fallback
+                            const url = place.mapUrl
+                                ?? `https://map.naver.com/p/search/${encodeURIComponent(place.name + (place.address ? " " + place.address : ""))}`;
+                            return (
+                                <TouchableOpacity
+                                    key={idx}
+                                    onPress={() => Linking.openURL(url).catch(() => Alert.alert("열기 실패", "네이버 지도를 열 수 없어요."))}
+                                    activeOpacity={0.85}
+                                    style={{
+                                        padding: 10,
+                                        borderRadius: 10,
+                                        backgroundColor: isDarkMode ? COLORS.gray[700] : "#fff",
+                                        borderWidth: 1,
+                                        borderColor: isDarkMode ? COLORS.gray[600] : COLORS.gray[200],
+                                        flexDirection: "row",
+                                        alignItems: "center",
+                                        gap: 8,
+                                    }}
+                                >
+                                    <View style={{ flex: 1 }}>
+                                        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                                            <Text style={{ fontSize: 13, fontWeight: "600", color: isDarkMode ? COLORS.white : COLORS.gray[900] }}>
+                                                {place.name}
+                                            </Text>
+                                            {place.distance && (
+                                                <Text style={{ fontSize: 10, color: accentColor, fontWeight: "700" }}>
+                                                    {place.distance}
+                                                </Text>
+                                            )}
+                                        </View>
+                                        {place.address && (
+                                            <Text style={{ fontSize: 11, color: isDarkMode ? COLORS.gray[400] : COLORS.gray[500], marginTop: 2 }}>
+                                                {place.address}
+                                            </Text>
+                                        )}
+                                    </View>
+                                    <View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
+                                        <Ionicons name="map-outline" size={12} color={accentColor} />
+                                        <Text style={{ fontSize: 10, color: accentColor, fontWeight: "700" }}>네이버 지도</Text>
+                                    </View>
+                                </TouchableOpacity>
+                            );
+                        })}
                     </View>
                 )}
             </View>

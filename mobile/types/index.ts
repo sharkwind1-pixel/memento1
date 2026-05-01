@@ -94,7 +94,7 @@ export interface ChatMessage {
     type?: "reminder-suggestion" | "crisis-alert";
     matchedPhoto?: { url: string; caption?: string };
     matchedTimeline?: { date: string; title: string; content: string };
-    nearbyPlaces?: Array<{ name: string; address?: string; distance?: number; phone?: string }>;
+    nearbyPlaces?: Array<{ name: string; address?: string; distance?: number | string; phone?: string; mapUrl?: string; category?: string }>;
     crisisAlert?: {
         message: string;
         resources?: Array<{ name: string; phone: string; description?: string }>;
