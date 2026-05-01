@@ -400,39 +400,50 @@ function DraggableMinimi({
     const minimi = findMinimi(placed.slug);
     const dragStart = useRef<{ origX: number; origY: number } | null>(null);
 
+    // **중요**: PanResponder는 mount 시 한 번만 생성. placed.x/y가 deps에 들어가면
+    // 매 move마다 부모 state 변경 → useMemo 재계산 → panResponder 새 인스턴스 →
+    // 진행 중 gesture context 잃고 미니미가 제자리로 튐 (떨림 증상의 원인).
+    // 최신 값은 ref로 access.
+    const placedRef = useRef(placed);
+    placedRef.current = placed;
+    const callbacksRef = useRef({ onMove, onMoveEnd });
+    callbacksRef.current = { onMove, onMoveEnd };
+    const stageDimsRef = useRef({ stageWidth, stageHeight, editMode });
+    stageDimsRef.current = { stageWidth, stageHeight, editMode };
+
     const panResponder = useMemo(() => PanResponder.create({
-        onStartShouldSetPanResponder: () => editMode,
-        onStartShouldSetPanResponderCapture: () => editMode,
-        onMoveShouldSetPanResponder: () => editMode,
-        onMoveShouldSetPanResponderCapture: () => editMode,
+        onStartShouldSetPanResponder: () => stageDimsRef.current.editMode,
+        onStartShouldSetPanResponderCapture: () => stageDimsRef.current.editMode,
+        onMoveShouldSetPanResponder: () => stageDimsRef.current.editMode,
+        onMoveShouldSetPanResponderCapture: () => stageDimsRef.current.editMode,
         onPanResponderTerminationRequest: () => false,
         onShouldBlockNativeResponder: () => true,
         onPanResponderGrant: () => {
-            // 웹 dragStartRef.current = { origX: placed.x, origY: placed.y }
-            dragStart.current = { origX: placed.x, origY: placed.y };
+            dragStart.current = { origX: placedRef.current.x, origY: placedRef.current.y };
         },
         onPanResponderMove: (_, g) => {
-            if (!dragStart.current || stageWidth === 0 || stageHeight === 0) return;
-            const dxPct = (g.dx / stageWidth) * 100;
-            const dyPct = (g.dy / stageHeight) * 100;
-            // 드래그 중에는 clamp 안 함 (웹 동일)
-            onMove(index, dragStart.current.origX + dxPct, dragStart.current.origY + dyPct);
+            const { stageWidth: sw, stageHeight: sh } = stageDimsRef.current;
+            if (!dragStart.current || sw === 0 || sh === 0) return;
+            const dxPct = (g.dx / sw) * 100;
+            const dyPct = (g.dy / sh) * 100;
+            callbacksRef.current.onMove(index, dragStart.current.origX + dxPct, dragStart.current.origY + dyPct);
         },
         onPanResponderRelease: (_, g) => {
-            if (!dragStart.current || stageWidth === 0 || stageHeight === 0) {
+            const { stageWidth: sw, stageHeight: sh } = stageDimsRef.current;
+            if (!dragStart.current || sw === 0 || sh === 0) {
                 dragStart.current = null;
                 return;
             }
-            const dxPct = (g.dx / stageWidth) * 100;
-            const dyPct = (g.dy / stageHeight) * 100;
-            // release 시 clamp 적용 (웹 동일)
-            onMoveEnd(index, dragStart.current.origX + dxPct, dragStart.current.origY + dyPct);
+            const dxPct = (g.dx / sw) * 100;
+            const dyPct = (g.dy / sh) * 100;
+            callbacksRef.current.onMoveEnd(index, dragStart.current.origX + dxPct, dragStart.current.origY + dyPct);
             dragStart.current = null;
         },
         onPanResponderTerminate: () => {
             dragStart.current = null;
         },
-    }), [editMode, stageWidth, stageHeight, index, onMove, onMoveEnd, placed.x, placed.y]);
+        // deps: index만 (mount 시 1회만 생성, 나머지는 ref로 latest access)
+    }), [index]);
 
     if (!minimi) return null;
 
