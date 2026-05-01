@@ -223,6 +223,49 @@ export interface LostPet {
 }
 
 // ============================================
+// 9.7 관리자 — 신고 (웹 admin/types.ts 매칭)
+// ============================================
+
+export type ReportStatus = "pending" | "reviewing" | "resolved" | "rejected";
+export type ReportTargetType = "post" | "comment" | "user" | "pet_memorial";
+
+export interface ReportRow {
+    id: string;
+    reporter_id: string;
+    reporter_email?: string;
+    target_type: ReportTargetType;
+    target_id: string;
+    reason: string;
+    description: string | null;
+    status: ReportStatus;
+    resolution_note: string | null;
+    resolved_at: string | null;
+    resolved_by: string | null;
+    created_at: string;
+}
+
+export const REPORT_REASON_LABELS: Record<string, string> = {
+    spam: "스팸/광고",
+    abuse: "욕설/비방",
+    inappropriate: "부적절한 콘텐츠",
+    harassment: "괴롭힘",
+    misinformation: "허위정보",
+    copyright: "저작권 침해",
+    other: "기타",
+};
+
+export const REPORT_TARGET_LABELS: Record<ReportTargetType, string> = {
+    post: "게시물",
+    comment: "댓글",
+    user: "회원",
+    pet_memorial: "기억공간",
+};
+
+export type AdminTab =
+    | "dashboard" | "reports" | "users" | "posts"
+    | "messages" | "inquiries" | "withdrawals" | "magazine";
+
+// ============================================
 // 9. 지역정보
 // ============================================
 

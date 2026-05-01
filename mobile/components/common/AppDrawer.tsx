@@ -218,12 +218,7 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
                             {/* 관리자 메뉴 (관리자만 표시, 웹 Sidebar.tsx 매칭) */}
                             {isAdminUser && (
                                 <TouchableOpacity
-                                    onPress={() => {
-                                        onClose();
-                                        setTimeout(() => {
-                                            Linking.openURL(`${API_BASE_URL}/?tab=admin`).catch(() => {});
-                                        }, 200);
-                                    }}
+                                    onPress={() => navigate("/admin")}
                                     style={[styles.menuItem, styles.adminMenuItem]}
                                     activeOpacity={0.7}
                                 >
@@ -231,7 +226,7 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
                                     <Text style={[styles.menuLabel, { color: "#8B5CF6", fontWeight: "700" }]}>
                                         관리자 모드
                                     </Text>
-                                    <Ionicons name="open-outline" size={14} color="#8B5CF6" />
+                                    <Ionicons name="chevron-forward" size={16} color="#8B5CF6" />
                                 </TouchableOpacity>
                             )}
                         </View>

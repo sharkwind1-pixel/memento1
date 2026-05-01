@@ -34,6 +34,7 @@ export default function RootLayout() {
                         <Stack.Screen name="lost/new" options={{ headerShown: false, presentation: "modal" }} />
                         <Stack.Screen name="local/new" options={{ headerShown: false, presentation: "modal" }} />
                         <Stack.Screen name="minihompy/[userId]" options={{ headerShown: false }} />
+                        <Stack.Screen name="admin/index" options={{ headerShown: false }} />
                     </Stack>
                     <StatusBar style="auto" />
                 </PetProvider>
