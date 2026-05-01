@@ -165,13 +165,16 @@ export default function PostDetailScreen() {
         setPost((p) => p ? { ...p, isLiked: newLiked, likes: p.likes + (newLiked ? 1 : -1) } : p);
 
         try {
-            await fetch(`${API_BASE_URL}/api/posts/${id}/like`, {
+            const res = await fetch(`${API_BASE_URL}/api/posts/${id}/like`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${session.access_token}`,
                 },
             });
+            if (!res.ok) {
+                setPost((p) => p ? { ...p, isLiked: !newLiked, likes: p.likes + (newLiked ? -1 : 1) } : p);
+            }
         } catch {
             setPost((p) => p ? { ...p, isLiked: !newLiked, likes: p.likes + (newLiked ? -1 : 1) } : p);
         } finally {
@@ -392,7 +395,7 @@ export default function PostDetailScreen() {
                                     <Ionicons name="chevron-forward" size={12} color={COLORS.gray[400]} />
                                 )}
                             </View>
-                            <Text style={{ fontSize: 12, color: COLORS.gray[400] }}>{post.createdAt}</Text>
+                            <Text style={{ fontSize: 12, color: COLORS.gray[400] }}>{formatCommentTime(post.createdAt)}</Text>
                         </View>
                     </TouchableOpacity>
 
