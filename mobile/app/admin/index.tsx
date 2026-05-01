@@ -19,6 +19,8 @@ import { COLORS } from "@/lib/theme";
 import { API_BASE_URL } from "@/config/constants";
 import AppHeader from "@/components/common/AppHeader";
 import AdminReportsTab from "@/components/admin/AdminReportsTab";
+import AdminUsersTab from "@/components/admin/AdminUsersTab";
+import AdminMessagesTab from "@/components/admin/AdminMessagesTab";
 import type { AdminTab } from "@/types";
 
 const TABS: Array<{ id: AdminTab; label: string; icon: React.ComponentProps<typeof Ionicons>["name"] }> = [
@@ -100,8 +102,12 @@ export default function AdminScreen() {
 
             {/* 탭 내용 */}
             <View style={styles.flex1}>
-                {tab === "reports" && accessToken ? (
+                {accessToken && tab === "reports" ? (
                     <AdminReportsTab accessToken={accessToken} />
+                ) : accessToken && tab === "users" ? (
+                    <AdminUsersTab accessToken={accessToken} />
+                ) : accessToken && tab === "messages" ? (
+                    <AdminMessagesTab accessToken={accessToken} />
                 ) : (
                     <PlaceholderTab tabId={tab} isDarkMode={isDarkMode} />
                 )}
