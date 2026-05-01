@@ -61,16 +61,23 @@ interface SettingsResponse {
     };
 }
 
+function normalizeSettings(s: SettingsResponse["settings"]): MinihompySettings {
+    return {
+        isPublic: !!s.isPublic,
+        backgroundSlug: s.backgroundSlug || "default_sky",
+        greeting: s.greeting ?? "",
+        todayVisitors: s.todayVisitors ?? 0,
+        totalVisitors: s.totalVisitors ?? 0,
+        totalLikes: s.totalLikes ?? 0,
+        // **중요**: placedMinimi 매핑 추가. 누락하면 저장 후 다음 load에서
+        // 빈 배열로 덮어써서 미니미가 사라져 보임.
+        placedMinimi: Array.isArray(s.placedMinimi) ? s.placedMinimi : [],
+    };
+}
+
 export async function getMyMinihompySettings(accessToken: string): Promise<MinihompySettings> {
     const data = await callApi<SettingsResponse>("/api/minihompy/settings", { accessToken });
-    return {
-        isPublic: !!data.settings.isPublic,
-        backgroundSlug: data.settings.backgroundSlug || "default_sky",
-        greeting: data.settings.greeting ?? "",
-        todayVisitors: data.settings.todayVisitors ?? 0,
-        totalVisitors: data.settings.totalVisitors ?? 0,
-        totalLikes: data.settings.totalLikes ?? 0,
-    };
+    return normalizeSettings(data.settings);
 }
 
 export async function patchMinihompySettings(
@@ -82,14 +89,7 @@ export async function patchMinihompySettings(
         method: "PATCH",
         body: update,
     });
-    return {
-        isPublic: !!data.settings.isPublic,
-        backgroundSlug: data.settings.backgroundSlug || "default_sky",
-        greeting: data.settings.greeting ?? "",
-        todayVisitors: data.settings.todayVisitors ?? 0,
-        totalVisitors: data.settings.totalVisitors ?? 0,
-        totalLikes: data.settings.totalLikes ?? 0,
-    };
+    return normalizeSettings(data.settings);
 }
 
 // ============================================================================
