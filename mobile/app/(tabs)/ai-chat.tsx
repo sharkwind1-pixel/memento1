@@ -428,7 +428,10 @@ export default function AiChatScreen() {
                                 emotionScore: event.emotionScore,
                                 matchedPhoto: event.matchedPhoto,
                                 matchedTimeline: event.matchedTimeline,
-                                nearbyPlaces: event.nearbyPlaces,
+                                // 서버는 { query, places: [...] } 객체로 보냄. places 배열만 추출.
+                                nearbyPlaces: Array.isArray(event.nearbyPlaces)
+                                    ? event.nearbyPlaces
+                                    : event.nearbyPlaces?.places ?? undefined,
                                 isStreaming: false,
                             }
                             : msg,
