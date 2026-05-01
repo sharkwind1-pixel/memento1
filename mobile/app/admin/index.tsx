@@ -1,9 +1,8 @@
 /**
  * 관리자 모드 — 8 탭 (웹 src/components/pages/AdminPage.tsx 매칭)
  *
- * 우선 신고 관리부터 native 이식. 나머지 탭은 placeholder + 웹 admin 안내.
- * 추후 단계적으로 dashboard / users / posts / messages / inquiries /
- * withdrawals / magazine 풀 이식 예정.
+ * 8개 탭 모두 네이티브 이식 완료.
+ * (매거진 본문 리치 에디터/이미지 편집은 웹 관리자 사용)
  */
 
 import { useState } from "react";
@@ -23,6 +22,9 @@ import AdminUsersTab from "@/components/admin/AdminUsersTab";
 import AdminMessagesTab from "@/components/admin/AdminMessagesTab";
 import AdminDashboardTab from "@/components/admin/AdminDashboardTab";
 import AdminPostsTab from "@/components/admin/AdminPostsTab";
+import AdminInquiriesTab from "@/components/admin/AdminInquiriesTab";
+import AdminWithdrawalsTab from "@/components/admin/AdminWithdrawalsTab";
+import AdminMagazineTab from "@/components/admin/AdminMagazineTab";
 import type { AdminTab } from "@/types";
 
 const TABS: Array<{ id: AdminTab; label: string; icon: React.ComponentProps<typeof Ionicons>["name"] }> = [
@@ -114,6 +116,12 @@ export default function AdminScreen() {
                     <AdminPostsTab accessToken={accessToken} />
                 ) : accessToken && tab === "messages" ? (
                     <AdminMessagesTab accessToken={accessToken} />
+                ) : accessToken && tab === "inquiries" ? (
+                    <AdminInquiriesTab />
+                ) : accessToken && tab === "withdrawals" ? (
+                    <AdminWithdrawalsTab accessToken={accessToken} />
+                ) : accessToken && tab === "magazine" ? (
+                    <AdminMagazineTab accessToken={accessToken} />
                 ) : (
                     <PlaceholderTab tabId={tab} isDarkMode={isDarkMode} />
                 )}
