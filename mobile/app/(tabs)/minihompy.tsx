@@ -240,6 +240,7 @@ export default function MinihompyScreen() {
                                 inventory={ownedMinimis}
                                 accessToken={accessToken}
                                 accentColor={accentColor}
+                                isMemorialMode={isMemorialMode}
                                 onChanged={handlePlacedChanged}
                                 onEditingChange={setStageEditing}
                             />

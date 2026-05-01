@@ -15,13 +15,15 @@ import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import {
     View, Text, Image, ImageBackground, TouchableOpacity,
     PanResponder, StyleSheet, Alert, ActivityIndicator,
-    LayoutChangeEvent, Modal, FlatList,
+    LayoutChangeEvent, Modal, FlatList, Animated, Easing,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 import { COLORS } from "@/lib/theme";
 import { findMinimi, findBackgroundOrDefault } from "@/data/minihompyData";
 import { putPlacedMinimi } from "@/lib/minihompy-api";
+import { pickReaction, type MinimiAction } from "@/data/minimiReactions";
 import type { PlacedMinimi, BackgroundTheme, UserMinimiRow } from "@/types";
 
 // 웹 baseSize 매칭: 모바일 40px (compact 32px). 64는 너무 컸음.
@@ -38,6 +40,8 @@ interface Props {
     inventory: UserMinimiRow[];    // 보유 row (slug 매핑용 — 사용처 미사용이지만 인터페이스 호환)
     accessToken: string;
     accentColor: string;
+    /** 비편집 모드에서 미니미 터치 시 메시지/액션 모드 (daily/memorial) */
+    isMemorialMode?: boolean;
     onChanged: (next: PlacedMinimi[]) => void;
     /** 편집 모드 진입/종료 시 부모에 알림 → 부모 ScrollView scroll 잠금 */
     onEditingChange?: (editing: boolean) => void;
@@ -51,13 +55,51 @@ function clampPosition(x: number, y: number) {
 }
 
 export default function StageEditor({
-    stageHeight, background, placedMinimi, ownedSlugs, accessToken, accentColor, onChanged, onEditingChange,
+    stageHeight, background, placedMinimi, ownedSlugs, accessToken, accentColor,
+    isMemorialMode = false, onChanged, onEditingChange,
 }: Props) {
     const [editMode, setEditMode] = useState(false);
     const [working, setWorking] = useState<PlacedMinimi[]>(placedMinimi);
     const [stageWidth, setStageWidth] = useState(0);
     const [saving, setSaving] = useState(false);
     const [pickerOpen, setPickerOpen] = useState(false);
+
+    // 터치 이펙트 (비편집 모드, 웹 MinihompyStage 패턴)
+    const [touchEffect, setTouchEffect] = useState<{ index: number; message: string; action: MinimiAction } | null>(null);
+    const consecutiveRef = useRef<{ index: number; count: number; lastAt: number }>({ index: -1, count: 0, lastAt: 0 });
+    const touchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    useEffect(() => {
+        return () => {
+            if (touchTimerRef.current) clearTimeout(touchTimerRef.current);
+        };
+    }, []);
+
+    const handleMinimiTouch = useCallback((idx: number, slug: string) => {
+        if (editMode) return;
+
+        if (touchTimerRef.current) clearTimeout(touchTimerRef.current);
+
+        // 연속 터치 카운트 (같은 미니미 + 2.5초 이내)
+        const now = Date.now();
+        const prev = consecutiveRef.current;
+        const isSameAndRecent = prev.index === idx && now - prev.lastAt < 2500;
+        const nextCount = isSameAndRecent ? prev.count + 1 : 1;
+        consecutiveRef.current = { index: idx, count: nextCount, lastAt: now };
+
+        const reaction = pickReaction(slug, isMemorialMode ? "memorial" : "daily", nextCount);
+
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+
+        // 같은 미니미 연속 터치 시에도 애니메이션 재시작되도록 null → 새 값
+        setTouchEffect(null);
+        requestAnimationFrame(() => {
+            setTouchEffect({ index: idx, message: reaction.message, action: reaction.action });
+        });
+
+        // 1.8초 후 이펙트 제거
+        touchTimerRef.current = setTimeout(() => setTouchEffect(null), 1800);
+    }, [editMode, isMemorialMode]);
 
     useEffect(() => {
         if (!editMode) setWorking(placedMinimi);
@@ -166,6 +208,9 @@ export default function StageEditor({
                     onMove={updatePositionLive}
                     onMoveEnd={updatePositionEnd}
                     onLongPress={() => editMode && removeMinimi(idx)}
+                    onTap={() => handleMinimiTouch(idx, p.slug)}
+                    touchAction={touchEffect?.index === idx ? touchEffect.action : null}
+                    touchMessage={touchEffect?.index === idx ? touchEffect.message : null}
                 />
             ))}
 
@@ -386,7 +431,8 @@ const pickerStyles = StyleSheet.create({
  *  - up: clamp(5~95, 10~85) 적용 + 최종 state
  */
 function DraggableMinimi({
-    placed, index, editMode, stageWidth, stageHeight, onMove, onMoveEnd, onLongPress,
+    placed, index, editMode, stageWidth, stageHeight, onMove, onMoveEnd, onLongPress, onTap,
+    touchAction, touchMessage,
 }: {
     placed: PlacedMinimi;
     index: number;
@@ -396,6 +442,9 @@ function DraggableMinimi({
     onMove: (index: number, x: number, y: number) => void;        // 드래그 중 (clamp X)
     onMoveEnd: (index: number, x: number, y: number) => void;     // 드래그 끝 (clamp O)
     onLongPress: () => void;
+    onTap: () => void;
+    touchAction: MinimiAction | null;
+    touchMessage: string | null;
 }) {
     const minimi = findMinimi(placed.slug);
     const dragStart = useRef<{ origX: number; origY: number } | null>(null);
@@ -452,23 +501,32 @@ function DraggableMinimi({
     const leftPx = (placed.x / 100) * stageWidth - HIT_SIZE / 2;
     const topPx = (placed.y / 100) * stageHeight - HIT_SIZE / 2;
 
+    // 미니미 z-index: 터치 이펙트 발동 중이면 위로
+    const zIdx = touchAction !== null ? 50 : (placed.zIndex ?? index);
+
     return (
         <View
             style={[
                 styles.minimiWrap,
-                { left: leftPx, top: topPx, width: HIT_SIZE, height: HIT_SIZE, zIndex: placed.zIndex ?? index },
+                { left: leftPx, top: topPx, width: HIT_SIZE, height: HIT_SIZE, zIndex: zIdx },
                 editMode && { backgroundColor: "rgba(255,255,255,0.05)" },
             ]}
             {...panResponder.panHandlers}
         >
+            {/* 말풍선 */}
+            {touchMessage && (
+                <SpeechBubble message={touchMessage} />
+            )}
+
             <TouchableOpacity
+                onPress={!editMode ? onTap : undefined}
                 onLongPress={onLongPress}
                 delayLongPress={400}
-                disabled={!editMode}
-                activeOpacity={editMode ? 0.7 : 1}
+                disabled={false}
+                activeOpacity={editMode ? 0.7 : 0.9}
                 style={styles.minimiTouch}
             >
-                <Image source={{ uri: minimi.imageUrl }} style={styles.minimiImg} resizeMode="contain" />
+                <AnimatedMinimi imageUrl={minimi.imageUrl} action={touchAction} />
                 {editMode && (
                     <View style={styles.removeBadge}>
                         <Ionicons name="close" size={10} color="#fff" />
@@ -476,6 +534,141 @@ function DraggableMinimi({
                 )}
             </TouchableOpacity>
         </View>
+    );
+}
+
+// ============================================================================
+// 미니미 이미지 + 액션 애니메이션 (웹 minimiJump/Spin/Wiggle/... 매핑)
+// ============================================================================
+
+function AnimatedMinimi({ imageUrl, action }: { imageUrl: string; action: MinimiAction | null }) {
+    const translateY = useRef(new Animated.Value(0)).current;
+    const translateX = useRef(new Animated.Value(0)).current;
+    const rotate = useRef(new Animated.Value(0)).current;
+    const scale = useRef(new Animated.Value(1)).current;
+
+    useEffect(() => {
+        // reset
+        translateX.setValue(0);
+        translateY.setValue(0);
+        rotate.setValue(0);
+        scale.setValue(1);
+
+        if (!action) return;
+
+        const a = (() => {
+            switch (action) {
+                case "jump":
+                    return Animated.sequence([
+                        Animated.timing(translateY, { toValue: -16, duration: 200, useNativeDriver: true, easing: Easing.out(Easing.quad) }),
+                        Animated.timing(translateY, { toValue: 0, duration: 200, useNativeDriver: true, easing: Easing.bounce }),
+                    ]);
+                case "bounce":
+                    return Animated.sequence([
+                        Animated.timing(scale, { toValue: 1.2, duration: 200, useNativeDriver: true }),
+                        Animated.timing(scale, { toValue: 1, duration: 300, useNativeDriver: true, easing: Easing.bounce }),
+                    ]);
+                case "wiggle":
+                    return Animated.sequence([
+                        Animated.timing(rotate, { toValue: -1, duration: 100, useNativeDriver: true }),
+                        Animated.timing(rotate, { toValue: 1, duration: 200, useNativeDriver: true }),
+                        Animated.timing(rotate, { toValue: -0.5, duration: 100, useNativeDriver: true }),
+                        Animated.timing(rotate, { toValue: 0, duration: 100, useNativeDriver: true }),
+                    ]);
+                case "spin":
+                    return Animated.timing(rotate, { toValue: 4, duration: 600, useNativeDriver: true });
+                case "runLeft":
+                    return Animated.sequence([
+                        Animated.timing(translateX, { toValue: -30, duration: 350, useNativeDriver: true }),
+                        Animated.timing(translateX, { toValue: 0, duration: 450, useNativeDriver: true }),
+                    ]);
+                case "runRight":
+                    return Animated.sequence([
+                        Animated.timing(translateX, { toValue: 30, duration: 350, useNativeDriver: true }),
+                        Animated.timing(translateX, { toValue: 0, duration: 450, useNativeDriver: true }),
+                    ]);
+                case "dash":
+                    return Animated.sequence([
+                        Animated.timing(translateX, { toValue: -20, duration: 250, useNativeDriver: true }),
+                        Animated.timing(translateX, { toValue: 20, duration: 250, useNativeDriver: true }),
+                        Animated.timing(translateX, { toValue: 0, duration: 250, useNativeDriver: true }),
+                    ]);
+                case "shrink":
+                    return Animated.sequence([
+                        Animated.timing(scale, { toValue: 0.8, duration: 200, useNativeDriver: true }),
+                        Animated.timing(scale, { toValue: 1, duration: 300, useNativeDriver: true, easing: Easing.bounce }),
+                    ]);
+                case "flip":
+                    return Animated.sequence([
+                        Animated.timing(rotate, { toValue: 2, duration: 300, useNativeDriver: true }),
+                        Animated.timing(rotate, { toValue: 0, duration: 300, useNativeDriver: true }),
+                    ]);
+                case "nod":
+                    return Animated.sequence([
+                        Animated.timing(rotate, { toValue: 0.5, duration: 150, useNativeDriver: true }),
+                        Animated.timing(rotate, { toValue: -0.5, duration: 200, useNativeDriver: true }),
+                        Animated.timing(rotate, { toValue: 0, duration: 150, useNativeDriver: true }),
+                    ]);
+                // heart/star/sparkle: 작은 pop
+                default:
+                    return Animated.sequence([
+                        Animated.timing(scale, { toValue: 1.15, duration: 150, useNativeDriver: true }),
+                        Animated.timing(scale, { toValue: 1, duration: 250, useNativeDriver: true, easing: Easing.bounce }),
+                    ]);
+            }
+        })();
+
+        a.start();
+    }, [action, translateX, translateY, rotate, scale]);
+
+    const rotateInterp = rotate.interpolate({
+        inputRange: [-1, 0, 1, 4],
+        outputRange: ["-15deg", "0deg", "15deg", "1440deg"],
+    });
+
+    return (
+        <Animated.Image
+            source={{ uri: imageUrl }}
+            style={[
+                styles.minimiImg,
+                {
+                    transform: [
+                        { translateX },
+                        { translateY },
+                        { rotate: rotateInterp },
+                        { scale },
+                    ],
+                },
+            ]}
+            resizeMode="contain"
+        />
+    );
+}
+
+function SpeechBubble({ message }: { message: string }) {
+    const opacity = useRef(new Animated.Value(0)).current;
+    const scale = useRef(new Animated.Value(0.6)).current;
+
+    useEffect(() => {
+        Animated.parallel([
+            Animated.timing(opacity, { toValue: 1, duration: 200, useNativeDriver: true }),
+            Animated.spring(scale, { toValue: 1, friction: 5, tension: 100, useNativeDriver: true }),
+        ]).start();
+        // 1.4초 후 fade out
+        const t = setTimeout(() => {
+            Animated.timing(opacity, { toValue: 0, duration: 250, useNativeDriver: true }).start();
+        }, 1400);
+        return () => clearTimeout(t);
+    }, [opacity, scale]);
+
+    return (
+        <Animated.View
+            pointerEvents="none"
+            style={[styles.bubble, { opacity, transform: [{ scale }] }]}
+        >
+            <Text style={styles.bubbleText} numberOfLines={1}>{message}</Text>
+            <View style={styles.bubbleTail} />
+        </Animated.View>
     );
 }
 
@@ -499,6 +692,31 @@ const styles = StyleSheet.create({
         position: "relative",
     },
     minimiImg: { width: MINIMI_SIZE, height: MINIMI_SIZE },
+    bubble: {
+        position: "absolute",
+        top: -8,
+        alignSelf: "center",
+        backgroundColor: "rgba(255,255,255,0.96)",
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 9999,
+        shadowColor: "#000",
+        shadowOpacity: 0.15,
+        shadowRadius: 4,
+        shadowOffset: { width: 0, height: 1 },
+        elevation: 4,
+        zIndex: 60,
+    },
+    bubbleText: { fontSize: 11, fontWeight: "700", color: COLORS.gray[800] },
+    bubbleTail: {
+        position: "absolute",
+        bottom: -4,
+        alignSelf: "center",
+        width: 8, height: 8,
+        backgroundColor: "rgba(255,255,255,0.96)",
+        transform: [{ rotate: "45deg" }],
+        zIndex: -1,
+    },
     removeBadge: {
         position: "absolute",
         top: -4, right: -4,
