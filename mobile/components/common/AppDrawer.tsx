@@ -9,7 +9,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
     Modal, View, Text, TouchableOpacity, Animated, Dimensions,
-    Pressable, StyleSheet, ScrollView, Image, Switch,
+    Pressable, StyleSheet, ScrollView, Image, Switch, Linking,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -17,6 +17,7 @@ import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
 import { useDarkMode } from "@/contexts/ThemeContext";
+import { API_BASE_URL } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
 
 const { width: SCREEN_W } = Dimensions.get("window");
@@ -59,7 +60,7 @@ const COMMUNITY_SUBS: Array<{
 
 export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
     const router = useRouter();
-    const { user, profile, points, isPremium, signOut } = useAuth();
+    const { user, profile, points, isPremium, isAdminUser, signOut } = useAuth();
     const { isMemorialMode } = usePet();
     const { isDarkMode, toggleTheme } = useDarkMode();
     const [communityExpanded, setCommunityExpanded] = useState(false);
@@ -213,6 +214,26 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
                                     )}
                                 </View>
                             ))}
+
+                            {/* 관리자 메뉴 (관리자만 표시, 웹 Sidebar.tsx 매칭) */}
+                            {isAdminUser && (
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        onClose();
+                                        setTimeout(() => {
+                                            Linking.openURL(`${API_BASE_URL}/?tab=admin`).catch(() => {});
+                                        }, 200);
+                                    }}
+                                    style={[styles.menuItem, styles.adminMenuItem]}
+                                    activeOpacity={0.7}
+                                >
+                                    <Ionicons name="shield-checkmark" size={20} color="#8B5CF6" />
+                                    <Text style={[styles.menuLabel, { color: "#8B5CF6", fontWeight: "700" }]}>
+                                        관리자 모드
+                                    </Text>
+                                    <Ionicons name="open-outline" size={14} color="#8B5CF6" />
+                                </TouchableOpacity>
+                            )}
                         </View>
 
                         <View style={[styles.menuSection, { marginTop: 16 }]}>
@@ -343,6 +364,12 @@ const styles = StyleSheet.create({
         borderRadius: 10,
     },
     menuLabel: { flex: 1, fontSize: 14, fontWeight: "500" },
+    adminMenuItem: {
+        marginTop: 8,
+        backgroundColor: "rgba(139, 92, 246, 0.08)",
+        borderWidth: 1,
+        borderColor: "rgba(139, 92, 246, 0.2)",
+    },
     subMenu: { paddingLeft: 32, paddingRight: 4 },
     subMenuItem: {
         flexDirection: "row",
