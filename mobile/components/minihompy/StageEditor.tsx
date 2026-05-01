@@ -15,8 +15,9 @@ import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import {
     View, Text, Image, ImageBackground, TouchableOpacity,
     PanResponder, StyleSheet, Alert, ActivityIndicator,
-    LayoutChangeEvent,
+    LayoutChangeEvent, Modal, FlatList,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/lib/theme";
 import { findMinimi, findBackgroundOrDefault } from "@/data/minihompyData";
@@ -38,6 +39,8 @@ interface Props {
     accessToken: string;
     accentColor: string;
     onChanged: (next: PlacedMinimi[]) => void;
+    /** 편집 모드 진입/종료 시 부모에 알림 → 부모 ScrollView scroll 잠금 */
+    onEditingChange?: (editing: boolean) => void;
 }
 
 function clampPosition(x: number, y: number) {
@@ -48,16 +51,22 @@ function clampPosition(x: number, y: number) {
 }
 
 export default function StageEditor({
-    stageHeight, background, placedMinimi, ownedSlugs, accessToken, accentColor, onChanged,
+    stageHeight, background, placedMinimi, ownedSlugs, accessToken, accentColor, onChanged, onEditingChange,
 }: Props) {
     const [editMode, setEditMode] = useState(false);
     const [working, setWorking] = useState<PlacedMinimi[]>(placedMinimi);
     const [stageWidth, setStageWidth] = useState(0);
     const [saving, setSaving] = useState(false);
+    const [pickerOpen, setPickerOpen] = useState(false);
 
     useEffect(() => {
         if (!editMode) setWorking(placedMinimi);
     }, [placedMinimi, editMode]);
+
+    // 편집 모드 변경 시 부모 ScrollView 잠금/해제 통지
+    useEffect(() => {
+        onEditingChange?.(editMode);
+    }, [editMode, onEditingChange]);
 
     function onLayout(e: LayoutChangeEvent) {
         setStageWidth(e.nativeEvent.layout.width);
@@ -92,39 +101,30 @@ export default function StageEditor({
             Alert.alert("배치 한도", `최대 ${MAX_PLACED}마리까지 배치할 수 있어요.`);
             return;
         }
-        const placedSlugs = new Set(working.map((p) => p.slug));
-        const available = ownedSlugs.filter((s) => !placedSlugs.has(s));
-        if (available.length === 0) {
+        if (ownedSlugs.length === 0) {
             Alert.alert(
-                "추가 가능한 미니미 없음",
-                placedSlugs.size > 0
-                    ? "보유한 모든 미니미가 이미 배치돼있어요."
-                    : "먼저 미니미 상점에서 캐릭터를 구매해주세요.",
+                "보유 미니미 없음",
+                "먼저 미니미 상점에서 캐릭터를 구매해주세요.",
             );
             return;
         }
-        // 옵션: 사용 가능 슬러그 중 첫 번째 자동 추가 (단순화).
-        // 더 나은 UX: 사용자에게 선택 시트 제공 — Alert.alert로 최대 3개만 옵션으로
-        const buttons = available.slice(0, 3).map((slug) => {
-            const m = findMinimi(slug);
-            return {
-                text: m?.name ?? slug,
-                onPress: () => {
-                    const newItem: PlacedMinimi = {
-                        slug,
-                        x: 50,
-                        y: 50,
-                        zIndex: working.length,
-                    };
-                    setWorking((prev) => [...prev, newItem]);
-                },
-            };
-        });
-        Alert.alert(
-            "추가할 미니미",
-            available.length > 3 ? `보유 ${available.length}마리 중 3마리만 표시` : "탭해서 추가",
-            [...buttons, { text: "취소", style: "cancel" as const }],
-        );
+        // 보관함(인벤토리 그리드) 모달 오픈 — 사용자가 시각적으로 선택
+        setPickerOpen(true);
+    }
+
+    function pickFromInventory(slug: string) {
+        if (working.some((p) => p.slug === slug)) {
+            Alert.alert("이미 배치됨", "이 미니미는 이미 스테이지에 있어요.");
+            return;
+        }
+        const newItem: PlacedMinimi = {
+            slug,
+            x: 50,
+            y: 50,
+            zIndex: working.length,
+        };
+        setWorking((prev) => [...prev, newItem]);
+        setPickerOpen(false);
     }
 
     function removeMinimi(index: number) {
@@ -254,9 +254,124 @@ export default function StageEditor({
                     </TouchableOpacity>
                 )}
             </View>
+
+            {/* 보관함 (인벤토리 그리드) */}
+            <InventoryPickerModal
+                visible={pickerOpen}
+                onClose={() => setPickerOpen(false)}
+                ownedSlugs={ownedSlugs}
+                placedSlugs={new Set(working.map((p) => p.slug))}
+                onPick={pickFromInventory}
+                accentColor={accentColor}
+            />
         </View>
     );
 }
+
+// ============================================================================
+// 보관함 (인벤토리 그리드) — 보유 미니미를 그리드로 표시, 탭하면 stage에 추가
+// ============================================================================
+
+function InventoryPickerModal({
+    visible, onClose, ownedSlugs, placedSlugs, onPick, accentColor,
+}: {
+    visible: boolean;
+    onClose: () => void;
+    ownedSlugs: string[];
+    placedSlugs: Set<string>;
+    onPick: (slug: string) => void;
+    accentColor: string;
+}) {
+    return (
+        <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+            <SafeAreaView style={pickerStyles.flex1} edges={["top"]}>
+                <View style={pickerStyles.header}>
+                    <TouchableOpacity onPress={onClose} hitSlop={8} style={pickerStyles.headerBtn}>
+                        <Ionicons name="close" size={24} color={COLORS.gray[800]} />
+                    </TouchableOpacity>
+                    <View style={{ flex: 1 }}>
+                        <Text style={pickerStyles.headerTitle}>보관함</Text>
+                        <Text style={pickerStyles.headerSub}>탭해서 스테이지에 배치</Text>
+                    </View>
+                </View>
+                <FlatList
+                    data={ownedSlugs}
+                    keyExtractor={(slug) => slug}
+                    numColumns={3}
+                    contentContainerStyle={{ padding: 16, gap: 12 }}
+                    columnWrapperStyle={{ gap: 12 }}
+                    ListEmptyComponent={
+                        <View style={pickerStyles.empty}>
+                            <Ionicons name="paw-outline" size={36} color={COLORS.gray[300]} />
+                            <Text style={pickerStyles.emptyText}>보관함이 비었어요</Text>
+                            <Text style={pickerStyles.emptyHint}>미니미 상점에서 캐릭터를 구매해보세요</Text>
+                        </View>
+                    }
+                    renderItem={({ item: slug }) => {
+                        const m = findMinimi(slug);
+                        if (!m) return null;
+                        const isPlaced = placedSlugs.has(slug);
+                        return (
+                            <TouchableOpacity
+                                onPress={() => onPick(slug)}
+                                disabled={isPlaced}
+                                style={[
+                                    pickerStyles.card,
+                                    isPlaced && { opacity: 0.4 },
+                                ]}
+                                activeOpacity={0.85}
+                            >
+                                <Image source={{ uri: m.imageUrl }} style={pickerStyles.cardImg} resizeMode="contain" />
+                                <Text style={pickerStyles.cardName} numberOfLines={1}>{m.name}</Text>
+                                {isPlaced && (
+                                    <View style={[pickerStyles.placedBadge, { backgroundColor: accentColor }]}>
+                                        <Text style={pickerStyles.placedBadgeText}>배치 중</Text>
+                                    </View>
+                                )}
+                            </TouchableOpacity>
+                        );
+                    }}
+                />
+            </SafeAreaView>
+        </Modal>
+    );
+}
+
+const pickerStyles = StyleSheet.create({
+    flex1: { flex: 1, backgroundColor: COLORS.gray[50] },
+    header: {
+        flexDirection: "row", alignItems: "center", gap: 8,
+        paddingHorizontal: 12, paddingVertical: 12,
+        borderBottomWidth: 1, borderBottomColor: COLORS.gray[100],
+        backgroundColor: "#fff",
+    },
+    headerBtn: { width: 32, height: 32, alignItems: "center", justifyContent: "center" },
+    headerTitle: { fontSize: 17, fontWeight: "700", color: COLORS.gray[900] },
+    headerSub: { fontSize: 11, color: COLORS.gray[500], marginTop: 2 },
+    card: {
+        flex: 1,
+        aspectRatio: 1,
+        backgroundColor: "#fff",
+        borderRadius: 14,
+        padding: 10,
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 4,
+        position: "relative",
+    },
+    cardImg: { width: 64, height: 64 },
+    cardName: { fontSize: 11, fontWeight: "700", color: COLORS.gray[800] },
+    placedBadge: {
+        position: "absolute",
+        top: 6, right: 6,
+        paddingHorizontal: 6, paddingVertical: 2,
+        borderRadius: 9999,
+    },
+    placedBadgeText: { fontSize: 9, fontWeight: "700", color: "#fff" },
+    empty: { padding: 60, alignItems: "center", gap: 8 },
+    emptyText: { fontSize: 14, color: COLORS.gray[600], fontWeight: "600", marginTop: 8 },
+    emptyHint: { fontSize: 12, color: COLORS.gray[400] },
+});
 
 // ============================================================================
 // 드래그 가능한 단일 미니미

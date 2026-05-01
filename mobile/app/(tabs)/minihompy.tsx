@@ -86,6 +86,7 @@ export default function MinihompyScreen() {
 
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
     const accessToken = session?.access_token ?? null;
+    const [stageEditing, setStageEditing] = useState(false);
 
     const load = useCallback(async () => {
         if (!accessToken) {
@@ -191,8 +192,9 @@ export default function MinihompyScreen() {
             <ScrollView
                 style={styles.flex1}
                 showsVerticalScrollIndicator={false}
+                scrollEnabled={!stageEditing}
                 refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={accentColor} />
+                    <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={accentColor} enabled={!stageEditing} />
                 }
             >
                 <View style={styles.headerRow}>
@@ -239,6 +241,7 @@ export default function MinihompyScreen() {
                                 accessToken={accessToken}
                                 accentColor={accentColor}
                                 onChanged={handlePlacedChanged}
+                                onEditingChange={setStageEditing}
                             />
                         )}
                         {/* 인사말 말풍선 (stage 위 절대 배치, pointerEvents=none으로 터치 통과) */}
