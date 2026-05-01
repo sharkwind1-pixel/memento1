@@ -23,7 +23,10 @@ import { findMinimi, findBackgroundOrDefault } from "@/data/minihompyData";
 import { putPlacedMinimi } from "@/lib/minihompy-api";
 import type { PlacedMinimi, BackgroundTheme, UserMinimiRow } from "@/types";
 
-const MINIMI_SIZE = 64;
+// 웹 baseSize 매칭: 모바일 40px (compact 32px). 64는 너무 컸음.
+const MINIMI_SIZE = 40;
+// 편집 모드 hit area 확장 (작은 미니미 손가락으로 잡기 쉽게)
+const HIT_PADDING = 20;
 const MAX_PLACED = 6;
 
 interface Props {
@@ -318,15 +321,17 @@ function DraggableMinimi({
 
     if (!minimi) return null;
 
-    // 위치는 placed.x/y % → absolute px (translate 안 씀, setState로 직접 변경)
-    const leftPx = (placed.x / 100) * stageWidth - MINIMI_SIZE / 2;
-    const topPx = (placed.y / 100) * stageHeight - MINIMI_SIZE / 2;
+    // hit area = MINIMI_SIZE + HIT_PADDING*2. 작은 미니미를 손가락으로 잡기 쉽게 확장.
+    const HIT_SIZE = MINIMI_SIZE + HIT_PADDING * 2;
+    const leftPx = (placed.x / 100) * stageWidth - HIT_SIZE / 2;
+    const topPx = (placed.y / 100) * stageHeight - HIT_SIZE / 2;
 
     return (
         <View
             style={[
                 styles.minimiWrap,
-                { left: leftPx, top: topPx, zIndex: placed.zIndex ?? index },
+                { left: leftPx, top: topPx, width: HIT_SIZE, height: HIT_SIZE, zIndex: placed.zIndex ?? index },
+                editMode && { backgroundColor: "rgba(255,255,255,0.05)" },
             ]}
             {...panResponder.panHandlers}
         >
@@ -340,7 +345,7 @@ function DraggableMinimi({
                 <Image source={{ uri: minimi.imageUrl }} style={styles.minimiImg} resizeMode="contain" />
                 {editMode && (
                     <View style={styles.removeBadge}>
-                        <Ionicons name="close" size={12} color="#fff" />
+                        <Ionicons name="close" size={10} color="#fff" />
                     </View>
                 )}
             </TouchableOpacity>
@@ -353,18 +358,25 @@ const styles = StyleSheet.create({
     stage: { borderRadius: 24, overflow: "hidden", position: "relative" },
     minimiWrap: {
         position: "absolute",
-        width: MINIMI_SIZE,
-        height: MINIMI_SIZE,
+        // width/height는 inline (HIT_SIZE) 로 설정
+        alignItems: "center",
+        justifyContent: "center",
     },
     minimiEdit: {
         // 편집 모드 시 약한 점선 효과
     },
-    minimiTouch: { flex: 1, position: "relative" },
-    minimiImg: { width: "100%", height: "100%" },
+    minimiTouch: {
+        width: MINIMI_SIZE,
+        height: MINIMI_SIZE,
+        alignItems: "center",
+        justifyContent: "center",
+        position: "relative",
+    },
+    minimiImg: { width: MINIMI_SIZE, height: MINIMI_SIZE },
     removeBadge: {
         position: "absolute",
-        top: 0, right: 0,
-        width: 22, height: 22, borderRadius: 11,
+        top: -4, right: -4,
+        width: 18, height: 18, borderRadius: 9,
         backgroundColor: "#EF4444",
         alignItems: "center", justifyContent: "center",
         borderWidth: 2, borderColor: "#fff",
