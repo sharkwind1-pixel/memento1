@@ -1,7 +1,7 @@
 /**
  * AdminPostsTab — 게시글 관리 (웹 src/components/admin/tabs/AdminPostsTab.tsx 이식)
  *
- * - posts 직접 fetch (최근 200개)
+ * - community_posts 직접 fetch (최근 200개) — author_name 컬럼 캐시 사용
  * - 검색 (제목/작성자)
  * - 확장 패널 (본문/이미지)
  * - 숨김 토글 (PATCH /api/admin/posts)
@@ -32,8 +32,7 @@ interface AdminPost {
     title: string;
     content: string;
     author_id: string;
-    author_email: string;
-    author_nickname: string | null;
+    author_name: string;
     created_at: string;
     is_hidden: boolean;
     views: number;
@@ -58,42 +57,26 @@ export default function AdminPostsTab({ accessToken }: Props) {
     const load = useCallback(async () => {
         try {
             const { data, error } = await supabase
-                .from("posts")
-                .select("id, title, content, author_id, created_at, is_hidden, views, likes_count, comments_count, image_urls, category")
+                .from("community_posts")
+                .select("id, title, content, user_id, author_name, created_at, is_hidden, views, likes_count, comments_count, image_urls, category")
                 .order("created_at", { ascending: false })
                 .limit(200);
             if (error) throw new Error(error.message);
 
-            const authorIds = Array.from(new Set((data ?? []).map((p) => p.author_id)));
-            const { data: profiles } = authorIds.length > 0
-                ? await supabase
-                    .from("profiles")
-                    .select("id, email, nickname")
-                    .in("id", authorIds)
-                : { data: [] };
-            const profileMap = new Map<string, { email: string; nickname: string | null }>();
-            (profiles ?? []).forEach((p) => {
-                profileMap.set(p.id, { email: p.email ?? "", nickname: p.nickname ?? null });
-            });
-
-            const list: AdminPost[] = (data ?? []).map((p) => {
-                const prof = profileMap.get(p.author_id);
-                return {
-                    id: p.id,
-                    title: p.title ?? "",
-                    content: p.content ?? "",
-                    author_id: p.author_id,
-                    author_email: prof?.email ?? "",
-                    author_nickname: prof?.nickname ?? null,
-                    created_at: p.created_at,
-                    is_hidden: !!p.is_hidden,
-                    views: p.views ?? 0,
-                    likes_count: p.likes_count ?? 0,
-                    comments_count: p.comments_count ?? 0,
-                    image_urls: Array.isArray(p.image_urls) ? p.image_urls : [],
-                    category: p.category ?? null,
-                };
-            });
+            const list: AdminPost[] = (data ?? []).map((p) => ({
+                id: p.id,
+                title: p.title ?? "",
+                content: p.content ?? "",
+                author_id: p.user_id,
+                author_name: p.author_name ?? "",
+                created_at: p.created_at,
+                is_hidden: !!p.is_hidden,
+                views: p.views ?? 0,
+                likes_count: p.likes_count ?? 0,
+                comments_count: p.comments_count ?? 0,
+                image_urls: Array.isArray(p.image_urls) ? p.image_urls : [],
+                category: p.category ?? null,
+            }));
             setPosts(list);
         } catch (e) {
             Alert.alert("불러오기 실패", e instanceof Error ? e.message : "");
@@ -187,8 +170,7 @@ export default function AdminPostsTab({ accessToken }: Props) {
         if (!s) return posts;
         return posts.filter((p) =>
             p.title.toLowerCase().includes(s) ||
-            p.author_email.toLowerCase().includes(s) ||
-            (p.author_nickname?.toLowerCase().includes(s) ?? false)
+            p.author_name.toLowerCase().includes(s)
         );
     }, [posts, search]);
 
@@ -294,7 +276,7 @@ function PostCard({
         } catch { return iso; }
     }
 
-    const author = post.author_nickname || post.author_email || "—";
+    const author = post.author_name || "—";
     const hiddenBg = isDarkMode ? "rgba(239,68,68,0.1)" : "#FEF2F2";
     const hiddenBorder = isDarkMode ? "rgba(239,68,68,0.3)" : "#FECACA";
 
