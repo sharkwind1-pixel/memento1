@@ -18,7 +18,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import {
     View, Text, TextInput, TouchableOpacity,
     FlatList, KeyboardAvoidingView, Platform,
-    ActivityIndicator, Image, StyleSheet, Alert,
+    ActivityIndicator, Image, StyleSheet, Alert, Share,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -45,6 +45,7 @@ import AppHeader from "@/components/common/AppHeader";
 import AppDrawer from "@/components/common/AppDrawer";
 import PetSwitcher from "@/components/common/PetSwitcher";
 import RemindersModal from "@/components/chat/RemindersModal";
+import PawLoading from "@/components/ui/PawLoading";
 
 interface ReminderItem {
     type: string;
@@ -723,7 +724,7 @@ export default function AiChatScreen() {
                                         { backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100] },
                                     ]}
                                 >
-                                    <ActivityIndicator size="small" color={accentColor} />
+                                    <PawLoading size="sm" color={accentColor} />
                                 </View>
                             </View>
                         ) : null
@@ -822,12 +823,25 @@ function MessageRenderer({
 
     const isUser = message.role === "user";
 
+    async function shareContent() {
+        try {
+            await Share.share({ message: message.content });
+        } catch {
+            // 사용자 취소 — 무시
+        }
+    }
+
     if (isUser) {
         return (
             <View style={{ flexDirection: "row", justifyContent: "flex-end", marginBottom: 12 }}>
-                <View style={[styles.bubbleUser, { backgroundColor: accentColor }]}>
+                <TouchableOpacity
+                    onLongPress={shareContent}
+                    delayLongPress={400}
+                    activeOpacity={0.85}
+                    style={[styles.bubbleUser, { backgroundColor: accentColor }]}
+                >
                     <Text style={{ color: "#fff", fontSize: 14, lineHeight: 20 }}>{message.content}</Text>
-                </View>
+                </TouchableOpacity>
             </View>
         );
     }
@@ -859,7 +873,12 @@ function MessageRenderer({
                         </Text>
                     </View>
                 )}
-                <View style={[styles.bubblePet, { backgroundColor: petBubbleBg }]}>
+                <TouchableOpacity
+                    onLongPress={shareContent}
+                    delayLongPress={400}
+                    activeOpacity={0.85}
+                    style={[styles.bubblePet, { backgroundColor: petBubbleBg }]}
+                >
                     <Text
                         style={{
                             fontSize: 14, lineHeight: 20,
@@ -868,7 +887,7 @@ function MessageRenderer({
                     >
                         {message.content || (message.isStreaming ? "..." : "")}
                     </Text>
-                </View>
+                </TouchableOpacity>
                 {message.matchedPhoto?.url && (
                     <Image
                         source={{ uri: message.matchedPhoto.url }}
