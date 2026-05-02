@@ -57,6 +57,16 @@ export default function MagazinePreview({ session, isMemorialMode }: Props) {
         })();
     }, [session]);
 
+    const cardBg = isDarkMode ? COLORS.gray[900] : COLORS.white;
+    const cardBorder = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
+    const titleColor = isDarkMode ? COLORS.white : COLORS.gray[900];
+    const thumbBg = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
+    const emptyBg = isDarkMode ? COLORS.gray[900] : COLORS.gray[50];
+    const emptyTextColor = isDarkMode ? COLORS.gray[400] : COLORS.gray[400];
+    const categoryBadgeBg = isDarkMode ? COLORS.gray[800] : COLORS.memento[100];
+    const categoryTextColor = isDarkMode ? COLORS.memento[300] : COLORS.memento[700];
+    const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
+
     return (
         <View style={styles.section}>
             <SectionHeader
@@ -69,11 +79,11 @@ export default function MagazinePreview({ session, isMemorialMode }: Props) {
 
             {isLoading ? (
                 <View style={styles.loading}>
-                    <ActivityIndicator color={COLORS.memento[500]} />
+                    <ActivityIndicator color={accentColor} />
                 </View>
             ) : articles.length === 0 ? (
-                <View style={styles.empty}>
-                    <Text style={styles.emptyText}>아직 매거진이 없어요</Text>
+                <View style={[styles.empty, { backgroundColor: emptyBg }]}>
+                    <Text style={[styles.emptyText, { color: emptyTextColor }]}>아직 매거진이 없어요</Text>
                 </View>
             ) : (
                 <View style={styles.list}>
@@ -81,21 +91,21 @@ export default function MagazinePreview({ session, isMemorialMode }: Props) {
                         <TouchableOpacity
                             key={article.id || `idx-${idx}`}
                             onPress={() => router.push(`/magazine/${article.id}`)}
-                            style={styles.card}
+                            style={[styles.card, { backgroundColor: cardBg, borderColor: cardBorder }]}
                             activeOpacity={0.85}
                         >
                             {article.image_url ? (
-                                <Image source={{ uri: article.image_url }} style={styles.thumb} />
+                                <Image source={{ uri: article.image_url }} style={[styles.thumb, { backgroundColor: thumbBg }]} />
                             ) : (
-                                <View style={[styles.thumb, styles.thumbFallback]}>
+                                <View style={[styles.thumb, styles.thumbFallback, { backgroundColor: thumbBg }]}>
                                     <Ionicons name="newspaper" size={22} color={COLORS.gray[300]} />
                                 </View>
                             )}
                             <View style={styles.cardBody}>
-                                <Text style={styles.title} numberOfLines={2}>{article.title}</Text>
+                                <Text style={[styles.title, { color: titleColor }]} numberOfLines={2}>{article.title}</Text>
                                 {article.category && (
-                                    <View style={styles.categoryBadge}>
-                                        <Text style={styles.categoryText}>{article.category}</Text>
+                                    <View style={[styles.categoryBadge, { backgroundColor: categoryBadgeBg }]}>
+                                        <Text style={[styles.categoryText, { color: categoryTextColor }]}>{article.category}</Text>
                                     </View>
                                 )}
                             </View>
