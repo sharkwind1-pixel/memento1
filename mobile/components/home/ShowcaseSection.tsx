@@ -163,7 +163,7 @@ export default function ShowcaseSection() {
                         <TouchableOpacity
                             key={post.id}
                             onPress={() => router.push(`/post/${post.id}`)}
-                            style={styles.card}
+                            style={[styles.card, { backgroundColor: isDarkMode ? COLORS.gray[900] : COLORS.white }]}
                             activeOpacity={0.85}
                         >
                             <View style={styles.heroContainer}>
@@ -203,8 +203,8 @@ export default function ShowcaseSection() {
                             </View>
 
                             <View style={styles.cardBody}>
-                                <Text style={styles.cardTitle} numberOfLines={2}>{post.title}</Text>
-                                <Text style={styles.cardMeta} numberOfLines={1}>
+                                <Text style={[styles.cardTitle, { color: isDarkMode ? COLORS.white : COLORS.gray[800] }]} numberOfLines={2}>{post.title}</Text>
+                                <Text style={[styles.cardMeta, { color: isDarkMode ? COLORS.gray[400] : COLORS.gray[500] }]} numberOfLines={1}>
                                     {post.authorName}님 · {formatTime(post.createdAt)}
                                 </Text>
                                 <View style={styles.cardFooter}>
@@ -257,7 +257,6 @@ const styles = StyleSheet.create({
     card: {
         width: CARD_WIDTH,
         borderRadius: 16,
-        backgroundColor: COLORS.white,
         overflow: "hidden",
         elevation: 3,
         shadowColor: "#000",
@@ -294,8 +293,8 @@ const styles = StyleSheet.create({
     },
     badgeText: { fontSize: 11, fontWeight: "700", color: "#fff" },
     cardBody: { padding: 16 },
-    cardTitle: { fontSize: 15, fontWeight: "700", color: COLORS.gray[800], lineHeight: 20, marginBottom: 6 },
-    cardMeta: { fontSize: 12, color: COLORS.gray[500], marginBottom: 12 },
+    cardTitle: { fontSize: 15, fontWeight: "700", lineHeight: 20, marginBottom: 6 },
+    cardMeta: { fontSize: 12, marginBottom: 12 },
     cardFooter: { flexDirection: "row", gap: 12 },
     statRow: { flexDirection: "row", alignItems: "center", gap: 4 },
     statText: { fontSize: 13, color: COLORS.gray[500] },

@@ -63,7 +63,13 @@ export default function QuestCard() {
 
     const percent = Math.round((state.completedCount / Math.max(state.totalCount, 1)) * 100);
     const accent = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
-    const bgGradStart = isMemorialMode ? COLORS.memorial[50] : COLORS.memento[50];
+    const bgGradStart = isDarkMode
+        ? COLORS.gray[900]
+        : (isMemorialMode ? COLORS.memorial[50] : COLORS.memento[50]);
+    const innerBg = isDarkMode ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.8)";
+    const progressTrack = isDarkMode ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.6)";
+    const titleColor = isDarkMode ? COLORS.white : COLORS.gray[900];
+    const subtitleColor = isDarkMode ? COLORS.gray[400] : COLORS.gray[500];
     const titleText = isMemorialMode ? "함께 걸어요" : "오늘의 미션";
     const subtitleText = isMemorialMode
         ? `천천히 한 걸음씩 (${state.completedCount} / ${state.totalCount})`
@@ -107,12 +113,13 @@ export default function QuestCard() {
                 <View style={{ flex: 1 }}>
                     <Text style={[
                         styles.stepTitle,
+                        { color: isDarkMode ? COLORS.gray[200] : COLORS.gray[800] },
                         done && { color: COLORS.gray[400], textDecorationLine: "line-through" },
                     ]} numberOfLines={1}>
                         {q.title}
                     </Text>
                     {!done && (
-                        <Text style={styles.stepDesc} numberOfLines={1}>{q.description}</Text>
+                        <Text style={[styles.stepDesc, { color: subtitleColor }]} numberOfLines={1}>{q.description}</Text>
                     )}
                 </View>
                 {q.bonusPoints > 0 && !done && (
@@ -130,29 +137,29 @@ export default function QuestCard() {
                 </View>
                 <View style={{ flex: 1 }}>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                        <Text style={[styles.title, isDarkMode && { color: COLORS.white }]}>{titleText}</Text>
+                        <Text style={[styles.title, { color: titleColor }]}>{titleText}</Text>
                         <Text style={[styles.percent, { color: accent }]}>{percent}%</Text>
                     </View>
-                    <Text style={styles.subtitle}>{subtitleText}</Text>
+                    <Text style={[styles.subtitle, { color: subtitleColor }]}>{subtitleText}</Text>
                 </View>
                 <TouchableOpacity onPress={handleHide} hitSlop={8}>
                     <Ionicons name="close" size={16} color={COLORS.gray[400]} />
                 </TouchableOpacity>
             </View>
 
-            <View style={styles.progressBg}>
+            <View style={[styles.progressBg, { backgroundColor: progressTrack }]}>
                 <View style={[styles.progressFill, { width: `${percent}%`, backgroundColor: accent }]} />
             </View>
 
             <TouchableOpacity
                 onPress={() => navigateTab(state.currentQuest!.targetTab)}
                 activeOpacity={0.85}
-                style={styles.action}
+                style={[styles.action, { backgroundColor: innerBg }]}
             >
                 <View style={{ flex: 1 }}>
-                    <Text style={styles.questTitle} numberOfLines={1}>{state.currentQuest.title}</Text>
+                    <Text style={[styles.questTitle, { color: titleColor }]} numberOfLines={1}>{state.currentQuest.title}</Text>
                     {state.currentQuest.description ? (
-                        <Text style={styles.questDesc} numberOfLines={1}>{state.currentQuest.description}</Text>
+                        <Text style={[styles.questDesc, { color: subtitleColor }]} numberOfLines={1}>{state.currentQuest.description}</Text>
                     ) : null}
                 </View>
                 <View style={[styles.actionBtn, { backgroundColor: accent }]}>
@@ -208,14 +215,13 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
     },
-    title: { fontSize: 14, fontWeight: "700", color: COLORS.gray[900] },
+    title: { fontSize: 14, fontWeight: "700" },
     percent: { fontSize: 12, fontWeight: "600" },
-    subtitle: { fontSize: 12, color: COLORS.gray[500], marginTop: 2 },
+    subtitle: { fontSize: 12, marginTop: 2 },
     progressBg: {
         marginHorizontal: 16,
         marginBottom: 12,
         height: 6,
-        backgroundColor: "rgba(255,255,255,0.6)",
         borderRadius: 9999,
         overflow: "hidden",
     },
@@ -227,10 +233,9 @@ const styles = StyleSheet.create({
         gap: 12,
         padding: 12,
         borderRadius: 12,
-        backgroundColor: "rgba(255,255,255,0.8)",
     },
-    questTitle: { fontSize: 14, fontWeight: "600", color: COLORS.gray[900] },
-    questDesc: { fontSize: 12, color: COLORS.gray[500], marginTop: 2 },
+    questTitle: { fontSize: 14, fontWeight: "600" },
+    questDesc: { fontSize: 12, marginTop: 2 },
     actionBtn: {
         flexDirection: "row",
         alignItems: "center",
@@ -271,7 +276,7 @@ const styles = StyleSheet.create({
         justifyContent: "center",
     },
     stepDotText: { fontSize: 11, fontWeight: "700", color: COLORS.gray[400] },
-    stepTitle: { fontSize: 13, fontWeight: "600", color: COLORS.gray[800] },
-    stepDesc: { fontSize: 11, color: COLORS.gray[500], marginTop: 1 },
+    stepTitle: { fontSize: 13, fontWeight: "600" },
+    stepDesc: { fontSize: 11, marginTop: 1 },
     stepBonus: { fontSize: 11, fontWeight: "700" },
 });

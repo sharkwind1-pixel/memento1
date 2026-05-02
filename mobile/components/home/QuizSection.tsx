@@ -34,11 +34,17 @@ export default function QuizSection() {
 
     if (availableQuizzes.length === 0) return null;
 
+    const cardBg = isDarkMode ? COLORS.gray[900] : COLORS.white;
+    const cardBorder = isDarkMode ? COLORS.gray[800] : COLORS.gray[200];
+    const titleColor = isDarkMode ? COLORS.white : COLORS.gray[800];
+    const subtitleColor = isDarkMode ? COLORS.gray[400] : COLORS.gray[500];
+    const iconBgColor = isDarkMode ? COLORS.gray[800] : COLORS.memento[100];
+
     return (
         <View style={styles.section}>
             <View style={styles.header}>
-                <Text style={[styles.title, isDarkMode && { color: COLORS.white }]}>자가진단</Text>
-                <Text style={styles.subtitle}>우리 아이 건강 체크</Text>
+                <Text style={[styles.title, { color: titleColor }]}>자가진단</Text>
+                <Text style={[styles.subtitle, { color: subtitleColor }]}>우리 아이 건강 체크</Text>
             </View>
 
             <View style={styles.grid}>
@@ -48,17 +54,17 @@ export default function QuizSection() {
                         <TouchableOpacity
                             key={quiz.id}
                             onPress={() => setActiveQuiz(quiz)}
-                            style={styles.card}
+                            style={[styles.card, { backgroundColor: cardBg, borderColor: cardBorder }]}
                             activeOpacity={0.85}
                         >
                             <View style={styles.cardHeader}>
-                                <View style={styles.iconBg}>
+                                <View style={[styles.iconBg, { backgroundColor: iconBgColor }]}>
                                     <Ionicons name={iconName} size={16} color={COLORS.memento[500]} />
                                 </View>
                                 <Ionicons name="chevron-forward" size={14} color={COLORS.gray[300]} />
                             </View>
-                            <Text style={styles.cardTitle}>{quiz.title}</Text>
-                            <Text style={styles.cardSubtitle}>{quiz.subtitle}</Text>
+                            <Text style={[styles.cardTitle, { color: titleColor }]}>{quiz.title}</Text>
+                            <Text style={[styles.cardSubtitle, { color: subtitleColor }]}>{quiz.subtitle}</Text>
                         </TouchableOpacity>
                     );
                 })}
@@ -79,15 +85,13 @@ export default function QuizSection() {
 const styles = StyleSheet.create({
     section: { paddingHorizontal: 16, marginTop: 24 },
     header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
-    title: { fontSize: 16, fontWeight: "700", color: COLORS.gray[800] },
-    subtitle: { fontSize: 11, color: COLORS.gray[400] },
+    title: { fontSize: 16, fontWeight: "700" },
+    subtitle: { fontSize: 11 },
     grid: { flexDirection: "row", gap: 12, flexWrap: "wrap" },
     card: {
         flex: 1,
         minWidth: "45%",
-        backgroundColor: COLORS.white,
         borderWidth: 1,
-        borderColor: COLORS.gray[200],
         borderRadius: 16,
         padding: 16,
     },
@@ -101,10 +105,9 @@ const styles = StyleSheet.create({
         width: 32,
         height: 32,
         borderRadius: 12,
-        backgroundColor: COLORS.memento[100],
         alignItems: "center",
         justifyContent: "center",
     },
-    cardTitle: { fontSize: 14, fontWeight: "600", color: COLORS.gray[800], lineHeight: 18 },
-    cardSubtitle: { fontSize: 11, color: COLORS.gray[500], marginTop: 4 },
+    cardTitle: { fontSize: 14, fontWeight: "600", lineHeight: 18 },
+    cardSubtitle: { fontSize: 11, marginTop: 4 },
 });

@@ -23,15 +23,20 @@ export default function PetCardSection({ pet, isMemorialMode }: Props) {
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
     const accentSoft = isMemorialMode ? COLORS.memorial[100] : COLORS.memento[100];
 
+    const cardBg = isDarkMode ? COLORS.gray[900] : COLORS.white;
+    const titleColor = isDarkMode ? COLORS.white : COLORS.gray[900];
+    const subtitleColor = isDarkMode ? COLORS.gray[400] : COLORS.gray[500];
+    const placeholderBg = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
+
     if (!pet) {
         return (
             <View style={styles.container}>
-                <View style={styles.emptyCard}>
+                <View style={[styles.emptyCard, { backgroundColor: cardBg }]}>
                     <View style={[styles.emptyIcon, { backgroundColor: accentSoft }]}>
                         <Ionicons name="paw" size={28} color={accentColor} />
                     </View>
-                    <Text style={styles.emptyTitle}>반려동물을 등록해보세요</Text>
-                    <Text style={styles.emptySubtitle}>소중한 순간들을 함께 기록하고 추억해요</Text>
+                    <Text style={[styles.emptyTitle, { color: titleColor }]}>반려동물을 등록해보세요</Text>
+                    <Text style={[styles.emptySubtitle, { color: subtitleColor }]}>소중한 순간들을 함께 기록하고 추억해요</Text>
                     <TouchableOpacity
                         onPress={() => router.push("/pet/new")}
                         style={[styles.emptyCta, { backgroundColor: accentColor }]}
@@ -54,39 +59,40 @@ export default function PetCardSection({ pet, isMemorialMode }: Props) {
                 activeOpacity={0.92}
                 style={[
                     styles.card,
-                    isMemorial && { backgroundColor: COLORS.memorial[50] },
+                    { backgroundColor: cardBg },
+                    isMemorial && { backgroundColor: isDarkMode ? COLORS.gray[900] : COLORS.memorial[50] },
                 ]}
             >
                 <View style={styles.cardLeft}>
                     {pet.profileImage ? (
-                        <Image source={{ uri: pet.profileImage }} style={styles.profileImage} />
+                        <Image source={{ uri: pet.profileImage }} style={[styles.profileImage, { backgroundColor: placeholderBg }]} />
                     ) : (
-                        <View style={[styles.profileImage, styles.profilePlaceholder]}>
+                        <View style={[styles.profileImage, styles.profilePlaceholder, { backgroundColor: placeholderBg }]}>
                             <Ionicons name="paw" size={28} color={COLORS.gray[300]} />
                         </View>
                     )}
                 </View>
                 <View style={styles.cardRight}>
                     <View style={styles.nameRow}>
-                        <Text style={styles.name}>{pet.name}</Text>
+                        <Text style={[styles.name, { color: titleColor }]}>{pet.name}</Text>
                         {isMemorial && (
                             <View style={styles.memorialBadge}>
                                 <Text style={styles.memorialBadgeText}>추모</Text>
                             </View>
                         )}
                     </View>
-                    <Text style={styles.meta}>
+                    <Text style={[styles.meta, { color: subtitleColor }]}>
                         {pet.type}{pet.breed ? ` · ${pet.breed}` : ""}{pet.gender ? ` · ${pet.gender}` : ""}
                     </Text>
                     <View style={styles.statsRow}>
                         <View style={styles.statItem}>
-                            <Ionicons name="image-outline" size={14} color={COLORS.gray[500]} />
-                            <Text style={styles.statText}>{photoCount}장</Text>
+                            <Ionicons name="image-outline" size={14} color={subtitleColor} />
+                            <Text style={[styles.statText, { color: subtitleColor }]}>{photoCount}장</Text>
                         </View>
                         {pet.togetherPeriod && (
                             <View style={styles.statItem}>
-                                <Ionicons name="heart-outline" size={14} color={COLORS.gray[500]} />
-                                <Text style={styles.statText}>{pet.togetherPeriod}</Text>
+                                <Ionicons name="heart-outline" size={14} color={subtitleColor} />
+                                <Text style={[styles.statText, { color: subtitleColor }]}>{pet.togetherPeriod}</Text>
                             </View>
                         )}
                     </View>
@@ -103,7 +109,6 @@ const styles = StyleSheet.create({
         marginTop: -SPACING.lg,
     },
     emptyCard: {
-        backgroundColor: COLORS.white,
         borderRadius: RADIUS.xl,
         padding: SPACING.lg,
         alignItems: "center",
@@ -124,12 +129,10 @@ const styles = StyleSheet.create({
     emptyTitle: {
         fontSize: 17,
         fontWeight: "bold",
-        color: COLORS.gray[900],
         marginBottom: SPACING.xs,
     },
     emptySubtitle: {
         fontSize: 13,
-        color: COLORS.gray[500],
         marginBottom: SPACING.md,
     },
     emptyCta: {
@@ -145,7 +148,6 @@ const styles = StyleSheet.create({
     card: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: COLORS.white,
         borderRadius: RADIUS.xl,
         padding: SPACING.md,
         gap: SPACING.md,
@@ -160,7 +162,6 @@ const styles = StyleSheet.create({
         width: 64,
         height: 64,
         borderRadius: RADIUS.full,
-        backgroundColor: COLORS.gray[100],
     },
     profilePlaceholder: {
         alignItems: "center",
@@ -178,7 +179,6 @@ const styles = StyleSheet.create({
     name: {
         fontSize: 17,
         fontWeight: "bold",
-        color: COLORS.gray[900],
     },
     memorialBadge: {
         paddingHorizontal: 8,
@@ -193,7 +193,6 @@ const styles = StyleSheet.create({
     },
     meta: {
         fontSize: 12,
-        color: COLORS.gray[500],
     },
     statsRow: {
         flexDirection: "row",
@@ -207,6 +206,5 @@ const styles = StyleSheet.create({
     },
     statText: {
         fontSize: 12,
-        color: COLORS.gray[500],
     },
 });

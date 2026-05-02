@@ -9,6 +9,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { API_BASE_URL } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
+import { useDarkMode } from "@/contexts/ThemeContext";
 
 interface Notice {
     id: string;
@@ -17,6 +18,7 @@ interface Notice {
 
 export default function AnnouncementBanner() {
     const router = useRouter();
+    const { isDarkMode } = useDarkMode();
     const [notices, setNotices] = useState<Notice[]>([]);
     const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
@@ -40,6 +42,11 @@ export default function AnnouncementBanner() {
     const visible = notices.filter((n) => !dismissed.has(n.id));
     if (visible.length === 0) return null;
 
+    // 웹 매칭: 다크모드 red-900/20 bg + red-700/50 border + red-300 text
+    const rowBg = isDarkMode ? "rgba(127,29,29,0.2)" : "#FEF2F2";
+    const rowBorder = isDarkMode ? "rgba(185,28,28,0.5)" : "#FECACA";
+    const titleColor = isDarkMode ? "#FCA5A5" : "#B91C1C";
+
     return (
         <View style={styles.container}>
             {visible.map((n) => (
@@ -47,10 +54,10 @@ export default function AnnouncementBanner() {
                     key={n.id}
                     onPress={() => n.id && router.push(`/post/${n.id}`)}
                     activeOpacity={0.75}
-                    style={styles.row}
+                    style={[styles.row, { backgroundColor: rowBg, borderColor: rowBorder }]}
                 >
                     <Ionicons name="megaphone" size={14} color="#DC2626" />
-                    <Text style={styles.title} numberOfLines={1}>[공지] {n.title}</Text>
+                    <Text style={[styles.title, { color: titleColor }]} numberOfLines={1}>[공지] {n.title}</Text>
                     <TouchableOpacity
                         onPress={(e) => {
                             e.stopPropagation();
@@ -74,15 +81,12 @@ const styles = StyleSheet.create({
         gap: 12,
         paddingHorizontal: 14,
         paddingVertical: 10,
-        backgroundColor: "#FEF2F2",
         borderWidth: 1,
-        borderColor: "#FECACA",
         borderRadius: 12,
     },
     title: {
         flex: 1,
         fontSize: 13,
         fontWeight: "500",
-        color: "#B91C1C",
     },
 });

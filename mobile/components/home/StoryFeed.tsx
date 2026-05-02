@@ -13,6 +13,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useAuth } from "@/contexts/AuthContext";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { API_BASE_URL } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
 import StoryViewer from "./StoryViewer";
@@ -35,6 +36,7 @@ interface StoryUser {
 
 export default function StoryFeed() {
     const { user, session } = useAuth();
+    const { isDarkMode } = useDarkMode();
     const [feed, setFeed] = useState<StoryUser[]>([]);
     const [selectedUser, setSelectedUser] = useState<StoryUser | null>(null);
     const [showCreate, setShowCreate] = useState(false);
@@ -67,6 +69,11 @@ export default function StoryFeed() {
 
     if (!user && feed.length === 0) return null;
 
+    const addBg = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
+    const avatarInnerBg = isDarkMode ? COLORS.gray[900] : "#fff";
+    const labelColor = isDarkMode ? COLORS.gray[400] : COLORS.gray[500];
+    const emptyColor = isDarkMode ? COLORS.gray[500] : COLORS.gray[400];
+
     return (
         <View style={styles.section}>
             <ScrollView
@@ -82,10 +89,10 @@ export default function StoryFeed() {
                         onPress={() => setShowCreate(true)}
                         activeOpacity={0.75}
                     >
-                        <View style={styles.addCircle}>
+                        <View style={[styles.addCircle, { backgroundColor: addBg }]}>
                             <Ionicons name="add" size={22} color={COLORS.memento[500]} />
                         </View>
-                        <Text style={styles.label}>내 스토리</Text>
+                        <Text style={[styles.label, { color: labelColor }]}>내 스토리</Text>
                     </TouchableOpacity>
                 ) : null}
 
@@ -101,7 +108,7 @@ export default function StoryFeed() {
                             colors={[COLORS.memento[500], "#8B5CF6"]}
                             style={styles.avatarBorder}
                         >
-                            <View style={styles.avatarInner}>
+                            <View style={[styles.avatarInner, { backgroundColor: avatarInnerBg }]}>
                                 {su.avatar ? (
                                     <Image source={{ uri: su.avatar }} style={styles.avatarImg} />
                                 ) : (
@@ -111,13 +118,13 @@ export default function StoryFeed() {
                                 )}
                             </View>
                         </LinearGradient>
-                        <Text style={styles.label} numberOfLines={1}>{su.nickname}</Text>
+                        <Text style={[styles.label, { color: labelColor }]} numberOfLines={1}>{su.nickname}</Text>
                     </TouchableOpacity>
                 ))}
 
                 {/* 빈 피드 안내 */}
                 {feed.length === 0 && user ? (
-                    <Text style={styles.emptyHint}>첫 번째 스토리를 올려보세요</Text>
+                    <Text style={[styles.emptyHint, { color: emptyColor }]}>첫 번째 스토리를 올려보세요</Text>
                 ) : null}
             </ScrollView>
 
@@ -155,7 +162,6 @@ const styles = StyleSheet.create({
         width: 56,
         height: 56,
         borderRadius: 28,
-        backgroundColor: COLORS.gray[100],
         borderWidth: 2,
         borderColor: COLORS.memento[400],
         borderStyle: "dashed",
@@ -176,7 +182,6 @@ const styles = StyleSheet.create({
         width: "100%",
         height: "100%",
         borderRadius: 28,
-        backgroundColor: "#fff",
         padding: 2,
     },
     avatarImg: { width: "100%", height: "100%", borderRadius: 28 },
@@ -187,13 +192,11 @@ const styles = StyleSheet.create({
     },
     label: {
         fontSize: 11,
-        color: COLORS.gray[500],
         textAlign: "center",
         maxWidth: 68,
     },
     emptyHint: {
         fontSize: 12,
-        color: COLORS.gray[400],
         marginLeft: 8,
         alignSelf: "center",
     },
