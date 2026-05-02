@@ -15,6 +15,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useAuth } from "@/contexts/AuthContext";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { supabase } from "@/lib/supabase";
 import { API_BASE_URL } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
@@ -34,6 +35,7 @@ interface Props {
 
 export default function StoryCreateModal({ visible, onClose, onSuccess }: Props) {
     const { user, session } = useAuth();
+    const { isDarkMode } = useDarkMode();
     const [mode, setMode] = useState<StoryMode>("text");
     const [textContent, setTextContent] = useState("");
     const [bgColor, setBgColor] = useState(BG_COLORS[0]);
@@ -148,15 +150,31 @@ export default function StoryCreateModal({ visible, onClose, onSuccess }: Props)
         (mode === "photo" && !!imageUri)
     );
 
+    const modalBg = isDarkMode ? COLORS.gray[900] : "#fff";
+    const headerBorder = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
+    const titleColor = isDarkMode ? COLORS.white : COLORS.gray[900];
+    const modeBorder = isDarkMode ? COLORS.gray[700] : COLORS.gray[200];
+    const modeActiveBg = isDarkMode ? "rgba(5,178,220,0.12)" : COLORS.memento[50];
+    const modeInactiveColor = isDarkMode ? COLORS.gray[400] : COLORS.gray[500];
+    const previewBg = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
+    const pickerBorder = isDarkMode ? COLORS.gray[700] : COLORS.gray[300];
+    const inputBorder = isDarkMode ? COLORS.gray[700] : COLORS.gray[200];
+    const inputBg = isDarkMode ? COLORS.gray[800] : "#fff";
+    const inputColor = isDarkMode ? COLORS.gray[100] : COLORS.gray[800];
+    const placeholderColor = isDarkMode ? COLORS.gray[500] : COLORS.gray[400];
+    const colorLabelColor = isDarkMode ? COLORS.gray[400] : COLORS.gray[500];
+    const colorDotActiveBorder = isDarkMode ? COLORS.gray[300] : COLORS.gray[800];
+    const submitHintColor = isDarkMode ? COLORS.gray[500] : COLORS.gray[400];
+
     return (
         <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
             <View style={styles.backdrop}>
-                <View style={styles.modal}>
+                <View style={[styles.modal, { backgroundColor: modalBg }]}>
                     {/* 헤더 */}
-                    <View style={styles.header}>
-                        <Text style={styles.title}>스토리 올리기</Text>
+                    <View style={[styles.header, { borderBottomColor: headerBorder }]}>
+                        <Text style={[styles.title, { color: titleColor }]}>스토리 올리기</Text>
                         <TouchableOpacity onPress={handleClose} hitSlop={8} style={styles.closeBtn}>
-                            <Ionicons name="close" size={20} color={COLORS.gray[500]} />
+                            <Ionicons name="close" size={20} color={modeInactiveColor} />
                         </TouchableOpacity>
                     </View>
 
@@ -164,27 +182,43 @@ export default function StoryCreateModal({ visible, onClose, onSuccess }: Props)
                     <View style={styles.modeRow}>
                         <TouchableOpacity
                             onPress={() => setMode("photo")}
-                            style={[styles.modeBtn, mode === "photo" && styles.modeBtnActive]}
+                            style={[
+                                styles.modeBtn,
+                                { borderColor: modeBorder },
+                                mode === "photo" && { borderColor: COLORS.memento[500], backgroundColor: modeActiveBg },
+                            ]}
                             activeOpacity={0.85}
                         >
                             <Ionicons
                                 name="camera-outline"
                                 size={16}
-                                color={mode === "photo" ? COLORS.memento[600] : COLORS.gray[500]}
+                                color={mode === "photo" ? COLORS.memento[600] : modeInactiveColor}
                             />
-                            <Text style={[styles.modeText, mode === "photo" && styles.modeTextActive]}>사진</Text>
+                            <Text style={[
+                                styles.modeText,
+                                { color: modeInactiveColor },
+                                mode === "photo" && { color: COLORS.memento[600] },
+                            ]}>사진</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             onPress={() => setMode("text")}
-                            style={[styles.modeBtn, mode === "text" && styles.modeBtnActive]}
+                            style={[
+                                styles.modeBtn,
+                                { borderColor: modeBorder },
+                                mode === "text" && { borderColor: COLORS.memento[500], backgroundColor: modeActiveBg },
+                            ]}
                             activeOpacity={0.85}
                         >
                             <Ionicons
                                 name="text-outline"
                                 size={16}
-                                color={mode === "text" ? COLORS.memento[600] : COLORS.gray[500]}
+                                color={mode === "text" ? COLORS.memento[600] : modeInactiveColor}
                             />
-                            <Text style={[styles.modeText, mode === "text" && styles.modeTextActive]}>텍스트</Text>
+                            <Text style={[
+                                styles.modeText,
+                                { color: modeInactiveColor },
+                                mode === "text" && { color: COLORS.memento[600] },
+                            ]}>텍스트</Text>
                         </TouchableOpacity>
                     </View>
 
@@ -192,7 +226,7 @@ export default function StoryCreateModal({ visible, onClose, onSuccess }: Props)
                     <ScrollView contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
                         {mode === "photo" ? (
                             imageUri ? (
-                                <View style={styles.imagePreview}>
+                                <View style={[styles.imagePreview, { backgroundColor: previewBg }]}>
                                     <Image source={{ uri: imageUri }} style={{ width: "100%", height: "100%" }} resizeMode="cover" />
                                     <TouchableOpacity
                                         onPress={() => setImageUri(null)}
@@ -203,9 +237,9 @@ export default function StoryCreateModal({ visible, onClose, onSuccess }: Props)
                                     </TouchableOpacity>
                                 </View>
                             ) : (
-                                <TouchableOpacity onPress={pickImage} style={styles.imagePicker} activeOpacity={0.85}>
-                                    <Ionicons name="camera" size={36} color={COLORS.gray[400]} />
-                                    <Text style={styles.imagePickerText}>사진 선택</Text>
+                                <TouchableOpacity onPress={pickImage} style={[styles.imagePicker, { borderColor: pickerBorder }]} activeOpacity={0.85}>
+                                    <Ionicons name="camera" size={36} color={placeholderColor} />
+                                    <Text style={[styles.imagePickerText, { color: placeholderColor }]}>사진 선택</Text>
                                 </TouchableOpacity>
                             )
                         ) : (
@@ -221,15 +255,15 @@ export default function StoryCreateModal({ visible, onClose, onSuccess }: Props)
                                     value={textContent}
                                     onChangeText={setTextContent}
                                     placeholder="오늘의 한마디..."
-                                    placeholderTextColor={COLORS.gray[400]}
+                                    placeholderTextColor={placeholderColor}
                                     multiline
                                     maxLength={500}
-                                    style={styles.textInput}
+                                    style={[styles.textInput, { borderColor: inputBorder, backgroundColor: inputBg, color: inputColor }]}
                                 />
 
                                 {/* 배경색 */}
                                 <View style={styles.colorRow}>
-                                    <Text style={styles.colorLabel}>배경</Text>
+                                    <Text style={[styles.colorLabel, { color: colorLabelColor }]}>배경</Text>
                                     {BG_COLORS.map((color) => (
                                         <TouchableOpacity
                                             key={color}
@@ -237,7 +271,7 @@ export default function StoryCreateModal({ visible, onClose, onSuccess }: Props)
                                             style={[
                                                 styles.colorDot,
                                                 { backgroundColor: color },
-                                                bgColor === color && styles.colorDotActive,
+                                                bgColor === color && { borderColor: colorDotActiveBorder, transform: [{ scale: 1.1 }] },
                                             ]}
                                             activeOpacity={0.7}
                                         />
@@ -249,7 +283,7 @@ export default function StoryCreateModal({ visible, onClose, onSuccess }: Props)
 
                     {/* 발행 */}
                     <View style={styles.submitWrap}>
-                        <Text style={styles.submitHint}>스토리는 24시간 후 자동으로 사라집니다</Text>
+                        <Text style={[styles.submitHint, { color: submitHintColor }]}>스토리는 24시간 후 자동으로 사라집니다</Text>
                         <TouchableOpacity
                             onPress={handleSubmit}
                             disabled={!canSubmit}
@@ -281,7 +315,6 @@ const styles = StyleSheet.create({
         width: "100%",
         maxWidth: 400,
         maxHeight: "90%",
-        backgroundColor: "#fff",
         borderRadius: 24,
         overflow: "hidden",
     },
@@ -292,9 +325,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingVertical: 14,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.gray[100],
     },
-    title: { fontSize: 16, fontWeight: "700", color: COLORS.gray[900] },
+    title: { fontSize: 16, fontWeight: "700" },
     closeBtn: { padding: 6 },
     modeRow: { flexDirection: "row", gap: 8, paddingHorizontal: 20, paddingTop: 16 },
     modeBtn: {
@@ -306,11 +338,8 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         borderRadius: 12,
         borderWidth: 2,
-        borderColor: COLORS.gray[200],
     },
-    modeBtnActive: { borderColor: COLORS.memento[500], backgroundColor: COLORS.memento[50] },
-    modeText: { fontSize: 14, fontWeight: "600", color: COLORS.gray[500] },
-    modeTextActive: { color: COLORS.memento[600] },
+    modeText: { fontSize: 14, fontWeight: "600" },
     imagePreview: {
         width: "100%",
         aspectRatio: 9 / 16,
@@ -318,7 +347,6 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         overflow: "hidden",
         position: "relative",
-        backgroundColor: COLORS.gray[100],
     },
     imageCloseBtn: {
         position: "absolute",
@@ -338,12 +366,11 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         borderWidth: 2,
         borderStyle: "dashed",
-        borderColor: COLORS.gray[300],
         alignItems: "center",
         justifyContent: "center",
         gap: 8,
     },
-    imagePickerText: { fontSize: 13, color: COLORS.gray[400] },
+    imagePickerText: { fontSize: 13 },
     textPreview: {
         width: "100%",
         aspectRatio: 9 / 16,
@@ -366,28 +393,22 @@ const styles = StyleSheet.create({
     },
     textInput: {
         borderWidth: 1,
-        borderColor: COLORS.gray[200],
         borderRadius: 12,
         paddingHorizontal: 12,
         paddingVertical: 10,
         fontSize: 14,
-        color: COLORS.gray[800],
         marginBottom: 12,
         minHeight: 64,
         textAlignVertical: "top",
     },
     colorRow: { flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" },
-    colorLabel: { fontSize: 12, color: COLORS.gray[500], marginRight: 4 },
+    colorLabel: { fontSize: 12, marginRight: 4 },
     colorDot: {
         width: 24,
         height: 24,
         borderRadius: 12,
         borderWidth: 2,
         borderColor: "transparent",
-    },
-    colorDotActive: {
-        borderColor: COLORS.gray[800],
-        transform: [{ scale: 1.1 }],
     },
     submitWrap: {
         paddingHorizontal: 20,
@@ -396,7 +417,6 @@ const styles = StyleSheet.create({
     },
     submitHint: {
         fontSize: 10,
-        color: COLORS.gray[400],
         textAlign: "center",
         marginBottom: 12,
     },

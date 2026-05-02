@@ -18,6 +18,7 @@ import * as Haptics from "expo-haptics";
 import type { PetQuiz } from "@/lib/petQuizzes";
 import { getQuizResult } from "@/lib/petQuizzes";
 import { COLORS } from "@/lib/theme";
+import { useDarkMode } from "@/contexts/ThemeContext";
 
 interface Props {
     quiz: PetQuiz;
@@ -27,6 +28,7 @@ interface Props {
 }
 
 export default function QuizModal({ quiz, petName, visible, onClose }: Props) {
+    const { isDarkMode } = useDarkMode();
     const [currentQuestion, setCurrentQuestion] = useState(0);
     const [answers, setAnswers] = useState<number[]>(new Array(quiz.questions.length).fill(-1));
     const [showResult, setShowResult] = useState(false);
@@ -87,18 +89,33 @@ export default function QuizModal({ quiz, petName, visible, onClose }: Props) {
         return COLORS.memento[600];
     }
 
+    const modalBg = isDarkMode ? COLORS.gray[900] : "#fff";
+    const headerBorder = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
+    const titleColor = isDarkMode ? COLORS.white : COLORS.gray[900];
+    const subtitleColor = isDarkMode ? COLORS.gray[400] : COLORS.gray[500];
+    const progressTrackBg = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
+    const optionBg = isDarkMode ? COLORS.gray[800] : "#fff";
+    const optionBorder = isDarkMode ? COLORS.gray[700] : COLORS.gray[200];
+    const optionTextColor = isDarkMode ? COLORS.gray[200] : COLORS.gray[700];
+    const ghostBg = isDarkMode ? COLORS.gray[800] : COLORS.white;
+    const ghostBorder = isDarkMode ? COLORS.gray[700] : COLORS.gray[300];
+    const resultBoxBg = isDarkMode ? COLORS.gray[800] : COLORS.gray[50];
+    const resultDescColor = isDarkMode ? COLORS.gray[200] : COLORS.gray[800];
+    const resultAdviceColor = isDarkMode ? COLORS.gray[300] : COLORS.gray[600];
+    const dividerColor = isDarkMode ? COLORS.gray[700] : COLORS.gray[200];
+
     return (
         <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
             <View style={styles.backdrop}>
-                <View style={styles.modal}>
+                <View style={[styles.modal, { backgroundColor: modalBg }]}>
                     {/* 헤더 */}
-                    <View style={styles.header}>
+                    <View style={[styles.header, { borderBottomColor: headerBorder }]}>
                         <View style={{ flex: 1 }}>
-                            <Text style={styles.title} numberOfLines={1}>{quiz.title}</Text>
-                            <Text style={styles.subtitle} numberOfLines={1}>{quiz.subtitle}</Text>
+                            <Text style={[styles.title, { color: titleColor }]} numberOfLines={1}>{quiz.title}</Text>
+                            <Text style={[styles.subtitle, { color: subtitleColor }]} numberOfLines={1}>{quiz.subtitle}</Text>
                         </View>
                         <TouchableOpacity onPress={handleClose} hitSlop={8} style={styles.closeBtn}>
-                            <Ionicons name="close" size={22} color={COLORS.gray[500]} />
+                            <Ionicons name="close" size={22} color={isDarkMode ? COLORS.gray[400] : COLORS.gray[500]} />
                         </TouchableOpacity>
                     </View>
 
@@ -107,10 +124,10 @@ export default function QuizModal({ quiz, petName, visible, onClose }: Props) {
                             {/* 프로그레스 */}
                             <View style={styles.progressWrap}>
                                 <View style={styles.progressMeta}>
-                                    <Text style={styles.progressText}>{currentQuestion + 1} / {totalQuestions}</Text>
-                                    <Text style={styles.progressText}>{Math.round(progress)}%</Text>
+                                    <Text style={[styles.progressText, { color: subtitleColor }]}>{currentQuestion + 1} / {totalQuestions}</Text>
+                                    <Text style={[styles.progressText, { color: subtitleColor }]}>{Math.round(progress)}%</Text>
                                 </View>
-                                <View style={styles.progressTrack}>
+                                <View style={[styles.progressTrack, { backgroundColor: progressTrackBg }]}>
                                     <LinearGradient
                                         colors={[COLORS.memento[500], COLORS.memento[400]]}
                                         start={{ x: 0, y: 0 }}
@@ -122,7 +139,7 @@ export default function QuizModal({ quiz, petName, visible, onClose }: Props) {
 
                             {/* 문항 */}
                             <View style={styles.questionWrap}>
-                                <Text style={styles.questionText}>
+                                <Text style={[styles.questionText, { color: titleColor }]}>
                                     {quiz.questions[currentQuestion].text}
                                 </Text>
                                 <View style={{ gap: 10 }}>
@@ -134,7 +151,11 @@ export default function QuizModal({ quiz, petName, visible, onClose }: Props) {
                                                 onPress={() => handleSelect(currentQuestion, opt.score)}
                                                 style={[
                                                     styles.option,
-                                                    isSelected && styles.optionSelected,
+                                                    { backgroundColor: optionBg, borderColor: optionBorder },
+                                                    isSelected && {
+                                                        borderColor: COLORS.memento[500],
+                                                        backgroundColor: isDarkMode ? "rgba(5,178,220,0.12)" : COLORS.memento[50],
+                                                    },
                                                 ]}
                                                 activeOpacity={0.85}
                                             >
@@ -143,7 +164,8 @@ export default function QuizModal({ quiz, petName, visible, onClose }: Props) {
                                                 ) : null}
                                                 <Text style={[
                                                     styles.optionText,
-                                                    isSelected && { color: COLORS.memento[700], fontWeight: "600" },
+                                                    { color: optionTextColor },
+                                                    isSelected && { color: isDarkMode ? COLORS.memento[300] : COLORS.memento[700], fontWeight: "600" },
                                                 ]}>
                                                     {opt.label}
                                                 </Text>
@@ -158,11 +180,11 @@ export default function QuizModal({ quiz, petName, visible, onClose }: Props) {
                                 <TouchableOpacity
                                     onPress={() => setCurrentQuestion((p) => Math.max(0, p - 1))}
                                     disabled={currentQuestion === 0}
-                                    style={[styles.navBtn, styles.navBtnGhost, currentQuestion === 0 && { opacity: 0.4 }]}
+                                    style={[styles.navBtn, styles.navBtnGhost, { backgroundColor: ghostBg, borderColor: ghostBorder }, currentQuestion === 0 && { opacity: 0.4 }]}
                                     activeOpacity={0.75}
                                 >
-                                    <Ionicons name="chevron-back" size={16} color={COLORS.gray[700]} />
-                                    <Text style={styles.navBtnGhostText}>이전</Text>
+                                    <Ionicons name="chevron-back" size={16} color={isDarkMode ? COLORS.gray[300] : COLORS.gray[700]} />
+                                    <Text style={[styles.navBtnGhostText, { color: isDarkMode ? COLORS.gray[300] : COLORS.gray[700] }]}>이전</Text>
                                 </TouchableOpacity>
 
                                 {currentQuestion < totalQuestions - 1 ? (
@@ -200,25 +222,25 @@ export default function QuizModal({ quiz, petName, visible, onClose }: Props) {
                             <Text style={[styles.resultTitle, { color: getResultColor(result.color) }]}>
                                 {result.title}
                             </Text>
-                            <Text style={styles.resultScore}>
+                            <Text style={[styles.resultScore, { color: subtitleColor }]}>
                                 총점: {totalScore} / {totalQuestions * 3}
                             </Text>
 
-                            <View style={styles.resultBox}>
-                                <Text style={styles.resultDesc}>{result.description}</Text>
-                                <View style={styles.resultDivider} />
-                                <Text style={styles.resultAdviceLabel}>권장 사항</Text>
-                                <Text style={styles.resultAdvice}>{result.advice}</Text>
+                            <View style={[styles.resultBox, { backgroundColor: resultBoxBg }]}>
+                                <Text style={[styles.resultDesc, { color: resultDescColor }]}>{result.description}</Text>
+                                <View style={[styles.resultDivider, { backgroundColor: dividerColor }]} />
+                                <Text style={[styles.resultAdviceLabel, { color: isDarkMode ? COLORS.gray[300] : COLORS.gray[700] }]}>권장 사항</Text>
+                                <Text style={[styles.resultAdvice, { color: resultAdviceColor }]}>{result.advice}</Text>
                             </View>
 
-                            <Text style={styles.disclaimer}>
+                            <Text style={[styles.disclaimer, { color: isDarkMode ? COLORS.gray[500] : COLORS.gray[400] }]}>
                                 이 결과는 참고용이며 수의사 진료를 대체하지 않습니다.
                             </Text>
 
                             <View style={styles.resultActions}>
-                                <TouchableOpacity onPress={reset} style={[styles.navBtn, styles.navBtnGhost, { flex: 1 }]} activeOpacity={0.75}>
-                                    <Ionicons name="refresh" size={16} color={COLORS.gray[700]} />
-                                    <Text style={styles.navBtnGhostText}>다시 하기</Text>
+                                <TouchableOpacity onPress={reset} style={[styles.navBtn, styles.navBtnGhost, { flex: 1, backgroundColor: ghostBg, borderColor: ghostBorder }]} activeOpacity={0.75}>
+                                    <Ionicons name="refresh" size={16} color={isDarkMode ? COLORS.gray[300] : COLORS.gray[700]} />
+                                    <Text style={[styles.navBtnGhostText, { color: isDarkMode ? COLORS.gray[300] : COLORS.gray[700] }]}>다시 하기</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity onPress={handleShare} style={[styles.navBtn, styles.navBtnPrimary, { flex: 1 }]} activeOpacity={0.85}>
                                     <Ionicons name="share-social-outline" size={16} color="#fff" />
@@ -226,7 +248,7 @@ export default function QuizModal({ quiz, petName, visible, onClose }: Props) {
                                 </TouchableOpacity>
                             </View>
 
-                            <Text style={styles.footer}>
+                            <Text style={[styles.footer, { color: isDarkMode ? COLORS.gray[500] : COLORS.gray[400] }]}>
                                 메멘토애니에서 더 많은 진단을 해보세요
                             </Text>
                         </ScrollView>
@@ -249,7 +271,6 @@ const styles = StyleSheet.create({
         width: "100%",
         maxWidth: 480,
         maxHeight: "90%",
-        backgroundColor: "#fff",
         borderRadius: 24,
         overflow: "hidden",
         elevation: 16,
@@ -264,11 +285,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingVertical: 16,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.gray[100],
         gap: 12,
     },
-    title: { fontSize: 17, fontWeight: "700", color: COLORS.gray[900] },
-    subtitle: { fontSize: 12, color: COLORS.gray[500], marginTop: 2 },
+    title: { fontSize: 17, fontWeight: "700" },
+    subtitle: { fontSize: 12, marginTop: 2 },
     closeBtn: { padding: 6 },
     body: { },
     progressWrap: { paddingHorizontal: 20, paddingTop: 16 },
@@ -277,10 +297,9 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         marginBottom: 6,
     },
-    progressText: { fontSize: 11, color: COLORS.gray[500] },
+    progressText: { fontSize: 11 },
     progressTrack: {
         height: 8,
-        backgroundColor: COLORS.gray[100],
         borderRadius: 4,
         overflow: "hidden",
     },
@@ -289,7 +308,6 @@ const styles = StyleSheet.create({
     questionText: {
         fontSize: 16,
         fontWeight: "600",
-        color: COLORS.gray[900],
         lineHeight: 24,
         marginBottom: 16,
     },
@@ -300,14 +318,8 @@ const styles = StyleSheet.create({
         paddingVertical: 14,
         borderRadius: 12,
         borderWidth: 2,
-        borderColor: COLORS.gray[200],
-        backgroundColor: "#fff",
     },
-    optionSelected: {
-        borderColor: COLORS.memento[500],
-        backgroundColor: COLORS.memento[50],
-    },
-    optionText: { fontSize: 14, color: COLORS.gray[700], flex: 1 },
+    optionText: { fontSize: 14, flex: 1 },
     navRow: {
         paddingHorizontal: 20,
         paddingBottom: 20,
@@ -326,11 +338,9 @@ const styles = StyleSheet.create({
         minWidth: 100,
     },
     navBtnGhost: {
-        backgroundColor: COLORS.white,
         borderWidth: 1,
-        borderColor: COLORS.gray[300],
     },
-    navBtnGhostText: { fontSize: 14, fontWeight: "600", color: COLORS.gray[700] },
+    navBtnGhostText: { fontSize: 14, fontWeight: "600" },
     navBtnPrimary: { backgroundColor: COLORS.memento[500] },
     navBtnPrimaryText: { fontSize: 14, fontWeight: "700", color: "#fff" },
     resultTitle: {
@@ -341,34 +351,29 @@ const styles = StyleSheet.create({
     },
     resultScore: {
         fontSize: 13,
-        color: COLORS.gray[500],
         textAlign: "center",
         marginBottom: 16,
     },
     resultBox: {
-        backgroundColor: COLORS.gray[50],
         borderRadius: 16,
         padding: 18,
         marginBottom: 12,
     },
-    resultDesc: { fontSize: 14, lineHeight: 22, color: COLORS.gray[800], marginBottom: 12 },
+    resultDesc: { fontSize: 14, lineHeight: 22, marginBottom: 12 },
     resultDivider: {
         height: 1,
-        backgroundColor: COLORS.gray[200],
         marginBottom: 12,
     },
-    resultAdviceLabel: { fontSize: 12, fontWeight: "700", color: COLORS.gray[700], marginBottom: 6 },
-    resultAdvice: { fontSize: 12, lineHeight: 20, color: COLORS.gray[600] },
+    resultAdviceLabel: { fontSize: 12, fontWeight: "700", marginBottom: 6 },
+    resultAdvice: { fontSize: 12, lineHeight: 20 },
     disclaimer: {
         fontSize: 10,
-        color: COLORS.gray[400],
         textAlign: "center",
         marginBottom: 14,
     },
     resultActions: { flexDirection: "row", gap: 10, marginBottom: 14 },
     footer: {
         fontSize: 11,
-        color: COLORS.gray[400],
         textAlign: "center",
     },
 });

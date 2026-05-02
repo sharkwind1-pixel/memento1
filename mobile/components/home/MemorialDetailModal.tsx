@@ -17,6 +17,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useAuth } from "@/contexts/AuthContext";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { API_BASE_URL } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
 
@@ -63,6 +64,7 @@ export default function MemorialDetailModal({
     pet, visible, isCondoled, onClose, onToggleCondolence,
 }: Props) {
     const { user, session, isAdminUser } = useAuth();
+    const { isDarkMode } = useDarkMode();
     const [messages, setMessages] = useState<CondolenceMessage[]>([]);
     const [loadingMessages, setLoadingMessages] = useState(true);
     const [sending, setSending] = useState(false);
@@ -170,10 +172,25 @@ export default function MemorialDetailModal({
 
     if (!pet) return null;
 
+    const modalBg = isDarkMode ? COLORS.gray[900] : "#fff";
+    const titleColor = isDarkMode ? COLORS.white : COLORS.gray[800];
+    const subtitleColor = isDarkMode ? COLORS.gray[400] : COLORS.gray[500];
+    const sectionTitleColor = isDarkMode ? COLORS.gray[300] : COLORS.gray[700];
+    const messageBg = isDarkMode ? "rgba(254,243,199,0.08)" : "rgba(254,243,199,0.4)";
+    const messageTextColor = isDarkMode ? COLORS.gray[200] : COLORS.gray[700];
+    const messageMetaColor = isDarkMode ? COLORS.gray[500] : COLORS.gray[400];
+    const presetItemBg = isDarkMode ? "rgba(254,243,199,0.06)" : "rgba(254,243,199,0.3)";
+    const presetTextColor = isDarkMode ? COLORS.gray[200] : COLORS.gray[700];
+    const presetToggleBg = isDarkMode ? "rgba(245,158,11,0.12)" : COLORS.memorial[50];
+    const condolenceBtnBg = isDarkMode ? "rgba(245,158,11,0.12)" : COLORS.memorial[50];
+    const condolenceBtnActiveBg = isDarkMode ? "rgba(245,158,11,0.2)" : COLORS.memorial[100];
+    const emptyTitleColor = isDarkMode ? COLORS.gray[500] : COLORS.gray[400];
+    const emptyHintColor = isDarkMode ? COLORS.gray[600] : COLORS.gray[300];
+
     return (
         <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
             <View style={styles.backdrop}>
-                <View style={styles.modal}>
+                <View style={[styles.modal, { backgroundColor: modalBg }]}>
                     {/* 닫기 */}
                     <TouchableOpacity onPress={onClose} style={styles.closeBtn} hitSlop={8}>
                         <Ionicons name="close" size={18} color="#fff" />
@@ -200,8 +217,8 @@ export default function MemorialDetailModal({
 
                         {/* 펫 정보 */}
                         <View style={styles.infoWrap}>
-                            <Text style={styles.petName}>{pet.name}</Text>
-                            <Text style={styles.petBreed}>
+                            <Text style={[styles.petName, { color: titleColor }]}>{pet.name}</Text>
+                            <Text style={[styles.petBreed, { color: subtitleColor }]}>
                                 {pet.type}{pet.breed ? ` / ${pet.breed}` : ""}
                             </Text>
                             {pet.yearsLabel ? (
@@ -213,7 +230,11 @@ export default function MemorialDetailModal({
                                     Haptics.selectionAsync().catch(() => {});
                                     onToggleCondolence(pet.id);
                                 }}
-                                style={[styles.condolenceBtn, isCondoled && styles.condolenceBtnActive]}
+                                style={[
+                                    styles.condolenceBtn,
+                                    { backgroundColor: condolenceBtnBg },
+                                    isCondoled && { backgroundColor: condolenceBtnActiveBg },
+                                ]}
                                 activeOpacity={0.85}
                             >
                                 <Ionicons
@@ -234,7 +255,7 @@ export default function MemorialDetailModal({
 
                         {/* 위로의 말 섹션 */}
                         <View style={styles.messagesWrap}>
-                            <Text style={styles.sectionTitle}>
+                            <Text style={[styles.sectionTitle, { color: sectionTitleColor }]}>
                                 위로의 말
                                 {messages.length > 0 ? (
                                     <Text style={{ color: COLORS.memorial[500] }}> {messages.length}</Text>
@@ -247,18 +268,18 @@ export default function MemorialDetailModal({
                                 </View>
                             ) : messages.length === 0 ? (
                                 <View style={styles.emptyRow}>
-                                    <Text style={styles.emptyTitle}>아직 위로의 말이 없습니다</Text>
-                                    <Text style={styles.emptyHint}>첫 번째 위로의 말을 남겨주세요</Text>
+                                    <Text style={[styles.emptyTitle, { color: emptyTitleColor }]}>아직 위로의 말이 없습니다</Text>
+                                    <Text style={[styles.emptyHint, { color: emptyHintColor }]}>첫 번째 위로의 말을 남겨주세요</Text>
                                 </View>
                             ) : (
                                 <View style={{ gap: 10 }}>
                                     {messages.map((msg) => (
-                                        <View key={msg.id} style={styles.messageRow}>
+                                        <View key={msg.id} style={[styles.messageRow, { backgroundColor: messageBg }]}>
                                             <View style={{ flex: 1 }}>
-                                                <Text style={styles.messageText}>{msg.message}</Text>
-                                                <Text style={styles.messageMeta}>
+                                                <Text style={[styles.messageText, { color: messageTextColor }]}>{msg.message}</Text>
+                                                <Text style={[styles.messageMeta, { color: messageMetaColor }]}>
                                                     {msg.nickname || "익명"}{"  "}
-                                                    <Text style={{ color: COLORS.gray[300] }}>
+                                                    <Text style={{ color: emptyHintColor }}>
                                                         {formatDate(msg.createdAt)}
                                                     </Text>
                                                 </Text>
@@ -283,7 +304,7 @@ export default function MemorialDetailModal({
                                     {!showPresets ? (
                                         <TouchableOpacity
                                             onPress={() => setShowPresets(true)}
-                                            style={styles.presetToggle}
+                                            style={[styles.presetToggle, { backgroundColor: presetToggleBg }]}
                                             activeOpacity={0.85}
                                         >
                                             <Text style={styles.presetToggleText}>위로의 말 남기기</Text>
@@ -295,10 +316,10 @@ export default function MemorialDetailModal({
                                                     key={preset}
                                                     onPress={() => handleSelectPreset(preset)}
                                                     disabled={sending}
-                                                    style={styles.presetItem}
+                                                    style={[styles.presetItem, { backgroundColor: presetItemBg }]}
                                                     activeOpacity={0.85}
                                                 >
-                                                    <Text style={styles.presetText}>{preset}</Text>
+                                                    <Text style={[styles.presetText, { color: presetTextColor }]}>{preset}</Text>
                                                 </TouchableOpacity>
                                             ))}
                                         </View>
@@ -320,7 +341,6 @@ const styles = StyleSheet.create({
         justifyContent: "flex-end",
     },
     modal: {
-        backgroundColor: "#fff",
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         maxHeight: "92%",
@@ -347,8 +367,8 @@ const styles = StyleSheet.create({
     profileImage: { width: "100%", height: "100%", alignItems: "center", justifyContent: "center" },
     imageOverlay: { position: "absolute", left: 0, right: 0, bottom: 0, height: 120 },
     infoWrap: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, alignItems: "center" },
-    petName: { fontSize: 20, fontWeight: "700", color: COLORS.gray[800] },
-    petBreed: { fontSize: 14, color: COLORS.gray[500], marginTop: 2 },
+    petName: { fontSize: 20, fontWeight: "700" },
+    petBreed: { fontSize: 14, marginTop: 2 },
     yearsLabel: { fontSize: 12, color: COLORS.memorial[600], fontWeight: "600", marginTop: 4 },
     condolenceBtn: {
         flexDirection: "row",
@@ -358,27 +378,24 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 10,
         borderRadius: 9999,
-        backgroundColor: COLORS.memorial[50],
     },
-    condolenceBtnActive: { backgroundColor: COLORS.memorial[100] },
     condolenceText: { fontSize: 14, fontWeight: "600" },
     divider: { marginHorizontal: 20, height: 1, backgroundColor: "rgba(245,158,11,0.18)" },
     messagesWrap: { paddingHorizontal: 20, paddingTop: 14, paddingBottom: 32 },
-    sectionTitle: { fontSize: 14, fontWeight: "700", color: COLORS.gray[700], marginBottom: 10 },
+    sectionTitle: { fontSize: 14, fontWeight: "700", marginBottom: 10 },
     loadingRow: { paddingVertical: 16, alignItems: "center" },
     emptyRow: { paddingVertical: 24, alignItems: "center" },
-    emptyTitle: { fontSize: 13, color: COLORS.gray[400] },
-    emptyHint: { fontSize: 11, color: COLORS.gray[300], marginTop: 4 },
+    emptyTitle: { fontSize: 13 },
+    emptyHint: { fontSize: 11, marginTop: 4 },
     messageRow: {
         flexDirection: "row",
         alignItems: "flex-start",
         gap: 8,
         padding: 10,
         borderRadius: 12,
-        backgroundColor: "rgba(254,243,199,0.4)",
     },
-    messageText: { fontSize: 13, color: COLORS.gray[700], lineHeight: 18 },
-    messageMeta: { fontSize: 11, color: COLORS.gray[400], marginTop: 4 },
+    messageText: { fontSize: 13, lineHeight: 18 },
+    messageMeta: { fontSize: 11, marginTop: 4 },
     deleteBtn: {
         width: 24,
         height: 24,
@@ -389,7 +406,6 @@ const styles = StyleSheet.create({
     presetToggle: {
         paddingVertical: 12,
         borderRadius: 12,
-        backgroundColor: COLORS.memorial[50],
         alignItems: "center",
     },
     presetToggleText: { fontSize: 14, fontWeight: "600", color: COLORS.memorial[600] },
@@ -397,7 +413,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         paddingVertical: 10,
         borderRadius: 12,
-        backgroundColor: "rgba(254,243,199,0.3)",
     },
-    presetText: { fontSize: 13, color: COLORS.gray[700] },
+    presetText: { fontSize: 13 },
 });
