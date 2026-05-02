@@ -162,10 +162,14 @@ export default function MagazineReaderScreen() {
 
     async function handleShare() {
         if (!article) return;
-        await Share.share({
-            title: article.title,
-            message: `${article.title}\n\nhttps://mementoani.com/magazine/${id}`,
-        });
+        try {
+            await Share.share({
+                title: article.title,
+                message: `${article.title}\n\nhttps://mementoani.com/magazine/${id}`,
+            });
+        } catch {
+            // 사용자 취소 — silent
+        }
     }
 
     // 카드 빌드: cover + summary + bodies + end
