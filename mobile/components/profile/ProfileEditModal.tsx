@@ -3,7 +3,9 @@
  * Supabase profiles 테이블 직접 update (모바일 RLS: auth.uid() = id).
  *
  * - 닉네임: 2~20자, 공백 trim
- * - 아바타: ImagePicker → Supabase Storage(pet-media/avatars/{userId}/...) → profiles.avatar_url update
+ * - 아바타: ImagePicker → Supabase Storage(pet-media/{userId}/avatar/...) → profiles.avatar_url update
+ *   - 경로는 첫 폴더가 userId여야 함 (RLS 정책: auth.uid() = (storage.foldername)[1])
+ *   - "avatars/" prefix 사용 시 RLS 위반 ("new row violates row-level security policy")
  * - 저장 시 onSaved 콜백 + AuthContext refreshProfile() 호출 권장
  */
 
@@ -42,7 +44,8 @@ async function uploadAvatar(uri: string, userId: string, mimeType?: string): Pro
         })();
         const mime = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
 
-        const path = `avatars/${userId}/${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${ext}`;
+        // RLS: pet-media 버킷은 첫 폴더가 userId여야 허용 → userId/avatar/... 패턴 사용
+        const path = `${userId}/avatar/${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${ext}`;
         const { data, error } = await supabase.storage
             .from("pet-media")
             .upload(path, new Uint8Array(ab), {
