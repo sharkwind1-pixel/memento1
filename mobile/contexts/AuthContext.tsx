@@ -337,6 +337,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     async function signOut() {
+        // 푸시 토큰 정리 (logout 전 — 세션 살아있을 때 DELETE 가능)
+        const accessToken = session?.access_token;
+        if (accessToken) {
+            try {
+                const { unregisterPushTokenFromBackend } = await import("@/lib/push-notifications");
+                await unregisterPushTokenFromBackend(accessToken).catch(() => {});
+            } catch {
+                // ignore
+            }
+        }
         await supabase.auth.signOut();
         setProfile(null);
     }

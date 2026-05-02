@@ -12,6 +12,7 @@ import { ScrollView, View, Text, TouchableOpacity, Image, StyleSheet } from "rea
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { usePet } from "@/contexts/PetContext";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { COLORS } from "@/lib/theme";
 
 interface Props {
@@ -23,6 +24,11 @@ interface Props {
 
 export default function PetSwitcher({ accentColor, onAddPet, alwaysVisible = false }: Props) {
     const { pets, selectedPet, selectPet } = usePet();
+    const { isDarkMode } = useDarkMode();
+    const addRingBg = isDarkMode ? COLORS.gray[800] : COLORS.gray[50];
+    const addRingBorder = isDarkMode ? COLORS.gray[700] : COLORS.gray[200];
+    const labelColor = isDarkMode ? COLORS.gray[400] : COLORS.gray[600];
+    const placeholderBg = isDarkMode ? COLORS.gray[800] : COLORS.memento[100];
 
     if (!alwaysVisible && pets.length < 2) return null;
     if (pets.length === 0) return null;
@@ -61,7 +67,7 @@ export default function PetSwitcher({ accentColor, onAddPet, alwaysVisible = fal
                                 {pet.profileImage ? (
                                     <Image source={{ uri: pet.profileImage }} style={styles.avatar} />
                                 ) : (
-                                    <View style={[styles.avatarPlaceholder, { backgroundColor: COLORS.memento[100] }]}>
+                                    <View style={[styles.avatarPlaceholder, { backgroundColor: placeholderBg }]}>
                                         <Ionicons name="paw" size={20} color={COLORS.memento[500]} />
                                     </View>
                                 )}
@@ -75,6 +81,7 @@ export default function PetSwitcher({ accentColor, onAddPet, alwaysVisible = fal
                                 numberOfLines={1}
                                 style={[
                                     styles.label,
+                                    { color: labelColor },
                                     isActive && { color: ringColor, fontWeight: "700" },
                                 ]}
                             >
@@ -84,10 +91,14 @@ export default function PetSwitcher({ accentColor, onAddPet, alwaysVisible = fal
                     );
                 })}
                 <TouchableOpacity onPress={onAddPet} activeOpacity={0.85} style={styles.itemTouch}>
-                    <View style={[styles.avatarRing, styles.addRing]}>
-                        <Ionicons name="add" size={22} color={COLORS.gray[500]} />
+                    <View style={[
+                        styles.avatarRing,
+                        styles.addRing,
+                        { backgroundColor: addRingBg, borderColor: addRingBorder },
+                    ]}>
+                        <Ionicons name="add" size={22} color={isDarkMode ? COLORS.gray[400] : COLORS.gray[500]} />
                     </View>
-                    <Text style={styles.label}>추가</Text>
+                    <Text style={[styles.label, { color: labelColor }]}>추가</Text>
                 </TouchableOpacity>
             </ScrollView>
         </View>
@@ -129,9 +140,7 @@ const styles = StyleSheet.create({
         justifyContent: "center",
     },
     addRing: {
-        borderColor: COLORS.gray[200],
         borderStyle: "dashed",
-        backgroundColor: COLORS.gray[50],
     },
     memorialBadge: {
         position: "absolute",
@@ -149,7 +158,6 @@ const styles = StyleSheet.create({
     label: {
         marginTop: 4,
         fontSize: 11,
-        color: COLORS.gray[600],
         textAlign: "center",
         maxWidth: 60,
     },

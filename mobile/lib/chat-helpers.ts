@@ -53,20 +53,45 @@ export async function decrementDailyUsage(): Promise<number> {
 }
 
 /**
+ * 받침 유무 판정. 한글 음절(0xAC00~0xD7A3)이 아니면 false (영어/숫자는 받침 없음 취급).
+ */
+export function hasJongseong(name: string): boolean {
+    if (!name) return false;
+    const lastChar = name.charCodeAt(name.length - 1);
+    if (lastChar < 0xAC00 || lastChar > 0xD7A3) return false;
+    return (lastChar - 0xAC00) % 28 !== 0;
+}
+
+/**
+ * 받침 유무에 따라 적절한 조사 선택. 작성자가 코드에서 `{name}{josa(name, "을/를")}`
+ * 형태로 호출하면 자동으로 "을" 또는 "를" 반환.
+ *
+ * 사용 예:
+ *   `${pet.name}${josa(pet.name, "을/를")} 삭제할까요?`
+ *   → "꼼지를 삭제할까요?" / "메리를 삭제할까요?"
+ *
+ * 지원 페어: 을/를, 이/가, 은/는, 와/과, 으로/로, 이여/여, 이다/다
+ */
+export function josa(name: string, pair: string): string {
+    const [withJong, withoutJong] = pair.split("/");
+    if (!withJong || !withoutJong) return pair;
+    return hasJongseong(name) ? withJong : withoutJong;
+}
+
+/**
  * 한국어 조사 자동 보정. AI가 "{name}이가" 형태로 양쪽 조사를 다 적어서 보내면
  * 받침 유무에 따라 올바른 조사 하나만 남긴다.
  */
 export function fixKoreanParticles(text: string, name: string): string {
     if (!name || !text) return text;
-    const lastChar = name.charCodeAt(name.length - 1);
-    if (lastChar < 0xAC00 || lastChar > 0xD7A3) return text;
-    const hasJongseong = (lastChar - 0xAC00) % 28 !== 0;
+    const jong = hasJongseong(name);
+    if (!jong && !/[가-힣]$/.test(name)) return text; // 한글 음절 아니면 skip
     const map: [string, string][] = [
-        ["이가", hasJongseong ? "이" : "가"],
-        ["은는", hasJongseong ? "은" : "는"],
-        ["을를", hasJongseong ? "을" : "를"],
-        ["와과", hasJongseong ? "과" : "와"],
-        ["로으로", hasJongseong ? "으로" : "로"],
+        ["이가", jong ? "이" : "가"],
+        ["은는", jong ? "은" : "는"],
+        ["을를", jong ? "을" : "를"],
+        ["와과", jong ? "과" : "와"],
+        ["로으로", jong ? "으로" : "로"],
     ];
     return map.reduce(
         (acc, [needle, replacement]) =>

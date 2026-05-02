@@ -100,6 +100,22 @@ export async function registerPushTokenWithBackend(accessToken: string): Promise
 }
 
 /**
+ * 로그아웃 시 백엔드의 토큰을 제거. 다른 디바이스로 옮겨가도 깨끗.
+ */
+export async function unregisterPushTokenFromBackend(accessToken: string): Promise<boolean> {
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/push/register`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        cachedToken = null; // 캐시 무효화
+        return res.ok;
+    } catch {
+        return false;
+    }
+}
+
+/**
  * 알림 탭 시 호출되는 listener 등록. 앱 전역 1회만.
  * onNotificationReceived: 포그라운드에서 받은 경우
  * onNotificationResponseReceived: 알림 탭해서 진입한 경우 (네비 처리에 사용)

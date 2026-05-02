@@ -21,6 +21,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { COLORS } from "@/lib/theme";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { findMinimi, findBackgroundOrDefault } from "@/data/minihompyData";
 import { putPlacedMinimi } from "@/lib/minihompy-api";
 import { pickReaction, type MinimiAction } from "@/data/minimiReactions";
@@ -327,16 +328,26 @@ function InventoryPickerModal({
     onPick: (slug: string) => void;
     accentColor: string;
 }) {
+    const { isDarkMode } = useDarkMode();
+    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.gray[50];
+    const headerBg = isDarkMode ? COLORS.gray[900] : "#fff";
+    const headerBorder = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
+    const titleColor = isDarkMode ? COLORS.white : COLORS.gray[900];
+    const subColor = isDarkMode ? COLORS.gray[400] : COLORS.gray[500];
+    const cardBg = isDarkMode ? COLORS.gray[900] : "#fff";
+    const cardNameColor = isDarkMode ? COLORS.white : COLORS.gray[800];
+    const emptyTextColor = isDarkMode ? COLORS.gray[300] : COLORS.gray[700];
+
     return (
         <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-            <SafeAreaView style={pickerStyles.flex1} edges={["top"]}>
-                <View style={pickerStyles.header}>
+            <SafeAreaView style={[pickerStyles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
+                <View style={[pickerStyles.header, { backgroundColor: headerBg, borderBottomColor: headerBorder }]}>
                     <TouchableOpacity onPress={onClose} hitSlop={8} style={pickerStyles.headerBtn}>
-                        <Ionicons name="close" size={24} color={COLORS.gray[800]} />
+                        <Ionicons name="close" size={24} color={isDarkMode ? COLORS.gray[300] : COLORS.gray[800]} />
                     </TouchableOpacity>
                     <View style={{ flex: 1 }}>
-                        <Text style={pickerStyles.headerTitle}>보관함</Text>
-                        <Text style={pickerStyles.headerSub}>탭해서 스테이지에 배치</Text>
+                        <Text style={[pickerStyles.headerTitle, { color: titleColor }]}>보관함</Text>
+                        <Text style={[pickerStyles.headerSub, { color: subColor }]}>탭해서 스테이지에 배치</Text>
                     </View>
                 </View>
                 <FlatList
@@ -348,8 +359,8 @@ function InventoryPickerModal({
                     ListEmptyComponent={
                         <View style={pickerStyles.empty}>
                             <Ionicons name="paw-outline" size={36} color={COLORS.gray[300]} />
-                            <Text style={pickerStyles.emptyText}>보관함이 비었어요</Text>
-                            <Text style={pickerStyles.emptyHint}>미니미 상점에서 캐릭터를 구매해보세요</Text>
+                            <Text style={[pickerStyles.emptyText, { color: emptyTextColor }]}>보관함이 비었어요</Text>
+                            <Text style={[pickerStyles.emptyHint, { color: subColor }]}>미니미 상점에서 캐릭터를 구매해보세요</Text>
                         </View>
                     }
                     renderItem={({ item: slug }) => {
@@ -362,12 +373,13 @@ function InventoryPickerModal({
                                 disabled={isPlaced}
                                 style={[
                                     pickerStyles.card,
+                                    { backgroundColor: cardBg },
                                     isPlaced && { opacity: 0.4 },
                                 ]}
                                 activeOpacity={0.85}
                             >
                                 <Image source={{ uri: m.imageUrl }} style={pickerStyles.cardImg} resizeMode="contain" />
-                                <Text style={pickerStyles.cardName} numberOfLines={1}>{m.name}</Text>
+                                <Text style={[pickerStyles.cardName, { color: cardNameColor }]} numberOfLines={1}>{m.name}</Text>
                                 {isPlaced && (
                                     <View style={[pickerStyles.placedBadge, { backgroundColor: accentColor }]}>
                                         <Text style={pickerStyles.placedBadgeText}>배치 중</Text>
@@ -383,20 +395,18 @@ function InventoryPickerModal({
 }
 
 const pickerStyles = StyleSheet.create({
-    flex1: { flex: 1, backgroundColor: COLORS.gray[50] },
+    flex1: { flex: 1 },
     header: {
         flexDirection: "row", alignItems: "center", gap: 8,
         paddingHorizontal: 12, paddingVertical: 12,
-        borderBottomWidth: 1, borderBottomColor: COLORS.gray[100],
-        backgroundColor: "#fff",
+        borderBottomWidth: 1,
     },
     headerBtn: { width: 32, height: 32, alignItems: "center", justifyContent: "center" },
-    headerTitle: { fontSize: 17, fontWeight: "700", color: COLORS.gray[900] },
-    headerSub: { fontSize: 11, color: COLORS.gray[500], marginTop: 2 },
+    headerTitle: { fontSize: 17, fontWeight: "700" },
+    headerSub: { fontSize: 11, marginTop: 2 },
     card: {
         flex: 1,
         aspectRatio: 1,
-        backgroundColor: "#fff",
         borderRadius: 14,
         padding: 10,
         alignItems: "center",
@@ -405,7 +415,7 @@ const pickerStyles = StyleSheet.create({
         position: "relative",
     },
     cardImg: { width: 64, height: 64 },
-    cardName: { fontSize: 11, fontWeight: "700", color: COLORS.gray[800] },
+    cardName: { fontSize: 11, fontWeight: "700" },
     placedBadge: {
         position: "absolute",
         top: 6, right: 6,
@@ -414,8 +424,8 @@ const pickerStyles = StyleSheet.create({
     },
     placedBadgeText: { fontSize: 9, fontWeight: "700", color: "#fff" },
     empty: { padding: 60, alignItems: "center", gap: 8 },
-    emptyText: { fontSize: 14, color: COLORS.gray[600], fontWeight: "600", marginTop: 8 },
-    emptyHint: { fontSize: 12, color: COLORS.gray[400] },
+    emptyText: { fontSize: 14, fontWeight: "600", marginTop: 8 },
+    emptyHint: { fontSize: 12 },
 });
 
 // ============================================================================

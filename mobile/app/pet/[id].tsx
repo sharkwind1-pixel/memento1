@@ -24,6 +24,7 @@ import { usePet } from "@/contexts/PetContext";
 import { useDarkMode } from "@/contexts/ThemeContext";
 import { COLORS } from "@/lib/theme";
 import { supabase } from "@/lib/supabase";
+import { josa } from "@/lib/chat-helpers";
 import AppHeader from "@/components/common/AppHeader";
 import PhotoLightbox from "@/components/record/PhotoLightbox";
 
@@ -95,8 +96,8 @@ export default function PetDetailScreen() {
         const next = isMemorial ? "active" : "memorial";
         const title = isMemorial ? "일상 모드로 되돌릴까요?" : "추모 모드로 전환할까요?";
         const message = isMemorial
-            ? `${pet.name}이를 일상 모드로 되돌립니다.`
-            : `${pet.name}이를 무지개다리 건너편으로 보내드릴게요. 추모 게시판/AI 위로 대화로 자동 전환됩니다.`;
+            ? `${pet.name}${josa(pet.name, "을/를")} 일상 모드로 되돌립니다.`
+            : `${pet.name}${josa(pet.name, "을/를")} 무지개다리 건너편으로 보내드릴게요. 추모 게시판/AI 위로 대화로 자동 전환됩니다.`;
         Alert.alert(title, message, [
             { text: "취소", style: "cancel" },
             {
@@ -129,7 +130,7 @@ export default function PetDetailScreen() {
         if (!pet || !user || busy) return;
         Alert.alert(
             "반려동물 삭제",
-            `${pet.name}이의 모든 사진, 타임라인, AI 대화 기록이 함께 삭제돼요. 복구할 수 없어요.`,
+            `${pet.name}의 모든 사진, 타임라인, AI 대화 기록이 함께 삭제돼요. 복구할 수 없어요.`,
             [
                 { text: "취소", style: "cancel" },
                 {
