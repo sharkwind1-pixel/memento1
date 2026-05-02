@@ -67,7 +67,7 @@ function normalizeComment(raw: any): Comment {
     return {
         id: raw?.id != null ? String(raw.id) : "",
         content: asString(raw?.content),
-        author: asString(raw?.author ?? raw?.author_name ?? raw?.nickname, "익명"),
+        author: asString(raw?.authorName ?? raw?.author ?? raw?.author_name ?? raw?.nickname, "익명"),
         authorId: asString(raw?.authorId ?? raw?.author_id ?? raw?.user_id),
         authorAvatar: typeof raw?.authorAvatar === "string"
             ? raw.authorAvatar
@@ -86,7 +86,7 @@ function normalizePost(raw: any): PostDetail | null {
         id: raw.id != null ? String(raw.id) : "",
         title: asString(raw.title),
         content: asString(raw.content),
-        author: asString(raw.author ?? raw.author_name ?? raw.nickname, "익명"),
+        author: asString(raw.authorName ?? raw.author ?? raw.author_name ?? raw.nickname, "익명"),
         authorId: asString(raw.authorId ?? raw.author_id ?? raw.user_id),
         authorAvatar: typeof raw.authorAvatar === "string"
             ? raw.authorAvatar
@@ -101,8 +101,20 @@ function normalizePost(raw: any): PostDetail | null {
         likes: asNumber(raw.likes),
         comments: asNumber(raw.comments ?? raw.comments_count),
         views: asNumber(raw.views),
-        isLiked: typeof raw.isLiked === "boolean" ? raw.isLiked : undefined,
-        images: Array.isArray(raw.images) ? raw.images.filter((x: unknown) => typeof x === "string") : undefined,
+        isLiked: typeof raw.userLiked === "boolean"
+            ? raw.userLiked
+            : typeof raw.isLiked === "boolean"
+                ? raw.isLiked
+                : typeof raw.user_liked === "boolean"
+                    ? raw.user_liked
+                    : undefined,
+        images: Array.isArray(raw.imageUrls)
+            ? raw.imageUrls.filter((x: unknown) => typeof x === "string")
+            : Array.isArray(raw.image_urls)
+                ? raw.image_urls.filter((x: unknown) => typeof x === "string")
+                : Array.isArray(raw.images)
+                    ? raw.images.filter((x: unknown) => typeof x === "string")
+                    : undefined,
         tag: typeof raw.tag === "string" ? raw.tag : undefined,
         subcategory: typeof raw.subcategory === "string" ? raw.subcategory : undefined,
         createdAt: asString(raw.createdAt ?? raw.created_at),

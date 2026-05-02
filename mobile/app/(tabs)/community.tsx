@@ -93,7 +93,7 @@ export default function CommunityScreen() {
                 id: raw?.id != null ? String(raw.id) : undefined,
                 title: asString(raw?.title),
                 content: asString(raw?.content),
-                author: asString(raw?.author ?? raw?.author_name ?? raw?.nickname, "익명"),
+                author: asString(raw?.authorName ?? raw?.author ?? raw?.author_name ?? raw?.nickname, "익명"),
                 authorId: asString(raw?.authorId ?? raw?.author_id ?? raw?.user_id),
                 authorAvatar: typeof raw?.authorAvatar === "string"
                     ? raw.authorAvatar
@@ -106,7 +106,13 @@ export default function CommunityScreen() {
                     ? raw.subcategory as CommunitySubcategory
                     : undefined,
                 tag: typeof raw?.tag === "string" ? raw.tag as CommunityPost["tag"] : undefined,
-                isLiked: typeof raw?.isLiked === "boolean" ? raw.isLiked : undefined,
+                isLiked: typeof raw?.userLiked === "boolean"
+                    ? raw.userLiked
+                    : typeof raw?.isLiked === "boolean"
+                        ? raw.isLiked
+                        : typeof raw?.user_liked === "boolean"
+                            ? raw.user_liked
+                            : undefined,
                 preview: typeof raw?.preview === "string"
                     ? raw.preview
                     : (typeof raw?.content === "string" ? raw.content.slice(0, 120) : undefined),
@@ -115,7 +121,11 @@ export default function CommunityScreen() {
                     : (typeof raw?.created_at === "string" ? raw.created_at : undefined),
                 images: Array.isArray(raw?.images)
                     ? raw.images.filter((x): x is string => typeof x === "string")
-                    : undefined,
+                    : (Array.isArray(raw?.imageUrls)
+                        ? raw.imageUrls.filter((x): x is string => typeof x === "string")
+                        : (Array.isArray(raw?.image_urls)
+                            ? raw.image_urls.filter((x): x is string => typeof x === "string")
+                            : undefined)),
             })));
         } catch {
             // 조용히
