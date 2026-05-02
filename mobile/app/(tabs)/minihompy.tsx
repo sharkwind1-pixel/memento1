@@ -35,6 +35,7 @@ import BackgroundShopModal from "@/components/minihompy/BackgroundShopModal";
 import GuestbookModal from "@/components/minihompy/GuestbookModal";
 import GreetingEditModal from "@/components/minihompy/GreetingEditModal";
 import StageEditor from "@/components/minihompy/StageEditor";
+import TouchParticles from "@/components/minihompy/TouchParticles";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const STAGE_HEIGHT = 300;
@@ -52,6 +53,12 @@ const PLAYFUL_DAILY = [
     "흐흐 좋긴 한데...",
     "기분 좋다",
 ];
+const TIRED_DAILY = [
+    "이제 좀 쉬자...",
+    "헥헥, 너무 많이 놀았어",
+    "잠깐만 쉬어도 될까?",
+    "졸려졸려",
+];
 const GREETINGS_MEMORIAL = [
     "오늘도 보러 와줘서 고마워.",
     "여기서 항상 기다리고 있을게.",
@@ -63,6 +70,15 @@ const PLAYFUL_MEMORIAL = [
     "예전 생각이 나네.",
     "고마워, 정말.",
 ];
+const TIRED_MEMORIAL = [
+    "잠깐 같이 앉아 있을래?",
+    "조용히 함께 있는 시간이 좋아.",
+    "이대로 잠시...",
+];
+
+const TOUCH_PLAYFUL_THRESHOLD = 5;
+const TOUCH_TIRED_THRESHOLD = 12;
+const TOUCH_RESET_MS = 30_000;
 
 export default function MinihompyScreen() {
     const router = useRouter();
@@ -77,7 +93,10 @@ export default function MinihompyScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const [touchCount, setTouchCount] = useState(0);
     const [message, setMessage] = useState<string | null>(null);
+    const [particleKey, setParticleKey] = useState(0); // 새로 터치할 때마다 +1 → 파티클 재생성
+    const [particleVariant, setParticleVariant] = useState<"star" | "heart" | "rest">("star");
     const messageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const touchResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const [shopOpen, setShopOpen] = useState(false);
     const [bgShopOpen, setBgShopOpen] = useState(false);
@@ -126,14 +145,40 @@ export default function MinihompyScreen() {
         const newCount = touchCount + 1;
         setTouchCount(newCount);
 
+        // 3단계 진행:
+        //  - 0~4: 인사말 (별 파티클)
+        //  - 5~11: 장난스러운 반응 (하트 파티클)
+        //  - 12+: 피곤/만족 (잔잔한 표시)
         const greetings = isMemorialMode ? GREETINGS_MEMORIAL : GREETINGS_DAILY;
         const playful = isMemorialMode ? PLAYFUL_MEMORIAL : PLAYFUL_DAILY;
-        const pool = newCount >= 5 ? playful : greetings;
+        const tired = isMemorialMode ? TIRED_MEMORIAL : TIRED_DAILY;
+
+        let pool: string[];
+        let variant: "star" | "heart" | "rest";
+        if (newCount >= TOUCH_TIRED_THRESHOLD) {
+            pool = tired;
+            variant = "rest";
+        } else if (newCount >= TOUCH_PLAYFUL_THRESHOLD) {
+            pool = playful;
+            variant = "heart";
+        } else {
+            pool = greetings;
+            variant = "star";
+        }
+
         const msg = pool[Math.floor(Math.random() * pool.length)];
         setMessage(msg);
+        setParticleVariant(variant);
+        setParticleKey((k) => k + 1);
 
         if (messageTimerRef.current) clearTimeout(messageTimerRef.current);
         messageTimerRef.current = setTimeout(() => setMessage(null), 2500);
+
+        // 30초 동안 터치 없으면 카운트 리셋 (다시 인사말로 시작)
+        if (touchResetTimerRef.current) clearTimeout(touchResetTimerRef.current);
+        touchResetTimerRef.current = setTimeout(() => {
+            setTouchCount(0);
+        }, TOUCH_RESET_MS);
     }
 
     async function togglePublic() {
@@ -245,6 +290,17 @@ export default function MinihompyScreen() {
                                 isMemorialMode={isMemorialMode}
                                 onChanged={handlePlacedChanged}
                                 onEditingChange={setStageEditing}
+                                onTouch={handleStageTouch}
+                            />
+                        )}
+                        {/* 파티클 — 터치할 때마다 key 갱신되어 새로 마운트 */}
+                        {particleKey > 0 && (
+                            <TouchParticles
+                                key={particleKey}
+                                triggerKey={particleKey}
+                                variant={particleVariant}
+                                stageWidth={SCREEN_WIDTH - 32}
+                                stageHeight={STAGE_HEIGHT}
                             />
                         )}
                         {/* 인사말 말풍선 (stage 위 절대 배치, pointerEvents=none으로 터치 통과) */}
@@ -256,7 +312,6 @@ export default function MinihompyScreen() {
                                 <View style={styles.speechTail} />
                             </View>
                         )}
-                        {/* 터치 영역 제거 — StageEditor가 자체 터치/드래그 처리 (간섭 방지) */}
                     </View>
                 ) : (
                     // 보유 미니미 0 + 배치 0 → 단일 stage + 상점 CTA
@@ -264,7 +319,7 @@ export default function MinihompyScreen() {
                         <TouchableOpacity
                             activeOpacity={0.95}
                             onPress={handleStageTouch}
-                            style={{ borderRadius: 24, overflow: "hidden" }}
+                            style={{ borderRadius: 24, overflow: "hidden", position: "relative" }}
                         >
                             <StageBackground background={background}>
                                 {(message || settings?.greeting) && (

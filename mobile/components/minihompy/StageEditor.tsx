@@ -46,6 +46,8 @@ interface Props {
     onChanged: (next: PlacedMinimi[]) => void;
     /** 편집 모드 진입/종료 시 부모에 알림 → 부모 ScrollView scroll 잠금 */
     onEditingChange?: (editing: boolean) => void;
+    /** 비편집 모드에서 미니미 터치 시 부모에 알림 → 부모가 추가 효과(파티클 등) 발사 */
+    onTouch?: () => void;
 }
 
 function clampPosition(x: number, y: number) {
@@ -57,7 +59,7 @@ function clampPosition(x: number, y: number) {
 
 export default function StageEditor({
     stageHeight, background, placedMinimi, ownedSlugs, accessToken, accentColor,
-    isMemorialMode = false, onChanged, onEditingChange,
+    isMemorialMode = false, onChanged, onEditingChange, onTouch,
 }: Props) {
     const [editMode, setEditMode] = useState(false);
     const [working, setWorking] = useState<PlacedMinimi[]>(placedMinimi);
@@ -81,6 +83,9 @@ export default function StageEditor({
 
         if (touchTimerRef.current) clearTimeout(touchTimerRef.current);
 
+        // 부모에 알림 (파티클 등 추가 효과 트리거)
+        onTouch?.();
+
         // 연속 터치 카운트 (같은 미니미 + 2.5초 이내)
         const now = Date.now();
         const prev = consecutiveRef.current;
@@ -100,7 +105,7 @@ export default function StageEditor({
 
         // 1.8초 후 이펙트 제거
         touchTimerRef.current = setTimeout(() => setTouchEffect(null), 1800);
-    }, [editMode, isMemorialMode]);
+    }, [editMode, isMemorialMode, onTouch]);
 
     useEffect(() => {
         if (!editMode) setWorking(placedMinimi);

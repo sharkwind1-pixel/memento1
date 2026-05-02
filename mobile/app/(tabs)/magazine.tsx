@@ -431,6 +431,12 @@ function ArticleCard({ article, isMemorialMode, onPress, badgeLabel, badgeColor 
                         {article.created_at ? <Text style={styles.metaText}>{article.created_at.slice(0, 10)}</Text> : null}
                     </View>
                     <View style={styles.metaRight}>
+                        {article.read_time ? (
+                            <View style={styles.statRow}>
+                                <Ionicons name="time-outline" size={11} color={COLORS.gray[500]} />
+                                <Text style={styles.metaText}>{article.read_time}분</Text>
+                            </View>
+                        ) : null}
                         <View style={styles.statRow}>
                             <Ionicons name="eye-outline" size={11} color={COLORS.gray[500]} />
                             <Text style={styles.metaText}>{article.views.toLocaleString()}</Text>

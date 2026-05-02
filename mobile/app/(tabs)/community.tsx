@@ -7,7 +7,7 @@
  * - 카드 (이미지 + 본문 + 좋아요/댓글/시간 메타)
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity,
     FlatList, RefreshControl, ActivityIndicator,
@@ -73,19 +73,65 @@ export default function CommunityScreen() {
     const [posts, setPosts] = useState<CommunityPost[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [searchInput, setSearchInput] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
     const [drawerOpen, setDrawerOpen] = useState(false);
+    const [sortBy, setSortBy] = useState<"latest" | "popular" | "comments">("latest");
+    const [trendingTags, setTrendingTags] = useState<string[]>([]);
+    const [activeTag, setActiveTag] = useState<string | null>(null);
 
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
     const activeSubcat = SUBCATEGORIES.find((s) => s.id === activeTab)!;
 
+    // 검색 디바운싱 — 300ms 후 적용 (입력 도중 API 호출 방지)
+    const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    useEffect(() => {
+        if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+        searchDebounceRef.current = setTimeout(() => {
+            setSearchQuery(searchInput);
+        }, 300);
+        return () => {
+            if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+        };
+    }, [searchInput]);
+
+    // 인기 해시태그 로드 (마운트 1회)
+    useEffect(() => {
+        fetch(`${API_BASE_URL}/api/hashtags?type=trending&limit=10`)
+            .then((r) => r.ok ? r.json() : null)
+            .then((d) => {
+                if (Array.isArray(d?.tags)) {
+                    setTrendingTags(
+                        d.tags
+                            .map((t: unknown) => {
+                                if (typeof t === "string") return t;
+                                if (t && typeof t === "object" && "tag" in t) {
+                                    const v = (t as { tag: unknown }).tag;
+                                    return typeof v === "string" ? v : null;
+                                }
+                                return null;
+                            })
+                            .filter((x: unknown): x is string => typeof x === "string"),
+                    );
+                }
+            })
+            .catch(() => {});
+    }, []);
+
     const fetchPosts = useCallback(async () => {
         try {
-            // showcaseMode: 자유게시판 + badge=자랑만 (함께 보기 갤러리)
-            // 일반 모드: 자유게시판 전체보기 시 자랑 게시글 숨김 (웹과 동일)
-            const url = showcaseMode
-                ? `${API_BASE_URL}/api/posts?subcategory=free&badge=자랑&limit=20`
-                : `${API_BASE_URL}/api/posts?subcategory=${activeTab}&limit=20${activeTab === "free" ? "&exclude_badge=자랑" : ""}`;
+            const queryParams = new URLSearchParams();
+            if (showcaseMode) {
+                queryParams.set("subcategory", "free");
+                queryParams.set("badge", "자랑");
+            } else {
+                queryParams.set("subcategory", activeTab);
+                if (activeTab === "free") queryParams.set("exclude_badge", "자랑");
+            }
+            queryParams.set("limit", "20");
+            if (sortBy !== "latest") queryParams.set("sort", sortBy);
+            if (activeTag) queryParams.set("tag", activeTag);
+            const url = `${API_BASE_URL}/api/posts?${queryParams.toString()}`;
             const headers: Record<string, string> = { "Content-Type": "application/json" };
             if (session) headers["Authorization"] = `Bearer ${session.access_token}`;
 
@@ -138,7 +184,7 @@ export default function CommunityScreen() {
             setIsLoading(false);
             setRefreshing(false);
         }
-    }, [activeTab, session, showcaseMode]);
+    }, [activeTab, session, showcaseMode, sortBy, activeTag]);
 
     useEffect(() => {
         setIsLoading(true);
@@ -184,11 +230,11 @@ export default function CommunityScreen() {
                         style={[styles.searchInput, { color: isDarkMode ? COLORS.white : COLORS.gray[900] }]}
                         placeholder="게시글 검색..."
                         placeholderTextColor={COLORS.gray[400]}
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
+                        value={searchInput}
+                        onChangeText={setSearchInput}
                     />
-                    {searchQuery.length > 0 && (
-                        <TouchableOpacity onPress={() => setSearchQuery("")}>
+                    {searchInput.length > 0 && (
+                        <TouchableOpacity onPress={() => setSearchInput("")}>
                             <Ionicons name="close-circle" size={18} color={COLORS.gray[400]} />
                         </TouchableOpacity>
                     )}
@@ -234,6 +280,91 @@ export default function CommunityScreen() {
                     );
                 })}
             </ScrollView>
+            )}
+
+            {/* 정렬 + 인기 해시태그 (showcase 모드 제외) */}
+            {!showcaseMode && (
+                <View style={styles.toolbar}>
+                    {/* 정렬 칩 */}
+                    <View style={styles.sortRow}>
+                        {(["latest", "popular", "comments"] as const).map((s) => {
+                            const active = sortBy === s;
+                            const label = s === "latest" ? "최신순" : s === "popular" ? "인기순" : "댓글순";
+                            return (
+                                <TouchableOpacity
+                                    key={s}
+                                    onPress={() => setSortBy(s)}
+                                    style={[
+                                        styles.sortChip,
+                                        active
+                                            ? { backgroundColor: accentColor }
+                                            : {
+                                                backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100],
+                                            },
+                                    ]}
+                                    activeOpacity={0.85}
+                                >
+                                    <Text style={[
+                                        styles.sortChipText,
+                                        {
+                                            color: active
+                                                ? "#fff"
+                                                : (isDarkMode ? COLORS.gray[300] : COLORS.gray[700]),
+                                        },
+                                    ]}>
+                                        {label}
+                                    </Text>
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </View>
+
+                    {/* 인기 해시태그 (있으면 노출) */}
+                    {trendingTags.length > 0 && (
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.hashRow}
+                            style={styles.hashRowOuter}
+                        >
+                            {activeTag && (
+                                <TouchableOpacity
+                                    onPress={() => setActiveTag(null)}
+                                    style={[
+                                        styles.hashChip,
+                                        { backgroundColor: COLORS.red[100], borderColor: COLORS.red[200] },
+                                    ]}
+                                    activeOpacity={0.85}
+                                >
+                                    <Ionicons name="close" size={11} color={COLORS.red[600]} />
+                                    <Text style={[styles.hashChipText, { color: COLORS.red[600] }]}>
+                                        {activeTag}
+                                    </Text>
+                                </TouchableOpacity>
+                            )}
+                            {trendingTags.filter((t) => t !== activeTag).slice(0, 10).map((tag) => (
+                                <TouchableOpacity
+                                    key={tag}
+                                    onPress={() => setActiveTag(tag)}
+                                    style={[
+                                        styles.hashChip,
+                                        {
+                                            backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.white,
+                                            borderColor: isDarkMode ? COLORS.gray[700] : COLORS.gray[200],
+                                        },
+                                    ]}
+                                    activeOpacity={0.85}
+                                >
+                                    <Text style={[styles.hashChipText, {
+                                        color: isDarkMode ? COLORS.gray[300] : COLORS.gray[700],
+                                    }]}>
+                                        #{tag}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+                    )}
+                </View>
             )}
 
             {/* 카드 리스트 */}
@@ -392,6 +523,33 @@ const styles = StyleSheet.create({
     },
     subcatLabel: { fontSize: 13, fontWeight: "500" },
     subcatLabelActive: { fontSize: 13, fontWeight: "600", color: "#fff" },
+    toolbar: {
+        paddingHorizontal: 16,
+        paddingBottom: 8,
+    },
+    sortRow: {
+        flexDirection: "row",
+        gap: 6,
+        marginBottom: 8,
+    },
+    sortChip: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 9999,
+    },
+    sortChipText: { fontSize: 12, fontWeight: "600" },
+    hashRowOuter: { flexGrow: 0, flexShrink: 0 },
+    hashRow: { gap: 6, paddingRight: 16 },
+    hashChip: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 9999,
+        borderWidth: 1,
+    },
+    hashChipText: { fontSize: 11, fontWeight: "600" },
     card: {
         marginHorizontal: 16,
         marginVertical: 6,

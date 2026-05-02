@@ -23,6 +23,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
 import { useDarkMode } from "@/contexts/ThemeContext";
 import { COLORS } from "@/lib/theme";
+import { buildMagazineCards, type MagazineCard } from "@/lib/magazine-cards";
 
 interface ArticleDetail {
     id: string;
@@ -37,6 +38,7 @@ interface ArticleDetail {
     created_at: string;
     author?: string;
     tags?: string[];
+    read_time?: number;
 }
 
 const { width: SCREEN_W } = Dimensions.get("window");
@@ -80,6 +82,9 @@ function normalizeArticle(raw: unknown): ArticleDetail | null {
         created_at: asString(r.created_at ?? r.createdAt),
         author: typeof r.author === "string" ? r.author : undefined,
         tags: Array.isArray(r.tags) ? r.tags.filter((t): t is string => typeof t === "string") : undefined,
+        read_time: typeof r.read_time === "number"
+            ? r.read_time
+            : (typeof r.readTime === "number" ? r.readTime : undefined),
     };
 }
 
@@ -179,25 +184,10 @@ export default function MagazineReaderScreen() {
         }
     }
 
-    // 카드 빌드: cover + summary + bodies + end
-    const cards = useMemo(() => {
+    // 카드 빌드: 웹과 동일한 splitContent 로직 (HTML <hr>/<h2>/<img>/<blockquote> 인식)
+    const cards = useMemo<MagazineCard[]>(() => {
         if (!article) return [];
-        const list: Array<{ type: "cover" | "summary" | "body" | "end"; text?: string }> = [];
-        list.push({ type: "cover" });
-        if (article.summary) list.push({ type: "summary" });
-
-        // 본문을 단락으로 분할 (\n\n 또는 .\n) — 각 단락이 한 카드
-        const paragraphs = article.content
-            .split(/\n\n+/)
-            .map((p) => p.trim())
-            .filter((p) => p.length > 0);
-
-        for (const para of paragraphs) {
-            list.push({ type: "body", text: para });
-        }
-
-        list.push({ type: "end" });
-        return list;
+        return buildMagazineCards(article);
     }, [article]);
 
     if (isLoading) {
@@ -259,8 +249,14 @@ export default function MagazineReaderScreen() {
                     if (card.type === "summary") {
                         return <SummaryCard key={idx} article={article} isMemorialMode={isMemorialMode} accentColor={accentColor} />;
                     }
-                    if (card.type === "body") {
-                        return <BodyCard key={idx} text={card.text ?? ""} isMemorialMode={isMemorialMode} index={idx} />;
+                    if (card.type === "text") {
+                        return <TextCard key={idx} card={card} isMemorialMode={isMemorialMode} index={idx} />;
+                    }
+                    if (card.type === "image") {
+                        return <ImageCard key={idx} card={card} isMemorialMode={isMemorialMode} />;
+                    }
+                    if (card.type === "quote") {
+                        return <QuoteCard key={idx} card={card} accentColor={accentColor} />;
                     }
                     return (
                         <EndCard
@@ -335,11 +331,19 @@ function CoverCard({ article, isMemorialMode }: { article: ArticleDetail; isMemo
                     {article.title}
                 </Text>
 
-                {article.author || article.created_at ? (
-                    <Text style={styles.coverMeta}>
-                        {article.author ? `${article.author} · ` : ""}
-                        {article.created_at.slice(0, 10)}
-                    </Text>
+                {article.author || article.created_at || article.read_time ? (
+                    <View style={styles.coverMetaRow}>
+                        <Text style={styles.coverMeta}>
+                            {article.author ? `${article.author} · ` : ""}
+                            {article.created_at.slice(0, 10)}
+                        </Text>
+                        {article.read_time ? (
+                            <View style={styles.readTimeBadge}>
+                                <Ionicons name="time-outline" size={11} color="#fff" />
+                                <Text style={styles.readTimeText}>{article.read_time}분 읽기</Text>
+                            </View>
+                        ) : null}
+                    </View>
                 ) : null}
             </View>
         </View>
@@ -381,23 +385,83 @@ function SummaryCard({ article, isMemorialMode, accentColor }: { article: Articl
     );
 }
 
-function BodyCard({ text, isMemorialMode, index }: { text: string; isMemorialMode: boolean; index: number }) {
+function TextCard({ card, isMemorialMode, index }: { card: MagazineCard; isMemorialMode: boolean; index: number }) {
     const { isDarkMode } = useDarkMode();
     const isAlt = index % 2 === 0;
-    const bg = isMemorialMode
+    const bg = isDarkMode
         ? (isAlt ? COLORS.gray[900] : COLORS.gray[950])
         : (isAlt ? COLORS.gray[50] : COLORS.white);
+    const textColor = isDarkMode ? COLORS.gray[200] : COLORS.gray[800];
 
     return (
         <ScrollView
             style={[styles.card, { width: SCREEN_W, backgroundColor: bg }]}
             contentContainerStyle={styles.cardScrollContent}
         >
-            <Text style={[styles.bodyText, {
-                color: isDarkMode ? COLORS.gray[200] : COLORS.gray[800],
-            }]}>
-                {text}
-            </Text>
+            {card.heading ? (
+                <Text style={[styles.bodyHeading, { color: isDarkMode ? COLORS.white : COLORS.gray[900] }]}>
+                    {card.heading}
+                </Text>
+            ) : null}
+            {(card.paragraphs ?? []).map((p, i) => (
+                <Text
+                    key={i}
+                    style={[styles.bodyText, { color: textColor, marginBottom: 16 }]}
+                >
+                    {p}
+                </Text>
+            ))}
+        </ScrollView>
+    );
+}
+
+function ImageCard({ card, isMemorialMode }: { card: MagazineCard; isMemorialMode: boolean }) {
+    const { isDarkMode } = useDarkMode();
+    const bg = isDarkMode ? COLORS.gray[950] : COLORS.gray[50];
+    return (
+        <ScrollView
+            style={[styles.card, { width: SCREEN_W, backgroundColor: bg }]}
+            contentContainerStyle={[styles.cardScrollContent, { padding: 0, paddingBottom: 80 }]}
+        >
+            {card.imageSrc ? (
+                <Image
+                    source={{ uri: card.imageSrc }}
+                    style={{ width: SCREEN_W, height: SCREEN_W * 0.7 }}
+                    resizeMode="cover"
+                />
+            ) : null}
+            {card.caption ? (
+                <Text style={[styles.imageCaption, {
+                    color: isDarkMode ? COLORS.gray[400] : COLORS.gray[500],
+                }]}>
+                    {card.caption}
+                </Text>
+            ) : null}
+        </ScrollView>
+    );
+}
+
+function QuoteCard({ card, accentColor }: { card: MagazineCard; accentColor: string }) {
+    const { isDarkMode } = useDarkMode();
+    const bg = isDarkMode ? COLORS.gray[900] : COLORS.gray[50];
+    return (
+        <ScrollView
+            style={[styles.card, { width: SCREEN_W, backgroundColor: bg }]}
+            contentContainerStyle={[styles.cardScrollContent, { justifyContent: "center" }]}
+        >
+            <View style={[styles.quoteBox, { borderLeftColor: accentColor }]}>
+                <Ionicons
+                    name="chatbox-ellipses"
+                    size={32}
+                    color={accentColor}
+                    style={{ opacity: 0.3, marginBottom: 8 }}
+                />
+                <Text style={[styles.quoteText, {
+                    color: isDarkMode ? COLORS.white : COLORS.gray[800],
+                }]}>
+                    {card.text}
+                </Text>
+            </View>
         </ScrollView>
     );
 }
@@ -509,6 +573,22 @@ const styles = StyleSheet.create({
     coverBadgeText: { fontSize: 12, fontWeight: "700", color: "#fff" },
     coverTitle: { fontSize: 26, fontWeight: "800", lineHeight: 34 },
     coverMeta: { fontSize: 13, color: COLORS.gray[500] },
+    coverMetaRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
+        flexWrap: "wrap",
+    },
+    readTimeBadge: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        backgroundColor: "rgba(0,0,0,0.5)",
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 9999,
+    },
+    readTimeText: { fontSize: 10, fontWeight: "600", color: "#fff" },
     summaryBox: {
         padding: 20,
         borderRadius: 16,
@@ -531,6 +611,25 @@ const styles = StyleSheet.create({
     statValue: { fontSize: 20, fontWeight: "700", color: COLORS.gray[800] },
     statLabel: { fontSize: 11, color: COLORS.gray[500] },
     bodyText: { fontSize: 17, lineHeight: 30 },
+    bodyHeading: { fontSize: 22, fontWeight: "700", marginBottom: 16, lineHeight: 30 },
+    imageCaption: {
+        fontSize: 13,
+        fontStyle: "italic",
+        textAlign: "center",
+        paddingHorizontal: 24,
+        paddingVertical: 12,
+    },
+    quoteBox: {
+        borderLeftWidth: 4,
+        paddingLeft: 16,
+        paddingVertical: 8,
+    },
+    quoteText: {
+        fontSize: 22,
+        lineHeight: 34,
+        fontWeight: "500",
+        fontStyle: "italic",
+    },
     endTop: { alignItems: "center", paddingVertical: 32, gap: 8 },
     endTitle: { fontSize: 22, fontWeight: "700" },
     endSub: { fontSize: 14, color: COLORS.gray[500], textAlign: "center" },
