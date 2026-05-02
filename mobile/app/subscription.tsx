@@ -83,15 +83,17 @@ export default function SubscriptionScreen() {
         setCancelOpen(true);
     }
 
-    const expiresAt = (profile as { premiumExpiresAt?: string } | null | undefined)?.premiumExpiresAt
-        ?? (profile as { premium_expires_at?: string } | null | undefined)?.premium_expires_at;
+    const expiresAt = profile?.premiumExpiresAt;
     const expiresText = expiresAt
         ? new Date(expiresAt).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })
         : null;
-    const phase = (profile as { subscriptionPhase?: string; subscription_phase?: string } | null | undefined)?.subscriptionPhase
-        ?? (profile as { subscription_phase?: string } | null | undefined)?.subscription_phase
-        ?? null;
+    const phase = profile?.subscriptionPhase ?? null;
     const isCancelled = phase === "cancelled";
+
+    // 현재 플랜 식별: subscription_tier 우선 → 없으면 isPremium만으로 premium 폴백
+    const currentTier: "free" | "basic" | "premium" = isPremium
+        ? (profile?.subscriptionTier === "basic" ? "basic" : "premium")
+        : "free";
 
     const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.gray[50];
 
@@ -152,10 +154,7 @@ export default function SubscriptionScreen() {
             )}
 
             {PLANS.map((plan) => {
-                const isCurrentPlan =
-                    (plan.id === "free" && !isPremium) ||
-                    (plan.id === "basic" && isPremium && profile?.isPremium) ||
-                    (plan.id === "premium" && isPremium);
+                const isCurrentPlan = plan.id === currentTier;
 
                 return (
                     <View

@@ -199,14 +199,14 @@ export default function NotificationsScreen() {
             {/* 헤더 액션 (모두 읽음) */}
             {notifications.length > 0 && (
                 <View style={[styles.headerActions, { borderBottomColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100] }]}>
-                    <Text style={{ fontSize: 12, color: COLORS.gray[500] }}>
+                    <Text style={{ fontSize: 12, color: isDarkMode ? COLORS.gray[400] : COLORS.gray[500] }}>
                         {unreadCount > 0 ? `읽지 않은 알림 ${unreadCount}개` : "모든 알림을 확인했어요"}
                     </Text>
                     {unreadCount > 0 && (
                         <TouchableOpacity
                             onPress={markAllRead}
                             disabled={markingAll}
-                            style={styles.markAllBtn}
+                            style={[styles.markAllBtn, { backgroundColor: isDarkMode ? "rgba(5,178,220,0.12)" : COLORS.memento[50] }]}
                             activeOpacity={0.7}
                         >
                             {markingAll ? (
@@ -228,10 +228,10 @@ export default function NotificationsScreen() {
                     refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={COLORS.memento[500]} />}
                 >
                     <Ionicons name="notifications-off-outline" size={48} color={COLORS.gray[300]} />
-                    <Text style={{ color: COLORS.gray[500], marginTop: 12, fontSize: 14, textAlign: "center", fontWeight: "600" }}>
+                    <Text style={{ color: isDarkMode ? COLORS.gray[400] : COLORS.gray[500], marginTop: 12, fontSize: 14, textAlign: "center", fontWeight: "600" }}>
                         아직 알림이 없어요
                     </Text>
-                    <Text style={{ color: COLORS.gray[400], marginTop: 6, fontSize: 12, textAlign: "center", lineHeight: 18 }}>
+                    <Text style={{ color: isDarkMode ? COLORS.gray[500] : COLORS.gray[400], marginTop: 6, fontSize: 12, textAlign: "center", lineHeight: 18 }}>
                         공지/관리자 메시지/구독·결제 알림이{"\n"}여기에 표시돼요
                     </Text>
                 </ScrollView>
@@ -256,7 +256,11 @@ export default function NotificationsScreen() {
                                 <View
                                     style={[
                                         styles.iconBg,
-                                        { backgroundColor: item.isRead ? COLORS.gray[100] : COLORS.memento[100] },
+                                        {
+                                            backgroundColor: item.isRead
+                                                ? (isDarkMode ? COLORS.gray[800] : COLORS.gray[100])
+                                                : (isDarkMode ? "rgba(5,178,220,0.2)" : COLORS.memento[100]),
+                                        },
                                     ]}
                                 >
                                     <Ionicons name={iconName} size={18} color={item.isRead ? COLORS.gray[400] : COLORS.memento[500]} />
@@ -305,14 +309,14 @@ export default function NotificationsScreen() {
                 <View style={styles.modalBackdrop}>
                     <View style={[styles.modalSheet, { backgroundColor: isDarkMode ? COLORS.gray[900] : "#fff" }]}>
                         <View style={styles.modalHeader}>
-                            <Text style={[styles.modalTitle, { color: isMemorialMode ? "#fff" : COLORS.gray[900] }]} numberOfLines={2}>
+                            <Text style={[styles.modalTitle, { color: isDarkMode ? COLORS.white : COLORS.gray[900] }]} numberOfLines={2}>
                                 {selected?.title}
                             </Text>
                             <TouchableOpacity onPress={() => setSelected(null)} hitSlop={8}>
-                                <Ionicons name="close" size={22} color={isMemorialMode ? "#fff" : COLORS.gray[700]} />
+                                <Ionicons name="close" size={22} color={isDarkMode ? COLORS.gray[300] : COLORS.gray[700]} />
                             </TouchableOpacity>
                         </View>
-                        <Text style={[styles.modalDate, { color: COLORS.gray[400] }]}>{formatRelative(selected?.createdAt ?? "")}</Text>
+                        <Text style={[styles.modalDate, { color: isDarkMode ? COLORS.gray[500] : COLORS.gray[400] }]}>{formatRelative(selected?.createdAt ?? "")}</Text>
                         <ScrollView style={{ maxHeight: 400 }} contentContainerStyle={{ paddingVertical: 8 }}>
                             <Text style={[
                                 styles.modalBody,
@@ -346,7 +350,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         paddingVertical: 6,
         borderRadius: 9999,
-        backgroundColor: COLORS.memento[50],
     },
     row: {
         flexDirection: "row",

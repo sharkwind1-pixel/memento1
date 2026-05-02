@@ -157,6 +157,10 @@ export interface UserProfile {
     isAdmin?: boolean;
     points?: number;
     createdAt?: string;
+    subscriptionTier?: "free" | "basic" | "premium";
+    premiumPlan?: string;
+    subscriptionPhase?: string;
+    premiumExpiresAt?: string;
 }
 
 // ============================================

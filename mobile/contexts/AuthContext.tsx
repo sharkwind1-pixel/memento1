@@ -195,7 +195,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
             const { data, error } = await supabase
                 .from("profiles")
-                .select("id, nickname, avatar_url, is_premium, is_admin, points, premium_expires_at")
+                .select("id, nickname, avatar_url, is_premium, is_admin, points, premium_expires_at, subscription_tier, premium_plan, subscription_phase")
                 .eq("id", userId)
                 .single();
 
@@ -208,7 +208,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     data.is_premium &&
                     (!data.premium_expires_at || new Date(data.premium_expires_at) > new Date());
 
-                console.log(`[Profile] loaded id=${data.id} nickname=${data.nickname} points=${data.points} isAdmin=${data.is_admin}`);
+                console.log(`[Profile] loaded id=${data.id} nickname=${data.nickname} points=${data.points} isAdmin=${data.is_admin} tier=${data.subscription_tier}`);
 
                 setProfile({
                     id: data.id,
@@ -217,6 +217,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     isPremium: isPremiumActive,
                     isAdmin: data.is_admin,
                     points: data.points ?? 0,
+                    subscriptionTier: data.subscription_tier as "free" | "basic" | "premium" | undefined,
+                    premiumPlan: data.premium_plan as string | undefined,
+                    subscriptionPhase: data.subscription_phase as string | undefined,
+                    premiumExpiresAt: data.premium_expires_at as string | undefined,
                 });
             } else {
                 console.warn(`[Profile] no row for userId=${userId} — creating fallback profile`);
