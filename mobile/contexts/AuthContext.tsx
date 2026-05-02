@@ -178,6 +178,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(session?.user ?? null);
             if (session?.user) {
                 loadProfile(session.user.id);
+                // 푸시 알림 토큰 백엔드 등록 (silent — 권한 거부/시뮬레이터는 그냥 skip)
+                if (session.access_token) {
+                    import("@/lib/push-notifications")
+                        .then(({ registerPushTokenWithBackend }) =>
+                            registerPushTokenWithBackend(session.access_token).catch(() => {}),
+                        )
+                        .catch(() => {});
+                }
             } else {
                 setProfile(null);
                 setIsLoading(false);
