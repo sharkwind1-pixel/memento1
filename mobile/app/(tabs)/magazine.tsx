@@ -72,6 +72,7 @@ export default function MagazineScreen() {
     const { isDarkMode } = useDarkMode();
 
     const [articles, setArticles] = useState<Article[]>([]);
+    const [popular, setPopular] = useState<Article[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [search, setSearch] = useState("");
@@ -80,6 +81,47 @@ export default function MagazineScreen() {
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [drawerOpen, setDrawerOpen] = useState(false);
+
+    // 인기 아티클: 최근 60개 → likes+views 가중점수로 상위 5개 (마운트 1회)
+    useEffect(() => {
+        (async () => {
+            try {
+                const headers: Record<string, string> = {};
+                if (session) headers["Authorization"] = `Bearer ${session.access_token}`;
+                const res = await fetch(`${API_BASE_URL}/api/magazine?limit=60`, { headers });
+                if (!res.ok) return;
+                const data = await res.json();
+                const list: Article[] = (Array.isArray(data?.articles) ? data.articles : Array.isArray(data) ? data : [])
+                    .map((raw: Record<string, unknown>): Article => ({
+                        id: raw.id != null ? String(raw.id) : "",
+                        title: typeof raw.title === "string" ? raw.title : "",
+                        summary: typeof raw.summary === "string" ? raw.summary : undefined,
+                        image_url: typeof raw.image_url === "string"
+                            ? raw.image_url
+                            : (typeof raw.imageUrl === "string" ? raw.imageUrl : undefined),
+                        badge: typeof raw.badge === "string" ? raw.badge : undefined,
+                        category: typeof raw.category === "string" ? raw.category : undefined,
+                        likes: typeof raw.likes === "number" ? raw.likes : 0,
+                        views: typeof raw.views === "number" ? raw.views : 0,
+                        liked: typeof raw.liked === "boolean" ? raw.liked : undefined,
+                        created_at: typeof raw.created_at === "string"
+                            ? raw.created_at
+                            : (typeof raw.createdAt === "string" ? raw.createdAt : ""),
+                        author: typeof raw.author === "string" ? raw.author : undefined,
+                        read_time: typeof raw.read_time === "number"
+                            ? raw.read_time
+                            : (typeof raw.readTime === "number" ? raw.readTime : undefined),
+                        tags: Array.isArray(raw.tags) ? raw.tags.filter((t: unknown): t is string => typeof t === "string") : undefined,
+                    }));
+                // 점수 = likes * 3 + views (좋아요 가중)
+                const scored = [...list].sort((a, b) => (b.likes * 3 + b.views) - (a.likes * 3 + a.views));
+                setPopular(scored.slice(0, 5));
+            } catch {
+                // 조용히
+            }
+        })();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [session?.access_token]);
 
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
 
@@ -283,6 +325,67 @@ export default function MagazineScreen() {
                                 );
                             })}
                         </ScrollView>
+
+                        {/* 인기 아티클 카로셀 (전체 모드일 때만, 검색 안 할 때) */}
+                        {!filtersActive && popular.length > 0 && (
+                            <>
+                                <View style={[styles.sectionLabelRow, { marginTop: 16 }]}>
+                                    <Ionicons name="flame" size={14} color="#F97316" />
+                                    <Text style={[styles.sectionLabel, { marginTop: 0, paddingHorizontal: 0 }]}>
+                                        인기 아티클
+                                    </Text>
+                                </View>
+                                <ScrollView
+                                    horizontal
+                                    showsHorizontalScrollIndicator={false}
+                                    contentContainerStyle={styles.popularScroll}
+                                >
+                                    {popular.map((p) => (
+                                        <TouchableOpacity
+                                            key={p.id}
+                                            onPress={() => router.push(`/magazine/${p.id}`)}
+                                            activeOpacity={0.85}
+                                            style={[styles.popularCard, {
+                                                backgroundColor: isDarkMode ? COLORS.gray[900] : COLORS.white,
+                                                borderColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100],
+                                            }]}
+                                        >
+                                            {p.image_url ? (
+                                                <Image source={{ uri: p.image_url }} style={styles.popularImage} resizeMode="cover" />
+                                            ) : (
+                                                <LinearGradient
+                                                    colors={badgeColor(p.badge)}
+                                                    style={styles.popularImage}
+                                                />
+                                            )}
+                                            <View style={{ padding: 10, gap: 4 }}>
+                                                <Text
+                                                    numberOfLines={2}
+                                                    style={{
+                                                        fontSize: 12,
+                                                        fontWeight: "700",
+                                                        lineHeight: 16,
+                                                        color: isDarkMode ? COLORS.white : COLORS.gray[900],
+                                                    }}
+                                                >
+                                                    {p.title}
+                                                </Text>
+                                                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                                                    <Ionicons name="heart" size={10} color="#EF4444" />
+                                                    <Text style={{ fontSize: 10, color: COLORS.gray[500] }}>
+                                                        {p.likes}
+                                                    </Text>
+                                                    <Ionicons name="eye-outline" size={10} color={COLORS.gray[500]} />
+                                                    <Text style={{ fontSize: 10, color: COLORS.gray[500] }}>
+                                                        {p.views.toLocaleString()}
+                                                    </Text>
+                                                </View>
+                                            </View>
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+                            </>
+                        )}
 
                         {/* Topic 7개 칩 */}
                         <Text style={[styles.sectionLabel, { marginTop: 16 }]}>주제</Text>
@@ -494,6 +597,21 @@ const styles = StyleSheet.create({
         color: COLORS.gray[500],
         marginBottom: 8,
     },
+    sectionLabelRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        paddingHorizontal: 20,
+        marginBottom: 8,
+    },
+    popularScroll: { paddingHorizontal: 16, gap: 12, paddingBottom: 4 },
+    popularCard: {
+        width: 160,
+        borderRadius: 12,
+        overflow: "hidden",
+        borderWidth: 1,
+    },
+    popularImage: { width: "100%", height: 90 },
     stageScroll: { paddingHorizontal: 16, gap: 12 },
     stageCard: {
         width: 140,

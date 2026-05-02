@@ -99,6 +99,7 @@ export default function MinihompyScreen() {
     const touchResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const [shopOpen, setShopOpen] = useState(false);
+    const [shopInitialFilter, setShopInitialFilter] = useState<"all" | "owned" | "dog" | "cat">("all");
     const [bgShopOpen, setBgShopOpen] = useState(false);
     const [guestbookOpen, setGuestbookOpen] = useState(false);
     const [greetingOpen, setGreetingOpen] = useState(false);
@@ -372,7 +373,7 @@ export default function MinihompyScreen() {
                     </View>
                 )}
 
-                {/* 4개 액션 카드 */}
+                {/* 액션 카드 (2 x 3 그리드) */}
                 <View style={styles.actionGrid}>
                     <ActionCard
                         icon="paw"
@@ -380,7 +381,15 @@ export default function MinihompyScreen() {
                         sub="구매 · 장착"
                         color={COLORS.memento[500]}
                         bgColor={isDarkMode ? COLORS.gray[900] : COLORS.memento[50]}
-                        onPress={() => setShopOpen(true)}
+                        onPress={() => { setShopInitialFilter("all"); setShopOpen(true); }}
+                    />
+                    <ActionCard
+                        icon="library"
+                        label={`내 미니미${ownedMinimis.length > 0 ? ` (${ownedMinimis.length})` : ""}`}
+                        sub="컬렉션 · 장착"
+                        color="#FB923C"
+                        bgColor={isDarkMode ? COLORS.gray[900] : "#FFF7ED"}
+                        onPress={() => { setShopInitialFilter("owned"); setShopOpen(true); }}
                     />
                     <ActionCard
                         icon="color-palette"
@@ -441,6 +450,7 @@ export default function MinihompyScreen() {
                         points={points ?? 0}
                         onChanged={handleShopChanged}
                         accentColor={accentColor}
+                        initialFilter={shopInitialFilter}
                     />
                     <BackgroundShopModal
                         visible={bgShopOpen}

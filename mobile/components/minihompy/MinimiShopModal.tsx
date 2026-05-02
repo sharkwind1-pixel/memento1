@@ -33,10 +33,12 @@ interface Props {
     points: number;
     onChanged: () => void;        // 구매/장착 후 부모 화면 새로고침 트리거
     accentColor: string;
+    /** 모달 열릴 때 미리 선택할 필터 (예: "내 미니미" 진입 시 "owned") */
+    initialFilter?: CategoryFilter;
 }
 
 export default function MinimiShopModal({
-    visible, onClose, accessToken, points, onChanged, accentColor,
+    visible, onClose, accessToken, points, onChanged, accentColor, initialFilter = "all",
 }: Props) {
     const insets = useSafeAreaInsets();
     const { isDarkMode } = useDarkMode();
@@ -46,7 +48,12 @@ export default function MinimiShopModal({
     const [equippedSlug, setEquippedSlug] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [busy, setBusy] = useState<string | null>(null);
-    const [filter, setFilter] = useState<CategoryFilter>("all");
+    const [filter, setFilter] = useState<CategoryFilter>(initialFilter);
+
+    // 모달 열릴 때 initialFilter 적용
+    useEffect(() => {
+        if (visible) setFilter(initialFilter);
+    }, [visible, initialFilter]);
 
     const load = useCallback(async () => {
         setLoading(true);

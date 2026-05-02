@@ -91,6 +91,45 @@ export default function PetDetailScreen() {
         );
     }
 
+    async function setPrimary() {
+        if (!pet || !user || busy) return;
+        if (pet.isPrimary) {
+            Alert.alert("대표 펫", `${pet.name}${josa(pet.name, "은/는")} 이미 대표 펫이에요.`);
+            return;
+        }
+        Alert.alert(
+            "대표 펫 지정",
+            `${pet.name}${josa(pet.name, "을/를")} 홈 화면 기본 펫으로 지정할까요?`,
+            [
+                { text: "취소", style: "cancel" },
+                {
+                    text: "지정",
+                    onPress: async () => {
+                        setBusy(true);
+                        try {
+                            // 다른 모든 펫의 대표 해제 → 이 펫만 대표
+                            await supabase
+                                .from("pets")
+                                .update({ is_primary: false })
+                                .eq("user_id", user.id);
+                            const { error } = await supabase
+                                .from("pets")
+                                .update({ is_primary: true })
+                                .eq("id", pet.id)
+                                .eq("user_id", user.id);
+                            if (error) throw new Error(error.message);
+                            await refreshPets();
+                        } catch (e) {
+                            Alert.alert("실패", e instanceof Error ? e.message : "");
+                        } finally {
+                            setBusy(false);
+                        }
+                    },
+                },
+            ],
+        );
+    }
+
     async function toggleMemorial() {
         if (!pet || !user || busy) return;
         const next = isMemorial ? "active" : "memorial";
@@ -275,8 +314,36 @@ export default function PetDetailScreen() {
                     </View>
                 )}
 
-                {/* 추모 전환 / 삭제 */}
+                {/* 대표 / 추모 전환 / 삭제 */}
                 <View style={[styles.dangerCard, { backgroundColor: cardBg, borderColor }]}>
+                    {!pet.isPrimary && (
+                        <>
+                            <TouchableOpacity onPress={setPrimary} disabled={busy} style={styles.dangerRow} activeOpacity={0.7}>
+                                <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                                    <Ionicons name="star-outline" size={20} color={COLORS.memorial[500]} />
+                                    <Text style={[styles.dangerText, { color: textColor }]}>
+                                        대표 펫으로 지정
+                                    </Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={16} color={COLORS.gray[400]} />
+                            </TouchableOpacity>
+                            <View style={[styles.divider, { backgroundColor: borderColor }]} />
+                        </>
+                    )}
+                    {pet.isPrimary && (
+                        <>
+                            <View style={styles.dangerRow}>
+                                <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                                    <Ionicons name="star" size={20} color={COLORS.memorial[500]} />
+                                    <Text style={[styles.dangerText, { color: textColor }]}>
+                                        대표 펫
+                                    </Text>
+                                </View>
+                                <Text style={{ fontSize: 12, color: COLORS.gray[400] }}>홈 기본 표시</Text>
+                            </View>
+                            <View style={[styles.divider, { backgroundColor: borderColor }]} />
+                        </>
+                    )}
                     <TouchableOpacity onPress={toggleMemorial} disabled={busy} style={styles.dangerRow} activeOpacity={0.7}>
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
                             <Ionicons

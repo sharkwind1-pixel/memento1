@@ -28,7 +28,9 @@ interface Comment {
     authorAvatar?: string;
     createdAt: string;
     likes: number;
+    dislikes: number;
     isLiked?: boolean;
+    isDisliked?: boolean;
 }
 
 interface PostDetail {
@@ -40,9 +42,11 @@ interface PostDetail {
     authorAvatar?: string;
     authorPetImage?: string;
     likes: number;
+    dislikes: number;
     comments: number;
     views: number;
     isLiked?: boolean;
+    isDisliked?: boolean;
     images?: string[];
     tag?: string;
     subcategory?: string;
@@ -76,7 +80,17 @@ function normalizeComment(raw: any): Comment {
                 : undefined,
         createdAt: asString(raw?.createdAt ?? raw?.created_at),
         likes: asNumber(raw?.likes),
-        isLiked: typeof raw?.isLiked === "boolean" ? raw.isLiked : undefined,
+        dislikes: asNumber(raw?.dislikes ?? raw?.dislike_count),
+        isLiked: typeof raw?.isLiked === "boolean"
+            ? raw.isLiked
+            : typeof raw?.userLiked === "boolean"
+                ? raw.userLiked
+                : undefined,
+        isDisliked: typeof raw?.isDisliked === "boolean"
+            ? raw.isDisliked
+            : typeof raw?.userDisliked === "boolean"
+                ? raw.userDisliked
+                : undefined,
     };
 }
 
@@ -99,6 +113,7 @@ function normalizePost(raw: any): PostDetail | null {
                 ? raw.author_pet_image
                 : undefined,
         likes: asNumber(raw.likes),
+        dislikes: asNumber(raw.dislikes ?? raw.dislike_count),
         comments: asNumber(raw.comments ?? raw.comments_count),
         views: asNumber(raw.views),
         isLiked: typeof raw.userLiked === "boolean"
@@ -107,6 +122,13 @@ function normalizePost(raw: any): PostDetail | null {
                 ? raw.isLiked
                 : typeof raw.user_liked === "boolean"
                     ? raw.user_liked
+                    : undefined,
+        isDisliked: typeof raw.userDisliked === "boolean"
+            ? raw.userDisliked
+            : typeof raw.isDisliked === "boolean"
+                ? raw.isDisliked
+                : typeof raw.user_disliked === "boolean"
+                    ? raw.user_disliked
                     : undefined,
         images: Array.isArray(raw.imageUrls)
             ? raw.imageUrls.filter((x: unknown) => typeof x === "string")
@@ -134,6 +156,7 @@ export default function PostDetailScreen() {
     const [commentInput, setCommentInput] = useState("");
     const [isSubmittingComment, setIsSubmittingComment] = useState(false);
     const [isLiking, setIsLiking] = useState(false);
+    const [isDisliking, setIsDisliking] = useState(false);
 
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
 
@@ -175,7 +198,15 @@ export default function PostDetailScreen() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
         const newLiked = !post.isLiked;
-        setPost((p) => p ? { ...p, isLiked: newLiked, likes: p.likes + (newLiked ? 1 : -1) } : p);
+        // 좋아요 시 비추천 자동 해제
+        const wasDisliked = post.isDisliked;
+        setPost((p) => p ? {
+            ...p,
+            isLiked: newLiked,
+            likes: p.likes + (newLiked ? 1 : -1),
+            isDisliked: newLiked && wasDisliked ? false : p.isDisliked,
+            dislikes: newLiked && wasDisliked ? Math.max(0, p.dislikes - 1) : p.dislikes,
+        } : p);
 
         try {
             const res = await fetch(`${API_BASE_URL}/api/posts/${id}/like`, {
@@ -186,12 +217,71 @@ export default function PostDetailScreen() {
                 },
             });
             if (!res.ok) {
-                setPost((p) => p ? { ...p, isLiked: !newLiked, likes: p.likes + (newLiked ? -1 : 1) } : p);
+                // 롤백
+                setPost((p) => p ? {
+                    ...p,
+                    isLiked: !newLiked,
+                    likes: p.likes + (newLiked ? -1 : 1),
+                    isDisliked: wasDisliked,
+                    dislikes: wasDisliked ? p.dislikes + (newLiked ? 1 : 0) : p.dislikes,
+                } : p);
             }
         } catch {
-            setPost((p) => p ? { ...p, isLiked: !newLiked, likes: p.likes + (newLiked ? -1 : 1) } : p);
+            setPost((p) => p ? {
+                ...p,
+                isLiked: !newLiked,
+                likes: p.likes + (newLiked ? -1 : 1),
+                isDisliked: wasDisliked,
+                dislikes: wasDisliked ? p.dislikes + (newLiked ? 1 : 0) : p.dislikes,
+            } : p);
         } finally {
             setIsLiking(false);
+        }
+    }
+
+    async function handleDislike() {
+        if (!session || !post || isDisliking) return;
+        setIsDisliking(true);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+        const newDisliked = !post.isDisliked;
+        const wasLiked = post.isLiked;
+        // 비추천 시 좋아요 자동 해제
+        setPost((p) => p ? {
+            ...p,
+            isDisliked: newDisliked,
+            dislikes: p.dislikes + (newDisliked ? 1 : -1),
+            isLiked: newDisliked && wasLiked ? false : p.isLiked,
+            likes: newDisliked && wasLiked ? Math.max(0, p.likes - 1) : p.likes,
+        } : p);
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/posts/${id}/dislike`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${session.access_token}`,
+                },
+            });
+            if (!res.ok) {
+                setPost((p) => p ? {
+                    ...p,
+                    isDisliked: !newDisliked,
+                    dislikes: p.dislikes + (newDisliked ? -1 : 1),
+                    isLiked: wasLiked,
+                    likes: wasLiked ? p.likes + (newDisliked ? 1 : 0) : p.likes,
+                } : p);
+            }
+        } catch {
+            setPost((p) => p ? {
+                ...p,
+                isDisliked: !newDisliked,
+                dislikes: p.dislikes + (newDisliked ? -1 : 1),
+                isLiked: wasLiked,
+                likes: wasLiked ? p.likes + (newDisliked ? 1 : 0) : p.likes,
+            } : p);
+        } finally {
+            setIsDisliking(false);
         }
     }
 
@@ -535,6 +625,16 @@ export default function PostDetailScreen() {
                                 {post.likes}
                             </Text>
                         </TouchableOpacity>
+                        <TouchableOpacity onPress={handleDislike} style={styles.reactionBtn} activeOpacity={0.7}>
+                            <Ionicons
+                                name={post.isDisliked ? "thumbs-down" : "thumbs-down-outline"}
+                                size={18}
+                                color={post.isDisliked ? "#6B7280" : COLORS.gray[400]}
+                            />
+                            <Text style={{ fontSize: 14, color: isDarkMode ? COLORS.gray[400] : COLORS.gray[500] }}>
+                                {post.dislikes}
+                            </Text>
+                        </TouchableOpacity>
                         <View style={styles.reactionBtn}>
                             <Ionicons name="chatbubble-outline" size={18} color={COLORS.gray[400]} />
                             <Text style={{ fontSize: 14, color: COLORS.gray[400] }}>{post.comments}</Text>
@@ -572,6 +672,11 @@ export default function PostDetailScreen() {
                             onDeleted={(commentId) => {
                                 setComments((prev) => prev.filter((x) => x.id !== commentId));
                                 setPost((p) => p ? { ...p, comments: Math.max(0, p.comments - 1) } : p);
+                            }}
+                            onReactionUpdate={(commentId, patch) => {
+                                setComments((prev) => prev.map((x) =>
+                                    x.id === commentId ? { ...x, ...patch } : x,
+                                ));
                             }}
                         />
                     ))}
@@ -642,7 +747,7 @@ function formatCommentTime(iso: string): string {
 }
 
 function CommentItem({
-    comment, isMemorialMode, currentUserId, accessToken, postId, onAuthorPress, onDeleted,
+    comment, isMemorialMode, currentUserId, accessToken, postId, onAuthorPress, onDeleted, onReactionUpdate,
 }: {
     comment: Comment;
     isMemorialMode: boolean;
@@ -651,10 +756,85 @@ function CommentItem({
     postId: string;
     onAuthorPress: (authorId: string) => void;
     onDeleted: (commentId: string) => void;
+    onReactionUpdate: (commentId: string, patch: Partial<Comment>) => void;
 }) {
+    void isMemorialMode; void postId;
     const { isDarkMode } = useDarkMode();
     const isMine = !!currentUserId && currentUserId === comment.authorId;
     const hasAuthorLink = !!comment.authorId;
+    const [reacting, setReacting] = useState(false);
+
+    async function handleLikeComment() {
+        if (!accessToken || reacting) return;
+        setReacting(true);
+        const newLiked = !comment.isLiked;
+        const wasDisliked = comment.isDisliked;
+        onReactionUpdate(comment.id, {
+            isLiked: newLiked,
+            likes: comment.likes + (newLiked ? 1 : -1),
+            isDisliked: newLiked && wasDisliked ? false : comment.isDisliked,
+            dislikes: newLiked && wasDisliked ? Math.max(0, comment.dislikes - 1) : comment.dislikes,
+        });
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/comments/${comment.id}/like`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${accessToken}` },
+            });
+            if (!res.ok) {
+                onReactionUpdate(comment.id, {
+                    isLiked: !newLiked,
+                    likes: comment.likes,
+                    isDisliked: wasDisliked,
+                    dislikes: comment.dislikes,
+                });
+            }
+        } catch {
+            onReactionUpdate(comment.id, {
+                isLiked: !newLiked,
+                likes: comment.likes,
+                isDisliked: wasDisliked,
+                dislikes: comment.dislikes,
+            });
+        } finally {
+            setReacting(false);
+        }
+    }
+
+    async function handleDislikeComment() {
+        if (!accessToken || reacting) return;
+        setReacting(true);
+        const newDisliked = !comment.isDisliked;
+        const wasLiked = comment.isLiked;
+        onReactionUpdate(comment.id, {
+            isDisliked: newDisliked,
+            dislikes: comment.dislikes + (newDisliked ? 1 : -1),
+            isLiked: newDisliked && wasLiked ? false : comment.isLiked,
+            likes: newDisliked && wasLiked ? Math.max(0, comment.likes - 1) : comment.likes,
+        });
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/comments/${comment.id}/dislike`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${accessToken}` },
+            });
+            if (!res.ok) {
+                onReactionUpdate(comment.id, {
+                    isDisliked: !newDisliked,
+                    dislikes: comment.dislikes,
+                    isLiked: wasLiked,
+                    likes: comment.likes,
+                });
+            }
+        } catch {
+            onReactionUpdate(comment.id, {
+                isDisliked: !newDisliked,
+                dislikes: comment.dislikes,
+                isLiked: wasLiked,
+                likes: comment.likes,
+            });
+        } finally {
+            setReacting(false);
+        }
+    }
 
     function handleLongPress() {
         if (!isMine || !accessToken) return;
@@ -741,11 +921,45 @@ function CommentItem({
                 }}>
                     {comment.content}
                 </Text>
-                {isMine && (
-                    <Text style={{ fontSize: 10, color: COLORS.gray[400], marginTop: 4 }}>
-                        길게 눌러서 삭제
-                    </Text>
-                )}
+                <View style={styles.commentReactionRow}>
+                    <TouchableOpacity
+                        onPress={handleLikeComment}
+                        disabled={!accessToken || reacting}
+                        hitSlop={6}
+                        style={styles.commentReactionBtn}
+                        activeOpacity={0.7}
+                    >
+                        <Ionicons
+                            name={comment.isLiked ? "heart" : "heart-outline"}
+                            size={13}
+                            color={comment.isLiked ? "#EF4444" : COLORS.gray[400]}
+                        />
+                        <Text style={[styles.commentReactionText, comment.isLiked && { color: "#EF4444" }]}>
+                            {comment.likes}
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={handleDislikeComment}
+                        disabled={!accessToken || reacting}
+                        hitSlop={6}
+                        style={styles.commentReactionBtn}
+                        activeOpacity={0.7}
+                    >
+                        <Ionicons
+                            name={comment.isDisliked ? "thumbs-down" : "thumbs-down-outline"}
+                            size={12}
+                            color={comment.isDisliked ? "#6B7280" : COLORS.gray[400]}
+                        />
+                        <Text style={[styles.commentReactionText, comment.isDisliked && { color: "#6B7280" }]}>
+                            {comment.dislikes}
+                        </Text>
+                    </TouchableOpacity>
+                    {isMine && (
+                        <Text style={{ fontSize: 10, color: COLORS.gray[400] }}>
+                            길게 눌러서 삭제
+                        </Text>
+                    )}
+                </View>
             </View>
         </TouchableOpacity>
     );
@@ -794,6 +1008,22 @@ const styles = StyleSheet.create({
     sendBtn: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
     commentAvatar: { width: 28, height: 28, borderRadius: 14 },
     commentAvatarFallback: { backgroundColor: COLORS.gray[200], alignItems: "center", justifyContent: "center" },
+    commentReactionRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        marginTop: 6,
+    },
+    commentReactionBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 3,
+    },
+    commentReactionText: {
+        fontSize: 11,
+        color: COLORS.gray[500],
+        fontWeight: "500",
+    },
     myCommentBadge: {
         paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4,
         backgroundColor: COLORS.memento[100],
