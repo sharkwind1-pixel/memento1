@@ -186,6 +186,15 @@ export async function putPlacedMinimi(
 // 다른 유저 미니홈피 방문
 // ============================================================================
 
+/**
+ * 웹 응답 형태 (src/app/api/minihompy/[userId]/route.ts):
+ * {
+ *   settings: { isPublic, backgroundSlug, greeting, todayVisitors, totalVisitors, totalLikes, placedMinimi },
+ *   ownerNickname, ownerPetType, ownerMinimiEquip: { minimiId, ... },
+ *   guestbook, guestbookTotal,
+ *   isLiked
+ * }
+ */
 interface VisitProfileResponse {
     settings?: {
         isPublic: boolean;
@@ -194,9 +203,16 @@ interface VisitProfileResponse {
         todayVisitors?: number;
         totalVisitors?: number;
         totalLikes?: number;
+        placedMinimi?: PlacedMinimi[];
     };
+    ownerNickname?: string;
+    ownerPetType?: string;
+    ownerMinimiEquip?: {
+        minimiId?: string | null;
+    };
+    // 옛 형태 (혹시 모를 호환)
     owner?: {
-        id: string;
+        id?: string;
         nickname?: string;
         avatar_url?: string;
         avatar?: string;
@@ -216,6 +232,7 @@ export interface VisitedMinihompy {
     ownerNickname: string;
     ownerAvatar: string | null;
     equippedMinimiSlug: string | null;
+    placedMinimi: PlacedMinimi[];
     isLiked: boolean;
 }
 
@@ -231,9 +248,14 @@ export async function visitMinihompy(
         todayVisitors: data.settings?.todayVisitors ?? 0,
         totalVisitors: data.settings?.totalVisitors ?? 0,
         totalLikes: data.settings?.totalLikes ?? 0,
-        ownerNickname: data.owner?.nickname ?? "익명",
+        // 서버는 ownerNickname을 top-level로 보냄 (data.owner.nickname 아님)
+        ownerNickname: data.ownerNickname ?? data.owner?.nickname ?? "익명",
         ownerAvatar: data.owner?.avatar_url ?? data.owner?.avatar ?? null,
-        equippedMinimiSlug: data.owner?.equippedMinimiSlug ?? data.owner?.equipped_minimi_slug ?? null,
+        equippedMinimiSlug: data.ownerMinimiEquip?.minimiId
+            ?? data.owner?.equippedMinimiSlug
+            ?? data.owner?.equipped_minimi_slug
+            ?? null,
+        placedMinimi: Array.isArray(data.settings?.placedMinimi) ? data.settings!.placedMinimi : [],
         isLiked: !!data.isLiked,
     };
 }

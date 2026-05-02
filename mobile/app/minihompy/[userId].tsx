@@ -195,7 +195,7 @@ export default function VisitMinihompyScreen() {
                     </View>
                 </View>
 
-                {/* Stage */}
+                {/* Stage — 자유배치 미니미 우선, 없으면 단일 장착 미니미 fallback */}
                 <View style={styles.stageWrap}>
                     <StageBackground background={background}>
                         {data.greeting && (
@@ -205,18 +205,41 @@ export default function VisitMinihompyScreen() {
                             </View>
                         )}
 
-                        <View style={styles.minimiSlot}>
-                            {equippedMinimi ? (
-                                <Image source={{ uri: equippedMinimi.imageUrl }} style={styles.minimiImg} resizeMode="contain" />
-                            ) : (
-                                <View style={[styles.minimiImg, styles.minimiImgFallback]}>
-                                    <Text style={{ fontSize: 56 }}>🐾</Text>
-                                </View>
-                            )}
-                            <Text style={styles.minimiName}>
-                                {equippedMinimi?.name ?? data.ownerNickname}
-                            </Text>
-                        </View>
+                        {/* 자유배치 미니미 (read-only — 드래그 불가) */}
+                        {data.placedMinimi.length > 0 ? (
+                            data.placedMinimi.map((p, idx) => {
+                                const m = findMinimi(p.slug);
+                                if (!m) return null;
+                                return (
+                                    <Image
+                                        key={`${p.slug}-${idx}`}
+                                        source={{ uri: m.imageUrl }}
+                                        resizeMode="contain"
+                                        style={[
+                                            styles.placedMinimi,
+                                            {
+                                                left: `${p.x}%`,
+                                                top: `${p.y}%`,
+                                                zIndex: p.zIndex ?? idx,
+                                            },
+                                        ]}
+                                    />
+                                );
+                            })
+                        ) : (
+                            <View style={styles.minimiSlot}>
+                                {equippedMinimi ? (
+                                    <Image source={{ uri: equippedMinimi.imageUrl }} style={styles.minimiImg} resizeMode="contain" />
+                                ) : (
+                                    <View style={[styles.minimiImg, styles.minimiImgFallback]}>
+                                        <Text style={{ fontSize: 56 }}>🐾</Text>
+                                    </View>
+                                )}
+                                <Text style={styles.minimiName}>
+                                    {equippedMinimi?.name ?? data.ownerNickname}
+                                </Text>
+                            </View>
+                        )}
                     </StageBackground>
                 </View>
 
@@ -374,6 +397,13 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(255,255,255,0.5)",
         borderRadius: 70,
         alignItems: "center", justifyContent: "center",
+    },
+    placedMinimi: {
+        position: "absolute",
+        width: 60,
+        height: 60,
+        marginLeft: -30,
+        marginTop: -30,
     },
     minimiName: {
         marginTop: 4, fontSize: 13, fontWeight: "700", color: "#111827",
