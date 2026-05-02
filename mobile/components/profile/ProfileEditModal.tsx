@@ -8,7 +8,7 @@
  *   → 웹도 동일 (OAuth 아바타만, 직접 업로드 없음)
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
     View, Text, Modal, TouchableOpacity, TextInput, Image,
     StyleSheet, ActivityIndicator, Alert,
@@ -18,6 +18,8 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/lib/theme";
 import { supabase } from "@/lib/supabase";
+
+type DupeStatus = "idle" | "checking" | "available" | "taken" | "invalid";
 
 interface Props {
     visible: boolean;
@@ -35,17 +37,66 @@ export default function ProfileEditModal({
     const insets = useSafeAreaInsets();
     const [nickname, setNickname] = useState(initialNickname);
     const [saving, setSaving] = useState(false);
+    const [dupeStatus, setDupeStatus] = useState<DupeStatus>("idle");
+    const dupeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         if (visible) {
             setNickname(initialNickname);
+            setDupeStatus("idle");
         }
     }, [visible, initialNickname]);
+
+    // 닉네임 변경 시 디바운싱된 중복 체크 (500ms)
+    useEffect(() => {
+        const trimmed = nickname.trim();
+        if (dupeTimerRef.current) clearTimeout(dupeTimerRef.current);
+
+        if (trimmed === initialNickname.trim()) {
+            setDupeStatus("idle");
+            return;
+        }
+        if (trimmed.length < 2 || trimmed.length > 20) {
+            setDupeStatus("invalid");
+            return;
+        }
+
+        setDupeStatus("checking");
+        dupeTimerRef.current = setTimeout(async () => {
+            try {
+                const { data, error } = await supabase
+                    .from("profiles")
+                    .select("id")
+                    .eq("nickname", trimmed)
+                    .neq("id", userId)
+                    .maybeSingle();
+                if (error && error.code !== "PGRST116") {
+                    setDupeStatus("idle");
+                    return;
+                }
+                setDupeStatus(data ? "taken" : "available");
+            } catch {
+                setDupeStatus("idle");
+            }
+        }, 500);
+
+        return () => {
+            if (dupeTimerRef.current) clearTimeout(dupeTimerRef.current);
+        };
+    }, [nickname, initialNickname, userId]);
 
     async function handleSave() {
         const trimmed = nickname.trim();
         if (trimmed.length < 2 || trimmed.length > 20) {
             Alert.alert("닉네임 형식", "닉네임은 2~20자로 입력해주세요.");
+            return;
+        }
+        if (dupeStatus === "taken") {
+            Alert.alert("중복", "이미 사용 중인 닉네임이에요.");
+            return;
+        }
+        if (dupeStatus === "checking") {
+            Alert.alert("확인 중", "닉네임 확인이 끝나면 다시 시도해주세요.");
             return;
         }
         if (saving) return;
@@ -56,7 +107,13 @@ export default function ProfileEditModal({
                 .from("profiles")
                 .update({ nickname: trimmed })
                 .eq("id", userId);
-            if (error) throw new Error(error.message);
+            if (error) {
+                // unique constraint 위반(중복) 처리
+                if (error.code === "23505" || error.message.toLowerCase().includes("duplicate")) {
+                    throw new Error("이미 사용 중인 닉네임이에요.");
+                }
+                throw new Error(error.message);
+            }
 
             onSaved({ nickname: trimmed, avatar: initialAvatar });
             onClose();
@@ -112,7 +169,11 @@ export default function ProfileEditModal({
                         <View style={styles.field}>
                             <Text style={styles.label}>닉네임</Text>
                             <TextInput
-                                style={styles.input}
+                                style={[
+                                    styles.input,
+                                    dupeStatus === "taken" && { borderColor: "#EF4444" },
+                                    dupeStatus === "available" && { borderColor: "#10B981" },
+                                ]}
                                 value={nickname}
                                 onChangeText={setNickname}
                                 placeholder="2~20자"
@@ -120,7 +181,21 @@ export default function ProfileEditModal({
                                 maxLength={20}
                                 autoCapitalize="none"
                             />
-                            <Text style={styles.helperText}>{nickname.trim().length}/20</Text>
+                            <View style={styles.helperRow}>
+                                {dupeStatus === "checking" && (
+                                    <Text style={[styles.helperText, { color: COLORS.gray[500] }]}>확인 중...</Text>
+                                )}
+                                {dupeStatus === "taken" && (
+                                    <Text style={[styles.helperText, { color: "#EF4444" }]}>이미 사용 중인 닉네임</Text>
+                                )}
+                                {dupeStatus === "available" && (
+                                    <Text style={[styles.helperText, { color: "#10B981" }]}>사용 가능</Text>
+                                )}
+                                {dupeStatus === "invalid" && (
+                                    <Text style={[styles.helperText, { color: "#EF4444" }]}>2~20자 필요</Text>
+                                )}
+                                <Text style={[styles.helperText, { marginLeft: "auto" }]}>{nickname.trim().length}/20</Text>
+                            </View>
                         </View>
                     </View>
                 </KeyboardAvoidingView>
@@ -161,5 +236,6 @@ const styles = StyleSheet.create({
         borderColor: COLORS.gray[200],
         color: COLORS.gray[900],
     },
-    helperText: { fontSize: 11, color: COLORS.gray[400], marginTop: 6, alignSelf: "flex-end" },
+    helperText: { fontSize: 11, color: COLORS.gray[400], marginTop: 6 },
+    helperRow: { flexDirection: "row", alignItems: "center", marginTop: 6 },
 });

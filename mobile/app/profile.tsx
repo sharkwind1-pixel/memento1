@@ -148,6 +148,13 @@ export default function ProfileScreen() {
                     onPress={() => router.push("/notifications")}
                     isMemorialMode={isMemorialMode}
                 />
+                <SettingsRow
+                    icon={<Ionicons name="settings-outline" size={22} color={COLORS.gray[500]} />}
+                    label="알림/차단/위치 설정"
+                    sublabel="알림 토글, 차단 해제, 위치 동의"
+                    onPress={() => router.push("/settings")}
+                    isMemorialMode={isMemorialMode}
+                />
             </SectionCard>
 
             <SectionCard title="화면" isMemorialMode={isMemorialMode}>

@@ -245,6 +245,7 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
     const [editingEntry, setEditingEntry] = useState<TimelineEntryDraft | undefined>(undefined);
+    const [moodFilter, setMoodFilter] = useState<TimelineMood | "all">("all");
 
     const load = useCallback(async () => {
         if (!session) { setLoading(false); return; }
@@ -369,10 +370,15 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
         return <View style={styles.loadingInline}><ActivityIndicator color={accentColor} /></View>;
     }
 
+    // 무드 필터 적용
+    const filteredEntries = moodFilter === "all"
+        ? entries
+        : entries.filter((e) => e.mood === moodFilter);
+
     return (
         <>
             <FlatList
-                data={entries}
+                data={filteredEntries}
                 keyExtractor={(e) => e.id}
                 style={{ flex: 1 }}
                 contentContainerStyle={[styles.tabContent, { paddingBottom: 96 }]}
@@ -399,7 +405,9 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
                                 <Text style={[styles.timelineHeaderTitle, isMemorialMode && { color: COLORS.white }]}>
                                     타임라인 일기
                                 </Text>
-                                <Text style={styles.timelineHeaderCount}>{entries.length}개</Text>
+                                <Text style={styles.timelineHeaderCount}>
+                                    {filteredEntries.length}개{moodFilter !== "all" ? ` (${entries.length}개 중)` : ""}
+                                </Text>
                             </View>
                             <TouchableOpacity
                                 onPress={openAdd}
@@ -410,6 +418,53 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
                                 <Text style={styles.addEntryText}>일기 쓰기</Text>
                             </TouchableOpacity>
                         </View>
+
+                        {/* 무드 필터 (entries 1개 이상일 때만) */}
+                        {entries.length > 0 && (
+                            <ScrollView
+                                horizontal
+                                showsHorizontalScrollIndicator={false}
+                                contentContainerStyle={styles.moodFilterRow}
+                                style={styles.moodFilterOuter}
+                            >
+                                {(["all", "happy", "normal", "sad", "sick"] as const).map((m) => {
+                                    const active = moodFilter === m;
+                                    const meta = m === "all"
+                                        ? { label: "전체", icon: "list-outline" as const, color: COLORS.gray[500] }
+                                        : m === "happy" ? { label: "기쁨", icon: "happy-outline" as const, color: "#FBBF24" }
+                                        : m === "normal" ? { label: "평범", icon: "ellipse-outline" as const, color: "#94A3B8" }
+                                        : m === "sad" ? { label: "슬픔", icon: "sad-outline" as const, color: "#60A5FA" }
+                                        : { label: "아픔", icon: "medkit-outline" as const, color: "#F87171" };
+                                    return (
+                                        <TouchableOpacity
+                                            key={m}
+                                            onPress={() => setMoodFilter(m)}
+                                            style={[
+                                                styles.moodFilterChip,
+                                                active
+                                                    ? { backgroundColor: meta.color }
+                                                    : {
+                                                        backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100],
+                                                    },
+                                            ]}
+                                            activeOpacity={0.85}
+                                        >
+                                            <Ionicons name={meta.icon} size={12} color={active ? "#fff" : meta.color} />
+                                            <Text style={[
+                                                styles.moodFilterText,
+                                                {
+                                                    color: active
+                                                        ? "#fff"
+                                                        : (isDarkMode ? COLORS.gray[300] : COLORS.gray[700]),
+                                                },
+                                            ]}>
+                                                {meta.label}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </ScrollView>
+                        )}
                     </View>
                 }
                 ListEmptyComponent={
@@ -485,6 +540,14 @@ function GalleryTab({ petId, photos, isMemorialMode, accentColor, refreshing, on
     const [selectionMode, setSelectionMode] = useState(false);
     const [selected, setSelected] = useState<Set<string>>(new Set());
     const [deleting, setDeleting] = useState(false);
+    const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
+
+    // 정렬된 사진 (원본 mutate 방지)
+    const sortedPhotos = [...photos].sort((a, b) => {
+        const aDate = (a as { date?: string }).date ?? "";
+        const bDate = (b as { date?: string }).date ?? "";
+        return sortBy === "newest" ? bDate.localeCompare(aDate) : aDate.localeCompare(bDate);
+    });
 
     function exitSelection() {
         setSelectionMode(false);
@@ -544,56 +607,72 @@ function GalleryTab({ petId, photos, isMemorialMode, accentColor, refreshing, on
     return (
         <>
             <FlatList
-                data={photos}
+                data={sortedPhotos}
                 keyExtractor={(item) => item.id}
                 numColumns={3}
                 style={{ flex: 1 }}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accentColor} />}
                 ListHeaderComponent={
-                    <View style={styles.galleryHeader}>
-                        {selectionMode ? (
-                            <>
-                                <View style={{ flex: 1 }}>
-                                    <Text style={[styles.galleryHeaderTitle, isMemorialMode && { color: COLORS.white }]}>
-                                        {selected.size}개 선택됨
-                                    </Text>
-                                    <Text style={styles.galleryHeaderCount}>길게 눌러 시작 · 탭하여 추가</Text>
-                                </View>
-                                <TouchableOpacity onPress={exitSelection} style={styles.galleryActionBtn} activeOpacity={0.85}>
-                                    <Text style={styles.galleryActionText}>취소</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    onPress={confirmDelete}
-                                    disabled={selected.size === 0 || deleting}
-                                    style={[
-                                        styles.galleryActionBtn,
-                                        { backgroundColor: "#EF4444" },
-                                        (selected.size === 0 || deleting) && { opacity: 0.5 },
-                                    ]}
-                                    activeOpacity={0.85}
-                                >
-                                    <Ionicons name="trash-outline" size={14} color="#fff" />
-                                    <Text style={[styles.galleryActionText, { color: "#fff" }]}>삭제</Text>
-                                </TouchableOpacity>
-                            </>
-                        ) : (
-                            <>
-                                <View style={{ flex: 1 }}>
-                                    <Text style={[styles.galleryHeaderTitle, isMemorialMode && { color: COLORS.white }]}>
-                                        사진/영상
-                                    </Text>
-                                    <Text style={styles.galleryHeaderCount}>{photos.length}장 · 길게 눌러 선택</Text>
-                                </View>
-                                <TouchableOpacity
-                                    onPress={() => setUploadOpen(true)}
-                                    style={[styles.uploadBtn, { backgroundColor: accentColor }]}
-                                    activeOpacity={0.85}
-                                >
-                                    <Ionicons name="add" size={16} color="#fff" />
-                                    <Text style={styles.uploadBtnText}>업로드</Text>
-                                </TouchableOpacity>
-                            </>
-                        )}
+                    <View>
+                        <View style={styles.galleryHeader}>
+                            {selectionMode ? (
+                                <>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={[styles.galleryHeaderTitle, isMemorialMode && { color: COLORS.white }]}>
+                                            {selected.size}개 선택됨
+                                        </Text>
+                                        <Text style={styles.galleryHeaderCount}>길게 눌러 시작 · 탭하여 추가</Text>
+                                    </View>
+                                    <TouchableOpacity onPress={exitSelection} style={styles.galleryActionBtn} activeOpacity={0.85}>
+                                        <Text style={styles.galleryActionText}>취소</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        onPress={confirmDelete}
+                                        disabled={selected.size === 0 || deleting}
+                                        style={[
+                                            styles.galleryActionBtn,
+                                            { backgroundColor: "#EF4444" },
+                                            (selected.size === 0 || deleting) && { opacity: 0.5 },
+                                        ]}
+                                        activeOpacity={0.85}
+                                    >
+                                        <Ionicons name="trash-outline" size={14} color="#fff" />
+                                        <Text style={[styles.galleryActionText, { color: "#fff" }]}>삭제</Text>
+                                    </TouchableOpacity>
+                                </>
+                            ) : (
+                                <>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={[styles.galleryHeaderTitle, isMemorialMode && { color: COLORS.white }]}>
+                                            사진/영상
+                                        </Text>
+                                        <Text style={styles.galleryHeaderCount}>{photos.length}장 · 길게 눌러 선택</Text>
+                                    </View>
+                                    <TouchableOpacity
+                                        onPress={() => setSortBy(sortBy === "newest" ? "oldest" : "newest")}
+                                        style={styles.galleryActionBtn}
+                                        activeOpacity={0.85}
+                                    >
+                                        <Ionicons
+                                            name={sortBy === "newest" ? "arrow-down" : "arrow-up"}
+                                            size={12}
+                                            color={COLORS.gray[700]}
+                                        />
+                                        <Text style={styles.galleryActionText}>
+                                            {sortBy === "newest" ? "최신순" : "오래된순"}
+                                        </Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        onPress={() => setUploadOpen(true)}
+                                        style={[styles.uploadBtn, { backgroundColor: accentColor }]}
+                                        activeOpacity={0.85}
+                                    >
+                                        <Ionicons name="add" size={16} color="#fff" />
+                                        <Text style={styles.uploadBtnText}>업로드</Text>
+                                    </TouchableOpacity>
+                                </>
+                            )}
+                        </View>
                     </View>
                 }
                 ListEmptyComponent={
@@ -649,7 +728,7 @@ function GalleryTab({ petId, photos, isMemorialMode, accentColor, refreshing, on
                 onSuccess={() => { setUploadOpen(false); onRefresh(); }}
             />
             <PhotoLightbox
-                photos={photos.map((p) => ({ id: p.id, url: p.url, caption: (p as any).caption }))}
+                photos={sortedPhotos.map((p) => ({ id: p.id, url: p.url, caption: (p as any).caption }))}
                 initialIndex={lightboxIdx ?? 0}
                 visible={lightboxIdx !== null}
                 onClose={() => setLightboxIdx(null)}
@@ -1314,6 +1393,17 @@ const styles = StyleSheet.create({
         borderRadius: 12,
     },
     addEntryText: { color: "#fff", fontSize: 13, fontWeight: "700" },
+    moodFilterOuter: { flexGrow: 0, flexShrink: 0, marginBottom: 8 },
+    moodFilterRow: { gap: 6, paddingRight: 16 },
+    moodFilterChip: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 9999,
+    },
+    moodFilterText: { fontSize: 11, fontWeight: "600" },
     emptyAction: {
         flexDirection: "row",
         alignItems: "center",
