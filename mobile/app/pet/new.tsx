@@ -175,6 +175,13 @@ export default function NewPetScreen() {
 
         setIsLoading(true);
         try {
+            // 첫 번째 펫이면 자동으로 대표(is_primary=true)로 지정
+            const { count: existingCount } = await supabase
+                .from("pets")
+                .select("id", { count: "exact", head: true })
+                .eq("user_id", user.id);
+            const shouldBePrimary = (existingCount ?? 0) === 0;
+
             const { data: pet, error: petError } = await supabase
                 .from("pets")
                 .insert({
@@ -197,7 +204,7 @@ export default function NewPetScreen() {
                     favorite_activity: form.favoriteActivity.trim() || null,
                     favorite_place: form.favoritePlace.trim() || null,
                     memorable_memory: form.status === "memorial" ? (form.memorableMemory.trim() || null) : null,
-                    is_primary: false,
+                    is_primary: shouldBePrimary,
                 })
                 .select()
                 .single();

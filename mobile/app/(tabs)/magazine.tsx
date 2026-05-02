@@ -9,7 +9,7 @@
  * 5. 무한 스크롤
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
     View, Text, FlatList, TouchableOpacity,
     Image, TextInput, RefreshControl, ActivityIndicator,
@@ -144,7 +144,23 @@ export default function MagazineScreen() {
     useEffect(() => {
         setIsLoading(true);
         fetchArticles(true);
+        // selectedStage/Topic 변경 시 즉시 fetch
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedStage, selectedTopic]);
+
+    // 검색어 디바운싱 — 400ms 후 자동 검색
+    const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    useEffect(() => {
+        if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+        searchDebounceRef.current = setTimeout(() => {
+            setIsLoading(true);
+            fetchArticles(true);
+        }, 400);
+        return () => {
+            if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [search]);
 
     function onRefresh() {
         setRefreshing(true);

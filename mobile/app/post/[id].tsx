@@ -223,7 +223,7 @@ export default function PostDetailScreen() {
         if (Platform.OS === "ios") {
             const options = isAuthor
                 ? ["수정", "삭제", "취소"]
-                : ["신고", "공유", "취소"];
+                : ["신고", "공유", "이 사용자 차단", "취소"];
             const destructiveButtonIndex = isAuthor ? 1 : 0;
             const cancelButtonIndex = options.length - 1;
             ActionSheetIOS.showActionSheetWithOptions(
@@ -239,6 +239,7 @@ export default function PostDetailScreen() {
                     else if (isAuthor && buttonIndex === 1) confirmDelete();
                     else if (!isAuthor && buttonIndex === 0) showReportPicker();
                     else if (!isAuthor && buttonIndex === 1) handleShare();
+                    else if (!isAuthor && buttonIndex === 2) confirmBlock();
                 },
             );
         } else {
@@ -256,12 +257,52 @@ export default function PostDetailScreen() {
                     { text: "취소", style: "cancel" as const },
                     { text: "공유", onPress: handleShare },
                     { text: "신고", style: "destructive" as const, onPress: showReportPicker },
+                    { text: "이 사용자 차단", style: "destructive" as const, onPress: confirmBlock },
                 ];
             Alert.alert(
                 isAuthor ? "이 게시글" : "게시글",
                 isAuthor ? "어떻게 할까요?" : "어떻게 할까요?",
                 options,
             );
+        }
+    }
+
+    function confirmBlock() {
+        if (!post) return;
+        Alert.alert(
+            `${post.author}님 차단`,
+            "이 사용자의 게시글이 더 이상 보이지 않아요. 설정 > 차단한 사용자에서 해제할 수 있어요.",
+            [
+                { text: "취소", style: "cancel" },
+                {
+                    text: "차단",
+                    style: "destructive",
+                    onPress: doBlock,
+                },
+            ],
+        );
+    }
+
+    async function doBlock() {
+        if (!session || !post) return;
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/blocks`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${session.access_token}`,
+                },
+                body: JSON.stringify({ blockedUserId: post.authorId, reason: "" }),
+            });
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data?.error || "차단에 실패했어요");
+            }
+            Alert.alert("차단 완료", `${post.author}님을 차단했어요.`, [
+                { text: "확인", onPress: () => router.back() },
+            ]);
+        } catch (e) {
+            Alert.alert("실패", e instanceof Error ? e.message : "다시 시도해주세요.");
         }
     }
 
