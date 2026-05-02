@@ -17,7 +17,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { API_BASE_URL } from "@/config/constants";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
@@ -63,9 +63,12 @@ function relativeTime(dateStr?: string): string {
 export default function CommunityScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
+    const params = useLocalSearchParams<{ view?: string }>();
     const { session } = useAuth();
     const { isMemorialMode } = usePet();
     const { isDarkMode } = useDarkMode();
+    // view=showcase 진입(홈 "함께 보기" 더보기 → 자랑 갤러리 모드)
+    const showcaseMode = params.view === "showcase";
     const [activeTab, setActiveTab] = useState<CommunitySubcategory>("free");
     const [posts, setPosts] = useState<CommunityPost[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -78,9 +81,11 @@ export default function CommunityScreen() {
 
     const fetchPosts = useCallback(async () => {
         try {
-            // 자유게시판 전체보기 시 자랑 게시글 숨기기 (함께보기 갤러리에서만 표시 — 웹과 동일)
-            const excludeParam = activeTab === "free" ? "&exclude_badge=자랑" : "";
-            const url = `${API_BASE_URL}/api/posts?subcategory=${activeTab}&limit=20${excludeParam}`;
+            // showcaseMode: 자유게시판 + badge=자랑만 (함께 보기 갤러리)
+            // 일반 모드: 자유게시판 전체보기 시 자랑 게시글 숨김 (웹과 동일)
+            const url = showcaseMode
+                ? `${API_BASE_URL}/api/posts?subcategory=free&badge=자랑&limit=20`
+                : `${API_BASE_URL}/api/posts?subcategory=${activeTab}&limit=20${activeTab === "free" ? "&exclude_badge=자랑" : ""}`;
             const headers: Record<string, string> = { "Content-Type": "application/json" };
             if (session) headers["Authorization"] = `Bearer ${session.access_token}`;
 
@@ -133,7 +138,7 @@ export default function CommunityScreen() {
             setIsLoading(false);
             setRefreshing(false);
         }
-    }, [activeTab, session]);
+    }, [activeTab, session, showcaseMode]);
 
     useEffect(() => {
         setIsLoading(true);
@@ -160,8 +165,13 @@ export default function CommunityScreen() {
             {/* 헤더 + 검색 */}
             <View style={styles.headerWrap}>
                 <View style={styles.headerRow}>
+                    {showcaseMode && (
+                        <TouchableOpacity onPress={() => router.replace("/(tabs)/community")} hitSlop={8} style={{ marginRight: 8 }}>
+                            <Ionicons name="chevron-back" size={22} color={isDarkMode ? COLORS.white : COLORS.gray[900]} />
+                        </TouchableOpacity>
+                    )}
                     <Text style={[styles.title, { color: isDarkMode ? COLORS.white : COLORS.gray[900] }]}>
-                        커뮤니티
+                        {showcaseMode ? "함께 보기" : "커뮤니티"}
                     </Text>
                 </View>
 
@@ -185,7 +195,8 @@ export default function CommunityScreen() {
                 </View>
             </View>
 
-            {/* 서브카테고리 탭 */}
+            {/* 서브카테고리 탭 (showcase 모드에서는 숨김) */}
+            {!showcaseMode && (
             <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -223,6 +234,7 @@ export default function CommunityScreen() {
                     );
                 })}
             </ScrollView>
+            )}
 
             {/* 카드 리스트 */}
             {isLoading ? (

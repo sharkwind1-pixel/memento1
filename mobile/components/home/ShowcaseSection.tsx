@@ -128,7 +128,7 @@ export default function ShowcaseSection() {
                     </View>
                 </View>
                 <TouchableOpacity
-                    onPress={() => router.push("/(tabs)/community")}
+                    onPress={() => router.push({ pathname: "/(tabs)/community", params: { view: "showcase" } })}
                     style={styles.moreBtn}
                     activeOpacity={0.7}
                 >
