@@ -2,7 +2,7 @@
  * 게시글 상세 화면
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity,
     Image, TextInput, Alert, ActivityIndicator,
@@ -10,7 +10,7 @@ import {
     ActionSheetIOS,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { API_BASE_URL } from "@/config/constants";
@@ -161,6 +161,19 @@ export default function PostDetailScreen() {
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
 
     useEffect(() => { loadPost(); }, [id]);
+
+    // 수정 화면에서 돌아왔을 때 게시글 다시 로드
+    const isFirstFocusRef = useRef(true);
+    useFocusEffect(
+        useCallback(() => {
+            if (isFirstFocusRef.current) {
+                isFirstFocusRef.current = false;
+                return;
+            }
+            loadPost();
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, [id]),
+    );
 
     async function loadPost() {
         try {

@@ -335,10 +335,14 @@ function ToggleRow({ label, sub, value, onChange, accentColor, labelColor, subCo
     disabled?: boolean;
     last?: boolean;
 }) {
+    const { isDarkMode } = useDarkMode();
     return (
         <View style={[
             styles.toggleRow,
-            !last && { borderBottomWidth: 1, borderBottomColor: COLORS.gray[100] },
+            !last && {
+                borderBottomWidth: 1,
+                borderBottomColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100],
+            },
         ]}>
             <View style={{ flex: 1 }}>
                 <Text style={[styles.toggleLabel, { color: labelColor }]}>{label}</Text>

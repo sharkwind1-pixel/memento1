@@ -8,6 +8,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useFocusEffect } from "expo-router";
 import {
     View, Text, ScrollView, TouchableOpacity,
     FlatList, RefreshControl, ActivityIndicator,
@@ -190,6 +191,18 @@ export default function CommunityScreen() {
         setIsLoading(true);
         fetchPosts();
     }, [fetchPosts]);
+
+    // 작성/수정 화면에서 돌아왔을 때 자동 새로고침 (마운트 후 첫 focus는 useEffect가 처리)
+    const isFirstFocusRef = useRef(true);
+    useFocusEffect(
+        useCallback(() => {
+            if (isFirstFocusRef.current) {
+                isFirstFocusRef.current = false;
+                return;
+            }
+            fetchPosts();
+        }, [fetchPosts]),
+    );
 
     async function onRefresh() {
         setRefreshing(true);
