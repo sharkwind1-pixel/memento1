@@ -12,6 +12,7 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Svg, { Path } from "react-native-svg";
 import { useAuth } from "@/contexts/AuthContext";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { COLORS } from "@/lib/theme";
 
 type Provider = "naver" | "kakao" | "google";
@@ -19,6 +20,7 @@ type Provider = "naver" | "kakao" | "google";
 export default function LoginScreen() {
     const router = useRouter();
     const { signInWithGoogle, signInWithKakao, signInWithNaver, session } = useAuth();
+    const { isDarkMode } = useDarkMode();
     const [loadingProvider, setLoadingProvider] = useState<Provider | null>(null);
 
     // 세션이 늦게라도 set되면 자동으로 탭 화면 이동 (cold-start hard guard 폴백)
@@ -49,9 +51,14 @@ export default function LoginScreen() {
         }
     }
 
+    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.white;
+    const titleColor = isDarkMode ? COLORS.white : COLORS.gray[900];
+    const subColor = isDarkMode ? COLORS.gray[400] : COLORS.gray[500];
+    const disclaimerColor = isDarkMode ? COLORS.gray[500] : COLORS.gray[400];
+
     return (
         <ScrollView
-            style={styles.flex1White}
+            style={[styles.flex1White, { backgroundColor: bgColor }]}
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
         >
@@ -62,11 +69,11 @@ export default function LoginScreen() {
                         style={styles.logo}
                         resizeMode="contain"
                     />
-                    <Text style={styles.title}>메멘토애니</Text>
-                    <Text style={styles.tagline}>특별한 매일을 함께</Text>
+                    <Text style={[styles.title, { color: titleColor }]}>메멘토애니</Text>
+                    <Text style={[styles.tagline, { color: subColor }]}>특별한 매일을 함께</Text>
                 </View>
 
-                <Text style={styles.intro}>
+                <Text style={[styles.intro, { color: subColor }]}>
                     소셜 계정으로 간편하게 시작하세요
                 </Text>
 
@@ -127,7 +134,7 @@ export default function LoginScreen() {
                     />
                 </View>
 
-                <Text style={styles.disclaimer}>
+                <Text style={[styles.disclaimer, { color: disclaimerColor }]}>
                     계속 진행하면{" "}
                     <Text
                         style={styles.linkText}
@@ -189,7 +196,7 @@ function SocialButton({
 }
 
 const styles = StyleSheet.create({
-    flex1White: { flex: 1, backgroundColor: COLORS.white },
+    flex1White: { flex: 1 },
     scrollContent: { flexGrow: 1 },
     container: {
         flex: 1,
@@ -199,11 +206,10 @@ const styles = StyleSheet.create({
     },
     logoWrap: { alignItems: "center", marginBottom: 40 },
     logo: { width: 88, height: 88, borderRadius: 20, marginBottom: 16 },
-    title: { fontSize: 26, fontWeight: "bold", color: COLORS.gray[900] },
-    tagline: { fontSize: 14, color: COLORS.gray[500], marginTop: 4 },
+    title: { fontSize: 26, fontWeight: "bold" },
+    tagline: { fontSize: 14, marginTop: 4 },
     intro: {
         fontSize: 14,
-        color: COLORS.gray[500],
         textAlign: "center",
         marginBottom: 24,
     },
@@ -221,7 +227,6 @@ const styles = StyleSheet.create({
     disclaimer: {
         textAlign: "center",
         fontSize: 12,
-        color: COLORS.gray[400],
         marginTop: 32,
         lineHeight: 18,
     },
