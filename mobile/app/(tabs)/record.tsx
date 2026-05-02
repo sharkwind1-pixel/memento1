@@ -6,7 +6,7 @@
  * - 비디오 (video_generations) — AI 영상
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity,
     Image, FlatList, RefreshControl, ActivityIndicator,
@@ -788,7 +788,6 @@ function AlbumsTab({ petId, isMemorialMode, accentColor, refreshing, onRefresh }
 //   - failed: 에러 알림 + 리스트에서 제거
 //   - max 60회(15분) 초과 시 폴링 중단 + 안내
 // ============================================
-import { useRef } from "react";
 
 interface Video {
     id: string;
