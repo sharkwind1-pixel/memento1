@@ -1,12 +1,11 @@
 /**
- * ProfileEditModal — 닉네임 + 아바타 편집
- * Supabase profiles 테이블 직접 update (모바일 RLS: auth.uid() = id).
+ * ProfileEditModal — 닉네임 편집 (모바일 V1: 닉네임 only)
+ * Supabase profiles 테이블 직접 update (RLS: auth.uid() = id).
  *
  * - 닉네임: 2~20자, 공백 trim
- * - 아바타: ImagePicker → Supabase Storage(pet-media/{userId}/avatar/...) → profiles.avatar_url update
- *   - 경로는 첫 폴더가 userId여야 함 (RLS 정책: auth.uid() = (storage.foldername)[1])
- *   - "avatars/" prefix 사용 시 RLS 위반 ("new row violates row-level security policy")
- * - 저장 시 onSaved 콜백 + AuthContext refreshProfile() 호출 권장
+ * - 아바타: OAuth 제공 URL이 있으면 표시, 없으면 사람 아이콘 (편집 불가)
+ *   → 모바일은 직접 업로드 기능 제거. 사진 업로드는 펫 등록/사진첩에서만.
+ *   → 웹도 동일 (OAuth 아바타만, 직접 업로드 없음)
  */
 
 import { useEffect, useState } from "react";
@@ -17,50 +16,8 @@ import {
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import * as ImagePicker from "expo-image-picker";
 import { COLORS } from "@/lib/theme";
 import { supabase } from "@/lib/supabase";
-
-interface UploadResult {
-    success: boolean;
-    url?: string;
-    error?: string;
-}
-
-async function uploadAvatar(uri: string, userId: string, mimeType?: string): Promise<UploadResult> {
-    try {
-        const response = await fetch(uri);
-        if (!response.ok) return { success: false, error: `이미지 로드 실패 (HTTP ${response.status})` };
-        const ab = await response.arrayBuffer();
-        if (ab.byteLength > 5 * 1024 * 1024) return { success: false, error: "5MB 이하 이미지만 업로드 가능합니다" };
-
-        const ext = (() => {
-            if (mimeType?.startsWith("image/")) {
-                const e = mimeType.split("/")[1] || "jpg";
-                return e === "jpeg" ? "jpg" : e;
-            }
-            const tail = (uri.split(".").pop() ?? "jpg").toLowerCase().split("?")[0];
-            return tail || "jpg";
-        })();
-        const mime = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
-
-        // RLS: pet-media 버킷은 첫 폴더가 userId여야 허용 → userId/avatar/... 패턴 사용
-        const path = `${userId}/avatar/${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${ext}`;
-        const { data, error } = await supabase.storage
-            .from("pet-media")
-            .upload(path, new Uint8Array(ab), {
-                cacheControl: "31536000",
-                upsert: false,
-                contentType: mime,
-            });
-        if (error) return { success: false, error: error.message };
-
-        const { data: { publicUrl } } = supabase.storage.from("pet-media").getPublicUrl(data.path);
-        return { success: true, url: publicUrl };
-    } catch (e) {
-        return { success: false, error: e instanceof Error ? e.message : "업로드 실패" };
-    }
-}
 
 interface Props {
     visible: boolean;
@@ -77,47 +34,13 @@ export default function ProfileEditModal({
 }: Props) {
     const insets = useSafeAreaInsets();
     const [nickname, setNickname] = useState(initialNickname);
-    const [avatarUri, setAvatarUri] = useState<string | null>(initialAvatar);
-    const [uploadedUrl, setUploadedUrl] = useState<string | null>(initialAvatar);
-    const [uploading, setUploading] = useState(false);
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
         if (visible) {
             setNickname(initialNickname);
-            setAvatarUri(initialAvatar);
-            setUploadedUrl(initialAvatar);
         }
-    }, [visible, initialNickname, initialAvatar]);
-
-    async function pickAvatar() {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (status !== "granted") {
-            Alert.alert("권한 필요", "갤러리 접근 권한이 필요합니다.");
-            return;
-        }
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            quality: 0.85,
-            allowsEditing: true,
-            aspect: [1, 1],
-        });
-        if (result.canceled || !result.assets[0]) return;
-
-        const asset = result.assets[0];
-        setAvatarUri(asset.uri);
-        setUploadedUrl(null);
-        setUploading(true);
-        const upload = await uploadAvatar(asset.uri, userId, asset.mimeType);
-        setUploading(false);
-        if (!upload.success || !upload.url) {
-            Alert.alert("업로드 실패", upload.error || "이미지 업로드 실패");
-            setAvatarUri(initialAvatar);
-            setUploadedUrl(initialAvatar);
-            return;
-        }
-        setUploadedUrl(upload.url);
-    }
+    }, [visible, initialNickname]);
 
     async function handleSave() {
         const trimmed = nickname.trim();
@@ -125,25 +48,17 @@ export default function ProfileEditModal({
             Alert.alert("닉네임 형식", "닉네임은 2~20자로 입력해주세요.");
             return;
         }
-        if (uploading) {
-            Alert.alert("업로드 진행 중", "이미지 업로드가 끝날 때까지 기다려주세요.");
-            return;
-        }
         if (saving) return;
 
         setSaving(true);
         try {
-            const update: Record<string, unknown> = { nickname: trimmed };
-            if (uploadedUrl !== initialAvatar) {
-                update.avatar_url = uploadedUrl;
-            }
             const { error } = await supabase
                 .from("profiles")
-                .update(update)
+                .update({ nickname: trimmed })
                 .eq("id", userId);
             if (error) throw new Error(error.message);
 
-            onSaved({ nickname: trimmed, avatar: uploadedUrl });
+            onSaved({ nickname: trimmed, avatar: initialAvatar });
             onClose();
         } catch (e) {
             Alert.alert("저장 실패", e instanceof Error ? e.message : "");
@@ -162,10 +77,10 @@ export default function ProfileEditModal({
                     <Text style={styles.headerTitle}>프로필 편집</Text>
                     <TouchableOpacity
                         onPress={handleSave}
-                        disabled={saving || uploading}
+                        disabled={saving}
                         style={[
                             styles.saveBtn,
-                            { backgroundColor: saving || uploading ? COLORS.gray[200] : accentColor },
+                            { backgroundColor: saving ? COLORS.gray[200] : accentColor },
                         ]}
                         activeOpacity={0.85}
                     >
@@ -182,24 +97,16 @@ export default function ProfileEditModal({
                     behavior={Platform.OS === "ios" ? "padding" : undefined}
                 >
                     <View style={[styles.body, { paddingBottom: 16 + insets.bottom }]}>
-                        {/* 아바타 */}
-                        <TouchableOpacity onPress={pickAvatar} style={styles.avatarWrap} activeOpacity={0.85}>
-                            {avatarUri || uploadedUrl ? (
-                                <Image source={{ uri: uploadedUrl ?? avatarUri ?? "" }} style={styles.avatar} />
+                        {/* 아바타 (편집 불가, OAuth 제공 시 표시) */}
+                        <View style={styles.avatarWrap}>
+                            {initialAvatar ? (
+                                <Image source={{ uri: initialAvatar }} style={styles.avatar} />
                             ) : (
                                 <View style={[styles.avatar, styles.avatarFallback, { backgroundColor: accentColor + "20" }]}>
                                     <Ionicons name="person" size={48} color={accentColor} />
                                 </View>
                             )}
-                            <View style={[styles.avatarEdit, { backgroundColor: accentColor }]}>
-                                {uploading ? (
-                                    <ActivityIndicator size="small" color="#fff" />
-                                ) : (
-                                    <Ionicons name="camera" size={16} color="#fff" />
-                                )}
-                            </View>
-                        </TouchableOpacity>
-                        <Text style={styles.avatarHint}>사진을 탭해서 변경</Text>
+                        </View>
 
                         {/* 닉네임 */}
                         <View style={styles.field}>
@@ -239,17 +146,9 @@ const styles = StyleSheet.create({
     saveBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 9999 },
     saveBtnText: { color: "#fff", fontSize: 13, fontWeight: "700" },
     body: { padding: 24, alignItems: "center", flex: 1 },
-    avatarWrap: { position: "relative", marginTop: 16 },
+    avatarWrap: { marginTop: 16, marginBottom: 32 },
     avatar: { width: 120, height: 120, borderRadius: 60 },
     avatarFallback: { alignItems: "center", justifyContent: "center" },
-    avatarEdit: {
-        position: "absolute",
-        bottom: 0, right: 0,
-        width: 36, height: 36, borderRadius: 18,
-        alignItems: "center", justifyContent: "center",
-        borderWidth: 3, borderColor: "#fff",
-    },
-    avatarHint: { fontSize: 12, color: COLORS.gray[500], marginTop: 12, marginBottom: 32 },
     field: { width: "100%" },
     label: { fontSize: 13, fontWeight: "600", color: COLORS.gray[700], marginBottom: 8 },
     input: {
