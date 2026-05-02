@@ -7,6 +7,7 @@ import {
     View, Text, ScrollView, TouchableOpacity,
     Image, TextInput, Alert, ActivityIndicator,
     KeyboardAvoidingView, Platform, Share, StyleSheet,
+    ActionSheetIOS,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
@@ -199,24 +200,49 @@ export default function PostDetailScreen() {
     function handleMore() {
         if (!post) return;
         const isAuthor = user && post.authorId && user.id === post.authorId;
-        const options = isAuthor
-            ? [
-                { text: "취소", style: "cancel" as const },
+
+        // iOS는 ActionSheetIOS, Android는 Alert로 fallback
+        if (Platform.OS === "ios") {
+            const options = isAuthor
+                ? ["삭제", "취소"]
+                : ["신고", "공유", "취소"];
+            const destructiveButtonIndex = isAuthor ? 0 : 0;
+            const cancelButtonIndex = options.length - 1;
+            ActionSheetIOS.showActionSheetWithOptions(
                 {
-                    text: "삭제",
-                    style: "destructive" as const,
-                    onPress: confirmDelete,
+                    options,
+                    destructiveButtonIndex,
+                    cancelButtonIndex,
+                    title: isAuthor ? "이 게시글" : "게시글",
                 },
-            ]
-            : [
-                { text: "취소", style: "cancel" as const },
-                { text: "신고", style: "destructive" as const, onPress: showReportPicker },
-            ];
-        Alert.alert(
-            isAuthor ? "이 게시글" : "게시글",
-            isAuthor ? "어떻게 할까요?" : "신고하시겠어요?",
-            options,
-        );
+                (buttonIndex) => {
+                    if (buttonIndex === cancelButtonIndex) return;
+                    if (isAuthor && buttonIndex === 0) confirmDelete();
+                    else if (!isAuthor && buttonIndex === 0) showReportPicker();
+                    else if (!isAuthor && buttonIndex === 1) handleShare();
+                },
+            );
+        } else {
+            const options = isAuthor
+                ? [
+                    { text: "취소", style: "cancel" as const },
+                    {
+                        text: "삭제",
+                        style: "destructive" as const,
+                        onPress: confirmDelete,
+                    },
+                ]
+                : [
+                    { text: "취소", style: "cancel" as const },
+                    { text: "공유", onPress: handleShare },
+                    { text: "신고", style: "destructive" as const, onPress: showReportPicker },
+                ];
+            Alert.alert(
+                isAuthor ? "이 게시글" : "게시글",
+                isAuthor ? "어떻게 할까요?" : "어떻게 할까요?",
+                options,
+            );
+        }
     }
 
     function showReportPicker() {
@@ -228,14 +254,32 @@ export default function PostDetailScreen() {
             { id: "misinformation", label: "허위 정보" },
             { id: "other", label: "기타" },
         ];
-        Alert.alert(
-            "신고 사유",
-            "사유를 선택해주세요",
-            [
-                ...reasons.map((r) => ({ text: r.label, onPress: () => submitReport(r.id) })),
-                { text: "취소", style: "cancel" as const },
-            ],
-        );
+
+        if (Platform.OS === "ios") {
+            const options = [...reasons.map((r) => r.label), "취소"];
+            const cancelButtonIndex = options.length - 1;
+            ActionSheetIOS.showActionSheetWithOptions(
+                {
+                    options,
+                    cancelButtonIndex,
+                    title: "신고 사유",
+                    message: "사유를 선택해주세요",
+                },
+                (buttonIndex) => {
+                    if (buttonIndex === cancelButtonIndex || buttonIndex === undefined) return;
+                    submitReport(reasons[buttonIndex].id);
+                },
+            );
+        } else {
+            Alert.alert(
+                "신고 사유",
+                "사유를 선택해주세요",
+                [
+                    ...reasons.map((r) => ({ text: r.label, onPress: () => submitReport(r.id) })),
+                    { text: "취소", style: "cancel" as const },
+                ],
+            );
+        }
     }
 
     async function submitReport(reason: string) {

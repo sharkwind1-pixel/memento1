@@ -162,10 +162,17 @@ export default function MagazineReaderScreen() {
 
     async function handleShare() {
         if (!article) return;
+        const url = `https://mementoani.com/magazine/${id}`;
+        const summary = article.summary?.trim();
+        // iOS는 url 별도 필드로 rich preview, Android는 message에 포함
+        const message = summary
+            ? `${article.title}\n\n${summary}\n\n${url}`
+            : `${article.title}\n\n${url}`;
         try {
             await Share.share({
                 title: article.title,
-                message: `${article.title}\n\nhttps://mementoani.com/magazine/${id}`,
+                message,
+                url, // iOS용 — 카카오톡/메시지/메일에서 rich link 표시
             });
         } catch {
             // 사용자 취소 — silent

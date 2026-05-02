@@ -184,8 +184,10 @@ export default function RemindersModal({ visible, onClose, petId, petName, accen
 
     const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.gray[50];
     const cardBg = isDarkMode ? COLORS.gray[900] : "#fff";
-    const titleColor = isMemorialMode ? "#fff" : COLORS.gray[900];
+    const titleColor = isDarkMode ? COLORS.white : COLORS.gray[900];
     const subColor = isDarkMode ? COLORS.gray[300] : COLORS.gray[600];
+    const placeholderColor = isDarkMode ? COLORS.gray[500] : COLORS.gray[400];
+    void isMemorialMode; // 추모 모드 시 추후 강조 분기 가능 (현재 미사용)
 
     return (
         <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
@@ -241,7 +243,7 @@ export default function RemindersModal({ visible, onClose, petId, petName, accen
                             value={newTitle}
                             onChangeText={setNewTitle}
                             placeholder="예: 사료 주기"
-                            placeholderTextColor={isMemorialMode ? COLORS.gray[500] : COLORS.gray[400]}
+                            placeholderTextColor={placeholderColor}
                             style={[styles.input, {
                                 backgroundColor: cardBg,
                                 color: titleColor,
@@ -255,7 +257,7 @@ export default function RemindersModal({ visible, onClose, petId, petName, accen
                             value={newTime}
                             onChangeText={setNewTime}
                             placeholder="09:00"
-                            placeholderTextColor={isMemorialMode ? COLORS.gray[500] : COLORS.gray[400]}
+                            placeholderTextColor={placeholderColor}
                             style={[styles.input, {
                                 backgroundColor: cardBg,
                                 color: titleColor,
