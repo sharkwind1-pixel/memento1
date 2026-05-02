@@ -1,10 +1,10 @@
 /**
  * 홈 탭 — 웹 src/components/pages/HomePage.tsx 기반 모바일 재현
  *
- * 섹션 순서 (V3 + 신규 6섹션):
+ * 섹션 순서:
  * 1. AnnouncementBanner (전체 공지 최대 3개)
  * 2. HeroSection (그라데이션 + 일러스트 + CTA)
- * 3. StoryFeed (24h 스토리, 가로 스크롤)
+ * 3. PetSwitcher (펫 전환 가로 스크롤)
  * 4. QuestCard (온보딩 미션 진행)
  * 5. PetCardSection (선택 펫 카드 또는 빈 상태)
  * 6. CommunityPreview (인기 게시글)
@@ -12,6 +12,8 @@
  * 8. QuizSection (자가진단 2x2)
  * 9. MagazinePreview (매거진 미리보기)
  * 10. MemorialSection (추모 펫 카드 + 별 파티클)
+ *
+ * 스토리 기능은 의도적으로 비활성. 추후 부활 시 components/home/Story* 복원.
  */
 
 import { useState, useCallback } from "react";
@@ -28,7 +30,6 @@ import PetCardSection from "@/components/home/PetCardSection";
 import CommunityPreview from "@/components/home/CommunityPreview";
 import MagazinePreview from "@/components/home/MagazinePreview";
 import AnnouncementBanner from "@/components/home/AnnouncementBanner";
-import StoryFeed from "@/components/home/StoryFeed";
 import QuestCard from "@/components/home/QuestCard";
 import QuizSection from "@/components/home/QuizSection";
 import ShowcaseSection from "@/components/home/ShowcaseSection";
@@ -73,7 +74,6 @@ export default function HomeScreen() {
             >
                 <AnnouncementBanner />
                 <HeroSection session={session} isMemorialMode={isMemorialMode} />
-                <StoryFeed />
                 <PetSwitcher
                     accentColor={isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500]}
                     onAddPet={() => router.push("/pet/new")}
