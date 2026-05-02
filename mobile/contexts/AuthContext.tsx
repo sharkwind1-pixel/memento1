@@ -45,21 +45,28 @@ const verifierMap: Record<string, string> = {};
 
 /**
  * RFC 7636 권장 문자셋으로 64자 random verifier 생성.
- * 보안: cryptographically secure random 사용 (Math.random() 절대 금지).
- * RN 0.76+ Hermes는 globalThis.crypto.getRandomValues 지원.
- * 미지원 환경 fallback은 의도적으로 없음 — 보안 약화 방지.
+ * 우선순위:
+ *  1) globalThis.crypto.getRandomValues (RN 0.76+ Hermes 지원, 안전)
+ *  2) Math.random fallback (Expo Go 등 미지원 환경 — 부팅 막지 않게 약하지만 동작)
+ * 운영 빌드에서는 expo-crypto 설치해서 1번만 쓰는 게 가장 좋음.
  */
 function generatePKCEVerifier(): string {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
     const cryptoApi = (globalThis as { crypto?: { getRandomValues?: (arr: Uint8Array) => Uint8Array } }).crypto;
-    if (!cryptoApi?.getRandomValues) {
-        throw new Error("crypto.getRandomValues 미지원 — RN 0.76+ 필요. expo-crypto 설치 권장.");
+    if (cryptoApi?.getRandomValues) {
+        const bytes = new Uint8Array(64);
+        cryptoApi.getRandomValues(bytes);
+        let result = "";
+        for (let i = 0; i < 64; i++) {
+            result += chars[bytes[i] % chars.length];
+        }
+        return result;
     }
-    const bytes = new Uint8Array(64);
-    cryptoApi.getRandomValues(bytes);
+    // Fallback: Math.random (보안 약화 — 운영 빌드 전 expo-crypto 설치 필수)
+    console.warn("[Auth] crypto.getRandomValues 미지원 — Math.random fallback (보안 약화)");
     let result = "";
     for (let i = 0; i < 64; i++) {
-        result += chars[bytes[i] % chars.length];
+        result += chars[Math.floor(Math.random() * chars.length)];
     }
     return result;
 }
@@ -189,13 +196,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(session?.user ?? null);
             if (session?.user) {
                 loadProfile(session.user.id);
-                // 푸시 알림 토큰 백엔드 등록 (silent — 권한 거부/시뮬레이터는 그냥 skip)
-                if (session.access_token) {
-                    import("@/lib/push-notifications")
-                        .then(({ registerPushTokenWithBackend }) =>
-                            registerPushTokenWithBackend(session.access_token).catch(() => {}),
-                        )
-                        .catch(() => {});
+                // 푸시 알림 토큰 백엔드 등록은 dev build 전용 (Expo Go에서는 expo-notifications 제한).
+                // session 직후 즉시 import하면 Expo Go에서 boot crash 위험 → 부팅 안정화 후 5초 지연.
+                if (session.access_token && process.env.EXPO_PUBLIC_PUSH_ENABLED === "true") {
+                    setTimeout(() => {
+                        import("@/lib/push-notifications")
+                            .then(({ registerPushTokenWithBackend }) =>
+                                registerPushTokenWithBackend(session.access_token).catch(() => {}),
+                            )
+                            .catch(() => {});
+                    }, 5000);
                 }
             } else {
                 setProfile(null);
@@ -348,9 +358,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     async function signOut() {
-        // 푸시 토큰 정리 (logout 전 — 세션 살아있을 때 DELETE 가능)
+        // 푸시 토큰 정리 (dev build에서만)
         const accessToken = session?.access_token;
-        if (accessToken) {
+        if (accessToken && process.env.EXPO_PUBLIC_PUSH_ENABLED === "true") {
             try {
                 const { unregisterPushTokenFromBackend } = await import("@/lib/push-notifications");
                 await unregisterPushTokenFromBackend(accessToken).catch(() => {});
