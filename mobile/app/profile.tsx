@@ -17,11 +17,12 @@ import { API_BASE_URL } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
 import AppHeader from "@/components/common/AppHeader";
 import ProfileEditModal from "@/components/profile/ProfileEditModal";
+import { getLevelIcon, getPointLevel, type PetIconType } from "@/lib/levels";
 
 export default function ProfileScreen() {
     const router = useRouter();
-    const { user, session, profile, isPremium, points, signOut, refreshProfile } = useAuth();
-    const { pets, isMemorialMode } = usePet();
+    const { user, session, profile, isPremium, points, isAdminUser, signOut, refreshProfile } = useAuth();
+    const { pets, selectedPet, isMemorialMode } = usePet();
     const { isDarkMode, toggleTheme } = useDarkMode();
     const [signingOut, setSigningOut] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
@@ -33,6 +34,15 @@ export default function ProfileScreen() {
         ?? user?.email?.split("@")[0]
         ?? "사용자";
     const email = user?.email ?? "";
+
+    // 포인트 + 펫 타입 기반 레벨 아이콘 (AppHeader와 동일 패턴)
+    const firstPet = selectedPet ?? pets?.[0];
+    const petType: PetIconType = firstPet?.type === "고양이" ? "cat"
+        : firstPet?.type === "강아지" ? "dog"
+        : firstPet?.type ? "other"
+        : "dog";
+    const levelIcon = getLevelIcon(points ?? 0, petType, isAdminUser);
+    const currentLevel = getPointLevel(points ?? 0);
 
     async function handleSignOut() {
         Alert.alert("로그아웃", "정말 로그아웃하시겠어요?", [
@@ -61,21 +71,15 @@ export default function ProfileScreen() {
                 activeOpacity={0.85}
                 style={[styles.headerCard, { backgroundColor: isDarkMode ? COLORS.gray[900] : COLORS.white }]}
             >
-                <View style={{ position: "relative" }}>
-                    {profile?.avatar ? (
-                        <Image source={{ uri: profile.avatar }} style={styles.avatar} />
-                    ) : (
-                        <View style={[styles.avatar, styles.avatarFallback, { backgroundColor: accentColor + "20" }]}>
-                            <Ionicons name="person" size={36} color={accentColor} />
-                        </View>
-                    )}
-                    <View style={[styles.editBadge, { backgroundColor: accentColor }]}>
-                        <Ionicons name="pencil" size={11} color="#fff" />
-                    </View>
+                <View style={[styles.avatar, styles.avatarFallback, { backgroundColor: currentLevel.color + "20" }]}>
+                    <Image source={levelIcon} style={styles.levelIconImg} resizeMode="contain" />
                 </View>
-                <Text style={{ fontSize: 18, fontWeight: "bold", color: isDarkMode ? COLORS.white : COLORS.gray[900], marginTop: 12 }}>
-                    {nickname}
-                </Text>
+                <View style={styles.nicknameRow}>
+                    <Text style={{ fontSize: 18, fontWeight: "bold", color: isDarkMode ? COLORS.white : COLORS.gray[900] }}>
+                        {nickname}
+                    </Text>
+                    <Ionicons name="pencil" size={13} color={COLORS.gray[400]} />
+                </View>
                 <Text style={{ fontSize: 14, color: COLORS.gray[400], marginTop: 2 }}>{email}</Text>
 
                 <View style={styles.badgeRow}>
@@ -378,13 +382,8 @@ const styles = StyleSheet.create({
     },
     avatar: { width: 80, height: 80, borderRadius: 40 },
     avatarFallback: { alignItems: "center", justifyContent: "center" },
-    editBadge: {
-        position: "absolute",
-        bottom: 0, right: 0,
-        width: 26, height: 26, borderRadius: 13,
-        alignItems: "center", justifyContent: "center",
-        borderWidth: 2, borderColor: "#fff",
-    },
+    levelIconImg: { width: 56, height: 56 },
+    nicknameRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 12 },
     badgeRow: { flexDirection: "row", gap: 8, marginTop: 12 },
     premiumBadge: {
         flexDirection: "row",
