@@ -14,6 +14,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/lib/theme";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { getGuestbook, postGuestbookEntry } from "@/lib/minihompy-api";
 import type { GuestbookEntry } from "@/types";
 
@@ -30,6 +31,7 @@ export default function GuestbookModal({
     visible, onClose, accessToken, ownerUserId, accentColor, canWrite = true,
 }: Props) {
     const insets = useSafeAreaInsets();
+    const { isDarkMode } = useDarkMode();
     const [entries, setEntries] = useState<GuestbookEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [input, setInput] = useState("");
@@ -64,16 +66,31 @@ export default function GuestbookModal({
         }
     }
 
+    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.gray[50];
+    const headerBg = isDarkMode ? COLORS.gray[900] : "#fff";
+    const headerBorder = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
+    const titleColor = isDarkMode ? COLORS.white : COLORS.gray[900];
+    const subColor = isDarkMode ? COLORS.gray[400] : COLORS.gray[500];
+    const cardBg = isDarkMode ? COLORS.gray[900] : "#fff";
+    const cardBorder = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
+    const entryNameColor = isDarkMode ? COLORS.white : COLORS.gray[900];
+    const entryContentColor = isDarkMode ? COLORS.gray[200] : COLORS.gray[700];
+    const entryDateColor = isDarkMode ? COLORS.gray[500] : COLORS.gray[400];
+    const inputBg = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
+    const inputColor = isDarkMode ? COLORS.gray[100] : COLORS.gray[900];
+    const placeholderColor = isDarkMode ? COLORS.gray[500] : COLORS.gray[400];
+    const emptyHintColor = isDarkMode ? COLORS.gray[500] : COLORS.gray[400];
+
     return (
         <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-            <SafeAreaView style={styles.flex1} edges={["top"]}>
-                <View style={styles.header}>
+            <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
+                <View style={[styles.header, { backgroundColor: headerBg, borderBottomColor: headerBorder }]}>
                     <TouchableOpacity onPress={onClose} hitSlop={8} style={styles.headerBtn}>
-                        <Ionicons name="close" size={24} color={COLORS.gray[800]} />
+                        <Ionicons name="close" size={24} color={isDarkMode ? COLORS.gray[300] : COLORS.gray[800]} />
                     </TouchableOpacity>
                     <View style={{ flex: 1 }}>
-                        <Text style={styles.headerTitle}>방명록</Text>
-                        <Text style={styles.headerSub}>{entries.length}개</Text>
+                        <Text style={[styles.headerTitle, { color: titleColor }]}>방명록</Text>
+                        <Text style={[styles.headerSub, { color: subColor }]}>{entries.length}개</Text>
                     </View>
                 </View>
 
@@ -88,8 +105,8 @@ export default function GuestbookModal({
                     ) : entries.length === 0 ? (
                         <View style={styles.emptyBox}>
                             <Ionicons name="chatbubbles-outline" size={36} color={COLORS.gray[300]} />
-                            <Text style={styles.emptyText}>아직 방명록이 없어요</Text>
-                            <Text style={styles.emptyHint}>첫 번째 메시지를 남겨보세요</Text>
+                            <Text style={[styles.emptyText, { color: isDarkMode ? COLORS.gray[300] : COLORS.gray[600] }]}>아직 방명록이 없어요</Text>
+                            <Text style={[styles.emptyHint, { color: emptyHintColor }]}>첫 번째 메시지를 남겨보세요</Text>
                         </View>
                     ) : (
                         <FlatList
@@ -97,7 +114,7 @@ export default function GuestbookModal({
                             keyExtractor={(e) => e.id}
                             contentContainerStyle={{ padding: 16, paddingBottom: 96, gap: 10 }}
                             renderItem={({ item }) => (
-                                <View style={styles.entryCard}>
+                                <View style={[styles.entryCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
                                     {item.writerAvatar ? (
                                         <Image source={{ uri: item.writerAvatar }} style={styles.avatar} />
                                     ) : (
@@ -109,10 +126,10 @@ export default function GuestbookModal({
                                     )}
                                     <View style={{ flex: 1 }}>
                                         <View style={styles.entryHeader}>
-                                            <Text style={styles.entryName}>{item.writerNickname ?? "익명"}</Text>
-                                            <Text style={styles.entryDate}>{formatDate(item.createdAt)}</Text>
+                                            <Text style={[styles.entryName, { color: entryNameColor }]}>{item.writerNickname ?? "익명"}</Text>
+                                            <Text style={[styles.entryDate, { color: entryDateColor }]}>{formatDate(item.createdAt)}</Text>
                                         </View>
-                                        <Text style={styles.entryContent}>{item.content}</Text>
+                                        <Text style={[styles.entryContent, { color: entryContentColor }]}>{item.content}</Text>
                                     </View>
                                 </View>
                             )}
@@ -120,11 +137,14 @@ export default function GuestbookModal({
                     )}
 
                     {canWrite && (
-                        <View style={[styles.inputRow, { paddingBottom: 12 + Math.max(insets.bottom, 0) }]}>
+                        <View style={[
+                            styles.inputRow,
+                            { backgroundColor: headerBg, borderTopColor: headerBorder, paddingBottom: 12 + Math.max(insets.bottom, 0) },
+                        ]}>
                             <TextInput
-                                style={styles.textInput}
+                                style={[styles.textInput, { backgroundColor: inputBg, color: inputColor }]}
                                 placeholder="따뜻한 한 줄을 남겨주세요..."
-                                placeholderTextColor={COLORS.gray[400]}
+                                placeholderTextColor={placeholderColor}
                                 value={input}
                                 onChangeText={setInput}
                                 multiline
@@ -177,7 +197,7 @@ function formatDate(iso: string): string {
 }
 
 const styles = StyleSheet.create({
-    flex1: { flex: 1, backgroundColor: COLORS.gray[50] },
+    flex1: { flex: 1 },
     header: {
         flexDirection: "row",
         alignItems: "center",
@@ -185,12 +205,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         paddingVertical: 12,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.gray[100],
-        backgroundColor: "#fff",
     },
     headerBtn: { width: 32, height: 32, alignItems: "center", justifyContent: "center" },
-    headerTitle: { fontSize: 17, fontWeight: "700", color: COLORS.gray[900] },
-    headerSub: { fontSize: 11, color: COLORS.gray[500], marginTop: 2 },
+    headerTitle: { fontSize: 17, fontWeight: "700" },
+    headerSub: { fontSize: 11, marginTop: 2 },
     loadingBox: { flex: 1, alignItems: "center", justifyContent: "center" },
     emptyBox: {
         flex: 1,
@@ -198,16 +216,14 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         gap: 8,
     },
-    emptyText: { fontSize: 14, fontWeight: "600", color: COLORS.gray[600], marginTop: 8 },
-    emptyHint: { fontSize: 12, color: COLORS.gray[400] },
+    emptyText: { fontSize: 14, fontWeight: "600", marginTop: 8 },
+    emptyHint: { fontSize: 12 },
     entryCard: {
         flexDirection: "row",
         gap: 10,
-        backgroundColor: "#fff",
         borderRadius: 12,
         padding: 12,
         borderWidth: 1,
-        borderColor: COLORS.gray[100],
     },
     avatar: { width: 36, height: 36, borderRadius: 18 },
     avatarFallback: { alignItems: "center", justifyContent: "center" },
@@ -217,28 +233,24 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         marginBottom: 4,
     },
-    entryName: { fontSize: 13, fontWeight: "700", color: COLORS.gray[900] },
-    entryDate: { fontSize: 11, color: COLORS.gray[400] },
-    entryContent: { fontSize: 13, color: COLORS.gray[700], lineHeight: 18 },
+    entryName: { fontSize: 13, fontWeight: "700" },
+    entryDate: { fontSize: 11 },
+    entryContent: { fontSize: 13, lineHeight: 18 },
     inputRow: {
         flexDirection: "row",
         gap: 8,
         paddingHorizontal: 16,
         paddingTop: 12,
-        backgroundColor: "#fff",
         borderTopWidth: 1,
-        borderTopColor: COLORS.gray[100],
         alignItems: "flex-end",
     },
     textInput: {
         flex: 1,
-        backgroundColor: COLORS.gray[100],
         borderRadius: 16,
         paddingHorizontal: 14,
         paddingVertical: 10,
         fontSize: 13,
         maxHeight: 96,
-        color: COLORS.gray[900],
     },
     sendBtn: {
         width: 40, height: 40, borderRadius: 20,

@@ -11,6 +11,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/lib/theme";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { BACKGROUND_CATALOG } from "@/data/minihompyData";
 import {
     getOwnedBackgrounds, purchaseBackground, patchMinihompySettings,
@@ -30,6 +31,7 @@ export default function BackgroundShopModal({
     visible, onClose, accessToken, points, currentSlug, onApplied, accentColor,
 }: Props) {
     const insets = useSafeAreaInsets();
+    const { isDarkMode } = useDarkMode();
     const [owned, setOwned] = useState<Set<string>>(new Set(["default_sky"]));
     const [loading, setLoading] = useState(true);
     const [busy, setBusy] = useState<string | null>(null);
@@ -98,18 +100,30 @@ export default function BackgroundShopModal({
         );
     }
 
+    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.gray[50];
+    const headerBg = isDarkMode ? COLORS.gray[900] : "#fff";
+    const headerBorder = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
+    const titleColor = isDarkMode ? COLORS.white : COLORS.gray[900];
+    const subColor = isDarkMode ? COLORS.gray[400] : COLORS.gray[500];
+    const cardBg = isDarkMode ? COLORS.gray[900] : "#fff";
+    const cardBorder = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
+    const pointPillBg = isDarkMode ? "rgba(5,178,220,0.12)" : COLORS.memento[50];
+    const cardNameColor = isDarkMode ? COLORS.white : COLORS.gray[900];
+    const cardDescColor = isDarkMode ? COLORS.gray[400] : COLORS.gray[500];
+    const cardPriceColor = isDarkMode ? COLORS.gray[300] : COLORS.gray[700];
+
     return (
         <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-            <SafeAreaView style={styles.flex1} edges={["top"]}>
-                <View style={styles.header}>
+            <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
+                <View style={[styles.header, { backgroundColor: headerBg, borderBottomColor: headerBorder }]}>
                     <TouchableOpacity onPress={onClose} hitSlop={8} style={styles.headerBtn}>
-                        <Ionicons name="close" size={24} color={COLORS.gray[800]} />
+                        <Ionicons name="close" size={24} color={isDarkMode ? COLORS.gray[300] : COLORS.gray[800]} />
                     </TouchableOpacity>
                     <View style={{ flex: 1 }}>
-                        <Text style={styles.headerTitle}>배경 테마</Text>
-                        <Text style={styles.headerSub}>탭해서 적용 · 구매</Text>
+                        <Text style={[styles.headerTitle, { color: titleColor }]}>배경 테마</Text>
+                        <Text style={[styles.headerSub, { color: subColor }]}>탭해서 적용 · 구매</Text>
                     </View>
-                    <View style={styles.pointPill}>
+                    <View style={[styles.pointPill, { backgroundColor: pointPillBg }]}>
                         <Ionicons name="star" size={12} color={COLORS.memento[500]} />
                         <Text style={styles.pointText}>{points.toLocaleString()}P</Text>
                     </View>
@@ -136,6 +150,7 @@ export default function BackgroundShopModal({
                                     disabled={itemBusy}
                                     style={[
                                         styles.card,
+                                        { backgroundColor: cardBg, borderColor: cardBorder },
                                         isApplied && { borderColor: accentColor, borderWidth: 2 },
                                     ]}
                                     activeOpacity={0.85}
@@ -158,8 +173,8 @@ export default function BackgroundShopModal({
                                         )}
                                     </View>
                                     <View style={{ padding: 10 }}>
-                                        <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
-                                        <Text style={styles.cardDesc} numberOfLines={2}>{item.description || " "}</Text>
+                                        <Text style={[styles.cardName, { color: cardNameColor }]} numberOfLines={1}>{item.name}</Text>
+                                        <Text style={[styles.cardDesc, { color: cardDescColor }]} numberOfLines={2}>{item.description || " "}</Text>
                                         <View style={styles.cardFooter}>
                                             {isOwned ? (
                                                 <Text style={[styles.cardPrice, { color: accentColor }]}>
@@ -168,7 +183,7 @@ export default function BackgroundShopModal({
                                             ) : (
                                                 <View style={styles.priceRow}>
                                                     <Ionicons name="star" size={11} color={COLORS.memento[500]} />
-                                                    <Text style={styles.cardPrice}>{item.price.toLocaleString()}P</Text>
+                                                    <Text style={[styles.cardPrice, { color: cardPriceColor }]}>{item.price.toLocaleString()}P</Text>
                                                 </View>
                                             )}
                                         </View>
@@ -184,7 +199,7 @@ export default function BackgroundShopModal({
 }
 
 const styles = StyleSheet.create({
-    flex1: { flex: 1, backgroundColor: COLORS.gray[50] },
+    flex1: { flex: 1 },
     header: {
         flexDirection: "row",
         alignItems: "center",
@@ -192,26 +207,21 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         paddingVertical: 12,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.gray[100],
-        backgroundColor: "#fff",
     },
     headerBtn: { width: 32, height: 32, alignItems: "center", justifyContent: "center" },
-    headerTitle: { fontSize: 17, fontWeight: "700", color: COLORS.gray[900] },
-    headerSub: { fontSize: 11, color: COLORS.gray[500], marginTop: 2 },
+    headerTitle: { fontSize: 17, fontWeight: "700" },
+    headerSub: { fontSize: 11, marginTop: 2 },
     pointPill: {
         flexDirection: "row", alignItems: "center", gap: 4,
         paddingHorizontal: 10, paddingVertical: 6, borderRadius: 9999,
-        backgroundColor: COLORS.memento[50],
     },
     pointText: { fontSize: 12, fontWeight: "700", color: COLORS.memento[600] },
     loadingBox: { flex: 1, alignItems: "center", justifyContent: "center" },
     card: {
         flex: 1,
-        backgroundColor: "#fff",
         borderRadius: 14,
         overflow: "hidden",
         borderWidth: 1,
-        borderColor: COLORS.gray[100],
     },
     cardImgWrap: {
         aspectRatio: 1,
@@ -230,9 +240,9 @@ const styles = StyleSheet.create({
         width: 24, height: 24, borderRadius: 12,
         alignItems: "center", justifyContent: "center",
     },
-    cardName: { fontSize: 13, fontWeight: "700", color: COLORS.gray[900] },
-    cardDesc: { fontSize: 11, color: COLORS.gray[500], marginTop: 2, lineHeight: 15, minHeight: 30 },
+    cardName: { fontSize: 13, fontWeight: "700" },
+    cardDesc: { fontSize: 11, marginTop: 2, lineHeight: 15, minHeight: 30 },
     cardFooter: { marginTop: 8 },
     priceRow: { flexDirection: "row", alignItems: "center", gap: 4 },
-    cardPrice: { fontSize: 12, fontWeight: "700", color: COLORS.gray[700] },
+    cardPrice: { fontSize: 12, fontWeight: "700" },
 });

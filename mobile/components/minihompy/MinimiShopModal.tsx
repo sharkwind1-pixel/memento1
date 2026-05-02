@@ -16,6 +16,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/lib/theme";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { MINIMI_CATALOG } from "@/data/minihompyData";
 import {
     getMinimiCatalog, getMinimiInventory,
@@ -38,6 +39,7 @@ export default function MinimiShopModal({
     visible, onClose, accessToken, points, onChanged, accentColor,
 }: Props) {
     const insets = useSafeAreaInsets();
+    const { isDarkMode } = useDarkMode();
     const [catalog, setCatalog] = useState<MinimiCatalogItem[]>([]);
     const [ownedSlugs, setOwnedSlugs] = useState<Set<string>>(new Set());
     const [slugToUserMinimiId, setSlugToUserMinimiId] = useState<Record<string, string>>({});
@@ -214,25 +216,40 @@ export default function MinimiShopModal({
             ? catalog.filter((c) => ownedSlugs.has(c.slug))
             : catalog.filter((c) => c.category === filter);
 
+    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.gray[50];
+    const headerBg = isDarkMode ? COLORS.gray[900] : "#fff";
+    const headerBorder = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
+    const titleColor = isDarkMode ? COLORS.white : COLORS.gray[900];
+    const subColor = isDarkMode ? COLORS.gray[400] : COLORS.gray[500];
+    const cardBg = isDarkMode ? COLORS.gray[900] : "#fff";
+    const cardBorder = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
+    const cardImgBg = isDarkMode ? COLORS.gray[800] : COLORS.gray[50];
+    const cardNameColor = isDarkMode ? COLORS.white : COLORS.gray[900];
+    const cardPriceColor = isDarkMode ? COLORS.gray[300] : COLORS.gray[700];
+    const filterChipBg = isDarkMode ? COLORS.gray[900] : "#fff";
+    const filterChipBorder = isDarkMode ? COLORS.gray[700] : COLORS.gray[200];
+    const filterChipColor = isDarkMode ? COLORS.gray[300] : COLORS.gray[700];
+    const pointPillBg = isDarkMode ? "rgba(5,178,220,0.12)" : COLORS.memento[50];
+
     return (
         <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-            <SafeAreaView style={styles.flex1} edges={["top"]}>
-                <View style={styles.header}>
+            <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
+                <View style={[styles.header, { backgroundColor: headerBg, borderBottomColor: headerBorder }]}>
                     <TouchableOpacity onPress={onClose} hitSlop={8} style={styles.headerBtn}>
-                        <Ionicons name="close" size={24} color={COLORS.gray[800]} />
+                        <Ionicons name="close" size={24} color={isDarkMode ? COLORS.gray[300] : COLORS.gray[800]} />
                     </TouchableOpacity>
                     <View style={{ flex: 1 }}>
-                        <Text style={styles.headerTitle}>미니미 상점</Text>
-                        <Text style={styles.headerSub}>탭해서 구매 · 장착</Text>
+                        <Text style={[styles.headerTitle, { color: titleColor }]}>미니미 상점</Text>
+                        <Text style={[styles.headerSub, { color: subColor }]}>탭해서 구매 · 장착</Text>
                     </View>
-                    <View style={styles.pointPill}>
+                    <View style={[styles.pointPill, { backgroundColor: pointPillBg }]}>
                         <Ionicons name="star" size={12} color={COLORS.memento[500]} />
                         <Text style={styles.pointText}>{points.toLocaleString()}P</Text>
                     </View>
                 </View>
 
                 {/* 카테고리 필터 */}
-                <View style={styles.filterRow}>
+                <View style={[styles.filterRow, { backgroundColor: headerBg, borderBottomColor: headerBorder }]}>
                     {(["all", "owned", "dog", "cat"] as CategoryFilter[]).map((c) => {
                         const ownedCount = ownedSlugs.size;
                         return (
@@ -241,13 +258,14 @@ export default function MinimiShopModal({
                                 onPress={() => setFilter(c)}
                                 style={[
                                     styles.filterChip,
+                                    { backgroundColor: filterChipBg, borderColor: filterChipBorder },
                                     filter === c && { backgroundColor: accentColor, borderColor: accentColor },
                                 ]}
                             >
                                 <Text style={{
                                     fontSize: 12,
                                     fontWeight: "600",
-                                    color: filter === c ? "#fff" : COLORS.gray[700],
+                                    color: filter === c ? "#fff" : filterChipColor,
                                 }}>
                                     {c === "all" ? "전체"
                                         : c === "owned" ? `보관함 (${ownedCount})`
@@ -280,11 +298,12 @@ export default function MinimiShopModal({
                                     disabled={itemBusy}
                                     style={[
                                         styles.card,
+                                        { backgroundColor: cardBg, borderColor: cardBorder },
                                         equipped && { borderColor: accentColor, borderWidth: 2 },
                                     ]}
                                     activeOpacity={0.85}
                                 >
-                                    <View style={styles.cardImgWrap}>
+                                    <View style={[styles.cardImgWrap, { backgroundColor: cardImgBg }]}>
                                         <Image source={{ uri: item.imageUrl }} style={styles.cardImg} resizeMode="contain" />
                                         {equipped && (
                                             <View style={[styles.equippedBadge, { backgroundColor: accentColor }]}>
@@ -299,8 +318,8 @@ export default function MinimiShopModal({
                                         )}
                                     </View>
                                     <View style={{ padding: 10 }}>
-                                        <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
-                                        <Text style={styles.cardDesc} numberOfLines={2}>{item.description}</Text>
+                                        <Text style={[styles.cardName, { color: cardNameColor }]} numberOfLines={1}>{item.name}</Text>
+                                        <Text style={[styles.cardDesc, { color: subColor }]} numberOfLines={2}>{item.description}</Text>
                                         <View style={styles.cardFooter}>
                                             {owned ? (
                                                 <Text style={[styles.cardPrice, { color: accentColor }]}>
@@ -309,7 +328,7 @@ export default function MinimiShopModal({
                                             ) : (
                                                 <View style={styles.priceRow}>
                                                     <Ionicons name="star" size={11} color={COLORS.memento[500]} />
-                                                    <Text style={styles.cardPrice}>{item.price.toLocaleString()}P</Text>
+                                                    <Text style={[styles.cardPrice, { color: cardPriceColor }]}>{item.price.toLocaleString()}P</Text>
                                                 </View>
                                             )}
                                         </View>
@@ -325,7 +344,7 @@ export default function MinimiShopModal({
 }
 
 const styles = StyleSheet.create({
-    flex1: { flex: 1, backgroundColor: COLORS.gray[50] },
+    flex1: { flex: 1 },
     header: {
         flexDirection: "row",
         alignItems: "center",
@@ -333,16 +352,13 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         paddingVertical: 12,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.gray[100],
-        backgroundColor: "#fff",
     },
     headerBtn: { width: 32, height: 32, alignItems: "center", justifyContent: "center" },
-    headerTitle: { fontSize: 17, fontWeight: "700", color: COLORS.gray[900] },
-    headerSub: { fontSize: 11, color: COLORS.gray[500], marginTop: 2 },
+    headerTitle: { fontSize: 17, fontWeight: "700" },
+    headerSub: { fontSize: 11, marginTop: 2 },
     pointPill: {
         flexDirection: "row", alignItems: "center", gap: 4,
         paddingHorizontal: 10, paddingVertical: 6, borderRadius: 9999,
-        backgroundColor: COLORS.memento[50],
     },
     pointText: { fontSize: 12, fontWeight: "700", color: COLORS.memento[600] },
     filterRow: {
@@ -350,29 +366,22 @@ const styles = StyleSheet.create({
         gap: 8,
         paddingHorizontal: 16,
         paddingVertical: 12,
-        backgroundColor: "#fff",
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.gray[100],
     },
     filterChip: {
         paddingHorizontal: 14,
         paddingVertical: 8,
         borderRadius: 9999,
         borderWidth: 1,
-        borderColor: COLORS.gray[200],
-        backgroundColor: "#fff",
     },
     loadingBox: { flex: 1, alignItems: "center", justifyContent: "center" },
     card: {
         flex: 1,
-        backgroundColor: "#fff",
         borderRadius: 14,
         overflow: "hidden",
         borderWidth: 1,
-        borderColor: COLORS.gray[100],
     },
     cardImgWrap: {
-        backgroundColor: COLORS.gray[50],
         aspectRatio: 1,
         position: "relative",
     },
@@ -395,9 +404,9 @@ const styles = StyleSheet.create({
         borderRadius: 9999,
     },
     equippedText: { color: "#fff", fontSize: 9, fontWeight: "700" },
-    cardName: { fontSize: 13, fontWeight: "700", color: COLORS.gray[900] },
-    cardDesc: { fontSize: 11, color: COLORS.gray[500], marginTop: 2, lineHeight: 15, minHeight: 30 },
+    cardName: { fontSize: 13, fontWeight: "700" },
+    cardDesc: { fontSize: 11, marginTop: 2, lineHeight: 15, minHeight: 30 },
     cardFooter: { marginTop: 8 },
     priceRow: { flexDirection: "row", alignItems: "center", gap: 4 },
-    cardPrice: { fontSize: 12, fontWeight: "700", color: COLORS.gray[700] },
+    cardPrice: { fontSize: 12, fontWeight: "700" },
 });

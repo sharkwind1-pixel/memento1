@@ -15,6 +15,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/lib/theme";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { patchMinihompySettings } from "@/lib/minihompy-api";
 
 const MAX_LENGTH = 100;
@@ -32,6 +33,7 @@ export default function GreetingEditModal({
     visible, onClose, accessToken, initialGreeting, accentColor, onSaved,
 }: Props) {
     const insets = useSafeAreaInsets();
+    const { isDarkMode } = useDarkMode();
     const [text, setText] = useState(initialGreeting);
     const [saving, setSaving] = useState(false);
 
@@ -54,16 +56,26 @@ export default function GreetingEditModal({
         }
     }
 
+    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.gray[50];
+    const headerBg = isDarkMode ? COLORS.gray[900] : "#fff";
+    const headerBorder = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
+    const titleColor = isDarkMode ? COLORS.white : COLORS.gray[900];
+    const subColor = isDarkMode ? COLORS.gray[400] : COLORS.gray[500];
+    const inputBg = isDarkMode ? COLORS.gray[900] : "#fff";
+    const inputBorder = isDarkMode ? COLORS.gray[700] : COLORS.gray[200];
+    const inputColor = isDarkMode ? COLORS.gray[100] : COLORS.gray[900];
+    const placeholderColor = isDarkMode ? COLORS.gray[500] : COLORS.gray[400];
+
     return (
         <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-            <SafeAreaView style={styles.flex1} edges={["top"]}>
-                <View style={styles.header}>
+            <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
+                <View style={[styles.header, { backgroundColor: headerBg, borderBottomColor: headerBorder }]}>
                     <TouchableOpacity onPress={onClose} hitSlop={8} style={styles.headerBtn}>
-                        <Ionicons name="close" size={24} color={COLORS.gray[800]} />
+                        <Ionicons name="close" size={24} color={isDarkMode ? COLORS.gray[300] : COLORS.gray[800]} />
                     </TouchableOpacity>
                     <View style={{ flex: 1 }}>
-                        <Text style={styles.headerTitle}>인사말</Text>
-                        <Text style={styles.headerSub}>방문자에게 보여줄 한마디</Text>
+                        <Text style={[styles.headerTitle, { color: titleColor }]}>인사말</Text>
+                        <Text style={[styles.headerSub, { color: subColor }]}>방문자에게 보여줄 한마디</Text>
                     </View>
                     <TouchableOpacity
                         onPress={handleSave}
@@ -88,9 +100,9 @@ export default function GreetingEditModal({
                 >
                     <View style={[styles.body, { paddingBottom: 16 + insets.bottom }]}>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, { backgroundColor: inputBg, borderColor: inputBorder, color: inputColor }]}
                             placeholder="예: 우리 아이 만나러 오세요!"
-                            placeholderTextColor={COLORS.gray[400]}
+                            placeholderTextColor={placeholderColor}
                             value={text}
                             onChangeText={setText}
                             multiline
@@ -98,11 +110,11 @@ export default function GreetingEditModal({
                             autoFocus
                         />
                         <View style={styles.metaRow}>
-                            <Text style={styles.metaText}>
+                            <Text style={[styles.metaText, { color: subColor }]}>
                                 {text.length}/{MAX_LENGTH}
                             </Text>
                             {text.trim().length === 0 && initialGreeting.length > 0 && (
-                                <Text style={styles.metaHint}>비우고 저장하면 인사말 제거</Text>
+                                <Text style={[styles.metaHint, { color: placeholderColor }]}>비우고 저장하면 인사말 제거</Text>
                             )}
                         </View>
                     </View>
@@ -113,7 +125,7 @@ export default function GreetingEditModal({
 }
 
 const styles = StyleSheet.create({
-    flex1: { flex: 1, backgroundColor: COLORS.gray[50] },
+    flex1: { flex: 1 },
     header: {
         flexDirection: "row",
         alignItems: "center",
@@ -121,12 +133,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         paddingVertical: 12,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.gray[100],
-        backgroundColor: "#fff",
     },
     headerBtn: { width: 32, height: 32, alignItems: "center", justifyContent: "center" },
-    headerTitle: { fontSize: 17, fontWeight: "700", color: COLORS.gray[900] },
-    headerSub: { fontSize: 11, color: COLORS.gray[500], marginTop: 2 },
+    headerTitle: { fontSize: 17, fontWeight: "700" },
+    headerSub: { fontSize: 11, marginTop: 2 },
     saveBtn: {
         paddingHorizontal: 14,
         paddingVertical: 8,
@@ -135,7 +145,6 @@ const styles = StyleSheet.create({
     saveBtnText: { color: "#fff", fontSize: 13, fontWeight: "700" },
     body: { padding: 16, gap: 8, flex: 1 },
     input: {
-        backgroundColor: "#fff",
         borderRadius: 12,
         padding: 14,
         fontSize: 15,
@@ -143,8 +152,6 @@ const styles = StyleSheet.create({
         minHeight: 120,
         textAlignVertical: "top",
         borderWidth: 1,
-        borderColor: COLORS.gray[200],
-        color: COLORS.gray[900],
     },
     metaRow: {
         flexDirection: "row",
@@ -152,6 +159,6 @@ const styles = StyleSheet.create({
         alignItems: "center",
         paddingHorizontal: 4,
     },
-    metaText: { fontSize: 11, color: COLORS.gray[500] },
-    metaHint: { fontSize: 11, color: COLORS.gray[400], fontStyle: "italic" },
+    metaText: { fontSize: 11 },
+    metaHint: { fontSize: 11, fontStyle: "italic" },
 });
