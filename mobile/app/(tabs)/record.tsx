@@ -32,6 +32,8 @@ import MediaUploadModal from "@/components/record/MediaUploadModal";
 import PhotoLightbox from "@/components/record/PhotoLightbox";
 import AlbumDetailModal from "@/components/record/AlbumDetailModal";
 import VideoGenerateModal from "@/components/record/VideoGenerateModal";
+import RemindersSummary from "@/components/record/RemindersSummary";
+import HealingJourneySummary from "@/components/record/HealingJourneySummary";
 import { supabase } from "@/lib/supabase";
 import * as Haptics from "expo-haptics";
 import { Alert as RNAlert } from "react-native";
@@ -376,21 +378,38 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
                 contentContainerStyle={[styles.tabContent, { paddingBottom: 96 }]}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accentColor} />}
                 ListHeaderComponent={
-                    <View style={styles.timelineHeader}>
-                        <View style={{ flex: 1 }}>
-                            <Text style={[styles.timelineHeaderTitle, isMemorialMode && { color: COLORS.white }]}>
-                                타임라인 일기
-                            </Text>
-                            <Text style={styles.timelineHeaderCount}>{entries.length}개</Text>
+                    <View>
+                        {/* 모드별 상단 위젯 — 추모: 치유의 여정, 일상: 케어 리마인더 */}
+                        {isMemorialMode ? (
+                            <HealingJourneySummary
+                                petId={petId}
+                                petName={petName}
+                                accentColor={accentColor}
+                            />
+                        ) : (
+                            <RemindersSummary
+                                petId={petId}
+                                petName={petName}
+                                accentColor={accentColor}
+                            />
+                        )}
+
+                        <View style={styles.timelineHeader}>
+                            <View style={{ flex: 1 }}>
+                                <Text style={[styles.timelineHeaderTitle, isMemorialMode && { color: COLORS.white }]}>
+                                    타임라인 일기
+                                </Text>
+                                <Text style={styles.timelineHeaderCount}>{entries.length}개</Text>
+                            </View>
+                            <TouchableOpacity
+                                onPress={openAdd}
+                                style={[styles.addEntryBtn, { backgroundColor: accentColor }]}
+                                activeOpacity={0.85}
+                            >
+                                <Ionicons name="add" size={16} color="#fff" />
+                                <Text style={styles.addEntryText}>일기 쓰기</Text>
+                            </TouchableOpacity>
                         </View>
-                        <TouchableOpacity
-                            onPress={openAdd}
-                            style={[styles.addEntryBtn, { backgroundColor: accentColor }]}
-                            activeOpacity={0.85}
-                        >
-                            <Ionicons name="add" size={16} color="#fff" />
-                            <Text style={styles.addEntryText}>일기 쓰기</Text>
-                        </TouchableOpacity>
                     </View>
                 }
                 ListEmptyComponent={

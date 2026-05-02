@@ -76,11 +76,21 @@ export default function WritePostScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
     const { isDarkMode } = useDarkMode();
-    const { subcategory } = useLocalSearchParams<{ subcategory?: CommunitySubcategory }>();
+    const { subcategory, editId } = useLocalSearchParams<{
+        subcategory?: CommunitySubcategory;
+        editId?: string;
+    }>();
     const { session, user, profile } = useAuth();
     const { pets, isMemorialMode } = usePet();
 
-    const boardType: CommunitySubcategory = (subcategory as CommunitySubcategory) || "free";
+    const isEditMode = !!editId;
+
+    // 편집 모드 — 서버에서 게시글 로드 후 boardType/badge/tag/region 등 채움
+    const [editLoaded, setEditLoaded] = useState(!isEditMode);
+    const [loadedBoardType, setLoadedBoardType] = useState<CommunitySubcategory | null>(null);
+
+    const boardType: CommunitySubcategory =
+        loadedBoardType ?? ((subcategory as CommunitySubcategory) || "free");
     const isFreeBoard = boardType === "free";
     const isLocalBoard = boardType === "local";
     const isMemorial = boardType === "memorial";
@@ -106,14 +116,77 @@ export default function WritePostScreen() {
         [profile?.nickname, user?.email],
     );
 
-    // boardType 변경 시 상태 초기화
+    // boardType 변경 시 상태 초기화 (편집 모드는 제외 — 서버 데이터 보존)
     useEffect(() => {
+        if (isEditMode) return;
         setBadge("");
         setTag("");
         setRegion("");
         setAuthorPetId("");
         setIsPublic(false);
-    }, [boardType]);
+    }, [boardType, isEditMode]);
+
+    // 편집 모드: 기존 게시글 로드 → 폼 채움
+    useEffect(() => {
+        if (!isEditMode || !editId || !session?.access_token) return;
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/posts/${editId}`, {
+                    headers: { Authorization: `Bearer ${session.access_token}` },
+                });
+                if (!res.ok) {
+                    Alert.alert("불러오기 실패", "게시글을 불러오지 못했어요.", [
+                        { text: "확인", onPress: () => router.back() },
+                    ]);
+                    return;
+                }
+                const data = await res.json();
+                const post = data?.post ?? data;
+                if (cancelled || !post) return;
+
+                // 본인 글인지 클라이언트에서도 확인 (서버는 PATCH 시 다시 검증)
+                const authorId = post.authorId ?? post.author_id ?? post.user_id;
+                if (user && authorId && authorId !== user.id) {
+                    Alert.alert("권한 없음", "본인 게시글만 수정할 수 있어요.", [
+                        { text: "확인", onPress: () => router.back() },
+                    ]);
+                    return;
+                }
+
+                setLoadedBoardType(
+                    (post.subcategory ?? post.boardType ?? "free") as CommunitySubcategory,
+                );
+                setTitle(typeof post.title === "string" ? post.title : "");
+                setContent(typeof post.content === "string" ? post.content : "");
+                setBadge(typeof post.badge === "string" ? post.badge : "");
+                setTag(typeof post.tag === "string"
+                    ? post.tag
+                    : typeof post.animalType === "string"
+                        ? post.animalType
+                        : "");
+                setRegion(typeof post.region === "string" ? post.region : "");
+                if (typeof post.isPublic === "boolean") setIsPublic(post.isPublic);
+                else if (typeof post.is_public === "boolean") setIsPublic(post.is_public);
+
+                // 이미지: 이미 업로드된 URL이라 uploaded만 채움
+                const imageUrls: string[] = Array.isArray(post.imageUrls)
+                    ? post.imageUrls.filter((x: unknown) => typeof x === "string")
+                    : Array.isArray(post.image_urls)
+                        ? post.image_urls.filter((x: unknown) => typeof x === "string")
+                        : Array.isArray(post.images)
+                            ? post.images.filter((x: unknown) => typeof x === "string")
+                            : [];
+                setImages(imageUrls.map((url) => ({ uri: url, uploaded: url })));
+                setEditLoaded(true);
+            } catch {
+                Alert.alert("불러오기 실패", "네트워크 오류가 발생했어요.", [
+                    { text: "확인", onPress: () => router.back() },
+                ]);
+            }
+        })();
+        return () => { cancelled = true; };
+    }, [isEditMode, editId, session?.access_token, user, router]);
 
     // ============================================
     // 이미지 선택 + 업로드
@@ -213,6 +286,35 @@ export default function WritePostScreen() {
 
         setSubmitting(true);
         try {
+            if (isEditMode && editId) {
+                // PATCH — 서버 핸들러는 title/content/badge만 받음
+                const body: Record<string, unknown> = {
+                    title: title.trim(),
+                    content: content.trim(),
+                    badge,
+                };
+                const res = await fetch(`${API_BASE_URL}/api/posts/${editId}`, {
+                    method: "PATCH",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${session.access_token}`,
+                    },
+                    body: JSON.stringify(body),
+                });
+                if (!res.ok) {
+                    let msg = `HTTP ${res.status}`;
+                    try {
+                        const err = await res.json();
+                        msg = err.error || msg;
+                    } catch {}
+                    throw new Error(msg);
+                }
+                Alert.alert("수정 완료", "게시글이 수정되었어요.", [
+                    { text: "확인", onPress: () => router.back() },
+                ]);
+                return;
+            }
+
             const body: Record<string, unknown> = {
                 boardType,
                 badge,
@@ -248,7 +350,7 @@ export default function WritePostScreen() {
                 { text: "확인", onPress: () => router.back() },
             ]);
         } catch (e) {
-            Alert.alert("등록 실패", e instanceof Error ? e.message : "");
+            Alert.alert(isEditMode ? "수정 실패" : "등록 실패", e instanceof Error ? e.message : "");
         } finally {
             setSubmitting(false);
         }
@@ -267,10 +369,26 @@ export default function WritePostScreen() {
         (!isFreeBoard || !!tag) && (!isLocalBoard || !!region) &&
         !submitting;
 
+    if (isEditMode && !editLoaded) {
+        return (
+            <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
+                <Stack.Screen options={{ headerShown: false }} />
+                <AppHeader showBack title="게시글 수정" hideActions />
+                <View style={[styles.flex1, { alignItems: "center", justifyContent: "center" }]}>
+                    <ActivityIndicator size="large" color={accentColor} />
+                </View>
+            </SafeAreaView>
+        );
+    }
+
     return (
         <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
             <Stack.Screen options={{ headerShown: false }} />
-            <AppHeader showBack title={`${SUBCATEGORY_LABELS[boardType]} 글쓰기`} hideActions />
+            <AppHeader
+                showBack
+                title={isEditMode ? `${SUBCATEGORY_LABELS[boardType]} 수정` : `${SUBCATEGORY_LABELS[boardType]} 글쓰기`}
+                hideActions
+            />
 
             <KeyboardAvoidingView
                 style={styles.flex1}
@@ -513,7 +631,7 @@ export default function WritePostScreen() {
                                 fontSize: 15, fontWeight: "700",
                                 color: canSubmit ? "#fff" : COLORS.gray[400],
                             }}>
-                                게시하기
+                                {isEditMode ? "수정하기" : "게시하기"}
                             </Text>
                         )}
                     </TouchableOpacity>

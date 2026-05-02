@@ -209,6 +209,12 @@ export default function PostDetailScreen() {
         }
     }
 
+    function handleEdit() {
+        if (!post) return;
+        // write 화면이 editId를 받아 PATCH 모드로 동작
+        router.push(`/post/write?editId=${post.id}`);
+    }
+
     function handleMore() {
         if (!post) return;
         const isAuthor = user && post.authorId && user.id === post.authorId;
@@ -216,9 +222,9 @@ export default function PostDetailScreen() {
         // iOS는 ActionSheetIOS, Android는 Alert로 fallback
         if (Platform.OS === "ios") {
             const options = isAuthor
-                ? ["삭제", "취소"]
+                ? ["수정", "삭제", "취소"]
                 : ["신고", "공유", "취소"];
-            const destructiveButtonIndex = isAuthor ? 0 : 0;
+            const destructiveButtonIndex = isAuthor ? 1 : 0;
             const cancelButtonIndex = options.length - 1;
             ActionSheetIOS.showActionSheetWithOptions(
                 {
@@ -229,7 +235,8 @@ export default function PostDetailScreen() {
                 },
                 (buttonIndex) => {
                     if (buttonIndex === cancelButtonIndex) return;
-                    if (isAuthor && buttonIndex === 0) confirmDelete();
+                    if (isAuthor && buttonIndex === 0) handleEdit();
+                    else if (isAuthor && buttonIndex === 1) confirmDelete();
                     else if (!isAuthor && buttonIndex === 0) showReportPicker();
                     else if (!isAuthor && buttonIndex === 1) handleShare();
                 },
@@ -238,6 +245,7 @@ export default function PostDetailScreen() {
             const options = isAuthor
                 ? [
                     { text: "취소", style: "cancel" as const },
+                    { text: "수정", onPress: handleEdit },
                     {
                         text: "삭제",
                         style: "destructive" as const,
