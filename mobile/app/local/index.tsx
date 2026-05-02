@@ -125,9 +125,20 @@ export default function LocalPostsScreen() {
                                     <Text style={styles.chipTextActive}>{c.label}</Text>
                                 </LinearGradient>
                             ) : (
-                                <View style={[styles.chip, styles.chipInactive]}>
-                                    <Ionicons name={c.icon} size={14} color={COLORS.gray[700]} style={{ marginRight: 6 }} />
-                                    <Text style={styles.chipText}>{c.label}</Text>
+                                <View style={[
+                                    styles.chip,
+                                    { backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100] },
+                                ]}>
+                                    <Ionicons
+                                        name={c.icon}
+                                        size={14}
+                                        color={isDarkMode ? COLORS.gray[300] : COLORS.gray[700]}
+                                        style={{ marginRight: 6 }}
+                                    />
+                                    <Text style={[
+                                        styles.chipText,
+                                        { color: isDarkMode ? COLORS.gray[300] : COLORS.gray[700] },
+                                    ]}>{c.label}</Text>
                                 </View>
                             )}
                         </TouchableOpacity>
@@ -167,7 +178,7 @@ export default function LocalPostsScreen() {
                         !isLoading ? (
                             <View style={styles.center}>
                                 <Ionicons name="map-outline" size={48} color={COLORS.gray[300]} />
-                                <Text style={styles.helpText}>아직 등록된 글이 없어요</Text>
+                                <Text style={[styles.helpText, { color: isDarkMode ? COLORS.gray[400] : COLORS.gray[500] }]}>아직 등록된 글이 없어요</Text>
                             </View>
                         ) : null
                     }
@@ -248,7 +259,7 @@ function LocalCard({ post, isDarkMode, onPress }: { post: LocalPost; isDarkMode:
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: COLORS.white },
+    container: { flex: 1 },
     filterScrollOuter: { flexGrow: 0, flexShrink: 0 },
     filterRow: { paddingHorizontal: 16, paddingVertical: 12 },
     chip: {
@@ -258,8 +269,7 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         borderRadius: 9999,
     },
-    chipInactive: { backgroundColor: COLORS.gray[100] },
-    chipText: { fontSize: 13, fontWeight: "500", color: COLORS.gray[700] },
+    chipText: { fontSize: 13, fontWeight: "500" },
     chipTextActive: { fontSize: 13, fontWeight: "600", color: "#fff" },
     fab: {
         position: "absolute",
@@ -277,18 +287,16 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
     },
     center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24, gap: 8 },
-    helpText: { fontSize: 13, color: COLORS.gray[500] },
+    helpText: { fontSize: 13 },
     listContent: { padding: 12, gap: 12 },
     footer: { paddingVertical: 24, alignItems: "center" },
     card: {
         flexDirection: "row",
-        backgroundColor: COLORS.white,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: COLORS.gray[100],
         overflow: "hidden",
     },
-    cardImage: { width: 96, height: 96, backgroundColor: COLORS.gray[50] },
+    cardImage: { width: 96, height: 96 },
     imagePlaceholder: { alignItems: "center", justifyContent: "center" },
     cardBody: { flex: 1, padding: 12, gap: 4 },
     cardHeaderRow: { flexDirection: "row", alignItems: "center", gap: 8 },
@@ -300,7 +308,7 @@ const styles = StyleSheet.create({
     },
     catBadgeText: { fontSize: 10, fontWeight: "700", color: COLORS.memento[700] },
     postBadge: { fontSize: 11, fontWeight: "600", color: COLORS.gray[600] },
-    cardTitle: { fontSize: 14, fontWeight: "600", color: COLORS.gray[900] },
+    cardTitle: { fontSize: 14, fontWeight: "600" },
     cardLocation: { fontSize: 12, color: COLORS.gray[500] },
     cardStats: { flexDirection: "row", gap: 12, marginTop: 4 },
     statItem: { flexDirection: "row", alignItems: "center", gap: 4 },

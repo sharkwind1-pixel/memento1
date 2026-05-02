@@ -120,8 +120,14 @@ export default function LostPetsScreen() {
                                     <Text style={styles.chipTextActive}>{t.label}</Text>
                                 </LinearGradient>
                             ) : (
-                                <View style={[styles.chip, styles.chipInactive]}>
-                                    <Text style={styles.chipText}>{t.label}</Text>
+                                <View style={[
+                                    styles.chip,
+                                    { backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100] },
+                                ]}>
+                                    <Text style={[
+                                        styles.chipText,
+                                        { color: isDarkMode ? COLORS.gray[300] : COLORS.gray[700] },
+                                    ]}>{t.label}</Text>
                                 </View>
                             )}
                         </TouchableOpacity>
@@ -161,7 +167,7 @@ export default function LostPetsScreen() {
                         !isLoading ? (
                             <View style={styles.center}>
                                 <Ionicons name="search-outline" size={48} color={COLORS.gray[300]} />
-                                <Text style={styles.helpText}>아직 등록된 글이 없어요</Text>
+                                <Text style={[styles.helpText, { color: isDarkMode ? COLORS.gray[400] : COLORS.gray[500] }]}>아직 등록된 글이 없어요</Text>
                             </View>
                         ) : null
                     }
@@ -211,7 +217,7 @@ function LostCard({ post, isDarkMode, onPress }: { post: LostPet; isDarkMode: bo
                         </Text>
                     </View>
                     {post.petType ? (
-                        <Text style={styles.cardKind}>{post.petType}</Text>
+                        <Text style={[styles.cardKind, { color: metaColor }]}>{post.petType}</Text>
                     ) : null}
                 </View>
                 <Text style={[styles.cardTitle, { color: titleColor }]} numberOfLines={1}>
@@ -233,7 +239,7 @@ function LostCard({ post, isDarkMode, onPress }: { post: LostPet; isDarkMode: bo
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: COLORS.white },
+    container: { flex: 1 },
     filterScrollOuter: { flexGrow: 0, flexShrink: 0 },
     filterRow: { paddingHorizontal: 16, paddingVertical: 12 },
     chip: {
@@ -243,8 +249,7 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         borderRadius: 9999,
     },
-    chipInactive: { backgroundColor: COLORS.gray[100] },
-    chipText: { fontSize: 13, fontWeight: "500", color: COLORS.gray[700] },
+    chipText: { fontSize: 13, fontWeight: "500" },
     chipTextActive: { fontSize: 13, fontWeight: "600", color: "#fff" },
     fab: {
         position: "absolute",
@@ -262,25 +267,23 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
     },
     center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24, gap: 8 },
-    helpText: { fontSize: 13, color: COLORS.gray[500] },
+    helpText: { fontSize: 13 },
     listContent: { padding: 12, gap: 12 },
     footer: { paddingVertical: 24, alignItems: "center" },
     card: {
         flexDirection: "row",
-        backgroundColor: COLORS.white,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: COLORS.gray[100],
         overflow: "hidden",
     },
-    cardImage: { width: 96, height: 96, backgroundColor: COLORS.gray[50] },
+    cardImage: { width: 96, height: 96 },
     imagePlaceholder: { alignItems: "center", justifyContent: "center" },
     cardBody: { flex: 1, padding: 12, gap: 4 },
     cardHeaderRow: { flexDirection: "row", alignItems: "center", gap: 8 },
     typeBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
     typeBadgeText: { fontSize: 10, fontWeight: "700" },
-    cardKind: { fontSize: 12, fontWeight: "600", color: COLORS.gray[600] },
-    cardTitle: { fontSize: 14, fontWeight: "600", color: COLORS.gray[900] },
-    cardLocation: { fontSize: 12, color: COLORS.gray[500] },
+    cardKind: { fontSize: 12, fontWeight: "600" },
+    cardTitle: { fontSize: 14, fontWeight: "600" },
+    cardLocation: { fontSize: 12 },
     cardDate: { fontSize: 11, color: COLORS.gray[400] },
 });
