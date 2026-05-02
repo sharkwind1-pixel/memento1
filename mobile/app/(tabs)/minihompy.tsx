@@ -83,6 +83,7 @@ export default function MinihompyScreen() {
     const [bgShopOpen, setBgShopOpen] = useState(false);
     const [guestbookOpen, setGuestbookOpen] = useState(false);
     const [greetingOpen, setGreetingOpen] = useState(false);
+    const [drawerOpen, setDrawerOpen] = useState(false);
 
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
     const accessToken = session?.access_token ?? null;
@@ -178,7 +179,8 @@ export default function MinihompyScreen() {
     if (loading) {
         return (
             <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
-                <AppHeader />
+                <AppHeader onOpenDrawer={() => setDrawerOpen(true)} />
+                <AppDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
                 <View style={styles.loadingBox}>
                     <ActivityIndicator color={accentColor} />
                 </View>
@@ -188,7 +190,7 @@ export default function MinihompyScreen() {
 
     return (
         <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
-            <AppHeader />
+            <AppHeader onOpenDrawer={() => setDrawerOpen(true)} />
             <ScrollView
                 style={styles.flex1}
                 showsVerticalScrollIndicator={false}
@@ -372,7 +374,7 @@ export default function MinihompyScreen() {
             </ScrollView>
 
             {/* Drawer */}
-            <AppDrawer visible={false} onClose={() => {}} />
+            <AppDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
             {/* 모달들 */}
             {accessToken && (
