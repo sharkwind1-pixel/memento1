@@ -9,7 +9,6 @@ import {
     ActivityIndicator, ScrollView, StyleSheet, Linking,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
 import Svg, { Path } from "react-native-svg";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDarkMode } from "@/contexts/ThemeContext";

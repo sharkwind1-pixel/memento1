@@ -73,15 +73,11 @@ export default function NewPetScreen() {
     const { refreshPets } = usePet();
     const { isDarkMode } = useDarkMode();
 
-    // 다크모드 컬러 토큰
+    // 다크모드 컬러 토큰 (Step1~4는 inputStyle/josa 헬퍼 사용)
     const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.white;
     const cardBg = isDarkMode ? COLORS.gray[900] : COLORS.white;
-    const inputBg = isDarkMode ? COLORS.gray[800] : COLORS.gray[50];
     const inputBorder = isDarkMode ? COLORS.gray[700] : COLORS.gray[200];
-    const inputColor = isDarkMode ? COLORS.gray[100] : COLORS.gray[900];
     const titleColor = isDarkMode ? COLORS.white : COLORS.gray[800];
-    const labelColor = isDarkMode ? COLORS.gray[300] : COLORS.gray[700];
-    const placeholderColor = isDarkMode ? COLORS.gray[500] : COLORS.gray[400];
     const stepDotInactiveBg = isDarkMode ? COLORS.gray[800] : COLORS.gray[200];
     const ghostBg = isDarkMode ? COLORS.gray[800] : COLORS.white;
     const ghostBorder = isDarkMode ? COLORS.gray[700] : COLORS.gray[300];
@@ -220,8 +216,8 @@ export default function NewPetScreen() {
 
             await refreshPets();
             router.back();
-        } catch (e: any) {
-            Alert.alert("오류", e?.message || "반려동물 등록 중 오류가 발생했습니다.");
+        } catch (e) {
+            Alert.alert("오류", e instanceof Error ? e.message : "반려동물 등록 중 오류가 발생했습니다.");
         } finally {
             setIsLoading(false);
         }

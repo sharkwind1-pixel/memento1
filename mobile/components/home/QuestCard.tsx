@@ -8,7 +8,7 @@
 
 import { useEffect, useState } from "react";
 import { useDarkMode } from "@/contexts/ThemeContext";
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";

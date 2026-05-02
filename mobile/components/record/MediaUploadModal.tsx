@@ -153,8 +153,8 @@ export default function MediaUploadModal({ petId, visible, onClose, onSuccess }:
             } else {
                 Alert.alert("실패", "업로드에 실패했습니다");
             }
-        } catch (e: any) {
-            Alert.alert("오류", e?.message || "업로드 중 오류가 발생했습니다");
+        } catch (e) {
+            Alert.alert("오류", e instanceof Error ? e.message : "업로드 중 오류가 발생했습니다");
         } finally {
             setUploading(false);
         }

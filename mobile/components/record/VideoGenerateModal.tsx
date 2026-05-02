@@ -21,7 +21,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useDarkMode } from "@/contexts/ThemeContext";
 import { API_BASE_URL } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
-import { VIDEO_TEMPLATES, CATEGORY_LABEL, type VideoTemplateCategory, type MobileVideoTemplate } from "@/data/videoTemplates";
+import { VIDEO_TEMPLATES, CATEGORY_LABEL, type MobileVideoTemplate } from "@/data/videoTemplates";
 
 interface PetPhoto {
     id: string;

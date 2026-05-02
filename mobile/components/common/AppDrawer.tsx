@@ -9,7 +9,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
     Modal, View, Text, TouchableOpacity, Animated, Dimensions,
-    Pressable, StyleSheet, ScrollView, Image, Switch, Linking,
+    Pressable, StyleSheet, ScrollView, Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -17,7 +17,6 @@ import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
 import { useDarkMode } from "@/contexts/ThemeContext";
-import { API_BASE_URL } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
 
 const { width: SCREEN_W } = Dimensions.get("window");
@@ -62,7 +61,7 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
     const router = useRouter();
     const { user, profile, points, isPremium, isAdminUser, signOut } = useAuth();
     const { isMemorialMode } = usePet();
-    const { isDarkMode, toggleTheme } = useDarkMode();
+    const { isDarkMode } = useDarkMode();
     const [communityExpanded, setCommunityExpanded] = useState(false);
 
     const slideAnim = useRef(new Animated.Value(-DRAWER_W)).current;

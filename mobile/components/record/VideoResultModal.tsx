@@ -10,12 +10,11 @@
 import { useRef, useState } from "react";
 import {
     View, Text, Modal, TouchableOpacity, StyleSheet,
-    ActivityIndicator, Alert, Share,
+    ActivityIndicator, Share,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Video, ResizeMode, AVPlaybackStatus } from "expo-av";
-import { COLORS } from "@/lib/theme";
 
 export interface VideoResult {
     id: string;

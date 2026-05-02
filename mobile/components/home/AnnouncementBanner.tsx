@@ -8,7 +8,6 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { API_BASE_URL } from "@/config/constants";
-import { COLORS } from "@/lib/theme";
 import { useDarkMode } from "@/contexts/ThemeContext";
 
 interface Notice {

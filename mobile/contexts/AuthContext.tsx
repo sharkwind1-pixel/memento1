@@ -43,12 +43,23 @@ const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
 /** 모듈 레벨에 verifier 보관 (provider별로 키) */
 const verifierMap: Record<string, string> = {};
 
-/** RFC 7636 권장 문자셋으로 64자 random verifier 생성 */
+/**
+ * RFC 7636 권장 문자셋으로 64자 random verifier 생성.
+ * 보안: cryptographically secure random 사용 (Math.random() 절대 금지).
+ * RN 0.76+ Hermes는 globalThis.crypto.getRandomValues 지원.
+ * 미지원 환경 fallback은 의도적으로 없음 — 보안 약화 방지.
+ */
 function generatePKCEVerifier(): string {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+    const cryptoApi = (globalThis as { crypto?: { getRandomValues?: (arr: Uint8Array) => Uint8Array } }).crypto;
+    if (!cryptoApi?.getRandomValues) {
+        throw new Error("crypto.getRandomValues 미지원 — RN 0.76+ 필요. expo-crypto 설치 권장.");
+    }
+    const bytes = new Uint8Array(64);
+    cryptoApi.getRandomValues(bytes);
     let result = "";
     for (let i = 0; i < 64; i++) {
-        result += chars[Math.floor(Math.random() * chars.length)];
+        result += chars[bytes[i] % chars.length];
     }
     return result;
 }

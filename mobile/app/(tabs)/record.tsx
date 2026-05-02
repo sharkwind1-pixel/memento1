@@ -300,7 +300,7 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
         }
         try {
             if (draft.id) {
-                // 수정
+                // 수정 — RLS 의존 + defense-in-depth로 user_id 명시
                 const { error } = await supabase
                     .from("timeline_entries")
                     .update({
@@ -309,7 +309,8 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
                         content: draft.content || null,
                         mood: draft.mood,
                     })
-                    .eq("id", draft.id);
+                    .eq("id", draft.id)
+                    .eq("user_id", user.id);
                 if (error) throw error;
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
                 await load();
@@ -331,8 +332,8 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
                 await load();
                 return true;
             }
-        } catch (e: any) {
-            RNAlert.alert("저장 실패", e?.message || "다시 시도해주세요");
+        } catch (e) {
+            RNAlert.alert("저장 실패", e instanceof Error ? e.message : "다시 시도해주세요");
             return false;
         }
     }
@@ -344,11 +345,13 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
                 text: "삭제",
                 style: "destructive",
                 onPress: async () => {
-                    if (!session) return;
+                    if (!session || !user) return;
+                    // RLS 의존 + defense-in-depth로 user_id 명시
                     const { error } = await supabase
                         .from("timeline_entries")
                         .delete()
-                        .eq("id", entryId);
+                        .eq("id", entryId)
+                        .eq("user_id", user.id);
                     if (error) {
                         RNAlert.alert("삭제 실패", error.message);
                         return;
@@ -457,7 +460,6 @@ function GalleryTab({ petId, photos, isMemorialMode, accentColor, refreshing, on
     refreshing: boolean;
     onRefresh: () => void;
 }) {
-    const { isDarkMode } = useDarkMode();
     const { deletePhotos } = usePet();
     const [uploadOpen, setUploadOpen] = useState(false);
     const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);

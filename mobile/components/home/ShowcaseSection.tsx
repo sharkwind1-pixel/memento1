@@ -52,11 +52,6 @@ export default function ShowcaseSection() {
                 }
                 const data = await res.json();
                 const list = Array.isArray(data?.posts) ? data.posts : [];
-                console.log("[Showcase] posts count:", list.length, "first:", list[0] && {
-                    id: list[0].id,
-                    imageUrls: list[0].imageUrls,
-                    videoUrl: list[0].videoUrl,
-                });
                 setPosts(list.map((p: Record<string, unknown>): ShowcasePost => ({
                     id: typeof p.id === "string" ? p.id : String(p.id ?? ""),
                     title: typeof p.title === "string" ? p.title : "",

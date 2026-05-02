@@ -22,7 +22,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
 import { useDarkMode } from "@/contexts/ThemeContext";
 import { COLORS } from "@/lib/theme";
-import { findMinimi, findBackgroundOrDefault } from "@/data/minihompyData";
+import { findBackgroundOrDefault } from "@/data/minihompyData";
 import {
     getMyMinihompySettings, patchMinihompySettings, getMinimiInventory,
 } from "@/lib/minihompy-api";
@@ -173,7 +173,7 @@ export default function MinihompyScreen() {
 
     const bgSlug = settings?.backgroundSlug ?? "default_sky";
     const background = findBackgroundOrDefault(bgSlug);
-    const equippedMinimi = equippedSlug ? findMinimi(equippedSlug) : null;
+    // equippedSlug는 StageEditor 내부에서 자체 처리. 단일 미니미 fallback 표시는 추후 추가.
     const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.white;
 
     if (loading) {
