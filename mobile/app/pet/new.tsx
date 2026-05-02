@@ -21,6 +21,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { PetType, PetGender } from "@/types";
 import { COLORS } from "@/lib/theme";
 import AppHeader from "@/components/common/AppHeader";
@@ -70,6 +71,21 @@ export default function NewPetScreen() {
     const insets = useSafeAreaInsets();
     const { user } = useAuth();
     const { refreshPets } = usePet();
+    const { isDarkMode } = useDarkMode();
+
+    // 다크모드 컬러 토큰
+    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.white;
+    const cardBg = isDarkMode ? COLORS.gray[900] : COLORS.white;
+    const inputBg = isDarkMode ? COLORS.gray[800] : COLORS.gray[50];
+    const inputBorder = isDarkMode ? COLORS.gray[700] : COLORS.gray[200];
+    const inputColor = isDarkMode ? COLORS.gray[100] : COLORS.gray[900];
+    const titleColor = isDarkMode ? COLORS.white : COLORS.gray[800];
+    const labelColor = isDarkMode ? COLORS.gray[300] : COLORS.gray[700];
+    const placeholderColor = isDarkMode ? COLORS.gray[500] : COLORS.gray[400];
+    const stepDotInactiveBg = isDarkMode ? COLORS.gray[800] : COLORS.gray[200];
+    const ghostBg = isDarkMode ? COLORS.gray[800] : COLORS.white;
+    const ghostBorder = isDarkMode ? COLORS.gray[700] : COLORS.gray[300];
+    const ghostText = isDarkMode ? COLORS.gray[300] : COLORS.gray[700];
 
     const [step, setStep] = useState(1);
     const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -212,7 +228,7 @@ export default function NewPetScreen() {
     }
 
     return (
-        <SafeAreaView style={styles.flex1White} edges={["top"]}>
+        <SafeAreaView style={[styles.flex1White, { backgroundColor: bgColor }]} edges={["top"]}>
             <Stack.Screen options={{ headerShown: false }} />
             <AppHeader showBack title="반려동물 등록" hideActions />
 
@@ -226,7 +242,7 @@ export default function NewPetScreen() {
                                     styles.stepDot,
                                     s < step && { backgroundColor: COLORS.memento[500] },
                                     s === step && { backgroundColor: COLORS.memento[500], transform: [{ scale: 1.2 }] },
-                                    s > step && { backgroundColor: COLORS.gray[200] },
+                                    s > step && { backgroundColor: stepDotInactiveBg },
                                 ]}
                             >
                                 {s < step ? (
@@ -234,20 +250,20 @@ export default function NewPetScreen() {
                                 ) : (
                                     <Text style={[
                                         styles.stepNum,
-                                        { color: s === step ? "#fff" : COLORS.gray[500] },
+                                        { color: s === step ? "#fff" : (isDarkMode ? COLORS.gray[400] : COLORS.gray[500]) },
                                     ]}>{s}</Text>
                                 )}
                             </View>
                             {s < 4 && (
                                 <View style={[
                                     styles.stepLine,
-                                    s < step ? { backgroundColor: COLORS.memento[500] } : { backgroundColor: COLORS.gray[200] },
+                                    s < step ? { backgroundColor: COLORS.memento[500] } : { backgroundColor: stepDotInactiveBg },
                                 ]} />
                             )}
                         </View>
                     ))}
                 </View>
-                <Text style={styles.stepTitle}>{STEP_TITLES[step - 1]}</Text>
+                <Text style={[styles.stepTitle, { color: titleColor }]}>{STEP_TITLES[step - 1]}</Text>
             </View>
 
             <KeyboardAvoidingView
@@ -267,27 +283,32 @@ export default function NewPetScreen() {
                             profileImage={profileImage}
                             pickImage={pickImage}
                             removeImage={() => { setProfileImage(null); setProfileImageFile(null); }}
+                            isDark={isDarkMode}
                         />
                     )}
-                    {step === 2 && <Step2Content form={form} update={update} />}
-                    {step === 3 && <Step3Content form={form} update={update} />}
-                    {step === 4 && <Step4Content form={form} update={update} />}
+                    {step === 2 && <Step2Content form={form} update={update} isDark={isDarkMode} />}
+                    {step === 3 && <Step3Content form={form} update={update} isDark={isDarkMode} />}
+                    {step === 4 && <Step4Content form={form} update={update} isDark={isDarkMode} />}
                 </ScrollView>
 
                 {/* 하단 네비게이션 */}
                 <View style={[
                     styles.bottomBar,
-                    { paddingBottom: 12 + Math.max(insets.bottom, 0) },
+                    {
+                        backgroundColor: cardBg,
+                        borderTopColor: inputBorder,
+                        paddingBottom: 12 + Math.max(insets.bottom, 0),
+                    },
                 ]}>
                     {step > 1 ? (
                         <TouchableOpacity
                             onPress={prev}
-                            style={styles.btnGhost}
+                            style={[styles.btnGhost, { backgroundColor: ghostBg, borderColor: ghostBorder }]}
                             activeOpacity={0.85}
                             disabled={isLoading}
                         >
-                            <Ionicons name="chevron-back" size={16} color={COLORS.gray[700]} />
-                            <Text style={styles.btnGhostText}>이전</Text>
+                            <Ionicons name="chevron-back" size={16} color={ghostText} />
+                            <Text style={[styles.btnGhostText, { color: ghostText }]}>이전</Text>
                         </TouchableOpacity>
                     ) : <View style={{ width: 100 }} />}
 
@@ -340,10 +361,23 @@ export default function NewPetScreen() {
 interface StepProps {
     form: FormData;
     update: <K extends keyof FormData>(key: K, value: FormData[K]) => void;
+    isDark: boolean;
+}
+
+// 모든 Step 공통 다크모드 인풋 스타일
+function inputStyle(isDark: boolean) {
+    return {
+        backgroundColor: isDark ? COLORS.gray[800] : COLORS.gray[50],
+        borderColor: isDark ? COLORS.gray[700] : COLORS.gray[200],
+        color: isDark ? COLORS.gray[100] : COLORS.gray[900],
+    } as const;
+}
+function inputPlaceholder(isDark: boolean) {
+    return isDark ? COLORS.gray[500] : COLORS.gray[400];
 }
 
 function Step1Content({
-    form, update, profileImage, pickImage, removeImage,
+    form, update, profileImage, pickImage, removeImage, isDark,
 }: StepProps & {
     profileImage: string | null;
     pickImage: () => void;
@@ -375,9 +409,9 @@ function Step1Content({
 
             <FormField label="이름 *">
                 <TextInput
-                    style={styles.input}
+                    style={[styles.input, inputStyle(isDark)]}
                     placeholder="반려동물 이름을 입력하세요"
-                    placeholderTextColor={COLORS.gray[400]}
+                    placeholderTextColor={inputPlaceholder(isDark)}
                     value={form.name}
                     onChangeText={(v) => update("name", v)}
                     maxLength={20}
@@ -400,7 +434,7 @@ function Step1Content({
     );
 }
 
-function Step2Content({ form, update }: StepProps) {
+function Step2Content({ form, update, isDark }: StepProps) {
     return (
         <View>
             <View style={styles.row}>
@@ -421,9 +455,9 @@ function Step2Content({ form, update }: StepProps) {
                 <View style={styles.col}>
                     <FormField label="품종">
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, inputStyle(isDark)]}
                             placeholder="예: 말티즈"
-                            placeholderTextColor={COLORS.gray[400]}
+                            placeholderTextColor={inputPlaceholder(isDark)}
                             value={form.breed}
                             onChangeText={(v) => update("breed", v)}
                         />
@@ -435,9 +469,9 @@ function Step2Content({ form, update }: StepProps) {
                 <View style={styles.col}>
                     <FormField label="생일">
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, inputStyle(isDark)]}
                             placeholder="YYYY-MM-DD"
-                            placeholderTextColor={COLORS.gray[400]}
+                            placeholderTextColor={inputPlaceholder(isDark)}
                             value={form.birthday}
                             onChangeText={(v) => update("birthday", v)}
                             keyboardType="numbers-and-punctuation"
@@ -448,9 +482,9 @@ function Step2Content({ form, update }: StepProps) {
                 <View style={styles.col}>
                     <FormField label="몸무게">
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, inputStyle(isDark)]}
                             placeholder="예: 3.2kg"
-                            placeholderTextColor={COLORS.gray[400]}
+                            placeholderTextColor={inputPlaceholder(isDark)}
                             value={form.weight}
                             onChangeText={(v) => update("weight", v)}
                         />
@@ -507,9 +541,9 @@ function Step2Content({ form, update }: StepProps) {
                 <View style={styles.memorialBox}>
                     <FormField label="무지개다리 건넌 날" labelColor={COLORS.memorial[700]}>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, inputStyle(isDark)]}
                             placeholder="YYYY-MM-DD"
-                            placeholderTextColor={COLORS.gray[400]}
+                            placeholderTextColor={inputPlaceholder(isDark)}
                             value={form.memorialDate}
                             onChangeText={(v) => update("memorialDate", v)}
                             keyboardType="numbers-and-punctuation"
@@ -518,9 +552,9 @@ function Step2Content({ form, update }: StepProps) {
                     </FormField>
                     <FormField label="함께한 기간" labelColor={COLORS.memorial[700]}>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, inputStyle(isDark)]}
                             placeholder="예: 15년, 2010년부터 2025년까지"
-                            placeholderTextColor={COLORS.gray[400]}
+                            placeholderTextColor={inputPlaceholder(isDark)}
                             value={form.togetherPeriod}
                             onChangeText={(v) => update("togetherPeriod", v)}
                         />
@@ -531,7 +565,7 @@ function Step2Content({ form, update }: StepProps) {
     );
 }
 
-function Step3Content({ form, update }: StepProps) {
+function Step3Content({ form, update, isDark }: StepProps) {
     return (
         <View>
             <View style={styles.storyBox}>
@@ -540,9 +574,9 @@ function Step3Content({ form, update }: StepProps) {
                 </Text>
                 <FormField label="처음 만난 날">
                     <TextInput
-                        style={styles.input}
+                        style={[styles.input, inputStyle(isDark)]}
                         placeholder="YYYY-MM-DD"
-                        placeholderTextColor={COLORS.gray[400]}
+                        placeholderTextColor={inputPlaceholder(isDark)}
                         value={form.adoptedDate}
                         onChangeText={(v) => update("adoptedDate", v)}
                         keyboardType="numbers-and-punctuation"
@@ -576,9 +610,9 @@ function Step3Content({ form, update }: StepProps) {
 
             <FormField label="부르는 별명들">
                 <TextInput
-                    style={styles.input}
+                    style={[styles.input, inputStyle(isDark)]}
                     placeholder="예: 콩이, 콩콩이, 콩순이"
-                    placeholderTextColor={COLORS.gray[400]}
+                    placeholderTextColor={inputPlaceholder(isDark)}
                     value={form.nicknames}
                     onChangeText={(v) => update("nicknames", v)}
                 />
@@ -587,9 +621,9 @@ function Step3Content({ form, update }: StepProps) {
 
             <FormField label="특별한 버릇이나 습관">
                 <TextInput
-                    style={[styles.input, styles.textArea]}
+                    style={[styles.input, styles.textArea, inputStyle(isDark)]}
                     placeholder="예: 배를 긁어주면 다리를 흔들어요, 산책 전에 빙글빙글 돌아요"
-                    placeholderTextColor={COLORS.gray[400]}
+                    placeholderTextColor={inputPlaceholder(isDark)}
                     value={form.specialHabits}
                     onChangeText={(v) => update("specialHabits", v)}
                     multiline
@@ -600,7 +634,7 @@ function Step3Content({ form, update }: StepProps) {
     );
 }
 
-function Step4Content({ form, update }: StepProps) {
+function Step4Content({ form, update, isDark }: StepProps) {
     return (
         <View>
             <FavCard
@@ -630,9 +664,9 @@ function Step4Content({ form, update }: StepProps) {
 
             <FormField label="성격/특징">
                 <TextInput
-                    style={[styles.input, styles.textArea]}
+                    style={[styles.input, styles.textArea, inputStyle(isDark)]}
                     placeholder="우리 아이만의 성격이나 특징을 자유롭게 적어주세요"
-                    placeholderTextColor={COLORS.gray[400]}
+                    placeholderTextColor={inputPlaceholder(isDark)}
                     value={form.personality}
                     onChangeText={(v) => update("personality", v)}
                     multiline
@@ -644,9 +678,9 @@ function Step4Content({ form, update }: StepProps) {
                 <View style={styles.memorialBox}>
                     <FormField label="기억하고 싶은 순간" labelColor={COLORS.memorial[700]}>
                         <TextInput
-                            style={[styles.input, styles.textArea]}
+                            style={[styles.input, styles.textArea, inputStyle(isDark)]}
                             placeholder="가장 기억에 남는 순간이나 함께한 추억을 적어주세요"
-                            placeholderTextColor={COLORS.gray[400]}
+                            placeholderTextColor={inputPlaceholder(isDark)}
                             value={form.memorableMemory}
                             onChangeText={(v) => update("memorableMemory", v)}
                             multiline
@@ -664,15 +698,18 @@ function FormField({ label, children, labelColor }: {
     children: React.ReactNode;
     labelColor?: string;
 }) {
+    const { isDarkMode } = useDarkMode();
+    const defaultLabelColor = isDarkMode ? COLORS.gray[300] : COLORS.gray[700];
     return (
         <View style={{ marginBottom: 16 }}>
-            <Text style={[styles.label, labelColor && { color: labelColor }]}>{label}</Text>
+            <Text style={[styles.label, { color: labelColor ?? defaultLabelColor }]}>{label}</Text>
             {children}
         </View>
     );
 }
 
 function SelectChip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+    const { isDarkMode } = useDarkMode();
     return (
         <TouchableOpacity
             onPress={onPress}
@@ -680,14 +717,17 @@ function SelectChip({ label, active, onPress }: { label: string; active: boolean
                 styles.chipBtn,
                 active
                     ? { backgroundColor: COLORS.memento[500], borderColor: COLORS.memento[500] }
-                    : { borderColor: COLORS.gray[200], backgroundColor: COLORS.gray[50] },
+                    : {
+                        borderColor: isDarkMode ? COLORS.gray[700] : COLORS.gray[200],
+                        backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[50],
+                    },
             ]}
             activeOpacity={0.85}
         >
             <Text style={{
                 fontSize: 14,
                 fontWeight: "500",
-                color: active ? "#fff" : COLORS.gray[600],
+                color: active ? "#fff" : (isDarkMode ? COLORS.gray[300] : COLORS.gray[600]),
             }}>{label}</Text>
         </TouchableOpacity>
     );
@@ -701,17 +741,23 @@ function FavCard({ icon, color, label, placeholder, value, onChangeText }: {
     value: string;
     onChangeText: (v: string) => void;
 }) {
+    const { isDarkMode } = useDarkMode();
+    const cardBg = isDarkMode ? COLORS.gray[900] : COLORS.memento[50];
+    const cardBorder = isDarkMode ? COLORS.gray[800] : COLORS.memento[100];
+    const labelColor = isDarkMode ? COLORS.gray[300] : COLORS.gray[700];
+    const inputColor = isDarkMode ? COLORS.gray[100] : COLORS.gray[900];
+
     return (
-        <View style={styles.favCard}>
+        <View style={[styles.favCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
             <View style={[styles.favIconBg, { backgroundColor: color + "15" }]}>
                 <Ionicons name={icon} size={18} color={color} />
             </View>
             <View style={{ flex: 1 }}>
-                <Text style={styles.favLabel}>{label}</Text>
+                <Text style={[styles.favLabel, { color: labelColor }]}>{label}</Text>
                 <TextInput
-                    style={styles.favInput}
+                    style={[styles.favInput, { color: inputColor }]}
                     placeholder={placeholder}
-                    placeholderTextColor={COLORS.gray[400]}
+                    placeholderTextColor={inputPlaceholder(isDarkMode)}
                     value={value}
                     onChangeText={onChangeText}
                 />
@@ -722,7 +768,7 @@ function FavCard({ icon, color, label, placeholder, value, onChangeText }: {
 
 const styles = StyleSheet.create({
     flex1: { flex: 1 },
-    flex1White: { flex: 1, backgroundColor: COLORS.white },
+    flex1White: { flex: 1 },
 
     stepWrap: {
         paddingHorizontal: 20,
@@ -742,7 +788,7 @@ const styles = StyleSheet.create({
     },
     stepNum: { fontSize: 11, fontWeight: "700" },
     stepLine: { flex: 1, height: 2, marginHorizontal: 4 },
-    stepTitle: { fontSize: 15, fontWeight: "700", color: COLORS.gray[800] },
+    stepTitle: { fontSize: 15, fontWeight: "700" },
 
     avatar: { width: 132, height: 132, borderRadius: 24 },
     avatarFallback: {
@@ -765,17 +811,14 @@ const styles = StyleSheet.create({
         borderColor: "#FECACA",
     },
 
-    label: { fontSize: 13, fontWeight: "600", color: COLORS.gray[700], marginBottom: 6 },
-    fieldHint: { fontSize: 11, color: COLORS.gray[400], marginTop: 4 },
+    label: { fontSize: 13, fontWeight: "600", marginBottom: 6 },
+    fieldHint: { fontSize: 11, marginTop: 4 },
     input: {
         borderWidth: 1,
-        borderColor: COLORS.gray[200],
         borderRadius: 12,
         paddingHorizontal: 14,
         paddingVertical: 12,
         fontSize: 14,
-        color: COLORS.gray[900],
-        backgroundColor: COLORS.gray[50],
     },
     textArea: { minHeight: 88, paddingTop: 12 },
 
@@ -830,10 +873,8 @@ const styles = StyleSheet.create({
         alignItems: "flex-start",
         gap: 12,
         padding: 12,
-        backgroundColor: COLORS.memento[50],
         borderRadius: 14,
         borderWidth: 1,
-        borderColor: COLORS.memento[100],
         marginBottom: 12,
     },
     favIconBg: {
@@ -844,10 +885,9 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         marginTop: 2,
     },
-    favLabel: { fontSize: 13, fontWeight: "600", color: COLORS.gray[700], marginBottom: 4 },
+    favLabel: { fontSize: 13, fontWeight: "600", marginBottom: 4 },
     favInput: {
         fontSize: 14,
-        color: COLORS.gray[900],
         paddingVertical: 4,
     },
 
@@ -858,8 +898,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingTop: 12,
         borderTopWidth: 1,
-        borderTopColor: COLORS.gray[100],
-        backgroundColor: COLORS.white,
         gap: 12,
     },
     btnGhost: {
@@ -870,11 +908,10 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: COLORS.gray[300],
         minWidth: 100,
         justifyContent: "center",
     },
-    btnGhostText: { fontSize: 14, fontWeight: "600", color: COLORS.gray[700] },
+    btnGhostText: { fontSize: 14, fontWeight: "600" },
     btnPrimaryWrap: {
         flex: 1,
         borderRadius: 12,
