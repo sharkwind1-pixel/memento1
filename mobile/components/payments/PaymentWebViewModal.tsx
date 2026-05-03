@@ -28,10 +28,23 @@ import { useDarkMode } from "@/contexts/ThemeContext";
 import { API_BASE_URL } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
 
+export type PayMethod =
+    | "card"      // 신용/체크카드 (KCP 안심클릭/ISP)
+    | "phone"     // 휴대폰 소액결제 (SKT/KT/LGU+)
+    | "trans"     // 실시간 계좌이체
+    | "vbank"     // 가상계좌
+    | "kakaopay"  // 카카오페이
+    | "tosspay"   // 토스페이
+    | "payco"     // 페이코
+    | "naverpay"  // 네이버페이
+    | "samsung"   // 삼성페이
+    | "lpay";     // L.pay
+
 interface Props {
     visible: boolean;
     type: "video" | "subscription";
     plan?: "basic" | "premium"; // subscription일 때만
+    method?: PayMethod;          // 단건 결제 수단. 미지정 시 card.
     onClose: () => void;
     onSuccess: () => void;
 }
@@ -39,7 +52,7 @@ interface Props {
 const ORIGIN = API_BASE_URL.replace(/^https:\/\/www\./, "https://").replace(/\/$/, "");
 const CALLBACK_PATH = "/payment/mobile-callback";
 
-export default function PaymentWebViewModal({ visible, type, plan, onClose, onSuccess }: Props) {
+export default function PaymentWebViewModal({ visible, type, plan, method, onClose, onSuccess }: Props) {
     const { session, user, profile } = useAuth();
     const { isDarkMode } = useDarkMode();
     const [verifying, setVerifying] = useState(false);
@@ -55,6 +68,7 @@ export default function PaymentWebViewModal({ visible, type, plan, onClose, onSu
         url.searchParams.set("token", accessToken);
         url.searchParams.set("type", type);
         if (type === "subscription" && plan) url.searchParams.set("plan", plan);
+        if (type === "video" && method) url.searchParams.set("method", method);
         if (user?.email) url.searchParams.set("email", user.email);
         if (profile?.nickname) url.searchParams.set("name", profile.nickname);
         return url.toString();

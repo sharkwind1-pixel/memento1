@@ -69,6 +69,9 @@ function MobilePaymentInner() {
                 const plan = params.get("plan");
                 const email = params.get("email") ?? undefined;
                 const name = params.get("name") ?? undefined;
+                // 결제 수단 (card | phone | trans | vbank | kakaopay | tosspay | payco | naverpay)
+                // 미지정 시 card. 구독은 무조건 card (빌링키 발급 위해).
+                const payMethodParam = params.get("method");
 
                 if (!token || !type) {
                     throw new Error("필수 파라미터 누락");
@@ -117,9 +120,18 @@ function MobilePaymentInner() {
                 const useChannelKey = isSubscription ? batchChannelKey : channelKey;
                 if (!useChannelKey) throw new Error("결제 채널 키 누락");
 
+                // pay_method 결정 — 구독은 card 강제 (빌링키 발급), 단건은 사용자 선택
+                const allowedMethods = new Set([
+                    "card", "phone", "trans", "vbank",
+                    "kakaopay", "tosspay", "payco", "naverpay", "samsung", "lpay",
+                ]);
+                const payMethod = isSubscription
+                    ? "card"
+                    : (payMethodParam && allowedMethods.has(payMethodParam) ? payMethodParam : "card");
+
                 const reqParams: IMPRequestPayParams = {
                     channelKey: useChannelKey,
-                    pay_method: "card",
+                    pay_method: payMethod,
                     merchant_uid: paymentId,
                     name: orderName || (isSubscription ? "메멘토애니 구독" : "AI 영상 1건"),
                     amount,

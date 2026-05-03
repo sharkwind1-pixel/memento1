@@ -22,7 +22,8 @@ import { useDarkMode } from "@/contexts/ThemeContext";
 import { API_BASE_URL, VIDEO } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
 import { VIDEO_TEMPLATES, CATEGORY_LABEL, type MobileVideoTemplate } from "@/data/videoTemplates";
-import PaymentWebViewModal from "@/components/payments/PaymentWebViewModal";
+import PaymentWebViewModal, { type PayMethod } from "@/components/payments/PaymentWebViewModal";
+import PayMethodPicker from "@/components/payments/PayMethodPicker";
 
 interface PetPhoto {
     id: string;
@@ -60,6 +61,8 @@ export default function VideoGenerateModal({ visible, onClose, onSuccess, pet, i
     const { isDarkMode } = useDarkMode();
     const [step, setStep] = useState<Step>("photo");
     const [paymentMode, setPaymentMode] = useState<"video" | "subscription" | null>(null);
+    const [methodPickerOpen, setMethodPickerOpen] = useState(false);
+    const [pickedMethod, setPickedMethod] = useState<PayMethod | null>(null);
     const [photo, setPhoto] = useState<PetPhoto | null>(null);
     const [template, setTemplate] = useState<MobileVideoTemplate | null>(null);
     const [quota, setQuota] = useState<Quota | null>(null);
@@ -133,18 +136,23 @@ export default function VideoGenerateModal({ visible, onClose, onSuccess, pet, i
     }
 
     /**
-     * 단건 구매 — 인앱 WebView로 PortOne 결제창 호출.
-     * 결제 검증 완료 후 quota 다시 fetch.
+     * 단건 구매 — 결제 수단 picker → WebView로 PortOne 결제창 호출.
      */
     function handleSinglePurchase() {
+        setMethodPickerOpen(true);
+    }
+
+    function handleMethodPicked(method: PayMethod) {
+        setMethodPickerOpen(false);
+        setPickedMethod(method);
         setPaymentMode("video");
     }
 
     /**
-     * 정기 구독 — 인앱 WebView로 PortOne 배치결제(빌링키 발급) 호출.
-     * 기본은 basic plan으로 시작 (사용자가 더 비싼 플랜 원하면 /subscription에서).
+     * 정기 구독 — KCP 빌링키 발급은 카드만 가능 → method picker 생략, 바로 진행.
      */
     function handleSubscribe() {
+        setPickedMethod(null);
         setPaymentMode("subscription");
     }
 
@@ -386,14 +394,29 @@ export default function VideoGenerateModal({ visible, onClose, onSuccess, pet, i
                     {step === "confirm" && renderConfirmStep()}
                 </ScrollView>
 
+                {/* 결제 수단 picker (단건만) */}
+                <PayMethodPicker
+                    visible={methodPickerOpen}
+                    onClose={() => setMethodPickerOpen(false)}
+                    onPick={handleMethodPicked}
+                    accentColor={accentColor}
+                    title="AI 영상 1건"
+                    amountKRW={VIDEO.SINGLE_PRICE}
+                />
+
                 {/* 인앱 결제 WebView */}
                 <PaymentWebViewModal
                     visible={paymentMode !== null}
                     type={paymentMode ?? "video"}
                     plan={paymentMode === "subscription" ? "basic" : undefined}
-                    onClose={() => setPaymentMode(null)}
+                    method={paymentMode === "video" ? (pickedMethod ?? undefined) : undefined}
+                    onClose={() => {
+                        setPaymentMode(null);
+                        setPickedMethod(null);
+                    }}
                     onSuccess={() => {
                         setPaymentMode(null);
+                        setPickedMethod(null);
                         // 결제 성공 → quota 다시 가져오기 → canGenerate 갱신
                         loadQuota();
                     }}
