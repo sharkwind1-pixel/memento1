@@ -2,14 +2,14 @@ module.exports = function (api) {
     api.cache(true);
     return {
         presets: [
-            // Reanimated 4.x는 react-native-worklets를 분리 패키지로 요구.
-            // babel-preset-expo가 자동 처리. (이전엔 worklets:false로 명시했었는데,
-            // Reanimated 4를 import하는 코드가 들어오면서 worklets 변환이 필수)
-            "babel-preset-expo",
+            // Reanimated 4.x는 react-native-worklets 분리 패키지를 요구하지만
+            // 모바일에서는 reanimated를 import하지 않음 (TouchParticles는 빌트인 Animated 사용).
+            // worklets 플러그인을 켜면 모든 함수가 worklets로 처리되어 부팅 비용↑ + Expo Go 호환 이슈.
+            ["babel-preset-expo", {
+                reanimated: false,
+                worklets: false,
+            }],
         ],
-        plugins: [
-            // Reanimated 4 권장: react-native-worklets/plugin 명시 추가 (반드시 마지막)
-            "react-native-worklets/plugin",
-        ],
+        plugins: [],
     };
 };

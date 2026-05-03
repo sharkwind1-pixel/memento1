@@ -7,31 +7,25 @@
  *  - "heart": 핑크 하트가 좌우로 살짝 (장난 단계)
  *  - "rest": 잔잔한 점 3개 (피곤 단계)
  *
- * react-native-reanimated 4.x 기준. 단순 withTiming 조합.
+ * 빌트인 react-native Animated API 사용 — react-native-worklets 의존성 회피.
+ * Reanimated 4.x를 쓰지 않아 Expo Go 부팅 안정성 확보.
  */
 
-import { useEffect, useMemo } from "react";
-import { Pressable, View, StyleSheet } from "react-native";
-import Animated, {
-    useSharedValue,
-    useAnimatedStyle,
-    withTiming,
-    withDelay,
-    Easing,
-} from "react-native-reanimated";
+import { useEffect, useMemo, useRef } from "react";
+import { View, StyleSheet, Animated, Easing } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 interface Props {
-    /** 외부 변경 시 재실행 트리거 */
+    /** 외부 변경 시 재실행 트리거 (key prop으로 컴포넌트 자체를 remount하는 용도) */
     triggerKey: number;
     variant: "star" | "heart" | "rest";
-    /** 스테이지 너비 (대략 SCREEN_WIDTH - 32) */
+    /** 스테이지 너비 */
     stageWidth: number;
     /** 스테이지 높이 */
     stageHeight: number;
 }
 
-interface Particle {
+interface ParticleSpec {
     id: number;
     startX: number;
     endX: number;
@@ -41,7 +35,7 @@ interface Particle {
     size: number;
 }
 
-function buildParticles(variant: Props["variant"], stageWidth: number): Particle[] {
+function buildParticles(variant: Props["variant"], stageWidth: number): ParticleSpec[] {
     const cx = stageWidth / 2;
     if (variant === "star") {
         return [0, 1, 2, 3, 4].map((i) => ({
@@ -78,56 +72,77 @@ function buildParticles(variant: Props["variant"], stageWidth: number): Particle
 }
 
 export default function TouchParticles({ triggerKey, variant, stageWidth, stageHeight }: Props) {
-    const particles = useMemo(() => buildParticles(variant, stageWidth), [variant, stageWidth, triggerKey]);
+    const particles = useMemo(
+        () => buildParticles(variant, stageWidth),
+        // triggerKey도 의존성에 넣어 새 좌표 생성
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [variant, stageWidth, triggerKey],
+    );
 
     return (
         <View pointerEvents="none" style={[StyleSheet.absoluteFill, { overflow: "hidden" }]}>
             {particles.map((p) => (
-                <Particle key={p.id} {...p} stageHeight={stageHeight} />
+                <Particle key={p.id} spec={p} stageHeight={stageHeight} />
             ))}
         </View>
     );
 }
 
-function Particle({ startX, endX, delay, icon, color, size, stageHeight }: Particle & { stageHeight: number }) {
-    const opacity = useSharedValue(0);
-    const ty = useSharedValue(0);
-    const tx = useSharedValue(0);
+function Particle({ spec, stageHeight }: { spec: ParticleSpec; stageHeight: number }) {
+    const opacity = useRef(new Animated.Value(0)).current;
+    const ty = useRef(new Animated.Value(0)).current;
+    const tx = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
-        // 시작: 가운데서 fade-in, 위로 30%만큼 부유
-        opacity.value = 0;
-        ty.value = 0;
-        tx.value = 0;
-
-        opacity.value = withDelay(delay, withTiming(1, { duration: 200, easing: Easing.out(Easing.quad) }));
-        opacity.value = withDelay(delay + 800, withTiming(0, { duration: 600, easing: Easing.in(Easing.quad) }));
-        ty.value = withDelay(delay, withTiming(-stageHeight * 0.35, { duration: 1400, easing: Easing.out(Easing.cubic) }));
-        tx.value = withDelay(delay, withTiming(endX - startX, { duration: 1400, easing: Easing.out(Easing.cubic) }));
+        // delay만큼 기다린 뒤 fade-in + 위로 부유 + fade-out
+        const sequence = Animated.sequence([
+            Animated.delay(spec.delay),
+            Animated.parallel([
+                Animated.timing(opacity, {
+                    toValue: 1,
+                    duration: 200,
+                    easing: Easing.out(Easing.quad),
+                    useNativeDriver: true,
+                }),
+                Animated.timing(ty, {
+                    toValue: -stageHeight * 0.35,
+                    duration: 1400,
+                    easing: Easing.out(Easing.cubic),
+                    useNativeDriver: true,
+                }),
+                Animated.timing(tx, {
+                    toValue: spec.endX - spec.startX,
+                    duration: 1400,
+                    easing: Easing.out(Easing.cubic),
+                    useNativeDriver: true,
+                }),
+            ]),
+            Animated.timing(opacity, {
+                toValue: 0,
+                duration: 600,
+                easing: Easing.in(Easing.quad),
+                useNativeDriver: true,
+            }),
+        ]);
+        sequence.start();
+        return () => sequence.stop();
+        // 마운트 시 1회만 실행 (key prop으로 새로 마운트되므로 의존성 불필요)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const style = useAnimatedStyle(() => ({
-        opacity: opacity.value,
-        transform: [{ translateY: ty.value }, { translateX: tx.value }],
-    }));
-
-    // 시작 위치는 stage 하단 중앙쯤 (60% 위치)
     return (
         <Animated.View
             style={[
                 {
                     position: "absolute",
-                    left: startX,
+                    left: spec.startX,
                     top: stageHeight * 0.55,
+                    opacity,
+                    transform: [{ translateY: ty }, { translateX: tx }],
                 },
-                style,
             ]}
         >
-            <Ionicons name={icon} size={size} color={color} />
+            <Ionicons name={spec.icon} size={spec.size} color={spec.color} />
         </Animated.View>
     );
 }
-
-// Pressable 미사용이지만 Reanimated 경고 방지를 위해 명시적으로 export 안 함
-void Pressable;
