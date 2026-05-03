@@ -1,6 +1,8 @@
 # 모바일 앱(독립 Expo 프로젝트) — 웹 Vercel 배포에서 제외
 # mobile/은 자체 package.json과 의존성을 가지므로 Next.js 빌드에 포함되면 안 됨
-mobile/
+# ⚠️ 반드시 leading slash로 root anchor — 안 그러면 src/app/payment/mobile/ 같은
+#    하위 경로의 mobile 폴더까지 매치되어 페이지가 제외됨 (실제 발생: /payment/mobile 404)
+/mobile/
 
 # Claude Code worktrees — 배포 불필요
 .claude/worktrees/
