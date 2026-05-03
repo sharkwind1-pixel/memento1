@@ -61,12 +61,13 @@ export default function RecordScreen() {
     const [autoOpenVideoGen, setAutoOpenVideoGen] = useState(false);
 
     // openVideo 파라미터 감지 → videos 탭 + 모달 자동 열기
+    // (URL 파라미터는 setParams로 비워서 다시 마운트해도 재트리거 X. router.replace는
+    //  같은 화면 self-replace 시 navigator REPLACE/index 에러 발생 → 사용 X)
     useEffect(() => {
         if (params.openVideo === "1") {
             setActiveTab("videos");
             setAutoOpenVideoGen(true);
-            // 1회성 트리거이므로 URL 정리 (replace로 백 스택 안 쌓이게)
-            router.replace("/(tabs)/record");
+            router.setParams({ openVideo: undefined });
         }
     }, [params.openVideo, router]);
 

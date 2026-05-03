@@ -34,7 +34,7 @@ export default function AuthCallbackScreen() {
             // 네이버 로그인: token_hash + type=magiclink로 세션 교환
             if (params.token_hash && params.type === "magiclink") {
                 const { data: { session } } = await supabase.auth.getSession();
-                if (session) { router.replace("/"); return; }
+                if (session) { router.replace("/(tabs)"); return; }
 
                 const { error } = await supabase.auth.verifyOtp({
                     token_hash: params.token_hash,
@@ -45,7 +45,7 @@ export default function AuthCallbackScreen() {
                     setTimeout(() => router.replace("/(auth)/login"), 1500);
                     return;
                 }
-                router.replace("/");
+                router.replace("/(tabs)");
                 return;
             }
 
@@ -61,7 +61,7 @@ export default function AuthCallbackScreen() {
             // (이전 race로 "flow_state_not_found" 에러 나던 케이스 차단)
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
-                router.replace("/");
+                router.replace("/(tabs)");
                 return;
             }
 
@@ -71,7 +71,7 @@ export default function AuthCallbackScreen() {
             // exchange 후에도 세션 한 번 더 확인 (자동 경로가 동시에 setSession했을 수 있음)
             const { data: { session: afterSession } } = await supabase.auth.getSession();
             if (afterSession) {
-                router.replace("/");
+                router.replace("/(tabs)");
                 return;
             }
 
@@ -81,7 +81,7 @@ export default function AuthCallbackScreen() {
                 return;
             }
 
-            router.replace("/");
+            router.replace("/(tabs)");
         })();
     }, [params.code, params.error, params.token_hash, params.type, params.error_description, router]);
 
