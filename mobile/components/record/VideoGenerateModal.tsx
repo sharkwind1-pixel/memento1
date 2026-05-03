@@ -16,10 +16,12 @@ import {
     ScrollView, StyleSheet, ActivityIndicator, Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDarkMode } from "@/contexts/ThemeContext";
-import { API_BASE_URL } from "@/config/constants";
+import { API_BASE_URL, VIDEO } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
 import { VIDEO_TEMPLATES, CATEGORY_LABEL, type MobileVideoTemplate } from "@/data/videoTemplates";
 
@@ -55,6 +57,7 @@ interface Props {
 type Step = "photo" | "template" | "confirm";
 
 export default function VideoGenerateModal({ visible, onClose, onSuccess, pet, isMemorialMode }: Props) {
+    const router = useRouter();
     const { session } = useAuth();
     const { isDarkMode } = useDarkMode();
     const [step, setStep] = useState<Step>("photo");
@@ -128,6 +131,43 @@ export default function VideoGenerateModal({ visible, onClose, onSuccess, pet, i
         } finally {
             setSubmitting(false);
         }
+    }
+
+    /**
+     * 단건 구매 — RN PortOne SDK 미통합 → WebBrowser로 웹 결제 페이지 진입.
+     * 결제 완료 후 사용자가 앱 복귀하면 quota 다시 fetch.
+     */
+    async function handleSinglePurchase() {
+        Alert.alert(
+            "단건 구매 안내",
+            `웹에서 ${VIDEO.SINGLE_PRICE.toLocaleString()}원으로 영상 1건을 구매할 수 있어요. 같은 계정으로 로그인되어 있으면 결제 후 앱에서 바로 사용 가능합니다.`,
+            [
+                { text: "취소", style: "cancel" },
+                {
+                    text: "웹으로 이동",
+                    onPress: async () => {
+                        try {
+                            // 결제 페이지 (홈에서 단건 구매 모달 자동 오픈하도록 query)
+                            await WebBrowser.openBrowserAsync(
+                                `${API_BASE_URL.replace(/^https:\/\/www\./, "https://")}/?openPurchase=video`,
+                            );
+                            // 돌아오면 quota 다시 가져오기
+                            loadQuota();
+                        } catch {
+                            Alert.alert("열기 실패", "웹 결제 페이지를 열 수 없어요.");
+                        }
+                    },
+                },
+            ],
+        );
+    }
+
+    /**
+     * 정기 구독 — 앱 내 subscription 화면으로 이동 (웹 구독 안내 포함).
+     */
+    function handleSubscribe() {
+        onClose();
+        router.push("/subscription");
     }
 
     // quota 로드 실패해도 시도는 가능. 서버가 quota 검증.
@@ -293,34 +333,66 @@ export default function VideoGenerateModal({ visible, onClose, onSuccess, pet, i
                     </Text>
                 </View>
                 {!canGenerate && quota ? (
-                    <View style={[styles.noticeCard, { backgroundColor: "#FEF3C7" }]}>
-                        <Ionicons name="alert-circle-outline" size={16} color="#B45309" />
-                        <Text style={[styles.noticeText, { color: "#92400E" }]}>
-                            {quota.tier === "free"
-                                ? "평생 무료 1회를 모두 사용했어요. 단건 구매(3,500원)로 추가 생성할 수 있어요."
-                                : "이번 달 쿼터를 모두 사용했어요. 단건 구매(3,500원)로 추가 생성할 수 있어요."}
-                        </Text>
-                    </View>
-                ) : null}
-                <TouchableOpacity
-                    onPress={handleGenerate}
-                    disabled={!canGenerate || submitting}
-                    style={[
-                        styles.generateBtn,
-                        { backgroundColor: accentColor },
-                        (!canGenerate || submitting) && { opacity: 0.5 },
-                    ]}
-                    activeOpacity={0.85}
-                >
-                    {submitting ? (
-                        <ActivityIndicator color="#fff" />
-                    ) : (
-                        <>
-                            <Ionicons name="sparkles" size={16} color="#fff" />
-                            <Text style={styles.generateBtnText}>영상 만들기</Text>
-                        </>
-                    )}
-                </TouchableOpacity>
+                    <>
+                        <View style={[styles.noticeCard, { backgroundColor: "#FEF3C7" }]}>
+                            <Ionicons name="alert-circle-outline" size={16} color="#B45309" />
+                            <Text style={[styles.noticeText, { color: "#92400E" }]}>
+                                {quota.tier === "free"
+                                    ? `평생 무료 1회를 모두 사용했어요. 단건 구매(${VIDEO.SINGLE_PRICE.toLocaleString()}원) 또는 정기 구독으로 추가 생성할 수 있어요.`
+                                    : `이번 달 쿼터를 모두 사용했어요. 단건 구매(${VIDEO.SINGLE_PRICE.toLocaleString()}원) 또는 정기 구독으로 추가 생성할 수 있어요.`}
+                            </Text>
+                        </View>
+                        {/* 단건 구매 + 정기 구독 동시 노출 */}
+                        <View style={{ flexDirection: "row", gap: 8 }}>
+                            <TouchableOpacity
+                                onPress={handleSinglePurchase}
+                                style={[styles.purchaseBtn, { backgroundColor: accentColor }]}
+                                activeOpacity={0.85}
+                            >
+                                <Ionicons name="card-outline" size={16} color="#fff" />
+                                <View style={{ alignItems: "center" }}>
+                                    <Text style={styles.purchaseBtnText}>단건 구매</Text>
+                                    <Text style={styles.purchaseBtnSub}>{VIDEO.SINGLE_PRICE.toLocaleString()}원</Text>
+                                </View>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={handleSubscribe}
+                                style={[styles.purchaseBtn, {
+                                    backgroundColor: isDarkMode ? COLORS.gray[800] : "#fff",
+                                    borderWidth: 2,
+                                    borderColor: accentColor,
+                                }]}
+                                activeOpacity={0.85}
+                            >
+                                <Ionicons name="ribbon-outline" size={16} color={accentColor} />
+                                <View style={{ alignItems: "center" }}>
+                                    <Text style={[styles.purchaseBtnText, { color: accentColor }]}>정기 구독</Text>
+                                    <Text style={[styles.purchaseBtnSub, { color: accentColor }]}>월 9,900원~</Text>
+                                </View>
+                            </TouchableOpacity>
+                        </View>
+                    </>
+                ) : (
+                    <TouchableOpacity
+                        onPress={handleGenerate}
+                        disabled={!canGenerate || submitting}
+                        style={[
+                            styles.generateBtn,
+                            { backgroundColor: accentColor },
+                            (!canGenerate || submitting) && { opacity: 0.5 },
+                        ]}
+                        activeOpacity={0.85}
+                    >
+                        {submitting ? (
+                            <ActivityIndicator color="#fff" />
+                        ) : (
+                            <>
+                                <Ionicons name="sparkles" size={16} color="#fff" />
+                                <Text style={styles.generateBtnText}>영상 만들기</Text>
+                            </>
+                        )}
+                    </TouchableOpacity>
+                )}
             </View>
         );
     }
@@ -421,4 +493,16 @@ const styles = StyleSheet.create({
         marginTop: 8,
     },
     generateBtnText: { color: "#fff", fontSize: 15, fontWeight: "700" },
+    purchaseBtn: {
+        flex: 1,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+        paddingVertical: 12,
+        borderRadius: 12,
+        marginTop: 8,
+    },
+    purchaseBtnText: { color: "#fff", fontSize: 13, fontWeight: "700" },
+    purchaseBtnSub: { color: "#fff", fontSize: 11, marginTop: 1, opacity: 0.85 },
 });

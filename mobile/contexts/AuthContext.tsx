@@ -351,10 +351,67 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return signInWithProvider("kakao");
     }
 
+    /**
+     * 네이버 로그인.
+     * Supabase는 Naver를 빌트인으로 지원하지 않으므로 웹 /api/auth/naver를 경유.
+     *
+     * 1) WebBrowser → /api/auth/naver?mobile=1&nativeUrl=...
+     * 2) 네이버 OAuth → /api/auth/naver/callback (쿠키로 mobile/nativeUrl 전달)
+     * 3) 콜백이 magiclink hashed_token 생성 → /auth/callback?token_hash=...&mobile=1&nativeUrl=...
+     * 4) /auth/callback이 deep link로 forward → 앱 catch
+     * 5) 앱에서 supabase.auth.verifyOtp({ type:"magiclink", token_hash })로 세션 교환
+     */
     async function signInWithNaver(): Promise<{ error: Error | null }> {
-        // 웹 API (/api/auth/naver)는 쿠키 기반 세션이라 모바일 미호환
-        // 추후 모바일 친화 엔드포인트 또는 Supabase custom OIDC provider 등록 후 구현
-        return { error: new Error("네이버 로그인은 현재 준비 중입니다. 카카오 또는 구글을 이용해주세요.") };
+        try {
+            const nativeDeepLink = Linking.createURL("/auth/callback");
+            const oauthOrigin = API_BASE_URL.replace(
+                /^https:\/\/www\.mementoani\.com/i,
+                "https://mementoani.com",
+            );
+
+            // 1. /api/auth/naver?mobile=1&nativeUrl=... 호출
+            const naverStart = `${oauthOrigin}/api/auth/naver`
+                + `?mobile=1`
+                + `&nativeUrl=${encodeURIComponent(nativeDeepLink)}`;
+
+            console.log(`[OAuth/Naver] start=${naverStart}`);
+
+            // 2. WebBrowser로 OAuth (자동 리다이렉트 chain)
+            const result = await WebBrowser.openAuthSessionAsync(
+                naverStart,
+                nativeDeepLink,
+            );
+            console.log(`[OAuth/Naver] result.type=${result.type}`);
+
+            if (result.type !== "success" || !result.url) {
+                // 사용자가 dismiss — 폴백 deep link 핸들러가 처리
+                return { error: null };
+            }
+
+            // 3. callback URL에서 token_hash 추출
+            const callbackUrl = new URL(result.url);
+            const tokenHash = callbackUrl.searchParams.get("token_hash");
+            const errMsg = callbackUrl.searchParams.get("error_description")
+                ?? callbackUrl.searchParams.get("error");
+
+            if (errMsg) return { error: new Error(decodeURIComponent(errMsg)) };
+            if (!tokenHash) {
+                return { error: new Error(`콜백에 token_hash 없음. URL=${result.url.slice(0, 200)}`) };
+            }
+
+            // 4. magiclink 검증으로 세션 교환
+            const { error: verifyError } = await supabase.auth.verifyOtp({
+                token_hash: tokenHash,
+                type: "magiclink",
+            });
+            if (verifyError) {
+                return { error: new Error(verifyError.message) };
+            }
+
+            return { error: null };
+        } catch (e) {
+            return { error: e as Error };
+        }
     }
 
     async function signOut() {

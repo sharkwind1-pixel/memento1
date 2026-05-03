@@ -46,4 +46,5 @@ export const API_BASE_URL = _rawBase.replace(
 export const VIDEO = {
     POLL_INTERVAL_MS: 15000, // 15초
     MAX_POLL_COUNT: 60,      // 15분 (60 × 15초)
+    SINGLE_PRICE: 3500,      // 단건 구매가 (KRW)
 } as const;
