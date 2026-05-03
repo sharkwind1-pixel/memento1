@@ -16,14 +16,13 @@ import {
     ScrollView, StyleSheet, ActivityIndicator, Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
-import * as WebBrowser from "expo-web-browser";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDarkMode } from "@/contexts/ThemeContext";
 import { API_BASE_URL, VIDEO } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
 import { VIDEO_TEMPLATES, CATEGORY_LABEL, type MobileVideoTemplate } from "@/data/videoTemplates";
+import PaymentWebViewModal from "@/components/payments/PaymentWebViewModal";
 
 interface PetPhoto {
     id: string;
@@ -57,10 +56,10 @@ interface Props {
 type Step = "photo" | "template" | "confirm";
 
 export default function VideoGenerateModal({ visible, onClose, onSuccess, pet, isMemorialMode }: Props) {
-    const router = useRouter();
     const { session } = useAuth();
     const { isDarkMode } = useDarkMode();
     const [step, setStep] = useState<Step>("photo");
+    const [paymentMode, setPaymentMode] = useState<"video" | "subscription" | null>(null);
     const [photo, setPhoto] = useState<PetPhoto | null>(null);
     const [template, setTemplate] = useState<MobileVideoTemplate | null>(null);
     const [quota, setQuota] = useState<Quota | null>(null);
@@ -134,40 +133,19 @@ export default function VideoGenerateModal({ visible, onClose, onSuccess, pet, i
     }
 
     /**
-     * 단건 구매 — RN PortOne SDK 미통합 → WebBrowser로 웹 결제 페이지 진입.
-     * 결제 완료 후 사용자가 앱 복귀하면 quota 다시 fetch.
+     * 단건 구매 — 인앱 WebView로 PortOne 결제창 호출.
+     * 결제 검증 완료 후 quota 다시 fetch.
      */
-    async function handleSinglePurchase() {
-        Alert.alert(
-            "단건 구매 안내",
-            `웹에서 ${VIDEO.SINGLE_PRICE.toLocaleString()}원으로 영상 1건을 구매할 수 있어요. 같은 계정으로 로그인되어 있으면 결제 후 앱에서 바로 사용 가능합니다.`,
-            [
-                { text: "취소", style: "cancel" },
-                {
-                    text: "웹으로 이동",
-                    onPress: async () => {
-                        try {
-                            // 결제 페이지 (홈에서 단건 구매 모달 자동 오픈하도록 query)
-                            await WebBrowser.openBrowserAsync(
-                                `${API_BASE_URL.replace(/^https:\/\/www\./, "https://")}/?openPurchase=video`,
-                            );
-                            // 돌아오면 quota 다시 가져오기
-                            loadQuota();
-                        } catch {
-                            Alert.alert("열기 실패", "웹 결제 페이지를 열 수 없어요.");
-                        }
-                    },
-                },
-            ],
-        );
+    function handleSinglePurchase() {
+        setPaymentMode("video");
     }
 
     /**
-     * 정기 구독 — 앱 내 subscription 화면으로 이동 (웹 구독 안내 포함).
+     * 정기 구독 — 인앱 WebView로 PortOne 배치결제(빌링키 발급) 호출.
+     * 기본은 basic plan으로 시작 (사용자가 더 비싼 플랜 원하면 /subscription에서).
      */
     function handleSubscribe() {
-        onClose();
-        router.push("/subscription");
+        setPaymentMode("subscription");
     }
 
     // quota 로드 실패해도 시도는 가능. 서버가 quota 검증.
@@ -407,6 +385,19 @@ export default function VideoGenerateModal({ visible, onClose, onSuccess, pet, i
                     {step === "template" && renderTemplateStep()}
                     {step === "confirm" && renderConfirmStep()}
                 </ScrollView>
+
+                {/* 인앱 결제 WebView */}
+                <PaymentWebViewModal
+                    visible={paymentMode !== null}
+                    type={paymentMode ?? "video"}
+                    plan={paymentMode === "subscription" ? "basic" : undefined}
+                    onClose={() => setPaymentMode(null)}
+                    onSuccess={() => {
+                        setPaymentMode(null);
+                        // 결제 성공 → quota 다시 가져오기 → canGenerate 갱신
+                        loadQuota();
+                    }}
+                />
             </SafeAreaView>
         </Modal>
     );
