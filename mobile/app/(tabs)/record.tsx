@@ -16,7 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Video as ExpoVideo, ResizeMode } from "expo-av";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
 import { useDarkMode } from "@/contexts/ThemeContext";
@@ -50,12 +50,25 @@ const TABS: Array<{ id: TabType; label: string; icon: React.ComponentProps<typeo
 
 export default function RecordScreen() {
     const router = useRouter();
+    const params = useLocalSearchParams<{ openVideo?: string }>();
     const { user } = useAuth();
     const { selectedPet, isLoading: petsLoading, isMemorialMode, refreshPets } = usePet();
     const { isDarkMode } = useDarkMode();
     const [activeTab, setActiveTab] = useState<TabType>("timeline");
     const [refreshing, setRefreshing] = useState(false);
     const [drawerOpen, setDrawerOpen] = useState(false);
+    // 함께 보기 → AI 영상 생성 진입 트리거 (community FAB에서 ?openVideo=1)
+    const [autoOpenVideoGen, setAutoOpenVideoGen] = useState(false);
+
+    // openVideo 파라미터 감지 → videos 탭 + 모달 자동 열기
+    useEffect(() => {
+        if (params.openVideo === "1") {
+            setActiveTab("videos");
+            setAutoOpenVideoGen(true);
+            // 1회성 트리거이므로 URL 정리 (replace로 백 스택 안 쌓이게)
+            router.replace("/(tabs)/record");
+        }
+    }, [params.openVideo, router]);
 
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
     const accentGradient: [string, string] = isMemorialMode
@@ -219,6 +232,8 @@ export default function RecordScreen() {
                             accentColor={accentColor}
                             refreshing={refreshing}
                             onRefresh={onRefresh}
+                            autoOpenGenerate={autoOpenVideoGen}
+                            onAutoOpenConsumed={() => setAutoOpenVideoGen(false)}
                         />
                     )}
                 </>
@@ -931,12 +946,14 @@ function normalizeVideo(raw: Record<string, unknown>): Video {
     };
 }
 
-function VideosTab({ pet, isMemorialMode, accentColor, refreshing, onRefresh }: {
+function VideosTab({ pet, isMemorialMode, accentColor, refreshing, onRefresh, autoOpenGenerate, onAutoOpenConsumed }: {
     pet: NonNullable<ReturnType<typeof usePet>["selectedPet"]>;
     isMemorialMode: boolean;
     accentColor: string;
     refreshing: boolean;
     onRefresh: () => void;
+    autoOpenGenerate?: boolean;
+    onAutoOpenConsumed?: () => void;
 }) {
     const { isDarkMode } = useDarkMode();
     const { session } = useAuth();
@@ -947,6 +964,14 @@ function VideosTab({ pet, isMemorialMode, accentColor, refreshing, onRefresh }: 
     const [activeStartedAt, setActiveStartedAt] = useState<number | null>(null);
     const [selectedVideo, setSelectedVideo] = useState<VideoResult | null>(null);
     const [tick, setTick] = useState(0); // 경과 시간 매초 갱신
+
+    // 함께 보기 → AI 영상 생성 진입 시 자동으로 모달 열기
+    useEffect(() => {
+        if (autoOpenGenerate) {
+            setGenerateOpen(true);
+            onAutoOpenConsumed?.();
+        }
+    }, [autoOpenGenerate, onAutoOpenConsumed]);
 
     const pollCountRef = useRef(0);
     const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);

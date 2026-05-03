@@ -419,9 +419,16 @@ export default function CommunityScreen() {
                 />
             )}
 
-            {/* FAB 글쓰기 */}
+            {/* FAB — showcase 모드는 AI 영상 생성으로, 일반은 글쓰기로 */}
             <TouchableOpacity
-                onPress={() => router.push({ pathname: "/post/write", params: { subcategory: activeTab } })}
+                onPress={() => {
+                    if (showcaseMode) {
+                        // 함께 보기는 AI 영상 갤러리 → 영상 생성 폼 진입
+                        router.push("/(tabs)/record?openVideo=1");
+                    } else {
+                        router.push({ pathname: "/post/write", params: { subcategory: activeTab } });
+                    }
+                }}
                 style={[styles.fab, { bottom: 84 + Math.max(insets.bottom, 8) }]}
                 activeOpacity={0.85}
             >
@@ -429,7 +436,7 @@ export default function CommunityScreen() {
                     colors={activeSubcat.gradient}
                     style={styles.fabGradient}
                 >
-                    <Ionicons name="create" size={22} color="#fff" />
+                    <Ionicons name={showcaseMode ? "videocam" : "create"} size={22} color="#fff" />
                 </LinearGradient>
             </TouchableOpacity>
         </SafeAreaView>

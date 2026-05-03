@@ -96,6 +96,24 @@ export default function LoginScreen() {
                     />
 
                     <SocialButton
+                        provider="naver"
+                        label="네이버로 계속하기"
+                        bg="#03C75A"
+                        fg="#FFFFFF"
+                        loading={loadingProvider === "naver"}
+                        disabled={loadingProvider !== null}
+                        onPress={() => handleLogin("naver")}
+                        icon={
+                            <Svg width={18} height={18} viewBox="0 0 24 24">
+                                <Path
+                                    d="M16.273 12.845L7.376 0H0v24h7.726V11.156L16.624 24H24V0h-7.727v12.845z"
+                                    fill="#FFFFFF"
+                                />
+                            </Svg>
+                        }
+                    />
+
+                    <SocialButton
                         provider="google"
                         label="Google로 계속하기"
                         bg="#FFFFFF"

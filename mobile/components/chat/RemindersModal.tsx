@@ -45,13 +45,16 @@ interface Props {
     isMemorialMode: boolean;
 }
 
+// DB CHECK 제약: type IN ('walk', 'meal', 'medicine', 'vaccine', 'grooming', 'vet', 'custom')
+// 모바일 라벨은 한국어. id는 DB allowed 값과 일치해야 함.
 const REMINDER_TYPES = [
-    { id: "feeding", label: "사료/간식", icon: "restaurant-outline" as const },
+    { id: "meal", label: "사료/간식", icon: "restaurant-outline" as const },
     { id: "walk", label: "산책", icon: "walk-outline" as const },
     { id: "medicine", label: "투약", icon: "medkit-outline" as const },
+    { id: "vaccine", label: "예방접종", icon: "shield-checkmark-outline" as const },
     { id: "grooming", label: "미용/목욕", icon: "water-outline" as const },
     { id: "vet", label: "병원", icon: "heart-outline" as const },
-    { id: "other", label: "기타", icon: "ellipsis-horizontal-outline" as const },
+    { id: "custom", label: "기타", icon: "ellipsis-horizontal-outline" as const },
 ];
 
 export default function RemindersModal({ visible, onClose, petId, petName, accentColor, isMemorialMode }: Props) {
@@ -62,8 +65,8 @@ export default function RemindersModal({ visible, onClose, petId, petName, accen
     const [adding, setAdding] = useState(false);
     const [submitting, setSubmitting] = useState(false);
 
-    // 새 리마인더 폼
-    const [newType, setNewType] = useState("feeding");
+    // 새 리마인더 폼 — DB CHECK 제약과 일치하는 값 사용
+    const [newType, setNewType] = useState("meal");
     const [newTitle, setNewTitle] = useState("");
     const [newTime, setNewTime] = useState("09:00");
 
@@ -91,7 +94,7 @@ export default function RemindersModal({ visible, onClose, petId, petName, accen
             setAdding(false);
             setNewTitle("");
             setNewTime("09:00");
-            setNewType("feeding");
+            setNewType("meal");
         }
     }, [visible, load]);
 
