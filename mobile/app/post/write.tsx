@@ -32,6 +32,7 @@ import { CommunitySubcategory } from "@/types";
 import { COLORS } from "@/lib/theme";
 import { uploadCommunityPostImage } from "@/lib/community-upload";
 import AppHeader from "@/components/common/AppHeader";
+import PhotoCropConfirmModal from "@/components/record/PhotoCropConfirmModal";
 
 // ============================================================================
 // 상수 (웹 WritePostModal과 동일)
@@ -110,6 +111,9 @@ export default function WritePostScreen() {
     // 이미지 (URI 또는 업로드된 URL)
     const [images, setImages] = useState<Array<{ uri: string; uploaded?: string; uploading?: boolean }>>([]);
     const [submitting, setSubmitting] = useState(false);
+
+    // 이미지 에디터 (크롭/회전) 상태
+    const [editingImage, setEditingImage] = useState<{ uri: string; index: number } | null>(null);
 
     const userNickname = useMemo(
         () => profile?.nickname || user?.email?.split("@")[0] || "익명",
@@ -247,6 +251,36 @@ export default function WritePostScreen() {
 
     function removeImage(idx: number) {
         setImages((prev) => prev.filter((_, k) => k !== idx));
+    }
+
+    function openImageEditor(idx: number) {
+        const img = images[idx];
+        if (!img) return;
+        // 업로드된 원격 URL은 expo-image-manipulator가 fetch해서 처리 가능. 로컬 uri 우선.
+        setEditingImage({ uri: img.uploaded ?? img.uri, index: idx });
+    }
+
+    async function handleEditedImage(finalUri: string) {
+        const target = editingImage;
+        setEditingImage(null);
+        if (!target || !user) return;
+
+        // 편집된 이미지를 다시 업로드 (uploading 상태로)
+        setImages((prev) => prev.map((img, k) =>
+            k === target.index ? { uri: finalUri, uploading: true } : img,
+        ));
+        const upload = await uploadCommunityPostImage(finalUri, user.id, {
+            mimeType: "image/jpeg",
+        });
+        if (!upload.success || !upload.url) {
+            Alert.alert("업로드 실패", upload.error || "편집된 이미지를 업로드하지 못했어요.");
+            // 실패 시 해당 슬롯 제거
+            setImages((prev) => prev.filter((_, k) => k !== target.index));
+            return;
+        }
+        setImages((prev) => prev.map((img, k) =>
+            k === target.index ? { uri: finalUri, uploaded: upload.url, uploading: false } : img,
+        ));
     }
 
     // ============================================
@@ -574,6 +608,15 @@ export default function WritePostScreen() {
                                             <ActivityIndicator size="small" color="#fff" />
                                         </View>
                                     )}
+                                    {!img.uploading && (
+                                        <TouchableOpacity
+                                            onPress={() => openImageEditor(i)}
+                                            style={styles.imgEdit}
+                                            hitSlop={6}
+                                        >
+                                            <Ionicons name="brush" size={12} color="#fff" />
+                                        </TouchableOpacity>
+                                    )}
                                     <TouchableOpacity
                                         onPress={() => removeImage(i)}
                                         style={styles.imgRemove}
@@ -637,6 +680,15 @@ export default function WritePostScreen() {
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>
+
+            <PhotoCropConfirmModal
+                visible={editingImage !== null}
+                initialUri={editingImage?.uri ?? null}
+                accentColor={accentColor}
+                onClose={() => setEditingImage(null)}
+                onConfirm={handleEditedImage}
+                onRetake={() => setEditingImage(null)}
+            />
         </SafeAreaView>
     );
 }
@@ -765,6 +817,14 @@ const styles = StyleSheet.create({
     imgRemove: {
         position: "absolute",
         top: 4, right: 4,
+        width: 22, height: 22,
+        backgroundColor: "rgba(0,0,0,0.6)",
+        borderRadius: 11,
+        alignItems: "center", justifyContent: "center",
+    },
+    imgEdit: {
+        position: "absolute",
+        bottom: 4, left: 4,
         width: 22, height: 22,
         backgroundColor: "rgba(0,0,0,0.6)",
         borderRadius: 11,

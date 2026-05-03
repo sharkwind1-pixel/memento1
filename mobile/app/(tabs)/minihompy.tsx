@@ -36,6 +36,7 @@ import GuestbookModal from "@/components/minihompy/GuestbookModal";
 import GreetingEditModal from "@/components/minihompy/GreetingEditModal";
 import StageEditor from "@/components/minihompy/StageEditor";
 import TouchParticles from "@/components/minihompy/TouchParticles";
+import VisitorsModal from "@/components/minihompy/VisitorsModal";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const STAGE_HEIGHT = 300;
@@ -104,6 +105,7 @@ export default function MinihompyScreen() {
     const [guestbookOpen, setGuestbookOpen] = useState(false);
     const [greetingOpen, setGreetingOpen] = useState(false);
     const [drawerOpen, setDrawerOpen] = useState(false);
+    const [visitorsOpen, setVisitorsOpen] = useState(false);
 
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
     const accessToken = session?.access_token ?? null;
@@ -251,7 +253,12 @@ export default function MinihompyScreen() {
                             미니홈피
                         </Text>
                         {settings && (
-                            <View style={styles.statsRow}>
+                            <TouchableOpacity
+                                onPress={() => setVisitorsOpen(true)}
+                                activeOpacity={0.7}
+                                style={styles.statsRow}
+                                hitSlop={4}
+                            >
                                 <Text style={styles.statsText}>
                                     오늘 방문 {settings.todayVisitors ?? 0}
                                 </Text>
@@ -263,7 +270,8 @@ export default function MinihompyScreen() {
                                 <Text style={styles.statsText}>
                                     좋아요 {settings.totalLikes ?? 0}
                                 </Text>
-                            </View>
+                                <Ionicons name="chevron-forward" size={11} color={COLORS.gray[400]} style={{ marginLeft: 2 }} />
+                            </TouchableOpacity>
                         )}
                     </View>
                     <View style={styles.pointPill}>
@@ -479,6 +487,11 @@ export default function MinihompyScreen() {
                         onSaved={(greeting) => {
                             if (settings) setSettings({ ...settings, greeting });
                         }}
+                    />
+                    <VisitorsModal
+                        visible={visitorsOpen}
+                        onClose={() => setVisitorsOpen(false)}
+                        accentColor={accentColor}
                     />
                 </>
             )}

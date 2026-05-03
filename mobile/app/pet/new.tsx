@@ -16,6 +16,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Stack, useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
+import PhotoCropConfirmModal from "@/components/record/PhotoCropConfirmModal";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { supabase } from "@/lib/supabase";
@@ -86,6 +87,7 @@ export default function NewPetScreen() {
     const [step, setStep] = useState(1);
     const [profileImage, setProfileImage] = useState<string | null>(null);
     const [profileImageFile, setProfileImageFile] = useState<{ uri: string; type: string } | null>(null);
+    const [cropModalUri, setCropModalUri] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
     const [form, setForm] = useState<FormData>({
@@ -126,11 +128,22 @@ export default function NewPetScreen() {
             quality: 0.85,
         });
         if (!result.canceled && result.assets[0]) {
-            const asset = result.assets[0];
-            setProfileImage(asset.uri);
-            const ext = asset.uri.split(".").pop() ?? "jpg";
-            setProfileImageFile({ uri: asset.uri, type: `image/${ext === "jpg" ? "jpeg" : ext}` });
+            // 크롭 확정 모달 띄움 — 회전 가능 + 다시 고르기 옵션
+            setCropModalUri(result.assets[0].uri);
         }
+    }
+
+    function handleCropConfirm(finalUri: string) {
+        setProfileImage(finalUri);
+        const ext = finalUri.split(".").pop()?.split("?")[0] ?? "jpg";
+        setProfileImageFile({ uri: finalUri, type: `image/${ext === "jpg" ? "jpeg" : ext}` });
+        setCropModalUri(null);
+    }
+
+    function handleCropRetake() {
+        setCropModalUri(null);
+        // 약간의 딜레이 후 picker 재오픈 (모달 닫힘 애니메이션 충돌 방지)
+        setTimeout(() => { pickImage(); }, 350);
     }
 
     async function uploadProfileImage(petId: string): Promise<string | null> {
@@ -357,6 +370,15 @@ export default function NewPetScreen() {
                     )}
                 </View>
             </KeyboardAvoidingView>
+
+            <PhotoCropConfirmModal
+                visible={cropModalUri !== null}
+                initialUri={cropModalUri}
+                accentColor={form.status === "memorial" ? COLORS.memorial[500] : COLORS.memento[500]}
+                onClose={() => setCropModalUri(null)}
+                onConfirm={handleCropConfirm}
+                onRetake={handleCropRetake}
+            />
         </SafeAreaView>
     );
 }

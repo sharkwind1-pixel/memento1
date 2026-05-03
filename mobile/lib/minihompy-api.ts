@@ -322,3 +322,30 @@ export async function postGuestbookEntry(
         body: { content },
     });
 }
+
+// ============================================================================
+// 방문자 목록 (본인만)
+// ============================================================================
+
+export interface VisitorEntry {
+    id: string;
+    visitorId: string | null;
+    visitorNickname: string;
+    visitorAvatar: string | null;
+    visitedAt: string;
+}
+
+interface VisitorsResponse {
+    visitors: VisitorEntry[];
+}
+
+export async function getMyVisitors(
+    accessToken: string,
+    ownerUserId: string,
+): Promise<VisitorEntry[]> {
+    const data = await callApi<VisitorsResponse>(
+        `/api/minihompy/${ownerUserId}/visitors`,
+        { accessToken },
+    );
+    return data.visitors ?? [];
+}
