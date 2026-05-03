@@ -65,7 +65,8 @@
           "locationAlwaysAndWhenInUsePermission": "AI 펫톡에서 근처 산책로/병원/펫카페를 추천하기 위해 위치를 사용합니다."
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": false
