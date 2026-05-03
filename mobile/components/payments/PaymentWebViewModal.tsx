@@ -168,22 +168,38 @@ export default function PaymentWebViewModal({ visible, type, plan, onClose, onSu
         return false;
     }
 
-    /** 외부 앱 URL scheme 열기 (실패 시 친절한 안내) */
+    /**
+     * 외부 앱 URL scheme 열기.
+     *
+     * canOpenURL은 사용 X — Expo Go는 LSApplicationQueriesSchemes(iOS) 와
+     * <queries> (Android API 30+)를 들고 있지 않아서 설치된 앱도 false 리턴.
+     * 무조건 openURL 시도하고 throw일 때만 fallback 안내.
+     *
+     * intent:// (Android KCP 결제) 처리:
+     *  1. 그대로 openURL — Android가 fallback URL 자동 처리해줌
+     *  2. 실패 시 intent에서 fallback URL 추출 시도
+     */
     async function tryOpenExternal(url: string) {
         try {
-            const supported = await Linking.canOpenURL(url);
-            if (supported) {
-                await Linking.openURL(url);
-            } else {
-                // 카드사 앱 미설치 추정
-                Alert.alert(
-                    "결제 앱 필요",
-                    "이 결제 수단을 사용하려면 카드사 또는 결제 앱이 설치되어 있어야 해요. 다른 결제 수단을 선택하거나 앱을 먼저 설치해주세요.",
-                );
+            await Linking.openURL(url);
+        } catch (e1) {
+            // intent://...#Intent;...;S.browser_fallback_url=https%3A%2F%2F...;end 형식이면
+            // browser_fallback_url 추출해서 시도
+            if (url.startsWith("intent://")) {
+                const fallbackMatch = url.match(/S\.browser_fallback_url=([^;]+)/);
+                if (fallbackMatch) {
+                    try {
+                        await Linking.openURL(decodeURIComponent(fallbackMatch[1]));
+                        return;
+                    } catch { /* 무시 */ }
+                }
             }
-        } catch {
-            // canOpenURL 실패해도 일단 시도 (Android는 종종 false 리턴해도 열림)
-            try { await Linking.openURL(url); } catch { /* silent */ }
+            // 정말 안 열림 = 앱 미설치 가능성 (또는 Expo Go scheme 제한)
+            Alert.alert(
+                "결제 앱 실행 실패",
+                "결제 앱을 실행할 수 없어요. 다른 결제 수단을 시도하거나 카드사 앱이 설치되어 있는지 확인해주세요.",
+            );
+            void e1;
         }
     }
 
