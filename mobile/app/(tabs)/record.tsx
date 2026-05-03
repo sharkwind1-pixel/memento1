@@ -296,6 +296,20 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
 
     useEffect(() => { load(); }, [load]);
 
+    // 실시간 timeline 동기화 — 다른 디바이스/AI 자동 기록 시 즉시 반영
+    useEffect(() => {
+        if (!petId) return;
+        const channel = supabase
+            .channel(`timeline:${petId}`)
+            .on(
+                "postgres_changes",
+                { event: "*", schema: "public", table: "timeline_entries", filter: `pet_id=eq.${petId}` },
+                () => { load(); },
+            )
+            .subscribe();
+        return () => { supabase.removeChannel(channel); };
+    }, [petId, load]);
+
     function openAdd() {
         setEditingEntry(undefined);
         setModalOpen(true);

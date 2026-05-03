@@ -295,6 +295,25 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
         }
     }, [user, loadFromSupabase, initEmptyState]);
 
+    // 실시간 펫/사진 동기화 — 다른 디바이스(앱)에서 변경 시 즉시 양쪽 반영
+    useEffect(() => {
+        if (!user?.id) return;
+        const channel = supabase
+            .channel(`pets_realtime:${user.id}`)
+            .on(
+                "postgres_changes",
+                { event: "*", schema: "public", table: "pets", filter: `user_id=eq.${user.id}` },
+                () => { loadFromSupabase(user.id); },
+            )
+            .on(
+                "postgres_changes",
+                { event: "*", schema: "public", table: "pet_media", filter: `user_id=eq.${user.id}` },
+                () => { loadFromSupabase(user.id); },
+            )
+            .subscribe();
+        return () => { supabase.removeChannel(channel); };
+    }, [user?.id, loadFromSupabase]);
+
     // 비로그인 사용자는 구경만 가능 (localStorage 저장 비활성화)
 
     // 선택된 펫 ID localStorage에 저장

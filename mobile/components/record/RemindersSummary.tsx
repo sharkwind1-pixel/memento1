@@ -14,6 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useDarkMode } from "@/contexts/ThemeContext";
 import { API_BASE_URL } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
+import { supabase } from "@/lib/supabase";
 import RemindersModal from "@/components/chat/RemindersModal";
 
 interface Reminder {
@@ -64,6 +65,20 @@ export default function RemindersSummary({ petId, petName, accentColor }: Props)
     }, [session, petId]);
 
     useEffect(() => { load(); }, [load]);
+
+    // 실시간 동기화 — pet_reminders 변경 즉시 반영
+    useEffect(() => {
+        if (!petId) return;
+        const channel = supabase
+            .channel(`reminders_summary:${petId}`)
+            .on(
+                "postgres_changes",
+                { event: "*", schema: "public", table: "pet_reminders", filter: `pet_id=eq.${petId}` },
+                () => { load(); },
+            )
+            .subscribe();
+        return () => { supabase.removeChannel(channel); };
+    }, [petId, load]);
 
     const enabledList = reminders.filter((r) => r.enabled);
     const nextReminder = computeNextReminder(enabledList);

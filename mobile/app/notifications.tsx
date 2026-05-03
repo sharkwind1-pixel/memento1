@@ -9,6 +9,7 @@ import { Stack, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { API_BASE_URL } from "@/config/constants";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 import { usePet } from "@/contexts/PetContext";
 import { useDarkMode } from "@/contexts/ThemeContext";
 import { COLORS } from "@/lib/theme";
@@ -58,7 +59,7 @@ function badgeForType(type: string): { label: string; color: string } | null {
 
 export default function NotificationsScreen() {
     const router = useRouter();
-    const { session } = useAuth();
+    const { session, user } = useAuth();
     const { isMemorialMode } = usePet();
     const { isDarkMode } = useDarkMode();
     const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -107,6 +108,20 @@ export default function NotificationsScreen() {
     }, [session]);
 
     useEffect(() => { load(); }, [load]);
+
+    // 실시간 알림 동기화 — 새 알림 INSERT/UPDATE 즉시 다시 로드 → 0.5초 이내 반영
+    useEffect(() => {
+        if (!user?.id) return;
+        const channel = supabase
+            .channel(`notifications:${user.id}`)
+            .on(
+                "postgres_changes",
+                { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
+                () => { load(); },
+            )
+            .subscribe();
+        return () => { supabase.removeChannel(channel); };
+    }, [user?.id, load]);
 
     async function handleRefresh() {
         setRefreshing(true);

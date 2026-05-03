@@ -19,6 +19,7 @@ import { usePet } from "@/contexts/PetContext";
 import { useDarkMode } from "@/contexts/ThemeContext";
 import { COLORS } from "@/lib/theme";
 import AppHeader from "@/components/common/AppHeader";
+import { supabase } from "@/lib/supabase";
 
 interface Comment {
     id: string;
@@ -174,6 +175,26 @@ export default function PostDetailScreen() {
             // eslint-disable-next-line react-hooks/exhaustive-deps
         }, [id]),
     );
+
+    // 실시간 동기화 — 다른 사용자가 댓글 달거나 좋아요/비추천 누르면 즉시 반영
+    useEffect(() => {
+        if (!id) return;
+        const channel = supabase
+            .channel(`post:${id}`)
+            .on(
+                "postgres_changes",
+                { event: "*", schema: "public", table: "community_posts", filter: `id=eq.${id}` },
+                () => { loadPost(); },
+            )
+            .on(
+                "postgres_changes",
+                { event: "*", schema: "public", table: "post_comments", filter: `post_id=eq.${id}` },
+                () => { loadPost(); },
+            )
+            .subscribe();
+        return () => { supabase.removeChannel(channel); };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id]);
 
     async function loadPost() {
         try {

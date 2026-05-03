@@ -25,6 +25,7 @@ import { usePet } from "@/contexts/PetContext";
 import { useDarkMode } from "@/contexts/ThemeContext";
 import { CommunityPost, CommunitySubcategory } from "@/types";
 import { COLORS } from "@/lib/theme";
+import { supabase } from "@/lib/supabase";
 import AppHeader from "@/components/common/AppHeader";
 import AppDrawer from "@/components/common/AppDrawer";
 
@@ -208,6 +209,20 @@ export default function CommunityScreen() {
             fetchPosts();
         }, [fetchPosts]),
     );
+
+    // 실시간 게시글 동기화 — 다른 디바이스에서 새 글 INSERT/UPDATE/DELETE 즉시 반영.
+    // 단순화 위해 풀 refetch (현재 활성 탭 + 필터 일치 여부 판단 복잡 회피).
+    useEffect(() => {
+        const channel = supabase
+            .channel(`community_posts_${activeTab}`)
+            .on(
+                "postgres_changes",
+                { event: "*", schema: "public", table: "community_posts" },
+                () => { fetchPosts(); },
+            )
+            .subscribe();
+        return () => { supabase.removeChannel(channel); };
+    }, [fetchPosts, activeTab]);
 
     async function onRefresh() {
         setRefreshing(true);

@@ -903,6 +903,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
     }, [refreshProfile, refreshPoints, checkDailyLogin]);
 
+    // ============================================================================
+    // 실시간 프로필 동기화 — 다른 디바이스(앱) 또는 서버(결제 webhook, cron, admin)에서
+    // profiles UPDATE 시 즉시 refreshProfile 호출 → 0.5초 이내 양쪽 반영.
+    // ============================================================================
+    useEffect(() => {
+        if (!user?.id) return;
+        const channel = supabase
+            .channel(`profile_realtime:${user.id}`)
+            .on(
+                "postgres_changes",
+                { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${user.id}` },
+                () => { refreshProfile(); },
+            )
+            .subscribe();
+        return () => { supabase.removeChannel(channel); };
+    }, [user?.id, refreshProfile]);
+
     // 삭제된 계정 체크 (재가입 쿨다운 확인) - 기존 호환성 유지
     const checkDeletedAccount = useCallback(async (email: string): Promise<DeletedAccountCheck | null> => {
         try {
