@@ -169,38 +169,78 @@ export default function PaymentWebViewModal({ visible, type, plan, onClose, onSu
     }
 
     /**
+     * Android intent:// URL을 실제 앱 scheme URL로 변환.
+     *
+     * 형식: intent://<path>?<query>#Intent;scheme=<scheme>;package=<pkg>;...;end
+     * 예: intent://launch?TID=ABC#Intent;scheme=ispmobile;package=kvp.jjy.MispAndroid320;end
+     *  → ispmobile://launch?TID=ABC
+     *
+     * Linking.openURL은 intent:// 형식 자체를 못 처리 → 우리가 변환해서 직접 호출.
+     */
+    function intentToScheme(intentUrl: string): string | null {
+        if (!intentUrl.startsWith("intent://")) return null;
+        try {
+            // path?query 추출 (intent:// 다음 ~ #Intent 직전까지)
+            const hashIdx = intentUrl.indexOf("#Intent;");
+            if (hashIdx < 0) return null;
+            const pathAndQuery = intentUrl.slice("intent://".length, hashIdx);
+            const intentParams = intentUrl.slice(hashIdx + "#Intent;".length);
+            const schemeMatch = intentParams.match(/scheme=([^;]+)/);
+            if (!schemeMatch) return null;
+            return `${schemeMatch[1]}://${pathAndQuery}`;
+        } catch {
+            return null;
+        }
+    }
+
+    /**
      * 외부 앱 URL scheme 열기.
      *
      * canOpenURL은 사용 X — Expo Go는 LSApplicationQueriesSchemes(iOS) 와
      * <queries> (Android API 30+)를 들고 있지 않아서 설치된 앱도 false 리턴.
-     * 무조건 openURL 시도하고 throw일 때만 fallback 안내.
+     * 무조건 openURL 시도하고 throw일 때만 fallback.
      *
-     * intent:// (Android KCP 결제) 처리:
-     *  1. 그대로 openURL — Android가 fallback URL 자동 처리해줌
-     *  2. 실패 시 intent에서 fallback URL 추출 시도
+     * intent:// 처리 순서:
+     *  1. intent://를 scheme://으로 변환 → openURL (가장 신뢰성 높음)
+     *  2. 실패 시 원본 intent:// 그대로 시도 (일부 OS는 직접 처리 가능)
+     *  3. 실패 시 browser_fallback_url 추출
+     *  4. 다 실패하면 사용자에게 디버그 정보 포함 alert
      */
     async function tryOpenExternal(url: string) {
-        try {
-            await Linking.openURL(url);
-        } catch (e1) {
-            // intent://...#Intent;...;S.browser_fallback_url=https%3A%2F%2F...;end 형식이면
-            // browser_fallback_url 추출해서 시도
-            if (url.startsWith("intent://")) {
-                const fallbackMatch = url.match(/S\.browser_fallback_url=([^;]+)/);
-                if (fallbackMatch) {
-                    try {
-                        await Linking.openURL(decodeURIComponent(fallbackMatch[1]));
-                        return;
-                    } catch { /* 무시 */ }
-                }
+        const attempts: { label: string; url: string }[] = [];
+
+        if (url.startsWith("intent://")) {
+            const converted = intentToScheme(url);
+            if (converted) attempts.push({ label: "intent→scheme", url: converted });
+            attempts.push({ label: "intent 원본", url });
+            const fallbackMatch = url.match(/S\.browser_fallback_url=([^;]+)/);
+            if (fallbackMatch) {
+                attempts.push({ label: "fallback URL", url: decodeURIComponent(fallbackMatch[1]) });
             }
-            // 정말 안 열림 = 앱 미설치 가능성 (또는 Expo Go scheme 제한)
-            Alert.alert(
-                "결제 앱 실행 실패",
-                "결제 앱을 실행할 수 없어요. 다른 결제 수단을 시도하거나 카드사 앱이 설치되어 있는지 확인해주세요.",
-            );
-            void e1;
+        } else {
+            attempts.push({ label: "직접", url });
         }
+
+        const errors: string[] = [];
+        for (const attempt of attempts) {
+            try {
+                console.log(`[Payment] try open: ${attempt.label} → ${attempt.url.slice(0, 80)}`);
+                await Linking.openURL(attempt.url);
+                return; // 성공
+            } catch (e) {
+                const msg = e instanceof Error ? e.message : String(e);
+                errors.push(`[${attempt.label}] ${msg}`);
+                console.log(`[Payment] failed ${attempt.label}: ${msg}`);
+            }
+        }
+
+        // 다 실패
+        Alert.alert(
+            "결제 앱 실행 실패",
+            `결제 앱을 실행할 수 없어요.\n\n시도한 URL: ${attempts[0]?.url.slice(0, 80) ?? url.slice(0, 80)}\n\n앱이 설치되어 있다면 한 번 더 시도하거나, 다른 결제 수단(예: 다른 카드)을 선택해주세요.`,
+            [{ text: "확인" }],
+        );
+        console.log(`[Payment] all attempts failed:\n${errors.join("\n")}`);
     }
 
     function handleClose() {
