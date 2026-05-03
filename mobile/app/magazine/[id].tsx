@@ -24,6 +24,7 @@ import { usePet } from "@/contexts/PetContext";
 import { useDarkMode } from "@/contexts/ThemeContext";
 import { COLORS } from "@/lib/theme";
 import { buildMagazineCards, type MagazineCard } from "@/lib/magazine-cards";
+import { supabase } from "@/lib/supabase";
 
 interface ArticleDetail {
     id: string;
@@ -38,7 +39,7 @@ interface ArticleDetail {
     created_at: string;
     author?: string;
     tags?: string[];
-    read_time?: number;
+    read_time?: string | number;
 }
 
 const { width: SCREEN_W } = Dimensions.get("window");
@@ -82,9 +83,10 @@ function normalizeArticle(raw: unknown): ArticleDetail | null {
         created_at: asString(r.created_at ?? r.createdAt),
         author: typeof r.author === "string" ? r.author : undefined,
         tags: Array.isArray(r.tags) ? r.tags.filter((t): t is string => typeof t === "string") : undefined,
-        read_time: typeof r.read_time === "number"
+        // DB는 read_time이 string ("5분") — string/number 모두 허용
+        read_time: typeof r.read_time === "string" || typeof r.read_time === "number"
             ? r.read_time
-            : (typeof r.readTime === "number" ? r.readTime : undefined),
+            : (typeof r.readTime === "string" || typeof r.readTime === "number" ? r.readTime : undefined),
     };
 }
 
@@ -107,10 +109,11 @@ export default function MagazineReaderScreen() {
 
     async function incrementView() {
         try {
+            // articleId는 UUID 문자열이라 Number() 캐스팅 X. 서버 PATCH는 string도 받음.
             await fetch(`${API_BASE_URL}/api/magazine`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ articleId: Number(id), action: "view" }),
+                body: JSON.stringify({ articleId: id, action: "view" }),
             });
         } catch {
             // silent
@@ -119,13 +122,31 @@ export default function MagazineReaderScreen() {
 
     async function load() {
         try {
-            const headers: Record<string, string> = {};
-            if (session) headers["Authorization"] = `Bearer ${session.access_token}`;
-            const res = await fetch(`${API_BASE_URL}/api/magazine/${id}`, { headers });
-            if (res.ok) {
-                const data = await res.json();
-                setArticle(normalizeArticle(data?.article ?? data));
+            // 웹은 /magazine/[id] SSR 페이지에서 Supabase 직접 조회 (GET API 없음).
+            // 모바일은 supabase 클라이언트로 동일 쿼리 + 좋아요 join.
+            const { data: row, error } = await supabase
+                .from("magazine_articles")
+                .select("*")
+                .eq("id", id)
+                .eq("status", "published")
+                .maybeSingle();
+            if (error || !row) {
+                setIsLoading(false);
+                return;
             }
+
+            // 좋아요 여부 별도 조회 (RLS로 본인 것만 보임)
+            let liked = false;
+            if (session?.access_token && row.id) {
+                const { data: likeRow } = await supabase
+                    .from("magazine_likes")
+                    .select("id")
+                    .eq("article_id", row.id)
+                    .maybeSingle();
+                liked = !!likeRow;
+            }
+
+            setArticle(normalizeArticle({ ...row, liked }));
         } catch {
             // ignore
         } finally {
@@ -340,7 +361,11 @@ function CoverCard({ article, isMemorialMode }: { article: ArticleDetail; isMemo
                         {article.read_time ? (
                             <View style={styles.readTimeBadge}>
                                 <Ionicons name="time-outline" size={11} color="#fff" />
-                                <Text style={styles.readTimeText}>{article.read_time}분 읽기</Text>
+                                <Text style={styles.readTimeText}>
+                                    {typeof article.read_time === "number"
+                                        ? `${article.read_time}분 읽기`
+                                        : `${article.read_time} 읽기`}
+                                </Text>
                             </View>
                         ) : null}
                     </View>

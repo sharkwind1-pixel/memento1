@@ -312,12 +312,11 @@ export default function MinihompyScreen() {
                                 stageHeight={STAGE_HEIGHT}
                             />
                         )}
-                        {/* 인사말 말풍선 (stage 위 절대 배치, pointerEvents=none으로 터치 통과) */}
-                        {(message || settings?.greeting) && (
+                        {/* 인사말 말풍선 — 터치 메시지는 StageEditor가 미니미 위에 표시.
+                            여기는 정적 greeting만 (터치 중엔 숨김) */}
+                        {!message && settings?.greeting && (
                             <View pointerEvents="none" style={styles.speechBubbleAbsolute}>
-                                <Text style={styles.speechText}>
-                                    {message ?? settings?.greeting ?? ""}
-                                </Text>
+                                <Text style={styles.speechText}>{settings.greeting}</Text>
                                 <View style={styles.speechTail} />
                             </View>
                         )}

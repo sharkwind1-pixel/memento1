@@ -126,15 +126,27 @@ export default function RemindersModal({ visible, onClose, petId, petName, accen
                 }),
             });
             if (!res.ok) {
-                const data = await res.json().catch(() => ({}));
-                Alert.alert("실패", data?.error || "리마인더를 만들지 못했어요");
+                let errMsg = "";
+                try {
+                    const data = await res.json();
+                    errMsg = data?.error ?? "";
+                } catch {
+                    try { errMsg = (await res.text()).slice(0, 200); } catch {}
+                }
+                Alert.alert(
+                    `리마인더 생성 실패 (${res.status})`,
+                    errMsg || "다시 시도해주세요",
+                );
                 return;
             }
             setAdding(false);
             setNewTitle("");
             await load();
-        } catch {
-            Alert.alert("오류", "네트워크 오류가 발생했어요");
+        } catch (e) {
+            Alert.alert(
+                "네트워크 오류",
+                e instanceof Error ? e.message : "다시 시도해주세요",
+            );
         } finally {
             setSubmitting(false);
         }

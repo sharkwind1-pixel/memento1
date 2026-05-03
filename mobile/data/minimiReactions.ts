@@ -75,7 +75,9 @@ const DAILY_MALTIPOO: ModeReactions = {
         { message: "하하하 멈춰~!", action: "dash" },
         { message: "한계야 한계!", action: "shrink" },
         { message: "아야~ (아프진 않아)", action: "bounce" },
-        { message: "그만하면 간식이지!", action: "heart" },
+        { message: "헥헥~ 잠깐 쉴래", action: "shrink" },
+        { message: "안아줘 안아줘", action: "heart" },
+        { message: "이제 잠 잘래~", action: "nod" },
     ],
 };
 
@@ -113,42 +115,46 @@ const MEMORIAL_MALTIPOO: ModeReactions = {
 };
 
 // ============================================================================
-// 요크셔테리어 — 자존심 강함. 작지만 당당. 리더 기질. 말이 짧고 강함.
+// 요크셔테리어 — 작지만 활기차고 다정함. 자기 가족엔 애교쟁이.
+// 시그니처: 깡총깡총 + 똘망똘망한 짧은 말투 + 애정 표현
 // ============================================================================
 
 const DAILY_YORKSHIRE: ModeReactions = {
     greeting: [
-        { message: "멍! 나 왔다", action: "jump" },
-        { message: "나 용감하지?", action: "nod" },
-        { message: "오늘도 내가 최고야", action: "star" },
-        { message: "쓰담 허락해줄게", action: "heart" },
-        { message: "겁 없다 나", action: "runRight" },
-        { message: "작아도 짱이야", action: "bounce" },
-        { message: "나한테 인사해", action: "flip" },
-        { message: "왔나, 잘됐어", action: "star" },
-        { message: "오늘 기분 봐줄게", action: "heart" },
-        { message: "멍!", action: "jump" },
+        { message: "멍! 나 왔어!", action: "jump" },
+        { message: "또 만났네 헤헤", action: "wiggle" },
+        { message: "보고 싶었어!", action: "heart" },
+        { message: "오늘도 와줘서 고마워!", action: "bounce" },
+        { message: "나 여기 있어~", action: "sparkle" },
+        { message: "꼬리 춤춰줄게~", action: "wiggle" },
+        { message: "왔구나 왔구나!", action: "jump" },
+        { message: "히히 좋아!", action: "bounce" },
+        { message: "오늘 어땠어?", action: "nod" },
+        { message: "같이 놀자!", action: "runRight" },
+        { message: "엄청 반가워!", action: "heart" },
+        { message: "쓰담쓰담 환영!", action: "wiggle" },
     ],
     playful: [
-        { message: "흠, 나쁘지 않아", action: "bounce" },
-        { message: "더 해봐", action: "heart" },
-        { message: "이 정도는 참을게", action: "nod" },
-        { message: "좋다고 안 해", action: "flip" },
-        { message: "눈치챘어? 좋거든", action: "sparkle" },
-        { message: "계속해봐", action: "bounce" },
-        { message: "최고야, 라곤 못 해", action: "star" },
-        { message: "멍멍!", action: "jump" },
-        { message: "인정한다", action: "nod" },
+        { message: "헤헤 더 해줘~", action: "wiggle" },
+        { message: "기분 진짜 좋아!", action: "heart" },
+        { message: "꺄 너무 좋아!", action: "bounce" },
+        { message: "응응 그렇게~", action: "nod" },
+        { message: "콩콩~ 신나!", action: "jump" },
+        { message: "사랑이야 사랑!", action: "heart" },
+        { message: "오늘 같이 있어줘서 고마워", action: "sparkle" },
+        { message: "이렇게 만져주면 행복해", action: "heart" },
+        { message: "꼬리 멈출 수 없어~", action: "wiggle" },
+        { message: "나 진짜 좋아해, 알지?", action: "star" },
     ],
     ticklish: [
-        { message: "그만!!", action: "wiggle" },
-        { message: "꺅!", action: "shrink" },
-        { message: "항복할게", action: "bounce" },
-        { message: "예외적으로 봐줄게", action: "flip" },
-        { message: "나도 한계 있어", action: "spin" },
-        { message: "진짜야 그만해", action: "runLeft" },
-        { message: "다음엔 내가 건드린다", action: "nod" },
-        { message: "멍멍멍!!", action: "spin" },
+        { message: "꺅 간지러워!", action: "wiggle" },
+        { message: "이제 좀 쉴까?", action: "bounce" },
+        { message: "헥헥~ 너무 신났어", action: "shrink" },
+        { message: "잠깐만 숨 좀!", action: "spin" },
+        { message: "히히 항복할게~", action: "bounce" },
+        { message: "조금만 살살~", action: "wiggle" },
+        { message: "기분 좋아 기분 좋아", action: "heart" },
+        { message: "이제 안아주면 안 돼?", action: "nod" },
     ],
 };
 
@@ -433,14 +439,15 @@ const DAILY_CHEESE_CAT: ModeReactions = {
         { message: "꽤 마음에 들어", action: "bounce" },
     ],
     ticklish: [
-        { message: "야옹!!", action: "wiggle" },
-        { message: "간식 내놔", action: "runRight" },
-        { message: "낮잠 시간이야", action: "bounce" },
-        { message: "발톱 나온다!!", action: "shrink" },
-        { message: "그만하면 간식!!", action: "heart" },
-        { message: "진짜야!", action: "flip" },
-        { message: "협박이 아니야 약속이야", action: "nod" },
+        { message: "야옹!! 그만~", action: "wiggle" },
         { message: "츄르 주면 용서해줄게", action: "runLeft" },
+        { message: "낮잠 시간이야", action: "bounce" },
+        { message: "발톱 나온다 진짜!", action: "shrink" },
+        { message: "이제 골골 모드~", action: "heart" },
+        { message: "그만 그만 항복~", action: "flip" },
+        { message: "협박이 아니야 약속이야", action: "nod" },
+        { message: "츄르 한 번이면 다시 시작!", action: "sparkle" },
+        { message: "휴~ 잠깐만 쉬자", action: "shrink" },
     ],
 };
 
@@ -572,10 +579,17 @@ export const REACTIONS_DEFAULT: ReactionsByMode = {
 
 /**
  * 미니미 반응 선택.
+ * 같은 미니미가 같은 메시지 연속 노출되면 중복감↑ → "최근 N개" 캐시로 회피.
+ *
  * @param slug 미니미 slug
  * @param mode "daily" | "memorial"
  * @param consecutiveCount 연속 터치 횟수 (1부터)
  */
+
+// slug+mode 별로 최근 사용한 메시지 N개 추적 (동일 풀에서 다시 안 뽑힘)
+const recentMessages = new Map<string, string[]>();
+const RECENT_WINDOW = 4; // 최근 4개는 회피
+
 export function pickReaction(
     slug: string,
     mode: "daily" | "memorial",
@@ -588,5 +602,18 @@ export function pickReaction(
     if (!pool || pool.length === 0) {
         return byMode.greeting[0] ?? { message: "안녕~", action: "heart" };
     }
-    return pool[Math.floor(Math.random() * pool.length)];
+
+    const key = `${slug}_${mode}_${level}`;
+    const recent = recentMessages.get(key) ?? [];
+    // 풀이 작으면(<=2개) 회피 어려우니 그냥 랜덤
+    const candidates = pool.length > 2
+        ? pool.filter((r) => !recent.includes(r.message))
+        : pool;
+    const choice = (candidates.length > 0 ? candidates : pool)[
+        Math.floor(Math.random() * (candidates.length > 0 ? candidates.length : pool.length))
+    ];
+    // 최근 목록 갱신
+    const nextRecent = [choice.message, ...recent].slice(0, RECENT_WINDOW);
+    recentMessages.set(key, nextRecent);
+    return choice;
 }

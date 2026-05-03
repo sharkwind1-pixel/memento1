@@ -192,14 +192,19 @@ export default function CommunityScreen() {
         fetchPosts();
     }, [fetchPosts]);
 
-    // 작성/수정 화면에서 돌아왔을 때 자동 새로고침 (마운트 후 첫 focus는 useEffect가 처리)
+    // 작성/수정 화면에서 돌아왔을 때만 자동 새로고침.
+    // 매 탭 전환마다 fetch하면 느려짐 → 30초 이상 지났을 때만 refetch.
     const isFirstFocusRef = useRef(true);
+    const lastFetchedAtRef = useRef(Date.now());
+    useEffect(() => { lastFetchedAtRef.current = Date.now(); }, [posts]);
     useFocusEffect(
         useCallback(() => {
             if (isFirstFocusRef.current) {
                 isFirstFocusRef.current = false;
                 return;
             }
+            // 30초 이내 focus는 무시 (탭 전환만 한 경우)
+            if (Date.now() - lastFetchedAtRef.current < 30_000) return;
             fetchPosts();
         }, [fetchPosts]),
     );

@@ -39,7 +39,7 @@ interface Article {
     liked?: boolean;
     created_at: string;
     author?: string;
-    read_time?: number;
+    read_time?: string | number;
     tags?: string[];
 }
 
@@ -108,9 +108,9 @@ export default function MagazineScreen() {
                             ? raw.created_at
                             : (typeof raw.createdAt === "string" ? raw.createdAt : ""),
                         author: typeof raw.author === "string" ? raw.author : undefined,
-                        read_time: typeof raw.read_time === "number"
+                        read_time: typeof raw.read_time === "string" || typeof raw.read_time === "number"
                             ? raw.read_time
-                            : (typeof raw.readTime === "number" ? raw.readTime : undefined),
+                            : (typeof raw.readTime === "string" || typeof raw.readTime === "number" ? raw.readTime : undefined),
                         tags: Array.isArray(raw.tags) ? raw.tags.filter((t: unknown): t is string => typeof t === "string") : undefined,
                     }));
                 // 점수 = likes * 3 + views (좋아요 가중)
@@ -161,9 +161,9 @@ export default function MagazineScreen() {
                     ? raw.created_at
                     : (typeof raw.createdAt === "string" ? raw.createdAt : ""),
                 author: typeof raw.author === "string" ? raw.author : undefined,
-                read_time: typeof raw.read_time === "number"
+                read_time: typeof raw.read_time === "string" || typeof raw.read_time === "number"
                     ? raw.read_time
-                    : (typeof raw.readTime === "number" ? raw.readTime : undefined),
+                    : (typeof raw.readTime === "string" || typeof raw.readTime === "number" ? raw.readTime : undefined),
                 tags: Array.isArray(raw.tags) ? raw.tags.filter((t): t is string => typeof t === "string") : undefined,
             }));
 
@@ -553,7 +553,9 @@ function ArticleCard({ article, isMemorialMode, onPress, badgeLabel, badgeColor 
                         {article.read_time ? (
                             <View style={styles.statRow}>
                                 <Ionicons name="time-outline" size={11} color={COLORS.gray[500]} />
-                                <Text style={styles.metaText}>{article.read_time}분</Text>
+                                <Text style={styles.metaText}>
+                                    {typeof article.read_time === "number" ? `${article.read_time}분` : article.read_time}
+                                </Text>
                             </View>
                         ) : null}
                         <View style={styles.statRow}>
