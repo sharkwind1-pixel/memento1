@@ -19,7 +19,41 @@
         "NSPhotoLibraryUsageDescription": "반려동물 사진을 업로드하기 위해 갤러리에 접근합니다.",
         "NSCameraUsageDescription": "반려동물 사진을 촬영하기 위해 카메라에 접근합니다.",
         "NSMicrophoneUsageDescription": "동영상 촬영 시 마이크에 접근합니다.",
-        "NSLocationWhenInUseUsageDescription": "AI 펫톡에서 근처 산책로/병원/펫카페를 추천하기 위해 위치를 사용합니다."
+        "NSLocationWhenInUseUsageDescription": "AI 펫톡에서 근처 산책로/병원/펫카페를 추천하기 위해 위치를 사용합니다.",
+        "LSApplicationQueriesSchemes": [
+          "ispmobile",
+          "kakaopay",
+          "kakaotalk",
+          "kftc-bankpay",
+          "mpocket.online.ansimclick",
+          "kb-acp",
+          "shinhan-sr-ansimclick",
+          "hdcardappcardansimclick",
+          "smshinhanansimclick",
+          "smhanaansim",
+          "smshinhancardusimansim",
+          "lottesmartpay",
+          "lotteappcard",
+          "cloudpay",
+          "payco",
+          "samsungpay",
+          "lpayapp",
+          "smdmbapp",
+          "nhappcardansimclick",
+          "citimobileapp",
+          "citispay",
+          "kb-acp",
+          "wooripay",
+          "newliivbank",
+          "kakaobank",
+          "supertoss",
+          "naversearchapp",
+          "tmoneypay",
+          "newsmartpay"
+        ],
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
       }
     },
     "android": {

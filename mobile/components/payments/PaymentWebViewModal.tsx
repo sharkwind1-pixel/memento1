@@ -18,7 +18,7 @@
 import { useState, useRef, useCallback } from "react";
 import {
     View, Text, Modal, TouchableOpacity, Alert,
-    StyleSheet, ActivityIndicator,
+    StyleSheet, ActivityIndicator, Linking, Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { WebView, type WebViewNavigation } from "react-native-webview";
@@ -128,16 +128,63 @@ export default function PaymentWebViewModal({ visible, type, plan, onClose, onSu
 
     /** WebView 네비게이션 인터셉트 */
     function shouldStartLoad(req: WebViewNavigation): boolean {
-        // mobile-callback URL 감지 → handleCallback로 위임
-        if (req.url.includes(CALLBACK_PATH)) {
-            // status 파라미터가 있을 때만 처리 (정규화된 형태)
-            const hasStatus = req.url.includes("status=") || req.url.includes("imp_success=");
+        const url = req.url;
+
+        // 1. mobile-callback URL 감지 → handleCallback로 위임
+        if (url.includes(CALLBACK_PATH)) {
+            const hasStatus = url.includes("status=") || url.includes("imp_success=");
             if (hasStatus) {
-                handleCallback(req.url);
-                return false; // 더 이상 navigate 막음 (모달 닫는 중)
+                handleCallback(url);
+                return false;
             }
         }
-        return true;
+
+        // 2. 일반 http/https는 WebView가 처리
+        if (url.startsWith("http://") || url.startsWith("https://")) {
+            return true;
+        }
+
+        // 3. 그 외 모든 URL scheme — 카드사/은행/페이 앱 (KCP 결제 시)
+        //    예: ispmobile://, kakaopay://, kftc-bankpay://, mpocket.online.ansimclick://,
+        //        kb-acp://, shinhan-sr-ansimclick://, hdcardappcardansimclick://,
+        //        cloudpay://, payco://, samsungpay://, lpayapp://, smdmbapp://,
+        //        nhappcardansimclick://, citimobileapp://, citispay://,
+        //        nonceapp://, intent:// (Android), about:blank 등
+        //    → OS에 위임하여 외부 앱 launch.
+        if (Platform.OS === "android" && url.startsWith("intent://")) {
+            // Android intent:// — fallback URL이 있으면 그걸로, 없으면 그냥 무시
+            // KCP는 intent://...#Intent;scheme=kakaopay;...;end 형태 사용
+            tryOpenExternal(url);
+            return false;
+        }
+
+        // about:blank는 PortOne이 결제창 닫을 때 navigate함 — 무시
+        if (url === "about:blank") {
+            return false;
+        }
+
+        // 모든 다른 scheme은 외부 앱 호출 시도
+        tryOpenExternal(url);
+        return false;
+    }
+
+    /** 외부 앱 URL scheme 열기 (실패 시 친절한 안내) */
+    async function tryOpenExternal(url: string) {
+        try {
+            const supported = await Linking.canOpenURL(url);
+            if (supported) {
+                await Linking.openURL(url);
+            } else {
+                // 카드사 앱 미설치 추정
+                Alert.alert(
+                    "결제 앱 필요",
+                    "이 결제 수단을 사용하려면 카드사 또는 결제 앱이 설치되어 있어야 해요. 다른 결제 수단을 선택하거나 앱을 먼저 설치해주세요.",
+                );
+            }
+        } catch {
+            // canOpenURL 실패해도 일단 시도 (Android는 종종 false 리턴해도 열림)
+            try { await Linking.openURL(url); } catch { /* silent */ }
+        }
     }
 
     function handleClose() {
