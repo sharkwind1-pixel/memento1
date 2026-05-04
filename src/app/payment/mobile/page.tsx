@@ -120,27 +120,46 @@ function MobilePaymentInner() {
 
                 setStatus("paying");
 
-                // 3. 결제창 호출
-                const useChannelKey = isSubscription ? batchChannelKey : channelKey;
-                if (!useChannelKey) throw new Error("결제 채널 키 누락");
-
-                // pay_method 결정 — 구독은 card 강제 (빌링키 발급), 단건은 사용자 선택
-                // KCP 단일 채널 지원 4종만: card / phone / trans / vbank
+                // 3. 결제 수단 결정
+                // 구독은 card 강제 (빌링키 발급은 카드만). 단건은 사용자가 선택한 method.
                 const allowedMethods = new Set(["card", "phone", "trans", "vbank"]);
                 const payMethod = isSubscription
                     ? "card"
                     : (payMethodParam && allowedMethods.has(payMethodParam) ? payMethodParam : "card");
 
-                // KCP V1은 channelKey만으로 라우팅이 모호한 경우 pg 명시 필요.
-                // 미등록 사이트 코드 에러(3014) 회피 + method별 정확한 라우팅.
+                // 4. PG 라우팅 — 결제 수단별로 다른 채널 사용
+                //  - 카드 / 정기구독: KCP
+                //  - 휴대폰: 다날 (전문 PG, 채널 등록 시 사용)
+                //  - 계좌이체 / 가상계좌: 일단 KCP (지원 시), 다날 추가 시 분기
+                const danalChannelKey = process.env.NEXT_PUBLIC_PORTONE_DANAL_CHANNEL_KEY;
                 const kcpMid = process.env.NEXT_PUBLIC_PORTONE_KCP_MID || "IP6S2";
-                const pgValue = isSubscription
-                    ? `kcp_billing.${kcpMid}` // 정기결제 (빌링키 발급)
-                    : `kcp.${kcpMid}`;        // 일반결제
+
+                let useChannelKey: string | undefined;
+                let pgValue: string | undefined;
+
+                if (isSubscription) {
+                    useChannelKey = batchChannelKey;
+                    pgValue = `kcp_billing.${kcpMid}`;
+                } else if (payMethod === "phone" && danalChannelKey) {
+                    // 다날 휴대폰 결제 (다날 ENV 등록되면 자동 활성)
+                    useChannelKey = danalChannelKey;
+                    pgValue = undefined; // 다날은 channelKey로 라우팅, pg 명시 불필요
+                } else {
+                    // 카드 / 계좌 / 가상 → KCP
+                    useChannelKey = channelKey;
+                    pgValue = `kcp.${kcpMid}`;
+                }
+
+                if (!useChannelKey) {
+                    throw new Error(
+                        payMethod === "phone"
+                            ? "휴대폰 결제 채널 키가 등록되지 않았어요. 카드 결제를 이용해주세요."
+                            : "결제 채널 키 누락",
+                    );
+                }
 
                 const reqParams: IMPRequestPayParams = {
                     channelKey: useChannelKey,
-                    pg: pgValue,
                     pay_method: payMethod,
                     merchant_uid: paymentId,
                     name: orderName || (isSubscription ? "메멘토애니 구독" : "AI 영상 1건"),
@@ -150,6 +169,7 @@ function MobilePaymentInner() {
                     // mobile redirect URL (포트원이 결제 후 이동) — 같은 origin이라 WebView가 인터셉트 가능
                     m_redirect_url: `${window.location.origin}/payment/mobile-callback?type=${type}`,
                 };
+                if (pgValue) reqParams.pg = pgValue;
 
                 // 휴대폰 결제: 디지털 상품 플래그 필수 (안 넣으면 실물상품으로 분류되어 거부)
                 if (payMethod === "phone") {

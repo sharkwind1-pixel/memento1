@@ -1,21 +1,17 @@
 /**
  * PayMethodPicker — 결제 수단 선택 모달
  *
- * 단건 결제 진입 전에 사용자가 결제 수단을 고르는 단계.
- * KCP가 지원하는 메소드만 노출:
- *  - 신용/체크카드 (안심클릭/ISP)
- *  - 휴대폰 소액결제
- *  - 실시간 계좌이체
- *  - 카카오페이
- *  - 토스페이
- *  - 네이버페이
+ * GET /api/payments/available-methods 응답 기반으로 사용 가능한 수단만 노출.
+ * 현재 활성: 카드(KCP). 다날 채널 등록 시 휴대폰 자동 추가.
  */
 
-import { View, Text, Modal, TouchableOpacity, StyleSheet } from "react-native";
+import { useEffect, useState } from "react";
+import { View, Text, Modal, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useDarkMode } from "@/contexts/ThemeContext";
 import { COLORS } from "@/lib/theme";
+import { API_BASE_URL } from "@/config/constants";
 import type { PayMethod } from "./PaymentWebViewModal";
 
 interface Props {
@@ -38,11 +34,9 @@ interface MethodOption {
     bgColor: string;
 }
 
-// 현재 KCP 가맹 계약은 신용/체크카드만 활성화 (M025: 미가입 가맹점).
-// 휴대폰결제/계좌이체/가상계좌는 KCP에 별도 심사·계약 추가하면 다시 노출 가능.
-// 카카오페이/토스페이 등 간편결제는 PortOne 콘솔에서 PG 채널 추가 후 가능.
-const METHODS: MethodOption[] = [
-    {
+// 카탈로그 — 서버가 활성화한 항목만 실제로 노출됨
+const METHOD_CATALOG: Record<string, MethodOption> = {
+    card: {
         id: "card",
         label: "신용/체크카드",
         sub: "안심클릭 · ISP",
@@ -50,7 +44,31 @@ const METHODS: MethodOption[] = [
         color: "#1E40AF",
         bgColor: "#DBEAFE",
     },
-];
+    phone: {
+        id: "phone",
+        label: "휴대폰 결제",
+        sub: "통신사 소액결제 (다날)",
+        icon: "phone-portrait-outline",
+        color: "#7C3AED",
+        bgColor: "#EDE9FE",
+    },
+    trans: {
+        id: "trans",
+        label: "실시간 계좌이체",
+        sub: "은행 계좌에서 즉시",
+        icon: "swap-horizontal-outline",
+        color: "#0891B2",
+        bgColor: "#CFFAFE",
+    },
+    vbank: {
+        id: "vbank",
+        label: "가상계좌",
+        sub: "발급된 계좌로 입금",
+        icon: "business-outline",
+        color: "#92400E",
+        bgColor: "#FEF3C7",
+    },
+};
 
 export default function PayMethodPicker({ visible, onClose, onPick, accentColor, amountKRW, title }: Props) {
     const insets = useSafeAreaInsets();
@@ -62,6 +80,32 @@ export default function PayMethodPicker({ visible, onClose, onPick, accentColor,
     const subColor = isDarkMode ? COLORS.gray[400] : COLORS.gray[500];
 
     void accentColor;
+
+    // 서버가 활성화한 결제 수단 목록 fetch (모달 열릴 때 1회)
+    const [available, setAvailable] = useState<string[] | null>(null);
+    useEffect(() => {
+        if (!visible) return;
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/payments/available-methods`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                if (!cancelled && Array.isArray(data?.methods)) {
+                    setAvailable(data.methods);
+                }
+            } catch {
+                // 실패 시 기본값(card만) — 서비스 다운 fallback
+                if (!cancelled) setAvailable(["card"]);
+            }
+        })();
+        return () => { cancelled = true; };
+    }, [visible]);
+
+    // 카탈로그에서 활성화된 항목만 추출
+    const methods: MethodOption[] = (available ?? [])
+        .map((id) => METHOD_CATALOG[id])
+        .filter((m): m is MethodOption => !!m);
 
     return (
         <Modal visible={visible} animationType="slide" onRequestClose={onClose} transparent>
@@ -88,7 +132,15 @@ export default function PayMethodPicker({ visible, onClose, onPick, accentColor,
 
                     {/* 메소드 목록 */}
                     <View style={[styles.list, { paddingBottom: 16 + insets.bottom }]}>
-                        {METHODS.map((m) => (
+                        {available === null ? (
+                            <View style={{ alignItems: "center", paddingVertical: 32 }}>
+                                <ActivityIndicator size="small" color={COLORS.memento[500]} />
+                            </View>
+                        ) : methods.length === 0 ? (
+                            <Text style={{ color: subColor, textAlign: "center", paddingVertical: 24 }}>
+                                현재 사용 가능한 결제 수단이 없어요.{"\n"}잠시 후 다시 시도해주세요.
+                            </Text>
+                        ) : methods.map((m) => (
                             <TouchableOpacity
                                 key={m.id}
                                 onPress={() => onPick(m.id)}
