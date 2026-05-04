@@ -105,14 +105,26 @@ export default function MagazineReaderScreen() {
 
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
 
-    useEffect(() => { load(); incrementView(); }, [id]);
+    useEffect(() => { load(); }, [id]);
+
+    // 조회수 증가 — session 준비된 후 1회 (id 또는 session 변경 시 재시도)
+    useEffect(() => {
+        if (id && session?.access_token) {
+            incrementView();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id, session?.access_token]);
 
     async function incrementView() {
+        // 서버 PATCH는 인증 필수 (조회수/좋아요 조작 방지). 비로그인은 카운트 안 됨.
+        if (!session?.access_token) return;
         try {
-            // articleId는 UUID 문자열이라 Number() 캐스팅 X. 서버 PATCH는 string도 받음.
             await fetch(`${API_BASE_URL}/api/magazine`, {
                 method: "PATCH",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${session.access_token}`,
+                },
                 body: JSON.stringify({ articleId: id, action: "view" }),
             });
         } catch {
@@ -170,7 +182,7 @@ export default function MagazineReaderScreen() {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${session.access_token}`,
                 },
-                body: JSON.stringify({ articleId: Number(id), action: newLiked ? "like" : "unlike" }),
+                body: JSON.stringify({ articleId: id, action: newLiked ? "like" : "unlike" }),
             });
             if (!res.ok) throw new Error("PATCH failed");
             const data = await res.json();
