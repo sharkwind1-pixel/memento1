@@ -282,6 +282,10 @@ export default async function RootLayout({
                             <span className="text-gray-300 dark:text-gray-600">|</span>
                             <a href="/privacy" className="font-semibold hover:underline">개인정보처리방침</a>
                             <span className="text-gray-300 dark:text-gray-600">|</span>
+                            <a href="/payment-terms" className="hover:underline">결제·구독 약관</a>
+                            <span className="text-gray-300 dark:text-gray-600">|</span>
+                            <a href="/refund-policy" className="hover:underline">환불 정책</a>
+                            <span className="text-gray-300 dark:text-gray-600">|</span>
                             <a href="/community-guidelines" className="hover:underline">커뮤니티 가이드라인</a>
                             <span className="text-gray-300 dark:text-gray-600">|</span>
                             <a href="/location-terms" className="hover:underline">위치기반 서비스 이용약관</a>

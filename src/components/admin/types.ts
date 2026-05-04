@@ -31,7 +31,8 @@ export type AdminTab =
     | "inquiries"
     | "withdrawals"
     | "magazine"
-    | "messages";
+    | "messages"
+    | "beta";
 
 // ============================================================================
 // 탈퇴 관련 타입

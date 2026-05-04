@@ -48,15 +48,15 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "잘못된 플랜입니다." }, { status: 400 });
         }
 
-        const amount = PLAN_AMOUNT[plan];
-        const orderName = PLAN_NAME[plan];
+        const baseAmount = PLAN_AMOUNT[plan];
+        const baseOrderName = PLAN_NAME[plan];
 
         const adminSupabase = createAdminSupabase();
 
-        // 이미 프리미엄인지 체크
+        // 이미 프리미엄인지 + 베타 테스터 할인 체크
         const { data: profile } = await adminSupabase
             .from("profiles")
-            .select("is_premium, premium_expires_at")
+            .select("is_premium, premium_expires_at, is_beta_tester, beta_discount_until")
             .eq("id", user.id)
             .single();
 
@@ -68,6 +68,22 @@ export async function POST(request: NextRequest) {
                     { status: 400 }
                 );
             }
+        }
+
+        // 베타 테스터 할인 적용 (3개월간 50% off — beta_codes_system 마이그레이션)
+        let amount = baseAmount;
+        let orderName = baseOrderName;
+        let betaDiscountApplied = false;
+        const BETA_DISCOUNT_PERCENT = 50;
+        const now = new Date();
+        const betaUntil = profile?.beta_discount_until ? new Date(profile.beta_discount_until) : null;
+        if (profile?.is_beta_tester && betaUntil && betaUntil > now) {
+            amount = Math.floor(baseAmount * (100 - BETA_DISCOUNT_PERCENT) / 100);
+            // 100원 단위 절사 (PG 호환)
+            amount = Math.floor(amount / 100) * 100;
+            if (amount < 100) amount = 100;
+            orderName = `${baseOrderName} (베타 ${BETA_DISCOUNT_PERCENT}% 할인)`;
+            betaDiscountApplied = true;
         }
 
         // customer_uid: 유저별 고유 (동일 유저는 동일 customer_uid로 빌링키 관리)
@@ -95,6 +111,8 @@ export async function POST(request: NextRequest) {
                     orderName,
                     is_subscription: true,
                     customer_uid: customerUid,
+                    base_amount: baseAmount,
+                    beta_discount_applied: betaDiscountApplied,
                 },
             });
 

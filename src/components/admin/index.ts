@@ -33,6 +33,7 @@ export { default as AdminReportsTab } from "./tabs/AdminReportsTab";
 export { default as AdminWithdrawalsTab } from "./tabs/AdminWithdrawalsTab";
 export { default as AdminMagazineTab } from "./tabs/AdminMagazineTab";
 export { default as AdminMessagesTab } from "./tabs/AdminMessagesTab";
+export { default as AdminBetaCodesTab } from "./tabs/AdminBetaCodesTab";
 
 // ============================================================================
 // 모달 컴포넌트 export

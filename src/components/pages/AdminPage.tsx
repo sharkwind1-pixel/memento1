@@ -52,6 +52,7 @@ import {
     Shield,
     BookOpen,
     Megaphone,
+    Ticket,
 } from "lucide-react";
 
 // 관리자 컴포넌트
@@ -65,6 +66,7 @@ import {
     AdminWithdrawalsTab,
     AdminMagazineTab,
     AdminMessagesTab,
+    AdminBetaCodesTab,
     WithdrawalModal,
     type AdminTab,
     type UserRow,
@@ -84,6 +86,7 @@ const TABS: { id: AdminTab; label: string; icon: typeof LayoutDashboard }[] = [
     { id: "withdrawals", label: "탈퇴 관리", icon: Ban },
     { id: "magazine", label: "매거진", icon: BookOpen },
     { id: "messages", label: "메시지", icon: Megaphone },
+    { id: "beta", label: "베타 코드", icon: Ticket },
 ];
 
 // ============================================================================
@@ -98,7 +101,7 @@ function AdminPage() {
     const [activeTab, setActiveTab] = useState<AdminTab>(() => {
         if (typeof window !== "undefined") {
             const saved = safeGetItem("memento-admin-tab");
-            if (saved && ["dashboard", "users", "posts", "inquiries", "reports", "withdrawals", "magazine", "messages"].includes(saved)) {
+            if (saved && ["dashboard", "users", "posts", "inquiries", "reports", "withdrawals", "magazine", "messages", "beta"].includes(saved)) {
                 return saved as AdminTab;
             }
         }
@@ -353,6 +356,11 @@ function AdminPage() {
                     {/* 메시지/공지 발송 탭 */}
                     {activeTab === "messages" && (
                         <AdminMessagesTab />
+                    )}
+
+                    {/* 베타 코드 발급 탭 */}
+                    {activeTab === "beta" && (
+                        <AdminBetaCodesTab />
                     )}
                 </div>
 
