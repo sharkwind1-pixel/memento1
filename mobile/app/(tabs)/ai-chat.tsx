@@ -269,31 +269,18 @@ export default function AiChatScreen() {
         return () => clearTimeout(timer);
     }, [messages, selectedPet?.id, user?.id]);
 
-    // ===== 새 메시지 시 자동 스크롤 =====
-    // 초기 로드(과거 대화 복원) 시엔 맨 위에서 시작 → 처음부터 읽을 수 있게.
-    // 사용자가 새 메시지 보낼 때만 맨 아래로 스크롤.
-    const messageCountRef = useRef(0);
-    const initialLoadedRef = useRef(false);
+    // ===== 메시지 변경 시 자동 스크롤 =====
+    // 일반 메신저 트렌드 — 항상 최신 메시지(맨 아래)가 보이게 시작.
+    // 초기 로드든 새 메시지든 모두 맨 아래로 스크롤.
     useEffect(() => {
-        const prev = messageCountRef.current;
-        messageCountRef.current = messages.length;
-
-        // 첫 로드 (대화 기록 복원): 스크롤 X
-        if (!initialLoadedRef.current && messages.length > 0) {
-            initialLoadedRef.current = true;
-            return;
-        }
-        // 메시지가 늘어났을 때만 (실제 새 메시지) 맨 아래로
-        if (messages.length > prev && messages.length > 0) {
-            setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
-        }
+        if (messages.length === 0) return;
+        // 약간의 지연으로 FlatList layout 안정화 후 scrollToEnd
+        // 초기 로드는 animated:false로 깜빡임 없이, 새 메시지는 animated:true로 부드럽게
+        const t = setTimeout(() => {
+            flatListRef.current?.scrollToEnd({ animated: true });
+        }, 120);
+        return () => clearTimeout(t);
     }, [messages]);
-
-    // 펫 전환 시 초기 로드 플래그 리셋 (다시 맨 위에서 시작)
-    useEffect(() => {
-        initialLoadedRef.current = false;
-        messageCountRef.current = 0;
-    }, [selectedPet?.id]);
 
     // ===== 메시지 전송 =====
     const handleSend = useCallback(async (directMessage?: string) => {
