@@ -269,11 +269,30 @@ export default function AiChatScreen() {
     }, [messages, selectedPet?.id, user?.id]);
 
     // ===== 새 메시지 시 자동 스크롤 =====
+    // 초기 로드(과거 대화 복원) 시엔 맨 위에서 시작 → 처음부터 읽을 수 있게.
+    // 사용자가 새 메시지 보낼 때만 맨 아래로 스크롤.
+    const messageCountRef = useRef(0);
+    const initialLoadedRef = useRef(false);
     useEffect(() => {
-        if (messages.length > 0) {
+        const prev = messageCountRef.current;
+        messageCountRef.current = messages.length;
+
+        // 첫 로드 (대화 기록 복원): 스크롤 X
+        if (!initialLoadedRef.current && messages.length > 0) {
+            initialLoadedRef.current = true;
+            return;
+        }
+        // 메시지가 늘어났을 때만 (실제 새 메시지) 맨 아래로
+        if (messages.length > prev && messages.length > 0) {
             setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
         }
     }, [messages]);
+
+    // 펫 전환 시 초기 로드 플래그 리셋 (다시 맨 위에서 시작)
+    useEffect(() => {
+        initialLoadedRef.current = false;
+        messageCountRef.current = 0;
+    }, [selectedPet?.id]);
 
     // ===== 메시지 전송 =====
     const handleSend = useCallback(async (directMessage?: string) => {
