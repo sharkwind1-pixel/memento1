@@ -82,6 +82,28 @@ export async function POST(request: NextRequest) {
             .select("*");
 
         if (claimError || !claimedPayments?.length) {
+            // pending 없음 → race condition 가능성 체크. webhook이 먼저 paid 처리했을 수 있음.
+            const { data: existing } = await adminSupabase
+                .from("payments")
+                .select("status")
+                .eq("merchant_uid", paymentId)
+                .eq("user_id", user.id)
+                .maybeSingle();
+
+            if (existing?.status === "paid") {
+                // 이미 webhook이 처리 완료 — 사용자 입장에서는 성공
+                return NextResponse.json({
+                    success: true,
+                    message: "AI 영상 1건이 추가되었습니다!",
+                });
+            }
+            if (existing?.status === "verifying") {
+                // 다른 동시 요청이 처리 중 — 잠시 후 재시도 안내 대신 성공 처리 (멱등)
+                return NextResponse.json({
+                    success: true,
+                    message: "결제 처리가 진행 중이에요.",
+                });
+            }
             return NextResponse.json(
                 { error: "결제 내역을 찾을 수 없거나 이미 처리된 결제입니다." },
                 { status: 409 }

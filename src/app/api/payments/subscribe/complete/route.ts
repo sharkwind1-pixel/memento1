@@ -86,6 +86,20 @@ export async function POST(request: NextRequest) {
             .select("*");
 
         if (claimError || !claimedPayments || claimedPayments.length === 0) {
+            // race condition 체크 — webhook이 먼저 paid 처리했을 수 있음
+            const { data: existing } = await adminSupabase
+                .from("payments")
+                .select("status")
+                .eq("merchant_uid", paymentId)
+                .eq("user_id", user.id)
+                .maybeSingle();
+
+            if (existing?.status === "paid" || existing?.status === "verifying") {
+                return NextResponse.json({
+                    success: true,
+                    message: "구독이 시작되었어요!",
+                });
+            }
             return NextResponse.json(
                 { error: "결제 내역을 찾을 수 없거나 이미 처리된 결제입니다." },
                 { status: 409 }
