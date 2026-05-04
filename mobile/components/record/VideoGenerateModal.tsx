@@ -17,10 +17,12 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDarkMode } from "@/contexts/ThemeContext";
 import { API_BASE_URL, VIDEO } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
+import { supabase } from "@/lib/supabase";
 import { VIDEO_TEMPLATES, CATEGORY_LABEL, type MobileVideoTemplate } from "@/data/videoTemplates";
 import PaymentWebViewModal, { type PayMethod } from "@/components/payments/PaymentWebViewModal";
 import PayMethodPicker from "@/components/payments/PayMethodPicker";
@@ -57,13 +59,14 @@ interface Props {
 type Step = "photo" | "template" | "confirm";
 
 export default function VideoGenerateModal({ visible, onClose, onSuccess, pet, isMemorialMode }: Props) {
-    const { session } = useAuth();
+    const { session, user } = useAuth();
     const { isDarkMode } = useDarkMode();
     const [step, setStep] = useState<Step>("photo");
     const [paymentMode, setPaymentMode] = useState<"video" | "subscription" | null>(null);
     const [methodPickerOpen, setMethodPickerOpen] = useState(false);
     const [pickedMethod, setPickedMethod] = useState<PayMethod | null>(null);
     const [photo, setPhoto] = useState<PetPhoto | null>(null);
+    const [uploadingNew, setUploadingNew] = useState(false);
     const [template, setTemplate] = useState<MobileVideoTemplate | null>(null);
     const [quota, setQuota] = useState<Quota | null>(null);
     const [loadingQuota, setLoadingQuota] = useState(false);
@@ -224,37 +227,131 @@ export default function VideoGenerateModal({ visible, onClose, onSuccess, pet, i
         );
     }
 
-    function renderPhotoStep() {
-        if (imagePhotos.length === 0) {
-            return (
-                <View style={styles.emptyBox}>
-                    <Ionicons name="image-outline" size={32} color={isDarkMode ? COLORS.gray[500] : COLORS.gray[400]} />
-                    <Text style={[styles.emptyText, { color: emptyTextColor }]}>먼저 사진을 업로드해주세요</Text>
-                </View>
-            );
+    /**
+     * 갤러리에서 사진 직접 선택 → pet-media에 업로드 → 그 사진으로 영상 생성.
+     * 업로드도 같이 되니까 기록(사진첩)에도 영구 저장.
+     */
+    async function pickFromGallery() {
+        if (!user || uploadingNew) return;
+        const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (perm.status !== "granted") {
+            Alert.alert("권한 필요", "사진첩 접근 권한이 필요해요");
+            return;
         }
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.9,
+        });
+        if (result.canceled || !result.assets[0]) return;
+
+        setUploadingNew(true);
+        try {
+            const asset = result.assets[0];
+            const ext = asset.uri.split(".").pop()?.split("?")[0]?.toLowerCase() || "jpg";
+            const path = `${user.id}/${pet.id}/${Date.now()}_video_src.${ext}`;
+            const response = await fetch(asset.uri);
+            const arrayBuffer = await response.arrayBuffer();
+
+            const { error: upErr } = await supabase.storage
+                .from("pet-media")
+                .upload(path, new Uint8Array(arrayBuffer), {
+                    contentType: ext === "png" ? "image/png" : "image/jpeg",
+                    upsert: false,
+                });
+            if (upErr) throw new Error(upErr.message);
+
+            const { data: urlData } = supabase.storage.from("pet-media").getPublicUrl(path);
+            const { data: insertData, error: insertErr } = await supabase
+                .from("pet_media")
+                .insert({
+                    pet_id: pet.id,
+                    user_id: user.id,
+                    type: "image",
+                    url: urlData.publicUrl,
+                    storage_path: path,
+                    date: new Date().toISOString().slice(0, 10),
+                })
+                .select("id, url")
+                .single();
+            if (insertErr || !insertData) throw new Error(insertErr?.message ?? "DB 저장 실패");
+
+            // 새로 업로드한 사진을 바로 선택 + 다음 단계로
+            const newPhoto: PetPhoto = { id: insertData.id, url: insertData.url, type: "image" };
+            setPhoto(newPhoto);
+            setStep("template");
+        } catch (e) {
+            Alert.alert("업로드 실패", e instanceof Error ? e.message : "다시 시도해주세요");
+        } finally {
+            setUploadingNew(false);
+        }
+    }
+
+    function renderPhotoStep() {
         return (
-            <View style={styles.photoGrid}>
-                {imagePhotos.map((p) => {
-                    const selected = photo?.id === p.id;
-                    return (
-                        <TouchableOpacity
-                            key={p.id}
-                            activeOpacity={0.85}
-                            onPress={() => {
-                                setPhoto(p);
-                                setStep("template");
-                            }}
-                            style={[
-                                styles.photoItem,
-                                { backgroundColor: photoItemBg },
-                                selected && { borderColor: accentColor, borderWidth: 3 },
-                            ]}
-                        >
-                            <Image source={{ uri: p.url }} style={styles.photoImg} />
-                        </TouchableOpacity>
-                    );
-                })}
+            <View>
+                {/* 갤러리에서 직접 선택하기 (항상 노출) */}
+                <TouchableOpacity
+                    onPress={pickFromGallery}
+                    disabled={uploadingNew}
+                    activeOpacity={0.85}
+                    style={[styles.galleryBtn, { borderColor: accentColor, backgroundColor: cardBg }]}
+                >
+                    {uploadingNew ? (
+                        <ActivityIndicator size="small" color={accentColor} />
+                    ) : (
+                        <>
+                            <Ionicons name="cloud-upload-outline" size={18} color={accentColor} />
+                            <View style={{ flex: 1 }}>
+                                <Text style={[styles.galleryBtnTitle, { color: accentColor }]}>
+                                    갤러리에서 사진 가져오기
+                                </Text>
+                                <Text style={[styles.galleryBtnSub, { color: emptyTextColor }]}>
+                                    사진첩에 자동 저장 + 영상 생성에 사용
+                                </Text>
+                            </View>
+                            <Ionicons name="chevron-forward" size={16} color={accentColor} />
+                        </>
+                    )}
+                </TouchableOpacity>
+
+                {imagePhotos.length === 0 ? (
+                    <View style={styles.emptyBox}>
+                        <Ionicons name="image-outline" size={32} color={isDarkMode ? COLORS.gray[500] : COLORS.gray[400]} />
+                        <Text style={[styles.emptyText, { color: emptyTextColor }]}>
+                            저장된 사진이 없어요. 위 버튼으로 사진을 골라주세요.
+                        </Text>
+                    </View>
+                ) : (
+                    <>
+                        <Text style={[styles.sectionLabel, { color: emptyTextColor }]}>
+                            저장된 사진에서 선택
+                        </Text>
+                        <View style={styles.photoGrid}>
+                            {imagePhotos.map((p) => {
+                                const selected = photo?.id === p.id;
+                                return (
+                                    <TouchableOpacity
+                                        key={p.id}
+                                        activeOpacity={0.85}
+                                        onPress={() => {
+                                            setPhoto(p);
+                                            setStep("template");
+                                        }}
+                                        style={[
+                                            styles.photoItem,
+                                            { backgroundColor: photoItemBg },
+                                            selected && { borderColor: accentColor, borderWidth: 3 },
+                                        ]}
+                                    >
+                                        <Image source={{ uri: p.url }} style={styles.photoImg} />
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
+                    </>
+                )}
             </View>
         );
     }
@@ -450,6 +547,19 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     quotaText: { fontSize: 12, fontWeight: "600" },
+    galleryBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        padding: 14,
+        borderRadius: 12,
+        borderWidth: 2,
+        borderStyle: "dashed",
+        marginBottom: 16,
+    },
+    galleryBtnTitle: { fontSize: 14, fontWeight: "700" },
+    galleryBtnSub: { fontSize: 11, marginTop: 2 },
+    sectionLabel: { fontSize: 12, fontWeight: "600", marginBottom: 8 },
     photoGrid: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
     photoItem: {
         width: "32%",

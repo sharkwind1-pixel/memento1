@@ -38,9 +38,9 @@ interface MethodOption {
     bgColor: string;
 }
 
-// KCP 채널 1개로 지원되는 결제 수단만 노출.
-// 카카오페이/토스페이/네이버페이/페이코는 PortOne 콘솔에서 별도 채널 등록 필요 →
-// 등록 후 NEXT_PUBLIC_PORTONE_<PG>_CHANNEL_KEY 추가하고 여기 ENABLED 옵션 추가.
+// 현재 KCP 가맹 계약은 신용/체크카드만 활성화 (M025: 미가입 가맹점).
+// 휴대폰결제/계좌이체/가상계좌는 KCP에 별도 심사·계약 추가하면 다시 노출 가능.
+// 카카오페이/토스페이 등 간편결제는 PortOne 콘솔에서 PG 채널 추가 후 가능.
 const METHODS: MethodOption[] = [
     {
         id: "card",
@@ -49,30 +49,6 @@ const METHODS: MethodOption[] = [
         icon: "card-outline",
         color: "#1E40AF",
         bgColor: "#DBEAFE",
-    },
-    {
-        id: "phone",
-        label: "휴대폰 결제",
-        sub: "통신사 소액결제 (SKT/KT/LGU+)",
-        icon: "phone-portrait-outline",
-        color: "#7C3AED",
-        bgColor: "#EDE9FE",
-    },
-    {
-        id: "trans",
-        label: "실시간 계좌이체",
-        sub: "은행 계좌에서 즉시",
-        icon: "swap-horizontal-outline",
-        color: "#0891B2",
-        bgColor: "#CFFAFE",
-    },
-    {
-        id: "vbank",
-        label: "가상계좌",
-        sub: "발급된 계좌로 입금",
-        icon: "business-outline",
-        color: "#92400E",
-        bgColor: "#FEF3C7",
     },
 ];
 
