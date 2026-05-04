@@ -13,6 +13,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { Stack, useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import { Video, ResizeMode } from "expo-av";
 import { API_BASE_URL } from "@/config/constants";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
@@ -49,6 +50,10 @@ interface PostDetail {
     isLiked?: boolean;
     isDisliked?: boolean;
     images?: string[];
+    /** AI 영상 게시글 (자랑 배지) — 비디오 URL */
+    videoUrl?: string;
+    /** AI 영상 썸네일 (선택) */
+    thumbnailUrl?: string;
     tag?: string;
     subcategory?: string;
     createdAt: string;
@@ -138,6 +143,12 @@ function normalizePost(raw: any): PostDetail | null {
                 : Array.isArray(raw.images)
                     ? raw.images.filter((x: unknown) => typeof x === "string")
                     : undefined,
+        videoUrl: typeof raw.videoUrl === "string"
+            ? raw.videoUrl
+            : (typeof raw.video_url === "string" ? raw.video_url : undefined),
+        thumbnailUrl: typeof raw.thumbnailUrl === "string"
+            ? raw.thumbnailUrl
+            : (typeof raw.thumbnail_url === "string" ? raw.thumbnail_url : undefined),
         tag: typeof raw.tag === "string" ? raw.tag : undefined,
         subcategory: typeof raw.subcategory === "string" ? raw.subcategory : undefined,
         createdAt: asString(raw.createdAt ?? raw.created_at),
@@ -628,6 +639,21 @@ export default function PostDetailScreen() {
                         </View>
                     </TouchableOpacity>
 
+                    {/* AI 영상 (자랑 배지 게시글) — 풀너비 비디오 플레이어 */}
+                    {post.videoUrl && (
+                        <View style={styles.videoWrap}>
+                            <Video
+                                source={{ uri: post.videoUrl }}
+                                style={styles.videoPlayer}
+                                useNativeControls
+                                resizeMode={ResizeMode.CONTAIN}
+                                shouldPlay={false}
+                                isLooping={false}
+                                {...(post.thumbnailUrl ? { posterSource: { uri: post.thumbnailUrl }, usePoster: true, posterStyle: styles.videoPlayer } : {})}
+                            />
+                        </View>
+                    )}
+
                     {post.images && post.images.length > 0 && (
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }} contentContainerStyle={{ gap: 8 }}>
                             {post.images.map((img, i) => (
@@ -1007,6 +1033,16 @@ const styles = StyleSheet.create({
     authorAvatar: { width: 32, height: 32, borderRadius: 16 },
     authorAvatarFallback: { backgroundColor: COLORS.gray[200], alignItems: "center", justifyContent: "center" },
     postImg: { width: 240, height: 176, borderRadius: 12 },
+    videoWrap: {
+        marginBottom: 16,
+        borderRadius: 12,
+        overflow: "hidden",
+        backgroundColor: "#000",
+    },
+    videoPlayer: {
+        width: "100%",
+        aspectRatio: 16 / 9,
+    },
     reactionRow: {
         flexDirection: "row",
         gap: 16,
