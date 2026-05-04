@@ -113,25 +113,34 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
     }, [fetchPets]);
 
     // ============================================================================
-    // 실시간 펫/사진 동기화 — 다른 디바이스에서 펫 추가/수정/삭제 또는 사진 업로드/삭제
-    // 시 즉시 fetchPets로 갱신. 0.5초 이내 양쪽 동기화 보장.
+    // 실시간 펫/사진 동기화 — 부팅 critical path 회피 위해 2초 지연.
     // ============================================================================
     useEffect(() => {
         if (!user?.id) return;
-        const channel = supabase
-            .channel(`pets:${user.id}`)
-            .on(
-                "postgres_changes",
-                { event: "*", schema: "public", table: "pets", filter: `user_id=eq.${user.id}` },
-                () => { fetchPets(); },
-            )
-            .on(
-                "postgres_changes",
-                { event: "*", schema: "public", table: "pet_media", filter: `user_id=eq.${user.id}` },
-                () => { fetchPets(); },
-            )
-            .subscribe();
-        return () => { supabase.removeChannel(channel); };
+        let channel: ReturnType<typeof supabase.channel> | null = null;
+        const t = setTimeout(() => {
+            try {
+                channel = supabase
+                    .channel(`pets:${user.id}`)
+                    .on(
+                        "postgres_changes",
+                        { event: "*", schema: "public", table: "pets", filter: `user_id=eq.${user.id}` },
+                        () => { fetchPets(); },
+                    )
+                    .on(
+                        "postgres_changes",
+                        { event: "*", schema: "public", table: "pet_media", filter: `user_id=eq.${user.id}` },
+                        () => { fetchPets(); },
+                    )
+                    .subscribe();
+            } catch (e) {
+                console.warn("[PetContext] realtime subscribe failed:", e);
+            }
+        }, 2500);
+        return () => {
+            clearTimeout(t);
+            if (channel) supabase.removeChannel(channel);
+        };
     }, [user?.id, fetchPets]);
 
     function selectPet(petId: string) {

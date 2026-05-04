@@ -224,29 +224,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // 실시간 프로필 동기화 — points / premium / subscription_tier 등이 다른 디바이스(웹/앱)
     // 또는 서버 프로세스(결제 webhook, cron, admin 작업)에서 바뀌면 즉시 반영.
     //
-    // postgres_changes 이벤트를 user.id 필터로 구독 → 0.5초 이내 setProfile 호출.
+    // ⚠️ subscribe()를 mount critical path에서 호출하면 Expo Go 부팅 막힘.
+    // 2초 지연 + try/catch로 안전하게 백그라운드 구독.
     // ============================================================================
     useEffect(() => {
         if (!user?.id) return;
-        const channel = supabase
-            .channel(`profile:${user.id}`)
-            .on(
-                "postgres_changes",
-                {
-                    event: "UPDATE",
-                    schema: "public",
-                    table: "profiles",
-                    filter: `id=eq.${user.id}`,
-                },
-                () => {
-                    // 변경 페이로드보다 안전하게 다시 select (모든 컬럼 일관 보장)
-                    loadProfile(user.id);
-                },
-            )
-            .subscribe();
+        let channel: ReturnType<typeof supabase.channel> | null = null;
+        const t = setTimeout(() => {
+            try {
+                channel = supabase
+                    .channel(`profile:${user.id}`)
+                    .on(
+                        "postgres_changes",
+                        {
+                            event: "UPDATE",
+                            schema: "public",
+                            table: "profiles",
+                            filter: `id=eq.${user.id}`,
+                        },
+                        () => { loadProfile(user.id); },
+                    )
+                    .subscribe();
+            } catch (e) {
+                console.warn("[AuthContext] realtime subscribe failed:", e);
+            }
+        }, 2000);
 
         return () => {
-            supabase.removeChannel(channel);
+            clearTimeout(t);
+            if (channel) supabase.removeChannel(channel);
         };
     }, [user?.id]);
 
