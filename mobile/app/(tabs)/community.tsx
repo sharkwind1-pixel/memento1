@@ -210,19 +210,9 @@ export default function CommunityScreen() {
         }, [fetchPosts]),
     );
 
-    // 실시간 게시글 동기화 — 다른 디바이스에서 새 글 INSERT/UPDATE/DELETE 즉시 반영.
-    // 단순화 위해 풀 refetch (현재 활성 탭 + 필터 일치 여부 판단 복잡 회피).
-    useEffect(() => {
-        const channel = supabase
-            .channel(`community_posts_${activeTab}`)
-            .on(
-                "postgres_changes",
-                { event: "*", schema: "public", table: "community_posts" },
-                () => { fetchPosts(); },
-            )
-            .subscribe();
-        return () => { supabase.removeChannel(channel); };
-    }, [fetchPosts, activeTab]);
+    // 실시간 게시글 동기화 — 글로벌 구독은 비용 큼 (다른 사용자 모든 글마다 refetch).
+    // 다음 디바이스 동기화는 pull-to-refresh로 충분하다고 판단, 글로벌 realtime 제거.
+    // (필요 시 본인 user_id 글만 구독으로 좁히는 방향 검토)
 
     async function onRefresh() {
         setRefreshing(true);

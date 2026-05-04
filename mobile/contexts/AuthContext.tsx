@@ -230,6 +230,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         if (!user?.id) return;
         let channel: ReturnType<typeof supabase.channel> | null = null;
+        // 부팅 + 첫 인터랙션 끝난 후 구독 시작 (cold start 부담 최소화)
         const t = setTimeout(() => {
             try {
                 channel = supabase
@@ -248,7 +249,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             } catch (e) {
                 console.warn("[AuthContext] realtime subscribe failed:", e);
             }
-        }, 2000);
+        }, 5000);
 
         return () => {
             clearTimeout(t);

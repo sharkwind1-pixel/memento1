@@ -118,8 +118,12 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         if (!user?.id) return;
         let channel: ReturnType<typeof supabase.channel> | null = null;
+        // 5초 지연 — cold start 부담 최소화. 사용자 첫 액션 후 백그라운드에서 활성.
         const t = setTimeout(() => {
             try {
+                // pets 테이블 변경만 구독 (펫 추가/수정/대표 변경).
+                // pet_media 변경은 빈도 높고 사진 한 장당 fetchPets() 풀 refetch 비용이 큼 →
+                // 사진 동기화는 사용자가 화면 다시 진입할 때 자동으로 갱신됨.
                 channel = supabase
                     .channel(`pets:${user.id}`)
                     .on(
@@ -127,16 +131,11 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                         { event: "*", schema: "public", table: "pets", filter: `user_id=eq.${user.id}` },
                         () => { fetchPets(); },
                     )
-                    .on(
-                        "postgres_changes",
-                        { event: "*", schema: "public", table: "pet_media", filter: `user_id=eq.${user.id}` },
-                        () => { fetchPets(); },
-                    )
                     .subscribe();
             } catch (e) {
                 console.warn("[PetContext] realtime subscribe failed:", e);
             }
-        }, 2500);
+        }, 5000);
         return () => {
             clearTimeout(t);
             if (channel) supabase.removeChannel(channel);
