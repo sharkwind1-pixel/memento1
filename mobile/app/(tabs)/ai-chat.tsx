@@ -23,6 +23,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
@@ -616,6 +617,14 @@ export default function AiChatScreen() {
 
     const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.white;
     const borderColor = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
+
+    // 감성 그라데이션 배경 — 모드별 따뜻한 색감
+    const chatBgGradient: [string, string] = isDarkMode
+        ? [COLORS.gray[950], COLORS.gray[900]]
+        : isMemorialMode
+            ? ["#FFFBEB", "#FEF3C7"]   // 메모리얼: 따뜻한 크림 → 살구
+            : ["#F0F9FF", "#FFFFFF"];  // 일상: 하늘색 → 흰색
+
     const usedCount = Math.min(limit === Infinity ? 0 : limit, limit === Infinity ? 0 : (limit - remainingChats));
 
     if (!selectedPet) {
@@ -665,14 +674,27 @@ export default function AiChatScreen() {
                         </View>
                     )}
                     <View style={{ flex: 1 }}>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                            <Text style={{
+                                fontSize: 16, fontWeight: "700",
+                                color: isDarkMode ? COLORS.white : COLORS.gray[900],
+                            }}>
+                                {selectedPet.name}
+                            </Text>
+                            {/* 온라인 표시 — 살아있는 느낌 */}
+                            <View style={{
+                                width: 8, height: 8, borderRadius: 4,
+                                backgroundColor: isMemorialMode ? "#FBBF24" : "#10B981",
+                            }} />
+                        </View>
                         <Text style={{
-                            fontSize: 16, fontWeight: "600",
-                            color: isDarkMode ? COLORS.white : COLORS.gray[900],
+                            fontSize: 11,
+                            color: isDarkMode ? COLORS.gray[400] : COLORS.gray[500],
+                            marginTop: 1,
                         }}>
-                            {selectedPet.name}
-                        </Text>
-                        <Text style={{ fontSize: 12, color: isDarkMode ? COLORS.gray[400] : COLORS.gray[500] }}>
-                            {isMemorialMode ? "추모 펫톡" : "AI 펫톡"}
+                            {isMemorialMode
+                                ? `${selectedPet.name}와(과) 다시 만난 시간`
+                                : `${selectedPet.name}와(과) 마음을 나눠보세요`}
                         </Text>
                     </View>
 
@@ -717,41 +739,54 @@ export default function AiChatScreen() {
                     </TouchableOpacity>
                 </View>
 
-                <FlatList
-                    ref={flatListRef}
-                    data={messages}
-                    keyExtractor={(item) => item.id}
-                    style={styles.messages}
-                    contentContainerStyle={{ paddingTop: 16, paddingBottom: 8, paddingHorizontal: 16 }}
-                    showsVerticalScrollIndicator={false}
-                    renderItem={({ item }) => (
-                        <MessageRenderer
-                            message={item}
-                            pet={selectedPet}
-                            accentColor={accentColor}
-                            onRetry={handleRetry}
-                        />
-                    )}
-                    ListFooterComponent={
-                        isTyping ? (
-                            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 }}>
-                                <View style={[styles.bubbleAvatar, { backgroundColor: accentColor + "20" }]}>
-                                    <Text style={{ fontSize: 12 }}>
-                                        {selectedPet.type === "강아지" ? "🐶" : "🐱"}
-                                    </Text>
+                <LinearGradient colors={chatBgGradient} style={styles.flex1}>
+                    <FlatList
+                        ref={flatListRef}
+                        data={messages}
+                        keyExtractor={(item) => item.id}
+                        style={styles.messages}
+                        contentContainerStyle={{ paddingTop: 16, paddingBottom: 8, paddingHorizontal: 16 }}
+                        showsVerticalScrollIndicator={false}
+                        renderItem={({ item }) => (
+                            <MessageRenderer
+                                message={item}
+                                pet={selectedPet}
+                                accentColor={accentColor}
+                                onRetry={handleRetry}
+                            />
+                        )}
+                        ListFooterComponent={
+                            isTyping ? (
+                                <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 8, marginBottom: 12 }}>
+                                    <View style={[styles.bubbleAvatar, { backgroundColor: accentColor + "20" }]}>
+                                        <Text style={{ fontSize: 12 }}>
+                                            {selectedPet.type === "강아지" ? "🐶" : "🐱"}
+                                        </Text>
+                                    </View>
+                                    <View>
+                                        <Text style={{
+                                            fontSize: 10,
+                                            color: isDarkMode ? COLORS.gray[400] : COLORS.gray[500],
+                                            marginBottom: 4,
+                                            marginLeft: 4,
+                                        }}>
+                                            {selectedPet.name}이(가) 답하고 있어요...
+                                        </Text>
+                                        <View
+                                            style={[
+                                                styles.bubblePet,
+                                                styles.bubblePetShadow,
+                                                { backgroundColor: isDarkMode ? COLORS.gray[800] : "#fff" },
+                                            ]}
+                                        >
+                                            <PawLoading size="sm" color={accentColor} />
+                                        </View>
+                                    </View>
                                 </View>
-                                <View
-                                    style={[
-                                        styles.bubblePet,
-                                        { backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100] },
-                                    ]}
-                                >
-                                    <PawLoading size="sm" color={accentColor} />
-                                </View>
-                            </View>
-                        ) : null
-                    }
-                />
+                            ) : null
+                        }
+                    />
+                </LinearGradient>
 
                 {suggestions.length > 0 && (
                     <ScrollableSuggestions
@@ -854,21 +889,33 @@ function MessageRenderer({
     }
 
     if (isUser) {
+        // 사용자 버블 — 그라데이션으로 더 생동감
+        const userGradient: [string, string] = pet.status === "memorial"
+            ? [COLORS.memorial[400], COLORS.memorial[500]]
+            : [COLORS.memento[400], COLORS.memento[500]];
         return (
             <View style={{ flexDirection: "row", justifyContent: "flex-end", marginBottom: 12 }}>
                 <TouchableOpacity
                     onLongPress={shareContent}
                     delayLongPress={400}
                     activeOpacity={0.85}
-                    style={[styles.bubbleUser, { backgroundColor: accentColor }]}
+                    style={styles.bubbleUserShadow}
                 >
-                    <Text style={{ color: "#fff", fontSize: 14, lineHeight: 20 }}>{message.content}</Text>
+                    <LinearGradient
+                        colors={userGradient}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.bubbleUser}
+                    >
+                        <Text style={{ color: "#fff", fontSize: 14, lineHeight: 22 }}>{message.content}</Text>
+                    </LinearGradient>
                 </TouchableOpacity>
             </View>
         );
     }
 
-    const petBubbleBg = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
+    // 펫 버블: 라이트는 흰색 카드 + 부드러운 그림자, 다크는 회색
+    const petBubbleBg = isDarkMode ? COLORS.gray[800] : "#FFFFFF";
     const emotionInfo = message.emotion ? EMOTION_MAP[message.emotion] : null;
 
     return (
@@ -899,11 +946,11 @@ function MessageRenderer({
                     onLongPress={shareContent}
                     delayLongPress={400}
                     activeOpacity={0.85}
-                    style={[styles.bubblePet, { backgroundColor: petBubbleBg }]}
+                    style={[styles.bubblePet, styles.bubblePetShadow, { backgroundColor: petBubbleBg }]}
                 >
                     <Text
                         style={{
-                            fontSize: 14, lineHeight: 20,
+                            fontSize: 14, lineHeight: 22,
                             color: isDarkMode ? COLORS.white : COLORS.gray[800],
                         }}
                     >
@@ -1153,12 +1200,31 @@ const styles = StyleSheet.create({
         alignItems: "center", justifyContent: "center",
     },
     bubbleUser: {
-        maxWidth: "80%", paddingHorizontal: 16, paddingVertical: 12,
-        borderRadius: 16, borderBottomRightRadius: 4,
+        maxWidth: "100%",
+        paddingHorizontal: 16, paddingVertical: 12,
+        borderRadius: 18, borderBottomRightRadius: 4,
+    },
+    bubbleUserShadow: {
+        maxWidth: "80%",
+        borderRadius: 18,
+        // 사용자 버블 — 살짝 들린 느낌
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 6,
+        elevation: 2,
     },
     bubblePet: {
         paddingHorizontal: 16, paddingVertical: 12,
-        borderRadius: 16, borderTopLeftRadius: 4,
+        borderRadius: 18, borderTopLeftRadius: 4,
+    },
+    bubblePetShadow: {
+        // 펫 버블 — 종이가 살짝 떠 있는 느낌, 라이트 모드일 때 강조
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.06,
+        shadowRadius: 4,
+        elevation: 1,
     },
     inputRow: {
         flexDirection: "row", alignItems: "flex-end", gap: 8,
