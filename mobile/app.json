@@ -7,41 +7,19 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "scheme": "mementoani",
-    "platforms": ["ios", "android"],
-    "primaryColor": "#05B2DC",
-    "description": "반려동물과의 모든 순간을 기록하고, 이별 후에도 따뜻한 추억을 간직할 수 있는 메모리얼 커뮤니티 플랫폼",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#E0F7FF"
     },
-    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.mementoani.app",
-      "buildNumber": "1",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "반려동물 사진을 업로드하기 위해 갤러리에 접근합니다.",
         "NSCameraUsageDescription": "반려동물 사진을 촬영하기 위해 카메라에 접근합니다.",
-        "NSMicrophoneUsageDescription": "동영상 촬영 시 마이크에 접근합니다.",
-        "NSUserTrackingUsageDescription": "광고 ID는 수집하지 않습니다. 서비스 향상을 위한 익명 분석에만 사용됩니다.",
-        "ITSAppUsesNonExemptEncryption": false,
-        "LSApplicationQueriesSchemes": [
-          "kakaopay",
-          "kakaopaybarcode",
-          "ispmobile",
-          "tauthlink",
-          "shinhan-sr-ansimclick",
-          "kb-acp",
-          "mpocket.online.ansimclick",
-          "lottesmartpay",
-          "lottesmartpaymobile",
-          "smshinhanansimclick",
-          "smartdgc",
-          "naversearchapp"
-        ]
-      },
-      "associatedDomains": ["applinks:mementoani.com", "applinks:www.mementoani.com"]
+        "NSMicrophoneUsageDescription": "동영상 촬영 시 마이크에 접근합니다."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -49,30 +27,13 @@
         "backgroundColor": "#E0F7FF"
       },
       "package": "com.mementoani.app",
-      "versionCode": 1,
       "permissions": [
-        "READ_MEDIA_IMAGES",
-        "READ_MEDIA_VIDEO",
-        "CAMERA",
-        "POST_NOTIFICATIONS",
-        "INTERNET"
-      ],
-      "blockedPermissions": [
         "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
+        "WRITE_EXTERNAL_STORAGE",
+        "CAMERA",
+        "NOTIFICATIONS"
       ],
-      "edgeToEdgeEnabled": true,
-      "intentFilters": [
-        {
-          "action": "VIEW",
-          "autoVerify": true,
-          "data": [
-            { "scheme": "https", "host": "mementoani.com" },
-            { "scheme": "https", "host": "www.mementoani.com" }
-          ],
-          "category": ["BROWSABLE", "DEFAULT"]
-        }
-      ]
+      "edgeToEdgeEnabled": true
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -99,20 +60,6 @@
     ],
     "experiments": {
       "typedRoutes": false
-    },
-    "extra": {
-      "eas": {
-        "projectId": "REPLACE_WITH_EAS_PROJECT_ID"
-      },
-      "SENTRY_DSN_MOBILE": null
-    },
-    "owner": "sharkwind1",
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
-    "updates": {
-      "url": "https://u.expo.dev/REPLACE_WITH_EAS_PROJECT_ID",
-      "fallbackToCacheTimeout": 0
     }
   }
 }

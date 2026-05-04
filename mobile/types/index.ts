@@ -144,8 +144,6 @@ export interface UserProfile {
     isAdmin?: boolean;
     points?: number;
     createdAt?: string;
-    isBetaTester?: boolean;
-    betaDiscountUntil?: string | null;
 }
 
 // ============================================

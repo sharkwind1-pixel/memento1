@@ -7,10 +7,6 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PetProvider } from "@/contexts/PetContext";
-import { initSentry } from "@/lib/sentry";
-
-// 앱 부팅 시 즉시 Sentry 초기화 (DSN 없거나 패키지 미설치 시 자동 noop)
-initSentry();
 
 export default function RootLayout() {
     return (

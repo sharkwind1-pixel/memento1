@@ -5,7 +5,7 @@
 import { useState } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity,
-    Image, Alert, ActivityIndicator, StyleSheet, TextInput,
+    Image, Alert, ActivityIndicator, StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useRouter } from "expo-router";
@@ -14,15 +14,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
 import { COLORS } from "@/lib/theme";
 import AppHeader from "@/components/common/AppHeader";
-import { supabase } from "@/lib/supabase";
 
 export default function ProfileScreen() {
     const router = useRouter();
-    const { user, profile, isPremium, points, signOut, refreshProfile } = useAuth();
+    const { user, profile, isPremium, points, signOut } = useAuth();
     const { pets, isMemorialMode } = usePet();
     const [signingOut, setSigningOut] = useState(false);
-    const [betaCode, setBetaCode] = useState("");
-    const [betaSubmitting, setBetaSubmitting] = useState(false);
 
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
     const nickname = profile?.nickname
@@ -30,51 +27,6 @@ export default function ProfileScreen() {
         ?? user?.email?.split("@")[0]
         ?? "사용자";
     const email = user?.email ?? "";
-
-    async function handleRedeemBeta() {
-        const code = betaCode.trim().toUpperCase();
-        if (!code) {
-            Alert.alert("코드 입력", "베타 코드를 입력해주세요.");
-            return;
-        }
-        setBetaSubmitting(true);
-        try {
-            const { data, error } = await supabase.rpc("redeem_beta_code", { _code: code });
-            if (error) {
-                Alert.alert("코드 사용 실패", error.message ?? "잠시 후 다시 시도해주세요.");
-                return;
-            }
-            // RPC는 throw 대신 { success, error } 반환
-            const result = (data as {
-                success: boolean;
-                error?: string;
-                points_added?: number;
-                discount_until?: string;
-                discount_percent?: number;
-            } | null) ?? null;
-
-            if (!result || result.success === false) {
-                Alert.alert("코드 사용 실패", result?.error ?? "유효하지 않은 코드입니다.");
-                return;
-            }
-
-            const pts = result.points_added ?? 3000;
-            const until = result.discount_until
-                ? new Date(result.discount_until).toLocaleDateString("ko-KR")
-                : "3개월간";
-            const percent = result.discount_percent ?? 50;
-            setBetaCode("");
-            await refreshProfile?.();
-            Alert.alert(
-                "베타 코드 사용 완료",
-                `${pts.toLocaleString()}P 지급\n구독 ${until}까지 ${percent}% 할인 적용`,
-            );
-        } catch (e) {
-            Alert.alert("오류", e instanceof Error ? e.message : "잠시 후 다시 시도해주세요.");
-        } finally {
-            setBetaSubmitting(false);
-        }
-    }
 
     async function handleSignOut() {
         Alert.alert("로그아웃", "정말 로그아웃하시겠어요?", [
@@ -177,58 +129,6 @@ export default function ProfileScreen() {
                     onPress={() => router.push("/notifications")}
                     isMemorialMode={isMemorialMode}
                 />
-            </SectionCard>
-
-            <SectionCard title="베타 테스터" isMemorialMode={isMemorialMode}>
-                {profile?.isBetaTester ? (
-                    <View style={styles.betaActiveBox}>
-                        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                            <Ionicons name="ribbon" size={18} color={COLORS.memento[500]} />
-                            <Text style={{ fontSize: 14, fontWeight: "600", color: COLORS.memento[700] }}>
-                                베타 테스터 활성화됨
-                            </Text>
-                        </View>
-                        {profile.betaDiscountUntil && (
-                            <Text style={{ fontSize: 12, color: COLORS.gray[500], marginTop: 6 }}>
-                                {new Date(profile.betaDiscountUntil).toLocaleDateString("ko-KR")}까지 구독 50% 할인
-                            </Text>
-                        )}
-                    </View>
-                ) : (
-                    <View style={styles.betaInputBox}>
-                        <Text style={{ fontSize: 12, color: COLORS.gray[500], marginBottom: 8 }}>
-                            베타 코드를 입력하면 3,000P + 3개월 구독 50% 할인을 받을 수 있어요
-                        </Text>
-                        <View style={{ flexDirection: "row", gap: 8 }}>
-                            <TextInput
-                                value={betaCode}
-                                onChangeText={(t) => setBetaCode(t.toUpperCase())}
-                                placeholder="BETA-XXXXXX"
-                                placeholderTextColor={COLORS.gray[400]}
-                                autoCapitalize="characters"
-                                autoCorrect={false}
-                                style={[
-                                    styles.betaInput,
-                                    {
-                                        backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[50],
-                                        color: isMemorialMode ? COLORS.white : COLORS.gray[900],
-                                    },
-                                ]}
-                            />
-                            <TouchableOpacity
-                                onPress={handleRedeemBeta}
-                                disabled={betaSubmitting}
-                                style={[styles.betaBtn, { backgroundColor: accentColor, opacity: betaSubmitting ? 0.5 : 1 }]}
-                            >
-                                {betaSubmitting ? (
-                                    <ActivityIndicator color="#fff" size="small" />
-                                ) : (
-                                    <Text style={{ color: "#fff", fontWeight: "600", fontSize: 13 }}>적용</Text>
-                                )}
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                )}
             </SectionCard>
 
             <SectionCard title="앱 정보" isMemorialMode={isMemorialMode}>
@@ -410,28 +310,5 @@ const styles = StyleSheet.create({
         alignItems: "center",
         borderWidth: 1,
         borderColor: COLORS.red[200],
-    },
-    betaActiveBox: {
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-    },
-    betaInputBox: {
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-    },
-    betaInput: {
-        flex: 1,
-        height: 40,
-        borderRadius: 12,
-        paddingHorizontal: 12,
-        fontSize: 14,
-        fontFamily: "monospace",
-    },
-    betaBtn: {
-        height: 40,
-        paddingHorizontal: 18,
-        borderRadius: 12,
-        justifyContent: "center",
-        alignItems: "center",
     },
 });

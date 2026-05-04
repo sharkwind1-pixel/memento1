@@ -176,13 +176,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (!mounted) return;
             setSession(session);
             setUser(session?.user ?? null);
-            // Sentry user 컨텍스트 동기화 (PII 정책: id만, email은 sendDefaultPii=false로 스크럽됨)
-            try {
-                // 동적 import로 Sentry 미설치 시에도 안전
-                // eslint-disable-next-line @typescript-eslint/no-require-imports
-                const { setSentryUser } = require("@/lib/sentry");
-                setSentryUser?.(session?.user ? { id: session.user.id } : null);
-            } catch { /* noop */ }
             if (session?.user) {
                 loadProfile(session.user.id);
             } else {
@@ -224,8 +217,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     isPremium: isPremiumActive,
                     isAdmin: data.is_admin,
                     points: data.points ?? 0,
-                    isBetaTester: data.is_beta_tester ?? false,
-                    betaDiscountUntil: data.beta_discount_until ?? null,
                 });
             } else {
                 console.warn(`[Profile] no row for userId=${userId} — creating fallback profile`);
