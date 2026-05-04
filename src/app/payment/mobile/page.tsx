@@ -34,6 +34,10 @@ interface IMPRequestPayParams {
     buyer_name?: string;
     m_redirect_url?: string;
     customer_uid?: string;
+    /** 디지털 상품 여부 (휴대폰 결제는 필수) */
+    digital?: boolean;
+    /** 가상계좌 입금 만료일 (YYYYMMDDHHmm) */
+    vbank_due?: string;
 }
 interface IMPResponse {
     success: boolean;
@@ -121,16 +125,22 @@ function MobilePaymentInner() {
                 if (!useChannelKey) throw new Error("결제 채널 키 누락");
 
                 // pay_method 결정 — 구독은 card 강제 (빌링키 발급), 단건은 사용자 선택
-                const allowedMethods = new Set([
-                    "card", "phone", "trans", "vbank",
-                    "kakaopay", "tosspay", "payco", "naverpay", "samsung", "lpay",
-                ]);
+                // KCP 단일 채널 지원 4종만: card / phone / trans / vbank
+                const allowedMethods = new Set(["card", "phone", "trans", "vbank"]);
                 const payMethod = isSubscription
                     ? "card"
                     : (payMethodParam && allowedMethods.has(payMethodParam) ? payMethodParam : "card");
 
+                // KCP V1은 channelKey만으로 라우팅이 모호한 경우 pg 명시 필요.
+                // 미등록 사이트 코드 에러(3014) 회피 + method별 정확한 라우팅.
+                const kcpMid = process.env.NEXT_PUBLIC_PORTONE_KCP_MID || "IP6S2";
+                const pgValue = isSubscription
+                    ? `kcp_billing.${kcpMid}` // 정기결제 (빌링키 발급)
+                    : `kcp.${kcpMid}`;        // 일반결제
+
                 const reqParams: IMPRequestPayParams = {
                     channelKey: useChannelKey,
+                    pg: pgValue,
                     pay_method: payMethod,
                     merchant_uid: paymentId,
                     name: orderName || (isSubscription ? "메멘토애니 구독" : "AI 영상 1건"),
@@ -140,15 +150,35 @@ function MobilePaymentInner() {
                     // mobile redirect URL (포트원이 결제 후 이동) — 같은 origin이라 WebView가 인터셉트 가능
                     m_redirect_url: `${window.location.origin}/payment/mobile-callback?type=${type}`,
                 };
+
+                // 휴대폰 결제: 디지털 상품 플래그 필수 (안 넣으면 실물상품으로 분류되어 거부)
+                if (payMethod === "phone") {
+                    reqParams.digital = true;
+                }
+
+                // 가상계좌: 만료일 = +3일 (YYYYMMDDHHmm)
+                if (payMethod === "vbank") {
+                    const due = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+                    const pad = (n: number) => String(n).padStart(2, "0");
+                    reqParams.vbank_due =
+                        `${due.getFullYear()}${pad(due.getMonth() + 1)}${pad(due.getDate())}`
+                        + `${pad(due.getHours())}${pad(due.getMinutes())}`;
+                }
+
                 if (isSubscription && customerUid) {
                     reqParams.customer_uid = customerUid;
                 }
 
                 window.IMP.request_pay(reqParams as Parameters<NonNullable<typeof window.IMP>["request_pay"]>[0], async (response: IMPResponse) => {
                     if (!response.success) {
-                        // 사용자 취소 또는 실패
-                        const reason = response.error_msg || "결제가 완료되지 않았습니다";
-                        const isCancel = reason.includes("취소") || response.error_code === "USER_CANCEL";
+                        // 사용자 취소 또는 실패. 에러 코드도 reason에 포함시켜 디버깅 가능.
+                        const code = response.error_code ?? "";
+                        const msg = response.error_msg || "결제가 완료되지 않았습니다";
+                        const reason = code ? `${msg} (${code})` : msg;
+                        const isCancel =
+                            reason.includes("취소") ||
+                            code === "USER_CANCEL" ||
+                            code === "F400";
                         const status = isCancel ? "cancelled" : "failed";
                         window.location.replace(
                             `${window.location.origin}/payment/mobile-callback`
