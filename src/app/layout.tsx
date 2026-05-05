@@ -87,6 +87,8 @@ export const metadata: Metadata = {
     },
     other: {
         "naver-site-verification": "f839a892a87f387d72f4a7fb585c40c51e13917a",
+        // 모바일 크롬 자동 번역 차단 (한국어 페이지가 번역체로 보이는 문제 방지)
+        "google": "notranslate",
     },
 };
 
@@ -98,7 +100,7 @@ export default async function RootLayout({
     const nonce = (await headers()).get("x-nonce") || "";
 
     return (
-        <html lang="ko" suppressHydrationWarning>
+        <html lang="ko" translate="no" className="notranslate" suppressHydrationWarning>
             <head>
                 <script
                     nonce={nonce}
