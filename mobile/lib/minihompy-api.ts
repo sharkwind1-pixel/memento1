@@ -285,15 +285,20 @@ export async function toggleMinihompyLike(
 // 방명록
 // ============================================================================
 
+// 서버 응답: { guestbook: [{id, ownerId, visitorId, visitorNickname, visitorMinimiData, content, createdAt}], total, hasMore }
+// (snake_case가 아니라 camelCase + visitor 키 — 절대 entries/writer_id 사용 금지)
 interface GuestbookResponse {
-    entries: Array<{
+    guestbook: Array<{
         id: string;
-        writer_id: string;
-        writer_nickname?: string;
-        writer_avatar?: string;
+        ownerId?: string;
+        visitorId: string;
+        visitorNickname?: string;
+        visitorMinimiData?: unknown;
         content: string;
-        created_at: string;
+        createdAt: string;
     }>;
+    total?: number;
+    hasMore?: boolean;
 }
 
 export async function getGuestbook(
@@ -301,13 +306,15 @@ export async function getGuestbook(
     ownerUserId: string,
 ): Promise<GuestbookEntry[]> {
     const data = await callApi<GuestbookResponse>(`/api/minihompy/${ownerUserId}/guestbook`, { accessToken });
-    return (data.entries || []).map((e) => ({
+    return (data.guestbook || []).map((e) => ({
         id: e.id,
-        writerId: e.writer_id,
-        writerNickname: e.writer_nickname,
-        writerAvatar: e.writer_avatar,
+        writerId: e.visitorId,
+        writerNickname: e.visitorNickname,
+        // 서버는 minimi 픽셀 데이터(JSON)를 주지 avatar URL이 아님 → 일단 빈값.
+        // 미니미 그리기는 별도 컴포넌트로 후속 작업.
+        writerAvatar: undefined,
         content: e.content,
-        createdAt: e.created_at,
+        createdAt: e.createdAt,
     }));
 }
 
