@@ -15,6 +15,9 @@ export default function manifest(): MetadataRoute.Manifest {
         background_color: "#ffffff",
         theme_color: "#0EA5E9",
         orientation: "portrait",
+        // PWA 자동번역 차단을 위한 언어 명시 (삼성 인터넷/갤럭시 시스템 번역 대응)
+        lang: "ko",
+        dir: "ltr",
         categories: ["lifestyle", "social"],
         icons: [
             {

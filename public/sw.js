@@ -17,7 +17,7 @@ self.addEventListener("install", function (event) {
     self.skipWaiting();
 });
 
-// 이전 버전 캐시 정리
+// 이전 버전 캐시 정리 + 모든 클라이언트 강제 새로고침 (PWA 자동번역 차단 메타 적용 보장)
 self.addEventListener("activate", function (event) {
     event.waitUntil(
         caches.keys().then(function (keys) {
@@ -25,9 +25,17 @@ self.addEventListener("activate", function (event) {
                 keys.filter(function (k) { return k !== CACHE_NAME; })
                     .map(function (k) { return caches.delete(k); })
             );
+        }).then(function () {
+            return self.clients.claim();
+        }).then(function () {
+            // 새 SW 버전 활성화 시 PWA standalone 창 포함 모든 클라이언트 강제 새로고침
+            return self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (cs) {
+                cs.forEach(function (client) {
+                    try { client.navigate(client.url); } catch (e) { /* noop */ }
+                });
+            });
         })
     );
-    self.clients.claim();
 });
 
 // 네트워크 요청 가로채기 - 정적 에셋/이미지 캐싱
