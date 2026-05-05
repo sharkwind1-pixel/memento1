@@ -4,7 +4,7 @@
  * 정적 에셋 캐싱으로 반복 방문 시 로드 시간 단축
  */
 
-const CACHE_NAME = "memento-v3";
+const CACHE_NAME = "memento-v4-notranslate";
 const STATIC_ASSETS = ["/logo.png", "/logo2.png", "/icon-192.png", "/icon-512.png"];
 
 // 서비스 워커 설치 시 정적 에셋 프리캐시
