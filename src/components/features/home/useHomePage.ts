@@ -258,6 +258,7 @@ export function useHomePage() {
                     time: formatRelativeTime(p.createdAt as string),
                     authorPoints: (p.authorPoints as number) || 0,
                     authorIsAdmin: (p.authorIsAdmin as boolean) || false,
+                    imageUrls: Array.isArray(p.imageUrls) ? p.imageUrls as string[] : undefined,
                 }));
                 setCommunityPosts(posts);
                 // DB에서 가져온 좋아요 상태 반영

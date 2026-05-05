@@ -22,6 +22,7 @@ export type CommunityPost = {
     avatar?: string;
     authorPoints?: number;
     authorIsAdmin?: boolean;
+    imageUrls?: string[];  // 첨부 이미지 (홈 인기 카드 썸네일용)
 };
 
 // 댓글 타입

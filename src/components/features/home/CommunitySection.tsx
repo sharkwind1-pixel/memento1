@@ -94,6 +94,10 @@ export default function CommunitySection({
                         const displayLikes = post.likes;
                         const addedComments = ([] as unknown[]).length || 0;
                         const totalComments = post.comments + addedComments;
+                        // 이미지 첨부 있을 때만 썸네일 표시. 텍스트 게시글에 그라데이션+발자국 강제로 안 그림.
+                        const firstImage = Array.isArray(post.imageUrls) && post.imageUrls.length > 0
+                            ? post.imageUrls[0]
+                            : undefined;
 
                         return (
                             <button
@@ -101,18 +105,31 @@ export default function CommunitySection({
                                 onClick={() => onSelectPost(post)}
                                 className="w-full flex items-center gap-4 p-3 rounded-2xl bg-white/60 dark:bg-gray-800/40 hover:bg-white dark:hover:bg-gray-800/60 transition-all group"
                             >
-                                {/* 좌측: 그라데이션 썸네일 */}
-                                <div className={`w-16 h-16 rounded-xl bg-gradient-to-br ${gradients[idx % gradients.length]} flex items-center justify-center flex-shrink-0 relative overflow-hidden`}>
-                                    <PawPrint className="w-6 h-6 text-white/70" />
-                                    {post.badge && (
-                                        <span className="absolute bottom-0.5 right-0.5 text-[9px] font-bold text-white bg-black/30 rounded px-1">
-                                            {post.badge}
-                                        </span>
-                                    )}
-                                </div>
+                                {/* 좌측: 이미지가 있는 경우만 썸네일 */}
+                                {firstImage ? (
+                                    <div className="w-16 h-16 rounded-xl flex-shrink-0 relative overflow-hidden bg-gray-100 dark:bg-gray-800">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img
+                                            src={firstImage}
+                                            alt=""
+                                            className="w-full h-full object-cover"
+                                            loading="lazy"
+                                        />
+                                        {post.badge && (
+                                            <span className="absolute bottom-0.5 right-0.5 text-[9px] font-bold text-white bg-black/40 rounded px-1">
+                                                {post.badge}
+                                            </span>
+                                        )}
+                                    </div>
+                                ) : null}
 
                                 {/* 우측: 제목 + 작성자 + 좋아요/댓글 */}
                                 <div className="flex-1 text-left min-w-0">
+                                    {!firstImage && post.badge && (
+                                        <span className={`inline-block text-[10px] font-bold text-white px-2 py-0.5 rounded mb-1.5 bg-gradient-to-r ${gradients[idx % gradients.length]}`}>
+                                            {post.badge}
+                                        </span>
+                                    )}
                                     <p className={`text-sm font-semibold text-gray-800 dark:text-gray-100 line-clamp-2 transition-colors ${isMemorial ? "group-hover:text-memorial-600" : "group-hover:text-memento-600"}`}>
                                         {post.title}
                                     </p>
