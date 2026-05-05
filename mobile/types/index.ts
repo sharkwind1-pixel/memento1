@@ -161,6 +161,8 @@ export interface UserProfile {
     premiumPlan?: string;
     subscriptionPhase?: string;
     premiumExpiresAt?: string;
+    isBetaTester?: boolean;
+    betaDiscountUntil?: string | null;
 }
 
 // ============================================

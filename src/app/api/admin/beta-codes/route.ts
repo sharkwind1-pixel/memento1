@@ -13,6 +13,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser, createAdminSupabase } from "@/lib/supabase-server";
 import { ADMIN_EMAILS } from "@/config/constants";
+import { getClientIP, checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -58,6 +59,16 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+    // 관리자라도 bulk 100개 무한 호출 차단을 위한 rate limit
+    const clientIP = await getClientIP();
+    const rateLimit = checkRateLimit(clientIP, "write");
+    if (!rateLimit.allowed) {
+        return NextResponse.json(
+            { error: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요." },
+            { status: 429, headers: getRateLimitHeaders(rateLimit.remaining, rateLimit.resetIn) }
+        );
+    }
+
     const ctx = await ensureAdmin();
     if (!ctx.ok) return NextResponse.json({ error: ctx.error }, { status: ctx.status });
 

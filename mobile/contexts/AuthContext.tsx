@@ -261,7 +261,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
             const { data, error } = await supabase
                 .from("profiles")
-                .select("id, nickname, avatar_url, is_premium, is_admin, points, premium_expires_at, subscription_tier, premium_plan, subscription_phase")
+                .select("id, nickname, avatar_url, is_premium, is_admin, points, premium_expires_at, subscription_tier, premium_plan, subscription_phase, is_beta_tester, beta_discount_until")
                 .eq("id", userId)
                 .single();
 
@@ -287,6 +287,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     premiumPlan: data.premium_plan as string | undefined,
                     subscriptionPhase: data.subscription_phase as string | undefined,
                     premiumExpiresAt: data.premium_expires_at as string | undefined,
+                    isBetaTester: data.is_beta_tester ?? false,
+                    betaDiscountUntil: data.beta_discount_until ?? null,
                 });
             } else {
                 console.warn(`[Profile] no row for userId=${userId} — creating fallback profile`);
