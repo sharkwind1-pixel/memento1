@@ -17,6 +17,13 @@ self.addEventListener("install", function (event) {
     self.skipWaiting();
 });
 
+// 페이지에서 보낸 SKIP_WAITING 메시지 처리 → 새 SW 즉시 활성화
+self.addEventListener("message", function (event) {
+    if (event.data && event.data.type === "SKIP_WAITING") {
+        self.skipWaiting();
+    }
+});
+
 // 이전 버전 캐시 정리 + 모든 클라이언트 강제 새로고침 (PWA 자동번역 차단 메타 적용 보장)
 self.addEventListener("activate", function (event) {
     event.waitUntil(
