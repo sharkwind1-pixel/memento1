@@ -119,16 +119,32 @@ export default function MagazineReaderScreen() {
         setIsLiking(true);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         const newLiked = !article.liked;
+        // 1. 낙관적 UI 업데이트
         setArticle((a) => a ? { ...a, liked: newLiked, likes: a.likes + (newLiked ? 1 : -1) } : a);
         try {
-            await fetch(`${API_BASE_URL}/api/magazine`, {
+            // articleId는 UUID라 절대 Number()로 감싸지 말 것 (NaN → 서버 400)
+            const res = await fetch(`${API_BASE_URL}/api/magazine`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${session.access_token}`,
                 },
-                body: JSON.stringify({ articleId: Number(id), action: newLiked ? "like" : "unlike" }),
+                body: JSON.stringify({ articleId: id, action: newLiked ? "like" : "unlike" }),
             });
+            if (!res.ok) {
+                // 서버 실패 → 롤백
+                setArticle((a) => a ? { ...a, liked: !newLiked, likes: a.likes + (newLiked ? -1 : 1) } : a);
+                return;
+            }
+            // 2. 서버 truth로 강제 동기화 (response의 likes / liked 반영)
+            const data = await res.json().catch(() => null) as { likes?: number; liked?: boolean } | null;
+            if (data && (typeof data.likes === "number" || typeof data.liked === "boolean")) {
+                setArticle((a) => a ? {
+                    ...a,
+                    likes: typeof data.likes === "number" ? data.likes : a.likes,
+                    liked: typeof data.liked === "boolean" ? data.liked : a.liked,
+                } : a);
+            }
         } catch {
             setArticle((a) => a ? { ...a, liked: !newLiked, likes: a.likes + (newLiked ? -1 : 1) } : a);
         } finally {

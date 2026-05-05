@@ -9,7 +9,7 @@
  * 5. 무한 스크롤
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
     View, Text, FlatList, TouchableOpacity,
     Image, TextInput, RefreshControl, ActivityIndicator,
@@ -18,7 +18,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { API_BASE_URL } from "@/config/constants";
 import { usePet } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -144,8 +144,22 @@ export default function MagazineScreen() {
         fetchArticles(true);
     }, [selectedStage, selectedTopic]);
 
+    // 화면 포커스 복귀 시 stale > 5초면 자동 갱신
+    // (매거진 상세에서 좋아요/조회수 후 뒤로 왔을 때 즉시 반영)
+    const lastFetchedAt = useRef(0);
+    useFocusEffect(
+        useCallback(() => {
+            const now = Date.now();
+            if (now - lastFetchedAt.current > 5000) {
+                lastFetchedAt.current = now;
+                fetchArticles(true);
+            }
+        }, [fetchArticles]),
+    );
+
     function onRefresh() {
         setRefreshing(true);
+        lastFetchedAt.current = Date.now();
         fetchArticles(true);
     }
 

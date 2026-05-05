@@ -7,7 +7,7 @@
  * - 카드 (이미지 + 본문 + 좋아요/댓글/시간 메타)
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity,
     FlatList, RefreshControl, ActivityIndicator,
@@ -17,7 +17,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { API_BASE_URL } from "@/config/constants";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
@@ -126,8 +126,22 @@ export default function CommunityScreen() {
         fetchPosts();
     }, [fetchPosts]);
 
+    // 화면 포커스 복귀 시 stale > 5초면 자동 갱신
+    // (게시글 상세에서 좋아요 누르고 뒤로 왔을 때 카운트 즉시 반영)
+    const lastFetchedAt = useRef(0);
+    useFocusEffect(
+        useCallback(() => {
+            const now = Date.now();
+            if (now - lastFetchedAt.current > 5000) {
+                lastFetchedAt.current = now;
+                fetchPosts();
+            }
+        }, [fetchPosts]),
+    );
+
     async function onRefresh() {
         setRefreshing(true);
+        lastFetchedAt.current = Date.now();
         await fetchPosts();
     }
 

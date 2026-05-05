@@ -159,16 +159,31 @@ export default function PostDetailScreen() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
         const newLiked = !post.isLiked;
+        // 낙관적 UI 업데이트
         setPost((p) => p ? { ...p, isLiked: newLiked, likes: p.likes + (newLiked ? 1 : -1) } : p);
 
         try {
-            await fetch(`${API_BASE_URL}/api/posts/${id}/like`, {
+            const res = await fetch(`${API_BASE_URL}/api/posts/${id}/like`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${session.access_token}`,
                 },
             });
+            if (!res.ok) {
+                // 서버 실패 → 낙관적 업데이트 롤백
+                setPost((p) => p ? { ...p, isLiked: !newLiked, likes: p.likes + (newLiked ? -1 : 1) } : p);
+                return;
+            }
+            // 서버 truth로 동기화 (응답: { liked, likes })
+            const data = await res.json().catch(() => null) as { liked?: boolean; likes?: number } | null;
+            if (data && (typeof data.likes === "number" || typeof data.liked === "boolean")) {
+                setPost((p) => p ? {
+                    ...p,
+                    likes: typeof data.likes === "number" ? data.likes : p.likes,
+                    isLiked: typeof data.liked === "boolean" ? data.liked : p.isLiked,
+                } : p);
+            }
         } catch {
             setPost((p) => p ? { ...p, isLiked: !newLiked, likes: p.likes + (newLiked ? -1 : 1) } : p);
         } finally {
