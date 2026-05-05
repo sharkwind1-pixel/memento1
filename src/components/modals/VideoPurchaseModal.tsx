@@ -62,7 +62,8 @@ export default function VideoPurchaseModal({
                 return;
             }
 
-            const { paymentId, orderName, amount } = await prepareRes.json();
+            const prepareDataParsed = await prepareRes.json();
+            const { paymentId, orderName, amount } = prepareDataParsed;
 
             // 2. 포트원 결제창 오픈
             const paymentResult = await requestPortOnePayment({
@@ -100,6 +101,14 @@ export default function VideoPurchaseModal({
             toast.success("AI 영상 1건이 추가되었습니다!");
             onPurchaseSuccess();
             onClose();
+            // 광고 conversion tracking용 thank-you 페이지로 이동
+            try {
+                const params = new URLSearchParams({
+                    type: "video",
+                    ...(amount ? { amount: String(amount) } : {}),
+                });
+                window.location.href = `/payment/thank-you?${params.toString()}`;
+            } catch { /* noop */ }
         } catch (err) {
             console.error("[VideoPurchaseModal] 결제 오류:", err);
             toast.error("결제 중 오류가 발생했습니다. 다시 시도해주세요.");

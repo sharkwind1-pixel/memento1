@@ -174,6 +174,16 @@ export default function PremiumModal({
             toast.success(isSubscription ? "정기구독이 시작되었습니다!" : "프리미엄이 활성화되었습니다!");
             await refreshProfile();
             onClose();
+            // 광고 conversion tracking용 thank-you 페이지로 이동
+            // (모바일 WebView 결제는 mobile-callback이 처리하므로 여기 안 옴)
+            try {
+                const params = new URLSearchParams({
+                    type: "subscribe",
+                    ...(selectedPlan ? { plan: selectedPlan } : {}),
+                    ...(prepareData?.amount ? { amount: String(prepareData.amount) } : {}),
+                });
+                window.location.href = `/payment/thank-you?${params.toString()}`;
+            } catch { /* noop */ }
         } catch (err) {
             console.error("[PremiumModal] 결제 오류:", err);
             toast.error("결제 중 오류가 발생했습니다. 다시 시도해주세요.");
