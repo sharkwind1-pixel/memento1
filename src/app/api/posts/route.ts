@@ -172,14 +172,15 @@ export async function GET(request: NextRequest) {
         let userIdToMinimiSlug: Record<string, string> = {};
         let userIdToPoints: Record<string, number> = {};
         let userIdToIsAdmin: Record<string, boolean> = {};
+        let userIdToNickname: Record<string, string> = {};
         if (userIds.length > 0) {
             try {
                 const adminSupabase = createAdminSupabase();
-                // profiles(equipped_minimi_id, points, is_admin)와 user_minimi를 병렬 조회
+                // profiles(nickname, equipped_minimi_id, points, is_admin)와 user_minimi를 병렬 조회
                 const [{ data: profileRows }, { data: minimiRows }] = await Promise.all([
                     adminSupabase
                         .from("profiles")
-                        .select("id, equipped_minimi_id, points, is_admin")
+                        .select("id, nickname, equipped_minimi_id, points, is_admin")
                         .in("id", userIds),
                     adminSupabase
                         .from("user_minimi")
@@ -193,6 +194,9 @@ export async function GET(request: NextRequest) {
                 for (const p of (profileRows || [])) {
                     userIdToPoints[p.id] = p.points ?? 0;
                     userIdToIsAdmin[p.id] = p.is_admin === true;
+                    if (typeof p.nickname === "string" && p.nickname.trim()) {
+                        userIdToNickname[p.id] = p.nickname.trim();
+                    }
                     if (p.equipped_minimi_id && uuidToSlug[p.equipped_minimi_id]) {
                         userIdToMinimiSlug[p.id] = uuidToSlug[p.equipped_minimi_id];
                     }
@@ -243,7 +247,11 @@ export async function GET(request: NextRequest) {
                 badge: post.badge || "",
                 title: post.title,
                 content: post.content,
-                authorName: post.author_name,
+                // author_name이 비어있으면 profiles.nickname으로 폴백 (옛날 게시글 "익명" 표시 회귀 fix).
+                // 둘 다 없으면 "익명" 클라이언트 폴백.
+                authorName: (typeof post.author_name === "string" && post.author_name.trim())
+                    ? post.author_name
+                    : (userIdToNickname[post.user_id] ?? null),
                 likes: post.likes ?? 0,
                 views: post.views ?? 0,
                 comments: post.post_comments?.[0]?.count ?? 0,

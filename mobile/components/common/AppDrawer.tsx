@@ -6,7 +6,7 @@
  * - 계정: 닉네임, 프로필, 로그아웃
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
     Modal, View, Text, TouchableOpacity, Animated, Dimensions,
     Pressable, StyleSheet, ScrollView, Image,
@@ -16,6 +16,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { COLORS } from "@/lib/theme";
 
 const { width: SCREEN_W } = Dimensions.get("window");
@@ -26,27 +27,42 @@ interface AppDrawerProps {
     onClose: () => void;
 }
 
-const MENU: Array<{
+// 웹 Sidebar.tsx와 동일 구조 (메인 5개)
+const MAIN_MENU: Array<{
     id: string;
     label: string;
     icon: React.ComponentProps<typeof Ionicons>["name"];
     route: string;
+    hasSubcategories?: boolean;
 }> = [
     { id: "home", label: "홈", icon: "home-outline", route: "/(tabs)" },
-    { id: "record", label: "내 기록", icon: "albums-outline", route: "/(tabs)/record" },
-    { id: "community", label: "커뮤니티", icon: "people-outline", route: "/(tabs)/community" },
-    { id: "ai-chat", label: "AI펫톡", icon: "chatbubble-ellipses-outline", route: "/(tabs)/ai-chat" },
-    { id: "magazine", label: "펫매거진", icon: "book-outline", route: "/(tabs)/magazine" },
-    { id: "adoption", label: "입양정보", icon: "home-outline", route: "/adoption" },
-    { id: "local", label: "지역정보", icon: "location-outline", route: "/local" },
-    { id: "lost", label: "분실동물", icon: "search-outline", route: "/lost" },
-    { id: "minihompy", label: "미니홈피", icon: "star-outline", route: "/(tabs)/minihompy" },
+    { id: "record", label: "내 기록", icon: "camera-outline", route: "/(tabs)/record" },
+    { id: "community", label: "커뮤니티", icon: "people-outline", route: "/(tabs)/community", hasSubcategories: true },
+    { id: "ai-chat", label: "AI 펫톡", icon: "chatbubble-ellipses-outline", route: "/(tabs)/ai-chat" },
+    { id: "magazine", label: "매거진", icon: "book-outline", route: "/(tabs)/magazine" },
+];
+
+// 커뮤니티 서브카테고리 (웹과 동일)
+const COMMUNITY_SUBS: Array<{
+    id: string;
+    label: string;
+    icon: React.ComponentProps<typeof Ionicons>["name"];
+    color: string;
+    route: string;
+}> = [
+    { id: "free", label: "자유게시판", icon: "chatbox-outline", color: COLORS.memento[500], route: "/(tabs)/community" },
+    { id: "memorial", label: "기억게시판", icon: "sparkles-outline", color: "#8B5CF6", route: "/(tabs)/community" },
+    { id: "adoption", label: "입양정보", icon: "heart-outline", color: "#F43F5E", route: "/adoption" },
+    { id: "local", label: "지역정보", icon: "location-outline", color: "#10B981", route: "/local" },
+    { id: "lost", label: "분실동물", icon: "alert-circle-outline", color: COLORS.memorial[500], route: "/lost" },
 ];
 
 export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
     const router = useRouter();
-    const { user, profile, points, isPremium, signOut } = useAuth();
+    const { user, profile, points, isPremium, isAdminUser, signOut } = useAuth();
     const { isMemorialMode } = usePet();
+    const { isDarkMode } = useDarkMode();
+    const [communityExpanded, setCommunityExpanded] = useState(false);
 
     const slideAnim = useRef(new Animated.Value(-DRAWER_W)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -108,7 +124,7 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
                         {
                             width: DRAWER_W,
                             transform: [{ translateX: slideAnim }],
-                            backgroundColor: isMemorialMode ? COLORS.gray[950] : COLORS.white,
+                            backgroundColor: isDarkMode ? COLORS.gray[950] : COLORS.white,
                         },
                     ]}
                 >
@@ -147,22 +163,71 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
                     <ScrollView style={{ flex: 1 }}>
                         <View style={styles.menuSection}>
                             <Text style={styles.sectionLabel}>메뉴</Text>
-                            {MENU.map((m) => (
+                            {MAIN_MENU.map((m) => (
+                                <View key={m.id}>
+                                    <TouchableOpacity
+                                        onPress={() => {
+                                            if (m.hasSubcategories) {
+                                                setCommunityExpanded((v) => !v);
+                                            } else {
+                                                navigate(m.route);
+                                            }
+                                        }}
+                                        style={styles.menuItem}
+                                        activeOpacity={0.7}
+                                    >
+                                        <Ionicons name={m.icon} size={20} color={isDarkMode ? COLORS.gray[300] : COLORS.gray[600]} />
+                                        <Text style={[styles.menuLabel, {
+                                            color: isDarkMode ? COLORS.gray[200] : COLORS.gray[800],
+                                        }]}>
+                                            {m.label}
+                                        </Text>
+                                        {m.hasSubcategories ? (
+                                            <Ionicons
+                                                name={communityExpanded ? "chevron-up" : "chevron-down"}
+                                                size={16}
+                                                color={COLORS.gray[400]}
+                                            />
+                                        ) : (
+                                            <Ionicons name="chevron-forward" size={16} color={COLORS.gray[400]} />
+                                        )}
+                                    </TouchableOpacity>
+                                    {m.hasSubcategories && communityExpanded && (
+                                        <View style={styles.subMenu}>
+                                            {COMMUNITY_SUBS.map((s) => (
+                                                <TouchableOpacity
+                                                    key={s.id}
+                                                    onPress={() => navigate(s.route)}
+                                                    style={styles.subMenuItem}
+                                                    activeOpacity={0.7}
+                                                >
+                                                    <Ionicons name={s.icon} size={16} color={s.color} />
+                                                    <Text style={[styles.subMenuLabel, {
+                                                        color: isDarkMode ? COLORS.gray[300] : COLORS.gray[700],
+                                                    }]}>
+                                                        {s.label}
+                                                    </Text>
+                                                </TouchableOpacity>
+                                            ))}
+                                        </View>
+                                    )}
+                                </View>
+                            ))}
+
+                            {/* 관리자 메뉴 (관리자만 표시, 웹 Sidebar.tsx 매칭) */}
+                            {isAdminUser && (
                                 <TouchableOpacity
-                                    key={m.id}
-                                    onPress={() => navigate(m.route)}
-                                    style={styles.menuItem}
+                                    onPress={() => navigate("/admin")}
+                                    style={[styles.menuItem, styles.adminMenuItem]}
                                     activeOpacity={0.7}
                                 >
-                                    <Ionicons name={m.icon} size={20} color={isMemorialMode ? COLORS.gray[300] : COLORS.gray[600]} />
-                                    <Text style={[styles.menuLabel, {
-                                        color: isMemorialMode ? COLORS.gray[200] : COLORS.gray[800],
-                                    }]}>
-                                        {m.label}
+                                    <Ionicons name="shield-checkmark" size={20} color="#8B5CF6" />
+                                    <Text style={[styles.menuLabel, { color: "#8B5CF6", fontWeight: "700" }]}>
+                                        관리자 모드
                                     </Text>
-                                    <Ionicons name="chevron-forward" size={16} color={COLORS.gray[400]} />
+                                    <Ionicons name="chevron-forward" size={16} color="#8B5CF6" />
                                 </TouchableOpacity>
-                            ))}
+                            )}
                         </View>
 
                         <View style={[styles.menuSection, { marginTop: 16 }]}>
@@ -172,9 +237,9 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
                                 style={styles.menuItem}
                                 activeOpacity={0.7}
                             >
-                                <Ionicons name="person-circle-outline" size={20} color={isMemorialMode ? COLORS.gray[300] : COLORS.gray[600]} />
+                                <Ionicons name="person-circle-outline" size={20} color={isDarkMode ? COLORS.gray[300] : COLORS.gray[600]} />
                                 <Text style={[styles.menuLabel, {
-                                    color: isMemorialMode ? COLORS.gray[200] : COLORS.gray[800],
+                                    color: isDarkMode ? COLORS.gray[200] : COLORS.gray[800],
                                 }]}>프로필</Text>
                                 <Ionicons name="chevron-forward" size={16} color={COLORS.gray[400]} />
                             </TouchableOpacity>
@@ -183,9 +248,9 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
                                 style={styles.menuItem}
                                 activeOpacity={0.7}
                             >
-                                <Ionicons name="card-outline" size={20} color={isMemorialMode ? COLORS.gray[300] : COLORS.gray[600]} />
+                                <Ionicons name="card-outline" size={20} color={isDarkMode ? COLORS.gray[300] : COLORS.gray[600]} />
                                 <Text style={[styles.menuLabel, {
-                                    color: isMemorialMode ? COLORS.gray[200] : COLORS.gray[800],
+                                    color: isDarkMode ? COLORS.gray[200] : COLORS.gray[800],
                                 }]}>구독 관리</Text>
                                 <Ionicons name="chevron-forward" size={16} color={COLORS.gray[400]} />
                             </TouchableOpacity>
@@ -194,9 +259,9 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
                                 style={styles.menuItem}
                                 activeOpacity={0.7}
                             >
-                                <Ionicons name="notifications-outline" size={20} color={isMemorialMode ? COLORS.gray[300] : COLORS.gray[600]} />
+                                <Ionicons name="notifications-outline" size={20} color={isDarkMode ? COLORS.gray[300] : COLORS.gray[600]} />
                                 <Text style={[styles.menuLabel, {
-                                    color: isMemorialMode ? COLORS.gray[200] : COLORS.gray[800],
+                                    color: isDarkMode ? COLORS.gray[200] : COLORS.gray[800],
                                 }]}>알림</Text>
                                 <Ionicons name="chevron-forward" size={16} color={COLORS.gray[400]} />
                             </TouchableOpacity>
@@ -293,6 +358,22 @@ const styles = StyleSheet.create({
         borderRadius: 10,
     },
     menuLabel: { flex: 1, fontSize: 14, fontWeight: "500" },
+    adminMenuItem: {
+        marginTop: 8,
+        backgroundColor: "rgba(139, 92, 246, 0.08)",
+        borderWidth: 1,
+        borderColor: "rgba(139, 92, 246, 0.2)",
+    },
+    subMenu: { paddingLeft: 32, paddingRight: 4 },
+    subMenuItem: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        borderRadius: 8,
+    },
+    subMenuLabel: { fontSize: 13, fontWeight: "500" },
     footer: {
         padding: 16,
         borderTopWidth: 1,

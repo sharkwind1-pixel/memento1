@@ -5,6 +5,7 @@
  * 4초 자동 슬라이드. 사용자가 터치하면 5초간 일시 정지.
  */
 
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { useEffect, useRef, useState } from "react";
 import {
     View, Text, TouchableOpacity, ScrollView, Image,
@@ -12,6 +13,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { Video, ResizeMode } from "expo-av";
 import { useRouter } from "expo-router";
 import { API_BASE_URL } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
@@ -24,6 +26,7 @@ interface ShowcasePost {
     comments: number;
     imageUrls: string[];
     videoUrl: string | null;
+    thumbnailUrl: string | null;
     createdAt: string;
 }
 
@@ -32,6 +35,7 @@ const CARD_GAP = 16;
 const SLIDE_INTERVAL = 4000;
 
 export default function ShowcaseSection() {
+    const { isDarkMode } = useDarkMode();
     const router = useRouter();
     const [posts, setPosts] = useState<ShowcasePost[]>([]);
     const scrollRef = useRef<ScrollView>(null);
@@ -42,15 +46,20 @@ export default function ShowcaseSection() {
         (async () => {
             try {
                 const res = await fetch(`${API_BASE_URL}/api/posts?badge=자랑&limit=10`);
-                if (!res.ok) return;
+                if (!res.ok) {
+                    console.warn("[Showcase] fetch failed:", res.status);
+                    return;
+                }
                 const data = await res.json();
                 const list = Array.isArray(data?.posts) ? data.posts : [];
                 setPosts(list.map((p: Record<string, unknown>): ShowcasePost => ({
                     id: typeof p.id === "string" ? p.id : String(p.id ?? ""),
                     title: typeof p.title === "string" ? p.title : "",
-                    authorName: typeof p.authorName === "string"
+                    authorName: (typeof p.authorName === "string" && p.authorName.trim())
                         ? p.authorName
-                        : (typeof p.author === "string" ? p.author : "익명"),
+                        : (typeof p.author_name === "string" && p.author_name.trim())
+                            ? p.author_name
+                            : (typeof p.author === "string" && p.author.trim() ? p.author : "익명"),
                     likes: typeof p.likes === "number" ? p.likes : 0,
                     comments: typeof p.comments === "number" ? p.comments : 0,
                     imageUrls: Array.isArray(p.imageUrls)
@@ -59,6 +68,9 @@ export default function ShowcaseSection() {
                             ? (p.images as unknown[]).filter((x): x is string => typeof x === "string")
                             : [],
                     videoUrl: typeof p.videoUrl === "string" ? p.videoUrl : null,
+                    thumbnailUrl: typeof p.thumbnailUrl === "string"
+                        ? p.thumbnailUrl
+                        : (typeof p.thumbnail_url === "string" ? p.thumbnail_url : null),
                     createdAt: typeof p.createdAt === "string"
                         ? p.createdAt
                         : (typeof p.created_at === "string" ? p.created_at : ""),
@@ -111,12 +123,12 @@ export default function ShowcaseSection() {
                         <Ionicons name="star" size={18} color="#fff" />
                     </LinearGradient>
                     <View>
-                        <Text style={styles.title}>함께 보기</Text>
+                        <Text style={[styles.title, isDarkMode && { color: COLORS.white }]}>함께 보기</Text>
                         <Text style={styles.subtitle}>AI로 만든 우리 아이 영상</Text>
                     </View>
                 </View>
                 <TouchableOpacity
-                    onPress={() => router.push("/(tabs)/community")}
+                    onPress={() => router.push({ pathname: "/(tabs)/community", params: { view: "showcase" } })}
                     style={styles.moreBtn}
                     activeOpacity={0.7}
                 >
@@ -141,16 +153,30 @@ export default function ShowcaseSection() {
                     </View>
                 ) : posts.map((post) => {
                     const firstImage = post.imageUrls[0];
+                    // 우선순위: thumbnailUrl > firstImage > videoUrl(첫 프레임) > 폴백 그라데이션
                     return (
                         <TouchableOpacity
                             key={post.id}
                             onPress={() => router.push(`/post/${post.id}`)}
-                            style={styles.card}
+                            style={[styles.card, { backgroundColor: isDarkMode ? COLORS.gray[900] : COLORS.white }]}
                             activeOpacity={0.85}
                         >
                             <View style={styles.heroContainer}>
-                                {firstImage ? (
-                                    <Image source={{ uri: firstImage }} style={styles.heroImg} />
+                                {post.thumbnailUrl ? (
+                                    <Image source={{ uri: post.thumbnailUrl }} style={styles.heroImg} resizeMode="cover" />
+                                ) : firstImage ? (
+                                    <Image source={{ uri: firstImage }} style={styles.heroImg} resizeMode="cover" />
+                                ) : post.videoUrl ? (
+                                    // 영상 첫 프레임 표시 (paused + muted). iOS는 마운트 즉시,
+                                    // Android는 일부 코덱에서 검은 화면 가능 → 0.3초 지점으로 jump.
+                                    <Video
+                                        source={{ uri: post.videoUrl }}
+                                        style={styles.heroImg}
+                                        resizeMode={ResizeMode.COVER}
+                                        shouldPlay={false}
+                                        isMuted
+                                        positionMillis={300}
+                                    />
                                 ) : (
                                     <LinearGradient
                                         colors={[COLORS.memorial[400], "#FBA74D"]}
@@ -161,17 +187,19 @@ export default function ShowcaseSection() {
                                 )}
                                 {post.videoUrl && (
                                     <View style={styles.playOverlay}>
-                                        <Ionicons name="play" size={20} color={COLORS.memorial[600]} />
+                                        <View style={styles.playCircle}>
+                                            <Ionicons name="play" size={22} color={COLORS.memorial[600]} />
+                                        </View>
                                     </View>
                                 )}
                                 <View style={styles.badge}>
-                                    <Text style={styles.badgeText}>함께 보기</Text>
+                                    <Text style={styles.badgeText}>{post.videoUrl ? "AI 영상" : "함께 보기"}</Text>
                                 </View>
                             </View>
 
                             <View style={styles.cardBody}>
-                                <Text style={styles.cardTitle} numberOfLines={2}>{post.title}</Text>
-                                <Text style={styles.cardMeta} numberOfLines={1}>
+                                <Text style={[styles.cardTitle, { color: isDarkMode ? COLORS.white : COLORS.gray[800] }]} numberOfLines={2}>{post.title}</Text>
+                                <Text style={[styles.cardMeta, { color: isDarkMode ? COLORS.gray[400] : COLORS.gray[500] }]} numberOfLines={1}>
                                     {post.authorName}님 · {formatTime(post.createdAt)}
                                 </Text>
                                 <View style={styles.cardFooter}>
@@ -224,7 +252,6 @@ const styles = StyleSheet.create({
     card: {
         width: CARD_WIDTH,
         borderRadius: 16,
-        backgroundColor: COLORS.white,
         overflow: "hidden",
         elevation: 3,
         shadowColor: "#000",
@@ -240,6 +267,16 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
     },
+    playCircle: {
+        width: 48, height: 48, borderRadius: 24,
+        backgroundColor: "rgba(255,255,255,0.92)",
+        alignItems: "center", justifyContent: "center",
+        shadowColor: "#000",
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        shadowOffset: { width: 0, height: 2 },
+        elevation: 4,
+    },
     badge: {
         position: "absolute",
         bottom: 12,
@@ -251,8 +288,8 @@ const styles = StyleSheet.create({
     },
     badgeText: { fontSize: 11, fontWeight: "700", color: "#fff" },
     cardBody: { padding: 16 },
-    cardTitle: { fontSize: 15, fontWeight: "700", color: COLORS.gray[800], lineHeight: 20, marginBottom: 6 },
-    cardMeta: { fontSize: 12, color: COLORS.gray[500], marginBottom: 12 },
+    cardTitle: { fontSize: 15, fontWeight: "700", lineHeight: 20, marginBottom: 6 },
+    cardMeta: { fontSize: 12, marginBottom: 12 },
     cardFooter: { flexDirection: "row", gap: 12 },
     statRow: { flexDirection: "row", alignItems: "center", gap: 4 },
     statText: { fontSize: 13, color: COLORS.gray[500] },

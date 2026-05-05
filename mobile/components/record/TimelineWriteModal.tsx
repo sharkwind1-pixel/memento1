@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/lib/theme";
+import { useDarkMode } from "@/contexts/ThemeContext";
 
 export type TimelineMood = "happy" | "normal" | "sad" | "sick";
 
@@ -45,6 +46,7 @@ function todayISO(): string {
 }
 
 export default function TimelineWriteModal({ visible, petName, initialEntry, onClose, onSave }: Props) {
+    const { isDarkMode } = useDarkMode();
     const isEditing = !!initialEntry?.id;
     const [date, setDate] = useState(initialEntry?.date || todayISO());
     const [title, setTitle] = useState(initialEntry?.title || "");
@@ -78,60 +80,73 @@ export default function TimelineWriteModal({ visible, petName, initialEntry, onC
         if (ok) onClose();
     }
 
+    const modalBg = isDarkMode ? COLORS.gray[900] : "#fff";
+    const headerBorder = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
+    const titleColor = isDarkMode ? COLORS.white : COLORS.gray[900];
+    const labelColor = isDarkMode ? COLORS.gray[300] : COLORS.gray[700];
+    const inputBg = isDarkMode ? COLORS.gray[800] : "transparent";
+    const inputBorder = isDarkMode ? COLORS.gray[700] : COLORS.gray[200];
+    const inputColor = isDarkMode ? COLORS.gray[100] : COLORS.gray[800];
+    const placeholderColor = isDarkMode ? COLORS.gray[500] : COLORS.gray[400];
+    const moodLabelColor = isDarkMode ? COLORS.gray[400] : COLORS.gray[500];
+    const ghostBg = isDarkMode ? COLORS.gray[800] : "#fff";
+    const ghostBorder = isDarkMode ? COLORS.gray[700] : COLORS.gray[300];
+    const ghostTextColor = isDarkMode ? COLORS.gray[300] : COLORS.gray[700];
+
     return (
         <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
             <View style={styles.backdrop}>
-                <View style={styles.modal}>
+                <View style={[styles.modal, { backgroundColor: modalBg }]}>
                     {/* 헤더 */}
-                    <View style={styles.header}>
+                    <View style={[styles.header, { borderBottomColor: headerBorder }]}>
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                             <Ionicons name="book-outline" size={20} color={COLORS.memento[500]} />
-                            <Text style={styles.title}>
+                            <Text style={[styles.title, { color: titleColor }]}>
                                 {isEditing ? "일기 수정" : `${petName}의 일기`}
                             </Text>
                         </View>
                         <TouchableOpacity onPress={onClose} hitSlop={8}>
-                            <Ionicons name="close" size={20} color={COLORS.gray[500]} />
+                            <Ionicons name="close" size={20} color={isDarkMode ? COLORS.gray[400] : COLORS.gray[500]} />
                         </TouchableOpacity>
                     </View>
 
                     <ScrollView contentContainerStyle={{ padding: 20 }} keyboardShouldPersistTaps="handled">
                         {/* 날짜 */}
-                        <Text style={styles.label}>날짜</Text>
+                        <Text style={[styles.label, { color: labelColor }]}>날짜</Text>
                         <TextInput
                             value={date}
                             onChangeText={setDate}
                             placeholder="YYYY-MM-DD"
-                            placeholderTextColor={COLORS.gray[400]}
-                            style={styles.input}
+                            placeholderTextColor={placeholderColor}
+                            style={[styles.input, { backgroundColor: inputBg, borderColor: inputBorder, color: inputColor }]}
                         />
 
                         {/* 제목 */}
-                        <Text style={styles.label}>제목 *</Text>
+                        <Text style={[styles.label, { color: labelColor }]}>제목 *</Text>
                         <TextInput
                             value={title}
                             onChangeText={setTitle}
                             placeholder="오늘의 한 줄"
-                            placeholderTextColor={COLORS.gray[400]}
-                            style={styles.input}
+                            placeholderTextColor={placeholderColor}
+                            style={[styles.input, { backgroundColor: inputBg, borderColor: inputBorder, color: inputColor }]}
                             maxLength={100}
                         />
 
                         {/* 내용 */}
-                        <Text style={styles.label}>내용</Text>
+                        <Text style={[styles.label, { color: labelColor }]}>내용</Text>
                         <TextInput
                             value={content}
                             onChangeText={setContent}
                             placeholder="오늘 있었던 일을 기록해보세요..."
-                            placeholderTextColor={COLORS.gray[400]}
-                            style={[styles.input, styles.textArea]}
+                            placeholderTextColor={placeholderColor}
+                            style={[styles.input, styles.textArea, { backgroundColor: inputBg, borderColor: inputBorder, color: inputColor }]}
                             multiline
                             maxLength={2000}
                             textAlignVertical="top"
                         />
 
                         {/* 감정 */}
-                        <Text style={styles.label}>감정</Text>
+                        <Text style={[styles.label, { color: labelColor }]}>감정</Text>
                         <View style={styles.moodRow}>
                             {MOODS.map((m) => (
                                 <TouchableOpacity
@@ -139,12 +154,13 @@ export default function TimelineWriteModal({ visible, petName, initialEntry, onC
                                     onPress={() => setMood(m.id)}
                                     style={[
                                         styles.moodBtn,
+                                        { borderColor: inputBorder },
                                         mood === m.id && { borderColor: m.color, backgroundColor: m.color + "15" },
                                     ]}
                                     activeOpacity={0.85}
                                 >
-                                    <Ionicons name={m.icon} size={20} color={mood === m.id ? m.color : COLORS.gray[400]} />
-                                    <Text style={[styles.moodLabel, mood === m.id && { color: m.color, fontWeight: "700" }]}>
+                                    <Ionicons name={m.icon} size={20} color={mood === m.id ? m.color : (isDarkMode ? COLORS.gray[500] : COLORS.gray[400])} />
+                                    <Text style={[styles.moodLabel, { color: moodLabelColor }, mood === m.id && { color: m.color, fontWeight: "700" }]}>
                                         {m.label}
                                     </Text>
                                 </TouchableOpacity>
@@ -153,15 +169,15 @@ export default function TimelineWriteModal({ visible, petName, initialEntry, onC
                     </ScrollView>
 
                     {/* 액션 버튼 */}
-                    <View style={styles.actions}>
+                    <View style={[styles.actions, { borderTopColor: headerBorder }]}>
                         <TouchableOpacity
                             onPress={onClose}
-                            style={[styles.actionBtn, styles.actionGhost]}
+                            style={[styles.actionBtn, styles.actionGhost, { backgroundColor: ghostBg, borderColor: ghostBorder }]}
                             disabled={saving}
                             activeOpacity={0.85}
                         >
-                            <Ionicons name="close" size={16} color={COLORS.gray[700]} />
-                            <Text style={styles.actionGhostText}>취소</Text>
+                            <Ionicons name="close" size={16} color={ghostTextColor} />
+                            <Text style={[styles.actionGhostText, { color: ghostTextColor }]}>취소</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             onPress={handleSave}
@@ -193,7 +209,6 @@ const styles = StyleSheet.create({
         padding: 16,
     },
     modal: {
-        backgroundColor: "#fff",
         borderRadius: 24,
         maxHeight: "90%",
         overflow: "hidden",
@@ -205,24 +220,20 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingVertical: 14,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.gray[100],
     },
-    title: { fontSize: 16, fontWeight: "700", color: COLORS.gray[900] },
+    title: { fontSize: 16, fontWeight: "700" },
     label: {
         fontSize: 13,
         fontWeight: "600",
-        color: COLORS.gray[700],
         marginBottom: 6,
         marginTop: 12,
     },
     input: {
         borderWidth: 1,
-        borderColor: COLORS.gray[200],
         borderRadius: 12,
         paddingHorizontal: 12,
         paddingVertical: Platform.OS === "ios" ? 12 : 10,
         fontSize: 14,
-        color: COLORS.gray[800],
     },
     textArea: { minHeight: 96 },
     moodRow: { flexDirection: "row", gap: 8 },
@@ -235,16 +246,14 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         borderRadius: 10,
         borderWidth: 2,
-        borderColor: COLORS.gray[200],
     },
-    moodLabel: { fontSize: 12, fontWeight: "500", color: COLORS.gray[500] },
+    moodLabel: { fontSize: 12, fontWeight: "500" },
     actions: {
         flexDirection: "row",
         gap: 12,
         paddingHorizontal: 20,
         paddingVertical: 14,
         borderTopWidth: 1,
-        borderTopColor: COLORS.gray[100],
     },
     actionBtn: {
         flex: 1,
@@ -256,11 +265,9 @@ const styles = StyleSheet.create({
         borderRadius: 12,
     },
     actionGhost: {
-        backgroundColor: "#fff",
         borderWidth: 1,
-        borderColor: COLORS.gray[300],
     },
-    actionGhostText: { fontSize: 14, fontWeight: "600", color: COLORS.gray[700] },
+    actionGhostText: { fontSize: 14, fontWeight: "600" },
     actionPrimary: { backgroundColor: COLORS.memento[500] },
     actionPrimaryText: { fontSize: 14, fontWeight: "700", color: "#fff" },
 });

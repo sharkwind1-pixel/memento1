@@ -9,9 +9,9 @@ import {
     ActivityIndicator, ScrollView, StyleSheet, Linking,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
 import Svg, { Path } from "react-native-svg";
 import { useAuth } from "@/contexts/AuthContext";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { COLORS } from "@/lib/theme";
 
 type Provider = "naver" | "kakao" | "google";
@@ -19,11 +19,12 @@ type Provider = "naver" | "kakao" | "google";
 export default function LoginScreen() {
     const router = useRouter();
     const { signInWithGoogle, signInWithKakao, signInWithNaver, session } = useAuth();
+    const { isDarkMode } = useDarkMode();
     const [loadingProvider, setLoadingProvider] = useState<Provider | null>(null);
 
     // 세션이 늦게라도 set되면 자동으로 탭 화면 이동 (cold-start hard guard 폴백)
     useEffect(() => {
-        if (session) router.replace("/");
+        if (session) router.replace("/(tabs)");
     }, [session, router]);
 
     async function handleLogin(provider: Provider) {
@@ -41,7 +42,7 @@ export default function LoginScreen() {
                 Alert.alert("로그인 실패", error.message);
                 return;
             }
-            router.replace("/");
+            router.replace("/(tabs)");
         } catch (e) {
             Alert.alert("로그인 실패", (e as Error).message || "다시 시도해주세요.");
         } finally {
@@ -49,9 +50,14 @@ export default function LoginScreen() {
         }
     }
 
+    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.white;
+    const titleColor = isDarkMode ? COLORS.white : COLORS.gray[900];
+    const subColor = isDarkMode ? COLORS.gray[400] : COLORS.gray[500];
+    const disclaimerColor = isDarkMode ? COLORS.gray[500] : COLORS.gray[400];
+
     return (
         <ScrollView
-            style={styles.flex1White}
+            style={[styles.flex1White, { backgroundColor: bgColor }]}
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
         >
@@ -62,33 +68,15 @@ export default function LoginScreen() {
                         style={styles.logo}
                         resizeMode="contain"
                     />
-                    <Text style={styles.title}>메멘토애니</Text>
-                    <Text style={styles.tagline}>특별한 매일을 함께</Text>
+                    <Text style={[styles.title, { color: titleColor }]}>메멘토애니</Text>
+                    <Text style={[styles.tagline, { color: subColor }]}>특별한 매일을 함께</Text>
                 </View>
 
-                <Text style={styles.intro}>
+                <Text style={[styles.intro, { color: subColor }]}>
                     소셜 계정으로 간편하게 시작하세요
                 </Text>
 
                 <View style={styles.buttonGroup}>
-                    <SocialButton
-                        provider="naver"
-                        label="네이버로 계속하기"
-                        bg="#03C75A"
-                        fg="#FFFFFF"
-                        loading={loadingProvider === "naver"}
-                        disabled={loadingProvider !== null}
-                        onPress={() => handleLogin("naver")}
-                        icon={
-                            <Svg width={18} height={18} viewBox="0 0 24 24">
-                                <Path
-                                    d="M16.273 12.845 7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z"
-                                    fill="#FFFFFF"
-                                />
-                            </Svg>
-                        }
-                    />
-
                     <SocialButton
                         provider="kakao"
                         label="카카오로 계속하기"
@@ -102,6 +90,24 @@ export default function LoginScreen() {
                                 <Path
                                     d="M12 3C6.477 3 2 6.463 2 10.691c0 2.738 1.82 5.135 4.55 6.48-.168.607-.61 2.198-.7 2.543-.112.428.157.422.33.307.135-.09 2.15-1.46 3.02-2.048.57.083 1.16.127 1.8.127 5.523 0 10-3.463 10-7.409C22 6.463 17.523 3 12 3z"
                                     fill="#191919"
+                                />
+                            </Svg>
+                        }
+                    />
+
+                    <SocialButton
+                        provider="naver"
+                        label="네이버로 계속하기"
+                        bg="#03C75A"
+                        fg="#FFFFFF"
+                        loading={loadingProvider === "naver"}
+                        disabled={loadingProvider !== null}
+                        onPress={() => handleLogin("naver")}
+                        icon={
+                            <Svg width={18} height={18} viewBox="0 0 24 24">
+                                <Path
+                                    d="M16.273 12.845L7.376 0H0v24h7.726V11.156L16.624 24H24V0h-7.727v12.845z"
+                                    fill="#FFFFFF"
                                 />
                             </Svg>
                         }
@@ -127,7 +133,7 @@ export default function LoginScreen() {
                     />
                 </View>
 
-                <Text style={styles.disclaimer}>
+                <Text style={[styles.disclaimer, { color: disclaimerColor }]}>
                     계속 진행하면{" "}
                     <Text
                         style={styles.linkText}
@@ -189,7 +195,7 @@ function SocialButton({
 }
 
 const styles = StyleSheet.create({
-    flex1White: { flex: 1, backgroundColor: COLORS.white },
+    flex1White: { flex: 1 },
     scrollContent: { flexGrow: 1 },
     container: {
         flex: 1,
@@ -199,11 +205,10 @@ const styles = StyleSheet.create({
     },
     logoWrap: { alignItems: "center", marginBottom: 40 },
     logo: { width: 88, height: 88, borderRadius: 20, marginBottom: 16 },
-    title: { fontSize: 26, fontWeight: "bold", color: COLORS.gray[900] },
-    tagline: { fontSize: 14, color: COLORS.gray[500], marginTop: 4 },
+    title: { fontSize: 26, fontWeight: "bold" },
+    tagline: { fontSize: 14, marginTop: 4 },
     intro: {
         fontSize: 14,
-        color: COLORS.gray[500],
         textAlign: "center",
         marginBottom: 24,
     },
@@ -221,7 +226,6 @@ const styles = StyleSheet.create({
     disclaimer: {
         textAlign: "center",
         fontSize: 12,
-        color: COLORS.gray[400],
         marginTop: 32,
         lineHeight: 18,
     },

@@ -19,6 +19,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as Haptics from "expo-haptics";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { COLORS } from "@/lib/theme";
 
 interface SelectedAsset {
@@ -37,6 +38,7 @@ interface Props {
 
 export default function MediaUploadModal({ petId, visible, onClose, onSuccess }: Props) {
     const { user } = useAuth();
+    const { isDarkMode } = useDarkMode();
     const [assets, setAssets] = useState<SelectedAsset[]>([]);
     const [caption, setCaption] = useState("");
     const [uploading, setUploading] = useState(false);
@@ -50,6 +52,23 @@ export default function MediaUploadModal({ petId, visible, onClose, onSuccess }:
         if (uploading) return;
         reset();
         onClose();
+    }
+
+    function extToMime(ext: string, kind: "image" | "video"): string {
+        const e = ext.toLowerCase();
+        if (kind === "video") {
+            if (e === "mov") return "video/quicktime";
+            if (e === "m4v") return "video/x-m4v";
+            if (e === "webm") return "video/webm";
+            return "video/mp4";
+        }
+        if (e === "jpg" || e === "jpeg") return "image/jpeg";
+        if (e === "png") return "image/png";
+        if (e === "gif") return "image/gif";
+        if (e === "webp") return "image/webp";
+        if (e === "heic") return "image/heic";
+        if (e === "heif") return "image/heif";
+        return "image/jpeg";
     }
 
     async function pickMedia() {
@@ -92,9 +111,7 @@ export default function MediaUploadModal({ petId, visible, onClose, onSuccess }:
                 const response = await fetch(a.uri);
                 const arrayBuffer = await response.arrayBuffer();
 
-                const contentType = a.type === "video"
-                    ? `video/${ext}`
-                    : `image/${ext === "jpg" ? "jpeg" : ext}`;
+                const contentType = extToMime(ext, a.type);
 
                 const { error: uploadErr } = await supabase.storage
                     .from("pet-media")
@@ -117,6 +134,8 @@ export default function MediaUploadModal({ petId, visible, onClose, onSuccess }:
                     user_id: user.id,
                     type: a.type,
                     url: urlData.publicUrl,
+                    storage_path: path,
+                    date: new Date().toISOString().slice(0, 10),
                     caption: caption.trim() || null,
                 });
                 if (insertErr) {
@@ -134,8 +153,8 @@ export default function MediaUploadModal({ petId, visible, onClose, onSuccess }:
             } else {
                 Alert.alert("실패", "업로드에 실패했습니다");
             }
-        } catch (e: any) {
-            Alert.alert("오류", e?.message || "업로드 중 오류가 발생했습니다");
+        } catch (e) {
+            Alert.alert("오류", e instanceof Error ? e.message : "업로드 중 오류가 발생했습니다");
         } finally {
             setUploading(false);
         }
@@ -143,14 +162,27 @@ export default function MediaUploadModal({ petId, visible, onClose, onSuccess }:
 
     const canSubmit = !uploading && assets.length > 0;
 
+    const modalBg = isDarkMode ? COLORS.gray[900] : "#fff";
+    const headerBorder = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
+    const titleColor = isDarkMode ? COLORS.white : COLORS.gray[900];
+    const labelColor = isDarkMode ? COLORS.gray[300] : COLORS.gray[700];
+    const inputBg = isDarkMode ? COLORS.gray[800] : COLORS.gray[50];
+    const inputBorder = isDarkMode ? COLORS.gray[700] : COLORS.gray[200];
+    const inputColor = isDarkMode ? COLORS.gray[100] : COLORS.gray[800];
+    const placeholderColor = isDarkMode ? COLORS.gray[500] : COLORS.gray[400];
+    const gridItemBg = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
+    const ghostBg = isDarkMode ? COLORS.gray[800] : COLORS.white;
+    const ghostBorder = isDarkMode ? COLORS.gray[700] : COLORS.gray[300];
+    const ghostTextColor = isDarkMode ? COLORS.gray[300] : COLORS.gray[700];
+
     return (
         <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
             <View style={styles.backdrop}>
-                <View style={styles.modal}>
-                    <View style={styles.header}>
-                        <Text style={styles.title}>미디어 업로드</Text>
+                <View style={[styles.modal, { backgroundColor: modalBg }]}>
+                    <View style={[styles.header, { borderBottomColor: headerBorder }]}>
+                        <Text style={[styles.title, { color: titleColor }]}>미디어 업로드</Text>
                         <TouchableOpacity onPress={handleClose} hitSlop={8}>
-                            <Ionicons name="close" size={20} color={COLORS.gray[500]} />
+                            <Ionicons name="close" size={20} color={isDarkMode ? COLORS.gray[400] : COLORS.gray[500]} />
                         </TouchableOpacity>
                     </View>
 
@@ -166,7 +198,7 @@ export default function MediaUploadModal({ petId, visible, onClose, onSuccess }:
                             <>
                                 <View style={styles.grid}>
                                     {assets.map((a, idx) => (
-                                        <View key={idx} style={styles.gridItem}>
+                                        <View key={idx} style={[styles.gridItem, { backgroundColor: gridItemBg }]}>
                                             <Image source={{ uri: a.uri }} style={styles.gridImg} />
                                             {a.type === "video" && (
                                                 <View style={styles.videoBadge}>
@@ -185,13 +217,13 @@ export default function MediaUploadModal({ petId, visible, onClose, onSuccess }:
                                     )}
                                 </View>
 
-                                <Text style={styles.label}>캡션 (선택)</Text>
+                                <Text style={[styles.label, { color: labelColor }]}>캡션 (선택)</Text>
                                 <TextInput
                                     value={caption}
                                     onChangeText={setCaption}
                                     placeholder="이 순간을 한마디로..."
-                                    placeholderTextColor={COLORS.gray[400]}
-                                    style={styles.input}
+                                    placeholderTextColor={placeholderColor}
+                                    style={[styles.input, { backgroundColor: inputBg, borderColor: inputBorder, color: inputColor }]}
                                     multiline
                                     maxLength={200}
                                 />
@@ -199,14 +231,14 @@ export default function MediaUploadModal({ petId, visible, onClose, onSuccess }:
                         )}
                     </ScrollView>
 
-                    <View style={styles.footer}>
+                    <View style={[styles.footer, { borderTopColor: headerBorder }]}>
                         <TouchableOpacity
                             onPress={handleClose}
-                            style={[styles.btn, styles.btnGhost]}
+                            style={[styles.btn, styles.btnGhost, { backgroundColor: ghostBg, borderColor: ghostBorder }]}
                             disabled={uploading}
                             activeOpacity={0.85}
                         >
-                            <Text style={styles.btnGhostText}>취소</Text>
+                            <Text style={[styles.btnGhostText, { color: ghostTextColor }]}>취소</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             onPress={handleUpload}
@@ -240,7 +272,6 @@ const styles = StyleSheet.create({
         padding: 16,
     },
     modal: {
-        backgroundColor: "#fff",
         borderRadius: 24,
         maxHeight: "90%",
         overflow: "hidden",
@@ -252,9 +283,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingVertical: 14,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.gray[100],
     },
-    title: { fontSize: 16, fontWeight: "700", color: COLORS.gray[900] },
+    title: { fontSize: 16, fontWeight: "700" },
     pickerEmpty: {
         aspectRatio: 4 / 3,
         borderWidth: 2,
@@ -274,7 +304,6 @@ const styles = StyleSheet.create({
         aspectRatio: 1,
         borderRadius: 10,
         overflow: "hidden",
-        backgroundColor: COLORS.gray[100],
         position: "relative",
     },
     gridImg: { width: "100%", height: "100%" },
@@ -305,16 +334,13 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
     },
-    label: { fontSize: 13, fontWeight: "600", color: COLORS.gray[700], marginBottom: 6 },
+    label: { fontSize: 13, fontWeight: "600", marginBottom: 6 },
     input: {
         borderWidth: 1,
-        borderColor: COLORS.gray[200],
         borderRadius: 12,
         paddingHorizontal: 14,
         paddingVertical: Platform.OS === "ios" ? 12 : 10,
         fontSize: 14,
-        color: COLORS.gray[800],
-        backgroundColor: COLORS.gray[50],
         minHeight: 64,
         textAlignVertical: "top",
     },
@@ -324,7 +350,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingVertical: 14,
         borderTopWidth: 1,
-        borderTopColor: COLORS.gray[100],
     },
     btn: {
         flex: 1,
@@ -335,8 +360,8 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         borderRadius: 12,
     },
-    btnGhost: { backgroundColor: COLORS.white, borderWidth: 1, borderColor: COLORS.gray[300] },
-    btnGhostText: { fontSize: 14, fontWeight: "600", color: COLORS.gray[700] },
+    btnGhost: { borderWidth: 1 },
+    btnGhostText: { fontSize: 14, fontWeight: "600" },
     btnPrimary: { backgroundColor: COLORS.memento[500] },
     btnPrimaryText: { fontSize: 14, fontWeight: "700", color: "#fff" },
 });

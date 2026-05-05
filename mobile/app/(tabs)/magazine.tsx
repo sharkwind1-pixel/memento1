@@ -18,9 +18,10 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter, useFocusEffect } from "expo-router";
+import { useRouter } from "expo-router";
 import { API_BASE_URL } from "@/config/constants";
 import { usePet } from "@/contexts/PetContext";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { COLORS } from "@/lib/theme";
 import AppHeader from "@/components/common/AppHeader";
@@ -38,7 +39,7 @@ interface Article {
     liked?: boolean;
     created_at: string;
     author?: string;
-    read_time?: number;
+    read_time?: string | number;
     tags?: string[];
 }
 
@@ -68,8 +69,10 @@ export default function MagazineScreen() {
     const router = useRouter();
     const { session } = useAuth();
     const { isMemorialMode } = usePet();
+    const { isDarkMode } = useDarkMode();
 
     const [articles, setArticles] = useState<Article[]>([]);
+    const [popular, setPopular] = useState<Article[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [search, setSearch] = useState("");
@@ -78,6 +81,47 @@ export default function MagazineScreen() {
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [drawerOpen, setDrawerOpen] = useState(false);
+
+    // 인기 아티클: 최근 60개 → likes+views 가중점수로 상위 5개 (마운트 1회)
+    useEffect(() => {
+        (async () => {
+            try {
+                const headers: Record<string, string> = {};
+                if (session) headers["Authorization"] = `Bearer ${session.access_token}`;
+                const res = await fetch(`${API_BASE_URL}/api/magazine?limit=60`, { headers });
+                if (!res.ok) return;
+                const data = await res.json();
+                const list: Article[] = (Array.isArray(data?.articles) ? data.articles : Array.isArray(data) ? data : [])
+                    .map((raw: Record<string, unknown>): Article => ({
+                        id: raw.id != null ? String(raw.id) : "",
+                        title: typeof raw.title === "string" ? raw.title : "",
+                        summary: typeof raw.summary === "string" ? raw.summary : undefined,
+                        image_url: typeof raw.image_url === "string"
+                            ? raw.image_url
+                            : (typeof raw.imageUrl === "string" ? raw.imageUrl : undefined),
+                        badge: typeof raw.badge === "string" ? raw.badge : undefined,
+                        category: typeof raw.category === "string" ? raw.category : undefined,
+                        likes: typeof raw.likes === "number" ? raw.likes : 0,
+                        views: typeof raw.views === "number" ? raw.views : 0,
+                        liked: typeof raw.liked === "boolean" ? raw.liked : undefined,
+                        created_at: typeof raw.created_at === "string"
+                            ? raw.created_at
+                            : (typeof raw.createdAt === "string" ? raw.createdAt : ""),
+                        author: typeof raw.author === "string" ? raw.author : undefined,
+                        read_time: typeof raw.read_time === "string" || typeof raw.read_time === "number"
+                            ? raw.read_time
+                            : (typeof raw.readTime === "string" || typeof raw.readTime === "number" ? raw.readTime : undefined),
+                        tags: Array.isArray(raw.tags) ? raw.tags.filter((t: unknown): t is string => typeof t === "string") : undefined,
+                    }));
+                // 점수 = likes * 3 + views (좋아요 가중)
+                const scored = [...list].sort((a, b) => (b.likes * 3 + b.views) - (a.likes * 3 + a.views));
+                setPopular(scored.slice(0, 5));
+            } catch {
+                // 조용히
+            }
+        })();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [session?.access_token]);
 
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
 
@@ -117,9 +161,9 @@ export default function MagazineScreen() {
                     ? raw.created_at
                     : (typeof raw.createdAt === "string" ? raw.createdAt : ""),
                 author: typeof raw.author === "string" ? raw.author : undefined,
-                read_time: typeof raw.read_time === "number"
+                read_time: typeof raw.read_time === "string" || typeof raw.read_time === "number"
                     ? raw.read_time
-                    : (typeof raw.readTime === "number" ? raw.readTime : undefined),
+                    : (typeof raw.readTime === "string" || typeof raw.readTime === "number" ? raw.readTime : undefined),
                 tags: Array.isArray(raw.tags) ? raw.tags.filter((t): t is string => typeof t === "string") : undefined,
             }));
 
@@ -142,24 +186,26 @@ export default function MagazineScreen() {
     useEffect(() => {
         setIsLoading(true);
         fetchArticles(true);
+        // selectedStage/Topic 변경 시 즉시 fetch
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedStage, selectedTopic]);
 
-    // 화면 포커스 복귀 시 stale > 5초면 자동 갱신
-    // (매거진 상세에서 좋아요/조회수 후 뒤로 왔을 때 즉시 반영)
-    const lastFetchedAt = useRef(0);
-    useFocusEffect(
-        useCallback(() => {
-            const now = Date.now();
-            if (now - lastFetchedAt.current > 5000) {
-                lastFetchedAt.current = now;
-                fetchArticles(true);
-            }
-        }, [fetchArticles]),
-    );
+    // 검색어 디바운싱 — 400ms 후 자동 검색
+    const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    useEffect(() => {
+        if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+        searchDebounceRef.current = setTimeout(() => {
+            setIsLoading(true);
+            fetchArticles(true);
+        }, 400);
+        return () => {
+            if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [search]);
 
     function onRefresh() {
         setRefreshing(true);
-        lastFetchedAt.current = Date.now();
         fetchArticles(true);
     }
 
@@ -189,7 +235,7 @@ export default function MagazineScreen() {
         return map[badge] ?? [COLORS.gray[400], COLORS.gray[500]];
     }
 
-    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.gray[50];
+    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.gray[50];
     const filtersActive = selectedStage !== "all" || selectedTopic !== "all" || search.length > 0;
 
     return (
@@ -210,18 +256,18 @@ export default function MagazineScreen() {
                     <View>
                         {/* 헤더 + 검색 */}
                         <View style={styles.headerWrap}>
-                            <Text style={[styles.title, { color: isMemorialMode ? COLORS.white : COLORS.gray[900] }]}>
+                            <Text style={[styles.title, { color: isDarkMode ? COLORS.white : COLORS.gray[900] }]}>
                                 펫 매거진
                             </Text>
                             <Text style={styles.titleSub}>전문가와 함께 만든 반려동물 정보</Text>
 
                             <View style={[styles.searchBar, {
-                                backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.white,
-                                borderColor: isMemorialMode ? COLORS.gray[700] : COLORS.gray[200],
+                                backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.white,
+                                borderColor: isDarkMode ? COLORS.gray[700] : COLORS.gray[200],
                             }]}>
                                 <Ionicons name="search-outline" size={18} color={COLORS.gray[400]} />
                                 <TextInput
-                                    style={[styles.searchInput, { color: isMemorialMode ? COLORS.white : COLORS.gray[900] }]}
+                                    style={[styles.searchInput, { color: isDarkMode ? COLORS.white : COLORS.gray[900] }]}
                                     placeholder="기사 검색..."
                                     placeholderTextColor={COLORS.gray[400]}
                                     value={search}
@@ -263,12 +309,12 @@ export default function MagazineScreen() {
                                             </LinearGradient>
                                         ) : (
                                             <View style={[styles.stageCard, styles.stageCardInactive, {
-                                                backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.white,
-                                                borderColor: isMemorialMode ? COLORS.gray[700] : COLORS.gray[200],
+                                                backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.white,
+                                                borderColor: isDarkMode ? COLORS.gray[700] : COLORS.gray[200],
                                             }]}>
                                                 <Ionicons name={s.icon} size={20} color={s.gradient[1]} />
                                                 <Text style={[styles.stageLabel, {
-                                                    color: isMemorialMode ? COLORS.white : COLORS.gray[800],
+                                                    color: isDarkMode ? COLORS.white : COLORS.gray[800],
                                                 }]}>
                                                     {s.label}
                                                 </Text>
@@ -279,6 +325,67 @@ export default function MagazineScreen() {
                                 );
                             })}
                         </ScrollView>
+
+                        {/* 인기 아티클 카로셀 (전체 모드일 때만, 검색 안 할 때) */}
+                        {!filtersActive && popular.length > 0 && (
+                            <>
+                                <View style={[styles.sectionLabelRow, { marginTop: 16 }]}>
+                                    <Ionicons name="flame" size={14} color="#F97316" />
+                                    <Text style={[styles.sectionLabel, { marginTop: 0, paddingHorizontal: 0 }]}>
+                                        인기 아티클
+                                    </Text>
+                                </View>
+                                <ScrollView
+                                    horizontal
+                                    showsHorizontalScrollIndicator={false}
+                                    contentContainerStyle={styles.popularScroll}
+                                >
+                                    {popular.map((p) => (
+                                        <TouchableOpacity
+                                            key={p.id}
+                                            onPress={() => router.push(`/magazine/${p.id}`)}
+                                            activeOpacity={0.85}
+                                            style={[styles.popularCard, {
+                                                backgroundColor: isDarkMode ? COLORS.gray[900] : COLORS.white,
+                                                borderColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100],
+                                            }]}
+                                        >
+                                            {p.image_url ? (
+                                                <Image source={{ uri: p.image_url }} style={styles.popularImage} resizeMode="cover" />
+                                            ) : (
+                                                <LinearGradient
+                                                    colors={badgeColor(p.badge)}
+                                                    style={styles.popularImage}
+                                                />
+                                            )}
+                                            <View style={{ padding: 10, gap: 4 }}>
+                                                <Text
+                                                    numberOfLines={2}
+                                                    style={{
+                                                        fontSize: 12,
+                                                        fontWeight: "700",
+                                                        lineHeight: 16,
+                                                        color: isDarkMode ? COLORS.white : COLORS.gray[900],
+                                                    }}
+                                                >
+                                                    {p.title}
+                                                </Text>
+                                                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                                                    <Ionicons name="heart" size={10} color="#EF4444" />
+                                                    <Text style={{ fontSize: 10, color: COLORS.gray[500] }}>
+                                                        {p.likes}
+                                                    </Text>
+                                                    <Ionicons name="eye-outline" size={10} color={COLORS.gray[500]} />
+                                                    <Text style={{ fontSize: 10, color: COLORS.gray[500] }}>
+                                                        {p.views.toLocaleString()}
+                                                    </Text>
+                                                </View>
+                                            </View>
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+                            </>
+                        )}
 
                         {/* Topic 7개 칩 */}
                         <Text style={[styles.sectionLabel, { marginTop: 16 }]}>주제</Text>
@@ -296,22 +403,22 @@ export default function MagazineScreen() {
                                         style={[styles.topicChip, {
                                             backgroundColor: active
                                                 ? "#10B981"
-                                                : (isMemorialMode ? COLORS.gray[800] : COLORS.white),
+                                                : (isDarkMode ? COLORS.gray[800] : COLORS.white),
                                             borderColor: active
                                                 ? "#10B981"
-                                                : (isMemorialMode ? COLORS.gray[700] : COLORS.gray[200]),
+                                                : (isDarkMode ? COLORS.gray[700] : COLORS.gray[200]),
                                         }]}
                                         activeOpacity={0.8}
                                     >
                                         <Ionicons
                                             name={t.icon}
                                             size={14}
-                                            color={active ? "#fff" : (isMemorialMode ? COLORS.gray[300] : COLORS.gray[600])}
+                                            color={active ? "#fff" : (isDarkMode ? COLORS.gray[300] : COLORS.gray[600])}
                                         />
                                         <Text style={{
                                             fontSize: 13,
                                             fontWeight: "500",
-                                            color: active ? "#fff" : (isMemorialMode ? COLORS.gray[300] : COLORS.gray[600]),
+                                            color: active ? "#fff" : (isDarkMode ? COLORS.gray[300] : COLORS.gray[600]),
                                         }}>
                                             {t.label}
                                         </Text>
@@ -353,7 +460,7 @@ export default function MagazineScreen() {
                     !isLoading ? (
                         <View style={styles.emptyWrap}>
                             <View style={[styles.emptyIconBg, {
-                                backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100],
+                                backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100],
                             }]}>
                                 <Ionicons name="book-outline" size={32} color={COLORS.gray[400]} />
                             </View>
@@ -380,20 +487,21 @@ function ArticleCard({ article, isMemorialMode, onPress, badgeLabel, badgeColor 
     badgeLabel: (b?: string) => string;
     badgeColor: (b?: string) => [string, string];
 }) {
+    const { isDarkMode } = useDarkMode();
     return (
         <TouchableOpacity
             onPress={onPress}
             activeOpacity={0.85}
             style={[styles.card, {
-                backgroundColor: isMemorialMode ? COLORS.gray[900] : COLORS.white,
-                borderColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100],
+                backgroundColor: isDarkMode ? COLORS.gray[900] : COLORS.white,
+                borderColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100],
             }]}
         >
             {article.image_url ? (
                 <Image source={{ uri: article.image_url }} style={styles.cardImage} resizeMode="cover" />
             ) : (
                 <View style={[styles.cardImage, {
-                    backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100],
+                    backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100],
                     alignItems: "center",
                     justifyContent: "center",
                 }]}>
@@ -412,14 +520,14 @@ function ArticleCard({ article, isMemorialMode, onPress, badgeLabel, badgeColor 
                 ) : null}
 
                 <Text style={[styles.cardTitle, {
-                    color: isMemorialMode ? COLORS.white : COLORS.gray[800],
+                    color: isDarkMode ? COLORS.white : COLORS.gray[800],
                 }]} numberOfLines={2}>
                     {article.title}
                 </Text>
 
                 {article.summary ? (
                     <Text style={[styles.cardSummary, {
-                        color: isMemorialMode ? COLORS.gray[400] : COLORS.gray[600],
+                        color: isDarkMode ? COLORS.gray[400] : COLORS.gray[600],
                     }]} numberOfLines={2}>
                         {article.summary}
                     </Text>
@@ -442,6 +550,14 @@ function ArticleCard({ article, isMemorialMode, onPress, badgeLabel, badgeColor 
                         {article.created_at ? <Text style={styles.metaText}>{article.created_at.slice(0, 10)}</Text> : null}
                     </View>
                     <View style={styles.metaRight}>
+                        {article.read_time ? (
+                            <View style={styles.statRow}>
+                                <Ionicons name="time-outline" size={11} color={COLORS.gray[500]} />
+                                <Text style={styles.metaText}>
+                                    {typeof article.read_time === "number" ? `${article.read_time}분` : article.read_time}
+                                </Text>
+                            </View>
+                        ) : null}
                         <View style={styles.statRow}>
                             <Ionicons name="eye-outline" size={11} color={COLORS.gray[500]} />
                             <Text style={styles.metaText}>{article.views.toLocaleString()}</Text>
@@ -483,6 +599,21 @@ const styles = StyleSheet.create({
         color: COLORS.gray[500],
         marginBottom: 8,
     },
+    sectionLabelRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        paddingHorizontal: 20,
+        marginBottom: 8,
+    },
+    popularScroll: { paddingHorizontal: 16, gap: 12, paddingBottom: 4 },
+    popularCard: {
+        width: 160,
+        borderRadius: 12,
+        overflow: "hidden",
+        borderWidth: 1,
+    },
+    popularImage: { width: "100%", height: 90 },
     stageScroll: { paddingHorizontal: 16, gap: 12 },
     stageCard: {
         width: 140,

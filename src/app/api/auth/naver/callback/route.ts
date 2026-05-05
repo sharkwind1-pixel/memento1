@@ -223,12 +223,22 @@ export async function GET(request: NextRequest) {
         }
 
         // auth/callback 페이지로 리다이렉트 (token_hash + type으로 세션 교환)
-        const redirectUrl =
+        // 모바일 브릿지 쿠키가 있으면 mobile=1 + nativeUrl 추가 → /auth/callback이 deep link로 forward
+        const mobile = request.cookies.get("naver_oauth_mobile")?.value;
+        const nativeUrl = request.cookies.get("naver_oauth_nativeurl")?.value;
+
+        let redirectUrl =
             `${siteUrl}/auth/callback` +
             `?token_hash=${hashedToken}&type=magiclink`;
 
+        if (mobile === "1" && nativeUrl) {
+            redirectUrl += `&mobile=1&nativeUrl=${encodeURIComponent(nativeUrl)}`;
+        }
+
         const response = NextResponse.redirect(redirectUrl);
         response.cookies.delete("naver_oauth_state");
+        response.cookies.delete("naver_oauth_mobile");
+        response.cookies.delete("naver_oauth_nativeurl");
         return response;
     } catch (err) {
         console.error("[Naver Auth] Error:", err instanceof Error ? err.message : "unknown");

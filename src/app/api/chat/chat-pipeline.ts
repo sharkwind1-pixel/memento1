@@ -857,7 +857,7 @@ export async function postProcessResponse(
 ): Promise<ProcessedResponse> {
     const { pet, sanitizedMessage, enableAgent } = parsedInput;
     const { supabase } = security;
-    const { isMemorialMode, isCareQuery, crisisAlert, nearbyPlaces } = aiContext;
+    const { isMemorialMode, isCareQuery, crisisAlert, nearbyPlaces, placeKeyword } = aiContext;
 
     const suggestionsMarker = "---SUGGESTIONS---";
     const pendingTopicMarker = "---PENDING_TOPIC---";
@@ -932,6 +932,29 @@ export async function postProcessResponse(
         console.warn(
             `[chat/post-validation] 응답 수정됨: violations=${validation.violations.join(", ")}`
         );
+    }
+
+    // 응답 후 검증 레이어 1.5: 장소/산책 질문에 거절 답변 강제 교체.
+    // 시스템 프롬프트로 GPT 학습 안 잡히는 케이스 방어.
+    // placeKeyword가 있다 = 사용자 메시지가 장소 질문이라고 detect됐다는 신호.
+    if (placeKeyword || nearbyPlaces.length > 0) {
+        const isRefusal = /(잘\s*모르겠|모르겠어|모르겠는데).{0,30}(이니까|이라서|라서)/i.test(reply)
+            || /나는\s*(강아지|고양이|햄스터|토끼|새|파충류|물고기|동물).{0,30}(이니까|이라|모르)/i.test(reply);
+        if (isRefusal) {
+            const placeName = placeKeyword || "산책로";
+            const fallbacks = nearbyPlaces.length > 0
+                ? [
+                    `오! ${nearbyPlaces[0].name} 어때? 거기 ${placeName}이라 같이 가보고 싶어~`,
+                    `${nearbyPlaces[0].name} 알려? 나 거기 가보고 싶었어! 같이 갈래?`,
+                ]
+                : [
+                    `음~ 가까운 ${placeName} 같이 둘러보고 싶어! 위치 알려주면 더 정확히 추천해줄게.`,
+                    `해 떠있을 때 30분 정도 천천히 걸으면 좋아~ 너랑 같이라면 어디든!`,
+                    `근처 공원이나 하천변 ${placeName} 한번 둘러볼래? 풀밭 냄새 맡고 싶어!`,
+                ];
+            reply = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+            console.warn(`[chat/place-refusal-block] 장소 질문 거절 응답 차단 → fallback. pet=${pet.name}`);
+        }
     }
 
     // 응답 후 검증 레이어 2: 시스템 정보 누출 방지 (모든 응답 대상)

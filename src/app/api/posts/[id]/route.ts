@@ -113,10 +113,10 @@ export async function GET(
             commentQuery,
             // 작성자 프로필 + 미니미 조회 병렬
             (async () => {
-                if (!post.user_id) return { minimiSlug: null, points: 0, isAdmin: false };
+                if (!post.user_id) return { minimiSlug: null, points: 0, isAdmin: false, nickname: null as string | null };
                 try {
                     const [{ data: profile }, { data: minimiRows }] = await Promise.all([
-                        adminSupabase.from("profiles").select("equipped_minimi_id, points, is_admin").eq("id", post.user_id).maybeSingle(),
+                        adminSupabase.from("profiles").select("nickname, equipped_minimi_id, points, is_admin").eq("id", post.user_id).maybeSingle(),
                         adminSupabase.from("user_minimi").select("id, minimi_id").eq("user_id", post.user_id),
                     ]);
                     let minimiSlug: string | null = null;
@@ -128,8 +128,11 @@ export async function GET(
                         minimiSlug,
                         points: profile?.points ?? 0,
                         isAdmin: profile?.is_admin === true,
+                        nickname: typeof profile?.nickname === "string" && profile.nickname.trim()
+                            ? profile.nickname.trim()
+                            : null,
                     };
-                } catch { return { minimiSlug: null, points: 0, isAdmin: false }; }
+                } catch { return { minimiSlug: null, points: 0, isAdmin: false, nickname: null }; }
             })(),
         ]);
 
@@ -167,10 +170,17 @@ export async function GET(
               }
             : null;
 
+        // author_name이 비어있으면 profiles.nickname으로 폴백 (옛날 게시글 "익명" 회귀 fix).
+        const authorNameFinal = (typeof post.author_name === "string" && post.author_name.trim())
+            ? post.author_name
+            : authorInfo.nickname;
+
         return NextResponse.json({
             post: {
                 ...post,
+                author_name: authorNameFinal,
                 author_pet: authorPet,
+                authorName: authorNameFinal,
                 authorMinimiSlug: authorInfo.minimiSlug,
                 authorPoints: authorInfo.points,
                 authorIsAdmin: authorInfo.isAdmin,

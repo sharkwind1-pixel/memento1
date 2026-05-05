@@ -1,10 +1,10 @@
 /**
  * 홈 탭 — 웹 src/components/pages/HomePage.tsx 기반 모바일 재현
  *
- * 섹션 순서 (V3 + 신규 6섹션):
+ * 섹션 순서:
  * 1. AnnouncementBanner (전체 공지 최대 3개)
  * 2. HeroSection (그라데이션 + 일러스트 + CTA)
- * 3. StoryFeed (24h 스토리, 가로 스크롤)
+ * 3. PetSwitcher (펫 전환 가로 스크롤)
  * 4. QuestCard (온보딩 미션 진행)
  * 5. PetCardSection (선택 펫 카드 또는 빈 상태)
  * 6. CommunityPreview (인기 게시글)
@@ -12,13 +12,17 @@
  * 8. QuizSection (자가진단 2x2)
  * 9. MagazinePreview (매거진 미리보기)
  * 10. MemorialSection (추모 펫 카드 + 별 파티클)
+ *
+ * 스토리 기능은 의도적으로 비활성. 추후 부활 시 components/home/Story* 복원.
  */
 
 import { useState, useCallback } from "react";
 import { ScrollView, RefreshControl, View, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { COLORS } from "@/lib/theme";
 import AppDrawer from "@/components/common/AppDrawer";
 import HeroSection from "@/components/home/HeroSection";
@@ -26,16 +30,18 @@ import PetCardSection from "@/components/home/PetCardSection";
 import CommunityPreview from "@/components/home/CommunityPreview";
 import MagazinePreview from "@/components/home/MagazinePreview";
 import AnnouncementBanner from "@/components/home/AnnouncementBanner";
-import StoryFeed from "@/components/home/StoryFeed";
 import QuestCard from "@/components/home/QuestCard";
 import QuizSection from "@/components/home/QuizSection";
 import ShowcaseSection from "@/components/home/ShowcaseSection";
 import MemorialSection from "@/components/home/MemorialSection";
 import AppHeader from "@/components/common/AppHeader";
+import PetSwitcher from "@/components/common/PetSwitcher";
 
 export default function HomeScreen() {
+    const router = useRouter();
     const { session } = useAuth();
     const { selectedPet, isMemorialMode, refreshPets } = usePet();
+    const { isDarkMode } = useDarkMode();
     const [refreshing, setRefreshing] = useState(false);
     const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -48,7 +54,7 @@ export default function HomeScreen() {
         }
     }, [refreshPets]);
 
-    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.gray[50];
+    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.gray[50];
 
     return (
         <SafeAreaView edges={["top"]} style={[styles.container, { backgroundColor: bgColor }]}>
@@ -68,7 +74,10 @@ export default function HomeScreen() {
             >
                 <AnnouncementBanner />
                 <HeroSection session={session} isMemorialMode={isMemorialMode} />
-                <StoryFeed />
+                <PetSwitcher
+                    accentColor={isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500]}
+                    onAddPet={() => router.push("/pet/new")}
+                />
                 <QuestCard />
                 <PetCardSection pet={selectedPet} isMemorialMode={isMemorialMode} />
                 <CommunityPreview session={session} isMemorialMode={isMemorialMode} />

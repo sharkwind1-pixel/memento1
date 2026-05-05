@@ -17,7 +17,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import { API_BASE_URL } from "@/config/constants";
 import { AdoptionAnimal } from "@/types";
 import { COLORS } from "@/lib/theme";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import AppHeader from "@/components/common/AppHeader";
+import AdoptionDetailModal from "@/components/adoption/AdoptionDetailModal";
 
 type KindFilter = "all" | "dog" | "cat" | "etc";
 
@@ -29,12 +31,14 @@ const KIND_LABELS: { id: KindFilter; label: string; icon: React.ComponentProps<t
 ];
 
 export default function AdoptionScreen() {
+    const { isDarkMode } = useDarkMode();
     const [animals, setAnimals] = useState<AdoptionAnimal[]>([]);
     const [kindFilter, setKindFilter] = useState<KindFilter>("all");
     const [isLoading, setIsLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
+    const [selected, setSelected] = useState<AdoptionAnimal | null>(null);
 
     const fetchAnimals = useCallback(
         async (targetPage: number, append: boolean) => {
@@ -87,7 +91,7 @@ export default function AdoptionScreen() {
     }
 
     return (
-        <SafeAreaView style={styles.container} edges={["top"]}>
+        <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode ? COLORS.gray[950] : COLORS.white }]} edges={["top"]}>
             <Stack.Screen options={{ headerShown: false }} />
             <AppHeader showBack title="입양정보" hideActions />
 
@@ -116,9 +120,20 @@ export default function AdoptionScreen() {
                                     <Text style={styles.chipTextActive}>{k.label}</Text>
                                 </LinearGradient>
                             ) : (
-                                <View style={[styles.chip, styles.chipInactive]}>
-                                    <Ionicons name={k.icon} size={14} color={COLORS.gray[700]} style={{ marginRight: 6 }} />
-                                    <Text style={styles.chipText}>{k.label}</Text>
+                                <View style={[
+                                    styles.chip,
+                                    { backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100] },
+                                ]}>
+                                    <Ionicons
+                                        name={k.icon}
+                                        size={14}
+                                        color={isDarkMode ? COLORS.gray[300] : COLORS.gray[700]}
+                                        style={{ marginRight: 6 }}
+                                    />
+                                    <Text style={[
+                                        styles.chipText,
+                                        { color: isDarkMode ? COLORS.gray[300] : COLORS.gray[700] },
+                                    ]}>{k.label}</Text>
                                 </View>
                             )}
                         </TouchableOpacity>
@@ -130,14 +145,16 @@ export default function AdoptionScreen() {
             {isLoading && animals.length === 0 ? (
                 <View style={styles.center}>
                     <ActivityIndicator color={COLORS.memento[500]} />
-                    <Text style={styles.helpText}>입양 가능한 아이들을 불러오고 있어요</Text>
+                    <Text style={[styles.helpText, { color: isDarkMode ? COLORS.gray[400] : COLORS.gray[500] }]}>입양 가능한 아이들을 불러오고 있어요</Text>
                 </View>
             ) : (
                 <FlatList
                     data={animals}
                     keyExtractor={(item) => item.id}
                     style={{ flex: 1 }}
-                    renderItem={({ item }) => <AnimalCard animal={item} />}
+                    renderItem={({ item }) => (
+                        <AnimalCard animal={item} isDarkMode={isDarkMode} onPress={() => setSelected(item)} />
+                    )}
                     refreshControl={
                         <RefreshControl
                             refreshing={refreshing}
@@ -158,22 +175,36 @@ export default function AdoptionScreen() {
                         !isLoading ? (
                             <View style={styles.center}>
                                 <Ionicons name="paw-outline" size={48} color={COLORS.gray[300]} />
-                                <Text style={styles.helpText}>현재 등록된 아이가 없어요</Text>
+                                <Text style={[styles.helpText, { color: isDarkMode ? COLORS.gray[400] : COLORS.gray[500] }]}>현재 등록된 아이가 없어요</Text>
                             </View>
                         ) : null
                     }
                     contentContainerStyle={animals.length === 0 ? { flex: 1 } : styles.listContent}
                 />
             )}
+
+            <AdoptionDetailModal
+                visible={selected !== null}
+                onClose={() => setSelected(null)}
+                animal={selected}
+            />
         </SafeAreaView>
     );
 }
 
-function AnimalCard({ animal }: { animal: AdoptionAnimal }) {
+function AnimalCard({ animal, isDarkMode, onPress }: {
+    animal: AdoptionAnimal;
+    isDarkMode: boolean;
+    onPress: () => void;
+}) {
     const isAvailable = animal.status === "공고중" || animal.status === "보호중";
+    const cardBg = isDarkMode ? COLORS.gray[900] : COLORS.white;
+    const titleColor = isDarkMode ? COLORS.white : COLORS.gray[900];
+    const metaColor = isDarkMode ? COLORS.gray[400] : COLORS.gray[600];
+    const shelterColor = isDarkMode ? COLORS.gray[500] : COLORS.gray[500];
 
     return (
-        <View style={styles.card}>
+        <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={[styles.card, { backgroundColor: cardBg }]}>
             {animal.thumbnailUrl || animal.imageUrl ? (
                 <Image
                     source={{ uri: animal.thumbnailUrl ?? animal.imageUrl }}
@@ -197,27 +228,27 @@ function AnimalCard({ animal }: { animal: AdoptionAnimal }) {
                         </View>
                     ) : null}
                 </View>
-                <Text style={styles.cardTitle} numberOfLines={1}>
+                <Text style={[styles.cardTitle, { color: titleColor }]} numberOfLines={1}>
                     {animal.breed ?? "품종 정보 없음"}
                 </Text>
                 <View style={styles.cardMetaRow}>
-                    {animal.gender ? <Text style={styles.cardMeta}>{animal.gender}</Text> : null}
-                    {animal.age ? <Text style={styles.cardMeta}> · {animal.age}</Text> : null}
-                    {animal.color ? <Text style={styles.cardMeta}> · {animal.color}</Text> : null}
+                    {animal.gender ? <Text style={[styles.cardMeta, { color: metaColor }]}>{animal.gender}</Text> : null}
+                    {animal.age ? <Text style={[styles.cardMeta, { color: metaColor }]}> · {animal.age}</Text> : null}
+                    {animal.color ? <Text style={[styles.cardMeta, { color: metaColor }]}> · {animal.color}</Text> : null}
                 </View>
                 {animal.shelterName ? (
                     <View style={styles.shelterRow}>
-                        <Ionicons name="location-outline" size={11} color={COLORS.gray[500]} />
-                        <Text style={styles.cardShelter} numberOfLines={1}>{animal.shelterName}</Text>
+                        <Ionicons name="location-outline" size={11} color={shelterColor} />
+                        <Text style={[styles.cardShelter, { color: shelterColor }]} numberOfLines={1}>{animal.shelterName}</Text>
                     </View>
                 ) : null}
             </View>
-        </View>
+        </TouchableOpacity>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: COLORS.white },
+    container: { flex: 1 },
     filterScrollOuter: { flexGrow: 0, flexShrink: 0 },
     filterRow: { paddingHorizontal: 16, paddingVertical: 12 },
     chip: {
@@ -227,16 +258,14 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         borderRadius: 9999,
     },
-    chipInactive: { backgroundColor: COLORS.gray[100] },
-    chipText: { fontSize: 13, fontWeight: "500", color: COLORS.gray[700] },
+    chipText: { fontSize: 13, fontWeight: "500" },
     chipTextActive: { fontSize: 13, fontWeight: "600", color: "#fff" },
     center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24, gap: 8 },
-    helpText: { fontSize: 13, color: COLORS.gray[500] },
+    helpText: { fontSize: 13 },
     listContent: { padding: 12, gap: 12, paddingBottom: 32 },
     footer: { paddingVertical: 24, alignItems: "center" },
     card: {
         flexDirection: "row",
-        backgroundColor: COLORS.white,
         borderRadius: 16,
         overflow: "hidden",
         elevation: 2,
@@ -245,7 +274,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.06,
         shadowRadius: 4,
     },
-    cardImage: { width: 104, height: 104, backgroundColor: COLORS.gray[50] },
+    cardImage: { width: 104, height: 104 },
     imagePlaceholder: { alignItems: "center", justifyContent: "center" },
     cardBody: { flex: 1, padding: 12, gap: 6 },
     cardHeaderRow: { flexDirection: "row", alignItems: "center", gap: 8 },
@@ -267,9 +296,9 @@ const styles = StyleSheet.create({
     },
     statusDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#10B981" },
     statusText: { fontSize: 10, fontWeight: "600", color: "#059669" },
-    cardTitle: { fontSize: 15, fontWeight: "700", color: COLORS.gray[900] },
+    cardTitle: { fontSize: 15, fontWeight: "700" },
     cardMetaRow: { flexDirection: "row", flexWrap: "wrap" },
-    cardMeta: { fontSize: 12, color: COLORS.gray[600] },
+    cardMeta: { fontSize: 12 },
     shelterRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 },
-    cardShelter: { fontSize: 11, color: COLORS.gray[500], flex: 1 },
+    cardShelter: { fontSize: 11, flex: 1 },
 });

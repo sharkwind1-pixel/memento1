@@ -18,7 +18,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { API_BASE_URL } from "@/config/constants";
 import { LostPet, LostPetType } from "@/types";
 import { COLORS } from "@/lib/theme";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import AppHeader from "@/components/common/AppHeader";
+import LostDetailModal from "@/components/lost/LostDetailModal";
 
 type TypeFilter = "all" | LostPetType;
 
@@ -31,12 +33,14 @@ const TYPE_LABELS: { id: TypeFilter; label: string }[] = [
 export default function LostPetsScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
+    const { isDarkMode } = useDarkMode();
     const [posts, setPosts] = useState<LostPet[]>([]);
     const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
     const [isLoading, setIsLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
+    const [selected, setSelected] = useState<LostPet | null>(null);
 
     const fetchPosts = useCallback(
         async (targetPage: number, append: boolean) => {
@@ -89,7 +93,7 @@ export default function LostPetsScreen() {
     }
 
     return (
-        <SafeAreaView style={styles.container} edges={["top"]}>
+        <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode ? COLORS.gray[950] : COLORS.white }]} edges={["top"]}>
             <Stack.Screen options={{ headerShown: false }} />
             <AppHeader showBack title="분실 / 발견" hideActions />
 
@@ -116,8 +120,14 @@ export default function LostPetsScreen() {
                                     <Text style={styles.chipTextActive}>{t.label}</Text>
                                 </LinearGradient>
                             ) : (
-                                <View style={[styles.chip, styles.chipInactive]}>
-                                    <Text style={styles.chipText}>{t.label}</Text>
+                                <View style={[
+                                    styles.chip,
+                                    { backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100] },
+                                ]}>
+                                    <Text style={[
+                                        styles.chipText,
+                                        { color: isDarkMode ? COLORS.gray[300] : COLORS.gray[700] },
+                                    ]}>{t.label}</Text>
                                 </View>
                             )}
                         </TouchableOpacity>
@@ -134,7 +144,9 @@ export default function LostPetsScreen() {
                     data={posts}
                     keyExtractor={(item) => item.id}
                     style={{ flex: 1 }}
-                    renderItem={({ item }) => <LostCard post={item} />}
+                    renderItem={({ item }) => (
+                        <LostCard post={item} isDarkMode={isDarkMode} onPress={() => setSelected(item)} />
+                    )}
                     refreshControl={
                         <RefreshControl
                             refreshing={refreshing}
@@ -155,7 +167,7 @@ export default function LostPetsScreen() {
                         !isLoading ? (
                             <View style={styles.center}>
                                 <Ionicons name="search-outline" size={48} color={COLORS.gray[300]} />
-                                <Text style={styles.helpText}>아직 등록된 글이 없어요</Text>
+                                <Text style={[styles.helpText, { color: isDarkMode ? COLORS.gray[400] : COLORS.gray[500] }]}>아직 등록된 글이 없어요</Text>
                             </View>
                         ) : null
                     }
@@ -170,17 +182,26 @@ export default function LostPetsScreen() {
             >
                 <Ionicons name="create" size={22} color="#fff" />
             </TouchableOpacity>
+
+            <LostDetailModal
+                visible={selected !== null}
+                onClose={() => setSelected(null)}
+                post={selected}
+            />
         </SafeAreaView>
     );
 }
 
-function LostCard({ post }: { post: LostPet }) {
+function LostCard({ post, isDarkMode, onPress }: { post: LostPet; isDarkMode: boolean; onPress: () => void }) {
     const isLost = post.type === "lost";
     const accent = isLost ? COLORS.memorial[500] : COLORS.memento[500];
     const accentBg = isLost ? COLORS.memorial[100] : COLORS.memento[100];
+    const cardBg = isDarkMode ? COLORS.gray[900] : COLORS.white;
+    const titleColor = isDarkMode ? COLORS.white : COLORS.gray[900];
+    const metaColor = isDarkMode ? COLORS.gray[400] : COLORS.gray[500];
 
     return (
-        <View style={styles.card}>
+        <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={[styles.card, { backgroundColor: cardBg, borderColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100] }]}>
             {post.imageUrl ? (
                 <Image source={{ uri: post.imageUrl }} style={styles.cardImage} resizeMode="cover" />
             ) : (
@@ -196,29 +217,29 @@ function LostCard({ post }: { post: LostPet }) {
                         </Text>
                     </View>
                     {post.petType ? (
-                        <Text style={styles.cardKind}>{post.petType}</Text>
+                        <Text style={[styles.cardKind, { color: metaColor }]}>{post.petType}</Text>
                     ) : null}
                 </View>
-                <Text style={styles.cardTitle} numberOfLines={1}>
+                <Text style={[styles.cardTitle, { color: titleColor }]} numberOfLines={1}>
                     {post.title}
                 </Text>
                 {post.region || post.district ? (
-                    <Text style={styles.cardLocation} numberOfLines={1}>
-                        <Ionicons name="location-outline" size={12} color={COLORS.gray[500]} />
+                    <Text style={[styles.cardLocation, { color: metaColor }]} numberOfLines={1}>
+                        <Ionicons name="location-outline" size={12} color={metaColor} />
                         {" "}
                         {[post.region, post.district].filter(Boolean).join(" ")}
                     </Text>
                 ) : null}
                 {post.date ? (
-                    <Text style={styles.cardDate}>{post.date}</Text>
+                    <Text style={[styles.cardDate, { color: metaColor }]}>{post.date}</Text>
                 ) : null}
             </View>
-        </View>
+        </TouchableOpacity>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: COLORS.white },
+    container: { flex: 1 },
     filterScrollOuter: { flexGrow: 0, flexShrink: 0 },
     filterRow: { paddingHorizontal: 16, paddingVertical: 12 },
     chip: {
@@ -228,8 +249,7 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         borderRadius: 9999,
     },
-    chipInactive: { backgroundColor: COLORS.gray[100] },
-    chipText: { fontSize: 13, fontWeight: "500", color: COLORS.gray[700] },
+    chipText: { fontSize: 13, fontWeight: "500" },
     chipTextActive: { fontSize: 13, fontWeight: "600", color: "#fff" },
     fab: {
         position: "absolute",
@@ -247,25 +267,23 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
     },
     center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24, gap: 8 },
-    helpText: { fontSize: 13, color: COLORS.gray[500] },
+    helpText: { fontSize: 13 },
     listContent: { padding: 12, gap: 12 },
     footer: { paddingVertical: 24, alignItems: "center" },
     card: {
         flexDirection: "row",
-        backgroundColor: COLORS.white,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: COLORS.gray[100],
         overflow: "hidden",
     },
-    cardImage: { width: 96, height: 96, backgroundColor: COLORS.gray[50] },
+    cardImage: { width: 96, height: 96 },
     imagePlaceholder: { alignItems: "center", justifyContent: "center" },
     cardBody: { flex: 1, padding: 12, gap: 4 },
     cardHeaderRow: { flexDirection: "row", alignItems: "center", gap: 8 },
     typeBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
     typeBadgeText: { fontSize: 10, fontWeight: "700" },
-    cardKind: { fontSize: 12, fontWeight: "600", color: COLORS.gray[600] },
-    cardTitle: { fontSize: 14, fontWeight: "600", color: COLORS.gray[900] },
-    cardLocation: { fontSize: 12, color: COLORS.gray[500] },
+    cardKind: { fontSize: 12, fontWeight: "600" },
+    cardTitle: { fontSize: 14, fontWeight: "600" },
+    cardLocation: { fontSize: 12 },
     cardDate: { fontSize: 11, color: COLORS.gray[400] },
 });

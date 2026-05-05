@@ -7,10 +7,12 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PetProvider } from "@/contexts/PetContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 export default function RootLayout() {
     return (
         <SafeAreaProvider>
+            <ThemeProvider>
             <AuthProvider>
                 <PetProvider>
                     <Stack screenOptions={{ headerShown: false }}>
@@ -19,6 +21,7 @@ export default function RootLayout() {
                         <Stack.Screen name="(tabs)" />
                         <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
                         <Stack.Screen name="pet/new" options={{ presentation: "modal", headerShown: false }} />
+                        <Stack.Screen name="pet/[id]" options={{ headerShown: false }} />
                         <Stack.Screen name="post/[id]" options={{ headerShown: false }} />
                         <Stack.Screen name="post/write" options={{ presentation: "modal", headerShown: false }} />
                         <Stack.Screen name="magazine/[id]" options={{ headerShown: false }} />
@@ -30,10 +33,13 @@ export default function RootLayout() {
                         <Stack.Screen name="local/index" options={{ headerShown: false }} />
                         <Stack.Screen name="lost/new" options={{ headerShown: false, presentation: "modal" }} />
                         <Stack.Screen name="local/new" options={{ headerShown: false, presentation: "modal" }} />
+                        <Stack.Screen name="minihompy/[userId]" options={{ headerShown: false }} />
+                        <Stack.Screen name="admin/index" options={{ headerShown: false }} />
                     </Stack>
                     <StatusBar style="auto" />
                 </PetProvider>
             </AuthProvider>
+            </ThemeProvider>
         </SafeAreaProvider>
     );
 }

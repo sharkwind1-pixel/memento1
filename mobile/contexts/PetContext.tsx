@@ -15,6 +15,7 @@ interface PetContextValue {
     setSelectedPet: (pet: Pet | null) => void;
     selectPet: (petId: string) => void;
     refreshPets: () => Promise<void>;
+    deletePhotos: (petId: string, photoIds: string[]) => Promise<{ success: boolean; deleted: number }>;
 }
 
 const PetContext = createContext<PetContextValue | null>(null);
@@ -56,7 +57,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                         id: pet.id,
                         userId: pet.user_id,
                         name: pet.name,
-                        type: pet.pet_type,
+                        type: pet.type,
                         breed: pet.breed ?? "",
                         gender: pet.gender ?? "남아",
                         birthday: pet.birthday,
@@ -79,7 +80,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                             id: p.id,
                             url: p.url,
                             storagePath: p.storage_path,
-                            type: p.media_type ?? "image",
+                            type: (p.type as "image" | "video") ?? "image",
                             caption: p.caption ?? "",
                             date: p.date ?? p.created_at,
                             thumbnailUrl: p.thumbnail_url,
@@ -111,10 +112,75 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
         fetchPets();
     }, [fetchPets]);
 
+    // ============================================================================
+    // 실시간 펫/사진 동기화 — 부팅 critical path 회피 위해 2초 지연.
+    // ============================================================================
+    useEffect(() => {
+        if (!user?.id) return;
+        let channel: ReturnType<typeof supabase.channel> | null = null;
+        // 5초 지연 — cold start 부담 최소화. 사용자 첫 액션 후 백그라운드에서 활성.
+        const t = setTimeout(() => {
+            try {
+                // pets 테이블 변경만 구독 (펫 추가/수정/대표 변경).
+                // pet_media 변경은 빈도 높고 사진 한 장당 fetchPets() 풀 refetch 비용이 큼 →
+                // 사진 동기화는 사용자가 화면 다시 진입할 때 자동으로 갱신됨.
+                channel = supabase
+                    .channel(`pets:${user.id}`)
+                    .on(
+                        "postgres_changes",
+                        { event: "*", schema: "public", table: "pets", filter: `user_id=eq.${user.id}` },
+                        () => { fetchPets(); },
+                    )
+                    .subscribe();
+            } catch (e) {
+                console.warn("[PetContext] realtime subscribe failed:", e);
+            }
+        }, 5000);
+        return () => {
+            clearTimeout(t);
+            if (channel) supabase.removeChannel(channel);
+        };
+    }, [user?.id, fetchPets]);
+
     function selectPet(petId: string) {
         const pet = pets.find((p) => p.id === petId);
         if (pet) setSelectedPet(pet);
     }
+
+    const deletePhotos = useCallback(
+        async (petId: string, photoIds: string[]): Promise<{ success: boolean; deleted: number }> => {
+            if (!user || photoIds.length === 0) return { success: false, deleted: 0 };
+
+            const pet = pets.find((p) => p.id === petId);
+            if (!pet) return { success: false, deleted: 0 };
+
+            const paths = photoIds
+                .map((pid) => pet.photos.find((ph) => ph.id === pid)?.storagePath)
+                .filter((p): p is string => typeof p === "string" && p.length > 0);
+
+            if (paths.length > 0) {
+                await supabase.storage.from("pet-media").remove(paths);
+            }
+
+            const { error } = await supabase.from("pet_media").delete().in("id", photoIds);
+            if (error) return { success: false, deleted: 0 };
+
+            setPets((prev) =>
+                prev.map((p) =>
+                    p.id === petId
+                        ? { ...p, photos: p.photos.filter((ph) => !photoIds.includes(ph.id)) }
+                        : p,
+                ),
+            );
+            setSelectedPet((prev) =>
+                prev && prev.id === petId
+                    ? { ...prev, photos: prev.photos.filter((ph) => !photoIds.includes(ph.id)) }
+                    : prev,
+            );
+            return { success: true, deleted: photoIds.length };
+        },
+        [user, pets],
+    );
 
     const isMemorialMode = selectedPet?.status === "memorial";
 
@@ -123,6 +189,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
             pets, selectedPet, isLoading, isMemorialMode,
             setSelectedPet, selectPet,
             refreshPets: fetchPets,
+            deletePhotos,
         }}>
             {children}
         </PetContext.Provider>

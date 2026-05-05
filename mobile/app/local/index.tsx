@@ -18,7 +18,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { API_BASE_URL } from "@/config/constants";
 import { LocalPost, LocalPostCategory } from "@/types";
 import { COLORS } from "@/lib/theme";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import AppHeader from "@/components/common/AppHeader";
+import LocalDetailModal from "@/components/local/LocalDetailModal";
 
 type CategoryFilter = "all" | LocalPostCategory;
 
@@ -35,12 +37,14 @@ const CATEGORY_LABELS: { id: CategoryFilter; label: string; icon: keyof typeof I
 export default function LocalPostsScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
+    const { isDarkMode } = useDarkMode();
     const [posts, setPosts] = useState<LocalPost[]>([]);
     const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("all");
     const [isLoading, setIsLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
+    const [selected, setSelected] = useState<LocalPost | null>(null);
 
     const fetchPosts = useCallback(
         async (targetPage: number, append: boolean) => {
@@ -93,7 +97,7 @@ export default function LocalPostsScreen() {
     }
 
     return (
-        <SafeAreaView style={styles.container} edges={["top"]}>
+        <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode ? COLORS.gray[950] : COLORS.white }]} edges={["top"]}>
             <Stack.Screen options={{ headerShown: false }} />
             <AppHeader showBack title="지역정보" hideActions />
 
@@ -121,9 +125,20 @@ export default function LocalPostsScreen() {
                                     <Text style={styles.chipTextActive}>{c.label}</Text>
                                 </LinearGradient>
                             ) : (
-                                <View style={[styles.chip, styles.chipInactive]}>
-                                    <Ionicons name={c.icon} size={14} color={COLORS.gray[700]} style={{ marginRight: 6 }} />
-                                    <Text style={styles.chipText}>{c.label}</Text>
+                                <View style={[
+                                    styles.chip,
+                                    { backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100] },
+                                ]}>
+                                    <Ionicons
+                                        name={c.icon}
+                                        size={14}
+                                        color={isDarkMode ? COLORS.gray[300] : COLORS.gray[700]}
+                                        style={{ marginRight: 6 }}
+                                    />
+                                    <Text style={[
+                                        styles.chipText,
+                                        { color: isDarkMode ? COLORS.gray[300] : COLORS.gray[700] },
+                                    ]}>{c.label}</Text>
                                 </View>
                             )}
                         </TouchableOpacity>
@@ -140,7 +155,9 @@ export default function LocalPostsScreen() {
                     data={posts}
                     keyExtractor={(item) => item.id}
                     style={{ flex: 1 }}
-                    renderItem={({ item }) => <LocalCard post={item} />}
+                    renderItem={({ item }) => (
+                        <LocalCard post={item} isDarkMode={isDarkMode} onPress={() => setSelected(item)} />
+                    )}
                     refreshControl={
                         <RefreshControl
                             refreshing={refreshing}
@@ -161,7 +178,7 @@ export default function LocalPostsScreen() {
                         !isLoading ? (
                             <View style={styles.center}>
                                 <Ionicons name="map-outline" size={48} color={COLORS.gray[300]} />
-                                <Text style={styles.helpText}>아직 등록된 글이 없어요</Text>
+                                <Text style={[styles.helpText, { color: isDarkMode ? COLORS.gray[400] : COLORS.gray[500] }]}>아직 등록된 글이 없어요</Text>
                             </View>
                         ) : null
                     }
@@ -176,15 +193,28 @@ export default function LocalPostsScreen() {
             >
                 <Ionicons name="create" size={22} color="#fff" />
             </TouchableOpacity>
+
+            <LocalDetailModal
+                visible={selected !== null}
+                onClose={() => setSelected(null)}
+                post={selected}
+            />
         </SafeAreaView>
     );
 }
 
-function LocalCard({ post }: { post: LocalPost }) {
+function LocalCard({ post, isDarkMode, onPress }: { post: LocalPost; isDarkMode: boolean; onPress: () => void }) {
     const cat = CATEGORY_LABELS.find((c) => c.id === post.category);
+    const cardBg = isDarkMode ? COLORS.gray[900] : COLORS.white;
+    const titleColor = isDarkMode ? COLORS.white : COLORS.gray[900];
+    const metaColor = isDarkMode ? COLORS.gray[400] : COLORS.gray[500];
 
     return (
-        <View style={styles.card}>
+        <TouchableOpacity
+            onPress={onPress}
+            activeOpacity={0.85}
+            style={[styles.card, { backgroundColor: cardBg, borderColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100] }]}
+        >
             {post.imageUrl ? (
                 <Image source={{ uri: post.imageUrl }} style={styles.cardImage} resizeMode="cover" />
             ) : (
@@ -203,33 +233,33 @@ function LocalCard({ post }: { post: LocalPost }) {
                         <Text style={styles.postBadge}>{post.badge}</Text>
                     ) : null}
                 </View>
-                <Text style={styles.cardTitle} numberOfLines={2}>
+                <Text style={[styles.cardTitle, { color: titleColor }]} numberOfLines={2}>
                     {post.title}
                 </Text>
                 {post.region || post.district ? (
-                    <Text style={styles.cardLocation} numberOfLines={1}>
-                        <Ionicons name="location-outline" size={12} color={COLORS.gray[500]} />
+                    <Text style={[styles.cardLocation, { color: metaColor }]} numberOfLines={1}>
+                        <Ionicons name="location-outline" size={12} color={metaColor} />
                         {" "}
                         {[post.region, post.district].filter(Boolean).join(" ")}
                     </Text>
                 ) : null}
                 <View style={styles.cardStats}>
                     <View style={styles.statItem}>
-                        <Ionicons name="heart-outline" size={12} color={COLORS.gray[500]} />
-                        <Text style={styles.statText}>{post.likesCount ?? 0}</Text>
+                        <Ionicons name="heart-outline" size={12} color={metaColor} />
+                        <Text style={[styles.statText, { color: metaColor }]}>{post.likesCount ?? 0}</Text>
                     </View>
                     <View style={styles.statItem}>
-                        <Ionicons name="chatbubble-outline" size={12} color={COLORS.gray[500]} />
-                        <Text style={styles.statText}>{post.commentsCount ?? 0}</Text>
+                        <Ionicons name="chatbubble-outline" size={12} color={metaColor} />
+                        <Text style={[styles.statText, { color: metaColor }]}>{post.commentsCount ?? 0}</Text>
                     </View>
                 </View>
             </View>
-        </View>
+        </TouchableOpacity>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: COLORS.white },
+    container: { flex: 1 },
     filterScrollOuter: { flexGrow: 0, flexShrink: 0 },
     filterRow: { paddingHorizontal: 16, paddingVertical: 12 },
     chip: {
@@ -239,8 +269,7 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         borderRadius: 9999,
     },
-    chipInactive: { backgroundColor: COLORS.gray[100] },
-    chipText: { fontSize: 13, fontWeight: "500", color: COLORS.gray[700] },
+    chipText: { fontSize: 13, fontWeight: "500" },
     chipTextActive: { fontSize: 13, fontWeight: "600", color: "#fff" },
     fab: {
         position: "absolute",
@@ -258,18 +287,16 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
     },
     center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24, gap: 8 },
-    helpText: { fontSize: 13, color: COLORS.gray[500] },
+    helpText: { fontSize: 13 },
     listContent: { padding: 12, gap: 12 },
     footer: { paddingVertical: 24, alignItems: "center" },
     card: {
         flexDirection: "row",
-        backgroundColor: COLORS.white,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: COLORS.gray[100],
         overflow: "hidden",
     },
-    cardImage: { width: 96, height: 96, backgroundColor: COLORS.gray[50] },
+    cardImage: { width: 96, height: 96 },
     imagePlaceholder: { alignItems: "center", justifyContent: "center" },
     cardBody: { flex: 1, padding: 12, gap: 4 },
     cardHeaderRow: { flexDirection: "row", alignItems: "center", gap: 8 },
@@ -281,7 +308,7 @@ const styles = StyleSheet.create({
     },
     catBadgeText: { fontSize: 10, fontWeight: "700", color: COLORS.memento[700] },
     postBadge: { fontSize: 11, fontWeight: "600", color: COLORS.gray[600] },
-    cardTitle: { fontSize: 14, fontWeight: "600", color: COLORS.gray[900] },
+    cardTitle: { fontSize: 14, fontWeight: "600" },
     cardLocation: { fontSize: 12, color: COLORS.gray[500] },
     cardStats: { flexDirection: "row", gap: 12, marginTop: 4 },
     statItem: { flexDirection: "row", alignItems: "center", gap: 4 },

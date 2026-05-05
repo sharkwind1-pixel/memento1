@@ -10,6 +10,7 @@
  */
 
 import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -22,19 +23,30 @@ interface Props {
 }
 
 export default function HeroSection({ session, isMemorialMode }: Props) {
+    const { isDarkMode } = useDarkMode();
     const router = useRouter();
 
-    const gradientColors = isMemorialMode
-        ? (["#091A2E", "#1A2A3E", "#3D2A1A"] as const)
-        : (["#CBEBF0", "#E0F3F6", "#FFF8F6"] as const);
+    // 웹 매칭: 다크모드는 일상/추모 모두 gray-800 → gray-700 그라데이션
+    const gradientColors = isDarkMode
+        ? ([COLORS.gray[800], COLORS.gray[800], COLORS.gray[700]] as const)
+        : isMemorialMode
+            ? (["#091A2E", "#1A2A3E", "#3D2A1A"] as const)
+            : (["#CBEBF0", "#E0F3F6", "#FFF8F6"] as const);
 
     const ctaGradient: [string, string] = isMemorialMode
         ? [COLORS.memorial[500], "#FB923C"]
         : [COLORS.memento[500], COLORS.memento[400]];
 
-    const titleColor = isMemorialMode ? "#FEF3C7" : COLORS.gray[800];
-    const subtitleColor = isMemorialMode ? "rgba(254,243,199,0.8)" : COLORS.gray[600];
-    const ghostTextColor = isMemorialMode ? "rgba(254,243,199,0.85)" : COLORS.gray[600];
+    // 웹 매칭: 추모는 다크모드에서도 memorial-50 유지, 일상만 다크모드에서 white
+    const titleColor = isMemorialMode
+        ? "#FEF3C7"
+        : (isDarkMode ? COLORS.white : COLORS.gray[800]);
+    const subtitleColor = isMemorialMode
+        ? "rgba(254,243,199,0.8)"
+        : (isDarkMode ? COLORS.gray[300] : COLORS.gray[600]);
+    const ghostTextColor = isMemorialMode
+        ? "rgba(254,243,199,0.85)"
+        : (isDarkMode ? COLORS.gray[300] : COLORS.gray[600]);
 
     const decoTopColor = isMemorialMode ? "rgba(245,158,11,0.18)" : "rgba(186,230,253,0.45)";
     const decoBottomColor = isMemorialMode ? "rgba(251,146,60,0.12)" : "rgba(254,205,211,0.4)";

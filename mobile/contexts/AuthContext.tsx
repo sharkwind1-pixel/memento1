@@ -43,9 +43,27 @@ const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
 /** 모듈 레벨에 verifier 보관 (provider별로 키) */
 const verifierMap: Record<string, string> = {};
 
-/** RFC 7636 권장 문자셋으로 64자 random verifier 생성 */
+/**
+ * RFC 7636 권장 문자셋으로 64자 random verifier 생성.
+ * 우선순위:
+ *  1) globalThis.crypto.getRandomValues (RN 0.76+ Hermes 지원, 안전)
+ *  2) Math.random fallback (Expo Go 등 미지원 환경 — 부팅 막지 않게 약하지만 동작)
+ * 운영 빌드에서는 expo-crypto 설치해서 1번만 쓰는 게 가장 좋음.
+ */
 function generatePKCEVerifier(): string {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+    const cryptoApi = (globalThis as { crypto?: { getRandomValues?: (arr: Uint8Array) => Uint8Array } }).crypto;
+    if (cryptoApi?.getRandomValues) {
+        const bytes = new Uint8Array(64);
+        cryptoApi.getRandomValues(bytes);
+        let result = "";
+        for (let i = 0; i < 64; i++) {
+            result += chars[bytes[i] % chars.length];
+        }
+        return result;
+    }
+    // Fallback: Math.random (보안 약화 — 운영 빌드 전 expo-crypto 설치 필수)
+    console.warn("[Auth] crypto.getRandomValues 미지원 — Math.random fallback (보안 약화)");
     let result = "";
     for (let i = 0; i < 64; i++) {
         result += chars[Math.floor(Math.random() * chars.length)];
@@ -178,6 +196,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(session?.user ?? null);
             if (session?.user) {
                 loadProfile(session.user.id);
+                // 푸시 알림 토큰 백엔드 등록은 dev build 전용 (Expo Go에서는 expo-notifications 제한).
+                // session 직후 즉시 import하면 Expo Go에서 boot crash 위험 → 부팅 안정화 후 5초 지연.
+                if (session.access_token && process.env.EXPO_PUBLIC_PUSH_ENABLED === "true") {
+                    setTimeout(() => {
+                        import("@/lib/push-notifications")
+                            .then(({ registerPushTokenWithBackend }) =>
+                                registerPushTokenWithBackend(session.access_token).catch(() => {}),
+                            )
+                            .catch(() => {});
+                    }, 5000);
+                }
             } else {
                 setProfile(null);
                 setIsLoading(false);
@@ -191,11 +220,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
     }, []);
 
+    // ============================================================================
+    // 실시간 프로필 동기화 — points / premium / subscription_tier 등이 다른 디바이스(웹/앱)
+    // 또는 서버 프로세스(결제 webhook, cron, admin 작업)에서 바뀌면 즉시 반영.
+    //
+    // ⚠️ subscribe()를 mount critical path에서 호출하면 Expo Go 부팅 막힘.
+    // 2초 지연 + try/catch로 안전하게 백그라운드 구독.
+    // ============================================================================
+    useEffect(() => {
+        if (!user?.id) return;
+        let channel: ReturnType<typeof supabase.channel> | null = null;
+        // 부팅 + 첫 인터랙션 끝난 후 구독 시작 (cold start 부담 최소화)
+        const t = setTimeout(() => {
+            try {
+                channel = supabase
+                    .channel(`profile:${user.id}`)
+                    .on(
+                        "postgres_changes",
+                        {
+                            event: "UPDATE",
+                            schema: "public",
+                            table: "profiles",
+                            filter: `id=eq.${user.id}`,
+                        },
+                        () => { loadProfile(user.id); },
+                    )
+                    .subscribe();
+            } catch (e) {
+                console.warn("[AuthContext] realtime subscribe failed:", e);
+            }
+        }, 5000);
+
+        return () => {
+            clearTimeout(t);
+            if (channel) supabase.removeChannel(channel);
+        };
+    }, [user?.id]);
+
     async function loadProfile(userId: string) {
         try {
             const { data, error } = await supabase
                 .from("profiles")
-                .select("id, nickname, avatar_url, is_premium, is_admin, points, premium_expires_at")
+                .select("id, nickname, avatar_url, is_premium, is_admin, points, premium_expires_at, subscription_tier, premium_plan, subscription_phase")
                 .eq("id", userId)
                 .single();
 
@@ -208,7 +274,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     data.is_premium &&
                     (!data.premium_expires_at || new Date(data.premium_expires_at) > new Date());
 
-                console.log(`[Profile] loaded id=${data.id} nickname=${data.nickname} points=${data.points} isAdmin=${data.is_admin}`);
+                console.log(`[Profile] loaded id=${data.id} nickname=${data.nickname} points=${data.points} isAdmin=${data.is_admin} tier=${data.subscription_tier}`);
 
                 setProfile({
                     id: data.id,
@@ -217,6 +283,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     isPremium: isPremiumActive,
                     isAdmin: data.is_admin,
                     points: data.points ?? 0,
+                    subscriptionTier: data.subscription_tier as "free" | "basic" | "premium" | undefined,
+                    premiumPlan: data.premium_plan as string | undefined,
+                    subscriptionPhase: data.subscription_phase as string | undefined,
+                    premiumExpiresAt: data.premium_expires_at as string | undefined,
                 });
             } else {
                 console.warn(`[Profile] no row for userId=${userId} — creating fallback profile`);
@@ -254,7 +324,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // 제대로 못 잡아서 Site URL(mementoani.com)로 fallback되는 문제 회피.
             // https URL은 매칭 안정적, 페이지가 deep link로 forward.
             // Chrome 확인창("Expo Go 앱 열려고 합니다 / 계속")은 OS 보안 정책이라 못 없앰.
-            const webBridge = `${API_BASE_URL}/auth/callback?mobile=1&nativeUrl=${encodeURIComponent(nativeDeepLink)}`;
+            //
+            // **중요**: API_BASE_URL은 www.mementoani.com로 normalize되지만,
+            // Supabase 대시보드에 등록된 redirect URL은 mementoani.com (no www)일 수 있음.
+            // OAuth용 redirect는 raw 도메인 사용 → Vercel이 webBridge 페이지 도달 후
+            // window.location.replace(deepLink)로 앱 deep link 호출.
+            const oauthOrigin = API_BASE_URL.replace(
+                /^https:\/\/www\.mementoani\.com/i,
+                "https://mementoani.com",
+            );
+            const webBridge = `${oauthOrigin}/auth/callback?mobile=1&nativeUrl=${encodeURIComponent(nativeDeepLink)}`;
 
             // 1. PKCE verifier 생성 → 메모리 보관
             const verifier = generatePKCEVerifier();
@@ -309,13 +388,80 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return signInWithProvider("kakao");
     }
 
+    /**
+     * 네이버 로그인.
+     * Supabase는 Naver를 빌트인으로 지원하지 않으므로 웹 /api/auth/naver를 경유.
+     *
+     * 1) WebBrowser → /api/auth/naver?mobile=1&nativeUrl=...
+     * 2) 네이버 OAuth → /api/auth/naver/callback (쿠키로 mobile/nativeUrl 전달)
+     * 3) 콜백이 magiclink hashed_token 생성 → /auth/callback?token_hash=...&mobile=1&nativeUrl=...
+     * 4) /auth/callback이 deep link로 forward → 앱 catch
+     * 5) 앱에서 supabase.auth.verifyOtp({ type:"magiclink", token_hash })로 세션 교환
+     */
     async function signInWithNaver(): Promise<{ error: Error | null }> {
-        // 웹 API (/api/auth/naver)는 쿠키 기반 세션이라 모바일 미호환
-        // 추후 모바일 친화 엔드포인트 또는 Supabase custom OIDC provider 등록 후 구현
-        return { error: new Error("네이버 로그인은 현재 준비 중입니다. 카카오 또는 구글을 이용해주세요.") };
+        try {
+            const nativeDeepLink = Linking.createURL("/auth/callback");
+            const oauthOrigin = API_BASE_URL.replace(
+                /^https:\/\/www\.mementoani\.com/i,
+                "https://mementoani.com",
+            );
+
+            // 1. /api/auth/naver?mobile=1&nativeUrl=... 호출
+            const naverStart = `${oauthOrigin}/api/auth/naver`
+                + `?mobile=1`
+                + `&nativeUrl=${encodeURIComponent(nativeDeepLink)}`;
+
+            console.log(`[OAuth/Naver] start=${naverStart}`);
+
+            // 2. WebBrowser로 OAuth (자동 리다이렉트 chain)
+            const result = await WebBrowser.openAuthSessionAsync(
+                naverStart,
+                nativeDeepLink,
+            );
+            console.log(`[OAuth/Naver] result.type=${result.type}`);
+
+            if (result.type !== "success" || !result.url) {
+                // 사용자가 dismiss — 폴백 deep link 핸들러가 처리
+                return { error: null };
+            }
+
+            // 3. callback URL에서 token_hash 추출
+            const callbackUrl = new URL(result.url);
+            const tokenHash = callbackUrl.searchParams.get("token_hash");
+            const errMsg = callbackUrl.searchParams.get("error_description")
+                ?? callbackUrl.searchParams.get("error");
+
+            if (errMsg) return { error: new Error(decodeURIComponent(errMsg)) };
+            if (!tokenHash) {
+                return { error: new Error(`콜백에 token_hash 없음. URL=${result.url.slice(0, 200)}`) };
+            }
+
+            // 4. magiclink 검증으로 세션 교환
+            const { error: verifyError } = await supabase.auth.verifyOtp({
+                token_hash: tokenHash,
+                type: "magiclink",
+            });
+            if (verifyError) {
+                return { error: new Error(verifyError.message) };
+            }
+
+            return { error: null };
+        } catch (e) {
+            return { error: e as Error };
+        }
     }
 
     async function signOut() {
+        // 푸시 토큰 정리 (dev build에서만)
+        const accessToken = session?.access_token;
+        if (accessToken && process.env.EXPO_PUBLIC_PUSH_ENABLED === "true") {
+            try {
+                const { unregisterPushTokenFromBackend } = await import("@/lib/push-notifications");
+                await unregisterPushTokenFromBackend(accessToken).catch(() => {});
+            } catch {
+                // ignore
+            }
+        }
         await supabase.auth.signOut();
         setProfile(null);
     }

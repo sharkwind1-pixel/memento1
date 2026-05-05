@@ -9,9 +9,10 @@
  */
 
 import { useEffect, useState, useRef } from "react";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import {
     View, Text, TouchableOpacity, StyleSheet,
-    ActivityIndicator, Animated, Image,
+    ActivityIndicator, Animated,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -29,7 +30,6 @@ interface CommunityPostPreview {
     comments: number;
     badge?: string;
     isLiked?: boolean;
-    imageUrl?: string;
 }
 
 const DAILY_GRADIENTS: Array<[string, string]> = [
@@ -53,6 +53,7 @@ interface Props {
 }
 
 export default function CommunityPreview({ session, isMemorialMode }: Props) {
+    const { isDarkMode } = useDarkMode();
     const router = useRouter();
     const [posts, setPosts] = useState<CommunityPostPreview[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -68,32 +69,30 @@ export default function CommunityPreview({ session, isMemorialMode }: Props) {
             try {
                 const headers: Record<string, string> = {};
                 if (session) headers["Authorization"] = `Bearer ${session.access_token}`;
-                const res = await fetch(`${API_BASE_URL}/api/posts?featured=true&limit=5`, { headers });
+                // 인기글 = 자유게시판 + 자랑 제외 (웹 기준)
+                const res = await fetch(`${API_BASE_URL}/api/posts?featured=true&subcategory=free&exclude_badge=자랑&limit=5`, { headers });
                 if (!res.ok) return;
                 const data = await res.json();
                 const list = Array.isArray(data?.posts) ? data.posts : Array.isArray(data) ? data : [];
-                setPosts(list.map((raw: any): CommunityPostPreview => {
-                    const imgs: unknown = raw?.imageUrls ?? raw?.image_urls ?? raw?.images;
-                    const firstImg = Array.isArray(imgs)
-                        ? (typeof imgs[0] === "string" ? imgs[0] : undefined)
-                        : (typeof imgs === "string" ? imgs : undefined);
-                    return {
-                        id: raw?.id != null ? String(raw.id) : "",
-                        title: typeof raw?.title === "string" ? raw.title : "",
-                        author: typeof raw?.author === "string"
+                setPosts(list.map((raw: any): CommunityPostPreview => ({
+                    id: raw?.id != null ? String(raw.id) : "",
+                    title: typeof raw?.title === "string" ? raw.title : "",
+                    author: (typeof raw?.authorName === "string" && raw.authorName.trim())
+                        ? raw.authorName
+                        : (typeof raw?.author === "string" && raw.author.trim())
                             ? raw.author
-                            : typeof raw?.author_name === "string" ? raw.author_name : "익명",
-                        likes: typeof raw?.likes === "number" ? raw.likes : 0,
-                        comments: typeof raw?.comments === "number"
-                            ? raw.comments
-                            : typeof raw?.comments_count === "number" ? raw.comments_count : 0,
-                        badge: typeof raw?.tag === "string" ? raw.tag
-                            : (typeof raw?.badge === "string" ? raw.badge : undefined),
-                        isLiked: typeof raw?.isLiked === "boolean" ? raw.isLiked
-                            : (typeof raw?.is_liked === "boolean" ? raw.is_liked : false),
-                        imageUrl: firstImg && firstImg.startsWith("http") ? firstImg : undefined,
-                    };
-                }));
+                            : (typeof raw?.author_name === "string" && raw.author_name.trim())
+                                ? raw.author_name
+                                : "익명",
+                    likes: typeof raw?.likes === "number" ? raw.likes : 0,
+                    comments: typeof raw?.comments === "number"
+                        ? raw.comments
+                        : typeof raw?.comments_count === "number" ? raw.comments_count : 0,
+                    badge: typeof raw?.tag === "string" ? raw.tag
+                        : (typeof raw?.badge === "string" ? raw.badge : undefined),
+                    isLiked: typeof raw?.isLiked === "boolean" ? raw.isLiked
+                        : (typeof raw?.is_liked === "boolean" ? raw.is_liked : false),
+                })));
             } catch {
                 // ignore
             } finally {
@@ -147,7 +146,7 @@ export default function CommunityPreview({ session, isMemorialMode }: Props) {
                         <Ionicons name="trending-up" size={18} color="#fff" />
                     </LinearGradient>
                     <View>
-                        <Text style={styles.title}>인기 있는 이야기</Text>
+                        <Text style={[styles.title, isMemorialMode && { color: COLORS.white }]}>인기 있는 이야기</Text>
                         <Text style={styles.subtitle}>커뮤니티에서 가장 사랑받는 글들</Text>
                     </View>
                 </View>
@@ -198,6 +197,7 @@ interface CardProps {
 }
 
 function CommunityCard({ post, gradient, onPress, onToggleLike }: CardProps) {
+    const { isDarkMode } = useDarkMode();
     const heartScale = useRef(new Animated.Value(1)).current;
 
     function handleLike() {
@@ -208,34 +208,20 @@ function CommunityCard({ post, gradient, onPress, onToggleLike }: CardProps) {
         onToggleLike();
     }
 
-    // 이미지 있는 게시글만 썸네일 표시. 텍스트 게시글은 썸네일 영역 자체를 빼서 본문이 풀폭으로.
-    const hasImage = !!post.imageUrl;
-
     return (
         <TouchableOpacity onPress={onPress} style={styles.card} activeOpacity={0.85}>
-            {hasImage ? (
-                <View style={styles.thumb}>
-                    <Image source={{ uri: post.imageUrl }} style={styles.thumbImg} />
-                    {post.badge ? (
-                        <View style={styles.badge}>
-                            <Text style={styles.badgeText} numberOfLines={1}>{post.badge}</Text>
-                        </View>
-                    ) : null}
-                </View>
-            ) : null}
+            {/* 썸네일 */}
+            <LinearGradient colors={gradient} style={styles.thumb}>
+                <Ionicons name="paw" size={24} color="rgba(255,255,255,0.85)" />
+                {post.badge ? (
+                    <View style={styles.badge}>
+                        <Text style={styles.badgeText} numberOfLines={1}>{post.badge}</Text>
+                    </View>
+                ) : null}
+            </LinearGradient>
 
             {/* 본문 */}
             <View style={styles.body}>
-                {!hasImage && post.badge ? (
-                    <LinearGradient
-                        colors={gradient}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={styles.inlineBadge}
-                    >
-                        <Text style={styles.inlineBadgeText} numberOfLines={1}>{post.badge}</Text>
-                    </LinearGradient>
-                ) : null}
                 <Text style={styles.cardTitle} numberOfLines={2}>{post.title}</Text>
                 <View style={styles.metaRow}>
                     <Text style={styles.author} numberOfLines={1}>{post.author}</Text>
@@ -314,24 +300,6 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         position: "relative",
         overflow: "hidden",
-        backgroundColor: COLORS.gray[100],
-    },
-    thumbImg: {
-        width: "100%",
-        height: "100%",
-        resizeMode: "cover",
-    },
-    inlineBadge: {
-        alignSelf: "flex-start",
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-        borderRadius: 8,
-        marginBottom: 4,
-    },
-    inlineBadgeText: {
-        fontSize: 10,
-        fontWeight: "700",
-        color: "#fff",
     },
     badge: {
         position: "absolute",

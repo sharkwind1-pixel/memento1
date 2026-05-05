@@ -14,7 +14,13 @@ import { exchangeWithStoredVerifier } from "@/contexts/AuthContext";
 
 export default function AuthCallbackScreen() {
     const router = useRouter();
-    const params = useLocalSearchParams<{ code?: string; error?: string; error_description?: string }>();
+    const params = useLocalSearchParams<{
+        code?: string;
+        token_hash?: string;
+        type?: string;
+        error?: string;
+        error_description?: string;
+    }>();
     const [message, setMessage] = useState("로그인 처리 중...");
 
     useEffect(() => {
@@ -22,6 +28,24 @@ export default function AuthCallbackScreen() {
             if (params.error) {
                 setMessage(params.error_description ?? params.error);
                 setTimeout(() => router.replace("/(auth)/login"), 1500);
+                return;
+            }
+
+            // 네이버 로그인: token_hash + type=magiclink로 세션 교환
+            if (params.token_hash && params.type === "magiclink") {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) { router.replace("/(tabs)"); return; }
+
+                const { error } = await supabase.auth.verifyOtp({
+                    token_hash: params.token_hash,
+                    type: "magiclink",
+                });
+                if (error) {
+                    setMessage(`로그인 실패: ${error.message}`);
+                    setTimeout(() => router.replace("/(auth)/login"), 1500);
+                    return;
+                }
+                router.replace("/(tabs)");
                 return;
             }
 
@@ -37,7 +61,7 @@ export default function AuthCallbackScreen() {
             // (이전 race로 "flow_state_not_found" 에러 나던 케이스 차단)
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
-                router.replace("/");
+                router.replace("/(tabs)");
                 return;
             }
 
@@ -47,7 +71,7 @@ export default function AuthCallbackScreen() {
             // exchange 후에도 세션 한 번 더 확인 (자동 경로가 동시에 setSession했을 수 있음)
             const { data: { session: afterSession } } = await supabase.auth.getSession();
             if (afterSession) {
-                router.replace("/");
+                router.replace("/(tabs)");
                 return;
             }
 
@@ -57,9 +81,9 @@ export default function AuthCallbackScreen() {
                 return;
             }
 
-            router.replace("/");
+            router.replace("/(tabs)");
         })();
-    }, [params.code, params.error]);
+    }, [params.code, params.error, params.token_hash, params.type, params.error_description, router]);
 
     return (
         <View style={styles.container}>

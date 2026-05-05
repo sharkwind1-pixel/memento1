@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { COLORS } from "@/lib/theme";
 import { getLevelIcon, type PetIconType } from "@/lib/levels";
 
@@ -31,6 +32,7 @@ export default function AppHeader({ onOpenDrawer, showBack, title, hideActions }
     const router = useRouter();
     const { user, profile, points, isAdminUser } = useAuth();
     const { selectedPet, pets, isMemorialMode } = usePet();
+    const { isDarkMode, toggleTheme } = useDarkMode();
 
     // 레벨 뱃지 아이콘 (포인트 + 펫 타입 기반)
     // 우선순위: selectedPet → pets[0] → 기본값 "dog"
@@ -42,12 +44,12 @@ export default function AppHeader({ onOpenDrawer, showBack, title, hideActions }
     const levelIcon = getLevelIcon(points ?? 0, petType, isAdminUser);
 
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
-    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.white;
-    const textColor = isMemorialMode ? COLORS.white : COLORS.gray[900];
-    const iconColor = isMemorialMode ? COLORS.gray[300] : COLORS.gray[700];
+    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.white;
+    const textColor = isDarkMode ? COLORS.white : COLORS.gray[900];
+    const iconColor = isDarkMode ? COLORS.gray[300] : COLORS.gray[700];
 
     return (
-        <View style={[styles.container, { backgroundColor: bgColor, borderBottomColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100] }]}>
+        <View style={[styles.container, { backgroundColor: bgColor, borderBottomColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100] }]}>
             {/* 좌측: 햄버거 또는 뒤로가기 */}
             {showBack ? (
                 <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn} hitSlop={8}>
@@ -59,19 +61,23 @@ export default function AppHeader({ onOpenDrawer, showBack, title, hideActions }
                 </TouchableOpacity>
             )}
 
-            {/* 가운데: 로고 + 제목 */}
+            {/* 가운데: 로고 + 제목 (로고 탭 → 홈) */}
             <View style={styles.titleWrap}>
                 {title ? (
                     <Text style={[styles.title, { color: textColor }]} numberOfLines={1}>{title}</Text>
                 ) : (
-                    <View style={styles.logoRow}>
+                    <TouchableOpacity
+                        onPress={() => router.push("/(tabs)")}
+                        activeOpacity={0.7}
+                        style={styles.logoRow}
+                    >
                         <Image
                             source={require("@/assets/icon.png")}
                             style={styles.logoImg}
                             resizeMode="contain"
                         />
                         <Text style={[styles.brandText, { color: textColor }]}>메멘토애니</Text>
-                    </View>
+                    </TouchableOpacity>
                 )}
             </View>
 
@@ -88,6 +94,13 @@ export default function AppHeader({ onOpenDrawer, showBack, title, hideActions }
                     )}
                     <TouchableOpacity onPress={() => router.push("/notifications")} style={styles.iconBtn} hitSlop={6}>
                         <Ionicons name="notifications-outline" size={22} color={iconColor} />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={toggleTheme} style={styles.iconBtn} hitSlop={6}>
+                        <Ionicons
+                            name={isDarkMode ? "sunny" : "moon"}
+                            size={20}
+                            color={isDarkMode ? "#FBBF24" : iconColor}
+                        />
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => router.push("/profile")} hitSlop={6} style={styles.profileBtn}>
                         <Image source={levelIcon} style={styles.avatarImg} resizeMode="cover" />

@@ -8,6 +8,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useFocusEffect } from "expo-router";
 import {
     View, Text, ScrollView, TouchableOpacity,
     FlatList, RefreshControl, ActivityIndicator,
@@ -17,12 +18,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useRouter, useFocusEffect } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { API_BASE_URL } from "@/config/constants";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { CommunityPost, CommunitySubcategory } from "@/types";
 import { COLORS } from "@/lib/theme";
+import { supabase } from "@/lib/supabase";
 import AppHeader from "@/components/common/AppHeader";
 import AppDrawer from "@/components/common/AppDrawer";
 
@@ -62,21 +65,75 @@ function relativeTime(dateStr?: string): string {
 export default function CommunityScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
+    const params = useLocalSearchParams<{ view?: string }>();
     const { session } = useAuth();
     const { isMemorialMode } = usePet();
+    const { isDarkMode } = useDarkMode();
+    // view=showcase 진입(홈 "함께 보기" 더보기 → 자랑 갤러리 모드)
+    const showcaseMode = params.view === "showcase";
     const [activeTab, setActiveTab] = useState<CommunitySubcategory>("free");
     const [posts, setPosts] = useState<CommunityPost[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [searchInput, setSearchInput] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
     const [drawerOpen, setDrawerOpen] = useState(false);
+    const [sortBy, setSortBy] = useState<"latest" | "popular" | "comments">("latest");
+    const [trendingTags, setTrendingTags] = useState<string[]>([]);
+    const [activeTag, setActiveTag] = useState<string | null>(null);
 
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
     const activeSubcat = SUBCATEGORIES.find((s) => s.id === activeTab)!;
 
+    // 검색 디바운싱 — 300ms 후 적용 (입력 도중 API 호출 방지)
+    const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    useEffect(() => {
+        if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+        searchDebounceRef.current = setTimeout(() => {
+            setSearchQuery(searchInput);
+        }, 300);
+        return () => {
+            if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+        };
+    }, [searchInput]);
+
+    // 인기 해시태그 로드 (마운트 1회)
+    useEffect(() => {
+        fetch(`${API_BASE_URL}/api/hashtags?type=trending&limit=10`)
+            .then((r) => r.ok ? r.json() : null)
+            .then((d) => {
+                if (Array.isArray(d?.tags)) {
+                    setTrendingTags(
+                        d.tags
+                            .map((t: unknown) => {
+                                if (typeof t === "string") return t;
+                                if (t && typeof t === "object" && "tag" in t) {
+                                    const v = (t as { tag: unknown }).tag;
+                                    return typeof v === "string" ? v : null;
+                                }
+                                return null;
+                            })
+                            .filter((x: unknown): x is string => typeof x === "string"),
+                    );
+                }
+            })
+            .catch(() => {});
+    }, []);
+
     const fetchPosts = useCallback(async () => {
         try {
-            const url = `${API_BASE_URL}/api/posts?subcategory=${activeTab}&limit=20`;
+            const queryParams = new URLSearchParams();
+            if (showcaseMode) {
+                queryParams.set("subcategory", "free");
+                queryParams.set("badge", "자랑");
+            } else {
+                queryParams.set("subcategory", activeTab);
+                if (activeTab === "free") queryParams.set("exclude_badge", "자랑");
+            }
+            queryParams.set("limit", "20");
+            if (sortBy !== "latest") queryParams.set("sort", sortBy);
+            if (activeTag) queryParams.set("tag", activeTag);
+            const url = `${API_BASE_URL}/api/posts?${queryParams.toString()}`;
             const headers: Record<string, string> = { "Content-Type": "application/json" };
             if (session) headers["Authorization"] = `Bearer ${session.access_token}`;
 
@@ -89,7 +146,7 @@ export default function CommunityScreen() {
                 id: raw?.id != null ? String(raw.id) : undefined,
                 title: asString(raw?.title),
                 content: asString(raw?.content),
-                author: asString(raw?.author ?? raw?.author_name ?? raw?.nickname, "익명"),
+                author: asString(raw?.authorName ?? raw?.author ?? raw?.author_name ?? raw?.nickname, "익명"),
                 authorId: asString(raw?.authorId ?? raw?.author_id ?? raw?.user_id),
                 authorAvatar: typeof raw?.authorAvatar === "string"
                     ? raw.authorAvatar
@@ -102,7 +159,13 @@ export default function CommunityScreen() {
                     ? raw.subcategory as CommunitySubcategory
                     : undefined,
                 tag: typeof raw?.tag === "string" ? raw.tag as CommunityPost["tag"] : undefined,
-                isLiked: typeof raw?.isLiked === "boolean" ? raw.isLiked : undefined,
+                isLiked: typeof raw?.userLiked === "boolean"
+                    ? raw.userLiked
+                    : typeof raw?.isLiked === "boolean"
+                        ? raw.isLiked
+                        : typeof raw?.user_liked === "boolean"
+                            ? raw.user_liked
+                            : undefined,
                 preview: typeof raw?.preview === "string"
                     ? raw.preview
                     : (typeof raw?.content === "string" ? raw.content.slice(0, 120) : undefined),
@@ -111,7 +174,11 @@ export default function CommunityScreen() {
                     : (typeof raw?.created_at === "string" ? raw.created_at : undefined),
                 images: Array.isArray(raw?.images)
                     ? raw.images.filter((x): x is string => typeof x === "string")
-                    : undefined,
+                    : (Array.isArray(raw?.imageUrls)
+                        ? raw.imageUrls.filter((x): x is string => typeof x === "string")
+                        : (Array.isArray(raw?.image_urls)
+                            ? raw.image_urls.filter((x): x is string => typeof x === "string")
+                            : undefined)),
             })));
         } catch {
             // 조용히
@@ -119,29 +186,36 @@ export default function CommunityScreen() {
             setIsLoading(false);
             setRefreshing(false);
         }
-    }, [activeTab, session]);
+    }, [activeTab, session, showcaseMode, sortBy, activeTag]);
 
     useEffect(() => {
         setIsLoading(true);
         fetchPosts();
     }, [fetchPosts]);
 
-    // 화면 포커스 복귀 시 stale > 5초면 자동 갱신
-    // (게시글 상세에서 좋아요 누르고 뒤로 왔을 때 카운트 즉시 반영)
-    const lastFetchedAt = useRef(0);
+    // 작성/수정 화면에서 돌아왔을 때만 자동 새로고침.
+    // 매 탭 전환마다 fetch하면 느려짐 → 30초 이상 지났을 때만 refetch.
+    const isFirstFocusRef = useRef(true);
+    const lastFetchedAtRef = useRef(Date.now());
+    useEffect(() => { lastFetchedAtRef.current = Date.now(); }, [posts]);
     useFocusEffect(
         useCallback(() => {
-            const now = Date.now();
-            if (now - lastFetchedAt.current > 5000) {
-                lastFetchedAt.current = now;
-                fetchPosts();
+            if (isFirstFocusRef.current) {
+                isFirstFocusRef.current = false;
+                return;
             }
+            // 30초 이내 focus는 무시 (탭 전환만 한 경우)
+            if (Date.now() - lastFetchedAtRef.current < 30_000) return;
+            fetchPosts();
         }, [fetchPosts]),
     );
 
+    // 실시간 게시글 동기화 — 글로벌 구독은 비용 큼 (다른 사용자 모든 글마다 refetch).
+    // 다음 디바이스 동기화는 pull-to-refresh로 충분하다고 판단, 글로벌 realtime 제거.
+    // (필요 시 본인 user_id 글만 구독으로 좁히는 방향 검토)
+
     async function onRefresh() {
         setRefreshing(true);
-        lastFetchedAt.current = Date.now();
         await fetchPosts();
     }
 
@@ -151,7 +225,7 @@ export default function CommunityScreen() {
         || (p.content ?? "").toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.gray[50];
+    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.gray[50];
 
     return (
         <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
@@ -160,32 +234,38 @@ export default function CommunityScreen() {
             {/* 헤더 + 검색 */}
             <View style={styles.headerWrap}>
                 <View style={styles.headerRow}>
-                    <Text style={[styles.title, { color: isMemorialMode ? COLORS.white : COLORS.gray[900] }]}>
-                        커뮤니티
+                    {showcaseMode && (
+                        <TouchableOpacity onPress={() => router.replace("/(tabs)/community")} hitSlop={8} style={{ marginRight: 8 }}>
+                            <Ionicons name="chevron-back" size={22} color={isDarkMode ? COLORS.white : COLORS.gray[900]} />
+                        </TouchableOpacity>
+                    )}
+                    <Text style={[styles.title, { color: isDarkMode ? COLORS.white : COLORS.gray[900] }]}>
+                        {showcaseMode ? "함께 보기" : "커뮤니티"}
                     </Text>
                 </View>
 
                 <View style={[styles.searchBar, {
-                    backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.white,
-                    borderColor: isMemorialMode ? COLORS.gray[700] : COLORS.gray[200],
+                    backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.white,
+                    borderColor: isDarkMode ? COLORS.gray[700] : COLORS.gray[200],
                 }]}>
                     <Ionicons name="search-outline" size={18} color={COLORS.gray[400]} />
                     <TextInput
-                        style={[styles.searchInput, { color: isMemorialMode ? COLORS.white : COLORS.gray[900] }]}
+                        style={[styles.searchInput, { color: isDarkMode ? COLORS.white : COLORS.gray[900] }]}
                         placeholder="게시글 검색..."
                         placeholderTextColor={COLORS.gray[400]}
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
+                        value={searchInput}
+                        onChangeText={setSearchInput}
                     />
-                    {searchQuery.length > 0 && (
-                        <TouchableOpacity onPress={() => setSearchQuery("")}>
+                    {searchInput.length > 0 && (
+                        <TouchableOpacity onPress={() => setSearchInput("")}>
                             <Ionicons name="close-circle" size={18} color={COLORS.gray[400]} />
                         </TouchableOpacity>
                     )}
                 </View>
             </View>
 
-            {/* 서브카테고리 탭 */}
+            {/* 서브카테고리 탭 (showcase 모드에서는 숨김) */}
+            {!showcaseMode && (
             <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -194,8 +274,8 @@ export default function CommunityScreen() {
             >
                 {SUBCATEGORIES.map((cat) => {
                     const active = activeTab === cat.id;
-                    const inactiveBg = isMemorialMode ? COLORS.gray[800] : COLORS.gray[100];
-                    const inactiveColor = isMemorialMode ? COLORS.gray[300] : COLORS.gray[700];
+                    const inactiveBg = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
+                    const inactiveColor = isDarkMode ? COLORS.gray[300] : COLORS.gray[700];
                     return (
                         <TouchableOpacity
                             key={cat.id}
@@ -223,6 +303,92 @@ export default function CommunityScreen() {
                     );
                 })}
             </ScrollView>
+            )}
+
+            {/* 정렬 + 인기 해시태그 (showcase 모드 제외) */}
+            {!showcaseMode && (
+                <View style={styles.toolbar}>
+                    {/* 정렬 칩 */}
+                    <View style={styles.sortRow}>
+                        {(["latest", "popular", "comments"] as const).map((s) => {
+                            const active = sortBy === s;
+                            const label = s === "latest" ? "최신순" : s === "popular" ? "인기순" : "댓글순";
+                            return (
+                                <TouchableOpacity
+                                    key={s}
+                                    onPress={() => setSortBy(s)}
+                                    style={[
+                                        styles.sortChip,
+                                        active
+                                            ? { backgroundColor: accentColor }
+                                            : {
+                                                backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100],
+                                            },
+                                    ]}
+                                    activeOpacity={0.85}
+                                >
+                                    <Text style={[
+                                        styles.sortChipText,
+                                        {
+                                            color: active
+                                                ? "#fff"
+                                                : (isDarkMode ? COLORS.gray[300] : COLORS.gray[700]),
+                                        },
+                                    ]}>
+                                        {label}
+                                    </Text>
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </View>
+
+                    {/* 인기 해시태그 (있으면 노출) */}
+                    {trendingTags.length > 0 && (
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.hashRow}
+                            style={styles.hashRowOuter}
+                        >
+                            {activeTag && (
+                                <TouchableOpacity
+                                    onPress={() => setActiveTag(null)}
+                                    style={[
+                                        styles.hashChip,
+                                        { backgroundColor: COLORS.red[100], borderColor: COLORS.red[200] },
+                                    ]}
+                                    activeOpacity={0.85}
+                                >
+                                    <Ionicons name="close" size={11} color={COLORS.red[600]} />
+                                    <Text style={[styles.hashChipText, { color: COLORS.red[600] }]}>
+                                        {activeTag}
+                                    </Text>
+                                </TouchableOpacity>
+                            )}
+                            {trendingTags.filter((t) => t !== activeTag).slice(0, 10).map((tag) => (
+                                <TouchableOpacity
+                                    key={tag}
+                                    onPress={() => setActiveTag(tag)}
+                                    style={[
+                                        styles.hashChip,
+                                        {
+                                            backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.white,
+                                            borderColor: isDarkMode ? COLORS.gray[700] : COLORS.gray[200],
+                                        },
+                                    ]}
+                                    activeOpacity={0.85}
+                                >
+                                    <Text style={[styles.hashChipText, {
+                                        color: isDarkMode ? COLORS.gray[300] : COLORS.gray[700],
+                                    }]}>
+                                        #{tag}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+                    )}
+                </View>
+            )}
 
             {/* 카드 리스트 */}
             {isLoading ? (
@@ -258,9 +424,16 @@ export default function CommunityScreen() {
                 />
             )}
 
-            {/* FAB 글쓰기 */}
+            {/* FAB — showcase 모드는 AI 영상 생성으로, 일반은 글쓰기로 */}
             <TouchableOpacity
-                onPress={() => router.push({ pathname: "/post/write", params: { subcategory: activeTab } })}
+                onPress={() => {
+                    if (showcaseMode) {
+                        // 함께 보기는 AI 영상 갤러리 → 영상 생성 폼 진입
+                        router.push("/(tabs)/record?openVideo=1");
+                    } else {
+                        router.push({ pathname: "/post/write", params: { subcategory: activeTab } });
+                    }
+                }}
                 style={[styles.fab, { bottom: 84 + Math.max(insets.bottom, 8) }]}
                 activeOpacity={0.85}
             >
@@ -268,7 +441,7 @@ export default function CommunityScreen() {
                     colors={activeSubcat.gradient}
                     style={styles.fabGradient}
                 >
-                    <Ionicons name="create" size={22} color="#fff" />
+                    <Ionicons name={showcaseMode ? "videocam" : "create"} size={22} color="#fff" />
                 </LinearGradient>
             </TouchableOpacity>
         </SafeAreaView>
@@ -280,14 +453,15 @@ function PostCard({ post, isMemorialMode, onPress }: {
     isMemorialMode: boolean;
     onPress: () => void;
 }) {
+    const { isDarkMode } = useDarkMode();
     const hasImage = post.images && post.images.length > 0;
     return (
         <TouchableOpacity
             onPress={onPress}
             activeOpacity={0.85}
             style={[styles.card, {
-                backgroundColor: isMemorialMode ? COLORS.gray[900] : COLORS.white,
-                borderColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[100],
+                backgroundColor: isDarkMode ? COLORS.gray[900] : COLORS.white,
+                borderColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100],
             }]}
         >
             <View style={styles.cardBody}>
@@ -298,14 +472,14 @@ function PostCard({ post, isMemorialMode, onPress }: {
                 ) : null}
 
                 <Text style={[styles.cardTitle, {
-                    color: isMemorialMode ? COLORS.white : COLORS.gray[900],
+                    color: isDarkMode ? COLORS.white : COLORS.gray[900],
                 }]} numberOfLines={2}>
                     {post.title}
                 </Text>
 
                 {post.preview ? (
                     <Text style={[styles.cardPreview, {
-                        color: isMemorialMode ? COLORS.gray[400] : COLORS.gray[600],
+                        color: isDarkMode ? COLORS.gray[400] : COLORS.gray[600],
                     }]} numberOfLines={2}>
                         {post.preview}
                     </Text>
@@ -379,6 +553,33 @@ const styles = StyleSheet.create({
     },
     subcatLabel: { fontSize: 13, fontWeight: "500" },
     subcatLabelActive: { fontSize: 13, fontWeight: "600", color: "#fff" },
+    toolbar: {
+        paddingHorizontal: 16,
+        paddingBottom: 8,
+    },
+    sortRow: {
+        flexDirection: "row",
+        gap: 6,
+        marginBottom: 8,
+    },
+    sortChip: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 9999,
+    },
+    sortChipText: { fontSize: 12, fontWeight: "600" },
+    hashRowOuter: { flexGrow: 0, flexShrink: 0 },
+    hashRow: { gap: 6, paddingRight: 16 },
+    hashChip: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 9999,
+        borderWidth: 1,
+    },
+    hashChipText: { fontSize: 11, fontWeight: "600" },
     card: {
         marginHorizontal: 16,
         marginVertical: 6,

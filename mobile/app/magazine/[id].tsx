@@ -21,7 +21,10 @@ import * as Haptics from "expo-haptics";
 import { API_BASE_URL } from "@/config/constants";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { COLORS } from "@/lib/theme";
+import { buildMagazineCards, type MagazineCard } from "@/lib/magazine-cards";
+import { supabase } from "@/lib/supabase";
 
 interface ArticleDetail {
     id: string;
@@ -36,6 +39,7 @@ interface ArticleDetail {
     created_at: string;
     author?: string;
     tags?: string[];
+    read_time?: string | number;
 }
 
 const { width: SCREEN_W } = Dimensions.get("window");
@@ -79,10 +83,15 @@ function normalizeArticle(raw: unknown): ArticleDetail | null {
         created_at: asString(r.created_at ?? r.createdAt),
         author: typeof r.author === "string" ? r.author : undefined,
         tags: Array.isArray(r.tags) ? r.tags.filter((t): t is string => typeof t === "string") : undefined,
+        // DB는 read_time이 string ("5분") — string/number 모두 허용
+        read_time: typeof r.read_time === "string" || typeof r.read_time === "number"
+            ? r.read_time
+            : (typeof r.readTime === "string" || typeof r.readTime === "number" ? r.readTime : undefined),
     };
 }
 
 export default function MagazineReaderScreen() {
+    const { isDarkMode } = useDarkMode();
     const router = useRouter();
     const { id } = useLocalSearchParams<{ id: string }>();
     const { session } = useAuth();
@@ -98,15 +107,58 @@ export default function MagazineReaderScreen() {
 
     useEffect(() => { load(); }, [id]);
 
+    // 조회수 증가 — session 준비된 후 1회 (id 또는 session 변경 시 재시도)
+    useEffect(() => {
+        if (id && session?.access_token) {
+            incrementView();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id, session?.access_token]);
+
+    async function incrementView() {
+        // 서버 PATCH는 인증 필수 (조회수/좋아요 조작 방지). 비로그인은 카운트 안 됨.
+        if (!session?.access_token) return;
+        try {
+            await fetch(`${API_BASE_URL}/api/magazine`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${session.access_token}`,
+                },
+                body: JSON.stringify({ articleId: id, action: "view" }),
+            });
+        } catch {
+            // silent
+        }
+    }
+
     async function load() {
         try {
-            const headers: Record<string, string> = {};
-            if (session) headers["Authorization"] = `Bearer ${session.access_token}`;
-            const res = await fetch(`${API_BASE_URL}/api/magazine/${id}`, { headers });
-            if (res.ok) {
-                const data = await res.json();
-                setArticle(normalizeArticle(data?.article ?? data));
+            // 웹은 /magazine/[id] SSR 페이지에서 Supabase 직접 조회 (GET API 없음).
+            // 모바일은 supabase 클라이언트로 동일 쿼리 + 좋아요 join.
+            const { data: row, error } = await supabase
+                .from("magazine_articles")
+                .select("*")
+                .eq("id", id)
+                .eq("status", "published")
+                .maybeSingle();
+            if (error || !row) {
+                setIsLoading(false);
+                return;
             }
+
+            // 좋아요 여부 별도 조회 (RLS로 본인 것만 보임)
+            let liked = false;
+            if (session?.access_token && row.id) {
+                const { data: likeRow } = await supabase
+                    .from("magazine_likes")
+                    .select("id")
+                    .eq("article_id", row.id)
+                    .maybeSingle();
+                liked = !!likeRow;
+            }
+
+            setArticle(normalizeArticle({ ...row, liked }));
         } catch {
             // ignore
         } finally {
@@ -118,11 +170,12 @@ export default function MagazineReaderScreen() {
         if (!session || !article || isLiking) return;
         setIsLiking(true);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        const newLiked = !article.liked;
-        // 1. 낙관적 UI 업데이트
+        const prevLiked = article.liked;
+        const prevLikes = article.likes;
+        const newLiked = !prevLiked;
+        // 낙관적 업데이트
         setArticle((a) => a ? { ...a, liked: newLiked, likes: a.likes + (newLiked ? 1 : -1) } : a);
         try {
-            // articleId는 UUID라 절대 Number()로 감싸지 말 것 (NaN → 서버 400)
             const res = await fetch(`${API_BASE_URL}/api/magazine`, {
                 method: "PATCH",
                 headers: {
@@ -131,22 +184,15 @@ export default function MagazineReaderScreen() {
                 },
                 body: JSON.stringify({ articleId: id, action: newLiked ? "like" : "unlike" }),
             });
-            if (!res.ok) {
-                // 서버 실패 → 롤백
-                setArticle((a) => a ? { ...a, liked: !newLiked, likes: a.likes + (newLiked ? -1 : 1) } : a);
-                return;
-            }
-            // 2. 서버 truth로 강제 동기화 (response의 likes / liked 반영)
-            const data = await res.json().catch(() => null) as { likes?: number; liked?: boolean } | null;
-            if (data && (typeof data.likes === "number" || typeof data.liked === "boolean")) {
-                setArticle((a) => a ? {
-                    ...a,
-                    likes: typeof data.likes === "number" ? data.likes : a.likes,
-                    liked: typeof data.liked === "boolean" ? data.liked : a.liked,
-                } : a);
+            if (!res.ok) throw new Error("PATCH failed");
+            const data = await res.json();
+            // 서버 응답으로 truth 정렬 (race/중복 클릭 방어)
+            if (typeof data.liked === "boolean" && typeof data.likes === "number") {
+                setArticle((a) => a ? { ...a, liked: data.liked, likes: data.likes } : a);
             }
         } catch {
-            setArticle((a) => a ? { ...a, liked: !newLiked, likes: a.likes + (newLiked ? -1 : 1) } : a);
+            // 롤백
+            setArticle((a) => a ? { ...a, liked: prevLiked, likes: prevLikes } : a);
         } finally {
             setIsLiking(false);
         }
@@ -154,36 +200,32 @@ export default function MagazineReaderScreen() {
 
     async function handleShare() {
         if (!article) return;
-        await Share.share({
-            title: article.title,
-            message: `${article.title}\n\nhttps://mementoani.com/magazine/${id}`,
-        });
+        const url = `https://mementoani.com/magazine/${id}`;
+        const summary = article.summary?.trim();
+        // iOS는 url 별도 필드로 rich preview, Android는 message에 포함
+        const message = summary
+            ? `${article.title}\n\n${summary}\n\n${url}`
+            : `${article.title}\n\n${url}`;
+        try {
+            await Share.share({
+                title: article.title,
+                message,
+                url, // iOS용 — 카카오톡/메시지/메일에서 rich link 표시
+            });
+        } catch {
+            // 사용자 취소 — silent
+        }
     }
 
-    // 카드 빌드: cover + summary + bodies + end
-    const cards = useMemo(() => {
+    // 카드 빌드: 웹과 동일한 splitContent 로직 (HTML <hr>/<h2>/<img>/<blockquote> 인식)
+    const cards = useMemo<MagazineCard[]>(() => {
         if (!article) return [];
-        const list: Array<{ type: "cover" | "summary" | "body" | "end"; text?: string }> = [];
-        list.push({ type: "cover" });
-        if (article.summary) list.push({ type: "summary" });
-
-        // 본문을 단락으로 분할 (\n\n 또는 .\n) — 각 단락이 한 카드
-        const paragraphs = article.content
-            .split(/\n\n+/)
-            .map((p) => p.trim())
-            .filter((p) => p.length > 0);
-
-        for (const para of paragraphs) {
-            list.push({ type: "body", text: para });
-        }
-
-        list.push({ type: "end" });
-        return list;
+        return buildMagazineCards(article);
     }, [article]);
 
     if (isLoading) {
         return (
-            <SafeAreaView style={[styles.container, { backgroundColor: isMemorialMode ? COLORS.gray[950] : COLORS.white }]}>
+            <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode ? COLORS.gray[950] : COLORS.white }]}>
                 <View style={styles.center}>
                     <ActivityIndicator size="large" color={accentColor} />
                 </View>
@@ -193,7 +235,7 @@ export default function MagazineReaderScreen() {
 
     if (!article) {
         return (
-            <SafeAreaView style={[styles.container, { backgroundColor: isMemorialMode ? COLORS.gray[950] : COLORS.white }]}>
+            <SafeAreaView style={[styles.container, { backgroundColor: isDarkMode ? COLORS.gray[950] : COLORS.white }]}>
                 <View style={styles.center}>
                     <Text style={{ color: COLORS.gray[500] }}>기사를 불러올 수 없습니다.</Text>
                 </View>
@@ -201,7 +243,7 @@ export default function MagazineReaderScreen() {
         );
     }
 
-    const bgColor = isMemorialMode ? COLORS.gray[950] : COLORS.white;
+    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.white;
     const totalCards = cards.length;
     const progressPct = Math.min(100, Math.round(((currentCard + 1) / totalCards) * 100));
 
@@ -210,14 +252,20 @@ export default function MagazineReaderScreen() {
             <Stack.Screen options={{ headerShown: false }} />
             {/* 상단 바: close + progress + share */}
             <View style={styles.topBar}>
-                <TouchableOpacity onPress={() => router.back()} hitSlop={8}>
-                    <Ionicons name="arrow-back" size={22} color={isMemorialMode ? COLORS.white : COLORS.gray[800]} />
+                <TouchableOpacity
+                    onPress={() => {
+                        if (router.canGoBack()) router.back();
+                        else router.replace("/(tabs)/magazine");
+                    }}
+                    hitSlop={8}
+                >
+                    <Ionicons name="arrow-back" size={22} color={isDarkMode ? COLORS.white : COLORS.gray[800]} />
                 </TouchableOpacity>
                 <View style={styles.progressTrack}>
                     <View style={[styles.progressFill, { width: `${progressPct}%`, backgroundColor: accentColor }]} />
                 </View>
                 <TouchableOpacity onPress={handleShare} hitSlop={8}>
-                    <Ionicons name="share-outline" size={22} color={isMemorialMode ? COLORS.white : COLORS.gray[800]} />
+                    <Ionicons name="share-outline" size={22} color={isDarkMode ? COLORS.white : COLORS.gray[800]} />
                 </TouchableOpacity>
             </View>
 
@@ -240,8 +288,14 @@ export default function MagazineReaderScreen() {
                     if (card.type === "summary") {
                         return <SummaryCard key={idx} article={article} isMemorialMode={isMemorialMode} accentColor={accentColor} />;
                     }
-                    if (card.type === "body") {
-                        return <BodyCard key={idx} text={card.text ?? ""} isMemorialMode={isMemorialMode} index={idx} />;
+                    if (card.type === "text") {
+                        return <TextCard key={idx} card={card} isMemorialMode={isMemorialMode} index={idx} />;
+                    }
+                    if (card.type === "image") {
+                        return <ImageCard key={idx} card={card} isMemorialMode={isMemorialMode} />;
+                    }
+                    if (card.type === "quote") {
+                        return <QuoteCard key={idx} card={card} accentColor={accentColor} />;
                     }
                     return (
                         <EndCard
@@ -251,7 +305,15 @@ export default function MagazineReaderScreen() {
                             accentColor={accentColor}
                             isLiking={isLiking}
                             onLike={handleLike}
-                            onBack={() => router.back()}
+                            onBack={() => {
+                                // router.back()이 stack 상태에 따라 hang하는 케이스 회피.
+                                // 매거진 탭으로 명시적 navigate.
+                                if (router.canGoBack()) {
+                                    router.back();
+                                } else {
+                                    router.replace("/(tabs)/magazine");
+                                }
+                            }}
                         />
                     );
                 })}
@@ -268,7 +330,7 @@ export default function MagazineReaderScreen() {
                     disabled={currentCard === 0}
                     style={[styles.navBtn, currentCard === 0 && { opacity: 0.3 }]}
                 >
-                    <Ionicons name="chevron-back" size={20} color={isMemorialMode ? COLORS.white : COLORS.gray[800]} />
+                    <Ionicons name="chevron-back" size={20} color={isDarkMode ? COLORS.white : COLORS.gray[800]} />
                 </TouchableOpacity>
                 <TouchableOpacity
                     onPress={() => {
@@ -279,7 +341,7 @@ export default function MagazineReaderScreen() {
                     disabled={currentCard >= totalCards - 1}
                     style={[styles.navBtn, currentCard >= totalCards - 1 && { opacity: 0.3 }]}
                 >
-                    <Ionicons name="chevron-forward" size={20} color={isMemorialMode ? COLORS.white : COLORS.gray[800]} />
+                    <Ionicons name="chevron-forward" size={20} color={isDarkMode ? COLORS.white : COLORS.gray[800]} />
                 </TouchableOpacity>
             </View>
         </SafeAreaView>
@@ -287,6 +349,7 @@ export default function MagazineReaderScreen() {
 }
 
 function CoverCard({ article, isMemorialMode }: { article: ArticleDetail; isMemorialMode: boolean }) {
+    const { isDarkMode } = useDarkMode();
     const gradient = STAGE_GRADIENTS[article.badge ?? ""] ?? [COLORS.gray[400], COLORS.gray[500]];
     return (
         <View style={[styles.card, { width: SCREEN_W }]}>
@@ -310,16 +373,28 @@ function CoverCard({ article, isMemorialMode }: { article: ArticleDetail; isMemo
                 ) : null}
 
                 <Text style={[styles.coverTitle, {
-                    color: isMemorialMode ? COLORS.white : COLORS.gray[900],
+                    color: isDarkMode ? COLORS.white : COLORS.gray[900],
                 }]}>
                     {article.title}
                 </Text>
 
-                {article.author || article.created_at ? (
-                    <Text style={styles.coverMeta}>
-                        {article.author ? `${article.author} · ` : ""}
-                        {article.created_at.slice(0, 10)}
-                    </Text>
+                {article.author || article.created_at || article.read_time ? (
+                    <View style={styles.coverMetaRow}>
+                        <Text style={styles.coverMeta}>
+                            {article.author ? `${article.author} · ` : ""}
+                            {article.created_at.slice(0, 10)}
+                        </Text>
+                        {article.read_time ? (
+                            <View style={styles.readTimeBadge}>
+                                <Ionicons name="time-outline" size={11} color="#fff" />
+                                <Text style={styles.readTimeText}>
+                                    {typeof article.read_time === "number"
+                                        ? `${article.read_time}분 읽기`
+                                        : `${article.read_time} 읽기`}
+                                </Text>
+                            </View>
+                        ) : null}
+                    </View>
                 ) : null}
             </View>
         </View>
@@ -327,6 +402,7 @@ function CoverCard({ article, isMemorialMode }: { article: ArticleDetail; isMemo
 }
 
 function SummaryCard({ article, isMemorialMode, accentColor }: { article: ArticleDetail; isMemorialMode: boolean; accentColor: string }) {
+    const { isDarkMode } = useDarkMode();
     return (
         <ScrollView
             style={[styles.card, { width: SCREEN_W }]}
@@ -334,11 +410,11 @@ function SummaryCard({ article, isMemorialMode, accentColor }: { article: Articl
         >
             <Text style={[styles.cardLabel, { color: accentColor }]}>요약</Text>
             <View style={[styles.summaryBox, {
-                backgroundColor: isMemorialMode ? COLORS.gray[800] : COLORS.gray[50],
+                backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[50],
                 borderLeftColor: accentColor,
             }]}>
                 <Text style={[styles.summaryText, {
-                    color: isMemorialMode ? COLORS.gray[200] : COLORS.gray[700],
+                    color: isDarkMode ? COLORS.gray[200] : COLORS.gray[700],
                 }]}>
                     {article.summary}
                 </Text>
@@ -360,22 +436,83 @@ function SummaryCard({ article, isMemorialMode, accentColor }: { article: Articl
     );
 }
 
-function BodyCard({ text, isMemorialMode, index }: { text: string; isMemorialMode: boolean; index: number }) {
+function TextCard({ card, isMemorialMode, index }: { card: MagazineCard; isMemorialMode: boolean; index: number }) {
+    const { isDarkMode } = useDarkMode();
     const isAlt = index % 2 === 0;
-    const bg = isMemorialMode
+    const bg = isDarkMode
         ? (isAlt ? COLORS.gray[900] : COLORS.gray[950])
         : (isAlt ? COLORS.gray[50] : COLORS.white);
+    const textColor = isDarkMode ? COLORS.gray[200] : COLORS.gray[800];
 
     return (
         <ScrollView
             style={[styles.card, { width: SCREEN_W, backgroundColor: bg }]}
             contentContainerStyle={styles.cardScrollContent}
         >
-            <Text style={[styles.bodyText, {
-                color: isMemorialMode ? COLORS.gray[200] : COLORS.gray[800],
-            }]}>
-                {text}
-            </Text>
+            {card.heading ? (
+                <Text style={[styles.bodyHeading, { color: isDarkMode ? COLORS.white : COLORS.gray[900] }]}>
+                    {card.heading}
+                </Text>
+            ) : null}
+            {(card.paragraphs ?? []).map((p, i) => (
+                <Text
+                    key={i}
+                    style={[styles.bodyText, { color: textColor, marginBottom: 16 }]}
+                >
+                    {p}
+                </Text>
+            ))}
+        </ScrollView>
+    );
+}
+
+function ImageCard({ card, isMemorialMode }: { card: MagazineCard; isMemorialMode: boolean }) {
+    const { isDarkMode } = useDarkMode();
+    const bg = isDarkMode ? COLORS.gray[950] : COLORS.gray[50];
+    return (
+        <ScrollView
+            style={[styles.card, { width: SCREEN_W, backgroundColor: bg }]}
+            contentContainerStyle={[styles.cardScrollContent, { padding: 0, paddingBottom: 80 }]}
+        >
+            {card.imageSrc ? (
+                <Image
+                    source={{ uri: card.imageSrc }}
+                    style={{ width: SCREEN_W, height: SCREEN_W * 0.7 }}
+                    resizeMode="cover"
+                />
+            ) : null}
+            {card.caption ? (
+                <Text style={[styles.imageCaption, {
+                    color: isDarkMode ? COLORS.gray[400] : COLORS.gray[500],
+                }]}>
+                    {card.caption}
+                </Text>
+            ) : null}
+        </ScrollView>
+    );
+}
+
+function QuoteCard({ card, accentColor }: { card: MagazineCard; accentColor: string }) {
+    const { isDarkMode } = useDarkMode();
+    const bg = isDarkMode ? COLORS.gray[900] : COLORS.gray[50];
+    return (
+        <ScrollView
+            style={[styles.card, { width: SCREEN_W, backgroundColor: bg }]}
+            contentContainerStyle={[styles.cardScrollContent, { justifyContent: "center" }]}
+        >
+            <View style={[styles.quoteBox, { borderLeftColor: accentColor }]}>
+                <Ionicons
+                    name="chatbox-ellipses"
+                    size={32}
+                    color={accentColor}
+                    style={{ opacity: 0.3, marginBottom: 8 }}
+                />
+                <Text style={[styles.quoteText, {
+                    color: isDarkMode ? COLORS.white : COLORS.gray[800],
+                }]}>
+                    {card.text}
+                </Text>
+            </View>
         </ScrollView>
     );
 }
@@ -388,6 +525,7 @@ function EndCard({ article, isMemorialMode, accentColor, isLiking, onLike, onBac
     onLike: () => void;
     onBack: () => void;
 }) {
+    const { isDarkMode } = useDarkMode();
     return (
         <ScrollView
             style={[styles.card, { width: SCREEN_W }]}
@@ -396,7 +534,7 @@ function EndCard({ article, isMemorialMode, accentColor, isLiking, onLike, onBac
             <View style={styles.endTop}>
                 <Ionicons name="checkmark-circle" size={48} color={accentColor} />
                 <Text style={[styles.endTitle, {
-                    color: isMemorialMode ? COLORS.white : COLORS.gray[900],
+                    color: isDarkMode ? COLORS.white : COLORS.gray[900],
                 }]}>
                     읽어주셔서 감사해요
                 </Text>
@@ -486,6 +624,22 @@ const styles = StyleSheet.create({
     coverBadgeText: { fontSize: 12, fontWeight: "700", color: "#fff" },
     coverTitle: { fontSize: 26, fontWeight: "800", lineHeight: 34 },
     coverMeta: { fontSize: 13, color: COLORS.gray[500] },
+    coverMetaRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
+        flexWrap: "wrap",
+    },
+    readTimeBadge: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        backgroundColor: "rgba(0,0,0,0.5)",
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 9999,
+    },
+    readTimeText: { fontSize: 10, fontWeight: "600", color: "#fff" },
     summaryBox: {
         padding: 20,
         borderRadius: 16,
@@ -508,6 +662,25 @@ const styles = StyleSheet.create({
     statValue: { fontSize: 20, fontWeight: "700", color: COLORS.gray[800] },
     statLabel: { fontSize: 11, color: COLORS.gray[500] },
     bodyText: { fontSize: 17, lineHeight: 30 },
+    bodyHeading: { fontSize: 22, fontWeight: "700", marginBottom: 16, lineHeight: 30 },
+    imageCaption: {
+        fontSize: 13,
+        fontStyle: "italic",
+        textAlign: "center",
+        paddingHorizontal: 24,
+        paddingVertical: 12,
+    },
+    quoteBox: {
+        borderLeftWidth: 4,
+        paddingLeft: 16,
+        paddingVertical: 8,
+    },
+    quoteText: {
+        fontSize: 22,
+        lineHeight: 34,
+        fontWeight: "500",
+        fontStyle: "italic",
+    },
     endTop: { alignItems: "center", paddingVertical: 32, gap: 8 },
     endTitle: { fontSize: 22, fontWeight: "700" },
     endSub: { fontSize: 14, color: COLORS.gray[500], textAlign: "center" },

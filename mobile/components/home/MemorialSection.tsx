@@ -6,6 +6,7 @@
  * 발자국 데코는 단순 Image/이모지로 대체.
  */
 
+import { useDarkMode } from "@/contexts/ThemeContext";
 import { useEffect, useRef, useState } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity, Image,
@@ -41,6 +42,7 @@ const STARS = [
 ];
 
 function StarParticle({ left, size, duration, delay }: typeof STARS[0]) {
+    const { isDarkMode } = useDarkMode();
     const anim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
@@ -78,6 +80,7 @@ function StarParticle({ left, size, duration, delay }: typeof STARS[0]) {
 }
 
 export default function MemorialSection() {
+    const { isDarkMode } = useDarkMode();
     const router = useRouter();
     const { session } = useAuth();
     const [pets, setPets] = useState<MemorialPet[]>([]);
@@ -181,8 +184,8 @@ export default function MemorialSection() {
                     <Ionicons name="cloudy-outline" size={18} color="#fff" />
                 </LinearGradient>
                 <View>
-                    <Text style={styles.title}>마음속에 영원히</Text>
-                    <Text style={styles.subtitle}>영원히 마음속에 함께해요</Text>
+                    <Text style={[styles.title, isDarkMode && { color: COLORS.memorial[300] }]}>마음속에 영원히</Text>
+                    <Text style={[styles.subtitle, { color: isDarkMode ? COLORS.gray[400] : COLORS.gray[500] }]}>영원히 마음속에 함께해요</Text>
                 </View>
             </View>
 
@@ -208,7 +211,7 @@ export default function MemorialSection() {
                     pets.map((pet) => (
                         <TouchableOpacity
                             key={pet.id}
-                            style={styles.card}
+                            style={[styles.card, { backgroundColor: isDarkMode ? COLORS.gray[900] : COLORS.white }]}
                             activeOpacity={0.85}
                             onPress={() => setSelectedPet(pet)}
                         >
@@ -236,8 +239,8 @@ export default function MemorialSection() {
                                 ) : null}
                             </View>
                             <View style={styles.cardBody}>
-                                <Text style={styles.cardName}>{pet.name}</Text>
-                                <Text style={styles.cardBreed} numberOfLines={1}>
+                                <Text style={[styles.cardName, { color: isDarkMode ? COLORS.white : COLORS.gray[800] }]}>{pet.name}</Text>
+                                <Text style={[styles.cardBreed, { color: isDarkMode ? COLORS.gray[400] : COLORS.gray[500] }]} numberOfLines={1}>
                                     {pet.type}{pet.breed ? ` / ${pet.breed}` : ""}
                                 </Text>
                                 <View style={styles.divider} />
@@ -304,11 +307,10 @@ const styles = StyleSheet.create({
         justifyContent: "center",
     },
     title: { fontSize: 18, fontWeight: "700", color: COLORS.memorial[600] },
-    subtitle: { fontSize: 13, color: COLORS.gray[500], marginTop: 2 },
+    subtitle: { fontSize: 13, marginTop: 2 },
     scrollContent: { paddingHorizontal: 16, gap: 16, paddingBottom: 16 },
     card: {
         width: 220,
-        backgroundColor: COLORS.white,
         borderWidth: 1,
         borderColor: "rgba(252, 211, 77, 0.3)",
         borderRadius: 16,
@@ -351,8 +353,8 @@ const styles = StyleSheet.create({
     },
     yearBadgeText: { fontSize: 11, fontWeight: "500", color: "#fff" },
     cardBody: { padding: 16, alignItems: "center", gap: 6 },
-    cardName: { fontSize: 16, fontWeight: "700", color: COLORS.gray[800] },
-    cardBreed: { fontSize: 12, color: COLORS.gray[500] },
+    cardName: { fontSize: 16, fontWeight: "700" },
+    cardBreed: { fontSize: 12 },
     divider: { width: 32, height: 1, backgroundColor: "rgba(252, 211, 77, 0.6)", marginVertical: 4 },
     condolenceRow: { flexDirection: "row", alignItems: "center", gap: 6 },
     condolenceText: { fontSize: 12, color: COLORS.memorial[500], fontWeight: "500" },

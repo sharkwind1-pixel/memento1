@@ -88,10 +88,23 @@ export interface ChatMessage {
     content: string;
     timestamp: Date;
     emotion?: string;
+    emotionScore?: number;
     isError?: boolean;
     isStreaming?: boolean;
-    matchedPhoto?: { url: string; caption: string };
+    type?: "reminder-suggestion" | "crisis-alert";
+    matchedPhoto?: { url: string; caption?: string };
     matchedTimeline?: { date: string; title: string; content: string };
+    nearbyPlaces?: Array<{ name: string; address?: string; distance?: number | string; phone?: string; mapUrl?: string; category?: string }>;
+    crisisAlert?: {
+        message: string;
+        resources?: Array<{ name: string; phone: string; description?: string }>;
+    };
+    suggestedReminder?: {
+        title: string;
+        type: string;
+        schedule: { type: string; time: string; dayOfWeek?: number; dayOfMonth?: number };
+    };
+    retryMessage?: string;
 }
 
 export type EmotionType =
@@ -144,6 +157,10 @@ export interface UserProfile {
     isAdmin?: boolean;
     points?: number;
     createdAt?: string;
+    subscriptionTier?: "free" | "basic" | "premium";
+    premiumPlan?: string;
+    subscriptionPhase?: string;
+    premiumExpiresAt?: string;
 }
 
 // ============================================
@@ -210,8 +227,123 @@ export interface LostPet {
 }
 
 // ============================================
+// 9.7 관리자 — 신고 (웹 admin/types.ts 매칭)
+// ============================================
+
+export type ReportStatus = "pending" | "reviewing" | "resolved" | "rejected";
+export type ReportTargetType = "post" | "comment" | "user" | "pet_memorial";
+
+export interface ReportRow {
+    id: string;
+    reporter_id: string;
+    reporter_email?: string;
+    target_type: ReportTargetType;
+    target_id: string;
+    reason: string;
+    description: string | null;
+    status: ReportStatus;
+    resolution_note: string | null;
+    resolved_at: string | null;
+    resolved_by: string | null;
+    created_at: string;
+}
+
+export const REPORT_REASON_LABELS: Record<string, string> = {
+    spam: "스팸/광고",
+    abuse: "욕설/비방",
+    inappropriate: "부적절한 콘텐츠",
+    harassment: "괴롭힘",
+    misinformation: "허위정보",
+    copyright: "저작권 침해",
+    other: "기타",
+};
+
+export const REPORT_TARGET_LABELS: Record<ReportTargetType, string> = {
+    post: "게시물",
+    comment: "댓글",
+    user: "회원",
+    pet_memorial: "기억공간",
+};
+
+export type AdminTab =
+    | "dashboard" | "reports" | "users" | "posts"
+    | "messages" | "inquiries" | "withdrawals" | "magazine";
+
+// ============================================
 // 9. 지역정보
 // ============================================
+
+// ============================================
+// 9.5 미니홈피 / 미니미
+// ============================================
+
+export type MinimiCategory = "dog" | "cat";
+
+export interface MinimiCharacter {
+    slug: string;
+    name: string;
+    category: MinimiCategory;
+    imageUrl: string;
+    price: number;
+    description?: string;
+    imageAspect?: number;
+    footPadding?: number;
+}
+
+export interface MinimiCatalogItem extends MinimiCharacter {
+    id: string;
+    resellPrice: number;
+    isAvailable: boolean;
+    releasedAt?: string;
+    sortOrder?: number;
+}
+
+export interface UserMinimiRow {
+    id: string;            // user_minimi PK (UUID)
+    minimi_id: string;     // catalog slug
+    purchased_at?: string;
+    purchase_price?: number;
+}
+
+export type BackgroundCategory = "nature" | "season" | "special";
+
+export interface BackgroundTheme {
+    id: string;
+    slug: string;
+    name: string;
+    category: BackgroundCategory;
+    price: number;
+    description: string;
+    cssBackground: string;
+    imageUrl?: string;
+}
+
+export interface MinihompySettings {
+    isPublic: boolean;
+    backgroundSlug: string;
+    greeting: string;
+    todayVisitors?: number;
+    totalVisitors?: number;
+    totalLikes?: number;
+    placedMinimi?: PlacedMinimi[];
+}
+
+/** 스테이지에 자유 배치된 미니미 (x/y는 5~95 범위 %) */
+export interface PlacedMinimi {
+    slug: string;
+    x: number;
+    y: number;
+    zIndex: number;
+}
+
+export interface GuestbookEntry {
+    id: string;
+    writerId: string;
+    writerNickname?: string;
+    writerAvatar?: string;
+    content: string;
+    createdAt: string;
+}
 
 export type LocalPostCategory = "hospital" | "walk" | "share" | "trade" | "meet" | "place";
 export type LocalPostBadge = "질문" | "모집중" | "나눔" | "판매" | "후기" | "정보" | "기타";
