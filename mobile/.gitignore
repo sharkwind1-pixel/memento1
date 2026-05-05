@@ -33,6 +33,11 @@ yarn-error.*
 # local env files
 .env*.local
 
+# EAS submit credentials (절대 커밋 금지)
+google-play-key.json
+*-service-account.json
+appstore-connect-api-key.p8
+
 # typescript
 *.tsbuildinfo
 

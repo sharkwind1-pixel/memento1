@@ -3,10 +3,13 @@
     "name": "메멘토애니",
     "slug": "mementoani",
     "version": "1.0.0",
+    "description": "반려동물과 함께하는 모든 순간을 기록하고, 이별 후에도 따뜻한 추억을 간직할 수 있는 메모리얼 커뮤니티 플랫폼",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "scheme": "mementoani",
+    "primaryColor": "#05B2DC",
+    "assetBundlePatterns": ["**/*"],
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -15,7 +18,9 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.mementoani.app",
+      "buildNumber": "1",
       "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
         "NSPhotoLibraryUsageDescription": "반려동물 사진을 업로드하기 위해 갤러리에 접근합니다.",
         "NSCameraUsageDescription": "반려동물 사진을 촬영하기 위해 카메라에 접근합니다.",
         "NSMicrophoneUsageDescription": "동영상 촬영 시 마이크에 접근합니다.",
@@ -62,13 +67,19 @@
         "backgroundColor": "#E0F7FF"
       },
       "package": "com.mementoani.app",
+      "versionCode": 1,
       "permissions": [
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
+        "INTERNET",
         "CAMERA",
-        "NOTIFICATIONS",
+        "READ_MEDIA_IMAGES",
+        "READ_MEDIA_VIDEO",
+        "POST_NOTIFICATIONS",
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION"
+      ],
+      "blockedPermissions": [
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
       ],
       "edgeToEdgeEnabled": true
     },
