@@ -185,12 +185,17 @@ export default function SubscriptionSection({
                 toast.success("구독이 해지되었습니다.");
             }
 
-            // AuthContext 프로필 refresh — 전체 reload 대신 (UX 개선: 백화면 없음)
+            // AuthContext 프로필 refresh + 모든 컴포넌트 캐시(isPremium props/marin'd state) 정리를 위해
+            // 짧은 지연 후 강제 reload. 사용자가 toast 본 뒤 자연스럽게 페이지 새로고침.
             try {
                 await refreshProfile();
             } catch {
-                // fallback: reload
-                window.location.reload();
+                // refresh 실패해도 reload는 그대로 진행
+            } finally {
+                // 800ms — toast 읽고 모달 닫히는 시간. profiles realtime이 0.3s 내 동기화하지만
+                // 일부 컴포넌트(PremiumGate/AIChatLimit 등)가 mount 시점 캐시를 들고 있어
+                // reload로 cold-state 강제. 결제 취소 후 프리미엄 기능 즉시 차단.
+                setTimeout(() => { window.location.reload(); }, 800);
             }
         } catch (e) {
             const msg = e instanceof Error ? e.message : "구독 해지에 실패했습니다";
