@@ -9,7 +9,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Copy, Plus, RefreshCw, Ticket } from "lucide-react";
+import { Copy, Plus, RefreshCw, Ticket, Megaphone, Square, CheckSquare } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface BetaCode {
@@ -24,6 +24,15 @@ interface BetaCode {
     created_at: string;
 }
 
+interface BetaPromotion {
+    enabled: boolean;
+    start_at: string | null;
+    end_at: string | null;
+    points_reward: number;
+    discount_months: number;
+    discount_percent: number;
+}
+
 export default function AdminBetaCodesTab() {
     const [codes, setCodes] = useState<BetaCode[]>([]);
     const [loading, setLoading] = useState(false);
@@ -34,6 +43,54 @@ export default function AdminBetaCodesTab() {
     const [months, setMonths] = useState(3);
     const [note, setNote] = useState("");
     const [customCode, setCustomCode] = useState("");
+    const [promo, setPromo] = useState<BetaPromotion | null>(null);
+    const [promoLoading, setPromoLoading] = useState(false);
+    const [promoDays, setPromoDays] = useState(30);
+
+    const loadPromo = useCallback(async () => {
+        const { data } = await supabase
+            .from("beta_promotion")
+            .select("enabled, start_at, end_at, points_reward, discount_months, discount_percent")
+            .eq("id", 1)
+            .maybeSingle();
+        if (data) setPromo(data as BetaPromotion);
+    }, []);
+
+    useEffect(() => { loadPromo(); }, [loadPromo]);
+
+    async function handleStartPromo() {
+        if (!confirm(`${promoDays}일간 베타 프로모션을 시작합니다.\n신규 가입자 모두 자동으로 ${promo?.points_reward ?? 3000}P + 3개월 50% 할인 적용.\n진행할까요?`)) return;
+        setPromoLoading(true);
+        try {
+            const { data, error } = await supabase.rpc("start_beta_promotion", { _days: promoDays });
+            const result = data as { success?: boolean; error?: string } | null;
+            if (error || !result?.success) {
+                alert(result?.error ?? error?.message ?? "활성화 실패");
+                return;
+            }
+            await loadPromo();
+            alert(`베타 프로모션 시작 (${promoDays}일)`);
+        } finally {
+            setPromoLoading(false);
+        }
+    }
+
+    async function handleStopPromo() {
+        if (!confirm("베타 프로모션을 즉시 종료할까요? (이미 가입한 사용자의 혜택은 유지됨)")) return;
+        setPromoLoading(true);
+        try {
+            const { data, error } = await supabase.rpc("stop_beta_promotion");
+            const result = data as { success?: boolean; error?: string } | null;
+            if (error || !result?.success) {
+                alert(result?.error ?? error?.message ?? "종료 실패");
+                return;
+            }
+            await loadPromo();
+            alert("베타 프로모션 종료됨");
+        } finally {
+            setPromoLoading(false);
+        }
+    }
 
     const refresh = useCallback(async () => {
         setLoading(true);
@@ -96,12 +153,85 @@ export default function AdminBetaCodesTab() {
         navigator.clipboard.writeText(code).catch(() => {});
     }
 
+    const promoActive = !!(promo?.enabled && promo.start_at && promo.end_at &&
+        new Date(promo.end_at) > new Date());
+    const promoEndDateText = promo?.end_at
+        ? new Date(promo.end_at).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })
+        : null;
+
     return (
         <div className="space-y-6">
+            {/* 1) 자동 프로모션 토글 (정식 출시 후 1번만 활성화) */}
+            <div className={`rounded-xl p-5 border ${promoActive
+                ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-700"
+                : "bg-gray-50 dark:bg-gray-900/40 border-gray-200 dark:border-gray-700"
+            }`}>
+                <div className="flex items-start gap-3 mb-3">
+                    <Megaphone size={22} className={promoActive ? "text-emerald-500" : "text-gray-400"} />
+                    <div className="flex-1">
+                        <h3 className="font-bold text-sm">베타 프로모션 자동 적용</h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            활성화 기간 동안 가입한 모든 신규 사용자에게 3,000P + 3개월 50% 할인 자동 부여
+                        </p>
+                    </div>
+                    <span className={`text-xs font-bold px-2 py-1 rounded ${promoActive
+                        ? "bg-emerald-500 text-white"
+                        : "bg-gray-300 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+                    }`}>
+                        {promoActive ? "활성" : "비활성"}
+                    </span>
+                </div>
+
+                {promoActive ? (
+                    <div className="flex items-center justify-between flex-wrap gap-3">
+                        <div className="text-sm">
+                            <CheckSquare size={14} className="inline mr-1 text-emerald-500" />
+                            <span className="font-semibold text-emerald-700 dark:text-emerald-300">
+                                {promoEndDateText}까지
+                            </span>
+                            <span className="text-gray-500 dark:text-gray-400 ml-2">
+                                자동 적용 진행 중
+                            </span>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleStopPromo}
+                            disabled={promoLoading}
+                            className="text-xs bg-red-500 hover:bg-red-600 text-white rounded px-3 py-1.5"
+                        >
+                            즉시 종료
+                        </button>
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <Square size={14} className="text-gray-400" />
+                        <span className="text-xs text-gray-500">기간:</span>
+                        <input
+                            type="number"
+                            min={1}
+                            max={365}
+                            value={promoDays}
+                            onChange={(e) => setPromoDays(Math.max(1, Math.min(365, Number(e.target.value) || 30)))}
+                            className="w-16 rounded border px-2 py-1 text-sm"
+                        />
+                        <span className="text-xs text-gray-500">일</span>
+                        <button
+                            type="button"
+                            onClick={handleStartPromo}
+                            disabled={promoLoading}
+                            className="ml-auto bg-memento-500 hover:bg-memento-600 text-white rounded px-3 py-1.5 text-xs font-semibold"
+                        >
+                            {promoLoading ? "처리 중..." : "프로모션 시작"}
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            {/* 2) 개별 코드 관리 (기존 시스템 유지 — 별도 프로모션/특별 케이스용) */}
             <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold flex items-center gap-2">
                     <Ticket size={18} className="text-memento-500" />
-                    베타 코드 관리
+                    베타 코드 관리 <span className="text-xs font-normal text-gray-400">(개별 발급)</span>
                 </h2>
                 <button
                     type="button"
