@@ -81,7 +81,8 @@ export default function RefundPolicyPage() {
                     <ul className="list-none pl-0 space-y-1 text-sm">
                         <li>상호: 메멘토애니 / 대표: 안승빈</li>
                         <li>사업자등록번호: 687-08-03135</li>
-                        <li>주소: 등록 진행 중</li>
+                        <li>통신판매업: 제2026-서울강북-0224호</li>
+                        <li>주소: 서울특별시 강북구 덕릉로41길 78-5, 1층 102호(번동)</li>
                         <li>이메일: sharkwind1@gmail.com</li>
                         <li>전화: 070-8095-9918</li>
                     </ul>

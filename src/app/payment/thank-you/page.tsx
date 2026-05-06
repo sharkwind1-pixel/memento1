@@ -43,7 +43,7 @@ function ThankYouInner() {
 
     const subheading = (() => {
         if (type === "subscribe") return "이제 메멘토애니의 모든 기능을 자유롭게 즐겨보세요";
-        if (type === "video") return "내 기록 → AI 영상에서 생성을 시작할 수 있어요";
+        if (type === "video") return "우리의 기록 → AI 영상에서 생성을 시작할 수 있어요";
         return "감사합니다";
     })();
 
