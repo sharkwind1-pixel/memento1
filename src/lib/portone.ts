@@ -26,6 +26,8 @@ interface IMPRequestPayParams {
     buyer_name?: string;
     buyer_tel?: string;
     m_redirect_url?: string;
+    /** PortOne → 서버 webhook 비동기 알림 URL (KCP 환불/취소 등 결제 상태 변경 시 호출됨) */
+    notice_url?: string;
     customer_uid?: string; // 빌링키 발급용 (정기결제)
 }
 
@@ -148,6 +150,10 @@ export async function requestPortOnePayment(
                 buyer_email: params.customerEmail || undefined,
                 buyer_name: params.customerName || undefined,
                 m_redirect_url: `${window.location.origin}/api/payments/mobile-redirect`,
+                // PortOne V1 webhook URL — KCP 환불/취소 등 결제 상태 변경 시
+                // PortOne이 이 URL로 POST 호출해서 우리 DB가 자동 동기화됨.
+                // 이 파라미터 없으면 PortOne 콘솔 설정 없이는 webhook 미작동.
+                notice_url: `${window.location.origin}/api/payments/webhook`,
             };
 
             // 정기결제: customer_uid 추가 → 빌링키 발급

@@ -33,6 +33,8 @@ interface IMPRequestPayParams {
     buyer_email?: string;
     buyer_name?: string;
     m_redirect_url?: string;
+    /** PortOne V1 webhook URL (KCP 환불/취소 등 결제 상태 변경 시 PortOne이 POST 호출) */
+    notice_url?: string;
     customer_uid?: string;
     /** 디지털 상품 여부 (휴대폰 결제는 필수) */
     digital?: boolean;
@@ -168,6 +170,8 @@ function MobilePaymentInner() {
                     buyer_name: name,
                     // mobile redirect URL (포트원이 결제 후 이동) — 같은 origin이라 WebView가 인터셉트 가능
                     m_redirect_url: `${window.location.origin}/payment/mobile-callback?type=${type}`,
+                    // PortOne V1 webhook URL (서버 비동기 알림용)
+                    notice_url: `${window.location.origin}/api/payments/webhook`,
                 };
                 if (pgValue) reqParams.pg = pgValue;
 
