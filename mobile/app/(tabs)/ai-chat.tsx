@@ -47,6 +47,7 @@ import AppDrawer from "@/components/common/AppDrawer";
 import PetSwitcher from "@/components/common/PetSwitcher";
 import RemindersModal from "@/components/chat/RemindersModal";
 import PawLoading from "@/components/ui/PawLoading";
+import MemorialAmbientStars from "@/components/chat/MemorialAmbientStars";
 
 interface ReminderItem {
     type: string;
@@ -668,6 +669,10 @@ export default function AiChatScreen() {
                             : (isDarkMode ? COLORS.gray[900] : "#FFFFFF"),
                     },
                 ]}>
+                    {/* 추모 모드: 헤더 위에 잔잔한 별 파티클 (웹 DomeGallery 모바일 대체) */}
+                    {isMemorialMode && (
+                        <MemorialAmbientStars height={64} />
+                    )}
                     {selectedPet.profileImage ? (
                         <Image source={{ uri: selectedPet.profileImage }} style={styles.headerAvatar} />
                     ) : (

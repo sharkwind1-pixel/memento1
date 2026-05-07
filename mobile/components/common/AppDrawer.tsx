@@ -18,6 +18,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
 import { useDarkMode } from "@/contexts/ThemeContext";
 import { COLORS } from "@/lib/theme";
+import PointsHistoryModal from "@/components/points/PointsHistoryModal";
+import PointsShopModal from "@/components/points/PointsShopModal";
+import { getPointLevel } from "@/config/constants";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 const DRAWER_W = Math.min(SCREEN_W * 0.82, 320);
@@ -63,6 +66,9 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
     const { isMemorialMode } = usePet();
     const { isDarkMode } = useDarkMode();
     const [communityExpanded, setCommunityExpanded] = useState(false);
+    const [pointsHistoryOpen, setPointsHistoryOpen] = useState(false);
+    const [pointsShopOpen, setPointsShopOpen] = useState(false);
+    const currentLevel = getPointLevel(points ?? 0);
 
     const slideAnim = useRef(new Animated.Value(-DRAWER_W)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -149,12 +155,20 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
                                         <Text style={styles.premiumBadgeText}>프리미엄</Text>
                                     </View>
                                 )}
-                                <View style={styles.pointBadge}>
+                                <View style={styles.levelBadge}>
+                                    <Text style={styles.levelBadgeText}>Lv.{currentLevel.level}</Text>
+                                </View>
+                                <TouchableOpacity
+                                    onPress={() => setPointsHistoryOpen(true)}
+                                    style={styles.pointBadge}
+                                    activeOpacity={0.85}
+                                    hitSlop={6}
+                                >
                                     <Ionicons name="star" size={10} color={accentColor} />
                                     <Text style={[styles.pointBadgeText, { color: accentColor }]}>
                                         {(points ?? 0).toLocaleString()}P
                                     </Text>
-                                </View>
+                                </TouchableOpacity>
                             </View>
                         </View>
                     </LinearGradient>
@@ -231,6 +245,37 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
                         </View>
 
                         <View style={[styles.menuSection, { marginTop: 16 }]}>
+                            <Text style={styles.sectionLabel}>포인트</Text>
+                            <TouchableOpacity
+                                onPress={() => {
+                                    setPointsHistoryOpen(true);
+                                }}
+                                style={styles.menuItem}
+                                activeOpacity={0.7}
+                            >
+                                <Ionicons name="receipt-outline" size={20} color={isDarkMode ? COLORS.gray[300] : COLORS.gray[600]} />
+                                <Text style={[styles.menuLabel, {
+                                    color: isDarkMode ? COLORS.gray[200] : COLORS.gray[800],
+                                }]}>포인트 내역</Text>
+                                <Text style={styles.pointHint}>{(points ?? 0).toLocaleString()}P</Text>
+                                <Ionicons name="chevron-forward" size={16} color={COLORS.gray[400]} />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={() => {
+                                    setPointsShopOpen(true);
+                                }}
+                                style={styles.menuItem}
+                                activeOpacity={0.7}
+                            >
+                                <Ionicons name="bag-handle-outline" size={20} color={COLORS.memorial[500]} />
+                                <Text style={[styles.menuLabel, {
+                                    color: isDarkMode ? COLORS.gray[200] : COLORS.gray[800],
+                                }]}>포인트 상점</Text>
+                                <Ionicons name="chevron-forward" size={16} color={COLORS.gray[400]} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <View style={[styles.menuSection, { marginTop: 16 }]}>
                             <Text style={styles.sectionLabel}>계정</Text>
                             <TouchableOpacity
                                 onPress={() => navigate("/profile")}
@@ -284,6 +329,16 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
                     </View>
                 </Animated.View>
             </View>
+
+            {/* 포인트 모달 — Drawer 모달 내부에 렌더 (자체 Modal로 열림) */}
+            <PointsHistoryModal
+                visible={pointsHistoryOpen}
+                onClose={() => setPointsHistoryOpen(false)}
+            />
+            <PointsShopModal
+                visible={pointsShopOpen}
+                onClose={() => setPointsShopOpen(false)}
+            />
         </Modal>
     );
 }
@@ -339,6 +394,13 @@ const styles = StyleSheet.create({
         borderRadius: 9999,
     },
     pointBadgeText: { fontSize: 10, fontWeight: "600" },
+    levelBadge: {
+        backgroundColor: "rgba(255,255,255,0.25)",
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 9999,
+    },
+    levelBadgeText: { fontSize: 10, fontWeight: "700", color: "#fff" },
     menuSection: { paddingHorizontal: 16, paddingTop: 16 },
     sectionLabel: {
         fontSize: 11,
@@ -358,6 +420,12 @@ const styles = StyleSheet.create({
         borderRadius: 10,
     },
     menuLabel: { flex: 1, fontSize: 14, fontWeight: "500" },
+    pointHint: {
+        fontSize: 11,
+        color: COLORS.memento[600],
+        fontWeight: "700",
+        marginRight: 4,
+    },
     adminMenuItem: {
         marginTop: 8,
         backgroundColor: "rgba(139, 92, 246, 0.08)",

@@ -16,8 +16,8 @@
  * 스토리 기능은 의도적으로 비활성. 추후 부활 시 components/home/Story* 복원.
  */
 
-import { useState, useCallback } from "react";
-import { ScrollView, RefreshControl, View, StyleSheet } from "react-native";
+import { useState, useCallback, useEffect } from "react";
+import { ScrollView, RefreshControl, View, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
@@ -36,14 +36,61 @@ import ShowcaseSection from "@/components/home/ShowcaseSection";
 import MemorialSection from "@/components/home/MemorialSection";
 import AppHeader from "@/components/common/AppHeader";
 import PetSwitcher from "@/components/common/PetSwitcher";
+import OnboardingModal, {
+    hasCompletedOnboardingAsync, checkOnboardingFromDB, type UserType,
+} from "@/components/onboarding/OnboardingModal";
 
 export default function HomeScreen() {
     const router = useRouter();
-    const { session } = useAuth();
+    const { session, user } = useAuth();
     const { selectedPet, isMemorialMode, refreshPets } = usePet();
     const { isDarkMode } = useDarkMode();
     const [refreshing, setRefreshing] = useState(false);
     const [drawerOpen, setDrawerOpen] = useState(false);
+    const [onboardingOpen, setOnboardingOpen] = useState(false);
+
+    // 신규 로그인 첫 진입 시 온보딩 노출 (LocalStorage + DB 동기화)
+    useEffect(() => {
+        if (!user?.id) return;
+        let cancelled = false;
+        (async () => {
+            const localDone = await hasCompletedOnboardingAsync();
+            if (cancelled) return;
+            if (localDone) return;
+            const dbDone = await checkOnboardingFromDB(user.id);
+            if (cancelled) return;
+            if (!dbDone) {
+                // 자연스러운 진입 (1.5초 지연 후 노출)
+                setTimeout(() => {
+                    if (!cancelled) setOnboardingOpen(true);
+                }, 1500);
+            }
+        })();
+        return () => { cancelled = true; };
+    }, [user?.id]);
+
+    function handleOnboardingComplete(userType: UserType) {
+        // 유형별 후속 액션:
+        //  planning → 입양 정보 화면으로 안내
+        //  current → 반려동물 등록 권유
+        //  memorial → 추모 펫 등록 권유
+        if (userType === "planning") {
+            Alert.alert("환영합니다", "입양 정보를 먼저 둘러볼까요?", [
+                { text: "다음에", style: "cancel" },
+                { text: "입양 정보 보기", onPress: () => router.push("/adoption" as never) },
+            ]);
+        } else if (userType === "current") {
+            Alert.alert("환영합니다", "지금 함께하는 아이를 등록해볼까요?", [
+                { text: "나중에", style: "cancel" },
+                { text: "등록하기", onPress: () => router.push("/pet/new" as never) },
+            ]);
+        } else if (userType === "memorial") {
+            Alert.alert("환영합니다", "소중한 추억을 함께 간직해요. 아이를 등록할 수 있어요.", [
+                { text: "나중에", style: "cancel" },
+                { text: "등록하기", onPress: () => router.push("/pet/new" as never) },
+            ]);
+        }
+    }
 
     const onRefresh = useCallback(async () => {
         setRefreshing(true);
@@ -87,6 +134,12 @@ export default function HomeScreen() {
                 <MemorialSection />
                 <View style={styles.bottomSpace} />
             </ScrollView>
+
+            <OnboardingModal
+                visible={onboardingOpen}
+                onClose={() => setOnboardingOpen(false)}
+                onComplete={handleOnboardingComplete}
+            />
         </SafeAreaView>
     );
 }

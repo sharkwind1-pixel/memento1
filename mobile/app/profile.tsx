@@ -106,6 +106,28 @@ export default function ProfileScreen() {
                 </View>
             </TouchableOpacity>
 
+            {/* 나의 기록 통계 (웹 ProfileTab 매칭) */}
+            <SectionCard title="나의 기록" isMemorialMode={isMemorialMode}>
+                <View style={styles.statsRow}>
+                    <View style={[styles.statCard, { backgroundColor: COLORS.memento[100] }]}>
+                        <Text style={[styles.statValue, { color: COLORS.memento[600] }]}>{pets.length}</Text>
+                        <Text style={styles.statLabel}>반려동물</Text>
+                    </View>
+                    <View style={[styles.statCard, { backgroundColor: "#FFE4E6" }]}>
+                        <Text style={[styles.statValue, { color: "#EC4899" }]}>
+                            {pets.reduce((acc, p) => acc + (p.photos?.length ?? 0), 0)}
+                        </Text>
+                        <Text style={styles.statLabel}>사진/영상</Text>
+                    </View>
+                    <View style={[styles.statCard, { backgroundColor: "#EDE9FE" }]}>
+                        <Text style={[styles.statValue, { color: "#8B5CF6" }]}>
+                            {pets.filter((p) => p.status === "memorial").length}
+                        </Text>
+                        <Text style={styles.statLabel}>추억 속에</Text>
+                    </View>
+                </View>
+            </SectionCard>
+
             <SectionCard title="내 반려동물" isMemorialMode={isMemorialMode}>
                 {pets.map((pet) => (
                     <SettingsRow
@@ -401,6 +423,20 @@ function SettingsRow({ icon, label, sublabel, onPress, isMemorialMode, labelColo
 
 const styles = StyleSheet.create({
     flex1: { flex: 1 },
+    statsRow: {
+        flexDirection: "row",
+        gap: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+    },
+    statCard: {
+        flex: 1,
+        borderRadius: 14,
+        paddingVertical: 14,
+        alignItems: "center",
+    },
+    statValue: { fontSize: 20, fontWeight: "800" },
+    statLabel: { fontSize: 11, color: COLORS.gray[600], marginTop: 4 },
     headerCard: {
         alignItems: "center",
         paddingTop: 32,

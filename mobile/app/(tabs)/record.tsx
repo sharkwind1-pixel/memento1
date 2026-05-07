@@ -34,6 +34,7 @@ import AlbumDetailModal from "@/components/record/AlbumDetailModal";
 import VideoGenerateModal from "@/components/record/VideoGenerateModal";
 import RemindersSummary from "@/components/record/RemindersSummary";
 import HealingJourneySummary from "@/components/record/HealingJourneySummary";
+import MemoryAlbumsSection from "@/components/record/MemoryAlbumsSection";
 import { supabase } from "@/lib/supabase";
 import * as Haptics from "expo-haptics";
 import { Alert as RNAlert } from "react-native";
@@ -415,13 +416,20 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accentColor} />}
                 ListHeaderComponent={
                     <View>
-                        {/* 모드별 상단 위젯 — 추모: 치유의 여정, 일상: 케어 리마인더 */}
+                        {/* 모드별 상단 위젯 — 추모: 치유의 여정 + 추억 앨범, 일상: 케어 리마인더 */}
                         {isMemorialMode ? (
-                            <HealingJourneySummary
-                                petId={petId}
-                                petName={petName}
-                                accentColor={accentColor}
-                            />
+                            <>
+                                <HealingJourneySummary
+                                    petId={petId}
+                                    petName={petName}
+                                    accentColor={accentColor}
+                                />
+                                <MemoryAlbumsSection
+                                    petId={petId}
+                                    petName={petName}
+                                    isMemorialMode
+                                />
+                            </>
                         ) : (
                             <RemindersSummary
                                 petId={petId}

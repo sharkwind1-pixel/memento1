@@ -15,6 +15,7 @@ import { PRICING } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
 import AppHeader from "@/components/common/AppHeader";
 import CancelConfirmModal from "@/components/subscription/CancelConfirmModal";
+import ArchivedPetsSection from "@/components/subscription/ArchivedPetsSection";
 
 interface Plan {
     id: "free" | "basic" | "premium";
@@ -240,6 +241,9 @@ export default function SubscriptionScreen() {
                     <Ionicons name="open-outline" size={14} color={COLORS.memento[500]} />
                 </TouchableOpacity>
             </View>
+
+            {/* 해지 후 보관함 — archived 펫이 있을 때만 자동 노출 */}
+            <ArchivedPetsSection />
             </ScrollView>
 
             {session && (

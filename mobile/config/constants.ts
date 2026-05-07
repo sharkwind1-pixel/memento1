@@ -48,3 +48,60 @@ export const VIDEO = {
     MAX_POLL_COUNT: 60,      // 15분 (60 × 15초)
     SINGLE_PRICE: 3500,      // 단건 구매가 (KRW)
 } as const;
+
+// ===== 포인트 시스템 (웹 src/config/constants.ts POINTS와 동일) =====
+// 활동 라벨 + 페이지 사이즈만 모바일에서 직접 참조. 적립 로직은 백엔드.
+export const POINTS = {
+    LABELS: {
+        daily_login: "출석 체크",
+        write_post: "게시글 작성",
+        write_comment: "댓글 작성",
+        receive_like: "좋아요 받기",
+        receive_dislike: "비추천 받기",
+        ai_chat: "AI 펫톡",
+        pet_registration: "반려동물 등록",
+        timeline_entry: "타임라인 기록",
+        photo_upload: "사진 업로드",
+        admin_award: "관리자 지급",
+        write_guestbook: "방명록 작성",
+        receive_guestbook: "방명록 수신",
+    } as const,
+    HISTORY_PAGE_SIZE: 20,
+} as const;
+
+export type PointActionType =
+    | "daily_login" | "write_post" | "write_comment" | "receive_like" | "receive_dislike"
+    | "ai_chat" | "pet_registration" | "timeline_entry" | "photo_upload"
+    | "admin_award" | "write_guestbook" | "receive_guestbook";
+
+// ===== 포인트 등급 (웹 POINT_LEVELS과 동일) =====
+export interface PointLevel {
+    level: number;
+    minPoints: number;
+    label: string;        // 모바일은 아이콘 없이 라벨로 표현
+    color: string;        // accentBg
+}
+
+export const POINT_LEVELS: PointLevel[] = [
+    { level: 1, minPoints: 0,      label: "새싹",   color: "#9CA3AF" },
+    { level: 2, minPoints: 100,    label: "친구",   color: "#10B981" },
+    { level: 3, minPoints: 500,    label: "단골",   color: "#EC4899" },
+    { level: 4, minPoints: 3000,   label: "이웃",   color: "#0EA5E9" },
+    { level: 5, minPoints: 10000,  label: "후원자", color: "#8B5CF6" },
+    { level: 6, minPoints: 30000,  label: "수호자", color: "#F59E0B" },
+    { level: 7, minPoints: 100000, label: "전설",   color: "#F43F5E" },
+];
+
+export function getPointLevel(points: number): PointLevel {
+    for (let i = POINT_LEVELS.length - 1; i >= 0; i--) {
+        if (points >= POINT_LEVELS[i].minPoints) return POINT_LEVELS[i];
+    }
+    return POINT_LEVELS[0];
+}
+
+export function getNextPointLevel(points: number): PointLevel | null {
+    for (const lvl of POINT_LEVELS) {
+        if (points < lvl.minPoints) return lvl;
+    }
+    return null;
+}

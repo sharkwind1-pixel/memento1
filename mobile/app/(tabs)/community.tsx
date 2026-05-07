@@ -28,6 +28,8 @@ import { COLORS } from "@/lib/theme";
 import { supabase } from "@/lib/supabase";
 import AppHeader from "@/components/common/AppHeader";
 import AppDrawer from "@/components/common/AppDrawer";
+import HotPosts from "@/components/community/HotPosts";
+import ShowcaseBanner from "@/components/community/ShowcaseBanner";
 
 const SUBCATEGORIES: Array<{
     id: CommunitySubcategory;
@@ -81,6 +83,42 @@ export default function CommunityScreen() {
     const [sortBy, setSortBy] = useState<"latest" | "popular" | "comments">("latest");
     const [trendingTags, setTrendingTags] = useState<string[]>([]);
     const [activeTag, setActiveTag] = useState<string | null>(null);
+    const [showcasePreview, setShowcasePreview] = useState<string[]>([]);
+    const [showcaseCount, setShowcaseCount] = useState(0);
+
+    // showcase 미리보기 fetch (마운트 1회) — "함께 보기" 배너용
+    useEffect(() => {
+        if (showcaseMode) return;
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await fetch(
+                    `${API_BASE_URL}/api/posts?subcategory=free&badge=자랑&limit=6`,
+                );
+                if (!res.ok) return;
+                const data = await res.json();
+                const list = (data?.posts ?? []) as Array<Record<string, unknown>>;
+                if (cancelled) return;
+                const imgs: string[] = [];
+                for (const p of list) {
+                    const url = typeof p?.coverImage === "string"
+                        ? p.coverImage
+                        : typeof p?.cover_image === "string"
+                            ? p.cover_image
+                            : typeof p?.preview === "string"
+                                ? p.preview
+                                : typeof p?.thumbnail === "string"
+                                    ? p.thumbnail
+                                    : null;
+                    if (url) imgs.push(url);
+                    if (imgs.length >= 4) break;
+                }
+                setShowcasePreview(imgs);
+                setShowcaseCount(typeof data?.total === "number" ? data.total : list.length);
+            } catch {}
+        })();
+        return () => { cancelled = true; };
+    }, [showcaseMode]);
 
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
     const activeSubcat = SUBCATEGORIES.find((s) => s.id === activeTab)!;
@@ -404,6 +442,23 @@ export default function CommunityScreen() {
                     showsVerticalScrollIndicator={false}
                     refreshControl={
                         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accentColor} />
+                    }
+                    ListHeaderComponent={
+                        showcaseMode ? null : (
+                            <View>
+                                {/* "함께 보기" 배너 — showcase 모드 진입 CTA */}
+                                <ShowcaseBanner
+                                    previewImages={showcasePreview}
+                                    postCount={showcaseCount}
+                                    onOpen={() => router.push("/(tabs)/community?view=showcase" as never)}
+                                />
+                                {/* 인기글 (24h) */}
+                                <HotPosts
+                                    boardType={activeTab}
+                                    onSelectPost={(id) => router.push(`/post/${id}` as never)}
+                                />
+                            </View>
+                        )
                     }
                     ListEmptyComponent={
                         <View style={styles.emptyWrap}>
