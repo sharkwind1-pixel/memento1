@@ -578,7 +578,7 @@ export default function AiChatScreen() {
         isLimitReached, isMemorialMode, messages, reminders, serverRemaining,
     ]);
 
-    const handleNewChat = useCallback(() => {
+    const startFreshChat = useCallback(() => {
         if (!selectedPet) return;
         const greeting = generatePersonalizedGreeting(selectedPet, isMemorialMode, timelineRef.current);
         setMessages([{
@@ -587,6 +587,23 @@ export default function AiChatScreen() {
         setSuggestions([]);
         reminderSuggestionShown.current = false;
     }, [selectedPet, isMemorialMode]);
+
+    const handleNewChat = useCallback(() => {
+        if (!selectedPet) return;
+        // 메시지 2개 이상이면 확인 후 시작 (웹과 동일 패턴)
+        if (messages.length > 1) {
+            Alert.alert(
+                "새 대화 시작",
+                "현재 대화가 초기화됩니다. 새 대화를 시작할까요?",
+                [
+                    { text: "취소", style: "cancel" },
+                    { text: "시작", onPress: startFreshChat },
+                ],
+            );
+            return;
+        }
+        startFreshChat();
+    }, [selectedPet, messages.length, startFreshChat]);
 
     const handleRetry = useCallback((errorMessageId: string, retryMessage: string) => {
         setMessages((prev) => prev.filter((m) => m.id !== errorMessageId));
@@ -707,6 +724,25 @@ export default function AiChatScreen() {
                         <Ionicons name="refresh" size={16} color={isDarkMode ? COLORS.white : COLORS.gray[700]} />
                     </TouchableOpacity>
 
+                    {/* 대화 내보내기 (메시지 1개 초과일 때만 노출, 웹 패턴) */}
+                    {messages.length > 1 && (
+                        <TouchableOpacity
+                            onPress={async () => {
+                                const text = messages
+                                    .filter((m) => m.role !== "system" || (m.type !== "crisis-alert" && m.type !== "reminder-suggestion"))
+                                    .map((m) => `[${m.role === "user" ? "나" : selectedPet.name}] ${m.content}`)
+                                    .join("\n\n");
+                                try {
+                                    await Share.share({ message: `메멘토애니 — ${selectedPet.name}와 나눈 대화\n\n${text}` });
+                                } catch { /* noop */ }
+                            }}
+                            style={[styles.headerIconBtn, { backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100] }]}
+                            activeOpacity={0.85}
+                        >
+                            <Ionicons name="share-outline" size={16} color={isDarkMode ? COLORS.white : COLORS.gray[700]} />
+                        </TouchableOpacity>
+                    )}
+
                     {/* 리마인더 */}
                     <TouchableOpacity
                         onPress={() => setRemindersOpen(true)}
@@ -725,12 +761,14 @@ export default function AiChatScreen() {
                         style={styles.messages}
                         contentContainerStyle={{ paddingTop: 16, paddingBottom: 8, paddingHorizontal: 16 }}
                         showsVerticalScrollIndicator={false}
-                        renderItem={({ item }) => (
+                        renderItem={({ item, index }) => (
                             <MessageRenderer
                                 message={item}
                                 pet={selectedPet}
                                 accentColor={accentColor}
                                 onRetry={handleRetry}
+                                prevTimestamp={index > 0 ? messages[index - 1].timestamp : undefined}
+                                isFirst={index === 0}
                             />
                         )}
                         ListFooterComponent={
@@ -842,18 +880,54 @@ const EMOTION_MAP: Record<string, { label: string; color: string }> = {
     excited: { label: "신남", color: "#FB923C" },
 };
 
+/** 시간을 한국어 형식으로 포맷 (오전/오후 HH:MM) — 웹 chatTypes.ts와 동일 */
+function formatTimestamp(date: Date): string {
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    const period = hours < 12 ? "오전" : "오후";
+    const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+    const displayMinutes = minutes.toString().padStart(2, "0");
+    return `${period} ${displayHours}:${displayMinutes}`;
+}
+
+/** 두 메시지 사이의 시간 간격이 5분 이상인지 (웹 동일 패턴) */
+function hasTimeGap(prev: Date, curr: Date): boolean {
+    return Math.abs(curr.getTime() - prev.getTime()) > 5 * 60 * 1000;
+}
+
 function MessageRenderer({
-    message, pet, accentColor, onRetry,
+    message, pet, accentColor, onRetry, prevTimestamp, isFirst,
 }: {
     message: ChatMessage;
     pet: NonNullable<ReturnType<typeof usePet>["selectedPet"]>;
     accentColor: string;
     onRetry: (id: string, retryMessage: string) => void;
+    prevTimestamp?: Date;
+    isFirst?: boolean;
 }) {
     const { isDarkMode } = useDarkMode();
 
+    // 메시지 시간 갭 분리선 (5분+ 간격이거나 첫 메시지면 시각 표시)
+    const showTimestamp = isFirst || (prevTimestamp && hasTimeGap(prevTimestamp, message.timestamp));
+    const timestampNode = showTimestamp ? (
+        <View style={{ alignItems: "center", marginVertical: 8 }}>
+            <Text style={{
+                fontSize: 11,
+                color: isDarkMode ? COLORS.gray[500] : COLORS.gray[400],
+                fontWeight: "500",
+            }}>
+                {formatTimestamp(message.timestamp)}
+            </Text>
+        </View>
+    ) : null;
+
     if (message.role === "system") {
-        return <SystemMessage message={message} accentColor={accentColor} onRetry={onRetry} />;
+        return (
+            <>
+                {timestampNode}
+                <SystemMessage message={message} accentColor={accentColor} onRetry={onRetry} />
+            </>
+        );
     }
 
     const isUser = message.role === "user";
@@ -872,7 +946,9 @@ function MessageRenderer({
             ? [COLORS.memorial[400], COLORS.memorial[500]]
             : [COLORS.memento[400], COLORS.memento[500]];
         return (
-            <View style={{ flexDirection: "row", justifyContent: "flex-end", marginBottom: 12 }}>
+            <>
+                {timestampNode}
+                <View style={{ flexDirection: "row", justifyContent: "flex-end", marginBottom: 12 }}>
                 <TouchableOpacity
                     onLongPress={shareContent}
                     delayLongPress={400}
@@ -889,6 +965,7 @@ function MessageRenderer({
                     </LinearGradient>
                 </TouchableOpacity>
             </View>
+            </>
         );
     }
 
@@ -897,6 +974,8 @@ function MessageRenderer({
     const emotionInfo = message.emotion ? EMOTION_MAP[message.emotion] : null;
 
     return (
+        <>
+        {timestampNode}
         <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 8, marginBottom: 12 }}>
             <View style={[styles.bubbleAvatar, { backgroundColor: accentColor + "20", marginBottom: 4 }]}>
                 {pet.profileImage ? (
@@ -992,6 +1071,7 @@ function MessageRenderer({
                 )}
             </View>
         </View>
+        </>
     );
 }
 
