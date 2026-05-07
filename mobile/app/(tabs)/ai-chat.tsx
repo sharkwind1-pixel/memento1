@@ -658,7 +658,16 @@ export default function AiChatScreen() {
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
                 keyboardVerticalOffset={0}
             >
-                <View style={[styles.header, { borderBottomColor: borderColor }]}>
+                <View style={[
+                    styles.header,
+                    {
+                        borderBottomColor: borderColor,
+                        // 추모 모드: 따뜻한 크림톤 헤더 (웹과 동일 amber 분위기)
+                        backgroundColor: isMemorialMode
+                            ? (isDarkMode ? "#1F1407" : "#FFFBEB")
+                            : (isDarkMode ? COLORS.gray[900] : "#FFFFFF"),
+                    },
+                ]}>
                     {selectedPet.profileImage ? (
                         <Image source={{ uri: selectedPet.profileImage }} style={styles.headerAvatar} />
                     ) : (
