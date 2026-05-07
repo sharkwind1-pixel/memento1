@@ -723,20 +723,9 @@ export function useAIChat({
                                         }, 800);
                                     }
 
-                                    // 위기 감지 시 상담 안내 카드
-                                    if (event.crisisAlert) {
-                                        const crisisMessage: ChatMessage = {
-                                            id: `crisis-alert-${Date.now()}`,
-                                            role: "system",
-                                            type: "crisis-alert",
-                                            content: event.crisisAlert.message,
-                                            timestamp: new Date(),
-                                            crisisAlert: event.crisisAlert as CrisisAlertInfo,
-                                        };
-                                        setTimeout(() => {
-                                            setMessages((prev) => [...prev, crisisMessage]);
-                                        }, 600);
-                                    }
+                                    // 위기 알림은 유저 UI에 표시하지 않음 (서버 텔레그램 시스템 채널만).
+                                    // 사용자 결정: AI 펫톡 흐름 끊지 않음. 위기 대응은 백엔드 모니터링 전담.
+                                    // (이전: setMessages에 crisis-alert 카드 추가)
 
                                     // 자동 리마인더 제안
                                     if (event.suggestedReminder) {

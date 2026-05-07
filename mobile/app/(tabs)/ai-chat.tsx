@@ -449,18 +449,9 @@ export default function AiChatScreen() {
                         setSuggestions(event.suggestedQuestions);
                     }
 
-                    if (event.crisisAlert) {
-                        setTimeout(() => {
-                            setMessages((prev) => [...prev, {
-                                id: `crisis-${Date.now()}`,
-                                role: "system",
-                                type: "crisis-alert",
-                                content: event.crisisAlert.message,
-                                timestamp: new Date(),
-                                crisisAlert: event.crisisAlert,
-                            }]);
-                        }, 600);
-                    }
+                    // 위기 알림은 유저 UI에 표시하지 않음 (서버는 텔레그램 시스템 채널로 알림 전송).
+                    // 사용자 결정: AI 펫톡 흐름을 끊지 않고, 위기 대응은 백엔드 모니터링만.
+                    // (이전: setMessages에 crisis-alert 카드 추가)
 
                     if (event.suggestedReminder) {
                         setTimeout(() => {
@@ -1044,32 +1035,9 @@ function SystemMessage({
         );
     }
 
-    if (message.type === "crisis-alert" && message.crisisAlert) {
-        return (
-            <View style={{
-                alignSelf: "stretch",
-                marginBottom: 12,
-                padding: 14,
-                backgroundColor: "#FEF3C7",
-                borderRadius: 14,
-                borderLeftWidth: 4,
-                borderLeftColor: "#F59E0B",
-            }}>
-                <Text style={{ color: "#92400E", fontSize: 13, fontWeight: "700", marginBottom: 6 }}>
-                    잠깐, 괜찮으세요?
-                </Text>
-                <Text style={{ color: "#78350F", fontSize: 13, lineHeight: 18 }}>{message.content}</Text>
-                {message.crisisAlert.resources && message.crisisAlert.resources.length > 0 && (
-                    <View style={{ marginTop: 10, gap: 6 }}>
-                        {message.crisisAlert.resources.map((r, i) => (
-                            <Text key={i} style={{ color: "#92400E", fontSize: 12 }}>
-                                · {r.name}: {r.phone}
-                            </Text>
-                        ))}
-                    </View>
-                )}
-            </View>
-        );
+    // 위기 알림은 유저 UI에서 표시하지 않음. 옛날 데이터/잔존 메시지 안전 가드.
+    if (message.type === "crisis-alert") {
+        return null;
     }
 
     if (message.type === "reminder-suggestion") {
