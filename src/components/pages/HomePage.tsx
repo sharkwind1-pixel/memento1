@@ -18,7 +18,6 @@ import {
     ShowcaseSection,
     MemorialSection,
     QuizSection,
-    StoryFeed,
 } from "@/components/features/home";
 import AnnouncementBanner from "@/components/features/home/AnnouncementBanner";
 import QuestCard from "@/components/features/quests/QuestCard";
@@ -142,8 +141,8 @@ function HomePage({ setSelectedTab, isActive, onOpenCommunityPost }: HomePagePro
                 {/* 히어로 */}
                 <HeroSection setSelectedTab={setSelectedTab} user={user} isMemorial={isMemorialMode} />
 
-                {/* 스토리 피드 (24시간 임시 게시물, 인스타 스타일) */}
-                <StoryFeed />
+                {/* 스토리 피드는 의도적으로 홈에서 제외 (사용자 결정 2026-04~05).
+                    추후 부활 시 StoryFeed import + 위치 복원. 모바일 앱과 패리티 유지. */}
 
                 {/* 온보딩 미션 카드 — 신규 유저 끈끈한 가이드 */}
                 {user && <QuestCard setSelectedTab={(t) => setSelectedTab(t)} />}
