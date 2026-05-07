@@ -147,7 +147,24 @@ function enhanceSearchQuery(topic: BlogTopic): string {
 // Tavily 검색
 // ============================================================
 
-async function searchTopicInfo(query: string): Promise<string> {
+/**
+ * 종별 YouTube 전문가 키워드 매핑.
+ * 강형욱은 강아지 행동/훈련 전문가 — 고양이/특수동물 글에 절대 끼워넣지 말 것.
+ * 고양이는 수의사 채널, 특수동물은 엑조틱 전문 수의사 위주.
+ */
+function getYoutubeExpertQuery(species: string): string {
+    if (species === "강아지") {
+        return "강형욱 OR 수의사 OR 동물행동전문가";
+    }
+    if (species === "고양이") {
+        // 김명철 (고양이 전문 수의사 채널) 등 고양이 전문가만
+        return "고양이 수의사 OR 김명철 수의사 OR 나비야사랑해 OR 펫닥 고양이";
+    }
+    // 토끼/햄스터/조류/파충류 등 엑조틱
+    return "엑조틱 수의사 OR exotic vet OR 특수동물 수의사";
+}
+
+async function searchTopicInfo(query: string, species: string = "공통"): Promise<string> {
     const apiKey = process.env.TAVILY_API_KEY;
     if (!apiKey) return "";
 
@@ -175,8 +192,10 @@ async function searchTopicInfo(query: string): Promise<string> {
             ],
         });
 
-        // 2차: YouTube 전문가 영상 검색 (강형욱, 수의사 채널, 엑조틱 전문가 등)
-        const ytResponse = await client.search(`${query} 강형욱 OR 수의사 OR 동물행동전문가 OR exotic vet site:youtube.com`, {
+        // 2차: YouTube 전문가 영상 검색 — 종별로 다른 전문가 사용
+        // 강형욱은 강아지 전용 (개 훈련사). 고양이/특수동물에는 절대 끼워넣지 않음.
+        const expertQuery = getYoutubeExpertQuery(species);
+        const ytResponse = await client.search(`${query} ${expertQuery} site:youtube.com`, {
             searchDepth: "basic",
             maxResults: 3,
             includeAnswer: true,
@@ -374,7 +393,7 @@ export async function GET(request: NextRequest) {
         // 1. Tavily로 최신 정보 검색 — 종별 특화 쿼리로 강화
         const speciesContext = SPECIES_CONTEXT[selectedTopic.species] || "";
         const enhancedSearchQuery = enhanceSearchQuery(selectedTopic);
-        const searchContext = await searchTopicInfo(enhancedSearchQuery);
+        const searchContext = await searchTopicInfo(enhancedSearchQuery, selectedTopic.species);
 
         // 2. 블로그 글 생성 (Claude Sonnet + Opus advisor 우선, OpenAI 폴백)
         const isExotic = isExoticSpecies(selectedTopic.species);
@@ -399,7 +418,10 @@ ${isExotic ? `### 특수반려동물(엑조틱) 작성 시 추가 지침
 - 1800~2500자 분량
 - 소제목 4~5개로 구조화
 - 수의사/전문가 의견을 인용하는 느낌으로 (예: "수의사들은 ~을 권장합니다")
-- YouTube 전문가(강형욱, 수의사 채널, 엑조틱 전문가 등) 정보가 있으면 자연스럽게 인용
+- YouTube 전문가 정보가 있으면 자연스럽게 인용. 단, 종에 맞는 전문가만 인용할 것:
+  · 강아지 글 → 강형욱(반려견 행동/훈련 전문가), 수의사 채널 OK
+  · 고양이 글 → 고양이 전문 수의사 채널만. 강형욱은 강아지 전문이므로 고양이 글에 등장 금지
+  · 토끼/햄스터/조류/파충류 글 → 엑조틱 전문 수의사만. 강형욱/일반 수의사 등장 금지
 - 구체적 수치, 방법, 단계를 포함 (예: "케이지 최소 면적 60×40cm", "온도 24~28도 유지")
 - 의학적 확정 진단은 피하고 반드시 "수의사 상담을 권장합니다" 포함
 - 이모지 사용 금지
