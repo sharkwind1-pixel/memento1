@@ -54,7 +54,35 @@ export default function RefundPolicyPage() {
                         <li>오결제·이중결제 등 회사 귀책 사유는 즉시 100% 환불됩니다.</li>
                     </ul>
 
-                    <h2 className="text-xl font-display font-bold">3. 환불 신청 방법</h2>
+                    <div className="my-6 rounded-xl border-2 border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700 p-5">
+                        <h2 className="text-xl font-display font-bold flex items-center gap-2 mt-0">
+                            <span aria-hidden="true">📱</span>
+                            3. 휴대폰 소액결제 환불 (이동통신사 정책)
+                        </h2>
+                        <ul className="list-disc pl-6 space-y-2 mb-0">
+                            <li>
+                                <strong className="bg-amber-200/60 dark:bg-amber-800/40 px-1 rounded">
+                                    휴대폰 소액결제는 당월취소만 가능하며 결제자 본인명의 계좌로 환불됩니다.
+                                </strong>
+                            </li>
+                            <li>
+                                <strong className="bg-amber-200/60 dark:bg-amber-800/40 px-1 rounded">
+                                    휴대폰 결제의 경우 당월은 취소만 가능, 익월 이후 청구요금 수납 확인 후 결제자 본인 계좌 환불 가능합니다.
+                                </strong>
+                            </li>
+                            <li>
+                                번호 변경, 명의 변경 등의 사유로 당월 취소가 불가한 경우에도 휴대폰 수납확인서 수신 후 결제자 본인명의 계좌로 직접 환불 처리됩니다.
+                            </li>
+                            <li>
+                                연체 상태인 결제 건은 이동통신사 정책에 따라 환불이 제한될 수 있습니다.
+                            </li>
+                            <li>
+                                정산 주기: 이동통신사 정책에 따라 결제 후 휴대폰 요금을 납부한 소비자에 한하여 2개월 뒤 마지막 영업일에 정산이 진행됩니다.
+                            </li>
+                        </ul>
+                    </div>
+
+                    <h2 className="text-xl font-display font-bold">4. 환불 신청 방법</h2>
                     <ul className="list-disc pl-6 space-y-1">
                         <li>앱 내 <strong>설정 → 구독 관리 → 해지</strong> 메뉴에서 자동 환불 신청.</li>
                         <li>이메일: <a className="text-memento-500" href="mailto:sharkwind1@gmail.com">sharkwind1@gmail.com</a></li>
@@ -64,20 +92,20 @@ export default function RefundPolicyPage() {
                         영업일 기준 3일 이내에 결제 수단 원복으로 환불됩니다. 카드 결제는 PG사 정책에 따라 매입 전/후에 따라 처리 시간이 달라질 수 있습니다.
                     </p>
 
-                    <h2 className="text-xl font-display font-bold">4. 환불이 제한되는 경우</h2>
+                    <h2 className="text-xl font-display font-bold">5. 환불이 제한되는 경우</h2>
                     <ul className="list-disc pl-6 space-y-1">
                         <li>이용약관 위반 또는 부정 사용으로 이용이 정지된 경우.</li>
                         <li>구매 전 명시적으로 안내된 비환불 상품(이벤트성 포인트 충전 등).</li>
                         <li>회사가 정상적으로 서비스를 제공하였음에도 단순 변심으로 사용이 종료된 단건 디지털 콘텐츠.</li>
                     </ul>
 
-                    <h2 className="text-xl font-display font-bold">5. 미사용 데이터 보관</h2>
+                    <h2 className="text-xl font-display font-bold">6. 미사용 데이터 보관</h2>
                     <p>
                         구독 해지 후에도 펫 프로필·사진·일기 등은 무료 플랜 기준으로 계속 보관됩니다.
                         무료 플랜 한도를 초과하는 데이터는 30일간 안전하게 보관되며, 그 이전에 다시 구독 시 자동 복원됩니다.
                     </p>
 
-                    <h2 className="text-xl font-display font-bold">6. 사업자 정보</h2>
+                    <h2 className="text-xl font-display font-bold">7. 사업자 정보</h2>
                     <ul className="list-none pl-0 space-y-1 text-sm">
                         <li>상호: 메멘토애니 / 대표: 안승빈</li>
                         <li>사업자등록번호: 687-08-03135</li>

@@ -277,11 +277,14 @@ export default async function RootLayout({
                                 <li>프리미엄 플랜: 월 18,900원 - AI 펫톡 무제한, 반려동물 10마리, 사진 펫당 1,000장, AI 영상 월 6회, 우선 고객 지원</li>
                             </ul>
                             <h3>환불 정책</h3>
-                            <p>결제일로부터 7일 이내 청약철회 가능. 서비스 이용 이력이 있는 경우 이용일수에 해당하는 금액을 차감 후 환불. 환불 처리 기간은 3~7 영업일 소요.</p>
+                            <p>구독 서비스: 결제 후 24시간 이내 사용 이력이 없거나 미미한 경우 전액 환불. 24시간 경과 후 해지 시 결제일~해지 시점까지의 기간을 일할 계산하여 잔여분 환불. 단건 디지털 콘텐츠는 사용 전 7일 이내 전액 환불. 환불 처리 기간은 3~7 영업일 소요.</p>
+                            <p>휴대폰 소액결제는 당월취소만 가능하며 결제자 본인명의 계좌로 환불됩니다. 휴대폰 결제의 경우 당월은 취소만 가능, 익월 이후 청구요금 수납 확인 후 결제자 본인 계좌 환불 가능합니다.</p>
                         </div>
 
                         {/* 법적 링크 */}
                         <nav className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                            <a href="/pricing" className="hover:underline">요금제·결제 안내</a>
+                            <span className="text-gray-300 dark:text-gray-600">|</span>
                             <a href="/terms" className="hover:underline">이용약관</a>
                             <span className="text-gray-300 dark:text-gray-600">|</span>
                             <a href="/privacy" className="font-semibold hover:underline">개인정보처리방침</a>
