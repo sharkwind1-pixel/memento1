@@ -14,6 +14,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import crypto from "crypto";
+import { sendPushToUser } from "@/lib/expo-push";
 
 export const dynamic = "force-dynamic";
 
@@ -76,10 +77,10 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 2. DB에서 해당 요청 조회
+        // 2. DB에서 해당 요청 조회 (pet_name 포함 — 푸시 알림용)
         const { data: generation, error: fetchError } = await supabase
             .from("video_generations")
-            .select("id, user_id, status")
+            .select("id, user_id, status, pet_name")
             .eq("fal_request_id", request_id)
             .single();
 
@@ -148,6 +149,17 @@ export async function POST(request: NextRequest) {
                     console.error("[Video Webhook] DB 업데이트 에러:", updateError);
                 }
 
+                // 모바일 푸시 알림 발송 (best-effort, 실패해도 무시)
+                const pushTitle = generation.pet_name
+                    ? `${generation.pet_name}의 영상이 완성됐어요!`
+                    : "AI 영상이 완성됐어요!";
+                sendPushToUser(
+                    generation.user_id,
+                    pushTitle,
+                    "지금 바로 만나러 가볼까요?",
+                    { type: "video_complete", videoId: generation.id },
+                ).catch((e) => console.warn("[Video Webhook] 푸시 발송 실패:", e));
+
             } catch (downloadErr) {
                 // 다운로드/업로드 실패 시에도 fal URL은 저장
                 console.error("[Video Webhook] 영상 처리 에러:", downloadErr);
@@ -161,6 +173,17 @@ export async function POST(request: NextRequest) {
                         completed_at: new Date().toISOString(),
                     })
                     .eq("id", generation.id);
+
+                // 푸시 알림 (fallback 경로에서도)
+                const pushTitle = generation.pet_name
+                    ? `${generation.pet_name}의 영상이 완성됐어요!`
+                    : "AI 영상이 완성됐어요!";
+                sendPushToUser(
+                    generation.user_id,
+                    pushTitle,
+                    "지금 바로 만나러 가볼까요?",
+                    { type: "video_complete", videoId: generation.id },
+                ).catch((e) => console.warn("[Video Webhook] 푸시 발송 실패:", e));
             }
 
         } else {
