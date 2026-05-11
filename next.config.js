@@ -163,4 +163,21 @@ const nextConfig = {
     },
 };
 
-module.exports = nextConfig;
+// Sentry wrapper — DSN 환경변수 있을 때만 활성화. 없으면 nextConfig 그대로 export.
+const sentryDsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
+
+if (sentryDsn) {
+    const { withSentryConfig } = require("@sentry/nextjs");
+    module.exports = withSentryConfig(nextConfig, {
+        // Sentry 빌드 옵션 — 빌드 시간 노이즈 최소화
+        silent: true,
+        // source map 업로드 (SENTRY_AUTH_TOKEN 환경변수 필요)
+        widenClientFileUpload: true,
+        // 클라이언트 측 sentry 코드를 별도 청크로 분리 (캐시 효율)
+        hideSourceMaps: true,
+        // CSP nonce를 Sentry script에도 적용 (middleware.ts nonce와 통합)
+        disableLogger: true,
+    });
+} else {
+    module.exports = nextConfig;
+}

@@ -2,8 +2,13 @@
  * Global Error Boundary
  * layout.tsx(AuthProvider/PetProvider) 레벨에서 발생하는 에러도 포착
  * error.tsx는 layout 내부 에러만 잡으므로, layout 자체의 크래시는 이 파일이 담당
+ *
+ * Sentry 통합: 에러 발생 시 Sentry로 자동 전송 (DSN 환경변수 있을 때만).
  */
 "use client";
+
+import { useEffect } from "react";
+import * as Sentry from "@sentry/nextjs";
 
 export default function GlobalError({
     error,
@@ -12,6 +17,11 @@ export default function GlobalError({
     error: Error & { digest?: string };
     reset: () => void;
 }) {
+    useEffect(() => {
+        // Sentry로 에러 캡처 (DSN 없으면 노옵)
+        Sentry.captureException(error);
+    }, [error]);
+
     return (
         <html lang="ko">
             <body style={{ margin: 0, fontFamily: "sans-serif" }}>
