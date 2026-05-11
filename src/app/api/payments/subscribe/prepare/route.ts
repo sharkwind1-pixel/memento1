@@ -12,18 +12,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { getAuthUser, createAdminSupabase } from "@/lib/supabase-server";
-import { PRICING } from "@/config/constants";
+import { PRICING, type BillingCycle } from "@/config/constants";
 import { getClientIP, checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 
+/** 플랜 + 결제 주기별 금액. premium_annual은 새 연 구독 플랜. */
 const PLAN_AMOUNT: Record<string, number> = {
     basic: PRICING.BASIC_MONTHLY,
     premium: PRICING.PREMIUM_MONTHLY,
+    premium_annual: PRICING.PREMIUM_ANNUAL,
 };
 
 const PLAN_NAME: Record<string, string> = {
     basic: "메멘토애니 베이직 정기구독 (월)",
     premium: "메멘토애니 프리미엄 정기구독 (월)",
+    premium_annual: "메멘토애니 프리미엄 연간구독 (12개월)",
 };
+
+/** plan → billing_cycle 매핑 */
+function getBillingCycle(plan: string): BillingCycle {
+    return plan === "premium_annual" ? "annual" : "monthly";
+}
 
 export async function POST(request: NextRequest) {
     try {
@@ -98,6 +106,9 @@ export async function POST(request: NextRequest) {
             .eq("status", "pending")
             .like("merchant_uid", "sub_%");
 
+        // 결제 주기 (monthly 또는 annual)
+        const billingCycle = getBillingCycle(plan);
+
         // payments 테이블에 pending 레코드 생성
         const { error: insertError } = await adminSupabase
             .from("payments")
@@ -110,6 +121,7 @@ export async function POST(request: NextRequest) {
                 metadata: {
                     orderName,
                     is_subscription: true,
+                    billing_cycle: billingCycle,
                     customer_uid: customerUid,
                     base_amount: baseAmount,
                     beta_discount_applied: betaDiscountApplied,

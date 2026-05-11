@@ -30,20 +30,28 @@ export default function RefundPolicyPage() {
                 </header>
 
                 <section className="prose dark:prose-invert max-w-none">
-                    <h2 className="text-xl font-display font-bold">1. 구독 서비스 환불</h2>
+                    <h2 className="text-xl font-display font-bold">1. 구독 서비스 환불 (월/연 구독 공통)</h2>
                     <ul className="list-disc pl-6 space-y-1">
                         <li><strong>결제 후 24시간 이내</strong> · 사용 이력이 없거나 미미한 경우 전액 환불.</li>
                         <li>
-                            <strong>24시간 경과 후 해지</strong> · 결제일~해지 시점까지의 기간을 밀리초 단위로 일할 계산하여 잔여분을 환불합니다.
+                            <strong>24시간 경과 후 해지</strong> · 결제일~해지 시점까지의 기간을 일할 계산하여 잔여분을 환불합니다.
                             기간이 지난 일수는 정상 사용으로 간주됩니다.
+                            <ul className="list-disc pl-6 mt-1 text-sm">
+                                <li>월 구독(30일 기준): 일할 환불 = 결제금액 × (남은 일수 / 30)</li>
+                                <li>연 구독(365일 기준): 일할 환불 = 결제금액 × (남은 일수 / 365)</li>
+                            </ul>
                         </li>
                         <li>
-                            <strong>AI 영상 생성</strong> · 결제 회차에 사용한 AI 영상 1건당 3,500원이 환불 금액에서 차감됩니다.
-                            (베이직 월 3회 / 프리미엄 월 6회 기본 제공 기준)
+                            <strong>AI 영상 생성</strong> · 결제 회차에 사용한 AI 영상 1건당 4,900원이 환불 금액에서 차감됩니다.
+                            (프리미엄 월 3회 기본 제공 기준)
                         </li>
                         <li>
                             <strong>자동 결제 다음 회차</strong> · 해지 시점부터는 더 이상 자동 결제가 진행되지 않으며,
                             남은 이용 기간 동안은 프리미엄 기능을 그대로 사용할 수 있습니다.
+                        </li>
+                        <li>
+                            <strong>연 구독 특이사항</strong> · 연 구독은 25% 할인이 적용된 가격이므로,
+                            환불 시 사용 일수 만큼의 정가(월 9,900원 환산)로 차감 후 잔여분이 환불될 수 있습니다.
                         </li>
                     </ul>
 

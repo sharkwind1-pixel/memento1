@@ -12,7 +12,10 @@
 
 import { Metadata } from "next";
 import Link from "next/link";
-import { PRICING, VIDEO } from "@/config/constants";
+import { PRICING, VIDEO, calculateAnnualSavings } from "@/config/constants";
+
+const ANNUAL_SAVINGS = calculateAnnualSavings();
+const PREMIUM_ANNUAL_MONTHLY = Math.round(PRICING.PREMIUM_ANNUAL / 12);
 
 export const metadata: Metadata = {
     title: "요금제 및 결제 안내 | 메멘토애니",
@@ -91,12 +94,44 @@ export default function PricingPage() {
                             period="월 자동 결제"
                             features={[
                                 "AI 펫톡 무제한",
-                                "반려동물 10마리 등록",
-                                "사진 펫당 1,000장 저장",
-                                "AI 영상 월 6회",
+                                "반려동물 무제한 등록",
+                                "사진 무제한 저장",
+                                "AI 영상 월 3회",
+                                "광고 없음",
                                 "우선 고객 지원",
                             ]}
                         />
+                    </div>
+
+                    {/* 연 구독 추천 카드 — 별도 강조 */}
+                    <div className="mt-6 rounded-2xl bg-gradient-to-br from-violet-500 via-purple-500 to-rose-500 p-1 shadow-lg">
+                        <div className="bg-white dark:bg-gray-800 rounded-[14px] p-6">
+                            <div className="flex items-start justify-between gap-4 flex-wrap">
+                                <div className="flex-1 min-w-[200px]">
+                                    <div className="inline-block bg-rose-500 text-white text-xs font-bold px-2 py-1 rounded-full mb-2">
+                                        {ANNUAL_SAVINGS.percent}% 할인
+                                    </div>
+                                    <h3 className="text-xl font-display font-bold text-gray-900 dark:text-white">
+                                        프리미엄 연 구독
+                                    </h3>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                        1년치 한 번에 결제하고 {ANNUAL_SAVINGS.saved.toLocaleString()}원 절약
+                                    </p>
+                                </div>
+                                <div className="text-right">
+                                    <div className="text-2xl font-display font-bold text-violet-600">
+                                        {PREMIUM_ANNUAL_MONTHLY.toLocaleString()}원
+                                        <span className="text-sm text-gray-400 ml-1">/월</span>
+                                    </div>
+                                    <div className="text-xs text-gray-500 mt-1">
+                                        연 {PRICING.PREMIUM_ANNUAL.toLocaleString()}원 일시 결제
+                                    </div>
+                                </div>
+                            </div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-4">
+                                ※ 연 구독 환불은 결제 후 24시간 이내 전액 환불 또는 일할 환불 (사용 일수 차감). 자세한 환불 규정은 아래 환불 정책 참조.
+                            </p>
+                        </div>
                     </div>
                 </section>
 

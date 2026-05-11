@@ -166,8 +166,15 @@ export async function POST(request: NextRequest) {
         }
 
         const customerUid = payment.metadata?.customer_uid || `memento_sub_${user.id}`;
+
+        // 결제 주기 기반 다음 청구일 + duration 결정
+        // - monthly: 30일 후
+        // - annual: 365일 후
+        const billingCycle: "monthly" | "annual" =
+            payment.metadata?.billing_cycle === "annual" ? "annual" : "monthly";
+        const cycleDays = billingCycle === "annual" ? 365 : 30;
         const nextBillingDate = new Date();
-        nextBillingDate.setDate(nextBillingDate.getDate() + 30);
+        nextBillingDate.setDate(nextBillingDate.getDate() + cycleDays);
 
         // payments 상태 업데이트 → paid
         const { error: updateError } = await adminSupabase
@@ -181,6 +188,7 @@ export async function POST(request: NextRequest) {
                     imp_uid: impUid,
                     customer_uid: customerUid,
                     is_subscription: true,
+                    billing_cycle: billingCycle,
                     next_billing_date: nextBillingDate.toISOString(),
                     portone_method: portoneData.pay_method,
                     portone_card: portoneData.card_name,
@@ -194,15 +202,18 @@ export async function POST(request: NextRequest) {
         }
 
         // 프리미엄 부여
+        // - monthly: 30일, plan='premium' or 'basic'
+        // - annual: 365일, plan='premium_annual' → grant_premium에서는 'premium'으로 매핑
         const plan = payment.plan;
-        const durationDays = PLAN_DURATION_DAYS[plan as keyof typeof PLAN_DURATION_DAYS] || 30;
+        const grantPlan = plan === "premium_annual" ? "premium" : plan;
+        const durationDays = cycleDays;  // billing_cycle 기준 (위에서 결정)
 
         const { error: grantError } = await adminSupabase.rpc("grant_premium", {
             p_user_id: user.id,
-            p_plan: plan,
+            p_plan: grantPlan,
             p_duration_days: durationDays,
             p_granted_by: null,
-            p_reason: `정기결제 첫 결제 (${impUid})`,
+            p_reason: `정기결제 첫 결제 (${impUid}, ${billingCycle})`,
         });
 
         if (grantError) {
@@ -217,17 +228,25 @@ export async function POST(request: NextRequest) {
             }, { status: 500 });
         }
 
+        // profiles에 billing_cycle 저장 (다른 곳에서 조회 시 사용)
+        await adminSupabase
+            .from("profiles")
+            .update({ subscription_billing_cycle: billingCycle })
+            .eq("id", user.id);
+
         // 구독 정보를 subscriptions 테이블에 저장 (있으면)
         // UNIQUE(user_id) 제약이 있어야 onConflict가 동작함 (20260418 마이그레이션)
         const { error: subUpsertError } = await adminSupabase
             .from("subscriptions")
             .upsert({
                 user_id: user.id,
-                plan,
+                plan: grantPlan,
+                billing_cycle: billingCycle,
                 status: "active",
                 last_payment_id: payment.id,
                 metadata: {
                     customer_uid: customerUid,
+                    billing_cycle: billingCycle,
                     next_billing_date: nextBillingDate.toISOString(),
                     auto_renew: true,
                 },

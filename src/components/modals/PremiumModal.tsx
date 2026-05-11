@@ -23,7 +23,7 @@ import {
     Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { PRICING, BASIC_LIMITS, PREMIUM_LIMITS, VIDEO } from "@/config/constants";
+import { PRICING, BASIC_LIMITS, PREMIUM_LIMITS, VIDEO, calculateAnnualSavings, type BillingCycle } from "@/config/constants";
 import { requestPortOnePayment } from "@/lib/portone";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
@@ -87,6 +87,9 @@ type PlanType = "basic" | "premium";
 
 const basicPrice = PRICING.BASIC_MONTHLY.toLocaleString();
 const premiumPrice = PRICING.PREMIUM_MONTHLY.toLocaleString();
+const premiumAnnualPrice = PRICING.PREMIUM_ANNUAL.toLocaleString();
+const premiumAnnualMonthly = Math.round(PRICING.PREMIUM_ANNUAL / 12).toLocaleString();
+const ANNUAL_SAVINGS = calculateAnnualSavings();
 
 export default function PremiumModal({
     isOpen,
@@ -95,7 +98,8 @@ export default function PremiumModal({
     onLogin,
     isLoggedIn = true,
 }: PremiumModalProps) {
-    const [selectedPlan, setSelectedPlan] = useState<PlanType>("basic");
+    const [selectedPlan, setSelectedPlan] = useState<PlanType>("premium");
+    const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
     const [isSubscription, setIsSubscription] = useState(true); // 기본: 정기결제
     const [isProcessing, setIsProcessing] = useState(false);
     const { user, refreshProfile } = useAuth();
@@ -121,10 +125,16 @@ export default function PremiumModal({
             const prepareUrl = isSubscription ? API.SUBSCRIBE_PREPARE : API.PAYMENT_PREPARE;
             const completeUrl = isSubscription ? API.SUBSCRIBE_COMPLETE : API.PAYMENT_COMPLETE;
 
+            // plan 결정: 프리미엄 + 연 결제 → "premium_annual"
+            const planToCharge =
+                selectedPlan === "premium" && billingCycle === "annual" && isSubscription
+                    ? "premium_annual"
+                    : selectedPlan;
+
             // 1. 결제 준비
             const prepareRes = await authFetch(prepareUrl, {
                 method: "POST",
-                body: JSON.stringify({ plan: selectedPlan }),
+                body: JSON.stringify({ plan: planToCharge }),
             });
 
             if (!prepareRes.ok) {
@@ -179,7 +189,8 @@ export default function PremiumModal({
             try {
                 const params = new URLSearchParams({
                     type: "subscribe",
-                    ...(selectedPlan ? { plan: selectedPlan } : {}),
+                    plan: planToCharge,
+                    ...(billingCycle ? { cycle: billingCycle } : {}),
                     ...(prepareData?.amount ? { amount: String(prepareData.amount) } : {}),
                 });
                 window.location.href = `/payment/thank-you?${params.toString()}`;
@@ -288,8 +299,17 @@ export default function PremiumModal({
                                 <span className="text-sm font-bold text-gray-800 dark:text-white">프리미엄</span>
                             </div>
                             <div className="flex items-baseline gap-0.5">
-                                <span className="text-xl sm:text-2xl font-display font-bold text-gray-800 dark:text-white">{premiumPrice}</span>
-                                <span className="text-xs text-gray-400">원/월</span>
+                                {selectedPlan === "premium" && billingCycle === "annual" ? (
+                                    <>
+                                        <span className="text-xl sm:text-2xl font-display font-bold text-gray-800 dark:text-white">{premiumAnnualMonthly}</span>
+                                        <span className="text-xs text-gray-400">원/월</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="text-xl sm:text-2xl font-display font-bold text-gray-800 dark:text-white">{premiumPrice}</span>
+                                        <span className="text-xs text-gray-400">원/월</span>
+                                    </>
+                                )}
                             </div>
                             <ul className="mt-2.5 space-y-1">
                                 <li className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1">
@@ -315,6 +335,50 @@ export default function PremiumModal({
                             </ul>
                         </button>
                     </div>
+
+                    {/* 결제 주기 토글 (프리미엄 + 정기결제일 때만) */}
+                    {selectedPlan === "premium" && isSubscription && (
+                        <div className="mb-5">
+                            <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">결제 주기</div>
+                            <div className="grid grid-cols-2 gap-2">
+                                <button
+                                    onClick={() => setBillingCycle("monthly")}
+                                    className={`rounded-xl p-3 text-left border-2 transition-all ${
+                                        billingCycle === "monthly"
+                                            ? "border-violet-500 bg-violet-50 dark:bg-violet-900/20"
+                                            : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                                    }`}
+                                >
+                                    <div className="text-xs font-bold text-gray-800 dark:text-white">월 결제</div>
+                                    <div className="text-base font-display font-bold text-gray-800 dark:text-white mt-0.5">
+                                        {premiumPrice}원
+                                        <span className="text-[10px] text-gray-400 ml-0.5">/월</span>
+                                    </div>
+                                    <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">매달 자동 결제</div>
+                                </button>
+                                <button
+                                    onClick={() => setBillingCycle("annual")}
+                                    className={`relative rounded-xl p-3 text-left border-2 transition-all ${
+                                        billingCycle === "annual"
+                                            ? "border-violet-500 bg-violet-50 dark:bg-violet-900/20"
+                                            : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                                    }`}
+                                >
+                                    <div className="absolute -top-2 right-2 bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                                        {ANNUAL_SAVINGS.percent}% 할인
+                                    </div>
+                                    <div className="text-xs font-bold text-gray-800 dark:text-white">연 결제</div>
+                                    <div className="text-base font-display font-bold text-gray-800 dark:text-white mt-0.5">
+                                        {premiumAnnualMonthly}원
+                                        <span className="text-[10px] text-gray-400 ml-0.5">/월</span>
+                                    </div>
+                                    <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
+                                        1년 {premiumAnnualPrice}원 일시 결제
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    )}
 
                     {/* 결제 유형 선택 */}
                     <div className="flex gap-2 mb-3">

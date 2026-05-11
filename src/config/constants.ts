@@ -162,15 +162,28 @@ export const PREMIUM_LIMITS = {
 
 // ===== 가격 (원) =====
 export const PRICING = {
-    BASIC_MONTHLY: 9900,        // 베이직 월 구독
-    PREMIUM_MONTHLY: 18900,     // 프리미엄 월 구독
+    BASIC_MONTHLY: 9900,         // 베이직 월 구독 (deprecated, 단일 프리미엄으로 통합 예정)
+    PREMIUM_MONTHLY: 9900,       // 프리미엄 월 구독 (단순화 정책)
+    PREMIUM_ANNUAL: 89000,       // 프리미엄 연 구독 (월 환산 7,416원, 25% 할인 — 신규)
 } as const;
 
 // ===== 결제 플랜 기간 (일) =====
 export const PLAN_DURATION_DAYS = {
     basic: 30,
     premium: 30,
+    premium_annual: 365,         // 연 결제는 365일
 } as const;
+
+// ===== 구독 결제 주기 =====
+export type BillingCycle = "monthly" | "annual";
+
+/** 연 결제 할인율 계산 (월 결제 12회 vs 연 결제) */
+export function calculateAnnualSavings(): { saved: number; percent: number } {
+    const monthlyTotal = PRICING.PREMIUM_MONTHLY * 12;
+    const saved = monthlyTotal - PRICING.PREMIUM_ANNUAL;
+    const percent = Math.round((saved / monthlyTotal) * 100);
+    return { saved, percent };
+}
 
 // ===== UI 설정 =====
 export const UI = {

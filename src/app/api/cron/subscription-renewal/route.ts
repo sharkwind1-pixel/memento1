@@ -12,7 +12,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { verifyCronSecret, getServiceSupabase } from "@/lib/cron-utils";
-import { PRICING, PLAN_DURATION_DAYS } from "@/config/constants";
+import { PRICING } from "@/config/constants";
 import { randomUUID } from "crypto";
 
 const MAX_RETRY = 3;
@@ -86,13 +86,24 @@ async function notifySystem(text: string) {
     }
 }
 
-function getPlanAmount(plan: string): number {
+/**
+ * billing_cycle을 고려해서 청구 금액 결정.
+ * annual은 plan="premium"이지만 billing_cycle="annual"이면 연간 가격으로 청구.
+ */
+function getPlanAmount(plan: string, billingCycle: "monthly" | "annual" = "monthly"): number {
+    if (billingCycle === "annual") return PRICING.PREMIUM_ANNUAL;
     if (plan === "premium") return PRICING.PREMIUM_MONTHLY;
     return PRICING.BASIC_MONTHLY;
 }
 
-function getPlanLabel(plan: string): string {
+function getPlanLabel(plan: string, billingCycle: "monthly" | "annual" = "monthly"): string {
+    if (billingCycle === "annual") return "프리미엄 연간";
     return plan === "premium" ? "프리미엄" : "베이직";
+}
+
+/** billing_cycle 기반 갱신 주기 일수 */
+function getCycleDays(billingCycle: "monthly" | "annual"): number {
+    return billingCycle === "annual" ? 365 : 30;
 }
 
 export async function GET(request: NextRequest) {
@@ -153,16 +164,22 @@ export async function GET(request: NextRequest) {
 
             const retryCount = sub.metadata?.retry_count || 0;
             const plan = sub.plan;
-            const amount = getPlanAmount(plan);
+            // billing_cycle: 컬럼 우선, fallback으로 metadata, 둘 다 없으면 monthly
+            const billingCycle: "monthly" | "annual" =
+                (sub.billing_cycle === "annual" || sub.metadata?.billing_cycle === "annual")
+                    ? "annual"
+                    : "monthly";
+            const amount = getPlanAmount(plan, billingCycle);
             const merchantUid = `sub_renew_${randomUUID()}`;
-            const orderName = `메멘토애니 ${getPlanLabel(plan)} 정기구독 갱신`;
+            const orderName = `메멘토애니 ${getPlanLabel(plan, billingCycle)} 정기구독 갱신`;
             const userEmail = emailMap.get(sub.user_id) || sub.user_id;
 
             // 빌링키 재결제
             const charge = await chargeSubscription(accessToken, customerUid, merchantUid, amount, orderName);
 
             if (charge.success) {
-                const durationDays = PLAN_DURATION_DAYS[plan as keyof typeof PLAN_DURATION_DAYS] || 30;
+                // billing_cycle 기반 다음 청구일 계산 (annual=365, monthly=30)
+                const durationDays = getCycleDays(billingCycle);
                 const nextBillingDate = new Date();
                 nextBillingDate.setDate(nextBillingDate.getDate() + durationDays);
 
