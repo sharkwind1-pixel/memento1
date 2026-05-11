@@ -363,9 +363,11 @@ export async function checkSecurityLimits(
     const isPremium = profile?.is_premium &&
         (!profile.premium_expires_at || new Date(profile.premium_expires_at) > new Date());
 
-    // subscription_tier 결정 (DB 값 우선, 하위호환)
+    // subscription_tier 결정
+    // is_premium = true 이지만 tier가 NULL/"free" 같은 모순 상태 보정 (관리자 부여 시 tier 누락 대응)
+    const rawTier = profile?.subscription_tier as SubscriptionTier | null | undefined;
     const subscriptionTier: SubscriptionTier = isPremium
-        ? ((profile?.subscription_tier as SubscriptionTier) || "premium")
+        ? (rawTier === "basic" ? "basic" : "premium")
         : "free";
     const baseLimits = getLimitsForTier(subscriptionTier);
     // tierLimits는 `as const`로 좁혀진 readonly 객체이므로,

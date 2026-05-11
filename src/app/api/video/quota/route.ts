@@ -40,8 +40,11 @@ export async function GET() {
             (!profile.premium_expires_at || new Date(profile.premium_expires_at) > new Date());
 
         // subscription_tier 결정
+        // is_premium = true 이지만 subscription_tier가 NULL/"free" 같은 모순 상태일 때
+        // "premium"으로 자동 보정 (관리자 부여 시 tier 누락된 과거 데이터 대응)
+        const rawTier = profile?.subscription_tier as SubscriptionTier | null | undefined;
         const subscriptionTier: SubscriptionTier = isPremium
-            ? ((profile?.subscription_tier as SubscriptionTier) || "premium")
+            ? (rawTier === "basic" ? "basic" : "premium")
             : "free";
         const monthlyQuota = getVideoMonthlyQuota(subscriptionTier);
 
