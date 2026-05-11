@@ -121,20 +121,53 @@ export async function POST(request: NextRequest) {
             .eq("user_id", user.id)
             .neq("status", "failed");
 
-        // 5-4. 쿼터 초과 검사 (tier별 분기)
+        // 5-3-b. 단품/묶음 보너스 크레딧 합산 (metadata.video_credits 기준)
+        const { createAdminSupabase: createAdmin } = await import("@/lib/supabase-server");
+        const adminSupabase = createAdmin();
+        const videoPlans = ["video_single", "video_bundle_5", "video_bundle_10"];
+
+        let bonusCredits = 0;
+        if (subscriptionTier !== "free") {
+            const { data: paidPurchases } = await adminSupabase
+                .from("payments")
+                .select("metadata")
+                .eq("user_id", user.id)
+                .in("plan", videoPlans)
+                .eq("status", "paid")
+                .gte("paid_at", monthStart);
+            bonusCredits = (paidPurchases ?? []).reduce((sum, p) => {
+                const credits = typeof p.metadata?.video_credits === "number" ? p.metadata.video_credits : 1;
+                return sum + credits;
+            }, 0);
+        } else {
+            const { data: paidPurchases } = await adminSupabase
+                .from("payments")
+                .select("metadata")
+                .eq("user_id", user.id)
+                .in("plan", videoPlans)
+                .eq("status", "paid");
+            bonusCredits = (paidPurchases ?? []).reduce((sum, p) => {
+                const credits = typeof p.metadata?.video_credits === "number" ? p.metadata.video_credits : 1;
+                return sum + credits;
+            }, 0);
+        }
+
+        // 5-4. 쿼터 초과 검사 (tier별 분기) — 보너스 크레딧 합산
         if (subscriptionTier === "free") {
-            // 무료 회원: 평생 FREE_LIFETIME회
-            if ((lifetimeCount ?? 0) >= VIDEO.FREE_LIFETIME) {
+            // 무료 회원: 평생 FREE_LIFETIME회 + 보너스 크레딧
+            const effectiveLimit = VIDEO.FREE_LIFETIME + bonusCredits;
+            if ((lifetimeCount ?? 0) >= effectiveLimit) {
                 return NextResponse.json(
-                    { error: "무료 체험 영상 생성 횟수를 모두 사용했습니다. 구독하면 매달 더 많은 영상을 만들 수 있어요." },
+                    { error: "무료 체험 영상 생성 횟수를 모두 사용했습니다. 단품 또는 묶음권을 구매하거나 구독하면 더 많이 만들 수 있어요." },
                     { status: 403 }
                 );
             }
         } else {
-            // 베이직/프리미엄: 월간 쿼터
-            if ((monthlyCount ?? 0) >= monthlyQuota) {
+            // 베이직/프리미엄: 월간 쿼터 + 보너스 크레딧
+            const effectiveLimit = monthlyQuota + bonusCredits;
+            if ((monthlyCount ?? 0) >= effectiveLimit) {
                 return NextResponse.json(
-                    { error: `이번 달 영상 생성 횟수(${monthlyQuota}회)를 모두 사용했습니다. 다음 달에 다시 이용해주세요.` },
+                    { error: `이번 달 영상 생성 횟수(${effectiveLimit}회)를 모두 사용했습니다. 묶음권을 구매하거나 다음 달에 다시 이용해주세요.` },
                     { status: 403 }
                 );
             }

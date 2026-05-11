@@ -67,29 +67,44 @@ export async function GET() {
             .eq("user_id", user.id)
             .neq("status", "failed");
 
-        // 5. 단건 구매 보너스 크레딧 조회
+        // 5. 단품 + 묶음권 구매 보너스 크레딧 합산
+        // payments.metadata.video_credits에 회수 저장됨 (단품 1, 묶음 5 또는 10)
         const adminSupabase = createAdminSupabase();
         let bonusCredits = 0;
 
+        const videoPlans = ["video_single", "video_bundle_5", "video_bundle_10"];
+
         if (subscriptionTier !== "free") {
-            // 유료 유저: 이번 달 구매 건수만 카운트
-            const { count: bonusCount } = await adminSupabase
+            // 유료 유저: 이번 달 구매분만 카운트
+            const { data: paidVideoPurchases } = await adminSupabase
                 .from("payments")
-                .select("id", { count: "exact", head: true })
+                .select("metadata")
                 .eq("user_id", user.id)
-                .eq("plan", "video_single")
+                .in("plan", videoPlans)
                 .eq("status", "paid")
                 .gte("paid_at", monthStart);
-            bonusCredits = bonusCount ?? 0;
+
+            bonusCredits = (paidVideoPurchases ?? []).reduce((sum, p) => {
+                const credits = typeof p.metadata?.video_credits === "number"
+                    ? p.metadata.video_credits
+                    : 1; // 옛 단품 결제는 metadata 없을 수 있으니 1로 폴백
+                return sum + credits;
+            }, 0);
         } else {
-            // 무료 유저: 전체 기간 구매 건수
-            const { count: bonusCount } = await adminSupabase
+            // 무료 유저: 전체 기간 구매분 모두 카운트
+            const { data: paidVideoPurchases } = await adminSupabase
                 .from("payments")
-                .select("id", { count: "exact", head: true })
+                .select("metadata")
                 .eq("user_id", user.id)
-                .eq("plan", "video_single")
+                .in("plan", videoPlans)
                 .eq("status", "paid");
-            bonusCredits = bonusCount ?? 0;
+
+            bonusCredits = (paidVideoPurchases ?? []).reduce((sum, p) => {
+                const credits = typeof p.metadata?.video_credits === "number"
+                    ? p.metadata.video_credits
+                    : 1;
+                return sum + credits;
+            }, 0);
         }
 
         // 6. 쿼터 응답 구성

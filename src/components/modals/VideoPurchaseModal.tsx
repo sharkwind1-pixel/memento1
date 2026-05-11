@@ -1,7 +1,9 @@
 /**
  * VideoPurchaseModal.tsx
- * AI 영상 단건 구매 모달
- * - 영상 1건 3,500원 단건 결제
+ * AI 영상 구매 모달 (단품 + 묶음권)
+ * - 1회: 4,900원
+ * - 5회 묶음: 19,900원 (영상당 3,980원)
+ * - 10회 묶음: 34,900원 (영상당 3,490원)
  * - 하단에 구독 플랜 안내 링크
  */
 
@@ -10,7 +12,7 @@
 import { useState } from "react";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
 import { Button } from "@/components/ui/button";
-import { X, Video, Loader2, Crown } from "lucide-react";
+import { X, Video, Loader2, Crown, Check } from "lucide-react";
 import { toast } from "sonner";
 import { VIDEO } from "@/config/constants";
 import { requestPortOnePayment } from "@/lib/portone";
@@ -25,6 +27,36 @@ interface VideoPurchaseModalProps {
     onPurchaseSuccess: () => void;
 }
 
+type PackageSize = 1 | 5 | 10;
+
+interface PackageOption {
+    size: PackageSize;
+    label: string;
+    price: number;
+    perVideo: number;
+    badge?: string;
+    highlight?: boolean;
+}
+
+const PACKAGES: PackageOption[] = [
+    { size: 1, label: "1회권", price: VIDEO.SINGLE_PRICE, perVideo: VIDEO.SINGLE_PRICE },
+    {
+        size: 5,
+        label: "5회 묶음",
+        price: VIDEO.BUNDLE_5_PRICE,
+        perVideo: Math.round(VIDEO.BUNDLE_5_PRICE / 5),
+        badge: "인기",
+        highlight: true,
+    },
+    {
+        size: 10,
+        label: "10회 묶음",
+        price: VIDEO.BUNDLE_10_PRICE,
+        perVideo: Math.round(VIDEO.BUNDLE_10_PRICE / 10),
+        badge: "최대 할인",
+    },
+];
+
 export default function VideoPurchaseModal({
     isOpen,
     onClose,
@@ -32,12 +64,14 @@ export default function VideoPurchaseModal({
     onPurchaseSuccess,
 }: VideoPurchaseModalProps) {
     const [isProcessing, setIsProcessing] = useState(false);
+    const [selectedSize, setSelectedSize] = useState<PackageSize>(5);
     const { user } = useAuth();
     useEscapeClose(isOpen, onClose);
 
     if (!isOpen) return null;
 
-    const price = VIDEO.SINGLE_PRICE.toLocaleString();
+    const selectedPkg = PACKAGES.find((p) => p.size === selectedSize)!;
+    const priceStr = selectedPkg.price.toLocaleString();
 
     const handlePurchase = async () => {
         if (isProcessing) return;
@@ -50,10 +84,10 @@ export default function VideoPurchaseModal({
         setIsProcessing(true);
 
         try {
-            // 1. 결제 준비
+            // 1. 결제 준비 (선택한 묶음 사이즈 전달)
             const prepareRes = await authFetch(API.PAYMENT_VIDEO_PREPARE, {
                 method: "POST",
-                body: JSON.stringify({}),
+                body: JSON.stringify({ packageSize: selectedSize }),
             });
 
             if (!prepareRes.ok) {
@@ -98,13 +132,18 @@ export default function VideoPurchaseModal({
                 return;
             }
 
-            toast.success("AI 영상 1건이 추가되었습니다!");
+            toast.success(
+                selectedSize === 1
+                    ? "AI 영상 1건이 추가되었습니다!"
+                    : `AI 영상 ${selectedSize}건이 추가되었습니다!`,
+            );
             onPurchaseSuccess();
             onClose();
             // 광고 conversion tracking용 thank-you 페이지로 이동
             try {
                 const params = new URLSearchParams({
                     type: "video",
+                    package: String(selectedSize),
                     ...(amount ? { amount: String(amount) } : {}),
                 });
                 window.location.href = `/payment/thank-you?${params.toString()}`;
@@ -130,7 +169,7 @@ export default function VideoPurchaseModal({
         >
             <div className="min-h-full flex items-start justify-center pt-16 pb-20 px-4">
                 <div
-                    className="bg-white dark:bg-gray-900 rounded-3xl max-w-sm w-full shadow-2xl relative animate-in fade-in zoom-in-95 duration-200"
+                    className="bg-white dark:bg-gray-900 rounded-3xl max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in-95 duration-200"
                     role="dialog"
                     aria-modal="true"
                     onClick={(e) => e.stopPropagation()}
@@ -151,23 +190,66 @@ export default function VideoPurchaseModal({
                             </div>
                             <div>
                                 <h2 className="text-lg font-display font-bold">AI 영상 만들기</h2>
-                                <p className="text-white/80 text-sm mt-1">무료 횟수를 다 사용했어요</p>
+                                <p className="text-white/80 text-sm mt-1">필요한 만큼 골라보세요</p>
                             </div>
                         </div>
                     </div>
 
                     {/* 본문 */}
                     <div className="p-5">
-                        {/* 단건 구매 카드 */}
-                        <div className="bg-memento-200 dark:bg-memento-900/20 rounded-2xl p-4 mb-4">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm font-bold text-gray-800 dark:text-white">영상 1건 구매</span>
-                                <span className="text-memento-600 dark:text-memento-400"><span className="text-lg font-display font-bold">{price}</span><span className="text-sm font-normal ml-0.5">원</span></span>
-                            </div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                                지금 선택한 템플릿으로 바로 영상을 만들 수 있어요.
-                                결제 후 즉시 1건의 영상 생성 크레딧이 추가됩니다.
-                            </p>
+                        {/* 묶음 옵션 선택 */}
+                        <div className="space-y-2 mb-4">
+                            {PACKAGES.map((pkg) => {
+                                const isSelected = selectedSize === pkg.size;
+                                return (
+                                    <button
+                                        key={pkg.size}
+                                        onClick={() => setSelectedSize(pkg.size)}
+                                        className={`w-full relative rounded-2xl p-4 text-left transition-all border-2 ${
+                                            isSelected
+                                                ? "border-memento-500 bg-memento-50 dark:bg-memento-900/20 shadow-sm"
+                                                : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                                        }`}
+                                    >
+                                        {pkg.badge && (
+                                            <div className="absolute -top-2 right-3 bg-gradient-to-r from-rose-500 to-pink-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                                {pkg.badge}
+                                            </div>
+                                        )}
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div className="flex items-center gap-2.5">
+                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                                    isSelected
+                                                        ? "bg-memento-500 text-white"
+                                                        : "border-2 border-gray-300 dark:border-gray-600"
+                                                }`}>
+                                                    {isSelected && <Check className="w-3 h-3" />}
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-bold text-gray-800 dark:text-white">
+                                                        AI 영상 {pkg.label}
+                                                    </p>
+                                                    {pkg.size > 1 && (
+                                                        <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                                                            영상당 {pkg.perVideo.toLocaleString()}원
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-lg font-display font-bold text-memento-600 dark:text-memento-400">
+                                                    {pkg.price.toLocaleString()}원
+                                                </p>
+                                                {pkg.size > 1 && (
+                                                    <p className="text-[10px] text-gray-400">
+                                                        {Math.round((1 - pkg.perVideo / VIDEO.SINGLE_PRICE) * 100)}% 할인
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </button>
+                                );
+                            })}
                         </div>
 
                         {/* 구매 버튼 */}
@@ -183,7 +265,7 @@ export default function VideoPurchaseModal({
                             ) : (
                                 <Video className="w-5 h-5 mr-2" />
                             )}
-                            {isProcessing ? "결제 진행 중..." : <>영상 만들기 {price}<span className="font-normal text-sm">원</span></>}
+                            {isProcessing ? "결제 진행 중..." : <>{priceStr}<span className="font-normal text-sm ml-0.5">원</span> 결제하기</>}
                         </Button>
 
                         {/* 구독 안내 */}
@@ -193,7 +275,7 @@ export default function VideoPurchaseModal({
                                 className="w-full flex items-center justify-center gap-2 text-sm text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 transition-colors py-2"
                             >
                                 <Crown className="w-4 h-4" />
-                                <span>구독하면 매달 3~6회 영상 생성</span>
+                                <span>구독하면 매달 3회 + 무제한 펫톡</span>
                             </button>
                         </div>
 
