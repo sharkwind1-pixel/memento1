@@ -137,25 +137,18 @@ export default function VideoGenerationSection({
             if (data.status === "completed") {
                 stopPolling();
                 setActiveGeneration(null);
-                setSelectedVideo(data);
 
-                // 영상 목록 갱신
+                // 영상 목록 갱신만. 토스트 + 결과 모달 표시는 글로벌 VideoProgressContext가 담당.
                 setVideos((prev) => {
                     const filtered = prev.filter((v) => v.id !== data.id);
                     return [data, ...filtered].slice(0, 3);
                 });
-
-                toast.success(`${pet.name}의 영상이 완성되었어요!`);
             } else if (data.status === "failed") {
                 stopPolling();
                 setActiveGeneration(null);
 
-                // 영상 목록에서 실패한 항목 제거
+                // 영상 목록에서 실패한 항목 제거. 토스트는 글로벌 Context가 띄움.
                 setVideos((prev) => prev.filter((v) => v.id !== data.id));
-
-                toast.error(
-                    data.errorMessage || "영상 생성에 실패했어요. 다시 시도해주세요."
-                );
             } else {
                 // pending 또는 processing: activeGeneration 업데이트
                 setActiveGeneration(data);
@@ -207,37 +200,13 @@ export default function VideoGenerationSection({
     }, []);
 
     const handleGenerationSuccess = useCallback(
-        async (generationId: string) => {
+        async (_generationId: string) => {
+            // 폴링/토스트는 글로벌 VideoProgressContext가 처리 (VideoGenerateModal에서 startTracking 호출).
+            // 여기서는 모달 닫기 + 쿼터 새로고침만 처리.
             setIsGenerateModalOpen(false);
-
-            const newGeneration: VideoGeneration = {
-                id: generationId,
-                userId: "",
-                petId: pet.id,
-                petName: pet.name,
-                sourcePhotoUrl: "",
-                templateId: null,
-                customPrompt: null,
-                falRequestId: null,
-                status: "pending",
-                videoUrl: null,
-                falVideoUrl: null,
-                thumbnailUrl: null,
-                durationSeconds: null,
-                errorMessage: null,
-                isSinglePurchase: false,
-                createdAt: new Date().toISOString(),
-                completedAt: null,
-            };
-
-            setActiveGeneration(newGeneration);
-
-            // 쿼터 새로고침
             await fetchQuota();
-
-            toast.success("영상 생성을 시작했어요! 완성되면 알려드릴게요.");
         },
-        [pet.id, pet.name, fetchQuota]
+        [fetchQuota]
     );
 
     const handleVideoClick = useCallback((video: VideoGeneration) => {

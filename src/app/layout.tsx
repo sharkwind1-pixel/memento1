@@ -8,6 +8,8 @@ import { headers } from "next/headers";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PetProvider } from "@/contexts/PetContext";
+import { VideoProgressProvider } from "@/contexts/VideoProgressContext";
+import VideoProgressWidget from "@/components/common/VideoProgressWidget";
 import { Toaster } from "sonner";
 import CookieConsentBanner from "@/components/features/cookie/CookieConsentBanner";
 import OfflineBanner from "@/components/common/OfflineBanner";
@@ -257,8 +259,11 @@ export default async function RootLayout({
                 <ServiceWorkerUpdater />
                 <AuthProvider>
                     <PetProvider>
-                        <OfflineBanner />
-                        {children}
+                        <VideoProgressProvider>
+                            <OfflineBanner />
+                            {children}
+                            <VideoProgressWidget />
+                        </VideoProgressProvider>
                     </PetProvider>
                 </AuthProvider>
                 <CookieConsentBanner />

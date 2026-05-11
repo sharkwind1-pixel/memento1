@@ -40,6 +40,7 @@ import { useEscapeClose } from "@/hooks/useEscapeClose";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { uploadMedia } from "@/lib/storage";
 import { useAuth } from "@/contexts/AuthContext";
+import { useVideoProgress } from "@/contexts/VideoProgressContext";
 
 
 // ============================================
@@ -101,6 +102,7 @@ export default function VideoGenerateModal({
     onSuccess,
     pet,
 }: VideoGenerateModalProps) {
+    const { startTracking } = useVideoProgress();
     // ============================================
     // State
     // ============================================
@@ -243,7 +245,11 @@ export default function VideoGenerateModal({
             }
 
             const data = await res.json();
-            toast("영상을 만들고 있어요! 완성되면 알려드릴게요.");
+            // 글로벌 진행 위젯 등록 — 어느 페이지에 있든 위젯 표시 + 완료 시 자동 알림
+            startTracking(data.id, pet.name);
+            toast.success("영상을 만들고 있어요! 완성되면 알려드릴게요. 다른 활동 즐기고 계세요.", {
+                duration: 4000,
+            });
             onSuccess(data.id);
             onClose();
         } catch (err) {

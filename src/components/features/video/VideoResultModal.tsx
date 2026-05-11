@@ -155,7 +155,7 @@ export default function VideoResultModal({
         >
             <div className="min-h-full flex items-start justify-center pt-8 pb-8 px-4">
                 <div
-                    className="bg-white dark:bg-gray-800 rounded-2xl max-w-2xl w-full shadow-2xl relative animate-in fade-in zoom-in-95 duration-200"
+                    className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in-95 duration-200"
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby="video-result-modal-title"
@@ -170,15 +170,16 @@ export default function VideoResultModal({
                         <X className="w-5 h-5" />
                     </button>
 
-                    {/* 영상 플레이어 */}
-                    <div className="p-5 pb-0">
+                    {/* 영상 플레이어 — 9:16 세로 영상이라 max-height로 화면 비율 제한 */}
+                    <div className="p-4 pb-0 flex justify-center">
                         <video
                             src={video.videoUrl}
                             controls
                             autoPlay
                             loop
                             playsInline
-                            className="w-full rounded-xl bg-black"
+                            className="rounded-xl bg-black w-auto max-w-full max-h-[55vh]"
+                            style={{ aspectRatio: "9/16" }}
                         />
                     </div>
 
