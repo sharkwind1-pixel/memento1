@@ -192,6 +192,15 @@ export default async function RootLayout({
                         }),
                     }}
                 />
+
+                {/* Google AdSense — publisher ID가 환경변수에 있을 때만 로드 */}
+                {process.env.NEXT_PUBLIC_ADSENSE_PUBLISHER_ID && (
+                    <script
+                        async
+                        src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_PUBLISHER_ID}`}
+                        crossOrigin="anonymous"
+                    />
+                )}
             </head>
             <body className="font-sans notranslate" translate="no">
                 {/* SSR 랜딩 콘텐츠 - JS 없는 크롤러/봇에게 서비스 정보 노출. JS 로드 후 숨김 */}
