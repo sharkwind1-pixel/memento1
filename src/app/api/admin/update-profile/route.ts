@@ -25,6 +25,7 @@ type AllowedField =
     | "premium_started_at"
     | "premium_expires_at"
     | "premium_plan"
+    | "subscription_tier"
     | "tutorial_completed_at"
     | "onboarding_completed_at"
     | "user_type"
@@ -40,6 +41,7 @@ const ALLOWED_FIELDS: AllowedField[] = [
     "premium_started_at",
     "premium_expires_at",
     "premium_plan",
+    "subscription_tier",
     "tutorial_completed_at",
     "onboarding_completed_at",
     "user_type",
@@ -121,7 +123,7 @@ export async function PATCH(request: NextRequest) {
             .from("profiles")
             .update(sanitizedUpdates)
             .eq("id", targetUserId)
-            .select("id, is_admin, is_premium, is_banned, points, total_points_earned, premium_plan, premium_expires_at")
+            .select("id, is_admin, is_premium, is_banned, points, total_points_earned, premium_plan, premium_expires_at, subscription_tier")
             .single();
 
         if (error) {
