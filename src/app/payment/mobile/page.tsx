@@ -78,6 +78,9 @@ function MobilePaymentInner() {
                 // 결제 수단 (card | phone | trans | vbank | kakaopay | tosspay | payco | naverpay)
                 // 미지정 시 card. 구독은 무조건 card (빌링키 발급 위해).
                 const payMethodParam = params.get("method");
+                // 영상 묶음 사이즈 (1 / 5 / 10) — video 타입에서만 의미.
+                const packageSizeParam = params.get("packageSize");
+                const packageSize = packageSizeParam ? parseInt(packageSizeParam, 10) : 1;
 
                 if (!token || !type) {
                     throw new Error("필수 파라미터 누락");
@@ -97,7 +100,13 @@ function MobilePaymentInner() {
                     ? "/api/payments/subscribe/prepare"
                     : "/api/payments/video/prepare";
                 const prepareBody: Record<string, unknown> = {};
-                if (isSubscription && plan) prepareBody.plan = plan;
+                if (isSubscription && plan) {
+                    // plan: "basic" / "premium" / "premium_annual"
+                    prepareBody.plan = plan;
+                }
+                if (!isSubscription && [1, 5, 10].includes(packageSize)) {
+                    prepareBody.packageSize = packageSize;
+                }
 
                 const prepareRes = await fetch(prepareUrl, {
                     method: "POST",
@@ -134,22 +143,26 @@ function MobilePaymentInner() {
                 //  - 휴대폰: 다날 (전문 PG, 채널 등록 시 사용)
                 //  - 계좌이체 / 가상계좌: 일단 KCP (지원 시), 다날 추가 시 분기
                 const danalChannelKey = process.env.NEXT_PUBLIC_PORTONE_DANAL_CHANNEL_KEY;
-                const kcpMid = process.env.NEXT_PUBLIC_PORTONE_KCP_MID || "IP6S2";
+                // KCP 사이트코드 분기 (2026-05-11 KCP 답변 기준):
+                //  - IP6S2 = 자동결제 전용. 휴대폰결제 불가.
+                //  - IP6RE = 일반 단건결제. 휴대폰결제 지원.
+                const kcpSubMid = process.env.NEXT_PUBLIC_PORTONE_KCP_MID || "IP6S2";
+                const kcpGeneralMid = process.env.NEXT_PUBLIC_PORTONE_KCP_GENERAL_MID || "IP6RE";
 
                 let useChannelKey: string | undefined;
                 let pgValue: string | undefined;
 
                 if (isSubscription) {
                     useChannelKey = batchChannelKey;
-                    pgValue = `kcp_billing.${kcpMid}`;
+                    pgValue = `kcp_billing.${kcpSubMid}`;
                 } else if (payMethod === "phone" && danalChannelKey) {
                     // 다날 휴대폰 결제 (다날 ENV 등록되면 자동 활성)
                     useChannelKey = danalChannelKey;
                     pgValue = undefined; // 다날은 channelKey로 라우팅, pg 명시 불필요
                 } else {
-                    // 카드 / 계좌 / 가상 → KCP
+                    // 카드 / 휴대폰(KCP) / 계좌 / 가상 → KCP 일반 사이트코드(IP6RE)
                     useChannelKey = channelKey;
-                    pgValue = `kcp.${kcpMid}`;
+                    pgValue = `kcp.${kcpGeneralMid}`;
                 }
 
                 if (!useChannelKey) {

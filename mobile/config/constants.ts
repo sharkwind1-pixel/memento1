@@ -21,9 +21,20 @@ export const PREMIUM_LIMITS = {
 } as const;
 
 export const PRICING = {
-    BASIC_MONTHLY: 9900,
-    PREMIUM_MONTHLY: 18900,
+    BASIC_MONTHLY: 9900,         // deprecated, 단일 프리미엄으로 통합 예정
+    PREMIUM_MONTHLY: 9900,       // 프리미엄 월 구독 (단순화 정책)
+    PREMIUM_ANNUAL: 89000,       // 프리미엄 연 구독 (월 환산 7,416원, 25% 할인)
 } as const;
+
+export type BillingCycle = "monthly" | "annual";
+
+/** 연 결제 할인율 계산 (월 결제 12회 vs 연 결제) */
+export function calculateAnnualSavings(): { saved: number; percent: number } {
+    const monthlyTotal = PRICING.PREMIUM_MONTHLY * 12;
+    const saved = monthlyTotal - PRICING.PREMIUM_ANNUAL;
+    const percent = Math.round((saved / monthlyTotal) * 100);
+    return { saved, percent };
+}
 
 export const ADMIN_EMAILS = ["sharkwind1@gmail.com"] as const;
 
@@ -42,11 +53,15 @@ export const API_BASE_URL = _rawBase.replace(
     "https://www.mementoani.com",
 );
 
-// 영상 생성 폴링 (웹 src/config/constants.ts VIDEO와 동일)
+// 영상 생성 폴링 + 가격 (웹 src/config/constants.ts VIDEO와 동일)
 export const VIDEO = {
-    POLL_INTERVAL_MS: 15000, // 15초
-    MAX_POLL_COUNT: 60,      // 15분 (60 × 15초)
-    SINGLE_PRICE: 3500,      // 단건 구매가 (KRW)
+    POLL_INTERVAL_MS: 15000,    // 15초
+    MAX_POLL_COUNT: 60,         // 15분 (60 × 15초)
+    FREE_LIFETIME: 1,           // 무료 평생 1회
+    PREMIUM_MONTHLY: 3,         // 프리미엄 월 3회
+    SINGLE_PRICE: 4900,         // 단품 1회
+    BUNDLE_5_PRICE: 19900,      // 5회 묶음 (영상당 3,980원)
+    BUNDLE_10_PRICE: 34900,     // 10회 묶음 (영상당 3,490원)
 } as const;
 
 // ===== 포인트 시스템 (웹 src/config/constants.ts POINTS와 동일) =====

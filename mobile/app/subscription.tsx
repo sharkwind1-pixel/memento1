@@ -11,7 +11,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
 import { useDarkMode } from "@/contexts/ThemeContext";
-import { PRICING } from "@/config/constants";
+import { PRICING, calculateAnnualSavings } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
 import AppHeader from "@/components/common/AppHeader";
 import CancelConfirmModal from "@/components/subscription/CancelConfirmModal";
@@ -36,31 +36,21 @@ const PLANS: Plan[] = [
             "AI 펫톡 하루 10회",
             "반려동물 1마리",
             "사진 펫당 50장",
-        ],
-    },
-    {
-        id: "basic",
-        name: "베이직",
-        price: `월 ${PRICING.BASIC_MONTHLY.toLocaleString()}원`,
-        color: COLORS.memento[500],
-        popular: true,
-        features: [
-            "AI 펫톡 하루 50회",
-            "반려동물 3마리",
-            "사진 펫당 200장",
-            "AI 영상 월 3회",
+            "AI 영상 평생 1회",
         ],
     },
     {
         id: "premium",
         name: "프리미엄",
         price: `월 ${PRICING.PREMIUM_MONTHLY.toLocaleString()}원`,
-        color: "#8B5CF6",
+        color: COLORS.memento[500],
+        popular: true,
         features: [
             "AI 펫톡 무제한",
-            "반려동물 10마리",
-            "사진 펫당 1,000장",
-            "AI 영상 월 6회",
+            "반려동물 무제한",
+            "사진 무제한",
+            "AI 영상 월 3회",
+            "광고 없음",
             "우선 고객 지원",
         ],
     },
@@ -242,6 +232,42 @@ export default function SubscriptionScreen() {
                 </TouchableOpacity>
             </View>
 
+            {/* 연 구독 추천 카드 — 25% 할인 강조 */}
+            {!isPremium && (
+                <View style={[styles.annualCard, { borderColor: COLORS.memento[300] }]}>
+                    <View style={[styles.annualBadge, { backgroundColor: "#EF4444" }]}>
+                        <Text style={styles.annualBadgeText}>{calculateAnnualSavings().percent}% 할인</Text>
+                    </View>
+                    <View style={styles.annualRow}>
+                        <View style={{ flex: 1 }}>
+                            <Text style={[styles.annualTitle, { color: isDarkMode ? COLORS.white : COLORS.gray[900] }]}>
+                                프리미엄 연 구독
+                            </Text>
+                            <Text style={[styles.annualSub, { color: isDarkMode ? COLORS.gray[400] : COLORS.gray[600] }]}>
+                                1년치 한 번에 결제하고 {calculateAnnualSavings().saved.toLocaleString()}원 절약
+                            </Text>
+                        </View>
+                        <View style={{ alignItems: "flex-end" }}>
+                            <Text style={[styles.annualPrice, { color: COLORS.memento[600] }]}>
+                                월 {Math.round(PRICING.PREMIUM_ANNUAL / 12).toLocaleString()}원
+                            </Text>
+                            <Text style={[styles.annualTotal, { color: COLORS.gray[500] }]}>
+                                연 {PRICING.PREMIUM_ANNUAL.toLocaleString()}원
+                            </Text>
+                        </View>
+                    </View>
+                    <TouchableOpacity
+                        onPress={openWebPayment}
+                        style={[styles.annualBtn, { backgroundColor: COLORS.memento[500] }]}
+                        activeOpacity={0.85}
+                    >
+                        <Text style={{ color: "#fff", fontWeight: "700", fontSize: 14 }}>
+                            연 구독 시작하기 (웹)
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            )}
+
             {/* 해지 후 보관함 — archived 펫이 있을 때만 자동 노출 */}
             <ArchivedPetsSection />
             </ScrollView>
@@ -275,6 +301,34 @@ const styles = StyleSheet.create({
     featureRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
     planButton: { marginTop: 16, paddingVertical: 12, borderRadius: 12, alignItems: "center" },
     notice: { borderRadius: 16, padding: 16, marginTop: 8 },
+    annualCard: {
+        borderRadius: 18,
+        borderWidth: 2,
+        padding: 16,
+        marginTop: 16,
+        position: "relative",
+    },
+    annualBadge: {
+        position: "absolute",
+        top: -10,
+        right: 16,
+        backgroundColor: "#EF4444",
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 9999,
+    },
+    annualBadgeText: { color: "#fff", fontSize: 11, fontWeight: "800" },
+    annualRow: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
+    annualTitle: { fontSize: 16, fontWeight: "800" },
+    annualSub: { fontSize: 12, marginTop: 4, lineHeight: 18 },
+    annualPrice: { fontSize: 18, fontWeight: "800" },
+    annualTotal: { fontSize: 11, marginTop: 2 },
+    annualBtn: {
+        marginTop: 14,
+        paddingVertical: 12,
+        borderRadius: 12,
+        alignItems: "center",
+    },
     expiresCard: {
         flexDirection: "row",
         alignItems: "center",

@@ -26,6 +26,7 @@ import { supabase } from "@/lib/supabase";
 import { VIDEO_TEMPLATES, CATEGORY_LABEL, type MobileVideoTemplate } from "@/data/videoTemplates";
 import PaymentWebViewModal, { type PayMethod } from "@/components/payments/PaymentWebViewModal";
 import PayMethodPicker from "@/components/payments/PayMethodPicker";
+import PackagePicker from "@/components/payments/PackagePicker";
 
 interface PetPhoto {
     id: string;
@@ -65,6 +66,8 @@ export default function VideoGenerateModal({ visible, onClose, onSuccess, pet, i
     const [paymentMode, setPaymentMode] = useState<"video" | "subscription" | null>(null);
     const [methodPickerOpen, setMethodPickerOpen] = useState(false);
     const [pickedMethod, setPickedMethod] = useState<PayMethod | null>(null);
+    const [pickedPackageSize, setPickedPackageSize] = useState<1 | 5 | 10>(5); // 기본 5회 묶음 (인기)
+    const [packagePickerOpen, setPackagePickerOpen] = useState(false);
     const [photo, setPhoto] = useState<PetPhoto | null>(null);
     const [uploadingNew, setUploadingNew] = useState(false);
     const [template, setTemplate] = useState<MobileVideoTemplate | null>(null);
@@ -129,6 +132,11 @@ export default function VideoGenerateModal({ visible, onClose, onSuccess, pet, i
                 setSubmitting(false);
                 return;
             }
+            // 진행 안내 + 푸시 알림 안내 (모바일은 영상 완료 시 푸시로 알림 도달)
+            Alert.alert(
+                "영상 생성 시작",
+                "영상을 만들고 있어요! 완성되면 알림으로 알려드릴게요. 다른 활동 즐기고 계세요.",
+            );
             onSuccess(data.generationId ?? data.id ?? "");
             onClose();
         } catch {
@@ -139,9 +147,15 @@ export default function VideoGenerateModal({ visible, onClose, onSuccess, pet, i
     }
 
     /**
-     * 단건 구매 — 결제 수단 picker → WebView로 PortOne 결제창 호출.
+     * 영상 구매 (단품 + 묶음) — 1차로 묶음 사이즈 picker → 결제 수단 picker → WebView.
      */
     function handleSinglePurchase() {
+        setPackagePickerOpen(true);
+    }
+
+    function handlePackagePicked(size: 1 | 5 | 10) {
+        setPickedPackageSize(size);
+        setPackagePickerOpen(false);
         setMethodPickerOpen(true);
     }
 
@@ -491,14 +505,31 @@ export default function VideoGenerateModal({ visible, onClose, onSuccess, pet, i
                     {step === "confirm" && renderConfirmStep()}
                 </ScrollView>
 
+                {/* 묶음 사이즈 picker (단품 / 5회 / 10회) */}
+                <PackagePicker
+                    visible={packagePickerOpen}
+                    onClose={() => setPackagePickerOpen(false)}
+                    onPick={handlePackagePicked}
+                    accentColor={accentColor}
+                    isDarkMode={isDarkMode}
+                />
+
                 {/* 결제 수단 picker (단건만) */}
                 <PayMethodPicker
                     visible={methodPickerOpen}
                     onClose={() => setMethodPickerOpen(false)}
                     onPick={handleMethodPicked}
                     accentColor={accentColor}
-                    title="AI 영상 1건"
-                    amountKRW={VIDEO.SINGLE_PRICE}
+                    title={
+                        pickedPackageSize === 1 ? "AI 영상 1회권"
+                            : pickedPackageSize === 5 ? "AI 영상 5회 묶음"
+                                : "AI 영상 10회 묶음"
+                    }
+                    amountKRW={
+                        pickedPackageSize === 1 ? VIDEO.SINGLE_PRICE
+                            : pickedPackageSize === 5 ? VIDEO.BUNDLE_5_PRICE
+                                : VIDEO.BUNDLE_10_PRICE
+                    }
                 />
 
                 {/* 인앱 결제 WebView */}
@@ -507,6 +538,7 @@ export default function VideoGenerateModal({ visible, onClose, onSuccess, pet, i
                     type={paymentMode ?? "video"}
                     plan={paymentMode === "subscription" ? "basic" : undefined}
                     method={paymentMode === "video" ? (pickedMethod ?? undefined) : undefined}
+                    packageSize={paymentMode === "video" ? pickedPackageSize : undefined}
                     onClose={() => {
                         setPaymentMode(null);
                         setPickedMethod(null);

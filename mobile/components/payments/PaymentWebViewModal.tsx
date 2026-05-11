@@ -43,8 +43,9 @@ export type PayMethod =
 interface Props {
     visible: boolean;
     type: "video" | "subscription";
-    plan?: "basic" | "premium"; // subscription일 때만
+    plan?: "basic" | "premium" | "premium_annual"; // subscription일 때만. premium_annual = 연 구독.
     method?: PayMethod;          // 단건 결제 수단. 미지정 시 card.
+    packageSize?: 1 | 5 | 10;    // video일 때 묶음 사이즈 (1=단품, 5=5회 묶음, 10=10회 묶음)
     onClose: () => void;
     onSuccess: () => void;
 }
@@ -52,7 +53,7 @@ interface Props {
 const ORIGIN = API_BASE_URL.replace(/^https:\/\/www\./, "https://").replace(/\/$/, "");
 const CALLBACK_PATH = "/payment/mobile-callback";
 
-export default function PaymentWebViewModal({ visible, type, plan, method, onClose, onSuccess }: Props) {
+export default function PaymentWebViewModal({ visible, type, plan, method, packageSize, onClose, onSuccess }: Props) {
     const { session, user, profile } = useAuth();
     const { isDarkMode } = useDarkMode();
     const [verifying, setVerifying] = useState(false);
@@ -69,6 +70,9 @@ export default function PaymentWebViewModal({ visible, type, plan, method, onClo
         url.searchParams.set("type", type);
         if (type === "subscription" && plan) url.searchParams.set("plan", plan);
         if (type === "video" && method) url.searchParams.set("method", method);
+        if (type === "video" && packageSize && [1, 5, 10].includes(packageSize)) {
+            url.searchParams.set("packageSize", String(packageSize));
+        }
         if (user?.email) url.searchParams.set("email", user.email);
         if (profile?.nickname) url.searchParams.set("name", profile.nickname);
         return url.toString();
