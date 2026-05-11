@@ -150,27 +150,52 @@ export async function POST(request: NextRequest) {
             }
             finalPrompt = template.prompt;
         } else if (customPrompt) {
-            // 직접 입력 프롬프트: 영어 번역 + 모션 키워드 보강
-            // Veo는 영문 프롬프트가 품질 훨씬 높음. 한국어 → 영어 변환.
+            // 직접 입력 프롬프트: 한국어 → Veo 3.1 최적화 영문 프롬프트 변환
+            // Google 공식 Veo 3.1 가이드 기반 5-part formula + 3-beat sequence 적용
             try {
                 const openai = new (await import("openai")).default({
                     apiKey: process.env.OPENAI_API_KEY,
                 });
                 const translateResult = await openai.chat.completions.create({
                     model: "gpt-4o-mini",
-                    max_tokens: 400,
-                    temperature: 0.3,
+                    max_tokens: 500,
+                    temperature: 0.4,
                     messages: [
                         {
                             role: "system",
-                            content: `You are a video prompt translator. Convert the user's Korean description into an English video generation prompt.
-Rules:
-- Translate to natural English
-- Add motion keywords: "gentle movement", "slow motion", "breathing", "blinking", "tail wagging" etc.
-- Add quality keywords: "cinematic", "photorealistic", "soft lighting", "shallow depth of field"
-- Add "9:16 vertical" for mobile format
-- Keep under 500 characters
-- Output ONLY the English prompt, nothing else`,
+                            content: `You are a Veo 3.1 image-to-video prompt engineer specializing in pet videos.
+Convert the user's Korean description into a structured English prompt using Google's official 5-part formula:
+
+STRUCTURE (in this exact order):
+1. [Camera Shot/Movement] — START with this. Examples:
+   - "Wide tracking shot following the pet from the side..."
+   - "Slow cinematic push-in toward..."
+   - "Medium shot from a low angle..."
+   - "Slow dolly-out revealing..."
+   - "Intimate close-up of..."
+2. [Subject + 3-Beat Action] — Describe action as 3 beats happening in 8 seconds:
+   - "Beat 1: ... Beat 2: ... Beat 3: ..."
+   - Each beat is a distinct, photographable moment
+   - Include subtle motion: blinking, breathing, ear twitch, tail flick
+3. [Context Sensory Details] — Environment with sensory texture:
+   - What surrounds the pet, what moves in the scene (leaves drift, mist swirls, etc.)
+4. [Lighting] — Specific lighting type:
+   - "Golden hour backlight", "rim lighting", "volumetric god rays", "soft window light"
+5. [Style/Lens Reference] — End with cinematic reference:
+   - "Shot on 35mm film with shallow depth of field" (daily, vibrant)
+   - "85mm portrait lens with creamy bokeh, Studio Ghibli aesthetic" (memorial, dreamy)
+   - "Pixar-style painterly textures" (fantasy/playful)
+   - Add: "Maintain consistent subject features, no morphing, no glitches"
+
+RULES:
+- Output ONLY the final English prompt, no explanation
+- Total length 250-450 characters
+- Use present tense, filmmaker-like visual direction
+- Do NOT use "Place this pet" — the model auto-recognizes subject from the input image
+- Do NOT use vague terms like "4K quality" or "high definition" — use specific cinematic references instead
+- If user's tone is sad/memorial, use S_MEMORIAL style (soft golden, peaceful)
+- If user's tone is playful/joyful, use S_DAILY style (vibrant, energetic)
+- If user describes costume/transformation, use S_FANTASY style (Pixar-like)`,
                         },
                         { role: "user", content: sanitizeInput(customPrompt) },
                     ],

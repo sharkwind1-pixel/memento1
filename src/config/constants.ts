@@ -374,9 +374,11 @@ export const MINIHOMPY = {
 // ===== AI 영상 생성 =====
 export const VIDEO = {
     FREE_LIFETIME: 1,           // 무료 회원 평생 1회
-    BASIC_MONTHLY: 3,           // 베이직 월 3회
-    PREMIUM_MONTHLY: 6,         // 프리미엄 월 6회
-    SINGLE_PRICE: 3500,         // 단품 구매 가격 (원)
+    BASIC_MONTHLY: 3,           // 베이직 월 3회 (deprecated, 단일 프리미엄으로 통합 예정)
+    PREMIUM_MONTHLY: 3,         // 프리미엄 월 3회 (마진 보호 + 단품/묶음 유도)
+    SINGLE_PRICE: 4900,         // 단품 1회 구매 가격
+    BUNDLE_5_PRICE: 19900,      // 5회 묶음권 (영상당 3,980원)
+    BUNDLE_10_PRICE: 34900,     // 10회 묶음권 (영상당 3,490원)
     POLL_INTERVAL_MS: 15000,    // 상태 폴링 간격 (15초)
     MAX_POLL_COUNT: 60,         // 최대 폴링 횟수 (15분)
 } as const;
