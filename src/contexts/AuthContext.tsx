@@ -145,7 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const [profileResult, minimiListResult, firstPetResult] = await Promise.all([
                 supabase
                     .from("profiles")
-                    .select("is_admin, is_premium, premium_expires_at, points, onboarding_data, equipped_minimi_id, equipped_accessories, minimi_pixel_data, minimi_accessories_data, is_simple_mode, subscription_tier, subscription_phase, subscription_cancelled_at, data_reset_at")
+                    .select("is_admin, is_premium, premium_expires_at, points, onboarding_data, equipped_minimi_id, equipped_accessories, minimi_pixel_data, minimi_accessories_data, is_simple_mode, subscription_tier, subscription_phase, subscription_cancelled_at, data_reset_at, welcome_email_sent_at")
                     .eq("id", currentUser.id)
                     .single(),
                 supabase
@@ -178,7 +178,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         is_admin: false,
                         is_banned: false,
                     }, { onConflict: "id" })
-                    .select("is_admin, is_premium, premium_expires_at, points, onboarding_data, equipped_minimi_id, equipped_accessories, minimi_pixel_data, minimi_accessories_data, is_simple_mode, subscription_tier, subscription_phase, subscription_cancelled_at, data_reset_at")
+                    .select("is_admin, is_premium, premium_expires_at, points, onboarding_data, equipped_minimi_id, equipped_accessories, minimi_pixel_data, minimi_accessories_data, is_simple_mode, subscription_tier, subscription_phase, subscription_cancelled_at, data_reset_at, welcome_email_sent_at")
                     .single();
                 if (!insertErr && newProfile) {
                     data = newProfile;
@@ -343,6 +343,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             setPointsLoaded(true);
             setProfileLoaded(true);
+
+            // 가입 환영 메일 발송 트리거 (idempotent — 서버가 중복 차단)
+            // data?.welcome_email_sent_at이 null이면 호출. 한 번 보내면 다시 안 보냄.
+            if (data && !data.welcome_email_sent_at) {
+                fetch("/api/auth/welcome", { method: "POST" }).catch(() => {
+                    // 메일 실패해도 앱 동작에 영향 X
+                });
+            }
         } catch (err) {
             console.error("[AuthContext] refreshProfile failed:", err instanceof Error ? err.message : err);
             // refreshProfile 실패 시에도 petType 최소 복구 시도 (고양이 유저에게 강아지 아이콘이 보이는 버그 방지)

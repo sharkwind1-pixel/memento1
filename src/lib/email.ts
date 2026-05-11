@@ -117,6 +117,69 @@ export async function sendSubscriptionCancelledEmail(
 }
 
 /**
+ * 가입 환영 이메일 (베타 프로모션 안내 포함)
+ * 가입 직후 1회만 발송. profiles.welcome_email_sent_at으로 중복 방지.
+ */
+export async function sendWelcomeEmail(
+    to: string,
+    nickname: string | null,
+    options?: { betaPromotion?: boolean; betaPoints?: number; betaDiscountPercent?: number },
+): Promise<SendEmailResult> {
+    const name = nickname || "회원";
+    const betaPromotion = options?.betaPromotion ?? true;
+    const betaPoints = options?.betaPoints ?? 3000;
+    const betaDiscountPercent = options?.betaDiscountPercent ?? 50;
+
+    const betaBlock = betaPromotion ? `
+        <div style="background: linear-gradient(135deg, #FEF3C7, #FFEDD5); padding: 20px; border-radius: 16px; margin: 20px 0; border-left: 4px solid #F59E0B;">
+            <p style="margin: 0 0 8px; font-size: 14px; font-weight: 700; color: #92400E;">🎁 베타 프로모션 자동 적용</p>
+            <ul style="margin: 0; padding-left: 18px; color: #78350F; font-size: 13px; line-height: 1.7;">
+                <li><strong>${betaPoints.toLocaleString()}P</strong> 보너스 포인트 지급</li>
+                <li>구독 첫 3개월 <strong>${betaDiscountPercent}% 할인</strong></li>
+            </ul>
+        </div>
+    ` : "";
+
+    return sendEmail({
+        to,
+        subject: "[메멘토애니] 가입을 환영해요!",
+        html: `
+            <div style="font-family: 'Pretendard', -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #333;">
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <h1 style="color: #05B2DC; font-size: 24px; margin-bottom: 8px;">환영합니다, ${name}님</h1>
+                    <p style="color: #6B7280; font-size: 14px; margin: 0;">반려동물과 함께하는 모든 순간을 기록하는 곳</p>
+                </div>
+
+                ${betaBlock}
+
+                <div style="background: #F9FAFB; padding: 20px; border-radius: 16px; margin: 20px 0;">
+                    <p style="margin: 0 0 12px; font-size: 14px; font-weight: 700; color: #1F2937;">먼저 해볼 수 있는 것</p>
+                    <ul style="margin: 0; padding-left: 18px; color: #4B5563; font-size: 13px; line-height: 1.8;">
+                        <li>반려동물 등록하고 첫 사진 올리기</li>
+                        <li><strong>평생 무료 AI 영상 1회</strong> 만들기 — 우리 아이의 특별한 영상</li>
+                        <li>AI 펫톡으로 아이와 대화 나누기</li>
+                        <li>커뮤니티 자랑하기 게시판에서 다른 보호자와 소통</li>
+                    </ul>
+                </div>
+
+                <p style="margin: 20px 0;">시간이 흘러 추억이 더 소중해질 때, 메멘토애니는 그 추억을 따뜻하게 간직해 드릴게요.</p>
+
+                <p style="text-align: center; margin-top: 32px;">
+                    <a href="https://www.mementoani.com" style="display: inline-block; padding: 14px 32px; background: #05B2DC; color: white; text-decoration: none; border-radius: 12px; font-weight: 700;">메멘토애니 시작하기</a>
+                </p>
+
+                <p style="margin-top: 32px; font-size: 12px; color: #9CA3AF; text-align: center;">
+                    문의: sharkwind1@gmail.com<br>
+                    <a href="https://www.mementoani.com" style="color: #9CA3AF;">mementoani.com</a>
+                </p>
+            </div>
+        `,
+        text: `${name}님, 메멘토애니에 가입해주셔서 감사합니다. ${betaPromotion ? `베타 프로모션으로 ${betaPoints.toLocaleString()}P + 구독 ${betaDiscountPercent}% 할인이 자동 적용됐어요. ` : ""}https://www.mementoani.com`,
+        tags: [{ name: "category", value: "welcome" }],
+    });
+}
+
+/**
  * 카운트다운 이메일 (D-10, D-5, D-1)
  * 보관 데이터 영구 삭제 경고
  */
