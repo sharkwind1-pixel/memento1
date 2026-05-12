@@ -880,17 +880,21 @@ export async function postProcessResponse(
         const sgParts = reply.split(suggestionsMarker);
         reply = sgParts[0].trim();
 
-        // 반려동물 관련 화이트리스트 — 이 키워드가 하나라도 있어야 통과
-        const PET_WHITELIST = /산책|걷|걸|뛰|놀|공원|간식|사료|밥|케어|건강|병원|예방|목욕|미용|훈련|짖|발바닥|컨디션|기분|하루|뭐 해|뭐 했|어때|좋아|싫어해|무서|잠|낮잠|꿈|배변|털|체중|몸무게|주사|약|귀|눈|이빨|양치|장난감|터그|공놀이|물놀이|수영|옷|안아|쓰다듬|꼬리|혀|코|냄새|소리|짤|사진|영상|추억|기억|보고싶|그리|함께|같이/;
-        // 사람 음식/맛집 블랙리스트 — 화이트리스트를 통과해도 이 키워드가 있으면 차단
+        // 일상 모드용 — 케어/놀이 키워드 위주
+        const DAILY_WHITELIST = /산책|걷|걸|뛰|놀|공원|간식|사료|밥|케어|건강|병원|예방|목욕|미용|훈련|짖|발바닥|컨디션|기분|하루|뭐 해|뭐 했|어때|좋아|싫어해|무서|잠|낮잠|꿈|배변|털|체중|몸무게|주사|약|귀|눈|이빨|양치|장난감|터그|공놀이|물놀이|수영|옷|안아|쓰다듬|꼬리|혀|코|냄새|소리|짤|사진|영상|추억|기억|보고싶|그리|함께|같이/;
+        // 추모 모드용 — 추억/감정/관계 키워드 위주 + 일상 공유 OK (사용자 짜증 해결: 너무 엄격해서 fallback 매번 같음 → 관대화)
+        const MEMORIAL_WHITELIST = /추억|기억|보고싶|보고 싶|그리|함께|같이|같았|같아|놀|걷|걸|쓰다듬|안아|품|무릎|곁|옆|발|꼬리|소리|냄새|들리|들렸|느껴|느꼈|좋아|좋았|행복|따뜻|편안|잠|꿈|어디|언제|왜|뭘|뭐|어때|어땠|날씨|오늘|어제|내일|밤|아침|저녁|네|너|우리|나|날|할|해|할까|어떻게|만약|왔|왔어|왔지|봤|봤어|이야기|얘기|말|마음|생각|날|날들|순간|시간|장소|곳|집|사진|영상|화면|보여|보였|울|웃|짖|꿈/;
+        // 사람 음식/맛집 블랙리스트 — 모드 무관
         const FOOD_BLACKLIST = /맛집|먹거리|음식점|식당|카페|레스토랑|맛있는 곳|특산물|먹을만한|뭐 먹|뭘 먹|먹으러|먹방|치킨|피자|커피|디저트|빵집|술집|호프|바베큐|고깃집|횟집|라멘|초밥|떡볶이|볼거리|관광|여행지|숙소|호텔|펜션/;
+
+        const whitelist = isMemorialMode ? MEMORIAL_WHITELIST : DAILY_WHITELIST;
 
         suggestedQuestions = sgParts[1]
             .trim()
             .split("\n")
             .map(s => s.replace(/^[-\d.)\s]+/, "").trim())
             .filter(s => s.length > 0 && s.length <= 20)
-            .filter(s => PET_WHITELIST.test(s))
+            .filter(s => whitelist.test(s))
             .filter(s => !FOOD_BLACKLIST.test(s))
             .slice(0, 3);
     }
@@ -900,12 +904,30 @@ export async function postProcessResponse(
         suggestedQuestions = filterMemorialSuggestions(suggestedQuestions);
     }
 
-    // 필터링 후 질문이 부족하면 반려동물 기본 질문으로 채움
+    // 필터링 후 질문이 부족하면 fallback 풀에서 random pick (매번 같은 3개 짜증 해결, 2026-05-12).
+    // 14개 풀 → 3개 random selection. 현실적으로 같은 3개 연속 나올 확률 낮음.
     if (suggestedQuestions.length < 3) {
-        const petFallbacks = isMemorialMode
-            ? ["좋았던 기억 얘기해줘", "너와 함께한 날들", "보고 싶은 마음"]
-            : ["오늘 산책 갔어?", "뭐 하고 놀까?", "요즘 기분 어때?"];
-        for (const fb of petFallbacks) {
+        const memorialFallbacks = [
+            "좋았던 기억 얘기해줘", "너와 함께한 날들", "보고 싶은 마음",
+            "오늘 어떻게 지내?", "거기 날씨 어때?", "꿈에 와줄래?",
+            "네 사진 봐도 돼?", "그때 어땠어?", "또 만나자",
+            "지금 뭐 해?", "별 보러 가자", "잘 자라고 말해줘",
+            "꼬리 흔들었어?", "내 목소리 들려?",
+        ];
+        const dailyFallbacks = [
+            "오늘 산책 갔어?", "뭐 하고 놀까?", "요즘 기분 어때?",
+            "오늘 뭐 했어?", "지금 뭐 해?", "간식 줄까?",
+            "같이 놀자", "어디 가고 싶어?", "잠 잘 잤어?",
+            "오늘 햇볕 좋아", "산책 가자", "공놀이 할까?",
+        ];
+        const pool = isMemorialMode ? memorialFallbacks : dailyFallbacks;
+        // Fisher-Yates shuffle 후 앞 N개 — 매번 다른 조합 (memory: feedback_lying_patterns에 sort()-0.5 편향 사례 누적)
+        const shuffled = [...pool];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        for (const fb of shuffled) {
             if (suggestedQuestions.length >= 3) break;
             if (!suggestedQuestions.includes(fb)) suggestedQuestions.push(fb);
         }

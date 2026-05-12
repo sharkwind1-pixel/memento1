@@ -57,9 +57,29 @@ interface ReminderItem {
 }
 
 // 진입 시 default 추천멘트 (서버 응답 받기 전부터 사용자가 즉시 클릭 가능).
-// 사용자 보고: "처음부터 떠야해" — 이전엔 첫 응답 후에만 표시.
-const DEFAULT_SUGGESTIONS_DAILY = ["오늘 뭐 했어?", "같이 놀자!", "기분이 어때?"];
-const DEFAULT_SUGGESTIONS_MEMORIAL = ["좋았던 기억 얘기해줘", "너와 함께한 날들", "보고 싶은 마음"];
+// 사용자 보고 (2026-05-12): "똑같은 3개 반복 짜증" → 풀 확장 + random pick
+const DEFAULT_POOL_DAILY = [
+    "오늘 뭐 했어?", "같이 놀자!", "기분이 어때?",
+    "산책 갈까?", "간식 줄까?", "잘 잤어?",
+    "지금 뭐 해?", "오늘 햇볕 좋아", "공놀이 할까?",
+    "어디 가고 싶어?", "오늘 컨디션 어때?",
+];
+const DEFAULT_POOL_MEMORIAL = [
+    "좋았던 기억 얘기해줘", "너와 함께한 날들", "보고 싶은 마음",
+    "오늘 어떻게 지내?", "거기 날씨 어때?", "꿈에 와줄래?",
+    "내 사진 봐도 돼?", "또 만나자", "지금 뭐 해?",
+    "별 보러 가자", "꼬리 흔들었어?", "잘 자라고 말해줘",
+];
+
+/** Fisher-Yates shuffle 후 앞 N개 (sort()-0.5 편향 방지) */
+function pickRandomSuggestions(pool: string[], n: number): string[] {
+    const shuffled = [...pool];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled.slice(0, n);
+}
 
 export default function AiChatScreen() {
     const router = useRouter();
@@ -183,7 +203,7 @@ export default function AiChatScreen() {
         setIsStreaming(false);
         setMessages([]);
         // default 추천 표시 (서버 첫 응답 받기 전이라도 사용자가 바로 클릭 가능)
-        setSuggestions(isMemorialMode ? DEFAULT_SUGGESTIONS_MEMORIAL : DEFAULT_SUGGESTIONS_DAILY);
+        setSuggestions(pickRandomSuggestions(isMemorialMode ? DEFAULT_POOL_MEMORIAL : DEFAULT_POOL_DAILY, 3));
         reminderSuggestionShown.current = false;
 
         let cancelled = false;
@@ -601,7 +621,7 @@ export default function AiChatScreen() {
             id: `greeting-${Date.now()}`, role: "pet", content: greeting, timestamp: new Date(),
         }]);
         // 새 대화 시작 시에도 default 추천 즉시 표시
-        setSuggestions(isMemorialMode ? DEFAULT_SUGGESTIONS_MEMORIAL : DEFAULT_SUGGESTIONS_DAILY);
+        setSuggestions(pickRandomSuggestions(isMemorialMode ? DEFAULT_POOL_MEMORIAL : DEFAULT_POOL_DAILY, 3));
         reminderSuggestionShown.current = false;
     }, [selectedPet, isMemorialMode]);
 
