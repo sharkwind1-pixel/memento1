@@ -54,7 +54,9 @@ const RATE_LIMITS = {
     // AI Chat API (비용 보호)
     aiChat: {
         windowMs: 60 * 1000, // 1분
-        maxRequests: 10, // 분당 10회
+        // 분당 30회 — 프리미엄 사용자가 빠르게 대화할 때 10회/분이 너무 빡빡해서 차단됨 (사용자 짜증, 2026-05-12).
+        // 봇 방어는 dailyLimit(무료 10/일) + dailyLimitAuth(1000/일) + checkGlobalDailyLimit으로 충분.
+        maxRequests: 30,
         dailyLimit: FREE_LIMITS.DAILY_CHATS, // 무료 회원 일일 제한 (10회)
         dailyLimitAuth: 1000, // 프리미엄 일일 상한 (사람은 하루 100회도 힘듦, 1000 = 봇만 걸림)
     },
