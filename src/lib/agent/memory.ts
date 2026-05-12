@@ -377,12 +377,15 @@ export async function getRelevantMemories(
         return { memory: m, totalScore, relevanceScore };
     });
 
-    // 점수 내림차순 정렬, 관련성 있는 것 우선
+    // 점수 내림차순 정렬, 관련성 있는 것 우선.
+    // 같은 점수 묶음 내에서는 random shuffle → 매 턴 같은 top N 반복 방지 (응답 정형화 짜증 해결).
     scored.sort((a, b) => {
-        // 관련성 점수가 있는 것 우선
         if (a.relevanceScore > 0 && b.relevanceScore === 0) return -1;
         if (a.relevanceScore === 0 && b.relevanceScore > 0) return 1;
-        return b.totalScore - a.totalScore;
+        const diff = b.totalScore - a.totalScore;
+        if (diff !== 0) return diff;
+        // 동점이면 random — 짧은 메시지("응", "보고싶어")일 때 매번 다른 메모리 노출
+        return Math.random() - 0.5;
     });
 
     return scored.slice(0, limit).map((s) => s.memory);
@@ -394,13 +397,15 @@ export async function getRelevantMemories(
 export function memoriesToContext(memories: PetMemory[]): string {
     if (memories.length === 0) return "";
 
-    const memoryStrings = memories.map((m) => {
+    const memoryStrings = memories.map((m, i) => {
         let timeStr = "";
         if (m.timeInfo && m.timeInfo.time) {
             timeStr = ` (${m.timeInfo.type === "daily" ? "매일" : "매주"} ${m.timeInfo.time})`;
         }
-        return `- [${m.memoryType}] ${m.title}: ${m.content}${timeStr}`;
+        // 첫 번째 메모리에 ★ 표시 — GPT가 우선 참조하도록 hint
+        const star = i === 0 ? "★ " : "";
+        return `- ${star}[${m.memoryType}] ${m.title}: ${m.content}${timeStr}`;
     });
 
-    return `\n\n## 기억하고 있는 정보:\n${memoryStrings.join("\n")}`;
+    return `\n\n## 기억하고 있는 정보 (★ 표시는 이번 응답에 우선 활용):\n${memoryStrings.join("\n")}\n\n**중요**: 위 메모리 중 1-2개를 응답에 자연스럽게 녹여라. 매 응답마다 다른 메모리를 활용해. 메모리 무시하고 일반적 응답 금지.`;
 }
