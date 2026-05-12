@@ -14,7 +14,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { awardPoints } from "@/lib/points";
-import { getAuthUser, createServerSupabase } from "@/lib/supabase-server";
+import { getAuthUser, createServerSupabase, createAdminSupabase } from "@/lib/supabase-server";
 import { FREE_LIMITS, AI_INPUT_LIMITS, type SubscriptionTier, getLimitsForTier } from "@/config/constants";
 import {
     getClientIP,
@@ -344,12 +344,21 @@ export async function checkSecurityLimits(
     }
 
     // 프리미엄 상태 확인 (서버 검증 - 보안 중요)
+    // RLS 클라이언트(createServerSupabase)가 profile fetch 실패 시 isPremium=undefined → free 오판
+    // 발생 (사용자 짜증 1순위, 2026-05-12 꼼지네형 케이스).
+    // user.id는 이미 getAuthUser()로 인증됐으므로 service role로 fetch해도 보안 동일.
     const supabase = await createServerSupabase();
-    const { data: profile } = await supabase
+    const adminSupabase = createAdminSupabase();
+    const { data: profile, error: profileError } = await adminSupabase
         .from("profiles")
         .select("is_premium, premium_expires_at, onboarding_data, user_type, subscription_tier, is_banned, ban_reason, subscription_phase")
         .eq("id", user.id)
         .single();
+    if (profileError || !profile) {
+        console.error(`[Chat] profile fetch failed user=${user.id} error=${profileError?.message ?? "no data"}`);
+    } else {
+        console.log(`[Chat] profile loaded user=${user.id} is_premium=${profile.is_premium} tier=${profile.subscription_tier} phase=${profile.subscription_phase}`);
+    }
 
     // 차단 유저 AI 펫톡 차단 (보안+비용 누출 방지)
     if (profile?.is_banned) {
