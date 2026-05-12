@@ -109,31 +109,31 @@ export function generatePersonalizedGreeting(
     timeline: TimelineEntry[] | undefined,
 ): string {
     const name = pet.name;
+    // josa() 사용 — `${name}이...` 하드코딩이 받침 없는 이름(꼼지)에서 "꼼지이랑" 같은 잘못된 조사 만들었음.
+    // 추모 톤은 "..."로 잔잔하게. 발랄한 "?" 자제.
     if (isMemorialMode) {
         const memorialGreets = [
-            `안녕, ${name}이야. 오늘은 어떤 추억이 떠올라?`,
-            `${name}이는 너 잊은 적 없어. 보고 싶었어.`,
-            `오늘은 ${name}이랑 같이 어떤 이야기 해볼까?`,
+            `... 안녕. 나 ${name}${josa(name, "이야/야")}. 오늘은 어떤 이야기 나눠볼까...`,
+            `${name}${josa(name, "은/는")} 너 잊은 적 없어. 보고 싶었어...`,
+            `오늘은 ${name}${josa(name, "이랑/랑")} 무슨 얘기 할까...`,
+            `... 와줘서 고마워. 잘 지냈어?`,
         ];
         const recentMood = timeline?.[0]?.mood;
         if (recentMood === "happy") {
-            return fixKoreanParticles(
-                `${name}이가 행복했던 그 순간들, 같이 떠올려보자.`,
-                name,
-            );
+            return `${name}${josa(name, "이/가")} 행복했던 그 순간들... 같이 떠올려보자.`;
         }
         const idx = Math.floor(Math.random() * memorialGreets.length);
-        return fixKoreanParticles(memorialGreets[idx], name);
+        return memorialGreets[idx];
     }
 
     const dailyGreets = [
-        `안녕! 나 ${name}이야. 오늘은 어떤 이야기 해볼까?`,
-        `${name}이 왔다! 오늘 뭐 했어?`,
-        `반가워! ${name}이는 너 보고 싶었어.`,
-        `${name}이야! 오늘 기분 어때?`,
+        `안녕! 나 ${name}${josa(name, "이야/야")}. 오늘은 어떤 이야기 해볼까?`,
+        `${name}${josa(name, "이/가")} 왔다! 오늘 뭐 했어?`,
+        `반가워! ${name}${josa(name, "은/는")} 너 보고 싶었어.`,
+        `${name}${josa(name, "이야/야")}! 오늘 기분 어때?`,
     ];
     const idx = Math.floor(Math.random() * dailyGreets.length);
-    return fixKoreanParticles(dailyGreets[idx], name);
+    return dailyGreets[idx];
 }
 
 /**
