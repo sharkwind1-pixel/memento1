@@ -904,21 +904,22 @@ export async function postProcessResponse(
         suggestedQuestions = filterMemorialSuggestions(suggestedQuestions);
     }
 
-    // 필터링 후 질문이 부족하면 fallback 풀에서 random pick (매번 같은 3개 짜증 해결, 2026-05-12).
-    // 14개 풀 → 3개 random selection. 현실적으로 같은 3개 연속 나올 확률 낮음.
+    // 필터링 후 질문이 부족하면 fallback 풀에서 random pick.
+    // 원칙 (2026-05-12 사용자 짜증): 보호자가 AI펫에게 실제 보낼 만한 자연스러운 한 마디만.
+    // 의미 없는 것 ("내 사진 봐도 돼?" — AI는 사진 못 봄) + 명사구 ("보고 싶은 마음") 제외.
     if (suggestedQuestions.length < 3) {
         const memorialFallbacks = [
-            "좋았던 기억 얘기해줘", "너와 함께한 날들", "보고 싶은 마음",
-            "오늘 어떻게 지내?", "거기 날씨 어때?", "꿈에 와줄래?",
-            "네 사진 봐도 돼?", "그때 어땠어?", "또 만나자",
-            "지금 뭐 해?", "별 보러 가자", "잘 자라고 말해줘",
-            "꼬리 흔들었어?", "내 목소리 들려?",
+            "오늘도 보고 싶었어", "잘 지내고 있어?", "거기 어때?",
+            "꿈에 와줘", "기다리고 있어", "사랑해",
+            "고마워", "지금 뭐 해?", "어떻게 지내?",
+            "잘 자", "또 와줘", "내 마음 알지?",
+            "그때 행복했지?", "내 목소리 들려?",
         ];
         const dailyFallbacks = [
-            "오늘 산책 갔어?", "뭐 하고 놀까?", "요즘 기분 어때?",
-            "오늘 뭐 했어?", "지금 뭐 해?", "간식 줄까?",
-            "같이 놀자", "어디 가고 싶어?", "잠 잘 잤어?",
-            "오늘 햇볕 좋아", "산책 가자", "공놀이 할까?",
+            "오늘 산책 갔어?", "뭐 하고 놀까?", "기분 어때?",
+            "오늘 뭐 했어?", "지금 뭐 해?", "간식 먹을래?",
+            "같이 놀자", "어디 가고 싶어?", "잘 잤어?",
+            "산책 가자", "공놀이 할까?", "보고 싶었어",
         ];
         const pool = isMemorialMode ? memorialFallbacks : dailyFallbacks;
         // Fisher-Yates shuffle 후 앞 N개 — 매번 다른 조합 (memory: feedback_lying_patterns에 sort()-0.5 편향 사례 누적)
