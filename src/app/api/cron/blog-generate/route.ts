@@ -563,6 +563,19 @@ ${searchContext ? `## 참고 자료 (아래 검색 결과를 바탕으로 정확
 
         await sendToTelegram(header, body);
 
+        // 팩트체크 에이전트 (AGENTS.md 9번, 2026-05-12 추가).
+        // Fire-and-forget — 텔레그램 발송 후 비동기로 검증.
+        // 결과 점수 < 80이면 시스템 채널에 별도 알림 메시지 발송 (관리자 확인용).
+        import("@/lib/agent/fact-checker").then(({ validateContent }) =>
+            validateContent(body, {
+                contentType: "blog",
+                species: selectedTopic.species ?? undefined,
+                sourceId: `${dateStr}-${selectedTopic.topic.slice(0, 20)}`,
+            }),
+        ).catch((e) => {
+            console.warn("[FactChecker/blog] 검증 실패:", e instanceof Error ? e.message : e);
+        });
+
         // 전송 이력 기록 — 다음 실행부터 최근 14일 내 topic은 중복 선택 방지
         if (supabaseAdmin) {
             try {

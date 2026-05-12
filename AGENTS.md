@@ -5,7 +5,7 @@
 
 ---
 
-## 팀 구성 (8명)
+## 팀 구성 (9명)
 
 | 번호 | 역할 | 핵심 판단 기준 |
 |-----|------|-------------|
@@ -17,6 +17,7 @@
 | 6 | AI/프롬프트 엔지니어 | 답변 품질, 톤앤매너(완곡한 표현), 토큰 효율 |
 | 7 | **비판적 사고 에이전트** | "실제 유저가 쓸까?", "유지보수 가능한가?", "MVP에 필요한가?" |
 | 8 | PM/기획자 | 우선순위, MVP 범위, 사업적 임팩트, 기술 부채 관리 |
+| 9 | **팩트 체커 / 할루시네이션 검증** | 사실성, 출처 검증 가능성, 종 일관성, 확정 표현 위험도 |
 
 ---
 
@@ -65,6 +66,46 @@ Task(prompt: "7번 비판적 사고 에이전트로서...")
 - 새 기능 구현 완료 후
 - 디자인 변경 후
 - 아키텍처 결정 시
+
+### 9번(팩트 체커) 자동 호출 + 수동 호출
+
+**자동 호출 (이미 통합됨)**:
+- `cron/magazine-generate` 매거진 INSERT 직후 → fire-and-forget
+- `cron/blog-generate` 텔레그램 발송 직후 → fire-and-forget
+- 결과: `validation_logs` 테이블 + 점수 < 80이면 텔레그램 시스템 채널 알림
+
+**수동 호출 (Task 도구로 띄울 때)**:
+
+```
+Task(subagent_type: "general-purpose", prompt: """
+당신은 메멘토애니 팀의 9번: 팩트 체커입니다.
+
+역할: 콘텐츠의 사실성/출처/종 일관성 검증.
+도구: src/lib/agent/fact-checker.ts의 validateContentDryRun(content, options)
+
+다음 콘텐츠를 검증하세요:
+[콘텐츠 텍스트]
+
+검증 항목:
+1. 통계/숫자 주장 (출처 확인 가능?)
+2. 의료/건강 정보 (단정 표현?)
+3. 종별 행동 일관성 (강아지 글에 고양이 행동?)
+4. 확정 표현 (반드시/절대/항상)
+
+결과 점수 + 의심 항목 + 정정 제안을 보고하세요.
+""")
+```
+
+**또는 코드에서 직접**:
+```typescript
+import { validateContentDryRun } from "@/lib/agent/fact-checker";
+
+const result = await validateContentDryRun(text, {
+    contentType: "magazine",
+    species: "강아지",
+});
+console.log(result.overallScore, result.flags, result.summary);
+```
 
 ```
 Task(subagent_type: "general-purpose", prompt: """

@@ -24,6 +24,7 @@ import {
     fetchUnsplashImage,
 } from "@/lib/magazine-generator";
 import type { GenerationResult } from "@/lib/magazine-generator";
+import { validateContent } from "@/lib/agent/fact-checker";
 
 // ===== 서비스 클라이언트 =====
 
@@ -115,6 +116,21 @@ async function createMagazineArticle(
 
     if (insertError) {
         throw new Error(`DB INSERT 실패: ${insertError.message}`);
+    }
+
+    // ============================================================
+    // 팩트체크 에이전트 호출 (AGENTS.md 9번, 2026-05-12 추가).
+    // Fire-and-forget — 매거진 생성 응답 속도 영향 없음.
+    // 점수 < 80이면 자동으로 텔레그램 시스템 채널에 알림.
+    // ============================================================
+    if (inserted?.id) {
+        validateContent(article.content, {
+            contentType: "magazine",
+            species: animalType.name,
+            sourceId: inserted.id,
+        }).catch((e) => {
+            console.warn("[FactChecker/magazine] 검증 실패:", e instanceof Error ? e.message : e);
+        });
     }
 
     return {
