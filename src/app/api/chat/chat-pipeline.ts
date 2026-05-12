@@ -349,9 +349,12 @@ export async function checkSecurityLimits(
     // user.id는 이미 getAuthUser()로 인증됐으므로 service role로 fetch해도 보안 동일.
     const supabase = await createServerSupabase();
     const adminSupabase = createAdminSupabase();
+    // ban_reason 컬럼은 profiles 테이블에 없음 (2026-05-12 발견 — 진짜 root cause).
+    // 이 select가 PostgREST 에러 반환 → profile=null → isPremium=undefined → "free" tier
+    // → DAILY_CHATS=10 적용 → 무료 한도 초과로 프리미엄 사용자 차단.
     const { data: profile, error: profileError } = await adminSupabase
         .from("profiles")
-        .select("is_premium, premium_expires_at, onboarding_data, user_type, subscription_tier, is_banned, ban_reason, subscription_phase")
+        .select("is_premium, premium_expires_at, onboarding_data, user_type, subscription_tier, is_banned, subscription_phase")
         .eq("id", user.id)
         .single();
     if (profileError || !profile) {
@@ -362,7 +365,7 @@ export async function checkSecurityLimits(
 
     // 차단 유저 AI 펫톡 차단 (보안+비용 누출 방지)
     if (profile?.is_banned) {
-        console.warn(`[Security] Banned user attempted AI chat: ${user.id} reason=${profile?.ban_reason ?? "unknown"}`);
+        console.warn(`[Security] Banned user attempted AI chat: ${user.id}`);
         return NextResponse.json(
             { error: "이용이 제한된 계정입니다. 문의하기를 통해 연락 주세요." },
             { status: 403 }
