@@ -1,21 +1,25 @@
 /**
- * MemorialAmbientStars — 추모 모드 AI 펫톡 배경 별 파티클
+ * MemorialAmbientStars — 추모 모드 AI 펫톡 배경 별 효과
  *
- * 웹 DomeGallery (3D 사진 갤러리)는 모바일에서 비활성. 대신 잔잔하게
- * 떠오르는 별 파티클로 추모 분위기를 강조.
+ * 웹 src/components/pages/AIChatPage.tsx 230-263 매칭:
+ *  - 정적 펄스 별 12개 (animate-pulse, opacity 0.3↔0.7 반복)
+ *  - 떠오르는 별 10개 (memorial-star CSS, 아래→위 슬로우 라이즈)
  *
- *  - 12개 별이 천천히 위로 부드럽게 흘러감 + 페이드
- *  - 추모 모드에서만 마운트
- *  - react-native Animated API (Reanimated 의존성 X)
+ * 사용 모드:
+ *  - `<MemorialAmbientStars />` → fullscreen absolute fill (chat 영역 backdrop)
+ *  - `<MemorialAmbientStars height={64} />` → 명시 높이 (헤더 등 좁은 영역)
+ *
+ * Animated API 사용 (Reanimated 의존성 X) — Expo Go 호환.
  */
 
 import { useEffect, useMemo, useRef } from "react";
 import { View, StyleSheet, Animated, Dimensions, Easing } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-const { width: SCREEN_W } = Dimensions.get("window");
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
+const STAR_COLORS = ["#FCD34D", "#FBBF24", "#FDE68A", "#F59E0B"];
 
-interface StarSpec {
+interface FloatStarSpec {
     id: number;
     x: number;
     delay: number;
@@ -25,40 +29,102 @@ interface StarSpec {
     color: string;
 }
 
-function buildStars(): StarSpec[] {
-    const colors = ["#FCD34D", "#FBBF24", "#FDE68A", "#F59E0B"];
-    return Array.from({ length: 12 }, (_, i) => ({
+interface StaticStarSpec {
+    id: number;
+    x: number;        // absolute X
+    y: number;        // absolute Y
+    delay: number;
+    duration: number; // pulse 한 cycle
+    size: number;
+    color: string;
+}
+
+function buildFloatStars(): FloatStarSpec[] {
+    return Array.from({ length: 10 }, (_, i) => ({
         id: i,
         x: Math.random() * (SCREEN_W - 32),
         delay: Math.random() * 4000,
-        duration: 6000 + Math.random() * 4000,
+        duration: 8000 + Math.random() * 6000,
         size: 8 + Math.random() * 8,
         opacity: 0.45 + Math.random() * 0.4,
-        color: colors[i % colors.length],
+        color: STAR_COLORS[i % STAR_COLORS.length],
+    }));
+}
+
+function buildStaticStars(areaHeight: number): StaticStarSpec[] {
+    // 웹 패턴 매칭: left ${10 + (i*7)%80}% / top ${5 + (i*13)%70}% (등간격에 가까움)
+    return Array.from({ length: 12 }, (_, i) => ({
+        id: i,
+        x: (SCREEN_W * (10 + ((i * 7) % 80))) / 100,
+        y: (areaHeight * (5 + ((i * 13) % 70))) / 100,
+        delay: i * 300, // 0~3.3초 stagger
+        duration: 2000 + (i % 3) * 700, // 2~3.4초 cycle
+        size: 10,
+        color: STAR_COLORS[i % STAR_COLORS.length],
     }));
 }
 
 interface Props {
-    /** 추모 헤더 영역 높이 (별이 떠오르는 박스 크기) */
+    /** 명시적 높이. 미지정 시 fullscreen (absolute fill) */
     height?: number;
 }
 
-export default function MemorialAmbientStars({ height = 80 }: Props) {
-    const stars = useMemo(() => buildStars(), []);
+export default function MemorialAmbientStars({ height }: Props) {
+    const fullscreen = height === undefined;
+    const effectiveHeight = fullscreen ? SCREEN_H : height;
+
+    const floatStars = useMemo(() => buildFloatStars(), []);
+    const staticStars = useMemo(() => buildStaticStars(effectiveHeight), [effectiveHeight]);
+
+    const rootStyle = fullscreen
+        ? [styles.root, StyleSheet.absoluteFill]
+        : [styles.root, { height: effectiveHeight }];
 
     return (
-        <View
-            pointerEvents="none"
-            style={[styles.root, { height }]}
-        >
-            {stars.map((star) => (
-                <FloatingStar key={star.id} star={star} stageHeight={height} />
+        <View pointerEvents="none" style={rootStyle}>
+            {staticStars.map((star) => (
+                <PulsingStar key={`p-${star.id}`} star={star} />
+            ))}
+            {floatStars.map((star) => (
+                <FloatingStar key={`f-${star.id}`} star={star} stageHeight={effectiveHeight} />
             ))}
         </View>
     );
 }
 
-function FloatingStar({ star, stageHeight }: { star: StarSpec; stageHeight: number }) {
+function PulsingStar({ star }: { star: StaticStarSpec }) {
+    const opacity = useRef(new Animated.Value(0.25)).current;
+
+    useEffect(() => {
+        const loop = Animated.loop(
+            Animated.sequence([
+                Animated.timing(opacity, {
+                    toValue: 0.65,
+                    duration: star.duration / 2,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(opacity, {
+                    toValue: 0.25,
+                    duration: star.duration / 2,
+                    useNativeDriver: true,
+                }),
+            ]),
+        );
+        const timer = setTimeout(() => loop.start(), star.delay);
+        return () => {
+            clearTimeout(timer);
+            loop.stop();
+        };
+    }, [opacity, star.delay, star.duration]);
+
+    return (
+        <Animated.View style={[styles.star, { left: star.x, top: star.y, opacity }]}>
+            <Ionicons name="star" size={star.size} color={star.color} />
+        </Animated.View>
+    );
+}
+
+function FloatingStar({ star, stageHeight }: { star: FloatStarSpec; stageHeight: number }) {
     const translateY = useRef(new Animated.Value(stageHeight)).current;
     const opacity = useRef(new Animated.Value(0)).current;
 
@@ -124,7 +190,9 @@ function FloatingStar({ star, stageHeight }: { star: StarSpec; stageHeight: numb
 const styles = StyleSheet.create({
     root: {
         position: "absolute",
-        top: 0, left: 0, right: 0,
+        top: 0,
+        left: 0,
+        right: 0,
         overflow: "hidden",
     },
     star: { position: "absolute", top: 0 },

@@ -56,9 +56,12 @@ export default function AdminPostsTab({ accessToken }: Props) {
 
     const load = useCallback(async () => {
         try {
+            // 실제 DB 컬럼명에 맞춤 (likes_count/comments_count/image_urls/category 컬럼은 없음).
+            // 진짜 컬럼: likes (integer), board_type (text). image_urls/comments_count는 별도 테이블 join 필요해서
+            // 목록에서는 0/[]로 표시하고 상세 보기에서만 별도 fetch.
             const { data, error } = await supabase
                 .from("community_posts")
-                .select("id, title, content, user_id, author_name, created_at, is_hidden, views, likes_count, comments_count, image_urls, category")
+                .select("id, title, content, user_id, author_name, created_at, is_hidden, views, likes, board_type")
                 .order("created_at", { ascending: false })
                 .limit(200);
             if (error) throw new Error(error.message);
@@ -72,14 +75,18 @@ export default function AdminPostsTab({ accessToken }: Props) {
                 created_at: p.created_at,
                 is_hidden: !!p.is_hidden,
                 views: p.views ?? 0,
-                likes_count: p.likes_count ?? 0,
-                comments_count: p.comments_count ?? 0,
-                image_urls: Array.isArray(p.image_urls) ? p.image_urls : [],
-                category: p.category ?? null,
+                likes_count: p.likes ?? 0,
+                comments_count: 0, // 별도 테이블 (post_comments) 카운트 필요 — 목록에서는 0
+                image_urls: [],     // 별도 테이블 또는 video_url만. 목록에서는 빈 배열
+                category: p.board_type ?? null,
             }));
+            console.log("[AdminPosts] loaded", list.length, "posts");
             setPosts(list);
         } catch (e) {
-            Alert.alert("불러오기 실패", e instanceof Error ? e.message : "");
+            // 사용자 화면에 정확한 원인 노출 — V5 인계 교훈
+            console.error("[AdminPosts] load error:", e);
+            const detail = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
+            Alert.alert("불러오기 실패", detail);
         } finally {
             setLoading(false);
         }

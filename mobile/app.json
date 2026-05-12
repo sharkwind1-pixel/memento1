@@ -54,6 +54,35 @@
           "supertoss",
           "naversearchapp",
           "tmoneypay",
+          "newsmartpay",
+          "ispmobile",
+          "kakaopay",
+          "kakaotalk",
+          "kftc-bankpay",
+          "mpocket.online.ansimclick",
+          "kb-acp",
+          "shinhan-sr-ansimclick",
+          "hdcardappcardansimclick",
+          "smshinhanansimclick",
+          "smhanaansim",
+          "smshinhancardusimansim",
+          "lottesmartpay",
+          "lotteappcard",
+          "cloudpay",
+          "payco",
+          "samsungpay",
+          "lpayapp",
+          "smdmbapp",
+          "nhappcardansimclick",
+          "citimobileapp",
+          "citispay",
+          "kb-acp",
+          "wooripay",
+          "newliivbank",
+          "kakaobank",
+          "supertoss",
+          "naversearchapp",
+          "tmoneypay",
           "newsmartpay"
         ],
         "NSAppTransportSecurity": {
@@ -75,7 +104,8 @@
         "READ_MEDIA_VIDEO",
         "POST_NOTIFICATIONS",
         "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION"
+        "ACCESS_FINE_LOCATION",
+        "RECORD_AUDIO"
       ],
       "blockedPermissions": [
         "READ_EXTERNAL_STORAGE",
@@ -115,6 +145,19 @@
     ],
     "experiments": {
       "typedRoutes": false
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "240e8f90-7a8a-4ba4-9422-d82a37842afd"
+      }
+    },
+    "owner": "sharkwind1",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/240e8f90-7a8a-4ba4-9422-d82a37842afd"
     }
   }
 }

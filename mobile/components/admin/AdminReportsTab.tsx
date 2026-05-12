@@ -14,6 +14,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/lib/theme";
 import { API_BASE_URL } from "@/config/constants";
+import { supabase } from "@/lib/supabase";
 import { useDarkMode } from "@/contexts/ThemeContext";
 import {
     type ReportRow, type ReportStatus,
@@ -48,27 +49,23 @@ export default function AdminReportsTab({ accessToken }: Props) {
 
     const load = useCallback(async () => {
         try {
-            const res = await fetch(`${API_BASE_URL}/api/admin/reports`, {
-                headers: { Authorization: `Bearer ${accessToken}` },
-            });
-            if (!res.ok) {
-                if (res.status === 403) {
-                    Alert.alert("접근 거부", "관리자 권한이 없어요.");
-                    return;
-                }
-                throw new Error(`HTTP ${res.status}`);
-            }
-            const data = await res.json();
-            const list: ReportRow[] = Array.isArray(data?.reports)
-                ? data.reports
-                : Array.isArray(data) ? data : [];
-            setReports(list);
+            // /api/admin/reports route는 PATCH/DELETE만 지원 (GET 없음). 웹 useAdminData 패턴과 동일하게
+            // supabase에서 직접 select. RLS는 admin role에 대해 통과 (profiles.is_admin = true).
+            const { data, error } = await supabase
+                .from("reports")
+                .select("*")
+                .order("created_at", { ascending: false })
+                .limit(200);
+            if (error) throw new Error(error.message);
+            setReports((data ?? []) as ReportRow[]);
         } catch (e) {
-            Alert.alert("불러오기 실패", e instanceof Error ? e.message : "");
+            console.error("[AdminReports] load error:", e);
+            const detail = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
+            Alert.alert("불러오기 실패", detail);
         } finally {
             setLoading(false);
         }
-    }, [accessToken]);
+    }, []);
 
     useEffect(() => { load(); }, [load]);
 

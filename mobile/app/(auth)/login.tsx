@@ -39,6 +39,8 @@ export default function LoginScreen() {
 
             const { error } = await fn();
             if (error) {
+                // 사용자가 OAuth 취소(뒤로가기) — alert 없이 그냥 머무름
+                if (error.message === "CANCELLED") return;
                 Alert.alert("로그인 실패", error.message);
                 return;
             }

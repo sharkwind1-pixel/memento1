@@ -10,6 +10,7 @@ import * as Haptics from "expo-haptics";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PetProvider } from "@/contexts/PetContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { SimpleModeProvider } from "@/contexts/SimpleModeContext";
 import { setupNotificationListeners } from "@/lib/push-notifications";
 
 function NotificationBridge() {
@@ -50,6 +51,7 @@ export default function RootLayout() {
     return (
         <SafeAreaProvider>
             <ThemeProvider>
+            <SimpleModeProvider>
             <AuthProvider>
                 <PetProvider>
                     <NotificationBridge />
@@ -77,6 +79,7 @@ export default function RootLayout() {
                     <StatusBar style="auto" />
                 </PetProvider>
             </AuthProvider>
+            </SimpleModeProvider>
             </ThemeProvider>
         </SafeAreaProvider>
     );

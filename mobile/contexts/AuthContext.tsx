@@ -43,6 +43,16 @@ const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
 /** 모듈 레벨에 verifier 보관 (provider별로 키) */
 const verifierMap: Record<string, string> = {};
 
+/** verifier 메모리에 있는지 확인 (callback.tsx에서 race 차단용) */
+export function hasStoredVerifier(): boolean {
+    return Object.keys(verifierMap).length > 0;
+}
+
+/** 모든 verifier 즉시 삭제 (취소/타임아웃 시) */
+export function clearStoredVerifiers(): void {
+    Object.keys(verifierMap).forEach((k) => delete verifierMap[k]);
+}
+
 /**
  * RFC 7636 권장 문자셋으로 64자 random verifier 생성.
  * 우선순위:
@@ -361,9 +371,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             // 자동 경로: 인앱 브라우저가 deepLink 감지 → result.url에 code
             if (result.type !== "success" || !result.url) {
-                console.log(`[OAuth] 인앱 브라우저 dismiss — deep link 핸들러 대기`);
-                // 폴백: 사용자가 "앱으로 돌아가기" 수동 탭 → app/auth/callback.tsx에서 처리
-                return { error: null };
+                // 사용자가 취소(뒤로가기) — verifier 즉시 삭제해서 deep link race로
+                // Chrome SSO 자동 OAuth가 callback에서 exchange 시도하는 것 차단.
+                // (이게 없으면 의도치 않게 다른 Google 계정으로 자동 가입되는 보안 버그)
+                delete verifierMap[provider];
+                console.log(`[OAuth] dismiss — verifier 삭제 → deep link race 차단`);
+                return { error: new Error("CANCELLED") };
             }
 
             const callbackUrl = new URL(result.url);

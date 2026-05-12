@@ -96,8 +96,10 @@ export async function POST(request: NextRequest) {
             ],
             max_tokens: AI_CONFIG.AI_MAX_TOKENS,
             temperature: aiContext.mode === "memorial" ? AI_CONFIG.AI_TEMPERATURE_MEMORIAL : AI_CONFIG.AI_TEMPERATURE_DAILY,
-            presence_penalty: aiContext.isMemorialMode ? 0.4 : 0.7,
-            frequency_penalty: aiContext.isMemorialMode ? 0.3 : 0.6,
+            // 추모 모드 penalty 상향 (정형화 응답 짜증 해결, 2026-05-12 사용자 보고).
+            // 0.4/0.3 → 0.7/0.55: 같은 표현/구조 반복 강하게 차단.
+            presence_penalty: aiContext.isMemorialMode ? 0.7 : 0.7,
+            frequency_penalty: aiContext.isMemorialMode ? 0.55 : 0.6,
             seed: randomSeed,
             stream: true,
         });

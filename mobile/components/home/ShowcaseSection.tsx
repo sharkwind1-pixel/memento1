@@ -6,7 +6,7 @@
  */
 
 import { useDarkMode } from "@/contexts/ThemeContext";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
     View, Text, TouchableOpacity, ScrollView, Image,
     Dimensions, StyleSheet,
@@ -14,7 +14,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Video, ResizeMode } from "expo-av";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { API_BASE_URL } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
 
@@ -42,44 +42,46 @@ export default function ShowcaseSection() {
     const isPausedRef = useRef(false);
     const indexRef = useRef(0);
 
-    useEffect(() => {
-        (async () => {
-            try {
-                const res = await fetch(`${API_BASE_URL}/api/posts?badge=자랑&limit=10`);
-                if (!res.ok) {
-                    console.warn("[Showcase] fetch failed:", res.status);
-                    return;
-                }
-                const data = await res.json();
-                const list = Array.isArray(data?.posts) ? data.posts : [];
-                setPosts(list.map((p: Record<string, unknown>): ShowcasePost => ({
-                    id: typeof p.id === "string" ? p.id : String(p.id ?? ""),
-                    title: typeof p.title === "string" ? p.title : "",
-                    authorName: (typeof p.authorName === "string" && p.authorName.trim())
-                        ? p.authorName
-                        : (typeof p.author_name === "string" && p.author_name.trim())
-                            ? p.author_name
-                            : (typeof p.author === "string" && p.author.trim() ? p.author : "익명"),
-                    likes: typeof p.likes === "number" ? p.likes : 0,
-                    comments: typeof p.comments === "number" ? p.comments : 0,
-                    imageUrls: Array.isArray(p.imageUrls)
-                        ? p.imageUrls.filter((x): x is string => typeof x === "string")
-                        : Array.isArray(p.images)
-                            ? (p.images as unknown[]).filter((x): x is string => typeof x === "string")
-                            : [],
-                    videoUrl: typeof p.videoUrl === "string" ? p.videoUrl : null,
-                    thumbnailUrl: typeof p.thumbnailUrl === "string"
-                        ? p.thumbnailUrl
-                        : (typeof p.thumbnail_url === "string" ? p.thumbnail_url : null),
-                    createdAt: typeof p.createdAt === "string"
-                        ? p.createdAt
-                        : (typeof p.created_at === "string" ? p.created_at : ""),
-                })));
-            } catch {
-                // 조용히
+    const fetchPosts = useCallback(async () => {
+        try {
+            // cache: "no-store" — 자랑 등록 직후 홈 복귀 시 stale data 방지 (Next.js fetch 자동 캐싱 회피)
+            const res = await fetch(`${API_BASE_URL}/api/posts?badge=자랑&limit=10`, { cache: "no-store" });
+            if (!res.ok) {
+                console.warn("[Showcase] fetch failed:", res.status);
+                return;
             }
-        })();
+            const data = await res.json();
+            const list = Array.isArray(data?.posts) ? data.posts : [];
+            setPosts(list.map((p: Record<string, unknown>): ShowcasePost => ({
+                id: typeof p.id === "string" ? p.id : String(p.id ?? ""),
+                title: typeof p.title === "string" ? p.title : "",
+                authorName: (typeof p.authorName === "string" && p.authorName.trim())
+                    ? p.authorName
+                    : (typeof p.author_name === "string" && p.author_name.trim())
+                        ? p.author_name
+                        : (typeof p.author === "string" && p.author.trim() ? p.author : "익명"),
+                likes: typeof p.likes === "number" ? p.likes : 0,
+                comments: typeof p.comments === "number" ? p.comments : 0,
+                imageUrls: Array.isArray(p.imageUrls)
+                    ? p.imageUrls.filter((x): x is string => typeof x === "string")
+                    : Array.isArray(p.images)
+                        ? (p.images as unknown[]).filter((x): x is string => typeof x === "string")
+                        : [],
+                videoUrl: typeof p.videoUrl === "string" ? p.videoUrl : null,
+                thumbnailUrl: typeof p.thumbnailUrl === "string"
+                    ? p.thumbnailUrl
+                    : (typeof p.thumbnail_url === "string" ? p.thumbnail_url : null),
+                createdAt: typeof p.createdAt === "string"
+                    ? p.createdAt
+                    : (typeof p.created_at === "string" ? p.created_at : ""),
+            })));
+        } catch {
+            // 조용히
+        }
     }, []);
+
+    // mount 시 1회 + 화면 포커스 복귀 시 매번 (영상 자랑하기 등록 후 즉시 반영)
+    useFocusEffect(useCallback(() => { fetchPosts(); }, [fetchPosts]));
 
     useEffect(() => {
         if (posts.length <= 1) return;

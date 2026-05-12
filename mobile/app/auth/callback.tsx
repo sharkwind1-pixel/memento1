@@ -10,7 +10,7 @@ import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { supabase } from "@/lib/supabase";
 import { COLORS } from "@/lib/theme";
-import { exchangeWithStoredVerifier } from "@/contexts/AuthContext";
+import { exchangeWithStoredVerifier, hasStoredVerifier } from "@/contexts/AuthContext";
 
 export default function AuthCallbackScreen() {
     const router = useRouter();
@@ -62,6 +62,15 @@ export default function AuthCallbackScreen() {
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
                 router.replace("/(tabs)");
+                return;
+            }
+
+            // 보안 차단: signInWithProvider가 dismiss 처리하면서 verifier 삭제했으면
+            // 사용자가 OAuth를 명시적으로 취소한 것 → exchange 시도하지 말 것.
+            // (Chrome SSO 자동 OAuth가 의도치 않게 다른 Google 계정으로 가입시키던 버그 차단)
+            if (!hasStoredVerifier()) {
+                console.log("[Auth callback] verifier 없음 — 사용자가 취소함, exchange skip");
+                router.replace("/(auth)/login");
                 return;
             }
 

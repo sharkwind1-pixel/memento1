@@ -205,9 +205,9 @@ export const UPLOAD = {
 // ===== API 설정 =====
 export const AI_CONFIG = {
     AI_MODEL: "gpt-4o-mini",    // AI 펫톡 모델
-    AI_MAX_TOKENS: 500,         // AI 응답 최대 토큰 (본문+SUGGESTIONS+PENDING_TOPIC)
-    AI_TEMPERATURE_DAILY: 0.80,     // 일상 모드 온도
-    AI_TEMPERATURE_MEMORIAL: 0.65,  // 추모 모드 온도 (따뜻한 밝음 + 지시 준수 균형)
+    AI_MAX_TOKENS: 600,         // AI 응답 최대 토큰 (본문+SUGGESTIONS+PENDING_TOPIC). 다양한 화법용으로 +100.
+    AI_TEMPERATURE_DAILY: 0.85,     // 일상 모드 온도 (0.80 → 0.85, 다양성 ↑)
+    AI_TEMPERATURE_MEMORIAL: 0.85,  // 추모 모드 온도 (0.65 → 0.85, "정형화" 짜증 해결. 사용자 보고 2026-05-12)
 } as const;
 
 // ===== AI 펫톡 입력 제한 (route.ts에서 사용) =====

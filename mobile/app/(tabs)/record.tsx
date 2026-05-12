@@ -979,7 +979,7 @@ function VideosTab({ pet, isMemorialMode, accentColor, refreshing, onRefresh, au
     onAutoOpenConsumed?: () => void;
 }) {
     const { isDarkMode } = useDarkMode();
-    const { session } = useAuth();
+    const { session, profile } = useAuth();
     const [videos, setVideos] = useState<Video[]>([]);
     const [loading, setLoading] = useState(true);
     const [generateOpen, setGenerateOpen] = useState(false);
@@ -1140,6 +1140,51 @@ function VideosTab({ pet, isMemorialMode, accentColor, refreshing, onRefresh, au
         }, ...prev]);
         setActiveGenId(generationId);
         setActiveStartedAt(Date.now());
+    }
+
+    /**
+     * AI 영상 자랑하기 — 커뮤니티 "함께 보기"에 게시글 등록.
+     * 웹 src/components/features/video/VideoResultModal.tsx handleShowOff와 동일 패턴.
+     */
+    async function handleShowOff(video: VideoResult) {
+        if (!video.videoUrl) {
+            RNAlert.alert("등록 실패", "영상이 아직 준비되지 않았어요");
+            return;
+        }
+        if (!session?.access_token) {
+            RNAlert.alert("등록 실패", "로그인이 필요합니다");
+            return;
+        }
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/posts`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${session.access_token}`,
+                },
+                body: JSON.stringify({
+                    boardType: "free",
+                    badge: "자랑",
+                    title: video.petName
+                        ? `${video.petName}의 특별한 영상`
+                        : "우리 아이의 AI 영상",
+                    content: video.petName
+                        ? `${video.petName}의 AI 영상을 만들었어요! 함께 감상해주세요.`
+                        : "AI로 만든 우리 아이의 특별한 영상이에요!",
+                    authorName: profile?.nickname || "익명",
+                    videoUrl: video.videoUrl,
+                }),
+            });
+            if (res.ok) {
+                RNAlert.alert("등록 완료", "함께 보기에 영상이 등록되었어요!");
+                setSelectedVideo(null);
+            } else {
+                const data = await res.json().catch(() => ({}));
+                RNAlert.alert("등록 실패", data.error || "다시 시도해주세요");
+            }
+        } catch {
+            RNAlert.alert("등록 실패", "네트워크 오류가 발생했어요");
+        }
     }
 
     function getElapsed(): string {
@@ -1333,6 +1378,7 @@ function VideosTab({ pet, isMemorialMode, accentColor, refreshing, onRefresh, au
                 onClose={() => setSelectedVideo(null)}
                 video={selectedVideo}
                 accentColor={accentColor}
+                onShowOff={handleShowOff}
             />
         </>
     );

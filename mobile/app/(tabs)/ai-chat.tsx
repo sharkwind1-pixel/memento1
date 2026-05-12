@@ -56,6 +56,11 @@ interface ReminderItem {
     enabled: boolean;
 }
 
+// 진입 시 default 추천멘트 (서버 응답 받기 전부터 사용자가 즉시 클릭 가능).
+// 사용자 보고: "처음부터 떠야해" — 이전엔 첫 응답 후에만 표시.
+const DEFAULT_SUGGESTIONS_DAILY = ["오늘 뭐 했어?", "같이 놀자!", "기분이 어때?"];
+const DEFAULT_SUGGESTIONS_MEMORIAL = ["좋았던 기억 얘기해줘", "너와 함께한 날들", "보고 싶은 마음"];
+
 export default function AiChatScreen() {
     const router = useRouter();
     const { session, user, isPremium } = useAuth();
@@ -177,7 +182,8 @@ export default function AiChatScreen() {
         setIsTyping(false);
         setIsStreaming(false);
         setMessages([]);
-        setSuggestions([]);
+        // default 추천 표시 (서버 첫 응답 받기 전이라도 사용자가 바로 클릭 가능)
+        setSuggestions(isMemorialMode ? DEFAULT_SUGGESTIONS_MEMORIAL : DEFAULT_SUGGESTIONS_DAILY);
         reminderSuggestionShown.current = false;
 
         let cancelled = false;
@@ -414,8 +420,12 @@ export default function AiChatScreen() {
             // ===== SSE 파싱 =====
             const stream = response.body as ReadableStream<Uint8Array> | null;
             const useStream = !!(stream && typeof stream.getReader === "function");
+            // 디버그: stream vs text fallback 어느 경로 타는지 (RN의 fetch stream 미지원 시 text fallback)
+            console.log(`[Chat] useStream=${useStream} (RN fetch stream 지원 여부)`);
 
             const handleEvent = (event: any) => {
+                // 디버그: SSE 이벤트 도달 추적 (어떤 type이 오는지 + done 이벤트 누락 여부 진단)
+                console.log(`[Chat] event type=${event?.type} keys=${Object.keys(event ?? {}).join(",")}`);
                 if (event.type === "delta" && typeof event.content === "string") {
                     setMessages((prev) => prev.map((msg) =>
                         msg.id === petMessageId
@@ -446,6 +456,11 @@ export default function AiChatScreen() {
                     ));
 
                     if (typeof event.remaining === "number") setServerRemaining(event.remaining);
+                    // 디버그: suggestedQuestions 수신 여부 + 갯수 확인 (모바일에서 추천멘트 안 보이는 버그 추적)
+                    console.log(`[Chat] done event suggestedQuestions =`,
+                        Array.isArray(event.suggestedQuestions)
+                            ? `[${event.suggestedQuestions.length} items: ${event.suggestedQuestions.slice(0, 2).join(", ")}...]`
+                            : `${typeof event.suggestedQuestions} (not array)`);
                     if (Array.isArray(event.suggestedQuestions) && event.suggestedQuestions.length > 0) {
                         setSuggestions(event.suggestedQuestions);
                     }
@@ -585,7 +600,8 @@ export default function AiChatScreen() {
         setMessages([{
             id: `greeting-${Date.now()}`, role: "pet", content: greeting, timestamp: new Date(),
         }]);
-        setSuggestions([]);
+        // 새 대화 시작 시에도 default 추천 즉시 표시
+        setSuggestions(isMemorialMode ? DEFAULT_SUGGESTIONS_MEMORIAL : DEFAULT_SUGGESTIONS_DAILY);
         reminderSuggestionShown.current = false;
     }, [selectedPet, isMemorialMode]);
 
@@ -768,6 +784,8 @@ export default function AiChatScreen() {
                 </View>
 
                 <LinearGradient colors={chatBgGradient} style={styles.flex1}>
+                    {/* 추모 모드: chat 영역 전체 backdrop (정적 펄스 별 + 떠오르는 별, 웹 매칭) */}
+                    {isMemorialMode && <MemorialAmbientStars />}
                     <FlatList
                         ref={flatListRef}
                         data={messages}
@@ -985,7 +1003,8 @@ function MessageRenderer({
 
     // 펫 버블: 라이트는 흰색 카드 + 부드러운 그림자, 다크는 회색
     const petBubbleBg = isDarkMode ? COLORS.gray[800] : "#FFFFFF";
-    const emotionInfo = message.emotion ? EMOTION_MAP[message.emotion] : null;
+    // 감정 라벨(외로움/슬픔/불안 등)은 사용자 명시 요청으로 화면에 표시 안 함.
+    // 백엔드 emotion 분석은 그대로 사용 (서버 텔레그램 모니터링/위기 감지용).
 
     return (
         <>
@@ -999,20 +1018,6 @@ function MessageRenderer({
                 )}
             </View>
             <View style={{ maxWidth: "80%" }}>
-                {emotionInfo && (
-                    <View style={{
-                        alignSelf: "flex-start",
-                        backgroundColor: emotionInfo.color + "20",
-                        paddingHorizontal: 8,
-                        paddingVertical: 2,
-                        borderRadius: 9999,
-                        marginBottom: 4,
-                    }}>
-                        <Text style={{ fontSize: 10, fontWeight: "600", color: emotionInfo.color }}>
-                            {emotionInfo.label}
-                        </Text>
-                    </View>
-                )}
                 <TouchableOpacity
                     onLongPress={shareContent}
                     delayLongPress={400}

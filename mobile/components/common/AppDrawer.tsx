@@ -17,10 +17,12 @@ import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
 import { useDarkMode } from "@/contexts/ThemeContext";
+import { useSimpleMode } from "@/contexts/SimpleModeContext";
 import { COLORS } from "@/lib/theme";
 import PointsHistoryModal from "@/components/points/PointsHistoryModal";
 import PointsShopModal from "@/components/points/PointsShopModal";
 import { getPointLevel } from "@/config/constants";
+import { POINT_LEVELS, type PetIconType } from "@/lib/levels";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 const DRAWER_W = Math.min(SCREEN_W * 0.82, 320);
@@ -63,12 +65,24 @@ const COMMUNITY_SUBS: Array<{
 export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
     const router = useRouter();
     const { user, profile, points, isPremium, isAdminUser, signOut } = useAuth();
-    const { isMemorialMode } = usePet();
+    const { isMemorialMode, selectedPet } = usePet();
     const { isDarkMode } = useDarkMode();
+    const { isSimpleMode, toggleSimpleMode, fontScale } = useSimpleMode();
     const [communityExpanded, setCommunityExpanded] = useState(false);
     const [pointsHistoryOpen, setPointsHistoryOpen] = useState(false);
     const [pointsShopOpen, setPointsShopOpen] = useState(false);
     const currentLevel = getPointLevel(points ?? 0);
+
+    // 펫 종류 → 등급 아이콘 매핑 (pets.type: "강아지" | "고양이" | 그 외)
+    const petType: PetIconType =
+        selectedPet?.type === "강아지" ? "dog" :
+        selectedPet?.type === "고양이" ? "cat" : "other";
+
+    // levels.ts에서 현재 레벨의 아이콘 png require 결과 (관리자면 어드민 등급)
+    const levelIconSource = isAdminUser
+        ? POINT_LEVELS[POINT_LEVELS.length - 1].icons[petType]
+        : (POINT_LEVELS.find((l) => l.level === currentLevel.level)?.icons[petType]
+            ?? POINT_LEVELS[0].icons[petType]);
 
     const slideAnim = useRef(new Animated.Value(-DRAWER_W)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -139,8 +153,9 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
                         {profile?.avatar ? (
                             <Image source={{ uri: profile.avatar }} style={styles.avatar} />
                         ) : (
+                            // 웹과 동일하게 펫 종류 + 레벨에 따라 동물 등급 아이콘 표시 (이모지 X)
                             <View style={[styles.avatar, styles.avatarFallback]}>
-                                <Ionicons name="person" size={26} color="#fff" />
+                                <Image source={levelIconSource} style={styles.avatarLevelIcon} resizeMode="contain" />
                             </View>
                         )}
                         <View style={{ flex: 1 }}>
@@ -316,8 +331,43 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
                                 activeOpacity={0.7}
                             >
                                 <Ionicons name="log-out-outline" size={20} color={COLORS.red[500]} />
-                                <Text style={[styles.menuLabel, { color: COLORS.red[500] }]}>로그아웃</Text>
+                                <Text style={[styles.menuLabel, { color: COLORS.red[500], fontSize: 14 * fontScale }]}>로그아웃</Text>
                             </TouchableOpacity>
+                        </View>
+
+                        {/* 접근성: 크게 보기 토글 (웹 Sidebar 간편모드 매칭) */}
+                        <View style={[styles.menuSection, { marginTop: 16 }]}>
+                            <Text style={styles.sectionLabel}>접근성</Text>
+                            <TouchableOpacity
+                                onPress={toggleSimpleMode}
+                                style={styles.menuItem}
+                                activeOpacity={0.7}
+                            >
+                                <Ionicons
+                                    name={isSimpleMode ? "eye" : "eye-outline"}
+                                    size={20}
+                                    color={isSimpleMode ? accentColor : (isDarkMode ? COLORS.gray[300] : COLORS.gray[600])}
+                                />
+                                <Text style={[styles.menuLabel, {
+                                    color: isDarkMode ? COLORS.gray[200] : COLORS.gray[800],
+                                    fontSize: 14 * fontScale,
+                                    fontWeight: isSimpleMode ? "700" : "500",
+                                }]}>
+                                    크게 보기
+                                </Text>
+                                <View style={[
+                                    styles.toggleTrack,
+                                    isSimpleMode && { backgroundColor: accentColor },
+                                ]}>
+                                    <View style={[
+                                        styles.toggleThumb,
+                                        isSimpleMode && styles.toggleThumbOn,
+                                    ]} />
+                                </View>
+                            </TouchableOpacity>
+                            <Text style={[styles.simpleModeHint, { color: isDarkMode ? COLORS.gray[500] : COLORS.gray[400] }]}>
+                                글자/버튼이 25% 더 커집니다
+                            </Text>
                         </View>
 
                         <View style={{ height: 24 }} />
@@ -370,7 +420,9 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(255,255,255,0.3)",
         alignItems: "center",
         justifyContent: "center",
+        overflow: "hidden",
     },
+    avatarLevelIcon: { width: 44, height: 44 },
     userName: { fontSize: 16, fontWeight: "700", color: "#fff" },
     userEmail: { fontSize: 11, color: "rgba(255,255,255,0.85)", marginTop: 2 },
     userBadges: { flexDirection: "row", gap: 6, marginTop: 8 },
@@ -420,6 +472,28 @@ const styles = StyleSheet.create({
         borderRadius: 10,
     },
     menuLabel: { flex: 1, fontSize: 14, fontWeight: "500" },
+    toggleTrack: {
+        width: 40,
+        height: 22,
+        borderRadius: 11,
+        backgroundColor: "rgba(0,0,0,0.15)",
+        padding: 2,
+        justifyContent: "center",
+    },
+    toggleThumb: {
+        width: 18,
+        height: 18,
+        borderRadius: 9,
+        backgroundColor: "#fff",
+    },
+    toggleThumbOn: {
+        transform: [{ translateX: 18 }],
+    },
+    simpleModeHint: {
+        fontSize: 11,
+        marginTop: 4,
+        marginLeft: 44,
+    },
     pointHint: {
         fontSize: 11,
         color: COLORS.memento[600],
