@@ -72,7 +72,12 @@ export default function AppHeader({ onOpenDrawer, showBack, title, hideActions }
             {/* 가운데: 로고 + 제목 (로고 탭 → 홈) */}
             <View style={styles.titleWrap}>
                 {title ? (
-                    <Text style={[styles.title, { color: textColor, fontSize: 16 * fontScale }]} numberOfLines={1}>{title}</Text>
+                    <Text
+                        style={[styles.title, { color: textColor, fontSize: 14 * fontScale }]}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.7}
+                    >{title}</Text>
                 ) : (
                     <TouchableOpacity
                         onPress={() => router.push("/(tabs)")}
@@ -84,7 +89,12 @@ export default function AppHeader({ onOpenDrawer, showBack, title, hideActions }
                             style={[styles.logoImg, { width: 26 * spacingScale, height: 26 * spacingScale }]}
                             resizeMode="contain"
                         />
-                        <Text style={[styles.brandText, { color: textColor, fontSize: 16 * fontScale }]}>메멘토애니</Text>
+                        <Text
+                            style={[styles.brandText, { color: textColor, fontSize: 14 * fontScale }]}
+                            numberOfLines={1}
+                            adjustsFontSizeToFit
+                            minimumFontScale={0.7}
+                        >메멘토애니</Text>
                     </TouchableOpacity>
                 )}
             </View>
