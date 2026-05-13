@@ -23,6 +23,7 @@ import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
 import { useDarkMode } from "@/contexts/ThemeContext";
+import { useSimpleMode } from "@/contexts/SimpleModeContext";
 import { COLORS } from "@/lib/theme";
 import AppDrawer from "@/components/common/AppDrawer";
 import HeroSection from "@/components/home/HeroSection";
@@ -34,6 +35,7 @@ import QuestCard from "@/components/home/QuestCard";
 import QuizSection from "@/components/home/QuizSection";
 import ShowcaseSection from "@/components/home/ShowcaseSection";
 import MemorialSection from "@/components/home/MemorialSection";
+import SimpleHomeLauncher from "@/components/home/SimpleHomeLauncher";
 import AppHeader from "@/components/common/AppHeader";
 import PetSwitcher from "@/components/common/PetSwitcher";
 import OnboardingModal, {
@@ -45,6 +47,7 @@ export default function HomeScreen() {
     const { session, user } = useAuth();
     const { selectedPet, isMemorialMode, refreshPets } = usePet();
     const { isDarkMode } = useDarkMode();
+    const { isSimpleMode } = useSimpleMode();
     const [refreshing, setRefreshing] = useState(false);
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [onboardingOpen, setOnboardingOpen] = useState(false);
@@ -102,6 +105,22 @@ export default function HomeScreen() {
     }, [refreshPets]);
 
     const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.gray[50];
+
+    // 간편모드: 웹 SimpleHomeLauncher와 동일하게 큰 카드 그리드 런처로 완전 교체
+    if (isSimpleMode) {
+        return (
+            <SafeAreaView edges={["top"]} style={[styles.container, { backgroundColor: bgColor }]}>
+                <AppHeader onOpenDrawer={() => setDrawerOpen(true)} />
+                <AppDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
+                <SimpleHomeLauncher />
+                <OnboardingModal
+                    visible={onboardingOpen}
+                    onClose={() => setOnboardingOpen(false)}
+                    onComplete={handleOnboardingComplete}
+                />
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView edges={["top"]} style={[styles.container, { backgroundColor: bgColor }]}>
