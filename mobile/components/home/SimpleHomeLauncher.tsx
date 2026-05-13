@@ -28,10 +28,13 @@ interface LauncherItem {
     iconColor: string;
     /** 다크모드 아이콘 색 (웹 dark:text-*-400 — 밝은 톤) */
     iconColorDark: string;
-    /** 라이트모드 카드 배경 (웹 bg-*-200/50) */
+    /** 라이트모드 카드 배경 (웹 bg-*-{50,200}) */
     bgColor: string;
     /** 다크모드 카드 배경 (웹 dark:bg-*-900/20 — alpha 18% 톤) */
     bgColorDark: string;
+    /** 라이트 모드 라벨/설명 글씨 색 — 카드 색 톤과 매칭 (700) */
+    labelColor: string;
+    descColor: string;
 }
 
 const LAUNCHER_ITEMS: LauncherItem[] = [
@@ -45,6 +48,8 @@ const LAUNCHER_ITEMS: LauncherItem[] = [
         iconColorDark: COLORS.memento[400], // #38BDF8
         bgColor: COLORS.memento[200],     // #BAE6FD
         bgColorDark: "rgba(8,145,178,0.18)",
+        labelColor: "#075985",            // sky-900 톤 — 메멘토 진한 청록
+        descColor: "#0E7490",             // memento-700
     },
     {
         id: "ai-chat",
@@ -56,6 +61,8 @@ const LAUNCHER_ITEMS: LauncherItem[] = [
         iconColorDark: "#34D399",          // emerald-400
         bgColor: "#ECFDF5",                // emerald-50
         bgColorDark: "rgba(5,150,105,0.18)",
+        labelColor: "#065F46",             // emerald-800
+        descColor: "#047857",              // emerald-700
     },
     {
         id: "community",
@@ -67,6 +74,8 @@ const LAUNCHER_ITEMS: LauncherItem[] = [
         iconColorDark: COLORS.memento[400],
         bgColor: COLORS.memento[200],
         bgColorDark: "rgba(8,145,178,0.18)",
+        labelColor: "#075985",
+        descColor: "#0E7490",
     },
     {
         id: "magazine",
@@ -78,6 +87,8 @@ const LAUNCHER_ITEMS: LauncherItem[] = [
         iconColorDark: "#C084FC",          // purple-400
         bgColor: "#FAF5FF",                // purple-50
         bgColorDark: "rgba(147,51,234,0.18)",
+        labelColor: "#6B21A8",             // purple-800
+        descColor: "#7E22CE",              // purple-700
     },
     {
         id: "minihompy",
@@ -89,6 +100,8 @@ const LAUNCHER_ITEMS: LauncherItem[] = [
         iconColorDark: COLORS.memento[400],
         bgColor: COLORS.memento[50],
         bgColorDark: "rgba(8,145,178,0.10)",
+        labelColor: "#075985",
+        descColor: "#0E7490",
     },
     {
         id: "adoption",
@@ -100,6 +113,8 @@ const LAUNCHER_ITEMS: LauncherItem[] = [
         iconColorDark: "#FB7185",          // rose-400
         bgColor: "#FFF1F2",                // rose-50
         bgColorDark: "rgba(225,29,72,0.18)",
+        labelColor: "#9F1239",             // rose-800
+        descColor: "#BE123C",              // rose-700
     },
 ];
 
@@ -132,8 +147,9 @@ export default function SimpleHomeLauncher() {
             ? ["rgba(255,251,235,0.8)", "rgba(255,251,235,0.3)", "rgba(255,247,237,0.2)"]
             : ["rgba(186,230,253,0.8)", "rgba(186,230,253,0.4)", COLORS.white];
 
-    const cardLabelColor = isDarkMode ? COLORS.gray[100] : COLORS.gray[800];
-    const cardDescColor = isDarkMode ? COLORS.gray[400] : COLORS.gray[500];
+    // 라이트 모드는 카드별 자기 색 톤(700/800), 다크 모드는 회색 톤
+    const darkLabelColor = COLORS.gray[100];
+    const darkDescColor = COLORS.gray[400];
 
     function handleCardPress(item: LauncherItem) {
         router.push(item.route as never);
@@ -219,13 +235,13 @@ export default function SimpleHomeLauncher() {
                                 </View>
                                 <View style={{ alignItems: "center" }}>
                                     <Text style={[styles.cardLabel, {
-                                        color: cardLabelColor,
+                                        color: isDarkMode ? darkLabelColor : item.labelColor,
                                         fontSize: 17 * fontScale,
                                     }]} numberOfLines={1}>
                                         {item.label}
                                     </Text>
                                     <Text style={[styles.cardDesc, {
-                                        color: cardDescColor,
+                                        color: isDarkMode ? darkDescColor : item.descColor,
                                         fontSize: 12 * fontScale,
                                         marginTop: 2 * spacingScale,
                                     }]} numberOfLines={1}>
