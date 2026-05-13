@@ -27,7 +27,6 @@ import { useSimpleMode } from "@/contexts/SimpleModeContext";
 import { COLORS } from "@/lib/theme";
 import AppDrawer from "@/components/common/AppDrawer";
 import HeroSection from "@/components/home/HeroSection";
-import PetCardSection from "@/components/home/PetCardSection";
 import CommunityPreview from "@/components/home/CommunityPreview";
 import MagazinePreview from "@/components/home/MagazinePreview";
 import AnnouncementBanner from "@/components/home/AnnouncementBanner";
@@ -45,7 +44,7 @@ import OnboardingModal, {
 export default function HomeScreen() {
     const router = useRouter();
     const { session, user } = useAuth();
-    const { selectedPet, isMemorialMode, refreshPets } = usePet();
+    const { isMemorialMode, refreshPets } = usePet();
     const { isDarkMode } = useDarkMode();
     const { isSimpleMode } = useSimpleMode();
     const [refreshing, setRefreshing] = useState(false);
@@ -145,7 +144,6 @@ export default function HomeScreen() {
                     onAddPet={() => router.push("/pet/new")}
                 />
                 <QuestCard />
-                <PetCardSection pet={selectedPet} isMemorialMode={isMemorialMode} />
                 <CommunityPreview session={session} isMemorialMode={isMemorialMode} />
                 <ShowcaseSection />
                 <QuizSection />
