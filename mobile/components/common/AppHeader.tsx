@@ -99,16 +99,20 @@ export default function AppHeader({ onOpenDrawer, showBack, title, hideActions }
                 )}
             </View>
 
-            {/* 우측: 포인트 + 알림 + 프로필 */}
+            {/* 우측: 포인트 + 알림 + 프로필
+                — 좁은 헤더에서 메멘토애니 텍스트와 안 겹치도록
+                  gap/iconBtn은 고정값 유지(spacingScale 미적용),
+                  포인트 pill만 살짝 우측으로 밀기(marginLeft) */}
             {!hideActions ? (
-                <View style={[styles.actions, { gap: 4 * spacingScale }]}>
+                <View style={[styles.actions, { gap: 0, marginLeft: 6 }]}>
                     {user && (
                         <View style={[styles.pointPill, {
                             backgroundColor: accentColor + "15",
-                            paddingHorizontal: 8 * spacingScale,
-                            paddingVertical: 4 * spacingScale,
-                            gap: 3 * spacingScale,
-                            marginRight: 4 * spacingScale,
+                            paddingHorizontal: 8,
+                            paddingVertical: 4,
+                            gap: 3,
+                            marginLeft: 4,
+                            marginRight: 2,
                         }]}>
                             <Ionicons name="star" size={11 * iconScale} color={accentColor} />
                             <Text style={[styles.pointText, { color: accentColor, fontSize: 11 * fontScale }]}>
@@ -116,18 +120,18 @@ export default function AppHeader({ onOpenDrawer, showBack, title, hideActions }
                             </Text>
                         </View>
                     )}
-                    <TouchableOpacity onPress={() => router.push("/notifications")} style={[styles.iconBtn, { width: 36 * spacingScale, height: 36 * spacingScale }]} hitSlop={6}>
+                    <TouchableOpacity onPress={() => router.push("/notifications")} style={[styles.iconBtn, { width: 30, height: 32 }]} hitSlop={8}>
                         <Ionicons name="notifications-outline" size={22 * iconScale} color={iconColor} />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={toggleTheme} style={[styles.iconBtn, { width: 36 * spacingScale, height: 36 * spacingScale }]} hitSlop={6}>
+                    <TouchableOpacity onPress={toggleTheme} style={[styles.iconBtn, { width: 30, height: 32 }]} hitSlop={8}>
                         <Ionicons
                             name={isDarkMode ? "sunny" : "moon"}
                             size={20 * iconScale}
                             color={isDarkMode ? "#FBBF24" : iconColor}
                         />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => router.push("/profile")} hitSlop={6} style={[styles.profileBtn, { width: 36 * spacingScale, height: 36 * spacingScale }]}>
-                        <Image source={levelIcon} style={[styles.avatarImg, { width: 32 * spacingScale, height: 32 * spacingScale, borderRadius: 16 * spacingScale }]} resizeMode="cover" />
+                    <TouchableOpacity onPress={() => router.push("/profile")} hitSlop={8} style={[styles.profileBtn, { width: 32, height: 32, marginLeft: 2 }]}>
+                        <Image source={levelIcon} style={[styles.avatarImg, { width: 28, height: 28, borderRadius: 14 }]} resizeMode="cover" />
                     </TouchableOpacity>
                 </View>
             ) : (
