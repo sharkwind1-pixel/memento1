@@ -16,6 +16,7 @@ import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
 import { useDarkMode } from "@/contexts/ThemeContext";
+import { useSimpleMode } from "@/contexts/SimpleModeContext";
 import { COLORS } from "@/lib/theme";
 import { getLevelIcon, type PetIconType } from "@/lib/levels";
 
@@ -33,6 +34,7 @@ export default function AppHeader({ onOpenDrawer, showBack, title, hideActions }
     const { user, profile, points, isAdminUser } = useAuth();
     const { selectedPet, pets, isMemorialMode } = usePet();
     const { isDarkMode, toggleTheme } = useDarkMode();
+    const { fontScale } = useSimpleMode();
 
     // 레벨 뱃지 아이콘 (포인트 + 펫 타입 기반)
     // 우선순위: selectedPet → pets[0] → 기본값 "dog"
@@ -64,7 +66,7 @@ export default function AppHeader({ onOpenDrawer, showBack, title, hideActions }
             {/* 가운데: 로고 + 제목 (로고 탭 → 홈) */}
             <View style={styles.titleWrap}>
                 {title ? (
-                    <Text style={[styles.title, { color: textColor }]} numberOfLines={1}>{title}</Text>
+                    <Text style={[styles.title, { color: textColor, fontSize: 16 * fontScale }]} numberOfLines={1}>{title}</Text>
                 ) : (
                     <TouchableOpacity
                         onPress={() => router.push("/(tabs)")}
@@ -76,7 +78,7 @@ export default function AppHeader({ onOpenDrawer, showBack, title, hideActions }
                             style={styles.logoImg}
                             resizeMode="contain"
                         />
-                        <Text style={[styles.brandText, { color: textColor }]}>메멘토애니</Text>
+                        <Text style={[styles.brandText, { color: textColor, fontSize: 16 * fontScale }]}>메멘토애니</Text>
                     </TouchableOpacity>
                 )}
             </View>
@@ -87,7 +89,7 @@ export default function AppHeader({ onOpenDrawer, showBack, title, hideActions }
                     {user && (
                         <View style={[styles.pointPill, { backgroundColor: accentColor + "15" }]}>
                             <Ionicons name="star" size={11} color={accentColor} />
-                            <Text style={[styles.pointText, { color: accentColor }]}>
+                            <Text style={[styles.pointText, { color: accentColor, fontSize: 11 * fontScale }]}>
                                 {(points ?? 0).toLocaleString()}
                             </Text>
                         </View>

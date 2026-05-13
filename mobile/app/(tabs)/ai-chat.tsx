@@ -28,6 +28,7 @@ import * as Haptics from "expo-haptics";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
 import { useDarkMode } from "@/contexts/ThemeContext";
+import { useSimpleMode } from "@/contexts/SimpleModeContext";
 import { ChatMessage, TimelineEntry } from "@/types";
 import { API_BASE_URL } from "@/config/constants";
 import { COLORS } from "@/lib/theme";
@@ -959,6 +960,7 @@ function MessageRenderer({
     isFirst?: boolean;
 }) {
     const { isDarkMode } = useDarkMode();
+    const { fontScale } = useSimpleMode();
 
     // 메시지 시간 갭 분리선 (5분+ 간격이거나 첫 메시지면 시각 표시)
     const showTimestamp = isFirst || (prevTimestamp && hasTimeGap(prevTimestamp, message.timestamp));
@@ -1014,7 +1016,7 @@ function MessageRenderer({
                         end={{ x: 1, y: 1 }}
                         style={styles.bubbleUser}
                     >
-                        <Text style={{ color: "#fff", fontSize: 14, lineHeight: 22 }}>{message.content}</Text>
+                        <Text style={{ color: "#fff", fontSize: 14 * fontScale, lineHeight: 22 * fontScale }}>{message.content}</Text>
                     </LinearGradient>
                 </TouchableOpacity>
             </View>
@@ -1047,7 +1049,7 @@ function MessageRenderer({
                 >
                     <Text
                         style={{
-                            fontSize: 14, lineHeight: 22,
+                            fontSize: 14 * fontScale, lineHeight: 22 * fontScale,
                             color: isDarkMode ? COLORS.white : COLORS.gray[800],
                         }}
                     >
