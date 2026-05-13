@@ -5,6 +5,7 @@
 
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { useDarkMode } from "@/contexts/ThemeContext";
+import { useSimpleMode } from "@/contexts/SimpleModeContext";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS, SPACING } from "@/lib/theme";
 
@@ -24,19 +25,20 @@ export default function SectionHeader({
     isMemorialMode,
 }: Props) {
     const { isDarkMode } = useDarkMode();
+    const { fontScale, spacingScale, iconScale } = useSimpleMode();
     const accentColor = isMemorialMode ? COLORS.memorial[600] : COLORS.memento[600];
 
     const titleColor = isDarkMode ? COLORS.white : COLORS.gray[900];
 
     return (
         <View style={styles.container}>
-            <View style={styles.left}>
-                <Ionicons name={icon} size={18} color={accentColor} />
-                <Text style={[styles.title, { color: titleColor }]}>{title}</Text>
+            <View style={[styles.left, { gap: SPACING.sm * spacingScale }]}>
+                <Ionicons name={icon} size={18 * iconScale} color={accentColor} />
+                <Text style={[styles.title, { color: titleColor, fontSize: 16 * fontScale }]}>{title}</Text>
             </View>
             {actionLabel && onAction && (
                 <TouchableOpacity onPress={onAction} activeOpacity={0.6}>
-                    <Text style={[styles.action, { color: accentColor }]}>
+                    <Text style={[styles.action, { color: accentColor, fontSize: 12 * fontScale }]}>
                         {actionLabel} →
                     </Text>
                 </TouchableOpacity>

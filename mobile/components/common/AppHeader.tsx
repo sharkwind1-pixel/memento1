@@ -34,7 +34,7 @@ export default function AppHeader({ onOpenDrawer, showBack, title, hideActions }
     const { user, profile, points, isAdminUser } = useAuth();
     const { selectedPet, pets, isMemorialMode } = usePet();
     const { isDarkMode, toggleTheme } = useDarkMode();
-    const { fontScale } = useSimpleMode();
+    const { fontScale, iconScale, spacingScale } = useSimpleMode();
 
     // 레벨 뱃지 아이콘 (포인트 + 펫 타입 기반)
     // 우선순위: selectedPet → pets[0] → 기본값 "dog"
@@ -51,15 +51,21 @@ export default function AppHeader({ onOpenDrawer, showBack, title, hideActions }
     const iconColor = isDarkMode ? COLORS.gray[300] : COLORS.gray[700];
 
     return (
-        <View style={[styles.container, { backgroundColor: bgColor, borderBottomColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100] }]}>
+        <View style={[styles.container, {
+            backgroundColor: bgColor,
+            borderBottomColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100],
+            paddingHorizontal: 12 * spacingScale,
+            paddingVertical: 8 * spacingScale,
+            gap: 4 * spacingScale,
+        }]}>
             {/* 좌측: 햄버거 또는 뒤로가기 */}
             {showBack ? (
-                <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn} hitSlop={8}>
-                    <Ionicons name="arrow-back" size={24} color={iconColor} />
+                <TouchableOpacity onPress={() => router.back()} style={[styles.iconBtn, { width: 36 * spacingScale, height: 36 * spacingScale }]} hitSlop={8}>
+                    <Ionicons name="arrow-back" size={24 * iconScale} color={iconColor} />
                 </TouchableOpacity>
             ) : (
-                <TouchableOpacity onPress={onOpenDrawer} style={styles.iconBtn} hitSlop={8}>
-                    <Ionicons name="menu" size={24} color={iconColor} />
+                <TouchableOpacity onPress={onOpenDrawer} style={[styles.iconBtn, { width: 36 * spacingScale, height: 36 * spacingScale }]} hitSlop={8}>
+                    <Ionicons name="menu" size={24 * iconScale} color={iconColor} />
                 </TouchableOpacity>
             )}
 
@@ -71,11 +77,11 @@ export default function AppHeader({ onOpenDrawer, showBack, title, hideActions }
                     <TouchableOpacity
                         onPress={() => router.push("/(tabs)")}
                         activeOpacity={0.7}
-                        style={styles.logoRow}
+                        style={[styles.logoRow, { gap: 8 * spacingScale }]}
                     >
                         <Image
                             source={require("@/assets/icon.png")}
-                            style={styles.logoImg}
+                            style={[styles.logoImg, { width: 26 * spacingScale, height: 26 * spacingScale }]}
                             resizeMode="contain"
                         />
                         <Text style={[styles.brandText, { color: textColor, fontSize: 16 * fontScale }]}>메멘토애니</Text>
@@ -85,27 +91,33 @@ export default function AppHeader({ onOpenDrawer, showBack, title, hideActions }
 
             {/* 우측: 포인트 + 알림 + 프로필 */}
             {!hideActions ? (
-                <View style={styles.actions}>
+                <View style={[styles.actions, { gap: 4 * spacingScale }]}>
                     {user && (
-                        <View style={[styles.pointPill, { backgroundColor: accentColor + "15" }]}>
-                            <Ionicons name="star" size={11} color={accentColor} />
+                        <View style={[styles.pointPill, {
+                            backgroundColor: accentColor + "15",
+                            paddingHorizontal: 8 * spacingScale,
+                            paddingVertical: 4 * spacingScale,
+                            gap: 3 * spacingScale,
+                            marginRight: 4 * spacingScale,
+                        }]}>
+                            <Ionicons name="star" size={11 * iconScale} color={accentColor} />
                             <Text style={[styles.pointText, { color: accentColor, fontSize: 11 * fontScale }]}>
                                 {(points ?? 0).toLocaleString()}
                             </Text>
                         </View>
                     )}
-                    <TouchableOpacity onPress={() => router.push("/notifications")} style={styles.iconBtn} hitSlop={6}>
-                        <Ionicons name="notifications-outline" size={22} color={iconColor} />
+                    <TouchableOpacity onPress={() => router.push("/notifications")} style={[styles.iconBtn, { width: 36 * spacingScale, height: 36 * spacingScale }]} hitSlop={6}>
+                        <Ionicons name="notifications-outline" size={22 * iconScale} color={iconColor} />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={toggleTheme} style={styles.iconBtn} hitSlop={6}>
+                    <TouchableOpacity onPress={toggleTheme} style={[styles.iconBtn, { width: 36 * spacingScale, height: 36 * spacingScale }]} hitSlop={6}>
                         <Ionicons
                             name={isDarkMode ? "sunny" : "moon"}
-                            size={20}
+                            size={20 * iconScale}
                             color={isDarkMode ? "#FBBF24" : iconColor}
                         />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => router.push("/profile")} hitSlop={6} style={styles.profileBtn}>
-                        <Image source={levelIcon} style={styles.avatarImg} resizeMode="cover" />
+                    <TouchableOpacity onPress={() => router.push("/profile")} hitSlop={6} style={[styles.profileBtn, { width: 36 * spacingScale, height: 36 * spacingScale }]}>
+                        <Image source={levelIcon} style={[styles.avatarImg, { width: 32 * spacingScale, height: 32 * spacingScale, borderRadius: 16 * spacingScale }]} resizeMode="cover" />
                     </TouchableOpacity>
                 </View>
             ) : (

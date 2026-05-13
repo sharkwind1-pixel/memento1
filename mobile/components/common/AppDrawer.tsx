@@ -67,7 +67,7 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
     const { user, profile, points, isPremium, isAdminUser, signOut } = useAuth();
     const { isMemorialMode, selectedPet } = usePet();
     const { isDarkMode } = useDarkMode();
-    const { isSimpleMode, toggleSimpleMode, fontScale } = useSimpleMode();
+    const { isSimpleMode, toggleSimpleMode, fontScale, spacingScale, iconScale } = useSimpleMode();
     const [communityExpanded, setCommunityExpanded] = useState(false);
     const [pointsHistoryOpen, setPointsHistoryOpen] = useState(false);
     const [pointsShopOpen, setPointsShopOpen] = useState(false);
@@ -88,6 +88,37 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
     const fadeAnim = useRef(new Animated.Value(0)).current;
 
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
+
+    // 간편모드 비례 확대 (웹 zoom: 1.15 효과 모방)
+    const sectionLabelStyle = {
+        fontSize: 11 * fontScale,
+        fontWeight: "600" as const,
+        color: COLORS.gray[400],
+        textTransform: "uppercase" as const,
+        letterSpacing: 0.5,
+        paddingHorizontal: 8 * spacingScale,
+        marginBottom: 8 * spacingScale,
+    };
+    const menuItemStyle = {
+        flexDirection: "row" as const,
+        alignItems: "center" as const,
+        gap: 12 * spacingScale,
+        paddingHorizontal: 12 * spacingScale,
+        paddingVertical: 12 * spacingScale,
+        borderRadius: 10,
+    };
+    const menuLabelStyle = {
+        flex: 1,
+        fontSize: 14 * fontScale,
+        fontWeight: "500" as const,
+    };
+    const menuIconSize = 20 * iconScale;
+    const chevronSize = 16 * iconScale;
+    const subIconSize = 16 * iconScale;
+    const subLabelStyle = {
+        fontSize: 13 * fontScale,
+        fontWeight: "500" as const,
+    };
     const accentGradient: [string, string] = isMemorialMode
         ? [COLORS.memorial[400], "#F97316"]
         : [COLORS.memento[400], COLORS.memento[500]];
@@ -159,19 +190,19 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
                             </View>
                         )}
                         <View style={{ flex: 1 }}>
-                            <Text style={styles.userName} numberOfLines={1}>{nickname}</Text>
-                            <Text style={styles.userEmail} numberOfLines={1}>
+                            <Text style={[styles.userName, { fontSize: 16 * fontScale }]} numberOfLines={1}>{nickname}</Text>
+                            <Text style={[styles.userEmail, { fontSize: 11 * fontScale }]} numberOfLines={1}>
                                 {user?.email ?? ""}
                             </Text>
-                            <View style={styles.userBadges}>
+                            <View style={[styles.userBadges, { gap: 6 * spacingScale, marginTop: 8 * spacingScale }]}>
                                 {isPremium && (
                                     <View style={styles.premiumBadge}>
-                                        <Ionicons name="star" size={10} color="#fff" />
-                                        <Text style={styles.premiumBadgeText}>프리미엄</Text>
+                                        <Ionicons name="star" size={10 * iconScale} color="#fff" />
+                                        <Text style={[styles.premiumBadgeText, { fontSize: 10 * fontScale }]}>프리미엄</Text>
                                     </View>
                                 )}
                                 <View style={styles.levelBadge}>
-                                    <Text style={styles.levelBadgeText}>Lv.{currentLevel.level}</Text>
+                                    <Text style={[styles.levelBadgeText, { fontSize: 10 * fontScale }]}>Lv.{currentLevel.level}</Text>
                                 </View>
                                 <TouchableOpacity
                                     onPress={() => setPointsHistoryOpen(true)}
@@ -179,8 +210,8 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
                                     activeOpacity={0.85}
                                     hitSlop={6}
                                 >
-                                    <Ionicons name="star" size={10} color={accentColor} />
-                                    <Text style={[styles.pointBadgeText, { color: accentColor }]}>
+                                    <Ionicons name="star" size={10 * iconScale} color={accentColor} />
+                                    <Text style={[styles.pointBadgeText, { color: accentColor, fontSize: 10 * fontScale }]}>
                                         {(points ?? 0).toLocaleString()}P
                                     </Text>
                                 </TouchableOpacity>
@@ -188,10 +219,78 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
                         </View>
                     </LinearGradient>
 
+                    {/* 크게 보기 토글 (웹 Sidebar.tsx 매칭 — 사용자 카드 바로 다음, 메뉴 위) */}
+                    {user && (
+                        <View style={[
+                            styles.simpleModeBar,
+                            {
+                                borderBottomColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100],
+                                paddingHorizontal: 16 * spacingScale,
+                                paddingVertical: 10 * spacingScale,
+                            },
+                        ]}>
+                            <TouchableOpacity
+                                onPress={toggleSimpleMode}
+                                style={[styles.simpleModeBtn, {
+                                    backgroundColor: isSimpleMode
+                                        ? (isMemorialMode ? "rgba(245, 158, 11, 0.10)" : "rgba(5, 178, 220, 0.10)")
+                                        : "transparent",
+                                    paddingHorizontal: 12 * spacingScale,
+                                    paddingVertical: 10 * spacingScale,
+                                }]}
+                                activeOpacity={0.75}
+                            >
+                                <View style={{ flexDirection: "row", alignItems: "center", gap: 12 * spacingScale }}>
+                                    <Ionicons
+                                        name={isSimpleMode ? "eye" : "eye-outline"}
+                                        size={20 * iconScale}
+                                        color={isSimpleMode ? accentColor : (isDarkMode ? COLORS.gray[300] : COLORS.gray[600])}
+                                    />
+                                    <Text style={{
+                                        color: isSimpleMode ? accentColor : (isDarkMode ? COLORS.gray[200] : COLORS.gray[800]),
+                                        fontSize: 14 * fontScale,
+                                        fontWeight: isSimpleMode ? "700" : "600",
+                                    }}>
+                                        크게 보기
+                                    </Text>
+                                </View>
+                                <View style={[
+                                    styles.toggleTrack,
+                                    {
+                                        width: 40 * spacingScale,
+                                        height: 22 * spacingScale,
+                                        borderRadius: 11 * spacingScale,
+                                    },
+                                    isSimpleMode && { backgroundColor: accentColor },
+                                ]}>
+                                    <View style={[
+                                        styles.toggleThumb,
+                                        {
+                                            width: 18 * spacingScale,
+                                            height: 18 * spacingScale,
+                                            borderRadius: 9 * spacingScale,
+                                        },
+                                        isSimpleMode && { transform: [{ translateX: 18 * spacingScale }] },
+                                    ]} />
+                                </View>
+                            </TouchableOpacity>
+                            {isSimpleMode && (
+                                <Text style={{
+                                    fontSize: 11 * fontScale,
+                                    color: isDarkMode ? COLORS.gray[500] : COLORS.gray[400],
+                                    marginTop: 4,
+                                    marginLeft: 12 * spacingScale + 12 + 20 * iconScale,
+                                }}>
+                                    글자·여백·아이콘이 함께 커집니다
+                                </Text>
+                            )}
+                        </View>
+                    )}
+
                     {/* 메뉴 */}
                     <ScrollView style={{ flex: 1 }}>
                         <View style={styles.menuSection}>
-                            <Text style={styles.sectionLabel}>메뉴</Text>
+                            <Text style={sectionLabelStyle}>메뉴</Text>
                             {MAIN_MENU.map((m) => (
                                 <View key={m.id}>
                                     <TouchableOpacity
@@ -202,11 +301,11 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
                                                 navigate(m.route);
                                             }
                                         }}
-                                        style={styles.menuItem}
+                                        style={menuItemStyle}
                                         activeOpacity={0.7}
                                     >
-                                        <Ionicons name={m.icon} size={20} color={isDarkMode ? COLORS.gray[300] : COLORS.gray[600]} />
-                                        <Text style={[styles.menuLabel, {
+                                        <Ionicons name={m.icon} size={menuIconSize} color={isDarkMode ? COLORS.gray[300] : COLORS.gray[600]} />
+                                        <Text style={[menuLabelStyle, {
                                             color: isDarkMode ? COLORS.gray[200] : COLORS.gray[800],
                                         }]}>
                                             {m.label}
@@ -214,11 +313,11 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
                                         {m.hasSubcategories ? (
                                             <Ionicons
                                                 name={communityExpanded ? "chevron-up" : "chevron-down"}
-                                                size={16}
+                                                size={chevronSize}
                                                 color={COLORS.gray[400]}
                                             />
                                         ) : (
-                                            <Ionicons name="chevron-forward" size={16} color={COLORS.gray[400]} />
+                                            <Ionicons name="chevron-forward" size={chevronSize} color={COLORS.gray[400]} />
                                         )}
                                     </TouchableOpacity>
                                     {m.hasSubcategories && communityExpanded && (
@@ -230,8 +329,8 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
                                                     style={styles.subMenuItem}
                                                     activeOpacity={0.7}
                                                 >
-                                                    <Ionicons name={s.icon} size={16} color={s.color} />
-                                                    <Text style={[styles.subMenuLabel, {
+                                                    <Ionicons name={s.icon} size={subIconSize} color={s.color} />
+                                                    <Text style={[subLabelStyle, {
                                                         color: isDarkMode ? COLORS.gray[300] : COLORS.gray[700],
                                                     }]}>
                                                         {s.label}
@@ -247,127 +346,92 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
                             {isAdminUser && (
                                 <TouchableOpacity
                                     onPress={() => navigate("/admin")}
-                                    style={[styles.menuItem, styles.adminMenuItem]}
+                                    style={[menuItemStyle, styles.adminMenuItem]}
                                     activeOpacity={0.7}
                                 >
-                                    <Ionicons name="shield-checkmark" size={20} color="#8B5CF6" />
-                                    <Text style={[styles.menuLabel, { color: "#8B5CF6", fontWeight: "700" }]}>
+                                    <Ionicons name="shield-checkmark" size={menuIconSize} color="#8B5CF6" />
+                                    <Text style={[menuLabelStyle, { color: "#8B5CF6", fontWeight: "700" }]}>
                                         관리자 모드
                                     </Text>
-                                    <Ionicons name="chevron-forward" size={16} color="#8B5CF6" />
+                                    <Ionicons name="chevron-forward" size={chevronSize} color="#8B5CF6" />
                                 </TouchableOpacity>
                             )}
                         </View>
 
                         <View style={[styles.menuSection, { marginTop: 16 }]}>
-                            <Text style={styles.sectionLabel}>포인트</Text>
+                            <Text style={sectionLabelStyle}>포인트</Text>
                             <TouchableOpacity
                                 onPress={() => {
                                     setPointsHistoryOpen(true);
                                 }}
-                                style={styles.menuItem}
+                                style={menuItemStyle}
                                 activeOpacity={0.7}
                             >
-                                <Ionicons name="receipt-outline" size={20} color={isDarkMode ? COLORS.gray[300] : COLORS.gray[600]} />
-                                <Text style={[styles.menuLabel, {
+                                <Ionicons name="receipt-outline" size={menuIconSize} color={isDarkMode ? COLORS.gray[300] : COLORS.gray[600]} />
+                                <Text style={[menuLabelStyle, {
                                     color: isDarkMode ? COLORS.gray[200] : COLORS.gray[800],
                                 }]}>포인트 내역</Text>
                                 <Text style={styles.pointHint}>{(points ?? 0).toLocaleString()}P</Text>
-                                <Ionicons name="chevron-forward" size={16} color={COLORS.gray[400]} />
+                                <Ionicons name="chevron-forward" size={chevronSize} color={COLORS.gray[400]} />
                             </TouchableOpacity>
                             <TouchableOpacity
                                 onPress={() => {
                                     setPointsShopOpen(true);
                                 }}
-                                style={styles.menuItem}
+                                style={menuItemStyle}
                                 activeOpacity={0.7}
                             >
-                                <Ionicons name="bag-handle-outline" size={20} color={COLORS.memorial[500]} />
-                                <Text style={[styles.menuLabel, {
+                                <Ionicons name="bag-handle-outline" size={menuIconSize} color={COLORS.memorial[500]} />
+                                <Text style={[menuLabelStyle, {
                                     color: isDarkMode ? COLORS.gray[200] : COLORS.gray[800],
                                 }]}>포인트 상점</Text>
-                                <Ionicons name="chevron-forward" size={16} color={COLORS.gray[400]} />
+                                <Ionicons name="chevron-forward" size={chevronSize} color={COLORS.gray[400]} />
                             </TouchableOpacity>
                         </View>
 
                         <View style={[styles.menuSection, { marginTop: 16 }]}>
-                            <Text style={styles.sectionLabel}>계정</Text>
+                            <Text style={sectionLabelStyle}>계정</Text>
                             <TouchableOpacity
                                 onPress={() => navigate("/profile")}
-                                style={styles.menuItem}
+                                style={menuItemStyle}
                                 activeOpacity={0.7}
                             >
-                                <Ionicons name="person-circle-outline" size={20} color={isDarkMode ? COLORS.gray[300] : COLORS.gray[600]} />
-                                <Text style={[styles.menuLabel, {
+                                <Ionicons name="person-circle-outline" size={menuIconSize} color={isDarkMode ? COLORS.gray[300] : COLORS.gray[600]} />
+                                <Text style={[menuLabelStyle, {
                                     color: isDarkMode ? COLORS.gray[200] : COLORS.gray[800],
                                 }]}>프로필</Text>
-                                <Ionicons name="chevron-forward" size={16} color={COLORS.gray[400]} />
+                                <Ionicons name="chevron-forward" size={chevronSize} color={COLORS.gray[400]} />
                             </TouchableOpacity>
                             <TouchableOpacity
                                 onPress={() => navigate("/subscription")}
-                                style={styles.menuItem}
+                                style={menuItemStyle}
                                 activeOpacity={0.7}
                             >
-                                <Ionicons name="card-outline" size={20} color={isDarkMode ? COLORS.gray[300] : COLORS.gray[600]} />
-                                <Text style={[styles.menuLabel, {
+                                <Ionicons name="card-outline" size={menuIconSize} color={isDarkMode ? COLORS.gray[300] : COLORS.gray[600]} />
+                                <Text style={[menuLabelStyle, {
                                     color: isDarkMode ? COLORS.gray[200] : COLORS.gray[800],
                                 }]}>구독 관리</Text>
-                                <Ionicons name="chevron-forward" size={16} color={COLORS.gray[400]} />
+                                <Ionicons name="chevron-forward" size={chevronSize} color={COLORS.gray[400]} />
                             </TouchableOpacity>
                             <TouchableOpacity
                                 onPress={() => navigate("/notifications")}
-                                style={styles.menuItem}
+                                style={menuItemStyle}
                                 activeOpacity={0.7}
                             >
-                                <Ionicons name="notifications-outline" size={20} color={isDarkMode ? COLORS.gray[300] : COLORS.gray[600]} />
-                                <Text style={[styles.menuLabel, {
+                                <Ionicons name="notifications-outline" size={menuIconSize} color={isDarkMode ? COLORS.gray[300] : COLORS.gray[600]} />
+                                <Text style={[menuLabelStyle, {
                                     color: isDarkMode ? COLORS.gray[200] : COLORS.gray[800],
                                 }]}>알림</Text>
-                                <Ionicons name="chevron-forward" size={16} color={COLORS.gray[400]} />
+                                <Ionicons name="chevron-forward" size={chevronSize} color={COLORS.gray[400]} />
                             </TouchableOpacity>
                             <TouchableOpacity
                                 onPress={handleSignOut}
-                                style={styles.menuItem}
+                                style={menuItemStyle}
                                 activeOpacity={0.7}
                             >
-                                <Ionicons name="log-out-outline" size={20} color={COLORS.red[500]} />
-                                <Text style={[styles.menuLabel, { color: COLORS.red[500], fontSize: 14 * fontScale }]}>로그아웃</Text>
+                                <Ionicons name="log-out-outline" size={menuIconSize} color={COLORS.red[500]} />
+                                <Text style={[menuLabelStyle, { color: COLORS.red[500] }]}>로그아웃</Text>
                             </TouchableOpacity>
-                        </View>
-
-                        {/* 접근성: 크게 보기 토글 (웹 Sidebar 간편모드 매칭) */}
-                        <View style={[styles.menuSection, { marginTop: 16 }]}>
-                            <Text style={styles.sectionLabel}>접근성</Text>
-                            <TouchableOpacity
-                                onPress={toggleSimpleMode}
-                                style={styles.menuItem}
-                                activeOpacity={0.7}
-                            >
-                                <Ionicons
-                                    name={isSimpleMode ? "eye" : "eye-outline"}
-                                    size={20}
-                                    color={isSimpleMode ? accentColor : (isDarkMode ? COLORS.gray[300] : COLORS.gray[600])}
-                                />
-                                <Text style={[styles.menuLabel, {
-                                    color: isDarkMode ? COLORS.gray[200] : COLORS.gray[800],
-                                    fontSize: 14 * fontScale,
-                                    fontWeight: isSimpleMode ? "700" : "500",
-                                }]}>
-                                    크게 보기
-                                </Text>
-                                <View style={[
-                                    styles.toggleTrack,
-                                    isSimpleMode && { backgroundColor: accentColor },
-                                ]}>
-                                    <View style={[
-                                        styles.toggleThumb,
-                                        isSimpleMode && styles.toggleThumbOn,
-                                    ]} />
-                                </View>
-                            </TouchableOpacity>
-                            <Text style={[styles.simpleModeHint, { color: isDarkMode ? COLORS.gray[500] : COLORS.gray[400] }]}>
-                                글자/버튼이 25% 더 커집니다
-                            </Text>
                         </View>
 
                         <View style={{ height: 24 }} />
@@ -472,6 +536,15 @@ const styles = StyleSheet.create({
         borderRadius: 10,
     },
     menuLabel: { flex: 1, fontSize: 14, fontWeight: "500" },
+    simpleModeBar: {
+        borderBottomWidth: 1,
+    },
+    simpleModeBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        borderRadius: 12,
+    },
     toggleTrack: {
         width: 40,
         height: 22,

@@ -1210,27 +1210,28 @@ function ScrollableSuggestions({
     accentColor: string;
     onSelect: (s: string) => void;
 }) {
+    const { fontScale, spacingScale } = useSimpleMode();
     return (
-        <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
+        <View style={{ paddingHorizontal: 16 * spacingScale, paddingBottom: 8 * spacingScale }}>
             <FlatList
                 data={suggestions}
                 horizontal
                 keyExtractor={(item) => item}
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ gap: 8 }}
+                contentContainerStyle={{ gap: 8 * spacingScale }}
                 renderItem={({ item }) => (
                     <TouchableOpacity
                         onPress={() => onSelect(item)}
                         style={{
-                            paddingHorizontal: 12,
-                            paddingVertical: 8,
+                            paddingHorizontal: 12 * spacingScale,
+                            paddingVertical: 8 * spacingScale,
                             borderRadius: 9999,
                             borderWidth: 1,
                             borderColor: accentColor,
                         }}
                         activeOpacity={0.8}
                     >
-                        <Text style={{ fontSize: 12, color: accentColor }}>{item}</Text>
+                        <Text style={{ fontSize: 12 * fontScale, color: accentColor }}>{item}</Text>
                     </TouchableOpacity>
                 )}
             />

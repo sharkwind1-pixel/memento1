@@ -11,6 +11,7 @@
 
 import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
 import { useDarkMode } from "@/contexts/ThemeContext";
+import { useSimpleMode } from "@/contexts/SimpleModeContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -24,6 +25,7 @@ interface Props {
 
 export default function HeroSection({ session, isMemorialMode }: Props) {
     const { isDarkMode } = useDarkMode();
+    const { fontScale, spacingScale, iconScale } = useSimpleMode();
     const router = useRouter();
 
     // 웹 매칭: 다크모드는 일상/추모 모두 gray-800 → gray-700 그라데이션
@@ -72,30 +74,43 @@ export default function HeroSection({ session, isMemorialMode }: Props) {
                 <View style={[styles.decoCircleTop, { backgroundColor: decoTopColor }]} />
                 <View style={[styles.decoCircleBottom, { backgroundColor: decoBottomColor }]} />
 
-                <View style={styles.content}>
+                <View style={[styles.content, { padding: 24 * spacingScale }]}>
                     {/* 일러스트 */}
-                    <View style={styles.illustrationWrap}>
+                    <View style={[styles.illustrationWrap, {
+                        width: 240 * spacingScale,
+                        height: 240 * spacingScale,
+                        marginBottom: 20 * spacingScale,
+                    }]}>
                         <Image source={heroImage} style={styles.illustration} resizeMode="cover" />
                     </View>
 
                     {/* 카피 */}
-                    <Text style={[styles.title, { color: titleColor }]}>
+                    <Text style={[styles.title, { color: titleColor, fontSize: 26 * fontScale, marginBottom: 10 * spacingScale }]}>
                         특별한 매일을 함께
                     </Text>
-                    <Text style={[styles.subtitle, { color: subtitleColor }]}>
+                    <Text style={[styles.subtitle, {
+                        color: subtitleColor,
+                        fontSize: 14 * fontScale,
+                        lineHeight: 22 * fontScale,
+                        marginBottom: 20 * spacingScale,
+                    }]}>
                         반려동물과의 소중한 순간을 기록하고,{"\n"}따뜻한 추억으로 간직하세요
                     </Text>
 
                     {/* CTA */}
-                    <View style={styles.ctaRow}>
+                    <View style={[styles.ctaRow, { gap: 12 * spacingScale }]}>
                         <TouchableOpacity onPress={handleCta} activeOpacity={0.88} style={styles.ctaPrimaryWrap}>
                             <LinearGradient
                                 colors={ctaGradient}
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 1, y: 0 }}
-                                style={styles.ctaPrimary}
+                                style={[styles.ctaPrimary, {
+                                    paddingHorizontal: 24 * spacingScale,
+                                    paddingVertical: 14 * spacingScale,
+                                    minWidth: 140 * spacingScale,
+                                }]}
                             >
-                                <Text style={styles.ctaPrimaryText}>
+                                <Text style={[styles.ctaPrimaryText, { fontSize: 15 * fontScale }]}>
                                     {session ? "지금 만나러 가기" : "시작하기"}
                                 </Text>
                             </LinearGradient>
@@ -104,10 +119,13 @@ export default function HeroSection({ session, isMemorialMode }: Props) {
                         <TouchableOpacity
                             onPress={() => router.push("/(tabs)/community")}
                             activeOpacity={0.7}
-                            style={styles.ctaGhost}
+                            style={[styles.ctaGhost, {
+                                paddingHorizontal: 18 * spacingScale,
+                                paddingVertical: 13 * spacingScale,
+                            }]}
                         >
-                            <Text style={[styles.ctaGhostText, { color: ghostTextColor }]}>둘러보기</Text>
-                            <Ionicons name="arrow-forward" size={16} color={ghostTextColor} style={{ marginLeft: 4 }} />
+                            <Text style={[styles.ctaGhostText, { color: ghostTextColor, fontSize: 15 * fontScale }]}>둘러보기</Text>
+                            <Ionicons name="arrow-forward" size={16 * iconScale} color={ghostTextColor} style={{ marginLeft: 4 }} />
                         </TouchableOpacity>
                     </View>
                 </View>

@@ -7,6 +7,7 @@
 
 import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
 import { useDarkMode } from "@/contexts/ThemeContext";
+import { useSimpleMode } from "@/contexts/SimpleModeContext";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Pet } from "@/types";
@@ -19,6 +20,7 @@ interface Props {
 
 export default function PetCardSection({ pet, isMemorialMode }: Props) {
     const { isDarkMode } = useDarkMode();
+    const { fontScale, spacingScale, iconScale } = useSimpleMode();
     const router = useRouter();
     const accentColor = isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500];
     const accentSoft = isMemorialMode ? COLORS.memorial[100] : COLORS.memento[100];
@@ -31,18 +33,27 @@ export default function PetCardSection({ pet, isMemorialMode }: Props) {
     if (!pet) {
         return (
             <View style={styles.container}>
-                <View style={[styles.emptyCard, { backgroundColor: cardBg }]}>
-                    <View style={[styles.emptyIcon, { backgroundColor: accentSoft }]}>
-                        <Ionicons name="paw" size={28} color={accentColor} />
+                <View style={[styles.emptyCard, { backgroundColor: cardBg, padding: SPACING.lg * spacingScale }]}>
+                    <View style={[styles.emptyIcon, {
+                        backgroundColor: accentSoft,
+                        width: 56 * spacingScale,
+                        height: 56 * spacingScale,
+                        marginBottom: SPACING.md * spacingScale,
+                    }]}>
+                        <Ionicons name="paw" size={28 * iconScale} color={accentColor} />
                     </View>
-                    <Text style={[styles.emptyTitle, { color: titleColor }]}>반려동물을 등록해보세요</Text>
-                    <Text style={[styles.emptySubtitle, { color: subtitleColor }]}>소중한 순간들을 함께 기록하고 추억해요</Text>
+                    <Text style={[styles.emptyTitle, { color: titleColor, fontSize: 17 * fontScale }]}>반려동물을 등록해보세요</Text>
+                    <Text style={[styles.emptySubtitle, { color: subtitleColor, fontSize: 13 * fontScale }]}>소중한 순간들을 함께 기록하고 추억해요</Text>
                     <TouchableOpacity
                         onPress={() => router.push("/pet/new")}
-                        style={[styles.emptyCta, { backgroundColor: accentColor }]}
+                        style={[styles.emptyCta, {
+                            backgroundColor: accentColor,
+                            paddingHorizontal: SPACING.xl * spacingScale,
+                            paddingVertical: 12 * spacingScale,
+                        }]}
                         activeOpacity={0.85}
                     >
-                        <Text style={styles.emptyCtaText}>등록하기</Text>
+                        <Text style={[styles.emptyCtaText, { fontSize: 14 * fontScale }]}>등록하기</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -59,45 +70,53 @@ export default function PetCardSection({ pet, isMemorialMode }: Props) {
                 activeOpacity={0.92}
                 style={[
                     styles.card,
-                    { backgroundColor: cardBg },
+                    { backgroundColor: cardBg, padding: SPACING.md * spacingScale, gap: SPACING.md * spacingScale },
                     isMemorial && { backgroundColor: isDarkMode ? COLORS.gray[900] : COLORS.memorial[50] },
                 ]}
             >
                 <View style={styles.cardLeft}>
                     {pet.profileImage ? (
-                        <Image source={{ uri: pet.profileImage }} style={[styles.profileImage, { backgroundColor: placeholderBg }]} />
+                        <Image source={{ uri: pet.profileImage }} style={[styles.profileImage, {
+                            backgroundColor: placeholderBg,
+                            width: 64 * spacingScale,
+                            height: 64 * spacingScale,
+                        }]} />
                     ) : (
-                        <View style={[styles.profileImage, styles.profilePlaceholder, { backgroundColor: placeholderBg }]}>
-                            <Ionicons name="paw" size={28} color={COLORS.gray[300]} />
+                        <View style={[styles.profileImage, styles.profilePlaceholder, {
+                            backgroundColor: placeholderBg,
+                            width: 64 * spacingScale,
+                            height: 64 * spacingScale,
+                        }]}>
+                            <Ionicons name="paw" size={28 * iconScale} color={COLORS.gray[300]} />
                         </View>
                     )}
                 </View>
                 <View style={styles.cardRight}>
                     <View style={styles.nameRow}>
-                        <Text style={[styles.name, { color: titleColor }]}>{pet.name}</Text>
+                        <Text style={[styles.name, { color: titleColor, fontSize: 17 * fontScale }]}>{pet.name}</Text>
                         {isMemorial && (
                             <View style={styles.memorialBadge}>
-                                <Text style={styles.memorialBadgeText}>추모</Text>
+                                <Text style={[styles.memorialBadgeText, { fontSize: 10 * fontScale }]}>추모</Text>
                             </View>
                         )}
                     </View>
-                    <Text style={[styles.meta, { color: subtitleColor }]}>
+                    <Text style={[styles.meta, { color: subtitleColor, fontSize: 12 * fontScale }]}>
                         {pet.type}{pet.breed ? ` · ${pet.breed}` : ""}{pet.gender ? ` · ${pet.gender}` : ""}
                     </Text>
                     <View style={styles.statsRow}>
                         <View style={styles.statItem}>
-                            <Ionicons name="image-outline" size={14} color={subtitleColor} />
-                            <Text style={[styles.statText, { color: subtitleColor }]}>{photoCount}장</Text>
+                            <Ionicons name="image-outline" size={14 * iconScale} color={subtitleColor} />
+                            <Text style={[styles.statText, { color: subtitleColor, fontSize: 12 * fontScale }]}>{photoCount}장</Text>
                         </View>
                         {pet.togetherPeriod && (
                             <View style={styles.statItem}>
-                                <Ionicons name="heart-outline" size={14} color={subtitleColor} />
-                                <Text style={[styles.statText, { color: subtitleColor }]}>{pet.togetherPeriod}</Text>
+                                <Ionicons name="heart-outline" size={14 * iconScale} color={subtitleColor} />
+                                <Text style={[styles.statText, { color: subtitleColor, fontSize: 12 * fontScale }]}>{pet.togetherPeriod}</Text>
                             </View>
                         )}
                     </View>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={COLORS.gray[400]} />
+                <Ionicons name="chevron-forward" size={20 * iconScale} color={COLORS.gray[400]} />
             </TouchableOpacity>
         </View>
     );

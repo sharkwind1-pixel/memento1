@@ -10,6 +10,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useDarkMode } from "@/contexts/ThemeContext";
+import { useSimpleMode } from "@/contexts/SimpleModeContext";
 import {
     View, Text, TouchableOpacity, StyleSheet,
     ActivityIndicator, Animated, Image,
@@ -55,6 +56,7 @@ interface Props {
 
 export default function CommunityPreview({ session, isMemorialMode }: Props) {
     const { isDarkMode } = useDarkMode();
+    const { fontScale, spacingScale, iconScale } = useSimpleMode();
     const router = useRouter();
     const [posts, setPosts] = useState<CommunityPostPreview[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -149,13 +151,16 @@ export default function CommunityPreview({ session, isMemorialMode }: Props) {
         <View style={styles.section}>
             {/* 헤더 */}
             <View style={styles.header}>
-                <View style={styles.headerLeft}>
-                    <LinearGradient colors={headerGradient} style={styles.headerIcon}>
-                        <Ionicons name="trending-up" size={18} color="#fff" />
+                <View style={[styles.headerLeft, { gap: 12 * spacingScale }]}>
+                    <LinearGradient colors={headerGradient} style={[styles.headerIcon, {
+                        width: 40 * spacingScale,
+                        height: 40 * spacingScale,
+                    }]}>
+                        <Ionicons name="trending-up" size={18 * iconScale} color="#fff" />
                     </LinearGradient>
                     <View>
-                        <Text style={[styles.title, isMemorialMode && { color: COLORS.white }]}>인기 있는 이야기</Text>
-                        <Text style={styles.subtitle}>커뮤니티에서 가장 사랑받는 글들</Text>
+                        <Text style={[styles.title, { fontSize: 16 * fontScale }, isMemorialMode && { color: COLORS.white }]}>인기 있는 이야기</Text>
+                        <Text style={[styles.subtitle, { fontSize: 12 * fontScale }]}>커뮤니티에서 가장 사랑받는 글들</Text>
                     </View>
                 </View>
                 <TouchableOpacity
@@ -163,8 +168,8 @@ export default function CommunityPreview({ session, isMemorialMode }: Props) {
                     style={styles.moreBtn}
                     activeOpacity={0.7}
                 >
-                    <Text style={[styles.moreText, { color: accentColor }]}>더 많은 이야기</Text>
-                    <Ionicons name="arrow-forward" size={14} color={accentColor} />
+                    <Text style={[styles.moreText, { color: accentColor, fontSize: 13 * fontScale }]}>더 많은 이야기</Text>
+                    <Ionicons name="arrow-forward" size={14 * iconScale} color={accentColor} />
                 </TouchableOpacity>
             </View>
 
@@ -179,13 +184,16 @@ export default function CommunityPreview({ session, isMemorialMode }: Props) {
                     <Text style={styles.emptyHint}>커뮤니티에서 첫 번째 이야기를 작성해보세요</Text>
                 </View>
             ) : (
-                <View style={styles.list}>
+                <View style={[styles.list, { gap: 8 * spacingScale }]}>
                     {posts.map((post, idx) => (
                         <CommunityCard
                             key={post.id || `idx-${idx}`}
                             post={post}
                             gradient={gradients[idx % gradients.length]}
                             isMemorialMode={isMemorialMode}
+                            fontScale={fontScale}
+                            spacingScale={spacingScale}
+                            iconScale={iconScale}
                             onPress={() => post.id && router.push(`/post/${post.id}`)}
                             onToggleLike={() => post.id && toggleLike(post.id)}
                         />
@@ -200,11 +208,14 @@ interface CardProps {
     post: CommunityPostPreview;
     gradient: [string, string];
     isMemorialMode: boolean;
+    fontScale: number;
+    spacingScale: number;
+    iconScale: number;
     onPress: () => void;
     onToggleLike: () => void;
 }
 
-function CommunityCard({ post, gradient, onPress, onToggleLike }: CardProps) {
+function CommunityCard({ post, gradient, fontScale, spacingScale, iconScale, onPress, onToggleLike }: CardProps) {
     const { isDarkMode } = useDarkMode();
     const heartScale = useRef(new Animated.Value(1)).current;
 
@@ -220,13 +231,16 @@ function CommunityCard({ post, gradient, onPress, onToggleLike }: CardProps) {
     const hasImage = !!post.imageUrl;
 
     return (
-        <TouchableOpacity onPress={onPress} style={styles.card} activeOpacity={0.85}>
+        <TouchableOpacity onPress={onPress} style={[styles.card, {
+            gap: 16 * spacingScale,
+            padding: 12 * spacingScale,
+        }]} activeOpacity={0.85}>
             {hasImage ? (
-                <View style={styles.thumb}>
+                <View style={[styles.thumb, { width: 64 * spacingScale, height: 64 * spacingScale }]}>
                     <Image source={{ uri: post.imageUrl }} style={styles.thumbImg} />
                     {post.badge ? (
                         <View style={styles.badge}>
-                            <Text style={styles.badgeText} numberOfLines={1}>{post.badge}</Text>
+                            <Text style={[styles.badgeText, { fontSize: 9 * fontScale }]} numberOfLines={1}>{post.badge}</Text>
                         </View>
                     ) : null}
                 </View>
@@ -241,25 +255,25 @@ function CommunityCard({ post, gradient, onPress, onToggleLike }: CardProps) {
                         end={{ x: 1, y: 0 }}
                         style={styles.inlineBadge}
                     >
-                        <Text style={styles.inlineBadgeText} numberOfLines={1}>{post.badge}</Text>
+                        <Text style={[styles.inlineBadgeText, { fontSize: 10 * fontScale }]} numberOfLines={1}>{post.badge}</Text>
                     </LinearGradient>
                 ) : null}
-                <Text style={styles.cardTitle} numberOfLines={2}>{post.title}</Text>
-                <View style={styles.metaRow}>
-                    <Text style={styles.author} numberOfLines={1}>{post.author}</Text>
+                <Text style={[styles.cardTitle, { fontSize: 14 * fontScale, lineHeight: 20 * fontScale }]} numberOfLines={2}>{post.title}</Text>
+                <View style={[styles.metaRow, { gap: 8 * spacingScale }]}>
+                    <Text style={[styles.author, { fontSize: 12 * fontScale }]} numberOfLines={1}>{post.author}</Text>
                     <TouchableOpacity onPress={handleLike} hitSlop={8} activeOpacity={0.7} style={styles.metaItem}>
                         <Animated.View style={{ transform: [{ scale: heartScale }] }}>
                             <Ionicons
                                 name={post.isLiked ? "heart" : "heart-outline"}
-                                size={13}
+                                size={13 * iconScale}
                                 color={post.isLiked ? "#EF4444" : COLORS.gray[400]}
                             />
                         </Animated.View>
-                        <Text style={[styles.statText, post.isLiked && { color: "#EF4444" }]}>{post.likes}</Text>
+                        <Text style={[styles.statText, { fontSize: 11 * fontScale }, post.isLiked && { color: "#EF4444" }]}>{post.likes}</Text>
                     </TouchableOpacity>
                     <View style={styles.metaItem}>
-                        <Ionicons name="chatbubble-outline" size={12} color={COLORS.gray[400]} />
-                        <Text style={styles.statText}>{post.comments}</Text>
+                        <Ionicons name="chatbubble-outline" size={12 * iconScale} color={COLORS.gray[400]} />
+                        <Text style={[styles.statText, { fontSize: 11 * fontScale }]}>{post.comments}</Text>
                     </View>
                 </View>
             </View>

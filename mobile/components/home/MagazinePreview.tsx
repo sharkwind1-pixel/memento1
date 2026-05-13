@@ -4,6 +4,7 @@
 
 import { useEffect, useState } from "react";
 import { useDarkMode } from "@/contexts/ThemeContext";
+import { useSimpleMode } from "@/contexts/SimpleModeContext";
 import { View, Text, TouchableOpacity, Image, StyleSheet, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -27,6 +28,7 @@ interface Props {
 
 export default function MagazinePreview({ session, isMemorialMode }: Props) {
     const { isDarkMode } = useDarkMode();
+    const { fontScale, spacingScale, iconScale } = useSimpleMode();
     const router = useRouter();
     const [articles, setArticles] = useState<ArticlePreview[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -86,26 +88,43 @@ export default function MagazinePreview({ session, isMemorialMode }: Props) {
                     <Text style={[styles.emptyText, { color: emptyTextColor }]}>아직 매거진이 없어요</Text>
                 </View>
             ) : (
-                <View style={styles.list}>
+                <View style={[styles.list, { gap: SPACING.sm * spacingScale }]}>
                     {articles.map((article, idx) => (
                         <TouchableOpacity
                             key={article.id || `idx-${idx}`}
                             onPress={() => router.push(`/magazine/${article.id}`)}
-                            style={[styles.card, { backgroundColor: cardBg, borderColor: cardBorder }]}
+                            style={[styles.card, {
+                                backgroundColor: cardBg,
+                                borderColor: cardBorder,
+                                padding: SPACING.sm * spacingScale,
+                                gap: SPACING.md * spacingScale,
+                            }]}
                             activeOpacity={0.85}
                         >
                             {article.image_url ? (
-                                <Image source={{ uri: article.image_url }} style={[styles.thumb, { backgroundColor: thumbBg }]} />
+                                <Image source={{ uri: article.image_url }} style={[styles.thumb, {
+                                    backgroundColor: thumbBg,
+                                    width: 56 * spacingScale,
+                                    height: 56 * spacingScale,
+                                }]} />
                             ) : (
-                                <View style={[styles.thumb, styles.thumbFallback, { backgroundColor: thumbBg }]}>
-                                    <Ionicons name="newspaper" size={22} color={COLORS.gray[300]} />
+                                <View style={[styles.thumb, styles.thumbFallback, {
+                                    backgroundColor: thumbBg,
+                                    width: 56 * spacingScale,
+                                    height: 56 * spacingScale,
+                                }]}>
+                                    <Ionicons name="newspaper" size={22 * iconScale} color={COLORS.gray[300]} />
                                 </View>
                             )}
                             <View style={styles.cardBody}>
-                                <Text style={[styles.title, { color: titleColor }]} numberOfLines={2}>{article.title}</Text>
+                                <Text style={[styles.title, {
+                                    color: titleColor,
+                                    fontSize: 14 * fontScale,
+                                    lineHeight: 20 * fontScale,
+                                }]} numberOfLines={2}>{article.title}</Text>
                                 {article.category && (
                                     <View style={[styles.categoryBadge, { backgroundColor: categoryBadgeBg }]}>
-                                        <Text style={[styles.categoryText, { color: categoryTextColor }]}>{article.category}</Text>
+                                        <Text style={[styles.categoryText, { color: categoryTextColor, fontSize: 10 * fontScale }]}>{article.category}</Text>
                                     </View>
                                 )}
                             </View>
