@@ -24,8 +24,13 @@ interface LauncherItem {
     description: string;
     icon: React.ComponentProps<typeof Ionicons>["name"];
     route: string;
+    /** 라이트모드 아이콘 색 (웹 text-*-600) */
     iconColor: string;
+    /** 다크모드 아이콘 색 (웹 dark:text-*-400 — 밝은 톤) */
+    iconColorDark: string;
+    /** 라이트모드 카드 배경 (웹 bg-*-200/50) */
     bgColor: string;
+    /** 다크모드 카드 배경 (웹 dark:bg-*-900/20 — alpha 18% 톤) */
     bgColorDark: string;
 }
 
@@ -36,8 +41,9 @@ const LAUNCHER_ITEMS: LauncherItem[] = [
         description: "사진, 일기, 기록",
         icon: "camera",
         route: "/(tabs)/record",
-        iconColor: COLORS.memento[600],
-        bgColor: COLORS.memento[200],
+        iconColor: COLORS.memento[600],   // #0891B2
+        iconColorDark: COLORS.memento[400], // #38BDF8
+        bgColor: COLORS.memento[200],     // #BAE6FD
         bgColorDark: "rgba(8,145,178,0.18)",
     },
     {
@@ -46,8 +52,9 @@ const LAUNCHER_ITEMS: LauncherItem[] = [
         description: "AI 펫톡 상담",
         icon: "chatbubble-ellipses",
         route: "/(tabs)/ai-chat",
-        iconColor: "#059669",
-        bgColor: "#ECFDF5",
+        iconColor: "#059669",              // emerald-600
+        iconColorDark: "#34D399",          // emerald-400
+        bgColor: "#ECFDF5",                // emerald-50
         bgColorDark: "rgba(5,150,105,0.18)",
     },
     {
@@ -57,6 +64,7 @@ const LAUNCHER_ITEMS: LauncherItem[] = [
         icon: "people",
         route: "/(tabs)/community",
         iconColor: COLORS.memento[600],
+        iconColorDark: COLORS.memento[400],
         bgColor: COLORS.memento[200],
         bgColorDark: "rgba(8,145,178,0.18)",
     },
@@ -66,8 +74,9 @@ const LAUNCHER_ITEMS: LauncherItem[] = [
         description: "반려동물 정보",
         icon: "book",
         route: "/(tabs)/magazine",
-        iconColor: "#9333EA",
-        bgColor: "#FAF5FF",
+        iconColor: "#9333EA",              // purple-600
+        iconColorDark: "#C084FC",          // purple-400
+        bgColor: "#FAF5FF",                // purple-50
         bgColorDark: "rgba(147,51,234,0.18)",
     },
     {
@@ -77,6 +86,7 @@ const LAUNCHER_ITEMS: LauncherItem[] = [
         icon: "home",
         route: "/(tabs)/minihompy",
         iconColor: COLORS.memento[600],
+        iconColorDark: COLORS.memento[400],
         bgColor: COLORS.memento[50],
         bgColorDark: "rgba(8,145,178,0.10)",
     },
@@ -86,8 +96,9 @@ const LAUNCHER_ITEMS: LauncherItem[] = [
         description: "유기동물 입양",
         icon: "heart",
         route: "/adoption",
-        iconColor: "#E11D48",
-        bgColor: "#FFF1F2",
+        iconColor: "#E11D48",              // rose-600
+        iconColorDark: "#FB7185",          // rose-400
+        bgColor: "#FFF1F2",                // rose-50
         bgColorDark: "rgba(225,29,72,0.18)",
     },
 ];
@@ -131,11 +142,11 @@ export default function SimpleHomeLauncher() {
     return (
         <LinearGradient colors={screenBg} style={styles.container}>
             <ScrollView contentContainerStyle={[styles.scrollContent, { padding: 16 * spacingScale }]} showsVerticalScrollIndicator={false}>
-                {/* 히어로 배너 */}
+                {/* 히어로 배너 — 웹 매칭: 일상은 to-br(대각), 추모는 to-b(수직) */}
                 <LinearGradient
                     colors={heroGradient}
                     start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
+                    end={isMemorialMode ? { x: 0, y: 1 } : { x: 1, y: 1 }}
                     style={[styles.heroCard, { marginBottom: 24 * spacingScale }]}
                 >
                     <View style={[styles.heroInner, {
@@ -190,8 +201,9 @@ export default function SimpleHomeLauncher() {
                                 onPress={() => handleCardPress(item)}
                                 style={[styles.card, {
                                     flex: 1,
-                                    backgroundColor: isDarkMode ? COLORS.gray[800] : item.bgColor,
-                                    borderColor: isDarkMode ? COLORS.gray[700] : "rgba(255,255,255,0.7)",
+                                    // 웹 매칭: 다크모드는 카드별 색의 900/20 톤 (단색 gray 아님)
+                                    backgroundColor: isDarkMode ? item.bgColorDark : item.bgColor,
+                                    borderColor: isDarkMode ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.6)",
                                     padding: 20 * spacingScale,
                                     minHeight: 140 * spacingScale,
                                     gap: 10 * spacingScale,
@@ -201,9 +213,9 @@ export default function SimpleHomeLauncher() {
                                 <View style={[styles.cardIconWrap, {
                                     width: 56 * spacingScale,
                                     height: 56 * spacingScale,
-                                    backgroundColor: isDarkMode ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.7)",
+                                    backgroundColor: isDarkMode ? "rgba(31,41,55,0.6)" : "rgba(255,255,255,0.7)",
                                 }]}>
-                                    <Ionicons name={item.icon} size={32 * iconScale} color={item.iconColor} />
+                                    <Ionicons name={item.icon} size={32 * iconScale} color={isDarkMode ? item.iconColorDark : item.iconColor} />
                                 </View>
                                 <View style={{ alignItems: "center" }}>
                                     <Text style={[styles.cardLabel, {
