@@ -174,46 +174,56 @@ export default function SimpleHomeLauncher() {
                     <QuestCard />
                 </View>
 
-                {/* 큰 카드 2x3 그리드 */}
-                <View style={[styles.grid, { gap: 12 * spacingScale }]}>
-                    {LAUNCHER_ITEMS.map((item) => (
-                        <TouchableOpacity
-                            key={item.id}
-                            onPress={() => handleCardPress(item)}
-                            style={[styles.card, {
-                                backgroundColor: isDarkMode ? COLORS.gray[800] : item.bgColor,
-                                borderColor: isDarkMode ? COLORS.gray[700] : "rgba(255,255,255,0.7)",
-                                padding: 20 * spacingScale,
-                                minHeight: 140 * spacingScale,
-                                gap: 10 * spacingScale,
-                            }]}
-                            activeOpacity={0.85}
-                        >
-                            <View style={[styles.cardIconWrap, {
-                                width: 56 * spacingScale,
-                                height: 56 * spacingScale,
-                                backgroundColor: isDarkMode ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.7)",
-                            }]}>
-                                <Ionicons name={item.icon} size={32 * iconScale} color={item.iconColor} />
-                            </View>
-                            <View style={{ alignItems: "center" }}>
-                                <Text style={[styles.cardLabel, {
-                                    color: cardLabelColor,
-                                    fontSize: 17 * fontScale,
-                                }]} numberOfLines={1}>
-                                    {item.label}
-                                </Text>
-                                <Text style={[styles.cardDesc, {
-                                    color: cardDescColor,
-                                    fontSize: 12 * fontScale,
-                                    marginTop: 2 * spacingScale,
-                                }]} numberOfLines={1}>
-                                    {item.description}
-                                </Text>
-                            </View>
-                        </TouchableOpacity>
-                    ))}
-                </View>
+                {/* 큰 카드 2x3 그리드 — 2개씩 row 분할 (RN flexWrap+퍼센트 폭 호환 이슈 회피) */}
+                {[0, 2, 4].map((startIdx) => (
+                    <View
+                        key={`row-${startIdx}`}
+                        style={{
+                            flexDirection: "row",
+                            gap: 12 * spacingScale,
+                            marginBottom: 12 * spacingScale,
+                        }}
+                    >
+                        {LAUNCHER_ITEMS.slice(startIdx, startIdx + 2).map((item) => (
+                            <TouchableOpacity
+                                key={item.id}
+                                onPress={() => handleCardPress(item)}
+                                style={[styles.card, {
+                                    flex: 1,
+                                    backgroundColor: isDarkMode ? COLORS.gray[800] : item.bgColor,
+                                    borderColor: isDarkMode ? COLORS.gray[700] : "rgba(255,255,255,0.7)",
+                                    padding: 20 * spacingScale,
+                                    minHeight: 140 * spacingScale,
+                                    gap: 10 * spacingScale,
+                                }]}
+                                activeOpacity={0.85}
+                            >
+                                <View style={[styles.cardIconWrap, {
+                                    width: 56 * spacingScale,
+                                    height: 56 * spacingScale,
+                                    backgroundColor: isDarkMode ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.7)",
+                                }]}>
+                                    <Ionicons name={item.icon} size={32 * iconScale} color={item.iconColor} />
+                                </View>
+                                <View style={{ alignItems: "center" }}>
+                                    <Text style={[styles.cardLabel, {
+                                        color: cardLabelColor,
+                                        fontSize: 17 * fontScale,
+                                    }]} numberOfLines={1}>
+                                        {item.label}
+                                    </Text>
+                                    <Text style={[styles.cardDesc, {
+                                        color: cardDescColor,
+                                        fontSize: 12 * fontScale,
+                                        marginTop: 2 * spacingScale,
+                                    }]} numberOfLines={1}>
+                                        {item.description}
+                                    </Text>
+                                </View>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                ))}
 
                 {/* 일반모드 전환 버튼 (웹 매칭) */}
                 <TouchableOpacity
@@ -252,12 +262,7 @@ const styles = StyleSheet.create({
     },
     heroTitle: { fontWeight: "800", letterSpacing: -0.3 },
     heroSub: { fontWeight: "500" },
-    grid: {
-        flexDirection: "row",
-        flexWrap: "wrap",
-    },
     card: {
-        width: "48%",
         borderRadius: 20,
         alignItems: "center",
         justifyContent: "center",
