@@ -26,9 +26,11 @@ import {
     BookOpen,
     Clock,
     Search,
+    FileText,
 } from "lucide-react";
 import KakaoShareButton from "@/components/common/KakaoShareButton";
 import { TIMELINE_CATEGORY_OPTIONS, type TimelineCategory } from "@/types";
+import TimelineExportModal from "./TimelineExportModal";
 
 interface TimelineSectionProps {
     petId: string;
@@ -42,6 +44,7 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
     const currentPet = pets.find((p) => p.id === petId);
     const petPhotos = currentPet?.photos ?? [];
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isExportOpen, setIsExportOpen] = useState(false);
     const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
     const [formData, setFormData] = useState({
         date: new Date().toISOString().split("T")[0],
@@ -189,14 +192,28 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                             {timeline.length}개
                         </span>
                     </CardTitle>
-                    <Button
-                        size="sm"
-                        onClick={openAddModal}
-                        className="bg-memento-500 hover:bg-memento-600"
-                    >
-                        <Plus className="w-4 h-4 mr-1" />
-                        일기 쓰기
-                    </Button>
+                    <div className="flex gap-1.5">
+                        {timeline.length > 0 && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setIsExportOpen(true)}
+                                className="border-memento-500 text-memento-600 hover:bg-memento-50"
+                                title="수의사 상담용으로 내보내기"
+                            >
+                                <FileText className="w-4 h-4 mr-1" />
+                                내보내기
+                            </Button>
+                        )}
+                        <Button
+                            size="sm"
+                            onClick={openAddModal}
+                            className="bg-memento-500 hover:bg-memento-600"
+                        >
+                            <Plus className="w-4 h-4 mr-1" />
+                            일기 쓰기
+                        </Button>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     {/* 검색 + 카테고리 필터 (블로그 글이 약속한 "검색 용이") */}
@@ -500,6 +517,16 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                     </div>
                 </div>
             )}
+
+            {/* 수의사 상담용 내보내기 모달 */}
+            <TimelineExportModal
+                isOpen={isExportOpen}
+                onClose={() => setIsExportOpen(false)}
+                petName={petName}
+                petBreed={currentPet?.breed}
+                petAge={currentPet?.birthday ? `${currentPet.birthday} 출생` : undefined}
+                timeline={filteredTimeline}
+            />
         </>
     );
 }

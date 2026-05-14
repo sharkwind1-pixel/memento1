@@ -10,7 +10,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity,
     Image, FlatList, RefreshControl, ActivityIndicator,
-    StyleSheet, TextInput,
+    StyleSheet, TextInput, Share,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -477,6 +477,54 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
                                     {filteredEntries.length}개{moodFilter !== "all" ? ` (${entries.length}개 중)` : ""}
                                 </Text>
                             </View>
+                            {/* 수의사 상담용 공유 (블로그 글이 약속한 "수의사용 정확한 시기/빈도 데이터") */}
+                            {entries.length > 0 && (
+                                <TouchableOpacity
+                                    onPress={async () => {
+                                        const lines: string[] = [];
+                                        lines.push(`${petName}의 건강·생활 기록`);
+                                        lines.push(`내보낸 시각: ${new Date().toLocaleDateString("ko-KR")}`);
+                                        lines.push(`총 ${filteredEntries.length}건`);
+                                        // 카테고리별 빈도
+                                        const catMap = new Map<string, number>();
+                                        filteredEntries.forEach((e) => {
+                                            const k = e.category || "분류 없음";
+                                            catMap.set(k, (catMap.get(k) || 0) + 1);
+                                        });
+                                        if (catMap.size > 0) {
+                                            lines.push("");
+                                            lines.push("[카테고리별 빈도]");
+                                            Array.from(catMap.entries())
+                                                .sort((a, b) => b[1] - a[1])
+                                                .forEach(([k, v]) => lines.push(`  ${k}: ${v}건`));
+                                        }
+                                        lines.push("");
+                                        lines.push("[일기 목록]");
+                                        filteredEntries.forEach((e) => {
+                                            lines.push(`\n────────────────`);
+                                            lines.push(`${e.date}${e.mood ? ` · ${e.mood}` : ""}${e.category ? ` · ${e.category}` : ""}`);
+                                            lines.push(`제목: ${e.title}`);
+                                            if (e.content) lines.push(`내용: ${e.content}`);
+                                        });
+                                        try {
+                                            await Share.share({
+                                                title: `${petName}의 기록`,
+                                                message: lines.join("\n"),
+                                            });
+                                        } catch { /* 사용자 취소 */ }
+                                    }}
+                                    style={[styles.addEntryBtn, {
+                                        backgroundColor: "transparent",
+                                        borderWidth: 1,
+                                        borderColor: accentColor,
+                                        marginRight: 6,
+                                    }]}
+                                    activeOpacity={0.85}
+                                >
+                                    <Ionicons name="share-outline" size={14} color={accentColor} />
+                                    <Text style={[styles.addEntryText, { color: accentColor }]}>공유</Text>
+                                </TouchableOpacity>
+                            )}
                             <TouchableOpacity
                                 onPress={openAdd}
                                 style={[styles.addEntryBtn, { backgroundColor: accentColor }]}
