@@ -239,6 +239,7 @@ function CommunityCard({ post, gradient, fontScale, spacingScale, iconScale, onP
         <TouchableOpacity onPress={onPress} style={[styles.card, {
             gap: 16 * spacingScale,
             padding: 12 * spacingScale,
+            backgroundColor: isDarkMode ? COLORS.gray[900] : "rgba(255,255,255,0.7)",
         }]} activeOpacity={0.85}>
             {hasImage ? (
                 <View style={[styles.thumb, { width: 64 * spacingScale, height: 64 * spacingScale }]}>
@@ -263,7 +264,11 @@ function CommunityCard({ post, gradient, fontScale, spacingScale, iconScale, onP
                         <Text style={[styles.inlineBadgeText, { fontSize: 10 * fontScale }]} numberOfLines={1}>{post.badge}</Text>
                     </LinearGradient>
                 ) : null}
-                <Text style={[styles.cardTitle, { fontSize: 14 * fontScale, lineHeight: 20 * fontScale }]} numberOfLines={2}>{post.title}</Text>
+                <Text style={[styles.cardTitle, {
+                    fontSize: 14 * fontScale,
+                    lineHeight: 20 * fontScale,
+                    color: isDarkMode ? COLORS.white : COLORS.gray[800],
+                }]} numberOfLines={2}>{post.title}</Text>
                 <View style={[styles.metaRow, { gap: 8 * spacingScale }]}>
                     <Text style={[styles.author, { fontSize: 12 * fontScale }]} numberOfLines={1}>{post.author}</Text>
                     <TouchableOpacity onPress={handleLike} hitSlop={8} activeOpacity={0.7} style={styles.metaItem}>
