@@ -22,6 +22,7 @@ import {
     fetchSubsForUsers,
     PAGE_SIZE,
 } from "@/lib/cron-utils";
+import { sendPushToUser } from "@/lib/expo-push";
 
 interface ReminderWithPet {
     id: string;
@@ -125,22 +126,39 @@ export async function GET(request: NextRequest) {
         // 푸시 발송 배치 구성
         const pushItems: { sub: { endpoint: string; p256dh: string; auth: string }; payload: { title: string; body: string; url: string } }[] = [];
 
+        // 모바일 expo push 발송 promise들 (web push와 병렬)
+        const expoPromises: Promise<boolean>[] = [];
+
         for (const reminder of matched) {
             const userId = reminder.pets.user_id;
             const petName = reminder.pets.name;
             const subs = userSubsMap.get(userId);
-            if (!subs) continue;
 
-            for (const sub of subs) {
-                pushItems.push({
-                    sub,
-                    payload: {
-                        title: `${petName} 케어 알림`,
-                        body: reminder.title,
-                        url: "/?tab=record",
-                    },
-                });
+            // 1) 웹 푸시 (VAPID) — 구독한 브라우저로
+            if (subs) {
+                for (const sub of subs) {
+                    pushItems.push({
+                        sub,
+                        payload: {
+                            title: `${petName} 케어 알림`,
+                            body: reminder.title,
+                            url: "/?tab=record",
+                        },
+                    });
+                }
             }
+
+            // 2) 모바일 Expo push (네이티브 앱) — profiles.expo_push_token 보유 유저
+            // sendPushToUser가 토큰 없는 유저는 silent return false (정상 케이스)
+            // DeviceNotRegistered 자동 정리도 포함
+            expoPromises.push(
+                sendPushToUser(
+                    userId,
+                    `${petName} 케어 알림`,
+                    reminder.title,
+                    { type: "reminder", reminderId: reminder.id, link: "/(tabs)/record" },
+                ),
+            );
 
             triggeredIds.push(reminder.id);
             if (reminder.schedule_type === "once") {
@@ -148,11 +166,16 @@ export async function GET(request: NextRequest) {
             }
         }
 
-        // 배치 발송
-        const result = await sendPushBatch(pushItems);
-        totalSent += result.sent;
-        totalFailed += result.failed;
-        allExpiredEndpoints.push(...result.expiredEndpoints);
+        // 웹 + 모바일 동시 발송
+        const [webResult, expoResults] = await Promise.all([
+            sendPushBatch(pushItems),
+            Promise.all(expoPromises),
+        ]);
+        const expoSent = expoResults.filter(Boolean).length;
+        const expoFailed = expoResults.length - expoSent;
+        totalSent += webResult.sent + expoSent;
+        totalFailed += webResult.failed + expoFailed;
+        allExpiredEndpoints.push(...webResult.expiredEndpoints);
     }
 
     // last_triggered 업데이트 (200개씩 분할)
