@@ -208,6 +208,8 @@ export default function RecordScreen() {
                             accentColor={accentColor}
                             refreshing={refreshing}
                             onRefresh={onRefresh}
+                            // 일기 모달의 사진 첨부 UI에서 펫의 기존 사진 중 선택
+                            petPhotos={(selectedPet.photos ?? []).map((p) => ({ id: p.id, url: p.url }))}
                         />
                     )}
                     {activeTab === "gallery" && (
@@ -250,13 +252,14 @@ export default function RecordScreen() {
 // 타임라인 탭 — TimelineEntry는 @/types에서 import (CLAUDE.md 컨벤션)
 // ============================================
 
-function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, onRefresh }: {
+function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, onRefresh, petPhotos }: {
     petId: string;
     petName: string;
     isMemorialMode: boolean;
     accentColor: string;
     refreshing: boolean;
     onRefresh: () => void;
+    petPhotos: { id: string; url: string }[];
 }) {
     const { isDarkMode } = useDarkMode();
     const { user, session } = useAuth();
@@ -331,6 +334,7 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
             content: entry.content || "",
             mood: (entry.mood as TimelineMood) || "normal",
             category: entry.category as import("@/components/record/TimelineWriteModal").TimelineCategory | undefined,
+            mediaIds: entry.mediaIds,
         });
         setModalOpen(true);
     }
@@ -351,6 +355,7 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
                         content: draft.content || null,
                         mood: draft.mood,
                         category: draft.category || null,
+                        media_ids: draft.mediaIds && draft.mediaIds.length > 0 ? draft.mediaIds : null,
                     })
                     .eq("id", draft.id)
                     .eq("user_id", user.id);
@@ -370,6 +375,7 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
                         content: draft.content || null,
                         mood: draft.mood,
                         category: draft.category || null,
+                        media_ids: draft.mediaIds && draft.mediaIds.length > 0 ? draft.mediaIds : null,
                     }]);
                 if (error) throw error;
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -643,6 +649,7 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
             <TimelineWriteModal
                 visible={modalOpen}
                 petName={petName}
+                petPhotos={petPhotos}
                 initialEntry={editingEntry}
                 onClose={() => setModalOpen(false)}
                 onSave={handleSave}

@@ -8,8 +8,9 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import Image from "next/image";
 import { toast } from "sonner";
-import { useTimeline } from "@/contexts/PetContext";
+import { useTimeline, usePets } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,7 +37,10 @@ interface TimelineSectionProps {
 
 export default function TimelineSection({ petId, petName }: TimelineSectionProps) {
     const { timeline, fetchTimeline, addTimelineEntry, updateTimelineEntry, deleteTimelineEntry } = useTimeline();
+    const { pets } = usePets();
     const { user } = useAuth();
+    const currentPet = pets.find((p) => p.id === petId);
+    const petPhotos = currentPet?.photos ?? [];
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
     const [formData, setFormData] = useState({
@@ -45,6 +49,7 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
         content: "",
         mood: "normal" as "happy" | "normal" | "sad" | "sick",
         category: "" as TimelineCategory | "",
+        mediaIds: [] as string[],
     });
     // 검색/필터 (블로그 글이 약속한 "검색 용이")
     const [searchQuery, setSearchQuery] = useState("");
@@ -66,6 +71,7 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
             content: "",
             mood: "normal",
             category: "",
+            mediaIds: [],
         });
         setIsModalOpen(true);
     };
@@ -79,6 +85,7 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
             content: entry.content || "",
             mood: entry.mood || "normal",
             category: (entry.category as TimelineCategory) || "",
+            mediaIds: entry.mediaIds || [],
         });
         setIsModalOpen(true);
     };
@@ -97,6 +104,7 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                 content: formData.content,
                 mood: formData.mood,
                 category: formData.category || undefined,
+                mediaIds: formData.mediaIds.length > 0 ? formData.mediaIds : undefined,
             });
             toast.success("일기가 수정되었습니다");
         } else {
@@ -106,6 +114,7 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                 content: formData.content,
                 mood: formData.mood,
                 category: formData.category || undefined,
+                mediaIds: formData.mediaIds.length > 0 ? formData.mediaIds : undefined,
             });
 
             if (!result) {
@@ -224,7 +233,7 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                                                 : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200"
                                         }`}
                                     >
-                                        {opt.icon} {opt.value}
+                                        {opt.value}
                                     </button>
                                 ))}
                             </div>
@@ -388,6 +397,55 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                                 />
                             </div>
 
+                            {/* 사진 첨부 (선택) — 펫의 기존 사진 중 골라서 일기에 연결 */}
+                            {petPhotos.length > 0 && (
+                                <div>
+                                    <Label>
+                                        사진 첨부 <span className="text-xs text-gray-400 font-normal">(선택 · {formData.mediaIds.length}/4)</span>
+                                    </Label>
+                                    <div className="grid grid-cols-4 gap-1.5 mt-1.5 max-h-40 overflow-y-auto">
+                                        {petPhotos.slice(0, 24).map((p) => {
+                                            const selected = formData.mediaIds.includes(p.id);
+                                            const reachedMax = !selected && formData.mediaIds.length >= 4;
+                                            return (
+                                                <button
+                                                    key={p.id}
+                                                    type="button"
+                                                    disabled={reachedMax}
+                                                    onClick={() => setFormData((prev) => ({
+                                                        ...prev,
+                                                        mediaIds: selected
+                                                            ? prev.mediaIds.filter((x) => x !== p.id)
+                                                            : [...prev.mediaIds, p.id],
+                                                    }))}
+                                                    className={`relative aspect-square rounded-md overflow-hidden border-2 transition ${
+                                                        selected
+                                                            ? "border-memento-500 ring-2 ring-memento-200"
+                                                            : reachedMax
+                                                                ? "border-gray-200 opacity-40 cursor-not-allowed"
+                                                                : "border-gray-200 hover:border-gray-300"
+                                                    }`}
+                                                >
+                                                    <Image
+                                                        src={p.url}
+                                                        alt=""
+                                                        fill
+                                                        sizes="80px"
+                                                        className="object-cover"
+                                                        unoptimized
+                                                    />
+                                                    {selected && (
+                                                        <div className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-memento-500 text-white flex items-center justify-center">
+                                                            <Check className="w-3 h-3" />
+                                                        </div>
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
                             {/* 카테고리 선택 (블로그 글이 약속한 사료/배변/행동 분류) */}
                             <div>
                                 <Label>카테고리 <span className="text-xs text-gray-400 font-normal">(선택)</span></Label>
@@ -415,7 +473,7 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                                             }`}
                                             title={opt.description}
                                         >
-                                            {opt.icon} {opt.value}
+                                            {opt.value}
                                         </button>
                                     ))}
                                 </div>

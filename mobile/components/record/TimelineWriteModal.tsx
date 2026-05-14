@@ -10,7 +10,7 @@ import { useState, useEffect } from "react";
 import {
     View, Text, TextInput, TouchableOpacity, Modal,
     ScrollView, StyleSheet, Alert, ActivityIndicator,
-    Platform,
+    Platform, Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/lib/theme";
@@ -23,18 +23,11 @@ export type TimelineCategory =
     | "사료" | "배변" | "행동" | "훈련" | "놀이"
     | "일상" | "건강" | "여행" | "기념일" | "특별한날" | "기타";
 
-const CATEGORY_OPTIONS: { value: TimelineCategory; icon: string }[] = [
-    { value: "사료", icon: "🥣" },
-    { value: "배변", icon: "💩" },
-    { value: "행동", icon: "🐾" },
-    { value: "건강", icon: "💊" },
-    { value: "훈련", icon: "🎓" },
-    { value: "놀이", icon: "🎾" },
-    { value: "일상", icon: "📅" },
-    { value: "여행", icon: "🚗" },
-    { value: "기념일", icon: "🎉" },
-    { value: "특별한날", icon: "✨" },
-    { value: "기타", icon: "📝" },
+// 이모지 사용 금지 (CLAUDE.md 규율). 라벨만 노출.
+const CATEGORY_OPTIONS: { value: TimelineCategory }[] = [
+    { value: "사료" }, { value: "배변" }, { value: "행동" }, { value: "건강" },
+    { value: "훈련" }, { value: "놀이" }, { value: "일상" }, { value: "여행" },
+    { value: "기념일" }, { value: "특별한날" }, { value: "기타" },
 ];
 
 export interface TimelineEntryDraft {
@@ -44,11 +37,19 @@ export interface TimelineEntryDraft {
     content: string;
     mood: TimelineMood;
     category?: TimelineCategory;
+    mediaIds?: string[];
+}
+
+interface PetPhoto {
+    id: string;
+    url: string;
 }
 
 interface Props {
     visible: boolean;
     petName: string;
+    /** 첨부 가능한 펫 사진 (선택). 없으면 첨부 UI 숨김. */
+    petPhotos?: PetPhoto[];
     initialEntry?: TimelineEntryDraft;
     onClose: () => void;
     onSave: (entry: TimelineEntryDraft) => Promise<boolean>;
@@ -65,7 +66,7 @@ function todayISO(): string {
     return new Date().toISOString().split("T")[0];
 }
 
-export default function TimelineWriteModal({ visible, petName, initialEntry, onClose, onSave }: Props) {
+export default function TimelineWriteModal({ visible, petName, petPhotos = [], initialEntry, onClose, onSave }: Props) {
     const { isDarkMode } = useDarkMode();
     const isEditing = !!initialEntry?.id;
     const [date, setDate] = useState(initialEntry?.date || todayISO());
@@ -73,6 +74,7 @@ export default function TimelineWriteModal({ visible, petName, initialEntry, onC
     const [content, setContent] = useState(initialEntry?.content || "");
     const [mood, setMood] = useState<TimelineMood>(initialEntry?.mood || "normal");
     const [category, setCategory] = useState<TimelineCategory | "">(initialEntry?.category || "");
+    const [mediaIds, setMediaIds] = useState<string[]>(initialEntry?.mediaIds || []);
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
@@ -82,8 +84,17 @@ export default function TimelineWriteModal({ visible, petName, initialEntry, onC
             setContent(initialEntry?.content || "");
             setMood(initialEntry?.mood || "normal");
             setCategory(initialEntry?.category || "");
+            setMediaIds(initialEntry?.mediaIds || []);
         }
     }, [visible, initialEntry]);
+
+    function togglePhoto(id: string) {
+        setMediaIds((prev) =>
+            prev.includes(id)
+                ? prev.filter((x) => x !== id)
+                : prev.length >= 4 ? prev : [...prev, id],
+        );
+    }
 
     async function handleSave() {
         if (!title.trim()) {
@@ -98,6 +109,7 @@ export default function TimelineWriteModal({ visible, petName, initialEntry, onC
             content: content.trim(),
             mood,
             category: category || undefined,
+            mediaIds: mediaIds.length > 0 ? mediaIds : undefined,
         });
         setSaving(false);
         if (ok) onClose();
@@ -190,6 +202,47 @@ export default function TimelineWriteModal({ visible, petName, initialEntry, onC
                             ))}
                         </View>
 
+                        {/* 사진 첨부 (펫의 기존 사진 중 선택) */}
+                        {petPhotos.length > 0 && (
+                            <>
+                                <Text style={[styles.label, { color: labelColor }]}>
+                                    사진 첨부 <Text style={{ fontSize: 11, color: placeholderColor }}>(선택 · {mediaIds.length}/4)</Text>
+                                </Text>
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingVertical: 4 }}>
+                                    {petPhotos.slice(0, 24).map((p) => {
+                                        const selected = mediaIds.includes(p.id);
+                                        const reachedMax = !selected && mediaIds.length >= 4;
+                                        return (
+                                            <TouchableOpacity
+                                                key={p.id}
+                                                onPress={() => togglePhoto(p.id)}
+                                                disabled={reachedMax}
+                                                activeOpacity={0.85}
+                                                style={{
+                                                    width: 64, height: 64, borderRadius: 8, overflow: "hidden",
+                                                    borderWidth: 2,
+                                                    borderColor: selected ? COLORS.memento[500] : (isDarkMode ? COLORS.gray[700] : COLORS.gray[200]),
+                                                    opacity: reachedMax ? 0.4 : 1,
+                                                }}
+                                            >
+                                                <Image source={{ uri: p.url }} style={{ width: "100%", height: "100%" }} />
+                                                {selected && (
+                                                    <View style={{
+                                                        position: "absolute", top: 2, right: 2,
+                                                        width: 16, height: 16, borderRadius: 8,
+                                                        backgroundColor: COLORS.memento[500],
+                                                        alignItems: "center", justifyContent: "center",
+                                                    }}>
+                                                        <Ionicons name="checkmark" size={11} color="#fff" />
+                                                    </View>
+                                                )}
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </ScrollView>
+                            </>
+                        )}
+
                         {/* 카테고리 (블로그 글 약속: 사료/배변/행동 분류) */}
                         <Text style={[styles.label, { color: labelColor }]}>
                             카테고리 <Text style={{ fontSize: 11, color: placeholderColor }}>(선택)</Text>
@@ -223,7 +276,7 @@ export default function TimelineWriteModal({ visible, petName, initialEntry, onC
                                         fontWeight: category === opt.value ? "700" : "500",
                                         color: category === opt.value ? COLORS.memento[600] : ghostTextColor,
                                     }}>
-                                        {opt.icon} {opt.value}
+                                        {opt.value}
                                     </Text>
                                 </TouchableOpacity>
                             ))}

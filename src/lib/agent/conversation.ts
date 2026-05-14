@@ -303,6 +303,16 @@ export async function saveAutoTimelineEntry(
 
         const content = contentLines.join("\n");
 
+        // 카테고리 자동 매핑: keyTopics에 건강/식사/배변 키워드 있으면 매핑, 그 외 "일상"
+        // (블로그 글이 약속한 카테고리 분류를 AI 자동 entry도 채우도록)
+        const topicsText = summary.keyTopics.join(" ");
+        let autoCategory: string = "일상";
+        if (/병원|약|증상|건강|아프|치료|예방|접종|컨디션/.test(topicsText)) autoCategory = "건강";
+        else if (/사료|밥|간식|먹|식사|음식/.test(topicsText)) autoCategory = "사료";
+        else if (/배변|똥|소변|화장실/.test(topicsText)) autoCategory = "배변";
+        else if (/산책|운동|놀이|놀았/.test(topicsText)) autoCategory = "놀이";
+        else if (/훈련|배웠|가르쳤/.test(topicsText)) autoCategory = "훈련";
+
         const { data, error } = await getSupabase()
             .from("timeline_entries")
             .insert({
@@ -312,6 +322,7 @@ export async function saveAutoTimelineEntry(
                 title: `[AI 펫톡] ${title}`, // AI 채팅에서 자동 생성됨을 제목에 표시
                 content,
                 mood,
+                category: autoCategory,
             })
             .select("id")
             .single();

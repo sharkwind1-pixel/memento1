@@ -458,19 +458,19 @@ export type TimelineCategory =
     | "특별한날"
     | "기타";
 
-/** 카테고리 선택 옵션 (UI에서 사용) */
-export const TIMELINE_CATEGORY_OPTIONS: { value: TimelineCategory; icon: string; description: string }[] = [
-    { value: "사료", icon: "🥣", description: "사료 종류·양·반응" },
-    { value: "배변", icon: "💩", description: "배변 횟수·상태" },
-    { value: "행동", icon: "🐾", description: "특이 행동·습관" },
-    { value: "건강", icon: "💊", description: "약·접종·증상" },
-    { value: "훈련", icon: "🎓", description: "훈련 진도" },
-    { value: "놀이", icon: "🎾", description: "놀이·산책" },
-    { value: "일상", icon: "📅", description: "오늘 하루" },
-    { value: "여행", icon: "🚗", description: "외출·여행" },
-    { value: "기념일", icon: "🎉", description: "기념일·이벤트" },
-    { value: "특별한날", icon: "✨", description: "특별한 순간" },
-    { value: "기타", icon: "📝", description: "기타" },
+/** 카테고리 선택 옵션 (UI에서 사용) — 이모지 사용 금지 (CLAUDE.md 규율). 라벨만 노출. */
+export const TIMELINE_CATEGORY_OPTIONS: { value: TimelineCategory; description: string }[] = [
+    { value: "사료", description: "사료 종류·양·반응" },
+    { value: "배변", description: "배변 횟수·상태" },
+    { value: "행동", description: "특이 행동·습관" },
+    { value: "건강", description: "약·접종·증상" },
+    { value: "훈련", description: "훈련 진도" },
+    { value: "놀이", description: "놀이·산책" },
+    { value: "일상", description: "오늘 하루" },
+    { value: "여행", description: "외출·여행" },
+    { value: "기념일", description: "기념일·이벤트" },
+    { value: "특별한날", description: "특별한 순간" },
+    { value: "기타", description: "기타" },
 ];
 
 // ============================================
