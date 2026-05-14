@@ -254,7 +254,7 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                                 {topPattern.needsVetConsult && (
                                     <p className="text-xs mt-1 flex items-center gap-1 text-rose-700 dark:text-rose-300">
                                         <Stethoscope className="w-3 h-3" />
-                                        수의사 상담 권장 — 위 "내보내기" 버튼으로 기록을 정리해 가세요
+                                        수의사 상담 권장 — 위 &lsquo;내보내기&rsquo; 버튼으로 기록을 정리해 가세요
                                     </p>
                                 )}
                             </div>
