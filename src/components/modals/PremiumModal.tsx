@@ -301,9 +301,9 @@ export default function PremiumModal({
                                     }`}
                                 >
                                     <div className="text-xs font-bold text-gray-800 dark:text-white">월 결제</div>
-                                    <div className="text-base font-display font-bold text-gray-800 dark:text-white mt-0.5">
-                                        {premiumPrice}원
-                                        <span className="text-[10px] text-gray-400 ml-0.5">/월</span>
+                                    <div className="flex items-baseline gap-0.5 mt-0.5">
+                                        <span className="text-base font-display font-bold text-gray-800 dark:text-white">{premiumPrice}</span>
+                                        <span className="text-[10px] text-gray-400">원/월</span>
                                     </div>
                                     <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">매달 자동 결제</div>
                                 </button>
@@ -319,9 +319,9 @@ export default function PremiumModal({
                                         {ANNUAL_SAVINGS.percent}% 할인
                                     </div>
                                     <div className="text-xs font-bold text-gray-800 dark:text-white">연 결제</div>
-                                    <div className="text-base font-display font-bold text-gray-800 dark:text-white mt-0.5">
-                                        {premiumAnnualMonthly}원
-                                        <span className="text-[10px] text-gray-400 ml-0.5">/월</span>
+                                    <div className="flex items-baseline gap-0.5 mt-0.5">
+                                        <span className="text-base font-display font-bold text-gray-800 dark:text-white">{premiumAnnualMonthly}</span>
+                                        <span className="text-[10px] text-gray-400">원/월</span>
                                     </div>
                                     <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
                                         1년 {premiumAnnualPrice}원 일시 결제
