@@ -421,6 +421,7 @@ export interface TimelineEntry {
     mediaIds?: string[];
     photos?: string[];
     category?: TimelineCategory;
+    tags?: string[];
     createdAt: string;
 }
 
@@ -434,17 +435,43 @@ export interface TimelineEntryRow {
     content: string;
     mood?: "happy" | "normal" | "sad" | "sick";
     media_ids?: string[];
+    category?: string;
+    tags?: string[];
     created_at: string;
 }
 
-/** 타임라인 카테고리 */
+/**
+ * 타임라인 카테고리 (블로그/매거진 글 약속 매핑)
+ * - 사료/배변/행동: 글이 강조한 시계열 건강 데이터
+ * - 일상/건강/여행/기념일/특별한날/기타: 기존 자동 생성 호환
+ */
 export type TimelineCategory =
+    | "사료"
+    | "배변"
+    | "행동"
+    | "훈련"
+    | "놀이"
     | "일상"
     | "건강"
     | "여행"
     | "기념일"
     | "특별한날"
     | "기타";
+
+/** 카테고리 선택 옵션 (UI에서 사용) */
+export const TIMELINE_CATEGORY_OPTIONS: { value: TimelineCategory; icon: string; description: string }[] = [
+    { value: "사료", icon: "🥣", description: "사료 종류·양·반응" },
+    { value: "배변", icon: "💩", description: "배변 횟수·상태" },
+    { value: "행동", icon: "🐾", description: "특이 행동·습관" },
+    { value: "건강", icon: "💊", description: "약·접종·증상" },
+    { value: "훈련", icon: "🎓", description: "훈련 진도" },
+    { value: "놀이", icon: "🎾", description: "놀이·산책" },
+    { value: "일상", icon: "📅", description: "오늘 하루" },
+    { value: "여행", icon: "🚗", description: "외출·여행" },
+    { value: "기념일", icon: "🎉", description: "기념일·이벤트" },
+    { value: "특별한날", icon: "✨", description: "특별한 순간" },
+    { value: "기타", icon: "📝", description: "기타" },
+];
 
 // ============================================
 // 7-1. 리마인더 관련 타입

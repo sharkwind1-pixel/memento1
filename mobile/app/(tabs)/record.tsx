@@ -10,7 +10,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity,
     Image, FlatList, RefreshControl, ActivityIndicator,
-    StyleSheet,
+    StyleSheet, TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -265,13 +265,16 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
     const [modalOpen, setModalOpen] = useState(false);
     const [editingEntry, setEditingEntry] = useState<TimelineEntryDraft | undefined>(undefined);
     const [moodFilter, setMoodFilter] = useState<TimelineMood | "all">("all");
+    // 블로그 글 약속한 검색 + 카테고리 필터
+    const [searchQuery, setSearchQuery] = useState("");
+    const [categoryFilter, setCategoryFilter] = useState<string>("");
 
     const load = useCallback(async () => {
         if (!session) { setLoading(false); return; }
         try {
             const { data, error } = await supabase
                 .from("timeline_entries")
-                .select("id, pet_id, date, title, content, mood, media_ids, created_at")
+                .select("id, pet_id, date, title, content, mood, media_ids, category, tags, created_at")
                 .eq("pet_id", petId)
                 .order("date", { ascending: false });
             if (error) {
@@ -287,6 +290,8 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
                 date: e.date,
                 mood: e.mood as TimelineMood | undefined,
                 mediaIds: e.media_ids || undefined,
+                category: e.category || undefined,
+                tags: e.tags || undefined,
                 createdAt: e.created_at,
             }));
             setEntries(list);
@@ -325,6 +330,7 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
             title: entry.title,
             content: entry.content || "",
             mood: (entry.mood as TimelineMood) || "normal",
+            category: entry.category as import("@/components/record/TimelineWriteModal").TimelineCategory | undefined,
         });
         setModalOpen(true);
     }
@@ -344,6 +350,7 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
                         title: draft.title,
                         content: draft.content || null,
                         mood: draft.mood,
+                        category: draft.category || null,
                     })
                     .eq("id", draft.id)
                     .eq("user_id", user.id);
@@ -362,6 +369,7 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
                         title: draft.title,
                         content: draft.content || null,
                         mood: draft.mood,
+                        category: draft.category || null,
                     }]);
                 if (error) throw error;
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -403,10 +411,20 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
         return <View style={styles.loadingInline}><ActivityIndicator color={accentColor} /></View>;
     }
 
-    // 무드 필터 적용
-    const filteredEntries = moodFilter === "all"
-        ? entries
-        : entries.filter((e) => e.mood === moodFilter);
+    // 무드 + 카테고리 + 검색 필터 적용
+    const filteredEntries = (() => {
+        const q = searchQuery.trim().toLowerCase();
+        return entries.filter((e) => {
+            if (moodFilter !== "all" && e.mood !== moodFilter) return false;
+            if (categoryFilter && e.category !== categoryFilter) return false;
+            if (q) {
+                const inTitle = e.title.toLowerCase().includes(q);
+                const inContent = (e.content || "").toLowerCase().includes(q);
+                if (!inTitle && !inContent) return false;
+            }
+            return true;
+        });
+    })();
 
     return (
         <>
@@ -462,6 +480,68 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
                                 <Text style={styles.addEntryText}>일기 쓰기</Text>
                             </TouchableOpacity>
                         </View>
+
+                        {/* 검색 + 카테고리 필터 (블로그 글 약속) */}
+                        {entries.length > 0 && (
+                            <>
+                                <View style={{ position: "relative", marginTop: 8 }}>
+                                    <Ionicons
+                                        name="search-outline"
+                                        size={16}
+                                        color={isDarkMode ? COLORS.gray[500] : COLORS.gray[400]}
+                                        style={{ position: "absolute", left: 10, top: 11, zIndex: 1 }}
+                                    />
+                                    <TextInput
+                                        value={searchQuery}
+                                        onChangeText={setSearchQuery}
+                                        placeholder="키워드 검색 (제목·내용)"
+                                        placeholderTextColor={isDarkMode ? COLORS.gray[500] : COLORS.gray[400]}
+                                        style={{
+                                            borderWidth: 1,
+                                            borderColor: isDarkMode ? COLORS.gray[700] : COLORS.gray[200],
+                                            borderRadius: 10,
+                                            paddingLeft: 32,
+                                            paddingRight: 12,
+                                            paddingVertical: 8,
+                                            fontSize: 13,
+                                            color: isDarkMode ? COLORS.gray[100] : COLORS.gray[800],
+                                            backgroundColor: isDarkMode ? COLORS.gray[800] : "transparent",
+                                        }}
+                                    />
+                                </View>
+                                <ScrollView
+                                    horizontal
+                                    showsHorizontalScrollIndicator={false}
+                                    contentContainerStyle={{ gap: 6, paddingHorizontal: 0, paddingVertical: 8 }}
+                                >
+                                    {(["", "사료", "배변", "행동", "건강", "훈련", "놀이", "일상"] as const).map((c) => {
+                                        const active = categoryFilter === c;
+                                        const label = c === "" ? "전체" : c;
+                                        return (
+                                            <TouchableOpacity
+                                                key={c || "all"}
+                                                onPress={() => setCategoryFilter(c)}
+                                                style={{
+                                                    paddingHorizontal: 10,
+                                                    paddingVertical: 5,
+                                                    borderRadius: 9999,
+                                                    borderWidth: 1,
+                                                    borderColor: active ? accentColor : (isDarkMode ? COLORS.gray[700] : COLORS.gray[200]),
+                                                    backgroundColor: active ? accentColor + "15" : "transparent",
+                                                }}
+                                                activeOpacity={0.85}
+                                            >
+                                                <Text style={{
+                                                    fontSize: 11,
+                                                    fontWeight: active ? "700" : "500",
+                                                    color: active ? accentColor : (isDarkMode ? COLORS.gray[300] : COLORS.gray[700]),
+                                                }}>{label}</Text>
+                                            </TouchableOpacity>
+                                        );
+                                    })}
+                                </ScrollView>
+                            </>
+                        )}
 
                         {/* 무드 필터 (entries 1개 이상일 때만) */}
                         {entries.length > 0 && (

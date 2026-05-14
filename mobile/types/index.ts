@@ -75,6 +75,7 @@ export interface TimelineEntry {
     isAiGenerated?: boolean;
     mood?: "happy" | "normal" | "sad" | "sick";
     category?: string;
+    tags?: string[];
     mediaIds?: string[];
 }
 

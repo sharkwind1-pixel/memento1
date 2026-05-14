@@ -7,7 +7,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { useTimeline } from "@/contexts/PetContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,8 +24,10 @@ import {
     Check,
     BookOpen,
     Clock,
+    Search,
 } from "lucide-react";
 import KakaoShareButton from "@/components/common/KakaoShareButton";
+import { TIMELINE_CATEGORY_OPTIONS, type TimelineCategory } from "@/types";
 
 interface TimelineSectionProps {
     petId: string;
@@ -42,7 +44,11 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
         title: "",
         content: "",
         mood: "normal" as "happy" | "normal" | "sad" | "sick",
+        category: "" as TimelineCategory | "",
     });
+    // 검색/필터 (블로그 글이 약속한 "검색 용이")
+    const [searchQuery, setSearchQuery] = useState("");
+    const [filterCategory, setFilterCategory] = useState<TimelineCategory | "">("");
 
     // 펫 변경 시 타임라인 로드
     useEffect(() => {
@@ -59,6 +65,7 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
             title: "",
             content: "",
             mood: "normal",
+            category: "",
         });
         setIsModalOpen(true);
     };
@@ -71,6 +78,7 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
             title: entry.title,
             content: entry.content || "",
             mood: entry.mood || "normal",
+            category: (entry.category as TimelineCategory) || "",
         });
         setIsModalOpen(true);
     };
@@ -88,6 +96,7 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                 title: formData.title,
                 content: formData.content,
                 mood: formData.mood,
+                category: formData.category || undefined,
             });
             toast.success("일기가 수정되었습니다");
         } else {
@@ -96,6 +105,7 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                 title: formData.title,
                 content: formData.content,
                 mood: formData.mood,
+                category: formData.category || undefined,
             });
 
             if (!result) {
@@ -108,6 +118,20 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
         setIsModalOpen(false);
         setEditingEntryId(null);
     };
+
+    // 검색 + 카테고리 필터 적용된 timeline (블로그 글이 약속한 검색)
+    const filteredTimeline = useMemo(() => {
+        const q = searchQuery.trim().toLowerCase();
+        return timeline.filter((entry) => {
+            if (filterCategory && entry.category !== filterCategory) return false;
+            if (q) {
+                const inTitle = entry.title.toLowerCase().includes(q);
+                const inContent = (entry.content || "").toLowerCase().includes(q);
+                if (!inTitle && !inContent) return false;
+            }
+            return true;
+        });
+    }, [timeline, searchQuery, filterCategory]);
 
     const handleDelete = async (entryId: string) => {
         toast("이 일기를 삭제할까요?", {
@@ -166,6 +190,52 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                     </Button>
                 </CardHeader>
                 <CardContent>
+                    {/* 검색 + 카테고리 필터 (블로그 글이 약속한 "검색 용이") */}
+                    {timeline.length > 0 && (
+                        <div className="space-y-2 mb-4">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <Input
+                                    type="text"
+                                    placeholder="키워드 검색 (제목·내용)"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="pl-9"
+                                />
+                            </div>
+                            <div className="flex gap-1.5 flex-wrap">
+                                <button
+                                    onClick={() => setFilterCategory("")}
+                                    className={`text-xs px-2.5 py-1 rounded-full font-medium transition ${
+                                        filterCategory === ""
+                                            ? "bg-memento-500 text-white"
+                                            : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200"
+                                    }`}
+                                >
+                                    전체
+                                </button>
+                                {TIMELINE_CATEGORY_OPTIONS.slice(0, 6).map((opt) => (
+                                    <button
+                                        key={opt.value}
+                                        onClick={() => setFilterCategory(opt.value)}
+                                        className={`text-xs px-2.5 py-1 rounded-full font-medium transition ${
+                                            filterCategory === opt.value
+                                                ? "bg-memento-500 text-white"
+                                                : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200"
+                                        }`}
+                                    >
+                                        {opt.icon} {opt.value}
+                                    </button>
+                                ))}
+                            </div>
+                            {(searchQuery || filterCategory) && (
+                                <p className="text-xs text-gray-500">
+                                    {filteredTimeline.length}개 결과
+                                    {filteredTimeline.length === 0 && " · 검색 조건을 바꿔보세요"}
+                                </p>
+                            )}
+                        </div>
+                    )}
                     {timeline.length === 0 ? (
                         <div className="text-center py-10">
                             <div className="w-16 h-16 rounded-full bg-memento-100 dark:bg-memento-500/20 flex items-center justify-center mx-auto mb-4">
@@ -188,7 +258,7 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            {timeline.map((entry) => {
+                            {filteredTimeline.map((entry) => {
                                 return (
                                     <div
                                         key={entry.id}
@@ -312,10 +382,43 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                                     onChange={(e) =>
                                         setFormData((prev) => ({ ...prev, content: e.target.value }))
                                     }
-                                    placeholder="오늘 있었던 일을 기록해보세요..."
+                                    placeholder="오늘 있었던 일을 기록해보세요... (예: 사료 절반 먹음 / 산책 30분 / 평소보다 잠 많이 잠)"
                                     rows={4}
                                     className="mt-1"
                                 />
+                            </div>
+
+                            {/* 카테고리 선택 (블로그 글이 약속한 사료/배변/행동 분류) */}
+                            <div>
+                                <Label>카테고리 <span className="text-xs text-gray-400 font-normal">(선택)</span></Label>
+                                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData((prev) => ({ ...prev, category: "" }))}
+                                        className={`text-xs px-2.5 py-1 rounded-full border transition ${
+                                            formData.category === ""
+                                                ? "bg-gray-200 dark:bg-gray-700 border-gray-300 text-gray-700 dark:text-gray-200"
+                                                : "border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-100"
+                                        }`}
+                                    >
+                                        없음
+                                    </button>
+                                    {TIMELINE_CATEGORY_OPTIONS.map((opt) => (
+                                        <button
+                                            key={opt.value}
+                                            type="button"
+                                            onClick={() => setFormData((prev) => ({ ...prev, category: opt.value }))}
+                                            className={`text-xs px-2.5 py-1 rounded-full border transition ${
+                                                formData.category === opt.value
+                                                    ? "bg-memento-500 text-white border-memento-500"
+                                                    : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-memento-50 dark:hover:bg-memento-900/20"
+                                            }`}
+                                            title={opt.description}
+                                        >
+                                            {opt.icon} {opt.value}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         </div>
 

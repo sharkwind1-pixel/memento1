@@ -18,12 +18,32 @@ import { useDarkMode } from "@/contexts/ThemeContext";
 
 export type TimelineMood = "happy" | "normal" | "sad" | "sick";
 
+// 블로그/매거진 글 약속: 사료/배변/행동 카테고리 분류 (웹 types/index.ts와 일치)
+export type TimelineCategory =
+    | "사료" | "배변" | "행동" | "훈련" | "놀이"
+    | "일상" | "건강" | "여행" | "기념일" | "특별한날" | "기타";
+
+const CATEGORY_OPTIONS: { value: TimelineCategory; icon: string }[] = [
+    { value: "사료", icon: "🥣" },
+    { value: "배변", icon: "💩" },
+    { value: "행동", icon: "🐾" },
+    { value: "건강", icon: "💊" },
+    { value: "훈련", icon: "🎓" },
+    { value: "놀이", icon: "🎾" },
+    { value: "일상", icon: "📅" },
+    { value: "여행", icon: "🚗" },
+    { value: "기념일", icon: "🎉" },
+    { value: "특별한날", icon: "✨" },
+    { value: "기타", icon: "📝" },
+];
+
 export interface TimelineEntryDraft {
     id?: string;
     date: string;
     title: string;
     content: string;
     mood: TimelineMood;
+    category?: TimelineCategory;
 }
 
 interface Props {
@@ -52,6 +72,7 @@ export default function TimelineWriteModal({ visible, petName, initialEntry, onC
     const [title, setTitle] = useState(initialEntry?.title || "");
     const [content, setContent] = useState(initialEntry?.content || "");
     const [mood, setMood] = useState<TimelineMood>(initialEntry?.mood || "normal");
+    const [category, setCategory] = useState<TimelineCategory | "">(initialEntry?.category || "");
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
@@ -60,6 +81,7 @@ export default function TimelineWriteModal({ visible, petName, initialEntry, onC
             setTitle(initialEntry?.title || "");
             setContent(initialEntry?.content || "");
             setMood(initialEntry?.mood || "normal");
+            setCategory(initialEntry?.category || "");
         }
     }, [visible, initialEntry]);
 
@@ -75,6 +97,7 @@ export default function TimelineWriteModal({ visible, petName, initialEntry, onC
             title: title.trim(),
             content: content.trim(),
             mood,
+            category: category || undefined,
         });
         setSaving(false);
         if (ok) onClose();
@@ -162,6 +185,45 @@ export default function TimelineWriteModal({ visible, petName, initialEntry, onC
                                     <Ionicons name={m.icon} size={20} color={mood === m.id ? m.color : (isDarkMode ? COLORS.gray[500] : COLORS.gray[400])} />
                                     <Text style={[styles.moodLabel, { color: moodLabelColor }, mood === m.id && { color: m.color, fontWeight: "700" }]}>
                                         {m.label}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+
+                        {/* 카테고리 (블로그 글 약속: 사료/배변/행동 분류) */}
+                        <Text style={[styles.label, { color: labelColor }]}>
+                            카테고리 <Text style={{ fontSize: 11, color: placeholderColor }}>(선택)</Text>
+                        </Text>
+                        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+                            <TouchableOpacity
+                                onPress={() => setCategory("")}
+                                style={{
+                                    paddingHorizontal: 10, paddingVertical: 6, borderRadius: 9999,
+                                    borderWidth: 1, borderColor: inputBorder,
+                                    backgroundColor: category === "" ? (isDarkMode ? COLORS.gray[700] : COLORS.gray[100]) : "transparent",
+                                }}
+                                activeOpacity={0.85}
+                            >
+                                <Text style={{ fontSize: 12, color: category === "" ? titleColor : ghostTextColor }}>없음</Text>
+                            </TouchableOpacity>
+                            {CATEGORY_OPTIONS.map((opt) => (
+                                <TouchableOpacity
+                                    key={opt.value}
+                                    onPress={() => setCategory(opt.value)}
+                                    style={{
+                                        paddingHorizontal: 10, paddingVertical: 6, borderRadius: 9999,
+                                        borderWidth: 1,
+                                        borderColor: category === opt.value ? COLORS.memento[500] : inputBorder,
+                                        backgroundColor: category === opt.value ? COLORS.memento[500] + "15" : "transparent",
+                                    }}
+                                    activeOpacity={0.85}
+                                >
+                                    <Text style={{
+                                        fontSize: 12,
+                                        fontWeight: category === opt.value ? "700" : "500",
+                                        color: category === opt.value ? COLORS.memento[600] : ghostTextColor,
+                                    }}>
+                                        {opt.icon} {opt.value}
                                     </Text>
                                 </TouchableOpacity>
                             ))}

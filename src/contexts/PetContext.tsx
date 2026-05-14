@@ -873,7 +873,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
 
             const { data, error } = await supabase
                 .from("timeline_entries")
-                .select("id, pet_id, date, title, content, mood, media_ids, created_at")
+                .select("id, pet_id, date, title, content, mood, media_ids, category, tags, created_at")
                 .eq("pet_id", petId)
                 .order("date", { ascending: false });
 
@@ -886,6 +886,8 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                     content: entry.content || "",
                     mood: entry.mood,
                     mediaIds: entry.media_ids,
+                    category: entry.category,
+                    tags: entry.tags,
                     createdAt: entry.created_at,
                 }));
 
@@ -923,6 +925,8 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                             content: entry.content || null,
                             mood: entry.mood || null,
                             media_ids: entry.mediaIds || null,
+                            category: entry.category || null,
+                            tags: entry.tags || null,
                         },
                     ])
                     .select()
@@ -941,6 +945,8 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                     content: data.content || "",
                     mood: data.mood,
                     mediaIds: data.media_ids,
+                    category: data.category,
+                    tags: data.tags,
                     createdAt: data.created_at,
                 };
 
@@ -985,6 +991,8 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                 if (data.mood !== undefined) updateData.mood = data.mood || null;
                 if (data.mediaIds !== undefined)
                     updateData.media_ids = data.mediaIds || null;
+                if (data.category !== undefined) updateData.category = data.category || null;
+                if (data.tags !== undefined) updateData.tags = data.tags || null;
 
                 const { error } = await supabase
                     .from("timeline_entries")
