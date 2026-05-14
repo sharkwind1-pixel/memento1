@@ -285,7 +285,7 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                                 >
                                     전체
                                 </button>
-                                {TIMELINE_CATEGORY_OPTIONS.slice(0, 6).map((opt) => (
+                                {TIMELINE_CATEGORY_OPTIONS.map((opt) => (
                                     <button
                                         key={opt.value}
                                         onClick={() => setFilterCategory(opt.value)}
@@ -392,6 +392,27 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                                                 <p className="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-wrap">
                                                     {entry.content}
                                                 </p>
+                                            )}
+                                            {/* 첨부 사진 썸네일 */}
+                                            {entry.mediaIds && entry.mediaIds.length > 0 && petPhotos.length > 0 && (
+                                                <div className="flex gap-1.5 mt-2 flex-wrap">
+                                                    {entry.mediaIds
+                                                        .map((mid) => petPhotos.find((p) => p.id === mid))
+                                                        .filter((p): p is typeof petPhotos[0] => !!p)
+                                                        .slice(0, 4)
+                                                        .map((photo) => (
+                                                            <div key={photo.id} className="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                                                                <Image
+                                                                    src={photo.url}
+                                                                    alt=""
+                                                                    fill
+                                                                    sizes="64px"
+                                                                    className="object-cover"
+                                                                    unoptimized
+                                                                />
+                                                            </div>
+                                                        ))}
+                                                </div>
                                             )}
                                         </div>
                                     </div>

@@ -45,12 +45,7 @@ export interface TimelinePattern {
     windowDays: number;
 }
 
-/** 날짜 문자열(YYYY-MM-DD)을 KST 자정 Date로 변환 */
-function parseDate(s: string): Date {
-    return new Date(s + "T00:00:00+09:00");
-}
-
-/** N일 전 ~ 오늘 사이의 entry만 필터 */
+/** N일 전 ~ 오늘 사이의 entry만 필터 (YYYY-MM-DD 문자열 비교, 타임존 안전) */
 function withinDays(entries: TimelineEntry[], days: number): TimelineEntry[] {
     const since = new Date();
     since.setDate(since.getDate() - days);
@@ -123,16 +118,17 @@ export function analyzeTimelinePatterns(entries: TimelineEntry[]): TimelinePatte
     }
 
     // 5. 최근 14일 기록 0건 + 이전 14일엔 3건 이상 (사용자 케어 약화 가능 신호)
+    // 타임존 일관성: parseDate(KST) vs new Date(시스템 로컬) 혼용 시 ±1일 경계 버그.
+    // 해결: 모두 YYYY-MM-DD 문자열 비교로 통일.
     const recent14 = withinDays(entries, 14);
     if (recent14.length === 0) {
-        const prev = entries.filter((e) => {
-            const d = parseDate(e.date);
-            const since = new Date();
-            since.setDate(since.getDate() - 28);
-            const until = new Date();
-            until.setDate(until.getDate() - 14);
-            return d >= since && d < until;
-        });
+        const since28 = new Date();
+        since28.setDate(since28.getDate() - 28);
+        const until14 = new Date();
+        until14.setDate(until14.getDate() - 14);
+        const since28Str = since28.toISOString().split("T")[0];
+        const until14Str = until14.toISOString().split("T")[0];
+        const prev = entries.filter((e) => e.date >= since28Str && e.date < until14Str);
         if (prev.length >= 3) {
             patterns.push({
                 code: "record_gap",

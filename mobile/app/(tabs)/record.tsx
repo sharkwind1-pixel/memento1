@@ -640,7 +640,8 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
                                     showsHorizontalScrollIndicator={false}
                                     contentContainerStyle={{ gap: 6, paddingHorizontal: 0, paddingVertical: 8 }}
                                 >
-                                    {(["", "사료", "배변", "행동", "건강", "훈련", "놀이", "일상"] as const).map((c) => {
+                                    {/* 웹 TIMELINE_CATEGORY_OPTIONS와 동일 11종 (전체 + 11종) */}
+                                    {(["", "사료", "배변", "행동", "건강", "훈련", "놀이", "일상", "여행", "기념일", "특별한날", "기타"] as const).map((c) => {
                                         const active = categoryFilter === c;
                                         const label = c === "" ? "전체" : c;
                                         return (
@@ -763,6 +764,22 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
                                 {item.content}
                             </Text>
                         ) : null}
+                        {/* 첨부 사진 썸네일 */}
+                        {item.mediaIds && item.mediaIds.length > 0 && petPhotos.length > 0 && (
+                            <View style={{ flexDirection: "row", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
+                                {item.mediaIds
+                                    .map((mid) => petPhotos.find((p) => p.id === mid))
+                                    .filter((p): p is { id: string; url: string } => !!p)
+                                    .slice(0, 4)
+                                    .map((photo) => (
+                                        <Image
+                                            key={photo.id}
+                                            source={{ uri: photo.url }}
+                                            style={{ width: 56, height: 56, borderRadius: 8 }}
+                                        />
+                                    ))}
+                            </View>
+                        )}
                     </View>
                 )}
             />
