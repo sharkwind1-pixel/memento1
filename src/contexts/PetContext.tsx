@@ -382,9 +382,15 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
 
                 if (error) {
                     console.error("[addPet/insert]", error.message, error.code, error.details);
-                    // throw해서 호출부의 catch가 modal을 닫지 않도록.
-                    // generic toast는 호출부(RecordPage handleSavePet)의 catch에서 띄움.
-                    throw new Error(error.message || "DB insert failed");
+                    // 실제 DB 에러 메시지를 toast에 노출 (사용자가 모바일에서 콘솔 못 봄)
+                    const reason = error.code === "23503"
+                        ? "프로필 정보가 아직 만들어지지 않았어요. 잠시 후 다시 시도해주세요."
+                        : error.code === "42501" || /policy|permission|rls/i.test(error.message)
+                            ? "권한 오류 (RLS). 새로고침 후 다시 시도해주세요."
+                            : error.code === "23505"
+                                ? "이미 등록된 정보예요."
+                                : `${error.message} (${error.code ?? "unknown"})`;
+                    throw new Error(reason);
                 }
 
                 const newPet: Pet = {

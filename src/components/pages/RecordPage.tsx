@@ -322,8 +322,10 @@ function RecordPage({ setSelectedTab, isActive = true, suppressPetModal = false 
             }
             setEditingPet(null);
             setIsPetModalOpen(false);
-        } catch {
-            toast.error("저장하지 못했어요");
+        } catch (err) {
+            // addPet에서 throw한 실제 DB 에러 메시지를 그대로 노출 (디버깅 + 사용자 안내)
+            const msg = err instanceof Error ? err.message : "저장하지 못했어요";
+            toast.error(msg);
         }
     };
 
