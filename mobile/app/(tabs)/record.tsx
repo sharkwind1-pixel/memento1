@@ -440,7 +440,11 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
 
                         <View style={styles.timelineHeader}>
                             <View style={{ flex: 1 }}>
-                                <Text style={[styles.timelineHeaderTitle, isMemorialMode && { color: COLORS.white }]}>
+                                <Text style={[styles.timelineHeaderTitle, {
+                                    color: isDarkMode
+                                        ? COLORS.white
+                                        : (isMemorialMode ? COLORS.memorial[700] : COLORS.gray[800]),
+                                }]}>
                                     타임라인 일기
                                 </Text>
                                 <Text style={styles.timelineHeaderCount}>
@@ -543,7 +547,11 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
                             </View>
                         </View>
                         {item.content ? (
-                            <Text style={[styles.timelineContent, isMemorialMode && { color: COLORS.gray[300] }]} numberOfLines={3}>
+                            <Text style={[styles.timelineContent, {
+                                color: isDarkMode
+                                    ? COLORS.gray[300]
+                                    : (isMemorialMode ? COLORS.memorial[800] : COLORS.gray[600]),
+                            }]} numberOfLines={3}>
                                 {item.content}
                             </Text>
                         ) : null}
@@ -573,6 +581,7 @@ function GalleryTab({ petId, photos, isMemorialMode, accentColor, refreshing, on
     onRefresh: () => void;
 }) {
     const { deletePhotos } = usePet();
+    const { isDarkMode } = useDarkMode();
     const [uploadOpen, setUploadOpen] = useState(false);
     const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
     const [selectionMode, setSelectionMode] = useState(false);
@@ -656,7 +665,11 @@ function GalleryTab({ petId, photos, isMemorialMode, accentColor, refreshing, on
                             {selectionMode ? (
                                 <>
                                     <View style={{ flex: 1 }}>
-                                        <Text style={[styles.galleryHeaderTitle, isMemorialMode && { color: COLORS.white }]}>
+                                        <Text style={[styles.galleryHeaderTitle, {
+                                    color: isDarkMode
+                                        ? COLORS.white
+                                        : (isMemorialMode ? COLORS.memorial[700] : COLORS.gray[800]),
+                                }]}>
                                             {selected.size}개 선택됨
                                         </Text>
                                         <Text style={styles.galleryHeaderCount}>길게 눌러 시작 · 탭하여 추가</Text>
@@ -681,7 +694,11 @@ function GalleryTab({ petId, photos, isMemorialMode, accentColor, refreshing, on
                             ) : (
                                 <>
                                     <View style={{ flex: 1 }}>
-                                        <Text style={[styles.galleryHeaderTitle, isMemorialMode && { color: COLORS.white }]}>
+                                        <Text style={[styles.galleryHeaderTitle, {
+                                    color: isDarkMode
+                                        ? COLORS.white
+                                        : (isMemorialMode ? COLORS.memorial[700] : COLORS.gray[800]),
+                                }]}>
                                             사진/영상
                                         </Text>
                                         <Text style={styles.galleryHeaderCount}>{photos.length}장 · 길게 눌러 선택</Text>
@@ -1250,7 +1267,11 @@ function VideosTab({ pet, isMemorialMode, accentColor, refreshing, onRefresh, au
                     <>
                         <View style={styles.galleryHeader}>
                             <View style={{ flex: 1 }}>
-                                <Text style={[styles.galleryHeaderTitle, isMemorialMode && { color: COLORS.white }]}>
+                                <Text style={[styles.galleryHeaderTitle, {
+                                    color: isDarkMode
+                                        ? COLORS.white
+                                        : (isMemorialMode ? COLORS.memorial[700] : COLORS.gray[800]),
+                                }]}>
                                     AI 영상
                                 </Text>
                                 <Text style={styles.galleryHeaderCount}>

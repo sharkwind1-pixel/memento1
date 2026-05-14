@@ -159,7 +159,12 @@ export default function CommunityPreview({ session, isMemorialMode }: Props) {
                         <Ionicons name="trending-up" size={18 * iconScale} color="#fff" />
                     </LinearGradient>
                     <View>
-                        <Text style={[styles.title, { fontSize: 16 * fontScale }, isMemorialMode && { color: COLORS.white }]}>인기 있는 이야기</Text>
+                        <Text style={[styles.title, {
+                            fontSize: 16 * fontScale,
+                            color: isDarkMode
+                                ? COLORS.white
+                                : (isMemorialMode ? COLORS.memorial[700] : COLORS.gray[800]),
+                        }]}>인기 있는 이야기</Text>
                         <Text style={[styles.subtitle, { fontSize: 12 * fontScale }]}>커뮤니티에서 가장 사랑받는 글들</Text>
                     </View>
                 </View>
