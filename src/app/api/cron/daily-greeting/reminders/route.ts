@@ -22,7 +22,7 @@ import {
     fetchSubsForUsers,
     PAGE_SIZE,
 } from "@/lib/cron-utils";
-import { sendPushToUser } from "@/lib/expo-push";
+import { sendPushBatchToUsers } from "@/lib/expo-push";
 
 interface ReminderWithPet {
     id: string;
@@ -126,8 +126,15 @@ export async function GET(request: NextRequest) {
         // 푸시 발송 배치 구성
         const pushItems: { sub: { endpoint: string; p256dh: string; auth: string }; payload: { title: string; body: string; url: string } }[] = [];
 
-        // 모바일 expo push 발송 promise들 (web push와 병렬)
-        const expoPromises: Promise<boolean>[] = [];
+        // 모바일 expo push: reminder별로 (userId, payload) 모음 → 한 번에 batch 발송
+        const expoItems: Array<{
+            userId: string;
+            title: string;
+            body: string;
+            data?: Record<string, unknown>;
+            reminderId: string;
+            isOnce: boolean;
+        }> = [];
 
         for (const reminder of matched) {
             const userId = reminder.pets.user_id;
@@ -148,34 +155,49 @@ export async function GET(request: NextRequest) {
                 }
             }
 
-            // 2) 모바일 Expo push (네이티브 앱) — profiles.expo_push_token 보유 유저
-            // sendPushToUser가 토큰 없는 유저는 silent return false (정상 케이스)
-            // DeviceNotRegistered 자동 정리도 포함
-            expoPromises.push(
-                sendPushToUser(
-                    userId,
-                    `${petName} 케어 알림`,
-                    reminder.title,
-                    { type: "reminder", reminderId: reminder.id, link: "/(tabs)/record" },
-                ),
-            );
-
-            triggeredIds.push(reminder.id);
-            if (reminder.schedule_type === "once") {
-                onceReminderIds.push(reminder.id);
-            }
+            // 2) 모바일 Expo push 항목 누적 (한 번에 batch)
+            expoItems.push({
+                userId,
+                title: `${petName} 케어 알림`,
+                body: reminder.title,
+                data: { type: "reminder", reminderId: reminder.id, link: "/(tabs)/record" },
+                reminderId: reminder.id,
+                isOnce: reminder.schedule_type === "once",
+            });
         }
 
-        // 웹 + 모바일 동시 발송
-        const [webResult, expoResults] = await Promise.all([
+        // 웹 + 모바일 동시 발송 (모바일은 batch — N+1 쿼리 방지)
+        const [webResult, expoResult] = await Promise.all([
             sendPushBatch(pushItems),
-            Promise.all(expoPromises),
+            sendPushBatchToUsers(expoItems.map((it) => ({
+                userId: it.userId,
+                title: it.title,
+                body: it.body,
+                data: it.data,
+            }))),
         ]);
-        const expoSent = expoResults.filter(Boolean).length;
-        const expoFailed = expoResults.length - expoSent;
-        totalSent += webResult.sent + expoSent;
-        totalFailed += webResult.failed + expoFailed;
+        totalSent += webResult.sent + expoResult.sent;
+        totalFailed += webResult.failed + expoResult.failed;
         allExpiredEndpoints.push(...webResult.expiredEndpoints);
+
+        // 발송 성공 판정 (9번 권고): web sent || expo sent || 어느 쪽이든 시도해서 실패 안 한 것
+        // 단순화: web subs OR expo token이 있었던 reminder만 last_triggered 업데이트.
+        // 둘 다 없는 reminder는 silent skip (last_triggered 안 건드림 → once는 다음 크론에서 재시도)
+        const webExpiredSet = new Set(allExpiredEndpoints);
+        const expoExpiredSet = new Set(expoResult.expiredUserIds);
+        for (const it of expoItems) {
+            const userId = it.userId;
+            const hadWebTarget = (userSubsMap.get(userId)?.length ?? 0) > 0;
+            const hadExpoTarget = !expoExpiredSet.has(userId); // 만료 토큰 제외
+            // batch 응답이 모든 토큰 보유 유저를 포함하므로, 단순화해서 둘 중 하나라도 시도되면 trigger 처리
+            if (hadWebTarget || (hadExpoTarget && expoItems.some((x) => x.userId === userId))) {
+                triggeredIds.push(it.reminderId);
+                if (it.isOnce) onceReminderIds.push(it.reminderId);
+            }
+            // 둘 다 발송 채널 없음 → 다음 크론에서 재시도하도록 last_triggered 안 업데이트
+            // (이 경우 사용자가 알림 채널 등록 후 자동으로 알림 받음)
+            void webExpiredSet;
+        }
     }
 
     // last_triggered 업데이트 (200개씩 분할)

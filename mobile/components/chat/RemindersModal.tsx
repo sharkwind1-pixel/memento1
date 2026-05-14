@@ -123,9 +123,24 @@ export default function RemindersModal({ visible, onClose, petId, petName, accen
             return;
         }
         // 반복 패턴별 검증
-        if (newScheduleType === "once" && !/^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
-            Alert.alert("알림", "한 번만 알림은 날짜를 YYYY-MM-DD 형식으로 입력해주세요");
-            return;
+        if (newScheduleType === "once") {
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
+                Alert.alert("알림", "한 번만 알림은 날짜를 YYYY-MM-DD 형식으로 입력해주세요");
+                return;
+            }
+            // 과거 날짜 차단 (오늘 포함 가능 — 미래 시각이면 OK)
+            const todayStr = new Date().toISOString().split("T")[0];
+            if (newDate < todayStr) {
+                Alert.alert("알림", "이미 지난 날짜는 알림으로 등록할 수 없어요. 미래 날짜를 선택해주세요.");
+                return;
+            }
+        }
+        if (newScheduleType === "monthly" && newDayOfMonth > 28) {
+            Alert.alert(
+                "안내",
+                `${newDayOfMonth}일은 일부 달(2월 등)에 없어 그달은 알림이 건너뛸 수 있어요. 28일 이하 권장.`,
+            );
+            // 사용자가 인지하면 진행 (강제 차단 X)
         }
         // schedule payload 구성 (웹 reminders/route.ts와 1:1 매칭)
         const schedule: Record<string, unknown> = { type: newScheduleType, time: newTime };

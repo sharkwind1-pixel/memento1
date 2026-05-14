@@ -176,6 +176,41 @@ export async function POST(request: NextRequest) {
         const sanitizedDescription = description ? sanitizeInput(description).slice(0, 1000) : undefined;
         const sanitizedType = sanitizeInput(type).slice(0, 50);
 
+        // type 화이트리스트 (DB CHECK 제약과 동일, 미리 400으로 막아 깔끔한 에러)
+        const ALLOWED_TYPES = ["walk", "meal", "medicine", "vaccine", "grooming", "vet", "custom"];
+        if (!ALLOWED_TYPES.includes(sanitizedType)) {
+            return NextResponse.json(
+                { error: `Invalid reminder type. Allowed: ${ALLOWED_TYPES.join(", ")}` },
+                { status: 400 }
+            );
+        }
+
+        // schedule_type 화이트리스트
+        const ALLOWED_SCHEDULE_TYPES = ["daily", "weekly", "monthly", "once"];
+        if (!ALLOWED_SCHEDULE_TYPES.includes(schedule.type)) {
+            return NextResponse.json(
+                { error: `Invalid schedule type. Allowed: ${ALLOWED_SCHEDULE_TYPES.join(", ")}` },
+                { status: 400 }
+            );
+        }
+
+        // once 과거 날짜 차단 (서버 검증 — 클라 우회 방어)
+        if (schedule.type === "once") {
+            if (!schedule.date || !/^\d{4}-\d{2}-\d{2}$/.test(schedule.date)) {
+                return NextResponse.json(
+                    { error: "한 번만 알림은 YYYY-MM-DD 형식의 date 필드가 필수예요." },
+                    { status: 400 }
+                );
+            }
+            const todayStr = new Date().toISOString().split("T")[0];
+            if (schedule.date < todayStr) {
+                return NextResponse.json(
+                    { error: "이미 지난 날짜는 등록할 수 없어요." },
+                    { status: 400 }
+                );
+            }
+        }
+
         const supabase = await createServerSupabase();
 
         // 펫이 해당 사용자 소유인지 확인
