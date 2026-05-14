@@ -500,10 +500,13 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
 
                     const { error } = await supabase.from("pets").update(updateData).eq("id", id);
                     if (error) throw error;
-                } catch {
-                    // Supabase 업데이트 실패 - 로컬 상태 롤백
+                } catch (err) {
+                    // Supabase 업데이트 실패 - 로컬 상태 롤백 + 호출자에게 throw 전파
+                    // (이전엔 토스트만 띄우고 swallow → 호출자가 success 토스트 잘못 노출)
                     setPets(previousPets);
-                    toast.error("정보 수정에 실패했어요. 다시 시도해주세요.");
+                    console.error("[updatePet]", err instanceof Error ? err.message : err);
+                    const reason = err instanceof Error ? err.message : "정보 수정 실패";
+                    throw new Error(reason);
                 }
             } else {
                 setPets((prev) =>

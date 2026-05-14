@@ -233,7 +233,9 @@ export default function PetDetailScreen() {
                 <LinearGradient
                     colors={isMemorial
                         ? ["#FEF3C7", "#FDE68A"]
-                        : [COLORS.memento[100], COLORS.memento[50]]}
+                        // 일상: memento[200] sky → memento[50] 크림으로 자연스러운 그라데이션
+                        // (이전 [100, 50]은 둘 다 크림이라 단조해 보임)
+                        : [COLORS.memento[200], COLORS.memento[50]]}
                     style={styles.heroCard}
                 >
                     {pet.profileImage ? (
