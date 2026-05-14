@@ -340,19 +340,31 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                 return "";
             }
             try {
+                // 신규 가입 직후 SIGNED_IN race로 supabase 클라의 session이 stale일 수 있음.
+                // → fresh session을 직접 가져와서 user_id의 진위를 확인 (auth.uid()와 매칭 보장).
+                const { data: sessionData } = await supabase.auth.getSession();
+                const freshSession = sessionData?.session;
+                if (!freshSession?.user?.id) {
+                    throw new Error("로그인 세션이 만료됐어요. 다시 로그인해주세요.");
+                }
+                const insertUserId = freshSession.user.id;
+                if (insertUserId !== user.id) {
+                    console.warn("[addPet] user.id !== fresh session user.id", { ctx: user.id, fresh: insertUserId });
+                }
+
                 // 프로필 이미지가 blob:/data: URL이면 Storage 업로드 후 public URL로 교체.
                 // 이 전처리 없이 blob/data URL을 그대로 저장하면 다른 세션/디바이스에서
                 // 렌더 불가능 (blob) 또는 DB 비대화 (data URL 2~5MB base64).
                 const profileImageUrl = await ensurePetProfileStorageUrl(
                     petData.profileImage,
-                    user.id,
+                    insertUserId,
                 );
 
                 const { data, error } = await supabase
                     .from("pets")
                     .insert([
                         {
-                            user_id: user.id,
+                            user_id: insertUserId,
                             name: petData.name,
                             type: petData.type,
                             breed: petData.breed,
