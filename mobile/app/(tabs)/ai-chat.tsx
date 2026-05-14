@@ -357,8 +357,9 @@ export default function AiChatScreen() {
                     content: m.content,
                 }));
 
-            const recentTimeline = timelineRef.current.slice(0, 10).map((e) => ({
-                date: e.date, title: e.title, content: e.content, mood: e.mood,
+            // 최근 30개 + category 포함 (timeline-patterns의 카테고리 누적 30일 룰 활성화)
+            const recentTimeline = timelineRef.current.slice(0, 30).map((e) => ({
+                date: e.date, title: e.title, content: e.content, mood: e.mood, category: e.category,
             }));
 
             const photoMemories = (selectedPet.photos ?? [])

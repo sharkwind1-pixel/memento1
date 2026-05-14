@@ -625,10 +625,29 @@ export async function buildAIContext(
     // 타임라인 컨텍스트 생성
     const timelineContext = timelineToContext(timeline);
 
+    // 첫 대화 가드 — 패턴 분석 + 후속 systemPrompt 양쪽에서 사용
+    const isNewSession = chatHistory.length === 0;
+    let isFirstChat = isNewSession;
+    if (isFirstChat && pet.id) {
+        const { count } = await supabase
+            .from("chat_messages")
+            .select("id", { count: "exact", head: true })
+            .eq("pet_id", pet.id)
+            .eq("user_id", user.id)
+            .limit(1);
+        if (count && count > 0) {
+            isFirstChat = false;
+        }
+    }
+
     // 타임라인 패턴 분석 (조기 건강 신호 감지)
-    // 블로그/매거진 글 약속의 마지막 한 조각 — UI 배너뿐 아니라 AI 펫톡도 자연스럽게 언급.
-    // 추모 모드는 건너뜀 (활성 케어 X).
-    const topPattern = !isMemorialMode ? agent.getTopPattern(timeline) : null;
+    // 블로그/매거진 글 약속 — UI 배너뿐 아니라 AI 펫톡도 자연스럽게 언급.
+    // 가드:
+    //  - 추모 모드 X (활성 케어 X)
+    //  - 첫 인사 X (사용자 "안녕"인데 갑자기 병원 권유는 어색 — 9번 권고)
+    const topPattern = (!isMemorialMode && !isFirstChat && !isNewSession)
+        ? agent.getTopPattern(timeline)
+        : null;
     const patternContext = topPattern
         ? `\n[보호자 일기 패턴 알림]\n${topPattern.message}\n` +
           (topPattern.needsVetConsult
@@ -702,20 +721,7 @@ export async function buildAIContext(
         || emergencyDetection.isEmergency
         || emergencyDetection.isUrgent;
 
-    // 첫 대화 vs 새 세션 구분
-    const isNewSession = chatHistory.length === 0;
-    let isFirstChat = isNewSession;
-    if (isFirstChat && pet.id) {
-        const { count } = await supabase
-            .from("chat_messages")
-            .select("id", { count: "exact", head: true })
-            .eq("pet_id", pet.id)
-            .eq("user_id", user.id)
-            .limit(1);
-        if (count && count > 0) {
-            isFirstChat = false;
-        }
-    }
+    // isFirstChat / isNewSession은 timeline 패턴 분석 위에서 이미 계산됨
 
     // 모드에 따른 시스템 프롬프트 선택
     let systemPrompt =

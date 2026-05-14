@@ -550,14 +550,16 @@ export function useAIChat({
                     content: msg.content,
                 }));
 
-            // 타임라인 데이터 준비 (최근 10개만)
+            // 타임라인 데이터 준비 (최근 30개로 확장 — patterns 7일 윈도우와 카테고리 누적 30일 둘 다 커버)
+            // category 포함: 카테고리 패턴 3종 (배변/사료/건강 누적) 활성화. 9번 권고 fix.
             const recentTimeline = timelineRef.current
-                .slice(0, 10)
+                .slice(0, 30)
                 .map((entry) => ({
                     date: entry.date,
                     title: entry.title,
                     content: entry.content,
                     mood: entry.mood,
+                    category: entry.category,
                 }));
 
             // 사진 캡션 데이터 준비 (캡션이 있는 것만, 최근 15개)
