@@ -531,3 +531,20 @@ KCP는 운영 채널에 테스트 MID가 들어와서 "미등록 사이트 [3014
 - [x] 홈 매거진 카드 배치 수정
 - [x] DB 마이그레이션 전부 실행 확인
 - [x] 커뮤니티 5개 게시판 공지글
+
+## 🔴 미실행 마이그레이션 (2026-05-14 prod 적용 완료)
+
+다음 5개가 한 달 이상 누락되어 사이트 곳곳이 깨져 있었음. supabase MCP apply_migration으로 prod 적용 완료. 코드 마이그레이션 파일은 supabase/migrations/에 그대로 보존.
+
+| 마이그레이션 | 내용 | 영향했던 기능 |
+|---|---|---|
+| 003_community_images.sql | community_posts.image_urls/is_public 컬럼 | 커뮤니티 이미지 첨부 |
+| 20240215_pet_reminders.sql | pet_reminders 테이블 신설 | 케어 리마인더 (사용자: "작동 안 했어") |
+| 20250210_withdrawal_system.sql | withdrawn_users 테이블 + profiles.ban_reason/banned_at/last_ip | 탈퇴/차단 시스템 |
+| 20260301_all_pending.sql | support_inquiries 테이블 | 문의/신고 시스템 |
+| 20260502_push_notifications.sql | profiles.expo_push_token + push_platform + push_registered_at | 모바일 푸시 알림 |
+
+추가 적용:
+- 20260514_fix_profiles_rls_recursion.sql → SECURITY DEFINER 함수 current_user_is_admin() + Admins update 정책 교체
+- 20260514_add_profiles_insert_policy.sql → "본인 프로필 생성" INSERT 정책 신설
+
