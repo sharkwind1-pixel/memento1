@@ -335,6 +335,7 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
             mood: (entry.mood as TimelineMood) || "normal",
             category: entry.category as import("@/components/record/TimelineWriteModal").TimelineCategory | undefined,
             mediaIds: entry.mediaIds,
+            tags: entry.tags,
         });
         setModalOpen(true);
     }
@@ -356,6 +357,7 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
                         mood: draft.mood,
                         category: draft.category || null,
                         media_ids: draft.mediaIds && draft.mediaIds.length > 0 ? draft.mediaIds : null,
+                        tags: draft.tags && draft.tags.length > 0 ? draft.tags : null,
                     })
                     .eq("id", draft.id)
                     .eq("user_id", user.id);
@@ -376,6 +378,7 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
                         mood: draft.mood,
                         category: draft.category || null,
                         media_ids: draft.mediaIds && draft.mediaIds.length > 0 ? draft.mediaIds : null,
+                        tags: draft.tags && draft.tags.length > 0 ? draft.tags : null,
                     }]);
                 if (error) throw error;
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -440,16 +443,22 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
         return null;
     })();
 
-    // 무드 + 카테고리 + 검색 필터 적용
+    // 무드 + 카테고리 + 검색 필터 적용 (tags 검색 지원: #로 시작 또는 일반 매치)
     const filteredEntries = (() => {
         const q = searchQuery.trim().toLowerCase();
+        const tagQ = q.startsWith("#") ? q.slice(1) : null;
         return entries.filter((e) => {
             if (moodFilter !== "all" && e.mood !== moodFilter) return false;
             if (categoryFilter && e.category !== categoryFilter) return false;
             if (q) {
-                const inTitle = e.title.toLowerCase().includes(q);
-                const inContent = (e.content || "").toLowerCase().includes(q);
-                if (!inTitle && !inContent) return false;
+                if (tagQ) {
+                    if (!e.tags?.some((t) => t.toLowerCase().includes(tagQ))) return false;
+                } else {
+                    const inTitle = e.title.toLowerCase().includes(q);
+                    const inContent = (e.content || "").toLowerCase().includes(q);
+                    const inTags = e.tags?.some((t) => t.toLowerCase().includes(q)) ?? false;
+                    if (!inTitle && !inContent && !inTags) return false;
+                }
             }
             return true;
         });
@@ -764,6 +773,25 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
                                 {item.content}
                             </Text>
                         ) : null}
+                        {/* 태그 칩 */}
+                        {item.tags && item.tags.length > 0 && (
+                            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4, marginTop: 6 }}>
+                                {item.tags.map((t) => (
+                                    <TouchableOpacity
+                                        key={t}
+                                        onPress={() => setSearchQuery(`#${t}`)}
+                                        activeOpacity={0.7}
+                                        style={{
+                                            paddingHorizontal: 8, paddingVertical: 2,
+                                            backgroundColor: isDarkMode ? "rgba(8,145,178,0.18)" : "rgba(186,230,253,0.4)",
+                                            borderRadius: 9999,
+                                        }}
+                                    >
+                                        <Text style={{ fontSize: 11, color: COLORS.memento[600], fontWeight: "500" }}>#{t}</Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        )}
                         {/* 첨부 사진 썸네일 */}
                         {item.mediaIds && item.mediaIds.length > 0 && petPhotos.length > 0 && (
                             <View style={{ flexDirection: "row", gap: 6, marginTop: 8, flexWrap: "wrap" }}>

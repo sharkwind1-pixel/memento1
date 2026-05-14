@@ -57,7 +57,9 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
         mood: "normal" as "happy" | "normal" | "sad" | "sick",
         category: "" as TimelineCategory | "",
         mediaIds: [] as string[],
+        tags: [] as string[],
     });
+    const [tagInput, setTagInput] = useState("");
     // 검색/필터 (블로그 글이 약속한 "검색 용이")
     const [searchQuery, setSearchQuery] = useState("");
     const [filterCategory, setFilterCategory] = useState<TimelineCategory | "">("");
@@ -79,7 +81,9 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
             mood: "normal",
             category: "",
             mediaIds: [],
+            tags: [],
         });
+        setTagInput("");
         setIsModalOpen(true);
     };
 
@@ -93,7 +97,9 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
             mood: entry.mood || "normal",
             category: (entry.category as TimelineCategory) || "",
             mediaIds: entry.mediaIds || [],
+            tags: entry.tags || [],
         });
+        setTagInput("");
         setIsModalOpen(true);
     };
 
@@ -112,6 +118,7 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                 mood: formData.mood,
                 category: formData.category || undefined,
                 mediaIds: formData.mediaIds.length > 0 ? formData.mediaIds : undefined,
+                tags: formData.tags.length > 0 ? formData.tags : undefined,
             });
             toast.success("일기가 수정되었습니다");
         } else {
@@ -122,6 +129,7 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                 mood: formData.mood,
                 category: formData.category || undefined,
                 mediaIds: formData.mediaIds.length > 0 ? formData.mediaIds : undefined,
+                tags: formData.tags.length > 0 ? formData.tags : undefined,
             });
 
             if (!result) {
@@ -139,14 +147,22 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
     const topPattern = useMemo(() => getTopPattern(timeline), [timeline]);
 
     // 검색 + 카테고리 필터 적용된 timeline (블로그 글이 약속한 검색)
+    // 태그 검색: #으로 시작하면 태그 우선 매치
     const filteredTimeline = useMemo(() => {
         const q = searchQuery.trim().toLowerCase();
+        const tagQuery = q.startsWith("#") ? q.slice(1) : null;
         return timeline.filter((entry) => {
             if (filterCategory && entry.category !== filterCategory) return false;
             if (q) {
-                const inTitle = entry.title.toLowerCase().includes(q);
-                const inContent = (entry.content || "").toLowerCase().includes(q);
-                if (!inTitle && !inContent) return false;
+                if (tagQuery) {
+                    // 태그 검색: 정확 매치 우선
+                    if (!entry.tags?.some((t) => t.toLowerCase().includes(tagQuery))) return false;
+                } else {
+                    const inTitle = entry.title.toLowerCase().includes(q);
+                    const inContent = (entry.content || "").toLowerCase().includes(q);
+                    const inTags = entry.tags?.some((t) => t.toLowerCase().includes(q)) ?? false;
+                    if (!inTitle && !inContent && !inTags) return false;
+                }
             }
             return true;
         });
@@ -393,6 +409,21 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                                                     {entry.content}
                                                 </p>
                                             )}
+                                            {/* 태그 칩 */}
+                                            {entry.tags && entry.tags.length > 0 && (
+                                                <div className="flex flex-wrap gap-1 mt-2">
+                                                    {entry.tags.map((t) => (
+                                                        <span
+                                                            key={t}
+                                                            className="text-[11px] text-memento-700 dark:text-memento-300 bg-memento-100/70 dark:bg-memento-900/30 px-2 py-0.5 rounded-full cursor-pointer hover:bg-memento-200"
+                                                            onClick={() => setSearchQuery(`#${t}`)}
+                                                            title="이 태그로 검색"
+                                                        >
+                                                            #{t}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
                                             {/* 첨부 사진 썸네일 */}
                                             {entry.mediaIds && entry.mediaIds.length > 0 && petPhotos.length > 0 && (
                                                 <div className="flex gap-1.5 mt-2 flex-wrap">
@@ -560,6 +591,55 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                                         </button>
                                     ))}
                                 </div>
+                            </div>
+
+                            {/* 태그 입력 (자유 키워드, 검색·필터 보조) */}
+                            <div>
+                                <Label>
+                                    태그 <span className="text-xs text-gray-400 font-normal">(선택 · 최대 8개)</span>
+                                </Label>
+                                <div className="flex gap-1.5 mt-1.5">
+                                    <Input
+                                        value={tagInput}
+                                        onChange={(e) => setTagInput(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter" || e.key === ",") {
+                                                e.preventDefault();
+                                                const t = tagInput.trim().replace(/,/g, "");
+                                                if (t && !formData.tags.includes(t) && formData.tags.length < 8) {
+                                                    setFormData((prev) => ({ ...prev, tags: [...prev.tags, t] }));
+                                                    setTagInput("");
+                                                }
+                                            }
+                                        }}
+                                        placeholder="예: 산책, 친구만남 (Enter로 추가)"
+                                        className="flex-1"
+                                        maxLength={20}
+                                    />
+                                </div>
+                                {formData.tags.length > 0 && (
+                                    <div className="flex flex-wrap gap-1.5 mt-2">
+                                        {formData.tags.map((t) => (
+                                            <span
+                                                key={t}
+                                                className="inline-flex items-center gap-1 text-xs bg-memento-100 dark:bg-memento-900/30 text-memento-700 dark:text-memento-300 px-2 py-1 rounded-full"
+                                            >
+                                                #{t}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setFormData((prev) => ({
+                                                        ...prev,
+                                                        tags: prev.tags.filter((x) => x !== t),
+                                                    }))}
+                                                    className="hover:text-rose-600"
+                                                    aria-label={`${t} 태그 제거`}
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
 

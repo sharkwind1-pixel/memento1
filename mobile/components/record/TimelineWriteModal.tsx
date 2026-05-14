@@ -38,6 +38,7 @@ export interface TimelineEntryDraft {
     mood: TimelineMood;
     category?: TimelineCategory;
     mediaIds?: string[];
+    tags?: string[];
 }
 
 interface PetPhoto {
@@ -75,6 +76,8 @@ export default function TimelineWriteModal({ visible, petName, petPhotos = [], i
     const [mood, setMood] = useState<TimelineMood>(initialEntry?.mood || "normal");
     const [category, setCategory] = useState<TimelineCategory | "">(initialEntry?.category || "");
     const [mediaIds, setMediaIds] = useState<string[]>(initialEntry?.mediaIds || []);
+    const [tags, setTags] = useState<string[]>(initialEntry?.tags || []);
+    const [tagInput, setTagInput] = useState("");
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
@@ -85,8 +88,18 @@ export default function TimelineWriteModal({ visible, petName, petPhotos = [], i
             setMood(initialEntry?.mood || "normal");
             setCategory(initialEntry?.category || "");
             setMediaIds(initialEntry?.mediaIds || []);
+            setTags(initialEntry?.tags || []);
+            setTagInput("");
         }
     }, [visible, initialEntry]);
+
+    function addTag() {
+        const t = tagInput.trim().replace(/[#,]/g, "");
+        if (t && !tags.includes(t) && tags.length < 8) {
+            setTags((prev) => [...prev, t]);
+            setTagInput("");
+        }
+    }
 
     function togglePhoto(id: string) {
         setMediaIds((prev) =>
@@ -110,6 +123,7 @@ export default function TimelineWriteModal({ visible, petName, petPhotos = [], i
             mood,
             category: category || undefined,
             mediaIds: mediaIds.length > 0 ? mediaIds : undefined,
+            tags: tags.length > 0 ? tags : undefined,
         });
         setSaving(false);
         if (ok) onClose();
@@ -281,6 +295,56 @@ export default function TimelineWriteModal({ visible, petName, petPhotos = [], i
                                 </TouchableOpacity>
                             ))}
                         </View>
+
+                        {/* 태그 (자유 키워드, 최대 8개) */}
+                        <Text style={[styles.label, { color: labelColor }]}>
+                            태그 <Text style={{ fontSize: 11, color: placeholderColor }}>(선택 · {tags.length}/8)</Text>
+                        </Text>
+                        <View style={{ flexDirection: "row", gap: 6 }}>
+                            <TextInput
+                                value={tagInput}
+                                onChangeText={setTagInput}
+                                onSubmitEditing={addTag}
+                                returnKeyType="done"
+                                placeholder="예: 산책, 친구만남"
+                                placeholderTextColor={placeholderColor}
+                                style={[styles.input, { flex: 1, backgroundColor: inputBg, borderColor: inputBorder, color: inputColor }]}
+                                maxLength={20}
+                            />
+                            <TouchableOpacity
+                                onPress={addTag}
+                                style={{
+                                    paddingHorizontal: 14,
+                                    backgroundColor: COLORS.memento[500],
+                                    borderRadius: 8,
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                }}
+                                activeOpacity={0.85}
+                            >
+                                <Ionicons name="add" size={18} color="#fff" />
+                            </TouchableOpacity>
+                        </View>
+                        {tags.length > 0 && (
+                            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
+                                {tags.map((t) => (
+                                    <TouchableOpacity
+                                        key={t}
+                                        onPress={() => setTags((prev) => prev.filter((x) => x !== t))}
+                                        style={{
+                                            flexDirection: "row", alignItems: "center", gap: 4,
+                                            paddingHorizontal: 10, paddingVertical: 4,
+                                            backgroundColor: isDarkMode ? "rgba(8,145,178,0.18)" : "rgba(186,230,253,0.4)",
+                                            borderRadius: 9999,
+                                        }}
+                                        activeOpacity={0.7}
+                                    >
+                                        <Text style={{ fontSize: 12, color: COLORS.memento[600], fontWeight: "500" }}>#{t}</Text>
+                                        <Ionicons name="close" size={12} color={COLORS.memento[600]} />
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        )}
                     </ScrollView>
 
                     {/* 액션 버튼 */}
