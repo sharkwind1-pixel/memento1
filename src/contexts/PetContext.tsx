@@ -381,8 +381,10 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                     .single();
 
                 if (error) {
-                    toast.error("등록에 실패했어요. 다시 시도해주세요.");
-                    return "";
+                    console.error("[addPet/insert]", error.message, error.code, error.details);
+                    // throw해서 호출부의 catch가 modal을 닫지 않도록.
+                    // generic toast는 호출부(RecordPage handleSavePet)의 catch에서 띄움.
+                    throw new Error(error.message || "DB insert failed");
                 }
 
                 const newPet: Pet = {
@@ -406,9 +408,10 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                 });
 
                 return data.id;
-            } catch {
-                toast.error("등록에 실패했어요. 다시 시도해주세요.");
-                return "";
+            } catch (err) {
+                console.error("[addPet/catch]", err instanceof Error ? err.message : err);
+                // 호출부(RecordPage)의 catch가 modal을 안 닫고 toast 띄우도록 throw로 전파
+                throw err;
             }
         },
         [user]

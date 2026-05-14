@@ -153,10 +153,12 @@ export default function NotificationBell() {
                         onClick={() => setIsOpen(false)}
                     />
 
-                    {/* 알림 패널 */}
+                    {/* 알림 패널
+                        - 모바일: fixed left/right 양옆 8px 여백 → viewport 안에 항상 들어옴
+                        - 데스크탑(sm+): 기존 absolute right-0 드롭다운 */}
                     <div
                         ref={panelRef}
-                        className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] max-h-[28rem] bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 z-50 overflow-hidden flex flex-col"
+                        className="fixed sm:absolute left-2 right-2 sm:left-auto sm:right-0 top-14 sm:top-auto sm:mt-2 w-auto sm:w-80 max-w-none sm:max-w-[calc(100vw-2rem)] max-h-[70vh] sm:max-h-[28rem] bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 z-50 overflow-hidden flex flex-col"
                     >
                         {/* 헤더 */}
                         <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between flex-shrink-0">

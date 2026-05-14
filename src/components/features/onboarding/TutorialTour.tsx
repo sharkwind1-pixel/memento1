@@ -329,14 +329,24 @@ export default function TutorialTour({
 
     // ─────────────────────────────────────────────────────────
     // 스포트라이트 좌표 (padding 8px)
+    //
+    // 간편모드(html.simple-mode)는 CSS zoom: 1.15 (또는 1.25 데스크탑)을 사용.
+    // getBoundingClientRect()는 zoom 후 좌표 반환 → Portal에서 fixed로 다시 그리면
+    // 한 번 더 zoom 곱해져서 spotlight가 우측 하단으로 어긋남.
+    // 보정: 좌표/크기를 zoom factor로 나눠서 한 번 상쇄.
     // ─────────────────────────────────────────────────────────
     const pad = 8;
+    const zoomFactor = (() => {
+        if (typeof window === "undefined") return 1;
+        if (!document.documentElement.classList.contains("simple-mode")) return 1;
+        return window.matchMedia("(min-width: 1280px)").matches ? 1.25 : 1.15;
+    })();
     const spot = targetRect
         ? {
-              x: targetRect.left - pad,
-              y: targetRect.top - pad,
-              w: targetRect.width + pad * 2,
-              h: targetRect.height + pad * 2,
+              x: (targetRect.left - pad) / zoomFactor,
+              y: (targetRect.top - pad) / zoomFactor,
+              w: (targetRect.width + pad * 2) / zoomFactor,
+              h: (targetRect.height + pad * 2) / zoomFactor,
           }
         : null;
 
