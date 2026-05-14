@@ -518,14 +518,26 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                 </div>
             )}
 
-            {/* 수의사 상담용 내보내기 모달 */}
+            {/* 수의사 상담용 내보내기 모달 — 전체 timeline 전달 (모달 내부에서 자체 기간/카테고리 필터) */}
             <TimelineExportModal
                 isOpen={isExportOpen}
                 onClose={() => setIsExportOpen(false)}
                 petName={petName}
                 petBreed={currentPet?.breed}
-                petAge={currentPet?.birthday ? `${currentPet.birthday} 출생` : undefined}
-                timeline={filteredTimeline}
+                petAge={
+                    currentPet?.birthday
+                        ? (() => {
+                            const birth = new Date(currentPet.birthday);
+                            const now = new Date();
+                            const months = (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth());
+                            if (months < 12) return `${months}개월령`;
+                            const years = Math.floor(months / 12);
+                            const rem = months % 12;
+                            return rem > 0 ? `${years}살 ${rem}개월령` : `${years}살`;
+                        })()
+                        : undefined
+                }
+                timeline={timeline}
             />
         </>
     );
