@@ -19,11 +19,10 @@ import {
     Heart,
     Check,
     Crown,
-    Star,
     Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { PRICING, BASIC_LIMITS, PREMIUM_LIMITS, VIDEO, calculateAnnualSavings, type BillingCycle } from "@/config/constants";
+import { PRICING, PREMIUM_LIMITS, VIDEO, calculateAnnualSavings, type BillingCycle } from "@/config/constants";
 import { requestPortOnePayment } from "@/lib/portone";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
@@ -83,9 +82,7 @@ const featureInfo: Record<PremiumFeature, {
     },
 };
 
-type PlanType = "basic" | "premium";
-
-const basicPrice = PRICING.BASIC_MONTHLY.toLocaleString();
+// 단일 프리미엄 통합 정책 (2026-05-15) — basic 플랜 폐기. 잔존 가입자는 자연 만료.
 const premiumPrice = PRICING.PREMIUM_MONTHLY.toLocaleString();
 const premiumAnnualPrice = PRICING.PREMIUM_ANNUAL.toLocaleString();
 const premiumAnnualMonthly = Math.round(PRICING.PREMIUM_ANNUAL / 12).toLocaleString();
@@ -98,7 +95,7 @@ export default function PremiumModal({
     onLogin,
     isLoggedIn = true,
 }: PremiumModalProps) {
-    const [selectedPlan, setSelectedPlan] = useState<PlanType>("premium");
+    // 단일 프리미엄 통합 → selectedPlan 상태 제거. plan은 항상 "premium" (연 결제 시 "premium_annual").
     const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
     const [isSubscription, setIsSubscription] = useState(true); // 기본: 정기결제
     const [isProcessing, setIsProcessing] = useState(false);
@@ -125,11 +122,11 @@ export default function PremiumModal({
             const prepareUrl = isSubscription ? API.SUBSCRIBE_PREPARE : API.PAYMENT_PREPARE;
             const completeUrl = isSubscription ? API.SUBSCRIBE_COMPLETE : API.PAYMENT_COMPLETE;
 
-            // plan 결정: 프리미엄 + 연 결제 → "premium_annual"
-            const planToCharge =
-                selectedPlan === "premium" && billingCycle === "annual" && isSubscription
+            // 단일 프리미엄: 연 결제(정기)면 "premium_annual", 그 외 모두 "premium"
+            const planToCharge: "premium" | "premium_annual" =
+                billingCycle === "annual" && isSubscription
                     ? "premium_annual"
-                    : selectedPlan;
+                    : "premium";
 
             // 1. 결제 준비
             const prepareRes = await authFetch(prepareUrl, {
@@ -242,102 +239,56 @@ export default function PremiumModal({
                         </p>
                     </div>
 
-                    {/* 플랜 선택 - 베이직 / 프리미엄 */}
-                    <div className="grid grid-cols-2 gap-3 mb-5">
-                        {/* 베이직 */}
-                        <button
-                            onClick={() => setSelectedPlan("basic")}
-                            className={`relative rounded-2xl p-3.5 sm:p-4 text-left transition-all duration-200 border-2 ${
-                                selectedPlan === "basic"
-                                    ? "border-memento-500 bg-memento-200 dark:bg-memento-900/20 shadow-sm"
-                                    : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
-                            }`}
-                        >
-                            <div className="flex items-center gap-1.5 mb-2">
-                                <Star className="w-4 h-4 text-memento-500" />
-                                <span className="text-sm font-bold text-gray-800 dark:text-white">베이직</span>
-                            </div>
-                            <div className="flex items-baseline gap-0.5">
-                                <span className="text-xl sm:text-2xl font-display font-bold text-gray-800 dark:text-white">{basicPrice}</span>
-                                <span className="text-xs text-gray-400">원/월</span>
-                            </div>
-                            <ul className="mt-2.5 space-y-1">
-                                <li className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1">
-                                    <Check className="w-3 h-3 text-memento-500 flex-shrink-0 mt-0.5" />
-                                    AI 펫톡 하루 {BASIC_LIMITS.DAILY_CHATS}회
-                                </li>
-                                <li className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1">
-                                    <Check className="w-3 h-3 text-memento-500 flex-shrink-0 mt-0.5" />
-                                    반려동물 {BASIC_LIMITS.PETS}마리
-                                </li>
-                                <li className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1">
-                                    <Check className="w-3 h-3 text-memento-500 flex-shrink-0 mt-0.5" />
-                                    사진 펫당 {BASIC_LIMITS.PHOTOS_PER_PET}장
-                                </li>
-                                <li className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1">
-                                    <Check className="w-3 h-3 text-memento-500 flex-shrink-0 mt-0.5" />
-                                    AI 영상 월 {VIDEO.BASIC_MONTHLY}회
-                                </li>
-                            </ul>
-                        </button>
-
-                        {/* 프리미엄 */}
-                        <button
-                            onClick={() => setSelectedPlan("premium")}
-                            className={`relative rounded-2xl p-3.5 sm:p-4 text-left transition-all duration-200 border-2 ${
-                                selectedPlan === "premium"
-                                    ? "border-violet-500 bg-violet-50 dark:bg-violet-900/20 shadow-sm"
-                                    : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
-                            }`}
-                        >
-                            {/* 추천 뱃지 */}
+                    {/* 단일 프리미엄 카드 */}
+                    <div className="mb-5">
+                        <div className="relative rounded-2xl p-4 sm:p-5 border-2 border-violet-500 bg-violet-50 dark:bg-violet-900/20 shadow-sm">
                             <div className="absolute -top-2.5 right-3 bg-gradient-to-r from-violet-500 to-purple-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
                                 추천
                             </div>
                             <div className="flex items-center gap-1.5 mb-2">
-                                <Crown className="w-4 h-4 text-violet-500" />
-                                <span className="text-sm font-bold text-gray-800 dark:text-white">프리미엄</span>
+                                <Crown className="w-5 h-5 text-violet-500" />
+                                <span className="text-base font-bold text-gray-800 dark:text-white">프리미엄</span>
                             </div>
                             <div className="flex items-baseline gap-0.5">
-                                {selectedPlan === "premium" && billingCycle === "annual" ? (
+                                {billingCycle === "annual" ? (
                                     <>
-                                        <span className="text-xl sm:text-2xl font-display font-bold text-gray-800 dark:text-white">{premiumAnnualMonthly}</span>
+                                        <span className="text-2xl sm:text-3xl font-display font-bold text-gray-800 dark:text-white">{premiumAnnualMonthly}</span>
                                         <span className="text-xs text-gray-400">원/월</span>
                                     </>
                                 ) : (
                                     <>
-                                        <span className="text-xl sm:text-2xl font-display font-bold text-gray-800 dark:text-white">{premiumPrice}</span>
+                                        <span className="text-2xl sm:text-3xl font-display font-bold text-gray-800 dark:text-white">{premiumPrice}</span>
                                         <span className="text-xs text-gray-400">원/월</span>
                                     </>
                                 )}
                             </div>
-                            <ul className="mt-2.5 space-y-1">
-                                <li className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1">
-                                    <Check className="w-3 h-3 text-violet-500 flex-shrink-0 mt-0.5" />
+                            <ul className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5">
+                                <li className="text-[12px] text-gray-600 dark:text-gray-300 flex items-start gap-1">
+                                    <Check className="w-3.5 h-3.5 text-violet-500 flex-shrink-0 mt-0.5" />
                                     AI 펫톡 무제한
                                 </li>
-                                <li className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1">
-                                    <Check className="w-3 h-3 text-violet-500 flex-shrink-0 mt-0.5" />
+                                <li className="text-[12px] text-gray-600 dark:text-gray-300 flex items-start gap-1">
+                                    <Check className="w-3.5 h-3.5 text-violet-500 flex-shrink-0 mt-0.5" />
                                     반려동물 {PREMIUM_LIMITS.PETS}마리
                                 </li>
-                                <li className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1">
-                                    <Check className="w-3 h-3 text-violet-500 flex-shrink-0 mt-0.5" />
+                                <li className="text-[12px] text-gray-600 dark:text-gray-300 flex items-start gap-1">
+                                    <Check className="w-3.5 h-3.5 text-violet-500 flex-shrink-0 mt-0.5" />
                                     사진 펫당 {PREMIUM_LIMITS.PHOTOS_PER_PET}장
                                 </li>
-                                <li className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1">
-                                    <Check className="w-3 h-3 text-violet-500 flex-shrink-0 mt-0.5" />
+                                <li className="text-[12px] text-gray-600 dark:text-gray-300 flex items-start gap-1">
+                                    <Check className="w-3.5 h-3.5 text-violet-500 flex-shrink-0 mt-0.5" />
                                     AI 영상 월 {VIDEO.PREMIUM_MONTHLY}회
                                 </li>
-                                <li className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1">
-                                    <Check className="w-3 h-3 text-violet-500 flex-shrink-0 mt-0.5" />
+                                <li className="text-[12px] text-gray-600 dark:text-gray-300 flex items-start gap-1 col-span-2">
+                                    <Check className="w-3.5 h-3.5 text-violet-500 flex-shrink-0 mt-0.5" />
                                     우선 고객 지원
                                 </li>
                             </ul>
-                        </button>
+                        </div>
                     </div>
 
-                    {/* 결제 주기 토글 (프리미엄 + 정기결제일 때만) */}
-                    {selectedPlan === "premium" && isSubscription && (
+                    {/* 결제 주기 토글 (정기결제일 때만) */}
+                    {isSubscription && (
                         <div className="mb-5">
                             <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">결제 주기</div>
                             <div className="grid grid-cols-2 gap-2">
@@ -416,26 +367,20 @@ export default function PremiumModal({
                     {isLoggedIn ? (
                         <div className="space-y-3">
                             <Button
-                                className={`w-full text-white rounded-xl py-6 font-bold transition-all ${
-                                    selectedPlan === "premium"
-                                        ? "bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700"
-                                        : "bg-gradient-to-r from-memento-500 to-memento-500 hover:from-memento-600 hover:to-memento-600"
-                                } ${isProcessing ? "opacity-80 cursor-not-allowed" : ""}`}
+                                className={`w-full text-white rounded-xl py-6 font-bold transition-all bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 ${isProcessing ? "opacity-80 cursor-not-allowed" : ""}`}
                                 onClick={handlePayment}
                                 disabled={isProcessing}
                             >
                                 {isProcessing ? (
                                     <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                                ) : selectedPlan === "premium" ? (
-                                    <Crown className="w-5 h-5 mr-2" />
                                 ) : (
-                                    <Star className="w-5 h-5 mr-2" />
+                                    <Crown className="w-5 h-5 mr-2" />
                                 )}
                                 {isProcessing
                                     ? "결제 진행 중..."
-                                    : selectedPlan === "premium"
-                                        ? `프리미엄 ${premiumPrice}원/월 ${isSubscription ? "구독" : "결제"}`
-                                        : `베이직 ${basicPrice}원/월 ${isSubscription ? "구독" : "결제"}`
+                                    : billingCycle === "annual" && isSubscription
+                                        ? `프리미엄 연 결제 ${premiumAnnualPrice}원`
+                                        : `프리미엄 ${premiumPrice}원/월 ${isSubscription ? "구독" : "결제"}`
                                 }
                             </Button>
                             <button

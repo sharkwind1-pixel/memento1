@@ -62,7 +62,8 @@ export default function PricingPage() {
                     <h2 className="text-2xl font-display font-bold text-gray-900 dark:text-white text-center">
                         정기 구독 플랜
                     </h2>
-                    <div className="grid md:grid-cols-3 gap-6">
+                    {/* 단일 프리미엄 통합 정책 (2026-05-15) — 베이직 폐기. 무료 / 프리미엄 2단계만 노출. */}
+                    <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
                         <PlanCard
                             name="무료"
                             price="0원"
@@ -76,28 +77,16 @@ export default function PricingPage() {
                             ]}
                         />
                         <PlanCard
-                            name="베이직"
-                            price={`${PRICING.BASIC_MONTHLY.toLocaleString()}원`}
-                            period="월 자동 결제"
-                            highlight
-                            features={[
-                                "AI 펫톡 하루 50회",
-                                "반려동물 3마리 등록",
-                                "사진 펫당 200장 저장",
-                                "AI 영상 월 3회",
-                                "메모리얼 펫톡 지원",
-                            ]}
-                        />
-                        <PlanCard
                             name="프리미엄"
                             price={`${PRICING.PREMIUM_MONTHLY.toLocaleString()}원`}
                             period="월 자동 결제"
+                            highlight
                             features={[
                                 "AI 펫톡 무제한",
-                                "반려동물 무제한 등록",
-                                "사진 무제한 저장",
+                                "반려동물 10마리 등록",
+                                "사진 펫당 1,000장 저장",
                                 "AI 영상 월 3회",
-                                "광고 없음",
+                                "메모리얼 펫톡 지원",
                                 "우선 고객 지원",
                             ]}
                         />

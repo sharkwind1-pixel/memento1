@@ -15,15 +15,13 @@ import { getAuthUser, createAdminSupabase } from "@/lib/supabase-server";
 import { PRICING, type BillingCycle } from "@/config/constants";
 import { getClientIP, checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 
-/** 플랜 + 결제 주기별 금액. premium_annual은 새 연 구독 플랜. */
+/** 플랜 + 결제 주기별 금액. 단일 프리미엄 통합 정책 (2026-05-15) — basic은 premium으로 자동 매핑 (직접 호출 방어). */
 const PLAN_AMOUNT: Record<string, number> = {
-    basic: PRICING.BASIC_MONTHLY,
     premium: PRICING.PREMIUM_MONTHLY,
     premium_annual: PRICING.PREMIUM_ANNUAL,
 };
 
 const PLAN_NAME: Record<string, string> = {
-    basic: "메멘토애니 베이직 정기구독 (월)",
     premium: "메멘토애니 프리미엄 정기구독 (월)",
     premium_annual: "메멘토애니 프리미엄 연간구독 (12개월)",
 };
@@ -31,6 +29,11 @@ const PLAN_NAME: Record<string, string> = {
 /** plan → billing_cycle 매핑 */
 function getBillingCycle(plan: string): BillingCycle {
     return plan === "premium_annual" ? "annual" : "monthly";
+}
+
+/** 단일 프리미엄 정책: basic 요청 → premium으로 매핑 (외부 직접 호출 방어). */
+function normalizePlan(plan: string): string {
+    return plan === "basic" ? "premium" : plan;
 }
 
 export async function POST(request: NextRequest) {
@@ -50,7 +53,7 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const plan = body.plan as string;
+        const plan = normalizePlan(body.plan as string);
 
         if (!plan || !PLAN_AMOUNT[plan]) {
             return NextResponse.json({ error: "잘못된 플랜입니다." }, { status: 400 });

@@ -39,8 +39,8 @@ interface PremiumModalProps {
 // 옵션
 // ============================================================================
 
+// 단일 프리미엄 통합 정책 (2026-05-15) — 베이직 옵션 제거. 관리자 부여도 프리미엄만.
 const PLAN_OPTIONS = [
-    { value: "basic" as const, label: "베이직", price: PRICING.BASIC_MONTHLY, desc: `AI 펫톡 50회/일, 펫 3마리, 사진 200장, AI 영상 월 ${VIDEO.BASIC_MONTHLY}회` },
     { value: "premium" as const, label: "프리미엄", price: PRICING.PREMIUM_MONTHLY, desc: `AI 펫톡 무제한, 펫 10마리, 사진 1,000장, AI 영상 월 ${VIDEO.PREMIUM_MONTHLY}회` },
 ];
 
@@ -60,7 +60,7 @@ const DURATION_OPTIONS = [
 export function PremiumModal({ user, onClose, onGrant }: PremiumModalProps) {
     useEscapeClose(true, onClose);
     useBodyScrollLock(true);
-    const [plan, setPlan] = useState<"basic" | "premium">("premium");
+    const [plan, setPlan] = useState<"premium">("premium");
     const [duration, setDuration] = useState("30");
     const [reason, setReason] = useState("");
     const [isSaving, setIsSaving] = useState(false);

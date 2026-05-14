@@ -92,13 +92,15 @@ async function notifySystem(text: string) {
  */
 function getPlanAmount(plan: string, billingCycle: "monthly" | "annual" = "monthly"): number {
     if (billingCycle === "annual") return PRICING.PREMIUM_ANNUAL;
-    if (plan === "premium") return PRICING.PREMIUM_MONTHLY;
-    return PRICING.BASIC_MONTHLY;
+    // 단일 프리미엄 통합 (2026-05-15) — basic 잔존 가입자도 같은 PREMIUM_MONTHLY로 갱신
+    // (가격이 동일하니 사용자 영향 없음. 잔존 cancelled 2건은 next_billing_date 없어 자연 만료)
+    return PRICING.PREMIUM_MONTHLY;
 }
 
 function getPlanLabel(plan: string, billingCycle: "monthly" | "annual" = "monthly"): string {
     if (billingCycle === "annual") return "프리미엄 연간";
-    return plan === "premium" ? "프리미엄" : "베이직";
+    // 단일 프리미엄 통합 — basic도 "프리미엄" 라벨
+    return "프리미엄";
 }
 
 /** billing_cycle 기반 갱신 주기 일수 */

@@ -16,15 +16,18 @@ import { PRICING } from "@/config/constants";
 import { getClientIP, checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
 
 // plan → 금액 매핑 (서버에서만 관리)
+// 단일 프리미엄 통합 정책 (2026-05-15) — basic은 normalizePlan으로 premium 매핑
 const PLAN_AMOUNT: Record<string, number> = {
-    basic: PRICING.BASIC_MONTHLY,
     premium: PRICING.PREMIUM_MONTHLY,
 };
 
 const PLAN_NAME: Record<string, string> = {
-    basic: "메멘토애니 베이직 (1개월)",
     premium: "메멘토애니 프리미엄 (1개월)",
 };
+
+function normalizePlan(plan: string): string {
+    return plan === "basic" ? "premium" : plan;
+}
 
 export async function POST(request: NextRequest) {
     try {
@@ -46,7 +49,7 @@ export async function POST(request: NextRequest) {
 
         // 2. 요청 파싱
         const body = await request.json();
-        const plan = body.plan as string;
+        const plan = normalizePlan(body.plan as string);
 
         if (!plan || !PLAN_AMOUNT[plan]) {
             return NextResponse.json(
