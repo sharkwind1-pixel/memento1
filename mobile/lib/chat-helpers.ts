@@ -177,23 +177,64 @@ export function detectPlaceQuery(text: string): { detected: boolean; keyword?: s
 
 /**
  * 사용자 위치 수집 — expo-location 사용.
- * permission 거부되거나 5초 내 응답 없으면 null 반환 (서버는 keyword만 받고 일반 답변).
  *
- * 첫 호출 시 권한 다이얼로그 → 한번 허용/거부하면 OS가 기억.
+ * OS 시스템 권한 다이얼로그는 OS 언어 따름(영어 폰=영어). 우리 앱이 직접 한글로
+ * 보여주려면 시스템 다이얼로그 직전에 in-app Alert를 띄워야 함.
+ *
+ * 흐름:
+ *  1) 권한 상태 확인
+ *  2) 미결정이면 한글 Alert로 "왜 필요한지" 안내 → 확인 → 시스템 권한 요청
+ *  3) 거부 시 한글 Alert로 "설정에서 켜는 법" 안내 후 null
+ *  4) 허용 시 5초 타임아웃 좌표 수집
  */
+
+import { Alert, Linking } from "react-native";
+
+function showRationaleAndAsk(): Promise<boolean> {
+    return new Promise((resolve) => {
+        Alert.alert(
+            "위치 권한 안내",
+            "근처 산책로·동물병원·펫카페를 찾으려면 현재 위치가 필요해요.\n다음 화면에서 '허용'을 눌러주세요.",
+            [
+                { text: "다음에", style: "cancel", onPress: () => resolve(false) },
+                { text: "확인", onPress: () => resolve(true) },
+            ],
+            { cancelable: false },
+        );
+    });
+}
+
+function showSettingsGuide(): void {
+    Alert.alert(
+        "위치 권한이 꺼져있어요",
+        "설정 → 메멘토애니 → 권한 → 위치 에서 '허용'으로 바꿔주세요.",
+        [
+            { text: "닫기", style: "cancel" },
+            { text: "설정 열기", onPress: () => Linking.openSettings().catch(() => {}) },
+        ],
+    );
+}
+
 export async function getUserLocation(): Promise<{ lat: number; lng: number } | null> {
     try {
         // 1) 현재 권한 상태
         let { status } = await Location.getForegroundPermissionsAsync();
 
-        // 2) 미결정이면 요청
-        if (status !== Location.PermissionStatus.GRANTED) {
+        // 2) 미결정이면 한글 안내 후 시스템 다이얼로그
+        if (status === Location.PermissionStatus.UNDETERMINED) {
+            const accepted = await showRationaleAndAsk();
+            if (!accepted) return null;
             const req = await Location.requestForegroundPermissionsAsync();
             status = req.status;
         }
 
-        // 3) 거부 시 null
-        if (status !== Location.PermissionStatus.GRANTED) return null;
+        // 3) 거부 상태면 설정 안내 후 null
+        if (status !== Location.PermissionStatus.GRANTED) {
+            if (status === Location.PermissionStatus.DENIED) {
+                showSettingsGuide();
+            }
+            return null;
+        }
 
         // 4) 좌표 수집 (5초 타임아웃, 저정확도로 빠르게)
         const positionPromise = Location.getCurrentPositionAsync({
