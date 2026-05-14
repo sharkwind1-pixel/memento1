@@ -25,13 +25,15 @@ interface Reminder {
     enabled: boolean;
 }
 
+// DB pet_reminders.type CHECK 제약과 정확히 일치 (walk/meal/medicine/vaccine/grooming/vet/custom)
 const TYPE_ICON: Record<string, React.ComponentProps<typeof Ionicons>["name"]> = {
-    feeding: "restaurant-outline",
     walk: "walk-outline",
+    meal: "restaurant-outline",
     medicine: "medkit-outline",
+    vaccine: "shield-checkmark-outline",
     grooming: "water-outline",
     vet: "heart-outline",
-    other: "ellipsis-horizontal-outline",
+    custom: "ellipsis-horizontal-outline",
 };
 
 interface Props {

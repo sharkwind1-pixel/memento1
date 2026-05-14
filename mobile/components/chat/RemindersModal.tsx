@@ -69,6 +69,11 @@ export default function RemindersModal({ visible, onClose, petId, petName, accen
     const [newType, setNewType] = useState("meal");
     const [newTitle, setNewTitle] = useState("");
     const [newTime, setNewTime] = useState("09:00");
+    // 반복 패턴: daily / weekly / monthly / once (웹 패리티)
+    const [newScheduleType, setNewScheduleType] = useState<"daily" | "weekly" | "monthly" | "once">("daily");
+    const [newDayOfWeek, setNewDayOfWeek] = useState(1); // weekly: 0=일~6=토
+    const [newDayOfMonth, setNewDayOfMonth] = useState(1); // monthly: 1~31
+    const [newDate, setNewDate] = useState(""); // once: YYYY-MM-DD
 
     const load = useCallback(async () => {
         if (!session || !petId) { setLoading(false); return; }
@@ -95,6 +100,10 @@ export default function RemindersModal({ visible, onClose, petId, petName, accen
             setNewTitle("");
             setNewTime("09:00");
             setNewType("meal");
+            setNewScheduleType("daily");
+            setNewDayOfWeek(1);
+            setNewDayOfMonth(1);
+            setNewDate("");
         }
     }, [visible, load]);
 
@@ -113,6 +122,17 @@ export default function RemindersModal({ visible, onClose, petId, petName, accen
             Alert.alert("알림", "시간 형식은 HH:MM 이어야 해요 (예: 09:00)");
             return;
         }
+        // 반복 패턴별 검증
+        if (newScheduleType === "once" && !/^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
+            Alert.alert("알림", "한 번만 알림은 날짜를 YYYY-MM-DD 형식으로 입력해주세요");
+            return;
+        }
+        // schedule payload 구성 (웹 reminders/route.ts와 1:1 매칭)
+        const schedule: Record<string, unknown> = { type: newScheduleType, time: newTime };
+        if (newScheduleType === "weekly") schedule.dayOfWeek = newDayOfWeek;
+        if (newScheduleType === "monthly") schedule.dayOfMonth = newDayOfMonth;
+        if (newScheduleType === "once") schedule.date = newDate;
+
         setSubmitting(true);
         try {
             const res = await fetch(`${API_BASE_URL}/api/reminders`, {
@@ -125,7 +145,7 @@ export default function RemindersModal({ visible, onClose, petId, petName, accen
                     petId,
                     type: newType,
                     title,
-                    schedule: { type: "daily", time: newTime },
+                    schedule,
                 }),
             });
             if (!res.ok) {
@@ -157,21 +177,32 @@ export default function RemindersModal({ visible, onClose, petId, petName, accen
 
     async function handleToggle(reminder: Reminder) {
         if (!session) return;
+        // 낙관적 업데이트: 즉시 UI 반영. 실패 시 롤백.
+        const previousEnabled = reminder.enabled;
+        setReminders((prev) =>
+            prev.map((r) => (r.id === reminder.id ? { ...r, enabled: !r.enabled } : r)),
+        );
         try {
             const res = await fetch(`${API_BASE_URL}/api/reminders/${reminder.id}`, {
-                method: "PATCH",
+                method: "PUT", // 서버 라우트가 PUT만 받음 (PATCH는 405)
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${session.access_token}`,
                 },
-                body: JSON.stringify({ enabled: !reminder.enabled }),
+                body: JSON.stringify({ toggleEnabled: !previousEnabled }), // 서버 분기 키
             });
-            if (!res.ok) return;
+            if (!res.ok) {
+                // 롤백 + 사용자 안내
+                setReminders((prev) =>
+                    prev.map((r) => (r.id === reminder.id ? { ...r, enabled: previousEnabled } : r)),
+                );
+                Alert.alert("리마인더 변경 실패", `다시 시도해주세요 (${res.status})`);
+            }
+        } catch (e) {
             setReminders((prev) =>
-                prev.map((r) => (r.id === reminder.id ? { ...r, enabled: !r.enabled } : r)),
+                prev.map((r) => (r.id === reminder.id ? { ...r, enabled: previousEnabled } : r)),
             );
-        } catch {
-            // silent
+            Alert.alert("네트워크 오류", e instanceof Error ? e.message : "다시 시도해주세요");
         }
     }
 
@@ -281,6 +312,100 @@ export default function RemindersModal({ visible, onClose, petId, petName, accen
                             maxLength={5}
                             keyboardType={Platform.OS === "ios" ? "numbers-and-punctuation" : "default"}
                         />
+
+                        {/* 반복 패턴 (웹 패리티) */}
+                        <Text style={[styles.fieldLabel, { color: titleColor }]}>반복</Text>
+                        <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+                            {([
+                                { v: "daily", label: "매일" },
+                                { v: "weekly", label: "매주" },
+                                { v: "monthly", label: "매월" },
+                                { v: "once", label: "한 번만" },
+                            ] as const).map((opt) => (
+                                <TouchableOpacity
+                                    key={opt.v}
+                                    onPress={() => setNewScheduleType(opt.v)}
+                                    style={{
+                                        paddingHorizontal: 12,
+                                        paddingVertical: 6,
+                                        borderRadius: 9999,
+                                        borderWidth: 1,
+                                        borderColor: newScheduleType === opt.v ? accentColor : COLORS.gray[300],
+                                        backgroundColor: newScheduleType === opt.v ? accentColor + "15" : "transparent",
+                                    }}
+                                    activeOpacity={0.85}
+                                >
+                                    <Text style={{
+                                        fontSize: 13,
+                                        fontWeight: newScheduleType === opt.v ? "700" : "500",
+                                        color: newScheduleType === opt.v ? accentColor : subColor,
+                                    }}>{opt.label}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+
+                        {/* weekly: 요일 선택 */}
+                        {newScheduleType === "weekly" && (
+                            <View style={{ flexDirection: "row", gap: 4, flexWrap: "wrap", marginBottom: 8 }}>
+                                {(["일", "월", "화", "수", "목", "금", "토"]).map((day, idx) => (
+                                    <TouchableOpacity
+                                        key={day}
+                                        onPress={() => setNewDayOfWeek(idx)}
+                                        style={{
+                                            width: 36, height: 36, borderRadius: 18,
+                                            alignItems: "center", justifyContent: "center",
+                                            borderWidth: 1,
+                                            borderColor: newDayOfWeek === idx ? accentColor : COLORS.gray[300],
+                                            backgroundColor: newDayOfWeek === idx ? accentColor : "transparent",
+                                        }}
+                                        activeOpacity={0.85}
+                                    >
+                                        <Text style={{
+                                            fontSize: 13,
+                                            fontWeight: "600",
+                                            color: newDayOfWeek === idx ? "#fff" : subColor,
+                                        }}>{day}</Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        )}
+
+                        {/* monthly: 일자 선택 */}
+                        {newScheduleType === "monthly" && (
+                            <TextInput
+                                value={String(newDayOfMonth)}
+                                onChangeText={(v) => {
+                                    const n = parseInt(v, 10);
+                                    if (!isNaN(n) && n >= 1 && n <= 31) setNewDayOfMonth(n);
+                                    else if (v === "") setNewDayOfMonth(1);
+                                }}
+                                placeholder="1~31일"
+                                placeholderTextColor={placeholderColor}
+                                style={[styles.input, {
+                                    backgroundColor: cardBg,
+                                    color: titleColor,
+                                    borderColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[200],
+                                }]}
+                                keyboardType="number-pad"
+                                maxLength={2}
+                            />
+                        )}
+
+                        {/* once: 날짜 선택 */}
+                        {newScheduleType === "once" && (
+                            <TextInput
+                                value={newDate}
+                                onChangeText={setNewDate}
+                                placeholder="YYYY-MM-DD (예: 2026-12-25)"
+                                placeholderTextColor={placeholderColor}
+                                style={[styles.input, {
+                                    backgroundColor: cardBg,
+                                    color: titleColor,
+                                    borderColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[200],
+                                }]}
+                                maxLength={10}
+                            />
+                        )}
 
                         <View style={{ flexDirection: "row", gap: 8, marginTop: 16 }}>
                             <TouchableOpacity
