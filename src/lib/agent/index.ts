@@ -56,3 +56,10 @@ export type { ConversationSummary } from "./conversation";
 export {
     fixKoreanParticles,
 } from "./helpers";
+
+// 타임라인 패턴 분석 (조기 건강 신호 감지)
+export {
+    analyzeTimelinePatterns,
+    getTopPattern,
+} from "./timeline-patterns";
+export type { TimelinePattern, PatternSeverity } from "./timeline-patterns";

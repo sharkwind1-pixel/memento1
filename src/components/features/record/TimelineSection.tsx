@@ -27,10 +27,14 @@ import {
     Clock,
     Search,
     FileText,
+    AlertTriangle,
+    Info,
+    Stethoscope,
 } from "lucide-react";
 import KakaoShareButton from "@/components/common/KakaoShareButton";
 import { TIMELINE_CATEGORY_OPTIONS, type TimelineCategory } from "@/types";
 import TimelineExportModal from "./TimelineExportModal";
+import { getTopPattern } from "@/lib/agent/timeline-patterns";
 
 interface TimelineSectionProps {
     petId: string;
@@ -131,6 +135,9 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
         setEditingEntryId(null);
     };
 
+    // 패턴 분석 (블로그 글 약속: 조기 건강 신호 감지)
+    const topPattern = useMemo(() => getTopPattern(timeline), [timeline]);
+
     // 검색 + 카테고리 필터 적용된 timeline (블로그 글이 약속한 검색)
     const filteredTimeline = useMemo(() => {
         const q = searchQuery.trim().toLowerCase();
@@ -216,6 +223,44 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                     </div>
                 </CardHeader>
                 <CardContent>
+                    {/* AI 패턴 분석 배너 (블로그 글 약속: 조기 건강 신호 감지) */}
+                    {topPattern && (
+                        <div className={`mb-4 p-3 rounded-xl border flex items-start gap-2.5 ${
+                            topPattern.severity === "alert"
+                                ? "bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800"
+                                : topPattern.severity === "warn"
+                                    ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800"
+                                    : "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
+                        }`}>
+                            <div className="flex-shrink-0 mt-0.5">
+                                {topPattern.severity === "alert" ? (
+                                    <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                                ) : topPattern.severity === "warn" ? (
+                                    <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                                ) : (
+                                    <Info className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                )}
+                            </div>
+                            <div className="flex-1">
+                                <p className={`text-sm font-medium ${
+                                    topPattern.severity === "alert"
+                                        ? "text-rose-800 dark:text-rose-200"
+                                        : topPattern.severity === "warn"
+                                            ? "text-amber-800 dark:text-amber-200"
+                                            : "text-blue-800 dark:text-blue-200"
+                                }`}>
+                                    {topPattern.message}
+                                </p>
+                                {topPattern.needsVetConsult && (
+                                    <p className="text-xs mt-1 flex items-center gap-1 text-rose-700 dark:text-rose-300">
+                                        <Stethoscope className="w-3 h-3" />
+                                        수의사 상담 권장 — 위 "내보내기" 버튼으로 기록을 정리해 가세요
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     {/* 검색 + 카테고리 필터 (블로그 글이 약속한 "검색 용이") */}
                     {timeline.length > 0 && (
                         <div className="space-y-2 mb-4">

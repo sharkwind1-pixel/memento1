@@ -417,6 +417,29 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
         return <View style={styles.loadingInline}><ActivityIndicator color={accentColor} /></View>;
     }
 
+    // 패턴 분석 — 블로그 글 약속: 조기 건강 신호 감지
+    // (웹 src/lib/agent/timeline-patterns.ts 모바일 단순 재구현, 같은 룰)
+    const topPattern = (() => {
+        if (entries.length === 0) return null as null | { code: string; message: string; severity: "alert" | "warn" | "info"; needsVetConsult: boolean };
+        const within = (days: number) => {
+            const since = new Date();
+            since.setDate(since.getDate() - days);
+            const sinceStr = since.toISOString().split("T")[0];
+            return entries.filter((e) => e.date >= sinceStr);
+        };
+        const sick7 = within(7).filter((e) => e.mood === "sick");
+        if (sick7.length >= 3) return { code: "sick_frequent", message: `최근 7일 동안 컨디션이 안 좋다고 ${sick7.length}번 기록됐어요. 수의사 상담을 고려해보세요.`, severity: "alert" as const, needsVetConsult: true };
+        const poop7 = within(7).filter((e) => e.category === "배변");
+        if (poop7.length >= 3) return { code: "poop_issue", message: `최근 7일 동안 배변 관련 기록이 ${poop7.length}번이에요. 식이/소화 문제 가능성, 수의사와 상담 권장.`, severity: "alert" as const, needsVetConsult: true };
+        const health30 = within(30).filter((e) => e.category === "건강");
+        if (health30.length >= 3) return { code: "health_accum", message: `최근 한 달 동안 건강 관련 기록이 ${health30.length}번이에요. 정기 건강검진을 고려해보세요.`, severity: "warn" as const, needsVetConsult: true };
+        const sad14 = within(14).filter((e) => e.mood === "sad");
+        if (sad14.length >= 5) return { code: "sad_pattern", message: `최근 2주 동안 기분이 가라앉은 날이 ${sad14.length}번이에요. 환경 변화나 활동량을 살펴봐주세요.`, severity: "warn" as const, needsVetConsult: false };
+        const meal7 = within(7).filter((e) => e.category === "사료");
+        if (meal7.length >= 5) return { code: "meal_change", message: `최근 7일 동안 사료/식사 관련 기록이 ${meal7.length}번이에요. 식습관 변화를 꾸준히 살펴봐주세요.`, severity: "warn" as const, needsVetConsult: false };
+        return null;
+    })();
+
     // 무드 + 카테고리 + 검색 필터 적용
     const filteredEntries = (() => {
         const q = searchQuery.trim().toLowerCase();
@@ -462,6 +485,55 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
                                 petName={petName}
                                 accentColor={accentColor}
                             />
+                        )}
+
+                        {/* AI 패턴 분석 배너 (블로그 글 약속: 조기 건강 신호) */}
+                        {topPattern && (
+                            <View style={{
+                                marginBottom: 12,
+                                padding: 12,
+                                borderRadius: 12,
+                                borderWidth: 1,
+                                flexDirection: "row",
+                                gap: 10,
+                                alignItems: "flex-start",
+                                backgroundColor: topPattern.severity === "alert"
+                                    ? (isDarkMode ? "rgba(225,29,72,0.15)" : "#FEF2F2")
+                                    : topPattern.severity === "warn"
+                                        ? (isDarkMode ? "rgba(245,158,11,0.15)" : "#FFFBEB")
+                                        : (isDarkMode ? "rgba(59,130,246,0.15)" : "#EFF6FF"),
+                                borderColor: topPattern.severity === "alert"
+                                    ? (isDarkMode ? "rgba(225,29,72,0.3)" : "#FECACA")
+                                    : topPattern.severity === "warn"
+                                        ? (isDarkMode ? "rgba(245,158,11,0.3)" : "#FDE68A")
+                                        : (isDarkMode ? "rgba(59,130,246,0.3)" : "#BFDBFE"),
+                            }}>
+                                <Ionicons
+                                    name={topPattern.severity === "info" ? "information-circle" : "warning"}
+                                    size={18}
+                                    color={topPattern.severity === "alert" ? "#DC2626" : topPattern.severity === "warn" ? "#D97706" : "#2563EB"}
+                                    style={{ marginTop: 1 }}
+                                />
+                                <View style={{ flex: 1 }}>
+                                    <Text style={{
+                                        fontSize: 13,
+                                        fontWeight: "600",
+                                        lineHeight: 18,
+                                        color: topPattern.severity === "alert"
+                                            ? (isDarkMode ? "#FCA5A5" : "#991B1B")
+                                            : topPattern.severity === "warn"
+                                                ? (isDarkMode ? "#FCD34D" : "#92400E")
+                                                : (isDarkMode ? "#93C5FD" : "#1E40AF"),
+                                    }}>{topPattern.message}</Text>
+                                    {topPattern.needsVetConsult && (
+                                        <Text style={{
+                                            fontSize: 11,
+                                            marginTop: 4,
+                                            color: isDarkMode ? "#FCA5A5" : "#B91C1C",
+                                        }}>수의사 상담 권장 — 위 "공유" 버튼으로 기록을 정리해 가세요</Text>
+                                    )}
+                                </View>
+                            </View>
                         )}
 
                         <View style={styles.timelineHeader}>
