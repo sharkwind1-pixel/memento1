@@ -299,7 +299,12 @@ async function uploadImage(
         const timestamp = Date.now();
         const randomId = Math.random().toString(36).substring(2, 9);
         const finalExt = compressed.type === "image/jpeg" ? "jpg" : validation.ext;
-        const path = `${pathPrefix}/${userId}/${timestamp}-${randomId}.${finalExt}`;
+        // storage RLS 정책 "Users can upload own media": (foldername)[1] = auth.uid()
+        // → 첫 폴더는 무조건 userId여야 함. pathPrefix는 두 번째로 배치.
+        // 단 community는 별도 정책 "community/{userId}/..." 형태라 그 형태 유지.
+        const path = pathPrefix === "community" || pathPrefix === "magazine"
+            ? `${pathPrefix}/${userId}/${timestamp}-${randomId}.${finalExt}`
+            : `${userId}/${pathPrefix}/${timestamp}-${randomId}.${finalExt}`;
 
         const { data, error } = await supabase.storage
             .from("pet-media")
