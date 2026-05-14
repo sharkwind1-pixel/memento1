@@ -173,7 +173,7 @@ export const PREMIUM_LIMITS = {
 export const PRICING = {
     BASIC_MONTHLY: 9900,         // 베이직 월 구독 (deprecated, 단일 프리미엄으로 통합 예정)
     PREMIUM_MONTHLY: 9900,       // 프리미엄 월 구독 (단순화 정책)
-    PREMIUM_ANNUAL: 89000,       // 프리미엄 연 구독 (월 환산 7,416원, 25% 할인 — 신규)
+    PREMIUM_ANNUAL: 88800,       // 프리미엄 연 구독 (월 환산 7,400원, 정확히 25% 할인 + 30,000원 절약 — 우수리 뗀 할인 가격 인상)
 } as const;
 
 // ===== 결제 플랜 기간 (일) =====

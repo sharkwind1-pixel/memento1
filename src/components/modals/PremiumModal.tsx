@@ -249,19 +249,31 @@ export default function PremiumModal({
                                 <Crown className="w-5 h-5 text-violet-500" />
                                 <span className="text-base font-bold text-gray-800 dark:text-white">프리미엄</span>
                             </div>
-                            <div className="flex items-baseline gap-0.5">
+                            <div className="flex items-baseline gap-2 flex-wrap">
                                 {billingCycle === "annual" ? (
                                     <>
-                                        <span className="text-2xl sm:text-3xl font-display font-bold text-gray-800 dark:text-white">{premiumAnnualMonthly}</span>
-                                        <span className="text-xs text-gray-400">원/월</span>
+                                        {/* 정가 strike-through로 할인 임팩트 강조 */}
+                                        <span className="text-sm text-gray-400 line-through">{premiumPrice}원</span>
+                                        <div className="flex items-baseline gap-0.5">
+                                            <span className="text-2xl sm:text-3xl font-display font-bold text-rose-600 dark:text-rose-400">{premiumAnnualMonthly}</span>
+                                            <span className="text-xs text-gray-400">원/월</span>
+                                        </div>
+                                        <span className="text-[11px] font-bold text-rose-600 bg-rose-50 dark:bg-rose-900/30 px-1.5 py-0.5 rounded-full">
+                                            -{ANNUAL_SAVINGS.percent}%
+                                        </span>
                                     </>
                                 ) : (
-                                    <>
+                                    <div className="flex items-baseline gap-0.5">
                                         <span className="text-2xl sm:text-3xl font-display font-bold text-gray-800 dark:text-white">{premiumPrice}</span>
                                         <span className="text-xs text-gray-400">원/월</span>
-                                    </>
+                                    </div>
                                 )}
                             </div>
+                            {billingCycle === "annual" && (
+                                <div className="mt-1.5 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                                    매년 {ANNUAL_SAVINGS.saved.toLocaleString()}원 절약!
+                                </div>
+                            )}
                             <ul className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5">
                                 <li className="text-[12px] text-gray-600 dark:text-gray-300 flex items-start gap-1">
                                     <Check className="w-3.5 h-3.5 text-violet-500 flex-shrink-0 mt-0.5" />
@@ -315,16 +327,22 @@ export default function PremiumModal({
                                             : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                                     }`}
                                 >
-                                    <div className="absolute -top-2 right-2 bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                                    <div className="absolute -top-2 right-2 bg-gradient-to-r from-rose-500 to-pink-500 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full shadow-sm">
                                         {ANNUAL_SAVINGS.percent}% 할인
                                     </div>
-                                    <div className="text-xs font-bold text-gray-800 dark:text-white">연 결제</div>
-                                    <div className="flex items-baseline gap-0.5 mt-0.5">
-                                        <span className="text-base font-display font-bold text-gray-800 dark:text-white">{premiumAnnualMonthly}</span>
-                                        <span className="text-[10px] text-gray-400">원/월</span>
+                                    <div className="flex items-center gap-1">
+                                        <div className="text-xs font-bold text-gray-800 dark:text-white">연 결제</div>
+                                        <span className="text-[9px] font-bold text-rose-600 bg-rose-50 dark:bg-rose-900/30 px-1 py-0 rounded">BEST</span>
+                                    </div>
+                                    <div className="flex items-baseline gap-1 mt-0.5 flex-wrap">
+                                        <span className="text-[11px] text-gray-400 line-through">{premiumPrice}원</span>
+                                        <div className="flex items-baseline gap-0.5">
+                                            <span className="text-base font-display font-bold text-rose-600 dark:text-rose-400">{premiumAnnualMonthly}</span>
+                                            <span className="text-[10px] text-gray-400">원/월</span>
+                                        </div>
                                     </div>
                                     <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
-                                        1년 {premiumAnnualPrice}원 일시 결제
+                                        연 {premiumAnnualPrice}원 · <span className="font-bold text-rose-600 dark:text-rose-400">{ANNUAL_SAVINGS.saved.toLocaleString()}원 절약</span>
                                     </div>
                                 </button>
                             </div>
@@ -379,7 +397,7 @@ export default function PremiumModal({
                                 {isProcessing
                                     ? "결제 진행 중..."
                                     : billingCycle === "annual" && isSubscription
-                                        ? `프리미엄 연 결제 ${premiumAnnualPrice}원`
+                                        ? `프리미엄 연 결제 ${premiumAnnualPrice}원 · ${ANNUAL_SAVINGS.saved.toLocaleString()}원 절약`
                                         : `프리미엄 ${premiumPrice}원/월 ${isSubscription ? "구독" : "결제"}`
                                 }
                             </Button>
