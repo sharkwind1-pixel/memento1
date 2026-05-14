@@ -12,7 +12,7 @@
  *
  * Props:
  *  - type: "video" | "subscription"
- *  - plan: subscription일 때 "basic" | "premium"
+ *  - plan: subscription일 때 "premium" | "premium_annual" (단일 프리미엄 통합 정책 2026-05-15)
  */
 
 import { useState, useRef, useCallback } from "react";
@@ -43,7 +43,7 @@ export type PayMethod =
 interface Props {
     visible: boolean;
     type: "video" | "subscription";
-    plan?: "basic" | "premium" | "premium_annual"; // subscription일 때만. premium_annual = 연 구독.
+    plan?: "premium" | "premium_annual"; // subscription일 때만. premium_annual = 연 구독. (단일 프리미엄 통합)
     method?: PayMethod;          // 단건 결제 수단. 미지정 시 card.
     packageSize?: 1 | 5 | 10;    // video일 때 묶음 사이즈 (1=단품, 5=5회 묶음, 10=10회 묶음)
     onClose: () => void;

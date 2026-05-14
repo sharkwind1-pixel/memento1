@@ -232,7 +232,7 @@ export default function SubscriptionScreen() {
                 </TouchableOpacity>
             </View>
 
-            {/* 연 구독 추천 카드 — 25% 할인 강조 */}
+            {/* 연 구독 추천 카드 — 25% 할인 임팩트 강조 (웹 PremiumModal과 패리티) */}
             {!isPremium && (
                 <View style={[styles.annualCard, { borderColor: COLORS.memento[300] }]}>
                     <View style={[styles.annualBadge, { backgroundColor: "#EF4444" }]}>
@@ -240,15 +240,23 @@ export default function SubscriptionScreen() {
                     </View>
                     <View style={styles.annualRow}>
                         <View style={{ flex: 1 }}>
-                            <Text style={[styles.annualTitle, { color: isDarkMode ? COLORS.white : COLORS.gray[900] }]}>
-                                프리미엄 연 구독
-                            </Text>
-                            <Text style={[styles.annualSub, { color: isDarkMode ? COLORS.gray[400] : COLORS.gray[600] }]}>
-                                1년치 한 번에 결제하고 {calculateAnnualSavings().saved.toLocaleString()}원 절약
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                                <Text style={[styles.annualTitle, { color: isDarkMode ? COLORS.white : COLORS.gray[900] }]}>
+                                    프리미엄 연 구독
+                                </Text>
+                                <View style={{ backgroundColor: "rgba(239,68,68,0.12)", paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 }}>
+                                    <Text style={{ fontSize: 10, fontWeight: "800", color: "#DC2626" }}>BEST</Text>
+                                </View>
+                            </View>
+                            <Text style={[styles.annualSub, { color: "#DC2626", fontWeight: "700", marginTop: 2 }]}>
+                                매년 {calculateAnnualSavings().saved.toLocaleString()}원 절약!
                             </Text>
                         </View>
                         <View style={{ alignItems: "flex-end" }}>
-                            <Text style={[styles.annualPrice, { color: COLORS.memento[600] }]}>
+                            <Text style={{ fontSize: 12, color: COLORS.gray[400], textDecorationLine: "line-through" }}>
+                                월 {PRICING.PREMIUM_MONTHLY.toLocaleString()}원
+                            </Text>
+                            <Text style={[styles.annualPrice, { color: "#DC2626" }]}>
                                 월 {Math.round(PRICING.PREMIUM_ANNUAL / 12).toLocaleString()}원
                             </Text>
                             <Text style={[styles.annualTotal, { color: COLORS.gray[500] }]}>
@@ -262,7 +270,7 @@ export default function SubscriptionScreen() {
                         activeOpacity={0.85}
                     >
                         <Text style={{ color: "#fff", fontWeight: "700", fontSize: 14 }}>
-                            연 구독 시작하기 (웹)
+                            연 구독 시작하기 · {calculateAnnualSavings().saved.toLocaleString()}원 절약
                         </Text>
                     </TouchableOpacity>
                 </View>

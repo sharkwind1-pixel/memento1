@@ -536,7 +536,7 @@ export default function VideoGenerateModal({ visible, onClose, onSuccess, pet, i
                 <PaymentWebViewModal
                     visible={paymentMode !== null}
                     type={paymentMode ?? "video"}
-                    plan={paymentMode === "subscription" ? "basic" : undefined}
+                    plan={paymentMode === "subscription" ? "premium" : undefined}
                     method={paymentMode === "video" ? (pickedMethod ?? undefined) : undefined}
                     packageSize={paymentMode === "video" ? pickedPackageSize : undefined}
                     onClose={() => {

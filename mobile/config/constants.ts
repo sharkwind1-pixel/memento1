@@ -21,9 +21,9 @@ export const PREMIUM_LIMITS = {
 } as const;
 
 export const PRICING = {
-    BASIC_MONTHLY: 9900,         // deprecated, 단일 프리미엄으로 통합 예정
-    PREMIUM_MONTHLY: 9900,       // 프리미엄 월 구독 (단순화 정책)
-    PREMIUM_ANNUAL: 89000,       // 프리미엄 연 구독 (월 환산 7,416원, 25% 할인)
+    BASIC_MONTHLY: 9900,         // deprecated, 단일 프리미엄 통합 (2026-05-15) — 잔존 가입자 자연 만료
+    PREMIUM_MONTHLY: 9900,       // 프리미엄 월 구독
+    PREMIUM_ANNUAL: 88800,       // 프리미엄 연 구독 (월 환산 7,400원, 정확히 25% 할인 + 30,000원 절약)
 } as const;
 
 export type BillingCycle = "monthly" | "annual";
