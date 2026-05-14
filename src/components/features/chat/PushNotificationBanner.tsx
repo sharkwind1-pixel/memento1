@@ -19,6 +19,7 @@ import {
     unsubscribeFromPush,
 } from "@/lib/push-notifications";
 import { API } from "@/config/apiEndpoints";
+import { josa } from "@/lib/korean-particle";
 import { supabase } from "@/lib/supabase";
 import { safeGetItem, safeSetItem, safeRemoveItem } from "@/lib/safe-storage";
 
@@ -197,7 +198,7 @@ export default function PushNotificationBanner({
             }
 
             setBannerState("just-subscribed");
-            toast.success(`매일 ${getHourLabel(selectedHour)}에 ${petName}이(가) 인사할게요`);
+            toast.success(`매일 ${getHourLabel(selectedHour)}에 ${petName}${josa(petName, "이/가")} 인사할게요`);
 
             // 3초 후 구독 관리 UI로 전환
             hideTimerRef.current = setTimeout(() => {

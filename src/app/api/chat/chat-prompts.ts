@@ -21,15 +21,8 @@ import {
     getSpeciesSound,
 } from "@/lib/species-context";
 
-/** 펫 이름 끝 글자의 받침 유무에 따른 조사 반환 */
-function nameParticle(name: string): { iya: string; iga: string; eul: string; eun: string; a: string } {
-    const last = name.charCodeAt(name.length - 1);
-    const isHangul = last >= 0xAC00 && last <= 0xD7A3;
-    const hasBatchim = isHangul && (last - 0xAC00) % 28 !== 0;
-    return hasBatchim
-        ? { iya: "이야", iga: "이", eul: "을", eun: "은", a: "아" }
-        : { iya: "야", iga: "가", eul: "를", eun: "는", a: "야" };
-}
+// nameParticle은 src/lib/korean-particle.ts에서 단일 출처로 관리 (모바일/cron/chatUtils 공유)
+import { nameParticle } from "@/lib/korean-particle";
 
 // getSpeciesSound는 species-context.ts로 이동했다 (서버/클라 공용 + 단일 출처).
 

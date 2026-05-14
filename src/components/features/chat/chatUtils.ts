@@ -4,6 +4,7 @@ import { FREE_LIMITS, PREMIUM_LIMITS } from "@/config/constants";
 import { STORAGE_KEYS } from "@/constants/storage";
 import { safeGetItem, safeSetItem } from "@/lib/safe-storage";
 import { fixKoreanParticles } from "@/lib/agent/helpers";
+import { nameParticle } from "@/lib/korean-particle";
 import type { Pet } from "@/types";
 import { inferSpeciesFromPet, getSpeciesSound, type PetSpecies } from "@/lib/species-context";
 
@@ -225,18 +226,18 @@ function _generateGreetingInner(
         // --- 일상 모드 ---
         // 특별일 우선
         if (specialDayHook) {
-            return `${petSound} 안녕! 나 ${petName}이야! ${specialDayHook}${reminderHook ? ` 그리고 ${reminderHook}` : ""}`;
+            return `${petSound} 안녕! 나 ${petName}${nameParticle(petName).iya}! ${specialDayHook}${reminderHook ? ` 그리고 ${reminderHook}` : ""}`;
         }
         if (isRecent && recentEntry) {
             const moodMessages: Record<string, string> = {
-                happy: `${petSound} ${timeGreeting}! 나 ${petName}이야! 지난번에 "${recentEntry.title}" 진짜 재밌었어! 오늘도 뭐 재밌는 거 하자~`,
+                happy: `${petSound} ${timeGreeting}! 나 ${petName}${nameParticle(petName).iya}! 지난번에 "${recentEntry.title}" 진짜 재밌었어! 오늘도 뭐 재밌는 거 하자~`,
                 normal: `${petSound} 안녕! 나 ${petName}! ${timeGreeting}이야! 지난번 "${recentEntry.title}" 어땠어? 오늘은 뭐 할 거야?`,
-                sad: `${petSound} 안녕! 나 ${petName}이야. ${timeGreeting}이야~ 오늘 기분은 어때?`,
+                sad: `${petSound} 안녕! 나 ${petName}${nameParticle(petName).iya}. ${timeGreeting}이야~ 오늘 기분은 어때?`,
                 sick: `${petSound} 나 ${petName}! 이제 괜찮아~ ${timeGreeting}이야! 오늘 뭐 할 거야?`,
             };
             let base = moodMessages[recentEntry.mood || "normal"] ||
-                `${petSound} 안녕! 나 ${petName}이야! ${timeGreeting}이야~ 오늘도 같이 놀자! 뭐해?`;
-            if (longAbsenceHook) base = `${petSound} ${longAbsenceHook} 나 ${petName}이야! ${timeGreeting}이야~`;
+                `${petSound} 안녕! 나 ${petName}${nameParticle(petName).iya}! ${timeGreeting}이야~ 오늘도 같이 놀자! 뭐해?`;
+            if (longAbsenceHook) base = `${petSound} ${longAbsenceHook} 나 ${petName}${nameParticle(petName).iya}! ${timeGreeting}이야~`;
             if (reminderHook) base += ` ${reminderHook}`;
             return base;
         }
@@ -257,26 +258,26 @@ function buildDailyGreeting(
     // 거북이("...")는 조용한 캐릭터라 의성어 대신 줄임표로 시작
     if (species === "거북이") {
         openings.push(
-            `...안녕. 나 ${petName}이야.`,
+            `...안녕. 나 ${petName}${nameParticle(petName).iya}.`,
             `...왔구나. 나 ${petName}.`,
-            `...${petName}이야. 반가워.`,
+            `...${petName}${nameParticle(petName).iya}. 반가워.`,
         );
     } else if (sound) {
         openings.push(
-            `${sound} 안녕! 나 ${petName}이야!`,
+            `${sound} 안녕! 나 ${petName}${nameParticle(petName).iya}!`,
             `${sound} 나야 나! ${petName}!`,
-            `${sound} 반가워~ 나 ${petName}이라고 해!`,
+            `${sound} 반가워~ 나 ${petName}${nameParticle(petName).iya === "야" ? "라고" : "이라고"} 해!`,
         );
     } else {
         openings.push(
-            `안녕! 나 ${petName}이야!`,
+            `안녕! 나 ${petName}${nameParticle(petName).iya}!`,
             `반가워~ 나 ${petName}!`,
-            `안녕안녕! ${petName}이야~`,
+            `안녕안녕! ${petName}${nameParticle(petName).iya}~`,
         );
     }
     // 품종 기반 추가 오프닝
     if (pet.breed && pet.breed !== "믹스" && pet.breed !== "기타") {
-        openings.push(`${petSound} 안녕! ${pet.breed} ${petName}이야! 잘 부탁해~`);
+        openings.push(`${petSound} 안녕! ${pet.breed} ${petName}${nameParticle(petName).iya}! 잘 부탁해~`);
     }
 
     // 2단계: 성격 기반 한마디
@@ -343,7 +344,7 @@ function buildDailyGreeting(
 
     // 조합
     const opening = longAbsenceHook
-        ? `${petSound} ${longAbsenceHook} 나 ${petName}이야!`
+        ? `${petSound} ${longAbsenceHook} 나 ${petName}${nameParticle(petName).iya}!`
         : pick(openings, seed, 0);
     const closing = pick(closings, seed, 1);
 
@@ -370,11 +371,11 @@ function buildMemorialGreeting(
     const openings = [
         `안녕, 나 ${petName}야. ${timeGreeting}이야.`,
         `나 ${petName}야. 보고 싶었어.`,
-        `안녕... 나 ${petName}이야. 잘 지내고 있어?`,
-        `${petName}이야. 오랜만이야.`,
+        `안녕... 나 ${petName}${nameParticle(petName).iya}. 잘 지내고 있어?`,
+        `${petName}${nameParticle(petName).iya}. 오랜만이야.`,
     ];
     if (pet.breed && pet.breed !== "믹스" && pet.breed !== "기타") {
-        openings.push(`나 ${pet.breed} ${petName}이야. 기억하지?`);
+        openings.push(`나 ${pet.breed} ${petName}${nameParticle(petName).iya}. 기억하지?`);
     }
 
     // 2단계: 성격 기반

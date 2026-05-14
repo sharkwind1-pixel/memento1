@@ -13,6 +13,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyCronSecret, getServiceSupabase, getKstTime } from "@/lib/cron-utils";
 import { FREE_LIMITS } from "@/config/constants";
+import { josa } from "@/lib/korean-particle";
 
 export async function GET(request: NextRequest) {
     const authError = verifyCronSecret(request);
@@ -146,7 +147,7 @@ export async function GET(request: NextRequest) {
                             user_id: pet.user_id,
                             type: "welcome", // 기존 CHECK 제약에 있는 type 사용
                             title: `${pet.name}의 기억의 날`,
-                            body: `${pet.name}이(가) 무지개다리를 건넌 지 ${yearLabel}. 소중한 추억은 언제나 함께해요.`,
+                            body: `${pet.name}${josa(pet.name, "이/가")} 무지개다리를 건넌 지 ${yearLabel}. 소중한 추억은 언제나 함께해요.`,
                             metadata: {
                                 pet_id: pet.id,
                                 pet_name: pet.name,

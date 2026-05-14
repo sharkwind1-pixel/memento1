@@ -7,6 +7,7 @@
  */
 
 import { formatScheduleText } from "@/lib/schedule-utils";
+import { josa } from "@/lib/korean-particle";
 
 // ---- 로컬 타입 (route.ts 전용) ----
 
@@ -561,17 +562,17 @@ export function getSpecialDayContext(pet: PetInfo): string {
     if (pet.status === "memorial" && pet.memorialDate) {
         const memorialMMDD = pet.memorialDate.slice(5, 10);
         if (memorialMMDD === todayStr) {
-            messages.push(`오늘은 ${pet.name}이(가) 무지개다리를 건넌 날입니다.`);
+            messages.push(`오늘은 ${pet.name}${josa(pet.name, "이/가")} 무지개다리를 건넌 날입니다.`);
         }
         // 추모 1주년, 100일 등 체크
         const memorialDate = new Date(pet.memorialDate);
         const daysSince = Math.floor((today.getTime() - memorialDate.getTime()) / (1000 * 60 * 60 * 24));
         if (daysSince === 100) {
-            messages.push(`${pet.name}이(가) 무지개다리를 건넌 지 100일이 되었습니다.`);
+            messages.push(`${pet.name}${josa(pet.name, "이/가")} 무지개다리를 건넌 지 100일이 되었습니다.`);
         }
         if (daysSince === 365 || daysSince === 730 || daysSince === 1095) {
             const years = Math.floor(daysSince / 365);
-            messages.push(`${pet.name}이(가) 무지개다리를 건넌 지 ${years}년이 되었습니다.`);
+            messages.push(`${pet.name}${josa(pet.name, "이/가")} 무지개다리를 건넌 지 ${years}년이 되었습니다.`);
         }
     }
 

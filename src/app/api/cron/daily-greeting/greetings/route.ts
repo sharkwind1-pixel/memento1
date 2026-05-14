@@ -26,6 +26,7 @@ import {
     MAX_IN_IDS,
     type KstTime,
 } from "@/lib/cron-utils";
+import { nameParticle, josa } from "@/lib/korean-particle";
 
 // ===== 타입 =====
 
@@ -58,46 +59,46 @@ interface SubWithHour {
 
 const MORNING_TEMPLATES = [
     (name: string) => `안녕! 나 ${name}! 좋은 아침이야~ 오늘 하루도 파이팅!`,
-    (name: string) => `일어났어? 나 ${name}야! 오늘도 같이 신나게 보내자!`,
+    (name: string) => `일어났어? 나 ${name}${nameParticle(name).iya}! 오늘도 같이 신나게 보내자!`,
     (name: string) => `좋은 아침~ 나 ${name}! 오늘 날씨 어때? 산책 가고 싶다!`,
     (name: string) => `아침이다! 나 ${name}~ 맛있는 거 먹고 힘내자!`,
     (name: string) => `${name} 등장! 벌써 아침이야~ 오늘도 재밌는 하루 보내자!`,
-    (name: string) => `일어나! 일어나! 나 ${name}야~ 오늘 뭐 하고 놀까?`,
-    (name: string) => `안녕~ ${name}이야! 오늘 아침 기분이 좋아~ 같이 놀자!`,
+    (name: string) => `일어나! 일어나! 나 ${name}${nameParticle(name).iya}~ 오늘 뭐 하고 놀까?`,
+    (name: string) => `안녕~ ${name}${nameParticle(name).iya}! 오늘 아침 기분이 좋아~ 같이 놀자!`,
     (name: string) => `${name} 여기! 좋은 아침~ 오늘도 행복한 하루 되길!`,
 ];
 
 const AFTERNOON_TEMPLATES = [
-    (name: string) => `${name}이야! 점심은 맛있게 먹었어? 오후도 화이팅~`,
+    (name: string) => `${name}${nameParticle(name).iya}! 점심은 맛있게 먹었어? 오후도 화이팅~`,
     (name: string) => `나 ${name}! 좀 졸린데... 같이 낮잠 잘래?`,
-    (name: string) => `안녕~ 나 ${name}야! 오후에도 힘내자!`,
+    (name: string) => `안녕~ 나 ${name}${nameParticle(name).iya}! 오후에도 힘내자!`,
     (name: string) => `${name} 등장~ 오후엔 간식 시간 아니야? 기대된다!`,
     (name: string) => `나 ${name}! 심심해~ 놀아줘!`,
-    (name: string) => `오후다! ${name}이야~ 남은 하루도 즐겁게 보내자!`,
-    (name: string) => `${name}이가 찾아왔어! 오늘 뭐 재밌는 일 있었어?`,
+    (name: string) => `오후다! ${name}${nameParticle(name).iya}~ 남은 하루도 즐겁게 보내자!`,
+    (name: string) => `${name}${josa(name, "이/가")} 찾아왔어! 오늘 뭐 재밌는 일 있었어?`,
     (name: string) => `나 ${name}~ 오늘 오후 참 좋다! 뭐 하고 있어?`,
 ];
 
 const EVENING_TEMPLATES = [
     (name: string) => `나 ${name}! 오늘 하루 수고했어~ 푹 쉬어!`,
-    (name: string) => `${name}이야~ 저녁이다! 오늘도 고생 많았어!`,
+    (name: string) => `${name}${nameParticle(name).iya}~ 저녁이다! 오늘도 고생 많았어!`,
     (name: string) => `안녕~ 나 ${name}! 오늘 하루 어땠어? 좋은 꿈 꿔~`,
     (name: string) => `${name} 등장~ 저녁 맛있는 거 먹자!`,
-    (name: string) => `오늘도 수고했어~ 나 ${name}이가 옆에 있을게!`,
+    (name: string) => `오늘도 수고했어~ 나 ${name}${josa(name, "이/가")} 옆에 있을게!`,
     (name: string) => `나 ${name}! 저녁이야~ 오늘 뭐 재밌는 일 있었어?`,
-    (name: string) => `${name}이야! 저녁에는 편하게 쉬자~ 내가 곁에 있을게!`,
+    (name: string) => `${name}${nameParticle(name).iya}! 저녁에는 편하게 쉬자~ 내가 곁에 있을게!`,
     (name: string) => `나 ${name}~ 오늘 하루도 참 잘했어! 내일도 함께하자!`,
 ];
 
 const MEMORIAL_TEMPLATES = [
-    (name: string) => `안녕, 나 ${name}야. 오늘도 네 곁에 있어.`,
-    (name: string) => `나 ${name}야. 여기서 잘 지내고 있어. 넌 어때?`,
-    (name: string) => `${name}야. 오늘도 너를 생각하고 있어. 잘 지내고 있지?`,
-    (name: string) => `나 ${name}야. 따뜻한 햇살 아래서 편안히 쉬고 있어.`,
-    (name: string) => `${name}이가 보내는 마음이야. 항상 네 곁에서 지켜보고 있어.`,
-    (name: string) => `나 ${name}야. 힘든 일 있으면 나한테 말해. 듣고 있을게.`,
-    (name: string) => `${name}야. 오늘도 좋은 하루 보내. 나도 여기서 잘 지내.`,
-    (name: string) => `안녕, ${name}야. 우리 함께한 시간 참 행복했어. 고마워.`,
+    (name: string) => `안녕, 나 ${name}${nameParticle(name).iya}. 오늘도 네 곁에 있어.`,
+    (name: string) => `나 ${name}${nameParticle(name).iya}. 여기서 잘 지내고 있어. 넌 어때?`,
+    (name: string) => `${name}${nameParticle(name).iya}. 오늘도 너를 생각하고 있어. 잘 지내고 있지?`,
+    (name: string) => `나 ${name}${nameParticle(name).iya}. 따뜻한 햇살 아래서 편안히 쉬고 있어.`,
+    (name: string) => `${name}${josa(name, "이/가")} 보내는 마음이야. 항상 네 곁에서 지켜보고 있어.`,
+    (name: string) => `나 ${name}${nameParticle(name).iya}. 힘든 일 있으면 나한테 말해. 듣고 있을게.`,
+    (name: string) => `${name}${nameParticle(name).iya}. 오늘도 좋은 하루 보내. 나도 여기서 잘 지내.`,
+    (name: string) => `안녕, ${name}${nameParticle(name).iya}. 우리 함께한 시간 참 행복했어. 고마워.`,
 ];
 
 function getTemplateGreeting(
@@ -124,7 +125,7 @@ function getTemplateGreeting(
     const body = templates[idx](pet.name);
 
     const title = isMemorial
-        ? `${pet.name}이(가) 찾아왔어요`
+        ? `${pet.name}${josa(pet.name, "이/가")} 찾아왔어요`
         : `${pet.name}의 ${timeSlot} 인사`;
 
     return { title, body };
@@ -182,7 +183,7 @@ function checkSpecialDay(pet: PetInfo, kst: KstTime): SpecialDay {
         if (diffDays > 0 && diffDays % 100 === 0) {
             return {
                 type: "memorial",
-                label: `${pet.name}이(가) 보내는 마음`,
+                label: `${pet.name}${josa(pet.name, "이/가")} 보내는 마음`,
             };
         }
         if (
@@ -192,7 +193,7 @@ function checkSpecialDay(pet: PetInfo, kst: KstTime): SpecialDay {
         ) {
             return {
                 type: "memorial",
-                label: `${pet.name}이(가) 보내는 마음`,
+                label: `${pet.name}${josa(pet.name, "이/가")} 보내는 마음`,
             };
         }
     }
