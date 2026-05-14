@@ -346,10 +346,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             // 가입 환영 메일 발송 트리거 (idempotent — 서버가 중복 차단)
             // data?.welcome_email_sent_at이 null이면 호출. 한 번 보내면 다시 안 보냄.
+            // getAuthUser는 Authorization 헤더 only → access_token 명시 첨부
             if (data && !data.welcome_email_sent_at) {
-                fetch("/api/auth/welcome", { method: "POST" }).catch(() => {
-                    // 메일 실패해도 앱 동작에 영향 X
-                });
+                (async () => {
+                    try {
+                        const { data: sd } = await supabase.auth.getSession();
+                        const token = sd?.session?.access_token;
+                        if (!token) return; // 세션 없으면 skip (어차피 401)
+                        await fetch("/api/auth/welcome", {
+                            method: "POST",
+                            headers: { Authorization: `Bearer ${token}` },
+                        });
+                    } catch { /* 메일 실패해도 앱 동작 영향 X */ }
+                })();
             }
         } catch (err) {
             console.error("[AuthContext] refreshProfile failed:", err instanceof Error ? err.message : err);
