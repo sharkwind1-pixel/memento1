@@ -45,6 +45,7 @@ import {
 } from "@/lib/chat-helpers";
 import AppHeader from "@/components/common/AppHeader";
 import AppDrawer from "@/components/common/AppDrawer";
+import PageBackground, { usePageBgColor } from "@/components/common/PageBackground";
 import PetSwitcher from "@/components/common/PetSwitcher";
 import RemindersModal from "@/components/chat/RemindersModal";
 import PawLoading from "@/components/ui/PawLoading";
@@ -649,21 +650,22 @@ export default function AiChatScreen() {
         handleSend(retryMessage);
     }, [handleSend]);
 
-    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.white;
+    const bgColor = usePageBgColor();
     const borderColor = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
 
-    // 감성 그라데이션 배경 — 모드별 따뜻한 색감
+    // 채팅 본문 그라데이션 — 웹 패리티 (따뜻한 크림 톤)
     const chatBgGradient: [string, string] = isDarkMode
         ? [COLORS.gray[950], COLORS.gray[900]]
         : isMemorialMode
-            ? ["#FFFBEB", "#FEF3C7"]   // 메모리얼: 따뜻한 크림 → 살구
-            : ["#F0F9FF", "#FFFFFF"];  // 일상: 하늘색 → 흰색
+            ? [COLORS.memorial[50], COLORS.memorial[100]]    // memorial-50 → 100
+            : [COLORS.memento[50], COLORS.memento[75]];      // memento-50 → 75 (따뜻한 크림)
 
     const usedCount = Math.min(limit === Infinity ? 0 : limit, limit === Infinity ? 0 : (limit - remainingChats));
 
     if (!selectedPet) {
         return (
             <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
+                <PageBackground />
                 <AppHeader onOpenDrawer={() => setDrawerOpen(true)} />
                 <AppDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
                 <View style={styles.emptyCenter}>

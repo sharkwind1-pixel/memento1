@@ -29,6 +29,7 @@ import {
 import type { MinihompySettings, PlacedMinimi, UserMinimiRow } from "@/types";
 import AppHeader from "@/components/common/AppHeader";
 import AppDrawer from "@/components/common/AppDrawer";
+import PageBackground, { usePageBgColor } from "@/components/common/PageBackground";
 import PetSwitcher from "@/components/common/PetSwitcher";
 import MinimiShopModal from "@/components/minihompy/MinimiShopModal";
 import BackgroundShopModal from "@/components/minihompy/BackgroundShopModal";
@@ -222,11 +223,12 @@ export default function MinihompyScreen() {
     const bgSlug = settings?.backgroundSlug ?? "default_sky";
     const background = findBackgroundOrDefault(bgSlug);
     // equippedSlug는 StageEditor 내부에서 자체 처리. 단일 미니미 fallback 표시는 추후 추가.
-    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.white;
+    const bgColor = usePageBgColor();
 
     if (loading) {
         return (
             <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
+                <PageBackground />
                 <AppHeader onOpenDrawer={() => setDrawerOpen(true)} />
                 <AppDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
                 <View style={styles.loadingBox}>

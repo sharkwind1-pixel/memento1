@@ -26,6 +26,7 @@ import type { TimelineEntry } from "@/types";
 import VideoResultModal, { type VideoResult } from "@/components/record/VideoResultModal";
 import AppHeader from "@/components/common/AppHeader";
 import AppDrawer from "@/components/common/AppDrawer";
+import PageBackground, { usePageBgColor } from "@/components/common/PageBackground";
 import PetSwitcher from "@/components/common/PetSwitcher";
 import TimelineWriteModal, { type TimelineEntryDraft, type TimelineMood } from "@/components/record/TimelineWriteModal";
 import MediaUploadModal from "@/components/record/MediaUploadModal";
@@ -91,10 +92,11 @@ export default function RecordScreen() {
         );
     }
 
-    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.gray[50];
+    const bgColor = usePageBgColor();
 
     return (
         <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
+            <PageBackground />
             <AppHeader onOpenDrawer={() => setDrawerOpen(true)} />
             <AppDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
             {/* 헤더 */}

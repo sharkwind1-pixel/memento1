@@ -19,7 +19,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { ScrollView, RefreshControl, View, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
+import PageBackground, { usePageBgColor } from "@/components/common/PageBackground";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePet } from "@/contexts/PetContext";
@@ -104,15 +104,8 @@ export default function HomeScreen() {
         }
     }, [refreshPets]);
 
-    // 웹 Layout.tsx 매칭: 일상 라이트는 따뜻한 크림 그라데이션,
-    // 추모 라이트는 황금→오렌지→크림, 다크는 gray 계열
-    const pageGradient: [string, string, string] = isDarkMode
-        ? [COLORS.gray[900], COLORS.gray[800], COLORS.gray[900]]
-        : isMemorialMode
-            ? ["rgba(255,251,235,0.8)", "rgba(255,247,237,0.3)", COLORS.memento[75]]   // memorial-50/80 → orange-50/30 → memento-75
-            : [COLORS.memento[50], COLORS.memento[75], "rgba(255,255,255,0.8)"];      // memento-50 → memento-75 → white/80
-
-    const safeAreaBg = isDarkMode ? COLORS.gray[950] : COLORS.memento[50];
+    // 페이지 배경 (웹 Layout.tsx 423-424 매칭) — PageBackground 컴포넌트 사용
+    const safeAreaBg = usePageBgColor();
 
     // 간편모드: 웹 SimpleHomeLauncher와 동일하게 큰 카드 그리드 런처로 완전 교체
     if (isSimpleMode) {
@@ -135,11 +128,7 @@ export default function HomeScreen() {
             <AppHeader onOpenDrawer={() => setDrawerOpen(true)} />
             <AppDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
             <View style={{ flex: 1 }}>
-                <LinearGradient
-                    colors={pageGradient}
-                    style={StyleSheet.absoluteFill}
-                    pointerEvents="none"
-                />
+                <PageBackground />
                 <ScrollView
                 style={styles.scroll}
                 contentContainerStyle={styles.scrollContent}

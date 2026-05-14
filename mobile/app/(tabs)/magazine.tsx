@@ -26,6 +26,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { COLORS } from "@/lib/theme";
 import AppHeader from "@/components/common/AppHeader";
 import AppDrawer from "@/components/common/AppDrawer";
+import PageBackground, { usePageBgColor } from "@/components/common/PageBackground";
 
 interface Article {
     id: string;
@@ -235,11 +236,12 @@ export default function MagazineScreen() {
         return map[badge] ?? [COLORS.gray[400], COLORS.gray[500]];
     }
 
-    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.gray[50];
+    const bgColor = usePageBgColor();
     const filtersActive = selectedStage !== "all" || selectedTopic !== "all" || search.length > 0;
 
     return (
         <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
+            <PageBackground />
             <AppHeader onOpenDrawer={() => setDrawerOpen(true)} />
             <AppDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
             <FlatList

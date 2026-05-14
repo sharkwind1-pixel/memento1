@@ -28,6 +28,7 @@ import { COLORS } from "@/lib/theme";
 import { supabase } from "@/lib/supabase";
 import AppHeader from "@/components/common/AppHeader";
 import AppDrawer from "@/components/common/AppDrawer";
+import PageBackground, { usePageBgColor } from "@/components/common/PageBackground";
 import HotPosts from "@/components/community/HotPosts";
 import ShowcaseBanner from "@/components/community/ShowcaseBanner";
 
@@ -263,10 +264,11 @@ export default function CommunityScreen() {
         || (p.content ?? "").toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.gray[50];
+    const bgColor = usePageBgColor();
 
     return (
         <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
+            <PageBackground />
             <AppHeader onOpenDrawer={() => setDrawerOpen(true)} />
             <AppDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
             {/* 헤더 + 검색 */}

@@ -22,7 +22,7 @@ import { COLORS } from "@/lib/theme";
 import PointsHistoryModal from "@/components/points/PointsHistoryModal";
 import PointsShopModal from "@/components/points/PointsShopModal";
 import { getPointLevel } from "@/config/constants";
-import { POINT_LEVELS, type PetIconType } from "@/lib/levels";
+import { POINT_LEVELS, ADMIN_ICONS, type PetIconType } from "@/lib/levels";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 const DRAWER_W = Math.min(SCREEN_W * 0.82, 320);
@@ -78,9 +78,9 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
         selectedPet?.type === "강아지" ? "dog" :
         selectedPet?.type === "고양이" ? "cat" : "other";
 
-    // levels.ts에서 현재 레벨의 아이콘 png require 결과 (관리자면 어드민 등급)
+    // 관리자는 ADMIN_ICONS PNG (별도 자산), 일반 유저는 현재 레벨 아이콘
     const levelIconSource = isAdminUser
-        ? POINT_LEVELS[POINT_LEVELS.length - 1].icons[petType]
+        ? ADMIN_ICONS[petType]
         : (POINT_LEVELS.find((l) => l.level === currentLevel.level)?.icons[petType]
             ?? POINT_LEVELS[0].icons[petType]);
 
