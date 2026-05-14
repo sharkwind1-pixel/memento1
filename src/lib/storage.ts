@@ -423,20 +423,33 @@ export async function ensurePetProfileStorageUrl(
 
     if (source.startsWith("data:")) {
         const file = base64ToFile(source, `${filename}.jpg`);
-        if (!file) return null;
+        if (!file) {
+            throw new Error("이미지 데이터 변환에 실패했어요.");
+        }
         const result = await uploadPetProfile(file, userId);
-        return result.success ? result.url || null : null;
+        if (!result.success) {
+            console.error("[ensurePetProfileStorageUrl/data]", result.error);
+            throw new Error(`프로필 사진 업로드 실패: ${result.error || "알 수 없는 오류"}`);
+        }
+        return result.url || null;
     }
 
     if (source.startsWith("blob:")) {
         const file = await blobUrlToFile(source, `${filename}.jpg`);
-        if (!file) return null;
+        if (!file) {
+            // blob URL fetch 실패 (CSP 차단 등) — 명확히 알려야 silent fail 안 됨
+            throw new Error("이미지를 읽지 못했어요. 사이트 새로고침 후 다시 시도해주세요.");
+        }
         const result = await uploadPetProfile(file, userId);
-        return result.success ? result.url || null : null;
+        if (!result.success) {
+            console.error("[ensurePetProfileStorageUrl/blob]", result.error);
+            throw new Error(`프로필 사진 업로드 실패: ${result.error || "알 수 없는 오류"}`);
+        }
+        return result.url || null;
     }
 
     // 알 수 없는 스킴 — 저장 거부
-    return null;
+    throw new Error("지원하지 않는 이미지 형식이에요.");
 }
 
 // Base64를 File로 변환 (기존 localStorage 데이터 마이그레이션용)

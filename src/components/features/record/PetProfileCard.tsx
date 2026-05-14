@@ -19,6 +19,8 @@ import {
     PawPrint,
 } from "lucide-react";
 import type { Pet } from "@/contexts/PetContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { ADMIN_EMAILS, TESTER_EMAILS } from "@/config/constants";
 
 interface PetProfileCardProps {
     pet: Pet;
@@ -46,6 +48,12 @@ export default function PetProfileCard({
     onMemorialClick,
     onRecoverToActive,
 }: PetProfileCardProps) {
+    const { user, isAdminUser } = useAuth();
+    // 일상 모드 복구는 관리자 또는 화이트리스트 테스터 계정만 (실수 복구 방지)
+    const email = (user?.email ?? "").toLowerCase();
+    const canRecoverToActive = isAdminUser
+        || ADMIN_EMAILS.some((e) => e.toLowerCase() === email)
+        || TESTER_EMAILS.some((e) => e.toLowerCase() === email);
     return (
         <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm mb-6">
             <CardContent className="p-4 sm:p-6">
@@ -139,7 +147,7 @@ export default function PetProfileCard({
                             </div>
                         )}
 
-                        {/* 추모 모드일 때 - 일상 모드 복구 옵션 */}
+                        {/* 추모 모드일 때 - 일상 모드 복구 옵션 (관리자/테스터만) */}
                         {pet.status === "memorial" && (
                             <div className="mt-4 space-y-2">
                                 {pet.memorialDate && (
@@ -150,29 +158,31 @@ export default function PetProfileCard({
                                         </span>
                                     </div>
                                 )}
-                                <Button
-                                    onClick={() => {
-                                        toast("일상 모드로 되돌리시겠습니까?", {
-                                            action: {
-                                                label: "복구",
-                                                onClick: async () => {
-                                                    await onRecoverToActive(pet.id);
-                                                    toast.success("일상 모드로 복구되었습니다");
+                                {canRecoverToActive && (
+                                    <Button
+                                        onClick={() => {
+                                            toast("일상 모드로 되돌리시겠습니까?", {
+                                                action: {
+                                                    label: "복구",
+                                                    onClick: async () => {
+                                                        await onRecoverToActive(pet.id);
+                                                        toast.success("일상 모드로 복구되었습니다");
+                                                    },
                                                 },
-                                            },
-                                            cancel: {
-                                                label: "취소",
-                                                onClick: () => {},
-                                            },
-                                        });
-                                    }}
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-gray-500 hover:text-gray-700 text-xs"
-                                >
-                                    <Heart className="w-3 h-3 mr-1" />
-                                    일상 모드로 복구
-                                </Button>
+                                                cancel: {
+                                                    label: "취소",
+                                                    onClick: () => {},
+                                                },
+                                            });
+                                        }}
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-gray-500 hover:text-gray-700 text-xs"
+                                    >
+                                        <Heart className="w-3 h-3 mr-1" />
+                                        일상 모드로 복구
+                                    </Button>
+                                )}
                             </div>
                         )}
                     </div>

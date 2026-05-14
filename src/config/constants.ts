@@ -7,14 +7,23 @@
 export const ADMIN_EMAILS = ["sharkwind1@gmail.com", "ahaadh@hanmail.net"];
 
 /**
+ * 테스트 계정 — 관리자 외 위험한 기능 (예: 추모→일상 모드 복구)을
+ * 신규 일반 유저 실수로부터 막기 위한 화이트리스트.
+ */
+export const TESTER_EMAILS = [
+    "sharkwind1@naver.com",
+    "kinosis.h@gmail.com",
+    "dojin3497@gmail.com",
+    "essomena@gmail.com",
+];
+
+/**
  * 신뢰 계정 — 관리자 + 테스트 계정
  * 다중 계정 탐지(multi-account-alert) 화이트리스트 용도
  */
 export const TRUSTED_EMAILS = [
     ...ADMIN_EMAILS,
-    "sharkwind1@naver.com",
-    "kinosis.h@gmail.com",
-    "dojin3497@gmail.com",
+    ...TESTER_EMAILS,
 ];
 
 // ===== Open 100 오픈 이벤트 =====
