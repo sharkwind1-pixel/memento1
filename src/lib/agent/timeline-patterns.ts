@@ -20,7 +20,19 @@
  * 별도 알림 없음 (스팸 방지). 사용자가 직접 보거나 채팅에서 받음.
  */
 
-import type { TimelineEntry } from "@/types";
+/**
+ * 패턴 분석에 필요한 최소 timeline entry 모양.
+ * src/types의 TimelineEntry, src/app/api/chat/chat-helpers의 TimelineEntry,
+ * 그 외 클라가 보낸 entry 모두 호환되도록 최소 필드만 요구.
+ */
+interface TimelineEntryLike {
+    id?: string;
+    date: string;
+    title?: string;
+    content?: string;
+    mood?: "happy" | "normal" | "sad" | "sick" | string;
+    category?: string;
+}
 
 export type PatternSeverity = "info" | "warn" | "alert";
 
@@ -46,7 +58,7 @@ export interface TimelinePattern {
 }
 
 /** N일 전 ~ 오늘 사이의 entry만 필터 (YYYY-MM-DD 문자열 비교, 타임존 안전) */
-function withinDays(entries: TimelineEntry[], days: number): TimelineEntry[] {
+function withinDays(entries: TimelineEntryLike[], days: number): TimelineEntryLike[] {
     const since = new Date();
     since.setDate(since.getDate() - days);
     const sinceStr = since.toISOString().split("T")[0];
@@ -60,7 +72,7 @@ function withinDays(entries: TimelineEntry[], days: number): TimelineEntry[] {
  *
  * 비용: O(n). 클라이언트/서버 어디서나 호출 가능, 외부 API 호출 0.
  */
-export function analyzeTimelinePatterns(entries: TimelineEntry[]): TimelinePattern[] {
+export function analyzeTimelinePatterns(entries: TimelineEntryLike[]): TimelinePattern[] {
     if (entries.length === 0) return [];
 
     const patterns: TimelinePattern[] = [];
@@ -73,7 +85,7 @@ export function analyzeTimelinePatterns(entries: TimelineEntry[]): TimelinePatte
             message: `최근 7일 동안 컨디션이 안 좋다고 ${sick7.length}번 기록됐어요. 수의사 상담을 고려해보세요.`,
             needsVetConsult: true,
             severity: "alert",
-            relatedEntryIds: sick7.map((e) => e.id),
+            relatedEntryIds: sick7.map((e) => e.id ?? ""),
             windowDays: 7,
         });
     }
@@ -86,7 +98,7 @@ export function analyzeTimelinePatterns(entries: TimelineEntry[]): TimelinePatte
             message: `최근 2주 동안 기분이 가라앉은 날이 ${sad14.length}번이에요. 환경 변화나 활동량을 살펴봐주세요.`,
             needsVetConsult: false,
             severity: "warn",
-            relatedEntryIds: sad14.map((e) => e.id),
+            relatedEntryIds: sad14.map((e) => e.id ?? ""),
             windowDays: 14,
         });
     }
@@ -99,7 +111,7 @@ export function analyzeTimelinePatterns(entries: TimelineEntry[]): TimelinePatte
             message: `최근 7일 동안 배변 관련 기록이 ${poop7.length}번이에요. 식이/소화 문제 가능성, 수의사와 상담 권장.`,
             needsVetConsult: true,
             severity: "alert",
-            relatedEntryIds: poop7.map((e) => e.id),
+            relatedEntryIds: poop7.map((e) => e.id ?? ""),
             windowDays: 7,
         });
     }
@@ -112,7 +124,7 @@ export function analyzeTimelinePatterns(entries: TimelineEntry[]): TimelinePatte
             message: `최근 7일 동안 사료/식사 관련 기록이 ${meal7.length}번이에요. 식습관 변화를 꾸준히 살펴봐주세요.`,
             needsVetConsult: false,
             severity: "warn",
-            relatedEntryIds: meal7.map((e) => e.id),
+            relatedEntryIds: meal7.map((e) => e.id ?? ""),
             windowDays: 7,
         });
     }
@@ -135,7 +147,7 @@ export function analyzeTimelinePatterns(entries: TimelineEntry[]): TimelinePatte
                 message: "최근 2주 동안 기록이 멈춰있어요. 한 줄이라도 다시 시작해보세요. 작은 기록이 큰 단서가 됩니다.",
                 needsVetConsult: false,
                 severity: "info",
-                relatedEntryIds: prev.map((e) => e.id),
+                relatedEntryIds: prev.map((e) => e.id ?? ""),
                 windowDays: 14,
             });
         }
@@ -149,7 +161,7 @@ export function analyzeTimelinePatterns(entries: TimelineEntry[]): TimelinePatte
             message: `최근 한 달 동안 건강 관련 기록이 ${health30.length}번이에요. 정기 건강검진을 고려해보세요.`,
             needsVetConsult: true,
             severity: "warn",
-            relatedEntryIds: health30.map((e) => e.id),
+            relatedEntryIds: health30.map((e) => e.id ?? ""),
             windowDays: 30,
         });
     }
@@ -161,7 +173,7 @@ export function analyzeTimelinePatterns(entries: TimelineEntry[]): TimelinePatte
  * 가장 시급한 패턴 1개만 반환 (UI에 1개씩 보여줄 때).
  * 우선순위: alert > warn > info, 동일 severity면 최근 entry 많은 것.
  */
-export function getTopPattern(entries: TimelineEntry[]): TimelinePattern | null {
+export function getTopPattern(entries: TimelineEntryLike[]): TimelinePattern | null {
     const patterns = analyzeTimelinePatterns(entries);
     if (patterns.length === 0) return null;
 

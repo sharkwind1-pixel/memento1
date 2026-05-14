@@ -625,6 +625,18 @@ export async function buildAIContext(
     // 타임라인 컨텍스트 생성
     const timelineContext = timelineToContext(timeline);
 
+    // 타임라인 패턴 분석 (조기 건강 신호 감지)
+    // 블로그/매거진 글 약속의 마지막 한 조각 — UI 배너뿐 아니라 AI 펫톡도 자연스럽게 언급.
+    // 추모 모드는 건너뜀 (활성 케어 X).
+    const topPattern = !isMemorialMode ? agent.getTopPattern(timeline) : null;
+    const patternContext = topPattern
+        ? `\n[보호자 일기 패턴 알림]\n${topPattern.message}\n` +
+          (topPattern.needsVetConsult
+              ? "→ 응답 중 자연스럽게 한 번 짧게 언급해주세요. 강요 X. 예: '요즘 몸이 좀 안 좋다고 적었던 거... 병원 한번 가보는 건 어때?' 같은 펫의 걱정 톤.\n"
+              : "→ 응답 중 자연스럽게 한 번 짧게 언급해주세요. 부담 X. 예: '요즘 잠이 좀 많다고 적었더라.' 같은 가벼운 관찰 톤.\n") +
+          "이미 다른 응답에서 언급했다면 반복 X. 응답마다 1회 이내."
+        : "";
+
     // 사진 캡션 컨텍스트 생성
     const photoContext = photoMemoriesToContext(photoMemories);
 
@@ -652,6 +664,7 @@ export async function buildAIContext(
     const memorialToneContext = getMemorialTimeToneGuide(pet);
 
     // 통합 컨텍스트 (우선순위 기반 예산 시스템)
+    // 일상 모드 한정: patternContext (건강 신호) — priority 8 (장소·breed 다음, 감정·온보딩보다 높음)
     const contextItems = isMemorialMode
         ? [
             { content: placeContext, priority: 9 },
@@ -668,6 +681,7 @@ export async function buildAIContext(
         ]
         : [
             { content: placeContext, priority: 9 },
+            { content: patternContext, priority: 8 },         // 타임라인 패턴 알림 (조기 건강 신호)
             { content: breedContext, priority: 7 },
             { content: onboardingContext, priority: 7 },
             { content: emotionTrendContext, priority: 6 },
