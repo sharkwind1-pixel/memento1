@@ -97,24 +97,49 @@ export async function notifyPayment(params: {
     return sendTelegram(lines.join("\n"), "payment");
 }
 
-/** 크론 실행 결과 알림 (에러 있을 때만) -> 시스템 알림 그룹 */
+/** 크론 실행 결과 알림 (에러 / 실패 / 만료 / 처리 건이 있을 때) -> 시스템 알림 그룹.
+ *
+ * 라벨 분기:
+ *  - error 있으면 [크론 에러] (진짜 시스템 장애 — 토큰 발급 실패, DB 연결 끊김 등)
+ *  - error 없고 failed/expired만 있으면 [크론 리포트] (정상 처리된 결제 실패/만료 보고)
+ *
+ * kstHour 미지정 시 호출 시점의 KST 시간 자동 계산.
+ * (이전: subscription-renewal이 항상 7로 하드코드 → 수동 트리거 시 잘못된 시각 표시)
+ */
 export async function notifyCronResult(params: {
     phase: string;
-    kstHour: number;
+    kstHour?: number;
     error?: string;
+    renewed?: number;
     sent?: number;
     failed?: number;
+    expired?: number;
 }) {
-    if (!params.error && (params.failed || 0) === 0) return false;
+    const renewed = params.renewed ?? 0;
+    const sent = params.sent ?? 0;
+    const failed = params.failed ?? 0;
+    const expired = params.expired ?? 0;
+
+    if (!params.error && failed === 0 && expired === 0) return false;
+
+    const kstHour = typeof params.kstHour === "number"
+        ? params.kstHour
+        : Number(new Date().toLocaleString("en-US", {
+              timeZone: "Asia/Seoul", hour: "2-digit", hour12: false,
+          }));
+
+    const label = params.error ? "크론 에러" : "크론 리포트";
 
     const lines = [
-        `<b>[크론 ${params.error ? "에러" : "경고"}]</b>`,
+        `<b>[${label}]</b>`,
         `Phase: ${params.phase}`,
-        `시간: KST ${params.kstHour}시`,
+        `시간: KST ${kstHour}시`,
     ];
     if (params.error) lines.push(`에러: ${params.error.slice(0, 200)}`);
-    if (params.sent) lines.push(`발송: ${params.sent}건`);
-    if (params.failed) lines.push(`실패: ${params.failed}건`);
+    if (renewed) lines.push(`갱신: ${renewed}건`);
+    if (sent) lines.push(`발송: ${sent}건`);
+    if (failed) lines.push(`실패: ${failed}건`);
+    if (expired) lines.push(`만료: ${expired}건`);
     return sendTelegram(lines.join("\n"), "system");
 }
 

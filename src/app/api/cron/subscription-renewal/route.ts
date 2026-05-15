@@ -76,11 +76,25 @@ async function chargeSubscription(
     }
 }
 
-/** 텔레그램 시스템 알림 (비동기, 실패 무시) */
-async function notifySystem(text: string) {
+/** 텔레그램 시스템 알림 - 진짜 에러 (토큰 실패, DB 끊김 등) */
+async function notifyError(text: string) {
     try {
         const { notifyCronResult } = await import("@/lib/telegram");
-        await notifyCronResult({ phase: "subscription-renewal", kstHour: 7, error: text });
+        await notifyCronResult({ phase: "subscription-renewal", error: text });
+        // kstHour 미지정 → 호출 시점 KST 자동 계산
+    } catch {
+        // 무시
+    }
+}
+
+/** 텔레그램 시스템 알림 - 정상 처리된 결제 실패/만료 리포트 (에러 아님) */
+async function notifyReport(renewed: number, failed: number, expired: number) {
+    try {
+        const { notifyCronResult } = await import("@/lib/telegram");
+        await notifyCronResult({
+            phase: "subscription-renewal",
+            renewed, failed, expired,
+        });
     } catch {
         // 무시
     }
@@ -143,7 +157,7 @@ export async function GET(request: NextRequest) {
         // 2. 포트원 토큰 발급
         const accessToken = await getPortoneAccessToken();
         if (!accessToken) {
-            await notifySystem("포트원 토큰 발급 실패 - 정기결제 갱신 중단");
+            await notifyError("포트원 토큰 발급 실패 - 정기결제 갱신 중단");
             return NextResponse.json({ error: "포트원 토큰 발급 실패" }, { status: 500 });
         }
 
@@ -307,7 +321,8 @@ export async function GET(request: NextRequest) {
                         dedup_key: `sub_expired_${now.toISOString().slice(0, 10)}_${sub.user_id}`,
                     });
 
-                    await notifySystem(
+                    // 1건 단위 만료 통보 (개별 사용자 영향이라 운영자 즉시 인지용)
+                    await notifyError(
                         `구독 만료: ${userEmail} (${getPlanLabel(plan)}) - ${MAX_RETRY}회 결제 실패`
                     );
                 } else {
@@ -343,17 +358,15 @@ export async function GET(request: NextRequest) {
             }
         }
 
-        // 4. 결과 요약 알림 (실패가 있을 때만)
+        // 4. 결과 요약 리포트 (실패/만료가 있을 때만) — 정상 처리된 결과라 에러 아님
         if (results.failed > 0 || results.expired > 0) {
-            await notifySystem(
-                `갱신: ${results.renewed}건, 실패: ${results.failed}건, 만료: ${results.expired}건`
-            );
+            await notifyReport(results.renewed, results.failed, results.expired);
         }
 
         return NextResponse.json({ message: "정기결제 갱신 완료", ...results });
     } catch (err) {
         const msg = err instanceof Error ? err.message : "알 수 없는 오류";
-        await notifySystem(`정기결제 크론 에러: ${msg}`);
+        await notifyError(`정기결제 크론 에러: ${msg}`);
         return NextResponse.json({ error: msg }, { status: 500 });
     }
 }
