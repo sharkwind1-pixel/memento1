@@ -311,20 +311,36 @@ export default function ChatMessageList({
                                             </div>
                                         </div>
                                     )}
-                                    {/* 주변 장소 추천 카드 */}
-                                    {message.role === "pet" && message.nearbyPlaces && message.nearbyPlaces.places.length > 0 && (
-                                        <div className={`mt-2 rounded-xl overflow-hidden shadow-sm border ${
-                                            isMemorialMode ? "border-memorial-200 bg-memorial-50/50 dark:bg-memorial-900/20" : "border-emerald-200 bg-emerald-50/50 dark:bg-emerald-900/20"
-                                        }`}>
+                                    {/* 주변 장소 추천 카드 — 두 형식 호환:
+                                         - 옛 형식 (ai_chats jsonb 잔존): nearbyPlaces: Place[]
+                                         - 새 형식 (현재): nearbyPlaces: { query, places: Place[] }
+                                       옛 데이터가 깨졌을 때 undefined.length로 페이지 전체 crash 방지 */}
+                                    {(() => {
+                                        if (message.role !== "pet" || !message.nearbyPlaces) return null;
+                                        const np = message.nearbyPlaces as unknown;
+                                        const isLegacyArr = Array.isArray(np);
+                                        const places = isLegacyArr
+                                            ? (np as { name: string; mapUrl?: string; address?: string; distance?: string }[])
+                                            : (np && typeof np === "object" && Array.isArray((np as { places?: unknown }).places))
+                                                ? (np as { places: { name: string; mapUrl?: string; address?: string; distance?: string }[] }).places
+                                                : null;
+                                        if (!places || places.length === 0) return null;
+                                        const query = (!isLegacyArr && np && typeof np === "object")
+                                            ? ((np as { query?: string }).query || "장소")
+                                            : "장소";
+                                        return (
+                                            <div className={`mt-2 rounded-xl overflow-hidden shadow-sm border ${
+                                                isMemorialMode ? "border-memorial-200 bg-memorial-50/50 dark:bg-memorial-900/20" : "border-emerald-200 bg-emerald-50/50 dark:bg-emerald-900/20"
+                                            }`}>
                                             <div className="px-3 py-2.5">
                                                 <div className={`flex items-center gap-1.5 mb-2 ${
                                                     isMemorialMode ? "text-memorial-600 dark:text-memorial-400" : "text-emerald-600 dark:text-emerald-400"
                                                 }`}>
                                                     <MapPin className="w-3.5 h-3.5" />
-                                                    <span className="text-xs font-medium">주변 {message.nearbyPlaces.query}</span>
+                                                    <span className="text-xs font-medium">주변 {query}</span>
                                                 </div>
                                                 <div className="space-y-1.5">
-                                                    {message.nearbyPlaces.places.map((place, pIdx) => (
+                                                    {places.map((place, pIdx) => (
                                                         <a
                                                             key={pIdx}
                                                             href={place.mapUrl}
@@ -361,7 +377,8 @@ export default function ChatMessageList({
                                                 </div>
                                             </div>
                                         </div>
-                                    )}
+                                        );
+                                    })()}
                                 </div>
                             </div>
                         )}
