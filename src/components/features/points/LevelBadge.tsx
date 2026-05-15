@@ -61,13 +61,12 @@ export default function LevelBadge({
             )}
             title={showTooltip ? tooltipText : undefined}
         >
-            {/* 아이콘 래퍼 — 글로우, 반짝이 포함 */}
+            {/* 아이콘 래퍼 — 등급 PNG 자체 디자인만 사용 (코드 sparkle 도트 제거) */}
             <span className="relative inline-flex">
-                {/* 메인 아이콘 */}
                 <span className={cn(
                     "inline-flex items-center justify-center rounded-full overflow-hidden",
                     wrapper,
-                    // Lv.7 글로우 효과
+                    // Lv.7 글로우 효과 (그림자만 — 도트 X)
                     level.hasGlow && "shadow-[0_0_8px_rgba(244,63,94,0.35),0_0_16px_rgba(251,191,36,0.2)]",
                 )}>
                     <Image
@@ -79,22 +78,12 @@ export default function LevelBadge({
                         unoptimized
                     />
                 </span>
-
-                {/* Lv.5+ 반짝이 도트 */}
-                {level.hasSparkle && (
-                    <span className={cn(
-                        "absolute -top-0.5 -right-0.5 rounded-full border border-white",
-                        size === "sm" && "w-2.5 h-2.5",
-                        size === "md" && "w-3 h-3",
-                        size === "lg" && "w-3.5 h-3.5",
-                        size === "xl" && "w-4 h-4",
-                        size === "2xl" && "w-5 h-5",
-                        // Lv.7 무지개 / 나머지 골드
-                        level.hasGlow
-                            ? "bg-[conic-gradient(#ef4444,#f59e0b,#22c55e,#3b82f6,#8b5cf6,#ef4444)]"
-                            : "bg-gradient-to-br from-memorial-300 to-memorial-500",
-                    )} />
-                )}
+                {/*
+                  Lv.5+ 반짝이 도트 제거 (2026-05-15) — 사용자 요청:
+                  "원래 등급표 아이콘엔 동물밖에 없어. 점 같은 코드가 만든 데코는 빼라."
+                  PNG 자체의 별/하트/왕관/무지개는 디자인 의도라 보존.
+                  hasSparkle 메타데이터는 향후 다른 표시(예: 글로우 변형)에 재사용 가능.
+                */}
             </span>
 
             {showName && (
