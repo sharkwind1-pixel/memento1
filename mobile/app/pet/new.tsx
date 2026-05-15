@@ -121,10 +121,11 @@ export default function NewPetScreen() {
             Alert.alert("권한 필요", "갤러리 접근 권한이 필요합니다.");
             return;
         }
+        // allowsEditing/aspect 제거: 자체 PhotoCropConfirmModal이 크롭/회전 담당.
+        // (704bb38에서 자체 크롭 도입 시 시스템 크롭 제거 누락 → 중복 크롭 단계였음)
+        // mediaTypes: 새 API 배열 형식 (MediaTypeOptions enum은 deprecated)
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            aspect: [1, 1],
+            mediaTypes: ["images"],
             quality: 0.85,
         });
         if (!result.canceled && result.assets[0]) {

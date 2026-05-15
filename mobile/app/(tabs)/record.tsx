@@ -1061,7 +1061,11 @@ function GalleryTab({ petId, photos, isMemorialMode, accentColor, refreshing, on
                         </TouchableOpacity>
                     );
                 }}
-                contentContainerStyle={photos.length === 0 ? { padding: 16 } : { padding: 12, paddingBottom: 32 }}
+                contentContainerStyle={photos.length === 0 ? { padding: 16 } : { padding: 12, paddingBottom: 120 }}
+                removeClippedSubviews
+                initialNumToRender={12}
+                maxToRenderPerBatch={9}
+                windowSize={7}
             />
             <MediaUploadModal
                 petId={petId}
@@ -1182,8 +1186,12 @@ function AlbumsTab({ petId, isMemorialMode, accentColor, refreshing, onRefresh }
                 keyExtractor={(a) => a.id}
                 numColumns={2}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accentColor} />}
-                contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+                contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
                 columnWrapperStyle={{ gap: 12 }}
+                removeClippedSubviews
+                initialNumToRender={10}
+                maxToRenderPerBatch={8}
+                windowSize={7}
                 renderItem={({ item }) => (
                     <TouchableOpacity
                         activeOpacity={0.85}
@@ -1549,7 +1557,7 @@ function VideosTab({ pet, isMemorialMode, accentColor, refreshing, onRefresh, au
                 data={videos}
                 keyExtractor={(v) => v.id}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={accentColor} />}
-                contentContainerStyle={{ padding: 16, paddingBottom: 32, gap: 12 }}
+                contentContainerStyle={{ padding: 16, paddingBottom: 120, gap: 12 }}
                 ListHeaderComponent={
                     <>
                         <View style={styles.galleryHeader}>
@@ -1727,7 +1735,7 @@ const styles = StyleSheet.create({
     },
     tabLabel: { fontSize: 13, fontWeight: "500" },
     tabLabelActive: { fontSize: 13, fontWeight: "600", color: "#fff" },
-    tabContent: { padding: 16, paddingBottom: 32 },
+    tabContent: { padding: 16, paddingBottom: 120 },
     emptyCenter: {
         flex: 1,
         alignItems: "center",
