@@ -75,6 +75,23 @@ const DEFAULT_POOL_MEMORIAL = [
     "잘 자", "또 와줘", "내 마음 알지?",
 ];
 
+// 타이핑 인디케이터 감성 텍스트 — 웹 ChatMessageList 패리티 (펫종/모드별 순환)
+const TYPING_TEXTS_DOG = [
+    "꼬리 흔들며 생각 중...", "킁킁 냄새 맡는 중...", "고개 갸웃하는 중...",
+    "발로 톡톡 치는 중...", "귀 쫑긋 세우는 중...",
+];
+const TYPING_TEXTS_CAT = [
+    "그루밍하며 생각 중...", "꼬리 살랑살랑...", "고개 갸웃하는 중...",
+    "앞발로 콕콕 치는 중...", "귀 쫑긋 세우는 중...",
+];
+const TYPING_TEXTS_OTHER = [
+    "생각하는 중...", "고개 갸웃하는 중...", "귀 쫑긋 세우는 중...",
+];
+const TYPING_TEXTS_MEMORIAL = [
+    "조용히 곁에 앉는 중...", "따뜻한 기억 떠올리는 중...", "별빛 아래 생각하는 중...",
+    "이곳에서 너를 생각하는 중...", "소중한 추억 찾는 중...",
+];
+
 /** Fisher-Yates shuffle 후 앞 N개 (sort()-0.5 편향 방지) */
 function pickRandomSuggestions(pool: string[], n: number): string[] {
     const shuffled = [...pool];
@@ -96,6 +113,7 @@ export default function AiChatScreen() {
     const [input, setInput] = useState("");
     const [isTyping, setIsTyping] = useState(false);
     const [isStreaming, setIsStreaming] = useState(false);
+    const [typingTextIndex, setTypingTextIndex] = useState(0);
     const [suggestions, setSuggestions] = useState<string[]>([]);
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [remindersOpen, setRemindersOpen] = useState(false);
@@ -319,7 +337,15 @@ export default function AiChatScreen() {
         if (!messageToSend.trim() || !selectedPet || !session?.access_token) return;
         if (isTyping || isStreaming) return;
         if (isLimitReached) {
-            Alert.alert("오늘의 대화 한도", "오늘은 더 이상 대화할 수 없어요. 내일 다시 만나요.");
+            // 웹 패리티: 단순 안내 대신 프리미엄 전환 동선 제공
+            Alert.alert(
+                "오늘의 대화 한도",
+                `${selectedPet.name}와(과) 더 이야기하고 싶다면 프리미엄으로 무제한 대화할 수 있어요. 무료는 매일 다시 충전돼요.`,
+                [
+                    { text: "내일 다시 올게요", style: "cancel" },
+                    { text: "프리미엄 보기", onPress: () => router.push("/subscription") },
+                ],
+            );
             return;
         }
 
@@ -652,6 +678,30 @@ export default function AiChatScreen() {
         handleSend(retryMessage);
     }, [handleSend]);
 
+    // 리마인더 카드 수락: 안내 메시지 제거 + 기록 탭(케어 리마인더)으로 이동 — 웹 패리티
+    const handleReminderAccept = useCallback((messageId: string) => {
+        setMessages((prev) => prev.filter((m) => m.id !== messageId));
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+        router.push("/(tabs)/record");
+    }, [router]);
+
+    // 리마인더 카드 거절: 안내 메시지만 제거
+    const handleReminderDismiss = useCallback((messageId: string) => {
+        setMessages((prev) => prev.filter((m) => m.id !== messageId));
+    }, []);
+
+    // 타이핑 인디케이터 감성 텍스트 순환 (웹 패리티) — 2.5초마다 다음 문구
+    useEffect(() => {
+        if (!isTyping) {
+            setTypingTextIndex(0);
+            return;
+        }
+        const id = setInterval(() => {
+            setTypingTextIndex((prev) => prev + 1);
+        }, 2500);
+        return () => clearInterval(id);
+    }, [isTyping]);
+
     const bgColor = usePageBgColor();
     const borderColor = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
 
@@ -825,6 +875,8 @@ export default function AiChatScreen() {
                                 pet={selectedPet}
                                 accentColor={accentColor}
                                 onRetry={handleRetry}
+                                onReminderAccept={handleReminderAccept}
+                                onReminderDismiss={handleReminderDismiss}
                                 prevTimestamp={index > 0 ? messages[index - 1].timestamp : undefined}
                                 isFirst={index === 0}
                             />
@@ -844,7 +896,16 @@ export default function AiChatScreen() {
                                             marginBottom: 4,
                                             marginLeft: 4,
                                         }}>
-                                            {selectedPet.name}이(가) 답하고 있어요...
+                                            {(() => {
+                                                const tt = isMemorialMode
+                                                    ? TYPING_TEXTS_MEMORIAL
+                                                    : selectedPet.type === "고양이"
+                                                        ? TYPING_TEXTS_CAT
+                                                        : selectedPet.type === "강아지"
+                                                            ? TYPING_TEXTS_DOG
+                                                            : TYPING_TEXTS_OTHER;
+                                                return tt[typingTextIndex % tt.length];
+                                            })()}
                                         </Text>
                                         <View
                                             style={[
@@ -954,12 +1015,14 @@ function hasTimeGap(prev: Date, curr: Date): boolean {
 }
 
 function MessageRenderer({
-    message, pet, accentColor, onRetry, prevTimestamp, isFirst,
+    message, pet, accentColor, onRetry, onReminderAccept, onReminderDismiss, prevTimestamp, isFirst,
 }: {
     message: ChatMessage;
     pet: NonNullable<ReturnType<typeof usePet>["selectedPet"]>;
     accentColor: string;
     onRetry: (id: string, retryMessage: string) => void;
+    onReminderAccept?: (id: string) => void;
+    onReminderDismiss?: (id: string) => void;
     prevTimestamp?: Date;
     isFirst?: boolean;
 }) {
@@ -984,7 +1047,13 @@ function MessageRenderer({
         return (
             <>
                 {timestampNode}
-                <SystemMessage message={message} accentColor={accentColor} onRetry={onRetry} />
+                <SystemMessage
+                    message={message}
+                    accentColor={accentColor}
+                    onRetry={onRetry}
+                    onReminderAccept={onReminderAccept}
+                    onReminderDismiss={onReminderDismiss}
+                />
             </>
         );
     }
@@ -1061,11 +1130,59 @@ function MessageRenderer({
                     </Text>
                 </TouchableOpacity>
                 {message.matchedPhoto?.url && (
-                    <Image
-                        source={{ uri: message.matchedPhoto.url }}
-                        style={{ width: 192, height: 128, borderRadius: 12, marginTop: 8 }}
-                        resizeMode="cover"
-                    />
+                    <View style={{ marginTop: 8, borderRadius: 12, overflow: "hidden", width: 192 }}>
+                        <Image
+                            source={{ uri: message.matchedPhoto.url }}
+                            style={{ width: 192, height: 128 }}
+                            resizeMode="cover"
+                        />
+                        {message.matchedPhoto.caption ? (
+                            <View style={{
+                                flexDirection: "row", alignItems: "center", gap: 4,
+                                paddingHorizontal: 8, paddingVertical: 6,
+                                backgroundColor: accentColor + "22",
+                            }}>
+                                <Ionicons name="heart" size={11} color={accentColor} />
+                                <Text numberOfLines={1} style={{
+                                    flex: 1, fontSize: 11,
+                                    color: isDarkMode ? COLORS.gray[200] : COLORS.gray[700],
+                                }}>
+                                    {message.matchedPhoto.caption}
+                                </Text>
+                            </View>
+                        ) : null}
+                    </View>
+                )}
+                {/* 타임라인 연동 카드 (사진 없을 때만) — 웹 패리티: "우리의 기록" USP */}
+                {message.matchedTimeline && !message.matchedPhoto && (
+                    <View style={{
+                        marginTop: 8, borderRadius: 12, borderWidth: 1, padding: 10,
+                        width: 220,
+                        borderColor: isDarkMode ? COLORS.gray[700] : accentColor + "40",
+                        backgroundColor: isDarkMode ? COLORS.gray[800] : accentColor + "10",
+                    }}>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                            <Ionicons name="book-outline" size={13} color={accentColor} />
+                            <Text style={{ fontSize: 11, fontWeight: "600", color: accentColor }}>우리의 기록</Text>
+                            <Text style={{ marginLeft: "auto", fontSize: 10, color: isDarkMode ? COLORS.gray[500] : COLORS.gray[400] }}>
+                                {message.matchedTimeline.date}
+                            </Text>
+                        </View>
+                        <Text style={{
+                            fontSize: 13, fontWeight: "600", marginTop: 4,
+                            color: isDarkMode ? COLORS.white : COLORS.gray[800],
+                        }}>
+                            {message.matchedTimeline.title}
+                        </Text>
+                        {message.matchedTimeline.content ? (
+                            <Text numberOfLines={2} style={{
+                                fontSize: 11, marginTop: 2,
+                                color: isDarkMode ? COLORS.gray[400] : COLORS.gray[500],
+                            }}>
+                                {message.matchedTimeline.content}
+                            </Text>
+                        ) : null}
+                    </View>
                 )}
                 {message.nearbyPlaces && message.nearbyPlaces.length > 0 && (
                     <View style={{ marginTop: 8, gap: 6 }}>
@@ -1122,11 +1239,13 @@ function MessageRenderer({
 }
 
 function SystemMessage({
-    message, accentColor, onRetry,
+    message, accentColor, onRetry, onReminderAccept, onReminderDismiss,
 }: {
     message: ChatMessage;
     accentColor: string;
     onRetry: (id: string, retryMessage: string) => void;
+    onReminderAccept?: (id: string) => void;
+    onReminderDismiss?: (id: string) => void;
 }) {
     const { isDarkMode } = useDarkMode();
 
@@ -1171,19 +1290,53 @@ function SystemMessage({
             <View style={{
                 alignSelf: "center",
                 marginBottom: 12,
-                paddingHorizontal: 14,
-                paddingVertical: 10,
+                paddingHorizontal: 16,
+                paddingVertical: 14,
                 backgroundColor: isDarkMode ? COLORS.gray[800] : accentColor + "15",
-                borderRadius: 12,
-                maxWidth: "90%",
+                borderRadius: 16,
+                maxWidth: "92%",
+                borderWidth: 1,
+                borderColor: isDarkMode ? COLORS.gray[700] : accentColor + "33",
             }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                    <Ionicons name="notifications-outline" size={16} color={accentColor} />
+                    <Text style={{ fontSize: 13, fontWeight: "700", color: accentColor }}>케어 리마인더</Text>
+                </View>
                 <Text style={{
-                    color: isDarkMode ? COLORS.gray[200] : accentColor,
-                    fontSize: 12,
-                    lineHeight: 18,
+                    color: isDarkMode ? COLORS.gray[200] : COLORS.gray[700],
+                    fontSize: 13,
+                    lineHeight: 19,
+                    marginBottom: 12,
                 }}>
                     {message.content}
                 </Text>
+                <View style={{ flexDirection: "row", gap: 8 }}>
+                    <TouchableOpacity
+                        onPress={() => onReminderAccept?.(message.id)}
+                        activeOpacity={0.85}
+                        style={{
+                            flex: 1, paddingVertical: 10, borderRadius: 10,
+                            backgroundColor: accentColor, alignItems: "center",
+                        }}
+                    >
+                        <Text style={{ color: "#fff", fontSize: 13, fontWeight: "600" }}>알려주세요</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={() => onReminderDismiss?.(message.id)}
+                        activeOpacity={0.85}
+                        style={{
+                            flex: 1, paddingVertical: 10, borderRadius: 10,
+                            backgroundColor: isDarkMode ? COLORS.gray[700] : "#fff",
+                            borderWidth: 1, borderColor: isDarkMode ? COLORS.gray[600] : accentColor + "40",
+                            alignItems: "center",
+                        }}
+                    >
+                        <Text style={{
+                            color: isDarkMode ? COLORS.gray[200] : accentColor,
+                            fontSize: 13, fontWeight: "600",
+                        }}>괜찮아요</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
         );
     }

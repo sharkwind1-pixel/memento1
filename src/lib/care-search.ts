@@ -122,14 +122,21 @@ export async function searchCareInfo(
 
         const query = buildSearchQuery(userMessage, petType, petBreed);
 
-        // advanced + maxResults 상향 + 도메인 화이트리스트 제거
-        //  - 기존 8개 도메인 제한이 수의학 정보 품질을 크게 떨어뜨림 (조사 결과)
-        //  - 도메인 제한 없이 Tavily 자체 랭킹 신뢰, includeAnswer로 요약 확보
-        //  - 토큰: 결과는 아래에서 600자 × 5로 캡, 출력단 sanitizeAIOutput로 누출 방어 유지
+        // advanced + maxResults 상향 + 화이트리스트 제거하되 광고/오픈마켓은 블랙리스트
+        //  - 화이트리스트 8개 제한이 수의학 정보 품질 병목 → 제거
+        //  - 단 통째 위임은 광고/저품질 혼입 위험(7번 비판 P2) → excludeDomains로 보완
+        //  - 범용 오픈마켓/가격비교/광고 도배 도메인만 제외 (펫 전문몰 정보글은 유지)
+        //  - 토큰: 결과는 아래에서 600자 × 5로 캡, 출력단 sanitizeAIOutput 방어 유지
         const response = await client.search(query, {
             searchDepth: "advanced",
             maxResults: 5,
             includeAnswer: true,
+            excludeDomains: [
+                "coupang.com", "gmarket.co.kr", "11st.co.kr", "auction.co.kr",
+                "shopping.naver.com", "smartstore.naver.com", "aliexpress.com",
+                "amazon.com", "ebay.com", "danawa.com", "enuri.com",
+                "ad.naver.com", "adcr.naver.com",
+            ],
         });
 
         // 결과 조합
