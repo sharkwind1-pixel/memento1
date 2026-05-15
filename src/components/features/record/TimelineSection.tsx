@@ -146,6 +146,38 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
     // 패턴 분석 (블로그 글 약속: 조기 건강 신호 감지)
     const topPattern = useMemo(() => getTopPattern(timeline), [timeline]);
 
+    // 사용자가 X로 닫은 패턴은 24시간 동안 숨김 (UI 배너 vs AI 멘트 채널 분리)
+    // - UI 배너: 영구 표시. 사용자가 X 누르면 24h dismiss
+    // - AI 멘트: chat-pipeline 코드 레벨 dedup (최근 5턴 동일 패턴 검출)
+    const [patternDismissed, setPatternDismissed] = useState(false);
+    useEffect(() => {
+        if (!topPattern) {
+            setPatternDismissed(false);
+            return;
+        }
+        try {
+            const key = `timeline_pattern_dismiss_${petId}_${topPattern.code}`;
+            const ts = localStorage.getItem(key);
+            if (ts) {
+                const dismissedAt = parseInt(ts, 10);
+                if (!isNaN(dismissedAt) && Date.now() - dismissedAt < 24 * 60 * 60 * 1000) {
+                    setPatternDismissed(true);
+                    return;
+                }
+            }
+            setPatternDismissed(false);
+        } catch { /* localStorage 비활성 환경 무시 */ }
+    }, [topPattern, petId]);
+
+    const handleDismissPattern = () => {
+        if (!topPattern) return;
+        try {
+            const key = `timeline_pattern_dismiss_${petId}_${topPattern.code}`;
+            localStorage.setItem(key, String(Date.now()));
+            setPatternDismissed(true);
+        } catch { /* 저장 실패 시 일시적으로만 닫힘 */ setPatternDismissed(true); }
+    };
+
     // 검색 + 카테고리 필터 적용된 timeline (블로그 글이 약속한 검색)
     // 태그 검색: #으로 시작하면 태그 우선 매치
     const filteredTimeline = useMemo(() => {
@@ -240,7 +272,7 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                 </CardHeader>
                 <CardContent>
                     {/* AI 패턴 분석 배너 (블로그 글 약속: 조기 건강 신호 감지) */}
-                    {topPattern && (
+                    {topPattern && !patternDismissed && (
                         <div className={`mb-4 p-3 rounded-xl border flex items-start gap-2.5 ${
                             topPattern.severity === "alert"
                                 ? "bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800"
@@ -274,6 +306,20 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                                     </p>
                                 )}
                             </div>
+                            <button
+                                type="button"
+                                onClick={handleDismissPattern}
+                                aria-label="패턴 알림 닫기 (24시간)"
+                                className="flex-shrink-0 p-1 -m-1 rounded hover:bg-black/5 dark:hover:bg-white/5 transition"
+                            >
+                                <X className={`w-4 h-4 ${
+                                    topPattern.severity === "alert"
+                                        ? "text-rose-600 dark:text-rose-400"
+                                        : topPattern.severity === "warn"
+                                            ? "text-amber-600 dark:text-amber-400"
+                                            : "text-blue-600 dark:text-blue-400"
+                                }`} />
+                            </button>
                         </div>
                     )}
 

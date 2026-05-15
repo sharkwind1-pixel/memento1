@@ -61,5 +61,6 @@ export {
 export {
     analyzeTimelinePatterns,
     getTopPattern,
+    wasPatternRecentlyMentioned,
 } from "./timeline-patterns";
 export type { TimelinePattern, PatternSeverity } from "./timeline-patterns";

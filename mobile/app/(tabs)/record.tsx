@@ -6,7 +6,7 @@
  * - 비디오 (video_generations) — AI 영상
  */
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity,
     Image, FlatList, RefreshControl, ActivityIndicator,
@@ -38,6 +38,8 @@ import HealingJourneySummary from "@/components/record/HealingJourneySummary";
 import MemoryAlbumsSection from "@/components/record/MemoryAlbumsSection";
 import { supabase } from "@/lib/supabase";
 import * as Haptics from "expo-haptics";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getTopTimelinePattern } from "@/lib/timeline-patterns";
 import { Alert as RNAlert } from "react-native";
 
 type TabType = "timeline" | "gallery" | "albums" | "videos" | "minihompy";
@@ -271,6 +273,44 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
     // 블로그 글 약속한 검색 + 카테고리 필터
     const [searchQuery, setSearchQuery] = useState("");
     const [categoryFilter, setCategoryFilter] = useState<string>("");
+    // 패턴 배너 dismiss 상태 (24h, code 단위) — 웹 패리티
+    const [dismissedPatternCode, setDismissedPatternCode] = useState<string | null>(null);
+
+    // 패턴 분석 — 블로그 글 약속: 조기 건강 신호 감지 (mobile/lib/timeline-patterns.ts 추출)
+    // useMemo로 entries 변경 시만 재계산. dismiss useEffect의 의존성으로 사용.
+    const topPattern = useMemo(() => getTopTimelinePattern(entries), [entries]);
+
+    // 24h dismiss 로드 — topPattern.code 변경 시 다시 체크 (다른 패턴 발생 시 그것도 dismiss됐었나 확인)
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            if (!topPattern) {
+                if (!cancelled) setDismissedPatternCode(null);
+                return;
+            }
+            try {
+                const key = `timeline_pattern_dismiss_${petId}_${topPattern.code}`;
+                const ts = await AsyncStorage.getItem(key);
+                if (cancelled) return;
+                if (ts) {
+                    const n = parseInt(ts, 10);
+                    if (!isNaN(n) && Date.now() - n < 24 * 60 * 60 * 1000) {
+                        setDismissedPatternCode(topPattern.code);
+                        return;
+                    }
+                }
+                setDismissedPatternCode(null);
+            } catch { /* AsyncStorage 실패 무시 */ }
+        })();
+        return () => { cancelled = true; };
+    }, [topPattern?.code, petId]);
+
+    const handleDismissPattern = async (code: string) => {
+        try {
+            await AsyncStorage.setItem(`timeline_pattern_dismiss_${petId}_${code}`, String(Date.now()));
+        } catch { /* 저장 실패 시 일시 dismiss만 */ }
+        setDismissedPatternCode(code);
+    };
 
     const load = useCallback(async () => {
         if (!session) { setLoading(false); return; }
@@ -420,29 +460,6 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
         return <View style={styles.loadingInline}><ActivityIndicator color={accentColor} /></View>;
     }
 
-    // 패턴 분석 — 블로그 글 약속: 조기 건강 신호 감지
-    // (웹 src/lib/agent/timeline-patterns.ts 모바일 단순 재구현, 같은 룰)
-    const topPattern = (() => {
-        if (entries.length === 0) return null as null | { code: string; message: string; severity: "alert" | "warn" | "info"; needsVetConsult: boolean };
-        const within = (days: number) => {
-            const since = new Date();
-            since.setDate(since.getDate() - days);
-            const sinceStr = since.toISOString().split("T")[0];
-            return entries.filter((e) => e.date >= sinceStr);
-        };
-        const sick7 = within(7).filter((e) => e.mood === "sick");
-        if (sick7.length >= 3) return { code: "sick_frequent", message: `최근 7일 동안 컨디션이 안 좋다고 ${sick7.length}번 기록됐어요. 수의사 상담을 고려해보세요.`, severity: "alert" as const, needsVetConsult: true };
-        const poop7 = within(7).filter((e) => e.category === "배변");
-        if (poop7.length >= 3) return { code: "poop_issue", message: `최근 7일 동안 배변 관련 기록이 ${poop7.length}번이에요. 식이/소화 문제 가능성, 수의사와 상담 권장.`, severity: "alert" as const, needsVetConsult: true };
-        const health30 = within(30).filter((e) => e.category === "건강");
-        if (health30.length >= 3) return { code: "health_accum", message: `최근 한 달 동안 건강 관련 기록이 ${health30.length}번이에요. 정기 건강검진을 고려해보세요.`, severity: "warn" as const, needsVetConsult: true };
-        const sad14 = within(14).filter((e) => e.mood === "sad");
-        if (sad14.length >= 5) return { code: "sad_pattern", message: `최근 2주 동안 기분이 가라앉은 날이 ${sad14.length}번이에요. 환경 변화나 활동량을 살펴봐주세요.`, severity: "warn" as const, needsVetConsult: false };
-        const meal7 = within(7).filter((e) => e.category === "사료");
-        if (meal7.length >= 5) return { code: "meal_change", message: `최근 7일 동안 사료/식사 관련 기록이 ${meal7.length}번이에요. 식습관 변화를 꾸준히 살펴봐주세요.`, severity: "warn" as const, needsVetConsult: false };
-        return null;
-    })();
-
     // 무드 + 카테고리 + 검색 필터 적용 (tags 검색 지원: #로 시작 또는 일반 매치)
     const filteredEntries = (() => {
         const q = searchQuery.trim().toLowerCase();
@@ -497,7 +514,7 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
                         )}
 
                         {/* AI 패턴 분석 배너 (블로그 글 약속: 조기 건강 신호) */}
-                        {topPattern && (
+                        {topPattern && dismissedPatternCode !== topPattern.code && (
                             <View style={{
                                 marginBottom: 12,
                                 padding: 12,
@@ -539,9 +556,25 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
                                             fontSize: 11,
                                             marginTop: 4,
                                             color: isDarkMode ? "#FCA5A5" : "#B91C1C",
-                                        }}>수의사 상담 권장 — 위 "공유" 버튼으로 기록을 정리해 가세요</Text>
+                                        }}>수의사 상담 권장 — 위 &quot;공유&quot; 버튼으로 기록을 정리해 가세요</Text>
                                     )}
                                 </View>
+                                <TouchableOpacity
+                                    onPress={() => handleDismissPattern(topPattern.code)}
+                                    accessibilityLabel="패턴 알림 닫기 (24시간)"
+                                    hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                                    style={{ padding: 2, marginTop: -2 }}
+                                >
+                                    <Ionicons
+                                        name="close"
+                                        size={18}
+                                        color={topPattern.severity === "alert"
+                                            ? (isDarkMode ? "#FCA5A5" : "#991B1B")
+                                            : topPattern.severity === "warn"
+                                                ? (isDarkMode ? "#FCD34D" : "#92400E")
+                                                : (isDarkMode ? "#93C5FD" : "#1E40AF")}
+                                    />
+                                </TouchableOpacity>
                             </View>
                         )}
 

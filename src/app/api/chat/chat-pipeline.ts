@@ -645,15 +645,32 @@ export async function buildAIContext(
     // 가드:
     //  - 추모 모드 X (활성 케어 X)
     //  - 첫 인사 X (사용자 "안녕"인데 갑자기 병원 권유는 어색 — 9번 권고)
+    //  - 최근 5개 assistant 응답에 같은 패턴 멘트가 이미 나왔으면 skip (코드 레벨 dedup)
+    //    → 프롬프트 의지("반복 X")만으로는 GPT가 며칠 연속 같은 멘트 반복 가능
     const topPattern = (!isMemorialMode && !isFirstChat && !isNewSession)
         ? agent.getTopPattern(timeline)
         : null;
-    const patternContext = topPattern
+
+    // dedup: 최근 5개 assistant 응답에서 동일 패턴 시그니처 검색
+    let patternSuppressed = false;
+    if (topPattern) {
+        const recentAssistantText = chatHistory
+            .filter((m) => m.role === "assistant")
+            .slice(-5)
+            .map((m) => m.content || "")
+            .join("\n");
+        patternSuppressed = agent.wasPatternRecentlyMentioned(topPattern.code, recentAssistantText);
+        if (patternSuppressed) {
+            console.log(`[chat/pattern-dedup] 패턴 ${topPattern.code} 최근 5개 응답에 이미 언급됨 — skip`);
+        }
+    }
+
+    const patternContext = (topPattern && !patternSuppressed)
         ? `\n[보호자 일기 패턴 알림]\n${topPattern.message}\n` +
           (topPattern.needsVetConsult
               ? "→ 응답 중 자연스럽게 한 번 짧게 언급해주세요. 강요 X. 예: '요즘 몸이 좀 안 좋다고 적었던 거... 병원 한번 가보는 건 어때?' 같은 펫의 걱정 톤.\n"
               : "→ 응답 중 자연스럽게 한 번 짧게 언급해주세요. 부담 X. 예: '요즘 잠이 좀 많다고 적었더라.' 같은 가벼운 관찰 톤.\n") +
-          "이미 다른 응답에서 언급했다면 반복 X. 응답마다 1회 이내."
+          "응답마다 1회 이내. 같은 표현 반복 금지."
         : "";
 
     // 사진 캡션 컨텍스트 생성

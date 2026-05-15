@@ -184,3 +184,40 @@ export function getTopPattern(entries: TimelineEntryLike[]): TimelinePattern | n
         return b.relatedEntryIds.length - a.relatedEntryIds.length;
     })[0];
 }
+
+/**
+ * 패턴 코드별 시그니처 키워드 (정규식).
+ * AI 응답에서 이 표현이 발견되면 "이미 언급된 패턴"으로 판정.
+ *
+ * 보수적으로 골랐다 (1~2개씩, 확실한 시그니처만).
+ * 공격적으로 잡으면 같은 패턴이 며칠 동안 한 번도 안 나오는 부작용.
+ */
+const PATTERN_SIGNATURES: Record<TimelinePattern["code"], RegExp[]> = {
+    sick_frequent: [/컨디션이?\s*(좀\s*)?안\s*좋/, /몸이?\s*(좀\s*)?안\s*좋/, /병원\s*(한번|가보)/],
+    sad_pattern: [/기분이?\s*(좀\s*)?가라앉/, /활동량/, /환경\s*변화/],
+    poop_issue: [/배변\s*(이슈|관련|문제)/, /화장실\s*(자주|많이)/],
+    meal_change: [/사료\s*(바뀌|변|자주)/, /식습관\s*변/],
+    record_gap: [/기록이?\s*(멈|뜸|드물)/, /한\s*줄이라도/],
+    health_accum: [/정기\s*건강/, /건강검진/, /건강\s*관련\s*기록/],
+};
+
+/**
+ * 최근 AI 응답 텍스트에서 동일 패턴 코드의 시그니처가 발견되는지 확인.
+ *
+ * - chatHistory의 최근 N개 assistant 메시지를 합쳐서 체크 (호출 측 책임)
+ * - 발견되면 → AI 응답에서 같은 패턴 멘트를 또 하지 않도록 patternContext skip
+ * - 9번 팩트체커 권고: "프롬프트 의지뿐인 dedup → 코드 레벨 강제로 보강"
+ *
+ * @param code 패턴 코드
+ * @param recentAssistantText 최근 assistant 응답들을 합친 문자열
+ * @returns true이면 이미 언급됨 → patternContext suppress 권장
+ */
+export function wasPatternRecentlyMentioned(
+    code: TimelinePattern["code"],
+    recentAssistantText: string,
+): boolean {
+    if (!recentAssistantText) return false;
+    const sigs = PATTERN_SIGNATURES[code];
+    if (!sigs || sigs.length === 0) return false;
+    return sigs.some((re) => re.test(recentAssistantText));
+}
