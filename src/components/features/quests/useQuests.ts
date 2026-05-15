@@ -36,7 +36,7 @@ interface UseQuestsResult {
 }
 
 export function useQuests(): UseQuestsResult {
-    const { user, refreshPoints } = useAuth();
+    const { user, session, refreshPoints } = useAuth();
     const { isMemorialMode } = useMemorialMode();
     const [progress, setProgress] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(true);
@@ -44,7 +44,9 @@ export function useQuests(): UseQuestsResult {
     const quests = isMemorialMode ? MEMORIAL_QUESTS : DAILY_QUESTS;
 
     const refresh = useCallback(async () => {
-        if (!user) {
+        // user는 hydration race로 즉시 truthy가 되지만 session.access_token은 늦게 hydrated될 수 있음.
+        // 둘 다 있어야 fetch — 없으면 콘솔에 401 노이즈만 남기고 의미 없는 호출.
+        if (!user || !session?.access_token) {
             setProgress({});
             setLoading(false);
             return;
@@ -59,7 +61,7 @@ export function useQuests(): UseQuestsResult {
         } finally {
             setLoading(false);
         }
-    }, [user]);
+    }, [user, session?.access_token]);
 
     useEffect(() => {
         refresh();
@@ -74,7 +76,7 @@ export function useQuests(): UseQuestsResult {
 
     const completeQuest = useCallback(
         async (questId: QuestId) => {
-            if (!user) return null;
+            if (!user || !session?.access_token) return null;
             try {
                 const res = await authFetch(API.QUESTS, {
                     method: "POST",
@@ -118,7 +120,7 @@ export function useQuests(): UseQuestsResult {
                 return null;
             }
         },
-        [user, quests, refreshPoints]
+        [user, session?.access_token, quests, refreshPoints]
     );
 
     const completedCount = quests.filter((q) => progress[q.id]).length;
