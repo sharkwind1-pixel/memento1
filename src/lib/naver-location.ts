@@ -39,16 +39,19 @@ interface NaverSearchItem {
 
 /** 유저 메시지에서 장소 질문 감지 + 검색 키워드 반환 */
 /** keyword를 배열로 바꿔 복수 검색어 지원 (네이버 검색은 단일 키워드가 결과 품질이 좋음) */
-const PLACE_PATTERNS: { pattern: RegExp; keyword: string; altKeyword?: string }[] = [
-    { pattern: /산책|공원|놀이터|야외|걷기|뛰기|걸을|산책로|산책 ?코스/, keyword: "공원", altKeyword: "산책로" },
-    { pattern: /병원|수의사|진료|응급|건강검진|예방접종/, keyword: "동물병원" },
-    { pattern: /펫카페|애견카페|펫프렌들리|놀 ?곳|놀 ?데|놀이/, keyword: "펫카페" },
-    { pattern: /미용|그루밍|목욕|트리밍/, keyword: "애견미용" },
-    { pattern: /호텔|펫호텔|맡길|돌봄|위탁/, keyword: "펫호텔" },
-    { pattern: /용품|사료|간식.*사|쇼핑/, keyword: "애견용품" },
-    { pattern: /수영장|수영/, keyword: "애견수영장" },
-    { pattern: /운동장/, keyword: "애견운동장" },
-    { pattern: /장례|장묘|화장|납골|추모공원|장의사|수습|유골/, keyword: "반려동물장례", altKeyword: "펫장례식장" },
+// strong: true → 의문형("어디/근처/추천") 없어도 평서문만으로 장소 검색 트리거
+//   (예: "동물병원 가야겠다", "산책로 좋더라"). 장소 의도가 명확한 카테고리만.
+// strong 없음 → 의문형 필수 (예: "사료/용품"은 평서문 일상 대화가 흔해 오발동 방지)
+const PLACE_PATTERNS: { pattern: RegExp; keyword: string; altKeyword?: string; strong?: boolean }[] = [
+    { pattern: /산책|공원|놀이터|야외|걷기|뛰기|걸을|산책로|산책 ?코스|둘레길|산책길|하천|천변|강변|호수공원|수변/, keyword: "공원", altKeyword: "산책로", strong: true },
+    { pattern: /병원|수의사|진료|응급|건강검진|예방접종|24시|응급실|동물약국/, keyword: "동물병원", strong: true },
+    { pattern: /펫카페|애견카페|펫프렌들리|놀 ?곳|놀 ?데|놀이터/, keyword: "펫카페", strong: true },
+    { pattern: /미용|그루밍|목욕|트리밍|스파/, keyword: "애견미용", strong: true },
+    { pattern: /호텔|펫호텔|맡길|돌봄|위탁|펫시터|펫유치원|애견유치원/, keyword: "펫호텔", strong: true },
+    { pattern: /용품|사료.*사|간식.*사|쇼핑|애견용품점/, keyword: "애견용품" },
+    { pattern: /수영장|수영/, keyword: "애견수영장", strong: true },
+    { pattern: /운동장|놀이장|애견운동장|드넓은/, keyword: "애견운동장", strong: true },
+    { pattern: /장례|장묘|화장|납골|추모공원|장의사|수습|유골/, keyword: "반려동물장례", altKeyword: "펫장례식장", strong: true },
 ];
 
 /** 일반 장소 표현 (특정 카테고리 없이 "갈만한/시설/명소" 같은 일반 질문) */
@@ -65,7 +68,10 @@ export function detectPlaceQuery(message: string): { detected: boolean; keyword?
     const questionPatterns = /어디|어느|가까운|근처|주변|추천|갈까|가볼|찾아|코스|갈만|산책|있어|있을까|있나|있는지|어딨|알려/;
     // 장례/장묘 키워드는 의문형 없어도 장소 검색 트리거 (추모 모드 핵심 기능)
     const memorialPlacePatterns = /장례.*어디|장례.*해야|장묘|화장.*해야|장례식장|납골|추모공원/;
-    if (!questionPatterns.test(message) && !memorialPlacePatterns.test(message)) {
+    // strong 카테고리(병원/산책로/펫카페 등)는 평서문만으로도 장소 의도가 명확 → 의문형 게이트 우회
+    // (조사 결과: "동물병원 가야겠다" 같은 평서문이 미발동하던 가장 큰 병목)
+    const hasStrongCategory = PLACE_PATTERNS.some(({ pattern, strong }) => strong && pattern.test(message));
+    if (!questionPatterns.test(message) && !memorialPlacePatterns.test(message) && !hasStrongCategory) {
         return { detected: false };
     }
 

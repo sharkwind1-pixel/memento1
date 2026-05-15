@@ -57,8 +57,24 @@ function buildSearchQuery(userMessage: string, petType: string, petBreed?: strin
         "피부": "피부병 가려움 원인 치료",
         "귀": "귀 감염 외이염 증상 치료",
         "눈물": "눈물자국 원인 관리법",
-        "사료": "사료 추천 선택 기준 영양",
-        "간식": "간식 추천 안전한 간식 위험한 음식",
+        "사료": "사료 추천 선택 기준 연령별 영양성분 비교",
+        "간식": "간식 추천 안전한 간식 위험한 음식 수제간식 만드는 법",
+        "영양제": "영양제 추천 종류 성분 효과 급여량 주의사항",
+        "보조제": "건강보조제 종류 효과 급여 가이드",
+        "유산균": "장 건강 유산균 프로바이오틱 효과 급여법",
+        "관절": "관절 건강 영양제 글루코사민 노령 관리",
+        "노령": "노령 건강관리 식단 운동 정기검진 체크리스트",
+        "시니어": "시니어 건강관리 영양 노화 신호 관리법",
+        "비만": "비만 다이어트 식단 운동 체중관리 방법",
+        "다이어트": "체중감량 식이조절 운동 칼로리 가이드",
+        "스케일링": "치아 스케일링 시기 비용 마취 위험 양치 관리",
+        "치아": "치아 관리 치석 제거 양치 방법 구강 건강",
+        "슬개골": "슬개골 탈구 증상 단계 관리 수술 시기",
+        "알러지": "알레르기 원인 증상 식이 환경 관리법",
+        "임신": "임신 징후 기간 관리 출산 준비 영양",
+        "출산": "출산 과정 준비물 신생아 관리 주의사항",
+        "발정": "발정 주기 증상 관리 중성화 시기",
+        "털빠짐": "털빠짐 환절기 탈모 원인 관리 영양",
         "예방접종": "예방접종 스케줄 종류 시기",
         "중성화": "중성화 수술 시기 장단점",
         // 장례/추모 실용
@@ -106,15 +122,14 @@ export async function searchCareInfo(
 
         const query = buildSearchQuery(userMessage, petType, petBreed);
 
+        // advanced + maxResults 상향 + 도메인 화이트리스트 제거
+        //  - 기존 8개 도메인 제한이 수의학 정보 품질을 크게 떨어뜨림 (조사 결과)
+        //  - 도메인 제한 없이 Tavily 자체 랭킹 신뢰, includeAnswer로 요약 확보
+        //  - 토큰: 결과는 아래에서 600자 × 5로 캡, 출력단 sanitizeAIOutput로 누출 방어 유지
         const response = await client.search(query, {
-            searchDepth: "basic",
-            maxResults: 3,
+            searchDepth: "advanced",
+            maxResults: 5,
             includeAnswer: true,
-            includeDomains: [
-                "fitpetmall.com", "mypetlife.co.kr", "royalcanin.com",
-                "petzlp.com", "wayopet.com", "brunch.co.kr",
-                "naver.com", "tistory.com",
-            ],
         });
 
         // 결과 조합
@@ -125,12 +140,12 @@ export async function searchCareInfo(
             parts.push(`요약: ${response.answer}`);
         }
 
-        // 상위 결과 스니펫
+        // 상위 결과 스니펫 (300→600자, 3→5개 — 수의학 정보는 맥락이 길어야 정확)
         if (response.results && response.results.length > 0) {
-            for (let i = 0; i < Math.min(3, response.results.length); i++) {
+            for (let i = 0; i < Math.min(5, response.results.length); i++) {
                 const r = response.results[i];
                 if (r.content) {
-                    parts.push(`출처${i + 1}: ${r.content.slice(0, 300)}`);
+                    parts.push(`출처${i + 1}: ${r.content.slice(0, 600)}`);
                 }
             }
         }
@@ -138,12 +153,19 @@ export async function searchCareInfo(
         if (parts.length === 0) return "";
 
         return `\n## 참고 자료 (검색 결과 기반 — 정확한 정보 전달 우선)
-아래 정보를 바탕으로 답변하되, 캐릭터 톤은 유지합니다.
+아래 정보를 바탕으로 답변하되, 캐릭터 톤(반려동물 1인칭)은 유지합니다.
 답변에 반드시 포함할 것:
 1. 왜 그런 행동/증상이 나타나는지 (원인)
-2. 구체적 단계별 방법 (1→2→3)
+2. 구체적 단계별 방법 (1→2→3) — 두루뭉술 금지, 실제로 따라할 수 있게
 3. 절대 하면 안 되는 것
 4. 심각하면 "수의사/훈련사 상담" 안내
+
+추가 지시 (구체성 강화):
+- 간식/사료/영양제 질문이면: 일반론("닭고기 좋아")으로 끝내지 말고
+  성분/영양소 기준, 연령·체중별 급여량 가이드, 피해야 할 성분까지 구체적으로.
+  단 특정 브랜드를 "이게 최고"라고 단정하지 말 것 (제품 유형/성분 위주로).
+- 수치(용량/주기/기간)는 검색 자료에 있는 값만 인용, 없으면 "수의사 확인" 안내.
+- 검색 자료에 근거가 약하면 단정하지 말고 "일반적으로는 ~지만 개체차가 있어"로.
 
 ${parts.join("\n\n")}`;
     } catch (err) {
