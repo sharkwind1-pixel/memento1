@@ -867,7 +867,7 @@ export default function AiChatScreen() {
                         data={messages}
                         keyExtractor={(item) => item.id}
                         style={styles.messages}
-                        contentContainerStyle={{ paddingTop: 16, paddingBottom: 8, paddingHorizontal: 16 }}
+                        contentContainerStyle={{ paddingTop: 12, paddingBottom: 16, paddingHorizontal: 16 }}
                         showsVerticalScrollIndicator={false}
                         renderItem={({ item, index }) => (
                             <MessageRenderer
@@ -1124,6 +1124,7 @@ function MessageRenderer({
                 <SystemMessage
                     message={message}
                     accentColor={accentColor}
+                    isMemorial={pet.status === "memorial"}
                     onRetry={onRetry}
                     onReminderAccept={onReminderAccept}
                     onReminderDismiss={onReminderDismiss}
@@ -1233,9 +1234,12 @@ function MessageRenderer({
                             <View style={{
                                 flexDirection: "row", alignItems: "center", gap: 4,
                                 paddingHorizontal: 8, paddingVertical: 6,
-                                backgroundColor: accentColor + "22",
+                                // 웹 1:1: 일상 memento-200 / 추모 memorial-50 불투명 (반투명 X)
+                                backgroundColor: isDarkMode
+                                    ? COLORS.gray[700]
+                                    : (isMemorial ? COLORS.memorial[50] : COLORS.memento[200]),
                             }}>
-                                <Ionicons name="heart" size={11} color={accentColor} />
+                                <Ionicons name="heart" size={11} color={isMemorial ? COLORS.memorial[600] : COLORS.memento[600]} />
                                 <Text numberOfLines={1} style={{
                                     flex: 1, fontSize: 11,
                                     color: isDarkMode ? COLORS.gray[200] : COLORS.gray[700],
@@ -1250,9 +1254,14 @@ function MessageRenderer({
                 {message.matchedTimeline && !message.matchedPhoto && (
                     <View style={{
                         marginTop: 8, borderRadius: 12, borderWidth: 1, padding: 10,
-                        width: 220,
-                        borderColor: isDarkMode ? COLORS.gray[700] : accentColor + "40",
-                        backgroundColor: isDarkMode ? COLORS.gray[800] : accentColor + "10",
+                        // 웹 1:1: 고정폭 제거 → 버블폭 추종. 테두리/배경 모드색
+                        alignSelf: "stretch",
+                        borderColor: isDarkMode
+                            ? COLORS.gray[700]
+                            : (isMemorial ? COLORS.memorial[200] : COLORS.memento[200]),
+                        backgroundColor: isDarkMode
+                            ? COLORS.gray[800]
+                            : (isMemorial ? COLORS.memorial[50] : COLORS.memento[100]),
                     }}>
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                             <Ionicons name="book-outline" size={13} color={accentColor} />
@@ -1332,10 +1341,11 @@ function MessageRenderer({
 }
 
 function SystemMessage({
-    message, accentColor, onRetry, onReminderAccept, onReminderDismiss,
+    message, accentColor, isMemorial = false, onRetry, onReminderAccept, onReminderDismiss,
 }: {
     message: ChatMessage;
     accentColor: string;
+    isMemorial?: boolean;
     onRetry: (id: string, retryMessage: string) => void;
     onReminderAccept?: (id: string) => void;
     onReminderDismiss?: (id: string) => void;
@@ -1343,27 +1353,30 @@ function SystemMessage({
     const { isDarkMode } = useDarkMode();
 
     if (message.isError) {
+        // 웹 1:1: 빨강 고정이 아니라 모드색 배경 + 모드 텍스트 + pill 버튼
+        const errBg = isMemorial ? COLORS.memorial[50] : COLORS.memento[200];
+        const errText = isMemorial ? COLORS.memorial[700] : COLORS.memento[700];
         return (
             <View style={{
                 alignSelf: "center",
                 marginBottom: 12,
                 paddingHorizontal: 14,
                 paddingVertical: 10,
-                backgroundColor: "#FEE2E2",
+                backgroundColor: isDarkMode ? COLORS.gray[800] : errBg,
                 borderRadius: 12,
                 maxWidth: "90%",
             }}>
-                <Text style={{ color: "#B91C1C", fontSize: 13, lineHeight: 18 }}>{message.content}</Text>
+                <Text style={{ color: isDarkMode ? COLORS.gray[200] : errText, fontSize: 13, lineHeight: 18, textAlign: "center" }}>{message.content}</Text>
                 {message.retryMessage && (
                     <TouchableOpacity
                         onPress={() => onRetry(message.id, message.retryMessage!)}
                         style={{
-                            alignSelf: "flex-start",
+                            alignSelf: "center",
                             marginTop: 8,
-                            paddingHorizontal: 12,
+                            paddingHorizontal: 16,
                             paddingVertical: 6,
-                            backgroundColor: "#DC2626",
-                            borderRadius: 8,
+                            backgroundColor: isMemorial ? COLORS.memorial[500] : COLORS.memento[500],
+                            borderRadius: 9999,
                         }}
                     >
                         <Text style={{ color: "#fff", fontSize: 12, fontWeight: "600" }}>다시 시도</Text>
