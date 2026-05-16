@@ -4,6 +4,14 @@
 
 ---
 
+## [2026-05-16 추가] focused-mclaren 브랜치 main 머지 + handover 맹점 발견
+
+별도 워크트리 세션이 `claude/focused-mclaren-71deee`에서 소개노출(온보딩/로그인/메타 `036a39a b6ad594`) + CLAUDE.md stale 정정 `a52a762` 작업 → **브리핑은 "푸시 완료"라 했으나 실제론 그 브랜치에만 있고 main/origin 미반영 = Vercel 배포 0**. 코드 검증(텍스트/문서, 충돌0) 후 `a2b49a9..b6ad594` fast-forward 머지 + push. L2 통과.
+
+**handover 체계 맹점 (다음 세션 필독)**: `/handover`는 main git log만 봐서 **다른 워크트리/브랜치 작업을 못 잡음**. 워크트리 10개 난립 = 작업이 main 외 9곳에 흩어질 수 있음. 인계 시 `git worktree list` + `git log --all --not main`으로 미머지 브랜치 작업 점검 필요. handover 스킬에 이 단계 추가 권장 (미반영).
+
+---
+
 ## [2026-05-16] 인계 누락방지 체계 + AI펫톡 웹1:1 재정렬 + 버그 다수 (22커밋)
 
 **인계 체계 (A+B 구축)**: RELAY.md를 50줄 보드(🔴NEXT/⚠️미검증/⏳외부대기)로 재설계 · `/handover` 스킬 신설(.claude/skills/handover, git↔RELAY 자동 대조) · CLAUDE.md "인계 누락 방지" 규칙 추가.
