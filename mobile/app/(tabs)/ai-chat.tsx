@@ -926,7 +926,7 @@ export default function AiChatScreen() {
                 {suggestions.length > 0 && (
                     <ScrollableSuggestions
                         suggestions={suggestions}
-                        accentColor={accentColor}
+                        isMemorialMode={isMemorialMode}
                         onSelect={(s) => { setSuggestions([]); handleSend(s); }}
                     />
                 )}
@@ -1380,38 +1380,44 @@ function SystemMessage({
     );
 }
 
+// 웹 ChatInputArea 추천칩 1:1: 입력영역 위 flex-wrap pill(채운 배경)
+// + Sparkles 아이콘 + 줄바꿈(가로스크롤 아님). 색은 모드별 memento/memorial.
 function ScrollableSuggestions({
-    suggestions, accentColor, onSelect,
+    suggestions, isMemorialMode, onSelect,
 }: {
     suggestions: string[];
-    accentColor: string;
+    isMemorialMode: boolean;
     onSelect: (s: string) => void;
 }) {
     const { fontScale, spacingScale } = useSimpleMode();
+    const chipBg = isMemorialMode ? COLORS.memorial[100] : COLORS.memento[100];
+    const chipBorder = isMemorialMode ? COLORS.memorial[200] : COLORS.memento[200];
+    const chipText = isMemorialMode ? COLORS.memorial[600] : COLORS.memento[600];
     return (
-        <View style={{ paddingHorizontal: 16 * spacingScale, paddingBottom: 8 * spacingScale }}>
-            <FlatList
-                data={suggestions}
-                horizontal
-                keyExtractor={(item) => item}
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ gap: 8 * spacingScale }}
-                renderItem={({ item }) => (
-                    <TouchableOpacity
-                        onPress={() => onSelect(item)}
-                        style={{
-                            paddingHorizontal: 12 * spacingScale,
-                            paddingVertical: 8 * spacingScale,
-                            borderRadius: 9999,
-                            borderWidth: 1,
-                            borderColor: accentColor,
-                        }}
-                        activeOpacity={0.8}
-                    >
-                        <Text style={{ fontSize: 12 * fontScale, color: accentColor }}>{item}</Text>
-                    </TouchableOpacity>
-                )}
-            />
+        <View style={{
+            flexDirection: "row", flexWrap: "wrap", gap: 8 * spacingScale,
+            paddingHorizontal: 16 * spacingScale, paddingBottom: 8 * spacingScale,
+        }}>
+            {suggestions.map((item) => (
+                <TouchableOpacity
+                    key={item}
+                    onPress={() => onSelect(item)}
+                    style={{
+                        flexDirection: "row", alignItems: "center", gap: 6,
+                        paddingHorizontal: 16 * spacingScale,
+                        paddingVertical: 10 * spacingScale,
+                        minHeight: 44,
+                        borderRadius: 9999,
+                        backgroundColor: chipBg,
+                        borderWidth: 1,
+                        borderColor: chipBorder,
+                    }}
+                    activeOpacity={0.8}
+                >
+                    <Ionicons name="sparkles" size={14 * fontScale} color={chipText} />
+                    <Text style={{ fontSize: 14 * fontScale, fontWeight: "500", color: chipText }}>{item}</Text>
+                </TouchableOpacity>
+            ))}
         </View>
     );
 }
