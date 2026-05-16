@@ -183,17 +183,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
         }, 4000);
 
+        // 무효 refresh token을 로컬에서 정리 (서버 호출 X, 빠름).
+        // 그대로 두면 부팅마다 getSession이 refresh 재시도 → 콘솔 ERROR + hang.
+        const clearInvalidSession = async () => {
+            try {
+                await supabase.auth.signOut({ scope: "local" });
+            } catch { /* 이미 비어있으면 무시 */ }
+            if (mounted) {
+                setSession(null);
+                setUser(null);
+                setProfile(null);
+            }
+        };
+
         (async () => {
             try {
-                const { data: { session } } = await supabase.auth.getSession();
+                const { data: { session }, error } = await supabase.auth.getSession();
                 if (!mounted) return;
+                if (error) {
+                    // Invalid/missing refresh token 등 → 무효 토큰 정리 후 로그아웃 상태로
+                    console.warn("[AuthContext] getSession error → clear local session:", error.message);
+                    await clearInvalidSession();
+                    return;
+                }
                 setSession(session);
                 setUser(session?.user ?? null);
                 if (session?.user) {
                     await loadProfile(session.user.id);
                 }
             } catch (e) {
-                console.warn("[AuthContext] init error:", e);
+                const msg = e instanceof Error ? e.message : String(e);
+                console.warn("[AuthContext] init error:", msg);
+                // refresh token 관련 에러는 무효 토큰 정리 (재부팅 시 반복 차단)
+                if (/refresh token/i.test(msg)) {
+                    await clearInvalidSession();
+                }
             } finally {
                 if (mounted) setIsLoading(false);
             }
