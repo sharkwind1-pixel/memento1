@@ -48,6 +48,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             priority: 1,
         },
         {
+            // 서비스 정체성 소개 — "장례식장 오해" 검색 직격용. 우선순위 높게.
+            url: `${siteUrl}/about`,
+            lastModified: now,
+            changeFrequency: "monthly",
+            priority: 0.9,
+        },
+        {
+            url: `${siteUrl}/pricing`,
+            lastModified: now,
+            changeFrequency: "monthly",
+            priority: 0.5,
+        },
+        {
             url: `${siteUrl}/terms`,
             lastModified: now,
             changeFrequency: "monthly",
