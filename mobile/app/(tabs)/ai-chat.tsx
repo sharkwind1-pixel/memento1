@@ -50,6 +50,7 @@ import PetSwitcher from "@/components/common/PetSwitcher";
 import RemindersModal from "@/components/chat/RemindersModal";
 import PawLoading from "@/components/ui/PawLoading";
 import MemorialAmbientStars from "@/components/chat/MemorialAmbientStars";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface ReminderItem {
     type: string;
@@ -241,6 +242,44 @@ export default function AiChatScreen() {
 
                 if (cancelled) return;
 
+                // 웹 1:1 — 저장 3회 실패해 AsyncStorage 백업된 대화 복구.
+                // 백업 마지막 메시지가 서버보다 최신이면 백업 우선 + 서버 재저장.
+                const backupKey = `aichat_unsaved_${user.id}_${selectedPet.id}`;
+                let backup: ChatMessage[] | null = null;
+                try {
+                    const raw = await AsyncStorage.getItem(backupKey);
+                    if (raw) {
+                        const parsed = JSON.parse(raw);
+                        if (Array.isArray(parsed) && parsed.length > 0) backup = parsed;
+                    }
+                } catch { /* 파싱 불가 */ }
+                if (cancelled) return;
+                const lastTs = (arr?: ChatMessage[]): number => {
+                    if (!arr || arr.length === 0) return 0;
+                    const t = arr[arr.length - 1]?.timestamp;
+                    const n = t ? new Date(t).getTime() : 0;
+                    return isNaN(n) ? 0 : n;
+                };
+                const serverMsgs = (cached?.messages && Array.isArray(cached.messages)) ? cached.messages as ChatMessage[] : undefined;
+                if (backup && backup.length > 0 && lastTs(backup) >= lastTs(serverMsgs)) {
+                    setMessages(
+                        backup.map((m: ChatMessage) => ({
+                            ...m,
+                            content: m.role === "pet" && selectedPet.name
+                                ? fixKoreanParticles(m.content, selectedPet.name)
+                                : m.content,
+                            timestamp: new Date(m.timestamp),
+                        })),
+                    );
+                    supabase.from("ai_chats").upsert(
+                        { user_id: user.id, pet_id: selectedPet.id, messages: backup },
+                        { onConflict: "user_id,pet_id" },
+                    ).then(({ error: reErr }) => {
+                        if (!reErr) AsyncStorage.removeItem(backupKey).catch(() => {});
+                    });
+                    return;
+                }
+
                 if (cached?.messages && Array.isArray(cached.messages) && cached.messages.length > 0) {
                     setMessages(
                         cached.messages.map((m: ChatMessage) => ({
@@ -309,11 +348,31 @@ export default function AiChatScreen() {
     // ===== 메시지 변경 시 1초 debounce로 ai_chats 저장 =====
     useEffect(() => {
         if (!selectedPet?.id || !user?.id || messages.length === 0) return;
-        const timer = setTimeout(() => {
-            supabase.from("ai_chats").upsert(
-                { user_id: user.id, pet_id: selectedPet.id, messages },
-                { onConflict: "user_id,pet_id" },
-            ).then(() => {});
+        const uid = user.id;
+        const pid = selectedPet.id;
+        const snapshot = messages;
+        const backupKey = `aichat_unsaved_${uid}_${pid}`;
+        const timer = setTimeout(async () => {
+            // 웹 useAIChat 1:1 — 3회 재시도 + 실패 시 AsyncStorage 백업.
+            // 기존 .then(()=>{})은 에러조차 안 봐서 대화 영구 소실(메멘토 심장 구멍).
+            let saved = false;
+            for (let attempt = 1; attempt <= 3; attempt++) {
+                const { error } = await supabase.from("ai_chats").upsert(
+                    { user_id: uid, pet_id: pid, messages: snapshot },
+                    { onConflict: "user_id,pet_id" },
+                );
+                if (!error) { saved = true; break; }
+                console.error(`[ai-chat save] ai_chats 실패 (${attempt}/3): ${error.message}`);
+                if (attempt < 3) await new Promise((r) => setTimeout(r, 300 * attempt));
+            }
+            if (!saved) {
+                try {
+                    await AsyncStorage.setItem(backupKey, JSON.stringify(snapshot));
+                    console.error(`[ai-chat save] 3회 실패 → AsyncStorage 백업: ${backupKey}`);
+                } catch { /* 백업 불가 */ }
+            } else {
+                try { await AsyncStorage.removeItem(backupKey); } catch { /* noop */ }
+            }
         }, 1000);
         return () => clearTimeout(timer);
     }, [messages, selectedPet?.id, user?.id]);

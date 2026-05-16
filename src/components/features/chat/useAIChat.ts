@@ -290,6 +290,46 @@ export function useAIChat({
                     // PGRST116 = no rows found (정상 케이스) - 에러 무시
                 }
 
+                // 이전 세션에서 저장 3회 실패해 localStorage에 백업된 대화가 있으면 복구.
+                // 백업이 서버보다 길면(= 저장 실패분) 백업 우선 + 서버 재저장 시도.
+                const backupKey = `aichat_unsaved_${user.id}_${selectedPetId}`;
+                let backup: ChatMessage[] | null = null;
+                try {
+                    const raw = localStorage.getItem(backupKey);
+                    if (raw) {
+                        const parsed = JSON.parse(raw);
+                        if (Array.isArray(parsed) && parsed.length > 0) backup = parsed;
+                    }
+                } catch { /* 파싱 불가 무시 */ }
+
+                // 멀티기기 stale 방지 (9번 권고): length가 아니라 마지막 메시지
+                // timestamp로 비교. 다른 기기에서 더 최근 대화했으면 서버가 정본.
+                const lastTs = (arr?: ChatMessage[]): number => {
+                    if (!arr || arr.length === 0) return 0;
+                    const t = arr[arr.length - 1]?.timestamp;
+                    const n = t ? new Date(t).getTime() : 0;
+                    return isNaN(n) ? 0 : n;
+                };
+                const backupNewer = backup ? lastTs(backup) >= lastTs(data?.messages) : false;
+                if (backup && backup.length > 0 && backupNewer) {
+                    const petName = selectedPet?.name || "";
+                    setMessages(
+                        backup.map((msg: ChatMessage) => ({
+                            ...msg,
+                            content: msg.role === "pet" && petName ? fixKoreanParticles(msg.content, petName) : msg.content,
+                            timestamp: new Date(msg.timestamp),
+                        }))
+                    );
+                    // 서버에 재저장 시도 (성공 시 saveToSupabase가 백업 제거)
+                    supabase.from("ai_chats").upsert(
+                        { user_id: user.id, pet_id: selectedPetId, messages: backup },
+                        { onConflict: "user_id,pet_id" }
+                    ).then(({ error: reErr }) => {
+                        if (!reErr) { try { localStorage.removeItem(backupKey); } catch { /* noop */ } }
+                    });
+                    return;
+                }
+
                 if (data?.messages && data.messages.length > 0) {
                     const petName = selectedPet?.name || "";
                     setMessages(
@@ -373,20 +413,33 @@ export function useAIChat({
             if (!selectedPetId || !user?.id || messagesToSave.length === 0)
                 return;
 
-            try {
-                // upsert: 있으면 업데이트, 없으면 생성
-                await supabase.from("ai_chats").upsert(
+            // 이게 "다시 꺼내 대화"의 실제 정본(loadChatFromSupabase가 ai_chats 우선).
+            // 통째 upsert라 마지막 저장 실패 + 앱 종료 = 그 대화 영구 소실.
+            // → 재시도 + 실패 시 localStorage 백업(다음 진입 때 복구 시도).
+            const backupKey = `aichat_unsaved_${user.id}_${selectedPetId}`;
+            let saved = false;
+            for (let attempt = 1; attempt <= 3; attempt++) {
+                const { error } = await supabase.from("ai_chats").upsert(
                     {
                         user_id: user.id,
                         pet_id: selectedPetId,
                         messages: messagesToSave,
                     },
-                    {
-                        onConflict: "user_id,pet_id",
-                    }
+                    { onConflict: "user_id,pet_id" }
                 );
-            } catch {
-                // 채팅 저장 실패 - 조용히 무시 (다음 저장에서 재시도됨)
+                if (!error) { saved = true; break; }
+                console.error(`[saveToSupabase] ai_chats 저장 실패 (${attempt}/3): ${error.message}`);
+                if (attempt < 3) await new Promise((r) => setTimeout(r, 300 * attempt));
+            }
+            if (!saved) {
+                // 영구 소실 방지: 로컬에 마지막 상태 백업 (다음 로드 시 복구)
+                try {
+                    localStorage.setItem(backupKey, JSON.stringify(messagesToSave));
+                    console.error(`[saveToSupabase] 3회 실패 → localStorage 백업: ${backupKey}`);
+                } catch { /* localStorage 불가 환경 */ }
+            } else {
+                // 저장 성공 시 잔존 백업 제거
+                try { localStorage.removeItem(backupKey); } catch { /* noop */ }
             }
         },
         [selectedPetId, user?.id]

@@ -16,7 +16,8 @@
 ## 🔴 NEXT — 지금 이어서 (우선순위순)
 
 1. **앱 AI펫톡 남은 갭** (대조 에이전트 지목, 미착수): 펫 프로필 사이드바 / 내보내기 4종 템플릿(react-native-view-shot 의존성 결정 필요) / 푸시 배너(모바일 적합성 검토). 원칙: **웹 1:1 이식, 임의 재디자인 금지**.
-2. **[경미] 타이핑 인디케이터**: 앱 PawLoading vs 웹 PawPrint 3개 rotate bounce. 현재 근접으로 스킵 판단. 사용자가 원하면 PawPrint 3개 staggered bounce로 정렬.
+2. **대화 저장 #4 동시성 + 중복 후속** (9번 권고, 핵심 보존): (a) `ai_chats` 통째 upsert는 웹·앱 동시 대화 시 last-write-wins로 한쪽 소실 — append/머지 설계 필요. (b) `chat_messages` dedup_key UNIQUE 컬럼 + ON CONFLICT (재시도 중복행 방지, DB 마이그 필요). **메멘토 철학상 유실<중복이라 현 fix(유실차단) 우선이 옳음**. dedup은 보강.
+3. **[경미] 타이핑 인디케이터**: 앱 PawLoading vs 웹 PawPrint 3개 rotate bounce. 현재 근접으로 스킵 판단. 사용자가 원하면 PawPrint 3개 staggered bounce로 정렬.
 
 ## ⚠️ 미검증 — 커밋ID / 검증레벨 / 남은 검증
 

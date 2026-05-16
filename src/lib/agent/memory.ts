@@ -229,25 +229,46 @@ export async function saveMessage(
     // chat_mode 컬럼 존재 여부에 따라 조건부 포함 (마이그레이션 전후 호환)
     const hasModeCol = await hasChatModeColumn();
 
-    const { data, error } = await getSupabase()
-        .from("chat_messages")
-        .insert({
-            user_id: userId,
-            pet_id: petId,
-            role,
-            content,
-            emotion,
-            emotion_score: emotionScore,
-            ...(hasModeCol && chatMode ? { chat_mode: chatMode } : {}),
-        })
-        .select()
-        .single();
+    const row = {
+        user_id: userId,
+        pet_id: petId,
+        role,
+        content,
+        emotion,
+        emotion_score: emotionScore,
+        ...(hasModeCol && chatMode ? { chat_mode: chatMode } : {}),
+    };
 
-    if (error) {
-        return null;
+    // 메멘토애니 심장 = 모든 대화 보존. 저장 실패를 조용히 삼키면
+    // 사용자가 한 말이 영구 소실됨 → 재시도 + 실패 시 명확히 throw(호출자가 알게).
+    const MAX_RETRY = 3;
+    let lastErr: unknown = null;
+    for (let attempt = 1; attempt <= MAX_RETRY; attempt++) {
+        const { data, error } = await getSupabase()
+            .from("chat_messages")
+            .insert(row)
+            .select()
+            .single();
+
+        if (!error) return data;
+
+        lastErr = error;
+        console.error(
+            `[saveMessage] chat_messages INSERT 실패 (${attempt}/${MAX_RETRY}) ` +
+            `user=${userId} pet=${petId} role=${role}: ${error.message}`
+        );
+        // 지수 백오프 (200ms, 400ms) — 일시 네트워크/DB 부하 대응
+        if (attempt < MAX_RETRY) {
+            await new Promise((r) => setTimeout(r, 200 * attempt));
+        }
     }
 
-    return data;
+    // 3회 모두 실패 → 대화 유실. 호출자(chat-pipeline)의 catch가
+    // 실제로 작동하도록 throw (기존엔 null 반환이라 catch가 무의미했음).
+    throw new Error(
+        `[saveMessage] ${MAX_RETRY}회 재시도 후에도 저장 실패 — 대화 유실 위험. ` +
+        `user=${userId} pet=${petId} role=${role}: ${lastErr instanceof Error ? lastErr.message : String(lastErr)}`
+    );
 }
 
 /**
