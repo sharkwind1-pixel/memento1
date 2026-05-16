@@ -31,7 +31,7 @@ export const metadata: Metadata = {
         template: "%s | 메멘토애니",
     },
     description:
-        "반려동물과 함께하는 모든 순간을 기록하고, 이별 후에도 따뜻한 추억을 간직할 수 있는 메모리얼 커뮤니티 플랫폼. AI 펫톡, 타임라인, 케어 리마인더 등.",
+        "반려동물과 보내는 평생의 일상을 기록하고 돌보는 반려동물 라이프 플랫폼. AI 펫톡, 타임라인, 케어 리마인더로 매일을 함께하고, 오랜 시간이 흐른 뒤의 추억까지 이어가요. (오프라인 장례식장이 아닌 기록·커뮤니티 앱)",
     keywords: [
         "반려동물",
         "펫",
@@ -71,13 +71,13 @@ export const metadata: Metadata = {
         siteName: "메멘토애니",
         title: "메멘토애니 - 특별한 매일을 함께",
         description:
-            "반려동물과 함께하는 모든 순간을 기록하고, 이별 후에도 따뜻한 추억을 간직하세요.",
+            "반려동물과 보내는 평생의 일상을 기록하고 돌보는 곳. 매일의 순간과 케어부터 오랜 시간이 흐른 뒤의 추억까지 함께해요.",
         images: [
             {
                 url: "/og-image.png",
                 width: 1200,
                 height: 630,
-                alt: "메멘토애니 - 반려동물 메모리얼 커뮤니티 플랫폼",
+                alt: "메멘토애니 - 반려동물과 평생을 함께하는 라이프 플랫폼",
             },
         ],
     },
@@ -85,7 +85,7 @@ export const metadata: Metadata = {
         card: "summary_large_image",
         title: "메멘토애니 - 특별한 매일을 함께",
         description:
-            "반려동물과 함께하는 모든 순간을 기록하고, 이별 후에도 따뜻한 추억을 간직하세요.",
+            "반려동물과 보내는 평생의 일상을 기록하고 돌보는 곳. 매일의 순간과 케어부터 오랜 시간이 흐른 뒤의 추억까지 함께해요.",
         images: ["/og-image.png"],
     },
     other: {
@@ -135,7 +135,7 @@ export default async function RootLayout({
                                     "@type": "WebSite",
                                     "name": "메멘토애니",
                                     "url": siteUrl,
-                                    "description": "반려동물과 함께하는 모든 순간을 기록하고, 이별 후에도 따뜻한 추억을 간직할 수 있는 메모리얼 커뮤니티 플랫폼",
+                                    "description": "반려동물과 보내는 평생의 일상을 기록하고 돌보는 반려동물 라이프 플랫폼. 매일의 순간과 케어부터 오랜 시간이 흐른 뒤의 추억까지 함께하는 기록·커뮤니티 앱",
                                 },
                                 {
                                     "@type": "Organization",

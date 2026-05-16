@@ -3,7 +3,7 @@
     "name": "메멘토애니",
     "slug": "mementoani",
     "version": "1.0.0",
-    "description": "반려동물과 함께하는 모든 순간을 기록하고, 이별 후에도 따뜻한 추억을 간직할 수 있는 메모리얼 커뮤니티 플랫폼",
+    "description": "반려동물과 보내는 평생의 일상을 기록하고 돌보는 반려동물 라이프 플랫폼. 매일의 순간과 케어, AI 펫톡부터 오랜 시간이 흐른 뒤의 추억까지 함께해요.",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",

@@ -242,9 +242,9 @@ export default function OnboardingModal({ visible, onClose, onComplete }: Props)
                                 </View>
                                 <Text style={[styles.h2, { color: textColor }]}>환영해요!</Text>
                                 <Text style={[styles.body, { color: subColor }]}>
-                                    메멘토애니에 오신 걸 환영해요.{"\n"}
-                                    몇 가지 질문에 답해주시면{"\n"}
-                                    맞춤 서비스를 제공해드릴게요.
+                                    메멘토애니는 반려동물과의 모든 하루를 함께 담는 곳이에요.{"\n"}
+                                    오늘의 평범한 순간부터 먼 훗날의 약속까지, 평생의 이야기를 함께해요.{"\n\n"}
+                                    몇 가지만 알려주시면 딱 맞게 준비해드릴게요.
                                 </Text>
                             </View>
                         )}

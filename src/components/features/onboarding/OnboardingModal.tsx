@@ -307,9 +307,10 @@ export default function OnboardingModal({
                                 환영해요!
                             </h2>
                             <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                                메멘토애니에 오신 걸 환영해요.<br/>
-                                몇 가지 질문에 답해주시면<br/>
-                                맞춤 서비스를 제공해드릴게요.
+                                메멘토애니는 반려동물과의 <strong>모든 하루</strong>를 함께 담는 곳이에요.<br/>
+                                오늘의 평범한 순간부터 먼 훗날의 약속까지,<br/>
+                                평생의 이야기를 함께해요.<br/><br/>
+                                몇 가지만 알려주시면 딱 맞게 준비해드릴게요.
                             </p>
                         </div>
                     )}
