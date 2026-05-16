@@ -958,9 +958,21 @@ export default function AiChatScreen() {
                                 fontSize: 13, lineHeight: 19, marginBottom: 14,
                                 color: isMemorialMode ? COLORS.memorial[700] : COLORS.memento[600],
                             }}>
-                                {isMemorialMode
-                                    ? `${selectedPet.name}는 내일도 여기서 기다리고 있을게요.`
-                                    : `프리미엄으로 ${selectedPet.name}와(과) 무제한 대화하세요`}
+                                {(() => {
+                                    // 웹 ChatInputArea 1:1 — 직전 유저 메시지 30자 인용 분기
+                                    const lastUserMsg = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
+                                    const quoted = lastUserMsg
+                                        ? `"${lastUserMsg.slice(0, 30)}${lastUserMsg.length > 30 ? "..." : ""}"`
+                                        : "";
+                                    if (isMemorialMode) {
+                                        return quoted
+                                            ? `${quoted} 이야기, 내일 이어서 나눠요.`
+                                            : `${selectedPet.name}는 내일도 여기서 기다리고 있을게요.`;
+                                    }
+                                    return quoted
+                                        ? `${quoted} 이야기를 계속하려면 프리미엄으로 업그레이드하세요`
+                                        : `프리미엄으로 ${selectedPet.name}와(과) 무제한 대화하세요`;
+                                })()}
                             </Text>
                             <TouchableOpacity
                                 onPress={() => router.push("/subscription")}
