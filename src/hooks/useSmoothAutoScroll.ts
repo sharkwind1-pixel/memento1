@@ -199,15 +199,19 @@ export function useSmoothAutoScroll(): SmoothAutoScrollReturn {
 
                     const maxScroll = cont.scrollWidth - cont.clientWidth;
 
-                    // 일시정지 상태가 아닐 때만 자동 스크롤
-                    if (maxScroll > 0 && !pausedRef.current[index]) {
+                    // 카드가 컨테이너보다 "충분히" 넘칠 때만 자동 스크롤.
+                    // 살짝만 넘치면(maxScroll 작음) 0 리셋 왕복으로 흐르지 못하고
+                    // 흔들리기만 함 → 그 경우 정지가 정답 (적은 카드는 흐를 필요 없음).
+                    const MIN_SCROLLABLE = 48;
+                    if (maxScroll > MIN_SCROLLABLE && !pausedRef.current[index]) {
                         scrollPosRef.current[index] += SPEED * (deltaTime / 16.67);
-                        cont.scrollLeft = scrollPosRef.current[index];
 
-                        // 끝에 도달하면 처음으로
+                        // 끝에 도달하면 처음으로 (scrollLeft 적용 전에 리셋 →
+                        // maxScroll 초과값을 한 프레임 그리는 오버슈트 떨림 제거)
                         if (scrollPosRef.current[index] >= maxScroll) {
                             scrollPosRef.current[index] = 0;
                         }
+                        cont.scrollLeft = scrollPosRef.current[index];
                     }
 
                     animationIdsRef.current[index] = requestAnimationFrame(animate);
