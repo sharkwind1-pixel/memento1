@@ -30,9 +30,10 @@ src/
 │   ├── page.tsx              # 메인 라우터 (탭 기반 SPA)
 │   ├── api/
 │   │   ├── chat/
-│   │   │   ├── route.ts      # AI 펫톡 API (핸들러+인증)
+│   │   │   ├── route.ts      # AI 펫톡 진입점 (5단계 오케스트레이터: 입력검증→보안→컨텍스트→GPT스트리밍→저장)
+│   │   │   ├── chat-pipeline.ts # 펫톡 핵심 로직 (validate/security/buildContext/postProcess/saveAndRespond) ★실제 흐름은 여기
 │   │   │   ├── chat-helpers.ts # 컨텍스트 빌더/유틸
-│   │   │   └── chat-prompts.ts # 시스템 프롬프트 생성
+│   │   │   └── chat-prompts.ts # 시스템 프롬프트 생성 (일상/추모 모드 분기)
 │   │   └── reminders/        # 리마인더 CRUD API
 │   └── auth/callback/        # Supabase Auth 콜백
 ├── components/
@@ -86,18 +87,19 @@ interface Pet { ... }  // 금지!
 
 ---
 
-## 주요 페이지 (8개 탭)
+## 주요 페이지 (메인 탭 5개 + admin)
 
-| 탭 | 컴포넌트 | 상태 |
+> `src/app/page.tsx:46` `MAIN_TABS = ["home","record","community","ai-chat","magazine","admin"]`
+> 입양/지역/분실은 **독립 탭이 아니라 커뮤니티 서브카테고리**. 레거시 URL은 `getLegacyTabRedirect`로 `community?sub=xxx` 리다이렉트 (`page.tsx:11,220`).
+
+| 탭 | 컴포넌트 | 비고 |
 |---|---------|-----|
-| 홈 | HomePage | ✅ 완료 |
-| 우리의 기록 | RecordPage | ✅ 완료 |
-| 커뮤니티 | CommunityPage | ✅ 완료 |
-| AI 펫톡 | AIChatPage | ✅ 완료 |
-| 입양정보 | AdoptionPage | ✅ 완료 |
-| 지역정보 | LocalPage | ✅ 완료 |
-| 분실동물 | LostPage | ✅ 완료 |
-| 펫매거진 | MagazinePage | ✅ 완료 |
+| 홈 | HomePage | 정적 import (첫 화면). 히어로/커뮤니티/Showcase/Memorial/Quiz 섹션 |
+| 우리의 기록 | RecordPage | 펫프로필/사진앨범/타임라인/리마인더/메모리앨범/추모/미니홈피 |
+| 커뮤니티 | CommunityPage | 서브: 자유/추모/입양/지역/분실 (말머리 시스템) |
+| AI 펫톡 | AIChatPage | 일상/추모 모드 분기 |
+| 펫매거진 | MagazinePage | 매거진 검색/카테고리/리더 |
+| 관리자 | AdminPage | 이메일/DB is_admin 조건부 표시 |
 
 ---
 
@@ -281,23 +283,29 @@ grep -n "setIsPetModalOpen\|handleAddNewPet" src/components/pages/RecordPage.tsx
 
 ---
 
-## 무료/베이직/프리미엄 회원 제한
+## 회원 제한 (단일 프리미엄 정책 — 진실은 `src/config/constants.ts`)
 
-| 기능 | 무료 | 베이직 (월 9,900원) | 프리미엄 (월 18,900원) |
-|-----|-----|-------------------|---------------------|
-| AI 펫톡 | 하루 10회 | 하루 50회 | 무제한 |
-| 반려동물 등록 | 1마리 | 3마리 | 10마리 |
-| 사진 저장 | 펫당 50장 | 펫당 200장 | 펫당 1,000장 |
-| AI 영상 | 평생 1회 | 월 3회 | 월 6회 |
-| 메모리얼 펫톡 | 제한적 | 지원 | 지원 |
-| 우선 고객 지원 | - | - | 지원 |
+> **2026-05-15 단일 프리미엄 통합 (커밋 `8a23701`).** 베이직은 결제 UI·신규 가입 경로에서 폐기.
+> 단 `BASIC_LIMITS` / `SubscriptionTier "basic"` / `getLimitsForTier`의 `case "basic"` 코드·타입은 deprecated 주석 단 채 **잔존**(레거시 유저 매핑용). "베이직 완전 제거"라 단정 금지.
+> 가격/한도 질문은 무조건 `constants.ts:151-184, 397-406` 직접 인용. 아래 표는 그 사본일 뿐.
+
+| 기능 | 무료 | 프리미엄 | 베이직(deprecated, 신규 불가) |
+|-----|-----|---------|------------------------------|
+| AI 펫톡/일 | 10회 | 1000회(사실상 무제한) | 50회 |
+| 반려동물 등록 | 1마리 | 10마리 | 3마리 |
+| 사진/펫 | 50장 | 1,000장 | 200장 |
+| 메시지 길이 | 200자 | 1,000자 | 500자 |
+| AI 영상 | 평생 1회 | 월 3회 | 월 3회 |
+
+**가격** (`constants.ts:173-184`): 프리미엄 **월 9,900원 / 연 88,800원**(월환산 7,400원, ~25%↓, `calculateAnnualSavings()`). 베이직 월 9,900원은 deprecated 상수.
+**AI 영상 단건** (`constants.ts:397-406`): 단품 4,900 / 5회 묶음 19,900 / 10회 묶음 34,900원.
 
 ```typescript
-// config/constants.ts - 중앙 관리
-export const FREE_LIMITS = { PETS: 1, PHOTOS_PER_PET: 50, DAILY_CHATS: 10 };
-export const BASIC_LIMITS = { PETS: 3, PHOTOS_PER_PET: 200, DAILY_CHATS: 50 };
-export const PREMIUM_LIMITS = { PETS: 10, PHOTOS_PER_PET: 1000, DAILY_CHATS: Infinity };
-export const PRICING = { BASIC_MONTHLY: 9900, PREMIUM_MONTHLY: 18900 };
+// config/constants.ts - 중앙 관리 (실제 값)
+export const FREE_LIMITS    = { PETS: 1,  PHOTOS_PER_PET: 50,   DAILY_CHATS: 10,   MESSAGE_LENGTH: 200 };
+export const BASIC_LIMITS   = { PETS: 3,  PHOTOS_PER_PET: 200,  DAILY_CHATS: 50,   MESSAGE_LENGTH: 500 };  // deprecated
+export const PREMIUM_LIMITS = { PETS: 10, PHOTOS_PER_PET: 1000, DAILY_CHATS: 1000, MESSAGE_LENGTH: 1000 }; // Infinity는 JSON 불가→1000
+export const PRICING = { BASIC_MONTHLY: 9900 /*deprecated*/, PREMIUM_MONTHLY: 9900, PREMIUM_ANNUAL: 88800 };
 
 // AuthContext.tsx - DB 기반 프리미엄 체크 (완료)
 const isPremium = data?.is_premium && (!expiresAt || new Date(expiresAt) > new Date());
@@ -321,6 +329,9 @@ export const ADMIN_EMAILS = ["sharkwind1@gmail.com"];
 ---
 
 ## AI 펫톡 처리 흐름 (코드 수정 시 필독)
+
+> 구현 위치: **`src/app/api/chat/chat-pipeline.ts`** (route.ts 아님). 5단계: validateAndParseInput → checkSecurityLimits(IP/일일상한/인증/ban/tier/쿨다운/**프롬프트인젝션은 이 단계 끝**) → buildAIContext(crisis/emergency/감정/메모리/timeline패턴/Tavily) → GPT 스트리밍(route.ts) → postProcessResponse → saveAndRespond. 아래 개념 흐름은 단계 내부 순서 참고용.
+> ⚠️ 9번 팩트체커(`fact-checker.ts validateContentDryRun`)는 **펫톡 런타임 미연결** — cron(magazine/blog)만. 펫톡엔 `validateAIResponse`(약용량/단정 체크, 별개 함수)만 적용.
 
 ```
 유저 메시지
@@ -351,9 +362,10 @@ export const ADMIN_EMAILS = ["sharkwind1@gmail.com"];
 ```
 src/types/index.ts              # 타입 추가/수정
 src/contexts/PetContext.tsx     # 펫 데이터 로직
-src/app/api/chat/route.ts       # AI 펫톡 핸들러+인증
+src/app/api/chat/route.ts       # AI 펫톡 진입점 (5단계 오케스트레이터)
+src/app/api/chat/chat-pipeline.ts # ★ 펫톡 핵심 로직 (실제 흐름은 여기)
 src/app/api/chat/chat-helpers.ts # AI 펫톡 컨텍스트/유틸
-src/app/api/chat/chat-prompts.ts # AI 시스템 프롬프트
+src/app/api/chat/chat-prompts.ts # AI 시스템 프롬프트 (일상/추모 분기)
 src/lib/agent/*.ts              # AI 에이전트 모듈
 src/components/pages/*.tsx      # 각 페이지 UI
 src/config/apiEndpoints.ts      # API URL 상수
