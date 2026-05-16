@@ -1106,7 +1106,18 @@ function MessageRenderer({
         <>
         {timestampNode}
         <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 8, marginBottom: 12 }}>
-            <View style={[styles.bubbleAvatar, { backgroundColor: accentColor + "20", marginBottom: 4 }]}>
+            {/* 감정 글로우 — 펫 응답 감정에 따라 아바타에 색 후광 (웹 EMOTION_GLOW 패리티) */}
+            <View style={[
+                styles.bubbleAvatar,
+                { backgroundColor: accentColor + "20", marginBottom: 4 },
+                message.emotion && EMOTION_MAP[message.emotion] ? {
+                    shadowColor: EMOTION_MAP[message.emotion].color,
+                    shadowOffset: { width: 0, height: 0 },
+                    shadowOpacity: 0.6,
+                    shadowRadius: 7,
+                    elevation: 6,
+                } : null,
+            ]}>
                 {pet.profileImage ? (
                     <Image source={{ uri: pet.profileImage }} style={styles.bubbleAvatar} />
                 ) : (
