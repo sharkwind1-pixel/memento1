@@ -227,6 +227,18 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                             </a>
                             에 동의하는 것으로 간주됩니다.
                         </p>
+
+                        {/* 서비스 소개 — 장례식장 오해하고 들어온 비로그인 방문자 직격 */}
+                        <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-2">
+                            메멘토애니가 처음이신가요?{" "}
+                            <a
+                                href="/about"
+                                target="_blank"
+                                className="underline hover:text-memento-500 font-medium"
+                            >
+                                어떤 서비스인지 알아보기
+                            </a>
+                        </p>
                     </div>
                 </div>
             </div>
