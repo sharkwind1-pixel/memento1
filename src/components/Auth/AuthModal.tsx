@@ -119,6 +119,12 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                             </div>
                         )}
 
+                        {/* 정체성 한 줄 — 장례식장 오해 방어 (가입 전 노출) */}
+                        <p className="text-center text-sm text-gray-700 dark:text-gray-200 font-medium leading-relaxed">
+                            반려동물과의 <strong>모든 하루</strong>를 함께 담는 곳이에요.<br/>
+                            매일의 일상부터 오랜 추억까지.
+                        </p>
+
                         {/* 안내 문구 */}
                         <p className="text-center text-sm text-gray-500 dark:text-gray-400">
                             소셜 계정으로 간편하게 시작하세요

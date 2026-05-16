@@ -74,6 +74,10 @@ export default function LoginScreen() {
                     <Text style={[styles.tagline, { color: subColor }]}>특별한 매일을 함께</Text>
                 </View>
 
+                <Text style={[styles.intro, { color: subColor, fontWeight: "600", marginTop: 16 }]}>
+                    반려동물과의 모든 하루를 함께 담는 곳이에요.{"\n"}매일의 일상부터 오랜 추억까지.
+                </Text>
+
                 <Text style={[styles.intro, { color: subColor }]}>
                     소셜 계정으로 간편하게 시작하세요
                 </Text>
