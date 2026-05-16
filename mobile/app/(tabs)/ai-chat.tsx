@@ -988,15 +988,16 @@ export default function AiChatScreen() {
 // 메시지 렌더러
 // ============================================================================
 
-const EMOTION_MAP: Record<string, { label: string; color: string }> = {
-    happy: { label: "기쁨", color: "#FBBF24" },
-    sad: { label: "슬픔", color: "#60A5FA" },
-    anxious: { label: "불안", color: "#A78BFA" },
-    angry: { label: "화남", color: "#EF4444" },
-    grateful: { label: "고마움", color: "#F472B6" },
-    lonely: { label: "외로움", color: "#94A3B8" },
-    peaceful: { label: "평온", color: "#34D399" },
-    excited: { label: "신남", color: "#FB923C" },
+// 색·강도는 웹 ChatMessageList EMOTION_GLOW_COLORS와 1:1 동일 (웹 패리티)
+const EMOTION_MAP: Record<string, { label: string; color: string; glow: number }> = {
+    happy: { label: "기쁨", color: "#EAB308", glow: 0.5 },
+    sad: { label: "슬픔", color: "#8B5CF6", glow: 0.4 },
+    anxious: { label: "불안", color: "#6B7280", glow: 0.4 },
+    angry: { label: "화남", color: "#EF4444", glow: 0.4 },
+    grateful: { label: "고마움", color: "#EC4899", glow: 0.4 },
+    lonely: { label: "외로움", color: "#6366F1", glow: 0.4 },
+    peaceful: { label: "평온", color: "#10B981", glow: 0.4 },
+    excited: { label: "신남", color: "#F59E0B", glow: 0.5 },
 };
 
 /** 시간을 한국어 형식으로 포맷 (오전/오후 HH:MM) — 웹 chatTypes.ts와 동일 */
@@ -1070,9 +1071,10 @@ function MessageRenderer({
 
     if (isUser) {
         // 사용자 버블 — 그라데이션으로 더 생동감
+        // 웹 패리티: 일상 memento-600→500, 추모 memorial-500→orange-500
         const userGradient: [string, string] = pet.status === "memorial"
-            ? [COLORS.memorial[400], COLORS.memorial[500]]
-            : [COLORS.memento[400], COLORS.memento[500]];
+            ? [COLORS.memorial[500], "#F97316"]
+            : [COLORS.memento[600], COLORS.memento[500]];
         return (
             <>
                 {timestampNode}
@@ -1089,7 +1091,7 @@ function MessageRenderer({
                         end={{ x: 1, y: 1 }}
                         style={styles.bubbleUser}
                     >
-                        <Text style={{ color: "#fff", fontSize: 14 * fontScale, lineHeight: 22 * fontScale }}>{message.content}</Text>
+                        <Text style={{ color: "#fff", fontSize: 15 * fontScale, lineHeight: 24 * fontScale }}>{message.content}</Text>
                     </LinearGradient>
                 </TouchableOpacity>
             </View>
@@ -1097,8 +1099,15 @@ function MessageRenderer({
         );
     }
 
-    // 펫 버블: 라이트는 흰색 카드 + 부드러운 그림자, 다크는 회색
-    const petBubbleBg = isDarkMode ? COLORS.gray[800] : "#FFFFFF";
+    // 펫 버블 — 웹 패리티: 일상=흰 카드+memento-200 테두리, 추모=memorial-100+memorial-200 테두리
+    const isMemorial = pet.status === "memorial";
+    const petBubbleBg = isDarkMode
+        ? COLORS.gray[800]
+        : (isMemorial ? COLORS.memorial[100] : "#FFFFFF");
+    const petBubbleBorder = isDarkMode
+        ? COLORS.gray[700]
+        : (isMemorial ? COLORS.memorial[200] : COLORS.memento[200]);
+    const avatarRing = isMemorial ? COLORS.memorial[200] : COLORS.memento[200];
     // 감정 라벨(외로움/슬픔/불안 등)은 사용자 명시 요청으로 화면에 표시 안 함.
     // 백엔드 emotion 분석은 그대로 사용 (서버 텔레그램 모니터링/위기 감지용).
 
@@ -1109,11 +1118,11 @@ function MessageRenderer({
             {/* 감정 글로우 — 펫 응답 감정에 따라 아바타에 색 후광 (웹 EMOTION_GLOW 패리티) */}
             <View style={[
                 styles.bubbleAvatar,
-                { backgroundColor: accentColor + "20", marginBottom: 4 },
+                { backgroundColor: accentColor + "20", marginBottom: 4, borderWidth: 2, borderColor: avatarRing },
                 message.emotion && EMOTION_MAP[message.emotion] ? {
                     shadowColor: EMOTION_MAP[message.emotion].color,
                     shadowOffset: { width: 0, height: 0 },
-                    shadowOpacity: 0.6,
+                    shadowOpacity: EMOTION_MAP[message.emotion].glow,
                     shadowRadius: 7,
                     elevation: 6,
                 } : null,
@@ -1121,7 +1130,7 @@ function MessageRenderer({
                 {pet.profileImage ? (
                     <Image source={{ uri: pet.profileImage }} style={styles.bubbleAvatar} />
                 ) : (
-                    <Text style={{ fontSize: 12 }}>{pet.type === "강아지" ? "🐶" : "🐱"}</Text>
+                    <Text style={{ fontSize: 14 }}>{pet.type === "강아지" ? "🐶" : "🐱"}</Text>
                 )}
             </View>
             <View style={{ maxWidth: "80%" }}>
@@ -1129,11 +1138,11 @@ function MessageRenderer({
                     onLongPress={shareContent}
                     delayLongPress={400}
                     activeOpacity={0.85}
-                    style={[styles.bubblePet, styles.bubblePetShadow, { backgroundColor: petBubbleBg }]}
+                    style={[styles.bubblePet, styles.bubblePetShadow, { backgroundColor: petBubbleBg, borderWidth: 1, borderColor: petBubbleBorder }]}
                 >
                     <Text
                         style={{
-                            fontSize: 14 * fontScale, lineHeight: 22 * fontScale,
+                            fontSize: 15 * fontScale, lineHeight: 24 * fontScale,
                             color: isDarkMode ? COLORS.white : COLORS.gray[800],
                         }}
                     >
@@ -1442,13 +1451,13 @@ const styles = StyleSheet.create({
     },
     messages: { flex: 1 },
     bubbleAvatar: {
-        width: 28, height: 28, borderRadius: 14,
+        width: 36, height: 36, borderRadius: 18,
         alignItems: "center", justifyContent: "center",
     },
     bubbleUser: {
         maxWidth: "100%",
         paddingHorizontal: 16, paddingVertical: 12,
-        borderRadius: 18, borderBottomRightRadius: 4,
+        borderRadius: 16, borderBottomRightRadius: 2,
     },
     bubbleUserShadow: {
         maxWidth: "80%",
@@ -1462,7 +1471,7 @@ const styles = StyleSheet.create({
     },
     bubblePet: {
         paddingHorizontal: 16, paddingVertical: 12,
-        borderRadius: 18, borderTopLeftRadius: 4,
+        borderRadius: 16, borderTopLeftRadius: 2,
     },
     bubblePetShadow: {
         // 펫 버블 — 종이가 살짝 떠 있는 느낌, 라이트 모드일 때 강조
