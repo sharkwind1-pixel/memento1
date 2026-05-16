@@ -91,19 +91,14 @@ export default function NotificationBell() {
 
     /**
      * 알림 클릭 시 타입별 목적지 결정
-     * - admin_notice / admin_message: 모달로 전체 내용 표시
-     * - metadata.link 있으면: 해당 URL로 이동
-     * - 구독/결제 관련: 홈으로 이동 (프로필/구독 UI 접근)
-     * - 그 외: 읽음 처리만
+     * - metadata.link 있으면: 해당 URL로 이동 (최우선 — 특정 화면 연결 의도)
+     * - 구독/결제 관련: 계정 설정 모달 열고 구독 섹션으로 스크롤
+     * - 그 외 전부(admin_notice/admin_message/welcome 등 본문 있는 알림): 모달로 본문 표시
+     *   ※ 기존엔 admin_*만 모달 → welcome 등은 본문 못 읽던 버그 (DB엔 admin_* 0건,
+     *      welcome/subscription_cancelled만 존재했음)
      */
     const handleItemClick = (n: NotificationData) => {
-        // 1. 관리자 공지/메시지 → 모달
-        if (n.type === "admin_notice" || n.type === "admin_message") {
-            setSelectedNotification(n);
-            return;
-        }
-
-        // 2. metadata.link 명시돼 있으면 그쪽으로
+        // 1. metadata.link 명시돼 있으면 그쪽으로 (특정 화면 딥링크 의도)
         const link = (n.metadata as { link?: unknown })?.link;
         if (typeof link === "string" && link.length > 0) {
             setIsOpen(false);
@@ -111,8 +106,7 @@ export default function NotificationBell() {
             return;
         }
 
-        // 3. 구독/결제 알림 → 계정 설정 모달 열고 구독 섹션으로 자동 스크롤
-        //    Layout.tsx의 "구독 관리" 버튼과 동일한 이벤트 사용
+        // 2. 구독/결제 알림 → 계정 설정 모달 + 구독 섹션 스크롤
         if (n.type.startsWith("subscription_") || n.type.startsWith("payment_")) {
             setIsOpen(false);
             window.dispatchEvent(
@@ -123,7 +117,8 @@ export default function NotificationBell() {
             return;
         }
 
-        // 4. 나머지는 읽음 처리만 (이미 NotificationItem에서 처리됨)
+        // 3. 그 외 전부 → 모달로 본문 표시 (welcome/공지/관리자 메시지 등)
+        setSelectedNotification(n);
     };
 
     const closeModal = () => setSelectedNotification(null);
@@ -223,18 +218,22 @@ export default function NotificationBell() {
                             <div className="flex items-center gap-2 min-w-0">
                                 {selectedNotification.type === "admin_notice" ? (
                                     <Megaphone className="w-5 h-5 text-memorial-600 flex-shrink-0" />
-                                ) : (
+                                ) : selectedNotification.type === "admin_message" ? (
                                     <Mail className="w-5 h-5 text-memento-500 flex-shrink-0" />
+                                ) : (
+                                    <Bell className="w-5 h-5 text-memento-500 flex-shrink-0" />
                                 )}
                                 <div className="min-w-0">
                                     <div className="flex items-center gap-1.5">
-                                        <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                                            selectedNotification.type === "admin_notice"
-                                                ? "bg-memorial-200 text-memorial-800 dark:bg-memorial-900/40 dark:text-memorial-200"
-                                                : "bg-memento-200 text-memento-800 dark:bg-memento-900/40 dark:text-memento-200"
-                                        }`}>
-                                            {selectedNotification.type === "admin_notice" ? "공지" : "관리자"}
-                                        </span>
+                                        {(selectedNotification.type === "admin_notice" || selectedNotification.type === "admin_message") && (
+                                            <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                                                selectedNotification.type === "admin_notice"
+                                                    ? "bg-memorial-200 text-memorial-800 dark:bg-memorial-900/40 dark:text-memorial-200"
+                                                    : "bg-memento-200 text-memento-800 dark:bg-memento-900/40 dark:text-memento-200"
+                                            }`}>
+                                                {selectedNotification.type === "admin_notice" ? "공지" : "관리자"}
+                                            </span>
+                                        )}
                                         <span className="text-xs text-gray-400 dark:text-gray-500">
                                             {new Date(selectedNotification.created_at).toLocaleString("ko-KR", {
                                                 year: "numeric",
