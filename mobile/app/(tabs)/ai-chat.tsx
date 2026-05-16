@@ -931,6 +931,67 @@ export default function AiChatScreen() {
                     />
                 )}
 
+                {isLimitReached ? (
+                    // 웹 ChatInputArea 한도 카드 1:1 (네이티브 Alert 아닌 풀 업셀 카드)
+                    <View style={{
+                        paddingHorizontal: 16,
+                        paddingTop: 8,
+                        paddingBottom: 12 + Math.max(insets.bottom, 0),
+                        borderTopWidth: 1,
+                        borderTopColor: borderColor,
+                    }}>
+                        <LinearGradient
+                            colors={isMemorialMode
+                                ? [COLORS.memorial[100], "#FFEDD5"]
+                                : [COLORS.memento[100], COLORS.memento[200]]}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                            style={{ borderRadius: 16, padding: 20, marginBottom: 10 }}
+                        >
+                            <Text style={{
+                                fontSize: 15, fontWeight: "600", marginBottom: 6,
+                                color: isMemorialMode ? COLORS.memorial[800] : COLORS.memento[600],
+                            }}>
+                                {isMemorialMode ? "오늘은 여기까지 이야기 나눌 수 있어요" : "오늘의 무료 대화를 모두 사용했어요"}
+                            </Text>
+                            <Text style={{
+                                fontSize: 13, lineHeight: 19, marginBottom: 14,
+                                color: isMemorialMode ? COLORS.memorial[700] : COLORS.memento[600],
+                            }}>
+                                {isMemorialMode
+                                    ? `${selectedPet.name}는 내일도 여기서 기다리고 있을게요.`
+                                    : `프리미엄으로 ${selectedPet.name}와(과) 무제한 대화하세요`}
+                            </Text>
+                            <TouchableOpacity
+                                onPress={() => router.push("/subscription")}
+                                activeOpacity={0.85}
+                                style={{
+                                    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
+                                    alignSelf: "flex-start",
+                                    paddingHorizontal: 20, paddingVertical: 11, borderRadius: 9999,
+                                    backgroundColor: isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500],
+                                }}
+                            >
+                                <Ionicons name={isMemorialMode ? "diamond" : "sparkles"} size={15} color="#fff" />
+                                <Text style={{ color: "#fff", fontSize: 14, fontWeight: "600" }}>
+                                    {isMemorialMode ? `${selectedPet.name}와(과) 더 이야기하기` : "프리미엄 시작하기"}
+                                </Text>
+                            </TouchableOpacity>
+                            <Text style={{
+                                fontSize: 11, marginTop: 8,
+                                color: isMemorialMode ? COLORS.memorial[600] : COLORS.memento[500],
+                            }}>
+                                하루 약 330원, 월 9,900원
+                            </Text>
+                        </LinearGradient>
+                        <Text style={{
+                            fontSize: 11, textAlign: "center",
+                            color: isMemorialMode ? COLORS.memorial[500] : COLORS.memento[500],
+                        }}>
+                            내일 다시 10회 무료 대화가 충전돼요
+                        </Text>
+                    </View>
+                ) : (
                 <View style={[
                     styles.inputRow,
                     {
@@ -946,31 +1007,31 @@ export default function AiChatScreen() {
                                 color: isDarkMode ? COLORS.white : COLORS.gray[900],
                             },
                         ]}
-                        placeholder={isLimitReached ? "오늘의 대화를 다 사용했어요" : "메시지 입력..."}
+                        placeholder="메시지 입력..."
                         placeholderTextColor={isMemorialMode ? COLORS.gray[500] : COLORS.gray[400]}
                         value={input}
                         onChangeText={setInput}
                         multiline
-                        editable={!isLimitReached}
                         returnKeyType="send"
                         onSubmitEditing={() => handleSend()}
                     />
                     <TouchableOpacity
                         onPress={() => handleSend()}
-                        disabled={!input.trim() || isTyping || isStreaming || isLimitReached}
+                        disabled={!input.trim() || isTyping || isStreaming}
                         style={[
                             styles.sendBtn,
-                            { backgroundColor: input.trim() && !isTyping && !isStreaming && !isLimitReached ? accentColor : COLORS.gray[200] },
+                            { backgroundColor: input.trim() && !isTyping && !isStreaming ? accentColor : COLORS.gray[200] },
                         ]}
                         activeOpacity={0.85}
                     >
                         <Ionicons
                             name="arrow-up"
                             size={18}
-                            color={input.trim() && !isTyping && !isStreaming && !isLimitReached ? "#fff" : COLORS.gray[400]}
+                            color={input.trim() && !isTyping && !isStreaming ? "#fff" : COLORS.gray[400]}
                         />
                     </TouchableOpacity>
                 </View>
+                )}
             </KeyboardAvoidingView>
             <RemindersModal
                 visible={remindersOpen}
