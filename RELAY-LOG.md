@@ -4,6 +4,12 @@
 
 ---
 
+## [2026-05-19 추가] 대화 저장 #4-a 동시성 — ai_chats union 병합
+
+`ai_chats` 통째 upsert last-write-wins(웹·앱 동시 대화 시 한쪽 메시지 소실) 해결. 저장 직전 서버 최신값을 다시 읽어 `mergeChatMessages`(키 role|timestamp|content[:120], timestamp 오름차순)로 union 병합 후 upsert. 웹 `useAIChat.ts` + 모바일 `ai-chat.tsx` 1:1, saveToSupabase 재시도 루프 + 백업 재저장 경로 둘 다 적용. 9번 8/10 발행가능·치명결함 0(주석 명세 정정 반영). 웹+앱 typecheck 0, 웹 build exit 0 = **L2**. 실기(동시 대화 양쪽 보존) 미검증은 RELAY ⚠️. #4-b(chat_messages dedup_key)는 유실<중복 철학상 후순위로 잔존.
+
+---
+
 ## [2026-05-16 추가] focused-mclaren 브랜치 main 머지 + handover 맹점 발견
 
 별도 워크트리 세션이 `claude/focused-mclaren-71deee`에서 소개노출(온보딩/로그인/메타 `036a39a b6ad594`) + CLAUDE.md stale 정정 `a52a762` 작업 → **브리핑은 "푸시 완료"라 했으나 실제론 그 브랜치에만 있고 main/origin 미반영 = Vercel 배포 0**. 코드 검증(텍스트/문서, 충돌0) 후 `a2b49a9..b6ad594` fast-forward 머지 + push. L2 통과.

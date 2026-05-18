@@ -103,6 +103,28 @@ function pickRandomSuggestions(pool: string[], n: number): string[] {
     return shuffled.slice(0, n);
 }
 
+// 웹 useAIChat.mergeChatMessages 1:1 — ai_chats 통째 upsert는 last-write-wins라
+// 다른 기기가 그 사이 추가한 메시지를 덮어 소실시킴. 저장 직전 서버값과 union
+// 병합해 양쪽 모두 보존(메멘토 철학: 유실<중복). 키 = role|timestamp|content[:120].
+function mergeChatMessages(
+    a: ChatMessage[] = [],
+    b: ChatMessage[] = [],
+): ChatMessage[] {
+    const ts = (m?: ChatMessage): number => {
+        const t = m?.timestamp ? new Date(m.timestamp).getTime() : 0;
+        return isNaN(t) ? 0 : t;
+    };
+    const keyOf = (m: ChatMessage) =>
+        `${m?.role}|${ts(m)}|${(m?.content ?? "").slice(0, 120)}`;
+    const map = new Map<string, ChatMessage>();
+    for (const m of [...a, ...b]) {
+        if (!m) continue;
+        const k = keyOf(m);
+        if (!map.has(k)) map.set(k, m);
+    }
+    return Array.from(map.values()).sort((x, y) => ts(x) - ts(y));
+}
+
 export default function AiChatScreen() {
     const router = useRouter();
     const { session, user, isPremium } = useAuth();
@@ -271,8 +293,10 @@ export default function AiChatScreen() {
                             timestamp: new Date(m.timestamp),
                         })),
                     );
+                    // 서버 전용 메시지 소실 방지: 백업 ∪ 서버값 병합 후 저장.
+                    const reMerged = mergeChatMessages(serverMsgs ?? [], backup);
                     supabase.from("ai_chats").upsert(
-                        { user_id: user.id, pet_id: selectedPet.id, messages: backup },
+                        { user_id: user.id, pet_id: selectedPet.id, messages: reMerged },
                         { onConflict: "user_id,pet_id" },
                     ).then(({ error: reErr }) => {
                         if (!reErr) AsyncStorage.removeItem(backupKey).catch(() => {});
@@ -357,8 +381,25 @@ export default function AiChatScreen() {
             // 기존 .then(()=>{})은 에러조차 안 봐서 대화 영구 소실(메멘토 심장 구멍).
             let saved = false;
             for (let attempt = 1; attempt <= 3; attempt++) {
+                // 통째 덮어쓰기 전 서버 최신값과 병합 (다른 기기 메시지 소실 방지).
+                // 조회 실패해도 로컬분이라도 저장 (미저장 < 부분유실).
+                let toWrite = snapshot;
+                try {
+                    const { data: cur } = await supabase
+                        .from("ai_chats")
+                        .select("messages")
+                        .eq("user_id", uid)
+                        .eq("pet_id", pid)
+                        .maybeSingle();
+                    if (cur?.messages && Array.isArray(cur.messages)) {
+                        toWrite = mergeChatMessages(
+                            cur.messages as ChatMessage[],
+                            snapshot,
+                        );
+                    }
+                } catch { /* 서버 조회 실패 → 로컬분만 저장 */ }
                 const { error } = await supabase.from("ai_chats").upsert(
-                    { user_id: uid, pet_id: pid, messages: snapshot },
+                    { user_id: uid, pet_id: pid, messages: toWrite },
                     { onConflict: "user_id,pet_id" },
                 );
                 if (!error) { saved = true; break; }

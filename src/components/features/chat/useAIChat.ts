@@ -144,6 +144,29 @@ function getUserLocation(): Promise<{ lat: number; lng: number } | null> {
     });
 }
 
+// ai_chats는 (user,pet)당 1행에 대화 전체를 통째 보관 → 통째 upsert는
+// last-write-wins라 다른 기기가 그 사이 추가한 메시지를 덮어 소실시킴.
+// 저장 직전 서버값과 union 병합해 양쪽 메시지를 모두 보존(메멘토 철학: 유실<중복).
+// 키 = role|timestamp|content[:120]. 모호하면 둘 다 남기고 timestamp 오름차순.
+function mergeChatMessages(
+    a: ChatMessage[] = [],
+    b: ChatMessage[] = [],
+): ChatMessage[] {
+    const ts = (m?: ChatMessage): number => {
+        const t = m?.timestamp ? new Date(m.timestamp).getTime() : 0;
+        return isNaN(t) ? 0 : t;
+    };
+    const keyOf = (m: ChatMessage) =>
+        `${m?.role}|${ts(m)}|${(m?.content ?? "").slice(0, 120)}`;
+    const map = new Map<string, ChatMessage>();
+    for (const m of [...a, ...b]) {
+        if (!m) continue;
+        const k = keyOf(m);
+        if (!map.has(k)) map.set(k, m);
+    }
+    return Array.from(map.values()).sort((x, y) => ts(x) - ts(y));
+}
+
 // ============================================================================
 // 훅 구현
 // ============================================================================
@@ -320,9 +343,14 @@ export function useAIChat({
                             timestamp: new Date(msg.timestamp),
                         }))
                     );
-                    // 서버에 재저장 시도 (성공 시 saveToSupabase가 백업 제거)
+                    // 서버에 재저장 시도 (성공 시 saveToSupabase가 백업 제거).
+                    // 서버 전용 메시지 소실 방지: 백업 ∪ 서버값 병합 후 저장.
+                    const reMerged = mergeChatMessages(
+                        Array.isArray(data?.messages) ? (data!.messages as ChatMessage[]) : [],
+                        backup,
+                    );
                     supabase.from("ai_chats").upsert(
-                        { user_id: user.id, pet_id: selectedPetId, messages: backup },
+                        { user_id: user.id, pet_id: selectedPetId, messages: reMerged },
                         { onConflict: "user_id,pet_id" }
                     ).then(({ error: reErr }) => {
                         if (!reErr) { try { localStorage.removeItem(backupKey); } catch { /* noop */ } }
@@ -419,11 +447,28 @@ export function useAIChat({
             const backupKey = `aichat_unsaved_${user.id}_${selectedPetId}`;
             let saved = false;
             for (let attempt = 1; attempt <= 3; attempt++) {
+                // 통째 덮어쓰기 전 서버 최신값과 병합 (다른 기기 메시지 소실 방지).
+                // 조회 실패해도 로컬분이라도 저장 (미저장 < 부분유실).
+                let toWrite = messagesToSave;
+                try {
+                    const { data: cur } = await supabase
+                        .from("ai_chats")
+                        .select("messages")
+                        .eq("user_id", user.id)
+                        .eq("pet_id", selectedPetId)
+                        .maybeSingle();
+                    if (cur?.messages && Array.isArray(cur.messages)) {
+                        toWrite = mergeChatMessages(
+                            cur.messages as ChatMessage[],
+                            messagesToSave,
+                        );
+                    }
+                } catch { /* 서버 조회 실패 → 로컬분만 저장 */ }
                 const { error } = await supabase.from("ai_chats").upsert(
                     {
                         user_id: user.id,
                         pet_id: selectedPetId,
-                        messages: messagesToSave,
+                        messages: toWrite,
                     },
                     { onConflict: "user_id,pet_id" }
                 );
