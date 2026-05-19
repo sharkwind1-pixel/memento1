@@ -942,53 +942,56 @@ export default function AiChatScreen() {
                     </TouchableOpacity>
                 </View>
 
-                {/* 웹 PetProfileSidebar 1:1 — AI펫톡 상단 펫 사진 히어로 카드 */}
-                <PetPhotoHero
-                    photos={(selectedPet.photos ?? []).map((p) => ({ id: p.id, url: p.url }))}
-                    name={selectedPet.name}
-                    type={selectedPet.type}
-                    breed={selectedPet.breed}
-                    isMemorial={isMemorialMode}
-                    memorialDate={selectedPet.memorialDate}
-                    birthday={selectedPet.birthday}
-                    idx={photoIdx}
-                    setIdx={setPhotoIdx}
-                    onRegister={() => router.push("/(tabs)/record")}
-                />
-
                 <LinearGradient colors={chatBgGradient} style={styles.flex1}>
                     {/* 추모 모드: chat 영역 전체 backdrop (정적 펄스 별 + 떠오르는 별, 웹 매칭) */}
                     {isMemorialMode && <MemorialAmbientStars />}
-                    {/* AI 고지 배너 — 웹 AIChatPage 1:1 */}
-                    <View style={{
-                        marginHorizontal: 16, marginTop: 8, marginBottom: 4,
-                        paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8,
-                        flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4,
-                        backgroundColor: isDarkMode
-                            ? (isMemorialMode ? "rgba(251,191,36,0.10)" : "rgba(7,89,133,0.40)")
-                            : (isMemorialMode ? "rgba(254,243,199,0.8)" : "rgba(186,230,253,0.8)"),
-                    }}>
-                        <Ionicons
-                            name="information-circle"
-                            size={12}
-                            color={isMemorialMode ? COLORS.memorial[700] : COLORS.memento[700]}
-                        />
-                        <Text style={{
-                            fontSize: 12,
-                            color: isDarkMode
-                                ? (isMemorialMode ? COLORS.memorial[300] : COLORS.memento[300])
-                                : (isMemorialMode ? COLORS.memorial[700] : COLORS.memento[700]),
-                        }}>
-                            AI가 도와주는 대화예요. 참고용으로 봐주세요!
-                        </Text>
-                    </View>
                     <FlatList
                         ref={flatListRef}
                         data={messages}
                         keyExtractor={(item) => item.id}
                         style={styles.messages}
-                        contentContainerStyle={{ paddingTop: 12, paddingBottom: 16, paddingHorizontal: 16 }}
+                        contentContainerStyle={{ paddingTop: 0, paddingBottom: 16, paddingHorizontal: 16 }}
                         showsVerticalScrollIndicator={false}
+                        ListHeaderComponent={
+                            // 웹 PetProfileSidebar + AI고지 1:1 — 리스트와 함께 스크롤
+                            // (고정 블록으로 두면 키보드 시 메시지 영역이 0으로 눌려 안 보였음)
+                            <View style={{ marginHorizontal: -16 }}>
+                                <PetPhotoHero
+                                    photos={(selectedPet.photos ?? []).map((p) => ({ id: p.id, url: p.url }))}
+                                    name={selectedPet.name}
+                                    type={selectedPet.type}
+                                    breed={selectedPet.breed}
+                                    isMemorial={isMemorialMode}
+                                    memorialDate={selectedPet.memorialDate}
+                                    birthday={selectedPet.birthday}
+                                    idx={photoIdx}
+                                    setIdx={setPhotoIdx}
+                                    onRegister={() => router.push("/(tabs)/record")}
+                                />
+                                <View style={{
+                                    marginHorizontal: 16, marginTop: 8, marginBottom: 8,
+                                    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8,
+                                    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4,
+                                    backgroundColor: isDarkMode
+                                        ? (isMemorialMode ? "rgba(251,191,36,0.10)" : "rgba(7,89,133,0.40)")
+                                        : (isMemorialMode ? "rgba(254,243,199,0.8)" : "rgba(186,230,253,0.8)"),
+                                }}>
+                                    <Ionicons
+                                        name="information-circle"
+                                        size={12}
+                                        color={isMemorialMode ? COLORS.memorial[700] : COLORS.memento[700]}
+                                    />
+                                    <Text style={{
+                                        fontSize: 12,
+                                        color: isDarkMode
+                                            ? (isMemorialMode ? COLORS.memorial[300] : COLORS.memento[300])
+                                            : (isMemorialMode ? COLORS.memorial[700] : COLORS.memento[700]),
+                                    }}>
+                                        AI가 도와주는 대화예요. 참고용으로 봐주세요!
+                                    </Text>
+                                </View>
+                            </View>
+                        }
                         onContentSizeChange={() => {
                             if (messages.length === 0) return;
                             flatListRef.current?.scrollToEnd({ animated: initialScrollDone.current });
