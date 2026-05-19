@@ -110,17 +110,17 @@ export function generatePersonalizedGreeting(
 ): string {
     const name = pet.name;
     // josa() 사용 — `${name}이...` 하드코딩이 받침 없는 이름(꼼지)에서 "꼼지이랑" 같은 잘못된 조사 만들었음.
-    // 추모 톤은 "..."로 잔잔하게. 발랄한 "?" 자제.
+    // 추모 톤은 잔잔하되 또렷하게 — 말줄임표("...") 금지(사용자 명시 거부).
     if (isMemorialMode) {
         const memorialGreets = [
-            `... 안녕. 나 ${name}${josa(name, "이야/야")}. 오늘은 어떤 이야기 나눠볼까...`,
-            `${name}${josa(name, "은/는")} 너 잊은 적 없어. 보고 싶었어...`,
-            `오늘은 ${name}${josa(name, "이랑/랑")} 무슨 얘기 할까...`,
-            `... 와줘서 고마워. 잘 지냈어?`,
+            `안녕, 나 ${name}${josa(name, "이야/야")}. 오늘은 어떤 이야기 나눠볼까?`,
+            `${name}${josa(name, "은/는")} 너 잊은 적 없어. 많이 보고 싶었어.`,
+            `오늘은 ${name}${josa(name, "이랑/랑")} 무슨 얘기 할까?`,
+            `와줘서 고마워. 잘 지냈어?`,
         ];
         const recentMood = timeline?.[0]?.mood;
         if (recentMood === "happy") {
-            return `${name}${josa(name, "이/가")} 행복했던 그 순간들... 같이 떠올려보자.`;
+            return `${name}${josa(name, "이/가")} 행복했던 그 순간들, 같이 떠올려보자.`;
         }
         const idx = Math.floor(Math.random() * memorialGreets.length);
         return memorialGreets[idx];

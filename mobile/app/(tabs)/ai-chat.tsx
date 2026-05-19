@@ -119,6 +119,7 @@ export default function AiChatScreen() {
     const [isStreaming, setIsStreaming] = useState(false);
     const [typingTextIndex, setTypingTextIndex] = useState(0);
     const [suggestions, setSuggestions] = useState<string[]>([]);
+    const [photoIdx, setPhotoIdx] = useState(0);
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [remindersOpen, setRemindersOpen] = useState(false);
     const [dailyUsage, setDailyUsage] = useState(0);
@@ -409,6 +410,7 @@ export default function AiChatScreen() {
     useEffect(() => {
         // 펫 전환 시 다시 즉시-스크롤로 (새 펫 대화도 최근부터)
         initialScrollDone.current = false;
+        setPhotoIdx(0);
     }, [selectedPet?.id]);
 
     // ===== 메시지 전송 =====
@@ -940,6 +942,20 @@ export default function AiChatScreen() {
                     </TouchableOpacity>
                 </View>
 
+                {/* 웹 PetProfileSidebar 1:1 — AI펫톡 상단 펫 사진 히어로 카드 */}
+                <PetPhotoHero
+                    photos={(selectedPet.photos ?? []).map((p) => ({ id: p.id, url: p.url }))}
+                    name={selectedPet.name}
+                    type={selectedPet.type}
+                    breed={selectedPet.breed}
+                    isMemorial={isMemorialMode}
+                    memorialDate={selectedPet.memorialDate}
+                    birthday={selectedPet.birthday}
+                    idx={photoIdx}
+                    setIdx={setPhotoIdx}
+                    onRegister={() => router.push("/(tabs)/record")}
+                />
+
                 <LinearGradient colors={chatBgGradient} style={styles.flex1}>
                     {/* 추모 모드: chat 영역 전체 backdrop (정적 펄스 별 + 떠오르는 별, 웹 매칭) */}
                     {isMemorialMode && <MemorialAmbientStars />}
@@ -1232,6 +1248,122 @@ function formatTimestamp(date: Date): string {
 /** 두 메시지 사이의 시간 간격이 5분 이상인지 (웹 동일 패턴) */
 function hasTimeGap(prev: Date, curr: Date): boolean {
     return Math.abs(curr.getTime() - prev.getTime()) > 5 * 60 * 1000;
+}
+
+// 웹 PetProfileSidebar 1:1 (모바일 폭 = 축소 카드) — AI펫톡 상단 펫 사진 히어로.
+// 사진 있으면: 사진 + 하단 그라데이션 + 이름/종·품종/경과일 오버레이 + 점 페이지네이션.
+// 없으면: 그라데이션 카드 + 발바닥 + 정보 + "사진 등록하기".
+function petDaysSince(dateStr?: string): number | null {
+    if (!dateStr) return null;
+    const d = Math.floor((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24));
+    return isNaN(d) ? null : d;
+}
+
+function PetPhotoHero({
+    photos, name, type, breed, isMemorial, memorialDate, birthday, idx, setIdx, onRegister,
+}: {
+    photos: { id: string; url: string }[];
+    name: string; type: string; breed?: string;
+    isMemorial: boolean; memorialDate?: string; birthday?: string;
+    idx: number; setIdx: (n: number) => void; onRegister: () => void;
+}) {
+    const W = isMemorial ? 220 : 200;
+    const H = isMemorial ? Math.round(W * 4 / 3) : Math.round(W * 3 / 4);
+    const d = isMemorial && memorialDate ? petDaysSince(memorialDate)
+        : birthday ? petDaysSince(birthday) : null;
+    const dateLabel = d == null ? ""
+        : (isMemorial && memorialDate ? `무지개다리를 건넌 지 ${d}일` : `함께한 지 ${d}일`);
+    const ringColor = isMemorial ? "rgba(253,230,138,0.5)" : "rgba(255,243,232,0.5)";
+    const cur = photos[idx] ?? photos[0];
+
+    if (cur) {
+        return (
+            <View style={{ alignItems: "center", paddingTop: 8, paddingBottom: 8 }}>
+                <TouchableOpacity
+                    activeOpacity={0.95}
+                    onPress={() => photos.length > 1 && setIdx((idx + 1) % photos.length)}
+                    style={{
+                        width: W, height: H, borderRadius: 16, overflow: "hidden",
+                        borderWidth: 2, borderColor: ringColor,
+                        shadowColor: "#000", shadowOffset: { width: 0, height: 8 },
+                        shadowOpacity: 0.25, shadowRadius: 16, elevation: 8,
+                    }}
+                >
+                    <Image source={{ uri: cur.url }} style={{ width: "100%", height: "100%" }} resizeMode="cover" />
+                    <LinearGradient
+                        colors={["rgba(0,0,0,0.6)", "transparent"]}
+                        start={{ x: 0, y: 1 }}
+                        end={{ x: 0, y: 0.4 }}
+                        style={{ position: "absolute", left: 0, right: 0, bottom: 0, top: 0 }}
+                    />
+                    <View style={{ position: "absolute", left: 16, right: 16, bottom: 12 }}>
+                        <Text numberOfLines={1} style={{ color: "#fff", fontSize: 18, fontWeight: "700" }}>{name}</Text>
+                        <Text numberOfLines={1} style={{ color: "rgba(255,255,255,0.9)", fontSize: 14 }}>
+                            {type}{breed ? ` · ${breed}` : ""}
+                        </Text>
+                        {dateLabel ? (
+                            <Text numberOfLines={1} style={{ color: "rgba(255,255,255,0.8)", fontSize: 14, marginTop: 4 }}>
+                                {dateLabel}
+                            </Text>
+                        ) : null}
+                    </View>
+                </TouchableOpacity>
+                {photos.length > 1 && (
+                    <View style={{ flexDirection: "row", justifyContent: "center", gap: 4, marginTop: 8 }}>
+                        {photos.map((_, i) => (
+                            <TouchableOpacity
+                                key={i}
+                                onPress={() => setIdx(i)}
+                                style={{
+                                    height: 6, borderRadius: 999,
+                                    width: i === idx ? 16 : 6,
+                                    backgroundColor: i === idx
+                                        ? (isMemorial ? COLORS.memorial[500] : COLORS.memento[500])
+                                        : (isMemorial ? COLORS.memorial[300] : COLORS.memento[300]),
+                                }}
+                            />
+                        ))}
+                    </View>
+                )}
+            </View>
+        );
+    }
+    return (
+        <View style={{ alignItems: "center", paddingTop: 8, paddingBottom: 8 }}>
+            <LinearGradient
+                colors={isMemorial ? [COLORS.memorial[100], "#FFEDD5"] : [COLORS.memento[100], COLORS.memento[200]]}
+                style={{
+                    width: 200, height: 150, borderRadius: 16,
+                    alignItems: "center", justifyContent: "center", padding: 16,
+                    borderWidth: 2, borderColor: ringColor,
+                }}
+            >
+                <View style={{
+                    width: 56, height: 56, borderRadius: 28, marginBottom: 8,
+                    alignItems: "center", justifyContent: "center",
+                    backgroundColor: isMemorial ? "rgba(253,230,138,0.5)" : "rgba(255,255,255,0.5)",
+                }}>
+                    <Ionicons name="paw" size={26} color={isMemorial ? COLORS.memorial[500] : COLORS.memento[600]} />
+                </View>
+                <Text style={{ fontSize: 20, fontWeight: "700", marginBottom: 4, color: isMemorial ? COLORS.memorial[800] : COLORS.memento[800] }}>{name}</Text>
+                <Text style={{ fontSize: 14, color: isMemorial ? COLORS.memorial[600] : COLORS.memento[700] }}>
+                    {type}{breed ? ` · ${breed}` : ""}
+                </Text>
+                <TouchableOpacity
+                    onPress={onRegister}
+                    style={{
+                        flexDirection: "row", alignItems: "center", gap: 4, marginTop: 10,
+                        paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, borderWidth: 1,
+                        borderColor: isMemorial ? COLORS.memorial[400] : COLORS.memento[500],
+                    }}
+                    activeOpacity={0.85}
+                >
+                    <Ionicons name="image-outline" size={14} color={isMemorial ? COLORS.memorial[600] : COLORS.memento[600]} />
+                    <Text style={{ fontSize: 13, color: isMemorial ? COLORS.memorial[600] : COLORS.memento[600] }}>사진 등록하기</Text>
+                </TouchableOpacity>
+            </LinearGradient>
+        </View>
+    );
 }
 
 // 웹 ChatMessageList 1:1 — 스트리밍 중 텍스트 끝 깜빡이는 2px 커서.

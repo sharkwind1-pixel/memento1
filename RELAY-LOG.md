@@ -4,6 +4,12 @@
 
 ---
 
+## [2026-05-19 추가] 펫 사진 히어로 카드 모바일 이식 + 인사말 "..." 근절
+
+사용자 웹↔모바일 스크린샷 대조 "다르지?" — 결정적 차이: **웹 AI펫톡 상단의 펫 사진 히어로 카드(이름/종·품종/"무지개다리 건넌 지 N일" 오버레이 + 점 페이지네이션)가 모바일엔 통째 없었음**. 지난 대조표가 PetProfileSidebar를 놓침(별도 컴포넌트). 수정: (1) `PetProfileSidebar.tsx` 1:1 → 모바일 `PetPhotoHero` 컴포넌트 신설(추모 220×293 aspect3/4, 일상 200×150 aspect4/3, rounded16, ring, 하단 그라데이션, 이름18/종품종14/날짜14 white, 점 페이지네이션 active16, 사진없을때 fallback+사진등록하기). 헤더 닫힘 직후·메시지영역 직전 렌더, photoIdx 상태+펫전환 리셋. (2) 인사말 "..." 근절: `mobile/lib/chat-helpers.ts` 추모 인사말 5개가 "..." 도배(스샷의 "오늘은 꼼지랑 무슨 얘기 할까..."가 그것) — GPT 프롬프트가 아니라 클라 생성함수라 지난 프롬프트 수정이 안 닿았음. 웹 `chatUtils.ts`도 177/374/402 "..." 제거(거북이 258-263은 의도된 조용한 종캐릭터라 보존). 9번 9/10 거짓0 치명0, fallback 폰트 웹값 반영. 웹+모바일 typecheck 0, 웹 build exit 0 = L2. Expo Go 실기 미검증. 교훈: 인사말은 프롬프트가 아니라 클라 함수 — "..." 출처 두 군데(프롬프트+greeting). "ux 다름"은 화면 컴포넌트 트리 통째 대조 필요(PetProfileSidebar 누락).
+
+---
+
 ## [2026-05-19 추가] AI펫톡 웹 1:1 정밀 패리티 (대조표 기반)
 
 사용자 "여전히 웹 ux 다름 1,2,3"(레이아웃/애니/추천칩). 대조에이전트가 웹↔모바일 1:1 diff표 작성 → 모바일을 웹값으로 정렬(ai-chat.tsx, PawLoading.tsx): (A)PawLoading delay i*200/dur600/rotate -15·0·15/translateY 0.25/text12 — 웹 PawPrint bounce 1:1. (B)배경 2-stop→3-stop(일상 memento50→75→white, 추모 memorial50→orange50→yellow50). (C)AI 고지 배너 신설("AI가 도와주는 대화예요. 참고용으로 봐주세요!", alpha 0.8). (D)추천칩 빈배열일 때 통째 사라지던 것→웹처럼 항상 기본4개 폴백. (E)추천칩 추모 글자색 memorial700, columnGap8/rowGap10/pb12, 아이콘gap8, idx*80ms stagger fade-in+shadow. (F)입력창을 웹처럼 rounded12 테두리 박스+TextInput 투명, 전송버튼 원형→rounded-lg 44x44 그라데이션+send아이콘. (G)스트리밍 커서(깜빡이는 ▌, 일상#0EA5E9/추모#D97706) 신설. (H)아바타 폴백 이모지→밝은surface+paw아이콘. 9번 8/10 거짓0 치명0, key중복방어+배너알파 권고 반영. 모바일 typecheck 0 = L2. **헤더 구조(웹은 펫아바타/이름 없이 Select 드롭다운, 모바일은 아바타+이름+서브+배지)는 위험커서 임의 안 뜯고 사용자 결정 보류** → RELAY ⚠️. Expo Go 실기 시각확인 미검증. 교훈: "ux 다름"은 대조표부터 — 추측 말고 웹값 인용해 정렬.

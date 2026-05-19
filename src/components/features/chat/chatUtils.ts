@@ -174,7 +174,7 @@ function _generateGreetingInner(
     if (!specialDayHook && isMemorial && pet.memorialDate) {
         const md = new Date(pet.memorialDate);
         if (`${md.getMonth() + 1}-${md.getDate()}` === todayMD) {
-            specialDayHook = `오늘... 우리가 마지막으로 함께한 날이야. 난 항상 네 곁에 있어.`;
+            specialDayHook = `오늘은 우리가 마지막으로 함께한 날이야. 난 항상 네 곁에 있어.`;
         }
     }
 
@@ -371,7 +371,7 @@ function buildMemorialGreeting(
     const openings = [
         `안녕, 나 ${petName}야. ${timeGreeting}이야.`,
         `나 ${petName}야. 보고 싶었어.`,
-        `안녕... 나 ${petName}${nameParticle(petName).iya}. 잘 지내고 있어?`,
+        `안녕, 나 ${petName}${nameParticle(petName).iya}. 잘 지내고 있어?`,
         `${petName}${nameParticle(petName).iya}. 오랜만이야.`,
     ];
     if (pet.breed && pet.breed !== "믹스" && pet.breed !== "기타") {
@@ -399,7 +399,7 @@ function buildMemorialGreeting(
     // 3단계: 추모 개인화 훅
     const personalHooks: string[] = [];
     if (pet.memorableMemory) {
-        personalHooks.push(`${pet.memorableMemory}... 그때 참 좋았지.`);
+        personalHooks.push(`${pet.memorableMemory}, 그때 참 좋았지.`);
     }
     if (pet.favoritePlace) {
         personalHooks.push(`${pet.favoritePlace}에서 같이 보냈던 시간이 떠올라.`);
