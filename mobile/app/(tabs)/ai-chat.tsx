@@ -1306,10 +1306,13 @@ function MessageRenderer({
                     <Text
                         style={{
                             fontSize: 15 * fontScale, lineHeight: 24 * fontScale,
-                            color: isDarkMode ? COLORS.white : COLORS.gray[800],
+                            // 웹 1:1 — 펫 버블 텍스트는 모드색 짙은 톤(gray 아님)
+                            color: isDarkMode
+                                ? COLORS.white
+                                : (isMemorial ? COLORS.memorial[900] : COLORS.memento[900]),
                         }}
                     >
-                        {message.content || (message.isStreaming ? "..." : "")}
+                        {message.content}
                     </Text>
                 </TouchableOpacity>
                 {message.matchedPhoto?.url && (
@@ -1643,24 +1646,24 @@ const styles = StyleSheet.create({
     bubbleUserShadow: {
         maxWidth: "80%",
         borderRadius: 18,
-        // 사용자 버블 — 살짝 들린 느낌
+        // 웹 shadow-md 1:1 근사
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.1,
         shadowRadius: 6,
-        elevation: 2,
+        elevation: 3,
     },
     bubblePet: {
         paddingHorizontal: 16, paddingVertical: 12,
         borderRadius: 16, borderTopLeftRadius: 2,
     },
     bubblePetShadow: {
-        // 펫 버블 — 종이가 살짝 떠 있는 느낌, 라이트 모드일 때 강조
+        // 웹 shadow-md 1:1 근사 (기존 0.06/r4는 너무 옅어 평평해 보였음)
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.06,
-        shadowRadius: 4,
-        elevation: 1,
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.1,
+        shadowRadius: 6,
+        elevation: 3,
     },
     inputRow: {
         flexDirection: "row", alignItems: "flex-end", gap: 8,

@@ -4,6 +4,12 @@
 
 ---
 
+## [2026-05-19 추가] 실기 재신고 3건 — 사진첩 진짜원인 + 말풍선색 + "..." 
+
+직전 5건 중 사진첩 수정이 실패해 재조사. **진짜 원인**: 직전에 넣은 getItemLayout이 ListHeaderComponent(갤러리 헤더+버튼) 높이를 offset에 못 더해 스크롤 좌표가 통째 어긋남 → 꿀렁/끝 안 닿음 그대로(또는 악화). 수정: getItemLayout 제거 + 셀을 flex/aspectRatio → 고정 픽셀(GALLERY_CELL=floor((w-24)/3))로 박아 이미지 디코드 시 행높이 재계산 thrash 차단, paddingBottom 120→140. (2) 펫 말풍선 텍스트색: 웹 text-memento-900/memorial-900인데 앱은 gray[800](중성회색) → 모드색 짙은톤으로 일치. 스트리밍 리터럴 "..." placeholder 제거(웹은 커서). 버블 그림자 shadow-md 근사로 강화. (3) AI펫 "..." 남발(우울하게 들림): chat-prompts.ts 데일리 "## 응답 규칙"에 말줄임표 남발 금지 규칙 + "감정 대응 순서" 템플릿 "..."→","/"!" (추모 톤 미오염, 데일리 한정). 9번 9/10 거짓0 치명0, TDZ 안전 확인. 웹+모바일 typecheck 0, 웹 build exit 0 = L3. 실기 시각확인(사진첩 끝까지 부드럽게/말풍선색/"..." 사라짐) 미검증 → RELAY ⚠️. 교훈: getItemLayout은 ListHeaderComponent 있으면 offset 어긋남, 추측 처방 말고 헤더 유무부터 확인.
+
+---
+
 ## [2026-05-19 추가] 모바일 AI펫톡/사진첩 버그 5건 (실기 신고 → 웹 1:1)
 
 사용자 Expo Go 실기 신고 5건 코드 추적 후 수정. (1) 타이핑 인디케이터: 텍스트 말풍선 위+단일 PawLoading → 웹 ChatMessageList처럼 아바타+한 말풍선 안 발바닥3개+그 아래 멘트(PawLoading text/textColor prop 추가). (2)+(3) 추천 멘트: 랜덤 3개(pickRandomSuggestions/DEFAULT_POOL) → 웹 ACTIVE/MEMORIAL_SUGGESTIONS와 글자 단위 동일한 고정 4개(DEFAULT_DAILY/DEFAULT_MEMORIAL). 랜덤 회전이 "대화와 무관/좌측쏠림"의 원인. (4) 입장 스크롤: setTimeout(120ms) 애매한 위치 → onContentSizeChange+initialScrollDone ref(첫 instant). **웹도 통일**(ChatMessageList 초기로드 "맨위유지"→맨끝 이동, 사용자 결정). (5) 사진첩 꿀렁/끝안닿음: record.tsx GalleryTab removeClippedSubviews 제거+getItemLayout(GALLERY_ROW_H)+initialNumToRender15. 9번 9/10 거짓0 치명0. 웹+모바일 typecheck 0, 웹 build exit 0 = L2. 실기 시각확인 미검증(RELAY ⚠️).

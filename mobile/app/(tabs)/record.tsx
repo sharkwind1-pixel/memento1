@@ -856,10 +856,12 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
     );
 }
 
-// 3열 그리드 한 행 높이 — contentContainerStyle padding 12(좌우 24) 기준 정사각 셀.
-// getItemLayout에 쓰여 FlatList가 전체 높이를 정확히 계산 → 스크롤이 맨 끝까지
-// 안정적으로 닿고 꿀렁임 사라짐(removeClippedSubviews 미사용과 함께).
-const GALLERY_ROW_H = (Dimensions.get("window").width - 24) / 3;
+// 3열 그리드 셀 한 변(px) — contentContainerStyle padding 12(좌우 24) 기준 정사각.
+// flex:1/3 + aspectRatio는 이미지 디코드마다 행 높이를 재계산해 스크롤이
+// 꿀렁이고 끝이 안 잡힘 → 고정 픽셀로 박아 레이아웃을 결정적으로 만든다.
+// (getItemLayout은 ListHeaderComponent 높이를 offset에 못 더해 좌표가
+//  통째 어긋나므로 쓰지 않는다.)
+const GALLERY_CELL = Math.floor((Dimensions.get("window").width - 24) / 3);
 
 // ============================================
 // 사진첩 탭
@@ -1066,12 +1068,7 @@ function GalleryTab({ petId, photos, isMemorialMode, accentColor, refreshing, on
                         </TouchableOpacity>
                     );
                 }}
-                contentContainerStyle={photos.length === 0 ? { padding: 16 } : { padding: 12, paddingBottom: 120 }}
-                getItemLayout={(_, index) => ({
-                    length: GALLERY_ROW_H,
-                    offset: GALLERY_ROW_H * Math.floor(index / 3),
-                    index,
-                })}
+                contentContainerStyle={photos.length === 0 ? { padding: 16 } : { padding: 12, paddingBottom: 140 }}
                 initialNumToRender={15}
                 maxToRenderPerBatch={9}
                 windowSize={7}
@@ -1851,8 +1848,8 @@ const styles = StyleSheet.create({
         borderRadius: 12,
     },
     uploadBtnText: { color: "#fff", fontSize: 13, fontWeight: "700" },
-    gridItem: { flex: 1 / 3, aspectRatio: 1, padding: 1 },
-    gridImg: { flex: 1 },
+    gridItem: { width: GALLERY_CELL, height: GALLERY_CELL, padding: 1 },
+    gridImg: { width: "100%", height: "100%" },
     selectOverlay: {
         ...StyleSheet.absoluteFillObject,
         backgroundColor: "transparent",
