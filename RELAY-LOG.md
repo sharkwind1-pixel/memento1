@@ -4,6 +4,12 @@
 
 ---
 
+## [2026-05-19 추가] 모바일 AI펫톡/사진첩 버그 5건 (실기 신고 → 웹 1:1)
+
+사용자 Expo Go 실기 신고 5건 코드 추적 후 수정. (1) 타이핑 인디케이터: 텍스트 말풍선 위+단일 PawLoading → 웹 ChatMessageList처럼 아바타+한 말풍선 안 발바닥3개+그 아래 멘트(PawLoading text/textColor prop 추가). (2)+(3) 추천 멘트: 랜덤 3개(pickRandomSuggestions/DEFAULT_POOL) → 웹 ACTIVE/MEMORIAL_SUGGESTIONS와 글자 단위 동일한 고정 4개(DEFAULT_DAILY/DEFAULT_MEMORIAL). 랜덤 회전이 "대화와 무관/좌측쏠림"의 원인. (4) 입장 스크롤: setTimeout(120ms) 애매한 위치 → onContentSizeChange+initialScrollDone ref(첫 instant). **웹도 통일**(ChatMessageList 초기로드 "맨위유지"→맨끝 이동, 사용자 결정). (5) 사진첩 꿀렁/끝안닿음: record.tsx GalleryTab removeClippedSubviews 제거+getItemLayout(GALLERY_ROW_H)+initialNumToRender15. 9번 9/10 거짓0 치명0. 웹+모바일 typecheck 0, 웹 build exit 0 = L2. 실기 시각확인 미검증(RELAY ⚠️).
+
+---
+
 ## [2026-05-19 추가] 대화 저장 #4-a 동시성 — ai_chats union 병합
 
 `ai_chats` 통째 upsert last-write-wins(웹·앱 동시 대화 시 한쪽 메시지 소실) 해결. 저장 직전 서버 최신값을 다시 읽어 `mergeChatMessages`(키 role|timestamp|content[:120], timestamp 오름차순)로 union 병합 후 upsert. 웹 `useAIChat.ts` + 모바일 `ai-chat.tsx` 1:1, saveToSupabase 재시도 루프 + 백업 재저장 경로 둘 다 적용. 9번 8/10 발행가능·치명결함 0(주석 명세 정정 반영). 웹+앱 typecheck 0, 웹 build exit 0 = **L2**. 실기(동시 대화 양쪽 보존) 미검증은 RELAY ⚠️. #4-b(chat_messages dedup_key)는 유실<중복 철학상 후순위로 잔존.

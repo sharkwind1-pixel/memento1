@@ -14,12 +14,13 @@ interface Props {
     size?: Size;
     text?: string;
     color?: string;
+    textColor?: string;
 }
 
 const SIZES: Record<Size, number> = { sm: 14, md: 22, lg: 32 };
 const GAPS: Record<Size, number> = { sm: 4, md: 8, lg: 12 };
 
-export default function PawLoading({ size = "md", text, color }: Props) {
+export default function PawLoading({ size = "md", text, color, textColor }: Props) {
     const iconColor = color ?? COLORS.memento[500];
     const iconSize = SIZES[size];
     const gap = GAPS[size];
@@ -77,7 +78,7 @@ export default function PawLoading({ size = "md", text, color }: Props) {
                     <Ionicons name="paw" size={iconSize} color={iconColor} />
                 </Animated.View>
             </View>
-            {text && <Text style={styles.text}>{text}</Text>}
+            {text && <Text style={[styles.text, textColor ? { color: textColor } : null]}>{text}</Text>}
         </View>
     );
 }

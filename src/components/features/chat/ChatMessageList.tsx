@@ -99,11 +99,15 @@ export default function ChatMessageList({
         const currentCount = messages.length;
         const prevCount = prevMessageCount.current;
 
-        // 1. 초기 로드 (DB에서 기존 대화 불러오기) → 스크롤 안 함
-        //    유저가 위에서부터 차분히 볼 수 있도록
+        // 1. 초기 로드 (DB에서 기존 대화 불러오기) → 즉시 맨 끝으로
+        //    (사용자 결정 2026-05-18: 웹·앱 모두 입장 시 최근 대화부터 보여줌.
+        //     이전엔 맨 위 유지였으나 앱과 통일. instant scroll로 중간 멈춤 방지)
         if (!initialLoadDone.current) {
             if (currentCount > 0) {
                 initialLoadDone.current = true;
+                requestAnimationFrame(() => {
+                    messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+                });
             }
             prevMessageCount.current = currentCount;
             return;

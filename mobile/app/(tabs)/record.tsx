@@ -10,7 +10,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
     View, Text, ScrollView, TouchableOpacity,
     Image, FlatList, RefreshControl, ActivityIndicator,
-    StyleSheet, TextInput, Share,
+    StyleSheet, TextInput, Share, Dimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -856,6 +856,11 @@ function TimelineTab({ petId, petName, isMemorialMode, accentColor, refreshing, 
     );
 }
 
+// 3열 그리드 한 행 높이 — contentContainerStyle padding 12(좌우 24) 기준 정사각 셀.
+// getItemLayout에 쓰여 FlatList가 전체 높이를 정확히 계산 → 스크롤이 맨 끝까지
+// 안정적으로 닿고 꿀렁임 사라짐(removeClippedSubviews 미사용과 함께).
+const GALLERY_ROW_H = (Dimensions.get("window").width - 24) / 3;
+
 // ============================================
 // 사진첩 탭
 // ============================================
@@ -1062,8 +1067,12 @@ function GalleryTab({ petId, photos, isMemorialMode, accentColor, refreshing, on
                     );
                 }}
                 contentContainerStyle={photos.length === 0 ? { padding: 16 } : { padding: 12, paddingBottom: 120 }}
-                removeClippedSubviews
-                initialNumToRender={12}
+                getItemLayout={(_, index) => ({
+                    length: GALLERY_ROW_H,
+                    offset: GALLERY_ROW_H * Math.floor(index / 3),
+                    index,
+                })}
+                initialNumToRender={15}
                 maxToRenderPerBatch={9}
                 windowSize={7}
             />

@@ -59,22 +59,12 @@ interface ReminderItem {
     enabled: boolean;
 }
 
-// 진입 시 default 추천멘트 — 보호자가 AI펫에게 실제로 보낼 만한 자연스러운 메시지만.
-// 사용자 짜증 (2026-05-12): "내 사진 봐도 돼?" 같은 의미 없는 거 (AI는 사진 못 봄) + 명사구 (의미 모호) 제거.
-// 원칙: 보호자가 펫에게 직접 말한다고 자연스러워야.
-const DEFAULT_POOL_DAILY = [
-    "오늘 뭐 했어?", "잘 잤어?", "지금 뭐 해?",
-    "산책 갈까?", "산책로 추천해줘", "공놀이 할까?", "간식 먹을래?",
-    "근처 동물병원 알려줘", "갈 만한 펫카페 있어?",
-    "기분 어때?", "오늘 컨디션 어때?", "어디 가고 싶어?",
-    "사랑해", "보고 싶었어", "잘 지내자",
-];
-const DEFAULT_POOL_MEMORIAL = [
-    "오늘도 보고 싶었어", "잘 지내고 있어?", "거기 어때?",
-    "꿈에 와줘", "기다리고 있어", "사랑해",
-    "고마워", "지금 뭐 해?", "어떻게 지내?",
-    "잘 자", "또 와줘", "내 마음 알지?",
-];
+// 진입 시 default 추천멘트 — 웹 ChatInputArea ACTIVE/MEMORIAL_SUGGESTIONS 1:1.
+// 웹은 랜덤이 아니라 고정 큐레이션 4개를 항상 같은 순서로 노출(예측가능 + 대화와
+// 무관한 랜덤 회전 없음). 모바일도 동일 텍스트·순서로 통일. 서버 추천이 오면
+// (event.suggestedQuestions) 이 기본값을 대체한다.
+const DEFAULT_DAILY = ["예방접종 언제?", "건강 체크해줘", "산책 시간", "간식 추천"];
+const DEFAULT_MEMORIAL = ["잘 지냈어?", "보고싶어", "오늘 네 생각 났어", "행복했던 기억"];
 
 // 타이핑 인디케이터 감성 텍스트 — 웹 ChatMessageList 패리티 (펫종/모드별 순환)
 const TYPING_TEXTS_DOG = [
@@ -93,15 +83,6 @@ const TYPING_TEXTS_MEMORIAL = [
     "이곳에서 너를 생각하는 중...", "소중한 추억 찾는 중...",
 ];
 
-/** Fisher-Yates shuffle 후 앞 N개 (sort()-0.5 편향 방지) */
-function pickRandomSuggestions(pool: string[], n: number): string[] {
-    const shuffled = [...pool];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled.slice(0, n);
-}
 
 // 웹 useAIChat.mergeChatMessages 1:1 — ai_chats 통째 upsert는 last-write-wins라
 // 다른 기기가 그 사이 추가한 메시지를 덮어 소실시킴. 저장 직전 서버값과 union
@@ -248,7 +229,7 @@ export default function AiChatScreen() {
         setIsStreaming(false);
         setMessages([]);
         // default 추천 표시 (서버 첫 응답 받기 전이라도 사용자가 바로 클릭 가능)
-        setSuggestions(pickRandomSuggestions(isMemorialMode ? DEFAULT_POOL_MEMORIAL : DEFAULT_POOL_DAILY, 3));
+        setSuggestions((isMemorialMode ? DEFAULT_MEMORIAL : DEFAULT_DAILY));
         reminderSuggestionShown.current = false;
 
         let cancelled = false;
@@ -418,18 +399,17 @@ export default function AiChatScreen() {
         return () => clearTimeout(timer);
     }, [messages, selectedPet?.id, user?.id]);
 
-    // ===== 메시지 변경 시 자동 스크롤 =====
-    // 일반 메신저 트렌드 — 항상 최신 메시지(맨 아래)가 보이게 시작.
-    // 초기 로드든 새 메시지든 모두 맨 아래로 스크롤.
+    // ===== 자동 스크롤 =====
+    // 입장 시 곧장 최근 대화(맨 끝)부터 (사용자 결정 2026-05-18, 웹과 통일).
+    // 기존 setTimeout(120ms)+scrollToEnd는 FlatList 레이아웃 안정 전이라
+    // 애매한 중간 위치에서 멈췄음 → FlatList onContentSizeChange로 교체
+    // (콘텐츠 높이 확정 시점에 호출되어 항상 정확히 맨 끝). 첫 스크롤은
+    // animated:false(중간 멈춤 없이 즉시), 이후 새 메시지는 animated:true.
+    const initialScrollDone = useRef(false);
     useEffect(() => {
-        if (messages.length === 0) return;
-        // 약간의 지연으로 FlatList layout 안정화 후 scrollToEnd
-        // 초기 로드는 animated:false로 깜빡임 없이, 새 메시지는 animated:true로 부드럽게
-        const t = setTimeout(() => {
-            flatListRef.current?.scrollToEnd({ animated: true });
-        }, 120);
-        return () => clearTimeout(t);
-    }, [messages]);
+        // 펫 전환 시 다시 즉시-스크롤로 (새 펫 대화도 최근부터)
+        initialScrollDone.current = false;
+    }, [selectedPet?.id]);
 
     // ===== 메시지 전송 =====
     const handleSend = useCallback(async (directMessage?: string) => {
@@ -752,7 +732,7 @@ export default function AiChatScreen() {
             id: `greeting-${Date.now()}`, role: "pet", content: greeting, timestamp: new Date(),
         }]);
         // 새 대화 시작 시에도 default 추천 즉시 표시
-        setSuggestions(pickRandomSuggestions(isMemorialMode ? DEFAULT_POOL_MEMORIAL : DEFAULT_POOL_DAILY, 3));
+        setSuggestions((isMemorialMode ? DEFAULT_MEMORIAL : DEFAULT_DAILY));
         reminderSuggestionShown.current = false;
     }, [selectedPet, isMemorialMode]);
 
@@ -969,6 +949,11 @@ export default function AiChatScreen() {
                         style={styles.messages}
                         contentContainerStyle={{ paddingTop: 12, paddingBottom: 16, paddingHorizontal: 16 }}
                         showsVerticalScrollIndicator={false}
+                        onContentSizeChange={() => {
+                            if (messages.length === 0) return;
+                            flatListRef.current?.scrollToEnd({ animated: initialScrollDone.current });
+                            initialScrollDone.current = true;
+                        }}
                         renderItem={({ item, index }) => (
                             <MessageRenderer
                                 message={item}
@@ -983,20 +968,33 @@ export default function AiChatScreen() {
                         )}
                         ListFooterComponent={
                             isTyping ? (
+                                // 웹 ChatMessageList 타이핑 인디케이터 1:1 — 아바타(링) +
+                                // 한 말풍선 안에 발바닥 3개 시차 bounce, 그 아래 멘트.
                                 <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 8, marginBottom: 12 }}>
-                                    <View style={[styles.bubbleAvatar, { backgroundColor: accentColor + "20" }]}>
-                                        <Text style={{ fontSize: 12 }}>
-                                            {selectedPet.type === "강아지" ? "🐶" : "🐱"}
-                                        </Text>
+                                    <View style={[
+                                        styles.bubbleAvatar,
+                                        { backgroundColor: accentColor + "20", borderWidth: 2, borderColor: accentColor + "55" },
+                                    ]}>
+                                        {selectedPet.profileImage ? (
+                                            <Image source={{ uri: selectedPet.profileImage }} style={styles.bubbleAvatar} />
+                                        ) : (
+                                            <Text style={{ fontSize: 14 }}>
+                                                {selectedPet.type === "강아지" ? "🐶" : selectedPet.type === "고양이" ? "🐱" : "🐾"}
+                                            </Text>
+                                        )}
                                     </View>
-                                    <View>
-                                        <Text style={{
-                                            fontSize: 10,
-                                            color: isDarkMode ? COLORS.gray[400] : COLORS.gray[500],
-                                            marginBottom: 4,
-                                            marginLeft: 4,
-                                        }}>
-                                            {(() => {
+                                    <View
+                                        style={[
+                                            styles.bubblePet,
+                                            styles.bubblePetShadow,
+                                            { backgroundColor: isDarkMode ? COLORS.gray[800] : "#fff" },
+                                        ]}
+                                    >
+                                        <PawLoading
+                                            size="sm"
+                                            color={accentColor}
+                                            textColor={accentColor}
+                                            text={(() => {
                                                 const tt = isMemorialMode
                                                     ? TYPING_TEXTS_MEMORIAL
                                                     : selectedPet.type === "고양이"
@@ -1006,16 +1004,7 @@ export default function AiChatScreen() {
                                                             : TYPING_TEXTS_OTHER;
                                                 return tt[typingTextIndex % tt.length];
                                             })()}
-                                        </Text>
-                                        <View
-                                            style={[
-                                                styles.bubblePet,
-                                                styles.bubblePetShadow,
-                                                { backgroundColor: isDarkMode ? COLORS.gray[800] : "#fff" },
-                                            ]}
-                                        >
-                                            <PawLoading size="sm" color={accentColor} />
-                                        </View>
+                                        />
                                     </View>
                                 </View>
                             ) : null
