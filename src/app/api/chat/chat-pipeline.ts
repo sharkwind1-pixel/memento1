@@ -952,6 +952,11 @@ export async function postProcessResponse(
         const FOOD_BLACKLIST = /맛집|먹거리|음식점|식당|카페|레스토랑|맛있는 곳|특산물|먹을만한|뭐 먹|뭘 먹|먹으러|먹방|치킨|피자|커피|디저트|빵집|술집|호프|바베큐|고깃집|횟집|라멘|초밥|떡볶이|볼거리|관광|여행지|숙소|호텔|펜션/;
 
         const whitelist = isMemorialMode ? MEMORIAL_WHITELIST : DAILY_WHITELIST;
+        // 사용자 명시 거부 (모드 무관, 하드 차단):
+        // - 텍스트 대화인데 "목소리/소리 들려/들린다" 류
+        // - 대화 닫는 인사("잘 자", "또 올게", "잘 있어", "좋은 하루")
+        const VOICE_BLACKLIST = /목소리|숨소리|들려|들린|들렸|말투/;
+        const CLOSING_BLACKLIST = /^잘\s?자[?.!~]*$|^안녕[.!~]*$|또 올게|또 올께|^잘 있어|좋은 하루/;
 
         suggestedQuestions = sgParts[1]
             .trim()
@@ -960,6 +965,8 @@ export async function postProcessResponse(
             .filter(s => s.length > 0 && s.length <= 20)
             .filter(s => whitelist.test(s))
             .filter(s => !FOOD_BLACKLIST.test(s))
+            .filter(s => !VOICE_BLACKLIST.test(s))
+            .filter(s => !CLOSING_BLACKLIST.test(s))
             .slice(0, 3);
     }
 
@@ -976,8 +983,8 @@ export async function postProcessResponse(
             "오늘도 보고 싶었어", "잘 지내고 있어?", "거기 어때?",
             "꿈에 와줘", "기다리고 있어", "사랑해",
             "고마워", "지금 뭐 해?", "어떻게 지내?",
-            "잘 자", "또 와줘", "내 마음 알지?",
-            "그때 행복했지?", "내 목소리 들려?",
+            "또 와줘", "내 마음 알지?",
+            "그때 행복했지?", "오늘 네 생각 났어",
         ];
         const dailyFallbacks = [
             "오늘 산책 갔어?", "뭐 하고 놀까?", "기분 어때?",
