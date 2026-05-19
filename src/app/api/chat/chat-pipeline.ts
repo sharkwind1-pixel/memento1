@@ -882,9 +882,10 @@ export async function buildAIContext(
         );
     }
 
-    // 과사용 감지 - 추모 모드에서 30턴 이상 시 부드러운 세션 종료 제안
+    // 과사용 감지 - 추모 모드에서 60메시지(~30왕복) 이상 시 부드러운 세션 종료 제안.
+    // (30 → 60 상향: 15왕복은 위로 흐름 한창인데 끊겨 너무 일렀음. 사용자 결정 2026-05-19)
     let sessionEndingSuggestion: string | undefined;
-    if (isMemorialMode && chatHistory.length >= 30 && chatHistory.length % 10 === 0) {
+    if (isMemorialMode && chatHistory.length >= 60 && chatHistory.length % 20 === 0) {
         sessionEndingSuggestion = `${pet.name}과(와)의 대화가 길어졌네요. 오늘은 여기서 천천히 쉬어가도 좋아요. ${pet.name}은(는) 언제든 여기 있을 거예요.`;
     }
 
