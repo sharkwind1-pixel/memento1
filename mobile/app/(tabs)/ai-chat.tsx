@@ -18,7 +18,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import {
     View, Text, TextInput, TouchableOpacity,
     FlatList, KeyboardAvoidingView, Platform,
-    Image, StyleSheet, Alert, Share, Linking,
+    Image, StyleSheet, Alert, Share, Linking, Animated,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -785,12 +785,13 @@ export default function AiChatScreen() {
     const bgColor = usePageBgColor();
     const borderColor = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
 
-    // 채팅 본문 그라데이션 — 웹 패리티 (따뜻한 크림 톤)
-    const chatBgGradient: [string, string] = isDarkMode
+    // 채팅 본문 그라데이션 — 웹 AIChatPage 1:1 (3-stop)
+    // 일상: memento-50 → memento-75 → white / 추모: memorial-50 → orange-50 → yellow-50
+    const chatBgGradient: readonly [string, string, ...string[]] = isDarkMode
         ? [COLORS.gray[950], COLORS.gray[900]]
         : isMemorialMode
-            ? [COLORS.memorial[50], COLORS.memorial[100]]    // memorial-50 → 100
-            : [COLORS.memento[50], COLORS.memento[75]];      // memento-50 → 75 (따뜻한 크림)
+            ? [COLORS.memorial[50], "#FFF7ED", "#FEFCE8"]
+            : [COLORS.memento[50], COLORS.memento[75], "#FFFFFF"];
 
     const usedCount = Math.min(limit === Infinity ? 0 : limit, limit === Infinity ? 0 : (limit - remainingChats));
 
@@ -942,6 +943,29 @@ export default function AiChatScreen() {
                 <LinearGradient colors={chatBgGradient} style={styles.flex1}>
                     {/* 추모 모드: chat 영역 전체 backdrop (정적 펄스 별 + 떠오르는 별, 웹 매칭) */}
                     {isMemorialMode && <MemorialAmbientStars />}
+                    {/* AI 고지 배너 — 웹 AIChatPage 1:1 */}
+                    <View style={{
+                        marginHorizontal: 16, marginTop: 8, marginBottom: 4,
+                        paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8,
+                        flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4,
+                        backgroundColor: isDarkMode
+                            ? (isMemorialMode ? "rgba(251,191,36,0.10)" : "rgba(7,89,133,0.40)")
+                            : (isMemorialMode ? "rgba(254,243,199,0.8)" : "rgba(186,230,253,0.8)"),
+                    }}>
+                        <Ionicons
+                            name="information-circle"
+                            size={12}
+                            color={isMemorialMode ? COLORS.memorial[700] : COLORS.memento[700]}
+                        />
+                        <Text style={{
+                            fontSize: 12,
+                            color: isDarkMode
+                                ? (isMemorialMode ? COLORS.memorial[300] : COLORS.memento[300])
+                                : (isMemorialMode ? COLORS.memorial[700] : COLORS.memento[700]),
+                        }}>
+                            AI가 도와주는 대화예요. 참고용으로 봐주세요!
+                        </Text>
+                    </View>
                     <FlatList
                         ref={flatListRef}
                         data={messages}
@@ -973,21 +997,27 @@ export default function AiChatScreen() {
                                 <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 8, marginBottom: 12 }}>
                                     <View style={[
                                         styles.bubbleAvatar,
-                                        { backgroundColor: accentColor + "20", borderWidth: 2, borderColor: accentColor + "55" },
+                                        {
+                                            backgroundColor: isMemorialMode ? COLORS.memorial[100] : COLORS.memento[100],
+                                            borderWidth: 2,
+                                            borderColor: isMemorialMode ? COLORS.memorial[200] : COLORS.memento[200],
+                                        },
                                     ]}>
                                         {selectedPet.profileImage ? (
                                             <Image source={{ uri: selectedPet.profileImage }} style={styles.bubbleAvatar} />
                                         ) : (
-                                            <Text style={{ fontSize: 14 }}>
-                                                {selectedPet.type === "강아지" ? "🐶" : selectedPet.type === "고양이" ? "🐱" : "🐾"}
-                                            </Text>
+                                            <Ionicons
+                                                name="paw"
+                                                size={16}
+                                                color={isMemorialMode ? COLORS.memorial[500] : COLORS.memento[600]}
+                                            />
                                         )}
                                     </View>
                                     <View
                                         style={[
                                             styles.bubblePet,
                                             styles.bubblePetShadow,
-                                            { backgroundColor: isDarkMode ? COLORS.gray[800] : "#fff" },
+                                            { backgroundColor: isDarkMode ? COLORS.gray[800] : "#fff", paddingHorizontal: 20 },
                                         ]}
                                     >
                                         <PawLoading
@@ -1012,9 +1042,11 @@ export default function AiChatScreen() {
                     />
                 </LinearGradient>
 
-                {suggestions.length > 0 && (
+                {!isLimitReached && (
+                    // 웹 ChatInputArea 1:1 — 서버 추천 있으면 그걸, 없으면 항상 기본 4개.
+                    // (모바일은 빈 배열일 때 칩이 통째 사라지던 게 웹과 불일치였음)
                     <ScrollableSuggestions
-                        suggestions={suggestions}
+                        suggestions={suggestions.length > 0 ? suggestions : (isMemorialMode ? DEFAULT_MEMORIAL : DEFAULT_DAILY)}
                         isMemorialMode={isMemorialMode}
                         onSelect={(s) => { setSuggestions([]); handleSend(s); }}
                     />
@@ -1096,41 +1128,66 @@ export default function AiChatScreen() {
                 <View style={[
                     styles.inputRow,
                     {
-                        borderTopColor: borderColor,
+                        borderTopWidth: 0,
                         paddingBottom: 10 + Math.max(insets.bottom, 0),
                     },
                 ]}>
-                    <TextInput
-                        style={[
-                            styles.textInput,
-                            {
-                                backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100],
-                                color: isDarkMode ? COLORS.white : COLORS.gray[900],
-                            },
-                        ]}
-                        placeholder="메시지 입력..."
-                        placeholderTextColor={isMemorialMode ? COLORS.gray[500] : COLORS.gray[400]}
-                        value={input}
-                        onChangeText={setInput}
-                        multiline
-                        returnKeyType="send"
-                        onSubmitEditing={() => handleSend()}
-                    />
-                    <TouchableOpacity
-                        onPress={() => handleSend()}
-                        disabled={!input.trim() || isTyping || isStreaming}
-                        style={[
-                            styles.sendBtn,
-                            { backgroundColor: input.trim() && !isTyping && !isStreaming ? accentColor : COLORS.gray[200] },
-                        ]}
-                        activeOpacity={0.85}
-                    >
-                        <Ionicons
-                            name="arrow-up"
-                            size={18}
-                            color={input.trim() && !isTyping && !isStreaming ? "#fff" : COLORS.gray[400]}
+                    {/* 웹 ChatInputArea 1:1 — textarea+전송을 한 테두리 박스(rounded-xl)로 */}
+                    <View style={{
+                        flex: 1,
+                        flexDirection: "row",
+                        alignItems: "flex-end",
+                        gap: 8,
+                        borderRadius: 12,
+                        borderWidth: 1,
+                        borderColor: isMemorialMode ? COLORS.memorial[200] : COLORS.memento[200],
+                        backgroundColor: isDarkMode
+                            ? COLORS.gray[800]
+                            : (isMemorialMode ? "rgba(255,251,235,0.3)" : "#fff"),
+                        padding: 6,
+                    }}>
+                        <TextInput
+                            style={[
+                                styles.textInput,
+                                {
+                                    flex: 1,
+                                    backgroundColor: "transparent",
+                                    color: isDarkMode ? COLORS.white : COLORS.gray[900],
+                                    maxHeight: 84,
+                                },
+                            ]}
+                            placeholder="메시지 입력..."
+                            placeholderTextColor={isMemorialMode ? COLORS.gray[500] : COLORS.gray[400]}
+                            value={input}
+                            onChangeText={setInput}
+                            multiline
+                            returnKeyType="send"
+                            onSubmitEditing={() => handleSend()}
                         />
-                    </TouchableOpacity>
+                        <TouchableOpacity
+                            onPress={() => handleSend()}
+                            disabled={!input.trim() || isTyping || isStreaming}
+                            style={{ borderRadius: 8, minWidth: 44, minHeight: 44, overflow: "hidden" }}
+                            activeOpacity={0.85}
+                        >
+                            {input.trim() && !isTyping && !isStreaming ? (
+                                <LinearGradient
+                                    colors={isMemorialMode
+                                        ? [COLORS.memorial[500], COLORS.memorial[400]]
+                                        : [COLORS.memento[500], COLORS.memento[400]]}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 1, y: 1 }}
+                                    style={{ flex: 1, minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" }}
+                                >
+                                    <Ionicons name="send" size={20} color="#fff" />
+                                </LinearGradient>
+                            ) : (
+                                <View style={{ flex: 1, minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center", backgroundColor: COLORS.gray[200] }}>
+                                    <Ionicons name="send" size={20} color={COLORS.gray[400]} />
+                                </View>
+                            )}
+                        </TouchableOpacity>
+                    </View>
                 </View>
                 )}
             </KeyboardAvoidingView>
@@ -1175,6 +1232,27 @@ function formatTimestamp(date: Date): string {
 /** 두 메시지 사이의 시간 간격이 5분 이상인지 (웹 동일 패턴) */
 function hasTimeGap(prev: Date, curr: Date): boolean {
     return Math.abs(curr.getTime() - prev.getTime()) > 5 * 60 * 1000;
+}
+
+// 웹 ChatMessageList 1:1 — 스트리밍 중 텍스트 끝 깜빡이는 2px 커서.
+// 색: 일상 #0EA5E9 / 추모 #D97706 (웹과 동일).
+function StreamingCursor({ memorial }: { memorial: boolean }) {
+    const op = useRef(new Animated.Value(1)).current;
+    useEffect(() => {
+        const loop = Animated.loop(
+            Animated.sequence([
+                Animated.timing(op, { toValue: 0.15, duration: 500, useNativeDriver: true }),
+                Animated.timing(op, { toValue: 1, duration: 500, useNativeDriver: true }),
+            ]),
+        );
+        loop.start();
+        return () => loop.stop();
+    }, [op]);
+    return (
+        <Animated.Text style={{ opacity: op, color: memorial ? "#D97706" : "#0EA5E9", fontWeight: "700" }}>
+            {" "}▌
+        </Animated.Text>
+    );
 }
 
 function MessageRenderer({
@@ -1281,7 +1359,7 @@ function MessageRenderer({
             {/* 감정 글로우 — 펫 응답 감정에 따라 아바타에 색 후광 (웹 EMOTION_GLOW 패리티) */}
             <View style={[
                 styles.bubbleAvatar,
-                { backgroundColor: accentColor + "20", marginBottom: 4, borderWidth: 2, borderColor: avatarRing },
+                { backgroundColor: isMemorial ? COLORS.memorial[100] : COLORS.memento[100], marginBottom: 4, borderWidth: 2, borderColor: avatarRing },
                 message.emotion && EMOTION_MAP[message.emotion] ? {
                     shadowColor: EMOTION_MAP[message.emotion].color,
                     shadowOffset: { width: 0, height: 0 },
@@ -1293,7 +1371,7 @@ function MessageRenderer({
                 {pet.profileImage ? (
                     <Image source={{ uri: pet.profileImage }} style={styles.bubbleAvatar} />
                 ) : (
-                    <Text style={{ fontSize: 14 }}>{pet.type === "강아지" ? "🐶" : "🐱"}</Text>
+                    <Ionicons name="paw" size={16} color={isMemorial ? COLORS.memorial[500] : COLORS.memento[600]} />
                 )}
             </View>
             <View style={{ maxWidth: "80%" }}>
@@ -1313,6 +1391,7 @@ function MessageRenderer({
                         }}
                     >
                         {message.content}
+                        {message.isStreaming ? <StreamingCursor memorial={isMemorial} /> : null}
                     </Text>
                 </TouchableOpacity>
                 {message.matchedPhoto?.url && (
@@ -1570,33 +1649,75 @@ function ScrollableSuggestions({
     const { fontScale, spacingScale } = useSimpleMode();
     const chipBg = isMemorialMode ? COLORS.memorial[100] : COLORS.memento[100];
     const chipBorder = isMemorialMode ? COLORS.memorial[200] : COLORS.memento[200];
-    const chipText = isMemorialMode ? COLORS.memorial[600] : COLORS.memento[600];
+    // 웹 ChatInputArea 1:1 — 추모 글자색 memorial-700 (#B45309), 일상 memento-600
+    const chipText = isMemorialMode ? COLORS.memorial[700] : COLORS.memento[600];
     return (
         <View style={{
-            flexDirection: "row", flexWrap: "wrap", gap: 8 * spacingScale,
-            paddingHorizontal: 16 * spacingScale, paddingBottom: 8 * spacingScale,
+            flexDirection: "row", flexWrap: "wrap",
+            // 웹 gap-x-2 gap-y-2.5 / mb-3
+            columnGap: 8 * spacingScale, rowGap: 10 * spacingScale,
+            paddingHorizontal: 16 * spacingScale, paddingBottom: 12 * spacingScale,
         }}>
-            {suggestions.map((item) => (
-                <TouchableOpacity
-                    key={item}
-                    onPress={() => onSelect(item)}
-                    style={{
-                        flexDirection: "row", alignItems: "center", gap: 6,
-                        paddingHorizontal: 16 * spacingScale,
-                        paddingVertical: 10 * spacingScale,
-                        minHeight: 44,
-                        borderRadius: 9999,
-                        backgroundColor: chipBg,
-                        borderWidth: 1,
-                        borderColor: chipBorder,
-                    }}
-                    activeOpacity={0.8}
-                >
-                    <Ionicons name="sparkles" size={14 * fontScale} color={chipText} />
-                    <Text style={{ fontSize: 14 * fontScale, fontWeight: "500", color: chipText }}>{item}</Text>
-                </TouchableOpacity>
+            {suggestions.map((item, idx) => (
+                <SuggestionChip
+                    key={idx + "_" + item}
+                    item={item}
+                    idx={idx}
+                    fontScale={fontScale}
+                    spacingScale={spacingScale}
+                    chipBg={chipBg}
+                    chipBorder={chipBorder}
+                    chipText={chipText}
+                    onSelect={onSelect}
+                />
             ))}
         </View>
+    );
+}
+
+// 웹 chip-enter 1:1 — idx*80ms stagger fade-in + shadow-sm
+function SuggestionChip({
+    item, idx, fontScale, spacingScale, chipBg, chipBorder, chipText, onSelect,
+}: {
+    item: string; idx: number; fontScale: number; spacingScale: number;
+    chipBg: string; chipBorder: string; chipText: string; onSelect: (s: string) => void;
+}) {
+    const enter = useRef(new Animated.Value(0)).current;
+    useEffect(() => {
+        const a = Animated.timing(enter, {
+            toValue: 1, duration: 220, delay: idx * 80, useNativeDriver: true,
+        });
+        a.start();
+        return () => a.stop();
+    }, [enter, idx]);
+    return (
+        <Animated.View style={{
+            opacity: enter,
+            transform: [{ translateY: enter.interpolate({ inputRange: [0, 1], outputRange: [6, 0] }) }],
+        }}>
+            <TouchableOpacity
+                onPress={() => onSelect(item)}
+                style={{
+                    flexDirection: "row", alignItems: "center", gap: 8,
+                    paddingHorizontal: 16 * spacingScale,
+                    paddingVertical: 10 * spacingScale,
+                    minHeight: 44,
+                    borderRadius: 9999,
+                    backgroundColor: chipBg,
+                    borderWidth: 1,
+                    borderColor: chipBorder,
+                    shadowColor: "#000",
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.06,
+                    shadowRadius: 2,
+                    elevation: 1,
+                }}
+                activeOpacity={0.8}
+            >
+                <Ionicons name="sparkles" size={14 * fontScale} color={chipText} />
+                <Text style={{ fontSize: 14 * fontScale, fontWeight: "500", color: chipText }}>{item}</Text>
+            </TouchableOpacity>
+        </Animated.View>
     );
 }
 

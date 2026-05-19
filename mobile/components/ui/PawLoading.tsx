@@ -30,18 +30,20 @@ export default function PawLoading({ size = "md", text, color, textColor }: Prop
     const v2 = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
+        // 웹 ChatMessageList 1:1 — animationDelay i*200ms(0/200/400),
+        // duration 0.6s(왕복 300+300). 사이클 1000ms 고정으로 stagger 유지.
         const make = (val: Animated.Value, delay: number) =>
             Animated.loop(
                 Animated.sequence([
                     Animated.delay(delay),
-                    Animated.timing(val, { toValue: 1, duration: 250, useNativeDriver: true, easing: Easing.out(Easing.quad) }),
-                    Animated.timing(val, { toValue: 0, duration: 250, useNativeDriver: true, easing: Easing.in(Easing.quad) }),
-                    Animated.delay(450 - delay),
+                    Animated.timing(val, { toValue: 1, duration: 300, useNativeDriver: true, easing: Easing.out(Easing.quad) }),
+                    Animated.timing(val, { toValue: 0, duration: 300, useNativeDriver: true, easing: Easing.in(Easing.quad) }),
+                    Animated.delay(400 - delay),
                 ]),
             );
         const a0 = make(v0, 0);
-        const a1 = make(v1, 150);
-        const a2 = make(v2, 300);
+        const a1 = make(v1, 200);
+        const a2 = make(v2, 400);
         a0.start();
         a1.start();
         a2.start();
@@ -52,15 +54,16 @@ export default function PawLoading({ size = "md", text, color, textColor }: Prop
         };
     }, [v0, v1, v2]);
 
-    function bouncedStyle(val: Animated.Value) {
+    function bouncedStyle(val: Animated.Value, rotateDeg: string) {
         return {
             transform: [
                 {
                     translateY: val.interpolate({
                         inputRange: [0, 1],
-                        outputRange: [0, -iconSize * 0.5],
+                        outputRange: [0, -iconSize * 0.25],
                     }),
                 },
+                { rotate: rotateDeg },
             ],
         };
     }
@@ -68,13 +71,13 @@ export default function PawLoading({ size = "md", text, color, textColor }: Prop
     return (
         <View style={styles.wrap}>
             <View style={[styles.row, { gap, marginBottom: text ? 10 : 0 }]}>
-                <Animated.View style={bouncedStyle(v0)}>
+                <Animated.View style={bouncedStyle(v0, "-15deg")}>
                     <Ionicons name="paw" size={iconSize} color={iconColor} />
                 </Animated.View>
-                <Animated.View style={bouncedStyle(v1)}>
+                <Animated.View style={bouncedStyle(v1, "0deg")}>
                     <Ionicons name="paw" size={iconSize} color={iconColor} />
                 </Animated.View>
-                <Animated.View style={bouncedStyle(v2)}>
+                <Animated.View style={bouncedStyle(v2, "15deg")}>
                     <Ionicons name="paw" size={iconSize} color={iconColor} />
                 </Animated.View>
             </View>
@@ -86,5 +89,5 @@ export default function PawLoading({ size = "md", text, color, textColor }: Prop
 const styles = StyleSheet.create({
     wrap: { alignItems: "center", justifyContent: "center" },
     row: { flexDirection: "row", alignItems: "flex-end" },
-    text: { fontSize: 13, color: COLORS.gray[400], textAlign: "center" },
+    text: { fontSize: 12, color: COLORS.gray[400], textAlign: "center", fontWeight: "500" },
 });
