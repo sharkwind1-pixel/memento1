@@ -15,6 +15,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
+import * as Crypto from "expo-crypto";
 import { supabase } from "@/lib/supabase";
 import { ADMIN_EMAILS, API_BASE_URL } from "@/config/constants";
 import { UserProfile } from "@/types";
@@ -56,12 +57,26 @@ export function clearStoredVerifiers(): void {
 /**
  * RFC 7636 권장 문자셋으로 64자 random verifier 생성.
  * 우선순위:
- *  1) globalThis.crypto.getRandomValues (RN 0.76+ Hermes 지원, 안전)
- *  2) Math.random fallback (Expo Go 등 미지원 환경 — 부팅 막지 않게 약하지만 동작)
- * 운영 빌드에서는 expo-crypto 설치해서 1번만 쓰는 게 가장 좋음.
+ *  1) expo-crypto Crypto.getRandomBytes (Expo Go·EAS 빌드 둘 다 동작, 안전 — 권장)
+ *  2) globalThis.crypto.getRandomValues (RN 0.76+ Hermes 네이티브 지원, 안전)
+ *  3) Math.random fallback (둘 다 실패 시 부팅 막지 않게 — 정상 환경에선 도달 안 함)
  */
 function generatePKCEVerifier(): string {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+
+    // 1) expo-crypto — Expo Go·프로덕션 모두 보장 (CSPRNG)
+    try {
+        const bytes = Crypto.getRandomBytes(64);
+        let result = "";
+        for (let i = 0; i < 64; i++) {
+            result += chars[bytes[i] % chars.length];
+        }
+        return result;
+    } catch {
+        // 다음 폴백으로
+    }
+
+    // 2) globalThis.crypto.getRandomValues — RN 0.76+ Hermes 네이티브 (안전)
     const cryptoApi = (globalThis as { crypto?: { getRandomValues?: (arr: Uint8Array) => Uint8Array } }).crypto;
     if (cryptoApi?.getRandomValues) {
         const bytes = new Uint8Array(64);
@@ -72,8 +87,9 @@ function generatePKCEVerifier(): string {
         }
         return result;
     }
-    // Fallback: Math.random (보안 약화 — 운영 빌드 전 expo-crypto 설치 필수)
-    console.warn("[Auth] crypto.getRandomValues 미지원 — Math.random fallback (보안 약화)");
+
+    // 3) Math.random fallback (보안 약화 — 정상 환경에선 도달 안 해야 함, ERROR로 격상)
+    console.error("[Auth] CSPRNG 미사용 — Math.random fallback 도달 (PKCE 보안 약화). expo-crypto/globalThis.crypto 둘 다 실패.");
     let result = "";
     for (let i = 0; i < 64; i++) {
         result += chars[Math.floor(Math.random() * chars.length)];
