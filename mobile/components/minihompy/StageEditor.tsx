@@ -571,29 +571,8 @@ function AnimatedMinimi({ imageUrl, action }: { imageUrl: string; action: Minimi
     const translateX = useRef(new Animated.Value(0)).current;
     const rotate = useRef(new Animated.Value(0)).current;
     const scale = useRef(new Animated.Value(1)).current;
-    const idleY = useRef(new Animated.Value(0)).current;
-
-    // 아이들 통통 바운스 — PawLoading과 동일 파라미터, 랜덤 위상으로 미니미마다 다르게
-    useEffect(() => {
-        const delay = Math.floor(Math.random() * 600);
-        const anim = Animated.loop(
-            Animated.sequence([
-                Animated.timing(idleY, {
-                    toValue: -5, duration: 300, useNativeDriver: true,
-                    easing: Easing.bezier(0, 0, 0.2, 1),
-                }),
-                Animated.timing(idleY, {
-                    toValue: 0, duration: 300, useNativeDriver: true,
-                    easing: Easing.bezier(0.8, 0, 1, 1),
-                }),
-            ]),
-        );
-        const t = setTimeout(() => anim.start(), delay);
-        return () => { clearTimeout(t); anim.stop(); };
-    }, [idleY]);
 
     useEffect(() => {
-        // 액션 값만 리셋 (idleY는 독립 루프이므로 건드리지 않음)
         translateX.setValue(0);
         translateY.setValue(0);
         rotate.setValue(0);
@@ -679,7 +658,7 @@ function AnimatedMinimi({ imageUrl, action }: { imageUrl: string; action: Minimi
                 {
                     transform: [
                         { translateX },
-                        { translateY: Animated.add(translateY, idleY) },
+                        { translateY },
                         { rotate: rotateInterp },
                         { scale },
                     ],
