@@ -338,7 +338,7 @@ export default function MinimiShopModal({
                                     activeOpacity={0.85}
                                 >
                                     <View style={[styles.cardImgWrap, { backgroundColor: cardImgBg }]}>
-                                        <Image source={{ uri: item.imageUrl }} style={styles.cardImg} resizeMode="contain" />
+                                        <Image source={{ uri: item.imageUrl }} style={styles.cardImg} resizeMode="contain" fadeDuration={0} />
                                         {equipped && (
                                             <View style={[styles.equippedBadge, { backgroundColor: accentColor }]}>
                                                 <Ionicons name="star" size={10} color="#fff" />
@@ -417,8 +417,10 @@ const styles = StyleSheet.create({
     cardImgWrap: {
         aspectRatio: 1,
         position: "relative",
+        alignItems: "center",
+        justifyContent: "center",
     },
-    cardImg: { width: "100%", height: "100%" },
+    cardImg: { width: 72, height: 72 },
     cardOverlay: {
         ...StyleSheet.absoluteFillObject,
         alignItems: "center",
