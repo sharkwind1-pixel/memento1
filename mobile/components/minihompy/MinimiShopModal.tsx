@@ -44,7 +44,7 @@ export default function MinimiShopModal({
     const insets = useSafeAreaInsets();
     const { width: screenWidth } = useWindowDimensions();
     const { isDarkMode } = useDarkMode();
-    const cardWidth = (screenWidth - 16 * 2 - 12) / 2;
+    const cardWidth = (screenWidth - 16 * 2 - 10 * 2) / 3;
     const [catalog, setCatalog] = useState<MinimiCatalogItem[]>([]);
     const [ownedSlugs, setOwnedSlugs] = useState<Set<string>>(new Set());
     const [ownedCounts, setOwnedCounts] = useState<Record<string, number>>({});
@@ -318,9 +318,9 @@ export default function MinimiShopModal({
                     <FlatList
                         data={filtered}
                         keyExtractor={(item) => item.slug}
-                        numColumns={2}
-                        columnWrapperStyle={{ gap: 12, paddingHorizontal: 16 }}
-                        contentContainerStyle={{ paddingTop: 12, paddingBottom: 24 + insets.bottom, gap: 12 }}
+                        numColumns={3}
+                        columnWrapperStyle={{ gap: 10, paddingHorizontal: 16 }}
+                        contentContainerStyle={{ paddingTop: 12, paddingBottom: 24 + insets.bottom, gap: 10 }}
                         renderItem={({ item }) => {
                             const count = ownedCounts[item.slug] ?? 0;
                             const owned = count > 0;
@@ -341,8 +341,7 @@ export default function MinimiShopModal({
                                         <Image source={{ uri: item.imageUrl }} style={styles.cardImg} resizeMode="contain" fadeDuration={0} />
                                         {equipped && (
                                             <View style={[styles.equippedBadge, { backgroundColor: accentColor }]}>
-                                                <Ionicons name="star" size={10} color="#fff" />
-                                                <Text style={styles.equippedText}>장착중</Text>
+                                                <Ionicons name="star" size={8} color="#fff" />
                                             </View>
                                         )}
                                         {itemBusy && (
@@ -351,21 +350,18 @@ export default function MinimiShopModal({
                                             </View>
                                         )}
                                     </View>
-                                    <View style={{ padding: 10 }}>
+                                    <View style={{ paddingHorizontal: 6, paddingVertical: 6 }}>
                                         <Text style={[styles.cardName, { color: cardNameColor }]} numberOfLines={1}>{item.name}</Text>
-                                        <Text style={[styles.cardDesc, { color: subColor }]} numberOfLines={2}>{item.description}</Text>
-                                        <View style={styles.cardFooter}>
-                                            {owned ? (
-                                                <Text style={[styles.cardPrice, { color: accentColor }]}>
-                                                    {equipped ? `장착 중 · ${count}마리` : `보유 ${count}마리`}
-                                                </Text>
-                                            ) : (
-                                                <View style={styles.priceRow}>
-                                                    <Ionicons name="star" size={11} color={COLORS.memento[500]} />
-                                                    <Text style={[styles.cardPrice, { color: cardPriceColor }]}>{item.price.toLocaleString()}P</Text>
-                                                </View>
-                                            )}
-                                        </View>
+                                        {owned ? (
+                                            <Text style={[styles.cardPrice, { color: accentColor, marginTop: 2 }]}>
+                                                {equipped ? "장착중" : `보유 ${count}`}
+                                            </Text>
+                                        ) : (
+                                            <View style={[styles.priceRow, { marginTop: 2 }]}>
+                                                <Ionicons name="star" size={9} color={COLORS.memento[500]} />
+                                                <Text style={[styles.cardPrice, { color: cardPriceColor }]}>{item.price}P</Text>
+                                            </View>
+                                        )}
                                     </View>
                                 </TouchableOpacity>
                             );
@@ -410,7 +406,7 @@ const styles = StyleSheet.create({
     },
     loadingBox: { flex: 1, alignItems: "center", justifyContent: "center" },
     card: {
-        borderRadius: 14,
+        borderRadius: 10,
         overflow: "hidden",
         borderWidth: 1,
     },
@@ -420,7 +416,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
     },
-    cardImg: { width: 72, height: 72 },
+    cardImg: { width: 52, height: 52 },
     cardOverlay: {
         ...StyleSheet.absoluteFillObject,
         alignItems: "center",
@@ -429,19 +425,15 @@ const styles = StyleSheet.create({
     },
     equippedBadge: {
         position: "absolute",
-        top: 6,
-        right: 6,
-        flexDirection: "row",
+        top: 4,
+        right: 4,
         alignItems: "center",
-        gap: 3,
-        paddingHorizontal: 6,
-        paddingVertical: 3,
-        borderRadius: 9999,
+        justifyContent: "center",
+        width: 16,
+        height: 16,
+        borderRadius: 8,
     },
-    equippedText: { color: "#fff", fontSize: 9, fontWeight: "700" },
-    cardName: { fontSize: 13, fontWeight: "700" },
-    cardDesc: { fontSize: 11, marginTop: 2, lineHeight: 15, minHeight: 30 },
-    cardFooter: { marginTop: 8 },
-    priceRow: { flexDirection: "row", alignItems: "center", gap: 4 },
-    cardPrice: { fontSize: 12, fontWeight: "700" },
+    cardName: { fontSize: 11, fontWeight: "700" },
+    priceRow: { flexDirection: "row", alignItems: "center", gap: 3 },
+    cardPrice: { fontSize: 10, fontWeight: "700" },
 });
