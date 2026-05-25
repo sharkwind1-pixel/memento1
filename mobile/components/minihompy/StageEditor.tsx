@@ -68,8 +68,9 @@ export default function StageEditor({
     const [pickerOpen, setPickerOpen] = useState(false);
 
     // 터치 이펙트 (비편집 모드, 웹 MinihompyStage 패턴)
-    const [touchEffect, setTouchEffect] = useState<{ index: number; message: string; action: MinimiAction } | null>(null);
+    const [touchEffect, setTouchEffect] = useState<{ index: number; message: string; action: MinimiAction; key: number } | null>(null);
     const consecutiveRef = useRef<{ index: number; count: number; lastAt: number }>({ index: -1, count: 0, lastAt: 0 });
+    const touchKeyRef = useRef(0);
     const touchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
@@ -97,11 +98,8 @@ export default function StageEditor({
 
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
 
-        // 같은 미니미 연속 터치 시에도 애니메이션 재시작되도록 null → 새 값
-        setTouchEffect(null);
-        requestAnimationFrame(() => {
-            setTouchEffect({ index: idx, message: reaction.message, action: reaction.action });
-        });
+        touchKeyRef.current += 1;
+        setTouchEffect({ index: idx, message: reaction.message, action: reaction.action, key: touchKeyRef.current });
 
         // 1.8초 후 이펙트 제거
         touchTimerRef.current = setTimeout(() => setTouchEffect(null), 1800);
@@ -213,6 +211,7 @@ export default function StageEditor({
                     onTap={() => handleMinimiTouch(idx, p.slug)}
                     touchAction={touchEffect?.index === idx ? touchEffect.action : null}
                     touchMessage={touchEffect?.index === idx ? touchEffect.message : null}
+                    triggerKey={touchEffect?.index === idx ? touchEffect.key : 0}
                 />
             ))}
 
@@ -457,7 +456,7 @@ const pickerStyles = StyleSheet.create({
  */
 function DraggableMinimi({
     placed, index, editMode, stageWidth, stageHeight, onMove, onMoveEnd, onLongPress, onTap,
-    touchAction, touchMessage,
+    touchAction, touchMessage, triggerKey,
 }: {
     placed: PlacedMinimi;
     index: number;
@@ -470,6 +469,7 @@ function DraggableMinimi({
     onTap: () => void;
     touchAction: MinimiAction | null;
     touchMessage: string | null;
+    triggerKey: number;
 }) {
     const minimi = findMinimi(placed.slug);
     const dragStart = useRef<{ origX: number; origY: number } | null>(null);
@@ -538,9 +538,9 @@ function DraggableMinimi({
             ]}
             {...panResponder.panHandlers}
         >
-            {/* 말풍선 */}
+            {/* 말풍선 — key로 매 터치마다 remount → fade-in 재생 */}
             {touchMessage && (
-                <SpeechBubble message={touchMessage} />
+                <SpeechBubble key={triggerKey} message={touchMessage} />
             )}
 
             <TouchableOpacity
@@ -551,7 +551,7 @@ function DraggableMinimi({
                 activeOpacity={editMode ? 0.7 : 0.9}
                 style={styles.minimiTouch}
             >
-                <AnimatedMinimi imageUrl={minimi.imageUrl} action={touchAction} />
+                <AnimatedMinimi imageUrl={minimi.imageUrl} action={touchAction} triggerKey={triggerKey} />
                 {editMode && (
                     <View style={styles.removeBadge}>
                         <Ionicons name="close" size={10} color="#fff" />
@@ -566,7 +566,7 @@ function DraggableMinimi({
 // 미니미 이미지 + 액션 애니메이션 (웹 minimiJump/Spin/Wiggle/... 매핑)
 // ============================================================================
 
-function AnimatedMinimi({ imageUrl, action }: { imageUrl: string; action: MinimiAction | null }) {
+function AnimatedMinimi({ imageUrl, action, triggerKey }: { imageUrl: string; action: MinimiAction | null; triggerKey: number }) {
     const translateY = useRef(new Animated.Value(0)).current;
     const translateX = useRef(new Animated.Value(0)).current;
     const rotate = useRef(new Animated.Value(0)).current;
@@ -643,7 +643,8 @@ function AnimatedMinimi({ imageUrl, action }: { imageUrl: string; action: Minimi
         })();
 
         a.start();
-    }, [action, translateX, translateY, rotate, scale]);
+    // triggerKey changes on every touch — guarantees replay even for same action type
+    }, [triggerKey, action, translateX, translateY, rotate, scale]);
 
     const rotateInterp = rotate.interpolate({
         inputRange: [-1, 0, 1, 4],
