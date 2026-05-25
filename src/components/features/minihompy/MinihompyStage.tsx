@@ -290,14 +290,10 @@ export default function MinihompyStage({
         const mode = isMemorialMode ? "memorial" : "daily";
         const reaction = pickReaction(slug, mode, nextCount);
 
-        // 동일 미니미 연속 터치 시에도 애니메이션 재실행
-        setTouchEffectIndex(null);
-        requestAnimationFrame(() => {
-            setTouchEffectMessage(reaction.message);
-            setTouchEffectAction(reaction.action);
-            setTouchEffectIndex(index);
-            setTouchKey(k => k + 1);
-        });
+        setTouchEffectMessage(reaction.message);
+        setTouchEffectAction(reaction.action);
+        setTouchEffectIndex(index);
+        setTouchKey(k => k + 1);
 
         // 1.8초 후 이펙트 제거
         touchTimerRef.current = setTimeout(() => {
@@ -390,15 +386,13 @@ export default function MinihompyStage({
                             )}
                             {/* 이미지 (포인터 이벤트 없음 - 시각적 표시만) */}
                             <div
+                                key={hasTouchEffect ? `anim-${touchKey}` : undefined}
                                 className={cn(
                                     "relative w-full h-full transition-all duration-150",
                                     hasTouchEffect && "scale-110",
                                     isDragging && "opacity-60 scale-90"
                                 )}
                                 style={{
-                                    // 터치 액션별 애니메이션 분기
-                                    // heart/star/sparkle은 파티클만 (미니미 자체 움직임 없음)
-                                    // jump/spin/wiggle/bounce는 미니미가 직접 움직임
                                     animation: hasTouchEffect
                                         ? (() => {
                                               switch (touchEffectAction) {
