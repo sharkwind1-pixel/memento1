@@ -22,6 +22,7 @@ export interface PetPhoto {
     date: string;
     thumbnailUrl?: string;
     uploadedAt?: string;
+    cropPosition?: { x: number; y: number };
 }
 
 export interface Pet {
@@ -35,6 +36,7 @@ export interface Pet {
     weight?: string;
     personality?: string;
     profileImage?: string;
+    profileCropPosition?: { x: number; y: number };
     photos: PetPhoto[];
     status: PetStatus;
     memorialDate?: string;

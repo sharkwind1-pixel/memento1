@@ -957,7 +957,10 @@ export default function AiChatScreen() {
                             // (고정 블록으로 두면 키보드 시 메시지 영역이 0으로 눌려 안 보였음)
                             <View style={{ marginHorizontal: -16 }}>
                                 <PetPhotoHero
-                                    photos={(selectedPet.photos ?? []).map((p) => ({ id: p.id, url: p.url }))}
+                                    photos={[
+                                        ...(selectedPet.profileImage ? [{ id: "profile", url: selectedPet.profileImage, cropPosition: selectedPet.profileCropPosition }] : []),
+                                        ...(selectedPet.photos ?? []).map((p) => ({ id: p.id, url: p.url, cropPosition: p.cropPosition })),
+                                    ]}
                                     name={selectedPet.name}
                                     type={selectedPet.type}
                                     breed={selectedPet.breed}
@@ -1265,7 +1268,7 @@ function petDaysSince(dateStr?: string): number | null {
 function PetPhotoHero({
     photos, name, type, breed, isMemorial, memorialDate, birthday, idx, setIdx, onRegister,
 }: {
-    photos: { id: string; url: string }[];
+    photos: { id: string; url: string; cropPosition?: { x: number; y: number } }[];
     name: string; type: string; breed?: string;
     isMemorial: boolean; memorialDate?: string; birthday?: string;
     idx: number; setIdx: (n: number) => void; onRegister: () => void;
@@ -1278,13 +1281,30 @@ function PetPhotoHero({
         : (isMemorial && memorialDate ? `무지개다리를 건넌 지 ${d}일` : `함께한 지 ${d}일`);
     const ringColor = isMemorial ? "rgba(253,230,138,0.5)" : "rgba(255,243,232,0.5)";
     const cur = photos[idx] ?? photos[0];
+    const touchStartX = useRef(0);
 
     if (cur) {
+        // CSS objectPosition 근사: 1.6배 이미지 + 절대 좌표 이동
+        const S = 1.6;
+        const cx = cur.cropPosition?.x ?? 50;
+        const cy = cur.cropPosition?.y ?? 50;
+        const imgLeft = -W * (S - 1) * cx / 100;
+        const imgTop = -H * (S - 1) * cy / 100;
         return (
             <View style={{ alignItems: "center", paddingTop: 8, paddingBottom: 8 }}>
-                <TouchableOpacity
-                    activeOpacity={0.95}
-                    onPress={() => photos.length > 1 && setIdx((idx + 1) % photos.length)}
+                <View
+                    onTouchStart={(e) => { touchStartX.current = e.nativeEvent.pageX; }}
+                    onTouchEnd={(e) => {
+                        if (photos.length <= 1) return;
+                        const delta = e.nativeEvent.pageX - touchStartX.current;
+                        if (Math.abs(delta) > 50) {
+                            setIdx(delta < 0
+                                ? (idx + 1) % photos.length
+                                : (idx - 1 + photos.length) % photos.length);
+                        } else {
+                            setIdx((idx + 1) % photos.length);
+                        }
+                    }}
                     style={{
                         width: W, height: H, borderRadius: 16, overflow: "hidden",
                         borderWidth: 2, borderColor: ringColor,
@@ -1292,7 +1312,11 @@ function PetPhotoHero({
                         shadowOpacity: 0.25, shadowRadius: 16, elevation: 8,
                     }}
                 >
-                    <Image source={{ uri: cur.url }} style={{ width: "100%", height: "100%" }} resizeMode="cover" />
+                    <Image
+                        source={{ uri: cur.url }}
+                        style={{ position: "absolute", width: W * S, height: H * S, left: imgLeft, top: imgTop }}
+                        resizeMode="cover"
+                    />
                     <LinearGradient
                         colors={["rgba(0,0,0,0.6)", "transparent"]}
                         start={{ x: 0, y: 1 }}
@@ -1310,7 +1334,7 @@ function PetPhotoHero({
                             </Text>
                         ) : null}
                     </View>
-                </TouchableOpacity>
+                </View>
                 {photos.length > 1 && (
                     <View style={{ flexDirection: "row", justifyContent: "center", gap: 4, marginTop: 8 }}>
                         {photos.map((_, i) => (
@@ -1352,6 +1376,11 @@ function PetPhotoHero({
                 <Text style={{ fontSize: 14, color: isMemorial ? COLORS.memorial[600] : COLORS.memento[700] }}>
                     {type}{breed ? ` · ${breed}` : ""}
                 </Text>
+                {dateLabel ? (
+                    <Text style={{ fontSize: 13, color: isMemorial ? COLORS.memorial[600] : COLORS.memento[700], marginTop: 4 }}>
+                        {dateLabel}
+                    </Text>
+                ) : null}
                 <TouchableOpacity
                     onPress={onRegister}
                     style={{

@@ -64,6 +64,9 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                         weight: pet.weight,
                         personality: pet.personality,
                         profileImage: pet.profile_image,
+                        profileCropPosition: pet.profile_crop_position
+                            ? { x: pet.profile_crop_position.x, y: pet.profile_crop_position.y }
+                            : undefined,
                         status: (pet.status as PetStatus) ?? "active",
                         memorialDate: pet.memorial_date,
                         isPrimary: pet.is_primary,
@@ -85,6 +88,9 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
                             date: p.date ?? p.created_at,
                             thumbnailUrl: p.thumbnail_url,
                             uploadedAt: p.created_at,
+                            cropPosition: p.crop_position
+                                ? { x: p.crop_position.x, y: p.crop_position.y }
+                                : undefined,
                         })),
                     } satisfies Pet;
                 })
