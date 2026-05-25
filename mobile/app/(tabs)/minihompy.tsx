@@ -38,49 +38,30 @@ import GreetingEditModal from "@/components/minihompy/GreetingEditModal";
 import StageEditor from "@/components/minihompy/StageEditor";
 import TouchParticles from "@/components/minihompy/TouchParticles";
 import VisitorsModal from "@/components/minihompy/VisitorsModal";
+import { pickReaction, getTouchLevel } from "@/data/minimiReactions";
+import type { Pet } from "@/types";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const STAGE_HEIGHT = 300;
 
-const GREETINGS_DAILY = [
-    "반가워! 오늘도 왔구나!",
-    "헤헤, 또 만났네!",
-    "오늘 뭐 했어?",
-    "나 보고 싶었지?",
-    "같이 놀자!",
-];
-const PLAYFUL_DAILY = [
-    "간지러워~",
-    "야야야 그만 건드려",
-    "흐흐 좋긴 한데...",
-    "기분 좋다",
-];
-const TIRED_DAILY = [
-    "이제 좀 쉬자...",
-    "헥헥, 너무 많이 놀았어",
-    "잠깐만 쉬어도 될까?",
-    "졸려졸려",
-];
-const GREETINGS_MEMORIAL = [
-    "오늘도 보러 와줘서 고마워.",
-    "여기서 항상 기다리고 있을게.",
-    "잊지 않아줘서 고마워.",
-    "나는 늘 너랑 같이 있어.",
-];
-const PLAYFUL_MEMORIAL = [
-    "이렇게 만져주니까 따뜻해.",
-    "예전 생각이 나네.",
-    "고마워, 정말.",
-];
-const TIRED_MEMORIAL = [
-    "잠깐 같이 앉아 있을래?",
-    "조용히 함께 있는 시간이 좋아.",
-    "이대로 잠시...",
-];
-
-const TOUCH_PLAYFUL_THRESHOLD = 5;
-const TOUCH_TIRED_THRESHOLD = 12;
 const TOUCH_RESET_MS = 30_000;
+
+// 반려동물 품종 → minimiReactions 슬러그 매핑
+function getBreedSlug(pet: Pet | null): string {
+    if (!pet) return "";
+    const b = (pet.breed ?? "").toLowerCase();
+    const t = pet.type;
+    if (t === "강아지") {
+        if (b.includes("말티") || b.includes("malti") || b.includes("비숑") || b.includes("푸들") || b.includes("포메")) return "maltipoo";
+        if (b.includes("요크") || b.includes("york") || b.includes("치와와") || b.includes("닥스")) return "yorkshire";
+        if (b.includes("골든") || b.includes("리트리버") || b.includes("golden") || b.includes("허스키") || b.includes("보더") || b.includes("진도") || b.includes("코카")) return "golden_retriever";
+    } else if (t === "고양이") {
+        if (b.includes("러시안") || b.includes("russian") || b.includes("샴")) return "russian_blue";
+        if (b.includes("랙돌") || b.includes("ragdoll") || b.includes("스코티시") || b.includes("페르시안") || b.includes("메인쿤")) return "ragdoll";
+        if (b.includes("코숏") || b.includes("치즈") || b.includes("먼치킨") || b.includes("아비") || b.includes("터키시")) return "cheese_cat";
+    }
+    return "";
+}
 
 export default function MinihompyScreen() {
     const router = useRouter();
@@ -149,29 +130,14 @@ export default function MinihompyScreen() {
         const newCount = touchCount + 1;
         setTouchCount(newCount);
 
-        // 3단계 진행:
-        //  - 0~4: 인사말 (별 파티클)
-        //  - 5~11: 장난스러운 반응 (하트 파티클)
-        //  - 12+: 피곤/만족 (잔잔한 표시)
-        const greetings = isMemorialMode ? GREETINGS_MEMORIAL : GREETINGS_DAILY;
-        const playful = isMemorialMode ? PLAYFUL_MEMORIAL : PLAYFUL_DAILY;
-        const tired = isMemorialMode ? TIRED_MEMORIAL : TIRED_DAILY;
+        const slug = getBreedSlug(selectedPet);
+        const reaction = pickReaction(slug, isMemorialMode ? "memorial" : "daily", newCount);
+        setMessage(reaction.message);
 
-        let pool: string[];
-        let variant: "star" | "heart" | "rest";
-        if (newCount >= TOUCH_TIRED_THRESHOLD) {
-            pool = tired;
-            variant = "rest";
-        } else if (newCount >= TOUCH_PLAYFUL_THRESHOLD) {
-            pool = playful;
-            variant = "heart";
-        } else {
-            pool = greetings;
-            variant = "star";
-        }
-
-        const msg = pool[Math.floor(Math.random() * pool.length)];
-        setMessage(msg);
+        const level = getTouchLevel(newCount);
+        const variant: "star" | "heart" | "rest" =
+            level === "greeting" ? "star" :
+            level === "playful" ? "heart" : "rest";
         setParticleVariant(variant);
         setParticleKey((k) => k + 1);
 
