@@ -843,6 +843,79 @@ const MEMORIAL_SCOTTISH_FOLD: ModeReactions = {
 };
 
 // ============================================================================
+// 벵갈 — 활발/호기심/야생미. 에너지 넘치고 탐험 좋아함.
+// ============================================================================
+
+const DAILY_BENGAL: ModeReactions = {
+    greeting: [
+        { message: "냐옹! 놀자!", action: "dash" },
+        { message: "뭐가 있어?!", action: "runRight" },
+        { message: "탐험 시작!", action: "jump" },
+        { message: "나 여기 있어!", action: "bounce" },
+        { message: "심심했다구!", action: "wiggle" },
+        { message: "같이 뛰자!", action: "runLeft" },
+        { message: "안녕~!", action: "spin" },
+        { message: "오늘 뭐 해?", action: "sparkle" },
+        { message: "움직이고 싶어!", action: "dash" },
+        { message: "모험 갈 시간!", action: "jump" },
+    ],
+    playful: [
+        { message: "더 더 더!", action: "bounce" },
+        { message: "잡아봐~!", action: "runRight" },
+        { message: "나 빠르지?", action: "dash" },
+        { message: "높이 뛸 수 있어!", action: "jump" },
+        { message: "기분 최고!", action: "star" },
+        { message: "놀이 천재!", action: "spin" },
+        { message: "이거 재밌다!", action: "wiggle" },
+        { message: "한 번 더!", action: "bounce" },
+        { message: "못 잡지~?", action: "runLeft" },
+    ],
+    ticklish: [
+        { message: "으앙 간지러워!", action: "shrink" },
+        { message: "야생의 본능이...!", action: "flip" },
+        { message: "살살! 살살!", action: "spin" },
+        { message: "도망간다~!", action: "dash" },
+        { message: "한계 돌파!", action: "runRight" },
+        { message: "숨는다!", action: "shrink" },
+        { message: "간식 주면 용서!", action: "flip" },
+        { message: "나중에 더 놀자!", action: "runLeft" },
+    ],
+};
+
+const MEMORIAL_BENGAL: ModeReactions = {
+    greeting: [
+        { message: "왔어! 기다렸어!", action: "dash" },
+        { message: "보고 싶었어!", action: "heart" },
+        { message: "나 여기서 뛰어놀고 있어!", action: "jump" },
+        { message: "반가워~!", action: "bounce" },
+        { message: "또 와줬어?", action: "sparkle" },
+        { message: "여기야!", action: "runRight" },
+        { message: "기다렸어!", action: "wiggle" },
+        { message: "오늘도 왔네!", action: "spin" },
+    ],
+    playful: [
+        { message: "나 잘 뛰어놀고 있어!", action: "dash" },
+        { message: "여기 넓어서 좋아!", action: "star" },
+        { message: "너도 잘 지내지?", action: "nod" },
+        { message: "응원할게!", action: "bounce" },
+        { message: "오늘도 잘했어!", action: "heart" },
+        { message: "여기서 지켜보고 있어!", action: "sparkle" },
+        { message: "힘내~!", action: "jump" },
+        { message: "너 최고야!", action: "runLeft" },
+    ],
+    ticklish: [
+        { message: "언젠가 또 만나자!", action: "spin" },
+        { message: "여기서 기다릴게!", action: "nod" },
+        { message: "행복하게 살아!", action: "dash" },
+        { message: "우린 늘 함께야!", action: "wiggle" },
+        { message: "꼭 다시 만나!", action: "heart" },
+        { message: "신나게 기다릴게!", action: "jump" },
+        { message: "기다릴게, 천천히 와!", action: "star" },
+        { message: "우리 다시 만날 거야!", action: "runLeft" },
+    ],
+};
+
+// ============================================================================
 // 범용 폴백
 // ============================================================================
 
@@ -933,6 +1006,7 @@ export const REACTIONS_BY_TYPE: Record<string, ReactionsByMode> = {
     corgi:           { daily: DAILY_CORGI,        memorial: MEMORIAL_CORGI },
     shiba:           { daily: DAILY_SHIBA,        memorial: MEMORIAL_SHIBA },
     scottish_fold:   { daily: DAILY_SCOTTISH_FOLD, memorial: MEMORIAL_SCOTTISH_FOLD },
+    bengal:          { daily: DAILY_BENGAL,        memorial: MEMORIAL_BENGAL },
 };
 
 export const REACTIONS_DEFAULT: ReactionsByMode = {

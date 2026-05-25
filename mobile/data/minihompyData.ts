@@ -27,6 +27,7 @@ export const MINIMI_CATALOG: MinimiCharacter[] = [
     { slug: "corgi",            name: "웰시코기",       category: "dog", imageUrl: abs("/icons/minimi/corgi.png?v=11"),          price: 200, description: "짧은 다리 엉덩이 요정 코기",     imageAspect: 1, footPadding: 0.02 },
     { slug: "shiba",            name: "시바견",         category: "dog", imageUrl: abs("/icons/minimi/shiba.png?v=11"),          price: 200, description: "도도한 표정의 시바견",           imageAspect: 1, footPadding: 0.02 },
     { slug: "scottish_fold",    name: "스코티시폴드",   category: "cat", imageUrl: abs("/icons/minimi/scottish_fold.png?v=11"),  price: 200, description: "접힌 귀가 매력적인 스코티시폴드", imageAspect: 1, footPadding: 0.02 },
+    { slug: "bengal",           name: "벵갈",           category: "cat", imageUrl: abs("/icons/minimi/bengal.png?v=11"),          price: 200, description: "표범 무늬의 야생미 넘치는 벵갈",   imageAspect: 1, footPadding: 0.02 },
 ];
 
 export function findMinimi(slug: string): MinimiCharacter | undefined {

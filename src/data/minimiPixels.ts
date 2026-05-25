@@ -122,4 +122,14 @@ export const CHARACTER_CATALOG = [
         imageAspect: 1,
         footPadding: 0.02,
     },
+    {
+        slug: "bengal",
+        name: "벵갈",
+        category: "cat" as const,
+        imageUrl: "/icons/minimi/bengal.png?v=11",
+        price: 200,
+        description: "표범 무늬의 야생미 넘치는 벵갈",
+        imageAspect: 1,
+        footPadding: 0.02,
+    },
 ] as const;
