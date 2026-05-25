@@ -16,6 +16,7 @@ import {
     View, Text, Image, ImageBackground, TouchableOpacity,
     PanResponder, StyleSheet, Alert, ActivityIndicator,
     LayoutChangeEvent, Modal, FlatList, Animated, Easing,
+    useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -331,6 +332,8 @@ function InventoryPickerModal({
     accentColor: string;
 }) {
     const { isDarkMode } = useDarkMode();
+    const { width: screenWidth } = useWindowDimensions();
+    const cardWidth = (screenWidth - 16 * 2 - 12 * 2) / 3;
     const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.gray[50];
     const headerBg = isDarkMode ? COLORS.gray[900] : "#fff";
     const headerBorder = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
@@ -385,7 +388,7 @@ function InventoryPickerModal({
                                 disabled={maxedOut}
                                 style={[
                                     pickerStyles.card,
-                                    { backgroundColor: cardBg },
+                                    { width: cardWidth, backgroundColor: cardBg },
                                     maxedOut && { opacity: 0.4 },
                                 ]}
                                 activeOpacity={0.85}
@@ -419,10 +422,9 @@ const pickerStyles = StyleSheet.create({
     headerTitle: { fontSize: 17, fontWeight: "700" },
     headerSub: { fontSize: 11, marginTop: 2 },
     card: {
-        flex: 1,
         aspectRatio: 1,
-        borderRadius: 14,
-        padding: 10,
+        borderRadius: 10,
+        padding: 8,
         alignItems: "center",
         justifyContent: "center",
         gap: 4,
