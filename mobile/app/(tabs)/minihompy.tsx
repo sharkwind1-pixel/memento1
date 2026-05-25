@@ -506,7 +506,7 @@ function ActionCard({ icon, label, color, bgColor, onPress }: {
             <View style={[styles.actionIconBg, { backgroundColor: color + "20" }]}>
                 <Ionicons name={icon} size={16} color={color} />
             </View>
-            <Text style={styles.actionLabel} numberOfLines={1}>{label}</Text>
+            <Text style={[styles.actionLabel, { color }]} numberOfLines={1}>{label}</Text>
         </TouchableOpacity>
     );
 }
@@ -657,7 +657,7 @@ const styles = StyleSheet.create({
         width: 28, height: 28, borderRadius: 8,
         alignItems: "center", justifyContent: "center",
     },
-    actionLabel: { fontSize: 13, fontWeight: "700", color: COLORS.gray[900] },
+    actionLabel: { fontSize: 13, fontWeight: "700" },
     greetingHint: {
         flexDirection: "row",
         alignItems: "center",
