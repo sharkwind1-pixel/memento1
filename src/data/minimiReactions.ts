@@ -551,6 +551,79 @@ const MEMORIAL_POMERANIAN: ModeReactions = {
 };
 
 // ============================================================================
+// 비숑프리제 — 하얀 솜뭉치. 밝고 활발. 사람 좋아함. 애교 폭발.
+// ============================================================================
+
+const DAILY_BICHON: ModeReactions = {
+    greeting: [
+        { message: "뽀글뽀글~!", action: "wiggle" },
+        { message: "나 솜사탕이야!", action: "bounce" },
+        { message: "안아줘 안아줘!", action: "heart" },
+        { message: "깡총!", action: "jump" },
+        { message: "뭐해뭐해?", action: "nod" },
+        { message: "같이 놀자~!", action: "dash" },
+        { message: "나 왔어!", action: "runRight" },
+        { message: "헤헤~!", action: "sparkle" },
+        { message: "쓰담 좋아!", action: "heart" },
+        { message: "오늘도 뽀글!", action: "spin" },
+    ],
+    playful: [
+        { message: "더 해줘~!", action: "heart" },
+        { message: "뽀글뽀글 좋아!", action: "wiggle" },
+        { message: "나 예쁘지?", action: "sparkle" },
+        { message: "세상에서 제일 좋아!", action: "star" },
+        { message: "신나신나~!", action: "dash" },
+        { message: "같이 뛰자!", action: "runLeft" },
+        { message: "행복해~!", action: "bounce" },
+        { message: "쓰담 최고!", action: "heart" },
+        { message: "뭐든 좋아!", action: "nod" },
+    ],
+    ticklish: [
+        { message: "깽!", action: "shrink" },
+        { message: "간지러워~!", action: "spin" },
+        { message: "멈춰멈춰!", action: "wiggle" },
+        { message: "뽀글이 한계야!", action: "flip" },
+        { message: "살살해줘~!", action: "bounce" },
+        { message: "그만하면 간식!", action: "heart" },
+        { message: "너무 많아~!", action: "runLeft" },
+        { message: "잠깐 쉴래!", action: "shrink" },
+    ],
+};
+
+const MEMORIAL_BICHON: ModeReactions = {
+    greeting: [
+        { message: "또 왔어? 기다렸어!", action: "jump" },
+        { message: "나 여기 있어~!", action: "heart" },
+        { message: "보고 싶었어!", action: "wiggle" },
+        { message: "반가워~!", action: "bounce" },
+        { message: "왔구나!", action: "runRight" },
+        { message: "여기야~!", action: "sparkle" },
+        { message: "뽀글뽀글 기다렸어!", action: "nod" },
+        { message: "또 왔구나!", action: "dash" },
+    ],
+    playful: [
+        { message: "나 여기서 잘 지내!", action: "spin" },
+        { message: "오늘도 잘했어?", action: "nod" },
+        { message: "너 최고야!", action: "star" },
+        { message: "응원할게!", action: "jump" },
+        { message: "힘내~ 내가 지켜볼게!", action: "wiggle" },
+        { message: "오늘도 열심히했지?", action: "bounce" },
+        { message: "여기 따뜻해!", action: "heart" },
+        { message: "내가 지켜보고 있어!", action: "sparkle" },
+    ],
+    ticklish: [
+        { message: "언젠가 또 만나자!", action: "spin" },
+        { message: "여기서 기다릴게!", action: "nod" },
+        { message: "행복하게 살아!", action: "dash" },
+        { message: "우린 늘 함께야!", action: "wiggle" },
+        { message: "꼭 다시 만나!", action: "heart" },
+        { message: "뽀글이가 응원할게!", action: "runLeft" },
+        { message: "기다릴게!", action: "star" },
+        { message: "우리 다시 만나자!", action: "jump" },
+    ],
+};
+
+// ============================================================================
 // 범용 폴백
 // ============================================================================
 
@@ -637,6 +710,7 @@ export const REACTIONS_BY_TYPE: Record<string, ReactionsByMode> = {
     ragdoll:         { daily: DAILY_RAGDOLL,       memorial: MEMORIAL_RAGDOLL },
     cheese_cat:      { daily: DAILY_CHEESE_CAT,    memorial: MEMORIAL_CHEESE_CAT },
     pomeranian:      { daily: DAILY_POMERANIAN,   memorial: MEMORIAL_POMERANIAN },
+    bichon:          { daily: DAILY_BICHON,       memorial: MEMORIAL_BICHON },
 };
 
 export const REACTIONS_DEFAULT: ReactionsByMode = {

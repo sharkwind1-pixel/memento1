@@ -82,4 +82,14 @@ export const CHARACTER_CATALOG = [
         imageAspect: 1,
         footPadding: 0.02,
     },
+    {
+        slug: "bichon",
+        name: "비숑프리제",
+        category: "dog" as const,
+        imageUrl: "/icons/minimi/bichon.png?v=11",
+        price: 200,
+        description: "하얀 솜뭉치 비숑프리제",
+        imageAspect: 1,
+        footPadding: 0.02,
+    },
 ] as const;
