@@ -48,6 +48,7 @@ import AppDrawer from "@/components/common/AppDrawer";
 import PageBackground, { usePageBgColor } from "@/components/common/PageBackground";
 import PetSwitcher from "@/components/common/PetSwitcher";
 import RemindersModal from "@/components/chat/RemindersModal";
+import ExportChatModal from "@/components/chat/ExportChatModal";
 import PawLoading from "@/components/ui/PawLoading";
 import MemorialAmbientStars from "@/components/chat/MemorialAmbientStars";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -122,6 +123,7 @@ export default function AiChatScreen() {
     const [photoIdx, setPhotoIdx] = useState(0);
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [remindersOpen, setRemindersOpen] = useState(false);
+    const [exportOpen, setExportOpen] = useState(false);
     const [dailyUsage, setDailyUsage] = useState(0);
     const [serverRemaining, setServerRemaining] = useState<number | null>(null);
     const [reminders, setReminders] = useState<ReminderItem[]>([]);
@@ -916,15 +918,7 @@ export default function AiChatScreen() {
                     {/* 대화 내보내기 (메시지 1개 초과일 때만 노출, 웹 패턴) */}
                     {messages.length > 1 && (
                         <TouchableOpacity
-                            onPress={async () => {
-                                const text = messages
-                                    .filter((m) => m.role !== "system" || (m.type !== "crisis-alert" && m.type !== "reminder-suggestion"))
-                                    .map((m) => `[${m.role === "user" ? "나" : selectedPet.name}] ${m.content}`)
-                                    .join("\n\n");
-                                try {
-                                    await Share.share({ message: `메멘토애니 — ${selectedPet.name}와 나눈 대화\n\n${text}` });
-                                } catch { /* noop */ }
-                            }}
+                            onPress={() => setExportOpen(true)}
                             style={[styles.headerIconBtn, { backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[100] }]}
                             activeOpacity={0.85}
                         >
@@ -1219,6 +1213,13 @@ export default function AiChatScreen() {
                 petId={selectedPet.id}
                 petName={selectedPet.name}
                 accentColor={accentColor}
+                isMemorialMode={isMemorialMode}
+            />
+            <ExportChatModal
+                isOpen={exportOpen}
+                onClose={() => setExportOpen(false)}
+                messages={messages}
+                pet={selectedPet}
                 isMemorialMode={isMemorialMode}
             />
         </SafeAreaView>
