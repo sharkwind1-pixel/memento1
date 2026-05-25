@@ -67,16 +67,19 @@ export async function PUT(request: NextRequest) {
             .select("minimi_id")
             .eq("user_id", user.id);
 
-        const ownedSlugs = new Set((owned || []).map(o => o.minimi_id));
+        // 보유 수량 집계 (중복 구매 허용 → slug별 보유 개수만큼만 배치 가능)
+        const ownedCounts: Record<string, number> = {};
+        for (const o of (owned || [])) {
+            ownedCounts[o.minimi_id] = (ownedCounts[o.minimi_id] ?? 0) + 1;
+        }
 
-        // 배치하려는 캐릭터가 모두 보유 중인지 확인 (중복 slug 방지)
         const sanitized: PlacedMinimiItem[] = [];
-        const seenSlugs = new Set<string>();
+        const placedCounts: Record<string, number> = {};
         for (const item of placedMinimi) {
-            if (!ownedSlugs.has(item.slug) || seenSlugs.has(item.slug)) {
-                continue;
+            placedCounts[item.slug] = (placedCounts[item.slug] ?? 0) + 1;
+            if ((ownedCounts[item.slug] ?? 0) < placedCounts[item.slug]) {
+                continue; // 보유 수량 초과 배치 차단
             }
-            seenSlugs.add(item.slug);
             sanitized.push({
                 slug: item.slug,
                 x: Math.max(5, Math.min(95, item.x)),

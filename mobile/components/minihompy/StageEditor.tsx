@@ -31,7 +31,7 @@ import type { PlacedMinimi, BackgroundTheme, UserMinimiRow } from "@/types";
 const MINIMI_SIZE = 40;
 // 편집 모드 hit area 확장 (작은 미니미 손가락으로 잡기 쉽게)
 const HIT_PADDING = 20;
-const MAX_PLACED = 6;
+const MAX_PLACED = 10;
 
 interface Props {
     stageHeight: number;
@@ -161,10 +161,6 @@ export default function StageEditor({
     }
 
     function pickFromInventory(slug: string) {
-        if (working.some((p) => p.slug === slug)) {
-            Alert.alert("이미 배치됨", "이 미니미는 이미 스테이지에 있어요.");
-            return;
-        }
         const newItem: PlacedMinimi = {
             slug,
             x: 50,
@@ -311,7 +307,9 @@ export default function StageEditor({
                 visible={pickerOpen}
                 onClose={() => setPickerOpen(false)}
                 ownedSlugs={ownedSlugs}
-                placedSlugs={new Set(working.map((p) => p.slug))}
+                placedCounts={working.reduce<Record<string, number>>((acc, p) => {
+                    acc[p.slug] = (acc[p.slug] ?? 0) + 1; return acc;
+                }, {})}
                 onPick={pickFromInventory}
                 accentColor={accentColor}
             />
@@ -324,12 +322,12 @@ export default function StageEditor({
 // ============================================================================
 
 function InventoryPickerModal({
-    visible, onClose, ownedSlugs, placedSlugs, onPick, accentColor,
+    visible, onClose, ownedSlugs, placedCounts, onPick, accentColor,
 }: {
     visible: boolean;
     onClose: () => void;
-    ownedSlugs: string[];
-    placedSlugs: Set<string>;
+    ownedSlugs: string[];           // 중복 포함 raw 목록
+    placedCounts: Record<string, number>;
     onPick: (slug: string) => void;
     accentColor: string;
 }) {
@@ -342,6 +340,14 @@ function InventoryPickerModal({
     const cardBg = isDarkMode ? COLORS.gray[900] : "#fff";
     const cardNameColor = isDarkMode ? COLORS.white : COLORS.gray[800];
     const emptyTextColor = isDarkMode ? COLORS.gray[300] : COLORS.gray[700];
+
+    // 중복 제거 + 수량 집계
+    const ownedCounts = useMemo(() => {
+        const counts: Record<string, number> = {};
+        for (const s of ownedSlugs) counts[s] = (counts[s] ?? 0) + 1;
+        return counts;
+    }, [ownedSlugs]);
+    const uniqueSlugs = useMemo(() => Object.keys(ownedCounts), [ownedCounts]);
 
     return (
         <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
@@ -356,7 +362,7 @@ function InventoryPickerModal({
                     </View>
                 </View>
                 <FlatList
-                    data={ownedSlugs}
+                    data={uniqueSlugs}
                     keyExtractor={(slug) => slug}
                     numColumns={3}
                     contentContainerStyle={{ padding: 16, gap: 12 }}
@@ -371,23 +377,27 @@ function InventoryPickerModal({
                     renderItem={({ item: slug }) => {
                         const m = findMinimi(slug);
                         if (!m) return null;
-                        const isPlaced = placedSlugs.has(slug);
+                        const owned = ownedCounts[slug] ?? 0;
+                        const placed = placedCounts[slug] ?? 0;
+                        const maxedOut = placed >= owned;
                         return (
                             <TouchableOpacity
                                 onPress={() => onPick(slug)}
-                                disabled={isPlaced}
+                                disabled={maxedOut}
                                 style={[
                                     pickerStyles.card,
                                     { backgroundColor: cardBg },
-                                    isPlaced && { opacity: 0.4 },
+                                    maxedOut && { opacity: 0.4 },
                                 ]}
                                 activeOpacity={0.85}
                             >
                                 <Image source={{ uri: m.imageUrl }} style={pickerStyles.cardImg} resizeMode="contain" />
                                 <Text style={[pickerStyles.cardName, { color: cardNameColor }]} numberOfLines={1}>{m.name}</Text>
-                                {isPlaced && (
+                                {placed > 0 && (
                                     <View style={[pickerStyles.placedBadge, { backgroundColor: accentColor }]}>
-                                        <Text style={pickerStyles.placedBadgeText}>배치 중</Text>
+                                        <Text style={pickerStyles.placedBadgeText}>
+                                            {placed}/{owned}
+                                        </Text>
                                     </View>
                                 )}
                             </TouchableOpacity>

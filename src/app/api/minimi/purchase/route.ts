@@ -60,18 +60,6 @@ export async function POST(request: NextRequest) {
 
         // 4. 직접 처리 (RPC 불안정으로 폴백 방식 사용)
 
-        // 4a. 중복 구매 체크
-        const { data: existing } = await supabase
-            .from("user_minimi")
-            .select("id")
-            .eq("user_id", user.id)
-            .eq("minimi_id", itemSlug)
-            .maybeSingle();
-
-        if (existing) {
-            return NextResponse.json({ error: "이미 보유한 캐릭터입니다" }, { status: 400 });
-        }
-
         // 4b. 포인트 확인
         const { data: profile } = await supabase
             .from("profiles")
@@ -105,7 +93,6 @@ export async function POST(request: NextRequest) {
         const rpcData = rpcResult as { success: boolean; error?: string; newPoints?: number } | null;
         if (!rpcData?.success) {
             const errorMap: Record<string, string> = {
-                already_owned: "이미 보유한 아이템입니다",
                 user_not_found: "사용자 정보를 찾을 수 없습니다",
                 insufficient_points: "포인트가 부족합니다",
             };

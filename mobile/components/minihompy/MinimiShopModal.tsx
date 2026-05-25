@@ -44,7 +44,8 @@ export default function MinimiShopModal({
     const { isDarkMode } = useDarkMode();
     const [catalog, setCatalog] = useState<MinimiCatalogItem[]>([]);
     const [ownedSlugs, setOwnedSlugs] = useState<Set<string>>(new Set());
-    const [slugToUserMinimiId, setSlugToUserMinimiId] = useState<Record<string, string>>({});
+    const [ownedCounts, setOwnedCounts] = useState<Record<string, number>>({});
+    const [slugToUserMinimiIds, setSlugToUserMinimiIds] = useState<Record<string, string[]>>({});
     const [equippedSlug, setEquippedSlug] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [busy, setBusy] = useState<string | null>(null);
@@ -70,11 +71,15 @@ export default function MinimiShopModal({
                 isAvailable: true,
                 sortOrder: i,
             })));
-            setOwnedSlugs(new Set(inventory.owned.map((o) => o.minimi_id)));
-            // 판매(sell)는 user_minimi.id (UUID)가 필요 → slug → UUID 맵 구성
-            const slugToId: Record<string, string> = {};
-            inventory.owned.forEach((o: UserMinimiRow) => { slugToId[o.minimi_id] = o.id; });
-            setSlugToUserMinimiId(slugToId);
+            const counts: Record<string, number> = {};
+            const slugIds: Record<string, string[]> = {};
+            inventory.owned.forEach((o: UserMinimiRow) => {
+                counts[o.minimi_id] = (counts[o.minimi_id] ?? 0) + 1;
+                slugIds[o.minimi_id] = [...(slugIds[o.minimi_id] ?? []), o.id];
+            });
+            setOwnedSlugs(new Set(Object.keys(counts)));
+            setOwnedCounts(counts);
+            setSlugToUserMinimiIds(slugIds);
             setEquippedSlug(inventory.equippedSlug);
         } finally {
             setLoading(false);
@@ -99,14 +104,16 @@ export default function MinimiShopModal({
     }
 
     async function doSell(item: MinimiCatalogItem) {
-        const userMinimiId = slugToUserMinimiId[item.slug];
+        const ids = slugToUserMinimiIds[item.slug] ?? [];
+        const userMinimiId = ids[0]; // 가장 오래된 복사본 판매
         if (!userMinimiId) {
             Alert.alert("판매 불가", "보유 정보를 찾을 수 없어요. 새로고침 후 다시 시도해주세요.");
             return;
         }
+        const count = ownedCounts[item.slug] ?? 0;
         Alert.alert(
             `${item.name} 판매`,
-            `${item.resellPrice}P를 환불받고 판매할까요? (장착 중이면 자동 해제)`,
+            `${item.resellPrice}P를 환불받고 1마리 판매할까요?${count > 1 ? ` (보유 ${count}마리 중 1마리)` : ""}`,
             [
                 { text: "취소", style: "cancel" },
                 {
@@ -116,18 +123,34 @@ export default function MinimiShopModal({
                         setBusy(item.slug);
                         try {
                             const result = await sellMinimi(accessToken, userMinimiId);
-                            // 보유/장착/맵 갱신
-                            setOwnedSlugs((prev) => {
-                                const next = new Set(prev);
-                                next.delete(item.slug);
-                                return next;
-                            });
-                            setSlugToUserMinimiId((prev) => {
+                            // 수량 1 감소, 0이 되면 보유 Set에서도 제거
+                            setOwnedCounts((prev) => {
                                 const next = { ...prev };
-                                delete next[item.slug];
+                                if ((next[item.slug] ?? 0) > 1) {
+                                    next[item.slug]--;
+                                } else {
+                                    delete next[item.slug];
+                                }
                                 return next;
                             });
-                            if (equippedSlug === item.slug) setEquippedSlug(null);
+                            setSlugToUserMinimiIds((prev) => {
+                                const next = { ...prev };
+                                const remaining = (next[item.slug] ?? []).slice(1);
+                                if (remaining.length > 0) next[item.slug] = remaining;
+                                else delete next[item.slug];
+                                return next;
+                            });
+                            setOwnedSlugs((prev) => {
+                                if ((ownedCounts[item.slug] ?? 0) <= 1) {
+                                    const next = new Set(prev);
+                                    next.delete(item.slug);
+                                    return next;
+                                }
+                                return prev;
+                            });
+                            if ((ownedCounts[item.slug] ?? 0) <= 1 && equippedSlug === item.slug) {
+                                setEquippedSlug(null);
+                            }
                             onChanged();
                             Alert.alert("판매 완료", `${result.refundedPoints}P가 환불됐어요.`);
                         } catch (e) {
@@ -141,37 +164,11 @@ export default function MinimiShopModal({
         );
     }
 
-    function handlePress(item: MinimiCatalogItem) {
-        if (busy) return;
-
-        const owned = ownedSlugs.has(item.slug);
-        const equipped = equippedSlug === item.slug;
-
-        if (owned) {
-            // 보유한 미니미: 장착/해제 + 판매 옵션
-            Alert.alert(
-                item.name,
-                equipped ? "장착 중인 미니미예요." : "보유 중인 미니미예요.",
-                [
-                    { text: "취소", style: "cancel" },
-                    equipped
-                        ? { text: "장착 해제", onPress: () => doEquipToggle(item, false) }
-                        : { text: "장착하기", onPress: () => doEquipToggle(item, true) },
-                    { text: `판매 (${item.resellPrice}P)`, style: "destructive", onPress: () => doSell(item) },
-                ],
-            );
-            return;
-        }
-
-        // 구매 확인
+    async function doBuy(item: MinimiCatalogItem) {
         if (points < item.price) {
-            Alert.alert(
-                "포인트 부족",
-                `${item.name}을(를) 구매하려면 ${item.price}P가 필요해요. 현재 ${points}P 보유 중.`,
-            );
+            Alert.alert("포인트 부족", `${item.name}을(를) 구매하려면 ${item.price}P가 필요해요. 현재 ${points}P 보유 중.`);
             return;
         }
-
         Alert.alert(
             `${item.name} 구매`,
             `${item.price}P를 사용해서 구매할까요?`,
@@ -184,28 +181,28 @@ export default function MinimiShopModal({
                         setBusy(item.slug);
                         try {
                             await purchaseMinimi(accessToken, item.slug);
+                            // 카운트 증가 (새 UUID는 reload 시 갱신)
                             setOwnedSlugs((prev) => new Set([...prev, item.slug]));
+                            setOwnedCounts((prev) => ({ ...prev, [item.slug]: (prev[item.slug] ?? 0) + 1 }));
                             onChanged();
-                            // 구매 직후 자동 장착 옵션
-                            Alert.alert(
-                                "구매 완료",
-                                `${item.name}을(를) 바로 장착할까요?`,
-                                [
-                                    { text: "나중에", style: "cancel" },
-                                    {
-                                        text: "장착",
-                                        onPress: async () => {
-                                            try {
-                                                await equipMinimi(accessToken, item.slug);
-                                                setEquippedSlug(item.slug);
-                                                onChanged();
-                                            } catch {
-                                                // 무시
-                                            }
+                            const isFirst = (ownedCounts[item.slug] ?? 0) === 0;
+                            if (isFirst) {
+                                Alert.alert(
+                                    "구매 완료",
+                                    `${item.name}을(를) 바로 장착할까요?`,
+                                    [
+                                        { text: "나중에", style: "cancel" },
+                                        {
+                                            text: "장착",
+                                            onPress: async () => {
+                                                try { await equipMinimi(accessToken, item.slug); setEquippedSlug(item.slug); onChanged(); } catch {}
+                                            },
                                         },
-                                    },
-                                ],
-                            );
+                                    ],
+                                );
+                            } else {
+                                Alert.alert("구매 완료", `${item.name} ${(ownedCounts[item.slug] ?? 0) + 1}마리째를 구매했어요!`);
+                            }
                         } catch (e) {
                             Alert.alert("구매 실패", e instanceof Error ? e.message : "");
                         } finally {
@@ -215,6 +212,32 @@ export default function MinimiShopModal({
                 },
             ],
         );
+    }
+
+    function handlePress(item: MinimiCatalogItem) {
+        if (busy) return;
+
+        const count = ownedCounts[item.slug] ?? 0;
+        const owned = count > 0;
+        const equipped = equippedSlug === item.slug;
+
+        if (owned) {
+            Alert.alert(
+                item.name,
+                count > 1 ? `${count}마리 보유 중이에요.` : (equipped ? "장착 중이에요." : "보유 중이에요."),
+                [
+                    { text: "취소", style: "cancel" },
+                    equipped
+                        ? { text: "장착 해제", onPress: () => doEquipToggle(item, false) }
+                        : { text: "장착하기", onPress: () => doEquipToggle(item, true) },
+                    { text: `한 마리 더 (${item.price}P)`, onPress: () => doBuy(item) },
+                    { text: `판매 (${item.resellPrice}P)`, style: "destructive", onPress: () => doSell(item) },
+                ],
+            );
+            return;
+        }
+
+        doBuy(item);
     }
 
     const filtered = filter === "all"
@@ -296,7 +319,8 @@ export default function MinimiShopModal({
                         columnWrapperStyle={{ gap: 12, paddingHorizontal: 16 }}
                         contentContainerStyle={{ paddingTop: 12, paddingBottom: 24 + insets.bottom, gap: 12 }}
                         renderItem={({ item }) => {
-                            const owned = ownedSlugs.has(item.slug);
+                            const count = ownedCounts[item.slug] ?? 0;
+                            const owned = count > 0;
                             const equipped = equippedSlug === item.slug;
                             const itemBusy = busy === item.slug;
                             return (
@@ -330,7 +354,7 @@ export default function MinimiShopModal({
                                         <View style={styles.cardFooter}>
                                             {owned ? (
                                                 <Text style={[styles.cardPrice, { color: accentColor }]}>
-                                                    {equipped ? "장착 중 · 탭" : "보유 · 탭"}
+                                                    {equipped ? `장착 중 · ${count}마리` : `보유 ${count}마리`}
                                                 </Text>
                                             ) : (
                                                 <View style={styles.priceRow}>

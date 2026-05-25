@@ -390,7 +390,7 @@ export const MINIHOMPY = {
     GUESTBOOK_MAX_LENGTH: 200,
     GUESTBOOK_PAGE_SIZE: 10,
     DEFAULT_BACKGROUND: "default_sky",
-    MAX_PLACED_MINIMI: 5,
+    MAX_PLACED_MINIMI: 10,
 } as const;
 
 // ===== AI 영상 생성 =====

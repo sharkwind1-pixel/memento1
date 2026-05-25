@@ -38,19 +38,58 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { type, itemSlug } = body;
+        // 모바일: { userMinimiId } / 웹 레거시: { type, itemSlug }
+        const { userMinimiId, type, itemSlug } = body;
 
-        if (!type || !itemSlug) {
+        if (!userMinimiId && (!type || !itemSlug)) {
             return NextResponse.json({ error: "잘못된 요청입니다" }, { status: 400 });
+        }
+
+        const supabase = createAdminSupabase();
+
+        // 모바일 경로: UUID로 행 확인 후 slug 추출 → 기존 RPC 재사용
+        if (userMinimiId) {
+            const { data: row } = await supabase
+                .from("user_minimi")
+                .select("id, minimi_id, purchase_price")
+                .eq("id", userMinimiId)
+                .eq("user_id", user.id)
+                .maybeSingle();
+
+            if (!row) {
+                return NextResponse.json({ error: "보유하지 않은 캐릭터입니다" }, { status: 400 });
+            }
+
+            const character = CHARACTER_CATALOG.find(c => c.slug === row.minimi_id);
+            const itemName = character?.name ?? row.minimi_id;
+            const resellPrice = Math.ceil((character?.price ?? row.purchase_price) * MINIMI.RESELL_RATIO);
+
+            // sell_minimi_item RPC: 가장 오래된 복사본 1개 삭제 + 포인트 환급 (원자적)
+            const { data: rpcResult } = await supabase.rpc("sell_minimi_item", {
+                p_user_id: user.id,
+                p_minimi_id: row.minimi_id,
+                p_item_name: itemName,
+                p_resell_price: resellPrice,
+            });
+
+            if (!rpcResult?.success) {
+                return NextResponse.json({ error: "판매 처리에 실패했습니다" }, { status: 500 });
+            }
+
+            await removeSoldFromPlacedMinimi(supabase, user.id, row.minimi_id);
+
+            return NextResponse.json({
+                success: true,
+                refundedPoints: resellPrice,
+                remainingPoints: rpcResult.remaining_points,
+                message: `${itemName}을(를) ${resellPrice}P에 되팔았습니다`,
+            });
         }
 
         if (type !== "character") {
             return NextResponse.json({ error: "잘못된 아이템 유형입니다" }, { status: 400 });
         }
 
-        const supabase = createAdminSupabase();
-
-        // 캐릭터 검증
         const character = CHARACTER_CATALOG.find(c => c.slug === itemSlug);
         if (!character) {
             return NextResponse.json({ error: "존재하지 않는 캐릭터입니다" }, { status: 400 });
@@ -58,7 +97,7 @@ export async function POST(request: NextRequest) {
         const itemName = character.name;
         const resellPrice = Math.ceil(character.price * MINIMI.RESELL_RATIO);
 
-        // RPC 시도
+        // RPC 시도 (복사본 1개만 삭제하도록 마이그레이션에서 수정됨)
         const { data: rpcData, error: rpcError } = await supabase.rpc("sell_minimi_item", {
             p_user_id: user.id,
             p_minimi_id: itemSlug,
@@ -203,9 +242,12 @@ async function removeSoldFromPlacedMinimi(supabase: any, userId: string, slug: s
 
         if (!settings?.placed_minimi || !Array.isArray(settings.placed_minimi)) return;
 
-        const filtered = settings.placed_minimi.filter(
-            (item: { slug: string }) => item.slug !== slug
-        );
+        // 복사본 1개만 제거 (판매된 1개에 대응)
+        let removed = false;
+        const filtered = settings.placed_minimi.filter((item: { slug: string }) => {
+            if (!removed && item.slug === slug) { removed = true; return false; }
+            return true;
+        });
 
         if (filtered.length !== settings.placed_minimi.length) {
             await supabase
