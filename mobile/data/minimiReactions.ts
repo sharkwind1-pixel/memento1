@@ -485,6 +485,79 @@ const MEMORIAL_CHEESE_CAT: ModeReactions = {
 };
 
 // ============================================================================
+// 포메라니안 — 관종. 에너지 폭발. 자기가 대형견인 줄 앎. 짖기 좋아함.
+// ============================================================================
+
+const DAILY_POMERANIAN: ModeReactions = {
+    greeting: [
+        { message: "깽깽!", action: "jump" },
+        { message: "나 왔다!!", action: "runRight" },
+        { message: "나 봐봐봐!", action: "dash" },
+        { message: "뽀송뽀송~!", action: "wiggle" },
+        { message: "나 작아도 짱이야!", action: "star" },
+        { message: "솜사탕 왔어!", action: "bounce" },
+        { message: "안아줘! 지금!!", action: "heart" },
+        { message: "내가 제일 귀엽지?", action: "sparkle" },
+        { message: "깽깽깽~!", action: "spin" },
+        { message: "빨리 놀자!", action: "runLeft" },
+    ],
+    playful: [
+        { message: "더!! 더 만져줘!!", action: "heart" },
+        { message: "나한테만 집중해!", action: "nod" },
+        { message: "헤헤 좋아!!", action: "bounce" },
+        { message: "나 진짜 대형견이야!", action: "star" },
+        { message: "신난다 신나!!", action: "dash" },
+        { message: "우리 같이 뛰자!!", action: "runRight" },
+        { message: "솜뭉치 파워!", action: "sparkle" },
+        { message: "관심이 부족해!", action: "wiggle" },
+        { message: "짱짱 좋아!", action: "jump" },
+    ],
+    ticklish: [
+        { message: "깽!!", action: "shrink" },
+        { message: "작아도 무섭다고!", action: "flip" },
+        { message: "그만!! 진짜야!!", action: "spin" },
+        { message: "멈춰!! 깽깽!!", action: "wiggle" },
+        { message: "한계! 한계야!!", action: "runLeft" },
+        { message: "터질 것 같아!!", action: "dash" },
+        { message: "간식 안 주면 물어!", action: "flip" },
+        { message: "아 진짜 그만!!", action: "shrink" },
+    ],
+};
+
+const MEMORIAL_POMERANIAN: ModeReactions = {
+    greeting: [
+        { message: "또 왔어?! 기다렸어!!", action: "dash" },
+        { message: "나 여기 있어!!", action: "jump" },
+        { message: "보고 싶었어!", action: "wiggle" },
+        { message: "깽~ 반가워!", action: "bounce" },
+        { message: "왔다!! 알고 있었어!", action: "runRight" },
+        { message: "여기야 여기!!", action: "sparkle" },
+        { message: "나 기다렸다고!", action: "nod" },
+        { message: "또 왔구나!", action: "heart" },
+    ],
+    playful: [
+        { message: "나 여기서 잘 지내!", action: "spin" },
+        { message: "오늘도 잘했어?", action: "nod" },
+        { message: "너 최고야!", action: "star" },
+        { message: "나 응원하고 있어!!", action: "jump" },
+        { message: "힘내! 내가 지켜볼게!", action: "dash" },
+        { message: "오늘도 열심히했지?", action: "wiggle" },
+        { message: "여기 따뜻해!", action: "heart" },
+        { message: "내가 지켜보고 있어!", action: "sparkle" },
+    ],
+    ticklish: [
+        { message: "언젠가 또 만나자!!", action: "spin" },
+        { message: "여기서 기다릴게!", action: "nod" },
+        { message: "행복하게 살아!!", action: "dash" },
+        { message: "우린 늘 함께야!", action: "wiggle" },
+        { message: "꼭 다시 만나!!", action: "heart" },
+        { message: "행복한 게 최고 선물이야!", action: "runLeft" },
+        { message: "기다릴게!", action: "star" },
+        { message: "우리 다시 뛰어놀자!!", action: "jump" },
+    ],
+};
+
+// ============================================================================
 // 범용 폴백
 // ============================================================================
 
@@ -570,6 +643,7 @@ export const REACTIONS_BY_TYPE: Record<string, ReactionsByMode> = {
     russian_blue:    { daily: DAILY_RUSSIAN_BLUE,  memorial: MEMORIAL_RUSSIAN_BLUE },
     ragdoll:         { daily: DAILY_RAGDOLL,       memorial: MEMORIAL_RAGDOLL },
     cheese_cat:      { daily: DAILY_CHEESE_CAT,    memorial: MEMORIAL_CHEESE_CAT },
+    pomeranian:      { daily: DAILY_POMERANIAN,   memorial: MEMORIAL_POMERANIAN },
 };
 
 export const REACTIONS_DEFAULT: ReactionsByMode = {

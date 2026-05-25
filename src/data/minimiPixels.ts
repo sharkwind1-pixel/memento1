@@ -72,4 +72,14 @@ export const CHARACTER_CATALOG = [
         imageAspect: 1,
         footPadding: 0.02,
     },
+    {
+        slug: "pomeranian",
+        name: "포메라니안",
+        category: "dog" as const,
+        imageUrl: "/icons/minimi/pomeranian.png?v=11",
+        price: 200,
+        description: "뽀송뽀송 솜사탕 포메라니안",
+        imageAspect: 1,
+        footPadding: 0.02,
+    },
 ] as const;
