@@ -4,6 +4,7 @@
 
 ---
 
+## 2026-05-26 a9e621f 내보내기 4종 이미지 템플릿 (react-native-view-shot, L2, EAS 실기 필요)
 ## 2026-05-26 4be8fa9 PetPhotoHero cropPosition + 양방향 스와이프 + fallback 날짜표시 (L2, EAS 실기 필요)
 
 ---
