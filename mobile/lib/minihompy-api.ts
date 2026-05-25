@@ -129,7 +129,7 @@ export async function purchaseMinimi(accessToken: string, minimiId: string): Pro
     await callApi<unknown>("/api/minimi/purchase", {
         accessToken,
         method: "POST",
-        body: { minimiId },
+        body: { type: "character", itemSlug: minimiId },
     });
 }
 
