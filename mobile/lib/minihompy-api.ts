@@ -103,7 +103,10 @@ interface CatalogResponse {
 export async function getMinimiCatalog(accessToken: string, category?: string): Promise<MinimiCatalogItem[]> {
     const q = category && category !== "all" ? `?category=${encodeURIComponent(category)}` : "";
     const data = await callApi<CatalogResponse>(`/api/minimi/catalog${q}`, { accessToken });
-    return data.characters || [];
+    return (data.characters || []).map((c) => ({
+        ...c,
+        imageUrl: /^https?:\/\//i.test(c.imageUrl) ? c.imageUrl : `${API_BASE_URL}${c.imageUrl}`,
+    }));
 }
 
 interface InventoryResponse {
