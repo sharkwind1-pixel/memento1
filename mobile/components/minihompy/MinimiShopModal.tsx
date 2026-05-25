@@ -12,6 +12,7 @@ import { useEffect, useState, useCallback } from "react";
 import {
     View, Text, Modal, TouchableOpacity, FlatList,
     Image, StyleSheet, ActivityIndicator, Alert,
+    useWindowDimensions,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -41,7 +42,9 @@ export default function MinimiShopModal({
     visible, onClose, accessToken, points, onChanged, accentColor, initialFilter = "all",
 }: Props) {
     const insets = useSafeAreaInsets();
+    const { width: screenWidth } = useWindowDimensions();
     const { isDarkMode } = useDarkMode();
+    const cardWidth = (screenWidth - 16 * 2 - 12) / 2;
     const [catalog, setCatalog] = useState<MinimiCatalogItem[]>([]);
     const [ownedSlugs, setOwnedSlugs] = useState<Set<string>>(new Set());
     const [ownedCounts, setOwnedCounts] = useState<Record<string, number>>({});
@@ -329,7 +332,7 @@ export default function MinimiShopModal({
                                     disabled={itemBusy}
                                     style={[
                                         styles.card,
-                                        { backgroundColor: cardBg, borderColor: cardBorder },
+                                        { width: cardWidth, backgroundColor: cardBg, borderColor: cardBorder },
                                         equipped && { borderColor: accentColor, borderWidth: 2 },
                                     ]}
                                     activeOpacity={0.85}
@@ -407,7 +410,6 @@ const styles = StyleSheet.create({
     },
     loadingBox: { flex: 1, alignItems: "center", justifyContent: "center" },
     card: {
-        flex: 1,
         borderRadius: 14,
         overflow: "hidden",
         borderWidth: 1,
