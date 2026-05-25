@@ -112,4 +112,14 @@ export const CHARACTER_CATALOG = [
         imageAspect: 1,
         footPadding: 0.02,
     },
+    {
+        slug: "scottish_fold",
+        name: "스코티시폴드",
+        category: "cat" as const,
+        imageUrl: "/icons/minimi/scottish_fold.png?v=11",
+        price: 200,
+        description: "접힌 귀가 매력적인 스코티시폴드",
+        imageAspect: 1,
+        footPadding: 0.02,
+    },
 ] as const;

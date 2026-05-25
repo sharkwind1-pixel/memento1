@@ -777,6 +777,79 @@ const MEMORIAL_SHIBA: ModeReactions = {
 };
 
 // ============================================================================
+// 스코티시폴드 — 순둥/온순/느긋
+// ============================================================================
+
+const DAILY_SCOTTISH_FOLD: ModeReactions = {
+    greeting: [
+        { message: "어... 왔어?", action: "nod" },
+        { message: "반가워~", action: "heart" },
+        { message: "나 여기서 낮잠 자고 있었어", action: "wiggle" },
+        { message: "같이 있자~", action: "bounce" },
+        { message: "귀 접힌 거 귀엽지?", action: "sparkle" },
+        { message: "오늘도 평화로워", action: "nod" },
+        { message: "안녕~", action: "jump" },
+        { message: "뒹굴뒹굴~", action: "spin" },
+        { message: "쓰담해줘~", action: "heart" },
+        { message: "움직이기 귀찮아...", action: "wiggle" },
+    ],
+    playful: [
+        { message: "좋아~ 더 해줘", action: "nod" },
+        { message: "기분 좋다~", action: "heart" },
+        { message: "배 만져도 돼~", action: "flip" },
+        { message: "귀 뒤도 좋아!", action: "sparkle" },
+        { message: "그루밍 시간~", action: "wiggle" },
+        { message: "골골골~", action: "bounce" },
+        { message: "행복해~", action: "star" },
+        { message: "더~!", action: "jump" },
+        { message: "잠온다...", action: "nod" },
+    ],
+    ticklish: [
+        { message: "으냥... 그만", action: "shrink" },
+        { message: "졸린데...", action: "nod" },
+        { message: "살살 해줘!", action: "flip" },
+        { message: "낮잠 잘래...", action: "spin" },
+        { message: "한계야~", action: "wiggle" },
+        { message: "나중에 해줘...", action: "shrink" },
+        { message: "쉬자~", action: "nod" },
+        { message: "간식이면 좀 더...", action: "heart" },
+    ],
+};
+
+const MEMORIAL_SCOTTISH_FOLD: ModeReactions = {
+    greeting: [
+        { message: "왔구나~ 기다렸어", action: "nod" },
+        { message: "보고 싶었어", action: "heart" },
+        { message: "나 여기 있어~", action: "wiggle" },
+        { message: "반가워!", action: "bounce" },
+        { message: "또 와줬어?", action: "sparkle" },
+        { message: "여기야~", action: "jump" },
+        { message: "기다렸어!", action: "runRight" },
+        { message: "오늘도 왔네~", action: "dash" },
+    ],
+    playful: [
+        { message: "나 잘 지내고 있어", action: "spin" },
+        { message: "여기 따뜻해~", action: "star" },
+        { message: "너도 잘 지내지?", action: "nod" },
+        { message: "응원할게!", action: "bounce" },
+        { message: "오늘도 잘했어!", action: "heart" },
+        { message: "여기서 지켜보고 있어", action: "sparkle" },
+        { message: "힘내~", action: "jump" },
+        { message: "너 최고야!", action: "wiggle" },
+    ],
+    ticklish: [
+        { message: "언젠가 또 만나자", action: "spin" },
+        { message: "여기서 기다릴게~", action: "nod" },
+        { message: "행복하게 살아!", action: "dash" },
+        { message: "우린 늘 함께야", action: "wiggle" },
+        { message: "꼭 다시 만나!", action: "heart" },
+        { message: "느긋하게 기다릴게", action: "flip" },
+        { message: "기다릴게, 천천히 와", action: "star" },
+        { message: "우리 다시 만날 거야", action: "runLeft" },
+    ],
+};
+
+// ============================================================================
 // 범용 폴백
 // ============================================================================
 
@@ -866,6 +939,7 @@ export const REACTIONS_BY_TYPE: Record<string, ReactionsByMode> = {
     bichon:          { daily: DAILY_BICHON,       memorial: MEMORIAL_BICHON },
     corgi:           { daily: DAILY_CORGI,        memorial: MEMORIAL_CORGI },
     shiba:           { daily: DAILY_SHIBA,        memorial: MEMORIAL_SHIBA },
+    scottish_fold:   { daily: DAILY_SCOTTISH_FOLD, memorial: MEMORIAL_SCOTTISH_FOLD },
 };
 
 export const REACTIONS_DEFAULT: ReactionsByMode = {
