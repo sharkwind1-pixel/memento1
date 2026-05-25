@@ -1040,6 +1040,7 @@ export default function AiChatScreen() {
                                             size="sm"
                                             color={accentColor}
                                             textColor={accentColor}
+                                            isMemorial={isMemorialMode}
                                             text={(() => {
                                                 const tt = isMemorialMode
                                                     ? TYPING_TEXTS_MEMORIAL
