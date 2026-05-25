@@ -487,11 +487,18 @@ function DraggableMinimi({
     const stageDimsRef = useRef({ stageWidth, stageHeight, editMode });
     stageDimsRef.current = { stageWidth, stageHeight, editMode };
 
+    const onTapRef = useRef(onTap);
+    onTapRef.current = onTap;
+    const onLongPressRef = useRef(onLongPress);
+    onLongPressRef.current = onLongPress;
+
     const panResponder = useMemo(() => PanResponder.create({
         onStartShouldSetPanResponder: () => stageDimsRef.current.editMode,
-        onStartShouldSetPanResponderCapture: () => stageDimsRef.current.editMode,
-        onMoveShouldSetPanResponder: () => stageDimsRef.current.editMode,
-        onMoveShouldSetPanResponderCapture: () => stageDimsRef.current.editMode,
+        onStartShouldSetPanResponderCapture: () => false,
+        onMoveShouldSetPanResponder: (_, g) =>
+            stageDimsRef.current.editMode && (Math.abs(g.dx) > 3 || Math.abs(g.dy) > 3),
+        onMoveShouldSetPanResponderCapture: (_, g) =>
+            stageDimsRef.current.editMode && (Math.abs(g.dx) > 3 || Math.abs(g.dy) > 3),
         onPanResponderTerminationRequest: () => false,
         onShouldBlockNativeResponder: () => true,
         onPanResponderGrant: () => {
@@ -505,8 +512,22 @@ function DraggableMinimi({
             callbacksRef.current.onMove(index, dragStart.current.origX + dxPct, dragStart.current.origY + dyPct);
         },
         onPanResponderRelease: (_, g) => {
+            if (!dragStart.current) {
+                dragStart.current = null;
+                return;
+            }
+            const isTap = Math.abs(g.dx) < 5 && Math.abs(g.dy) < 5;
+            if (isTap) {
+                dragStart.current = null;
+                if (stageDimsRef.current.editMode) {
+                    onLongPressRef.current();
+                } else {
+                    onTapRef.current();
+                }
+                return;
+            }
             const { stageWidth: sw, stageHeight: sh } = stageDimsRef.current;
-            if (!dragStart.current || sw === 0 || sh === 0) {
+            if (sw === 0 || sh === 0) {
                 dragStart.current = null;
                 return;
             }
@@ -518,7 +539,6 @@ function DraggableMinimi({
         onPanResponderTerminate: () => {
             dragStart.current = null;
         },
-        // deps: index만 (mount 시 1회만 생성, 나머지는 ref로 latest access)
     }), [index]);
 
     if (!minimi) return null;
