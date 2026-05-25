@@ -352,24 +352,21 @@ export default function MinihompyScreen() {
                 <View style={styles.actionGrid}>
                     <ActionCard
                         icon="paw"
-                        label="미니미 상점"
-                        sub="구매 · 장착"
+                        label="상점"
                         color={COLORS.memento[500]}
                         bgColor={isDarkMode ? COLORS.gray[900] : COLORS.memento[50]}
                         onPress={() => { setShopInitialFilter("all"); setShopOpen(true); }}
                     />
                     <ActionCard
                         icon="library"
-                        label={`내 미니미${ownedMinimis.length > 0 ? ` (${ownedMinimis.length})` : ""}`}
-                        sub="컬렉션 · 장착"
+                        label={`미니미${ownedMinimis.length > 0 ? ` ${ownedMinimis.length}` : ""}`}
                         color="#FB923C"
                         bgColor={isDarkMode ? COLORS.gray[900] : "#FFF7ED"}
                         onPress={() => { setShopInitialFilter("owned"); setShopOpen(true); }}
                     />
                     <ActionCard
                         icon="color-palette"
-                        label="배경 테마"
-                        sub="선택 · 구매"
+                        label="배경"
                         color="#8B5CF6"
                         bgColor={isDarkMode ? COLORS.gray[900] : "#F5F3FF"}
                         onPress={() => setBgShopOpen(true)}
@@ -377,15 +374,13 @@ export default function MinihompyScreen() {
                     <ActionCard
                         icon="chatbubbles"
                         label="방명록"
-                        sub="메시지 보기"
                         color={COLORS.memorial[500]}
                         bgColor={isDarkMode ? COLORS.gray[900] : COLORS.memorial[50]}
                         onPress={() => setGuestbookOpen(true)}
                     />
                     <ActionCard
                         icon={settings?.isPublic ? "lock-open" : "lock-closed"}
-                        label={settings?.isPublic ? "공개 중" : "비공개"}
-                        sub="탭해서 전환"
+                        label={settings?.isPublic ? "공개" : "비공개"}
                         color={settings?.isPublic ? "#10B981" : "#6B7280"}
                         bgColor={isDarkMode ? COLORS.gray[900] : (settings?.isPublic ? "#ECFDF5" : "#F3F4F6")}
                         onPress={togglePublic}
@@ -495,10 +490,9 @@ function StageBackground({
     );
 }
 
-function ActionCard({ icon, label, sub, color, bgColor, onPress }: {
+function ActionCard({ icon, label, color, bgColor, onPress }: {
     icon: React.ComponentProps<typeof Ionicons>["name"];
     label: string;
-    sub: string;
     color: string;
     bgColor: string;
     onPress: () => void;
@@ -510,10 +504,9 @@ function ActionCard({ icon, label, sub, color, bgColor, onPress }: {
             style={[styles.actionCard, { backgroundColor: bgColor }]}
         >
             <View style={[styles.actionIconBg, { backgroundColor: color + "20" }]}>
-                <Ionicons name={icon} size={20} color={color} />
+                <Ionicons name={icon} size={16} color={color} />
             </View>
-            <Text style={styles.actionLabel}>{label}</Text>
-            <Text style={styles.actionSub}>{sub}</Text>
+            <Text style={styles.actionLabel} numberOfLines={1}>{label}</Text>
         </TouchableOpacity>
     );
 }
@@ -649,21 +642,22 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         flexWrap: "wrap",
         paddingHorizontal: 20,
-        gap: 10,
+        gap: 8,
         marginBottom: 16,
     },
     actionCard: {
-        width: (SCREEN_WIDTH - 50) / 2,
-        borderRadius: 16,
-        padding: 14,
+        flexDirection: "row",
+        alignItems: "center",
+        borderRadius: 10,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
         gap: 8,
     },
     actionIconBg: {
-        width: 36, height: 36, borderRadius: 12,
+        width: 28, height: 28, borderRadius: 8,
         alignItems: "center", justifyContent: "center",
     },
-    actionLabel: { fontSize: 14, fontWeight: "700", color: COLORS.gray[900] },
-    actionSub: { fontSize: 11, color: COLORS.gray[500] },
+    actionLabel: { fontSize: 13, fontWeight: "700", color: COLORS.gray[900] },
     greetingHint: {
         flexDirection: "row",
         alignItems: "center",
