@@ -633,7 +633,37 @@ function AnimatedMinimi({ imageUrl, action, triggerKey }: { imageUrl: string; ac
                         Animated.timing(rotate, { toValue: -0.5, duration: 200, useNativeDriver: true }),
                         Animated.timing(rotate, { toValue: 0, duration: 150, useNativeDriver: true }),
                     ]);
-                // heart/star/sparkle: 작은 pop
+                case "heart":
+                    return Animated.sequence([
+                        Animated.timing(translateY, { toValue: -10, duration: 200, useNativeDriver: true, easing: Easing.out(Easing.quad) }),
+                        Animated.timing(scale, { toValue: 1.2, duration: 150, useNativeDriver: true }),
+                        Animated.parallel([
+                            Animated.timing(translateY, { toValue: 0, duration: 300, useNativeDriver: true, easing: Easing.bounce }),
+                            Animated.timing(scale, { toValue: 1, duration: 300, useNativeDriver: true, easing: Easing.bounce }),
+                        ]),
+                    ]);
+                case "star":
+                    return Animated.sequence([
+                        Animated.timing(scale, { toValue: 1.3, duration: 120, useNativeDriver: true }),
+                        Animated.timing(scale, { toValue: 0.85, duration: 100, useNativeDriver: true }),
+                        Animated.timing(scale, { toValue: 1.2, duration: 120, useNativeDriver: true }),
+                        Animated.timing(scale, { toValue: 1, duration: 200, useNativeDriver: true, easing: Easing.bounce }),
+                    ]);
+                case "sparkle":
+                    return Animated.sequence([
+                        Animated.parallel([
+                            Animated.timing(rotate, { toValue: 0.3, duration: 150, useNativeDriver: true }),
+                            Animated.timing(scale, { toValue: 1.15, duration: 150, useNativeDriver: true }),
+                        ]),
+                        Animated.parallel([
+                            Animated.timing(rotate, { toValue: -0.3, duration: 200, useNativeDriver: true }),
+                            Animated.timing(scale, { toValue: 1.05, duration: 200, useNativeDriver: true }),
+                        ]),
+                        Animated.parallel([
+                            Animated.timing(rotate, { toValue: 0, duration: 150, useNativeDriver: true }),
+                            Animated.timing(scale, { toValue: 1, duration: 150, useNativeDriver: true }),
+                        ]),
+                    ]);
                 default:
                     return Animated.sequence([
                         Animated.timing(scale, { toValue: 1.15, duration: 150, useNativeDriver: true }),
