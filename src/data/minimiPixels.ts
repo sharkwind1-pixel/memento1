@@ -102,4 +102,14 @@ export const CHARACTER_CATALOG = [
         imageAspect: 1,
         footPadding: 0.02,
     },
+    {
+        slug: "shiba",
+        name: "시바견",
+        category: "dog" as const,
+        imageUrl: "/icons/minimi/shiba.png?v=11",
+        price: 200,
+        description: "도도한 표정의 시바견",
+        imageAspect: 1,
+        footPadding: 0.02,
+    },
 ] as const;

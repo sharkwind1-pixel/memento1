@@ -704,6 +704,79 @@ const MEMORIAL_CORGI: ModeReactions = {
 };
 
 // ============================================================================
+// 시바견 — 도도/츤데레/독립적
+// ============================================================================
+
+const DAILY_SHIBA: ModeReactions = {
+    greeting: [
+        { message: "...왔어?", action: "flip" },
+        { message: "별로 기다린 거 아냐", action: "nod" },
+        { message: "흥, 왔구나", action: "wiggle" },
+        { message: "나 혼자서도 잘 놀아", action: "spin" },
+        { message: "오늘은 봐줄게", action: "sparkle" },
+        { message: "뭘 봐", action: "flip" },
+        { message: "...반갑다", action: "heart" },
+        { message: "쓰담 한 번은 허락", action: "nod" },
+        { message: "관심 없는 척~", action: "runRight" },
+        { message: "안 기다렸거든!", action: "dash" },
+    ],
+    playful: [
+        { message: "...좋은 건 아닌데", action: "wiggle" },
+        { message: "한 번만 더!", action: "bounce" },
+        { message: "기분 나쁘진 않아", action: "sparkle" },
+        { message: "뭐, 괜찮아", action: "nod" },
+        { message: "더 해도 된다고!", action: "jump" },
+        { message: "흥, 실력은 있네", action: "spin" },
+        { message: "나 도도한 거지 차가운 거 아냐", action: "heart" },
+        { message: "간식이면 좀 더 해줄게", action: "star" },
+        { message: "꼬리 안 흔든 거 아니야", action: "wiggle" },
+    ],
+    ticklish: [
+        { message: "건방지게 어딜!", action: "shrink" },
+        { message: "허락 안 했거든?!", action: "flip" },
+        { message: "감히!", action: "spin" },
+        { message: "다음엔 물어", action: "runLeft" },
+        { message: "한계점 도달!", action: "shrink" },
+        { message: "...한 번만 봐준다", action: "nod" },
+        { message: "간식으로 사과해", action: "flip" },
+        { message: "오늘은 여기까지야", action: "dash" },
+    ],
+};
+
+const MEMORIAL_SHIBA: ModeReactions = {
+    greeting: [
+        { message: "...기다렸어", action: "nod" },
+        { message: "왔구나, 반가워", action: "heart" },
+        { message: "보고 싶었다", action: "wiggle" },
+        { message: "또 와줬어?", action: "sparkle" },
+        { message: "나 여기 있어", action: "bounce" },
+        { message: "여기야!", action: "jump" },
+        { message: "오늘도 왔네", action: "runRight" },
+        { message: "기다렸어, 진짜야", action: "dash" },
+    ],
+    playful: [
+        { message: "나 잘 지내고 있어", action: "spin" },
+        { message: "여기 좋아!", action: "star" },
+        { message: "너도 잘 지내지?", action: "nod" },
+        { message: "응원할게", action: "bounce" },
+        { message: "오늘도 잘했어!", action: "heart" },
+        { message: "여기서 지켜보고 있어", action: "sparkle" },
+        { message: "힘내!", action: "jump" },
+        { message: "너 최고야", action: "wiggle" },
+    ],
+    ticklish: [
+        { message: "언젠가 또 만나자", action: "spin" },
+        { message: "여기서 기다릴게", action: "nod" },
+        { message: "행복하게 살아!", action: "dash" },
+        { message: "우린 늘 함께야", action: "wiggle" },
+        { message: "꼭 다시 만나!", action: "heart" },
+        { message: "도도하게 기다릴게", action: "flip" },
+        { message: "기다릴게, 천천히 와", action: "star" },
+        { message: "우리 다시 만날 거야", action: "runLeft" },
+    ],
+};
+
+// ============================================================================
 // 범용 폴백
 // ============================================================================
 
@@ -792,6 +865,7 @@ export const REACTIONS_BY_TYPE: Record<string, ReactionsByMode> = {
     pomeranian:      { daily: DAILY_POMERANIAN,   memorial: MEMORIAL_POMERANIAN },
     bichon:          { daily: DAILY_BICHON,       memorial: MEMORIAL_BICHON },
     corgi:           { daily: DAILY_CORGI,        memorial: MEMORIAL_CORGI },
+    shiba:           { daily: DAILY_SHIBA,        memorial: MEMORIAL_SHIBA },
 };
 
 export const REACTIONS_DEFAULT: ReactionsByMode = {
