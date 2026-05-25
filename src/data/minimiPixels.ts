@@ -92,4 +92,14 @@ export const CHARACTER_CATALOG = [
         imageAspect: 1,
         footPadding: 0.02,
     },
+    {
+        slug: "corgi",
+        name: "웰시코기",
+        category: "dog" as const,
+        imageUrl: "/icons/minimi/corgi.png?v=11",
+        price: 200,
+        description: "짧은 다리 엉덩이 요정 코기",
+        imageAspect: 1,
+        footPadding: 0.02,
+    },
 ] as const;

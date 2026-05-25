@@ -624,6 +624,79 @@ const MEMORIAL_BICHON: ModeReactions = {
 };
 
 // ============================================================================
+// 웰시코기 — 엉덩이 요정. 짧은 다리 자부심. 먹보. 밝고 씩씩함.
+// ============================================================================
+
+const DAILY_CORGI: ModeReactions = {
+    greeting: [
+        { message: "엉덩이 흔들~!", action: "wiggle" },
+        { message: "다리 짧아도 빠르다!", action: "dash" },
+        { message: "간식 어디?!", action: "runRight" },
+        { message: "나 왔다!", action: "jump" },
+        { message: "꼬리 봐봐!", action: "wiggle" },
+        { message: "오늘도 씩씩!", action: "star" },
+        { message: "안녕!", action: "bounce" },
+        { message: "같이 산책 가자!", action: "runLeft" },
+        { message: "헤헤!", action: "heart" },
+        { message: "멍!", action: "nod" },
+    ],
+    playful: [
+        { message: "엉덩이 터치 금지!", action: "flip" },
+        { message: "간식 주면 더 해줄게!", action: "heart" },
+        { message: "나 진짜 빠르거든!", action: "dash" },
+        { message: "좋아좋아!", action: "bounce" },
+        { message: "더!!", action: "wiggle" },
+        { message: "최고야!", action: "star" },
+        { message: "뒹굴~!", action: "spin" },
+        { message: "짧아도 멋있지?", action: "sparkle" },
+        { message: "행복해!", action: "nod" },
+    ],
+    ticklish: [
+        { message: "엉덩이 만지지 마!", action: "flip" },
+        { message: "그만!!", action: "shrink" },
+        { message: "다리 짧다고 놀리지 마!", action: "spin" },
+        { message: "간식 내놔!", action: "runLeft" },
+        { message: "한계야!", action: "wiggle" },
+        { message: "진짜 물어!", action: "flip" },
+        { message: "쉴래!", action: "shrink" },
+        { message: "간식이면 용서!", action: "heart" },
+    ],
+};
+
+const MEMORIAL_CORGI: ModeReactions = {
+    greeting: [
+        { message: "또 왔어? 기다렸어!", action: "dash" },
+        { message: "나 여기 있어!", action: "jump" },
+        { message: "보고 싶었어!", action: "wiggle" },
+        { message: "반가워!", action: "bounce" },
+        { message: "왔구나!", action: "runRight" },
+        { message: "여기야!", action: "sparkle" },
+        { message: "기다렸어!", action: "nod" },
+        { message: "또 왔구나!", action: "heart" },
+    ],
+    playful: [
+        { message: "나 여기서 잘 지내!", action: "spin" },
+        { message: "오늘도 잘했어?", action: "nod" },
+        { message: "너 최고야!", action: "star" },
+        { message: "응원할게!", action: "jump" },
+        { message: "힘내!", action: "dash" },
+        { message: "오늘도 열심히했지?", action: "wiggle" },
+        { message: "여기 따뜻해!", action: "heart" },
+        { message: "지켜보고 있어!", action: "sparkle" },
+    ],
+    ticklish: [
+        { message: "언젠가 또 만나자!", action: "spin" },
+        { message: "여기서 기다릴게!", action: "nod" },
+        { message: "행복하게 살아!", action: "dash" },
+        { message: "우린 늘 함께야!", action: "wiggle" },
+        { message: "꼭 다시 만나!", action: "heart" },
+        { message: "같이 산책하자!", action: "runLeft" },
+        { message: "기다릴게!", action: "star" },
+        { message: "우리 다시 뛰자!", action: "jump" },
+    ],
+};
+
+// ============================================================================
 // 범용 폴백
 // ============================================================================
 
@@ -711,6 +784,7 @@ export const REACTIONS_BY_TYPE: Record<string, ReactionsByMode> = {
     cheese_cat:      { daily: DAILY_CHEESE_CAT,    memorial: MEMORIAL_CHEESE_CAT },
     pomeranian:      { daily: DAILY_POMERANIAN,   memorial: MEMORIAL_POMERANIAN },
     bichon:          { daily: DAILY_BICHON,       memorial: MEMORIAL_BICHON },
+    corgi:           { daily: DAILY_CORGI,        memorial: MEMORIAL_CORGI },
 };
 
 export const REACTIONS_DEFAULT: ReactionsByMode = {
