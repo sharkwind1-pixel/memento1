@@ -35,39 +35,44 @@ interface ParticleSpec {
     size: number;
 }
 
+const STAR_COLORS = ["#FBBF24", "#FCD34D", "#F59E0B", "#FFD700", "#FDE68A"];
+const HEART_COLORS = ["#F472B6", "#FB7185", "#FDA4AF", "#F9A8D4", "#FF6B9D"];
+const SPARKLE_ICONS: React.ComponentProps<typeof Ionicons>["name"][] = ["star", "heart", "sparkles"];
+const PASTEL_MIX = ["#C4B5FD", "#A5B4FC", "#93C5FD", "#FBCFE8", "#FDE68A", "#BBF7D0"];
+
 function buildParticles(variant: Props["variant"], stageWidth: number): ParticleSpec[] {
     const cx = stageWidth / 2;
     if (variant === "star") {
-        return [0, 1, 2, 3, 4].map((i) => ({
+        return [0, 1, 2, 3, 4, 5, 6].map((i) => ({
             id: i,
-            startX: cx - 30,
-            endX: cx - 60 + Math.random() * 120,
-            delay: i * 80,
-            icon: "star" as const,
-            color: i % 2 === 0 ? "#FBBF24" : "#FCD34D",
-            size: 16 + Math.random() * 6,
+            startX: cx - 40 + Math.random() * 20,
+            endX: cx - 80 + Math.random() * 160,
+            delay: i * 60,
+            icon: i % 3 === 0 ? "sparkles" as const : "star" as const,
+            color: STAR_COLORS[i % STAR_COLORS.length],
+            size: 12 + Math.random() * 10,
         }));
     }
     if (variant === "heart") {
-        return [0, 1, 2].map((i) => ({
+        return [0, 1, 2, 3, 4].map((i) => ({
             id: i,
-            startX: cx - 20 + i * 20 - 20,
-            endX: cx - 30 + i * 30 - 30,
-            delay: i * 100,
-            icon: "heart" as const,
-            color: "#F472B6",
-            size: 18,
+            startX: cx - 30 + Math.random() * 10,
+            endX: cx - 50 + Math.random() * 100,
+            delay: i * 80,
+            icon: i % 2 === 0 ? "heart" as const : "star" as const,
+            color: HEART_COLORS[i % HEART_COLORS.length],
+            size: 14 + Math.random() * 8,
         }));
     }
-    // rest
-    return [0, 1, 2].map((i) => ({
+    // rest — 회색 점 대신 파스텔 별/하트 믹스 (잔잔하게)
+    return [0, 1, 2, 3].map((i) => ({
         id: i,
-        startX: cx - 15 + i * 15 - 15,
-        endX: cx - 15 + i * 15 - 15,
-        delay: i * 200,
-        icon: "ellipse" as const,
-        color: "#94A3B8",
-        size: 6,
+        startX: cx - 25 + Math.random() * 10,
+        endX: cx - 40 + Math.random() * 80,
+        delay: i * 150,
+        icon: SPARKLE_ICONS[i % SPARKLE_ICONS.length],
+        color: PASTEL_MIX[i % PASTEL_MIX.length],
+        size: 10 + Math.random() * 6,
     }));
 }
 
