@@ -132,4 +132,14 @@ export const CHARACTER_CATALOG = [
         imageAspect: 1,
         footPadding: 0.02,
     },
+    {
+        slug: "munchkin",
+        name: "먼치킨",
+        category: "cat" as const,
+        imageUrl: "/icons/minimi/munchkin.png?v=11",
+        price: 200,
+        description: "짧은 다리의 깜찍한 먼치킨",
+        imageAspect: 1,
+        footPadding: 0.02,
+    },
 ] as const;

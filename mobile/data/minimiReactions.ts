@@ -923,6 +923,79 @@ const MEMORIAL_BENGAL: ModeReactions = {
 };
 
 // ============================================================================
+// 먼치킨 — 장난꾸러기/애교/짧은 다리. 다리 짧아도 에너지 넘침.
+// ============================================================================
+
+const DAILY_MUNCHKIN: ModeReactions = {
+    greeting: [
+        { message: "총총총!", action: "dash" },
+        { message: "다리 짧아도 빨라!", action: "runRight" },
+        { message: "안녕~!", action: "jump" },
+        { message: "놀아줘!", action: "bounce" },
+        { message: "여기 여기!", action: "wiggle" },
+        { message: "안아줘~!", action: "heart" },
+        { message: "총총 달려왔어!", action: "runLeft" },
+        { message: "왔어? 반가워!", action: "sparkle" },
+        { message: "오늘도 귀엽지?", action: "spin" },
+        { message: "다리 짧은 거 놀리지 마!", action: "nod" },
+    ],
+    playful: [
+        { message: "더 더~!", action: "bounce" },
+        { message: "기분 좋다!", action: "heart" },
+        { message: "배 만져줘~!", action: "flip" },
+        { message: "총총총 신나!", action: "dash" },
+        { message: "나도 점프 할 수 있어!", action: "jump" },
+        { message: "짧은 다리 매력이야!", action: "wiggle" },
+        { message: "골골골~", action: "sparkle" },
+        { message: "행복해!", action: "star" },
+        { message: "한 번 더!", action: "bounce" },
+    ],
+    ticklish: [
+        { message: "으냥! 간지러워!", action: "shrink" },
+        { message: "다리 짧아서 도망 못 가!", action: "dash" },
+        { message: "살살해줘~!", action: "flip" },
+        { message: "한계야!", action: "spin" },
+        { message: "총총 도망간다!", action: "runRight" },
+        { message: "숨을 데가 없어!", action: "shrink" },
+        { message: "간식 주면 용서!", action: "nod" },
+        { message: "나중에 더~!", action: "runLeft" },
+    ],
+};
+
+const MEMORIAL_MUNCHKIN: ModeReactions = {
+    greeting: [
+        { message: "총총총 달려왔어!", action: "dash" },
+        { message: "보고 싶었어!", action: "heart" },
+        { message: "나 여기서 뛰어놀고 있어!", action: "jump" },
+        { message: "반가워~!", action: "bounce" },
+        { message: "또 와줬어?", action: "sparkle" },
+        { message: "기다렸어!", action: "runRight" },
+        { message: "여기야!", action: "wiggle" },
+        { message: "오늘도 왔네!", action: "spin" },
+    ],
+    playful: [
+        { message: "나 잘 지내고 있어!", action: "dash" },
+        { message: "여기서 총총 뛰어다녀!", action: "star" },
+        { message: "너도 잘 지내지?", action: "nod" },
+        { message: "응원할게!", action: "bounce" },
+        { message: "오늘도 잘했어!", action: "heart" },
+        { message: "여기서 지켜보고 있어!", action: "sparkle" },
+        { message: "힘내~!", action: "jump" },
+        { message: "너 최고야!", action: "wiggle" },
+    ],
+    ticklish: [
+        { message: "언젠가 또 만나자!", action: "spin" },
+        { message: "여기서 기다릴게!", action: "nod" },
+        { message: "행복하게 살아!", action: "dash" },
+        { message: "우린 늘 함께야!", action: "wiggle" },
+        { message: "꼭 다시 만나!", action: "heart" },
+        { message: "총총 달려갈게!", action: "runRight" },
+        { message: "기다릴게, 천천히 와!", action: "star" },
+        { message: "우리 다시 만날 거야!", action: "runLeft" },
+    ],
+};
+
+// ============================================================================
 // 범용 폴백
 // ============================================================================
 
@@ -1014,6 +1087,7 @@ export const REACTIONS_BY_TYPE: Record<string, ReactionsByMode> = {
     shiba:           { daily: DAILY_SHIBA,        memorial: MEMORIAL_SHIBA },
     scottish_fold:   { daily: DAILY_SCOTTISH_FOLD, memorial: MEMORIAL_SCOTTISH_FOLD },
     bengal:          { daily: DAILY_BENGAL,        memorial: MEMORIAL_BENGAL },
+    munchkin:        { daily: DAILY_MUNCHKIN,      memorial: MEMORIAL_MUNCHKIN },
 };
 
 export const REACTIONS_DEFAULT: ReactionsByMode = {
