@@ -844,4 +844,4 @@ const styles = StyleSheet.create({
 });
 
 // 미니미 + stage 배경 한 번에 export
-export { findMinimi, findMinimiOrFallback, findBackgroundOrDefault };
+export { findMinimi, findBackgroundOrDefault };
