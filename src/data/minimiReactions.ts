@@ -989,6 +989,79 @@ const MEMORIAL_MUNCHKIN: ModeReactions = {
 };
 
 // ============================================================================
+// 코리안숏헤어 — 영리/독립적/도도하지만 정 많음. 골목대장 느낌.
+// ============================================================================
+
+const DAILY_KOREAN_SHORTHAIR: ModeReactions = {
+    greeting: [
+        { message: "야옹~", action: "nod" },
+        { message: "왔어? 나 바빴거든", action: "flip" },
+        { message: "오늘도 왔네", action: "wiggle" },
+        { message: "반갑다~", action: "heart" },
+        { message: "나 여기 있었어", action: "bounce" },
+        { message: "뭐 가져왔어?", action: "sparkle" },
+        { message: "안녕!", action: "jump" },
+        { message: "나 혼자서도 잘 놀아", action: "spin" },
+        { message: "쓰담 한 번 허락!", action: "nod" },
+        { message: "같이 있자~", action: "heart" },
+    ],
+    playful: [
+        { message: "기분 좋다~", action: "wiggle" },
+        { message: "더 해도 돼", action: "nod" },
+        { message: "나 사실 좋아하는 거야", action: "heart" },
+        { message: "골골골~", action: "bounce" },
+        { message: "귀 뒤 긁어줘!", action: "sparkle" },
+        { message: "좋아~ 더!", action: "jump" },
+        { message: "행복해~", action: "star" },
+        { message: "오늘은 기분 좋은 날!", action: "spin" },
+        { message: "간식 시간?", action: "flip" },
+    ],
+    ticklish: [
+        { message: "야! 그만!", action: "shrink" },
+        { message: "허락 안 했거든?", action: "flip" },
+        { message: "도망간다!", action: "dash" },
+        { message: "한계야~", action: "spin" },
+        { message: "살살 해!", action: "shrink" },
+        { message: "간식으로 사과해", action: "nod" },
+        { message: "높은 데로 올라간다!", action: "jump" },
+        { message: "나중에 해줘~", action: "runLeft" },
+    ],
+};
+
+const MEMORIAL_KOREAN_SHORTHAIR: ModeReactions = {
+    greeting: [
+        { message: "왔구나~ 기다렸어", action: "nod" },
+        { message: "보고 싶었어", action: "heart" },
+        { message: "나 여기 있어!", action: "wiggle" },
+        { message: "반가워!", action: "bounce" },
+        { message: "또 와줬어?", action: "sparkle" },
+        { message: "여기야~", action: "jump" },
+        { message: "기다렸어!", action: "runRight" },
+        { message: "오늘도 왔네!", action: "dash" },
+    ],
+    playful: [
+        { message: "나 잘 지내고 있어!", action: "spin" },
+        { message: "여기 좋아!", action: "star" },
+        { message: "너도 잘 지내지?", action: "nod" },
+        { message: "응원할게!", action: "bounce" },
+        { message: "오늘도 잘했어!", action: "heart" },
+        { message: "여기서 지켜보고 있어!", action: "sparkle" },
+        { message: "힘내~!", action: "jump" },
+        { message: "너 최고야!", action: "wiggle" },
+    ],
+    ticklish: [
+        { message: "언젠가 또 만나자!", action: "spin" },
+        { message: "여기서 기다릴게!", action: "nod" },
+        { message: "행복하게 살아!", action: "dash" },
+        { message: "우린 늘 함께야!", action: "wiggle" },
+        { message: "꼭 다시 만나!", action: "heart" },
+        { message: "당당하게 기다릴게!", action: "flip" },
+        { message: "기다릴게, 천천히 와!", action: "star" },
+        { message: "우리 다시 만날 거야!", action: "runLeft" },
+    ],
+};
+
+// ============================================================================
 // 범용 폴백
 // ============================================================================
 
@@ -1081,6 +1154,7 @@ export const REACTIONS_BY_TYPE: Record<string, ReactionsByMode> = {
     scottish_fold:   { daily: DAILY_SCOTTISH_FOLD, memorial: MEMORIAL_SCOTTISH_FOLD },
     bengal:          { daily: DAILY_BENGAL,        memorial: MEMORIAL_BENGAL },
     munchkin:        { daily: DAILY_MUNCHKIN,      memorial: MEMORIAL_MUNCHKIN },
+    korean_shorthair:{ daily: DAILY_KOREAN_SHORTHAIR, memorial: MEMORIAL_KOREAN_SHORTHAIR },
 };
 
 export const REACTIONS_DEFAULT: ReactionsByMode = {

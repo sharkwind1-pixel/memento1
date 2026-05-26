@@ -142,4 +142,14 @@ export const CHARACTER_CATALOG = [
         imageAspect: 1,
         footPadding: 0.02,
     },
+    {
+        slug: "korean_shorthair",
+        name: "코리안숏헤어",
+        category: "cat" as const,
+        imageUrl: "/icons/minimi/korean_shorthair.png?v=11",
+        price: 200,
+        description: "삼색 무늬의 영리한 코숏",
+        imageAspect: 1,
+        footPadding: 0.02,
+    },
 ] as const;
