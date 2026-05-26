@@ -36,6 +36,19 @@ export function findMinimi(slug: string): MinimiCharacter | undefined {
     return MINIMI_CATALOG.find((c) => c.slug === slug);
 }
 
+export function findMinimiOrFallback(slug: string): MinimiCharacter {
+    return findMinimi(slug) ?? {
+        slug,
+        name: slug.replace(/_/g, " "),
+        category: "cat",
+        imageUrl: abs(`/icons/minimi/${slug}.png?v=11`),
+        price: 200,
+        description: "",
+        imageAspect: 1,
+        footPadding: 0.02,
+    };
+}
+
 // ============================================================================
 // 배경 카탈로그 (1 무료 + 8 유료)
 // ============================================================================

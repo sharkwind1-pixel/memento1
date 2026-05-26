@@ -23,7 +23,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { COLORS } from "@/lib/theme";
 import { useDarkMode } from "@/contexts/ThemeContext";
-import { findMinimi, findBackgroundOrDefault } from "@/data/minihompyData";
+import { findMinimi, findMinimiOrFallback, findBackgroundOrDefault } from "@/data/minihompyData";
 import { putPlacedMinimi } from "@/lib/minihompy-api";
 import { pickReaction, type MinimiAction } from "@/data/minimiReactions";
 import type { PlacedMinimi, BackgroundTheme, UserMinimiRow } from "@/types";
@@ -377,8 +377,7 @@ function InventoryPickerModal({
                         </View>
                     }
                     renderItem={({ item: slug }) => {
-                        const m = findMinimi(slug);
-                        if (!m) return null;
+                        const m = findMinimiOrFallback(slug);
                         const owned = ownedCounts[slug] ?? 0;
                         const placed = placedCounts[slug] ?? 0;
                         const maxedOut = placed >= owned;
@@ -473,7 +472,7 @@ function DraggableMinimi({
     touchMessage: string | null;
     triggerKey: number;
 }) {
-    const minimi = findMinimi(placed.slug);
+    const minimi = findMinimiOrFallback(placed.slug);
     const dragStart = useRef<{ origX: number; origY: number } | null>(null);
 
     // **중요**: PanResponder는 mount 시 한 번만 생성. placed.x/y가 deps에 들어가면
@@ -540,8 +539,6 @@ function DraggableMinimi({
             dragStart.current = null;
         },
     }), [index]);
-
-    if (!minimi) return null;
 
     // hit area = MINIMI_SIZE + HIT_PADDING*2. 작은 미니미를 손가락으로 잡기 쉽게 확장.
     const HIT_SIZE = MINIMI_SIZE + HIT_PADDING * 2;
@@ -847,4 +844,4 @@ const styles = StyleSheet.create({
 });
 
 // 미니미 + stage 배경 한 번에 export
-export { findMinimi, findBackgroundOrDefault };
+export { findMinimi, findMinimiOrFallback, findBackgroundOrDefault };
