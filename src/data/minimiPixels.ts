@@ -162,4 +162,14 @@ export const CHARACTER_CATALOG = [
         imageAspect: 1,
         footPadding: 0.02,
     },
+    {
+        slug: "gecko",
+        name: "레오파드게코",
+        category: "other" as const,
+        imageUrl: "/icons/minimi/gecko.png?v=11",
+        price: 200,
+        description: "초록 눈의 표범무늬 도마뱀",
+        imageAspect: 1,
+        footPadding: 0.02,
+    },
 ] as const;

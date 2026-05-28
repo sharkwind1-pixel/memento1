@@ -1202,6 +1202,76 @@ const MEMORIAL_HAMSTER: ModeReactions = {
 };
 
 // ============================================================================
+// 레오파드게코
+// ============================================================================
+
+const DAILY_GECKO: ModeReactions = {
+    greeting: [
+        { message: "...눈만 깜빡...", action: "nod" },
+        { message: "꼬리 흔들흔들~ 기분 좋아!", action: "wiggle" },
+        { message: "따뜻한 돌 위에 있었어~", action: "heart" },
+        { message: "핥핥... 안녕!", action: "bounce" },
+        { message: "느릿느릿... 왔구나!", action: "runRight" },
+        { message: "배 깔고 쉬고 있었어!", action: "nod" },
+        { message: "눈 크게 떠서 봐주는 거야~", action: "sparkle" },
+        { message: "꼬리 통통! 잘 먹고 있어!", action: "jump" },
+    ],
+    playful: [
+        { message: "벽 타기 할 줄 안다고!", action: "dash" },
+        { message: "귀뚜라미 잡기 시합하자!", action: "runLeft" },
+        { message: "꼬리 잡지 마! 떨어져!", action: "wiggle" },
+        { message: "핥핥... 손가락 맛있어?", action: "heart" },
+        { message: "은신처에서 까꿍!", action: "jump" },
+        { message: "눈 돌리는 거 봤어? 동시에!", action: "spin" },
+        { message: "배 색깔 예쁘지? 주황이야!", action: "bounce" },
+        { message: "밤에 더 활발해질 거야!", action: "star" },
+    ],
+    ticklish: [
+        { message: "...zzz 따뜻해서 졸려...", action: "nod" },
+        { message: "은신처 들어갈래...", action: "wiggle" },
+        { message: "조용히 해... 야행성이야...", action: "star" },
+        { message: "꼬리에 영양분 저장 중...", action: "bounce" },
+        { message: "핥... 마지막 인사...", action: "heart" },
+        { message: "돌 위에서 잘게...", action: "nod" },
+        { message: "내일 밤에 또 놀자...", action: "sparkle" },
+        { message: "눈만 감을게... 반쯤...", action: "spin" },
+    ],
+};
+
+const MEMORIAL_GECKO: ModeReactions = {
+    greeting: [
+        { message: "따뜻한 손 위가 좋았어", action: "heart" },
+        { message: "느릿느릿 걸어가도 기다려줬지", action: "nod" },
+        { message: "큰 눈으로 널 지켜보고 있었어", action: "sparkle" },
+        { message: "조용했지만 옆에 있고 싶었어", action: "wiggle" },
+        { message: "네 체온이 내 히터였어", action: "bounce" },
+        { message: "은신처에서 몰래 봤었어, 항상", action: "star" },
+        { message: "꼬리 흔들어 인사했던 거 알아?", action: "runRight" },
+        { message: "작은 발로 네 손을 걸었던 밤들", action: "heart" },
+    ],
+    playful: [
+        { message: "말없이 옆에 있어도 편했잖아", action: "nod" },
+        { message: "느린 게 싫지 않았다고 해줘서 고마워", action: "heart" },
+        { message: "꼬리 통통했을 때 기뻐해줬지", action: "wiggle" },
+        { message: "핥아줬던 건 사랑이었어", action: "bounce" },
+        { message: "밤마다 네 숨소리 듣고 있었어", action: "sparkle" },
+        { message: "차가운 피였지만 마음은 따뜻했어", action: "star" },
+        { message: "조용한 사랑도 사랑이야", action: "spin" },
+        { message: "네 손바닥 온도를 아직 기억해", action: "dash" },
+    ],
+    ticklish: [
+        { message: "여기서도 따뜻한 곳을 찾았어", action: "heart" },
+        { message: "느릿느릿 무지개다리 건넜어", action: "nod" },
+        { message: "큰 눈으로 여기서도 지켜볼게", action: "sparkle" },
+        { message: "꼬리 잘 간직하고 기다릴게", action: "wiggle" },
+        { message: "다시 만나면 네 손 위로 올라갈게", action: "jump" },
+        { message: "조용하지만 항상 네 편이야", action: "bounce" },
+        { message: "밤하늘에서 반짝이고 있을게", action: "star" },
+        { message: "여기 돌도 따뜻해, 걱정 마", action: "spin" },
+    ],
+};
+
+// ============================================================================
 // Export
 // ============================================================================
 
@@ -1226,6 +1296,7 @@ export const REACTIONS_BY_TYPE: Record<string, ReactionsByMode> = {
     munchkin:        { daily: DAILY_MUNCHKIN,      memorial: MEMORIAL_MUNCHKIN },
     korean_shorthair:{ daily: DAILY_KOREAN_SHORTHAIR, memorial: MEMORIAL_KOREAN_SHORTHAIR },
     hamster:         { daily: DAILY_HAMSTER,          memorial: MEMORIAL_HAMSTER },
+    gecko:           { daily: DAILY_GECKO,            memorial: MEMORIAL_GECKO },
 };
 
 export const REACTIONS_DEFAULT: ReactionsByMode = {
