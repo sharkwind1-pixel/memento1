@@ -1,15 +1,17 @@
 /**
- * HeroSection — 홈 화면 상단 히어로 (웹 src/components/features/home/HeroSection.tsx 매칭)
+ * HeroSection — 홈 화면 상단 히어로
  *
- * 웹 구조:
- * - rounded-3xl 카드 + 그라데이션 배경 (일상: #CBEBF0→#E0F3F6→#FFF8F6 / 추모: #091A2E→#1A2A3E→#3D2A1A)
- * - 배경 장식 blur 원 2개 (top-right, bottom-left)
- * - 정사각 일러스트 (아이+강아지 / 추모는 별빛 강아지)
- * - 카피: "특별한 매일을 함께"
- * - 2 CTA: primary 그라데이션, ghost arrow
+ * 3가지 모드:
+ *  1. 비로그인: 기존 히어로 (일러스트 + "특별한 매일을 함께" + CTA)
+ *  2. 로그인 + 미니미 없음: 쇼케이스 이미지 + 탭 → 미니홈피 탭으로 이동
+ *  3. 로그인 + 미니미 있음: 개인 미니홈피 미리보기 + 탭 → 미니홈피 탭으로 이동
  */
 
-import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
+import { useEffect, useState, useCallback } from "react";
+import {
+    View, Text, Image, TouchableOpacity, StyleSheet,
+    ImageBackground, Dimensions,
+} from "react-native";
 import { useDarkMode } from "@/contexts/ThemeContext";
 import { useSimpleMode } from "@/contexts/SimpleModeContext";
 import { LinearGradient } from "expo-linear-gradient";
@@ -17,6 +19,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Session } from "@supabase/supabase-js";
 import { COLORS } from "@/lib/theme";
+import { getMyMinihompySettings, getMinimiInventory } from "@/lib/minihompy-api";
+import { findMinimiOrFallback, findBackgroundOrDefault } from "@/data/minihompyData";
+import type { MinihompySettings, UserMinimiRow } from "@/types";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const HERO_STAGE_HEIGHT = 260;
 
 interface Props {
     session: Session | null;
@@ -27,8 +35,178 @@ export default function HeroSection({ session, isMemorialMode }: Props) {
     const { isDarkMode } = useDarkMode();
     const { fontScale, spacingScale, iconScale } = useSimpleMode();
     const router = useRouter();
+    const accessToken = session?.access_token ?? null;
 
-    // 웹 매칭: 다크모드는 일상/추모 모두 gray-800 → gray-700 그라데이션
+    // 미니홈피 데이터 (로그인 유저만)
+    const [settings, setSettings] = useState<MinihompySettings | null>(null);
+    const [ownedMinimis, setOwnedMinimis] = useState<UserMinimiRow[]>([]);
+    const [loaded, setLoaded] = useState(false);
+
+    useEffect(() => {
+        if (!accessToken) {
+            setLoaded(true);
+            return;
+        }
+        let cancelled = false;
+        (async () => {
+            try {
+                const [s, inv] = await Promise.all([
+                    getMyMinihompySettings(accessToken).catch(() => null),
+                    getMinimiInventory(accessToken).catch(() => ({ owned: [], equippedSlug: null })),
+                ]);
+                if (cancelled) return;
+                if (s) setSettings(s);
+                setOwnedMinimis(inv.owned);
+            } finally {
+                if (!cancelled) setLoaded(true);
+            }
+        })();
+        return () => { cancelled = true; };
+    }, [accessToken]);
+
+    const hasMinimi = ownedMinimis.length > 0;
+    const hasPlacedMinimi = (settings?.placedMinimi?.length ?? 0) > 0;
+
+    // --- 비로그인: 기존 히어로 ---
+    if (!session) {
+        return <OriginalHero isMemorialMode={isMemorialMode} isDarkMode={isDarkMode} fontScale={fontScale} spacingScale={spacingScale} iconScale={iconScale} onCta={() => router.push("/(auth)/login")} onSecondary={() => router.push("/(tabs)/community")} />;
+    }
+
+    // 로딩 중이면 기존 히어로 잠깐 보여줌 (깜빡임 방지)
+    if (!loaded) {
+        return <OriginalHero isMemorialMode={isMemorialMode} isDarkMode={isDarkMode} fontScale={fontScale} spacingScale={spacingScale} iconScale={iconScale} onCta={() => router.push("/(tabs)/ai-chat")} onSecondary={() => router.push("/(tabs)/community")} ctaText="지금 만나러 가기" />;
+    }
+
+    // --- 로그인 + 미니미 있음: 개인 미니홈피 프리뷰 ---
+    if (hasMinimi && hasPlacedMinimi) {
+        const bg = findBackgroundOrDefault(settings?.backgroundSlug ?? "default_sky");
+        return (
+            <View style={styles.section}>
+                <TouchableOpacity
+                    activeOpacity={0.92}
+                    onPress={() => router.push("/(tabs)/minihompy")}
+                    style={styles.card}
+                >
+                    {bg.imageUrl ? (
+                        <ImageBackground
+                            source={{ uri: bg.imageUrl }}
+                            style={[styles.personalStage, { height: HERO_STAGE_HEIGHT }]}
+                            imageStyle={{ borderRadius: 24 }}
+                            resizeMode="cover"
+                        >
+                            <PersonalOverlay settings={settings} isMemorialMode={isMemorialMode} isDarkMode={isDarkMode} />
+                        </ImageBackground>
+                    ) : (
+                        <View style={[styles.personalStage, { height: HERO_STAGE_HEIGHT, backgroundColor: bg.cssBackground, borderRadius: 24 }]}>
+                            <PersonalOverlay settings={settings} isMemorialMode={isMemorialMode} isDarkMode={isDarkMode} />
+                        </View>
+                    )}
+                </TouchableOpacity>
+            </View>
+        );
+    }
+
+    // --- 로그인 + 미니미 없음: 쇼케이스 히어로 ---
+    return (
+        <View style={styles.section}>
+            <TouchableOpacity
+                activeOpacity={0.92}
+                onPress={() => router.push("/(tabs)/minihompy")}
+                style={styles.card}
+            >
+                <Image
+                    source={require("@/assets/hero-showcase.jpg")}
+                    style={[styles.showcaseImage, { height: HERO_STAGE_HEIGHT }]}
+                    resizeMode="cover"
+                />
+                {/* 하단 오버레이 — CTA */}
+                <LinearGradient
+                    colors={["transparent", "rgba(0,0,0,0.65)"]}
+                    style={styles.showcaseOverlay}
+                >
+                    <View style={styles.showcaseCtaRow}>
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.showcaseTitle}>나만의 미니홈피</Text>
+                            <Text style={styles.showcaseSub}>미니미를 모으고, 내 공간을 꾸며보세요</Text>
+                        </View>
+                        <View style={styles.showcaseArrow}>
+                            <Ionicons name="arrow-forward" size={18} color="#fff" />
+                        </View>
+                    </View>
+                </LinearGradient>
+            </TouchableOpacity>
+        </View>
+    );
+}
+
+// ============================================================================
+// 개인 미니홈피 오버레이 (배치된 미니미 표시 + 인사말)
+// ============================================================================
+
+function PersonalOverlay({ settings, isMemorialMode, isDarkMode }: {
+    settings: MinihompySettings | null;
+    isMemorialMode: boolean;
+    isDarkMode: boolean;
+}) {
+    const placed = settings?.placedMinimi ?? [];
+    const stageW = SCREEN_WIDTH - 32; // 16px padding each side
+
+    return (
+        <>
+            {/* 배치된 미니미들 */}
+            {placed.map((p, i) => {
+                const minimi = findMinimiOrFallback(p.slug);
+                const left = (p.x / 100) * stageW;
+                const top = (p.y / 100) * HERO_STAGE_HEIGHT;
+                return (
+                    <Image
+                        key={`${p.slug}-${i}`}
+                        source={{ uri: minimi.imageUrl }}
+                        style={[styles.placedMinimi, {
+                            left: Math.max(0, Math.min(left - 20, stageW - 40)),
+                            top: Math.max(0, Math.min(top - 20, HERO_STAGE_HEIGHT - 40)),
+                            zIndex: p.zIndex ?? i,
+                        }]}
+                        resizeMode="contain"
+                    />
+                );
+            })}
+
+            {/* 인사말 말풍선 */}
+            {settings?.greeting && (
+                <View style={styles.greetingBubble}>
+                    <Text style={styles.greetingText}>{settings.greeting}</Text>
+                    <View style={styles.greetingTail} />
+                </View>
+            )}
+
+            {/* 하단 바 — 미니홈피 바로가기 힌트 */}
+            <LinearGradient
+                colors={["transparent", "rgba(0,0,0,0.5)"]}
+                style={styles.personalBottomBar}
+            >
+                <Ionicons name="home" size={14} color="rgba(255,255,255,0.9)" />
+                <Text style={styles.personalHint}>내 미니홈피</Text>
+                <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.7)" />
+            </LinearGradient>
+        </>
+    );
+}
+
+// ============================================================================
+// 기존 히어로 (비로그인 / 로딩 중 폴백)
+// ============================================================================
+
+function OriginalHero({ isMemorialMode, isDarkMode, fontScale, spacingScale, iconScale, onCta, onSecondary, ctaText }: {
+    isMemorialMode: boolean;
+    isDarkMode: boolean;
+    fontScale: number;
+    spacingScale: number;
+    iconScale: number;
+    onCta: () => void;
+    onSecondary: () => void;
+    ctaText?: string;
+}) {
     const gradientColors = isDarkMode
         ? ([COLORS.gray[800], COLORS.gray[800], COLORS.gray[700]] as const)
         : isMemorialMode
@@ -39,7 +217,6 @@ export default function HeroSection({ session, isMemorialMode }: Props) {
         ? [COLORS.memorial[500], "#FB923C"]
         : [COLORS.memento[500], COLORS.memento[400]];
 
-    // 웹 매칭: 추모는 다크모드에서도 memorial-50 유지, 일상만 다크모드에서 white
     const titleColor = isMemorialMode
         ? "#FEF3C7"
         : (isDarkMode ? COLORS.white : COLORS.gray[800]);
@@ -57,11 +234,6 @@ export default function HeroSection({ session, isMemorialMode }: Props) {
         ? require("@/assets/hero-illustration-memorial.png")
         : require("@/assets/hero-illustration.png");
 
-    function handleCta() {
-        if (!session) router.push("/(auth)/login");
-        else router.push("/(tabs)/ai-chat");
-    }
-
     return (
         <View style={styles.section}>
             <LinearGradient
@@ -70,12 +242,10 @@ export default function HeroSection({ session, isMemorialMode }: Props) {
                 end={{ x: 1, y: 1 }}
                 style={styles.card}
             >
-                {/* 배경 장식 원 */}
                 <View style={[styles.decoCircleTop, { backgroundColor: decoTopColor }]} />
                 <View style={[styles.decoCircleBottom, { backgroundColor: decoBottomColor }]} />
 
                 <View style={[styles.content, { padding: 24 * spacingScale }]}>
-                    {/* 일러스트 */}
                     <View style={[styles.illustrationWrap, {
                         width: 240 * spacingScale,
                         height: 240 * spacingScale,
@@ -84,7 +254,6 @@ export default function HeroSection({ session, isMemorialMode }: Props) {
                         <Image source={heroImage} style={styles.illustration} resizeMode="cover" />
                     </View>
 
-                    {/* 카피 */}
                     <Text style={[styles.title, { color: titleColor, fontSize: 26 * fontScale, marginBottom: 10 * spacingScale }]}>
                         특별한 매일을 함께
                     </Text>
@@ -97,9 +266,8 @@ export default function HeroSection({ session, isMemorialMode }: Props) {
                         반려동물과의 소중한 순간을 기록하고,{"\n"}따뜻한 추억으로 간직하세요
                     </Text>
 
-                    {/* CTA */}
                     <View style={[styles.ctaRow, { gap: 12 * spacingScale }]}>
-                        <TouchableOpacity onPress={handleCta} activeOpacity={0.88} style={styles.ctaPrimaryWrap}>
+                        <TouchableOpacity onPress={onCta} activeOpacity={0.88} style={styles.ctaPrimaryWrap}>
                             <LinearGradient
                                 colors={ctaGradient}
                                 start={{ x: 0, y: 0 }}
@@ -111,13 +279,13 @@ export default function HeroSection({ session, isMemorialMode }: Props) {
                                 }]}
                             >
                                 <Text style={[styles.ctaPrimaryText, { fontSize: 15 * fontScale }]}>
-                                    {session ? "지금 만나러 가기" : "시작하기"}
+                                    {ctaText ?? "시작하기"}
                                 </Text>
                             </LinearGradient>
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                            onPress={() => router.push("/(tabs)/community")}
+                            onPress={onSecondary}
                             activeOpacity={0.7}
                             style={[styles.ctaGhost, {
                                 paddingHorizontal: 18 * spacingScale,
@@ -149,6 +317,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.08,
         shadowRadius: 8,
     },
+    // 기존 히어로
     decoCircleTop: {
         position: "absolute",
         top: -40,
@@ -232,5 +401,112 @@ const styles = StyleSheet.create({
     ctaGhostText: {
         fontSize: 15,
         fontWeight: "600",
+    },
+    // 쇼케이스 히어로
+    showcaseImage: {
+        width: "100%",
+        borderRadius: 24,
+    },
+    showcaseOverlay: {
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        borderBottomLeftRadius: 24,
+        borderBottomRightRadius: 24,
+        paddingHorizontal: 20,
+        paddingBottom: 18,
+        paddingTop: 40,
+    },
+    showcaseCtaRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+    },
+    showcaseTitle: {
+        color: "#fff",
+        fontSize: 17,
+        fontWeight: "800",
+        letterSpacing: -0.3,
+    },
+    showcaseSub: {
+        color: "rgba(255,255,255,0.8)",
+        fontSize: 12,
+        marginTop: 3,
+    },
+    showcaseArrow: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: "rgba(255,255,255,0.2)",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    // 개인 미니홈피 프리뷰
+    personalStage: {
+        position: "relative",
+        overflow: "hidden",
+    },
+    placedMinimi: {
+        position: "absolute",
+        width: 40,
+        height: 40,
+    },
+    greetingBubble: {
+        position: "absolute",
+        top: 20,
+        alignSelf: "center",
+        left: 40,
+        right: 40,
+        backgroundColor: "rgba(255,255,255,0.92)",
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 14,
+        alignItems: "center",
+        shadowColor: "#000",
+        shadowOpacity: 0.1,
+        shadowRadius: 6,
+        shadowOffset: { width: 0, height: 2 },
+        elevation: 3,
+        zIndex: 100,
+    },
+    greetingText: {
+        fontSize: 13,
+        fontWeight: "600",
+        color: COLORS.gray[800],
+        textAlign: "center",
+    },
+    greetingTail: {
+        position: "absolute",
+        bottom: -6,
+        alignSelf: "center",
+        width: 0,
+        height: 0,
+        borderLeftWidth: 6,
+        borderRightWidth: 6,
+        borderTopWidth: 7,
+        borderLeftColor: "transparent",
+        borderRightColor: "transparent",
+        borderTopColor: "rgba(255,255,255,0.92)",
+    },
+    personalBottomBar: {
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        paddingHorizontal: 16,
+        paddingBottom: 12,
+        paddingTop: 24,
+        borderBottomLeftRadius: 24,
+        borderBottomRightRadius: 24,
+    },
+    personalHint: {
+        color: "rgba(255,255,255,0.9)",
+        fontSize: 13,
+        fontWeight: "600",
+        flex: 1,
     },
 });
