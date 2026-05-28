@@ -11,7 +11,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Home, ChevronRight } from "lucide-react";
+import { ArrowRight, Home, ChevronRight, X, PawPrint, Star, Palette, Users, Info } from "lucide-react";
 import { TabType, MinihompySettings, PlacedMinimi } from "@/types";
 import type { User } from "@supabase/supabase-js";
 import { authFetch } from "@/lib/auth-fetch";
@@ -70,6 +70,8 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
             window.dispatchEvent(new CustomEvent("navigateRecordSubTab", { detail: "minihompy" }));
         }, 100);
     }, [setSelectedTab]);
+
+    const [guideOpen, setGuideOpen] = useState(false);
 
     const hasMinimi = ownedMinimis.length > 0;
     const hasPlacedMinimi = (settings?.placedMinimi?.length ?? 0) > 0;
@@ -136,7 +138,7 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
     return (
         <section className="px-4 pt-4 sm:pt-6" data-tutorial-id="home-hero">
             <button
-                onClick={goMinihompy}
+                onClick={() => setGuideOpen(true)}
                 className="relative w-full overflow-hidden rounded-3xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer group text-left"
                 style={{ minHeight: 260 }}
             >
@@ -161,7 +163,85 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
                     </div>
                 </div>
             </button>
+
+            {/* 미니홈피 안내 가이드 */}
+            <MinihompyGuideModal
+                open={guideOpen}
+                onClose={() => setGuideOpen(false)}
+                onStart={() => { setGuideOpen(false); goMinihompy(); }}
+            />
         </section>
+    );
+}
+
+// ============================================================================
+// 미니홈피 안내 가이드 모달
+// ============================================================================
+
+const GUIDE_STEPS = [
+    { Icon: PawPrint, title: "미니미 캐릭터", desc: "강아지, 고양이, 햄스터 등 17종의 귀여운 미니미를 수집할 수 있어요." },
+    { Icon: Star, title: "포인트로 구매", desc: "출석(10P), 게시글(10P), 댓글(3P), AI 펫톡(1P) 등 활동하면 포인트가 쌓여요." },
+    { Icon: Palette, title: "내 공간 꾸미기", desc: "배경 테마를 바꾸고, 미니미를 배치하고, 인사말을 설정해보세요." },
+    { Icon: Users, title: "친구 방문 & 방명록", desc: "다른 유저의 미니홈피를 방문하고, 방명록도 남길 수 있어요." },
+] as const;
+
+function MinihompyGuideModal({ open, onClose, onStart }: {
+    open: boolean; onClose: () => void; onStart: () => void;
+}) {
+    if (!open) return null;
+    return (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" onClick={onClose}>
+            {/* 배경 딤 */}
+            <div className="absolute inset-0 bg-black/45 animate-in fade-in" />
+            {/* 시트 */}
+            <div
+                className="relative bg-white dark:bg-gray-800 w-full sm:max-w-md sm:rounded-2xl rounded-t-3xl px-6 pb-8 pt-4 max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-300"
+                onClick={(e) => e.stopPropagation()}
+            >
+                {/* 핸들바 (모바일) */}
+                <div className="flex justify-center mb-2 sm:hidden">
+                    <div className="w-10 h-1 rounded-full bg-gray-200 dark:bg-gray-600" />
+                </div>
+                {/* 닫기 (데스크탑) */}
+                <button onClick={onClose} className="hidden sm:flex absolute top-4 right-4 w-8 h-8 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <X className="w-4 h-4 text-gray-400" />
+                </button>
+
+                <h2 className="text-xl font-extrabold text-gray-800 dark:text-white text-center mt-2 tracking-tight">
+                    미니홈피가 뭔가요?
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-2 mb-5 leading-relaxed">
+                    포인트를 모아 미니미를 수집하고,<br/>나만의 공간을 꾸밀 수 있어요!
+                </p>
+
+                <div className="space-y-3">
+                    {GUIDE_STEPS.map((step, i) => (
+                        <div key={i} className="flex items-start gap-3.5 bg-gray-50 dark:bg-gray-700/50 rounded-2xl p-4">
+                            <div className="w-10 h-10 rounded-xl bg-memento-50 dark:bg-memento-900/30 flex items-center justify-center flex-shrink-0">
+                                <step.Icon className="w-5 h-5 text-memento-500" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-bold text-gray-800 dark:text-white">{step.title}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 leading-relaxed">{step.desc}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="flex items-center justify-center gap-1.5 mt-4 mb-5">
+                    <Info className="w-3.5 h-3.5 text-gray-400" />
+                    <span className="text-xs text-gray-400">미니미 1마리 = 200P, 배경 테마 = 200P</span>
+                </div>
+
+                <button
+                    onClick={onStart}
+                    className="w-full bg-gradient-to-r from-memento-500 to-memento-400 hover:from-memento-600 hover:to-memento-500 text-white font-bold text-[15px] py-4 rounded-2xl flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-95 shadow-[0_4px_16px_-4px_rgba(5,178,220,0.4)]"
+                >
+                    미니홈피 시작하기
+                    <ArrowRight className="w-4 h-4" />
+                </button>
+            </div>
+        </div>
     );
 }
 

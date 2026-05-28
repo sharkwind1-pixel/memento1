@@ -10,7 +10,7 @@
 import { useEffect, useState, useCallback } from "react";
 import {
     View, Text, Image, TouchableOpacity, StyleSheet,
-    ImageBackground, Dimensions,
+    ImageBackground, Dimensions, Modal, ScrollView, Pressable,
 } from "react-native";
 import { useDarkMode } from "@/contexts/ThemeContext";
 import { useSimpleMode } from "@/contexts/SimpleModeContext";
@@ -64,6 +64,8 @@ export default function HeroSection({ session, isMemorialMode }: Props) {
         return () => { cancelled = true; };
     }, [accessToken]);
 
+    const [guideOpen, setGuideOpen] = useState(false);
+
     const hasMinimi = ownedMinimis.length > 0;
     const hasPlacedMinimi = (settings?.placedMinimi?.length ?? 0) > 0;
 
@@ -111,7 +113,7 @@ export default function HeroSection({ session, isMemorialMode }: Props) {
         <View style={styles.section}>
             <TouchableOpacity
                 activeOpacity={0.92}
-                onPress={() => router.push("/(tabs)/minihompy")}
+                onPress={() => setGuideOpen(true)}
                 style={styles.card}
             >
                 <Image
@@ -135,6 +137,16 @@ export default function HeroSection({ session, isMemorialMode }: Props) {
                     </View>
                 </LinearGradient>
             </TouchableOpacity>
+
+            {/* 미니홈피 안내 가이드 모달 */}
+            <MinihompyGuideModal
+                visible={guideOpen}
+                onClose={() => setGuideOpen(false)}
+                onStart={() => {
+                    setGuideOpen(false);
+                    router.push("/(tabs)/minihompy");
+                }}
+            />
         </View>
     );
 }
@@ -192,6 +204,194 @@ function PersonalOverlay({ settings, isMemorialMode, isDarkMode }: {
         </>
     );
 }
+
+// ============================================================================
+// 미니홈피 안내 가이드 모달
+// ============================================================================
+
+const GUIDE_STEPS = [
+    {
+        icon: "paw" as const,
+        title: "미니미 캐릭터",
+        desc: "강아지, 고양이, 햄스터 등 17종의 귀여운 미니미를 수집할 수 있어요.",
+    },
+    {
+        icon: "star" as const,
+        title: "포인트로 구매",
+        desc: "출석(10P), 게시글(10P), 댓글(3P), AI 펫톡(1P) 등 활동하면 포인트가 쌓여요.",
+    },
+    {
+        icon: "color-palette" as const,
+        title: "내 공간 꾸미기",
+        desc: "배경 테마를 바꾸고, 미니미를 배치하고, 인사말을 설정해보세요.",
+    },
+    {
+        icon: "people" as const,
+        title: "친구 방문 & 방명록",
+        desc: "다른 유저의 미니홈피를 방문하고, 방명록도 남길 수 있어요.",
+    },
+];
+
+function MinihompyGuideModal({ visible, onClose, onStart }: {
+    visible: boolean;
+    onClose: () => void;
+    onStart: () => void;
+}) {
+    return (
+        <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+            <Pressable style={guideStyles.backdrop} onPress={onClose}>
+                <Pressable style={guideStyles.sheet} onPress={() => {}}>
+                    {/* 핸들바 */}
+                    <View style={guideStyles.handleRow}>
+                        <View style={guideStyles.handle} />
+                    </View>
+
+                    <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
+                        {/* 헤더 */}
+                        <Text style={guideStyles.title}>미니홈피가 뭔가요?</Text>
+                        <Text style={guideStyles.subtitle}>
+                            포인트를 모아 미니미를 수집하고,{"\n"}나만의 공간을 꾸밀 수 있어요!
+                        </Text>
+
+                        {/* 단계 카드 */}
+                        <View style={guideStyles.stepsWrap}>
+                            {GUIDE_STEPS.map((step, i) => (
+                                <View key={i} style={guideStyles.stepCard}>
+                                    <View style={guideStyles.stepIconWrap}>
+                                        <Ionicons name={step.icon} size={22} color={COLORS.memento[500]} />
+                                    </View>
+                                    <View style={guideStyles.stepTextWrap}>
+                                        <Text style={guideStyles.stepTitle}>{step.title}</Text>
+                                        <Text style={guideStyles.stepDesc}>{step.desc}</Text>
+                                    </View>
+                                </View>
+                            ))}
+                        </View>
+
+                        {/* 미니미 가격 참고 */}
+                        <View style={guideStyles.priceHint}>
+                            <Ionicons name="information-circle-outline" size={16} color={COLORS.gray[400]} />
+                            <Text style={guideStyles.priceHintText}>미니미 1마리 = 200P, 배경 테마 = 200P</Text>
+                        </View>
+                    </ScrollView>
+
+                    {/* CTA */}
+                    <TouchableOpacity activeOpacity={0.88} onPress={onStart}>
+                        <LinearGradient
+                            colors={[COLORS.memento[500], COLORS.memento[400]]}
+                            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                            style={guideStyles.ctaButton}
+                        >
+                            <Text style={guideStyles.ctaText}>미니홈피 시작하기</Text>
+                            <Ionicons name="arrow-forward" size={18} color="#fff" />
+                        </LinearGradient>
+                    </TouchableOpacity>
+                </Pressable>
+            </Pressable>
+        </Modal>
+    );
+}
+
+const guideStyles = StyleSheet.create({
+    backdrop: {
+        flex: 1,
+        backgroundColor: "rgba(0,0,0,0.45)",
+        justifyContent: "flex-end",
+    },
+    sheet: {
+        backgroundColor: "#fff",
+        borderTopLeftRadius: 28,
+        borderTopRightRadius: 28,
+        paddingHorizontal: 24,
+        paddingBottom: 36,
+        maxHeight: "80%",
+    },
+    handleRow: {
+        alignItems: "center",
+        paddingTop: 12,
+        paddingBottom: 8,
+    },
+    handle: {
+        width: 40,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: COLORS.gray[200],
+    },
+    title: {
+        fontSize: 22,
+        fontWeight: "800",
+        color: COLORS.gray[800],
+        textAlign: "center",
+        marginTop: 8,
+        letterSpacing: -0.3,
+    },
+    subtitle: {
+        fontSize: 14,
+        color: COLORS.gray[500],
+        textAlign: "center",
+        lineHeight: 20,
+        marginTop: 8,
+        marginBottom: 20,
+    },
+    stepsWrap: {
+        gap: 12,
+    },
+    stepCard: {
+        flexDirection: "row",
+        backgroundColor: COLORS.gray[50],
+        borderRadius: 16,
+        padding: 16,
+        alignItems: "flex-start",
+        gap: 14,
+    },
+    stepIconWrap: {
+        width: 42,
+        height: 42,
+        borderRadius: 12,
+        backgroundColor: "#E0F7FF",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    stepTextWrap: {
+        flex: 1,
+    },
+    stepTitle: {
+        fontSize: 15,
+        fontWeight: "700",
+        color: COLORS.gray[800],
+        marginBottom: 3,
+    },
+    stepDesc: {
+        fontSize: 13,
+        color: COLORS.gray[500],
+        lineHeight: 18,
+    },
+    priceHint: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 6,
+        marginTop: 16,
+        marginBottom: 20,
+    },
+    priceHintText: {
+        fontSize: 12,
+        color: COLORS.gray[400],
+    },
+    ctaButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+        paddingVertical: 16,
+        borderRadius: 18,
+    },
+    ctaText: {
+        fontSize: 16,
+        fontWeight: "700",
+        color: "#fff",
+    },
+});
 
 // ============================================================================
 // 기존 히어로 (비로그인 / 로딩 중 폴백)
