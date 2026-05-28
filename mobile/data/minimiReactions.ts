@@ -1139,6 +1139,76 @@ const MEMORIAL_DEFAULT: ModeReactions = {
 };
 
 // ============================================================================
+// 햄스터
+// ============================================================================
+
+const DAILY_HAMSTER: ModeReactions = {
+    greeting: [
+        { message: "쪼꼼쪼꼼... 왔구나!", action: "wiggle" },
+        { message: "볼주머니에 간식 숨겨뒀어!", action: "bounce" },
+        { message: "쳇바퀴 한 바퀴 돌고 왔어~", action: "runRight" },
+        { message: "안녕! 오늘도 빙글빙글!", action: "spin" },
+        { message: "까꿍! 숨어있었어!", action: "jump" },
+        { message: "뒹굴뒹굴~ 심심했어!", action: "wiggle" },
+        { message: "해바라기씨 먹을래?", action: "nod" },
+        { message: "냠냠... 아 왔어?", action: "heart" },
+    ],
+    playful: [
+        { message: "볼주머니 빵빵! 만져볼래?", action: "bounce" },
+        { message: "쳇바퀴 같이 돌자~!", action: "spin" },
+        { message: "굴 파는 중이야! 방해 마!", action: "dash" },
+        { message: "간식 더 줘! 숨길 데가 있어!", action: "wiggle" },
+        { message: "뒤로 구르기 할 수 있어! 봐봐!", action: "runLeft" },
+        { message: "손 위에 올려줘~ 따뜻해!", action: "heart" },
+        { message: "이불 속이 최고야~", action: "nod" },
+        { message: "톱밥 위에서 뒹굴뒹굴!", action: "jump" },
+    ],
+    ticklish: [
+        { message: "꾸벅... 졸려...", action: "nod" },
+        { message: "볼주머니 다 비웠어... 피곤...", action: "wiggle" },
+        { message: "이불 속으로... 들어갈래...", action: "star" },
+        { message: "쳇바퀴 그만... 쉴래...", action: "bounce" },
+        { message: "해바라기씨 하나만 더...", action: "heart" },
+        { message: "꾸르르... 자는 중...", action: "spin" },
+        { message: "톱밥 이불 덮고 잘게~", action: "nod" },
+        { message: "내일 또 놀자... 꾸벅", action: "sparkle" },
+    ],
+};
+
+const MEMORIAL_HAMSTER: ModeReactions = {
+    greeting: [
+        { message: "볼주머니에 네 마음 담아뒀어", action: "heart" },
+        { message: "쳇바퀴 위에서 너 기다렸어", action: "nod" },
+        { message: "작지만 따뜻했던 거 알지?", action: "wiggle" },
+        { message: "손바닥 위 온기, 아직 기억나", action: "sparkle" },
+        { message: "해바라기씨 향기에 네가 떠올라", action: "bounce" },
+        { message: "작은 발로 달려가고 싶었어", action: "runRight" },
+        { message: "여기서 빙글빙글 돌고 있을게", action: "spin" },
+        { message: "톱밥 냄새 나면 나를 떠올려줘", action: "star" },
+    ],
+    playful: [
+        { message: "네 손 위가 세상에서 제일 좋았어", action: "heart" },
+        { message: "작은 몸으로 크게 사랑했어", action: "wiggle" },
+        { message: "볼주머니 가득 행복을 담았었어", action: "bounce" },
+        { message: "너랑 보낸 시간이 내 전부야", action: "nod" },
+        { message: "쳇바퀴 소리 들리면 나라고 생각해", action: "spin" },
+        { message: "짧았지만 따뜻했어, 정말로", action: "sparkle" },
+        { message: "작은 발자국도 사랑의 흔적이야", action: "star" },
+        { message: "굴 속에서 행복했어, 네 덕분에", action: "dash" },
+    ],
+    ticklish: [
+        { message: "작아도 네 마음속엔 클 거야", action: "heart" },
+        { message: "볼주머니에 추억 한가득 담아갈게", action: "wiggle" },
+        { message: "무지개다리 쳇바퀴도 잘 돌아가", action: "spin" },
+        { message: "여기서 해바라기씨 먹으며 기다릴게", action: "nod" },
+        { message: "다시 만나면 네 손 위로 올라갈게", action: "jump" },
+        { message: "작은 심장으로 크게 뛰었어", action: "bounce" },
+        { message: "우리 다시 만나면 빙글빙글 돌자", action: "star" },
+        { message: "여기서도 뒹굴뒹굴하고 있을게", action: "sparkle" },
+    ],
+};
+
+// ============================================================================
 // Export
 // ============================================================================
 
@@ -1162,6 +1232,7 @@ export const REACTIONS_BY_TYPE: Record<string, ReactionsByMode> = {
     bengal:          { daily: DAILY_BENGAL,        memorial: MEMORIAL_BENGAL },
     munchkin:        { daily: DAILY_MUNCHKIN,      memorial: MEMORIAL_MUNCHKIN },
     korean_shorthair:{ daily: DAILY_KOREAN_SHORTHAIR, memorial: MEMORIAL_KOREAN_SHORTHAIR },
+    hamster:         { daily: DAILY_HAMSTER,          memorial: MEMORIAL_HAMSTER },
 };
 
 export const REACTIONS_DEFAULT: ReactionsByMode = {

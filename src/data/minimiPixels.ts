@@ -152,4 +152,14 @@ export const CHARACTER_CATALOG = [
         imageAspect: 1,
         footPadding: 0.02,
     },
+    {
+        slug: "hamster",
+        name: "햄스터",
+        category: "other" as const,
+        imageUrl: "/icons/minimi/hamster.png?v=11",
+        price: 200,
+        description: "볼주머니 빵빵한 귀여운 햄스터",
+        imageAspect: 1,
+        footPadding: 0.02,
+    },
 ] as const;

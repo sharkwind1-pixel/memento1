@@ -282,7 +282,7 @@ export type AdminTab =
 // 9.5 미니홈피 / 미니미
 // ============================================
 
-export type MinimiCategory = "dog" | "cat";
+export type MinimiCategory = "dog" | "cat" | "other";
 
 export interface MinimiCharacter {
     slug: string;
