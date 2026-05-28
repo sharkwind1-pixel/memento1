@@ -17,7 +17,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useMemorialMode } from "@/contexts/PetContext";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
-import { MINIHOMPY } from "@/config/constants";
 import type { MinihompySettings, GuestbookEntry, PlacedMinimi } from "@/types";
 import { CHARACTER_CATALOG } from "@/data/minimiPixels";
 import MinihompyStage from "./MinihompyStage";
@@ -201,10 +200,6 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
 
     // 보관함에서 미니미 꺼내 배치
     const handleAddMinimi = (slug: string) => {
-        if (editPlaced.length >= MINIHOMPY.MAX_PLACED_MINIMI) {
-            toast.error(`최대 ${MINIHOMPY.MAX_PLACED_MINIMI}마리까지 배치할 수 있습니다`);
-            return;
-        }
         const newItem: PlacedMinimi = {
             slug,
             x: 50,
@@ -313,7 +308,6 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
                     placedMinimi={editPlaced}
                     loading={loadingOwned}
                     onSelect={handleAddMinimi}
-                    maxPlaced={MINIHOMPY.MAX_PLACED_MINIMI}
                 />
             )}
 
@@ -467,17 +461,14 @@ function StorageTray({
     placedMinimi,
     loading,
     onSelect,
-    maxPlaced,
 }: {
     ownedMinimis: OwnedChar[];
     placedMinimi: PlacedMinimi[];
     loading: boolean;
     onSelect: (slug: string) => void;
-    maxPlaced: number;
 }) {
     const placedSlugs = new Set(placedMinimi.map(p => p.slug));
     const available = ownedMinimis.filter(o => !placedSlugs.has(o.slug));
-    const isFull = placedMinimi.length >= maxPlaced;
 
     return (
         <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border-0 shadow-lg p-3">
@@ -508,14 +499,11 @@ function StorageTray({
                     {available.map((char) => (
                         <button
                             key={char.slug}
-                            onClick={() => !isFull && onSelect(char.slug)}
-                            disabled={isFull}
+                            onClick={() => onSelect(char.slug)}
                             className={cn(
                                 "flex-shrink-0 flex flex-col items-center gap-1 p-2 rounded-xl",
                                 "bg-gray-50 dark:bg-gray-700/50",
-                                isFull
-                                    ? "opacity-40 cursor-not-allowed"
-                                    : "hover:bg-memento-200 dark:hover:bg-memento-900/20 active:scale-95",
+                                "hover:bg-memento-200 dark:hover:bg-memento-900/20 active:scale-95",
                                 "border border-transparent hover:border-memento-300 dark:hover:border-memento-600",
                                 "transition-all"
                             )}
@@ -529,11 +517,9 @@ function StorageTray({
                                     className="object-contain"
                                     style={{ imageRendering: "pixelated" }}
                                 />
-                                {!isFull && (
-                                    <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-memento-500 rounded-full flex items-center justify-center">
-                                        <Plus className="w-2.5 h-2.5 text-white" />
-                                    </div>
-                                )}
+                                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-memento-500 rounded-full flex items-center justify-center">
+                                    <Plus className="w-2.5 h-2.5 text-white" />
+                                </div>
                             </div>
                             <span className="text-[10px] text-gray-600 dark:text-gray-300 truncate w-full text-center">
                                 {char.name}

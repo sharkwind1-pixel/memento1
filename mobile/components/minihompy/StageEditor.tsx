@@ -32,7 +32,7 @@ import type { PlacedMinimi, BackgroundTheme, UserMinimiRow } from "@/types";
 const MINIMI_SIZE = 40;
 // 편집 모드 hit area 확장 (작은 미니미 손가락으로 잡기 쉽게)
 const HIT_PADDING = 20;
-const MAX_PLACED = 10;
+// 배치 제한 없음 (보유한 만큼 자유 배치)
 
 interface Props {
     stageHeight: number;
@@ -144,10 +144,6 @@ export default function StageEditor({
     }
 
     function addMinimi() {
-        if (working.length >= MAX_PLACED) {
-            Alert.alert("배치 한도", `최대 ${MAX_PLACED}마리까지 배치할 수 있어요.`);
-            return;
-        }
         if (ownedSlugs.length === 0) {
             Alert.alert(
                 "보유 미니미 없음",
@@ -269,7 +265,7 @@ export default function StageEditor({
                         >
                             <Ionicons name="add" size={16} color={accentColor} />
                             <Text style={[styles.btnSecondaryText, { color: accentColor }]}>
-                                추가 ({working.length}/{MAX_PLACED})
+                                추가 ({working.length})
                             </Text>
                         </TouchableOpacity>
                         <TouchableOpacity
@@ -296,7 +292,7 @@ export default function StageEditor({
                     >
                         <Ionicons name="move" size={16} color={accentColor} />
                         <Text style={[styles.btnSecondaryText, { color: accentColor }]}>
-                            미니미 자유 배치 ({placedMinimi.length}/{MAX_PLACED})
+                            미니미 자유 배치 ({placedMinimi.length})
                         </Text>
                     </TouchableOpacity>
                 )}

@@ -25,7 +25,7 @@ import {
 } from "@/lib/minihompy-api";
 import type { MinimiCatalogItem, UserMinimiRow } from "@/types";
 
-type CategoryFilter = "all" | "owned" | "dog" | "cat";
+type CategoryFilter = "all" | "owned" | "dog" | "cat" | "other";
 
 interface Props {
     visible: boolean;
@@ -283,7 +283,7 @@ export default function MinimiShopModal({
 
                 {/* 카테고리 필터 */}
                 <View style={[styles.filterRow, { backgroundColor: headerBg, borderBottomColor: headerBorder }]}>
-                    {(["all", "owned", "dog", "cat"] as CategoryFilter[]).map((c) => {
+                    {(["all", "owned", "dog", "cat", "other"] as CategoryFilter[]).map((c) => {
                         const ownedCount = ownedSlugs.size;
                         return (
                             <TouchableOpacity
@@ -303,7 +303,8 @@ export default function MinimiShopModal({
                                     {c === "all" ? "전체"
                                         : c === "owned" ? `보관함 (${ownedCount})`
                                         : c === "dog" ? "강아지"
-                                        : "고양이"}
+                                        : c === "cat" ? "고양이"
+                                        : "기타"}
                                 </Text>
                             </TouchableOpacity>
                         );

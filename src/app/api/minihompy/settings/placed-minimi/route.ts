@@ -40,14 +40,6 @@ export async function PUT(request: NextRequest) {
             return NextResponse.json({ error: "잘못된 요청입니다" }, { status: 400 });
         }
 
-        // 최대 배치 수 제한
-        if (placedMinimi.length > MINIHOMPY.MAX_PLACED_MINIMI) {
-            return NextResponse.json(
-                { error: `최대 ${MINIHOMPY.MAX_PLACED_MINIMI}마리까지 배치할 수 있습니다` },
-                { status: 400 }
-            );
-        }
-
         // 각 아이템 검증
         for (const item of placedMinimi) {
             if (
