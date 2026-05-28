@@ -172,4 +172,14 @@ export const CHARACTER_CATALOG = [
         imageAspect: 1,
         footPadding: 0.02,
     },
+    {
+        slug: "parrot",
+        name: "앵무새",
+        category: "other" as const,
+        imageUrl: "/icons/minimi/parrot.png?v=11",
+        price: 200,
+        description: "수다쟁이 초록 앵무새",
+        imageAspect: 1,
+        footPadding: 0.02,
+    },
 ] as const;

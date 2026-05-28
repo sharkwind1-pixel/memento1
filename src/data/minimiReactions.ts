@@ -1272,6 +1272,76 @@ const MEMORIAL_GECKO: ModeReactions = {
 };
 
 // ============================================================================
+// 앵무새
+// ============================================================================
+
+const DAILY_PARROT: ModeReactions = {
+    greeting: [
+        { message: "안녕! 안녕! 안녕!", action: "bounce" },
+        { message: "삐약! 왔구나!", action: "jump" },
+        { message: "머리 긁어줘~ 여기여기!", action: "wiggle" },
+        { message: "노래 들려줄까? 삐요삐요~", action: "spin" },
+        { message: "어깨 위에 올라갈래!", action: "runRight" },
+        { message: "간식! 간식! 해바라기씨!", action: "dash" },
+        { message: "깃털 예쁘지? 초록이야!", action: "sparkle" },
+        { message: "따라해봐~ 안녕!", action: "heart" },
+    ],
+    playful: [
+        { message: "머리 위에 착지! 성공!", action: "jump" },
+        { message: "노래 배웠어! 들어볼래?", action: "spin" },
+        { message: "날개 펄럭! 바람 느껴져?", action: "dash" },
+        { message: "뽀뽀! 쪽~!", action: "heart" },
+        { message: "숨바꼭질! 커튼 뒤에 있었어!", action: "wiggle" },
+        { message: "발로 간식 잡는 거 봤어?", action: "bounce" },
+        { message: "거울 속 친구랑 놀고 있었어!", action: "star" },
+        { message: "삐약삐약! 신났어!", action: "runLeft" },
+    ],
+    ticklish: [
+        { message: "푸드득... 졸려...", action: "nod" },
+        { message: "깃털 속에 머리 넣을게...", action: "wiggle" },
+        { message: "횃대 위에서 잘게...", action: "star" },
+        { message: "한쪽 발로 서서 자는 거야...", action: "bounce" },
+        { message: "꾸욱... 눈 감을게...", action: "heart" },
+        { message: "내일 또 노래해줄게...", action: "nod" },
+        { message: "깃털 부풀리고 잘 거야~", action: "sparkle" },
+        { message: "삐...요... zzz", action: "spin" },
+    ],
+};
+
+const MEMORIAL_PARROT: ModeReactions = {
+    greeting: [
+        { message: "네 목소리를 제일 잘 따라했었어", action: "heart" },
+        { message: "어깨 위가 세상에서 제일 좋았어", action: "nod" },
+        { message: "불러줬던 노래 아직 기억해", action: "sparkle" },
+        { message: "이름 불러주면 항상 대답했잖아", action: "wiggle" },
+        { message: "깃털 색이 네 옷에 묻었었지", action: "bounce" },
+        { message: "창밖 보면서 네 발소리 기다렸어", action: "star" },
+        { message: "머리 긁어줄 때가 제일 행복했어", action: "runRight" },
+        { message: "삐약 한 번이 사랑한다는 뜻이었어", action: "heart" },
+    ],
+    playful: [
+        { message: "네 어깨에서 본 세상이 전부였어", action: "nod" },
+        { message: "따라한 건 목소리만이 아니었어", action: "heart" },
+        { message: "노래로 고마움을 전하고 싶었어", action: "sparkle" },
+        { message: "작은 새장이 넓게 느껴졌던 건 네 덕분", action: "wiggle" },
+        { message: "깃털 하나 남겨놓고 싶었어", action: "star" },
+        { message: "시끄럽게 굴어서 미안해, 외로워서 그랬어", action: "bounce" },
+        { message: "간식보다 네 손이 더 좋았어", action: "dash" },
+        { message: "아침마다 깨워줬던 게 그리울 거야", action: "spin" },
+    ],
+    ticklish: [
+        { message: "여기서도 네 이름 부르고 있어", action: "heart" },
+        { message: "무지개 깃털로 날아왔어", action: "sparkle" },
+        { message: "여기선 맘껏 날 수 있어", action: "jump" },
+        { message: "다시 만나면 어깨 위로 갈게", action: "wiggle" },
+        { message: "네 노래 여기서도 따라 부를게", action: "spin" },
+        { message: "하늘에서 삐약 들리면 나야", action: "bounce" },
+        { message: "초록 깃털 떨어지면 인사하는 거야", action: "star" },
+        { message: "기다릴게, 노래하면서", action: "nod" },
+    ],
+};
+
+// ============================================================================
 // Export
 // ============================================================================
 
@@ -1297,6 +1367,7 @@ export const REACTIONS_BY_TYPE: Record<string, ReactionsByMode> = {
     korean_shorthair:{ daily: DAILY_KOREAN_SHORTHAIR, memorial: MEMORIAL_KOREAN_SHORTHAIR },
     hamster:         { daily: DAILY_HAMSTER,          memorial: MEMORIAL_HAMSTER },
     gecko:           { daily: DAILY_GECKO,            memorial: MEMORIAL_GECKO },
+    parrot:          { daily: DAILY_PARROT,           memorial: MEMORIAL_PARROT },
 };
 
 export const REACTIONS_DEFAULT: ReactionsByMode = {
