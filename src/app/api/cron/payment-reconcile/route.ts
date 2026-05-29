@@ -88,12 +88,56 @@ export async function GET(request: NextRequest) {
     const reconciledIds: string[] = [];
 
     for (const row of rows) {
-        const impUid = typeof row.metadata?.imp_uid === "string" ? row.metadata.imp_uid : "";
+        let impUid = typeof row.metadata?.imp_uid === "string" ? row.metadata.imp_uid : "";
         if (!impUid) {
-            // metadata.imp_uid가 없는 row는 포트원 재조회 불가 → 수동 조사 필요.
-            // 신규 결제 파이프라인은 imp_uid를 항상 저장하지만, 구형/마이그레이션 누락 row 가능.
-            missingImpUid++;
-            continue;
+            // 이미 조사 완료된 row는 재알림 방지
+            if (row.metadata?.reconcile_imp_uid_resolved) continue;
+
+            // merchant_uid로 포트원 조회 시도 (imp_uid 복구)
+            const merchantUid = row.merchant_uid;
+            if (merchantUid) {
+                try {
+                    const r = await fetch(
+                        `https://api.iamport.kr/payments/find/${encodeURIComponent(merchantUid)}`,
+                        { headers: { Authorization: token }, cache: "no-store" },
+                    );
+                    const d = await r.json();
+                    if (d.code === 0 && d.response?.imp_uid) {
+                        // imp_uid 복구 성공 → metadata에 저장
+                        impUid = d.response.imp_uid as string;
+                        await supabase
+                            .from("payments")
+                            .update({
+                                metadata: {
+                                    ...(row.metadata || {}),
+                                    imp_uid: impUid,
+                                    reconcile_imp_uid_resolved: new Date().toISOString(),
+                                    reconcile_source: "cron_merchant_uid_lookup",
+                                },
+                            })
+                            .eq("id", row.id);
+                        // imp_uid 복구됐으니 아래 정상 재검증 로직으로 진행
+                    }
+                } catch {
+                    // merchant_uid 조회 실패 — 아래 플래그 처리로
+                }
+            }
+
+            if (!impUid) {
+                // 복구 실패 → 플래그 마킹 (다음 실행 시 스킵, 1회만 알림)
+                await supabase
+                    .from("payments")
+                    .update({
+                        metadata: {
+                            ...(row.metadata || {}),
+                            reconcile_imp_uid_resolved: "manual_investigation_needed",
+                            reconcile_flagged_at: new Date().toISOString(),
+                        },
+                    })
+                    .eq("id", row.id);
+                missingImpUid++;
+                continue;
+            }
         }
 
         try {
