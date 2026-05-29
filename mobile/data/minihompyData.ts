@@ -58,6 +58,7 @@ export function findMinimiOrFallback(slug: string): MinimiCharacter {
 
 export const BACKGROUND_CATALOG: BackgroundTheme[] = [
     { id: "bg_default_sky",      slug: "default_sky",      name: "기본 배경",      category: "nature",  price: 0,   description: "",                                                cssBackground: "#F8FAFC" },
+    { id: "bg_room_default",     slug: "room_default",     name: "기본 방",        category: "room",    price: 0,   description: "아무것도 없는 빈 방. 가구와 소품으로 꾸며보세요!", cssBackground: "#B8C8D8", imageUrl: abs("/icons/stages/room_default.jpg") },
     { id: "bg_cherry_hangang",   slug: "cherry_hangang",   name: "벚꽃 한강공원",  category: "season",  price: 200, description: "돗자리 깔고 벚꽃 구경하는 한강",                  cssBackground: "#FFB7C5", imageUrl: abs("/icons/stages/cherry_hangang.jpg") },
     { id: "bg_cherry_garden",    slug: "cherry_garden",    name: "벚꽃 정원",      category: "season",  price: 200, description: "등불과 빨간 다리가 있는 벚꽃 정원",               cssBackground: "#FFC0CB", imageUrl: abs("/icons/stages/cherry_garden.jpg") },
     { id: "bg_summer_beach",     slug: "summer_beach",     name: "여름 해변",      category: "nature",  price: 200, description: "야자수와 파도가 있는 열대 해변",                  cssBackground: "#00CED1", imageUrl: abs("/icons/stages/summer_beach.jpg") },

@@ -310,7 +310,7 @@ export interface UserMinimiRow {
     purchase_price?: number;
 }
 
-export type BackgroundCategory = "nature" | "season" | "special";
+export type BackgroundCategory = "nature" | "season" | "special" | "room";
 
 export interface BackgroundTheme {
     id: string;

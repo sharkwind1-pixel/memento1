@@ -21,6 +21,19 @@ export const BACKGROUND_CATALOG: BackgroundTheme[] = [
         cssBackground: "linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%)",
     },
     // ============================================
+    // 기본 방 (무료) — 빈 방 터, 가구 배치용
+    // ============================================
+    {
+        id: "bg_room_default",
+        slug: "room_default",
+        name: "기본 방",
+        category: "room",
+        price: 0,
+        description: "아무것도 없는 빈 방. 가구와 소품으로 꾸며보세요!",
+        cssBackground: "#B8C8D8",
+        imageUrl: "/icons/stages/room_default.jpg",
+    },
+    // ============================================
     // 픽셀아트 이미지 배경 (8종, 200포인트 통일)
     // ============================================
     {

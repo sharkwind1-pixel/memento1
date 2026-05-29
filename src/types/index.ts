@@ -744,7 +744,7 @@ export interface MinimiEquipState {
 // ============================================
 
 /** 미니홈피 배경 테마 카테고리 */
-export type BackgroundCategory = "nature" | "sky" | "season" | "special";
+export type BackgroundCategory = "nature" | "sky" | "season" | "special" | "room";
 
 /** 미니홈피 배경 테마 */
 export interface BackgroundTheme {
