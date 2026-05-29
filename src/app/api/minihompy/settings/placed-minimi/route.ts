@@ -1,12 +1,11 @@
 /**
- * 미니홈피 미니미 배치 API
- * PUT: 스테이지에 배치된 미니미 배열 저장
+ * 미니홈피 아이템 배치 API
+ * PUT: 스테이지에 배치된 미니미 + 가구 배열 저장
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
 import { getClientIP, checkRateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
-import { MINIHOMPY } from "@/config/constants";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +14,7 @@ interface PlacedMinimiItem {
     x: number;
     y: number;
     zIndex: number;
+    type?: "minimi" | "furniture";
 }
 
 export async function PUT(request: NextRequest) {
@@ -53,30 +53,59 @@ export async function PUT(request: NextRequest) {
 
         const supabase = await createServerSupabase();
 
-        // 보유 캐릭터 목록 확인
-        const { data: owned } = await supabase
+        // 아이템을 타입별로 분류
+        const minimiItems = placedMinimi.filter((i: PlacedMinimiItem) => !i.type || i.type === "minimi");
+        const furnitureItems = placedMinimi.filter((i: PlacedMinimiItem) => i.type === "furniture");
+
+        // 보유 미니미 수량 집계
+        const { data: ownedMinimi } = await supabase
             .from("user_minimi")
             .select("minimi_id")
             .eq("user_id", user.id);
 
-        // 보유 수량 집계 (중복 구매 허용 → slug별 보유 개수만큼만 배치 가능)
-        const ownedCounts: Record<string, number> = {};
-        for (const o of (owned || [])) {
-            ownedCounts[o.minimi_id] = (ownedCounts[o.minimi_id] ?? 0) + 1;
+        const minimiCounts: Record<string, number> = {};
+        for (const o of (ownedMinimi || [])) {
+            minimiCounts[o.minimi_id] = (minimiCounts[o.minimi_id] ?? 0) + 1;
+        }
+
+        // 보유 가구 수량 집계
+        const { data: ownedFurniture } = await supabase
+            .from("user_furniture")
+            .select("furniture_id")
+            .eq("user_id", user.id);
+
+        const furnitureCounts: Record<string, number> = {};
+        for (const o of (ownedFurniture || [])) {
+            furnitureCounts[o.furniture_id] = (furnitureCounts[o.furniture_id] ?? 0) + 1;
         }
 
         const sanitized: PlacedMinimiItem[] = [];
-        const placedCounts: Record<string, number> = {};
-        for (const item of placedMinimi) {
-            placedCounts[item.slug] = (placedCounts[item.slug] ?? 0) + 1;
-            if ((ownedCounts[item.slug] ?? 0) < placedCounts[item.slug]) {
-                continue; // 보유 수량 초과 배치 차단
-            }
+
+        // 미니미 배치 검증
+        const minimiPlacedCounts: Record<string, number> = {};
+        for (const item of minimiItems) {
+            minimiPlacedCounts[item.slug] = (minimiPlacedCounts[item.slug] ?? 0) + 1;
+            if ((minimiCounts[item.slug] ?? 0) < minimiPlacedCounts[item.slug]) continue;
             sanitized.push({
                 slug: item.slug,
                 x: Math.max(5, Math.min(95, item.x)),
                 y: Math.max(10, Math.min(85, item.y)),
                 zIndex: item.zIndex,
+                ...(item.type ? { type: item.type } : {}),
+            });
+        }
+
+        // 가구 배치 검증
+        const furniturePlacedCounts: Record<string, number> = {};
+        for (const item of furnitureItems) {
+            furniturePlacedCounts[item.slug] = (furniturePlacedCounts[item.slug] ?? 0) + 1;
+            if ((furnitureCounts[item.slug] ?? 0) < furniturePlacedCounts[item.slug]) continue;
+            sanitized.push({
+                slug: item.slug,
+                x: Math.max(5, Math.min(95, item.x)),
+                y: Math.max(10, Math.min(85, item.y)),
+                zIndex: item.zIndex,
+                type: "furniture",
             });
         }
 

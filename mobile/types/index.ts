@@ -333,12 +333,36 @@ export interface MinihompySettings {
     placedMinimi?: PlacedMinimi[];
 }
 
-/** 스테이지에 자유 배치된 미니미 (x/y는 5~95 범위 %) */
+/** 스테이지에 자유 배치된 아이템 (미니미 또는 가구, x/y는 5~95 범위 %) */
 export interface PlacedMinimi {
     slug: string;
     x: number;
     y: number;
     zIndex: number;
+    type?: "minimi" | "furniture";
+}
+
+/** 가구 카테고리 */
+export type FurnitureCategory = "wallpaper" | "flooring" | "window" | "furniture" | "accessory";
+
+/** 가구 카탈로그 아이템 */
+export interface FurnitureItem {
+    slug: string;
+    name: string;
+    category: FurnitureCategory;
+    imageUrl: string;
+    price: number;
+    description?: string;
+    stageWidth?: number;
+    stageHeight?: number;
+}
+
+/** 유저 보유 가구 (DB row) */
+export interface UserFurnitureRow {
+    id: string;
+    furniture_id: string;
+    purchased_at?: string;
+    purchase_price?: number;
 }
 
 export interface GuestbookEntry {

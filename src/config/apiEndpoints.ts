@@ -59,6 +59,10 @@ export const API = {
     MINIMI_EQUIP: "/api/minimi/equip",
     MINIMI_SELL: "/api/minimi/sell",
 
+    // 가구/소품
+    FURNITURE_PURCHASE: "/api/furniture/purchase",
+    FURNITURE_INVENTORY: "/api/furniture/inventory",
+
     // 미니홈피
     MINIHOMPY_SETTINGS: "/api/minihompy/settings",
     MINIHOMPY_VIEW: (userId: string) => `/api/minihompy/${userId}`,
