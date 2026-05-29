@@ -11,17 +11,58 @@ import type { FurnitureItem, FurnitureCategory } from "@/types";
 // ============================================
 
 export const FURNITURE_CATALOG: FurnitureItem[] = [
-    // 예시 구조 (이미지 준비되면 활성화):
-    // {
-    //     slug: "pet_bed_basic",
-    //     name: "기본 방석",
-    //     category: "furniture",
-    //     imageUrl: "/icons/furniture/pet_bed_basic.png",
-    //     price: 150,
-    //     description: "포근한 반려동물 방석",
-    //     stageWidth: 70,
-    //     stageHeight: 50,
-    // },
+    // -- 소품 (accessory) --
+    {
+        slug: "pet_bowl",
+        name: "밥그릇 세트",
+        category: "accessory",
+        imageUrl: "/icons/furniture/pet_bowl.png",
+        price: 60,
+        description: "귀여운 밥그릇과 물그릇 세트",
+        stageWidth: 50,
+        stageHeight: 40,
+    },
+    // -- 가구 (furniture) --
+    {
+        slug: "pet_bed_round",
+        name: "동글 방석",
+        category: "furniture",
+        imageUrl: "/icons/furniture/pet_bed_round.png",
+        price: 120,
+        description: "포근한 도넛 모양 방석",
+        stageWidth: 70,
+        stageHeight: 55,
+    },
+    {
+        slug: "pet_cushion_flat",
+        name: "납작 쿠션",
+        category: "furniture",
+        imageUrl: "/icons/furniture/pet_cushion_flat.png",
+        price: 100,
+        description: "넓적한 사각 쿠션",
+        stageWidth: 65,
+        stageHeight: 45,
+    },
+    {
+        slug: "cat_tower",
+        name: "캣타워",
+        category: "furniture",
+        imageUrl: "/icons/furniture/cat_tower.png",
+        price: 180,
+        description: "높이 올라갈 수 있는 캣타워",
+        stageWidth: 55,
+        stageHeight: 80,
+    },
+    {
+        slug: "dog_house",
+        name: "강아지집",
+        category: "furniture",
+        imageUrl: "/icons/furniture/dog_house.png",
+        price: 150,
+        description: "아늑한 강아지 하우스",
+        stageWidth: 75,
+        stageHeight: 65,
+    },
 ];
 
 /** 카테고리 한글 라벨 */

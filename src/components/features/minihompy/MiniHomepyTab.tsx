@@ -12,20 +12,28 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Loader2, MessageSquare, Trash2, ChevronDown, Archive, Plus, ShoppingBag } from "lucide-react";
+import { Loader2, MessageSquare, Trash2, ChevronDown, Archive, Plus, ShoppingBag, Armchair } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMemorialMode } from "@/contexts/PetContext";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
 import type { MinihompySettings, GuestbookEntry, PlacedMinimi } from "@/types";
 import { CHARACTER_CATALOG } from "@/data/minimiPixels";
+import { FURNITURE_CATALOG } from "@/data/furnitureCatalog";
 import MinihompyStage from "./MinihompyStage";
 import MinihompySettingsSection from "./MinihompySettingsSection";
 import MinimiCollection from "./MinimiCollection";
 import MinimiShopModal from "@/components/features/minimi/MinimiShopModal";
+import FurnitureShopModal from "./FurnitureShopModal";
 import Image from "next/image";
 
 interface OwnedChar {
+    slug: string;
+    name: string;
+    imageUrl: string;
+}
+
+interface OwnedFurniture {
     slug: string;
     name: string;
     imageUrl: string;
@@ -51,9 +59,15 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
     const [ownedMinimis, setOwnedMinimis] = useState<OwnedChar[]>([]);
     const [loadingOwned, setLoadingOwned] = useState(false);
 
+    // 보유 가구 목록
+    const [ownedFurniture, setOwnedFurniture] = useState<OwnedFurniture[]>([]);
+
     // 미니미 상점 모달 (도감/스테이지에서 진입)
     const [shopOpen, setShopOpen] = useState(false);
     const [shopInitialSlug, setShopInitialSlug] = useState<string | undefined>();
+
+    // 가구 상점 모달
+    const [furnitureShopOpen, setFurnitureShopOpen] = useState(false);
 
     const openShop = useCallback((initialSlug?: string) => {
         setShopInitialSlug(initialSlug);
@@ -97,6 +111,25 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
             // ignore
         } finally {
             setLoadingOwned(false);
+        }
+    }, []);
+
+    // 보유 가구 로드
+    const loadOwnedFurniture = useCallback(async () => {
+        try {
+            const res = await authFetch(API.FURNITURE_INVENTORY);
+            if (!res.ok) return;
+            const data = await res.json();
+            const items: OwnedFurniture[] = (data.items || [])
+                .map((row: { furniture_id: string }) => {
+                    const catalog = FURNITURE_CATALOG.find(f => f.slug === row.furniture_id);
+                    if (!catalog) return null;
+                    return { slug: catalog.slug, name: catalog.name, imageUrl: catalog.imageUrl };
+                })
+                .filter(Boolean) as OwnedFurniture[];
+            setOwnedFurniture(items);
+        } catch {
+            // ignore
         }
     }, []);
 
@@ -165,6 +198,7 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
         setEditPlaced(initial);
         setEditMode(true);
         loadOwnedMinimis();
+        loadOwnedFurniture();
     };
 
     // 편집모드 종료 + 저장
@@ -198,13 +232,14 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
         setEditPlaced([]);
     };
 
-    // 보관함에서 미니미 꺼내 배치
-    const handleAddMinimi = (slug: string) => {
+    // 보관함에서 아이템 꺼내 배치 (미니미 또는 가구)
+    const handleAddItem = (slug: string, type?: "minimi" | "furniture") => {
         const newItem: PlacedMinimi = {
             slug,
             x: 50,
             y: 50,
             zIndex: editPlaced.length + 1,
+            ...(type === "furniture" ? { type: "furniture" as const } : {}),
         };
         setEditPlaced(prev => [...prev, newItem]);
     };
@@ -286,28 +321,37 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
                 saving={saving}
             />
 
-            {/* 스테이지 바로 아래 "미니미 상점" 바로가기 — 치타 피드백:
-                "이 화면에서 구매하기 기능이 있는 줄 알고 한참 찾았어".
-                편집모드에선 보관함 트레이와 겹치므로 숨김. */}
+            {/* 스테이지 바로 아래 상점 바로가기 (편집모드에선 숨김) */}
             {!editMode && (
-                <button
-                    type="button"
-                    onClick={() => openShop()}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 text-white font-semibold shadow-md hover:shadow-lg active:scale-[0.99] transition-all"
-                >
-                    <ShoppingBag className="w-5 h-5" />
-                    <span>미니미 상점</span>
-                    <span className="text-white/80 text-xs font-normal">새 캐릭터 구매하기</span>
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        type="button"
+                        onClick={() => openShop()}
+                        className="flex-1 flex items-center justify-center gap-2 px-3 py-3 rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 text-white font-semibold shadow-md hover:shadow-lg active:scale-[0.99] transition-all"
+                    >
+                        <ShoppingBag className="w-5 h-5" />
+                        <span className="text-sm">미니미 상점</span>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setFurnitureShopOpen(true)}
+                        className="flex-1 flex items-center justify-center gap-2 px-3 py-3 rounded-2xl bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400 text-white font-semibold shadow-md hover:shadow-lg active:scale-[0.99] transition-all"
+                    >
+                        <Armchair className="w-5 h-5" />
+                        <span className="text-sm">가구 상점</span>
+                    </button>
+                </div>
             )}
 
-            {/* 편집모드: 인라인 보관함 트레이 */}
+            {/* 편집모드: 인라인 보관함 트레이 (미니미 + 가구 탭) */}
             {editMode && (
                 <StorageTray
                     ownedMinimis={ownedMinimis}
+                    ownedFurniture={ownedFurniture}
                     placedMinimi={editPlaced}
                     loading={loadingOwned}
-                    onSelect={handleAddMinimi}
+                    onSelectMinimi={(slug) => handleAddItem(slug)}
+                    onSelectFurniture={(slug) => handleAddItem(slug, "furniture")}
                 />
             )}
 
@@ -329,6 +373,15 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
                 initialSlug={shopInitialSlug}
                 onPurchased={() => {
                     loadOwnedMinimis();
+                }}
+            />
+
+            {/* 가구 상점 모달 */}
+            <FurnitureShopModal
+                isOpen={furnitureShopOpen}
+                onClose={() => setFurnitureShopOpen(false)}
+                onPurchased={() => {
+                    loadOwnedFurniture();
                 }}
             />
 
@@ -455,30 +508,84 @@ function GuestbookItem({
     );
 }
 
-/** 보관함 트레이 - 편집모드에서 스테이지 바로 아래에 표시 */
+/** 보관함 트레이 - 편집모드에서 스테이지 바로 아래에 표시 (미니미 + 가구 탭) */
 function StorageTray({
     ownedMinimis,
+    ownedFurniture,
     placedMinimi,
     loading,
-    onSelect,
+    onSelectMinimi,
+    onSelectFurniture,
 }: {
     ownedMinimis: OwnedChar[];
+    ownedFurniture: OwnedFurniture[];
     placedMinimi: PlacedMinimi[];
     loading: boolean;
-    onSelect: (slug: string) => void;
+    onSelectMinimi: (slug: string) => void;
+    onSelectFurniture: (slug: string) => void;
 }) {
-    const placedSlugs = new Set(placedMinimi.map(p => p.slug));
-    const available = ownedMinimis.filter(o => !placedSlugs.has(o.slug));
+    const [tab, setTab] = useState<"minimi" | "furniture">("minimi");
+
+    // 미니미: 배치된 slug 제외 (미니미는 1개씩만)
+    const placedMinimiSlugs = new Set(
+        placedMinimi.filter(p => !p.type || p.type === "minimi").map(p => p.slug)
+    );
+    const availableMinimis = ownedMinimis.filter(o => !placedMinimiSlugs.has(o.slug));
+
+    // 가구: 보유 개수 - 배치 개수 = 사용 가능 수
+    const placedFurnitureCounts: Record<string, number> = {};
+    for (const p of placedMinimi.filter(p => p.type === "furniture")) {
+        placedFurnitureCounts[p.slug] = (placedFurnitureCounts[p.slug] ?? 0) + 1;
+    }
+    const furnitureOwnedCounts: Record<string, number> = {};
+    for (const f of ownedFurniture) {
+        furnitureOwnedCounts[f.slug] = (furnitureOwnedCounts[f.slug] ?? 0) + 1;
+    }
+    // 사용 가능한 가구 (보유 - 배치 > 0인 것만)
+    const availableFurniture: (OwnedFurniture & { remaining: number })[] = [];
+    const seen = new Set<string>();
+    for (const f of ownedFurniture) {
+        if (seen.has(f.slug)) continue;
+        seen.add(f.slug);
+        const owned = furnitureOwnedCounts[f.slug] ?? 0;
+        const placed = placedFurnitureCounts[f.slug] ?? 0;
+        const remaining = owned - placed;
+        if (remaining > 0) {
+            availableFurniture.push({ ...f, remaining });
+        }
+    }
 
     return (
         <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border-0 shadow-lg p-3">
+            {/* 탭 헤더 */}
             <div className="flex items-center gap-2 mb-2">
                 <Archive className="w-4 h-4 text-memorial-500" />
-                <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-200">
-                    보관함
-                </h4>
-                <span className="text-[10px] text-gray-400">
-                    터치하여 배치 / 스테이지에서 아래로 끌어서 보관
+                <div className="flex gap-1">
+                    <button
+                        onClick={() => setTab("minimi")}
+                        className={cn(
+                            "px-2.5 py-1 rounded-full text-[11px] font-medium transition-all",
+                            tab === "minimi"
+                                ? "bg-memento-500 text-white"
+                                : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
+                        )}
+                    >
+                        미니미
+                    </button>
+                    <button
+                        onClick={() => setTab("furniture")}
+                        className={cn(
+                            "px-2.5 py-1 rounded-full text-[11px] font-medium transition-all",
+                            tab === "furniture"
+                                ? "bg-amber-500 text-white"
+                                : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
+                        )}
+                    >
+                        가구
+                    </button>
+                </div>
+                <span className="text-[10px] text-gray-400 ml-auto">
+                    터치하여 배치
                 </span>
             </div>
 
@@ -486,47 +593,99 @@ function StorageTray({
                 <div className="flex items-center justify-center py-4">
                     <Loader2 className="w-4 h-4 text-memorial-500 animate-spin" />
                 </div>
-            ) : available.length === 0 ? (
-                <div className="text-center py-3 text-gray-400 dark:text-gray-500">
-                    <p className="text-xs">
-                        {ownedMinimis.length === 0
-                            ? "보관함이 비어있어요. 미니미 상점에서 구매해보세요!"
-                            : "모든 미니미가 스테이지에 배치중이에요"}
-                    </p>
-                </div>
-            ) : (
-                <div className="flex gap-2 overflow-x-auto pb-1">
-                    {available.map((char) => (
-                        <button
-                            key={char.slug}
-                            onClick={() => onSelect(char.slug)}
-                            className={cn(
-                                "flex-shrink-0 flex flex-col items-center gap-1 p-2 rounded-xl",
-                                "bg-gray-50 dark:bg-gray-700/50",
-                                "hover:bg-memento-200 dark:hover:bg-memento-900/20 active:scale-95",
-                                "border border-transparent hover:border-memento-300 dark:hover:border-memento-600",
-                                "transition-all"
-                            )}
-                        >
-                            <div className="relative w-12 h-12 flex items-center justify-center">
-                                <Image
-                                    src={char.imageUrl}
-                                    alt={char.name}
-                                    width={40}
-                                    height={40}
-                                    className="object-contain"
-                                    style={{ imageRendering: "pixelated" }}
-                                />
-                                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-memento-500 rounded-full flex items-center justify-center">
-                                    <Plus className="w-2.5 h-2.5 text-white" />
+            ) : tab === "minimi" ? (
+                /* 미니미 탭 */
+                availableMinimis.length === 0 ? (
+                    <div className="text-center py-3 text-gray-400 dark:text-gray-500">
+                        <p className="text-xs">
+                            {ownedMinimis.length === 0
+                                ? "보관함이 비어있어요. 미니미 상점에서 구매해보세요!"
+                                : "모든 미니미가 스테이지에 배치중이에요"}
+                        </p>
+                    </div>
+                ) : (
+                    <div className="flex gap-2 overflow-x-auto pb-1">
+                        {availableMinimis.map((char) => (
+                            <button
+                                key={char.slug}
+                                onClick={() => onSelectMinimi(char.slug)}
+                                className={cn(
+                                    "flex-shrink-0 flex flex-col items-center gap-1 p-2 rounded-xl",
+                                    "bg-gray-50 dark:bg-gray-700/50",
+                                    "hover:bg-memento-200 dark:hover:bg-memento-900/20 active:scale-95",
+                                    "border border-transparent hover:border-memento-300 dark:hover:border-memento-600",
+                                    "transition-all"
+                                )}
+                            >
+                                <div className="relative w-12 h-12 flex items-center justify-center">
+                                    <Image
+                                        src={char.imageUrl}
+                                        alt={char.name}
+                                        width={40}
+                                        height={40}
+                                        className="object-contain"
+                                        style={{ imageRendering: "pixelated" }}
+                                    />
+                                    <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-memento-500 rounded-full flex items-center justify-center">
+                                        <Plus className="w-2.5 h-2.5 text-white" />
+                                    </div>
                                 </div>
-                            </div>
-                            <span className="text-[10px] text-gray-600 dark:text-gray-300 truncate w-full text-center">
-                                {char.name}
-                            </span>
-                        </button>
-                    ))}
-                </div>
+                                <span className="text-[10px] text-gray-600 dark:text-gray-300 truncate w-full text-center">
+                                    {char.name}
+                                </span>
+                            </button>
+                        ))}
+                    </div>
+                )
+            ) : (
+                /* 가구 탭 */
+                availableFurniture.length === 0 ? (
+                    <div className="text-center py-3 text-gray-400 dark:text-gray-500">
+                        <p className="text-xs">
+                            {ownedFurniture.length === 0
+                                ? "보유한 가구가 없어요. 가구 상점에서 구매해보세요!"
+                                : "모든 가구가 스테이지에 배치중이에요"}
+                        </p>
+                    </div>
+                ) : (
+                    <div className="flex gap-2 overflow-x-auto pb-1">
+                        {availableFurniture.map((item) => (
+                            <button
+                                key={item.slug}
+                                onClick={() => onSelectFurniture(item.slug)}
+                                className={cn(
+                                    "flex-shrink-0 flex flex-col items-center gap-1 p-2 rounded-xl",
+                                    "bg-gray-50 dark:bg-gray-700/50",
+                                    "hover:bg-amber-100 dark:hover:bg-amber-900/20 active:scale-95",
+                                    "border border-transparent hover:border-amber-300 dark:hover:border-amber-600",
+                                    "transition-all"
+                                )}
+                            >
+                                <div className="relative w-12 h-12 flex items-center justify-center">
+                                    <Image
+                                        src={item.imageUrl}
+                                        alt={item.name}
+                                        width={40}
+                                        height={40}
+                                        className="object-contain"
+                                        style={{ imageRendering: "pixelated" }}
+                                    />
+                                    <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center">
+                                        <Plus className="w-2.5 h-2.5 text-white" />
+                                    </div>
+                                </div>
+                                <span className="text-[10px] text-gray-600 dark:text-gray-300 truncate w-full text-center">
+                                    {item.name}
+                                </span>
+                                {item.remaining > 1 && (
+                                    <span className="text-[9px] text-amber-500 font-bold">
+                                        x{item.remaining}
+                                    </span>
+                                )}
+                            </button>
+                        ))}
+                    </div>
+                )
             )}
         </div>
     );

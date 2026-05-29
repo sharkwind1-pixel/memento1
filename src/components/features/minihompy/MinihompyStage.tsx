@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import type { MinimiEquipState, PlacedMinimi } from "@/types";
 import { findBackground, getDefaultBackground } from "@/data/minihompyBackgrounds";
 import { CHARACTER_CATALOG } from "@/data/minimiPixels";
+import { findFurnitureOrFallback } from "@/data/furnitureCatalog";
 import { pickReaction, type MinimiAction } from "@/data/minimiReactions";
 import Image from "next/image";
 
@@ -149,9 +150,20 @@ export default function MinihompyStage({
     // 배치된 미니미가 있으면 사용, 없으면 장착 미니미 1마리를 하단 중앙에 표시
     const displayPlaced = placedMinimi.length > 0;
 
-    const getImageUrl = (slug: string): string | null => {
+    /** 미니미 또는 가구 이미지 URL 조회 */
+    const getItemImage = (slug: string, type?: "minimi" | "furniture"): string | null => {
+        if (type === "furniture") {
+            const f = findFurnitureOrFallback(slug);
+            return f.imageUrl;
+        }
         const character = CHARACTER_CATALOG.find(c => c.slug === slug);
         return character?.imageUrl || null;
+    };
+
+    /** 가구 스테이지 렌더 크기 (px) */
+    const getFurnitureSize = (slug: string): { w: number; h: number } => {
+        const f = findFurnitureOrFallback(slug);
+        return { w: f.stageWidth ?? 60, h: f.stageHeight ?? 60 };
     };
 
     const handlePointerDown = useCallback((e: React.PointerEvent, index: number) => {
@@ -341,13 +353,28 @@ export default function MinihompyStage({
             {/* 배치된 미니미들 */}
             {displayPlaced ? (
                 placedMinimi.map((placed, index) => {
-                    const imgUrl = getImageUrl(placed.slug);
+                    const isFurniture = placed.type === "furniture";
+                    const imgUrl = getItemImage(placed.slug, placed.type);
                     if (!imgUrl) return null;
                     const isSelected = editMode && selectedIndex === index;
                     const isDragging = draggingIndex === index;
                     // 모바일(< 640px)에서 더 작게 표시
                     const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
-                    const baseSize = compact ? (isMobile ? 32 : 40) : (isMobile ? 40 : 50);
+                    const mobileScale = isMobile ? 0.7 : 1;
+
+                    // 가구: 카탈로그에 정의된 stageWidth/stageHeight 사용
+                    // 미니미: 기존 정사각 baseSize
+                    let itemW: number;
+                    let itemH: number;
+                    if (isFurniture) {
+                        const fs = getFurnitureSize(placed.slug);
+                        itemW = Math.round(fs.w * mobileScale * (compact ? 0.7 : 1));
+                        itemH = Math.round(fs.h * mobileScale * (compact ? 0.7 : 1));
+                    } else {
+                        const baseSize = compact ? (isMobile ? 32 : 40) : (isMobile ? 40 : 50);
+                        itemW = baseSize;
+                        itemH = baseSize;
+                    }
 
                     const hasTouchEffect = touchEffectIndex === index;
 
@@ -359,9 +386,8 @@ export default function MinihompyStage({
                                 left: `${placed.x}%`,
                                 top: `${placed.y}%`,
                                 zIndex: isSelected ? 50 : hasTouchEffect ? 40 : (placed.zIndex || index + 1),
-                                // 이미지를 포인터 이벤트 없이 전체 크기로 표시
-                                width: baseSize,
-                                height: baseSize,
+                                width: itemW,
+                                height: itemH,
                                 transform: "translate(-50%, -50%)",
                                 pointerEvents: "none",
                             }}
@@ -419,9 +445,9 @@ export default function MinihompyStage({
                                 {/* 그림자 제거됨 - 캐릭터별 발 위치 차이로 자연스러운 배치 어려움 */}
                                 <Image
                                     src={imgUrl}
-                                    alt="미니미"
-                                    width={baseSize}
-                                    height={baseSize}
+                                    alt={isFurniture ? "가구" : "미니미"}
+                                    width={itemW}
+                                    height={itemH}
                                     className="object-contain select-none"
                                     style={{ imageRendering: "pixelated" }}
                                     draggable={false}
