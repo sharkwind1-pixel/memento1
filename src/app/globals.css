@@ -772,4 +772,21 @@ body {
     select:focus-visible {
         outline: none;
     }
+    /* iOS Safari date/time input 값이 ::-webkit-date-and-time-value 가상요소에서
+       기본 center 정렬되어 다른 좌측정렬 필드와 어긋나는 문제 교정 (생일/추모일/입양일 등) */
+    input[type="date"],
+    input[type="time"],
+    input[type="datetime-local"] {
+        text-align: left;
+    }
+    input[type="date"]::-webkit-date-and-time-value,
+    input[type="time"]::-webkit-date-and-time-value,
+    input[type="datetime-local"]::-webkit-date-and-time-value {
+        text-align: left;
+    }
+    input[type="date"]::-webkit-datetime-edit,
+    input[type="time"]::-webkit-datetime-edit,
+    input[type="datetime-local"]::-webkit-datetime-edit {
+        text-align: left;
+    }
 }
