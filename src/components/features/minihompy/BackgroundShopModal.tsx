@@ -192,7 +192,7 @@ export default function BackgroundShopModal({
                                             )}
 
                                             <div className="mt-1.5">
-                                                {bg.owned ? (
+                                                {(bg.owned || bg.price === 0) ? (
                                                     isCurrentBg ? (
                                                         <div className="text-center text-[10px] py-1 text-violet-600 dark:text-violet-400 font-medium">
                                                             적용 중

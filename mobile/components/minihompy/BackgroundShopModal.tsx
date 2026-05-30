@@ -64,7 +64,8 @@ export default function BackgroundShopModal({
 
     function handlePress(slug: string, price: number, name: string) {
         if (busy) return;
-        const isOwned = owned.has(slug);
+        // 무료 배경(price 0)은 항상 보유로 취급 → 바로 적용 (구매 플로우 진입 X)
+        const isOwned = owned.has(slug) || price === 0;
 
         if (isOwned) {
             applyBackground(slug);
@@ -141,7 +142,7 @@ export default function BackgroundShopModal({
                         columnWrapperStyle={{ gap: 12, paddingHorizontal: 16 }}
                         contentContainerStyle={{ paddingTop: 12, paddingBottom: 24 + insets.bottom, gap: 12 }}
                         renderItem={({ item }) => {
-                            const isOwned = owned.has(item.slug);
+                            const isOwned = owned.has(item.slug) || item.price === 0;
                             const isApplied = currentSlug === item.slug;
                             const itemBusy = busy === item.slug;
                             return (

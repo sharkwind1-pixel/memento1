@@ -201,7 +201,7 @@ export default function MinihompyScreen() {
         if (settings) setSettings({ ...settings, placedMinimi: next });
     }
 
-    const bgSlug = settings?.backgroundSlug ?? "default_sky";
+    const bgSlug = settings?.backgroundSlug ?? "room_default";
     const background = findBackgroundOrDefault(bgSlug);
     // equippedSlug는 StageEditor 내부에서 자체 처리. 단일 미니미 fallback 표시는 추후 추가.
     const bgColor = usePageBgColor();
@@ -323,22 +323,11 @@ export default function MinihompyScreen() {
                                     </View>
                                 )}
 
-                                <View style={styles.minimiSlot}>
-                                    {selectedPet?.profileImage ? (
-                                        <Image source={{ uri: selectedPet.profileImage }} style={styles.petImg} />
-                                    ) : (
-                                        <View style={[styles.petImg, styles.petImgFallback]}>
-                                            <Text style={{ fontSize: 56 }}>
-                                                {selectedPet?.type === "강아지" ? "🐶" : selectedPet?.type === "고양이" ? "🐱" : "🐾"}
-                                            </Text>
-                                        </View>
-                                    )}
-                                    <Text style={styles.minimiName}>
-                                        {selectedPet?.name ?? "내 친구"}
-                                    </Text>
+                                {/* 빈집 안내 — 펫 사진/이름 대신, 빈 방에서 꾸미기 유도 */}
+                                <View style={styles.emptyRoomHint}>
+                                    <Text style={styles.emptyRoomTitle}>아직 빈 방이에요</Text>
+                                    <Text style={styles.emptyRoomSub}>상점에서 미니미·가구를 사서{"\n"}나만의 공간을 꾸며보세요</Text>
                                 </View>
-
-                                {/* 미니미 없으니 "탭해서 반응" 안내 X */}
                             </StageBackground>
                         </TouchableOpacity>
 
@@ -660,6 +649,18 @@ const styles = StyleSheet.create({
         textShadowOffset: { width: 0, height: 1 },
         textShadowRadius: 2,
     },
+    emptyRoomHint: {
+        position: "absolute",
+        alignSelf: "center",
+        top: "38%",
+        alignItems: "center",
+        backgroundColor: "rgba(255,255,255,0.78)",
+        paddingHorizontal: 18,
+        paddingVertical: 14,
+        borderRadius: 16,
+    },
+    emptyRoomTitle: { fontSize: 14, fontWeight: "800", color: "#374151", marginBottom: 4 },
+    emptyRoomSub: { fontSize: 12, color: "#6B7280", textAlign: "center", lineHeight: 18 },
     tapHint: {
         position: "absolute",
         bottom: 8,
