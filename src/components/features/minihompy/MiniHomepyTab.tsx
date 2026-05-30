@@ -289,7 +289,7 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
     const currentSettings = settings || {
         userId: user.id,
         isPublic: true,
-        backgroundSlug: "default_sky",
+        backgroundSlug: "room_default",
         greeting: "",
         todayVisitors: 0,
         totalVisitors: 0,

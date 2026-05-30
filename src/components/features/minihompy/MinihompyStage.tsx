@@ -345,7 +345,7 @@ export default function MinihompyStage({
                         "text-sm font-medium",
                         "text-white drop-shadow-md"
                     )}>
-                        {ownerNickname}의 미니홈피
+                        {ownerNickname ? `${ownerNickname}의 미니홈피` : "미니홈피"}
                     </p>
                 </div>
             </div>
