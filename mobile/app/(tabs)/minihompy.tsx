@@ -24,7 +24,7 @@ import { useDarkMode } from "@/contexts/ThemeContext";
 import { COLORS } from "@/lib/theme";
 import { findBackgroundOrDefault } from "@/data/minihompyData";
 import {
-    getMyMinihompySettings, patchMinihompySettings, getMinimiInventory,
+    getMyMinihompySettings, patchMinihompySettings, getMinimiInventory, getFurnitureInventory,
 } from "@/lib/minihompy-api";
 import type { MinihompySettings, PlacedMinimi, UserMinimiRow } from "@/types";
 import AppHeader from "@/components/common/AppHeader";
@@ -32,6 +32,7 @@ import AppDrawer from "@/components/common/AppDrawer";
 import PageBackground, { usePageBgColor } from "@/components/common/PageBackground";
 import PetSwitcher from "@/components/common/PetSwitcher";
 import MinimiShopModal from "@/components/minihompy/MinimiShopModal";
+import FurnitureShopModal from "@/components/minihompy/FurnitureShopModal";
 import BackgroundShopModal from "@/components/minihompy/BackgroundShopModal";
 import GuestbookModal from "@/components/minihompy/GuestbookModal";
 import GreetingEditModal from "@/components/minihompy/GreetingEditModal";
@@ -72,6 +73,7 @@ export default function MinihompyScreen() {
     const [settings, setSettings] = useState<MinihompySettings | null>(null);
     const [equippedSlug, setEquippedSlug] = useState<string | null>(null);
     const [ownedMinimis, setOwnedMinimis] = useState<UserMinimiRow[]>([]);
+    const [ownedFurniture, setOwnedFurniture] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [touchCount, setTouchCount] = useState(0);
@@ -82,6 +84,7 @@ export default function MinihompyScreen() {
     const touchResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const [shopOpen, setShopOpen] = useState(false);
+    const [furnitureShopOpen, setFurnitureShopOpen] = useState(false);
     const [shopInitialFilter, setShopInitialFilter] = useState<"all" | "owned" | "dog" | "cat">("all");
     const [bgShopOpen, setBgShopOpen] = useState(false);
     const [guestbookOpen, setGuestbookOpen] = useState(false);
@@ -99,13 +102,15 @@ export default function MinihompyScreen() {
             return;
         }
         try {
-            const [s, inv] = await Promise.all([
+            const [s, inv, furniture] = await Promise.all([
                 getMyMinihompySettings(accessToken).catch(() => null),
                 getMinimiInventory(accessToken).catch(() => ({ owned: [], equippedSlug: null })),
+                getFurnitureInventory(accessToken).catch(() => []),
             ]);
             if (s) setSettings(s);
             setEquippedSlug(inv.equippedSlug);
             setOwnedMinimis(inv.owned);
+            setOwnedFurniture(furniture.map((f) => f.furniture_id));
         } finally {
             setLoading(false);
         }
@@ -178,6 +183,16 @@ export default function MinihompyScreen() {
             const inv = await getMinimiInventory(accessToken);
             setEquippedSlug(inv.equippedSlug);
             setOwnedMinimis(inv.owned);
+        } catch {}
+        refreshProfile().catch(() => {});
+    }
+
+    async function handleFurnitureChanged() {
+        // 가구 인벤토리 + 포인트 갱신
+        if (!accessToken) return;
+        try {
+            const furniture = await getFurnitureInventory(accessToken);
+            setOwnedFurniture(furniture.map((f) => f.furniture_id));
         } catch {}
         refreshProfile().catch(() => {});
     }
@@ -261,6 +276,7 @@ export default function MinihompyScreen() {
                                 background={background}
                                 placedMinimi={settings?.placedMinimi ?? []}
                                 ownedSlugs={ownedMinimis.map((o) => o.minimi_id)}
+                                ownedFurniture={ownedFurniture}
                                 inventory={ownedMinimis}
                                 accessToken={accessToken}
                                 accentColor={accentColor}
@@ -365,6 +381,13 @@ export default function MinihompyScreen() {
                         onPress={() => { setShopInitialFilter("owned"); setShopOpen(true); }}
                     />
                     <ActionCard
+                        icon="bed"
+                        label="가구"
+                        color="#F59E0B"
+                        bgColor={isDarkMode ? COLORS.gray[900] : "#FFFBEB"}
+                        onPress={() => setFurnitureShopOpen(true)}
+                    />
+                    <ActionCard
                         icon="color-palette"
                         label="배경"
                         color="#8B5CF6"
@@ -421,6 +444,14 @@ export default function MinihompyScreen() {
                         onChanged={handleShopChanged}
                         accentColor={accentColor}
                         initialFilter={shopInitialFilter}
+                    />
+                    <FurnitureShopModal
+                        visible={furnitureShopOpen}
+                        onClose={() => setFurnitureShopOpen(false)}
+                        accessToken={accessToken}
+                        points={points ?? 0}
+                        onChanged={handleFurnitureChanged}
+                        accentColor={accentColor}
                     />
                     <BackgroundShopModal
                         visible={bgShopOpen}

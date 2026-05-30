@@ -24,6 +24,7 @@ import * as Haptics from "expo-haptics";
 import { COLORS } from "@/lib/theme";
 import { useDarkMode } from "@/contexts/ThemeContext";
 import { findMinimi, findMinimiOrFallback, findBackgroundOrDefault } from "@/data/minihompyData";
+import { findFurnitureOrFallback } from "@/data/furnitureCatalog";
 import { putPlacedMinimi } from "@/lib/minihompy-api";
 import { pickReaction, type MinimiAction } from "@/data/minimiReactions";
 import type { PlacedMinimi, BackgroundTheme, UserMinimiRow } from "@/types";
@@ -39,6 +40,7 @@ interface Props {
     background: BackgroundTheme;
     placedMinimi: PlacedMinimi[];
     ownedSlugs: string[];          // 보유한 미니미 slug 목록
+    ownedFurniture?: string[];     // 보유한 가구 slug 목록 (중복 포함)
     inventory: UserMinimiRow[];    // 보유 row (slug 매핑용 — 사용처 미사용이지만 인터페이스 호환)
     accessToken: string;
     accentColor: string;
@@ -59,7 +61,7 @@ function clampPosition(x: number, y: number) {
 }
 
 export default function StageEditor({
-    stageHeight, background, placedMinimi, ownedSlugs, accessToken, accentColor,
+    stageHeight, background, placedMinimi, ownedSlugs, ownedFurniture = [], accessToken, accentColor,
     isMemorialMode = false, onChanged, onEditingChange, onTouch,
 }: Props) {
     const [editMode, setEditMode] = useState(false);
@@ -144,10 +146,10 @@ export default function StageEditor({
     }
 
     function addMinimi() {
-        if (ownedSlugs.length === 0) {
+        if (ownedSlugs.length === 0 && ownedFurniture.length === 0) {
             Alert.alert(
-                "보유 미니미 없음",
-                "먼저 미니미 상점에서 캐릭터를 구매해주세요.",
+                "보유 아이템 없음",
+                "먼저 미니미 상점이나 가구 상점에서 아이템을 구매해주세요.",
             );
             return;
         }
@@ -155,21 +157,26 @@ export default function StageEditor({
         setPickerOpen(true);
     }
 
-    function pickFromInventory(slug: string) {
+    function pickFromInventory(slug: string, type: "minimi" | "furniture" = "minimi") {
         const newItem: PlacedMinimi = {
             slug,
             x: 50,
             y: 50,
             zIndex: working.length,
+            ...(type === "furniture" ? { type: "furniture" as const } : {}),
         };
         setWorking((prev) => [...prev, newItem]);
         setPickerOpen(false);
     }
 
     function removeMinimi(index: number) {
+        const it = working[index];
+        const itemName = it?.type === "furniture"
+            ? findFurnitureOrFallback(it.slug).name
+            : (findMinimi(it?.slug)?.name ?? "미니미");
         Alert.alert(
             "삭제",
-            `${findMinimi(working[index]?.slug)?.name ?? "미니미"}를 스테이지에서 제거할까요?`,
+            `${itemName}을(를) 스테이지에서 제거할까요?`,
             [
                 { text: "취소", style: "cancel" },
                 {
@@ -298,12 +305,16 @@ export default function StageEditor({
                 )}
             </View>
 
-            {/* 보관함 (인벤토리 그리드) */}
+            {/* 보관함 (인벤토리 그리드 — 미니미/가구 탭) */}
             <InventoryPickerModal
                 visible={pickerOpen}
                 onClose={() => setPickerOpen(false)}
                 ownedSlugs={ownedSlugs}
-                placedCounts={working.reduce<Record<string, number>>((acc, p) => {
+                ownedFurniture={ownedFurniture}
+                placedMinimiCounts={working.filter((p) => !p.type || p.type === "minimi").reduce<Record<string, number>>((acc, p) => {
+                    acc[p.slug] = (acc[p.slug] ?? 0) + 1; return acc;
+                }, {})}
+                placedFurnitureCounts={working.filter((p) => p.type === "furniture").reduce<Record<string, number>>((acc, p) => {
                     acc[p.slug] = (acc[p.slug] ?? 0) + 1; return acc;
                 }, {})}
                 onPick={pickFromInventory}
@@ -318,18 +329,21 @@ export default function StageEditor({
 // ============================================================================
 
 function InventoryPickerModal({
-    visible, onClose, ownedSlugs, placedCounts, onPick, accentColor,
+    visible, onClose, ownedSlugs, ownedFurniture, placedMinimiCounts, placedFurnitureCounts, onPick, accentColor,
 }: {
     visible: boolean;
     onClose: () => void;
-    ownedSlugs: string[];           // 중복 포함 raw 목록
-    placedCounts: Record<string, number>;
-    onPick: (slug: string) => void;
+    ownedSlugs: string[];               // 미니미 — 중복 포함 raw 목록
+    ownedFurniture: string[];           // 가구 — 중복 포함 raw 목록
+    placedMinimiCounts: Record<string, number>;
+    placedFurnitureCounts: Record<string, number>;
+    onPick: (slug: string, type: "minimi" | "furniture") => void;
     accentColor: string;
 }) {
     const { isDarkMode } = useDarkMode();
     const { width: screenWidth } = useWindowDimensions();
     const cardWidth = (screenWidth - 16 * 2 - 12 * 2) / 3;
+    const [tab, setTab] = useState<"minimi" | "furniture">("minimi");
     const bgColor = isDarkMode ? COLORS.gray[950] : COLORS.gray[50];
     const headerBg = isDarkMode ? COLORS.gray[900] : "#fff";
     const headerBorder = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
@@ -338,14 +352,33 @@ function InventoryPickerModal({
     const cardBg = isDarkMode ? COLORS.gray[900] : "#fff";
     const cardNameColor = isDarkMode ? COLORS.white : COLORS.gray[800];
     const emptyTextColor = isDarkMode ? COLORS.gray[300] : COLORS.gray[700];
+    const chipBg = isDarkMode ? COLORS.gray[800] : COLORS.gray[100];
+    const chipColor = isDarkMode ? COLORS.gray[300] : COLORS.gray[600];
 
-    // 중복 제거 + 수량 집계
-    const ownedCounts = useMemo(() => {
-        const counts: Record<string, number> = {};
-        for (const s of ownedSlugs) counts[s] = (counts[s] ?? 0) + 1;
-        return counts;
+    // 모달 열릴 때 미니미 탭으로 초기화
+    useEffect(() => {
+        if (visible) setTab("minimi");
+    }, [visible]);
+
+    // 중복 제거 + 수량 집계 (미니미/가구 각각)
+    const minimiCounts = useMemo(() => {
+        const c: Record<string, number> = {};
+        for (const s of ownedSlugs) c[s] = (c[s] ?? 0) + 1;
+        return c;
     }, [ownedSlugs]);
-    const uniqueSlugs = useMemo(() => Object.keys(ownedCounts), [ownedCounts]);
+    const furnitureCounts = useMemo(() => {
+        const c: Record<string, number> = {};
+        for (const s of ownedFurniture) c[s] = (c[s] ?? 0) + 1;
+        return c;
+    }, [ownedFurniture]);
+
+    const isMin = tab === "minimi";
+    const slugs = useMemo(
+        () => Object.keys(isMin ? minimiCounts : furnitureCounts),
+        [isMin, minimiCounts, furnitureCounts],
+    );
+    const ownedCountsMap = isMin ? minimiCounts : furnitureCounts;
+    const placedCountsMap = isMin ? placedMinimiCounts : placedFurnitureCounts;
 
     return (
         <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
@@ -359,27 +392,51 @@ function InventoryPickerModal({
                         <Text style={[pickerStyles.headerSub, { color: subColor }]}>탭해서 스테이지에 배치</Text>
                     </View>
                 </View>
+
+                {/* 미니미 / 가구 탭 */}
+                <View style={[pickerStyles.tabRow, { backgroundColor: headerBg, borderBottomColor: headerBorder }]}>
+                    {(["minimi", "furniture"] as const).map((t) => (
+                        <TouchableOpacity
+                            key={t}
+                            onPress={() => setTab(t)}
+                            style={[
+                                pickerStyles.tabChip,
+                                { backgroundColor: chipBg },
+                                tab === t && { backgroundColor: accentColor },
+                            ]}
+                        >
+                            <Text style={{ fontSize: 13, fontWeight: "700", color: tab === t ? "#fff" : chipColor }}>
+                                {t === "minimi" ? "미니미" : "가구"}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </View>
+
                 <FlatList
-                    data={uniqueSlugs}
+                    data={slugs}
                     keyExtractor={(slug) => slug}
                     numColumns={3}
                     contentContainerStyle={{ padding: 16, gap: 12 }}
                     columnWrapperStyle={{ gap: 12 }}
                     ListEmptyComponent={
                         <View style={pickerStyles.empty}>
-                            <Ionicons name="paw-outline" size={36} color={COLORS.gray[300]} />
-                            <Text style={[pickerStyles.emptyText, { color: emptyTextColor }]}>보관함이 비었어요</Text>
-                            <Text style={[pickerStyles.emptyHint, { color: subColor }]}>미니미 상점에서 캐릭터를 구매해보세요</Text>
+                            <Ionicons name={isMin ? "paw-outline" : "cube-outline"} size={36} color={COLORS.gray[300]} />
+                            <Text style={[pickerStyles.emptyText, { color: emptyTextColor }]}>
+                                {isMin ? "보유한 미니미가 없어요" : "보유한 가구가 없어요"}
+                            </Text>
+                            <Text style={[pickerStyles.emptyHint, { color: subColor }]}>
+                                {isMin ? "미니미 상점에서 캐릭터를 구매해보세요" : "가구 상점에서 아이템을 구매해보세요"}
+                            </Text>
                         </View>
                     }
                     renderItem={({ item: slug }) => {
-                        const m = findMinimiOrFallback(slug);
-                        const owned = ownedCounts[slug] ?? 0;
-                        const placed = placedCounts[slug] ?? 0;
+                        const meta = isMin ? findMinimiOrFallback(slug) : findFurnitureOrFallback(slug);
+                        const owned = ownedCountsMap[slug] ?? 0;
+                        const placed = placedCountsMap[slug] ?? 0;
                         const maxedOut = placed >= owned;
                         return (
                             <TouchableOpacity
-                                onPress={() => onPick(slug)}
+                                onPress={() => onPick(slug, tab)}
                                 disabled={maxedOut}
                                 style={[
                                     pickerStyles.card,
@@ -388,8 +445,8 @@ function InventoryPickerModal({
                                 ]}
                                 activeOpacity={0.85}
                             >
-                                <Image source={{ uri: m.imageUrl }} style={pickerStyles.cardImg} resizeMode="contain" />
-                                <Text style={[pickerStyles.cardName, { color: cardNameColor }]} numberOfLines={1}>{m.name}</Text>
+                                <Image source={{ uri: meta.imageUrl }} style={pickerStyles.cardImg} resizeMode="contain" />
+                                <Text style={[pickerStyles.cardName, { color: cardNameColor }]} numberOfLines={1}>{meta.name}</Text>
                                 {placed > 0 && (
                                     <View style={[pickerStyles.placedBadge, { backgroundColor: accentColor }]}>
                                         <Text style={pickerStyles.placedBadgeText}>
@@ -437,6 +494,18 @@ const pickerStyles = StyleSheet.create({
     empty: { padding: 60, alignItems: "center", gap: 8 },
     emptyText: { fontSize: 14, fontWeight: "600", marginTop: 8 },
     emptyHint: { fontSize: 12 },
+    tabRow: {
+        flexDirection: "row",
+        gap: 8,
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+    },
+    tabChip: {
+        paddingHorizontal: 18,
+        paddingVertical: 8,
+        borderRadius: 9999,
+    },
 });
 
 // ============================================================================
@@ -468,7 +537,12 @@ function DraggableMinimi({
     touchMessage: string | null;
     triggerKey: number;
 }) {
-    const minimi = findMinimiOrFallback(placed.slug);
+    const isFurniture = placed.type === "furniture";
+    const furniture = isFurniture ? findFurnitureOrFallback(placed.slug) : null;
+    const minimi = !isFurniture ? findMinimiOrFallback(placed.slug) : null;
+    const itemW = isFurniture ? (furniture?.stageWidth ?? 60) : MINIMI_SIZE;
+    const itemH = isFurniture ? (furniture?.stageHeight ?? 60) : MINIMI_SIZE;
+    const itemImageUrl = isFurniture ? (furniture?.imageUrl ?? "") : (minimi?.imageUrl ?? "");
     const dragStart = useRef<{ origX: number; origY: number } | null>(null);
 
     // **중요**: PanResponder는 mount 시 한 번만 생성. placed.x/y가 deps에 들어가면
@@ -483,7 +557,8 @@ function DraggableMinimi({
     stageDimsRef.current = { stageWidth, stageHeight, editMode };
 
     const onTapRef = useRef(onTap);
-    onTapRef.current = onTap;
+    // 가구는 비편집 터치 반응 없음 (말풍선/애니메이션 미적용)
+    onTapRef.current = isFurniture ? () => {} : onTap;
     const onLongPressRef = useRef(onLongPress);
     onLongPressRef.current = onLongPress;
 
@@ -536,37 +611,43 @@ function DraggableMinimi({
         },
     }), [index]);
 
-    // hit area = MINIMI_SIZE + HIT_PADDING*2. 작은 미니미를 손가락으로 잡기 쉽게 확장.
-    const HIT_SIZE = MINIMI_SIZE + HIT_PADDING * 2;
-    const leftPx = (placed.x / 100) * stageWidth - HIT_SIZE / 2;
-    const topPx = (placed.y / 100) * stageHeight - HIT_SIZE / 2;
+    // hit area: 아이템 크기 + 패딩 (작은 아이템을 손가락으로 잡기 쉽게 확장)
+    const hitPad = isFurniture ? 12 : HIT_PADDING;
+    const HIT_W = itemW + hitPad * 2;
+    const HIT_H = itemH + hitPad * 2;
+    const leftPx = (placed.x / 100) * stageWidth - HIT_W / 2;
+    const topPx = (placed.y / 100) * stageHeight - HIT_H / 2;
 
-    // 미니미 z-index: 터치 이펙트 발동 중이면 위로
+    // z-index: 터치 이펙트 발동 중이면 위로
     const zIdx = touchAction !== null ? 50 : (placed.zIndex ?? index);
 
     return (
         <View
             style={[
                 styles.minimiWrap,
-                { left: leftPx, top: topPx, width: HIT_SIZE, height: HIT_SIZE, zIndex: zIdx },
+                { left: leftPx, top: topPx, width: HIT_W, height: HIT_H, zIndex: zIdx },
                 editMode && { backgroundColor: "rgba(255,255,255,0.05)" },
             ]}
             {...panResponder.panHandlers}
         >
-            {/* 말풍선 — key로 매 터치마다 remount → fade-in 재생 */}
-            {touchMessage && (
+            {/* 말풍선 — 미니미만 (가구는 터치 반응 없음) */}
+            {!isFurniture && touchMessage && (
                 <SpeechBubble key={triggerKey} message={touchMessage} />
             )}
 
             <TouchableOpacity
-                onPress={!editMode ? onTap : undefined}
+                onPress={!editMode && !isFurniture ? onTap : undefined}
                 onLongPress={onLongPress}
                 delayLongPress={400}
                 disabled={false}
                 activeOpacity={editMode ? 0.7 : 0.9}
-                style={styles.minimiTouch}
+                style={{ width: itemW, height: itemH, alignItems: "center", justifyContent: "center" }}
             >
-                <AnimatedMinimi imageUrl={minimi.imageUrl} action={touchAction} triggerKey={triggerKey} />
+                {isFurniture ? (
+                    <Image source={{ uri: itemImageUrl }} style={{ width: itemW, height: itemH }} resizeMode="contain" />
+                ) : (
+                    <AnimatedMinimi imageUrl={itemImageUrl} action={touchAction} triggerKey={triggerKey} />
+                )}
                 {editMode && (
                     <View style={styles.removeBadge}>
                         <Ionicons name="close" size={10} color="#fff" />

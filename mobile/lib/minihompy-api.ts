@@ -7,7 +7,7 @@ import { API_BASE_URL } from "@/config/constants";
 import type {
     MinihompySettings, GuestbookEntry,
     MinimiCatalogItem, UserMinimiRow,
-    PlacedMinimi,
+    PlacedMinimi, UserFurnitureRow,
 } from "@/types";
 
 export type { PlacedMinimi };
@@ -358,4 +358,25 @@ export async function getMyVisitors(
         { accessToken },
     );
     return data.visitors ?? [];
+}
+
+// ============================================================================
+// 가구 / 소품 (인벤토리 / 구매) — 웹 /api/furniture/* 호출
+// ============================================================================
+
+interface FurnitureInventoryResponse {
+    items: UserFurnitureRow[];
+}
+
+export async function getFurnitureInventory(accessToken: string): Promise<UserFurnitureRow[]> {
+    const data = await callApi<FurnitureInventoryResponse>("/api/furniture/inventory", { accessToken });
+    return data.items || [];
+}
+
+export async function purchaseFurniture(accessToken: string, furnitureSlug: string): Promise<void> {
+    await callApi<unknown>("/api/furniture/purchase", {
+        accessToken,
+        method: "POST",
+        body: { furnitureSlug },
+    });
 }
