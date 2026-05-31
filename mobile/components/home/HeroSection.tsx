@@ -246,7 +246,12 @@ function MinihompyGuideModal({ visible, onClose, onStart }: {
                         <View style={guideStyles.handle} />
                     </View>
 
-                    <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
+                    <ScrollView
+                        style={guideStyles.scroll}
+                        contentContainerStyle={guideStyles.scrollContent}
+                        showsVerticalScrollIndicator={false}
+                        bounces={false}
+                    >
                         {/* 헤더 */}
                         <Text style={guideStyles.title}>미니홈피가 뭔가요?</Text>
                         <Text style={guideStyles.subtitle}>
@@ -304,7 +309,15 @@ const guideStyles = StyleSheet.create({
         borderTopRightRadius: 28,
         paddingHorizontal: 24,
         paddingBottom: 36,
-        maxHeight: "80%",
+        maxHeight: "85%",
+    },
+    scroll: {
+        // 내용이 길어도 ScrollView가 영역 안에서만 늘어나게 → CTA 버튼을 밀어내지 않음
+        flexGrow: 0,
+        flexShrink: 1,
+    },
+    scrollContent: {
+        paddingBottom: 16,
     },
     handleRow: {
         alignItems: "center",
