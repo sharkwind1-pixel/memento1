@@ -179,10 +179,10 @@ export async function POST(
             return NextResponse.json({ error: "게시글을 찾을 수 없습니다" }, { status: 404 });
         }
 
-        // 6. 프로필에서 닉네임 가져오기
+        // 6. 프로필에서 닉네임 + 등급 아이콘용 포인트/관리자 가져오기
         const { data: profile } = await adminSupabase
             .from("profiles")
-            .select("nickname, avatar_url")
+            .select("nickname, avatar_url, points, is_admin")
             .eq("id", user.id)
             .single();
         // 7. 댓글 저장 (DB 실제 컬럼: author_name은 NOT NULL)
@@ -249,6 +249,8 @@ export async function POST(
                 content: comment.content,
                 authorNickname: profile?.nickname || "익명",
                 authorAvatar: profile?.avatar_url || null,
+                authorPoints: profile?.points ?? 0,
+                authorIsAdmin: profile?.is_admin === true,
                 createdAt: comment.created_at,
             },
             pointAward,

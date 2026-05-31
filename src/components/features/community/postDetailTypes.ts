@@ -10,6 +10,8 @@ export interface PostComment {
     content: string;
     authorNickname: string;
     authorAvatar?: string;
+    authorPoints?: number;
+    authorIsAdmin?: boolean;
     createdAt: string;
     // 좋아요/비추천
     likes?: number;

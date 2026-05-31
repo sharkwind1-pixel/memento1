@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { InlineLoading } from "@/components/ui/PawLoading";
 import { OptimizedImage } from "@/components/ui/optimized-image";
+import LevelBadge from "@/components/features/points/LevelBadge";
 import type { PostComment } from "./postDetailTypes";
 import { formatTime } from "./postDetailTypes";
 
@@ -84,9 +85,12 @@ export default function PostDetailComments({
                                             className="w-7 h-7 rounded-full"
                                         />
                                     ) : (
-                                        <div className="w-7 h-7 rounded-full bg-gradient-to-r from-memento-400 to-memento-400 flex items-center justify-center text-white text-xs font-bold">
-                                            {comment.authorNickname.charAt(0)}
-                                        </div>
+                                        <LevelBadge
+                                            points={comment.authorPoints ?? 0}
+                                            isAdmin={comment.authorIsAdmin ?? false}
+                                            size="sm"
+                                            showTooltip={false}
+                                        />
                                     )}
                                     <button
                                         onClick={() => {
