@@ -206,6 +206,7 @@ export default function MinihompyShopModal({
                     </View>
                 ) : tab === "minimi" ? (
                     <FlatList
+                        key="shop-minimi"
                         data={catalog}
                         keyExtractor={(item) => item.slug}
                         numColumns={3}
@@ -228,6 +229,7 @@ export default function MinihompyShopModal({
                     />
                 ) : tab === "furniture" ? (
                     <FlatList
+                        key="shop-furniture"
                         data={FURNITURE_CATALOG}
                         keyExtractor={(item) => item.slug}
                         numColumns={3}
@@ -250,6 +252,7 @@ export default function MinihompyShopModal({
                     />
                 ) : (
                     <FlatList
+                        key="shop-background"
                         data={bgForSale}
                         keyExtractor={(item) => item.slug}
                         numColumns={2}
