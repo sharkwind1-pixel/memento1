@@ -21,6 +21,7 @@ import { useDarkMode } from "@/contexts/ThemeContext";
 import { COLORS } from "@/lib/theme";
 import AppHeader from "@/components/common/AppHeader";
 import { supabase } from "@/lib/supabase";
+import { getLevelIcon } from "@/lib/levels";
 
 interface Comment {
     id: string;
@@ -946,7 +947,11 @@ function CommentItem({
                     <Image source={{ uri: comment.authorAvatar }} style={styles.commentAvatar} />
                 ) : (
                     <View style={[styles.commentAvatar, styles.commentAvatarFallback]}>
-                        <Ionicons name="person" size={13} color={COLORS.gray[400]} />
+                        <Image
+                            source={getLevelIcon(comment.authorPoints ?? 0, "dog", comment.authorIsAdmin ?? false)}
+                            style={styles.commentAvatarLevelIcon}
+                            resizeMode="contain"
+                        />
                     </View>
                 )}
             </TouchableOpacity>
@@ -1077,7 +1082,8 @@ const styles = StyleSheet.create({
     },
     sendBtn: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
     commentAvatar: { width: 28, height: 28, borderRadius: 14 },
-    commentAvatarFallback: { backgroundColor: COLORS.gray[200], alignItems: "center", justifyContent: "center" },
+    commentAvatarFallback: { backgroundColor: COLORS.gray[200], alignItems: "center", justifyContent: "center", overflow: "hidden" },
+    commentAvatarLevelIcon: { width: 26, height: 26 },
     commentReactionRow: {
         flexDirection: "row",
         alignItems: "center",
