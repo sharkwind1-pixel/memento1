@@ -22,6 +22,8 @@ interface BackgroundShopModalProps {
     onClose: () => void;
     currentSlug: string;
     onApply: (slug: string) => Promise<void>;
+    /** 보관함 모드: 보유(또는 무료) 배경만 표시 + 구매 버튼 숨김 (적용 전용) */
+    storageMode?: boolean;
 }
 
 interface CatalogItem extends BackgroundTheme {
@@ -33,6 +35,7 @@ export default function BackgroundShopModal({
     onClose,
     currentSlug,
     onApply,
+    storageMode = false,
 }: BackgroundShopModalProps) {
     const { points, pointsLoaded, refreshPoints } = useAuth();
     const [catalog, setCatalog] = useState<CatalogItem[]>([]);
@@ -119,7 +122,7 @@ export default function BackgroundShopModal({
                     <div className="flex items-center gap-2">
                         <ShoppingBag className="w-5 h-5 text-violet-500" />
                         <h2 id="bg-shop-title" className="text-lg font-bold text-gray-800 dark:text-white">
-                            배경 꾸미기
+                            {storageMode ? "배경 보관함" : "배경 꾸미기"}
                         </h2>
                     </div>
                     <div className="flex items-center gap-3">
@@ -143,7 +146,7 @@ export default function BackgroundShopModal({
                         </div>
                     ) : (
                         <div className="grid grid-cols-2 gap-3">
-                            {catalog.map((bg) => {
+                            {(storageMode ? catalog.filter(b => b.owned || b.price === 0) : catalog).map((bg) => {
                                 const isCurrentBg = currentSlug === bg.slug;
                                 const isPurchasing = purchasingSlug === bg.slug;
                                 const isApplying = applyingSlug === bg.slug;

@@ -12,7 +12,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Loader2, MessageSquare, Trash2, ChevronDown, Archive, Plus, ShoppingBag, Armchair } from "lucide-react";
+import { Loader2, MessageSquare, Trash2, ChevronDown, Archive, Plus, ShoppingBag } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMemorialMode } from "@/contexts/PetContext";
 import { authFetch } from "@/lib/auth-fetch";
@@ -23,8 +23,7 @@ import { FURNITURE_CATALOG } from "@/data/furnitureCatalog";
 import MinihompyStage from "./MinihompyStage";
 import MinihompySettingsSection from "./MinihompySettingsSection";
 import MinimiCollection from "./MinimiCollection";
-import MinimiShopModal from "@/components/features/minimi/MinimiShopModal";
-import FurnitureShopModal from "./FurnitureShopModal";
+import MinihompyShop from "./MinihompyShop";
 import Image from "next/image";
 
 interface OwnedChar {
@@ -62,21 +61,17 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
     // 보유 가구 목록
     const [ownedFurniture, setOwnedFurniture] = useState<OwnedFurniture[]>([]);
 
-    // 미니미 상점 모달 (도감/스테이지에서 진입)
+    // 통합 상점 모달 (미니미/가구/배경 탭)
     const [shopOpen, setShopOpen] = useState(false);
-    const [shopInitialSlug, setShopInitialSlug] = useState<string | undefined>();
+    const [shopInitialTab, setShopInitialTab] = useState<"minimi" | "furniture" | "background">("minimi");
 
-    // 가구 상점 모달
-    const [furnitureShopOpen, setFurnitureShopOpen] = useState(false);
-
-    const openShop = useCallback((initialSlug?: string) => {
-        setShopInitialSlug(initialSlug);
+    const openShop = useCallback((tab: "minimi" | "furniture" | "background" = "minimi") => {
+        setShopInitialTab(tab);
         setShopOpen(true);
     }, []);
 
     const closeShop = useCallback(() => {
         setShopOpen(false);
-        setShopInitialSlug(undefined);
     }, []);
 
     // 설정 로드
@@ -321,26 +316,17 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
                 saving={saving}
             />
 
-            {/* 스테이지 바로 아래 상점 바로가기 (편집모드에선 숨김) */}
+            {/* 스테이지 바로 아래 통합 상점 바로가기 (편집모드에선 숨김) */}
             {!editMode && (
-                <div className="flex gap-2">
-                    <button
-                        type="button"
-                        onClick={() => openShop()}
-                        className="flex-1 flex items-center justify-center gap-2 px-3 py-3 rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 text-white font-semibold shadow-md hover:shadow-lg active:scale-[0.99] transition-all"
-                    >
-                        <ShoppingBag className="w-5 h-5" />
-                        <span className="text-sm">미니미 상점</span>
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setFurnitureShopOpen(true)}
-                        className="flex-1 flex items-center justify-center gap-2 px-3 py-3 rounded-2xl bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400 text-white font-semibold shadow-md hover:shadow-lg active:scale-[0.99] transition-all"
-                    >
-                        <Armchair className="w-5 h-5" />
-                        <span className="text-sm">가구 상점</span>
-                    </button>
-                </div>
+                <button
+                    type="button"
+                    onClick={() => openShop("minimi")}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 text-white font-semibold shadow-md hover:shadow-lg active:scale-[0.99] transition-all"
+                >
+                    <ShoppingBag className="w-5 h-5" />
+                    <span>상점</span>
+                    <span className="text-white/80 text-xs font-normal">미니미 · 가구 · 배경 구매</span>
+                </button>
             )}
 
             {/* 편집모드: 인라인 보관함 트레이 (미니미 + 가구 탭) */}
@@ -362,26 +348,18 @@ export default function MiniHomepyTab({ isActive = true }: { isActive?: boolean 
                 isActive={isActive}
             />
 
-            {/* 미니미 도감 — 미보유 클릭 시 상점 자동 오픈, 헤더에 "상점 열기" 버튼 */}
-            <MinimiCollection onOpenShop={openShop} />
+            {/* 미니미 도감 — 미보유 클릭 시 상점(미니미 탭) 자동 오픈 */}
+            <MinimiCollection onOpenShop={() => openShop("minimi")} />
 
-            {/* 미니미 상점 모달 */}
-            <MinimiShopModal
+            {/* 통합 상점 모달 (미니미/가구/배경) */}
+            <MinihompyShop
                 isOpen={shopOpen}
                 onClose={closeShop}
-                ownedCharacters={ownedMinimis.map((m) => m.slug)}
-                initialSlug={shopInitialSlug}
+                initialTab={shopInitialTab}
                 onPurchased={() => {
                     loadOwnedMinimis();
-                }}
-            />
-
-            {/* 가구 상점 모달 */}
-            <FurnitureShopModal
-                isOpen={furnitureShopOpen}
-                onClose={() => setFurnitureShopOpen(false)}
-                onPurchased={() => {
                     loadOwnedFurniture();
+                    loadSettings();
                 }}
             />
 

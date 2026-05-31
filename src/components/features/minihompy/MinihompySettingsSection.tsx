@@ -179,7 +179,7 @@ export default function MinihompySettingsSection({
                         )}
                     >
                         <Palette className="w-4 h-4" />
-                        배경 꾸미기
+                        배경 보관함
                     </button>
                 </div>
             </div>
@@ -190,6 +190,7 @@ export default function MinihompySettingsSection({
                     onClose={() => setShowBgShop(false)}
                     currentSlug={settings.backgroundSlug}
                     onApply={handleBgChange}
+                    storageMode
                 />
             )}
         </>
