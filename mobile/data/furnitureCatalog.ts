@@ -121,17 +121,19 @@ export const FURNITURE_CATALOG: FurnitureItem[] = [
         stageHeight: 50,
     },
     // -- 창문 (window) --
-    // 정면 평면 원근이라 작게 둬야 아이소메트릭 스테이지에서 벽 소품처럼 자연스러움.
-    {
-        slug: "arch_window",
-        name: "아치 창문",
-        category: "window",
-        imageUrl: abs("/icons/furniture/arch_window.png"),
-        price: 120,
-        description: "구름이 보이는 아치형 창문",
-        stageWidth: 32,
-        stageHeight: 48,
-    },
+    // 아치 창문: 이미지가 정면 뷰라 아이소메트릭(30도) 스테이지와 각도가 안 맞음.
+    // 코드(크기/회전/skew)로는 해결 불가 → 아이소메트릭 각도로 재생성 시 복구.
+    // 파일은 public/icons/furniture/arch_window.png 보존.
+    // {
+    //     slug: "arch_window",
+    //     name: "아치 창문",
+    //     category: "window",
+    //     imageUrl: abs("/icons/furniture/arch_window.png"),
+    //     price: 120,
+    //     description: "구름이 보이는 아치형 창문",
+    //     stageWidth: 32,
+    //     stageHeight: 48,
+    // },
 ];
 
 /** 카테고리 한글 라벨 */
