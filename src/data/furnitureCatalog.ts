@@ -115,16 +115,18 @@ export const FURNITURE_CATALOG: FurnitureItem[] = [
         stageHeight: 50,
     },
     // -- 창문 (window) --
-    {
-        slug: "arch_window",
-        name: "아치 창문",
-        category: "window",
-        imageUrl: "/icons/furniture/arch_window.png",
-        price: 120,
-        description: "구름이 보이는 아치형 창문",
-        stageWidth: 45,
-        stageHeight: 70,
-    },
+    // 아치 창문: 정면 평면 원근이라 아이소메트릭 집/벽과 각도·높이가 안 맞음.
+    // 아이소메트릭 버전 재생성 전까지 카탈로그에서 제외 (파일은 보존).
+    // {
+    //     slug: "arch_window",
+    //     name: "아치 창문",
+    //     category: "window",
+    //     imageUrl: "/icons/furniture/arch_window.png",
+    //     price: 120,
+    //     description: "구름이 보이는 아치형 창문",
+    //     stageWidth: 45,
+    //     stageHeight: 70,
+    // },
 ];
 
 /** 카테고리 한글 라벨 */

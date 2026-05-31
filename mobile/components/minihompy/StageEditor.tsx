@@ -618,8 +618,16 @@ function DraggableMinimi({
     const leftPx = (placed.x / 100) * stageWidth - HIT_W / 2;
     const topPx = (placed.y / 100) * stageHeight - HIT_H / 2;
 
-    // z-index: 터치 이펙트 발동 중이면 위로
-    const zIdx = touchAction !== null ? 50 : (placed.zIndex ?? index);
+    // z-index 레이어링: 가구는 항상 미니미보다 뒤(배경 가까이)에 깔린다.
+    //  - 가구: 0~99 밴드 (배치순)
+    //  - 미니미: 100+ 밴드 (가구를 가리지 않고 항상 위에 보임)
+    //  - 터치 이펙트 중인 미니미: 최상단(999)
+    const baseZ = placed.zIndex ?? index;
+    const zIdx = touchAction !== null
+        ? 999
+        : isFurniture
+            ? Math.min(baseZ, 99)
+            : 100 + baseZ;
 
     return (
         <View

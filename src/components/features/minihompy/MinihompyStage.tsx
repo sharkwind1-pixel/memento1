@@ -385,7 +385,10 @@ export default function MinihompyStage({
                             style={{
                                 left: `${placed.x}%`,
                                 top: `${placed.y}%`,
-                                zIndex: isSelected ? 50 : hasTouchEffect ? 40 : (placed.zIndex || index + 1),
+                                // 가구는 미니미보다 항상 뒤(배경 가까이)에 깔림. 가구 0~99 / 미니미 100+ / 선택·터치 최상단
+                                zIndex: isSelected ? 999 : hasTouchEffect ? 998
+                                    : isFurniture ? Math.min(placed.zIndex || index + 1, 99)
+                                    : 100 + (placed.zIndex || index + 1),
                                 width: itemW,
                                 height: itemH,
                                 transform: "translate(-50%, -50%)",
