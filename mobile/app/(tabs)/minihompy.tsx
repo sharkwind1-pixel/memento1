@@ -32,7 +32,7 @@ import AppDrawer from "@/components/common/AppDrawer";
 import PageBackground, { usePageBgColor } from "@/components/common/PageBackground";
 import PetSwitcher from "@/components/common/PetSwitcher";
 import MinimiShopModal from "@/components/minihompy/MinimiShopModal";
-import FurnitureShopModal from "@/components/minihompy/FurnitureShopModal";
+import MinihompyShopModal from "@/components/minihompy/MinihompyShopModal";
 import BackgroundShopModal from "@/components/minihompy/BackgroundShopModal";
 import GuestbookModal from "@/components/minihompy/GuestbookModal";
 import GreetingEditModal from "@/components/minihompy/GreetingEditModal";
@@ -83,8 +83,8 @@ export default function MinihompyScreen() {
     const messageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const touchResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const [shopOpen, setShopOpen] = useState(false);
-    const [furnitureShopOpen, setFurnitureShopOpen] = useState(false);
+    const [shopOpen, setShopOpen] = useState(false);              // 미니미 보관함(장착/판매/추가구매)
+    const [unifiedShopOpen, setUnifiedShopOpen] = useState(false); // 통합 상점(미니미/가구/배경 구매)
     const [shopInitialFilter, setShopInitialFilter] = useState<"all" | "owned" | "dog" | "cat">("all");
     const [bgShopOpen, setBgShopOpen] = useState(false);
     const [guestbookOpen, setGuestbookOpen] = useState(false);
@@ -331,9 +331,9 @@ export default function MinihompyScreen() {
                             </StageBackground>
                         </TouchableOpacity>
 
-                        {/* 미니미 상점 CTA */}
+                        {/* 상점 CTA */}
                         <TouchableOpacity
-                            onPress={() => setShopOpen(true)}
+                            onPress={() => setUnifiedShopOpen(true)}
                             style={[styles.shopCta, { borderColor: accentColor + "40", backgroundColor: isDarkMode ? COLORS.gray[900] : "#fff" }]}
                             activeOpacity={0.85}
                         >
@@ -342,10 +342,10 @@ export default function MinihompyScreen() {
                             </View>
                             <View style={{ flex: 1 }}>
                                 <Text style={[styles.shopCtaTitle, { color: isDarkMode ? COLORS.white : COLORS.gray[900] }]}>
-                                    미니미 캐릭터 만나보기
+                                    상점 둘러보기
                                 </Text>
                                 <Text style={styles.shopCtaSub}>
-                                    상점에서 미니미를 사면 스테이지에 자유롭게 배치할 수 있어요
+                                    미니미·가구·배경을 사서 나만의 공간을 꾸며보세요
                                 </Text>
                             </View>
                             <Ionicons name="chevron-forward" size={16} color={accentColor} />
@@ -356,11 +356,11 @@ export default function MinihompyScreen() {
                 {/* 액션 카드 (2 x 3 그리드) */}
                 <View style={styles.actionGrid}>
                     <ActionCard
-                        icon="paw"
+                        icon="storefront"
                         label="상점"
                         color={COLORS.memento[500]}
                         bgColor={isDarkMode ? COLORS.gray[900] : COLORS.memento[50]}
-                        onPress={() => { setShopInitialFilter("all"); setShopOpen(true); }}
+                        onPress={() => setUnifiedShopOpen(true)}
                     />
                     <ActionCard
                         icon="library"
@@ -368,13 +368,6 @@ export default function MinihompyScreen() {
                         color="#FB923C"
                         bgColor={isDarkMode ? COLORS.gray[900] : "#FFF7ED"}
                         onPress={() => { setShopInitialFilter("owned"); setShopOpen(true); }}
-                    />
-                    <ActionCard
-                        icon="bed"
-                        label="가구"
-                        color="#F59E0B"
-                        bgColor={isDarkMode ? COLORS.gray[900] : "#FFFBEB"}
-                        onPress={() => setFurnitureShopOpen(true)}
                     />
                     <ActionCard
                         icon="color-palette"
@@ -425,6 +418,17 @@ export default function MinihompyScreen() {
             {/* 모달들 */}
             {accessToken && (
                 <>
+                    {/* 통합 상점 (미니미/가구/배경 구매) */}
+                    <MinihompyShopModal
+                        visible={unifiedShopOpen}
+                        onClose={() => setUnifiedShopOpen(false)}
+                        accessToken={accessToken}
+                        points={points ?? 0}
+                        onChanged={() => { handleShopChanged(); handleFurnitureChanged(); }}
+                        accentColor={accentColor}
+                        initialTab="minimi"
+                    />
+                    {/* 미니미 보관함 (보유 미니미 장착/판매/추가구매) */}
                     <MinimiShopModal
                         visible={shopOpen}
                         onClose={() => setShopOpen(false)}
@@ -434,14 +438,7 @@ export default function MinihompyScreen() {
                         accentColor={accentColor}
                         initialFilter={shopInitialFilter}
                     />
-                    <FurnitureShopModal
-                        visible={furnitureShopOpen}
-                        onClose={() => setFurnitureShopOpen(false)}
-                        accessToken={accessToken}
-                        points={points ?? 0}
-                        onChanged={handleFurnitureChanged}
-                        accentColor={accentColor}
-                    />
+                    {/* 배경 보관함 (보유 배경 적용 전용) */}
                     <BackgroundShopModal
                         visible={bgShopOpen}
                         onClose={() => setBgShopOpen(false)}
@@ -450,6 +447,7 @@ export default function MinihompyScreen() {
                         currentSlug={bgSlug}
                         onApplied={handleBackgroundApplied}
                         accentColor={accentColor}
+                        storageMode
                     />
                     {user && (
                         <GuestbookModal

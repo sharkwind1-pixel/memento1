@@ -25,10 +25,12 @@ interface Props {
     currentSlug: string;
     onApplied: (slug: string) => void;
     accentColor: string;
+    /** 보관함 모드: 보유(또는 무료) 배경만 + 적용 전용 */
+    storageMode?: boolean;
 }
 
 export default function BackgroundShopModal({
-    visible, onClose, accessToken, points, currentSlug, onApplied, accentColor,
+    visible, onClose, accessToken, points, currentSlug, onApplied, accentColor, storageMode = false,
 }: Props) {
     const insets = useSafeAreaInsets();
     const { isDarkMode } = useDarkMode();
@@ -121,8 +123,8 @@ export default function BackgroundShopModal({
                         <Ionicons name="close" size={24} color={isDarkMode ? COLORS.gray[300] : COLORS.gray[800]} />
                     </TouchableOpacity>
                     <View style={{ flex: 1 }}>
-                        <Text style={[styles.headerTitle, { color: titleColor }]}>배경 테마</Text>
-                        <Text style={[styles.headerSub, { color: subColor }]}>탭해서 적용 · 구매</Text>
+                        <Text style={[styles.headerTitle, { color: titleColor }]}>{storageMode ? "배경 보관함" : "배경 테마"}</Text>
+                        <Text style={[styles.headerSub, { color: subColor }]}>{storageMode ? "탭해서 적용" : "탭해서 적용 · 구매"}</Text>
                     </View>
                     <View style={[styles.pointPill, { backgroundColor: pointPillBg }]}>
                         <Ionicons name="star" size={12} color={COLORS.memento[500]} />
@@ -136,7 +138,9 @@ export default function BackgroundShopModal({
                     </View>
                 ) : (
                     <FlatList
-                        data={BACKGROUND_CATALOG}
+                        data={storageMode
+                            ? BACKGROUND_CATALOG.filter((b) => owned.has(b.slug) || b.price === 0)
+                            : BACKGROUND_CATALOG}
                         keyExtractor={(item) => item.slug}
                         numColumns={2}
                         columnWrapperStyle={{ gap: 12, paddingHorizontal: 16 }}
