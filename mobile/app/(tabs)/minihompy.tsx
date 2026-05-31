@@ -296,14 +296,6 @@ export default function MinihompyScreen() {
                                 stageHeight={STAGE_HEIGHT}
                             />
                         )}
-                        {/* 인사말 말풍선 — 터치 메시지는 StageEditor가 미니미 위에 표시.
-                            여기는 정적 greeting만 (터치 중엔 숨김) */}
-                        {!message && settings?.greeting && (
-                            <View pointerEvents="none" style={styles.speechBubbleAbsolute}>
-                                <Text style={styles.speechText}>{settings.greeting}</Text>
-                                <View style={styles.speechTail} />
-                            </View>
-                        )}
                     </View>
                 ) : (
                     // 보유 미니미 0 + 배치 0 → 단일 stage + 상점 CTA
@@ -314,10 +306,10 @@ export default function MinihompyScreen() {
                             style={{ borderRadius: 24, overflow: "hidden", position: "relative" }}
                         >
                             <StageBackground background={background}>
-                                {(message || settings?.greeting) && (
+                                {message && (
                                     <View style={styles.speechBubble}>
                                         <Text style={styles.speechText}>
-                                            {message ?? settings?.greeting ?? ""}
+                                            {message}
                                         </Text>
                                         <View style={styles.speechTail} />
                                     </View>
@@ -568,22 +560,6 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         elevation: 3,
         maxWidth: SCREEN_WIDTH - 80,
-    },
-    speechBubbleAbsolute: {
-        position: "absolute",
-        top: 32,
-        alignSelf: "center",
-        left: 0, right: 0,
-        marginHorizontal: 60,
-        backgroundColor: "rgba(255,255,255,0.95)",
-        paddingHorizontal: 16, paddingVertical: 8,
-        borderRadius: 16,
-        shadowColor: "#000",
-        shadowOpacity: 0.1, shadowRadius: 8,
-        shadowOffset: { width: 0, height: 2 },
-        elevation: 3,
-        zIndex: 100,
-        alignItems: "center",
     },
     tapAreaAbsolute: {
         position: "absolute",

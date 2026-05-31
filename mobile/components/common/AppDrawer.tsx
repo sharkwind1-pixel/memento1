@@ -9,7 +9,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
     Modal, View, Text, TouchableOpacity, Animated, Dimensions,
-    Pressable, StyleSheet, ScrollView, Image,
+    Pressable, StyleSheet, ScrollView, Image, Linking,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -21,7 +21,7 @@ import { useSimpleMode } from "@/contexts/SimpleModeContext";
 import { COLORS } from "@/lib/theme";
 import PointsHistoryModal from "@/components/points/PointsHistoryModal";
 import PointsShopModal from "@/components/points/PointsShopModal";
-import { getPointLevel } from "@/config/constants";
+import { getPointLevel, PRICING } from "@/config/constants";
 import { POINT_LEVELS, ADMIN_ICONS, type PetIconType } from "@/lib/levels";
 
 const { width: SCREEN_W } = Dimensions.get("window");
@@ -142,6 +142,14 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
         // 약간의 delay 후 navigate (애니메이션 자연스럽게)
         setTimeout(() => {
             router.push(route as never);
+        }, 200);
+    }
+
+    // 사이드바 → 웹 결제 바로 연결 (앱 인앱결제 미연동, 웹에서 결제 후 동일 계정 로그인 시 적용)
+    function openWebPayment() {
+        onClose();
+        setTimeout(() => {
+            Linking.openURL("https://mementoani.com?tab=home#subscription").catch(() => {});
         }, 200);
     }
 
@@ -289,6 +297,32 @@ export default function AppDrawer({ visible, onClose }: AppDrawerProps) {
 
                     {/* 메뉴 */}
                     <ScrollView style={{ flex: 1 }}>
+                        {/* 프리미엄 구독 결제 버튼 — 비프리미엄 유저에게만 (웹 결제로 바로 연결) */}
+                        {user && !isPremium && (
+                            <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
+                                <TouchableOpacity activeOpacity={0.88} onPress={openWebPayment}>
+                                    <LinearGradient
+                                        colors={[COLORS.memento[500], COLORS.memento[400]]}
+                                        start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                                        style={styles.premiumCta}
+                                    >
+                                        <View style={styles.premiumCtaIcon}>
+                                            <Ionicons name="star" size={18 * iconScale} color="#fff" />
+                                        </View>
+                                        <View style={{ flex: 1 }}>
+                                            <Text style={[styles.premiumCtaTitle, { fontSize: 14 * fontScale }]}>
+                                                프리미엄 구독하기
+                                            </Text>
+                                            <Text style={[styles.premiumCtaSub, { fontSize: 11 * fontScale }]}>
+                                                월 {PRICING.PREMIUM_MONTHLY.toLocaleString()}원 · AI 펫톡 무제한
+                                            </Text>
+                                        </View>
+                                        <Ionicons name="chevron-forward" size={18 * iconScale} color="rgba(255,255,255,0.9)" />
+                                    </LinearGradient>
+                                </TouchableOpacity>
+                            </View>
+                        )}
+
                         <View style={styles.menuSection}>
                             <Text style={sectionLabelStyle}>메뉴</Text>
                             {MAIN_MENU.map((m) => (
@@ -517,6 +551,26 @@ const styles = StyleSheet.create({
         borderRadius: 9999,
     },
     levelBadgeText: { fontSize: 10, fontWeight: "700", color: "#fff" },
+    premiumCta: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        paddingHorizontal: 14,
+        paddingVertical: 14,
+        borderRadius: 14,
+        elevation: 3,
+        shadowColor: COLORS.memento[500],
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.3,
+        shadowRadius: 6,
+    },
+    premiumCtaIcon: {
+        width: 36, height: 36, borderRadius: 18,
+        backgroundColor: "rgba(255,255,255,0.25)",
+        alignItems: "center", justifyContent: "center",
+    },
+    premiumCtaTitle: { fontSize: 14, fontWeight: "800", color: "#fff" },
+    premiumCtaSub: { fontSize: 11, color: "rgba(255,255,255,0.9)", marginTop: 2 },
     menuSection: { paddingHorizontal: 16, paddingTop: 16 },
     sectionLabel: {
         fontSize: 11,
