@@ -389,7 +389,7 @@ export const MINIHOMPY = {
     GREETING_MAX_LENGTH: 50,
     GUESTBOOK_MAX_LENGTH: 200,
     GUESTBOOK_PAGE_SIZE: 10,
-    DEFAULT_BACKGROUND: "default_sky",
+    DEFAULT_BACKGROUND: "room_default",  // 신규 미니홈피 기본 = 빈집(가구 배치용)
     MAX_PLACED_MINIMI: 999,  // 사실상 무제한
 } as const;
 

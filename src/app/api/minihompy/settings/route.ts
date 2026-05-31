@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
 import { getClientIP, checkRateLimit, getRateLimitHeaders, sanitizeInput } from "@/lib/rate-limit";
 import { MINIHOMPY } from "@/config/constants";
+import { findBackground } from "@/data/minihompyBackgrounds";
 
 export const dynamic = "force-dynamic";
 
@@ -121,16 +122,24 @@ export async function PATCH(request: NextRequest) {
         const supabase = await createServerSupabase();
 
         // 배경 변경 시 보유 여부 확인
-        if (updates.background_slug && updates.background_slug !== MINIHOMPY.DEFAULT_BACKGROUND) {
-            const { data: owned } = await supabase
-                .from("minihompy_user_backgrounds")
-                .select("id")
-                .eq("user_id", user.id)
-                .eq("background_slug", updates.background_slug)
-                .maybeSingle();
+        // 무료 배경(price 0, 예: default_sky / room_default 빈집)은 보유 테이블에 없어도 항상 적용 가능.
+        // 유료 배경만 보유 여부를 검사한다. (DEFAULT_BACKGROUND 단일 슬러그 비교는 무료 배경이 늘면 깨짐)
+        if (updates.background_slug) {
+            const bgSlug = updates.background_slug as string;
+            const bgMeta = findBackground(bgSlug);
+            const isFree = !bgMeta || bgMeta.price === 0;
 
-            if (!owned) {
-                return NextResponse.json({ error: "보유하지 않은 배경입니다" }, { status: 400 });
+            if (!isFree) {
+                const { data: owned } = await supabase
+                    .from("minihompy_user_backgrounds")
+                    .select("id")
+                    .eq("user_id", user.id)
+                    .eq("background_slug", bgSlug)
+                    .maybeSingle();
+
+                if (!owned) {
+                    return NextResponse.json({ error: "보유하지 않은 배경입니다" }, { status: 400 });
+                }
             }
         }
 
