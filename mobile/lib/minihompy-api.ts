@@ -153,13 +153,15 @@ export async function sellMinimi(accessToken: string, userMinimiId: string): Pro
 // 배경 (구매 / 보유 목록)
 // ============================================================================
 
+// API는 { catalog: [{ slug, owned, price, ... }] } 형식을 반환한다.
+// (과거 { owned: string[] } 가정은 틀렸음 — 항상 빈 배열이 되어 보유 배경이 안 보이던 버그)
 interface BackgroundsResponse {
-    owned: string[]; // background slug 목록
+    catalog: { slug: string; owned: boolean }[];
 }
 
 export async function getOwnedBackgrounds(accessToken: string): Promise<string[]> {
     const data = await callApi<BackgroundsResponse>("/api/minihompy/backgrounds", { accessToken });
-    return data.owned || [];
+    return (data.catalog || []).filter((b) => b.owned).map((b) => b.slug);
 }
 
 export async function purchaseBackground(accessToken: string, slug: string): Promise<void> {
