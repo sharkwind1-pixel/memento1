@@ -123,9 +123,9 @@ export function findBackground(slug: string): BackgroundTheme | undefined {
     return BACKGROUND_CATALOG.find((bg) => bg.slug === slug);
 }
 
-/** 기본 배경 (첫 번째 카탈로그 항목) */
+/** 기본 배경 = 빈방(room_default). 없으면 첫 번째 카탈로그 항목 */
 export function getDefaultBackground(): BackgroundTheme {
-    return BACKGROUND_CATALOG[0];
+    return BACKGROUND_CATALOG.find((bg) => bg.slug === "room_default") || BACKGROUND_CATALOG[0];
 }
 
 /** 배경 조회 + 폴백 (삭제된 배경이면 기본 배경 반환) */

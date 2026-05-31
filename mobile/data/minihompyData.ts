@@ -74,5 +74,7 @@ export function findBackground(slug: string): BackgroundTheme | undefined {
 }
 
 export function findBackgroundOrDefault(slug: string): BackgroundTheme {
-    return findBackground(slug) || BACKGROUND_CATALOG[0];
+    return findBackground(slug)
+        || BACKGROUND_CATALOG.find((bg) => bg.slug === "room_default")
+        || BACKGROUND_CATALOG[0];
 }
