@@ -136,6 +136,28 @@ export async function GET(
             })(),
         ]);
 
+        // 댓글 작성자 프로필 조인 (아바타 + 등급 아이콘용 포인트/관리자)
+        // 게시글 상세 페이로드의 comments가 화면에 실제 표시되므로 여기서 보강해야 함.
+        let commentsWithProfile = comments || [];
+        const commentUserIds = [...new Set((comments || []).map(c => c.user_id).filter(Boolean))];
+        if (commentUserIds.length > 0) {
+            const { data: commentProfiles } = await adminSupabase
+                .from("profiles")
+                .select("id, nickname, avatar_url, points, is_admin")
+                .in("id", commentUserIds);
+            const cpMap = new Map((commentProfiles || []).map(p => [p.id, p]));
+            commentsWithProfile = (comments || []).map(c => {
+                const prof = cpMap.get(c.user_id);
+                return {
+                    ...c,
+                    author_name: prof?.nickname || c.author_name,
+                    author_avatar: prof?.avatar_url || null,
+                    author_points: prof?.points ?? 0,
+                    author_is_admin: prof?.is_admin === true,
+                };
+            });
+        }
+
         // 현재 유저의 좋아요/비추천 여부 확인
         let userLiked = false;
         let userDisliked = false;
@@ -184,7 +206,7 @@ export async function GET(
                 authorMinimiSlug: authorInfo.minimiSlug,
                 authorPoints: authorInfo.points,
                 authorIsAdmin: authorInfo.isAdmin,
-                comments: comments || [],
+                comments: commentsWithProfile,
                 userLiked,
                 userDisliked,
             },

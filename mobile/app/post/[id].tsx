@@ -29,6 +29,8 @@ interface Comment {
     author: string;
     authorId: string;
     authorAvatar?: string;
+    authorPoints?: number;
+    authorIsAdmin?: boolean;
     createdAt: string;
     likes: number;
     dislikes: number;
@@ -85,6 +87,8 @@ function normalizeComment(raw: any): Comment {
             : typeof raw?.author_avatar === "string"
                 ? raw.author_avatar
                 : undefined,
+        authorPoints: asNumber(raw?.authorPoints),
+        authorIsAdmin: Boolean(raw?.authorIsAdmin),
         createdAt: asString(raw?.createdAt ?? raw?.created_at),
         likes: asNumber(raw?.likes),
         dislikes: asNumber(raw?.dislikes ?? raw?.dislike_count),
