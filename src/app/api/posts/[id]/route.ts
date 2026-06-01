@@ -139,7 +139,7 @@ export async function GET(
         // 댓글 작성자 프로필 조인 (아바타 + 등급 아이콘용 포인트/관리자)
         // 게시글 상세 페이로드의 comments가 화면에 실제 표시되므로 여기서 보강해야 함.
         let commentsWithProfile = comments || [];
-        const commentUserIds = [...new Set((comments || []).map(c => c.user_id).filter(Boolean))];
+        const commentUserIds = Array.from(new Set((comments || []).map(c => c.user_id).filter(Boolean)));
         if (commentUserIds.length > 0) {
             const { data: commentProfiles } = await adminSupabase
                 .from("profiles")
