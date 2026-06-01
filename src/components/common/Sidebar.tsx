@@ -441,7 +441,7 @@ export default function Sidebar({
                                 <Home className="w-4 h-4" />
                                 <span>내 미니홈피</span>
                             </button>
-                            {isPremiumUser && (
+                            {isPremiumUser ? (
                                 <button
                                     onClick={() => {
                                         window.dispatchEvent(
@@ -455,6 +455,17 @@ export default function Sidebar({
                                 >
                                     <CreditCard className="w-4 h-4" />
                                     <span>구독 관리</span>
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => {
+                                        window.dispatchEvent(new CustomEvent("openPremiumModal"));
+                                        if (isMobile) onClose();
+                                    }}
+                                    className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-memento-500 to-memento-400 hover:opacity-90 active:scale-[0.99] transition-all shadow-sm"
+                                >
+                                    <Sparkles className="w-4 h-4" />
+                                    <span>프리미엄 구독하기</span>
                                 </button>
                             )}
                             <button
