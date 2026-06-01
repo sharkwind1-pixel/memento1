@@ -26,6 +26,7 @@ import {
     Ban,
     Pin,
     Globe,
+    Play,
 } from "lucide-react";
 import {
     DropdownMenu,
@@ -187,10 +188,38 @@ export default function CommunityPostList({
                                         </DropdownMenu>
                                     </div>
                                 </div>
-                                {/* 제목 */}
-                                <p className="text-[15px] font-semibold text-gray-800 dark:text-gray-100 mt-1.5 line-clamp-1 leading-snug">
-                                    {post.title}
-                                </p>
+                                {/* 제목 + 썸네일 (이미지/영상 첨부 시) */}
+                                {(post.thumbnailUrl || post.hasVideo) ? (
+                                    <div className="flex items-start gap-2.5 mt-1.5">
+                                        <p className="text-[15px] font-semibold text-gray-800 dark:text-gray-100 line-clamp-2 leading-snug flex-1 min-w-0">
+                                            {post.title}
+                                        </p>
+                                        <div className="relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700">
+                                            {post.thumbnailUrl ? (
+                                                <img
+                                                    src={post.thumbnailUrl}
+                                                    alt=""
+                                                    className="w-full h-full object-cover"
+                                                    loading="lazy"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
+                                                    <Play className="w-5 h-5 text-white/90 fill-white/90" />
+                                                </div>
+                                            )}
+                                            {/* 이미지 + 영상 둘 다일 때 영상 표시 */}
+                                            {post.thumbnailUrl && post.hasVideo && (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/25">
+                                                    <Play className="w-5 h-5 text-white fill-white" />
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <p className="text-[15px] font-semibold text-gray-800 dark:text-gray-100 mt-1.5 line-clamp-1 leading-snug">
+                                        {post.title}
+                                    </p>
+                                )}
                             </div>
                             {/* 하단: 작성자 + 통계 */}
                             <div className="px-3.5 pb-3 pt-1.5 flex items-center justify-between">
