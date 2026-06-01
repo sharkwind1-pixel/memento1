@@ -106,6 +106,8 @@ export default function PostDetailView({
                 content: c.content,
                 authorNickname: c.authorNickname || c.author_nickname || c.author_name || "익명",
                 authorAvatar: c.authorAvatar || c.author_avatar,
+                authorPoints: c.authorPoints ?? c.author_points ?? 0,
+                authorIsAdmin: c.authorIsAdmin ?? c.author_is_admin ?? false,
                 createdAt: c.createdAt || c.created_at || new Date().toISOString(),
             })));
         } catch {

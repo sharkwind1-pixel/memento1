@@ -22,6 +22,8 @@ export interface PostComment {
     author_name?: string;
     author_nickname?: string;
     author_avatar?: string;
+    author_points?: number;
+    author_is_admin?: boolean;
     user_id?: string;
     post_id?: string;
     created_at?: string;
