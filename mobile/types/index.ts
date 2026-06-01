@@ -145,6 +145,7 @@ export interface CommunityPost {
     time?: string;
     createdAt?: string;
     images?: string[];
+    videoUrl?: string;
 }
 
 // ============================================

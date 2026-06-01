@@ -218,6 +218,9 @@ export default function CommunityScreen() {
                         : (Array.isArray(raw?.image_urls)
                             ? raw.image_urls.filter((x): x is string => typeof x === "string")
                             : undefined)),
+                videoUrl: typeof raw?.videoUrl === "string"
+                    ? raw.videoUrl
+                    : (typeof raw?.video_url === "string" ? raw.video_url : undefined),
             })));
         } catch {
             // 조용히
@@ -553,6 +556,13 @@ function PostCard({ post, isMemorialMode, onPress }: {
                             </View>
                         ) : null}
                     </View>
+                ) : post.videoUrl ? (
+                    /* 이미지 없고 영상만 첨부 → 재생 아이콘 썸네일 */
+                    <View style={styles.imagesRow}>
+                        <View style={[styles.thumb, styles.videoThumb]}>
+                            <Ionicons name="play" size={22} color="#fff" />
+                        </View>
+                    </View>
                 ) : null}
 
                 <View style={styles.metaRow}>
@@ -658,6 +668,7 @@ const styles = StyleSheet.create({
     imagesRow: { flexDirection: "row", gap: 6, marginTop: 4 },
     thumb: { width: 64, height: 64, borderRadius: 8, backgroundColor: COLORS.gray[100] },
     moreThumb: { alignItems: "center", justifyContent: "center" },
+    videoThumb: { alignItems: "center", justifyContent: "center", backgroundColor: "#1f2937" },
     moreText: { fontSize: 12, fontWeight: "600", color: COLORS.gray[600] },
     metaRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 },
     metaText: { fontSize: 11, color: COLORS.gray[500] },
