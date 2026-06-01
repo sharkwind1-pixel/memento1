@@ -40,6 +40,7 @@ export interface Post {
     views: number;
     comments: number;
     imageUrls?: string[];
+    videoUrl?: string | null;
     createdAt: string;
     isPublic?: boolean;
     isPinned?: boolean; // 상단 고정 (공지)
