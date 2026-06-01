@@ -45,21 +45,20 @@ export async function GET(
         ]);
         const { id } = resolvedParams;
 
-        // 조회수 증가는 fire-and-forget (응답 대기 안 함)
+        // 조회수 증가 (fire-and-forget). increment_field RPC가 DB에 없고,
+        // 일반 supabase(RLS)로는 남의 글 UPDATE가 막혀 조회수가 0에 멈췄음.
+        // → service_role(admin) 클라이언트로 RLS 우회하여 직접 +1.
+        const viewAdmin = createAdminSupabase();
         Promise.resolve(
-            supabase.rpc("increment_field", {
-                table_name: "community_posts",
-                field_name: "views",
-                row_id: id,
-                amount: 1,
-            })
-        ).then(({ error: rpcErr }) => {
-            if (rpcErr) {
-                Promise.resolve(
-                    supabase.from("community_posts").select("views").eq("id", id).single()
-                ).then(({ data: p }) => {
-                    if (p) supabase.from("community_posts").update({ views: (p.views || 0) + 1 }).eq("id", id);
-                });
+            viewAdmin.from("community_posts").select("views").eq("id", id).single()
+        ).then(({ data: p }) => {
+            if (p) {
+                viewAdmin.from("community_posts")
+                    .update({ views: (p.views || 0) + 1 })
+                    .eq("id", id)
+                    .then(({ error: upErr }) => {
+                        if (upErr) console.error("[posts/GET] view update failed:", upErr.message);
+                    });
             }
         }).catch((err) => { console.error("[posts/GET] view increment failed:", err); });
 
