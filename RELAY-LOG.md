@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-06-03 웹 느림 근본원인 진단 — 리전 불일치(Vercel iad1↔Supabase 뭄바이↔유저 한국) + bom1 이동
+사용자 "개발 초기부터 항상 느림" 재지적 + "VPN체크 제거 금지(악용방지 의도)". 근본원인: `vercel.json`에 regions 없음 → **Vercel 함수 기본 iad1(미국 동부)**, **Supabase ap-south-1(뭄바이)**, 유저 한국. 매 API = 한국↔미국 + 미국↔뭄바이 **6쿼리 왕복** = 초 단위 지연. React/Next 문제 아님(지리 문제). 수정: `vercel.json` `regions:["bom1"]`(뭄바이=DB 동일 메트로) → 함수↔DB 6왕복 ~210ms→~3ms 붕괴, API 5~10배 예상. checkVPN은 24h 캐시 있음(rate-limit.ts:855)이라 **제거 안 함**(사용자 지적 옳음). ⚠️ **미검증**: Hobby 플랜 리전 지원 여부(대시보드 Functions 리전) + 배포 로그/실측 전엔 추정. 장기 이상: DB도 서울(ap-northeast-2)+함수 icn1 = DB 마이그레이션 필요(별건). 2차 레버: API당 순차쿼리 축소·낙관적 UI·VPN 캐시 영속화(in-memory라 콜드인스턴스마다 빔).
+
+---
+
 ## 2026-06-03 모바일웹 — 댓글 좋아요/위로 낙관적 업데이트 + 9번이 잡은 롤백·가드 버그 수정 — L2
 사용자 모바일웹 신고: 댓글 좋아요 적용 안 됨/느림, 추모 위로 4→5 즉시 안 바뀜. 원인: 둘 다 낙관적 UI 미흡 — 댓글은 아예 없음(서버 응답까지 무반응+`if(!res.ok)return`으로 실패 조용히 무시), 위로는 있으나 느린 `await getSession()` **뒤**라 지연. 수정: (1) `handleCommentLike`(PostDetailView) 낙관적 토글+서버보정+실패 롤백 (2) `toggleCondolence`(useHomePage) 낙관적 업데이트를 getSession **앞으로** 이동. **★9번 팩트체크가 추가 버그 3개 발견→수정**: (a) 위로 catch 롤백 비대칭 버그(un-condole 실패 시 카운트 1 적게 남음)→역델타 `+ (wasCondoled?1:-1)` (b) handleCommentLike in-flight 가드 없어 연타 드리프트→`commentLikingRef` (c) 댓글 likes/userLiked/dislikes 로드 매핑 누락(기존 좋아요 안 보임)→매핑에 추가. L2(tsc+build). **미수정(별건)**: 댓글 dislike 핸들러 동일 패턴(미신고)·post-like catch 롤백 동일 버그(useHomePage:187)·comment-like API 무거움(VPN+6쿼리=느림 근본)·서버 per-comment userLiked 미계산. 실기 시각확인(L5) 미실행. Vercel 자동배포.
 
