@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-06-02 결제 pending→paid 승격 시 구독 프리미엄 미부여 갭 수정 — L2(tsc+build) + 9번 2회검증 SHIP OK
+webhook 보정(`webhook/route.ts:233`)·payment-reconcile promote(`:285`)가 status만 paid로 바꾸고 `grant_premium` 미호출 → "구독 결제됐는데 프리미엄 없음" 갭(직전 healthcheck 작업이 발견). 공용 헬퍼 `lib/subscription-grant.ts` 신설: `is_subscription`(또는 merchant_uid `sub_` 접두사) 게이트로 영상단건 제외, grant_premium + **subscriptions.metadata(customer_uid·next_billing_date·auto_renew)+billing_cycle 컬럼+profiles.subscription_billing_cycle+restoreFromLifecycle까지 미러링**. ★9번 팩트체크가 "grant_premium만 부르면 subscriptions.metadata 빈 채 생성→renewal 크론이 그 유저 건너뛰어 30일 후 조용히 만료+재청구불가"라는 2차버그를 사전 차단(팩트체크 돌린 값어치). 동시성: 조건부 UPDATE(.neq/.eq status)+`.select()`로 실제 뒤집은 경우만 grant(이중부여 방지). plan premium_annual→premium 매핑. 9번 에이전트 2회(설계+구현) SHIP OK. blast radius: 실피해 dojin3497(테스터) 1명, 코드갭 차단이 목적. 영상 크레딧은 paid 카운트 기반이라 무관 확인. **미검증**: PG 실거래 E2E(L4) 미실행. 비치명 잔여: verifying 레이스 이중grant(grant_premium 멱등이라 무해).
+
+---
+
+## 2026-06-02 [비코드] 초기창업패키지(AI 인재 실증형) 사업계획서 작성·제출 완료 (K-Startup 과제 20460239)
+7개 섹션 전수 작성 + 도식 7장(`Downloads/`: 분기점·로드맵·플라이휠·팀구성·AI내재화·시장규모·ESG) + `메멘토애니_사업계획서_붙여넣기용.txt`. **핵심 앵글**: "범용 외부 API(fal/luma veo3.1) 의존 → 반려동물 추모영상 **버티컬 특화** 자체 생성 역량 내재화(오픈소스 파인튜닝+자체 파이프라인+하이브리드)". from-scratch 아님 명시(과대주장 차단). **검산된 수치만**: 영상 API 원가 **1,100원/건**($0.80, `lib/fal.ts` veo3.1 코드값) · 사업비 **215백만**(정부150+자부담 현금22+현물43, 검산) · 시장 **269만**(KB2025 591→323→269 검산) · LTV/CAC 7.4 · 소재지 서울강북=지방우대 비해당 30%(붙임5) · 정규직 채용 가점 10점. K-Startup 제출완료, **마감 6/12 18:00 — 그 전까지 재제출 가능**. 미반영(선택, 영향 적음): 소재지 집주소 노출·개요 요약 일부 옛표현. ⚠️교훈: 9번 팩트체커 자동호출 **또** 누락(사용자 지적). 메모리 의존=반복 실패 → hook 강제 필요(`fact_checker_always_on.md`).
+
+---
+
 ## 2026-06-02 healthcheck stuck-payments 오탐 제거 + 버려진 결제창 자동정리 — L2+DB쿼리검증
 healthcheck 크론이 30분+ pending을 전부 카운트해 "stuck payments" 경고를 보내던 오탐 제거. **imp_uid(컬럼 또는 metadata->>'imp_uid')가 있는 pending만** 카운트하도록 변경(`healthcheck/route.ts:128`) — "결제창만 열고 이탈한" 버려진 세션(imp_uid null, 실제 청구 없음)은 경고 제외, "포트원 결제됨(imp_uid 존재)인데 DB 미확정"만 경고. payment-reconcile 크론(`payment-reconcile/route.ts:316`)에 버려진 pending(포트원 기록無 + imp_uid 없음) 즉시 정리 브랜치 추가 — 기존 24h 대기→1h(쿼리 임계) 즉시 `status=failed`(메타 `cron_pending_cleanup_abandoned`, abandoned_no_imp_uid). cancelled 대신 failed 선택(`db_query_interpretation_rule.md` 교훈: cancelled-from-cleanup은 환불통계 오염). 검증: prod DB 쿼리로 현재 유일 pending sub_d5c9c4c8(dojin3497, imp_uid null)이 새 필터에서 stuckPayments=0으로 제외됨 확인. typecheck+build 통과. **미검증**: 두 크론 엔드투엔드 실행은 안 함(reconcile은 prod 데이터 변경되므로). **별건 발견(미수정)**: 웹훅 paid-rescue(`webhook/route.ts:236`)와 reconcile pending-promote(`payment-reconcile:285`)가 pending→paid 승격 시 grant_premium을 안 불러 "결제됐는데 프리미엄 미부여" 갭 존재 — dojin3497 sub_7223066c가 실제 사례(테스터, 10초후 해지라 영향 적음). 사용자 결정 대기.
 

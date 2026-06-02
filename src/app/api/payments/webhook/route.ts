@@ -129,14 +129,14 @@ export async function POST(request: NextRequest) {
         const supabase = getAdminSupabase();
         let { data: dbPayment, error: fetchErr } = await supabase
             .from("payments")
-            .select("id, user_id, status, metadata")
+            .select("id, user_id, status, metadata, merchant_uid, plan")
             .eq("merchant_uid", merchantUid)
             .maybeSingle();
 
         if (!dbPayment && impUid) {
             const fallback = await supabase
                 .from("payments")
-                .select("id, user_id, status, metadata")
+                .select("id, user_id, status, metadata, merchant_uid, plan")
                 .eq("imp_uid", impUid)
                 .maybeSingle();
             dbPayment = fallback.data;
@@ -234,7 +234,9 @@ export async function POST(request: NextRequest) {
             // 이미 complete 경로에서 paid로 처리됐을 가능성 높음.
             // DB status가 'pending'/'verifying'으로 남아있으면 강제 보정.
             if (dbPayment.status !== "paid") {
-                await supabase
+                // 동시성(TOCTOU) 방지: status가 아직 paid가 아닐 때만 뒤집고,
+                // "우리가 실제로 뒤집은 경우"에만 grant (다른 웹훅/cron과 이중부여 방지).
+                const { data: flipped } = await supabase
                     .from("payments")
                     .update({
                         status: "paid",
@@ -244,7 +246,16 @@ export async function POST(request: NextRequest) {
                             note: "complete 경로 놓친 결제를 웹훅이 보정",
                         },
                     })
-                    .eq("id", dbPayment.id);
+                    .eq("id", dbPayment.id)
+                    .neq("status", "paid")
+                    .select("id");
+
+                // 구독 결제면 프리미엄 부여 + subscriptions 메타(renewal 크론용)까지 채움.
+                // 영상 단건 등 비구독은 헬퍼 내부 is_subscription 게이트로 자동 skip.
+                if (flipped && flipped.length > 0) {
+                    const { grantPremiumForPromotedSubscription } = await import("@/lib/subscription-grant");
+                    await grantPremiumForPromotedSubscription(supabase, dbPayment, "webhook_paid_rescue");
+                }
             }
             return NextResponse.json({ ack: true, handled: "paid", already: dbPayment.status === "paid" });
         }

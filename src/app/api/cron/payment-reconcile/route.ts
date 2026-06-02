@@ -234,7 +234,7 @@ export async function GET(request: NextRequest) {
 
     const { data: pendings } = await supabase
         .from("payments")
-        .select("id, user_id, merchant_uid, imp_uid, metadata, created_at, amount")
+        .select("id, user_id, merchant_uid, imp_uid, metadata, created_at, amount, plan")
         .eq("status", "pending")
         .lt("created_at", pendingThreshold)
         .limit(100);
@@ -252,6 +252,7 @@ export async function GET(request: NextRequest) {
             metadata: Record<string, unknown> | null;
             created_at: string;
             amount: number;
+            plan: string | null;
         }>) {
             pendingChecked++;
             // imp_uid는 metadata 우선, 없으면 레거시 컬럼도 확인
@@ -283,8 +284,9 @@ export async function GET(request: NextRequest) {
                 const status = (portoneRes?.status as string | undefined) ?? "";
 
                 if (status === "paid") {
-                    // 웹훅 누락된 paid — DB만 promote (grant_premium은 별도 수동/관리자)
-                    await supabase
+                    // 웹훅마저 놓친 paid — DB promote + 구독이면 프리미엄까지 부여(renewal 메타 포함).
+                    // 동시성: status='pending'일 때만 뒤집고, 우리가 뒤집은 경우에만 grant(이중부여 방지).
+                    const { data: flipped } = await supabase
                         .from("payments")
                         .update({
                             status: "paid",
@@ -296,7 +298,13 @@ export async function GET(request: NextRequest) {
                                 portone_paid_at: portoneRes?.paid_at ?? null,
                             },
                         })
-                        .eq("id", p.id);
+                        .eq("id", p.id)
+                        .eq("status", "pending")
+                        .select("id");
+                    if (flipped && flipped.length > 0) {
+                        const { grantPremiumForPromotedSubscription } = await import("@/lib/subscription-grant");
+                        await grantPremiumForPromotedSubscription(supabase, p, "reconcile_pending_promote");
+                    }
                     pendingPromoted++;
                 } else if (status === "cancelled" || status === "failed") {
                     // 포트원이 명확히 취소/실패로 응답 → DB도 failed로 정리 (프로필 영향 없음)
