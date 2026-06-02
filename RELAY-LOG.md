@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-06-02 chat_messages 재시도 중복행 방지 (dedup_key UNIQUE) — L4 + 9번검증 SHIP OK
+saveMessage(`lib/agent/memory.ts:237`)가 silent-commit(서버 저장됐는데 응답 유실) 후 재시도하면 중복행이 생기던 문제. 호출당 `randomUUID()` 1개를 dedup_key로 재사용 + UNIQUE 인덱스 + `upsert(onConflict:"dedup_key", ignoreDuplicates:true)`(=ON CONFLICT DO NOTHING). 0행(충돌=이전 시도가 이미 커밋)이면 기존 행 조회해 반환. 마이그 `20260602_chat_messages_dedup_key.sql`(비부분 UNIQUE — 기존행 dedup_key NULL은 PG NULLS DISTINCT로 다중 허용, 비부분이어야 supabase-js onConflict 추론 동작) **prod apply_migration 적용 + repo 동기화 완료**. `chat_messages` 유일 writer는 서버 saveMessage뿐(클라 useAIChat은 ai_chats 블롭에 저장, 무관). 9번 에이전트: 유실0/false-dedup0을 코드+스키마+ON CONFLICT 롤백 실증 3중 검증 SHIP OK(L4). 정상 중복("ㅇㅇ" 2번)은 별개 키라 둘 다 보존. **미검증**: 강제 fail 주입 E2E(L5, 기존 RELAY 미검증 항목과 동일).
+
+---
+
 ## 2026-06-02 결제 pending→paid 승격 시 구독 프리미엄 미부여 갭 수정 — L2(tsc+build) + 9번 2회검증 SHIP OK
 webhook 보정(`webhook/route.ts:233`)·payment-reconcile promote(`:285`)가 status만 paid로 바꾸고 `grant_premium` 미호출 → "구독 결제됐는데 프리미엄 없음" 갭(직전 healthcheck 작업이 발견). 공용 헬퍼 `lib/subscription-grant.ts` 신설: `is_subscription`(또는 merchant_uid `sub_` 접두사) 게이트로 영상단건 제외, grant_premium + **subscriptions.metadata(customer_uid·next_billing_date·auto_renew)+billing_cycle 컬럼+profiles.subscription_billing_cycle+restoreFromLifecycle까지 미러링**. ★9번 팩트체크가 "grant_premium만 부르면 subscriptions.metadata 빈 채 생성→renewal 크론이 그 유저 건너뛰어 30일 후 조용히 만료+재청구불가"라는 2차버그를 사전 차단(팩트체크 돌린 값어치). 동시성: 조건부 UPDATE(.neq/.eq status)+`.select()`로 실제 뒤집은 경우만 grant(이중부여 방지). plan premium_annual→premium 매핑. 9번 에이전트 2회(설계+구현) SHIP OK. blast radius: 실피해 dojin3497(테스터) 1명, 코드갭 차단이 목적. 영상 크레딧은 paid 카운트 기반이라 무관 확인. **미검증**: PG 실거래 E2E(L4) 미실행. 비치명 잔여: verifying 레이스 이중grant(grant_premium 멱등이라 무해).
 

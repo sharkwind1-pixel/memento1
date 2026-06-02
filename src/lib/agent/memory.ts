@@ -8,6 +8,7 @@
 import type { EmotionType } from "@/types";
 import { getSupabase, getOpenAI, hasChatModeColumn } from "./shared";
 import { AI_CONFIG } from "@/config/constants";
+import { randomUUID } from "crypto";
 
 // ---- 타입 정의 ----
 
@@ -229,6 +230,11 @@ export async function saveMessage(
     // chat_mode 컬럼 존재 여부에 따라 조건부 포함 (마이그레이션 전후 호환)
     const hasModeCol = await hasChatModeColumn();
 
+    // 재시도 멱등성 키: 한 번만 생성해 3회 시도가 같은 값을 공유한다.
+    // silent-commit(서버엔 저장됐는데 응답이 유실)된 뒤 재시도해도 dedup_key UNIQUE +
+    // ON CONFLICT DO NOTHING으로 중복행이 생기지 않는다.
+    // (호출당 1키라, 사용자가 같은 말을 또 하는 "정상 중복"은 별개 키 → 영향 없음)
+    const dedupKey = randomUUID();
     const row = {
         user_id: userId,
         pet_id: petId,
@@ -236,6 +242,7 @@ export async function saveMessage(
         content,
         emotion,
         emotion_score: emotionScore,
+        dedup_key: dedupKey,
         ...(hasModeCol && chatMode ? { chat_mode: chatMode } : {}),
     };
 
@@ -244,19 +251,31 @@ export async function saveMessage(
     const MAX_RETRY = 3;
     let lastErr: unknown = null;
     for (let attempt = 1; attempt <= MAX_RETRY; attempt++) {
+        // ignoreDuplicates: dedup_key 충돌 시 INSERT ... DO NOTHING (재시도 중복행 방지)
         const { data, error } = await getSupabase()
             .from("chat_messages")
-            .insert(row)
-            .select()
-            .single();
+            .upsert(row, { onConflict: "dedup_key", ignoreDuplicates: true })
+            .select();
 
-        if (!error) return data;
-
-        lastErr = error;
-        console.error(
-            `[saveMessage] chat_messages INSERT 실패 (${attempt}/${MAX_RETRY}) ` +
-            `user=${userId} pet=${petId} role=${role}: ${error.message}`
-        );
+        if (!error) {
+            if (data && data.length > 0) return data[0];
+            // 0행 = 같은 dedup_key가 이미 존재(이전 시도가 silent-commit 됨).
+            // 메시지는 이미 저장된 상태 → 중복 방지 성공. 기존 행을 조회해 반환.
+            const { data: existing } = await getSupabase()
+                .from("chat_messages")
+                .select("*")
+                .eq("dedup_key", dedupKey)
+                .maybeSingle();
+            if (existing) return existing;
+            // 0행인데 조회도 실패 — 비정상. 에러로 간주하고 재시도.
+            lastErr = new Error("upsert가 0행 반환 + 기존 행 조회 실패");
+        } else {
+            lastErr = error;
+            console.error(
+                `[saveMessage] chat_messages 저장 실패 (${attempt}/${MAX_RETRY}) ` +
+                `user=${userId} pet=${petId} role=${role}: ${error.message}`
+            );
+        }
         // 지수 백오프 (200ms, 400ms) — 일시 네트워크/DB 부하 대응
         if (attempt < MAX_RETRY) {
             await new Promise((r) => setTimeout(r, 200 * attempt));
