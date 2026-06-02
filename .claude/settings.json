@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "bash",
+            "command": "bash \"C:/Users/shark/memento1/.claude/hooks/factcheck-reminder.sh\"",
+            "timeout": 15,
+            "statusMessage": "팩트체크 점검"
+          }
+        ]
+      }
+    ]
+  }
+}

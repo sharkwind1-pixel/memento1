@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-06-02 9번 팩트체크 자동 강제 — Stop hook 도입 (반복 누락 구조적 차단)
+사용자가 "작업 마치면 팩트체커 돌려라"를 반복 지시했으나 AI가 메모리 의존이라 매번 누락 → hook으로 강제. `.claude/settings.json` Stop hook + `.claude/hooks/factcheck-reminder.sh`: src/·supabase/migrations 미커밋 변경 또는 최근 20분 커밋 감지 시 `decision:block`+reason으로 "9번 팩트체크 돌렸나?"를 모델 컨텍스트에 주입. sentinel(/tmp/claude_factcheck_memento.txt)로 같은 상태 1회만 발동(무한 종료 차단). pipe-test 2회(발동→조용) + python 스키마 검증 통과. ⚠️ settings.json이 세션 중 신규 생성이라 설정 watcher 미감지 → **사용자가 `/hooks` 1회 열거나 재시작해야 로드됨**. 한계: shell hook은 서브에이전트 직접 실행 불가 → "리마인드"까지, 실제 Agent 호출은 모델 몫.
+
+---
+
 ## 2026-06-02 chat_messages 재시도 중복행 방지 (dedup_key UNIQUE) — L4 + 9번검증 SHIP OK
 saveMessage(`lib/agent/memory.ts:237`)가 silent-commit(서버 저장됐는데 응답 유실) 후 재시도하면 중복행이 생기던 문제. 호출당 `randomUUID()` 1개를 dedup_key로 재사용 + UNIQUE 인덱스 + `upsert(onConflict:"dedup_key", ignoreDuplicates:true)`(=ON CONFLICT DO NOTHING). 0행(충돌=이전 시도가 이미 커밋)이면 기존 행 조회해 반환. 마이그 `20260602_chat_messages_dedup_key.sql`(비부분 UNIQUE — 기존행 dedup_key NULL은 PG NULLS DISTINCT로 다중 허용, 비부분이어야 supabase-js onConflict 추론 동작) **prod apply_migration 적용 + repo 동기화 완료**. `chat_messages` 유일 writer는 서버 saveMessage뿐(클라 useAIChat은 ai_chats 블롭에 저장, 무관). 9번 에이전트: 유실0/false-dedup0을 코드+스키마+ON CONFLICT 롤백 실증 3중 검증 SHIP OK(L4). 정상 중복("ㅇㅇ" 2번)은 별개 키라 둘 다 보존. **미검증**: 강제 fail 주입 E2E(L5, 기존 RELAY 미검증 항목과 동일).
 
