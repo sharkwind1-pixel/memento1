@@ -58,8 +58,8 @@ const COMMUNITY_SUBS: Array<{
     { id: "free", label: "자유게시판", icon: "chatbox-outline", color: COLORS.memento[500], route: "/(tabs)/community" },
     { id: "memorial", label: "기억게시판", icon: "sparkles-outline", color: "#8B5CF6", route: "/(tabs)/community" },
     { id: "adoption", label: "입양정보", icon: "heart-outline", color: "#F43F5E", route: "/adoption" },
-    { id: "local", label: "지역정보", icon: "location-outline", color: "#10B981", route: "/local" },
-    { id: "lost", label: "분실동물", icon: "alert-circle-outline", color: COLORS.memorial[500], route: "/lost" },
+    { id: "local", label: "지역정보", icon: "location-outline", color: "#10B981", route: "/(tabs)/community?sub=local" },
+    { id: "lost", label: "분실동물", icon: "alert-circle-outline", color: COLORS.memorial[500], route: "/(tabs)/community?sub=lost" },
 ];
 
 export default function AppDrawer({ visible, onClose }: AppDrawerProps) {

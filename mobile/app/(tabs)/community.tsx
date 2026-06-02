@@ -68,13 +68,21 @@ function relativeTime(dateStr?: string): string {
 export default function CommunityScreen() {
     const router = useRouter();
     const insets = useSafeAreaInsets();
-    const params = useLocalSearchParams<{ view?: string }>();
+    const params = useLocalSearchParams<{ view?: string; sub?: string }>();
     const { session } = useAuth();
     const { isMemorialMode } = usePet();
     const { isDarkMode } = useDarkMode();
     // view=showcase 진입(홈 "함께 보기" 더보기 → 자랑 갤러리 모드)
     const showcaseMode = params.view === "showcase";
-    const [activeTab, setActiveTab] = useState<CommunitySubcategory>("free");
+    // ?sub= 딥링크(드로어 지역/분실 등 → 커뮤니티) 처리. 웹의 ?sub= 패리티.
+    // adoption은 별도 공공데이터 화면이라 인라인 대상에서 제외.
+    const subParam: CommunitySubcategory | null =
+        typeof params.sub === "string" && (["free", "memorial", "local", "lost"] as string[]).includes(params.sub)
+            ? (params.sub as CommunitySubcategory)
+            : null;
+    const [activeTab, setActiveTab] = useState<CommunitySubcategory>(subParam ?? "free");
+    // 이미 마운트된 상태에서 ?sub= 로 다시 진입하면 해당 탭으로 전환
+    useEffect(() => { if (subParam) setActiveTab(subParam); }, [subParam]);
     const [posts, setPosts] = useState<CommunityPost[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -323,9 +331,9 @@ export default function CommunityScreen() {
                         <TouchableOpacity
                             key={cat.id}
                             onPress={() => {
+                                // 입양은 공공데이터(보호소 동물) 독립 화면 유지.
+                                // 지역/분실은 웹과 동일하게 community_posts(/api/posts?board=)로 인라인 렌더.
                                 if (cat.id === "adoption") { router.push("/adoption"); return; }
-                                if (cat.id === "lost") { router.push("/lost"); return; }
-                                if (cat.id === "local") { router.push("/local"); return; }
                                 setActiveTab(cat.id);
                             }}
                             activeOpacity={0.85}

@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-06-02 모바일 게시판 합치기 — 지역/분실 커뮤니티 인라인 통합 (웹 패리티) — L2 + 9번 SHIP OK
+모바일이 지역(local)/분실(lost)을 독립 스택 화면으로 분리해놨던 것(웹은 `community_posts`를 `board_type`으로 필터해 커뮤니티 1탭 인라인)을 웹 1:1로 통합. (1) `community.tsx` 칩에서 lost/local `router.push` 제거 → 자유/추모처럼 `setActiveTab` 인라인, fetch는 `/api/posts?subcategory=`(community_posts). (2) `?sub=` 딥링크 파라미터 추가(웹 ?sub= 패리티, 기존 ?view=showcase와 동일 메커니즘). (3) `AppDrawer` 지역/분실 route → `/(tabs)/community?sub=local|lost`. (4) `_layout.tsx`에서 lost/local Stack.Screen 4개 제거 + 고아 화면 4파일(`app/local/*`,`app/lost/*`) 삭제. **입양은 공공데이터(/api/adoption) 독립 유지**(사용자 결정 — 웹 입양=유저글과 성격 다름). 데이터: `local_posts`/`lost_pets` prod 0행이라 마이그레이션·손실 0. 9번 에이전트 SHIP OK(고아 진입점 0·race 0·쿼리파라미터 동작 확인). 모바일 typecheck clean=L2. **다음 EAS 빌드 포함**. 미검증: 실기 ?sub= 동기화 시각확인(L5). 잔존 데드코드(비차단): `community-upload.ts`의 uploadLost/LocalImage 헬퍼.
+
+---
+
 ## 2026-06-02 9번 팩트체크 자동 강제 — Stop hook 도입 (반복 누락 구조적 차단)
 사용자가 "작업 마치면 팩트체커 돌려라"를 반복 지시했으나 AI가 메모리 의존이라 매번 누락 → hook으로 강제. `.claude/settings.json` Stop hook + `.claude/hooks/factcheck-reminder.sh`: src/·supabase/migrations 미커밋 변경 또는 최근 20분 커밋 감지 시 `decision:block`+reason으로 "9번 팩트체크 돌렸나?"를 모델 컨텍스트에 주입. sentinel(/tmp/claude_factcheck_memento.txt)로 같은 상태 1회만 발동(무한 종료 차단). pipe-test 2회(발동→조용) + python 스키마 검증 통과. ⚠️ settings.json이 세션 중 신규 생성이라 설정 watcher 미감지 → **사용자가 `/hooks` 1회 열거나 재시작해야 로드됨**. 한계: shell hook은 서브에이전트 직접 실행 불가 → "리마인드"까지, 실제 Agent 호출은 모델 몫.
 

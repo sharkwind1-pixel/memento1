@@ -69,10 +69,6 @@ export default function RootLayout() {
                         <Stack.Screen name="profile" options={{ presentation: "modal", headerShown: false }} />
                         <Stack.Screen name="subscription" options={{ headerShown: false }} />
                         <Stack.Screen name="adoption" options={{ headerShown: false }} />
-                        <Stack.Screen name="lost/index" options={{ headerShown: false }} />
-                        <Stack.Screen name="local/index" options={{ headerShown: false }} />
-                        <Stack.Screen name="lost/new" options={{ headerShown: false, presentation: "modal" }} />
-                        <Stack.Screen name="local/new" options={{ headerShown: false, presentation: "modal" }} />
                         <Stack.Screen name="minihompy/[userId]" options={{ headerShown: false }} />
                         <Stack.Screen name="admin/index" options={{ headerShown: false }} />
                     </Stack>
