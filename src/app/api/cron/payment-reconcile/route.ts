@@ -225,14 +225,16 @@ export async function GET(request: NextRequest) {
     // ===== pending 결제 stuck 처리 =====
     // 1시간 이상 pending인 결제 → 포트원 재조회.
     //   - paid면: status=paid로 promote (단, 자동 grant_premium은 위험하므로 metadata에 표시만)
-    //   - cancelled/없음이면: status=failed로 정리 (프로필 영향 없음)
-    //   - 결과 모름이면: 24시간 후 자동 failed
+    //   - cancelled/failed면: status=failed로 정리 (프로필 영향 없음)
+    //   - 포트원에 기록 자체가 없고 imp_uid도 없으면: "결제창만 열고 이탈한 버려진 세션"
+    //     → 실제 청구가 없으므로 1시간(쿼리 임계) 경과 시 즉시 조용히 정리. (healthcheck 알림 대상 아님)
+    //   - imp_uid는 있는데 포트원에서 못 찾으면: 이상 케이스 → 보수적으로 24h 후 failed
     const pendingThreshold = new Date(Date.now() - 60 * 60 * 1000).toISOString();
     const pendingStaleThreshold = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
     const { data: pendings } = await supabase
         .from("payments")
-        .select("id, user_id, merchant_uid, metadata, created_at, amount")
+        .select("id, user_id, merchant_uid, imp_uid, metadata, created_at, amount")
         .eq("status", "pending")
         .lt("created_at", pendingThreshold)
         .limit(100);
@@ -246,12 +248,16 @@ export async function GET(request: NextRequest) {
             id: string;
             user_id: string;
             merchant_uid: string | null;
+            imp_uid: string | null;
             metadata: Record<string, unknown> | null;
             created_at: string;
             amount: number;
         }>) {
             pendingChecked++;
-            const impUid = typeof p.metadata?.imp_uid === "string" ? p.metadata.imp_uid : "";
+            // imp_uid는 metadata 우선, 없으면 레거시 컬럼도 확인
+            const metaImp = typeof p.metadata?.imp_uid === "string" ? p.metadata.imp_uid : "";
+            const colImp = typeof p.imp_uid === "string" ? p.imp_uid : "";
+            const impUid = metaImp || colImp;
             const merchantUid = p.merchant_uid;
 
             try {
@@ -292,8 +298,8 @@ export async function GET(request: NextRequest) {
                         })
                         .eq("id", p.id);
                     pendingPromoted++;
-                } else if (status === "cancelled" || status === "failed" || (!portoneRes && p.created_at < pendingStaleThreshold)) {
-                    // 명확히 실패/취소이거나, 포트원에서 결과 모르고 24h 지난 stale
+                } else if (status === "cancelled" || status === "failed") {
+                    // 포트원이 명확히 취소/실패로 응답 → DB도 failed로 정리 (프로필 영향 없음)
                     await supabase
                         .from("payments")
                         .update({
@@ -302,13 +308,46 @@ export async function GET(request: NextRequest) {
                                 ...(p.metadata || {}),
                                 reconcile_failed_at: new Date().toISOString(),
                                 reconcile_source: "cron_pending_cleanup",
-                                portone_status: status || "no_response",
+                                portone_status: status,
+                            },
+                        })
+                        .eq("id", p.id);
+                    pendingFailed++;
+                } else if (!portoneRes && !impUid) {
+                    // 포트원에 결제 기록 자체가 없고 imp_uid도 없음
+                    // = 결제창만 열고 이탈한 버려진 세션 (실제 청구 없음).
+                    // 쿼리 임계(1h)를 이미 넘겼으므로 추가 대기 없이 즉시 조용히 정리.
+                    await supabase
+                        .from("payments")
+                        .update({
+                            status: "failed",
+                            metadata: {
+                                ...(p.metadata || {}),
+                                reconcile_failed_at: new Date().toISOString(),
+                                reconcile_source: "cron_pending_cleanup_abandoned",
+                                abandoned_no_imp_uid: true,
+                                portone_status: "no_record",
+                            },
+                        })
+                        .eq("id", p.id);
+                    pendingFailed++;
+                } else if (!portoneRes && p.created_at < pendingStaleThreshold) {
+                    // imp_uid는 있는데 포트원에서 못 찾고 24h 경과 — 이상 케이스, 보수적으로 정리
+                    await supabase
+                        .from("payments")
+                        .update({
+                            status: "failed",
+                            metadata: {
+                                ...(p.metadata || {}),
+                                reconcile_failed_at: new Date().toISOString(),
+                                reconcile_source: "cron_pending_cleanup",
+                                portone_status: "no_response_24h",
                             },
                         })
                         .eq("id", p.id);
                     pendingFailed++;
                 }
-                // 그 외 (1시간~24시간 사이 결과 미상)는 다음 사이클에서 재시도
+                // 그 외 (imp_uid 있고 24h 미경과, 또는 포트원 ready 등 결과 미상)는 다음 사이클 재시도
             } catch (err) {
                 console.error(`[payment-reconcile pending] ${p.id} 재검증 실패:`, err);
             }

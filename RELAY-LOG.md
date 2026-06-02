@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-06-02 healthcheck stuck-payments 오탐 제거 + 버려진 결제창 자동정리 — L2+DB쿼리검증
+healthcheck 크론이 30분+ pending을 전부 카운트해 "stuck payments" 경고를 보내던 오탐 제거. **imp_uid(컬럼 또는 metadata->>'imp_uid')가 있는 pending만** 카운트하도록 변경(`healthcheck/route.ts:128`) — "결제창만 열고 이탈한" 버려진 세션(imp_uid null, 실제 청구 없음)은 경고 제외, "포트원 결제됨(imp_uid 존재)인데 DB 미확정"만 경고. payment-reconcile 크론(`payment-reconcile/route.ts:316`)에 버려진 pending(포트원 기록無 + imp_uid 없음) 즉시 정리 브랜치 추가 — 기존 24h 대기→1h(쿼리 임계) 즉시 `status=failed`(메타 `cron_pending_cleanup_abandoned`, abandoned_no_imp_uid). cancelled 대신 failed 선택(`db_query_interpretation_rule.md` 교훈: cancelled-from-cleanup은 환불통계 오염). 검증: prod DB 쿼리로 현재 유일 pending sub_d5c9c4c8(dojin3497, imp_uid null)이 새 필터에서 stuckPayments=0으로 제외됨 확인. typecheck+build 통과. **미검증**: 두 크론 엔드투엔드 실행은 안 함(reconcile은 prod 데이터 변경되므로). **별건 발견(미수정)**: 웹훅 paid-rescue(`webhook/route.ts:236`)와 reconcile pending-promote(`payment-reconcile:285`)가 pending→paid 승격 시 grant_premium을 안 불러 "결제됐는데 프리미엄 미부여" 갭 존재 — dojin3497 sub_7223066c가 실제 사례(테스터, 10초후 해지라 영향 적음). 사용자 결정 대기.
+
+---
+
+## 2026-06-02 38a5532 웹 사이드바 프리미엄 구독 결제 버튼 (비프리미엄 유저) — L5 검증완료
+비프리미엄 계정에 사이드바 유저정보 영역 "프리미엄 구독하기" 그라데이션 버튼 추가(`Sidebar.tsx:444` isPremiumUser 분기, openPremiumModal 이벤트=전역 표준 결제 진입점). "없는데" 신고의 원인은 버그 아님 — 승빈님 본인 계정 is_premium=true(2027-03-28)라 "구독 관리"가 뜨고 비프리미엄 버튼은 구조상 안 보였던 것. testmementoani@gmail.com(free)로 웹 시각확인 완료(버튼 표시+모달 열림). 교훈: "안 보임" 신고 시 계정 상태(권한/프리미엄 분기)부터 DB로 확인 — 코드보다 보는 사람 조건이 원인일 수 있음.
+
+---
+
 ## 2026-05-26 a9e621f 내보내기 4종 이미지 템플릿 (react-native-view-shot, L2, EAS 실기 필요)
 ## 2026-05-26 4be8fa9 PetPhotoHero cropPosition + 양방향 스와이프 + fallback 날짜표시 (L2, EAS 실기 필요)
 

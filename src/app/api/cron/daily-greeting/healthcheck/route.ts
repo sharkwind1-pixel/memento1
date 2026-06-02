@@ -125,17 +125,28 @@ export async function GET(request: NextRequest) {
             }
         }
 
-        // 5. 30분 이상 pending 상태인 결제 (PG 응답 누락)
+        // 5. 30분 이상 pending인 결제 중 "실제로 위험한" 건만 카운트.
+        //    제외: imp_uid 없는 pending = 결제창만 열고 이탈한 버려진 세션(실제 청구 없음).
+        //          이런 건은 payment-reconcile 크론이 조용히 정리하므로 알림 불필요.
+        //    경고: imp_uid 있는 pending = 포트원에선 결제됐는데 DB가 paid로 확정 못 한 케이스 → 사람이 봐야 함.
         try {
             const since = new Date(Date.now() - 30 * 60 * 1000).toISOString();
-            const { count } = await supabase
+            const { data: stuckRows, error: stuckErr } = await supabase
                 .from("payments")
-                .select("*", { count: "exact", head: true })
+                .select("id, imp_uid, metadata")
                 .eq("status", "pending")
-                .lt("created_at", since);
-            result.stuckPayments = count ?? 0;
+                .lt("created_at", since)
+                .limit(200);
+            if (stuckErr) throw stuckErr;
+            const stuck = (stuckRows ?? []).filter((r: { imp_uid?: unknown; metadata?: unknown }) => {
+                const col = r.imp_uid;
+                const meta = (r.metadata as Record<string, unknown> | null)?.imp_uid;
+                return (typeof col === "string" && col.length > 0)
+                    || (typeof meta === "string" && meta.length > 0);
+            });
+            result.stuckPayments = stuck.length;
             if (result.stuckPayments > 0) {
-                result.warnings.push(`stuck pending payments: ${result.stuckPayments}`);
+                result.warnings.push(`stuck pending payments (imp_uid present, DB unconfirmed): ${result.stuckPayments}`);
             }
         } catch (e) {
             result.warnings.push(`stuck-payments check failed: ${e instanceof Error ? e.message : "unknown"}`);
