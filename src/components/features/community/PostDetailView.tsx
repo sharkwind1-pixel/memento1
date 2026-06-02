@@ -48,6 +48,7 @@ export default function PostDetailView({
     const [isLiking, setIsLiking] = useState(false);
     const [isDisliking, setIsDisliking] = useState(false);
     const likingRef = useRef(false);
+    const commentLikingRef = useRef<Set<string>>(new Set());
     const dislikingRef = useRef(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isHidden, setIsHidden] = useState(false);
@@ -109,6 +110,10 @@ export default function PostDetailView({
                 authorPoints: c.authorPoints ?? c.author_points ?? 0,
                 authorIsAdmin: c.authorIsAdmin ?? c.author_is_admin ?? false,
                 createdAt: c.createdAt || c.created_at || new Date().toISOString(),
+                likes: c.likes ?? 0,
+                userLiked: c.userLiked ?? false,
+                dislikes: c.dislikes ?? 0,
+                userDisliked: c.userDisliked ?? false,
             })));
         } catch {
             setLoadError("게시글을 불러올 수 없습니다.");
@@ -487,12 +492,23 @@ export default function PostDetailView({
     // 댓글 좋아요 (inline async -> named function)
     const handleCommentLike = async (commentId: string) => {
         if (!user) { window.dispatchEvent(new CustomEvent("openAuthModal")); return; }
+        if (commentLikingRef.current.has(commentId)) return; // 연타 드리프트 방지(in-flight 가드)
+        commentLikingRef.current.add(commentId);
+        // 낙관적 UI 업데이트 — 탭 즉시 토글(모바일웹 체감속도). 서버 응답으로 보정, 실패 시 롤백.
+        const before = comments.find(c => c.id === commentId);
+        setComments(prev => prev.map(c => c.id === commentId
+            ? { ...c, userLiked: !c.userLiked, likes: Math.max(0, (c.likes || 0) + (c.userLiked ? -1 : 1)) }
+            : c));
         try {
             const res = await authFetch(API.COMMENT_LIKE(commentId), { method: "POST" });
-            if (!res.ok) return;
+            if (!res.ok) throw new Error("comment like failed");
             const d = await res.json();
             setComments(prev => prev.map(c => c.id === commentId ? { ...c, likes: d.likes, userLiked: d.liked } : c));
-        } catch { /* 무시 */ }
+        } catch {
+            if (before) setComments(prev => prev.map(c => c.id === commentId ? before : c));
+        } finally {
+            commentLikingRef.current.delete(commentId);
+        }
     };
 
     // 댓글 비추천 (inline async -> named function)

@@ -67,17 +67,9 @@ export function useHomePage() {
     const toggleCondolence = async (petId: string) => {
         // 중복 클릭 방지
         if (condolingRef.current.has(petId)) return;
-
-        // 로그인 체크
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-            window.dispatchEvent(new CustomEvent("openAuthModal"));
-            return;
-        }
-
         condolingRef.current.add(petId);
 
-        // 낙관적 UI 업데이트
+        // 낙관적 UI 업데이트 — 탭 즉시 반영(모바일웹 체감속도). 로그인 체크는 그 다음에.
         const wasCondoled = condoledPets[petId] || false;
         setCondoledPets((prev) => ({ ...prev, [petId]: !wasCondoled }));
         setMemorialPets((prev) =>
@@ -87,6 +79,22 @@ export function useHomePage() {
                     : p
             )
         );
+
+        // 로그인 체크 (비로그인이면 낙관적 반영 롤백 후 로그인 모달)
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+            setCondoledPets((prev) => ({ ...prev, [petId]: wasCondoled }));
+            setMemorialPets((prev) =>
+                prev.map((p) =>
+                    p.id === petId
+                        ? { ...p, condolenceCount: p.condolenceCount + (wasCondoled ? 1 : -1) }
+                        : p
+                )
+            );
+            condolingRef.current.delete(petId);
+            window.dispatchEvent(new CustomEvent("openAuthModal"));
+            return;
+        }
 
         try {
             const response = await authFetch(API.PET_CONDOLENCE(petId), { method: "POST" });
@@ -100,12 +108,12 @@ export function useHomePage() {
                 )
             );
         } catch {
-            // 롤백
+            // 롤백 — 낙관적 델타(wasCondoled ? -1 : +1)의 역델타로 정확히 복원
             setCondoledPets((prev) => ({ ...prev, [petId]: wasCondoled }));
             setMemorialPets((prev) =>
                 prev.map((p) =>
                     p.id === petId
-                        ? { ...p, condolenceCount: wasCondoled ? p.condolenceCount : p.condolenceCount - 1 }
+                        ? { ...p, condolenceCount: p.condolenceCount + (wasCondoled ? 1 : -1) }
                         : p
                 )
             );

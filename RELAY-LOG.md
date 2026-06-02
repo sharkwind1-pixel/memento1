@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-06-03 모바일웹 — 댓글 좋아요/위로 낙관적 업데이트 + 9번이 잡은 롤백·가드 버그 수정 — L2
+사용자 모바일웹 신고: 댓글 좋아요 적용 안 됨/느림, 추모 위로 4→5 즉시 안 바뀜. 원인: 둘 다 낙관적 UI 미흡 — 댓글은 아예 없음(서버 응답까지 무반응+`if(!res.ok)return`으로 실패 조용히 무시), 위로는 있으나 느린 `await getSession()` **뒤**라 지연. 수정: (1) `handleCommentLike`(PostDetailView) 낙관적 토글+서버보정+실패 롤백 (2) `toggleCondolence`(useHomePage) 낙관적 업데이트를 getSession **앞으로** 이동. **★9번 팩트체크가 추가 버그 3개 발견→수정**: (a) 위로 catch 롤백 비대칭 버그(un-condole 실패 시 카운트 1 적게 남음)→역델타 `+ (wasCondoled?1:-1)` (b) handleCommentLike in-flight 가드 없어 연타 드리프트→`commentLikingRef` (c) 댓글 likes/userLiked/dislikes 로드 매핑 누락(기존 좋아요 안 보임)→매핑에 추가. L2(tsc+build). **미수정(별건)**: 댓글 dislike 핸들러 동일 패턴(미신고)·post-like catch 롤백 동일 버그(useHomePage:187)·comment-like API 무거움(VPN+6쿼리=느림 근본)·서버 per-comment userLiked 미계산. 실기 시각확인(L5) 미실행. Vercel 자동배포.
+
+---
+
 ## 2026-06-02 모바일 게시판 합치기 — 지역/분실 커뮤니티 인라인 통합 (웹 패리티) — L2 + 9번 SHIP OK
 모바일이 지역(local)/분실(lost)을 독립 스택 화면으로 분리해놨던 것(웹은 `community_posts`를 `board_type`으로 필터해 커뮤니티 1탭 인라인)을 웹 1:1로 통합. (1) `community.tsx` 칩에서 lost/local `router.push` 제거 → 자유/추모처럼 `setActiveTab` 인라인, fetch는 `/api/posts?subcategory=`(community_posts). (2) `?sub=` 딥링크 파라미터 추가(웹 ?sub= 패리티, 기존 ?view=showcase와 동일 메커니즘). (3) `AppDrawer` 지역/분실 route → `/(tabs)/community?sub=local|lost`. (4) `_layout.tsx`에서 lost/local Stack.Screen 4개 제거 + 고아 화면 4파일(`app/local/*`,`app/lost/*`) 삭제. **입양은 공공데이터(/api/adoption) 독립 유지**(사용자 결정 — 웹 입양=유저글과 성격 다름). 데이터: `local_posts`/`lost_pets` prod 0행이라 마이그레이션·손실 0. 9번 에이전트 SHIP OK(고아 진입점 0·race 0·쿼리파라미터 동작 확인). 모바일 typecheck clean=L2. **다음 EAS 빌드 포함**. 미검증: 실기 ?sub= 동기화 시각확인(L5). 잔존 데드코드(비차단): `community-upload.ts`의 uploadLost/LocalImage 헬퍼.
 
