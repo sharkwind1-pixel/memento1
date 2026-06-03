@@ -49,8 +49,6 @@ export default function PostDetailView({
     const [isSubmittingComment, setIsSubmittingComment] = useState(false);
     const [isLiking, setIsLiking] = useState(false);
     const [isDisliking, setIsDisliking] = useState(false);
-    const likingRef = useRef(false);
-    const dislikingRef = useRef(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isHidden, setIsHidden] = useState(false);
     const [isTogglingHidden, setIsTogglingHidden] = useState(false);
@@ -127,89 +125,67 @@ export default function PostDetailView({
         fetchPost();
     }, [fetchPost]);
 
-    // 좋아요 토글
+    // 좋아요 토글 — 공용 낙관적 토글 훅으로 가드/롤백/보정 표준화
     const handleLike = async () => {
         if (!user) {
             window.dispatchEvent(new CustomEvent("openAuthModal"));
             return;
         }
-        if (likingRef.current) return;
-
         // 자기 글 좋아요 방지
         if (post && user.id === post.user_id) {
             toast.info("자신의 글에는 좋아요를 누를 수 없습니다");
             return;
         }
 
-        likingRef.current = true;
-        setIsLiking(true);
-
-        // 낙관적 UI: 즉시 반영
         const prevLiked = isLiked;
         const prevCount = likeCount;
-        setIsLiked(!prevLiked);
-        setLikeCount(prevLiked ? prevCount - 1 : prevCount + 1);
-
-        try {
-            const response = await authFetch(API.POST_LIKE(postId), {
-                method: "POST",
-            });
-            if (!response.ok) throw new Error("좋아요 실패");
-
-            const data = await response.json();
-            setIsLiked(data.liked);
-            setLikeCount(data.likes);
-        } catch {
-            // 롤백
-            setIsLiked(prevLiked);
-            setLikeCount(prevCount);
-            toast.error("좋아요 처리에 실패했습니다");
-        } finally {
-            likingRef.current = false;
-            setIsLiking(false);
-        }
+        await runToggle<{ liked: boolean; likes: number }>("post-like", {
+            apply: () => {
+                setIsLiking(true);
+                setIsLiked(!prevLiked);
+                setLikeCount(prevLiked ? prevCount - 1 : prevCount + 1);
+            },
+            request: async () => {
+                const response = await authFetch(API.POST_LIKE(postId), { method: "POST" });
+                if (!response.ok) throw new Error("좋아요 실패");
+                return response.json();
+            },
+            reconcile: (data) => { setIsLiked(data.liked); setLikeCount(data.likes); },
+            rollback: () => { setIsLiked(prevLiked); setLikeCount(prevCount); },
+            onError: () => toast.error("좋아요 처리에 실패했습니다"),
+            onSettled: () => setIsLiking(false),
+        });
     };
 
-    // 비추천 토글
+    // 비추천 토글 — 공용 낙관적 토글 훅으로 표준화
     const handleDislike = async () => {
         if (!user) {
             window.dispatchEvent(new CustomEvent("openAuthModal"));
             return;
         }
-        if (dislikingRef.current) return;
-
         if (post && user.id === post.user_id) {
             toast.info("자신의 글에는 비추천할 수 없습니다");
             return;
         }
 
-        dislikingRef.current = true;
-        setIsDisliking(true);
-
-        // 낙관적 UI: 즉시 반영
         const prevDisliked = isDisliked;
         const prevDCount = dislikeCount;
-        setIsDisliked(!prevDisliked);
-        setDislikeCount(prevDisliked ? prevDCount - 1 : prevDCount + 1);
-
-        try {
-            const response = await authFetch(API.POST_DISLIKE(postId), {
-                method: "POST",
-            });
-            if (!response.ok) throw new Error("비추천 실패");
-
-            const data = await response.json();
-            setIsDisliked(data.disliked);
-            setDislikeCount(data.dislikes);
-        } catch {
-            // 롤백
-            setIsDisliked(prevDisliked);
-            setDislikeCount(prevDCount);
-            toast.error("비추천 처리에 실패했습니다");
-        } finally {
-            dislikingRef.current = false;
-            setIsDisliking(false);
-        }
+        await runToggle<{ disliked: boolean; dislikes: number }>("post-dislike", {
+            apply: () => {
+                setIsDisliking(true);
+                setIsDisliked(!prevDisliked);
+                setDislikeCount(prevDisliked ? prevDCount - 1 : prevDCount + 1);
+            },
+            request: async () => {
+                const response = await authFetch(API.POST_DISLIKE(postId), { method: "POST" });
+                if (!response.ok) throw new Error("비추천 실패");
+                return response.json();
+            },
+            reconcile: (data) => { setIsDisliked(data.disliked); setDislikeCount(data.dislikes); },
+            rollback: () => { setIsDisliked(prevDisliked); setDislikeCount(prevDCount); },
+            onError: () => toast.error("비추천 처리에 실패했습니다"),
+            onSettled: () => setIsDisliking(false),
+        });
     };
 
     // 댓글 작성

@@ -29,6 +29,7 @@ import {
 import type { MagazineArticle } from "@/data/magazineArticles";
 import { API } from "@/config/apiEndpoints";
 import { authFetch } from "@/lib/auth-fetch";
+import { useOptimisticToggle } from "@/hooks";
 import { safeSessionGetItem, safeSessionSetItem } from "@/lib/safe-storage";
 import { buildCards } from "./magazineCardUtils";
 import { CardRenderer } from "./MagazineCardRenderer";
@@ -45,6 +46,7 @@ interface MagazineReaderProps {
 // ──────────────────────────────────────────────
 
 export default function MagazineReader({ article, onBack, onLikeChange }: MagazineReaderProps) {
+    const runToggle = useOptimisticToggle();
     const [currentCard, setCurrentCard] = useState(0);
     const [isTouchDevice, setIsTouchDevice] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -55,7 +57,6 @@ export default function MagazineReader({ article, onBack, onLikeChange }: Magazi
     const [isLiked, setIsLiked] = useState(!!(article as MagazineArticle & { liked?: boolean }).liked);
     const [displayLikes, setDisplayLikes] = useState(article.likes);
     const [likeAnimating, setLikeAnimating] = useState(false);
-    const likingRef = useRef(false); // 이중 클릭 방지
 
     // 조회수 상태 (sessionStorage 기반 중복 방지)
     const [displayViews, setDisplayViews] = useState(article.views);
@@ -81,52 +82,47 @@ export default function MagazineReader({ article, onBack, onLikeChange }: Magazi
         }
     }, [article.id]);
 
-    // 좋아요 토글 핸들러 — 서버 기반 + 낙관적 UI + 이중 클릭 방지
+    // 좋아요 토글 핸들러 — 공용 낙관적 토글 훅으로 가드/롤백/보정 표준화
     const handleLike = useCallback(async () => {
-        if (likingRef.current) return; // 이중 클릭 방지
-        likingRef.current = true;
-
         const willLike = !isLiked;
-        // 낙관적 UI 업데이트
-        setIsLiked(willLike);
-        setDisplayLikes((prev) => Math.max(0, prev + (willLike ? 1 : -1)));
-        setLikeAnimating(true);
-        setTimeout(() => setLikeAnimating(false), 300);
-
-        try {
-            const res = await authFetch(API.MAGAZINE, {
-                method: "PATCH",
-                body: JSON.stringify({
-                    articleId: article.id,
-                    action: willLike ? "like" : "unlike",
-                }),
-            });
-            if (!res.ok) {
-                const errData = await res.json().catch(() => ({}));
-                console.error("[Magazine Like] API error:", res.status, errData);
-                // 401이면 로그인 모달
-                if (res.status === 401) {
-                    window.dispatchEvent(new CustomEvent("openAuthModal"));
+        await runToggle<{ likes?: number; liked?: boolean }>("magazine-like", {
+            apply: () => {
+                setIsLiked(willLike);
+                setDisplayLikes((prev) => Math.max(0, prev + (willLike ? 1 : -1)));
+                setLikeAnimating(true);
+                setTimeout(() => setLikeAnimating(false), 300);
+            },
+            request: async () => {
+                const res = await authFetch(API.MAGAZINE, {
+                    method: "PATCH",
+                    body: JSON.stringify({
+                        articleId: article.id,
+                        action: willLike ? "like" : "unlike",
+                    }),
+                });
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    console.error("[Magazine Like] API error:", res.status, errData);
+                    // 401이면 로그인 모달
+                    if (res.status === 401) {
+                        window.dispatchEvent(new CustomEvent("openAuthModal"));
+                    }
+                    throw new Error(errData.error || `HTTP ${res.status}`);
                 }
-                throw new Error(errData.error || `HTTP ${res.status}`);
-            }
-            const data = await res.json();
-            if (data.likes != null) {
-                setDisplayLikes(data.likes);
-            }
-            if (typeof data.liked === "boolean") {
-                setIsLiked(data.liked);
-            }
-            // 부모(목록)에도 즉시 반영 → 뒤로가기 시 업데이트된 수 표시
-            onLikeChange?.(article.id, data.liked ?? willLike, data.likes ?? (willLike ? 1 : 0));
-        } catch {
-            // 실패 시 롤백
-            setIsLiked(!willLike);
-            setDisplayLikes((prev) => Math.max(0, prev + (willLike ? -1 : 1)));
-        } finally {
-            likingRef.current = false;
-        }
-    }, [isLiked, article.id]);
+                return res.json();
+            },
+            reconcile: (data) => {
+                if (data.likes != null) setDisplayLikes(data.likes);
+                if (typeof data.liked === "boolean") setIsLiked(data.liked);
+                // 부모(목록)에도 즉시 반영 → 뒤로가기 시 업데이트된 수 표시
+                onLikeChange?.(article.id, data.liked ?? willLike, data.likes ?? (willLike ? 1 : 0));
+            },
+            rollback: () => {
+                setIsLiked(!willLike);
+                setDisplayLikes((prev) => Math.max(0, prev + (willLike ? -1 : 1)));
+            },
+        });
+    }, [isLiked, article.id, runToggle, onLikeChange]);
 
     const cards = useMemo(() => buildCards(article), [article]);
     const totalCards = cards.length;

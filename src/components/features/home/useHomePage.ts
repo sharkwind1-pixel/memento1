@@ -11,6 +11,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { authFetch } from "@/lib/auth-fetch";
 import { supabase } from "@/lib/supabase";
 import { API } from "@/config/apiEndpoints";
+import { useOptimisticToggle } from "@/hooks";
 import { toast } from "sonner";
 import type { LightboxItem, CommunityPost, Comment, ShowcasePost } from "./types";
 
@@ -28,6 +29,7 @@ export interface MemorialPetItem {
 }
 
 export function useHomePage() {
+    const runToggle = useOptimisticToggle();
     const [lightboxItem, setLightboxItem] = useState<LightboxItem | null>(null);
 
     // 커뮤니티 인기글 상태 (DB에서 가져옴)
@@ -48,7 +50,6 @@ export function useHomePage() {
 
     // 위로 리액션 상태
     const [condoledPets, setCondoledPets] = useState<Record<string, boolean>>({});
-    const condolingRef = useRef<Set<string>>(new Set());
 
     // 좋아요 상태 관리
     const [likedPosts, setLikedPosts] = useState<Record<number, boolean>>({});
@@ -61,73 +62,59 @@ export function useHomePage() {
     const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
 
     const heartTimersRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
-    const likingRef = useRef<Set<number>>(new Set());
 
-    /** 추모 펫 위로 토글 */
+    /** 추모 펫 위로 토글 — 공용 낙관적 토글 훅. 낙관적 반영 먼저(모바일 체감속도) → 비로그인이면 request에서 throw해 롤백 */
     const toggleCondolence = async (petId: string) => {
-        // 중복 클릭 방지
-        if (condolingRef.current.has(petId)) return;
-        condolingRef.current.add(petId);
-
-        // 낙관적 UI 업데이트 — 탭 즉시 반영(모바일웹 체감속도). 로그인 체크는 그 다음에.
         const wasCondoled = condoledPets[petId] || false;
-        setCondoledPets((prev) => ({ ...prev, [petId]: !wasCondoled }));
-        setMemorialPets((prev) =>
-            prev.map((p) =>
-                p.id === petId
-                    ? { ...p, condolenceCount: wasCondoled ? p.condolenceCount - 1 : p.condolenceCount + 1 }
-                    : p
-            )
-        );
-
-        // 로그인 체크 (비로그인이면 낙관적 반영 롤백 후 로그인 모달)
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-            setCondoledPets((prev) => ({ ...prev, [petId]: wasCondoled }));
-            setMemorialPets((prev) =>
-                prev.map((p) =>
-                    p.id === petId
-                        ? { ...p, condolenceCount: p.condolenceCount + (wasCondoled ? 1 : -1) }
-                        : p
-                )
-            );
-            condolingRef.current.delete(petId);
-            window.dispatchEvent(new CustomEvent("openAuthModal"));
-            return;
-        }
-
-        try {
-            const response = await authFetch(API.PET_CONDOLENCE(petId), { method: "POST" });
-            if (!response.ok) throw new Error("위로 실패");
-            const data = await response.json();
-            // 서버 응답으로 정확한 값 반영
-            setCondoledPets((prev) => ({ ...prev, [petId]: data.condoled }));
-            setMemorialPets((prev) =>
-                prev.map((p) =>
-                    p.id === petId ? { ...p, condolenceCount: data.count } : p
-                )
-            );
-        } catch {
-            // 롤백 — 낙관적 델타(wasCondoled ? -1 : +1)의 역델타로 정확히 복원
-            setCondoledPets((prev) => ({ ...prev, [petId]: wasCondoled }));
-            setMemorialPets((prev) =>
-                prev.map((p) =>
-                    p.id === petId
-                        ? { ...p, condolenceCount: p.condolenceCount + (wasCondoled ? 1 : -1) }
-                        : p
-                )
-            );
-            toast.error("위로 처리에 실패했습니다");
-        } finally {
-            condolingRef.current.delete(petId);
-        }
+        await runToggle<{ condoled: boolean; count: number }>(`condolence:${petId}`, {
+            apply: () => {
+                setCondoledPets((prev) => ({ ...prev, [petId]: !wasCondoled }));
+                setMemorialPets((prev) =>
+                    prev.map((p) =>
+                        p.id === petId
+                            ? { ...p, condolenceCount: wasCondoled ? p.condolenceCount - 1 : p.condolenceCount + 1 }
+                            : p
+                    )
+                );
+            },
+            request: async () => {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) {
+                    window.dispatchEvent(new CustomEvent("openAuthModal"));
+                    throw new Error("AUTH_REQUIRED");
+                }
+                const response = await authFetch(API.PET_CONDOLENCE(petId), { method: "POST" });
+                if (!response.ok) throw new Error("위로 실패");
+                return response.json();
+            },
+            reconcile: (data) => {
+                setCondoledPets((prev) => ({ ...prev, [petId]: data.condoled }));
+                setMemorialPets((prev) =>
+                    prev.map((p) => (p.id === petId ? { ...p, condolenceCount: data.count } : p))
+                );
+            },
+            rollback: () => {
+                // 낙관적 델타(wasCondoled ? -1 : +1)의 역델타로 정확히 복원
+                setCondoledPets((prev) => ({ ...prev, [petId]: wasCondoled }));
+                setMemorialPets((prev) =>
+                    prev.map((p) =>
+                        p.id === petId
+                            ? { ...p, condolenceCount: p.condolenceCount + (wasCondoled ? 1 : -1) }
+                            : p
+                    )
+                );
+            },
+            onError: (err) => {
+                // 비로그인(AUTH_REQUIRED)은 모달만, 그 외 실패는 토스트
+                if ((err as Error)?.message !== "AUTH_REQUIRED") {
+                    toast.error("위로 처리에 실패했습니다");
+                }
+            },
+        });
     };
 
     const toggleLike = async (postId: number) => {
-        // 중복 클릭 방지
-        if (likingRef.current.has(postId)) return;
-
-        // 로그인 체크
+        // 로그인 체크 (낙관적 반영 전 — 자기 글 차단에 session.user.id 필요)
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
             window.dispatchEvent(new CustomEvent("openAuthModal"));
@@ -137,59 +124,56 @@ export function useHomePage() {
         // 자기 글 좋아요 방지
         const post = communityPosts.find(p => p.id === postId);
         if (!post) return;
-
-        // 자기 글이면 차단
         if (post.userId && post.userId === session.user.id) {
             toast.info("자신의 글에는 좋아요를 누를 수 없습니다");
             return;
         }
 
-        // DB에서 좋아요 토글
+        // dbId가 없으면 기존 방식(클라이언트만)으로 폴백
         const dbId = post.dbId;
         if (!dbId) {
-            // dbId가 없으면 기존 방식(클라이언트만)으로 폴백
             setLikedPosts((prev) => ({ ...prev, [postId]: !prev[postId] }));
             return;
         }
 
-        likingRef.current.add(postId);
-
-        // 낙관적 UI 업데이트
         const wasLiked = likedPosts[postId] || false;
-        setLikedPosts((prev) => ({ ...prev, [postId]: !wasLiked }));
-        setCommunityPosts((prev) => prev.map(p =>
-            p.id === postId ? { ...p, likes: wasLiked ? p.likes - 1 : p.likes + 1 } : p
-        ));
-
-        // 하트 애니메이션
-        setAnimatingHearts((prev) => ({ ...prev, [postId]: true }));
-        const prevTimer = heartTimersRef.current.get(postId);
-        if (prevTimer) clearTimeout(prevTimer);
-        const timer = setTimeout(() => {
-            setAnimatingHearts((p) => ({ ...p, [postId]: false }));
-            heartTimersRef.current.delete(postId);
-        }, 400);
-        heartTimersRef.current.set(postId, timer);
-
-        try {
-            const response = await authFetch(API.POST_LIKE(dbId), { method: "POST" });
-            if (!response.ok) throw new Error("좋아요 실패");
-            const data = await response.json();
-            // 서버 응답으로 정확한 값 반영
-            setLikedPosts((prev) => ({ ...prev, [postId]: data.liked }));
-            setCommunityPosts((prev) => prev.map(p =>
-                p.id === postId ? { ...p, likes: data.likes } : p
-            ));
-        } catch {
-            // 롤백
-            setLikedPosts((prev) => ({ ...prev, [postId]: wasLiked }));
-            setCommunityPosts((prev) => prev.map(p =>
-                p.id === postId ? { ...p, likes: wasLiked ? p.likes : p.likes - 1 } : p
-            ));
-            toast.error("좋아요 처리에 실패했습니다");
-        } finally {
-            likingRef.current.delete(postId);
-        }
+        await runToggle<{ liked: boolean; likes: number }>(`home-like:${postId}`, {
+            apply: () => {
+                setLikedPosts((prev) => ({ ...prev, [postId]: !wasLiked }));
+                setCommunityPosts((prev) => prev.map(p =>
+                    p.id === postId ? { ...p, likes: wasLiked ? p.likes - 1 : p.likes + 1 } : p
+                ));
+                // 하트 애니메이션
+                setAnimatingHearts((prev) => ({ ...prev, [postId]: true }));
+                const prevTimer = heartTimersRef.current.get(postId);
+                if (prevTimer) clearTimeout(prevTimer);
+                const timer = setTimeout(() => {
+                    setAnimatingHearts((p) => ({ ...p, [postId]: false }));
+                    heartTimersRef.current.delete(postId);
+                }, 400);
+                heartTimersRef.current.set(postId, timer);
+            },
+            request: async () => {
+                const response = await authFetch(API.POST_LIKE(dbId), { method: "POST" });
+                if (!response.ok) throw new Error("좋아요 실패");
+                return response.json();
+            },
+            reconcile: (data) => {
+                setLikedPosts((prev) => ({ ...prev, [postId]: data.liked }));
+                setCommunityPosts((prev) => prev.map(p =>
+                    p.id === postId ? { ...p, likes: data.likes } : p
+                ));
+            },
+            rollback: () => {
+                // 낙관적 델타(wasLiked ? -1 : +1)의 역델타로 정확히 복원
+                // (기존 코드는 wasLiked=true(좋아요 취소) 실패 시 +1 복원이 누락된 off-by-one 버그였음)
+                setLikedPosts((prev) => ({ ...prev, [postId]: wasLiked }));
+                setCommunityPosts((prev) => prev.map(p =>
+                    p.id === postId ? { ...p, likes: p.likes + (wasLiked ? 1 : -1) } : p
+                ));
+            },
+            onError: () => toast.error("좋아요 처리에 실패했습니다"),
+        });
     };
 
     const addComment = async (postId: number, content: string) => {

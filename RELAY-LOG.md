@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-06-03 🟡5 토글 헬퍼 통합 2차(완료) — 나머지 5핸들러 이관 + toggleLike 롤백 버그 수정 — L2+동등성검증
+Phase 1(훅 신설+결함2건)에 이어 정상 작동 중이던 5개 핸들러를 모두 `useOptimisticToggle`로 이관 → **8개 토글 전부 단일 패턴 통일**. 이관: PostDetailView `handleLike`/`handleDislike`(likingRef/dislikingRef 제거, setIsLiking은 apply/onSettled), MagazineReader `handleLike`(401→openAuthModal·부모 onLikeChange 콜백 보존, likingRef 제거), useHomePage `toggleCondolence`(낙관적-후-로그인체크를 request내 throw "AUTH_REQUIRED"+onError 분기로 보존, condolingRef 제거)·`toggleLike`(사전체크 밖 유지, likingRef 제거). **버그 수정 1건**: useHomePage `toggleLike` 롤백이 `wasLiked ? p.likes : p.likes-1`로 좋아요-취소 실패 시 +1 복원 누락(off-by-one)이던 것을 역델타 `p.likes + (wasLiked?1:-1)`로 수정(수식 검산 확인). 검증: tsc clean + next build ✓(L2). **9번 적대검증: 회귀 0건, 버그수정 유효 확정, SHIP가**(git show 원본 1:1 대조 + 부호 수식 검산). ⚠️ 미검증(L4): magazine 좋아요/취소·home 실패 롤백 카운트 수동 1회 권장. 🟡5 종료. 다음 순차: 🟡4 API 보안 래퍼.
+
+---
+
 ## 2026-06-03 🟡5 토글 헬퍼 통합 1차 — useOptimisticToggle 신설 + 결함 2건 수정 — L2+동등성검증
 사용자 지정 심화항목 🟡5. Explore로 낙관적 토글 8개 핸들러 전수 매핑 → 6개는 패턴 양호(최근 버그 수정분), **2개 실제 결함** 발견. 공용 훅 `src/hooks/useOptimisticToggle.ts` 신설(가드+apply+request+reconcile+rollback+onError+onSettled 제어흐름 표준화, 상태모양은 호출부 콜백 주입, key별 in-flight Set). 적용 3핸들러:
 - `PostDetailView.handleCommentLike` — 동작 동등 마이그레이션(`commentLikingRef` 제거, 훅 내부 Set로 대체).
