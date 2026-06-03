@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-06-03 🟡6 쿼리 병렬화 1차 — posts·minihompy GET 핫패스 (웹 느림 코드측 레버) — L2+동등성검증
+사용자 지정 심화항목 🟡6. **buildAIContext(펫톡 최고빈도)는 이미 Promise.all 5개 병렬화돼 있어 추가 불필요** 확인. Explore로 API 전체 순차-await 핫스팟 스캔 후 직접 정독으로 의존성 확정(추측 처방 금지). 적용 2곳:
+- **`posts/route.ts` GET**(홈피드/게시판 목록=최고빈도): (A) 메인 목록 query + globalNotices query 병렬(첫페이지 1왕복↓), (B) 작성자 profiles/minimi + post_likes(좋아요) 병렬(고정 2왕복→1). blocks(L61)는 메인 query 필터로 들어가 순차 불가피 → 손대지 않음(병렬화하면 페이지네이션 count 깨짐).
+- **`minihompy/[userId]/route.ts` GET**: settings는 403 분기 때문에 선행 유지, 그 뒤 profile/guestbook/like 병렬(3왕복→1) + minimiRow/visitorProfiles 2차 병렬(2왕복→1). 6왕복 순차 → 3티어. currentUser+supabase도 병렬.
+검증: `tsc --noEmit` clean + `next build` ✓ Compiled successfully(L2). **9번 적대적 동등성 검증: 회귀 0건**(에러처리/분기/값매핑/응답JSON/순서의존성 전수 — supabase는 reject 안 하고 {data,error} 반환이라 Promise.all reject 회귀 없음 확인). ⚠️ **미검증(L4미달)**: 실제 ms 단축은 프로덕션/실측 전엔 추정(왕복수 감소는 코드상 확정이나 절대수치는 리전 이동과 함께 측정 필요). 다음 병렬화 후보(저효과/의존성有라 보류): guestbook·magazine·video/status는 의존성 체인이라 병렬 불가. 잔여 심화: 🟡4 API보안래퍼, 🟡5 토글헬퍼, 🟠 구조개편.
+
+---
+
 ## 2026-06-03 🟢 코드리뷰 정리 마무리 — webhook 민감로그 제거 + 웹↔모바일 상수 드리프트 테스트 — L2(typecheck+vitest)
 4-에이전트 코드리뷰 🟢 퀵윈 2건 처리. **(🟢2)** `payments/webhook/route.ts`: 들어온 결제 body 전체를 `JSON.stringify().slice(0,800)`로 로깅하던 것 → 식별자/키만(`keys/imp_uid/merchant_uid/status/type`) 로깅으로 축소. 디버깅(V1/V2 포맷·필드누락 감지) 의도는 유지하되 민감정보 미노출. **(🟢3)** 웹↔모바일 상수 드리프트 방지 테스트(`src/__tests__/constants-drift.test.ts`) 신설 — FREE/BASIC/PREMIUM_LIMITS·PRICING·VIDEO 핵심값 일치 강제(한쪽만 가격/한도 바꾸면 빌드서 깨짐). 작성 중 **실제 드리프트 발견·수정**: `mobile/config/constants.ts` `PREMIUM_LIMITS.DAILY_CHATS` Infinity → 1000(웹과 동일; JSON직렬화 불가라 웹은 의도적 1000. 모바일 ai-chat은 별도 로컬 Infinity 사용해 그 상수 미참조 → 안전). 검증: `tsc --noEmit` clean + `vitest run` 80/80(기존 75 + 신규 5). 4-에이전트 🟢 전부 소진(데드코드+webhook+드리프트). 다음: 사용자 지정 심화항목(🟡 API보안래퍼/토글헬퍼/쿼리병렬, 🟠 거대파일분할/모노레포/테스트커버리지, DB 서울이전).
 

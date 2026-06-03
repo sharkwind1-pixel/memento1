@@ -19,8 +19,10 @@ export async function GET(
             return NextResponse.json({ error: "잘못된 요청입니다" }, { status: 400 });
         }
 
-        const currentUser = await getAuthUser();
-        const supabase = await createServerSupabase();
+        const [currentUser, supabase] = await Promise.all([
+            getAuthUser(),
+            createServerSupabase(),
+        ]);
 
         // 미니홈피 설정 조회
         let settings = null;
@@ -67,28 +69,61 @@ export async function GET(
             };
         }
 
-        // 프로필 조회 (닉네임 + 미니미 + 펫타입)
-        const { data: profile } = await supabase
-            .from("profiles")
-            .select("nickname, equipped_minimi_id, equipped_accessories, minimi_pixel_data, minimi_accessories_data, onboarding_data")
-            .eq("id", userId)
-            .single();
+        // profile / guestbook / like 는 모두 userId(또는 currentUser)에만 의존하고 서로 독립
+        // → 병렬 실행으로 3왕복을 1왕복으로 단축. (settings는 위에서 403 분기 때문에 선행)
+        const [profileRes, guestbookRes, likeRes] = await Promise.all([
+            supabase
+                .from("profiles")
+                .select("nickname, equipped_minimi_id, equipped_accessories, minimi_pixel_data, minimi_accessories_data, onboarding_data")
+                .eq("id", userId)
+                .single(),
+            supabase
+                .from("minihompy_guestbook")
+                .select("id, owner_id, visitor_id, content, created_at", { count: "exact" })
+                .eq("owner_id", userId)
+                .order("created_at", { ascending: false })
+                .limit(MINIHOMPY.GUESTBOOK_PAGE_SIZE),
+            currentUser
+                ? supabase
+                      .from("minihompy_likes")
+                      .select("id")
+                      .eq("owner_id", userId)
+                      .eq("user_id", currentUser.id)
+                      .maybeSingle()
+                : Promise.resolve({ data: null }),
+        ]);
+
+        const profile = profileRes.data;
+        const guestbook = guestbookRes.data;
+        const count = guestbookRes.count;
+        const isLiked = !!likeRes.data;
 
         const ownerNickname = profile?.nickname || "익명";
         const onboardingData = profile?.onboarding_data as Record<string, unknown> | null;
         const ownerPetType = (onboardingData?.petType as string) || "dog";
 
-        // equipped_minimi_id는 user_minimi UUID → slug 변환 필요
-        let ownerMinimiSlug: string | null = null;
-        if (profile?.equipped_minimi_id) {
-            const { data: minimiRow } = await supabase
-                .from("user_minimi")
-                .select("minimi_id")
-                .eq("id", profile.equipped_minimi_id)
-                .maybeSingle();
-            ownerMinimiSlug = minimiRow?.minimi_id || null;
-        }
+        // 2차 의존 쿼리: 소유자 미니미 slug(profile 의존) + 방명록 작성자 프로필(guestbook 의존)
+        // → 서로 독립이라 병렬.
+        const visitorIds = Array.from(new Set((guestbook || []).map(g => g.visitor_id)));
+        const [minimiRow, visitorProfileRows] = await Promise.all([
+            profile?.equipped_minimi_id
+                ? supabase
+                      .from("user_minimi")
+                      .select("minimi_id")
+                      .eq("id", profile.equipped_minimi_id)
+                      .maybeSingle()
+                      .then(r => r.data)
+                : Promise.resolve(null),
+            visitorIds.length > 0
+                ? supabase
+                      .from("profiles")
+                      .select("id, nickname, minimi_pixel_data")
+                      .in("id", visitorIds)
+                      .then(r => r.data)
+                : Promise.resolve(null),
+        ]);
 
+        const ownerMinimiSlug = minimiRow?.minimi_id || null;
         const ownerMinimiEquip = {
             minimiId: ownerMinimiSlug,
             accessoryIds: profile?.equipped_accessories || [],
@@ -96,29 +131,12 @@ export async function GET(
             accessoriesData: profile?.minimi_accessories_data || [],
         };
 
-        // 방명록 최신 N개
-        const { data: guestbook, count } = await supabase
-            .from("minihompy_guestbook")
-            .select("id, owner_id, visitor_id, content, created_at", { count: "exact" })
-            .eq("owner_id", userId)
-            .order("created_at", { ascending: false })
-            .limit(MINIHOMPY.GUESTBOOK_PAGE_SIZE);
-
         // 방명록 작성자 닉네임 + 미니미
-        const visitorIds = Array.from(new Set((guestbook || []).map(g => g.visitor_id)));
         let visitorProfiles: Record<string, { nickname: string; pixelData: unknown }> = {};
-
-        if (visitorIds.length > 0) {
-            const { data: profiles } = await supabase
-                .from("profiles")
-                .select("id, nickname, minimi_pixel_data")
-                .in("id", visitorIds);
-
-            if (profiles) {
-                visitorProfiles = Object.fromEntries(
-                    profiles.map(p => [p.id, { nickname: p.nickname || "익명", pixelData: p.minimi_pixel_data }])
-                );
-            }
+        if (visitorProfileRows) {
+            visitorProfiles = Object.fromEntries(
+                visitorProfileRows.map(p => [p.id, { nickname: p.nickname || "익명", pixelData: p.minimi_pixel_data }])
+            );
         }
 
         const formattedGuestbook = (guestbook || []).map(g => ({
@@ -130,18 +148,6 @@ export async function GET(
             content: g.content,
             createdAt: g.created_at,
         }));
-
-        // 좋아요 여부
-        let isLiked = false;
-        if (currentUser) {
-            const { data: like } = await supabase
-                .from("minihompy_likes")
-                .select("id")
-                .eq("owner_id", userId)
-                .eq("user_id", currentUser.id)
-                .maybeSingle();
-            isLiked = !!like;
-        }
 
         return NextResponse.json({
             settings,

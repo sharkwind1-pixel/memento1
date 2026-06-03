@@ -136,7 +136,24 @@ export async function GET(request: NextRequest) {
         // 페이지네이션
         query = query.range(offset, offset + limit - 1);
 
-        let { data, error, count } = await query;
+        // 메인 목록 query와 전체 공지(global) query는 서로 독립 → 병렬 실행으로 라운드트립 절감.
+        // 전체 공지는 첫 페이지(!noticeScope && offset===0)에서만 prepend 대상.
+        const wantGlobalNotices = !noticeScope && offset === 0;
+        const [mainResult, globalResult] = await Promise.all([
+            query,
+            wantGlobalNotices
+                ? supabase
+                      .from("community_posts")
+                      .select("*, post_comments(count), author_pet:pets!community_posts_author_pet_id_fkey(id, name, type, breed, profile_image)")
+                      .eq("notice_scope", "global")
+                      .neq("board_type", boardType)
+                      .or("is_hidden.is.null,is_hidden.eq.false")
+                      .order("created_at", { ascending: false })
+                      .limit(3)
+                : Promise.resolve({ data: null, error: null }),
+        ]);
+
+        let { data, error, count } = mainResult;
 
         if (error) {
             console.error("[Posts GET] 조회 에러:", error);
@@ -145,24 +162,13 @@ export async function GET(request: NextRequest) {
 
         // 첫 페이지에서 전체 공지(global)를 해당 게시판 결과에 prepend
         // (전체 공지는 어떤 게시판에 작성했든 모든 게시판 상단에 노출)
-        if (!noticeScope && offset === 0) {
-            try {
-                const { data: globalNotices } = await supabase
-                    .from("community_posts")
-                    .select("*, post_comments(count), author_pet:pets!community_posts_author_pet_id_fkey(id, name, type, breed, profile_image)")
-                    .eq("notice_scope", "global")
-                    .neq("board_type", boardType)
-                    .or("is_hidden.is.null,is_hidden.eq.false")
-                    .order("created_at", { ascending: false })
-                    .limit(3);
-
-                if (globalNotices && globalNotices.length > 0) {
-                    const existingIds = new Set((data || []).map(p => p.id));
-                    const uniqueGlobals = globalNotices.filter(n => !existingIds.has(n.id));
-                    data = [...uniqueGlobals, ...(data || [])];
-                }
-            } catch {
-                // notice_scope 컬럼이 아직 없으면 무시 (게시글은 정상 반환)
+        // globalResult.error는 notice_scope 컬럼 미존재 등 → 조용히 무시(게시글은 정상 반환).
+        if (wantGlobalNotices && !globalResult.error && globalResult.data) {
+            const globalNotices = globalResult.data;
+            if (globalNotices.length > 0) {
+                const existingIds = new Set((data || []).map(p => p.id));
+                const uniqueGlobals = globalNotices.filter(n => !existingIds.has(n.id));
+                data = [...uniqueGlobals, ...(data || [])];
             }
         }
 
@@ -173,55 +179,70 @@ export async function GET(request: NextRequest) {
         let userIdToPoints: Record<string, number> = {};
         let userIdToIsAdmin: Record<string, boolean> = {};
         let userIdToNickname: Record<string, string> = {};
-        if (userIds.length > 0) {
-            try {
-                const adminSupabase = createAdminSupabase();
-                // profiles(nickname, equipped_minimi_id, points, is_admin)와 user_minimi를 병렬 조회
-                const [{ data: profileRows }, { data: minimiRows }] = await Promise.all([
-                    adminSupabase
-                        .from("profiles")
-                        .select("id, nickname, equipped_minimi_id, points, is_admin")
-                        .in("id", userIds),
-                    adminSupabase
-                        .from("user_minimi")
-                        .select("id, minimi_id, user_id")
-                        .in("user_id", userIds),
-                ]);
-                // user_minimi.id → slug 맵
-                const uuidToSlug = Object.fromEntries(
-                    (minimiRows || []).map(m => [m.id, m.minimi_id])
-                );
-                for (const p of (profileRows || [])) {
-                    userIdToPoints[p.id] = p.points ?? 0;
-                    userIdToIsAdmin[p.id] = p.is_admin === true;
-                    if (typeof p.nickname === "string" && p.nickname.trim()) {
-                        userIdToNickname[p.id] = p.nickname.trim();
-                    }
-                    if (p.equipped_minimi_id && uuidToSlug[p.equipped_minimi_id]) {
-                        userIdToMinimiSlug[p.id] = uuidToSlug[p.equipped_minimi_id];
-                    }
+        // 작성자 프로필/미니미 일괄 조회와 로그인 유저 좋아요 조회는 둘 다 data(목록)에만
+        // 의존하고 서로 독립 → 병렬 실행으로 고정 2왕복을 1왕복으로 단축.
+        const postIds = (data || []).map(p => p.id);
+        let userLikedPostIds = new Set<string>();
+
+        const [profileBundle, likeRows] = await Promise.all([
+            // (1) 작성자 프로필/미니미 (admin 클라이언트 — 타 유저 user_minimi RLS 우회)
+            userIds.length > 0
+                ? (async () => {
+                      try {
+                          const adminSupabase = createAdminSupabase();
+                          const [{ data: profileRows }, { data: minimiRows }] = await Promise.all([
+                              adminSupabase
+                                  .from("profiles")
+                                  .select("id, nickname, equipped_minimi_id, points, is_admin")
+                                  .in("id", userIds),
+                              adminSupabase
+                                  .from("user_minimi")
+                                  .select("id, minimi_id, user_id")
+                                  .in("user_id", userIds),
+                          ]);
+                          return { profileRows: profileRows || [], minimiRows: minimiRows || [] };
+                      } catch {
+                          return null; // 조회 실패 시 무시 (게시글은 정상 반환)
+                      }
+                  })()
+                : Promise.resolve(null),
+            // (2) 로그인 유저의 좋아요 여부
+            currentUser && postIds.length > 0
+                ? (async () => {
+                      try {
+                          const { data: rows } = await supabase
+                              .from("post_likes")
+                              .select("post_id")
+                              .eq("user_id", currentUser.id)
+                              .in("post_id", postIds);
+                          return rows || [];
+                      } catch {
+                          return null; // 좋아요 조회 실패 시 무시
+                      }
+                  })()
+                : Promise.resolve(null),
+        ]);
+
+        if (profileBundle) {
+            const { profileRows, minimiRows } = profileBundle;
+            // user_minimi.id → slug 맵
+            const uuidToSlug = Object.fromEntries(
+                minimiRows.map(m => [m.id, m.minimi_id])
+            );
+            for (const p of profileRows) {
+                userIdToPoints[p.id] = p.points ?? 0;
+                userIdToIsAdmin[p.id] = p.is_admin === true;
+                if (typeof p.nickname === "string" && p.nickname.trim()) {
+                    userIdToNickname[p.id] = p.nickname.trim();
                 }
-            } catch {
-                // 조회 실패 시 무시 (게시글은 정상 반환)
+                if (p.equipped_minimi_id && uuidToSlug[p.equipped_minimi_id]) {
+                    userIdToMinimiSlug[p.id] = uuidToSlug[p.equipped_minimi_id];
+                }
             }
         }
 
-        // 로그인 유저의 좋아요 여부 일괄 조회
-        const postIds = (data || []).map(p => p.id);
-        let userLikedPostIds = new Set<string>();
-        if (currentUser && postIds.length > 0) {
-            try {
-                const { data: likeRows } = await supabase
-                    .from("post_likes")
-                    .select("post_id")
-                    .eq("user_id", currentUser.id)
-                    .in("post_id", postIds);
-                if (likeRows) {
-                    userLikedPostIds = new Set(likeRows.map(r => r.post_id));
-                }
-            } catch {
-                // 좋아요 조회 실패 시 무시
-            }
+        if (likeRows) {
+            userLikedPostIds = new Set(likeRows.map(r => r.post_id));
         }
 
         // 댓글 수 계산
