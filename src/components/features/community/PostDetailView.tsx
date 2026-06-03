@@ -12,6 +12,7 @@ import PawLoading from "@/components/ui/PawLoading";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
+import { useOptimisticToggle } from "@/hooks";
 import ReportModal from "@/components/modals/ReportModal";
 import MinihompyVisitModal from "@/components/features/minihompy/MinihompyVisitModal";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
@@ -35,6 +36,7 @@ export default function PostDetailView({
     onPostDeleted,
 }: PostDetailViewProps) {
     const { user, isAdminUser, refreshPoints } = useAuth();
+    const runToggle = useOptimisticToggle();
     const [post, setPost] = useState<PostData | null>(null);
     const [comments, setComments] = useState<PostComment[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -48,7 +50,6 @@ export default function PostDetailView({
     const [isLiking, setIsLiking] = useState(false);
     const [isDisliking, setIsDisliking] = useState(false);
     const likingRef = useRef(false);
-    const commentLikingRef = useRef<Set<string>>(new Set());
     const dislikingRef = useRef(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isHidden, setIsHidden] = useState(false);
@@ -489,37 +490,42 @@ export default function PostDetailView({
         }
     };
 
-    // 댓글 좋아요 (inline async -> named function)
+    // 댓글 좋아요 — 공용 낙관적 토글 훅으로 가드/롤백/보정 표준화 (탭 즉시 토글 → 서버 보정 → 실패 시 롤백)
     const handleCommentLike = async (commentId: string) => {
         if (!user) { window.dispatchEvent(new CustomEvent("openAuthModal")); return; }
-        if (commentLikingRef.current.has(commentId)) return; // 연타 드리프트 방지(in-flight 가드)
-        commentLikingRef.current.add(commentId);
-        // 낙관적 UI 업데이트 — 탭 즉시 토글(모바일웹 체감속도). 서버 응답으로 보정, 실패 시 롤백.
         const before = comments.find(c => c.id === commentId);
-        setComments(prev => prev.map(c => c.id === commentId
-            ? { ...c, userLiked: !c.userLiked, likes: Math.max(0, (c.likes || 0) + (c.userLiked ? -1 : 1)) }
-            : c));
-        try {
-            const res = await authFetch(API.COMMENT_LIKE(commentId), { method: "POST" });
-            if (!res.ok) throw new Error("comment like failed");
-            const d = await res.json();
-            setComments(prev => prev.map(c => c.id === commentId ? { ...c, likes: d.likes, userLiked: d.liked } : c));
-        } catch {
-            if (before) setComments(prev => prev.map(c => c.id === commentId ? before : c));
-        } finally {
-            commentLikingRef.current.delete(commentId);
-        }
+        await runToggle<{ likes: number; liked: boolean }>(`comment-like:${commentId}`, {
+            apply: () => setComments(prev => prev.map(c => c.id === commentId
+                ? { ...c, userLiked: !c.userLiked, likes: Math.max(0, (c.likes || 0) + (c.userLiked ? -1 : 1)) }
+                : c)),
+            request: async () => {
+                const res = await authFetch(API.COMMENT_LIKE(commentId), { method: "POST" });
+                if (!res.ok) throw new Error("comment like failed");
+                return res.json();
+            },
+            reconcile: (d) => setComments(prev => prev.map(c => c.id === commentId
+                ? { ...c, likes: d.likes, userLiked: d.liked } : c)),
+            rollback: () => { if (before) setComments(prev => prev.map(c => c.id === commentId ? before : c)); },
+        });
     };
 
-    // 댓글 비추천 (inline async -> named function)
+    // 댓글 비추천 — 이전엔 낙관적 반영/연타 가드/롤백이 모두 없었음. 좋아요와 동일 패턴으로 통일.
     const handleCommentDislike = async (commentId: string) => {
         if (!user) { window.dispatchEvent(new CustomEvent("openAuthModal")); return; }
-        try {
-            const res = await authFetch(API.COMMENT_DISLIKE(commentId), { method: "POST" });
-            if (!res.ok) return;
-            const d = await res.json();
-            setComments(prev => prev.map(c => c.id === commentId ? { ...c, dislikes: d.dislikes, userDisliked: d.disliked } : c));
-        } catch { /* 무시 */ }
+        const before = comments.find(c => c.id === commentId);
+        await runToggle<{ dislikes: number; disliked: boolean }>(`comment-dislike:${commentId}`, {
+            apply: () => setComments(prev => prev.map(c => c.id === commentId
+                ? { ...c, userDisliked: !c.userDisliked, dislikes: Math.max(0, (c.dislikes || 0) + (c.userDisliked ? -1 : 1)) }
+                : c)),
+            request: async () => {
+                const res = await authFetch(API.COMMENT_DISLIKE(commentId), { method: "POST" });
+                if (!res.ok) throw new Error("comment dislike failed");
+                return res.json();
+            },
+            reconcile: (d) => setComments(prev => prev.map(c => c.id === commentId
+                ? { ...c, dislikes: d.dislikes, userDisliked: d.disliked } : c)),
+            rollback: () => { if (before) setComments(prev => prev.map(c => c.id === commentId ? before : c)); },
+        });
     };
 
     // 본인 글 여부 + 관리자 권한

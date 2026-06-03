@@ -15,6 +15,7 @@ import {
     Trash2, ChevronDown, Send,
 } from "lucide-react";
 import { useEscapeClose } from "@/hooks/useEscapeClose";
+import { useOptimisticToggle } from "@/hooks";
 import { useAuth } from "@/contexts/AuthContext";
 import { authFetch } from "@/lib/auth-fetch";
 import { API } from "@/config/apiEndpoints";
@@ -36,6 +37,7 @@ export default function MinihompyVisitModal({
     userId,
 }: MinihompyVisitModalProps) {
     const { user } = useAuth();
+    const runToggle = useOptimisticToggle();
     const [data, setData] = useState<MinihompyViewData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -90,7 +92,7 @@ export default function MinihompyVisitModal({
         }
     }, [isOpen, loadData, recordVisit]);
 
-    // 좋아요 토글
+    // 좋아요 토글 — 공용 낙관적 토글 훅으로 연타 가드 + 즉시 반영 + 실패 롤백 표준화
     const handleLike = async () => {
         if (!user) {
             toast.error("로그인이 필요합니다");
@@ -101,21 +103,30 @@ export default function MinihompyVisitModal({
             return;
         }
 
-        setLiking(true);
-        try {
-            const res = await authFetch(API.MINIHOMPY_LIKE(userId), {
-                method: "POST",
-            });
-            if (res.ok) {
-                const result = await res.json();
+        const prevLiked = isLiked;
+        const prevTotal = totalLikes;
+        await runToggle<{ liked: boolean; totalLikes: number }>("minihompy-like", {
+            apply: () => {
+                setLiking(true);
+                setIsLiked(!prevLiked);
+                setTotalLikes(prevLiked ? Math.max(0, prevTotal - 1) : prevTotal + 1);
+            },
+            request: async () => {
+                const res = await authFetch(API.MINIHOMPY_LIKE(userId), { method: "POST" });
+                if (!res.ok) throw new Error("minihompy like failed");
+                return res.json();
+            },
+            reconcile: (result) => {
                 setIsLiked(result.liked);
                 setTotalLikes(result.totalLikes);
-            }
-        } catch {
-            toast.error("좋아요 실패");
-        } finally {
-            setLiking(false);
-        }
+            },
+            rollback: () => {
+                setIsLiked(prevLiked);
+                setTotalLikes(prevTotal);
+            },
+            onError: () => toast.error("좋아요 실패"),
+            onSettled: () => setLiking(false),
+        });
     };
 
     // 방명록 작성

@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-06-03 🟡5 토글 헬퍼 통합 1차 — useOptimisticToggle 신설 + 결함 2건 수정 — L2+동등성검증
+사용자 지정 심화항목 🟡5. Explore로 낙관적 토글 8개 핸들러 전수 매핑 → 6개는 패턴 양호(최근 버그 수정분), **2개 실제 결함** 발견. 공용 훅 `src/hooks/useOptimisticToggle.ts` 신설(가드+apply+request+reconcile+rollback+onError+onSettled 제어흐름 표준화, 상태모양은 호출부 콜백 주입, key별 in-flight Set). 적용 3핸들러:
+- `PostDetailView.handleCommentLike` — 동작 동등 마이그레이션(`commentLikingRef` 제거, 훅 내부 Set로 대체).
+- `PostDetailView.handleCommentDislike` — **결함수정**: 기존 낙관적반영/연타가드/롤백 전무 → 좋아요와 대칭으로 신규 추가.
+- `MinihompyVisitModal.handleLike` — **결함수정**: 가드 약함+낙관적 없음 → 낙관적+가드+롤백+실패토스트 추가.
+정상 작동 중인 5개(post like/dislike, useHomePage condolence/toggleLike, magazine)는 **회귀 위험 차단 위해 미변경** → Phase 2로 분리(원하면 한 배치로 훅 마이그레이션). 검증: `tsc --noEmit` clean + `next build` ✓ + vitest 80/80(L2). **9번 적대검증: 버그 0건 SHIP가**(훅 제어흐름 7항목/배럴/3핸들러 동등·대칭/키독립성 전수, API 응답필드 일치 확인). 견고화 1건 반영(apply를 try 안으로 — 향후 throw 대비). ⚠️ 미검증(L3-5): 연타·롤백 시각확인은 머지 전 수동 1회 권장.
+
+---
+
 ## 2026-06-03 🟡6 쿼리 병렬화 1차 — posts·minihompy GET 핫패스 (웹 느림 코드측 레버) — L2+동등성검증
 사용자 지정 심화항목 🟡6. **buildAIContext(펫톡 최고빈도)는 이미 Promise.all 5개 병렬화돼 있어 추가 불필요** 확인. Explore로 API 전체 순차-await 핫스팟 스캔 후 직접 정독으로 의존성 확정(추측 처방 금지). 적용 2곳:
 - **`posts/route.ts` GET**(홈피드/게시판 목록=최고빈도): (A) 메인 목록 query + globalNotices query 병렬(첫페이지 1왕복↓), (B) 작성자 profiles/minimi + post_likes(좋아요) 병렬(고정 2왕복→1). blocks(L61)는 메인 query 필터로 들어가 순차 불가피 → 손대지 않음(병렬화하면 페이지네이션 count 깨짐).
