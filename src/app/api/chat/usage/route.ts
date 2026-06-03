@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { getAuthUser } from "@/lib/supabase-server";
+import { withAuth } from "@/lib/api-auth";
 import { FREE_LIMITS, type SubscriptionTier, getLimitsForTier } from "@/config/constants";
 
 function getSupabase() {
@@ -20,17 +20,8 @@ function getSupabase() {
     });
 }
 
-export async function GET() {
+export const GET = withAuth(async ({ user }) => {
     try {
-        // 인증 체크
-        const user = await getAuthUser();
-        if (!user) {
-            return NextResponse.json(
-                { error: "로그인이 필요합니다." },
-                { status: 401 }
-            );
-        }
-
         const supabase = getSupabase();
         if (!supabase) {
             // DB 접속 불가 시 기본값 반환
@@ -113,4 +104,4 @@ export async function GET() {
             { status: 500 }
         );
     }
-}
+});

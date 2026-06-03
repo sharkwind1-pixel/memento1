@@ -3,22 +3,15 @@
  * PATCH /api/memory-albums/{id}/read
  */
 
-import { NextRequest, NextResponse } from "next/server";
-import { getAuthUser, createServerSupabase } from "@/lib/supabase-server";
+import { NextResponse } from "next/server";
+import { createServerSupabase } from "@/lib/supabase-server";
+import { withAuth } from "@/lib/api-auth";
 
 export const dynamic = "force-dynamic";
 
-export async function PATCH(
-    request: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
-) {
+export const PATCH = withAuth<{ id: string }>(async ({ user, params }) => {
     try {
-        const user = await getAuthUser();
-        if (!user) {
-            return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
-        }
-
-        const { id } = await params;
+        const { id } = params;
 
         const supabase = await createServerSupabase();
 
@@ -38,4 +31,4 @@ export async function PATCH(
         console.error("[MemoryAlbumRead] 오류:", err instanceof Error ? err.message : "unknown");
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });
     }
-}
+}, { message: "인증이 필요합니다." });

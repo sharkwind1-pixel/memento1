@@ -11,22 +11,14 @@
  */
 
 import { NextResponse } from "next/server";
-import { createServerSupabase, createAdminSupabase, getAuthUser } from "@/lib/supabase-server";
+import { createServerSupabase, createAdminSupabase } from "@/lib/supabase-server";
+import { withAuth } from "@/lib/api-auth";
 import { VIDEO, type SubscriptionTier, getVideoMonthlyQuota } from "@/config/constants";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export const GET = withAuth(async ({ user }) => {
     try {
-        // 1. 인증 확인
-        const user = await getAuthUser();
-        if (!user) {
-            return NextResponse.json(
-                { error: "로그인이 필요합니다." },
-                { status: 401 }
-            );
-        }
-
         const supabase = await createServerSupabase();
 
         // 2. 프리미엄/구독 등급 확인
@@ -140,4 +132,4 @@ export async function GET() {
             { status: 500 }
         );
     }
-}
+});
