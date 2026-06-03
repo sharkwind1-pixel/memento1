@@ -19,6 +19,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { isAllowedNativeUrl } from "@/lib/native-url";
 
 export default function AuthCallbackPage() {
     const router = useRouter();
@@ -41,21 +42,27 @@ export default function AuthCallbackPage() {
             const nativeUrlRaw = params.get("nativeUrl");
             if (isMobile && nativeUrlRaw) {
                 const decoded = decodeURIComponent(nativeUrlRaw);
-                const separator = decoded.includes("?") ? "&" : "?";
-                const forwardParams: string[] = [];
-                if (code) forwardParams.push(`code=${encodeURIComponent(code)}`);
-                if (tokenHash) forwardParams.push(`token_hash=${encodeURIComponent(tokenHash)}`);
-                if (type) forwardParams.push(`type=${encodeURIComponent(type)}`);
-                if (authError) forwardParams.push(`error=${encodeURIComponent(authError)}`);
-                if (errorDescription) forwardParams.push(`error_description=${encodeURIComponent(errorDescription)}`);
-                let deepLink = `${decoded}${separator}${forwardParams.join("&")}`;
-                if (window.location.hash && window.location.hash.length > 1) {
-                    deepLink += window.location.hash;
+                // 보안: 허용된 앱 딥링크 스킴(mementoani://, exp://)일 때만 forward.
+                // 임의 https URL을 허용하면 magic-link token_hash/code가 외부 서버로 새어 세션 탈취 가능.
+                if (isAllowedNativeUrl(decoded)) {
+                    const separator = decoded.includes("?") ? "&" : "?";
+                    const forwardParams: string[] = [];
+                    if (code) forwardParams.push(`code=${encodeURIComponent(code)}`);
+                    if (tokenHash) forwardParams.push(`token_hash=${encodeURIComponent(tokenHash)}`);
+                    if (type) forwardParams.push(`type=${encodeURIComponent(type)}`);
+                    if (authError) forwardParams.push(`error=${encodeURIComponent(authError)}`);
+                    if (errorDescription) forwardParams.push(`error_description=${encodeURIComponent(errorDescription)}`);
+                    let deepLink = `${decoded}${separator}${forwardParams.join("&")}`;
+                    if (window.location.hash && window.location.hash.length > 1) {
+                        deepLink += window.location.hash;
+                    }
+                    setMobileDeepLink(deepLink);
+                    // location.replace: 현재 history entry를 대체 → 브라우저 탭에 흔적 안 남음
+                    window.location.replace(deepLink);
+                    return;
                 }
-                setMobileDeepLink(deepLink);
-                // location.replace: 현재 history entry를 대체 → 브라우저 탭에 흔적 안 남음
-                window.location.replace(deepLink);
-                return;
+                // 비허용 스킴 → 브릿지 건너뛰고 아래 일반 웹 흐름으로 폴백(토큰 외부 전달 차단)
+                console.error("[auth/callback] 비허용 nativeUrl 스킴 차단됨");
             }
 
             // OAuth 에러 처리

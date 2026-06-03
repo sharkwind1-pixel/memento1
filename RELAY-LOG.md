@@ -4,6 +4,15 @@
 
 ---
 
+## 2026-06-03 ②보안 감사 — 3차원 병렬 감사 + 코드 취약점 A/D/E 수정(round 1) — L2+적대검증
+순차 ②. security-audit 스킬 + 3에이전트 병렬 감사(돈경로/인증인가/시크릿·XSS·업로드). **인증·인가는 깨끗**(IDOR·admin게이트·service_role 소유권·금액위변조 PortOne재조회·CRON_SECRET 15개·멱등성 가드 전부 OK). 시크릿 클라누출 0, 유저입력 XSS 0, 업로드검증 양호. **발견·수정(round 1, 코드)**:
+- **A [Medium] nativeUrl 오픈리다이렉트/토큰탈취**: OAuth/네이버 콜백이 `nativeUrl`로 token_hash/code를 forward하는데 스킴 검증이 없어 `nativeUrl=https://evil.com`으로 매직링크 토큰 탈취 가능 → `src/lib/native-url.ts isAllowedNativeUrl`(mementoani://·exp://만) 신설, `auth/callback/page.tsx`+`api/auth/naver/route.ts` 이중 방어. 테스트 4개.
+- **D [Low] video/complete 금액검증**: `!== VIDEO.SINGLE_PRICE` 하드코딩 → 묶음권(19,900/34,900) 거부 버그 → `!== payment.amount`(서버값, 위변조 방지 유지).
+- **E [Low] JSON-LD `</script>` 미이스케이프**: magazine/[id] → `.replace(/</g,"<")`.
+검증: vitest 103(+4) + tsc clean + next build ✓(L2). **9번 적대검증: 잔여우회 0건 SHIP가**(외부URL 차단·정당 모바일로그인 보존·prefix우회 무해 확인, D 양쪽 서버권위값, E breakout 차단+JSON유효). ⚠️ **round 2 남음(DB RPC, 별 커밋)**: B[Med] sell_minimi_item 포인트복제(FOR UPDATE), C[Med] video/generate 쿼터 TOCTOU(fal 실비), F[Low] increment_user_points daily_cap. (working tree에 내것 아닌 portone.ts KCP변경 있음 — 커밋 제외)
+
+---
+
 ## 2026-06-03 ①결제/구독 테스트 커버리지 + 환불계산 de-dup — L3(tsc+build+vitest 19신규)
 "순차적으로 다 하라" 지시 1번. 런칭된 결제 서비스인데 돈 로직 테스트 0이던 문제 해소. **환불 계산을 `src/lib/refund-calc.ts`로 추출**: cancel route엔 순수함수 `computeRefund`가 있었으나 `refund-preview`가 **동일 식을 인라인 복붙**(드리프트 시 "보여준 환불액≠실제환불"=분쟁 위험) → `computeRefund`+`computeVideoDeduction` 단일 소스로 통합, 양쪽 route 재배선. 테스트 신규 19개: `refund-calc.test.ts`(12 — 숙려기간/경계 정확히24h/절반 4950/만료0/amount초과방지/영상차감 cap/음수방지0/무료쿼터0), `subscription-limits.test.ts`(7 — getLimitsForTier/getVideoMonthlyQuota/calculateAnnualSavings/isAdmin). 총 vitest 80→99. stale 주석 "×3,500원"→SINGLE_PRICE(4,900원) 정정(기존부터 틀렸던 것). 검증: tsc clean + next build ✓(cancel·refund-preview 컴파일) + vitest 99 pass. **9번 적대검증: 환불액 변동 회귀 0건 SHIP가**(원본 1:1 수식 대조 — 분기/클램프/반올림/경계/상수 1원단위 동등, `?? 0` 보존, cancel 4외부변수·preview 11응답필드 동일). 다음 순차: ②보안감사 ③🟡4 나머지 이관 ④구조개편.
 

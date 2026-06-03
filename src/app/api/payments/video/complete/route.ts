@@ -137,8 +137,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: `결제가 완료되지 않았습니다. (${portoneData.status})` }, { status: 400 });
         }
 
-        // 금액 검증
-        if (portoneData.amount !== VIDEO.SINGLE_PRICE) {
+        // 금액 검증 — payment.amount는 prepare에서 서버가 결정한 값(단품 4,900/묶음 19,900·34,900 모두 커버, 위변조 방지)
+        if (portoneData.amount !== payment.amount) {
             await adminSupabase.from("payments").update({ status: "failed" }).eq("id", payment.id);
             return NextResponse.json({ error: "결제 금액이 일치하지 않습니다." }, { status: 400 });
         }

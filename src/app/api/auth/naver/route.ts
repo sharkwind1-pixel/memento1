@@ -8,6 +8,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
+import { isAllowedNativeUrl } from "@/lib/native-url";
 
 export const dynamic = "force-dynamic";
 
@@ -47,7 +48,7 @@ export async function GET(request: NextRequest) {
         maxAge: 600,
         path: "/",
     });
-    if (mobile === "1" && nativeUrl) {
+    if (mobile === "1" && nativeUrl && isAllowedNativeUrl(nativeUrl)) {
         response.cookies.set("naver_oauth_mobile", "1", {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",

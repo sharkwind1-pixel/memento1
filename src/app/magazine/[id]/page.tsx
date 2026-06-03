@@ -157,7 +157,7 @@ export default async function MagazineDetailPage({
         <>
             <script
                 type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
             />
             {/* 크롤러용 텍스트 폴백 — 카드뉴스 UI 외에 본문 원문을 순수 텍스트로도 제공 */}
             <div className="sr-only">
