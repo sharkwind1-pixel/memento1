@@ -86,8 +86,14 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "invalid_body" }, { status: 400 });
     }
 
-    // 디버깅을 위해 포트원 원본 payload 기록 — 포맷이 V1인지 V2인지 파악 + 필드 누락 감지
-    console.log("[webhook] incoming body:", JSON.stringify(bodyJson).slice(0, 800));
+    // 디버깅용 — 포맷(V1/V2) 파악 + 필드 누락 감지. 전체 body 대신 식별자/키만 로깅(민감정보 미노출).
+    console.log("[webhook] incoming:", {
+        keys: Object.keys(bodyJson),
+        imp_uid: typeof bodyJson.imp_uid === "string" ? bodyJson.imp_uid : undefined,
+        merchant_uid: typeof bodyJson.merchant_uid === "string" ? bodyJson.merchant_uid : undefined,
+        status: typeof bodyJson.status === "string" ? bodyJson.status : undefined,
+        type: typeof bodyJson.type === "string" ? bodyJson.type : undefined,
+    });
 
     // 포트원 V1 포맷: { imp_uid, merchant_uid, status }
     // 포트원 V2 포맷: { type: "Transaction.*", data: { paymentId, transactionId, ... } }

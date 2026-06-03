@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-06-03 🟢 코드리뷰 정리 마무리 — webhook 민감로그 제거 + 웹↔모바일 상수 드리프트 테스트 — L2(typecheck+vitest)
+4-에이전트 코드리뷰 🟢 퀵윈 2건 처리. **(🟢2)** `payments/webhook/route.ts`: 들어온 결제 body 전체를 `JSON.stringify().slice(0,800)`로 로깅하던 것 → 식별자/키만(`keys/imp_uid/merchant_uid/status/type`) 로깅으로 축소. 디버깅(V1/V2 포맷·필드누락 감지) 의도는 유지하되 민감정보 미노출. **(🟢3)** 웹↔모바일 상수 드리프트 방지 테스트(`src/__tests__/constants-drift.test.ts`) 신설 — FREE/BASIC/PREMIUM_LIMITS·PRICING·VIDEO 핵심값 일치 강제(한쪽만 가격/한도 바꾸면 빌드서 깨짐). 작성 중 **실제 드리프트 발견·수정**: `mobile/config/constants.ts` `PREMIUM_LIMITS.DAILY_CHATS` Infinity → 1000(웹과 동일; JSON직렬화 불가라 웹은 의도적 1000. 모바일 ai-chat은 별도 로컬 Infinity 사용해 그 상수 미참조 → 안전). 검증: `tsc --noEmit` clean + `vitest run` 80/80(기존 75 + 신규 5). 4-에이전트 🟢 전부 소진(데드코드+webhook+드리프트). 다음: 사용자 지정 심화항목(🟡 API보안래퍼/토글헬퍼/쿼리병렬, 🟠 거대파일분할/모노레포/테스트커버리지, DB 서울이전).
+
+---
+
 ## 2026-06-03 데드코드 제거 — 웹 lost/local 레거시 스택 통째 삭제 (게시판 합치기 후속) — L2
 4-에이전트 코드리뷰 발견 + **검증**(useLostPosts()/컴포넌트 외부 렌더·호출 0개 = CommunityPage `/api/posts?board=` 통합으로 대체된 레거시). 삭제: 웹 `features/lost`(8)·`features/local`(5), `/api/lost-pets`·`/api/local-posts` 라우트(4), apiEndpoints LOST_PETS/LOCAL_POSTS/*_DETAIL 상수, storage.ts uploadLost/LocalPostImage, mobile `components/lost`·`local` 모달, `community-upload.ts` lost/local 헬퍼, `mobile/app-routes-stash`(미추적). 총 ~20파일. **DB `lost_pets`/`local_posts` 테이블은 보존**(빈 0행, 사용자 결정). 검증: 웹 next build + 모바일 tsc clean(L2) — 누락 참조 0(stale `.next/types`만 있었고 `.next` 재생성으로 해소). grep로 런타임 문자열 참조도 0 확인. 잔여 🟢: webhook 민감로그·상수 드리프트 테스트.
 

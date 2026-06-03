@@ -17,7 +17,7 @@ export const BASIC_LIMITS = {
 export const PREMIUM_LIMITS = {
     PETS: 10,
     PHOTOS_PER_PET: 1000,
-    DAILY_CHATS: Infinity,
+    DAILY_CHATS: 1000,          // 웹과 동일 (Infinity는 JSON 직렬화 불가 → 1000=사실상 무제한). ai-chat 화면은 별도 Infinity 사용.
 } as const;
 
 export const PRICING = {
