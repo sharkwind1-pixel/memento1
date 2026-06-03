@@ -9,12 +9,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser, createAdminSupabase } from "@/lib/supabase-server";
 import { VIDEO, type SubscriptionTier, getVideoMonthlyQuota } from "@/config/constants";
+import { DAY_MS, computeRefund, computeVideoDeduction } from "@/lib/refund-calc";
 
 export const dynamic = "force-dynamic";
-
-const DAY_MS = 24 * 60 * 60 * 1000;
-/** 숙려기간: 이 시간 이내 해지면 전액 환불 */
-const COOLING_OFF_MS = 24 * 60 * 60 * 1000;
 
 export async function GET(_request: NextRequest) {
     const user = await getAuthUser();
@@ -76,29 +73,13 @@ export async function GET(_request: NextRequest) {
         const expiresAt = profile.premium_expires_at
             ? new Date(profile.premium_expires_at)
             : new Date(paidAt.getTime() + 30 * DAY_MS);
-
-        // cancel route와 동일 로직: 24h 이내 → 전액, 이후 → ms 비율
-        const totalMs = Math.max(1, expiresAt.getTime() - paidAt.getTime());
-        const usedMs = Math.max(0, now.getTime() - paidAt.getTime());
-        const remainingMs = Math.max(0, expiresAt.getTime() - now.getTime());
-
-        const daysTotal = Math.max(1, Math.round(totalMs / DAY_MS));
-        const daysUsed = Math.max(0, Math.floor(usedMs / DAY_MS));
-        const daysRemaining = Math.max(0, Math.round(remainingMs / DAY_MS));
         const original = latestPaid.amount || 0;
 
-        let grossRefund = 0;
-        let isFullRefund = false;
-        if (remainingMs <= 0) {
-            grossRefund = 0;
-        } else if (usedMs < COOLING_OFF_MS) {
-            grossRefund = original; // 숙려기간 전액
-            isFullRefund = true;
-        } else {
-            grossRefund = Math.min(original, Math.max(0, Math.floor((original * remainingMs) / totalMs)));
-        }
+        // cancel route와 동일한 공용 계산(src/lib/refund-calc) — preview/실제 환불 드리프트 방지
+        const { refund: grossRefund, isFullRefund, daysUsed, daysTotal, daysRemaining } =
+            computeRefund({ amount: original, paidAt, expiresAt, now });
 
-        // 영상 사용량 차감 (cancel route와 동일 로직)
+        // 영상 사용량 차감 (cancel route와 동일한 공용 계산)
         const { count: videosSincePaid } = await adminSb
             .from("video_generations")
             .select("id", { count: "exact", head: true })
@@ -114,9 +95,8 @@ export async function GET(_request: NextRequest) {
             ? "basic"
             : (profileTier as SubscriptionTier);
         const monthlyQuota = getVideoMonthlyQuota(tier);
-        const videosUsedCharged = Math.min(videosSincePaid ?? 0, monthlyQuota);
-        const videoDeduction = videosUsedCharged * VIDEO.SINGLE_PRICE;
-        const refundable = Math.max(0, grossRefund - videoDeduction);
+        const { videosUsedCharged, videoDeduction, refundable } =
+            computeVideoDeduction(grossRefund, videosSincePaid ?? 0, monthlyQuota);
 
         return NextResponse.json({
             is_premium: true,

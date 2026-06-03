@@ -26,13 +26,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser, createServerSupabase, createAdminSupabase } from "@/lib/supabase-server";
 import { sendSubscriptionCancelledEmail } from "@/lib/email";
 import { VIDEO, type SubscriptionTier, getVideoMonthlyQuota } from "@/config/constants";
+import { DAY_MS, computeRefund, computeVideoDeduction } from "@/lib/refund-calc";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
-
-const DAY_MS = 24 * 60 * 60 * 1000;
-/** 숙려기간: 이 시간 이내 해지 시 무조건 전액 환불 */
-const COOLING_OFF_MS = 24 * 60 * 60 * 1000;
 
 /** PortOne V1 토큰 발급 */
 async function getPortOneToken(): Promise<string | null> {
@@ -123,44 +120,7 @@ async function cancelPortOnePayment(params: {
     }
 }
 
-/**
- * 환불 금액 계산.
- * - 결제 후 COOLING_OFF_MS 이내 해지 → 전액 환불 (isFullRefund=true)
- * - 그 이후 해지 → ms 비율 pro-rata (abuse 방지)
- * - 만료 지난 결제: 0원
- */
-function computeRefund(params: {
-    amount: number;
-    paidAt: Date;
-    expiresAt: Date;
-    now: Date;
-}): {
-    refund: number;
-    isFullRefund: boolean;
-    daysUsed: number;
-    daysTotal: number;
-    daysRemaining: number;
-} {
-    const { amount, paidAt, expiresAt, now } = params;
-    const totalMs = Math.max(1, expiresAt.getTime() - paidAt.getTime());
-    const usedMs = Math.max(0, now.getTime() - paidAt.getTime());
-    const remainingMs = Math.max(0, expiresAt.getTime() - now.getTime());
-
-    const daysTotal = Math.max(1, Math.round(totalMs / DAY_MS));
-    const daysUsed = Math.max(0, Math.floor(usedMs / DAY_MS));
-    const daysRemaining = Math.max(0, Math.round(remainingMs / DAY_MS));
-
-    if (remainingMs <= 0) {
-        return { refund: 0, isFullRefund: false, daysUsed, daysTotal, daysRemaining };
-    }
-    // 숙려기간 내 → 전액 환불
-    if (usedMs < COOLING_OFF_MS) {
-        return { refund: amount, isFullRefund: true, daysUsed, daysTotal, daysRemaining };
-    }
-    // 이후 → 일할 환불 (ms 비율)
-    const refund = Math.min(amount, Math.max(0, Math.floor((amount * remainingMs) / totalMs)));
-    return { refund, isFullRefund: false, daysUsed, daysTotal, daysRemaining };
-}
+// 환불 계산은 src/lib/refund-calc.ts로 추출(refund-preview와 공용 → 드리프트 방지 + 단위 테스트).
 
 export async function POST(_request: NextRequest) {
     const user = await getAuthUser();
@@ -332,7 +292,7 @@ export async function POST(_request: NextRequest) {
             grossRefund = calc.refund;
             isFullRefund = calc.isFullRefund;
 
-            // 영상 사용량 차감: 결제 이후 생성한 영상 중 구독 쿼터분만 × 3,500원
+            // 영상 사용량 차감: 결제 이후 생성한 영상 중 구독 쿼터분만 × VIDEO.SINGLE_PRICE(4,900원)
             // (쿼터 초과분은 단품(video_single)으로 이미 별도 결제·이용했으므로 이중 차감 방지)
             const { count: videosSincePaid } = await adminSb
                 .from("video_generations")
@@ -351,10 +311,10 @@ export async function POST(_request: NextRequest) {
                 ? "basic"
                 : (profileTier as SubscriptionTier);
             const monthlyQuota = getVideoMonthlyQuota(tier);
-            videosUsedCharged = Math.min(videosSincePaid ?? 0, monthlyQuota);
-            videoDeduction = videosUsedCharged * VIDEO.SINGLE_PRICE;
-
-            refundedAmount = Math.max(0, grossRefund - videoDeduction);
+            const deduction = computeVideoDeduction(grossRefund, videosSincePaid ?? 0, monthlyQuota);
+            videosUsedCharged = deduction.videosUsedCharged;
+            videoDeduction = deduction.videoDeduction;
+            refundedAmount = deduction.refundable;
 
             if (refundedAmount <= 0) {
                 refundStatus = "skipped_no_remaining";

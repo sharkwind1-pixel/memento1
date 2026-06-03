@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-06-03 ①결제/구독 테스트 커버리지 + 환불계산 de-dup — L3(tsc+build+vitest 19신규)
+"순차적으로 다 하라" 지시 1번. 런칭된 결제 서비스인데 돈 로직 테스트 0이던 문제 해소. **환불 계산을 `src/lib/refund-calc.ts`로 추출**: cancel route엔 순수함수 `computeRefund`가 있었으나 `refund-preview`가 **동일 식을 인라인 복붙**(드리프트 시 "보여준 환불액≠실제환불"=분쟁 위험) → `computeRefund`+`computeVideoDeduction` 단일 소스로 통합, 양쪽 route 재배선. 테스트 신규 19개: `refund-calc.test.ts`(12 — 숙려기간/경계 정확히24h/절반 4950/만료0/amount초과방지/영상차감 cap/음수방지0/무료쿼터0), `subscription-limits.test.ts`(7 — getLimitsForTier/getVideoMonthlyQuota/calculateAnnualSavings/isAdmin). 총 vitest 80→99. stale 주석 "×3,500원"→SINGLE_PRICE(4,900원) 정정(기존부터 틀렸던 것). 검증: tsc clean + next build ✓(cancel·refund-preview 컴파일) + vitest 99 pass. **9번 적대검증: 환불액 변동 회귀 0건 SHIP가**(원본 1:1 수식 대조 — 분기/클램프/반올림/경계/상수 1원단위 동등, `?? 0` 보존, cancel 4외부변수·preview 11응답필드 동일). 다음 순차: ②보안감사 ③🟡4 나머지 이관 ④구조개편.
+
+---
+
 ## 2026-06-03 🟡4 API 보안 래퍼 — withAuth 신설 + 대표 3라우트 이관(안전 분할) — L2+동등성검증
 사용자 선택 "안전 분할 방식"(전체 80파일 일괄 X). `getAuthUser→401` 패턴이 **80파일·103곳** 반복 측정 후, `src/lib/api-auth.ts` `withAuth(handler, {message?,status?})` 신설(인증 검증+401+user/request/params 주입, Next.js15 비동기 params await, 메시지 옵션으로 라우트별 문구 보존). 이관 3개: `video/quota` GET·`chat/usage` GET(기본 "로그인이 필요합니다.") + `memory-albums/[id]/read` PATCH(옵션으로 "인증이 필요합니다." 보존, params 케이스 증명). 검증: tsc clean + next build ✓(no-param·param 양쪽 Next 라우트 타입검증 통과) + eslint clean. **9번 적대검증: 회귀 0건 SHIP가**(본문 byte-동일, 401문구 2종·user.id·필터·500메시지·검사순서 보존, 인증우회 경로 없음). **핵심 발견(분할이 옳았던 이유)**: auth 앞에 rate-limit/VPN 선행 검사가 있는 라우트(예: `comments/[id]/like`)는 withAuth(auth우선)로 바꾸면 검사순서 회귀(비로그인+VPN: 403→401) → **auth-first 라우트만 드롭인 가능**, 나머지는 수동 유지 or 래퍼에 pre-check 훅 필요. 남은 ~77파일은 점진 이관(auth-first부터). 안전 순차정리 + 🟡4 분할 proof까지 완료. 잔여: 🟡4 점진이관, 🟠 구조개편(거대파일/공유패키지/테스트), 사용자측(Vercel 리전·EAS APK).
 
