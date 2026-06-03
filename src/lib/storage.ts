@@ -368,16 +368,6 @@ export async function uploadCommunityImage(file: File, userId: string): Promise<
     return uploadImage(file, userId, "community");
 }
 
-/** 지역정보 게시글 이미지 업로드 */
-export async function uploadLocalPostImage(file: File, userId: string): Promise<UploadResult> {
-    return uploadImage(file, userId, "local-posts");
-}
-
-/** 분실/발견 동물 게시글 이미지 업로드 */
-export async function uploadLostPetImage(file: File, userId: string): Promise<UploadResult> {
-    return uploadImage(file, userId, "lost-pets");
-}
-
 /** 펫 프로필 사진 업로드 (addPet/updatePet에서 Storage 우회 버그 재발 방지용) */
 export async function uploadPetProfile(file: File, userId: string): Promise<UploadResult> {
     return uploadImage(file, userId, "pet-profiles");

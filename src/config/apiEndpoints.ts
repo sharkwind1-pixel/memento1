@@ -19,17 +19,9 @@ export const API = {
     COMMENT_LIKE: (id: string) => `/api/comments/${id}/like`,
     COMMENT_DISLIKE: (id: string) => `/api/comments/${id}/dislike`,
 
-    // 분실동물
-    LOST_PETS: "/api/lost-pets",
-    LOST_PET_DETAIL: (id: string) => `/api/lost-pets/${id}`,
-
     // 입양정보
     ADOPTION: "/api/adoption",
     ADOPTION_REGIONS: "/api/adoption/regions",
-
-    // 지역정보
-    LOCAL_POSTS: "/api/local-posts",
-    LOCAL_POST_DETAIL: (id: string) => `/api/local-posts/${id}`,
 
     // 매거진
     MAGAZINE: "/api/magazine",

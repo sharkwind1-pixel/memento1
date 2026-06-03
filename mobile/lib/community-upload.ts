@@ -95,21 +95,3 @@ export async function uploadCommunityPostImage(
 ): Promise<UploadResult> {
     return uploadToStorage(uri, userId, "community", options);
 }
-
-/** 분실/발견 동물 게시글 이미지 (웹 uploadLostPetImage 매칭, prefix=lost-pets) */
-export async function uploadLostPetImage(
-    uri: string,
-    userId: string,
-    options?: { mimeType?: string },
-): Promise<UploadResult> {
-    return uploadToStorage(uri, userId, "lost-pets", options);
-}
-
-/** 지역정보 게시글 이미지 (웹 uploadLocalPostImage 매칭, prefix=local-posts) */
-export async function uploadLocalPostImage(
-    uri: string,
-    userId: string,
-    options?: { mimeType?: string },
-): Promise<UploadResult> {
-    return uploadToStorage(uri, userId, "local-posts", options);
-}

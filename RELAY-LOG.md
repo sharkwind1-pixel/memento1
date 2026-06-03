@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-06-03 데드코드 제거 — 웹 lost/local 레거시 스택 통째 삭제 (게시판 합치기 후속) — L2
+4-에이전트 코드리뷰 발견 + **검증**(useLostPosts()/컴포넌트 외부 렌더·호출 0개 = CommunityPage `/api/posts?board=` 통합으로 대체된 레거시). 삭제: 웹 `features/lost`(8)·`features/local`(5), `/api/lost-pets`·`/api/local-posts` 라우트(4), apiEndpoints LOST_PETS/LOCAL_POSTS/*_DETAIL 상수, storage.ts uploadLost/LocalPostImage, mobile `components/lost`·`local` 모달, `community-upload.ts` lost/local 헬퍼, `mobile/app-routes-stash`(미추적). 총 ~20파일. **DB `lost_pets`/`local_posts` 테이블은 보존**(빈 0행, 사용자 결정). 검증: 웹 next build + 모바일 tsc clean(L2) — 누락 참조 0(stale `.next/types`만 있었고 `.next` 재생성으로 해소). grep로 런타임 문자열 참조도 0 확인. 잔여 🟢: webhook 민감로그·상수 드리프트 테스트.
+
+---
+
 ## 2026-06-03 웹 느림 근본원인 진단 — 리전 불일치(Vercel iad1↔Supabase 뭄바이↔유저 한국) + bom1 이동
 사용자 "개발 초기부터 항상 느림" 재지적 + "VPN체크 제거 금지(악용방지 의도)". 근본원인: `vercel.json`에 regions 없음 → **Vercel 함수 기본 iad1(미국 동부)**, **Supabase ap-south-1(뭄바이)**, 유저 한국. 매 API = 한국↔미국 + 미국↔뭄바이 **6쿼리 왕복** = 초 단위 지연. React/Next 문제 아님(지리 문제). 수정: `vercel.json` `regions:["bom1"]`(뭄바이=DB 동일 메트로) → 함수↔DB 6왕복 ~210ms→~3ms 붕괴, API 5~10배 예상. checkVPN은 24h 캐시 있음(rate-limit.ts:855)이라 **제거 안 함**(사용자 지적 옳음). ⚠️ **미검증**: Hobby 플랜 리전 지원 여부(대시보드 Functions 리전) + 배포 로그/실측 전엔 추정. 장기 이상: DB도 서울(ap-northeast-2)+함수 icn1 = DB 마이그레이션 필요(별건). 2차 레버: API당 순차쿼리 축소·낙관적 UI·VPN 캐시 영속화(in-memory라 콜드인스턴스마다 빔).
 
