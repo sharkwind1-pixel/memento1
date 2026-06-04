@@ -86,6 +86,12 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
         return <OriginalHero setSelectedTab={setSelectedTab} user={user} isMemorial={isMemorial} />;
     }
 
+    // --- 추모 모드: 미니홈피/미니미를 히어로에 노출하지 않음 (추모 정서 보호) ---
+    // 미니미·미니홈피는 일상(꾸미기) 요소라 추모 모드에선 추모 전용 히어로만 보여준다.
+    if (isMemorial) {
+        return <OriginalHero setSelectedTab={setSelectedTab} user={user} isMemorial />;
+    }
+
     // --- 로그인 + 미니미 있음: 개인 미니홈피 프리뷰 ---
     if (hasMinimi && hasPlacedMinimi) {
         const bg = findBackgroundOrDefault(settings?.backgroundSlug ?? "default_sky");
@@ -93,8 +99,7 @@ export default function HeroSection({ setSelectedTab, user, isMemorial = false }
             <section className="px-4 pt-4 sm:pt-6" data-tutorial-id="home-hero">
                 <button
                     onClick={goMinihompy}
-                    className="relative w-full overflow-hidden rounded-3xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer group text-left"
-                    style={{ minHeight: 260 }}
+                    className="relative block w-full max-w-md mx-auto aspect-[4/3] overflow-hidden rounded-3xl shadow-lg hover:shadow-xl transition-shadow cursor-pointer group text-left"
                 >
                     {/* 배경 */}
                     {bg.imageUrl ? (

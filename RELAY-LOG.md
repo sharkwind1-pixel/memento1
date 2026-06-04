@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-06-04 UX fix — 히어로: 추모모드 미니홈피 차단 + 일상 미니홈피 늘어짐 수정 — L2, L5 대기
+사용자 신고 2건(`HeroSection.tsx`): (1) **추모 모드인데 미니홈피/미니미가 히어로에 노출** — `hasMinimi&&hasPlacedMinimi` 분기와 쇼케이스 분기가 `isMemorial`을 안 봤음. 수정: `!loaded` 직후 `if (isMemorial) return <OriginalHero isMemorial/>` 가드 추가 → 추모 모드는 항상 추모 전용 히어로(미니미 노출 0). (2) **일상 미니홈피 프리뷰가 좌우로 늘어남** — `w-full minHeight:260` 풀블리드 밴드라 넓은 화면일수록 미니미 % 좌표가 퍼짐. 수정: `block w-full max-w-md mx-auto aspect-[4/3]`(편집기 풀폭×280 비율 근사)로 가운데 정렬·폭 제한. 검증: tsc clean + next build ✓(L2). ⚠️ L5(시각) 대기 — 일상 미니홈피가 가운데 적당 크기로 보이는지. **#1 추모 히어로 이미지=2번**: 코드는 `/images/hero-illustration-memorial.webp` 사용 중(추모 가드가 이걸 렌더) → **사용자가 2번 이미지를 그 경로에 webp로 저장(교체)** 필요(붙여넣은 이미지를 코드가 디스크에 저장 불가). 단 2번은 밝은 청색인데 추모 히어로 bg는 다크 그라데이션이라 대비 검토 필요 — 원하면 추모 히어로를 풀블리드(이미지 꽉 채움+타이틀 오버레이)로 재구성 가능.
+
+---
+
 ## 2026-06-04 UX fix — 타임라인 카테고리 필터 가로스크롤 + 영상 썸네일 폴백(웹) — L2, L5 대기
 사용자 신고 2건(정정): (1) 헤더 아닌 **필터칩 배치**가 문제 — 카테고리 12개+가 `flex-wrap`으로 3줄 깔려 본문 밀어냄 → `TimelineSection.tsx` 필터를 **가로 스크롤 한 줄**(overflow-x-auto + scrollbar 숨김, 칩 shrink-0)로. (2) **내 기록 영상 썸네일 안 뜸** — prod 확인 결과 완료영상 11개 **전부 thumbnail_url NULL**(코드가 thumbnail_url을 SELECT/map만 하고 INSERT/UPDATE 안 함 = 썸네일 생성·저장 자체가 없음) → `VideoGenerationSection.tsx`에 썸네일 없을 때 **영상 첫 프레임**(`<video src=...#t=0.1 preload=metadata muted>`) 폴백 추가. **모바일 네이티브(record.tsx:1639)는 이미 동일 폴백 보유** → 웹만 수정(패리티 정합, 웹을 네이티브에 맞춤). 검증: tsc clean + next build ✓(L2). ⚠️ L5(배포 후 시각: 필터 한 줄 스와이프 / 썸네일 첫프레임 렌더) 대기. **근본 개선 여지(별건)**: 영상 생성 완료 시 실제 썸네일(fal poster or ffmpeg)을 thumbnail_url에 저장하면 metadata 로드 없이 더 가벼움 — 현재 첫프레임 폴백으로 UX는 해결.
 
