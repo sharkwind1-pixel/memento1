@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-06-04 UX fix — 타임라인 일기 헤더 제목 줄바꿈 깨짐(웹) — L2(build), L5 사용자확인 대기
+사용자 모바일 브라우저 스크린샷 신고: "타임라인 일기" 제목이 "타임라인/일기"로 강제 줄바꿈. 원인: `TimelineSection.tsx:242` CardHeader가 `flex flex-row ... justify-between`으로 좁은 폭에서 제목+카운트+버튼2개(내보내기·일기쓰기)를 한 줄 강제 → 제목 압착. 수정: 모바일 `flex-col gap-3`(제목줄/버튼줄 분리), `sm:`부터 기존 가로배치. 제목 `whitespace-nowrap`, 버튼 `shrink-0 self-end`. **모바일 네이티브(record.tsx:581)는 이미 flex:1 래퍼+카운트 세로적층으로 정상** → 웹만 수정(패리티 OK, 웹을 네이티브 동작에 정렬). 검증: next build ✓(CSS 전용, 로직 무변경). ⚠️ L5(Vercel 배포 후 시각확인) 대기. 참고: 스크린샷에 "작별 인사" 2건(내용 "꼼지야" 유무로 미세 차이 — 중복저장 아닌 별개 작성으로 보이나 사용자 확인 가치 있음).
+
+---
+
 ## 2026-06-04 ③🟡4 withAuth 배치 이관 batch1 — points·points/history·minimi/inventory GET — L2
 순차 ③. 분류 에이전트로 전 라우트 분류: **SAFE(auth-first 단순) 20메서드/13파일**, SKIP-preauth ~30(rate-limit/VPN 선행→검사순서 회귀라 제외), SKIP-admin ~15, SKIP-noauth ~5, SKIP-complex ~20. SAFE 중 단일메서드·no-param GET 3개를 withAuth 이관: `points` GET, `points/history` GET(request→ctx.request), `minimi/inventory` GET. 각 401 메시지("로그인이 필요합니다", 마침표 없음)는 옵션으로 원문 보존. body 로직 무변경. 검증: tsc clean(참조 무결성) + next build ✓ + 메시지 원문 직접대조 + e70f252 검증된 동일 패턴(L2). **잔여 SAFE ~17메서드**(memory-albums GET·healing-journey GET·chat/summary POST·moderation POST·memorial-messages POST/DEL·notifications GET/PATCH·notifications/subscribe×4·quests GET/POST·push/register POST/DEL) — worklist 확보, 후속 배치 or 기능 수정 시 기회주의 이관. me/pet-type은 401 안 함→제외. 다음: ④구조개편.
 

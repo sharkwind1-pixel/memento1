@@ -239,15 +239,15 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
     return (
         <>
             <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm mt-6">
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                        <BookOpen className="w-5 h-5 text-memento-600" />
+                <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <CardTitle className="text-lg flex items-center gap-2 whitespace-nowrap">
+                        <BookOpen className="w-5 h-5 text-memento-600 shrink-0" />
                         타임라인 일기
                         <span className="text-sm font-normal text-gray-500">
                             {timeline.length}개
                         </span>
                     </CardTitle>
-                    <div className="flex gap-1.5">
+                    <div className="flex gap-1.5 shrink-0 self-end sm:self-auto">
                         {timeline.length > 0 && (
                             <Button
                                 size="sm"
