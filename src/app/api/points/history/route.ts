@@ -5,22 +5,15 @@
  * 보안: 세션 기반 인증
  */
 
-import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
+import { NextResponse } from "next/server";
+import { createServerSupabase } from "@/lib/supabase-server";
+import { withAuth } from "@/lib/api-auth";
 import { POINTS } from "@/config/constants";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async ({ user, request }) => {
     try {
-        const user = await getAuthUser();
-        if (!user) {
-            return NextResponse.json(
-                { error: "로그인이 필요합니다" },
-                { status: 401 }
-            );
-        }
-
         const { searchParams } = new URL(request.url);
         const limit = Math.min(
             parseInt(searchParams.get("limit") || String(POINTS.HISTORY_PAGE_SIZE)),
@@ -60,4 +53,4 @@ export async function GET(request: NextRequest) {
     } catch {
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });
     }
-}
+}, { message: "로그인이 필요합니다" });

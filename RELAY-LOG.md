@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-06-04 ③🟡4 withAuth 배치 이관 batch1 — points·points/history·minimi/inventory GET — L2
+순차 ③. 분류 에이전트로 전 라우트 분류: **SAFE(auth-first 단순) 20메서드/13파일**, SKIP-preauth ~30(rate-limit/VPN 선행→검사순서 회귀라 제외), SKIP-admin ~15, SKIP-noauth ~5, SKIP-complex ~20. SAFE 중 단일메서드·no-param GET 3개를 withAuth 이관: `points` GET, `points/history` GET(request→ctx.request), `minimi/inventory` GET. 각 401 메시지("로그인이 필요합니다", 마침표 없음)는 옵션으로 원문 보존. body 로직 무변경. 검증: tsc clean(참조 무결성) + next build ✓ + 메시지 원문 직접대조 + e70f252 검증된 동일 패턴(L2). **잔여 SAFE ~17메서드**(memory-albums GET·healing-journey GET·chat/summary POST·moderation POST·memorial-messages POST/DEL·notifications GET/PATCH·notifications/subscribe×4·quests GET/POST·push/register POST/DEL) — worklist 확보, 후속 배치 or 기능 수정 시 기회주의 이관. me/pet-type은 401 안 함→제외. 다음: ④구조개편.
+
+---
+
 ## 2026-06-04 ④테스트 커버리지 확대 — 한국어조사·포인트등급·인사말 (+26) — L2(vitest 129)
 순차 ④(테스트). 순수 함수 고가치 타깃 3건 신규 테스트: `korean-particle.test.ts`(12 — hasJongseong 받침판정/nameParticle/josa/fixKoreanParticles GPT양조사 정정. AI펫톡 전반 사용+과거 "츄츄이야" 류 버그 이력), `point-levels.test.ts`(8 — getPointLevel 경계/클램프/최고등급, getNextLevelInfo progress 0~100·nextLevel null. 임계값은 POINT_LEVELS에서 직접 읽어 매직넘버 회피), `chat-greeting.test.ts`(6 — generatePersonalizedGreeting을 fake timer로 결정화: 이름포함/조사정정(츄츄→"야")/해시결정성/생일인식/추모톤(멍멍! 없음)/타임라인제목 언급). 테스트-온리(프로덕션 코드 무변경). 검증: vitest 103→129 + tsc clean. 누적 테스트 75→129(이번 세션 +54: 드리프트5·환불12·한도7·nativeUrl4·조사12·포인트8·인사말6). 다음 순차: ③🟡4 배치 이관, ④구조개편.
 

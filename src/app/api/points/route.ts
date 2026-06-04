@@ -6,20 +6,13 @@
  */
 
 import { NextResponse } from "next/server";
-import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
+import { createServerSupabase } from "@/lib/supabase-server";
+import { withAuth } from "@/lib/api-auth";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export const GET = withAuth(async ({ user }) => {
     try {
-        const user = await getAuthUser();
-        if (!user) {
-            return NextResponse.json(
-                { error: "로그인이 필요합니다" },
-                { status: 401 }
-            );
-        }
-
         const supabase = await createServerSupabase();
 
         const { data: profile } = await supabase
@@ -43,4 +36,4 @@ export async function GET() {
     } catch {
         return NextResponse.json({ error: "서버 오류" }, { status: 500 });
     }
-}
+}, { message: "로그인이 필요합니다" });
