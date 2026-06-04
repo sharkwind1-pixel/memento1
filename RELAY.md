@@ -44,7 +44,11 @@
 
 ## 🟢 미실행 마이그레이션
 
-_(현재 없음 — 모든 마이그레이션 Supabase MCP로 prod 적용 완료)_
+- **`20260604_fix_sell_minimi_unequip.sql`** (긴급도 Low) — `sell_minimi_item`(4-param) 장착해제 분기 dead code 교정.
+  `v_equipped = p_minimi_id`(UUID=slug, 항상 FALSE) → `v_equipped = v_delete_id::text`(UUID 비교). prod 실측으로 dead 확인(equipped_minimi_id=UUID).
+  현재 무영향(웹은 route.ts 폴백이 커버, 모바일은 미세 dangling 가능). **이 세션은 Supabase MCP 미연결 + exec_sql RPC 부재 + psql/CLI 없음 → prod 미적용.**
+  적용: MCP `apply_migration` 또는 Dashboard SQL Editor에 파일 내용 붙여넣기.
+  검증 쿼리(적용 후): 테스트 계정으로 미니미 구매→`equipped_minimi_id`=그 user_minimi.id 설정→`sell_minimi_item` 호출→`equipped_minimi_id`가 NULL 되는지 확인.
 
 ---
 

@@ -114,7 +114,9 @@ export async function POST(request: NextRequest) {
                 return NextResponse.json({ error: err.msg }, { status: err.status });
             }
 
-            // RPC의 UUID/slug 비교 불일치로 장착 해제가 안 될 수 있음 → 후처리
+            // 방어선(defense-in-depth): RPC가 삭제된 복사본 = 장착 복사본일 때 이미 해제하지만,
+            // 혹시 남은 dangling equip(존재하지 않는 user_minimi 참조)이 있으면 여기서도 정리.
+            // (RPC unequip 비교는 20260604_fix_sell_minimi_unequip.sql 에서 v_delete_id::text 로 교정됨)
             const { data: postProfile } = await supabase
                 .from("profiles")
                 .select("equipped_minimi_id")
