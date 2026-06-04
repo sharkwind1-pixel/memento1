@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-06-04 ④테스트 커버리지 확대 — 한국어조사·포인트등급·인사말 (+26) — L2(vitest 129)
+순차 ④(테스트). 순수 함수 고가치 타깃 3건 신규 테스트: `korean-particle.test.ts`(12 — hasJongseong 받침판정/nameParticle/josa/fixKoreanParticles GPT양조사 정정. AI펫톡 전반 사용+과거 "츄츄이야" 류 버그 이력), `point-levels.test.ts`(8 — getPointLevel 경계/클램프/최고등급, getNextLevelInfo progress 0~100·nextLevel null. 임계값은 POINT_LEVELS에서 직접 읽어 매직넘버 회피), `chat-greeting.test.ts`(6 — generatePersonalizedGreeting을 fake timer로 결정화: 이름포함/조사정정(츄츄→"야")/해시결정성/생일인식/추모톤(멍멍! 없음)/타임라인제목 언급). 테스트-온리(프로덕션 코드 무변경). 검증: vitest 103→129 + tsc clean. 누적 테스트 75→129(이번 세션 +54: 드리프트5·환불12·한도7·nativeUrl4·조사12·포인트8·인사말6). 다음 순차: ③🟡4 배치 이관, ④구조개편.
+
+---
+
 ## 2026-06-04 ②보안 감사 round2 — sell_minimi_item 포인트복제 수정(B) prod 적용 — L4
 보안감사 DB RPC 취약점 중 **B[Medium] 라이브 적용 완료**. 라이브 정의 dump로 오버로드 2개 확인: 실사용은 취약한 4-param(`p_item_name/p_resell_price`, FOR UPDATE 없음·DELETE 행수 미검사·동시 되팔기 시 포인트 복제), 안전한 3-param은 데드. 호출부(`minimi/sell/route.ts`)가 service_role(createAdminSupabase)로 호출 확인 → auth.uid()=NULL이라 auth체크 추가 안 함(메모리 경고 준수, API가 getAuthUser+user_id 소유권으로 보호). 수정: `PERFORM 1 FROM profiles WHERE id FOR UPDATE`(유저 직렬화) + `GET DIAGNOSTICS ROW_COUNT` 검사(실삭제 시만 환급). **Supabase MCP apply_migration prod 적용 + 검증 L4**: has_lock=true/has_rowcount_check=true 재dump 확인 + 스모크(미보유 유저→not_owned, 부작용0). repo에 `supabase/migrations/20260604_fix_sell_minimi_concurrency.sql` 저장. **C[Medium]·F[Low]는 보류**(RELAY NEXT 6·7): C=영상 쿼터 동시성(결제기능 재구조화 위험>이득, 부분완화 존재), F=points daily_cap(최고빈도 RPC blast radius). round1(A/D/E)+round2(B)로 보안감사 실행분 마무리.
 
