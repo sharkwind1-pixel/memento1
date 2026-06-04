@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-06-04 ②보안 감사 round2 — sell_minimi_item 포인트복제 수정(B) prod 적용 — L4
+보안감사 DB RPC 취약점 중 **B[Medium] 라이브 적용 완료**. 라이브 정의 dump로 오버로드 2개 확인: 실사용은 취약한 4-param(`p_item_name/p_resell_price`, FOR UPDATE 없음·DELETE 행수 미검사·동시 되팔기 시 포인트 복제), 안전한 3-param은 데드. 호출부(`minimi/sell/route.ts`)가 service_role(createAdminSupabase)로 호출 확인 → auth.uid()=NULL이라 auth체크 추가 안 함(메모리 경고 준수, API가 getAuthUser+user_id 소유권으로 보호). 수정: `PERFORM 1 FROM profiles WHERE id FOR UPDATE`(유저 직렬화) + `GET DIAGNOSTICS ROW_COUNT` 검사(실삭제 시만 환급). **Supabase MCP apply_migration prod 적용 + 검증 L4**: has_lock=true/has_rowcount_check=true 재dump 확인 + 스모크(미보유 유저→not_owned, 부작용0). repo에 `supabase/migrations/20260604_fix_sell_minimi_concurrency.sql` 저장. **C[Medium]·F[Low]는 보류**(RELAY NEXT 6·7): C=영상 쿼터 동시성(결제기능 재구조화 위험>이득, 부분완화 존재), F=points daily_cap(최고빈도 RPC blast radius). round1(A/D/E)+round2(B)로 보안감사 실행분 마무리.
+
+---
+
 ## 2026-06-03 ②보안 감사 — 3차원 병렬 감사 + 코드 취약점 A/D/E 수정(round 1) — L2+적대검증
 순차 ②. security-audit 스킬 + 3에이전트 병렬 감사(돈경로/인증인가/시크릿·XSS·업로드). **인증·인가는 깨끗**(IDOR·admin게이트·service_role 소유권·금액위변조 PortOne재조회·CRON_SECRET 15개·멱등성 가드 전부 OK). 시크릿 클라누출 0, 유저입력 XSS 0, 업로드검증 양호. **발견·수정(round 1, 코드)**:
 - **A [Medium] nativeUrl 오픈리다이렉트/토큰탈취**: OAuth/네이버 콜백이 `nativeUrl`로 token_hash/code를 forward하는데 스킴 검증이 없어 `nativeUrl=https://evil.com`으로 매직링크 토큰 탈취 가능 → `src/lib/native-url.ts isAllowedNativeUrl`(mementoani://·exp://만) 신설, `auth/callback/page.tsx`+`api/auth/naver/route.ts` 이중 방어. 테스트 4개.
