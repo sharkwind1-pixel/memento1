@@ -373,6 +373,15 @@ export default function VideoGenerationSection({
                                                     alt={`${video.petName || pet.name} 영상`}
                                                     className="w-full h-full object-cover"
                                                 />
+                                            ) : (video.videoUrl || video.falVideoUrl) ? (
+                                                // 썸네일이 별도 저장되지 않아(thumbnail_url 항상 NULL) 영상 첫 프레임을 썸네일로 사용
+                                                <video
+                                                    src={`${video.videoUrl || video.falVideoUrl}#t=0.1`}
+                                                    className="w-full h-full object-cover"
+                                                    muted
+                                                    playsInline
+                                                    preload="metadata"
+                                                />
                                             ) : (
                                                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-memento-50 to-memento-100">
                                                     <Film className="w-8 h-8 text-memento-300" />

@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-06-04 UX fix — 타임라인 카테고리 필터 가로스크롤 + 영상 썸네일 폴백(웹) — L2, L5 대기
+사용자 신고 2건(정정): (1) 헤더 아닌 **필터칩 배치**가 문제 — 카테고리 12개+가 `flex-wrap`으로 3줄 깔려 본문 밀어냄 → `TimelineSection.tsx` 필터를 **가로 스크롤 한 줄**(overflow-x-auto + scrollbar 숨김, 칩 shrink-0)로. (2) **내 기록 영상 썸네일 안 뜸** — prod 확인 결과 완료영상 11개 **전부 thumbnail_url NULL**(코드가 thumbnail_url을 SELECT/map만 하고 INSERT/UPDATE 안 함 = 썸네일 생성·저장 자체가 없음) → `VideoGenerationSection.tsx`에 썸네일 없을 때 **영상 첫 프레임**(`<video src=...#t=0.1 preload=metadata muted>`) 폴백 추가. **모바일 네이티브(record.tsx:1639)는 이미 동일 폴백 보유** → 웹만 수정(패리티 정합, 웹을 네이티브에 맞춤). 검증: tsc clean + next build ✓(L2). ⚠️ L5(배포 후 시각: 필터 한 줄 스와이프 / 썸네일 첫프레임 렌더) 대기. **근본 개선 여지(별건)**: 영상 생성 완료 시 실제 썸네일(fal poster or ffmpeg)을 thumbnail_url에 저장하면 metadata 로드 없이 더 가벼움 — 현재 첫프레임 폴백으로 UX는 해결.
+
+---
+
 ## 2026-06-04 UX fix — 타임라인 일기 헤더 제목 줄바꿈 깨짐(웹) — L2(build), L5 사용자확인 대기
 사용자 모바일 브라우저 스크린샷 신고: "타임라인 일기" 제목이 "타임라인/일기"로 강제 줄바꿈. 원인: `TimelineSection.tsx:242` CardHeader가 `flex flex-row ... justify-between`으로 좁은 폭에서 제목+카운트+버튼2개(내보내기·일기쓰기)를 한 줄 강제 → 제목 압착. 수정: 모바일 `flex-col gap-3`(제목줄/버튼줄 분리), `sm:`부터 기존 가로배치. 제목 `whitespace-nowrap`, 버튼 `shrink-0 self-end`. **모바일 네이티브(record.tsx:581)는 이미 flex:1 래퍼+카운트 세로적층으로 정상** → 웹만 수정(패리티 OK, 웹을 네이티브 동작에 정렬). 검증: next build ✓(CSS 전용, 로직 무변경). ⚠️ L5(Vercel 배포 후 시각확인) 대기. 참고: 스크린샷에 "작별 인사" 2건(내용 "꼼지야" 유무로 미세 차이 — 중복저장 아닌 별개 작성으로 보이나 사용자 확인 가치 있음).
 

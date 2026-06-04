@@ -336,10 +336,11 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                                     className="pl-9"
                                 />
                             </div>
-                            <div className="flex gap-1.5 flex-wrap">
+                            {/* 카테고리 필터: 12개+ 칩이 3줄로 깔려 본문을 밀어내던 것 → 가로 스크롤 한 줄 */}
+                            <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                                 <button
                                     onClick={() => setFilterCategory("")}
-                                    className={`text-xs px-2.5 py-1 rounded-full font-medium transition ${
+                                    className={`shrink-0 whitespace-nowrap text-xs px-2.5 py-1 rounded-full font-medium transition ${
                                         filterCategory === ""
                                             ? "bg-memento-500 text-white"
                                             : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200"
@@ -351,7 +352,7 @@ export default function TimelineSection({ petId, petName }: TimelineSectionProps
                                     <button
                                         key={opt.value}
                                         onClick={() => setFilterCategory(opt.value)}
-                                        className={`text-xs px-2.5 py-1 rounded-full font-medium transition ${
+                                        className={`shrink-0 whitespace-nowrap text-xs px-2.5 py-1 rounded-full font-medium transition ${
                                             filterCategory === opt.value
                                                 ? "bg-memento-500 text-white"
                                                 : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200"
