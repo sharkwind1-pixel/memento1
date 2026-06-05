@@ -4,6 +4,19 @@
 
 ---
 
+## 2026-06-06 신규 — 화제 뉴스 콩콩 자동게시 크론 (게시판 활성화) — L3, L4(런타임) 대기
+사용자 요청: 인기 뉴스를 유저(콩콩)가 올리는 것처럼 자동화. **합법·톤 안전 설계로 구현**:
+- 소스: **네이버 뉴스 검색 API**(공식, 상용허용). 구글뉴스 RSS는 copyright에 "비개인/상업 사용 금지" 명시라 **배제**(피드 직접 확인). 크롤링 아님.
+- 저작권: 전문/이미지 복제 X → **제목+API description 스니펫+출처 원문링크**만. (`src/lib/news-fetch.ts`)
+- 톤: 사망·폭력·성범죄·자살·마약·변사·고독사 등 **자극 denylist 필터**(제목+요약 양쪽). "조회수 랭킹" 공식 API 없어 화제성 키워드(화제/이슈/근황…) 로테이션 + 최신순으로 근사.
+- 게시: **콩콩(`625a825e…`)** user_id로 자유게시판, badge "정보", `moderation_status:"approved"`, 하루 최대 2건. (`src/app/api/cron/news-post/route.ts`)
+- 중복방지: `auto_news_log(link PK, RLS deny-all)` prod 적용 + upsert ignoreDuplicates. 마이그 파일 저장.
+- 안전: `verifyCronSecret` 인증 + **`?dryRun=1` 미리보기**(게시 없이 후보 반환) — 네이버 키가 로컬에 없어 로컬 테스트 불가하므로 배포 후 dryRun으로 품질 확인.
+- 크론: `vercel.json` `0 6 * * *`(=KST 15시) 추가(기존 10개와 시각 비충돌).
+검증: tsc clean + next build ✓(크론 등록 확인) + **9번 적대검증 위험·버그 0건 SHIP가**(저작권/필터/중복/insert NOT NULL/인증/dryRun/시크릿 전수, 콩콩 유저 실존 확인). ⚠️ **L4 미달**: 실제 네이버 응답 품질·게시 결과는 **배포 후 `/api/cron/news-post?dryRun=1`(Authorization: Bearer CRON_SECRET)로 미리보기 확인 권장** 후 실가동. (콩콩이 is_admin=false 일반계정 → 사용자가 본인/시드 계정임을 확인함.)
+
+---
+
 ## 2026-06-04 UX fix — 히어로: 추모모드 미니홈피 차단 + 일상 미니홈피 늘어짐 수정 — L2, L5 대기
 사용자 신고 2건(`HeroSection.tsx`): (1) **추모 모드인데 미니홈피/미니미가 히어로에 노출** — `hasMinimi&&hasPlacedMinimi` 분기와 쇼케이스 분기가 `isMemorial`을 안 봤음. 수정: `!loaded` 직후 `if (isMemorial) return <OriginalHero isMemorial/>` 가드 추가 → 추모 모드는 항상 추모 전용 히어로(미니미 노출 0). (2) **일상 미니홈피 프리뷰가 좌우로 늘어남** — `w-full minHeight:260` 풀블리드 밴드라 넓은 화면일수록 미니미 % 좌표가 퍼짐. 수정: `block w-full max-w-md mx-auto aspect-[4/3]`(편집기 풀폭×280 비율 근사)로 가운데 정렬·폭 제한. 검증: tsc clean + next build ✓(L2). ⚠️ L5(시각) 대기 — 일상 미니홈피가 가운데 적당 크기로 보이는지. **#1 추모 히어로 이미지=2번**: 코드는 `/images/hero-illustration-memorial.webp` 사용 중(추모 가드가 이걸 렌더) → **사용자가 2번 이미지를 그 경로에 webp로 저장(교체)** 필요(붙여넣은 이미지를 코드가 디스크에 저장 불가). 단 2번은 밝은 청색인데 추모 히어로 bg는 다크 그라데이션이라 대비 검토 필요 — 원하면 추모 히어로를 풀블리드(이미지 꽉 채움+타이틀 오버레이)로 재구성 가능.
 
