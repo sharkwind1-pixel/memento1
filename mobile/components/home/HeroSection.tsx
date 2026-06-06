@@ -79,6 +79,12 @@ export default function HeroSection({ session, isMemorialMode }: Props) {
         return <OriginalHero isMemorialMode={isMemorialMode} isDarkMode={isDarkMode} fontScale={fontScale} spacingScale={spacingScale} iconScale={iconScale} onCta={() => router.push("/(tabs)/ai-chat")} onSecondary={() => router.push("/(tabs)/community")} ctaText="지금 만나러 가기" />;
     }
 
+    // --- 추모 모드: 미니홈피/미니미를 히어로에 노출하지 않음 (추모 정서 보호) ---
+    // 미니미·미니홈피는 일상(꾸미기) 요소라 추모 모드에선 추모 전용 히어로만 보여준다. (웹 HeroSection과 동일)
+    if (isMemorialMode) {
+        return <OriginalHero isMemorialMode isDarkMode={isDarkMode} fontScale={fontScale} spacingScale={spacingScale} iconScale={iconScale} onCta={() => router.push("/(tabs)/ai-chat")} onSecondary={() => router.push("/(tabs)/community")} ctaText="지금 만나러 가기" />;
+    }
+
     // --- 로그인 + 미니미 있음: 개인 미니홈피 프리뷰 ---
     if (hasMinimi && hasPlacedMinimi) {
         const bg = findBackgroundOrDefault(settings?.backgroundSlug ?? "default_sky");

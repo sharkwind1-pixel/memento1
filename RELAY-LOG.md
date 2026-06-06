@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-06-06 버그수정 — 모바일 추모모드 히어로 미니홈피 노출 (웹과 동일 버그, 모바일 누락분) — L2
+사용자 신고: 앱 추모모드 계정 로그인 시 히어로가 미니홈피로 보임. 웹은 33dec3a에서 고쳤으나 **모바일 네이티브 `mobile/components/home/HeroSection.tsx`는 누락**. `hasMinimi && hasPlacedMinimi`·쇼케이스 분기가 `isMemorialMode` 미체크 → 추모 모드 + 미니미 보유 시 미니홈피 프리뷰 노출. 수정: `!loaded` 직후 `if (isMemorialMode) return <OriginalHero isMemorialMode .../>` 가드(웹과 동일). 검증: 모바일 tsc clean(L2). EAS 빌드 후 실기 확인 필요. ⏳ **#2 추모 히어로 이미지=2번 미반영**: `mobile/assets/hero-illustration-memorial.png`(4월 날짜)·`public/images/hero-illustration-memorial.webp`(4월) **둘 다 옛 파일 그대로** — 사용자가 교체 안 함. AI는 채팅 붙여넣기 이미지를 디스크 파일로 저장 불가 → 사용자가 두 경로에 image2 저장 필요(모바일은 PNG+EAS 재빌드, 웹은 webp). 또는 디스크 어딘가 저장 후 경로 주면 AI가 복사+커밋 가능.
+
+---
+
 ## 2026-06-06 버그수정 2건 — webhook 보정결제 알림 누락 + 가구 터치 리액션 — L2+적대검증
 사용자 신고 2건, prod 데이터로 원인 확정:
 - **결제 알림 누락(dojin은 오는데 콩콩은 안 옴)**: 콩콩 결제 prod 레코드 = `status:paid` + `note:"complete 경로 놓친 결제를 웹훅이 보정"` + `paid_at:NULL` → **complete 호출 누락 → webhook paid-rescue로 완료**됐는데 webhook paid 브랜치엔 notifyPayment가 없어 알림 0(cancelled 브랜치에만 있었음). dojin은 정상 complete라 알림 옴. 수정: `webhook/route.ts` paid flip에 `paid_at` 추가 + flip 성공 시 `notifyPayment({email:"(웹훅 보정)", plan, amount:payment.amount})` 추가. flip 게이트(`.neq status paid` + flipped.length>0) 공유라 **이중 알림 없음**(complete가 이미 보낸 건은 flip 0행 → skip).
