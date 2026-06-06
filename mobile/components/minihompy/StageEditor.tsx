@@ -853,7 +853,10 @@ const styles = StyleSheet.create({
     minimiImg: { width: MINIMI_SIZE, height: MINIMI_SIZE },
     bubble: {
         position: "absolute",
-        top: -8,
+        // 미니미 위로 완전히 띄움(웹 HeroSection/MinihompyStage의 bottom-full과 동일) —
+        // 터치 확대 애니메이션 중에도 얼굴을 가리지 않도록.
+        bottom: "100%",
+        marginBottom: 6,
         alignSelf: "center",
         minWidth: 120,
         maxWidth: 240,

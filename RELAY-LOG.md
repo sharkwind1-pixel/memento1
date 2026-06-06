@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-06-06 패리티 감사 + 재발방지 장치 — 모바일 말풍선 수정 + PARITY 맵 — L2
+사용자 지적("웹/모바일웹/앱 똑같이 적용이 계속 안 됨"). 인정하고 **이번 세션 웹 수정 5건을 모바일 대응 전수 감사**(에이전트): 4건은 모바일 이미 정상(가구터치 가드 3중·좋아요 롤백 대칭역델타·타임라인필터 ScrollView horizontal·히어로 좌표 stageW 재계산), **1건만 누락 발견** → 미니미 터치 말풍선이 모바일 `StageEditor.tsx:856` `top:-8`로 얼굴 가림(웹 e83d417 수정 전과 동일). 수정: `bottom:"100%" + marginBottom:6`(웹 bottom-full과 동일). 모바일 tsc clean(L2). **재발방지 구조화**: `docs/PARITY.md` 신설(기능별 web↔mobile 미러 파일 맵 + 절대규칙 "한쪽 바꾸면 대응파일 확인 후 양쪽 동시" + 공유레이어 + 예외) + CLAUDE.md "반드시 할 것"에 패리티 규칙 추가(모든 세션 노출). 교훈: src/(웹, 데스크탑+모바일웹 공용) ↔ mobile/(앱) 별도 코드라 누락 잦음 → 맵+체크 강제로 구조 차단.
+
+---
+
 ## 2026-06-06 버그수정 — 모바일 추모모드 히어로 미니홈피 노출 (웹과 동일 버그, 모바일 누락분) — L2
 사용자 신고: 앱 추모모드 계정 로그인 시 히어로가 미니홈피로 보임. 웹은 33dec3a에서 고쳤으나 **모바일 네이티브 `mobile/components/home/HeroSection.tsx`는 누락**. `hasMinimi && hasPlacedMinimi`·쇼케이스 분기가 `isMemorialMode` 미체크 → 추모 모드 + 미니미 보유 시 미니홈피 프리뷰 노출. 수정: `!loaded` 직후 `if (isMemorialMode) return <OriginalHero isMemorialMode .../>` 가드(웹과 동일). 검증: 모바일 tsc clean(L2). EAS 빌드 후 실기 확인 필요. ⏳ **#2 추모 히어로 이미지=2번 미반영**: `mobile/assets/hero-illustration-memorial.png`(4월 날짜)·`public/images/hero-illustration-memorial.webp`(4월) **둘 다 옛 파일 그대로** — 사용자가 교체 안 함. AI는 채팅 붙여넣기 이미지를 디스크 파일로 저장 불가 → 사용자가 두 경로에 image2 저장 필요(모바일은 PNG+EAS 재빌드, 웹은 webp). 또는 디스크 어딘가 저장 후 경로 주면 AI가 복사+커밋 가능.
 
