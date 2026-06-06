@@ -399,7 +399,8 @@ export default function MinihompyStage({
                             {hasTouchEffect && touchEffectMessage && (
                                 <div
                                     key={`bubble-${touchKey}`}
-                                    className="absolute -top-8 left-1/2 -translate-x-1/2 z-50"
+                                    // 미니미 상단 기준으로 항상 위에(bottom-full) + 여백 → 터치 애니메이션(확대/점프) 중에도 얼굴 안 가림
+                                    className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50"
                                     style={{
                                         animation: "minimiPop 0.3s ease-out, minimiFadeOut 0.3s ease-in 1.2s forwards",
                                     }}
