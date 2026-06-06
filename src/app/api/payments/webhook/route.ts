@@ -246,6 +246,7 @@ export async function POST(request: NextRequest) {
                     .from("payments")
                     .update({
                         status: "paid",
+                        paid_at: new Date().toISOString(), // complete 경로가 놓쳐 null로 남던 것 보정
                         metadata: {
                             ...(dbPayment.metadata as Record<string, unknown> || {}),
                             webhook_paid_at: new Date().toISOString(),
@@ -261,6 +262,17 @@ export async function POST(request: NextRequest) {
                 if (flipped && flipped.length > 0) {
                     const { grantPremiumForPromotedSubscription } = await import("@/lib/subscription-grant");
                     await grantPremiumForPromotedSubscription(supabase, dbPayment, "webhook_paid_rescue");
+
+                    // 결제 알림 — complete 경로가 놓친 결제라 여기서 보내지 않으면 관리자가 결제 사실을
+                    // 영영 못 받음(콩콩 케이스: 웹훅 보정으로 paid 됐지만 알림 누락). 보정 결제도 알림.
+                    const flippedPlan = typeof dbPayment.plan === "string" ? dbPayment.plan : "결제";
+                    import("@/lib/telegram").then(({ notifyPayment }) =>
+                        notifyPayment({
+                            email: "(웹훅 보정)",
+                            plan: flippedPlan,
+                            amount: payment.amount || 0,
+                        }),
+                    ).catch(() => {});
                 }
             }
             return NextResponse.json({ ack: true, handled: "paid", already: dbPayment.status === "paid" });

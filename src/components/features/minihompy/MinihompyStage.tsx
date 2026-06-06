@@ -512,7 +512,7 @@ export default function MinihompyStage({
                                     borderRadius: "30%",
                                 }}
                                 onPointerDown={(e) => handlePointerDown(e, index)}
-                                onClick={() => !editMode && handleMinimiTouch(index)}
+                                onClick={() => !editMode && !isFurniture && handleMinimiTouch(index)}
                             />
                         </div>
                     );

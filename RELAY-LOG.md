@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-06-06 버그수정 2건 — webhook 보정결제 알림 누락 + 가구 터치 리액션 — L2+적대검증
+사용자 신고 2건, prod 데이터로 원인 확정:
+- **결제 알림 누락(dojin은 오는데 콩콩은 안 옴)**: 콩콩 결제 prod 레코드 = `status:paid` + `note:"complete 경로 놓친 결제를 웹훅이 보정"` + `paid_at:NULL` → **complete 호출 누락 → webhook paid-rescue로 완료**됐는데 webhook paid 브랜치엔 notifyPayment가 없어 알림 0(cancelled 브랜치에만 있었음). dojin은 정상 complete라 알림 옴. 수정: `webhook/route.ts` paid flip에 `paid_at` 추가 + flip 성공 시 `notifyPayment({email:"(웹훅 보정)", plan, amount:payment.amount})` 추가. flip 게이트(`.neq status paid` + flipped.length>0) 공유라 **이중 알림 없음**(complete가 이미 보낸 건은 flip 0행 → skip).
+- **가구 터치 리액션**: `MinihompyStage.tsx:515` onClick이 미니미/가구 구분 없이 `handleMinimiTouch` 발동. `isFurniture`(line 356) 이미 계산돼 있는데 미사용 → `!isFurniture` 가드 추가. 미니미만 리액션, 가구 차단, 편집 드래그(onPointerDown)는 가구도 유지.
+검증: tsc clean + next build ✓(L2) + 9번 적대검증 버그 0건 SHIP가(이중알림/amount·plan 출처/스코프/편집드래그 전수). 참고: 콩콩 기존 결제 paid_at은 null로 남으나 premium엔 무영향(video bonus만 paid_at 사용, 콩콩은 premium plan). ⚠️ L4(실제 webhook 알림 1건 도달·가구 탭 무반응)는 배포 후 확인.
+
+---
+
 ## 2026-06-06 신규 — 화제 뉴스 콩콩 자동게시 크론 (게시판 활성화) — L3, L4(런타임) 대기
 사용자 요청: 인기 뉴스를 유저(콩콩)가 올리는 것처럼 자동화. **합법·톤 안전 설계로 구현**:
 - 소스: **네이버 뉴스 검색 API**(공식, 상용허용). 구글뉴스 RSS는 copyright에 "비개인/상업 사용 금지" 명시라 **배제**(피드 직접 확인). 크롤링 아님.
