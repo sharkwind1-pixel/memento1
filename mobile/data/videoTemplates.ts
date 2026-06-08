@@ -25,6 +25,9 @@ export const VIDEO_TEMPLATES: MobileVideoTemplate[] = [
     { id: "autumn-walk", name: "단풍길 산책", description: "알록달록 단풍 속을 걷는 모습", icon: "leaf-outline", category: "fun" },
     { id: "park-picnic", name: "공원에서 소풍", description: "싱그러운 공원에서 행복한 한때", icon: "sunny-outline", category: "fun" },
     { id: "rain-window", name: "비 오는 날 창가에서", description: "빗소리 들으며 창밖을 바라보는 모습", icon: "rainy-outline", category: "fun" },
+    { id: "campfire-night", name: "모닥불 캠핑", description: "별빛 아래 모닥불 옆에서 따뜻하게", icon: "flame-outline", category: "fun" },
+    { id: "cafe-terrace", name: "카페 테라스에서", description: "따뜻한 햇살 속 카페 한 켠", icon: "cafe-outline", category: "fun" },
+    { id: "bubble-play", name: "비누방울 놀이", description: "무지갯빛 비누방울 사이로 신나게", icon: "ellipse-outline", category: "fun" },
 
     // ===== 추모 모드 (memorial) =====
     { id: "rainbow-bridge", name: "무지개다리 건너편에서", description: "무지개빛 하늘 아래 평화로운 초원", icon: "color-palette-outline", category: "memorial" },
@@ -33,9 +36,13 @@ export const VIDEO_TEMPLATES: MobileVideoTemplate[] = [
     { id: "cherry-blossom", name: "벚꽃 아래에서", description: "분홍 벚꽃이 흩날리는 봄날", icon: "flower-outline", category: "memorial" },
     { id: "memorial-beach", name: "황금빛 해변에서", description: "따뜻한 석양 아래 해변을 거니는 모습", icon: "partly-sunny-outline", category: "memorial" },
     { id: "sunbeam-nap", name: "따스한 햇살 속 낮잠", description: "포근한 햇살을 받으며 편안히 잠든 모습", icon: "sunny-outline", category: "memorial" },
+    { id: "lake-reflection", name: "호수 위 평온", description: "잔잔한 호수 앞에서의 고요한 시간", icon: "water-outline", category: "memorial" },
+    { id: "misty-meadow", name: "새벽 안개 들꽃 언덕", description: "몽환적인 새벽 안개와 들꽃 속에서", icon: "cloudy-outline", category: "memorial" },
 
     // ===== 변환 (transform) =====
     { id: "hero-moment", name: "슈퍼히어로 변신", description: "우리 아이가 영웅이 되는 순간", icon: "shield-outline", category: "transform" },
+    { id: "astronaut", name: "우주 비행사 펫", description: "우주에서 떠다니는 작은 영웅", icon: "planet-outline", category: "transform" },
+    { id: "hanbok-festival", name: "한복 입은 우리 아이", description: "전통 한복을 입고 명절 분위기 속에서", icon: "gift-outline", category: "transform" },
 ];
 
 export const CATEGORY_LABEL: Record<VideoTemplateCategory, string> = {
