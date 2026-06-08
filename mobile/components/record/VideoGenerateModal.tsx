@@ -14,6 +14,7 @@ import { useState, useEffect } from "react";
 import {
     View, Text, Modal, TouchableOpacity, Image,
     ScrollView, StyleSheet, ActivityIndicator, Alert,
+    TextInput, KeyboardAvoidingView, Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -27,6 +28,9 @@ import { VIDEO_TEMPLATES, CATEGORY_LABEL, type MobileVideoTemplate } from "@/dat
 import PaymentWebViewModal, { type PayMethod } from "@/components/payments/PaymentWebViewModal";
 import PayMethodPicker from "@/components/payments/PayMethodPicker";
 import PackagePicker from "@/components/payments/PackagePicker";
+
+// 직접 입력 프롬프트 최대 글자수 (웹 src/components/features/video/VideoGenerateModal.tsx와 동일)
+const CUSTOM_PROMPT_MAX_LENGTH = 200;
 
 interface PetPhoto {
     id: string;
@@ -71,6 +75,8 @@ export default function VideoGenerateModal({ visible, onClose, onSuccess, pet, i
     const [photo, setPhoto] = useState<PetPhoto | null>(null);
     const [uploadingNew, setUploadingNew] = useState(false);
     const [template, setTemplate] = useState<MobileVideoTemplate | null>(null);
+    const [customPrompt, setCustomPrompt] = useState("");
+    const [isCustomPromptOpen, setIsCustomPromptOpen] = useState(false);
     const [quota, setQuota] = useState<Quota | null>(null);
     const [loadingQuota, setLoadingQuota] = useState(false);
     const [submitting, setSubmitting] = useState(false);
@@ -83,6 +89,8 @@ export default function VideoGenerateModal({ visible, onClose, onSuccess, pet, i
         setStep("photo");
         setPhoto(null);
         setTemplate(null);
+        setCustomPrompt("");
+        setIsCustomPromptOpen(false);
         loadQuota();
     }, [visible]);
 
@@ -110,21 +118,28 @@ export default function VideoGenerateModal({ visible, onClose, onSuccess, pet, i
     }
 
     async function handleGenerate() {
-        if (!session || !photo || !template || submitting) return;
+        const trimmedPrompt = customPrompt.trim();
+        if (!session || !photo || (!template && !trimmedPrompt) || submitting) return;
         setSubmitting(true);
         try {
+            // 템플릿 또는 커스텀 프롬프트 (상호 배타) — 서버가 둘 중 하나로 분기.
+            const body: Record<string, string> = {
+                petId: pet.id,
+                petName: pet.name,
+                sourcePhotoUrl: photo.url,
+            };
+            if (template) {
+                body.templateId = template.id;
+            } else {
+                body.customPrompt = trimmedPrompt;
+            }
             const res = await fetch(`${API_BASE_URL}/api/video/generate`, {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${session.access_token}`,
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({
-                    petId: pet.id,
-                    petName: pet.name,
-                    sourcePhotoUrl: photo.url,
-                    templateId: template.id,
-                }),
+                body: JSON.stringify(body),
             });
             const data = await res.json();
             if (!res.ok) {
@@ -371,6 +386,7 @@ export default function VideoGenerateModal({ visible, onClose, onSuccess, pet, i
     }
 
     function renderTemplateStep() {
+        const hasCustomPrompt = customPrompt.trim().length > 0;
         return (
             <View style={{ gap: 8 }}>
                 {visibleTemplates.map((t) => {
@@ -380,7 +396,10 @@ export default function VideoGenerateModal({ visible, onClose, onSuccess, pet, i
                             key={t.id}
                             activeOpacity={0.85}
                             onPress={() => {
+                                // 템플릿 선택 시 커스텀 프롬프트는 비움 (상호 배타)
                                 setTemplate(t);
+                                setCustomPrompt("");
+                                setIsCustomPromptOpen(false);
                                 setStep("confirm");
                             }}
                             style={[
@@ -407,21 +426,99 @@ export default function VideoGenerateModal({ visible, onClose, onSuccess, pet, i
                         </TouchableOpacity>
                     );
                 })}
+
+                {/* 직접 입력 (커스텀 프롬프트) — 웹 패리티 */}
+                <View style={[styles.customCard, { backgroundColor: cardBg, borderColor: isCustomPromptOpen ? accentColor : (isDarkMode ? COLORS.gray[700] : COLORS.gray[200]) }]}>
+                    <TouchableOpacity
+                        activeOpacity={0.85}
+                        onPress={() => {
+                            // 직접 입력 펼칠 때 템플릿 선택 해제 (상호 배타)
+                            setIsCustomPromptOpen((prev) => !prev);
+                            setTemplate(null);
+                        }}
+                        style={styles.customHeader}
+                    >
+                        <View style={[styles.templateIcon, { backgroundColor: accentColor + "1a" }]}>
+                            <Ionicons name="create-outline" size={18} color={accentColor} />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text style={[styles.templateName, { color: titleColor }]}>직접 입력하기</Text>
+                            <Text style={[styles.templateDesc, { color: subColor }]}>원하는 영상을 직접 설명해보세요</Text>
+                        </View>
+                        <Ionicons
+                            name={isCustomPromptOpen ? "chevron-up" : "chevron-down"}
+                            size={18}
+                            color={isDarkMode ? COLORS.gray[500] : COLORS.gray[400]}
+                        />
+                    </TouchableOpacity>
+
+                    {isCustomPromptOpen && (
+                        <View style={styles.customBody}>
+                            <TextInput
+                                value={customPrompt}
+                                onChangeText={(text) => {
+                                    if (text.length <= CUSTOM_PROMPT_MAX_LENGTH) {
+                                        setCustomPrompt(text);
+                                        if (text.trim().length > 0) setTemplate(null);
+                                    }
+                                }}
+                                placeholder="원하는 영상을 설명해주세요. 예: 우리 아이가 구름 위를 걷는 모습"
+                                placeholderTextColor={isDarkMode ? COLORS.gray[500] : COLORS.gray[400]}
+                                maxLength={CUSTOM_PROMPT_MAX_LENGTH}
+                                multiline
+                                textAlignVertical="top"
+                                style={[
+                                    styles.customInput,
+                                    {
+                                        backgroundColor: isDarkMode ? COLORS.gray[800] : COLORS.gray[50],
+                                        borderColor: isDarkMode ? COLORS.gray[700] : COLORS.gray[200],
+                                        color: titleColor,
+                                    },
+                                ]}
+                            />
+                            <Text style={[styles.customCounter, { color: subColor }]}>
+                                {customPrompt.length}/{CUSTOM_PROMPT_MAX_LENGTH}
+                            </Text>
+                            <TouchableOpacity
+                                onPress={() => setStep("confirm")}
+                                disabled={!hasCustomPrompt}
+                                activeOpacity={0.85}
+                                style={[
+                                    styles.customNextBtn,
+                                    { backgroundColor: accentColor },
+                                    !hasCustomPrompt && { opacity: 0.5 },
+                                ]}
+                            >
+                                <Text style={styles.customNextBtnText}>다음</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
+                </View>
             </View>
         );
     }
 
     function renderConfirmStep() {
-        if (!photo || !template) return null;
+        const trimmedPrompt = customPrompt.trim();
+        if (!photo || (!template && !trimmedPrompt)) return null;
         return (
             <View style={{ gap: 12 }}>
                 <View style={[styles.confirmCard, { backgroundColor: cardBg }]}>
                     <Image source={{ uri: photo.url }} style={styles.confirmPhoto} />
                 </View>
                 <View style={[styles.confirmInfo, { backgroundColor: cardBg }]}>
-                    <Text style={styles.confirmLabel}>{CATEGORY_LABEL[template.category]}</Text>
-                    <Text style={[styles.confirmTitle, { color: titleColor }]}>{template.name}</Text>
-                    <Text style={[styles.confirmDesc, { color: noticeColor }]}>{template.description}</Text>
+                    {template ? (
+                        <>
+                            <Text style={styles.confirmLabel}>{CATEGORY_LABEL[template.category]}</Text>
+                            <Text style={[styles.confirmTitle, { color: titleColor }]}>{template.name}</Text>
+                            <Text style={[styles.confirmDesc, { color: noticeColor }]}>{template.description}</Text>
+                        </>
+                    ) : (
+                        <>
+                            <Text style={styles.confirmLabel}>직접 입력</Text>
+                            <Text style={[styles.confirmDesc, { color: noticeColor }]}>{trimmedPrompt}</Text>
+                        </>
+                    )}
                 </View>
                 <View style={[styles.noticeCard, { backgroundColor: noticeBg }]}>
                     <Ionicons name="information-circle-outline" size={16} color={noticeColor} />
@@ -498,12 +595,20 @@ export default function VideoGenerateModal({ visible, onClose, onSuccess, pet, i
         <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
             <SafeAreaView style={[styles.flex1, { backgroundColor: bgColor }]} edges={["top"]}>
                 {renderHeader()}
-                <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
-                    {renderQuotaBadge()}
-                    {step === "photo" && renderPhotoStep()}
-                    {step === "template" && renderTemplateStep()}
-                    {step === "confirm" && renderConfirmStep()}
-                </ScrollView>
+                <KeyboardAvoidingView
+                    style={styles.flex1}
+                    behavior={Platform.OS === "ios" ? "padding" : undefined}
+                >
+                    <ScrollView
+                        contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+                        keyboardShouldPersistTaps="handled"
+                    >
+                        {renderQuotaBadge()}
+                        {step === "photo" && renderPhotoStep()}
+                        {step === "template" && renderTemplateStep()}
+                        {step === "confirm" && renderConfirmStep()}
+                    </ScrollView>
+                </KeyboardAvoidingView>
 
                 {/* 묶음 사이즈 picker (단품 / 5회 / 10회) */}
                 <PackagePicker
@@ -623,6 +728,40 @@ const styles = StyleSheet.create({
     templateBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 },
     templateBadgeText: { fontSize: 10, fontWeight: "700" },
     templateDesc: { fontSize: 12 },
+    customCard: {
+        borderRadius: 14,
+        borderWidth: 2,
+        overflow: "hidden",
+    },
+    customHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        padding: 12,
+    },
+    customBody: {
+        paddingHorizontal: 12,
+        paddingBottom: 12,
+        gap: 6,
+    },
+    customInput: {
+        minHeight: 88,
+        borderRadius: 10,
+        borderWidth: 1,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        fontSize: 14,
+        lineHeight: 20,
+    },
+    customCounter: { fontSize: 11, textAlign: "right" },
+    customNextBtn: {
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: 12,
+        borderRadius: 12,
+        marginTop: 4,
+    },
+    customNextBtnText: { color: "#fff", fontSize: 14, fontWeight: "700" },
     confirmCard: {
         borderRadius: 14,
         overflow: "hidden",

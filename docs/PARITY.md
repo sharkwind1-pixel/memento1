@@ -24,6 +24,7 @@
 | 미니홈피 탭/방문 | `components/features/minihompy/*` | `app/(tabs)/minihompy.tsx`, `app/minihompy/[userId].tsx` |
 | 기록/타임라인 | `components/features/record/TimelineSection.tsx` | `app/(tabs)/record.tsx` (TimelineTab) |
 | 영상 생성/썸네일 | `components/features/video/VideoGenerationSection.tsx` | `app/(tabs)/record.tsx` (VideosTab) |
+| 영상 생성 모달 (3단계: 사진→템플릿/직접입력→확인) | `components/features/video/VideoGenerateModal.tsx` | `components/record/VideoGenerateModal.tsx` |
 | 커뮤니티 목록/상세 | `components/features/community/*`, `app/api/posts/*` | `app/(tabs)/community.tsx`, `app/post/[id].tsx` |
 | AI 펫톡 | `components/features/chat/*`, `app/api/chat/*` | `app/(tabs)/ai-chat.tsx`, `lib/chat-helpers.ts` |
 | 매거진 | `components/features/magazine/*` | `app/(tabs)/magazine.tsx`, `app/magazine/[id].tsx` |
