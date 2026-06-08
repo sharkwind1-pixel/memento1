@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-06-08 게시글 좋아요 "2→0"·새로고침 시 목록 이동(웹) — L2 + 9번 SHIP WITH FIXES 반영
+- **좋아요 2→0(웹)**: `getAuthUser()`는 Authorization Bearer 헤더만 읽는데(쿠키 X), `PostDetailView.fetchPost`가 plain `fetch()`로 상세를 불러와 토큰 미전송 → 서버 currentUser=null → post/comment userLiked 전부 false. 내가 이미 누른 좋아요가 "안 눌림"으로 보여 누르면 낙관적 +1(2)→서버 '이미 있음→삭제'→0. (모바일 앱은 loadPost가 토큰 전송해 정상=웹 전용). 이전 GET userLiked 계산 수정이 웹에선 토큰 없어 무효였던 것. 수정: fetchPost→`authFetch(..., {cache:"no-store"})` + 의존성에 `user?.id`(세션 하이드레이트 시 재요청, 토큰 레이스 보정).
+- **새로고침→목록(웹)**: 커뮤니티 탭 SPA에서 글 열 때 `pushState({},"")`로 URL 미변경 → 새로고침 시 postId 없어 목록. 수정: handleSelectPost가 URL에 `?post=` 추가, 홈 딥링크(initialPostId)도 replaceState 반영, 마운트 시 `?post=` 복원, 상세→닫힘 "전환" 시에만(prevRef로 초기/복원 레이스 방지) `?post` 제거(서브카테고리/탭 전환으로 닫아도 새로고침 시 재오픈 안 되게).
+- 9번 적대검증: BUG1 SHIP OK, BUG2는 C1(닫기 시 ?post 잔존→재오픈)·A(세션 레이스) must/should-fix 지적 → 둘 다 반영. 부수효과: 인증된 GET이라 차단유저/숨김글 체크가 뷰어에도 적용(더 올바름). 검증 tsc+build ✓(L2). 배포 후 L4.
+
+---
+
 ## 2026-06-08 댓글 좋아요 "두개씩"·게시글 좋아요 "실패"·이미지 세로배치 — L2(웹 build, 모바일 tsc) + 9번 SHIP OK
 3개 버그 근본원인을 DB로 실증 후 수정.
 - **댓글 좋아요 두개씩(웹)**: 댓글 좋아요/비추천 API가 **session(RLS) 클라이언트**로 `post_comments.likes` 동기화 → UPDATE 정책 `auth.uid()=user_id`(작성자만)에 막혀 stored가 stale(실측: stored 0 vs real 2 다수). 게시글 상세 GET이 stored를 표시 + per-comment `userLiked`를 **아예 계산 안 함** → 화면 0 표시 후 좋아요 시 서버 실제 count로 보정=0→2 점프. 수정: (A)댓글 like/dislike API → `createAdminSupabase`(sync 정상). (B)상세 GET이 `comment_likes`/`comment_dislikes`에서 likes/dislikes·userLiked·userDisliked를 **권위적으로 계산해 override**(stored 드리프트 무관). (C)기존 stale stored 백필(불일치 0 검증).

@@ -36,13 +36,32 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey, i
     const { selectedPet } = usePets();
     const { user } = useAuth();
 
-    // 홈에서 게시글 클릭으로 들어온 경우 바로 상세 열기
+    // 홈에서 게시글 클릭으로 들어온 경우 바로 상세 열기 (+ URL에 ?post= 반영 → 새로고침 유지)
     useEffect(() => {
         if (initialPostId && isActive) {
             setSelectedPostId(initialPostId);
+            try {
+                const url = new URL(window.location.href);
+                url.searchParams.set("post", initialPostId);
+                window.history.replaceState({ communityPost: initialPostId }, "", url.toString());
+            } catch { /* noop */ }
             onInitialPostConsumed?.();
         }
     }, [initialPostId, isActive]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // 새로고침 복원: URL에 ?post= 가 있으면 읽던 글을 다시 연다 (마운트 1회, 홈 딥링크 우선).
+    const hasRestoredPostRef = useRef(false);
+    useEffect(() => {
+        if (hasRestoredPostRef.current || !isActive) return;
+        if (initialPostId) { hasRestoredPostRef.current = true; return; }
+        try {
+            const fromUrl = new URLSearchParams(window.location.search).get("post");
+            if (fromUrl) {
+                hasRestoredPostRef.current = true;
+                setSelectedPostId(fromUrl);
+            }
+        } catch { /* noop */ }
+    }, [isActive, initialPostId]);
 
     // 서브카테고리 상태 (props 또는 내부 상태)
     const [internalSubcategory, setInternalSubcategory] = useState<CommunitySubcategory>(subcategory || "free");
@@ -158,9 +177,16 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey, i
     }, []);
 
     // 게시글 선택 (히스토리 push + 스크롤 최상단)
+    // URL에 ?post=를 넣어야 새로고침 시 읽던 글이 유지됨(없으면 목록으로 되돌아감).
     const handleSelectPost = useCallback((postId: string) => {
         setSelectedPostId(postId);
-        window.history.pushState({ communityPost: postId }, "");
+        try {
+            const url = new URL(window.location.href);
+            url.searchParams.set("post", postId);
+            window.history.pushState({ communityPost: postId }, "", url.toString());
+        } catch {
+            window.history.pushState({ communityPost: postId }, "");
+        }
         window.scrollTo({ top: 0, behavior: "instant" });
     }, []);
 
@@ -188,6 +214,24 @@ function CommunityPage({ subcategory, onSubcategoryChange, isActive, resetKey, i
         };
         window.addEventListener("popstate", handlePopState);
         return () => window.removeEventListener("popstate", handlePopState);
+    }, [selectedPostId]);
+
+    // 상세 → 닫힘 "전환" 시에만 URL의 ?post= 제거 (서브카테고리/탭 전환 등 뒤로가기 외 경로로 닫아도
+    // ?post가 남아 새로고침 시 닫은 글이 다시 열리는 문제 방지). 초기 마운트/복원과 레이스 방지를 위해
+    // 직전 값이 있을 때(prev != null → null)만 동작.
+    const prevSelectedPostRef = useRef<string | null>(null);
+    useEffect(() => {
+        const prev = prevSelectedPostRef.current;
+        prevSelectedPostRef.current = selectedPostId;
+        if (prev && !selectedPostId) {
+            try {
+                const url = new URL(window.location.href);
+                if (url.searchParams.has("post")) {
+                    url.searchParams.delete("post");
+                    window.history.replaceState(window.history.state, "", url.toString());
+                }
+            } catch { /* noop */ }
+        }
     }, [selectedPostId]);
 
     // 필터 변경 시 localStorage에 저장

@@ -84,7 +84,10 @@ export default function PostDetailView({
     const fetchPost = useCallback(async () => {
         setIsLoading(true);
         try {
-            const response = await fetch(API.POST_DETAIL(postId));
+            // authFetch로 호출해야 서버 getAuthUser가 Bearer 토큰을 읽어 userLiked/userDisliked를 계산함.
+            // plain fetch면 currentUser=null → 내가 누른 좋아요도 false로 와서, 누르면 낙관적 +1 후
+            // 서버가 '이미 있음→삭제'로 처리해 카운트가 0이 되는 버그(=좋아요 2→0)가 발생.
+            const response = await authFetch(API.POST_DETAIL(postId), { cache: "no-store" });
             if (!response.ok) throw new Error("게시글 로드 실패");
 
             const data = await response.json();
@@ -119,7 +122,9 @@ export default function PostDetailView({
         } finally {
             setIsLoading(false);
         }
-    }, [postId]);
+        // user?.id 의존: 마운트 시 세션이 아직 안 떠서 토큰 없이 요청되면 userLiked=false로 오므로,
+        // 세션이 하이드레이트되면 재요청해 좋아요 상태를 보정한다.
+    }, [postId, user?.id]);
 
     useEffect(() => {
         fetchPost();
