@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
+import { createAdminSupabase, getAuthUser } from "@/lib/supabase-server";
 import { awardPoints } from "@/lib/points";
 import {
     getClientIP,
@@ -40,7 +40,10 @@ export async function POST(
             return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
         }
 
-        const supabase = await createServerSupabase();
+        // admin 클라이언트로 RLS 우회 (인증은 getAuthUser로 검증됨).
+        // 세션(RLS) 클라이언트는 post_comments.likes 동기화 UPDATE가 "작성자만" 정책에 막혀
+        // stored 카운트가 stale → 화면이 0으로 표시되다 실제 count로 점프(=좋아요 두개씩) 버그 유발.
+        const supabase = createAdminSupabase();
         const { id: commentId } = await params;
         const userId = user.id;
 

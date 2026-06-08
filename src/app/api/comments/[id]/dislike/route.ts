@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabase, getAuthUser } from "@/lib/supabase-server";
+import { createAdminSupabase, getAuthUser } from "@/lib/supabase-server";
 import {
     getClientIP,
     checkRateLimit,
@@ -39,7 +39,9 @@ export async function POST(
             return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
         }
 
-        const supabase = await createServerSupabase();
+        // admin 클라이언트로 RLS 우회 (인증은 getAuthUser로 검증됨).
+        // 세션(RLS) 클라이언트는 post_comments.dislikes 동기화가 "작성자만" 정책에 막혀 stored가 stale가 됨.
+        const supabase = createAdminSupabase();
         const { id: commentId } = await params;
         const userId = user.id;
 

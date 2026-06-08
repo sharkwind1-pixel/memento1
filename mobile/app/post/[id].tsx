@@ -80,15 +80,15 @@ function normalizeComment(raw: any): Comment {
     return {
         id: raw?.id != null ? String(raw.id) : "",
         content: asString(raw?.content),
-        author: asString(raw?.authorName ?? raw?.author ?? raw?.author_name ?? raw?.nickname, "익명"),
-        authorId: asString(raw?.authorId ?? raw?.author_id ?? raw?.user_id),
+        author: asString(raw?.authorName ?? raw?.authorNickname ?? raw?.author ?? raw?.author_name ?? raw?.nickname, "익명"),
+        authorId: asString(raw?.authorId ?? raw?.author_id ?? raw?.userId ?? raw?.user_id),
         authorAvatar: typeof raw?.authorAvatar === "string"
             ? raw.authorAvatar
             : typeof raw?.author_avatar === "string"
                 ? raw.author_avatar
                 : undefined,
-        authorPoints: asNumber(raw?.authorPoints),
-        authorIsAdmin: Boolean(raw?.authorIsAdmin),
+        authorPoints: asNumber(raw?.authorPoints ?? raw?.author_points),
+        authorIsAdmin: Boolean(raw?.authorIsAdmin ?? raw?.author_is_admin),
         createdAt: asString(raw?.createdAt ?? raw?.created_at),
         likes: asNumber(raw?.likes),
         dislikes: asNumber(raw?.dislikes ?? raw?.dislike_count),
@@ -187,7 +187,7 @@ export default function PostDetailScreen() {
                 isFirstFocusRef.current = false;
                 return;
             }
-            loadPost();
+            loadPost({ skipView: true });
             // eslint-disable-next-line react-hooks/exhaustive-deps
         }, [id]),
     );
@@ -200,39 +200,38 @@ export default function PostDetailScreen() {
             .on(
                 "postgres_changes",
                 { event: "*", schema: "public", table: "community_posts", filter: `id=eq.${id}` },
-                () => { loadPost(); },
+                () => { loadPost({ skipView: true }); },
             )
             .on(
                 "postgres_changes",
                 { event: "*", schema: "public", table: "post_comments", filter: `post_id=eq.${id}` },
-                () => { loadPost(); },
+                () => { loadPost({ skipView: true }); },
             )
             .subscribe();
         return () => { supabase.removeChannel(channel); };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id]);
 
-    async function loadPost() {
+    // skipView=true면 조회수 증가 생략 (realtime/포커스 재로드 시). community_posts realtime 구독 +
+    // GET의 views write가 만드는 reload churn(→좋아요 낙관적 상태 덮어쓰기=좋아요 실패)을 끊는다.
+    // 댓글은 게시글 상세 GET이 enriched 배열(likes/dislikes/userLiked/userDisliked 포함)로 반환하므로
+    // 그걸 그대로 사용한다. (예전엔 GET 없는 /comments 엔드포인트를 호출해 앱에서 댓글이 안 보였음)
+    async function loadPost(opts?: { skipView?: boolean }) {
         try {
             const headers: Record<string, string> = {};
             if (session) headers["Authorization"] = `Bearer ${session.access_token}`;
 
-            const [postRes, commentsRes] = await Promise.all([
-                fetch(`${API_BASE_URL}/api/posts/${id}`, { headers }),
-                fetch(`${API_BASE_URL}/api/posts/${id}/comments`, { headers }),
-            ]);
+            const viewQ = opts?.skipView ? "?skipView=1" : "";
+            const postRes = await fetch(`${API_BASE_URL}/api/posts/${id}${viewQ}`, { headers });
 
             if (postRes.ok) {
                 const data = await postRes.json();
-                setPost(normalizePost(data?.post ?? data));
-            }
-            if (commentsRes.ok) {
-                const data = await commentsRes.json();
-                const list = Array.isArray(data?.comments)
-                    ? data.comments
-                    : Array.isArray(data)
-                        ? data
-                        : [];
+                const raw = data?.post ?? data;
+                const list = Array.isArray(raw?.comments) ? raw.comments : [];
+                const normalized = normalizePost(raw);
+                // GET이 post.comments를 댓글 배열로 덮어쓰므로 개수는 배열 길이로 보정
+                if (normalized) normalized.comments = list.length;
+                setPost(normalized);
                 setComments(list.map(normalizeComment));
             }
         } catch {
@@ -659,12 +658,13 @@ export default function PostDetailScreen() {
                         </View>
                     )}
 
+                    {/* 첨부 이미지 — 세로 1열 배치 (여러 장이면 위아래로 쌓임, 웹과 패리티) */}
                     {post.images && post.images.length > 0 && (
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }} contentContainerStyle={{ gap: 8 }}>
+                        <View style={{ marginBottom: 16, gap: 8 }}>
                             {post.images.map((img, i) => (
                                 <Image key={i} source={{ uri: img }} style={styles.postImg} resizeMode="cover" />
                             ))}
-                        </ScrollView>
+                        </View>
                     )}
 
                     <Text
@@ -1054,7 +1054,7 @@ const styles = StyleSheet.create({
     authorRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 },
     authorAvatar: { width: 32, height: 32, borderRadius: 16 },
     authorAvatarFallback: { backgroundColor: COLORS.gray[200], alignItems: "center", justifyContent: "center" },
-    postImg: { width: 240, height: 176, borderRadius: 12 },
+    postImg: { width: "100%", height: 260, borderRadius: 12 },
     videoWrap: {
         marginBottom: 16,
         borderRadius: 12,

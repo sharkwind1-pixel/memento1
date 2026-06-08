@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-06-08 댓글 좋아요 "두개씩"·게시글 좋아요 "실패"·이미지 세로배치 — L2(웹 build, 모바일 tsc) + 9번 SHIP OK
+3개 버그 근본원인을 DB로 실증 후 수정.
+- **댓글 좋아요 두개씩(웹)**: 댓글 좋아요/비추천 API가 **session(RLS) 클라이언트**로 `post_comments.likes` 동기화 → UPDATE 정책 `auth.uid()=user_id`(작성자만)에 막혀 stored가 stale(실측: stored 0 vs real 2 다수). 게시글 상세 GET이 stored를 표시 + per-comment `userLiked`를 **아예 계산 안 함** → 화면 0 표시 후 좋아요 시 서버 실제 count로 보정=0→2 점프. 수정: (A)댓글 like/dislike API → `createAdminSupabase`(sync 정상). (B)상세 GET이 `comment_likes`/`comment_dislikes`에서 likes/dislikes·userLiked·userDisliked를 **권위적으로 계산해 override**(stored 드리프트 무관). (C)기존 stale stored 백필(불일치 0 검증).
+- **게시글 좋아요 실패(모바일)**: `community_posts`+`post_comments` 둘 다 realtime publication → 모바일 상세가 둘 구독+reload. 상세 GET이 **매 호출 views+1을 community_posts에 write** → realtime 발화 → reload → write churn → 좋아요 직후 낙관적 상태를 옛 스냅샷이 덮어씀. 수정: GET `?skipView=1` 추가, 초기 마운트만 조회수+1, realtime/포커스 재로드는 skip → churn 차단.
+- **앱 댓글 미표시(부수 발견)**: `/api/posts/[id]/comments`에 GET 핸들러 없음(POST/DELETE만)→모바일 GET 405. 모바일을 상세 GET의 **embedded enriched 댓글 배열** 사용으로 전환(앱 댓글 복구, 정확한 반응 데이터). normalizeComment가 GET snake_case + POST camelCase 둘 다 읽도록 보강(방금 단 댓글 "익명" 표시 수정).
+- **이미지 세로 배치**: 웹 PostDetailBody `grid-cols-2`→`flex flex-col`(object-contain), 모바일 가로 ScrollView→세로 View(풀너비).
+파일: comments/[id]/like+dislike, posts/[id] GET, PostDetailBody.tsx, mobile post/[id].tsx + DB 백필. 9번 적대검증 SHIP OK(보안/이중집계/크래시 없음). 남은 follow-up: 좋아요↔비추천 서버측 상호해제 미구현(모바일 낙관적 해제가 reload 시 복원). 배포 후 L4.
+
+---
+
 ## 2026-06-08 AI 모더레이션 오탐 수정 — 맛집 후기를 광고 스팸으로 자동숨김 — L2
 사용자 정상 글("삼각지역 명화원 다녀왔어요...또 먹고싶어서")이 `ai-moderation.ts`에서 spam(광고)으로 오판 → 즉시 is_hidden. 원인 2: (1)spam 정의가 "상업적 홍보/무관한 광고"로 너무 넓어 본인 맛집 후기를 광고로 오인. (2)safe 아니면 **무조건 즉시 is_hidden=true** → AI 오판 1회에 정상글 사라짐. 수정: (A)프롬프트 — spam은 "판매/외부링크/연락처·DM유도/할인코드/도배 등 명백한 상업"만, "본인 후기·추천·일상은 광고 아님, 애매하면 safe" 명시. (B)정책 — **자동 숨김은 inappropriate/hate_speech(명백 위반)만, spam은 숨김 X·"flagged"로 검토용 플래그 + 텔레그램 알림(숨김여부 명시)** → 관리자가 /hide로 수동. (moderation_status는 posts GET 가시성에 영향 없음=visible 유지.) 해당 글(52ef2afb) is_hidden=false·approved로 즉시 복구. 검증: tsc+build ✓(L2). 교훈: AI 모더레이션 spam 오탐 잦음 → 자동숨김보다 플래그+사람검토. 배포 후 적용.
 

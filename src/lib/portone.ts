@@ -55,13 +55,19 @@ const getMerchantCode = () => process.env.NEXT_PUBLIC_PORTONE_MERCHANT_CODE || "
 const getChannelKey = () => process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY || "";
 const getBatchChannelKey = () => process.env.NEXT_PUBLIC_PORTONE_BATCH_CHANNEL_KEY || "";
 /**
- * KCP PG 상점 ID (사이트코드) — V1 SDK에 pg 파라미터 명시용.
- * channelKey만 넘겼을 때 KCP 라우팅에서 "미등록 사이트 코드(3014)" 에러 발생 시
- * pg: "kcp.{MID}" (일반) 또는 "kcp_billing.{MID}" (정기)로 명시해서 해결.
- * 폴백 "IP6S2"는 KCP 상점관리자에서 확인된 실연동 사이트코드.
- * (이전 폴백 "A52LD"는 포트원 공용 테스트 MID였음 — 2026-04-16 포트원 Benny 답변으로 확정)
+ * KCP PG 사이트코드 분기 (2026-05-11 KCP 운영팀 답변 기준):
+ *  - IP6S2 = 자동결제(정기결제) 전용 사이트코드. 휴대폰결제 불가.
+ *  - IP6RE = 일반 단건결제 사이트코드. 휴대폰결제 지원.
+ *
+ * 따라서:
+ *  - 정기결제(빌링키): kcp_billing.{IP6S2}
+ *  - 단건 카드/휴대폰/계좌이체/가상계좌: kcp.{IP6RE}
+ *
+ * 폴백 IP6S2/IP6RE는 KCP 상점관리자에서 확인된 실연동 사이트코드.
+ * (이전 폴백 "A52LD"는 포트원 공용 테스트 MID였음 — 2026-04-16 포트원 Benny 답변)
  */
 const getKcpMid = () => process.env.NEXT_PUBLIC_PORTONE_KCP_MID || "IP6S2";
+const getKcpGeneralMid = () => process.env.NEXT_PUBLIC_PORTONE_KCP_GENERAL_MID || "IP6RE";
 
 export interface PaymentRequest {
     paymentId: string;     // 서버에서 발급받은 결제 ID (merchant_uid)
@@ -136,9 +142,12 @@ export async function requestPortOnePayment(
 
         return new Promise((resolve) => {
             // V1 SDK는 channelKey만으로 KCP 라우팅 시 "3014 미등록 사이트 코드" 에러가 날 수 있어
-            // pg 파라미터를 명시적으로 넘긴다. kcp_billing.{MID}는 정기결제(빌링키), kcp.{MID}는 일반결제.
-            const kcpMid = getKcpMid();
-            const pg = isSubscription ? `kcp_billing.${kcpMid}` : `kcp.${kcpMid}`;
+            // pg 파라미터를 명시적으로 넘긴다.
+            //  - 정기결제: kcp_billing.{IP6S2}  (자동결제 전용 사이트코드)
+            //  - 단건결제: kcp.{IP6RE}          (일반결제, 휴대폰결제 지원 가능)
+            const pg = isSubscription
+                ? `kcp_billing.${getKcpMid()}`
+                : `kcp.${getKcpGeneralMid()}`;
 
             const payParams: IMPRequestPayParams = {
                 pg,

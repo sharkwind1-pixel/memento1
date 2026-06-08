@@ -240,9 +240,9 @@ export default function PostDetailBody({
                     </div>
                 )}
 
-                {/* 첨부 이미지 */}
+                {/* 첨부 이미지 — 세로 1열 배치 (여러 장 첨부 시 위아래로 쌓임) */}
                 {post.image_urls && Array.isArray(post.image_urls) && post.image_urls.length > 0 && (
-                    <div className="mt-4 grid grid-cols-2 gap-2">
+                    <div className="mt-4 flex flex-col gap-3">
                         {post.image_urls.map((url: string, idx: number) => (
                             <div
                                 key={idx}
@@ -254,7 +254,7 @@ export default function PostDetailBody({
                                 <img
                                     src={url}
                                     alt={`첨부 이미지 ${idx + 1}`}
-                                    className="w-full h-[300px] object-cover"
+                                    className="w-full max-h-[520px] object-contain bg-gray-50 dark:bg-gray-900"
                                     loading="lazy"
                                 />
                             </div>

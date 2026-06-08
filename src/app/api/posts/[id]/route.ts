@@ -45,22 +45,29 @@ export async function GET(
         ]);
         const { id } = resolvedParams;
 
+        // skipView=1이면 조회수 증가 생략. 모바일 상세화면이 community_posts realtime을 구독하는데,
+        // GET이 매번 views를 write하면 realtime 발화 → 재요청 → 또 write의 reload churn이 생겨
+        // 좋아요 직후 낙관적 상태를 옛 스냅샷으로 덮어쓰는 레이스(=좋아요 실패)를 유발. 재로드 시엔 skip.
+        const skipView = request.nextUrl.searchParams.get("skipView") === "1";
+
         // 조회수 증가 (fire-and-forget). increment_field RPC가 DB에 없고,
         // 일반 supabase(RLS)로는 남의 글 UPDATE가 막혀 조회수가 0에 멈췄음.
         // → service_role(admin) 클라이언트로 RLS 우회하여 직접 +1.
         const viewAdmin = createAdminSupabase();
-        Promise.resolve(
-            viewAdmin.from("community_posts").select("views").eq("id", id).single()
-        ).then(({ data: p }) => {
-            if (p) {
-                viewAdmin.from("community_posts")
-                    .update({ views: (p.views || 0) + 1 })
-                    .eq("id", id)
-                    .then(({ error: upErr }) => {
-                        if (upErr) console.error("[posts/GET] view update failed:", upErr.message);
-                    });
-            }
-        }).catch((err) => { console.error("[posts/GET] view increment failed:", err); });
+        if (!skipView) {
+            Promise.resolve(
+                viewAdmin.from("community_posts").select("views").eq("id", id).single()
+            ).then(({ data: p }) => {
+                if (p) {
+                    viewAdmin.from("community_posts")
+                        .update({ views: (p.views || 0) + 1 })
+                        .eq("id", id)
+                        .then(({ error: upErr }) => {
+                            if (upErr) console.error("[posts/GET] view update failed:", upErr.message);
+                        });
+                }
+            }).catch((err) => { console.error("[posts/GET] view increment failed:", err); });
+        }
 
         // 게시글 조회 + 연결된 작성자 반려동물 함께 조회
         const { data: post, error } = await supabase
@@ -155,6 +162,36 @@ export async function GET(
                     author_is_admin: prof?.is_admin === true,
                 };
             });
+        }
+
+        // 댓글 좋아요/비추천: 실제 테이블에서 카운트 + 현재 유저 반응을 권위적으로 계산.
+        // stored post_comments.likes/dislikes는 과거 RLS로 동기화 실패해 stale일 수 있고,
+        // per-comment userLiked는 기존에 아예 계산하지 않아 화면이 항상 false였음(0→실제count 점프=두개씩).
+        const commentIds = commentsWithProfile.map(c => c.id).filter(Boolean);
+        if (commentIds.length > 0) {
+            const [{ data: clRows }, { data: cdRows }] = await Promise.all([
+                adminSupabase.from("comment_likes").select("comment_id, user_id").in("comment_id", commentIds),
+                adminSupabase.from("comment_dislikes").select("comment_id, user_id").in("comment_id", commentIds),
+            ]);
+            const likeCountMap = new Map<string, number>();
+            const dislikeCountMap = new Map<string, number>();
+            const myLiked = new Set<string>();
+            const myDisliked = new Set<string>();
+            for (const r of clRows || []) {
+                likeCountMap.set(r.comment_id, (likeCountMap.get(r.comment_id) || 0) + 1);
+                if (currentUser && r.user_id === currentUser.id) myLiked.add(r.comment_id);
+            }
+            for (const r of cdRows || []) {
+                dislikeCountMap.set(r.comment_id, (dislikeCountMap.get(r.comment_id) || 0) + 1);
+                if (currentUser && r.user_id === currentUser.id) myDisliked.add(r.comment_id);
+            }
+            commentsWithProfile = commentsWithProfile.map(c => ({
+                ...c,
+                likes: likeCountMap.get(c.id) || 0,
+                dislikes: dislikeCountMap.get(c.id) || 0,
+                userLiked: myLiked.has(c.id),
+                userDisliked: myDisliked.has(c.id),
+            }));
         }
 
         // 현재 유저의 좋아요/비추천 여부 확인
