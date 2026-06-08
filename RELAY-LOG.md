@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-06-08 AI 모더레이션 오탐 수정 — 맛집 후기를 광고 스팸으로 자동숨김 — L2
+사용자 정상 글("삼각지역 명화원 다녀왔어요...또 먹고싶어서")이 `ai-moderation.ts`에서 spam(광고)으로 오판 → 즉시 is_hidden. 원인 2: (1)spam 정의가 "상업적 홍보/무관한 광고"로 너무 넓어 본인 맛집 후기를 광고로 오인. (2)safe 아니면 **무조건 즉시 is_hidden=true** → AI 오판 1회에 정상글 사라짐. 수정: (A)프롬프트 — spam은 "판매/외부링크/연락처·DM유도/할인코드/도배 등 명백한 상업"만, "본인 후기·추천·일상은 광고 아님, 애매하면 safe" 명시. (B)정책 — **자동 숨김은 inappropriate/hate_speech(명백 위반)만, spam은 숨김 X·"flagged"로 검토용 플래그 + 텔레그램 알림(숨김여부 명시)** → 관리자가 /hide로 수동. (moderation_status는 posts GET 가시성에 영향 없음=visible 유지.) 해당 글(52ef2afb) is_hidden=false·approved로 즉시 복구. 검증: tsc+build ✓(L2). 교훈: AI 모더레이션 spam 오탐 잦음 → 자동숨김보다 플래그+사람검토. 배포 후 적용.
+
+---
+
 ## 2026-06-07 뉴스 썸네일 엑박 수정 — og:image를 pet-media에 re-host — L2
 사용자: 레퍼런스글 이미지 엑박. 원인 = **CSP `img-src`(middleware:23)에 외부 뉴스 도메인(yna 등) 없어 차단**(핫링크 아님 — Referer 있어도 200). 해결: og:image를 **우리 `pet-media` 버킷에 복사(re-host)** → supabase URL(*.supabase.co는 CSP·next/image remotePatterns 다 허용). 크론 `news-post`에 `rehostImage`(다운로드→`pet-media/community/{콩콩}/news_*.{ext}` 업로드→getPublicUrl, 8s타임아웃·8MB·image/* 검증·SSRF `isBlockedHost` 가드) 추가, 루프에서 ogImage→hostedImage. 레퍼런스글(`bb55f7ae`)은 로컬 service_role로 즉시 re-host(supabase URL HTTP 200 확인, 엑박 해결). 검증: tsc+build ✓(L2) + re-host 메커니즘은 레퍼런스에서 실증(다운로드 578KB→업로드→공개 200). ⚠️ 크론 자동 re-host는 L4(배포 후 cron 실행) 대기. dryRun preview는 외부 ogImage URL 그대로(미리보기용, 실게시 시 re-host).
 
