@@ -12,7 +12,7 @@
  */
 
 import { buildCareReferencePrompt } from "@/lib/care-reference";
-import { PetInfo, getPersonalityBehavior } from "./chat-helpers";
+import { PetInfo, getPersonalityBehavior, howWeMetLabel } from "./chat-helpers";
 import {
     type PetSpecies,
     inferSpeciesFromPet,
@@ -78,7 +78,8 @@ export function getDailySystemPrompt(
     if (pet.specialHabits) talkTopics.push(`특별한 버릇(${pet.specialHabits})을 보여주며 대화`);
     if (pet.favoriteFood) talkTopics.push(`좋아하는 음식(${pet.favoriteFood}) 이야기`);
     if (pet.nicknames) talkTopics.push(`별명(${pet.nicknames})에 얽힌 에피소드`);
-    if (pet.howWeMet) talkTopics.push(`처음 만났던 이야기(${pet.howWeMet})`);
+    const howWeMet = howWeMetLabel(pet.howWeMet);
+    if (howWeMet) talkTopics.push(`처음 만났던 이야기 (${howWeMet})`);
     // 기본 소재 (개인화 없을 때 폴백)
     if (talkTopics.length === 0) {
         talkTopics.push("오늘 하루에 대한 이야기", "날씨와 산책 이야기", "함께 놀고 싶은 이야기", "잠자는 자세나 좋아하는 장소 이야기");
@@ -252,7 +253,8 @@ export function getMemorialSystemPrompt(
     if (pet.favoriteActivity) memoryTopics.push(`같이 ${pet.favoriteActivity} 했던 시간`);
     if (pet.specialHabits) memoryTopics.push(`${pet.specialHabits} 하던 모습`);
     if (pet.favoriteFood) memoryTopics.push(`${pet.favoriteFood} 맛있게 먹던 모습`);
-    if (pet.howWeMet) memoryTopics.push(`처음 만났던 날의 기억 (${pet.howWeMet})`);
+    const howWeMet = howWeMetLabel(pet.howWeMet);
+    if (howWeMet) memoryTopics.push(`처음 만났던 날의 기억 (${howWeMet})`);
     if (pet.memorableMemory) memoryTopics.push(`특별했던 순간: ${pet.memorableMemory}`);
     if (pet.nicknames) memoryTopics.push(`"${pet.nicknames.split(",")[0]?.trim()}"라고 불러주던 기억`);
     if (memoryTopics.length === 0) {

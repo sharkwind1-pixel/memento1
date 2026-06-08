@@ -105,11 +105,30 @@ export function extractKeywordsFromReply(reply: string, pet: { favoritePlace?: s
 
 // ---- 컨텍스트 빌더 ----
 
-/** 타임라인을 프롬프트용 텍스트로 변환 */
+/**
+ * howWeMet enum(펫샵/분양/보호소/지인/길에서/기타)을 자연스러운 한국어 구로 변환.
+ * 폼이 코드 단어만 저장해 그대로 프롬프트에 넣으면 "처음 만난 이야기(보호소)"처럼 빈약 → 서사형으로.
+ * 자유 텍스트(레거시)면 원본 유지, "기타"·빈값은 빈 문자열(호출부에서 skip).
+ */
+export function howWeMetLabel(v?: string): string {
+    if (!v) return "";
+    const map: Record<string, string> = {
+        "펫샵": "펫샵에서 데려옴",
+        "분양": "분양받음",
+        "보호소": "보호소에서 입양",
+        "지인": "지인에게서 데려옴",
+        "길에서": "길에서 만나 가족이 됨",
+        "기타": "",
+    };
+    return v in map ? map[v] : v;
+}
+
+/** 타임라인을 프롬프트용 텍스트로 변환 (예산 보호: 최근 10개 + 본문 80자 컷 — 전체 30개를 넣으면
+ *  컨텍스트 예산을 초과해 통째로 잘려나가 정작 본인 기록이 AI에 안 들어가던 문제) */
 export function timelineToContext(timeline: TimelineEntry[]): string {
     if (!timeline || timeline.length === 0) return "";
 
-    const entries = timeline.map(entry => {
+    const entries = timeline.slice(0, 10).map(entry => {
         const moodEmoji = {
             happy: "(기분 좋음)",
             normal: "(평범)",
@@ -117,7 +136,8 @@ export function timelineToContext(timeline: TimelineEntry[]): string {
             sick: "(아픔)",
         }[entry.mood || "normal"] || "";
 
-        return `- ${entry.date}: "${entry.title}" ${moodEmoji}\n  ${entry.content || ""}`.trim();
+        const body = (entry.content || "").slice(0, 80);
+        return `- ${entry.date}: "${entry.title}" ${moodEmoji}\n  ${body}`.trim();
     });
 
     return `## 최근 기록된 일상/추억 (대화에 활용하세요)
@@ -130,7 +150,7 @@ ${entries.join("\n\n")}
 export function photoMemoriesToContext(photos: PhotoMemory[]): string {
     if (!photos || photos.length === 0) return "";
 
-    const entries = photos.map(photo =>
+    const entries = photos.slice(0, 12).map(photo =>
         `- ${photo.date}: "${photo.caption}"`
     );
 
@@ -253,8 +273,9 @@ export function getPersonalizationContext(pet: PetInfo): string {
     if (pet.adoptedDate) {
         items.push(`- 처음 만난 날: ${pet.adoptedDate}`);
     }
-    if (pet.howWeMet) {
-        items.push(`- 어떻게 만났는지: ${pet.howWeMet}`);
+    const howWeMet = howWeMetLabel(pet.howWeMet);
+    if (howWeMet) {
+        items.push(`- 어떻게 만났는지: ${howWeMet}`);
     }
     // 추모 모드용 추가 정보
     if (pet.togetherPeriod) {

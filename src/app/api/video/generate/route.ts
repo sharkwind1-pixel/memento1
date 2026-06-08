@@ -16,6 +16,7 @@ import {
     checkRateLimit,
     getRateLimitHeaders,
     sanitizeInput,
+    detectPromptInjection,
     checkVPN,
     getVPNBlockResponse,
 } from "@/lib/rate-limit";
@@ -173,6 +174,24 @@ export async function POST(request: NextRequest) {
             }
         }
 
+        // 펫 종/상태 조회 — 영상 프롬프트 종 반영 + 추모 status 검증 (UI 우회 직접 호출 방어)
+        let petType: string | null = null;
+        let petBreed: string | null = null;
+        let petStatus: string | null = null;
+        if (petId) {
+            const { data: petRow } = await supabase
+                .from("pets")
+                .select("type, breed, status")
+                .eq("id", petId)
+                .eq("user_id", user.id)
+                .maybeSingle();
+            if (petRow) {
+                petType = (petRow.type as string) ?? null;
+                petBreed = (petRow.breed as string) ?? null;
+                petStatus = (petRow.status as string) ?? null;
+            }
+        }
+
         // 6. 프롬프트 결정
         let finalPrompt: string | null = null;
 
@@ -184,8 +203,22 @@ export async function POST(request: NextRequest) {
                     { status: 400 }
                 );
             }
+            // 추모 펫엔 일상(fun) 템플릿 금지 (UI에선 막히지만 API 직접 호출 방어)
+            if (petStatus === "memorial" && template.category === "fun") {
+                return NextResponse.json(
+                    { error: "추모 모드에서는 추모용 영상만 만들 수 있어요." },
+                    { status: 400 }
+                );
+            }
             finalPrompt = template.prompt;
         } else if (customPrompt) {
+            // 프롬프트 인젝션(탈옥) 차단 — 펫톡과 동일 가드 (영상 경로엔 빠져 있었음)
+            if (detectPromptInjection(customPrompt).detected) {
+                return NextResponse.json(
+                    { error: "프롬프트에 허용되지 않은 내용이 있어요." },
+                    { status: 400 }
+                );
+            }
             // 직접 입력 프롬프트: 한국어 → Veo 3.1 최적화 영문 프롬프트 변환
             // Google 공식 Veo 3.1 가이드 기반 5-part formula + 3-beat sequence 적용
             try {
@@ -231,12 +264,23 @@ RULES:
 - Do NOT use vague terms like "4K quality" or "high definition" — use specific cinematic references instead
 - If user's tone is sad/memorial, use S_MEMORIAL style (soft golden, peaceful)
 - If user's tone is playful/joyful, use S_DAILY style (vibrant, energetic)
-- If user describes costume/transformation, use S_FANTASY style (Pixar-like)`,
+- If user describes costume/transformation, use S_FANTASY style (Pixar-like)
+- If a "Subject animal" is provided, keep all motion and anatomy natural for that species; never describe actions impossible for that animal.`,
                         },
-                        { role: "user", content: sanitizeInput(customPrompt) },
+                        {
+                            role: "user",
+                            content: `${petType ? `Subject animal: ${petType}${petBreed ? ` (${petBreed})` : ""}. ` : ""}Description: ${sanitizeInput(customPrompt)}`,
+                        },
                     ],
                 });
-                finalPrompt = translateResult.choices[0]?.message?.content?.trim() || sanitizeInput(customPrompt);
+                const converted = translateResult.choices[0]?.message?.content?.trim() || "";
+                // 변환 결과 검증: 빈값/거부메시지/과길이 → 원본 폴백·길이 컷 (검증 없이 fal 직행 방지)
+                const refusal = /\b(i (can'?t|cannot|won'?t)|i'?m sorry|i am sorry|(i'?m|i am) unable to)\b/i.test(converted);
+                if (!converted || refusal) {
+                    finalPrompt = sanitizeInput(customPrompt);
+                } else {
+                    finalPrompt = converted.length > 600 ? converted.slice(0, 600) : converted;
+                }
             } catch {
                 // 번역 실패 시 원본 그대로
                 finalPrompt = sanitizeInput(customPrompt);

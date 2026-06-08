@@ -726,8 +726,8 @@ export async function buildAIContext(
             { content: personalizationContext, priority: 5 },
             { content: specialDayContext, priority: 5 },
             { content: conversationContext, priority: 4 },
-            { content: timelineContext, priority: 3 },
-            { content: photoContext, priority: 3 },
+            { content: timelineContext, priority: 5 },
+            { content: photoContext, priority: 4 },
             { content: reminderContext, priority: 2 },
         ]
         : [
@@ -740,9 +740,12 @@ export async function buildAIContext(
             { content: personalizationContext, priority: 5 },
             { content: specialDayContext, priority: 4 },
             { content: reminderContext, priority: 4 },
+            // 본인 기록(타임라인·사진)을 mid-tier로 상향 — 예전엔 최하위(2/1)라 예산 초과 시
+            // 가장 먼저 잘려, 개인화 데이터 많은 헤비유저일수록 정작 자기 일기/사진이 AI에 안 들어갔음.
+            // timelineToContext/photoMemoriesToContext에 개수 캡이 있어 상향해도 다른 컨텍스트를 굶기지 않음.
             { content: conversationContext, priority: 3 },
-            { content: timelineContext, priority: 2 },
-            { content: photoContext, priority: 1 },
+            { content: timelineContext, priority: 5 },
+            { content: photoContext, priority: 4 },
         ];
 
     const maxContextChars = isMemorialMode ? AI_INPUT_LIMITS.CONTEXT_BUDGET_MEMORIAL : AI_INPUT_LIMITS.CONTEXT_BUDGET_DAILY;
