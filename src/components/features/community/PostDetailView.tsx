@@ -80,6 +80,11 @@ export default function PostDetailView({
         onConfirm: () => void;
     }>({ isOpen: false, title: "", message: "", onConfirm: () => {} });
 
+    // 같은 글에 대해 조회수를 1회만 올리기 위한 가드(중복 조회수 방지).
+    // user?.id 의존으로 fetchPost가 두 번(마운트 + 세션 하이드레이트) 돌 수 있으므로,
+    // 첫 요청만 조회수 +1, 이후 요청은 skipView=1로 호출.
+    const viewCountedRef = useRef<string | null>(null);
+
     // 게시글 상세 로드
     const fetchPost = useCallback(async () => {
         setIsLoading(true);
@@ -87,7 +92,12 @@ export default function PostDetailView({
             // authFetch로 호출해야 서버 getAuthUser가 Bearer 토큰을 읽어 userLiked/userDisliked를 계산함.
             // plain fetch면 currentUser=null → 내가 누른 좋아요도 false로 와서, 누르면 낙관적 +1 후
             // 서버가 '이미 있음→삭제'로 처리해 카운트가 0이 되는 버그(=좋아요 2→0)가 발생.
-            const response = await authFetch(API.POST_DETAIL(postId), { cache: "no-store" });
+            const firstView = viewCountedRef.current !== postId;
+            viewCountedRef.current = postId;
+            const response = await authFetch(
+                `${API.POST_DETAIL(postId)}${firstView ? "" : "?skipView=1"}`,
+                { cache: "no-store" },
+            );
             if (!response.ok) throw new Error("게시글 로드 실패");
 
             const data = await response.json();
