@@ -240,13 +240,13 @@ export default function PostDetailBody({
                     </div>
                 )}
 
-                {/* 첨부 이미지 — 세로 1열 배치 (여러 장 첨부 시 위아래로 쌓임) */}
+                {/* 첨부 이미지 — 세로 1열 + 컴팩트 카드 (본문 전체폭을 채우지 않도록 max-w 제한, 자연 비율) */}
                 {post.image_urls && Array.isArray(post.image_urls) && post.image_urls.length > 0 && (
                     <div className="mt-4 flex flex-col gap-3">
                         {post.image_urls.map((url: string, idx: number) => (
                             <div
                                 key={idx}
-                                className="relative rounded-xl overflow-hidden border dark:border-gray-600 cursor-pointer"
+                                className="relative rounded-xl overflow-hidden border dark:border-gray-600 cursor-pointer w-full max-w-sm"
                                 onClick={() => window.open(url, "_blank")}
                             >
                                 {/* 외부 뉴스 og:image 등은 next/image remotePatterns 밖이라 plain img 사용(목록과 동일) */}
@@ -254,7 +254,7 @@ export default function PostDetailBody({
                                 <img
                                     src={url}
                                     alt={`첨부 이미지 ${idx + 1}`}
-                                    className="w-full max-h-[520px] object-contain bg-gray-50 dark:bg-gray-900"
+                                    className="w-full h-auto max-h-[460px] object-contain bg-gray-50 dark:bg-gray-900"
                                     loading="lazy"
                                 />
                             </div>
