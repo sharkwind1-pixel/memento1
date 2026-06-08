@@ -36,6 +36,15 @@ const SENSITIVE = [
     "변사", "고독사", "암매장", "백골", "고문", "참수", "인신매매", "감금", "방화", "유서",
 ];
 
+// 정치/선거 뉴스 제외 (사용자 요청 — 커뮤니티 중립성·톤 보호). 제목/요약 어느 쪽에 걸려도 제외.
+const POLITICAL = [
+    "정치", "대통령", "대통령실", "청와대", "국회", "여당", "야당", "국회의원", "장관", "총리",
+    "총선", "대선", "지방선거", "보궐선거", "선거", "공천", "여야", "원내대표", "당대표",
+    "국민의힘", "더불어민주당", "민주당", "조국혁신당", "개혁신당", "정의당",
+    "탄핵", "청문회", "개각", "국정감사", "국정조사", "특검", "비대위",
+    "북한", "김정은", "대북", "외교부", "통일부",
+];
+
 function decodeEntities(s: string): string {
     return s
         .replace(/<\/?b>/g, "")
@@ -52,6 +61,10 @@ function decodeEntities(s: string): string {
 
 function isSensitive(text: string): boolean {
     return SENSITIVE.some((w) => text.includes(w));
+}
+
+function isPolitical(text: string): boolean {
+    return POLITICAL.some((w) => text.includes(w));
 }
 
 function hostFromUrl(u: string): string {
@@ -111,6 +124,7 @@ export async function fetchPopularNews(dayN: number, limit = 12): Promise<NewsIt
             if (!title || !link) continue;
             if (title.length < 8) continue; // 너무 짧은(잘린) 제목 제외
             if (isSensitive(title) || isSensitive(summary)) continue;
+            if (isPolitical(title) || isPolitical(summary)) continue; // 정치/선거 제외
             if (seen.has(link)) continue;
             seen.add(link);
             out.push({

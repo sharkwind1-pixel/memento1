@@ -7,7 +7,7 @@ import {
     View, Text, ScrollView, TouchableOpacity,
     Image, TextInput, Alert, ActivityIndicator,
     KeyboardAvoidingView, Platform, Share, StyleSheet,
-    ActionSheetIOS,
+    ActionSheetIOS, Linking,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
@@ -676,7 +676,20 @@ export default function PostDetailScreen() {
                         }}
                         selectable
                     >
-                        {post.content}
+                        {/* 본문 내 URL을 탭 가능한 링크로 (뉴스 출처 링크 등) — 웹 PostDetailBody와 패리티 */}
+                        {(post.content || "").split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
+                            /^https?:\/\//.test(part) ? (
+                                <Text
+                                    key={i}
+                                    style={{ color: COLORS.memento[600], textDecorationLine: "underline" }}
+                                    onPress={() => Linking.openURL(part).catch(() => {})}
+                                >
+                                    {part}
+                                </Text>
+                            ) : (
+                                part
+                            )
+                        )}
                     </Text>
 
                     <View style={[styles.reactionRow, { borderColor }]}>

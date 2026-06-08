@@ -4,6 +4,16 @@
 
 ---
 
+## 2026-06-06 콩콩 뉴스게시 고도화 — 정치제외/사람말투/감상평/링크활성/썸네일 — L2+적대검증
+라이브 결과 보고 사용자 피드백 5건 반영(웹·앱 패리티):
+- **정치 제외**: `news-fetch.ts` POLITICAL denylist(대통령/국회/선거/탄핵/party명 등). 과필터 방지로 "의원"→"국회의원", "정당" 제거(병원/정당하다 오탐 차단).
+- **봇 티 제거 + 감상평**: 고정 인트로("오늘의 화제 뉴스" 도배) + 발췌요약 삭제 → `generateComment`(gpt-4o-mini, temp 0.9)로 **사람이 읽고 쓴 한줄 감상**("~인가 봐요" 구어체, 매 기사 다름). 실패 시 제목해시로 5종 폴백 분산. 본문 = 감상평+출처+링크(전문/스니펫 복제 제거 = 저작권 개선).
+- **링크 활성화**: 웹 `PostDetailBody`(content를 https? split→`<a target=_blank rel=noopener>`) + 모바일 `post/[id].tsx`(split→`<Text onPress={Linking.openURL}>`, Linking import). https?만 허용(javascript:/data: 차단).
+- **썸네일**: `fetchOgImage`(기사 og:image 추출, AbortController 6s, SSRF 사설IP가드, https?만) → `image_urls[0]` 저장 → 웹 목록(CommunityPostList:193)·상세 + 모바일 목록·상세가 이미 imageUrls 렌더라 **자동 표시**. 웹 상세는 OptimizedImage(next/image)가 외부CDN remotePatterns 밖이라 placeholder 뜨던 것 → plain `<img>`로 교체.
+검증: web tsc+build ✓ + mobile tsc ✓(L2) + **9번 적대검증 버그2/보안2 발견 → 전부 수정**(웹상세 img·정치과필터·http정규식·SSRF가드). XSS/스킴인젝션/중복게시 회귀 0. ⚠️ L4(실 cron 실행)·L5(시각) 배포 후: dryRun으로 감상평/썸네일 미리보기 권장. 핫링크 차단 og:image는 graceful(빈칸). 잔여: og:image 핫링크 깨지면 향후 storage 재호스팅 고려.
+
+---
+
 ## 2026-06-06 AI 점검 후속 수정 — 영상(종/추모/인젝션) + 펫톡(본인기록/howWeMet) — L2+적대검증
 2-에이전트 AI 감사(펫톡 데이터연동·고도화 + 영상 프롬프트) 결과 발견 사항 수정. **백엔드라 웹·앱 공용.**
 - **Fix A 영상**(`video/generate/route.ts`): petId로 pets(type/breed/status) 조회 추가(소유권 필터) → (1)**종 주입**(변환 user메시지 "Subject animal" + system 종 규칙 → 햄스터 해변산책 류 부정합 방지) (2)**추모 게이트**(추모펫 + fun 템플릿 → 400, UI 우회 직접호출 방어) (3)**인젝션 가드** detectPromptInjection(펫톡엔 있었으나 영상엔 없던 것) (4)**변환 결과 검증**(빈값/거부메시지/600자초과 → 원본 폴백·컷).

@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { InlineLoading } from "@/components/ui/PawLoading";
-import { OptimizedImage } from "@/components/ui/optimized-image";
 import KakaoShareButton from "@/components/common/KakaoShareButton";
 import LevelBadge from "@/components/features/points/LevelBadge";
 import type { PostData } from "./postDetailTypes";
@@ -207,7 +206,22 @@ export default function PostDetailBody({
                     </div>
                 ) : (
                     <div className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap break-words">
-                        {post.content}
+                        {/* 본문 내 URL을 클릭 가능한 링크로 (뉴스 출처 링크 등) */}
+                        {(post.content || "").split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
+                            /^https?:\/\//.test(part) ? (
+                                <a
+                                    key={i}
+                                    href={part}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-memento-600 dark:text-memento-400 underline break-all"
+                                >
+                                    {part}
+                                </a>
+                            ) : (
+                                part
+                            )
+                        )}
                     </div>
                 )}
 
@@ -235,11 +249,13 @@ export default function PostDetailBody({
                                 className="relative rounded-xl overflow-hidden border dark:border-gray-600 cursor-pointer"
                                 onClick={() => window.open(url, "_blank")}
                             >
-                                <OptimizedImage
+                                {/* 외부 뉴스 og:image 등은 next/image remotePatterns 밖이라 plain img 사용(목록과 동일) */}
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
                                     src={url}
                                     alt={`첨부 이미지 ${idx + 1}`}
-                                    fill
-                                    className="w-full h-[300px]"
+                                    className="w-full h-[300px] object-cover"
+                                    loading="lazy"
                                 />
                             </div>
                         ))}
