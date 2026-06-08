@@ -158,8 +158,21 @@ export async function GET(request: NextRequest) {
         }
 
         // 3.5 IP 기반 다중 계정 제한 체크 (관리자 예외)
+        // 관리자 판정: ADMIN_EMAILS(이메일 화이트리스트) 또는 DB profiles.is_admin=true.
+        // 소셜 로그인 이메일이 ADMIN_EMAILS와 달라도(예: 관리자의 sharkwind1@naver.com) 해당 계정이
+        // 관리자면 IP 다중계정 차단을 면제. is_admin은 보호 컬럼이라 관리자만 설정 가능 → 신뢰 가능.
         const clientIP = await getClientIP();
-        const isNaverAdmin = ADMIN_EMAILS.includes(naverEmail);
+        let isNaverAdmin = ADMIN_EMAILS.includes(naverEmail);
+        if (!isNaverAdmin) {
+            const { data: adminProfile } = await supabaseAdmin
+                .from("profiles")
+                .select("is_admin")
+                .eq("id", userId)
+                .maybeSingle();
+            if ((adminProfile as { is_admin?: boolean } | null)?.is_admin === true) {
+                isNaverAdmin = true;
+            }
+        }
 
         if (!isNaverAdmin && clientIP !== "unknown") {
             // 같은 IP를 사용하는 다른 비관리자 계정이 있는지 확인
