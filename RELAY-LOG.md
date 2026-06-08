@@ -4,6 +4,11 @@
 
 ---
 
+## 2026-06-07 뉴스 썸네일 엑박 수정 — og:image를 pet-media에 re-host — L2
+사용자: 레퍼런스글 이미지 엑박. 원인 = **CSP `img-src`(middleware:23)에 외부 뉴스 도메인(yna 등) 없어 차단**(핫링크 아님 — Referer 있어도 200). 해결: og:image를 **우리 `pet-media` 버킷에 복사(re-host)** → supabase URL(*.supabase.co는 CSP·next/image remotePatterns 다 허용). 크론 `news-post`에 `rehostImage`(다운로드→`pet-media/community/{콩콩}/news_*.{ext}` 업로드→getPublicUrl, 8s타임아웃·8MB·image/* 검증·SSRF `isBlockedHost` 가드) 추가, 루프에서 ogImage→hostedImage. 레퍼런스글(`bb55f7ae`)은 로컬 service_role로 즉시 re-host(supabase URL HTTP 200 확인, 엑박 해결). 검증: tsc+build ✓(L2) + re-host 메커니즘은 레퍼런스에서 실증(다운로드 578KB→업로드→공개 200). ⚠️ 크론 자동 re-host는 L4(배포 후 cron 실행) 대기. dryRun preview는 외부 ogImage URL 그대로(미리보기용, 실게시 시 re-host).
+
+---
+
 ## 2026-06-06 콩콩 뉴스게시 고도화 — 정치제외/사람말투/감상평/링크활성/썸네일 — L2+적대검증
 라이브 결과 보고 사용자 피드백 5건 반영(웹·앱 패리티):
 - **정치 제외**: `news-fetch.ts` POLITICAL denylist(대통령/국회/선거/탄핵/party명 등). 과필터 방지로 "의원"→"국회의원", "정당" 제거(병원/정당하다 오탐 차단).

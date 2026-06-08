@@ -75,15 +75,22 @@ async function generateComment(title: string, summary: string): Promise<string> 
     }
 }
 
+/** SSRF 방어: 사설/로컬 호스트 차단 (URL은 네이버 결과지만 방어적으로). 파싱 실패도 차단. */
+function isBlockedHost(url: string): boolean {
+    try {
+        const host = new URL(url).hostname.toLowerCase();
+        return host === "localhost" || host.endsWith(".local") || host.startsWith("[") ||
+            /^(127\.|10\.|192\.168\.|169\.254\.|0\.)/.test(host) ||
+            /^172\.(1[6-9]|2\d|3[01])\./.test(host);
+    } catch {
+        return true;
+    }
+}
+
 /** 기사 URL의 og:image 추출 (링크 썸네일용). 실패/없음/상대경로 → null. */
 async function fetchOgImage(url: string): Promise<string | null> {
+    if (isBlockedHost(url)) return null;
     try {
-        // SSRF 방어: 사설/로컬 호스트로의 outbound 차단 (URL은 네이버 결과지만 방어적으로)
-        const host = new URL(url).hostname.toLowerCase();
-        if (host === "localhost" || host.endsWith(".local") || host.startsWith("[") ||
-            /^(127\.|10\.|192\.168\.|169\.254\.|0\.)/.test(host) ||
-            /^172\.(1[6-9]|2\d|3[01])\./.test(host)) return null;
-
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), 6000);
         const res = await fetch(url, {
@@ -113,6 +120,36 @@ async function enrich(item: { title: string; summary: string; link: string }) {
         fetchOgImage(item.link),
     ]);
     return { comment, ogImage };
+}
+
+/**
+ * 외부 og:image를 pet-media 버킷에 복사 → 우리 supabase URL 반환.
+ * 외부 뉴스 도메인은 CSP img-src에 없어 차단(엑박)되므로 반드시 우리 도메인으로 re-host해야 함.
+ * 실패/이미지아님/과대 → null (썸네일 없이 게시).
+ */
+async function rehostImage(admin: ReturnType<typeof getAdminSupabase>, externalUrl: string): Promise<string | null> {
+    if (isBlockedHost(externalUrl)) return null;
+    try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 8000);
+        const res = await fetch(externalUrl, {
+            signal: controller.signal,
+            headers: { "User-Agent": "Mozilla/5.0 (compatible; MementoAniBot/1.0)" },
+        });
+        clearTimeout(timer);
+        if (!res.ok) return null;
+        const ct = res.headers.get("content-type") || "";
+        if (!ct.startsWith("image/")) return null;
+        const bytes = new Uint8Array(await res.arrayBuffer());
+        if (bytes.byteLength === 0 || bytes.byteLength > 8_000_000) return null;
+        const ext = ct.includes("png") ? "png" : ct.includes("webp") ? "webp" : ct.includes("gif") ? "gif" : "jpg";
+        const path = `community/${KONG_USER_ID}/news_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        const { error } = await admin.storage.from("pet-media").upload(path, bytes, { contentType: ct, upsert: false });
+        if (error) return null;
+        return admin.storage.from("pet-media").getPublicUrl(path).data.publicUrl;
+    } catch {
+        return null;
+    }
 }
 
 export async function GET(request: NextRequest) {
@@ -152,8 +189,9 @@ export async function GET(request: NextRequest) {
                 .select("link");
             if (!logRows || logRows.length === 0) continue; // 이미 게시한 기사
 
-            // 감상평(사람 느낌) + 썸네일(og:image). 발췌 요약·고정 인트로 대신.
+            // 감상평(사람 느낌) + 썸네일. og:image는 외부 도메인이라 CSP 차단 → 우리 버킷에 re-host.
             const { comment, ogImage } = await enrich(item);
+            const hostedImage = ogImage ? await rehostImage(admin, ogImage) : null;
             const content = `${comment}\n\n출처: ${item.source}\n${item.link}`;
 
             const { error: postErr } = await admin.from("community_posts").insert({
@@ -163,7 +201,7 @@ export async function GET(request: NextRequest) {
                 title: item.title.slice(0, 100),
                 content,
                 author_name: "콩콩",
-                image_urls: ogImage ? [ogImage] : [],
+                image_urls: hostedImage ? [hostedImage] : [],
                 moderation_status: "approved", // 자체 자극필터 통과한 큐레이션 → 승인
             });
 
